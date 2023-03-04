@@ -260,7 +260,7 @@ def main(engine1, engine2, options1={}, options2={}, names=None, games=1, resign
 
                         engine.ponderhit(listener=listener)
                         bestmove, pondermove = pre_feature.result()
-    
+
                         elapsed_time = perf_counter() - start_time
                     else:
                         pre_pondermove = pondermove

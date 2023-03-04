@@ -172,7 +172,7 @@ class Parser:
                     except ValueError:
                         try:
                             # if KIF file has not second information, try another parse
-                            starttime = datetime.strptime(value, '%Y/%m/%d %H:%M') 
+                            starttime = datetime.strptime(value, '%Y/%m/%d %H:%M')
                         except ValueError:
                             pass
                 elif key == '先手' or key == '下手': # sente or shitate

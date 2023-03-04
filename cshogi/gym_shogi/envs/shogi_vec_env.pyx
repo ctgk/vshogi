@@ -7,7 +7,7 @@ class ShogiVecEnv:
 	def __init__(self, int num_envs):
 		self.num_envs = num_envs
 		self.envs = [ShogiEnv() for _ in range(num_envs)]
-		
+
 	def reset(self):
 		for env in self.envs:
 			env.reset()
@@ -30,5 +30,5 @@ class ShogiVecEnv:
 			is_draws.append(is_draw)
 			if done:
 				self.envs[i].reset()
-		
+
 		return rewards, dones, is_draws

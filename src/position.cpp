@@ -96,7 +96,7 @@ HuffmanCodeToPieceHash HuffmanCodedPos::handCodeToPieceHash;
 //     歩      4bit*18駒   = 72bit
 //     香      6bit* 4駒   = 24bit
 //     桂      6bit* 4駒   = 24bit
-//     銀      6bit* 4駒   = 24bit            
+//     銀      6bit* 4駒   = 24bit
 //     金      6bit* 4駒   = 24bit
 //     角      8bit* 2駒   = 16bit
 //     飛      8bit* 2駒   = 16bit

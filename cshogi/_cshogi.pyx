@@ -601,7 +601,7 @@ cdef class Board:
 				e.text = text
 
 		return SvgWrapper(ET.tostring(svg).decode("utf-8"))
-	
+
 	def _repr_svg_(self):
 		cdef int move = self.__board.peek()
 		if move == 0:
