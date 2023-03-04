@@ -110,11 +110,11 @@ class Board:
 
     @property
     def legal_moves(self):
-        raise NotImplementedError
+        return LegalMoveList(self)
 
     @property
     def pseudo_legal_moves(self):
-        raise NotImplementedError
+        return PseudoLegalMoveList(self)
 
     @property
     def turn(self):

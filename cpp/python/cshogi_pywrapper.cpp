@@ -15,6 +15,12 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(_cshogi, m)
 {
+    initTable();
+    Position::initZobrist();
+    HuffmanCodedPos_init();
+    PackedSfen_init();
+    Book_init();
+
     m.def("initTable", &initTable);
     py::class_<Position>(m, "Position")
         .def_static("initZobrist", Position::initZobrist);
