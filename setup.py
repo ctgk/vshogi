@@ -14,7 +14,7 @@ class my_build_ext(build_ext):
 extension = Pybind11Extension(
     name='cshogi._cshogi',
     sources=sorted(glob('cpp/python/*.cpp')) + sorted(glob('cpp/src/*.cpp')),
-    include_dirs=['src'],
+    include_dirs=['cpp/src'],
     define_macros=[('HAVE_SSE4', None), ('HAVE_SSE42', None), ('HAVE_AVX2', None)],
 )
 
