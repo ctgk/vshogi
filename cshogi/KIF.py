@@ -76,7 +76,7 @@ class Parser:
     @staticmethod
     def parse_file(path):
         prefix, ext = os.path.splitext(path)
-        enc = 'utf-8' if ext == '.kifu' else 'cp932'
+        enc = 'utf-8' if ext in ('.kifu', '.kif') else 'cp932'
         with codecs.open(path, 'r', enc) as f:
             return Parser.parse_str(f.read())
 
@@ -177,7 +177,7 @@ class Parser:
                     except ValueError:
                         try:
                             # if KIF file has not second information, try another parse
-                            starttime = datetime.strptime(value, '%Y/%m/%d %H:%M') 
+                            starttime = datetime.strptime(value, '%Y/%m/%d %H:%M')
                         except ValueError:
                             pass
 

@@ -31,14 +31,10 @@ ext_modules = [
 ]
 
 setup(
-    name='cshogi',
-    version='0.5.0',
     packages=['cshogi', 'cshogi.usi', 'cshogi.gym_shogi', 'cshogi.gym_shogi.envs', 'cshogi.dlshogi', 'cshogi.web', 'cshogi.web.templates', 'cshogi.web.static'],
     package_data={'cshogi.web.templates': ['*'], 'cshogi.web.static': ['*']},
     ext_modules=ext_modules,
     cmdclass={'build_ext': my_build_ext},
-    author='Tadao Yamaoka',
-    url='https://github.com/TadaoYamaoka/cshogi',
     description = 'A fast Python shogi library',
     classifiers=[
         "Programming Language :: Python :: 3",
