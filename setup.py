@@ -22,12 +22,6 @@ ext_modules = [
         language='c++',
         include_dirs = ["cpp/src"],
         define_macros=[('HAVE_SSE4', None), ('HAVE_SSE42', None), ('HAVE_AVX2', None)]),
-    Extension('cshogi.gym_shogi.envs.shogi_env',
-        ['cshogi/gym_shogi/envs/shogi_env.pyx'],
-        language='c++'),
-    Extension('cshogi.gym_shogi.envs.shogi_vec_env',
-        ['cshogi/gym_shogi/envs/shogi_vec_env.pyx'],
-        language='c++'),
 ]
 
 setup(
