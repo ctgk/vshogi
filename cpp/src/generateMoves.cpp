@@ -499,7 +499,6 @@ namespace {
 	template <Color US> struct GenerateMoves<NonEvasion, US> {
 		/*FORCE_INLINE*/ ExtMove* operator () (ExtMove* moveList, const Position& pos) {
 			Bitboard target = pos.emptyBB();
-
 			moveList = generateDropMoves<US>(moveList, pos, target);
 			target |= pos.bbOf(oppositeColor(US));
 			const Square ksq = pos.kingSquare(oppositeColor(US));

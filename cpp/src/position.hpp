@@ -248,9 +248,9 @@ public:
     void set(const std::string& sfen);
     void set(const Piece pieces[SquareNum], const int pieces_in_hand[ColorNum][HandPieceNum]);
 	bool set_hcp(const char* hcp_data); // for python
-	bool set(const HuffmanCodedPos& hcp) { set_hcp((const char*)hcp.data); };
+	bool set(const HuffmanCodedPos& hcp) {return set_hcp((const char*)hcp.data); };
 	bool set_psfen(const char* psfen_data); // for python
-	bool set(const PackedSfen& psfen) { set_psfen((const char*)psfen.data); };
+	bool set(const PackedSfen& psfen) { return set_psfen((const char*)psfen.data); };
     void set(std::mt19937& mt);
 
     Bitboard bbOf(const PieceType pt) const                                            { return byTypeBB_[pt]; }

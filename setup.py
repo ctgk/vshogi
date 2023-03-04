@@ -18,9 +18,9 @@ class my_build_ext(build_ext):
 ext_modules = [
     Extension('cshogi._cshogi',
         ['cshogi/_cshogi.pyx',
-         "src/bitboard.cpp", "src/common.cpp", "src/generateMoves.cpp", "src/hand.cpp", "src/init.cpp", "src/move.cpp", "src/mt64bit.cpp", "src/position.cpp", "src/search.cpp", "src/square.cpp", "src/usi.cpp", "src/book.cpp", "src/mate.cpp", "src/dfpn.cpp"],
+         "cpp/src/bitboard.cpp", "cpp/src/common.cpp", "cpp/src/generateMoves.cpp", "cpp/src/hand.cpp", "cpp/src/init.cpp", "cpp/src/move.cpp", "cpp/src/mt64bit.cpp", "cpp/src/position.cpp", "cpp/src/search.cpp", "cpp/src/square.cpp", "cpp/src/usi.cpp", "cpp/src/book.cpp", "cpp/src/mate.cpp", "cpp/src/dfpn.cpp"],
         language='c++',
-        include_dirs = ["src"],
+        include_dirs = ["cpp/src"],
         define_macros=[('HAVE_SSE4', None), ('HAVE_SSE42', None), ('HAVE_AVX2', None)]),
     Extension('cshogi.gym_shogi.envs.shogi_env',
         ['cshogi/gym_shogi/envs/shogi_env.pyx'],
