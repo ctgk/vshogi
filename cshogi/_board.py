@@ -1,6 +1,18 @@
 import numpy as np
 
 import cshogi._cshogi as _cs
+from cshogi._constants import (
+    COLORS, BLACK, WHITE, HAND_PIECES, HAND_PIECE_JAPANESE_SYMBOLS,
+    NUMBER_JAPANESE_KANJI_SYMBOLS,
+    SVG_COORDINATES, SVG_PIECE_DEFS, SVG_PIECE_DEF_IDS, SVG_SQUARES,
+    SQUARES, NONE,
+)
+
+
+class SvgWrapper(str):
+
+    def _repr_svg_(self):
+        return self
 
 
 class Board:
@@ -202,10 +214,110 @@ class Board:
         return self._board.bookKey()
 
     def to_svg(self, lastmove=None, scale=1.):
-        raise NotImplementedError
+        import xml.etree.ElementTree as ET
+
+        width = 230
+        height = 192
+
+        svg = ET.Element("svg", {
+            "xmlns": "http://www.w3.org/2000/svg",
+            "version": "1.1",
+            "xmlns:xlink": "http://www.w3.org/1999/xlink",
+            "width": str(width * scale),
+            "height": str(height * scale),
+            "viewBox": "0 0 {} {}".format(width, height),
+        })
+
+        defs = ET.SubElement(svg, "defs")
+        for piece_def in SVG_PIECE_DEFS:
+            defs.append(ET.fromstring(piece_def))
+
+        if lastmove is not None:
+            i, j = divmod(_cs.move_to(lastmove), 9)
+            ET.SubElement(svg, "rect", {
+                "x": str(20.5 + (8 - i) * 20),
+                "y": str(10.5 + j * 20),
+                "width": str(20),
+                "height": str(20),
+                "fill": "#f6b94d"
+            })
+            if not _cs.move_is_drop(lastmove):
+                i, j = divmod(_cs.move_from(lastmove), 9)
+                ET.SubElement(svg, "rect", {
+                    "x": str(20.5 + (8 - i) * 20),
+                    "y": str(10.5 + j * 20),
+                    "width": str(20),
+                    "height": str(20),
+                    "fill": "#fdf0e3"
+                })
+
+        svg.append(ET.fromstring(SVG_SQUARES))
+        svg.append(ET.fromstring(SVG_COORDINATES))
+
+        for sq in SQUARES:
+            pc = self.__board.piece(sq)
+            if pc != NONE:
+                i, j = divmod(sq, 9)
+                x = 20.5 + (8 - i) * 20
+                y = 10.5 + j * 20
+
+                ET.SubElement(svg, "use", {
+                    "xlink:href": "#{}".format(SVG_PIECE_DEF_IDS[pc]),
+                    "x": str(x),
+                    "y": str(y),
+                })
+
+        hand_pieces = [[], []]
+        for c in COLORS:
+            i = 0
+            for hp, n in zip(HAND_PIECES, self.__board.pieces_in_hand(c)):
+                if n >= 11:
+                    hand_pieces[c].append((i, NUMBER_JAPANESE_KANJI_SYMBOLS[n % 10]))
+                    i += 1
+                    hand_pieces[c].append((i, NUMBER_JAPANESE_KANJI_SYMBOLS[10]))
+                    i += 1
+                elif n >= 2:
+                    hand_pieces[c].append((i, NUMBER_JAPANESE_KANJI_SYMBOLS[n]))
+                    i += 1
+                if n >= 1:
+                    hand_pieces[c].append((i, HAND_PIECE_JAPANESE_SYMBOLS[hp]))
+                    i += 1
+            i += 1
+            hand_pieces[c].append((i, "手"))
+            i += 1
+            hand_pieces[c].append((i, "先" if c == BLACK else "後"))
+            i += 1
+            hand_pieces[c].append(( i, "☗" if c == BLACK else "☖"))
+
+        for c in COLORS:
+            if c == BLACK:
+                x = 214
+                y = 190
+            else:
+                x = -16
+                y = -10
+            scale = 1
+            if len(hand_pieces[c]) + 1 > 13:
+                scale = 13.0 / (len(hand_pieces[c]) + 1)
+            for i, text in hand_pieces[c]:
+                e = ET.SubElement(svg, "text", {
+                    "font-family": "serif",
+                    "font-size": str(14 * scale),
+                })
+                e.set("x", str(x))
+                e.set("y", str(y - 14 * scale * i))
+                if c == WHITE:
+                    e.set("transform", "rotate(180)")
+                e.text = text
+
+        return SvgWrapper(ET.tostring(svg).decode("utf-8"))
 
     def _repr_svg_(self):
-        raise NotImplementedError
+        move = self.__board.peek()
+        if move == 0:
+            return self.to_svg()
+        else:
+            return self.to_svg(move)
 
 
 class LegalMoveList:
