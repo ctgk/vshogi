@@ -137,8 +137,8 @@ inline PieceTypeEnum to_piece_type(const CapturedPieceTypeEnum hp)
 {
     return HandPieceToPieceTypeTable[hp];
 }
-inline ColoredPieceEnum colorAndHandPieceToPiece(
-    const color::ColorEnum c, const CapturedPieceTypeEnum hp)
+inline ColoredPieceEnum
+to_colored_piece(const color::ColorEnum c, const CapturedPieceTypeEnum hp)
 {
     return to_colored_piece(c, to_piece_type(hp));
 }

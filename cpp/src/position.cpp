@@ -2922,7 +2922,7 @@ std::string Position::toSFEN(const Ply ply) const {
                     continue;
                 if (num != 1)
                     ss << num;
-                const ColoredPieceEnum pc = colorAndHandPieceToPiece(color, hp);
+                const ColoredPieceEnum pc = to_colored_piece(color, hp);
                 ss << pieceToCharUSI(pc);
             }
         }
