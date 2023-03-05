@@ -53,7 +53,7 @@ public:
     {
     }
     DfPn(const DfPn& dfpn)
-        : kMaxDepth(dfpn.kMaxDepth), maxSearchNode(dfpn.maxSearchNode),
+        : maxSearchNode(dfpn.maxSearchNode), kMaxDepth(dfpn.kMaxDepth),
           draw_ply(dfpn.draw_ply)
     {
     }
