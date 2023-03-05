@@ -19,12 +19,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef APERY_HAND_HPP
-#define APERY_HAND_HPP
+#ifndef CSHOGI_PIECE_STAND_HPP
+#define CSHOGI_PIECE_STAND_HPP
 
 #include "common.hpp"
 #include "piece.hpp"
 
+namespace
+{
 constexpr int PIECE_STAND_SHIFT_BITS[piece::NUM_CAPTURED_PIECE_TYPES]
     = {0, 6, 10, 14, 18, 22, 25};
 constexpr u32 PIECE_STAND_MASK[piece::NUM_CAPTURED_PIECE_TYPES] = {
@@ -47,6 +49,7 @@ constexpr u32 PIECE_STAND_ONE[piece::NUM_CAPTURED_PIECE_TYPES] = {
     1 << 22,
     1 << 25,
 };
+}; // namespace
 
 // 手駒
 // 手駒の状態 (32bit に pack する)
@@ -200,4 +203,4 @@ private:
     u32 value_;
 };
 
-#endif // #ifndef APERY_HAND_HPP
+#endif // #ifndef CSHOGI_PIECE_STAND_HPP

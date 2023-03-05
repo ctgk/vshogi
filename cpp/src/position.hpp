@@ -27,8 +27,8 @@
 
 #include "bitboard.hpp"
 #include "common.hpp"
-#include "hand.hpp"
 #include "piece.hpp"
+#include "piece_stand.hpp"
 
 using Ply = int;
 

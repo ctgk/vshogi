@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "hand.hpp"
+#include "piece_stand.hpp"
 #include "position.hpp"
 
 // 置換表
