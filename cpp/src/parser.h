@@ -286,7 +286,7 @@ private:
     static std::string
     parse_position(const std::vector<std::string>& position_block_lines)
     {
-        color::ColorEnum color;
+        color::ColorEnum color_;
         color::ColorEnum current_turn;
         int rank_index;
         int file_index;
@@ -300,11 +300,11 @@ private:
                 auto itrColor = std::find(
                     COLOR_SYMBOLS.begin(), COLOR_SYMBOLS.end(), line[0]);
                 if (itrColor != COLOR_SYMBOLS.end()) {
-                    color::ColorEnum
+                    color_
                         = (color::ColorEnum)(itrColor - COLOR_SYMBOLS.begin());
                     if (line.size() == 1) {
                         // duplicated data
-                        current_turn = color;
+                        current_turn = color_;
                     } else {
                         // move
                         throw std::domain_error("TODO: parse moves");
