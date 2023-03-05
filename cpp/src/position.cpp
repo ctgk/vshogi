@@ -323,7 +323,7 @@ template <bool Searching> bool Position::moveIsPseudoLegal(const Move move) cons
     else {
         const Square from = move.from();
         const PieceTypeEnum ptFrom = move.pieceTypeFrom();
-        if (piece(from) != colorAndPieceTypeToPiece(us, ptFrom) || bbOf(us).isSet(to))
+        if (piece(from) != to_colored_piece(us, ptFrom) || bbOf(us).isSet(to))
             return false;
 
         if (!attacksFrom(ptFrom, us, from).isSet(to))
@@ -441,7 +441,7 @@ void Position::doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, co
 
         hand_[us].minusOne(hpTo);
         xorBBs(ptTo, to, us);
-        piece_[to] = colorAndPieceTypeToPiece(us, ptTo);
+        piece_[to] = to_colored_piece(us, ptTo);
 
         if (moveIsCheck) {
             // Direct checks
@@ -462,7 +462,7 @@ void Position::doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, co
         byTypeBB_[ptTo].xorBit(to);
         byColorBB_[us].xorBit(from, to);
         piece_[from] = Empty;
-        piece_[to] = colorAndPieceTypeToPiece(us, ptTo);
+        piece_[to] = to_colored_piece(us, ptTo);
         boardKey -= zobrist(ptFrom, from, us);
         boardKey += zobrist(ptTo, to, us);
 
@@ -559,19 +559,19 @@ void Position::undoMove(const Move move) {
             byTypeBB_[ptCaptured].xorBit(to);
             byColorBB_[them].xorBit(to);
             const CapturedPieceTypeEnum hpCaptured = pieceTypeToHandPiece(ptCaptured);
-            const ColoredPieceEnum pcCaptured = colorAndPieceTypeToPiece(them, ptCaptured);
+            const ColoredPieceEnum pcCaptured = to_colored_piece(them, ptCaptured);
             piece_[to] = pcCaptured;
 
             hand_[us].minusOne(hpCaptured);
         }
         else
-            // 駒を取らないときは、colorAndPieceTypeToPiece(us, ptCaptured) は 0 または 16 になる。
+            // 駒を取らないときは、to_colored_piece(us, ptCaptured) は 0 または 16 になる。
             // 16 になると困るので、駒を取らないときは明示的に Empty にする。
             piece_[to] = Empty;
         byTypeBB_[ptFrom].xorBit(from);
         byTypeBB_[ptTo].xorBit(to);
         byColorBB_[us].xorBit(from, to);
-        piece_[from] = colorAndPieceTypeToPiece(us, ptFrom);
+        piece_[from] = to_colored_piece(us, ptFrom);
     }
     // Occupied は to, from の位置のビットを操作するよりも、
     // color::BLACK と White の or を取る方が速いはず。
@@ -3511,7 +3511,7 @@ void Position::set(std::mt19937& mt) {
                 // 出来るだけ前にいるほど成っている確率を高めに。
                 std::uniform_int_distribution<int> promoteDist(0, 99);
                 const ColoredPieceEnum promoteFlag = (pt != KI && promoteThresh[t][rank] <= promoteDist(mt) ? Promoted : UnPromoted);
-                const ColoredPieceEnum pc = colorAndPieceTypeToPiece(t, pt) + promoteFlag;
+                const ColoredPieceEnum pc = to_colored_piece(t, pt) + promoteFlag;
                 if (promoteFlag == UnPromoted) {
                     if (pt == FU) {
                         // 二歩のチェック
@@ -3579,7 +3579,7 @@ void Position::set(std::mt19937& mt) {
                     else // 飛角に関しては、成りと不成は同確率とする。
                         return (50 <= promoteDist(mt) ? Promoted : UnPromoted);
                 }();
-                const ColoredPieceEnum pc = colorAndPieceTypeToPiece(t, pt) + promoteFlag;
+                const ColoredPieceEnum pc = to_colored_piece(t, pt) + promoteFlag;
                 if (promoteFlag == UnPromoted) {
                     if (pt == KY) {
                         // 行き所が無いかチェック
@@ -3704,7 +3704,7 @@ bool Position::moveGivesCheck(const Move move, const CheckInfo& ci) const
 
 ColoredPieceEnum Position::movedPiece(const Move m) const
 {
-    return colorAndPieceTypeToPiece(turn(), m.pieceTypeFromOrDropped());
+    return to_colored_piece(turn(), m.pieceTypeFromOrDropped());
 }
 
 void Position::clear()

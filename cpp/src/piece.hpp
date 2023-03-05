@@ -105,7 +105,7 @@ inline color::ColorEnum get_color(const ColoredPieceEnum p)
 }
 
 inline ColoredPieceEnum
-colorAndPieceTypeToPiece(const color::ColorEnum c, const PieceTypeEnum pt)
+to_colored_piece(const color::ColorEnum c, const PieceTypeEnum pt)
 {
     return static_cast<ColoredPieceEnum>((c << 4) | pt);
 }
@@ -151,7 +151,7 @@ inline PieceTypeEnum handPieceToPieceType(const CapturedPieceTypeEnum hp)
 inline ColoredPieceEnum colorAndHandPieceToPiece(
     const color::ColorEnum c, const CapturedPieceTypeEnum hp)
 {
-    return colorAndPieceTypeToPiece(c, handPieceToPieceType(hp));
+    return to_colored_piece(c, handPieceToPieceType(hp));
 }
 
 #endif // #ifndef APERY_PIECE_HPP
