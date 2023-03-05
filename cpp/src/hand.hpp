@@ -74,15 +74,7 @@ public:
     template <piece::CapturedPieceTypeEnum HP>
     u32 numOf() const
     {
-        return (
-            HP == piece::C_FU   ? ((value() & bit_mask_fu) >> shift_bits_fu)
-            : HP == piece::C_KY ? ((value() & bit_mask_ky) >> shift_bits_ky)
-            : HP == piece::C_KE ? ((value() & bit_mask_ke) >> shift_bits_ke)
-            : HP == piece::C_GI ? ((value() & bit_mask_gi) >> shift_bits_gi)
-            : HP == piece::C_KI ? ((value() & bit_mask_ki) >> shift_bits_ki)
-            : HP == piece::C_KA
-                ? ((value() & bit_mask_ka) >> shift_bits_ka)
-                : ((value() /*& bit_mask_hi*/) >> shift_bits_hi));
+        return (value_ & PIECE_STAND_MASK[HP]) >> PIECE_STAND_SHIFT_BITS[HP];
     }
 
     u32 numOf(const piece::CapturedPieceTypeEnum captured_piece_type) const
@@ -95,14 +87,7 @@ public:
     template <piece::CapturedPieceTypeEnum HP>
     u32 exists() const
     {
-        return (
-            HP == piece::C_FU   ? (value() & bit_mask_fu)
-            : HP == piece::C_KY ? (value() & bit_mask_ky)
-            : HP == piece::C_KE ? (value() & bit_mask_ke)
-            : HP == piece::C_GI ? (value() & bit_mask_gi)
-            : HP == piece::C_KI ? (value() & bit_mask_ki)
-            : HP == piece::C_KA ? (value() & bit_mask_ka)
-                                : (value() & bit_mask_hi));
+        return value_ & PIECE_STAND_MASK[HP];
     }
     u32 exists(const piece::CapturedPieceTypeEnum captured_piece_type) const
     {
