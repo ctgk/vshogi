@@ -174,27 +174,27 @@ public:
 
 private:
     // clang-format off
-    static const int shift_bits_fu =  0;
-    static const int shift_bits_ky =  6;
-    static const int shift_bits_ke = 10;
-    static const int shift_bits_gi = 14;
-    static const int shift_bits_ki = 18;
-    static const int shift_bits_ka = 22;
-    static const int shift_bits_hi = 25;
-    static const u32 bit_mask_fu = 0x1f << shift_bits_fu;
-    static const u32 bit_mask_ky = 0x7  << shift_bits_ky;
-    static const u32 bit_mask_ke = 0x7  << shift_bits_ke;
-    static const u32 bit_mask_gi = 0x7  << shift_bits_gi;
-    static const u32 bit_mask_ki = 0x7  << shift_bits_ki;
-    static const u32 bit_mask_ka = 0x3  << shift_bits_ka;
-    static const u32 bit_mask_hi = 0x3  << shift_bits_hi;
+    constexpr static int shift_bits_fu =  0;
+    constexpr static int shift_bits_ky =  6;
+    constexpr static int shift_bits_ke = 10;
+    constexpr static int shift_bits_gi = 14;
+    constexpr static int shift_bits_ki = 18;
+    constexpr static int shift_bits_ka = 22;
+    constexpr static int shift_bits_hi = 25;
+    constexpr static u32 bit_mask_fu = 0x1f << shift_bits_fu;
+    constexpr static u32 bit_mask_ky = 0x7  << shift_bits_ky;
+    constexpr static u32 bit_mask_ke = 0x7  << shift_bits_ke;
+    constexpr static u32 bit_mask_gi = 0x7  << shift_bits_gi;
+    constexpr static u32 bit_mask_ki = 0x7  << shift_bits_ki;
+    constexpr static u32 bit_mask_ka = 0x3  << shift_bits_ka;
+    constexpr static u32 bit_mask_hi = 0x3  << shift_bits_hi;
     // clang-format on
-    static const u32 HandPieceExceptPawnMask
+    constexpr static u32 HandPieceExceptPawnMask
         = (bit_mask_ky | bit_mask_ke | bit_mask_gi | bit_mask_ki | bit_mask_ka
            | bit_mask_hi);
     // 特定の種類の持ち駒を 1 つ増やしたり減らしたりするときに使用するテーブル
     static const u32 HandPieceOne[piece::NUM_CAPTURED_PIECE_TYPES];
-    static const u32 BorrowMask
+    constexpr static u32 BorrowMask
         = ((bit_mask_fu + (1 << shift_bits_fu))
            | (bit_mask_ky + (1 << shift_bits_ky))
            | (bit_mask_ke + (1 << shift_bits_ke))
