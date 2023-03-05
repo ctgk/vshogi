@@ -41,7 +41,7 @@ public:
     {
         (*this)["FU"] = piece::FU;
         (*this)["KY"] = piece::KY;
-        (*this)["piece::KE"] = piece::KE;
+        (*this)["KE"] = piece::KE;
         (*this)["GI"] = piece::GI;
         (*this)["KA"] = piece::KA;
         (*this)["HI"] = piece::HI;

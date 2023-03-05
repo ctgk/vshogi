@@ -3189,13 +3189,13 @@ namespace {
     }
 }
 void Position::printHand(std::ostream& os, const color::ColorEnum c) const {
-    printHandPiece(os, *this, piece::C_FU  , c, "FU");
-    printHandPiece(os, *this, piece::C_KY , c, "KY");
-    printHandPiece(os, *this, piece::C_KE, c, "piece::KE");
+    printHandPiece(os, *this, piece::C_FU, c, "FU");
+    printHandPiece(os, *this, piece::C_KY, c, "KY");
+    printHandPiece(os, *this, piece::C_KE, c, "KE");
     printHandPiece(os, *this, piece::C_GI, c, "GI");
-    printHandPiece(os, *this, piece::C_KI  , c, "KI");
+    printHandPiece(os, *this, piece::C_KI, c, "KI");
     printHandPiece(os, *this, piece::C_KA, c, "KA");
-    printHandPiece(os, *this, piece::C_HI  , c, "HI");
+    printHandPiece(os, *this, piece::C_HI, c, "HI");
 }
 
 Position& Position::operator = (const Position& pos) {

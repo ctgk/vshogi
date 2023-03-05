@@ -34,7 +34,7 @@ const std::string PieceTypeToStringTable[piece::PieceTypeNum]
     = {"",
        "FU",
        "KY",
-       "piece::KE",
+       "KE",
        "GI",
        "KA",
        "HI",
