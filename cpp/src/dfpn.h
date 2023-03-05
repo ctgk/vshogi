@@ -12,7 +12,7 @@ namespace ns_dfpn
 {
 struct TTEntry
 {
-    Hand hand; // 手駒（常に先手の手駒）
+    PieceStand hand; // 手駒（常に先手の手駒）
     int pn;
     int dn;
     uint16_t depth;
@@ -23,10 +23,10 @@ struct TranspositionTable
 {
     typedef std::vector<std::unique_ptr<TTEntry>> Cluster;
 
-    TTEntry& LookUp(const Key key, const Hand hand, const uint16_t depth);
+    TTEntry& LookUp(const Key key, const PieceStand hand, const uint16_t depth);
 
     TTEntry&
-    LookUpDirect(Cluster& entries, const Hand hand, const uint16_t depth);
+    LookUpDirect(Cluster& entries, const PieceStand hand, const uint16_t depth);
 
     template <bool or_node>
     TTEntry& LookUp(const Position& n);
@@ -34,7 +34,10 @@ struct TranspositionTable
     // moveを指した後の子ノードのキーを返す
     template <bool or_node>
     void GetChildFirstEntry(
-        const Position& n, const Move move, Cluster*& entries, Hand& hand);
+        const Position& n,
+        const Move move,
+        Cluster*& entries,
+        PieceStand& hand);
 
     // moveを指した後の子ノードの置換表エントリを返す
     template <bool or_node>

@@ -1229,7 +1229,7 @@ template <color::ColorEnum US, bool Additional> Move Position::mateMoveIn1Ply() 
 
     // 駒打ちを調べる。
     const Bitboard dropTarget = nOccupiedBB(); // emptyBB() ではないので注意して使うこと。
-    const Hand ourHand = hand(US);
+    const PieceStand ourHand = hand(US);
     // 王手する前の状態の dcBB。
     // 間にある駒は相手側の駒。
     // 駒打ちのときは、打った後も、打たれる前の状態の dcBB を使用する。
@@ -1967,7 +1967,7 @@ silver_drop_end:
 
         // 敵は歩以外を持っていないか。
 
-        const Hand themHand = hand(Them);
+        const PieceStand themHand = hand(Them);
         if (!themHand.exceptPawnExists()) {
             // 玉の8近傍の移動可能箇所の列挙
             const Bitboard bb_king_movable = ~bbOf(Them) & kingAttack(ksq);
@@ -2969,7 +2969,7 @@ void Position::toHuffmanCodedPos(u8* data) const {
 
     // 持ち駒
     for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
-        const Hand h = hand(c);
+        const PieceStand h = hand(c);
         for (piece::CapturedPieceTypeEnum hp = piece::C_FU; hp < piece::NUM_CAPTURED_PIECE_TYPES; ++hp) {
             const auto hc = HuffmanCodedPos::handCodeTable[hp][c];
             for (u32 n = 0; n < h.numOf(hp); ++n)
@@ -3000,7 +3000,7 @@ void Position::toPackedSfen(u8* data) const {
 
 	// 持ち駒
 	for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
-		const Hand h = hand(c);
+		const PieceStand h = hand(c);
 		for (piece::CapturedPieceTypeEnum hp = piece::C_FU; hp < piece::NUM_CAPTURED_PIECE_TYPES; ++hp) {
 			const auto hc = PackedSfen::handCodeTable[hp][c];
 			for (u32 n = 0; n < h.numOf(hp); ++n)

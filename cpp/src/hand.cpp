@@ -23,7 +23,7 @@
 #include "common.hpp"
 #include "piece.hpp"
 
-const int Hand::HandPieceShiftBits[piece::NUM_CAPTURED_PIECE_TYPES]
+const int PieceStand::HandPieceShiftBits[piece::NUM_CAPTURED_PIECE_TYPES]
     = {HPawnShiftBits,
        HLanceShiftBits,
        HKnightShiftBits,
@@ -31,7 +31,7 @@ const int Hand::HandPieceShiftBits[piece::NUM_CAPTURED_PIECE_TYPES]
        HGoldShiftBits,
        HBishopShiftBits,
        HRookShiftBits};
-const u32 Hand::HandPieceMask[piece::NUM_CAPTURED_PIECE_TYPES]
+const u32 PieceStand::HandPieceMask[piece::NUM_CAPTURED_PIECE_TYPES]
     = {HPawnMask,
        HLanceMask,
        HKnightMask,
@@ -40,7 +40,7 @@ const u32 Hand::HandPieceMask[piece::NUM_CAPTURED_PIECE_TYPES]
        HBishopMask,
        HRookMask};
 // 特定の種類の持ち駒を 1 つ増やしたり減らしたりするときに使用するテーブル
-const u32 Hand::HandPieceOne[piece::NUM_CAPTURED_PIECE_TYPES]
+const u32 PieceStand::HandPieceOne[piece::NUM_CAPTURED_PIECE_TYPES]
     = {1 << HPawnShiftBits,
        1 << HLanceShiftBits,
        1 << HKnightShiftBits,

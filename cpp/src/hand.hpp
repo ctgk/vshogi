@@ -35,13 +35,13 @@
 // xxxxxxxx xxx111xx xxxxxxxx xxxxxxxx  piece::KI
 // xxxxxxxx 11xxxxxx xxxxxxxx xxxxxxxx  piece::KA
 // xxxxx11x xxxxxxxx xxxxxxxx xxxxxxxx  piece::HI
-class Hand
+class PieceStand
 {
 public:
-    Hand()
+    PieceStand()
     {
     }
-    explicit Hand(u32 v) : value_(v)
+    explicit PieceStand(u32 v) : value_(v)
     {
     }
     u32 value() const
@@ -67,7 +67,7 @@ public:
         return (value() & HandPieceMask[handPiece])
                >> HandPieceShiftBits[handPiece];
     }
-    // 2つの Hand 型変数の、同じ種類の駒の数を比較する必要があるため、
+    // 2つの PieceStand 型変数の、同じ種類の駒の数を比較する必要があるため、
     // bool じゃなくて、u32 型でそのまま返す。
     template <piece::CapturedPieceTypeEnum HP>
     u32 exists() const
@@ -102,18 +102,18 @@ public:
     {
         value_ -= HandPieceOne[handPiece];
     }
-    bool operator==(const Hand rhs) const
+    bool operator==(const PieceStand rhs) const
     {
         return this->value() == rhs.value();
     }
-    bool operator!=(const Hand rhs) const
+    bool operator!=(const PieceStand rhs) const
     {
         return this->value() != rhs.value();
     }
     // 手駒の優劣判定
     // 手駒が ref と同じか、勝っていれば true
     // 勝っている状態とは、全ての種類の手駒が、ref 以上の枚数があることを言う。
-    bool isEqualOrSuperior(const Hand ref) const
+    bool isEqualOrSuperior(const PieceStand ref) const
     {
 #if 0
         // 全ての駒が ref 以上の枚数なので、true
@@ -134,7 +134,7 @@ public:
         value_ = value;
     }
     // 相手が一枚も持っていない種類の持駒を加算
-    void setPP(const Hand us, const Hand them)
+    void setPP(const PieceStand us, const PieceStand them)
     {
         u32 mask = 0;
         if (them.exists<piece::C_FU>() == 0)

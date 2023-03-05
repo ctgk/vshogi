@@ -78,15 +78,15 @@ private:
 };
 } // namespace ns_dfpn
 
-TTEntry&
-TranspositionTable::LookUp(const Key key, const Hand hand, const uint16_t depth)
+TTEntry& TranspositionTable::LookUp(
+    const Key key, const PieceStand hand, const uint16_t depth)
 {
     auto& entries = tt[key];
     return LookUpDirect(entries, hand, depth);
 }
 
 TTEntry& TranspositionTable::LookUpDirect(
-    Cluster& entries, const Hand hand, const uint16_t depth)
+    Cluster& entries, const PieceStand hand, const uint16_t depth)
 {
     int max_pn = 1;
     int max_dn = 1;
@@ -151,7 +151,7 @@ TTEntry& TranspositionTable::LookUp(const Position& n)
 // moveを指した後の子ノードのキーを返す
 template <bool or_node>
 void TranspositionTable::GetChildFirstEntry(
-    const Position& n, const Move move, Cluster*& entries, Hand& hand)
+    const Position& n, const Move move, Cluster*& entries, PieceStand& hand)
 {
     // 手駒は常に先手の手駒で表す
     if (or_node) {
@@ -178,7 +178,7 @@ TTEntry&
 TranspositionTable::LookUpChildEntry(const Position& n, const Move move)
 {
     Cluster* entries;
-    Hand hand;
+    PieceStand hand;
     GetChildFirstEntry<or_node>(n, move, entries, hand);
     return LookUpDirect(*entries, hand, n.gamePly() + 1);
 }
@@ -210,7 +210,7 @@ FORCE_INLINE bool moveGivesNeighborCheck(const Position& pos, const Move& move)
 }
 
 // 反証駒を計算(持っている持ち駒を最大数にする(後手の持ち駒を加える))
-FORCE_INLINE u32 dp(const Hand& us, const Hand& them)
+FORCE_INLINE u32 dp(const PieceStand& us, const PieceStand& them)
 {
     u32 dp = 0;
     u32 pawn = us.exists<piece::C_FU>();
@@ -533,7 +533,7 @@ void DfPn::dfpn_inner(
     struct TTKey
     {
         TranspositionTable::Cluster* entries;
-        Hand hand;
+        PieceStand hand;
     } ttkeys[MaxCheckMoves];
 
     for (const auto& move : move_picker) {
@@ -606,7 +606,7 @@ void DfPn::dfpn_inner(
                     break;
                 } else if (entry.dn == 0) {
                     if (child_entry.dn == 0) {
-                        const Hand& child_dp = child_entry.hand;
+                        const PieceStand& child_dp = child_entry.hand;
                         // 歩
                         const u32 child_pawn = child_dp.exists<piece::C_FU>();
                         if (child_pawn < pawn)
@@ -733,7 +733,7 @@ void DfPn::dfpn_inner(
                     *ttkey.entries, ttkey.hand, n.gamePly() + 1);
                 if (all_mate) {
                     if (child_entry.pn == 0) {
-                        const Hand& child_pp = child_entry.hand;
+                        const PieceStand& child_pp = child_entry.hand;
                         // 歩
                         const u32 child_pawn = child_pp.exists<piece::C_FU>();
                         if (child_pawn > pawn)

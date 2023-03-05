@@ -53,7 +53,7 @@ namespace {
     // NPSに影響が出ないならシンプルにした方が良さそう。
     template <color::ColorEnum US>
     ExtMove* generateDropMoves(ExtMove* moveList, const Position& pos, const Bitboard& target) {
-        const Hand hand = pos.hand(US);
+        const PieceStand hand = pos.hand(US);
         // まず、歩に対して指し手を生成
         if (hand.exists<piece::C_FU>()) {
             Bitboard toBB = target;
@@ -1028,7 +1028,7 @@ namespace {
             // --- 駒打ちによる王手
 
             const Bitboard dropTarget = pos.nOccupiedBB(); // emptyBB() ではないので注意して使うこと。
-            const Hand ourHand = pos.hand(US);
+            const PieceStand ourHand = pos.hand(US);
 
             // 歩打ち
             if (ourHand.exists<piece::C_FU>()) {

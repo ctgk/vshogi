@@ -75,7 +75,7 @@ struct StateInfo
     piece::ColoredPieceEnum capturedPiece;
 #endif
     StateInfo* previous;
-    Hand hand; // 手番側の持ち駒
+    PieceStand hand; // 手番側の持ち駒
 
     Key key() const
     {
@@ -424,7 +424,7 @@ public:
     }
 
     // hand
-    Hand hand(const color::ColorEnum c) const
+    PieceStand hand(const color::ColorEnum c) const
     {
         return hand_[c];
     }
@@ -819,7 +819,7 @@ private:
     Square kingSquare_[color::NUM_COLORS];
 
     // 手駒
-    Hand hand_[color::NUM_COLORS];
+    PieceStand hand_[color::NUM_COLORS];
     color::ColorEnum turn_;
 
     StateInfo startState_;

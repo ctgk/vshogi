@@ -53,7 +53,7 @@ Key Book::bookKey(const Position& pos)
         const Square sq = bb.firstOneFromSQ11();
         key ^= ZobPiece[pos.piece(sq)][sq];
     }
-    const Hand hand = pos.hand(pos.turn());
+    const PieceStand hand = pos.hand(pos.turn());
     for (piece::CapturedPieceTypeEnum hp = piece::C_FU;
          hp < piece::NUM_CAPTURED_PIECE_TYPES;
          ++hp)

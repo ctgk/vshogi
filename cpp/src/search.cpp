@@ -65,7 +65,7 @@ bool nyugyoku(const Position& pos)
            & pos.bbOf(us))
               .popCount();
     const int ownSmallPiecesCount = ownPiecesCount - ownBigPiecesCount;
-    const Hand hand = pos.hand(us);
+    const PieceStand hand = pos.hand(us);
     const int val = ownSmallPiecesCount + hand.numOf<piece::C_FU>()
                     + hand.numOf<piece::C_KY>() + hand.numOf<piece::C_KE>()
                     + hand.numOf<piece::C_GI>() + hand.numOf<piece::C_KI>()

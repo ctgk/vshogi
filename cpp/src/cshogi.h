@@ -341,7 +341,7 @@ public:
 
     std::vector<int> pieces_in_hand(const int color) const
     {
-        const Hand h = pos.hand((color::ColorEnum)color);
+        const PieceStand h = pos.hand((color::ColorEnum)color);
         return std::vector<int>{
             (int)h.numOf<piece::C_FU>(),
             (int)h.numOf<piece::C_KY>(),
@@ -509,7 +509,7 @@ public:
                 }
             }
             // hand
-            const Hand hand = pos.hand(c);
+            const PieceStand hand = pos.hand(c);
             int p = 0;
             for (piece::CapturedPieceTypeEnum hp = piece::C_FU;
                  hp < piece::NUM_CAPTURED_PIECE_TYPES;
