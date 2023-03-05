@@ -23,22 +23,6 @@
 #include "common.hpp"
 #include "piece.hpp"
 
-// const int PieceStand::PIECE_STAND_SHIFT_BITS[piece::NUM_CAPTURED_PIECE_TYPES]
-//     = {shift_bits_fu,
-//        shift_bits_ky,
-//        shift_bits_ke,
-//        shift_bits_gi,
-//        shift_bits_ki,
-//        shift_bits_ka,
-//        shift_bits_hi};
-const u32 PieceStand::HandPieceMask[piece::NUM_CAPTURED_PIECE_TYPES]
-    = {bit_mask_fu,
-       bit_mask_ky,
-       bit_mask_ke,
-       bit_mask_gi,
-       bit_mask_ki,
-       bit_mask_ka,
-       bit_mask_hi};
 // 特定の種類の持ち駒を 1 つ増やしたり減らしたりするときに使用するテーブル
 const u32 PieceStand::HandPieceOne[piece::NUM_CAPTURED_PIECE_TYPES]
     = {1 << shift_bits_fu,
