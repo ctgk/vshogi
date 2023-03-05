@@ -110,32 +110,32 @@ to_colored_piece(const color::ColorEnum c, const PieceTypeEnum pt)
     return static_cast<ColoredPieceEnum>((c << 4) | pt);
 }
 
-const CapturedPieceTypeEnum PieceTypeToHandPieceTable[PieceTypeNum]
-    = {NUM_CAPTURED_PIECE_TYPES,
-       C_FU,
-       C_KY,
-       C_KE,
-       C_GI,
-       C_KA,
-       C_HI,
-       C_KI,
-       NUM_CAPTURED_PIECE_TYPES,
-       C_FU,
-       C_KY,
-       C_KE,
-       C_GI,
-       C_KA,
-       C_HI};
 inline CapturedPieceTypeEnum to_captured_piece_type(const PieceTypeEnum pt)
 {
-    return PieceTypeToHandPieceTable[pt];
+    constexpr CapturedPieceTypeEnum table[PieceTypeNum]
+        = {NUM_CAPTURED_PIECE_TYPES,
+           C_FU,
+           C_KY,
+           C_KE,
+           C_GI,
+           C_KA,
+           C_HI,
+           C_KI,
+           NUM_CAPTURED_PIECE_TYPES,
+           C_FU,
+           C_KY,
+           C_KE,
+           C_GI,
+           C_KA,
+           C_HI};
+    return table[pt];
 }
 
-const PieceTypeEnum HandPieceToPieceTypeTable[NUM_CAPTURED_PIECE_TYPES]
-    = {FU, KY, KE, GI, KI, KA, HI};
 inline PieceTypeEnum to_piece_type(const CapturedPieceTypeEnum hp)
 {
-    return HandPieceToPieceTypeTable[hp];
+    constexpr PieceTypeEnum table[NUM_CAPTURED_PIECE_TYPES]
+        = {FU, KY, KE, GI, KI, KA, HI};
+    return table[hp];
 }
 inline ColoredPieceEnum
 to_colored_piece(const color::ColorEnum c, const CapturedPieceTypeEnum hp)
