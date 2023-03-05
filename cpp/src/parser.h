@@ -44,7 +44,7 @@ public:
 };
 const StringToPieceTypeCSA stringToPieceTypeCSA;
 
-class StringToPieceCSA : public std::map<std::string, Piece>
+class StringToPieceCSA : public std::map<std::string, ColoredPieceEnum>
 {
 public:
     StringToPieceCSA()
@@ -79,7 +79,7 @@ public:
         (*this)["-UM"] = W_UM;
         (*this)["-RY"] = W_RY;
     }
-    Piece value(const std::string& str) const
+    ColoredPieceEnum value(const std::string& str) const
     {
         return this->find(str)->second;
     }
@@ -290,9 +290,9 @@ private:
         color::ColorEnum current_turn;
         int rank_index;
         int file_index;
-        Piece piece;
+        ColoredPieceEnum piece;
         int pieces_in_hand[PieceNone] = {};
-        Piece pieces_in_board[9][9];
+        ColoredPieceEnum pieces_in_board[9][9];
 
         // ex.) P1 - KY - KE - GI - KI - OU - KI - GI - KE - KY
         for (auto line : position_block_lines) {
@@ -342,7 +342,7 @@ private:
                         file_index += 1;
                     }
                 } else if (line[1] == 'I') { // PI
-                    const Piece initial_board[9][9] = {
+                    const ColoredPieceEnum initial_board[9][9] = {
                         // clang-format off
                         {W_KY, W_KE, W_GI, W_KI, W_OU, W_KI, W_GI, W_KE, W_KY},
                         {Empty, W_HI, Empty, Empty, Empty, Empty, Empty, W_KA, Empty},
@@ -399,7 +399,7 @@ private:
     }
 
     static std::string to_sfen(
-        Piece pieces_in_board[9][9],
+        ColoredPieceEnum pieces_in_board[9][9],
         int pieces_in_hand[PieceNone],
         color::ColorEnum current_turn,
         int move_count = 1)
@@ -410,7 +410,7 @@ private:
         // Position part.
         for (int rank = 0; rank < 9; ++rank) {
             for (int file = 0; file < 9; ++file) {
-                Piece piece = pieces_in_board[rank][file];
+                ColoredPieceEnum piece = pieces_in_board[rank][file];
                 if (piece == Empty)
                     empty += 1;
                 else {
@@ -444,7 +444,7 @@ private:
 
         // Pieces in hand
         int pih_len = 0;
-        for (Piece p = B_FU; p < PieceNone; ++p) {
+        for (ColoredPieceEnum p = B_FU; p < PieceNone; ++p) {
             if (p > B_RY && p < W_FU)
                 continue;
             if (pieces_in_hand[p] >= 1) {

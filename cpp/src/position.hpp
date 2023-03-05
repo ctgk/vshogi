@@ -72,7 +72,7 @@ struct StateInfo
     Key handKey;
     Bitboard checkersBB; // 手番側の玉へ check している駒の Bitboard
 #if 0
-    Piece capturedPiece;
+    ColoredPieceEnum capturedPiece;
 #endif
     StateInfo* previous;
     Hand hand; // 手番側の持ち駒
@@ -161,9 +161,9 @@ union HuffmanCode
     u16 key; // std::unordered_map の key として使う。
 };
 
-struct HuffmanCodeToPieceHash : public std::unordered_map<u16, Piece>
+struct HuffmanCodeToPieceHash : public std::unordered_map<u16, ColoredPieceEnum>
 {
-    Piece value(const u16 key) const
+    ColoredPieceEnum value(const u16 key) const
     {
         const auto it = find(key);
         if (it == std::end(*this))
@@ -181,11 +181,11 @@ struct HuffmanCodedPos
     static HuffmanCodeToPieceHash handCodeToPieceHash;
     static void init()
     {
-        for (Piece pc = Empty; pc <= B_RY; ++pc)
+        for (ColoredPieceEnum pc = Empty; pc <= B_RY; ++pc)
             if (pieceToPieceType(pc)
                 != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
-        for (Piece pc = W_FU; pc <= W_RY; ++pc)
+        for (ColoredPieceEnum pc = W_FU; pc <= W_RY; ++pc)
             if (pieceToPieceType(pc)
                 != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
@@ -229,11 +229,11 @@ struct PackedSfen
     static HuffmanCodeToPieceHash handCodeToPieceHash;
     static void init()
     {
-        for (Piece pc = Empty; pc <= B_RY; ++pc)
+        for (ColoredPieceEnum pc = Empty; pc <= B_RY; ++pc)
             if (pieceToPieceType(pc)
                 != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
-        for (Piece pc = W_FU; pc <= W_RY; ++pc)
+        for (ColoredPieceEnum pc = W_FU; pc <= W_RY; ++pc)
             if (pieceToPieceType(pc)
                 != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
@@ -310,7 +310,7 @@ public:
     Position& operator=(const Position& pos);
     void set(const std::string& sfen);
     void
-    set(const Piece pieces[SquareNum],
+    set(const ColoredPieceEnum pieces[SquareNum],
         const int pieces_in_hand[color::NUM_COLORS][HandPieceNum]);
     bool set_hcp(const char* hcp_data); // for python
     bool set(const HuffmanCodedPos& hcp)
@@ -405,7 +405,7 @@ public:
         return goldsBB() & bbOf(c);
     }
 
-    Piece piece(const Square sq) const
+    ColoredPieceEnum piece(const Square sq) const
     {
         return piece_[sq];
     }
@@ -485,7 +485,7 @@ public:
 
     bool moveGivesCheck(const Move m) const;
     bool moveGivesCheck(const Move move, const CheckInfo& ci) const;
-    Piece movedPiece(const Move m) const;
+    ColoredPieceEnum movedPiece(const Move m) const;
 
     // attacks
     Bitboard attackersTo(const Square sq, const Bitboard& occupied) const;
@@ -685,7 +685,7 @@ public:
 
 private:
     void clear();
-    void setPiece(const Piece piece, const Square sq)
+    void setPiece(const ColoredPieceEnum piece, const Square sq)
     {
         const color::ColorEnum c = pieceToColor(piece);
         const PieceTypeEnum pt = pieceToPieceType(piece);
@@ -700,7 +700,7 @@ private:
     {
         hand_[c].orEqual(num, hp);
     }
-    void setHand(const Piece piece, const int num)
+    void setHand(const ColoredPieceEnum piece, const int num)
     {
         const color::ColorEnum c = pieceToColor(piece);
         const PieceTypeEnum pt = pieceToPieceType(piece);
@@ -784,7 +784,7 @@ private:
     Bitboard goldsBB_;
 
     // 各マスの状態
-    Piece piece_[SquareNum];
+    ColoredPieceEnum piece_[SquareNum];
     Square kingSquare_[color::NUM_COLORS];
 
     // 手駒
@@ -890,7 +890,7 @@ Position::attacksFrom<RY>(const color::ColorEnum, const Square sq) const
 // の局面が最大合法手局面で 593 手。番兵の分、+ 1 しておく。
 const int MaxLegalMoves = 593 + 1;
 
-class CharToPieceUSI : public std::map<char, Piece>
+class CharToPieceUSI : public std::map<char, ColoredPieceEnum>
 {
 public:
     CharToPieceUSI()
@@ -912,7 +912,7 @@ public:
         (*this)['K'] = B_OU;
         (*this)['k'] = W_OU;
     }
-    Piece value(char c) const
+    ColoredPieceEnum value(char c) const
     {
         return this->find(c)->second;
     }

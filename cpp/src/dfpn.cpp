@@ -159,7 +159,7 @@ void TranspositionTable::GetChildFirstEntry(
         if (move.isDrop()) {
             hand.minusOne(move.handPieceDropped());
         } else {
-            const Piece to_pc = n.piece(move.to());
+            const ColoredPieceEnum to_pc = n.piece(move.to());
             if (to_pc != Empty) {
                 const PieceTypeEnum pt = pieceToPieceType(to_pc);
                 hand.plusOne(pieceTypeToHandPiece(pt));
@@ -445,7 +445,7 @@ void DfPn::dfpn_inner(
                         }
                         // 先手の駒を取る手ならば、反証駒に追加する
                         else {
-                            const Piece to_pc = n.piece(m2.to());
+                            const ColoredPieceEnum to_pc = n.piece(m2.to());
                             if (to_pc != Empty) {
                                 const PieceTypeEnum pt
                                     = pieceToPieceType(to_pc);
@@ -587,7 +587,7 @@ void DfPn::dfpn_inner(
                     }
                     // 後手の駒を取る手ならば、証明駒から削除する
                     else {
-                        const Piece to_pc = n.piece(move.move.to());
+                        const ColoredPieceEnum to_pc = n.piece(move.move.to());
                         if (to_pc != Empty) {
                             entry.hand = child_entry.hand;
                             const PieceTypeEnum pt = pieceToPieceType(to_pc);
@@ -779,7 +779,8 @@ void DfPn::dfpn_inner(
                         }
                         // 先手の駒を取る手ならば、反証駒に追加する
                         else {
-                            const Piece to_pc = n.piece(move.move.to());
+                            const ColoredPieceEnum to_pc
+                                = n.piece(move.move.to());
                             if (to_pc != Empty) {
                                 const PieceTypeEnum pt
                                     = pieceToPieceType(to_pc);

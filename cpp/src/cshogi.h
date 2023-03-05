@@ -137,7 +137,7 @@ public:
     void set_pieces(const int pieces[], const int pieces_in_hand[][7])
     {
         history.clear();
-        pos.set((const Piece*)pieces, pieces_in_hand);
+        pos.set((const ColoredPieceEnum*)pieces, pieces_in_hand);
     }
     bool set_hcp(char* hcp)
     {
@@ -457,7 +457,7 @@ public:
             // clang-format on
         };
         for (Square sq = SQ11; sq < SquareNum; sq++) {
-            const Piece p = pos.piece(sq);
+            const ColoredPieceEnum p = pos.piece(sq);
             if (p != Empty) {
                 const color::ColorEnum pc = pieceToColor(p);
                 const PieceTypeEnum pt = pieceToPieceType(p);
@@ -534,7 +534,7 @@ private:
     void bbToVector(
         PieceTypeEnum pt,
         color::ColorEnum c,
-        Piece piece,
+        ColoredPieceEnum piece,
         std::vector<int>& board) const
     {
         Bitboard bb = pos.bbOf(pt, c);
@@ -611,7 +611,7 @@ private:
 
 int __piece_to_piece_type(const int p)
 {
-    return (int)pieceToPieceType((Piece)p);
+    return (int)pieceToPieceType((ColoredPieceEnum)p);
 }
 int __hand_piece_to_piece_type(const int hp)
 {

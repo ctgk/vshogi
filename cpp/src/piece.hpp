@@ -54,7 +54,7 @@ enum PieceTypeEnum
 };
 OverloadEnumOperators(PieceTypeEnum);
 
-enum Piece
+enum ColoredPieceEnum
 {
     // B* に 16 を加算することで、W* を表す。
     // Promoted を加算することで、成りを表す。
@@ -67,11 +67,11 @@ enum Piece
     PieceNone, // PieceNone = 31  これを 32 にした方が多重配列のときに有利か。
     // clang-format on
 };
-OverloadEnumOperators(Piece);
+OverloadEnumOperators(ColoredPieceEnum);
 
-inline Piece inverse(const Piece pc)
+inline ColoredPieceEnum inverse(const ColoredPieceEnum pc)
 {
-    return static_cast<Piece>(pc ^ 0x10);
+    return static_cast<ColoredPieceEnum>(pc ^ 0x10);
 }
 
 // 持ち駒を表すときに使用する。
@@ -93,26 +93,26 @@ OverloadEnumOperators(HandPiece);
 // Position::bbOf(pieceToPieceType(p)) とすると、
 // Position::emptyBB() ではなく Position::occupiedBB() になってしまうので、
 // 注意すること。出来れば修正したい。
-inline PieceTypeEnum pieceToPieceType(const Piece p)
+inline PieceTypeEnum pieceToPieceType(const ColoredPieceEnum p)
 {
     return static_cast<PieceTypeEnum>(p & 15);
 }
 
-inline color::ColorEnum pieceToColor(const Piece p)
+inline color::ColorEnum pieceToColor(const ColoredPieceEnum p)
 {
     assert(p != Empty);
     return static_cast<color::ColorEnum>(p >> 4);
 }
 
-inline Piece
+inline ColoredPieceEnum
 colorAndPieceTypeToPiece(const color::ColorEnum c, const PieceTypeEnum pt)
 {
-    return static_cast<Piece>((c << 4) | pt);
+    return static_cast<ColoredPieceEnum>((c << 4) | pt);
 }
 
 const u32 IsSliderVal = 0x60646064;
 // pc が遠隔駒であるか
-inline bool isSlider(const Piece pc)
+inline bool isSlider(const ColoredPieceEnum pc)
 {
     return (IsSliderVal & (1 << pc)) != 0;
 }
@@ -148,7 +148,7 @@ inline PieceTypeEnum handPieceToPieceType(const HandPiece hp)
 {
     return HandPieceToPieceTypeTable[hp];
 }
-inline Piece
+inline ColoredPieceEnum
 colorAndHandPieceToPiece(const color::ColorEnum c, const HandPiece hp)
 {
     return colorAndPieceTypeToPiece(c, handPieceToPieceType(hp));

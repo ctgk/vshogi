@@ -166,14 +166,14 @@ namespace {
         " * ", "+FU", "+KY", "+KE", "+GI", "+KA", "+HI", "+KI", "+OU", "+TO", "+NY", "+NK", "+NG", "+UM", "+RY", "", "",
         "-FU", "-KY", "-KE", "-GI", "-KA", "-HI", "-KI", "-OU", "-TO", "-NY", "-NK", "-NG", "-UM", "-RY"
     };
-    inline const char* pieceToCharCSA(const Piece pc) {
+    inline const char* pieceToCharCSA(const ColoredPieceEnum pc) {
         return PieceToCharCSATable[pc];
     }
     const char* PieceToCharUSITable[PieceNone] = {
         "", "P", "L", "N", "S", "B", "R", "G", "K", "+P", "+L", "+N", "+S", "+B", "+R", "", "",
         "p", "l", "n", "s", "b", "r", "g", "k", "+p", "+l", "+n", "+s", "+b", "+r"
     };
-    inline const char* pieceToCharUSI(const Piece pc) {
+    inline const char* pieceToCharUSI(const ColoredPieceEnum pc) {
         return PieceToCharUSITable[pc];
     }
 }
@@ -559,7 +559,7 @@ void Position::undoMove(const Move move) {
             byTypeBB_[ptCaptured].xorBit(to);
             byColorBB_[them].xorBit(to);
             const HandPiece hpCaptured = pieceTypeToHandPiece(ptCaptured);
-            const Piece pcCaptured = colorAndPieceTypeToPiece(them, ptCaptured);
+            const ColoredPieceEnum pcCaptured = colorAndPieceTypeToPiece(them, ptCaptured);
             piece_[to] = pcCaptured;
 
             hand_[us].minusOne(hpCaptured);
@@ -2784,23 +2784,23 @@ Key Position::getKeyAfter(const Move m) const {
 		Square from = m.from();
 
 		// 移動させる駒
-		Piece moved_pc = piece(from);
+		ColoredPieceEnum moved_pc = piece(from);
 
 		// 移動先に駒の配置
 		// もし成る指し手であるなら、成った後の駒を配置する。
-		Piece moved_after_pc;
+		ColoredPieceEnum moved_after_pc;
 
 		if (m.isPromotion())
 		{
-			moved_after_pc = moved_pc + Piece::Promoted;
+			moved_after_pc = moved_pc + ColoredPieceEnum::Promoted;
 		}
 		else {
 			moved_after_pc = moved_pc;
 		}
 
 		// 移動先の升にある駒
-		Piece to_pc = piece(to);
-		if (to_pc != Piece::Empty)
+		ColoredPieceEnum to_pc = piece(to);
+		if (to_pc != ColoredPieceEnum::Empty)
 		{
 			PieceTypeEnum pt = pieceToPieceType(to_pc);
 
@@ -2839,23 +2839,23 @@ Key Position::getBoardKeyAfter(const Move m) const {
 		Square from = m.from();
 
 		// 移動させる駒
-		Piece moved_pc = piece(from);
+		ColoredPieceEnum moved_pc = piece(from);
 
 		// 移動先に駒の配置
 		// もし成る指し手であるなら、成った後の駒を配置する。
-		Piece moved_after_pc;
+		ColoredPieceEnum moved_after_pc;
 
 		if (m.isPromotion())
 		{
-			moved_after_pc = moved_pc + Piece::Promoted;
+			moved_after_pc = moved_pc + ColoredPieceEnum::Promoted;
 		}
 		else {
 			moved_after_pc = moved_pc;
 		}
 
 		// 移動先の升にある駒
-		Piece to_pc = piece(to);
-		if (to_pc != Piece::Empty)
+		ColoredPieceEnum to_pc = piece(to);
+		if (to_pc != ColoredPieceEnum::Empty)
 		{
 			PieceTypeEnum pt = pieceToPieceType(to_pc);
 
@@ -2892,7 +2892,7 @@ std::string Position::toSFEN(const Ply ply) const {
     for (Rank rank = Rank1; rank != Rank9Wall; rank += RankDeltaS) {
         for (File file = File9; file != File1Wall; file += FileDeltaE) {
             const Square sq = makeSquare(file, rank);
-            const Piece pc = piece(sq);
+            const ColoredPieceEnum pc = piece(sq);
             if (pc == Empty)
                 ++space;
             else {
@@ -2922,7 +2922,7 @@ std::string Position::toSFEN(const Ply ply) const {
                     continue;
                 if (num != 1)
                     ss << num;
-                const Piece pc = colorAndHandPieceToPiece(color, hp);
+                const ColoredPieceEnum pc = colorAndHandPieceToPiece(color, hp);
                 ss << pieceToCharUSI(pc);
             }
         }
@@ -2960,7 +2960,7 @@ void Position::toHuffmanCodedPos(u8* data) const {
 
     // 盤上の駒
     for (Square sq = SQ11; sq < SquareNum; ++sq) {
-        Piece pc = piece(sq);
+        ColoredPieceEnum pc = piece(sq);
         if (pieceToPieceType(pc) == OU)
             continue;
         const auto hc = HuffmanCodedPos::boardCodeTable[pc];
@@ -2991,7 +2991,7 @@ void Position::toPackedSfen(u8* data) const {
 
 	// 盤上の駒
 	for (Square sq = SQ11; sq < SquareNum; ++sq) {
-		Piece pc = piece(sq);
+		ColoredPieceEnum pc = piece(sq);
 		if (pieceToPieceType(pc) == OU)
 			continue;
 		const auto hc = PackedSfen::boardCodeTable[pc];
@@ -3092,7 +3092,7 @@ bool Position::isOK() const {
     ++failedStep;
     if (debugPiece) {
         for (Square sq = SQ11; sq < SquareNum; ++sq) {
-            const Piece pc = piece(sq);
+            const ColoredPieceEnum pc = piece(sq);
             if (pc == Empty) {
                 if (!emptyBB().isSet(sq))
                     goto incorrect_position;
@@ -3208,7 +3208,7 @@ Position& Position::operator = (const Position& pos) {
 }
 
 void Position::set(const std::string& sfen) {
-    Piece promoteFlag = UnPromoted;
+    ColoredPieceEnum promoteFlag = UnPromoted;
     std::istringstream ss(sfen);
     char token;
     Square sq = SQ91;
@@ -3257,7 +3257,7 @@ void Position::set(const std::string& sfen) {
             digits = digits * 10 + token - '0';
         else if (g_charToPieceUSI.isLegalChar(token)) {
             // 持ち駒を32bit に pack する
-            const Piece piece = g_charToPieceUSI.value(token);
+            const ColoredPieceEnum piece = g_charToPieceUSI.value(token);
             setHand(piece, (digits == 0 ? 1 : digits));
 
             digits = 0;
@@ -3281,14 +3281,14 @@ INCORRECT:
     std::cout << "incorrect SFEN string : " << sfen << std::endl;
 }
 
-void Position::set(const Piece pieces[SquareNum], const int pieces_in_hand[color::NUM_COLORS][HandPieceNum]) {
+void Position::set(const ColoredPieceEnum pieces[SquareNum], const int pieces_in_hand[color::NUM_COLORS][HandPieceNum]) {
     const auto turn = turn_;
     const auto ply = gamePly_;
     clear();
 
     // 盤上の駒
     for (Square sq = SQ11; sq < SquareNum; ++sq) {
-        if (pieces[sq] != Piece::Empty)
+        if (pieces[sq] != ColoredPieceEnum::Empty)
             setPiece(pieces[sq], sq);
     }
     // 持ち駒
@@ -3336,7 +3336,7 @@ bool Position::set_hcp(const char* hcp_data) {
         while (hc.numOfBits <= 8) {
             hc.code |= bs.getBit() << hc.numOfBits++;
             if (HuffmanCodedPos::boardCodeToPieceHash.value(hc.key) != PieceNone) {
-                const Piece pc = HuffmanCodedPos::boardCodeToPieceHash.value(hc.key);
+                const ColoredPieceEnum pc = HuffmanCodedPos::boardCodeToPieceHash.value(hc.key);
                 if (pc != Empty)
                     setPiece(HuffmanCodedPos::boardCodeToPieceHash.value(hc.key), sq);
                 break;
@@ -3349,7 +3349,7 @@ bool Position::set_hcp(const char* hcp_data) {
         HuffmanCode hc = {0, 0};
         while (hc.numOfBits <= 8) {
             hc.code |= bs.getBit() << hc.numOfBits++;
-            const Piece pc = HuffmanCodedPos::handCodeToPieceHash.value(hc.key);
+            const ColoredPieceEnum pc = HuffmanCodedPos::handCodeToPieceHash.value(hc.key);
             if (pc != PieceNone) {
                 hand_[pieceToColor(pc)].plusOne(pieceTypeToHandPiece(pieceToPieceType(pc)));
                 break;
@@ -3401,7 +3401,7 @@ bool Position::set_psfen(const char* psfen_data) {
 		while (hc.numOfBits <= 8) {
 			hc.code |= bs.getBit() << hc.numOfBits++;
 			if (PackedSfen::boardCodeToPieceHash.value(hc.key) != PieceNone) {
-				const Piece pc = PackedSfen::boardCodeToPieceHash.value(hc.key);
+				const ColoredPieceEnum pc = PackedSfen::boardCodeToPieceHash.value(hc.key);
 				if (pc != Empty)
 					setPiece(PackedSfen::boardCodeToPieceHash.value(hc.key), sq);
 				break;
@@ -3414,7 +3414,7 @@ bool Position::set_psfen(const char* psfen_data) {
 		HuffmanCode hc = { 0, 0 };
 		while (hc.numOfBits <= 8) {
 			hc.code |= bs.getBit() << hc.numOfBits++;
-			const Piece pc = PackedSfen::handCodeToPieceHash.value(hc.key);
+			const ColoredPieceEnum pc = PackedSfen::handCodeToPieceHash.value(hc.key);
 			if (pc != PieceNone) {
 				hand_[pieceToColor(pc)].plusOne(pieceTypeToHandPiece(pieceToPieceType(pc)));
 				break;
@@ -3510,8 +3510,8 @@ void Position::set(std::mt19937& mt) {
                 const color::ColorEnum t = (color::ColorEnum)colorDist(mt);
                 // 出来るだけ前にいるほど成っている確率を高めに。
                 std::uniform_int_distribution<int> promoteDist(0, 99);
-                const Piece promoteFlag = (pt != KI && promoteThresh[t][rank] <= promoteDist(mt) ? Promoted : UnPromoted);
-                const Piece pc = colorAndPieceTypeToPiece(t, pt) + promoteFlag;
+                const ColoredPieceEnum promoteFlag = (pt != KI && promoteThresh[t][rank] <= promoteDist(mt) ? Promoted : UnPromoted);
+                const ColoredPieceEnum pc = colorAndPieceTypeToPiece(t, pt) + promoteFlag;
                 if (promoteFlag == UnPromoted) {
                     if (pt == FU) {
                         // 二歩のチェック
@@ -3573,13 +3573,13 @@ void Position::set(std::mt19937& mt) {
                 const color::ColorEnum t = (color::ColorEnum)colorDist(mt);
                 // 出来るだけ前にいるほど成っている確率を高めに。
                 std::uniform_int_distribution<int> promoteDist(0, 99);
-                const Piece promoteFlag = [&] {
+                const ColoredPieceEnum promoteFlag = [&] {
                     if (pt == KY)
                         return (promoteThresh[t][rank] <= promoteDist(mt) ? Promoted : UnPromoted);
                     else // 飛角に関しては、成りと不成は同確率とする。
                         return (50 <= promoteDist(mt) ? Promoted : UnPromoted);
                 }();
-                const Piece pc = colorAndPieceTypeToPiece(t, pt) + promoteFlag;
+                const ColoredPieceEnum pc = colorAndPieceTypeToPiece(t, pt) + promoteFlag;
                 if (promoteFlag == UnPromoted) {
                     if (pt == KY) {
                         // 行き所が無いかチェック
@@ -3702,7 +3702,7 @@ bool Position::moveGivesCheck(const Move move, const CheckInfo& ci) const
     return false;
 }
 
-Piece Position::movedPiece(const Move m) const
+ColoredPieceEnum Position::movedPiece(const Move m) const
 {
     return colorAndPieceTypeToPiece(turn(), m.pieceTypeFromOrDropped());
 }
