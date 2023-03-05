@@ -37,6 +37,17 @@ constexpr u32 PIECE_STAND_MASK[piece::NUM_CAPTURED_PIECE_TYPES] = {
     0x3 << 25,
 };
 
+// 特定の種類の持ち駒を 1 つ増やしたり減らしたりするときに使用するテーブル
+constexpr u32 PIECE_STAND_ONE[piece::NUM_CAPTURED_PIECE_TYPES] = {
+    1 << 0,
+    1 << 6,
+    1 << 10,
+    1 << 14,
+    1 << 18,
+    1 << 22,
+    1 << 25,
+};
+
 // 手駒
 // 手駒の状態 (32bit に pack する)
 // 手駒の優劣判定を高速に行う為に各駒の間を1bit空ける。
@@ -109,11 +120,11 @@ public:
     }
     void plusOne(const piece::CapturedPieceTypeEnum captured_piece_type)
     {
-        value_ += HandPieceOne[captured_piece_type];
+        value_ += PIECE_STAND_ONE[captured_piece_type];
     }
     void minusOne(const piece::CapturedPieceTypeEnum captured_piece_type)
     {
-        value_ -= HandPieceOne[captured_piece_type];
+        value_ -= PIECE_STAND_ONE[captured_piece_type];
     }
     bool operator==(const PieceStand rhs) const
     {
@@ -192,8 +203,6 @@ private:
     constexpr static u32 HandPieceExceptPawnMask
         = (bit_mask_ky | bit_mask_ke | bit_mask_gi | bit_mask_ki | bit_mask_ka
            | bit_mask_hi);
-    // 特定の種類の持ち駒を 1 つ増やしたり減らしたりするときに使用するテーブル
-    static const u32 HandPieceOne[piece::NUM_CAPTURED_PIECE_TYPES];
     constexpr static u32 BorrowMask
         = ((bit_mask_fu + (1 << shift_bits_fu))
            | (bit_mask_ky + (1 << shift_bits_ky))
