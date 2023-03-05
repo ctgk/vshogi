@@ -161,7 +161,7 @@ void TranspositionTable::GetChildFirstEntry(
         } else {
             const ColoredPieceEnum to_pc = n.piece(move.to());
             if (to_pc != Empty) {
-                const PieceTypeEnum pt = pieceToPieceType(to_pc);
+                const PieceTypeEnum pt = to_piece_type(to_pc);
                 hand.plusOne(pieceTypeToHandPiece(pt));
             }
         }
@@ -447,8 +447,7 @@ void DfPn::dfpn_inner(
                         else {
                             const ColoredPieceEnum to_pc = n.piece(m2.to());
                             if (to_pc != Empty) {
-                                const PieceTypeEnum pt
-                                    = pieceToPieceType(to_pc);
+                                const PieceTypeEnum pt = to_piece_type(to_pc);
                                 const CapturedPieceTypeEnum hp
                                     = pieceTypeToHandPiece(pt);
                                 if (entry.hand.numOf(hp)
@@ -592,7 +591,7 @@ void DfPn::dfpn_inner(
                         const ColoredPieceEnum to_pc = n.piece(move.move.to());
                         if (to_pc != Empty) {
                             entry.hand = child_entry.hand;
-                            const PieceTypeEnum pt = pieceToPieceType(to_pc);
+                            const PieceTypeEnum pt = to_piece_type(to_pc);
                             const CapturedPieceTypeEnum hp
                                 = pieceTypeToHandPiece(pt);
                             if (entry.hand.exists(hp))
@@ -786,8 +785,7 @@ void DfPn::dfpn_inner(
                             const ColoredPieceEnum to_pc
                                 = n.piece(move.move.to());
                             if (to_pc != Empty) {
-                                const PieceTypeEnum pt
-                                    = pieceToPieceType(to_pc);
+                                const PieceTypeEnum pt = to_piece_type(to_pc);
                                 const CapturedPieceTypeEnum hp
                                     = pieceTypeToHandPiece(pt);
                                 if (entry.hand.numOf(hp)

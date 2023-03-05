@@ -163,7 +163,7 @@ namespace {
             while (fromBB) {
                 const Square from = fromBB.firstOneFromSQ11();
                 // from にある駒の種類を判別
-                const PieceTypeEnum pt = pieceToPieceType(pos.piece(from));
+                const PieceTypeEnum pt = to_piece_type(pos.piece(from));
                 Bitboard toBB = pos.attacksFrom(pt, US, from) & target;
                 FOREACH_BB(toBB, const Square to, {
                     (*moveList++).move = makeNonPromoteMove<MT>(pt, from, to, pos);
@@ -311,7 +311,7 @@ namespace {
         Bitboard fromBB = pos.attackersTo(us, to);
         while (fromBB) {
             const Square from = fromBB.firstOneFromSQ11();
-            const PieceTypeEnum pt = pieceToPieceType(pos.piece(from));
+            const PieceTypeEnum pt = to_piece_type(pos.piece(from));
             switch (pt) {
             case Empty    : assert(false); break; // 最適化の為のダミー
             case FU     : case KY    : case KE   : case GI   : case KA   : case HI     :
@@ -696,7 +696,7 @@ namespace {
                 // 両王手候補なので指し手を生成してしまう。
 
                 // いまの敵玉とfromを通る直線上の升と違うところに移動させれば開き王手が確定する。
-                const PieceTypeEnum pt = pieceToPieceType(pos.piece(from));
+                const PieceTypeEnum pt = to_piece_type(pos.piece(from));
                 Bitboard toBB = pos.attacksFrom(pt, US, from) & target;
                 while (toBB) {
                     const Square to = toBB.firstOneFromSQ11();
@@ -705,7 +705,7 @@ namespace {
                     }
                     // 直接王手にもなるのでx & fromの場合、直線上の升への指し手を生成。
                     else if (x.isSet(from)) {
-                        const PieceTypeEnum pt = pieceToPieceType(pos.piece(from));
+                        const PieceTypeEnum pt = to_piece_type(pos.piece(from));
                         switch (pt) {
                         case FU: // 歩
                         {
@@ -786,7 +786,7 @@ namespace {
                 const Square from = src.firstOneFromSQ11();
 
                 // 直接王手のみ。
-                const PieceTypeEnum pt = pieceToPieceType(pos.piece(from));
+                const PieceTypeEnum pt = to_piece_type(pos.piece(from));
                 switch (pt) {
                 case FU: // 歩
                 {

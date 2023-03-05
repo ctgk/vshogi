@@ -183,11 +183,11 @@ struct HuffmanCodedPos
     static void init()
     {
         for (ColoredPieceEnum pc = Empty; pc <= B_RY; ++pc)
-            if (pieceToPieceType(pc)
+            if (to_piece_type(pc)
                 != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
         for (ColoredPieceEnum pc = W_FU; pc <= W_RY; ++pc)
-            if (pieceToPieceType(pc)
+            if (to_piece_type(pc)
                 != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
         for (CapturedPieceTypeEnum hp = C_FU; hp < NUM_CAPTURED_PIECE_TYPES;
@@ -233,11 +233,11 @@ struct PackedSfen
     static void init()
     {
         for (ColoredPieceEnum pc = Empty; pc <= B_RY; ++pc)
-            if (pieceToPieceType(pc)
+            if (to_piece_type(pc)
                 != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
         for (ColoredPieceEnum pc = W_FU; pc <= W_RY; ++pc)
-            if (pieceToPieceType(pc)
+            if (to_piece_type(pc)
                 != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
         for (CapturedPieceTypeEnum hp = C_FU; hp < NUM_CAPTURED_PIECE_TYPES;
@@ -692,7 +692,7 @@ private:
     void setPiece(const ColoredPieceEnum piece, const Square sq)
     {
         const color::ColorEnum c = pieceToColor(piece);
-        const PieceTypeEnum pt = pieceToPieceType(piece);
+        const PieceTypeEnum pt = to_piece_type(piece);
 
         piece_[sq] = piece;
 
@@ -708,7 +708,7 @@ private:
     void setHand(const ColoredPieceEnum piece, const int num)
     {
         const color::ColorEnum c = pieceToColor(piece);
-        const PieceTypeEnum pt = pieceToPieceType(piece);
+        const PieceTypeEnum pt = to_piece_type(piece);
         const CapturedPieceTypeEnum hp = pieceTypeToHandPiece(pt);
         setHand(hp, c, num);
     }

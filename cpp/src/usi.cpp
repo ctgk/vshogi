@@ -72,7 +72,7 @@ Move usiToMoveBody(const Position& pos, const std::string& moveStr)
     if (g_charToPieceUSI.isLegalChar(moveStr[0])) {
         // drop
         const PieceTypeEnum ptTo
-            = pieceToPieceType(g_charToPieceUSI.value(moveStr[0]));
+            = to_piece_type(g_charToPieceUSI.value(moveStr[0]));
         if (moveStr[1] != '*')
             return Move::moveNone();
         const File toFile = charUSIToFile(moveStr[2]);
@@ -94,12 +94,12 @@ Move usiToMoveBody(const Position& pos, const std::string& moveStr)
         const Square to = makeSquare(toFile, toRank);
         if (moveStr[4] == '\0')
             move = makeNonPromoteMove<Capture>(
-                pieceToPieceType(pos.piece(from)), from, to, pos);
+                to_piece_type(pos.piece(from)), from, to, pos);
         else if (moveStr[4] == '+') {
             if (moveStr[5] != '\0')
                 return Move::moveNone();
             move = makePromoteMove<Capture>(
-                pieceToPieceType(pos.piece(from)), from, to, pos);
+                to_piece_type(pos.piece(from)), from, to, pos);
         } else
             return Move::moveNone();
     }
@@ -159,7 +159,7 @@ Move csaToMoveBody(const Position& pos, const std::string& moveStr)
         if (!isInSquare(fromFile, fromRank))
             return Move::moveNone();
         const Square from = makeSquare(fromFile, fromRank);
-        PieceTypeEnum ptFrom = pieceToPieceType(pos.piece(from));
+        PieceTypeEnum ptFrom = to_piece_type(pos.piece(from));
         if (ptFrom == ptTo)
             // non promote
             move = makeNonPromoteMove<Capture>(ptFrom, from, to, pos);

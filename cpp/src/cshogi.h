@@ -222,14 +222,14 @@ public:
     {
         if (promotion)
             return makePromoteMove<Capture>(
-                       pieceToPieceType(pos.piece((Square)from_square)),
+                       to_piece_type(pos.piece((Square)from_square)),
                        (Square)from_square,
                        (Square)to_square,
                        pos)
                 .value();
         else
             return makeNonPromoteMove<Capture>(
-                       pieceToPieceType(pos.piece((Square)from_square)),
+                       to_piece_type(pos.piece((Square)from_square)),
                        (Square)from_square,
                        (Square)to_square,
                        pos)
@@ -460,7 +460,7 @@ public:
             const ColoredPieceEnum p = pos.piece(sq);
             if (p != Empty) {
                 const color::ColorEnum pc = pieceToColor(p);
-                const PieceTypeEnum pt = pieceToPieceType(p);
+                const PieceTypeEnum pt = to_piece_type(p);
                 const Bitboard bb = pos.attacksFrom(pt, pc, sq, occupied_bb);
                 attacks[pc][pt] |= bb;
             }
@@ -612,7 +612,7 @@ private:
 
 int __piece_to_piece_type(const int p)
 {
-    return (int)pieceToPieceType((ColoredPieceEnum)p);
+    return (int)to_piece_type((ColoredPieceEnum)p);
 }
 int __hand_piece_to_piece_type(const int hp)
 {

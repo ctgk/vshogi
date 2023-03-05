@@ -90,10 +90,10 @@ enum CapturedPieceTypeEnum
 OverloadEnumOperators(CapturedPieceTypeEnum);
 
 // p == Empty のとき、PieceType は OccuPied になってしまうので、
-// Position::bbOf(pieceToPieceType(p)) とすると、
+// Position::bbOf(to_piece_type(p)) とすると、
 // Position::emptyBB() ではなく Position::occupiedBB() になってしまうので、
 // 注意すること。出来れば修正したい。
-inline PieceTypeEnum pieceToPieceType(const ColoredPieceEnum p)
+inline PieceTypeEnum to_piece_type(const ColoredPieceEnum p)
 {
     return static_cast<PieceTypeEnum>(p & 15);
 }

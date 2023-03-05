@@ -280,7 +280,7 @@ inline Move capturedPieceType2Move(const PieceTypeEnum captured)
 // 駒を取らないときは、0 (MoveNone) を返す。
 inline Move capturedPieceType2Move(const Square to, const Position& pos)
 {
-    const PieceTypeEnum captured = pieceToPieceType(pos.piece(to));
+    const PieceTypeEnum captured = to_piece_type(pos.piece(to));
     return capturedPieceType2Move(captured);
 }
 
@@ -361,7 +361,7 @@ inline Move move16toMove(const Move move, const Position& pos)
     if (move.isDrop())
         return move;
     const Square from = move.from();
-    const PieceTypeEnum ptFrom = pieceToPieceType(pos.piece(from));
+    const PieceTypeEnum ptFrom = to_piece_type(pos.piece(from));
     return (
         move | pieceType2Move(ptFrom) | capturedPieceType2Move(move.to(), pos));
 }

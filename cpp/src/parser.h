@@ -381,7 +381,7 @@ private:
                         if (rank_index < 0 || rank_index >= 9 || file_index < 0
                             || file_index >= 9
                             || pieces_in_board[rank_index][file_index] == Empty
-                            || pieceToPieceType(
+                            || to_piece_type(
                                    pieces_in_board[rank_index][file_index])
                                    != piecetype)
                             throw std::domain_error("Invalid piece removing on "
