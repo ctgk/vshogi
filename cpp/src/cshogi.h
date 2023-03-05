@@ -652,7 +652,7 @@ int __move_from_piece_type(const int move)
 // 打つ駒の種類
 int __move_drop_hand_piece(const int move)
 {
-    return pieceTypeToHandPiece(
+    return to_captured_piece_type(
         (PieceTypeEnum)__move_from(move) - SquareNum + 1);
 }
 

@@ -292,7 +292,7 @@ template <bool Searching> bool Position::moveIsPseudoLegal(const Move move) cons
 
     if (move.isDrop()) {
         const PieceTypeEnum ptFrom = move.pieceTypeDropped();
-        if (!hand(us).exists(pieceTypeToHandPiece(ptFrom)) || piece(to) != Empty)
+        if (!hand(us).exists(to_captured_piece_type(ptFrom)) || piece(to) != Empty)
             return false;
 
         if (inCheck()) {
@@ -434,7 +434,7 @@ void Position::doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, co
     PieceTypeEnum ptTo;
     if (move.isDrop()) {
         ptTo = move.pieceTypeDropped();
-        const CapturedPieceTypeEnum hpTo = pieceTypeToHandPiece(ptTo);
+        const CapturedPieceTypeEnum hpTo = to_captured_piece_type(ptTo);
 
         handKey -= zobHand(hpTo, us);
         boardKey += zobrist(ptTo, to, us);
@@ -468,7 +468,7 @@ void Position::doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, co
 
         if (ptCaptured) {
             // 駒を取ったとき
-            const CapturedPieceTypeEnum hpCaptured = pieceTypeToHandPiece(ptCaptured);
+            const CapturedPieceTypeEnum hpCaptured = to_captured_piece_type(ptCaptured);
             const color::ColorEnum them = color::opposite(us);
 
             boardKey -= zobrist(ptCaptured, to, them);
@@ -542,7 +542,7 @@ void Position::undoMove(const Move move) {
         byColorBB_[us].xorBit(to);
         piece_[to] = Empty;
 
-        const CapturedPieceTypeEnum hp = pieceTypeToHandPiece(ptTo);
+        const CapturedPieceTypeEnum hp = to_captured_piece_type(ptTo);
         hand_[us].plusOne(hp);
     }
     else {
@@ -558,7 +558,7 @@ void Position::undoMove(const Move move) {
             // 駒を取ったとき
             byTypeBB_[ptCaptured].xorBit(to);
             byColorBB_[them].xorBit(to);
-            const CapturedPieceTypeEnum hpCaptured = pieceTypeToHandPiece(ptCaptured);
+            const CapturedPieceTypeEnum hpCaptured = to_captured_piece_type(ptCaptured);
             const ColoredPieceEnum pcCaptured = to_colored_piece(them, ptCaptured);
             piece_[to] = pcCaptured;
 
@@ -2775,7 +2775,7 @@ Key Position::getKeyAfter(const Move m) const {
 		PieceTypeEnum pt = m.pieceTypeDropped();
 
 		// Zobrist keyの更新
-		h -= zobHand(pieceTypeToHandPiece(pt), Us);
+		h -= zobHand(to_captured_piece_type(pt), Us);
 		k += zobrist(pt, to, Us);
 	}
 	else
@@ -2806,7 +2806,7 @@ Key Position::getKeyAfter(const Move m) const {
 
 			// 捕獲された駒が盤上から消えるので局面のhash keyを更新する
 			k -= zobrist(pt, to, get_color(to_pc));
-			h += zobHand(pieceTypeToHandPiece(pt), Us);
+			h += zobHand(to_captured_piece_type(pt), Us);
 		}
 
 		// fromにあったmoved_pcがtoにmoved_after_pcとして移動した。
@@ -3351,7 +3351,7 @@ bool Position::set_hcp(const char* hcp_data) {
             hc.code |= bs.getBit() << hc.numOfBits++;
             const ColoredPieceEnum pc = HuffmanCodedPos::handCodeToPieceHash.value(hc.key);
             if (pc != PieceNone) {
-                hand_[get_color(pc)].plusOne(pieceTypeToHandPiece(to_piece_type(pc)));
+                hand_[get_color(pc)].plusOne(to_captured_piece_type(to_piece_type(pc)));
                 break;
             }
         }
@@ -3416,7 +3416,7 @@ bool Position::set_psfen(const char* psfen_data) {
 			hc.code |= bs.getBit() << hc.numOfBits++;
 			const ColoredPieceEnum pc = PackedSfen::handCodeToPieceHash.value(hc.key);
 			if (pc != PieceNone) {
-				hand_[get_color(pc)].plusOne(pieceTypeToHandPiece(to_piece_type(pc)));
+				hand_[get_color(pc)].plusOne(to_captured_piece_type(to_piece_type(pc)));
 				break;
 			}
 		}

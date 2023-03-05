@@ -156,7 +156,7 @@ public:
     CapturedPieceTypeEnum handPieceDropped() const
     {
         assert(this->isDrop());
-        return pieceTypeToHandPiece(pieceTypeDropped());
+        return to_captured_piece_type(pieceTypeDropped());
     }
     // 値が入っているか。
     explicit operator bool() const

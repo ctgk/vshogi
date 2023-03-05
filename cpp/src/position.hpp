@@ -709,7 +709,7 @@ private:
     {
         const color::ColorEnum c = get_color(piece);
         const PieceTypeEnum pt = to_piece_type(piece);
-        const CapturedPieceTypeEnum hp = pieceTypeToHandPiece(pt);
+        const CapturedPieceTypeEnum hp = to_captured_piece_type(pt);
         setHand(hp, c, num);
     }
 

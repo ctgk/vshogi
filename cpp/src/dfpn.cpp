@@ -162,7 +162,7 @@ void TranspositionTable::GetChildFirstEntry(
             const ColoredPieceEnum to_pc = n.piece(move.to());
             if (to_pc != Empty) {
                 const PieceTypeEnum pt = to_piece_type(to_pc);
-                hand.plusOne(pieceTypeToHandPiece(pt));
+                hand.plusOne(to_captured_piece_type(pt));
             }
         }
     } else {
@@ -449,7 +449,7 @@ void DfPn::dfpn_inner(
                             if (to_pc != Empty) {
                                 const PieceTypeEnum pt = to_piece_type(to_pc);
                                 const CapturedPieceTypeEnum hp
-                                    = pieceTypeToHandPiece(pt);
+                                    = to_captured_piece_type(pt);
                                 if (entry.hand.numOf(hp)
                                     > entry1.hand.numOf(hp)) {
                                     entry.hand = entry1.hand;
@@ -593,7 +593,7 @@ void DfPn::dfpn_inner(
                             entry.hand = child_entry.hand;
                             const PieceTypeEnum pt = to_piece_type(to_pc);
                             const CapturedPieceTypeEnum hp
-                                = pieceTypeToHandPiece(pt);
+                                = to_captured_piece_type(pt);
                             if (entry.hand.exists(hp))
                                 entry.hand.minusOne(hp);
                         }
@@ -787,7 +787,7 @@ void DfPn::dfpn_inner(
                             if (to_pc != Empty) {
                                 const PieceTypeEnum pt = to_piece_type(to_pc);
                                 const CapturedPieceTypeEnum hp
-                                    = pieceTypeToHandPiece(pt);
+                                    = to_captured_piece_type(pt);
                                 if (entry.hand.numOf(hp)
                                     > child_entry.hand.numOf(hp)) {
                                     entry.hand = child_entry.hand;

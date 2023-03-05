@@ -126,7 +126,7 @@ const CapturedPieceTypeEnum PieceTypeToHandPieceTable[PieceTypeNum]
        C_GI,
        C_KA,
        C_HI};
-inline CapturedPieceTypeEnum pieceTypeToHandPiece(const PieceTypeEnum pt)
+inline CapturedPieceTypeEnum to_captured_piece_type(const PieceTypeEnum pt)
 {
     return PieceTypeToHandPieceTable[pt];
 }
