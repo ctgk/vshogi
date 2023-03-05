@@ -1,5 +1,5 @@
-﻿#ifndef CSHOGI_H
-#define CSHOGI_H
+﻿#ifndef VSHOGI_H
+#define VSHOGI_H
 
 #include "book.hpp"
 #include "dfpn.h"

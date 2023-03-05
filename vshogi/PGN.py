@@ -1,4 +1,4 @@
-import cshogi
+import vshogi
 from datetime import datetime
 
 PGN_SQUARE_NAMES = [
@@ -24,14 +24,14 @@ PGN_PIECE_TYPES = [
 ]
 
 def move_to_san(move):
-    move_to = PGN_SQUARE_NAMES[cshogi.move_to(move)]
+    move_to = PGN_SQUARE_NAMES[vshogi.move_to(move)]
 
-    if cshogi.move_is_drop(move):
-        return PGN_HAND_PIECES[cshogi.move_drop_hand_piece(move)] + '@' + move_to
+    if vshogi.move_is_drop(move):
+        return PGN_HAND_PIECES[vshogi.move_drop_hand_piece(move)] + '@' + move_to
 
-    move_from = PGN_SQUARE_NAMES[cshogi.move_from(move)]
-    promotion = '+' if cshogi.move_is_promotion(move) else ''
-    return PGN_PIECE_TYPES[cshogi.move_from_piece_type(move)] + move_from + move_to + promotion
+    move_from = PGN_SQUARE_NAMES[vshogi.move_from(move)]
+    promotion = '+' if vshogi.move_is_promotion(move) else ''
+    return PGN_PIECE_TYPES[vshogi.move_from_piece_type(move)] + move_from + move_to + promotion
 
 class Exporter:
     def __init__(self, path=None, append=False):
@@ -53,11 +53,11 @@ class Exporter:
         self.f.write('[Round "' + str(round) + '"]\n')
         self.f.write('[White "' + names[0] + '"]\n')
         self.f.write('[Black "' + names[1] + '"]\n')
-        if result == cshogi.BLACK_WIN:
+        if result == vshogi.BLACK_WIN:
             self.result_str = '1-0'
-        elif result == cshogi.WHITE_WIN:
+        elif result == vshogi.WHITE_WIN:
             self.result_str = '0-1'
-        elif result == cshogi.DRAW:
+        elif result == vshogi.DRAW:
             self.result_str = '1/2-1/2'
         else:
             self.result_str = '*'

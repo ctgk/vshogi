@@ -12,15 +12,15 @@ class my_build_ext(build_ext):
 
 
 extension = Pybind11Extension(
-    name='cshogi._cshogi',
+    name='vshogi._vshogi',
     sources=sorted(glob('cpp/python/*.cpp')) + sorted(glob('cpp/src/*.cpp')),
     include_dirs=['cpp/src'],
     define_macros=[('HAVE_SSE4', None), ('HAVE_SSE42', None), ('HAVE_AVX2', None)],
 )
 
 setup(
-    packages=['cshogi', 'cshogi.usi', 'cshogi.gym_shogi', 'cshogi.gym_shogi.envs', 'cshogi.dlshogi', 'cshogi.web', 'cshogi.web.templates', 'cshogi.web.static'],
-    package_data={'cshogi.web.templates': ['*'], 'cshogi.web.static': ['*']},
+    packages=['vshogi', 'vshogi.usi', 'vshogi.gym_shogi', 'vshogi.gym_shogi.envs', 'vshogi.dlshogi', 'vshogi.web', 'vshogi.web.templates', 'vshogi.web.static'],
+    package_data={'vshogi.web.templates': ['*'], 'vshogi.web.static': ['*']},
     ext_modules=[extension],
     cmdclass={'build_ext': my_build_ext},
     description = 'A fast Python shogi library',

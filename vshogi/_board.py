@@ -1,7 +1,7 @@
 import numpy as np
 
-import cshogi._cshogi as _cs
-from cshogi._constants import (
+import vshogi._vshogi as _vs
+from vshogi._constants import (
     COLORS, BLACK, WHITE, HAND_PIECES, HAND_PIECE_JAPANESE_SYMBOLS,
     NUMBER_JAPANESE_KANJI_SYMBOLS,
     SVG_COORDINATES, SVG_PIECE_DEFS, SVG_PIECE_DEF_IDS, SVG_SQUARES,
@@ -19,11 +19,11 @@ class Board:
 
     def __init__(self, sfen: str = None, board: 'Board' = None):
         if sfen is not None:
-            self._board = _cs._Board(sfen)
+            self._board = _vs._Board(sfen)
         elif board is not None:
-            self._board = _cs._Board(board._board)
+            self._board = _vs._Board(board._board)
         else:
-            self._board = _cs._Board()
+            self._board = _vs._Board()
 
     def __copy__(self):
         return Board(board=self)
@@ -161,7 +161,7 @@ class Board:
         return self._board.piece(sq)
 
     def piece_type(self, sq: int):
-        return _cs.piece_to_piece_type(self.piece(sq))
+        return _vs.piece_to_piece_type(self.piece(sq))
 
     def is_check(self):
         return self._board.inCheck()
@@ -233,7 +233,7 @@ class Board:
             defs.append(ET.fromstring(piece_def))
 
         if lastmove is not None:
-            i, j = divmod(_cs.move_to(lastmove), 9)
+            i, j = divmod(_vs.move_to(lastmove), 9)
             ET.SubElement(svg, "rect", {
                 "x": str(20.5 + (8 - i) * 20),
                 "y": str(10.5 + j * 20),
@@ -241,8 +241,8 @@ class Board:
                 "height": str(20),
                 "fill": "#f6b94d"
             })
-            if not _cs.move_is_drop(lastmove):
-                i, j = divmod(_cs.move_from(lastmove), 9)
+            if not _vs.move_is_drop(lastmove):
+                i, j = divmod(_vs.move_from(lastmove), 9)
                 ET.SubElement(svg, "rect", {
                     "x": str(20.5 + (8 - i) * 20),
                     "y": str(10.5 + j * 20),
@@ -323,7 +323,7 @@ class Board:
 class LegalMoveList:
 
     def __init__(self, board: Board) -> None:
-        self._ml = _cs._LegalMoveList(board._board)
+        self._ml = _vs._LegalMoveList(board._board)
 
     def __iter__(self):
         return self
@@ -342,7 +342,7 @@ class LegalMoveList:
 class PseudoLegalMoveList:
 
     def __init__(self, board: Board) -> None:
-        self._ml = _cs._PseudoLegalMoveList(board._board)
+        self._ml = _vs._PseudoLegalMoveList(board._board)
 
     def __iter__(self):
         return self

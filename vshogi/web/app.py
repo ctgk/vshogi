@@ -1,7 +1,7 @@
 import math
-from cshogi import Board, CSA, KIF, BLACK, WHITE, opponent, REPETITION_WIN, REPETITION_LOSE
-from cshogi.usi import Engine
-from cshogi.cli import usi_info_to_score, usi_info_to_csa_comment, re_usi_info
+from vshogi import Board, CSA, KIF, BLACK, WHITE, opponent, REPETITION_WIN, REPETITION_LOSE
+from vshogi.usi import Engine
+from vshogi.cli import usi_info_to_score, usi_info_to_csa_comment, re_usi_info
 from flask import Flask, render_template, request
 from wsgiref.simple_server import make_server
 

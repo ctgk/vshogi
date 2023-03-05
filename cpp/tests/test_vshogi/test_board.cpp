@@ -1,7 +1,7 @@
 #include <string>
 
-#include "cshogi.h"
 #include "init.hpp"
+#include "vshogi.h"
 
 #include <CppUTest/TestHarness.h>
 

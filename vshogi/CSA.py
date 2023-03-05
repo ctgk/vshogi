@@ -1,5 +1,5 @@
-import cshogi
-from cshogi import Parser
+import vshogi
+from vshogi import Parser
 
 COLOR_SYMBOLS = ['+', '-']
 JAPANESE_END_GAMES = {
@@ -55,11 +55,11 @@ class Exporter:
             self.turn = init_board.turn
         else:
             self.f.write('PI\n+\n')
-            self.turn = cshogi.BLACK
+            self.turn = vshogi.BLACK
 
     def move(self, move, time=None, comment=None, sep='\n'):
         self.f.write(COLOR_SYMBOLS[self.turn])
-        self.f.write(cshogi.move_to_csa(move))
+        self.f.write(vshogi.move_to_csa(move))
         if time is not None:
             self.f.write(sep)
             self.f.write('T' + str(time))
@@ -67,7 +67,7 @@ class Exporter:
             self.f.write(sep)
             self.f.write("'" + comment)
         self.f.write('\n')
-        self.turn = cshogi.opponent(self.turn)
+        self.turn = vshogi.opponent(self.turn)
 
     def endgame(self, endgame, time=None):
         self.f.write(endgame)

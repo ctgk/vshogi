@@ -3,8 +3,8 @@ import os
 
 import pytest
 
-import cshogi
-from cshogi import KIF
+import vshogi
+from vshogi import KIF
 
 
 def test_read():
@@ -18,7 +18,7 @@ def test_read():
     assert kif.comments[0] == '▲備考：居飛車'
     assert kif.comments[1] is None
     assert kif.comments[31] == '△戦型：右四間飛車'
-    assert kif.win == cshogi.BLACK_WIN
+    assert kif.win == vshogi.BLACK_WIN
     assert kif.endgame == '%TORYO'
 
 

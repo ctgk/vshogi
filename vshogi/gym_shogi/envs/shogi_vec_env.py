@@ -1,4 +1,4 @@
-from cshogi.gym_shogi.envs import ShogiEnv
+from vshogi.gym_shogi.envs import ShogiEnv
 
 class ShogiVecEnv:
     metadata = {'render.modes': ['sfen']}

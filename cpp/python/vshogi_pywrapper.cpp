@@ -4,15 +4,15 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "cshogi.h"
 #include "dfpn.h"
 #include "init.hpp"
 #include "parser.h"
 #include "position.hpp"
+#include "vshogi.h"
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(_cshogi, m)
+PYBIND11_MODULE(_vshogi, m)
 {
     initTable();
     Position::initZobrist();

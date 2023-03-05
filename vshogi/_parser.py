@@ -1,10 +1,10 @@
-import cshogi._cshogi as _cs
+import vshogi._vshogi as _vs
 
 
 class Parser:
 
     def __init__(self):
-        self._parser = _cs._Parser()
+        self._parser = _vs._Parser()
 
     @staticmethod
     def parse_file(file, encoding=None):

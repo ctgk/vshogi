@@ -1,25 +1,25 @@
 import pytest
 
-import cshogi as cs
+import vshogi as vs
 
 
 def test_legal_moves():
-    board = cs.Board()
+    board = vs.Board()
     assert len(board.legal_moves) == 30
-    actual = sorted(list(map(cs.move_to_usi, board.legal_moves)))
+    actual = sorted(list(map(vs.move_to_usi, board.legal_moves)))
     assert len(actual) == 30
     assert actual[0] == '1g1f'
     assert actual[-1] == '9i9h'
 
 
 def test_sfen1():
-    board = cs.Board()
+    board = vs.Board()
     sfen = 'lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1'
     assert board.sfen() == sfen
 
 
 def test_sfen2():
-    board = cs.Board()
+    board = vs.Board()
     moves = [67470]
     for move in moves:
         board.push(move)
@@ -28,7 +28,7 @@ def test_sfen2():
 
 
 def test_sfen3():
-    board = cs.Board()
+    board = vs.Board()
     moves = [
         67470, 68117, 67341, 328980, 73275, 264467, 265506, 269102, 465597,
         464549, 68631, 65795, 66309, 528924, 72114, 73922, 270132, 74051,

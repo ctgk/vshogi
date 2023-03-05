@@ -3,7 +3,7 @@ import gym
 from gym import spaces
 import numpy as np
 
-import cshogi
+import vshogi
 
 class ShogiEnv(gym.Env):
     metadata = {'render.modes': ['human', 'svg', 'ansi', 'sfen']}
@@ -11,14 +11,14 @@ class ShogiEnv(gym.Env):
     def __init__(self):
         super().__init__()
 
-        self.board = cshogi.Board()
+        self.board = vshogi.Board()
         self.moves = []
         self.repetition_hash = defaultdict(int)
         key = self.board.zobrist_hash()
         self.repetition_hash[key] += 1
         self.is_draw = None
 
-        self.observation_space = spaces.Box(0, len(cshogi.PIECES)-1, (9, 9), dtype=np.uint8)
+        self.observation_space = spaces.Box(0, len(vshogi.PIECES)-1, (9, 9), dtype=np.uint8)
 
         # actionはmoveを直接受け付ける
         # sample()は非合法手も含む
@@ -73,10 +73,10 @@ class ShogiEnv(gym.Env):
             done = True
             # 連続王手
             self.is_draw = self.board.is_draw()
-            if self.is_draw == cshogi.REPETITION_WIN:
+            if self.is_draw == vshogi.REPETITION_WIN:
                 # 相手の手番なので報酬は反対になる
                 reward = -1.0
-            elif self.is_draw == cshogi.REPETITION_LOSE:
+            elif self.is_draw == vshogi.REPETITION_LOSE:
                 reward = 1.0
             else:
                 reward = 0.0
