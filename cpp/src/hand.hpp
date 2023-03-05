@@ -52,13 +52,14 @@ public:
     u32 numOf() const
     {
         return (
-            HP == piece::C_FU   ? ((value() & HPawnMask) >> shift_bits_fu)
-            : HP == piece::C_KY ? ((value() & HLanceMask) >> shift_bits_ky)
-            : HP == piece::C_KE ? ((value() & HKnightMask) >> shift_bits_ke)
-            : HP == piece::C_GI ? ((value() & HSilverMask) >> shift_bits_gi)
-            : HP == piece::C_KI ? ((value() & HGoldMask) >> shift_bits_ki)
-            : HP == piece::C_KA ? ((value() & HBishopMask) >> shift_bits_ka)
-                                : ((value() /*& HRookMask*/) >> shift_bits_hi));
+            HP == piece::C_FU   ? ((value() & bit_mask_fu) >> shift_bits_fu)
+            : HP == piece::C_KY ? ((value() & bit_mask_ky) >> shift_bits_ky)
+            : HP == piece::C_KE ? ((value() & bit_mask_ke) >> shift_bits_ke)
+            : HP == piece::C_GI ? ((value() & bit_mask_gi) >> shift_bits_gi)
+            : HP == piece::C_KI ? ((value() & bit_mask_ki) >> shift_bits_ki)
+            : HP == piece::C_KA
+                ? ((value() & bit_mask_ka) >> shift_bits_ka)
+                : ((value() /*& bit_mask_hi*/) >> shift_bits_hi));
     }
 
     u32 numOf(const piece::CapturedPieceTypeEnum captured_piece_type) const
@@ -72,13 +73,13 @@ public:
     u32 exists() const
     {
         return (
-            HP == piece::C_FU   ? (value() & HPawnMask)
-            : HP == piece::C_KY ? (value() & HLanceMask)
-            : HP == piece::C_KE ? (value() & HKnightMask)
-            : HP == piece::C_GI ? (value() & HSilverMask)
-            : HP == piece::C_KI ? (value() & HGoldMask)
-            : HP == piece::C_KA ? (value() & HBishopMask)
-                                : (value() & HRookMask));
+            HP == piece::C_FU   ? (value() & bit_mask_fu)
+            : HP == piece::C_KY ? (value() & bit_mask_ky)
+            : HP == piece::C_KE ? (value() & bit_mask_ke)
+            : HP == piece::C_GI ? (value() & bit_mask_gi)
+            : HP == piece::C_KI ? (value() & bit_mask_ki)
+            : HP == piece::C_KA ? (value() & bit_mask_ka)
+                                : (value() & bit_mask_hi));
     }
     u32 exists(const piece::CapturedPieceTypeEnum captured_piece_type) const
     {
@@ -138,19 +139,19 @@ public:
     {
         u32 mask = 0;
         if (them.exists<piece::C_FU>() == 0)
-            mask |= HPawnMask;
+            mask |= bit_mask_fu;
         if (them.exists<piece::C_KY>() == 0)
-            mask |= HLanceMask;
+            mask |= bit_mask_ky;
         if (them.exists<piece::C_KE>() == 0)
-            mask |= HKnightMask;
+            mask |= bit_mask_ke;
         if (them.exists<piece::C_GI>() == 0)
-            mask |= HSilverMask;
+            mask |= bit_mask_gi;
         if (them.exists<piece::C_KI>() == 0)
-            mask |= HGoldMask;
+            mask |= bit_mask_ki;
         if (them.exists<piece::C_KA>() == 0)
-            mask |= HBishopMask;
+            mask |= bit_mask_ka;
         if (them.exists<piece::C_HI>() == 0)
-            mask |= HRookMask;
+            mask |= bit_mask_hi;
 
         // 相手が一枚も持っていない種類の持駒を一旦0にする
         value_ &= ~mask;
@@ -168,29 +169,29 @@ private:
     static const int shift_bits_ki = 18;
     static const int shift_bits_ka = 22;
     static const int shift_bits_hi = 25;
-    static const u32 HPawnMask   = 0x1f << shift_bits_fu;
-    static const u32 HLanceMask  = 0x7  << shift_bits_ky;
-    static const u32 HKnightMask = 0x7  << shift_bits_ke;
-    static const u32 HSilverMask = 0x7  << shift_bits_gi;
-    static const u32 HGoldMask   = 0x7  << shift_bits_ki;
-    static const u32 HBishopMask = 0x3  << shift_bits_ka;
-    static const u32 HRookMask   = 0x3  << shift_bits_hi;
+    static const u32 bit_mask_fu = 0x1f << shift_bits_fu;
+    static const u32 bit_mask_ky = 0x7  << shift_bits_ky;
+    static const u32 bit_mask_ke = 0x7  << shift_bits_ke;
+    static const u32 bit_mask_gi = 0x7  << shift_bits_gi;
+    static const u32 bit_mask_ki = 0x7  << shift_bits_ki;
+    static const u32 bit_mask_ka = 0x3  << shift_bits_ka;
+    static const u32 bit_mask_hi = 0x3  << shift_bits_hi;
     // clang-format on
     static const u32 HandPieceExceptPawnMask
-        = (HLanceMask | HKnightMask | HSilverMask | HGoldMask | HBishopMask
-           | HRookMask);
+        = (bit_mask_ky | bit_mask_ke | bit_mask_gi | bit_mask_ki | bit_mask_ka
+           | bit_mask_hi);
     static const int HandPieceShiftBits[piece::NUM_CAPTURED_PIECE_TYPES];
     static const u32 HandPieceMask[piece::NUM_CAPTURED_PIECE_TYPES];
     // 特定の種類の持ち駒を 1 つ増やしたり減らしたりするときに使用するテーブル
     static const u32 HandPieceOne[piece::NUM_CAPTURED_PIECE_TYPES];
     static const u32 BorrowMask
-        = ((HPawnMask + (1 << shift_bits_fu))
-           | (HLanceMask + (1 << shift_bits_ky))
-           | (HKnightMask + (1 << shift_bits_ke))
-           | (HSilverMask + (1 << shift_bits_gi))
-           | (HGoldMask + (1 << shift_bits_ki))
-           | (HBishopMask + (1 << shift_bits_ka))
-           | (HRookMask + (1 << shift_bits_hi)));
+        = ((bit_mask_fu + (1 << shift_bits_fu))
+           | (bit_mask_ky + (1 << shift_bits_ky))
+           | (bit_mask_ke + (1 << shift_bits_ke))
+           | (bit_mask_gi + (1 << shift_bits_gi))
+           | (bit_mask_ki + (1 << shift_bits_ki))
+           | (bit_mask_ka + (1 << shift_bits_ka))
+           | (bit_mask_hi + (1 << shift_bits_hi)));
 
     u32 value_;
 };
