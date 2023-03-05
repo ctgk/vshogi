@@ -63,7 +63,7 @@ enum ColoredPieceEnum
     // B* に 16 を加算することで、W* を表す。
     // Promoted を加算することで、成りを表す。
     // clang-format off
-    Empty = 0, UnPromoted = 0, Promoted = 8,
+    VOID = 0, UnPromoted = 0, Promoted = 8,
     B_FU = 1, B_KY, B_KE, B_GI, B_KA, B_HI, B_KI, B_OU,
     B_TO, B_NY, B_NK, B_NG, B_UM, B_RY, // B_RY = 14
     W_FU = 17, W_KY, W_KE, W_GI, W_KA, W_HI, W_KI, W_OU,

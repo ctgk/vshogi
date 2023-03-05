@@ -77,7 +77,7 @@ namespace {
             if (makeRank(ksq) != TRank9) {
                 const Square pawnDropCheckSquare = ksq + TDeltaS;
                 assert(isInSquare(pawnDropCheckSquare));
-                if (toBB.isSet(pawnDropCheckSquare) && pos.piece(pawnDropCheckSquare) == piece::Empty) {
+                if (toBB.isSet(pawnDropCheckSquare) && pos.piece(pawnDropCheckSquare) == piece::VOID) {
                     if (!pos.isPawnDropCheckMate(US, pawnDropCheckSquare))
                         // ここで clearBit だけして MakeMove しないことも出来る。
                         // 指し手が生成される順番が変わり、王手が先に生成されるが、後で問題にならないか?
@@ -313,7 +313,7 @@ namespace {
             const Square from = fromBB.firstOneFromSQ11();
             const piece::PieceTypeEnum pt = piece::to_piece_type(pos.piece(from));
             switch (pt) {
-            case piece::Empty    : assert(false); break; // 最適化の為のダミー
+            case piece::VOID    : assert(false); break; // 最適化の為のダミー
             case piece::FU     : case piece::KY    : case piece::KE   : case piece::GI   : case piece::KA   : case piece::HI     :
                 (*moveList++).move = ((canPromote(us, makeRank(to)) | canPromote(us, makeRank(from))) ?
                                       makePromoteMove<Capture>(pt, from, to, pos) :
@@ -387,7 +387,7 @@ namespace {
                                        const Square checkSq, const Square ksq)
     {
         switch (pos.piece(checkSq)) {
-//      case piece::Empty: assert(false); break; // 最適化の為のダミー
+//      case piece::VOID: assert(false); break; // 最適化の為のダミー
         case (THEM == color::BLACK ? piece::B_FU      : piece::W_FU):
         case (THEM == color::BLACK ? piece::B_KE    : piece::W_KE):
             // 歩、桂馬で王手したときは、どこへ逃げても、その駒で取られることはない。
@@ -579,7 +579,7 @@ namespace {
     template <color::ColorEnum US, bool ALL>
     FORCE_INLINE ExtMove* generatCheckMoves(ExtMove* moveList, const piece::PieceTypeEnum pt, const Position& pos, const Square from, const Square to) {
         switch (pt) {
-        case piece::Empty: assert(false); break; // 最適化の為のダミー
+        case piece::VOID: assert(false); break; // 最適化の為のダミー
         case piece::FU:
             if (canPromote(US, makeRank(to))) {
                 (*moveList++).move = makePromoteMove<Capture>(pt, from, to, pos);
@@ -1048,7 +1048,7 @@ namespace {
                 if (makeRank(ksq) != TRank9) {
                     const Square pawnDropCheckSquare = ksq + TDeltaS;
                     assert(isInSquare(pawnDropCheckSquare));
-                    if (toBB.isSet(pawnDropCheckSquare) && pos.piece(pawnDropCheckSquare) == piece::Empty) {
+                    if (toBB.isSet(pawnDropCheckSquare) && pos.piece(pawnDropCheckSquare) == piece::VOID) {
                         if (!pos.isPawnDropCheckMate(US, pawnDropCheckSquare))
                             // ここで clearBit だけして MakeMove しないことも出来る。
                             // 指し手が生成される順番が変わり、王手が先に生成されるが、後で問題にならないか?

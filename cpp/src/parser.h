@@ -49,7 +49,7 @@ class StringToPieceCSA : public std::map<std::string, piece::ColoredPieceEnum>
 public:
     StringToPieceCSA()
     {
-        (*this)[" * "] = piece::Empty;
+        (*this)[" * "] = piece::VOID;
         (*this)["+FU"] = piece::B_FU;
         (*this)["+KY"] = piece::B_KY;
         (*this)["+KE"] = piece::B_KE;
@@ -345,13 +345,13 @@ private:
                     const piece::ColoredPieceEnum initial_board[9][9] = {
                         // clang-format off
                         {piece::W_KY, piece::W_KE, piece::W_GI, piece::W_KI, piece::W_OU, piece::W_KI, piece::W_GI, piece::W_KE, piece::W_KY},
-                        {piece::Empty, piece::W_HI, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::W_KA, piece::Empty},
+                        {piece::VOID, piece::W_HI, piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::W_KA, piece::VOID},
                         {piece::W_FU, piece::W_FU, piece::W_FU, piece::W_FU, piece::W_FU, piece::W_FU, piece::W_FU, piece::W_FU, piece::W_FU},
-                        {piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty},
-                        {piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty},
-                        {piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty},
+                        {piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID},
+                        {piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID},
+                        {piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID},
                         {piece::B_FU, piece::B_FU, piece::B_FU, piece::B_FU, piece::B_FU, piece::B_FU, piece::B_FU, piece::B_FU, piece::B_FU},
-                        {piece::Empty, piece::B_KA, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::B_HI, piece::Empty},
+                        {piece::VOID, piece::B_KA, piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::VOID, piece::B_HI, piece::VOID},
                         {piece::B_KY, piece::B_KE, piece::B_GI, piece::B_KI, piece::B_OU, piece::B_KI, piece::B_GI, piece::B_KE, piece::B_KY},
                         // clang-format on
                     };
@@ -381,13 +381,13 @@ private:
                         if (rank_index < 0 || rank_index >= 9 || file_index < 0
                             || file_index >= 9
                             || pieces_in_board[rank_index][file_index]
-                                   == piece::Empty
+                                   == piece::VOID
                             || piece::to_piece_type(
                                    pieces_in_board[rank_index][file_index])
                                    != piecetype)
                             throw std::domain_error("Invalid piece removing on "
                                                     "intializing a board");
-                        pieces_in_board[rank_index][file_index] = piece::Empty;
+                        pieces_in_board[rank_index][file_index] = piece::VOID;
                     }
                 } else {
                     throw std::domain_error(
@@ -412,7 +412,7 @@ private:
         for (int rank = 0; rank < 9; ++rank) {
             for (int file = 0; file < 9; ++file) {
                 piece::ColoredPieceEnum piece = pieces_in_board[rank][file];
-                if (piece == piece::Empty)
+                if (piece == piece::VOID)
                     empty += 1;
                 else {
                     if (empty > 0) {

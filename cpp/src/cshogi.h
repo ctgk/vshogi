@@ -461,7 +461,7 @@ public:
         };
         for (Square sq = SQ11; sq < SquareNum; sq++) {
             const piece::ColoredPieceEnum p = pos.piece(sq);
-            if (p != piece::Empty) {
+            if (p != piece::VOID) {
                 const color::ColorEnum pc = piece::get_color(p);
                 const piece::PieceTypeEnum pt = piece::to_piece_type(p);
                 const Bitboard bb = pos.attacksFrom(pt, pc, sq, occupied_bb);

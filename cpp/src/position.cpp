@@ -30,7 +30,7 @@ Key Position::zobrist_[piece::PieceTypeNum][SquareNum][color::NUM_COLORS];
 Key Position::zobHand_[piece::NUM_CAPTURED_PIECE_TYPES][color::NUM_COLORS];
 
 const HuffmanCode HuffmanCodedPos::boardCodeTable[piece::PieceNone] = {
-    {Binary<         0>::value, 1}, // piece::Empty
+    {Binary<         0>::value, 1}, // piece::VOID
     {Binary<         1>::value, 4}, // piece::B_FU
     {Binary<        11>::value, 6}, // piece::B_KY
     {Binary<       111>::value, 6}, // piece::B_KE
@@ -63,7 +63,7 @@ const HuffmanCode HuffmanCodedPos::boardCodeTable[piece::PieceNone] = {
     {Binary<  11111111>::value, 8}, // piece::W_RY
 };
 
-// 盤上の bit 数 - 1 で表現出来るようにする。持ち駒があると、盤上には piece::Empty の 1 bit が増えるので、
+// 盤上の bit 数 - 1 で表現出来るようにする。持ち駒があると、盤上には piece::VOID の 1 bit が増えるので、
 // これで局面の bit 数が固定化される。
 const HuffmanCode HuffmanCodedPos::handCodeTable[piece::NUM_CAPTURED_PIECE_TYPES][color::NUM_COLORS] = {
     {{Binary<        0>::value, 3}, {Binary<      100>::value, 3}}, // piece::C_FU
@@ -111,7 +111,7 @@ HuffmanCodeToPieceHash HuffmanCodedPos::handCodeToPieceHash;
 // 手駒に成りフラグは不要だが、これも含めておくと盤上の駒のbit数-1になるので
 // 全体のbit数が固定化できるのでこれも含めておくことにする。
 const HuffmanCode PackedSfen::boardCodeTable[piece::PieceNone] = {
-	{ Binary<         0>::value, 1 }, // piece::Empty
+	{ Binary<         0>::value, 1 }, // piece::VOID
 	{ Binary<         1>::value, 4 }, // piece::B_FU
 	{ Binary<        11>::value, 6 }, // piece::B_KY
 	{ Binary<      1011>::value, 6 }, // piece::B_KE
@@ -144,7 +144,7 @@ const HuffmanCode PackedSfen::boardCodeTable[piece::PieceNone] = {
 	{ Binary<  11111111>::value, 8 }, // piece::W_RY
 };
 
-// 盤上の bit 数 - 1 で表現出来るようにする。持ち駒があると、盤上には piece::Empty の 1 bit が増えるので、
+// 盤上の bit 数 - 1 で表現出来るようにする。持ち駒があると、盤上には piece::VOID の 1 bit が増えるので、
 // これで局面の bit 数が固定化される。
 const HuffmanCode PackedSfen::handCodeTable[piece::NUM_CAPTURED_PIECE_TYPES][color::NUM_COLORS] = {
 	{ { Binary<        0>::value, 3 },{ Binary<      100>::value, 3 } }, // piece::C_FU
@@ -292,7 +292,7 @@ template <bool Searching> bool Position::moveIsPseudoLegal(const Move move) cons
 
     if (move.isDrop()) {
         const piece::PieceTypeEnum ptFrom = move.pieceTypeDropped();
-        if (!hand(us).exists(piece::to_captured_piece_type(ptFrom)) || piece(to) != piece::Empty)
+        if (!hand(us).exists(piece::to_captured_piece_type(ptFrom)) || piece(to) != piece::VOID)
             return false;
 
         if (inCheck()) {
@@ -461,7 +461,7 @@ void Position::doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, co
         byTypeBB_[ptFrom].xorBit(from);
         byTypeBB_[ptTo].xorBit(to);
         byColorBB_[us].xorBit(from, to);
-        piece_[from] = piece::Empty;
+        piece_[from] = piece::VOID;
         piece_[to] = to_colored_piece(us, ptTo);
         boardKey -= zobrist(ptFrom, from, us);
         boardKey += zobrist(ptTo, to, us);
@@ -540,7 +540,7 @@ void Position::undoMove(const Move move) {
         const piece::PieceTypeEnum ptTo = move.pieceTypeDropped();
         byTypeBB_[ptTo].xorBit(to);
         byColorBB_[us].xorBit(to);
-        piece_[to] = piece::Empty;
+        piece_[to] = piece::VOID;
 
         const piece::CapturedPieceTypeEnum hp = piece::to_captured_piece_type(ptTo);
         hand_[us].plusOne(hp);
@@ -566,8 +566,8 @@ void Position::undoMove(const Move move) {
         }
         else
             // 駒を取らないときは、to_colored_piece(us, ptCaptured) は 0 または 16 になる。
-            // 16 になると困るので、駒を取らないときは明示的に piece::Empty にする。
-            piece_[to] = piece::Empty;
+            // 16 になると困るので、駒を取らないときは明示的に piece::VOID にする。
+            piece_[to] = piece::VOID;
         byTypeBB_[ptFrom].xorBit(from);
         byTypeBB_[ptTo].xorBit(to);
         byColorBB_[us].xorBit(from, to);
@@ -1258,7 +1258,7 @@ template <color::ColorEnum US, bool Additional> Move Position::mateMoveIn1Ply() 
     // 玉が 9(1) 段目にいれば香車で王手出来無いので、それも省く。
     else if (ourHand.exists<piece::C_KY>() && isInFrontOf<US, Rank9, Rank1>(makeRank(ksq))) {
         const Square to = ksq + TDeltaS;
-        if (piece(to) == piece::Empty && attackersToIsAny(US, to)) {
+        if (piece(to) == piece::VOID && attackersToIsAny(US, to)) {
             if (!canKingEscape(*this, US, to, lanceAttackToEdge(US, to))
                 && !canPieceCapture(*this, Them, to, dcBB_betweenIsThem))
             {
@@ -2009,7 +2009,7 @@ silver_drop_end:
                 if (to == SquareNum) continue; // もう駄目
 
                 // toが自駒だとここに移動できないし..
-                if (piece(to) != piece::Empty && piece::get_color(piece(to)) == US) continue;
+                if (piece(to) != piece::VOID && piece::get_color(piece(to)) == US) continue;
 
                 // oneが二歩で打てないことを確認しよう。
                 if (canPawnDrop<~US>(one)) continue; // もう駄目
@@ -2244,7 +2244,7 @@ silver_drop_end:
 
                     // 移動性の保証
                     const Square to = from + (US == color::BLACK ? DeltaN : DeltaS);
-                    if (piece(to) != piece::Empty && piece::get_color(piece(to)) != ~US) { continue; }
+                    if (piece(to) != piece::VOID && piece::get_color(piece(to)) != ~US) { continue; }
 
                     // toの地点で成れないと駄目
                     if (!canPromote(US, to)) continue;
@@ -2800,7 +2800,7 @@ Key Position::getKeyAfter(const Move m) const {
 
 		// 移動先の升にある駒
 		piece::ColoredPieceEnum to_pc = piece(to);
-		if (to_pc != piece::Empty)
+		if (to_pc != piece::VOID)
 		{
 			piece::PieceTypeEnum pt = piece::to_piece_type(to_pc);
 
@@ -2855,7 +2855,7 @@ Key Position::getBoardKeyAfter(const Move m) const {
 
 		// 移動先の升にある駒
 		piece::ColoredPieceEnum to_pc = piece(to);
-		if (to_pc != piece::Empty)
+		if (to_pc != piece::VOID)
 		{
 			piece::PieceTypeEnum pt = piece::to_piece_type(to_pc);
 
@@ -2893,7 +2893,7 @@ std::string Position::toSFEN(const Ply ply) const {
         for (File file = File9; file != File1Wall; file += FileDeltaE) {
             const Square sq = makeSquare(file, rank);
             const piece::ColoredPieceEnum pc = piece(sq);
-            if (pc == piece::Empty)
+            if (pc == piece::VOID)
                 ++space;
             else {
                 if (space) {
@@ -3093,7 +3093,7 @@ bool Position::isOK() const {
     if (debugPiece) {
         for (Square sq = SQ11; sq < SquareNum; ++sq) {
             const piece::ColoredPieceEnum pc = piece(sq);
-            if (pc == piece::Empty) {
+            if (pc == piece::VOID) {
                 if (!emptyBB().isSet(sq))
                     goto incorrect_position;
             }
@@ -3118,7 +3118,7 @@ incorrect_position:
 Key Position::computeBoardKey() const {
     Key result = 0;
     for (Square sq = SQ11; sq < SquareNum; ++sq) {
-        if (piece(sq) != piece::Empty)
+        if (piece(sq) != piece::VOID)
             result += zobrist(piece::to_piece_type(piece(sq)), sq, piece::get_color(piece(sq)));
     }
     if (turn() == color::WHITE)
@@ -3288,7 +3288,7 @@ void Position::set(const piece::ColoredPieceEnum pieces[SquareNum], const int pi
 
     // 盤上の駒
     for (Square sq = SQ11; sq < SquareNum; ++sq) {
-        if (pieces[sq] != piece::Empty)
+        if (pieces[sq] != piece::VOID)
             setPiece(pieces[sq], sq);
     }
     // 持ち駒
@@ -3330,14 +3330,14 @@ bool Position::set_hcp(const char* hcp_data) {
 
     // 盤上の駒
     for (Square sq = SQ11; sq < SquareNum; ++sq) {
-        if (piece::to_piece_type(piece(sq)) == piece::OU) // piece(sq) は piece::B_OU, piece::W_OU, piece::Empty のどれか。
+        if (piece::to_piece_type(piece(sq)) == piece::OU) // piece(sq) は piece::B_OU, piece::W_OU, piece::VOID のどれか。
             continue;
         HuffmanCode hc = {0, 0};
         while (hc.numOfBits <= 8) {
             hc.code |= bs.getBit() << hc.numOfBits++;
             if (HuffmanCodedPos::boardCodeToPieceHash.value(hc.key) != piece::PieceNone) {
                 const piece::ColoredPieceEnum pc = HuffmanCodedPos::boardCodeToPieceHash.value(hc.key);
-                if (pc != piece::Empty)
+                if (pc != piece::VOID)
                     setPiece(HuffmanCodedPos::boardCodeToPieceHash.value(hc.key), sq);
                 break;
             }
@@ -3395,14 +3395,14 @@ bool Position::set_psfen(const char* psfen_data) {
 
 	// 盤上の駒
 	for (Square sq = SQ11; sq < SquareNum; ++sq) {
-		if (piece::to_piece_type(piece(sq)) == piece::OU) // piece(sq) は piece::B_OU, piece::W_OU, piece::Empty のどれか。
+		if (piece::to_piece_type(piece(sq)) == piece::OU) // piece(sq) は piece::B_OU, piece::W_OU, piece::VOID のどれか。
 			continue;
 		HuffmanCode hc = { 0, 0 };
 		while (hc.numOfBits <= 8) {
 			hc.code |= bs.getBit() << hc.numOfBits++;
 			if (PackedSfen::boardCodeToPieceHash.value(hc.key) != piece::PieceNone) {
 				const piece::ColoredPieceEnum pc = PackedSfen::boardCodeToPieceHash.value(hc.key);
-				if (pc != piece::Empty)
+				if (pc != piece::VOID)
 					setPiece(PackedSfen::boardCodeToPieceHash.value(hc.key), sq);
 				break;
 			}

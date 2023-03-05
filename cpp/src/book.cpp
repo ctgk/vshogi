@@ -31,7 +31,7 @@ Key Book::ZobTurn;
 
 void Book::init()
 {
-    for (piece::ColoredPieceEnum p = piece::Empty; p < piece::PieceNone; ++p) {
+    for (piece::ColoredPieceEnum p = piece::VOID; p < piece::PieceNone; ++p) {
         for (Square sq = SQ11; sq < SquareNum; ++sq)
             ZobPiece[p][sq] = mt64bit_.random();
     }

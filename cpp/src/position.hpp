@@ -183,7 +183,7 @@ struct HuffmanCodedPos
     static HuffmanCodeToPieceHash handCodeToPieceHash;
     static void init()
     {
-        for (piece::ColoredPieceEnum pc = piece::Empty; pc <= piece::B_RY; ++pc)
+        for (piece::ColoredPieceEnum pc = piece::VOID; pc <= piece::B_RY; ++pc)
             if (piece::to_piece_type(pc)
                 != piece::
                     OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
@@ -236,7 +236,7 @@ struct PackedSfen
     static HuffmanCodeToPieceHash handCodeToPieceHash;
     static void init()
     {
-        for (piece::ColoredPieceEnum pc = piece::Empty; pc <= piece::B_RY; ++pc)
+        for (piece::ColoredPieceEnum pc = piece::VOID; pc <= piece::B_RY; ++pc)
             if (piece::to_piece_type(pc)
                 != piece::
                     OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
