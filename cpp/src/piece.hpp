@@ -110,17 +110,6 @@ to_colored_piece(const color::ColorEnum c, const PieceTypeEnum pt)
     return static_cast<ColoredPieceEnum>((c << 4) | pt);
 }
 
-const u32 IsSliderVal = 0x60646064;
-// pc が遠隔駒であるか
-inline bool isSlider(const ColoredPieceEnum pc)
-{
-    return (IsSliderVal & (1 << pc)) != 0;
-}
-inline bool isSlider(const PieceTypeEnum pt)
-{
-    return (IsSliderVal & (1 << pt)) != 0;
-}
-
 const CapturedPieceTypeEnum PieceTypeToHandPieceTable[PieceTypeNum]
     = {NUM_CAPTURED_PIECE_TYPES,
        C_FU,
