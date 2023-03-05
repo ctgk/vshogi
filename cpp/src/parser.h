@@ -22,20 +22,20 @@ class StringToPieceTypeCSA : public std::map<std::string, PieceType>
 public:
     StringToPieceTypeCSA()
     {
-        (*this)["FU"] = Pawn;
-        (*this)["KY"] = Lance;
-        (*this)["KE"] = Knight;
-        (*this)["GI"] = Silver;
-        (*this)["KA"] = Bishop;
-        (*this)["HI"] = Rook;
-        (*this)["KI"] = Gold;
-        (*this)["OU"] = King;
-        (*this)["TO"] = ProPawn;
-        (*this)["NY"] = ProLance;
-        (*this)["NK"] = ProKnight;
-        (*this)["NG"] = ProSilver;
-        (*this)["UM"] = Horse;
-        (*this)["RY"] = Dragon;
+        (*this)["FU"] = FU;
+        (*this)["KY"] = KY;
+        (*this)["KE"] = KE;
+        (*this)["GI"] = GI;
+        (*this)["KA"] = KA;
+        (*this)["HI"] = HI;
+        (*this)["KI"] = KI;
+        (*this)["OU"] = OU;
+        (*this)["TO"] = TO;
+        (*this)["NY"] = NY;
+        (*this)["NK"] = NK;
+        (*this)["NG"] = NG;
+        (*this)["UM"] = UM;
+        (*this)["RY"] = RY;
     }
     PieceType value(const std::string& str) const
     {
@@ -50,34 +50,34 @@ public:
     StringToPieceCSA()
     {
         (*this)[" * "] = Empty;
-        (*this)["+FU"] = BPawn;
-        (*this)["+KY"] = BLance;
-        (*this)["+KE"] = BKnight;
-        (*this)["+GI"] = BSilver;
-        (*this)["+KA"] = BBishop;
-        (*this)["+HI"] = BRook;
-        (*this)["+KI"] = BGold;
-        (*this)["+OU"] = BKing;
-        (*this)["+TO"] = BProPawn;
-        (*this)["+NY"] = BProLance;
-        (*this)["+NK"] = BProKnight;
-        (*this)["+NG"] = BProSilver;
-        (*this)["+UM"] = BHorse;
-        (*this)["+RY"] = BDragon;
-        (*this)["-FU"] = WPawn;
-        (*this)["-KY"] = WLance;
-        (*this)["-KE"] = WKnight;
-        (*this)["-GI"] = WSilver;
-        (*this)["-KA"] = WBishop;
-        (*this)["-HI"] = WRook;
-        (*this)["-KI"] = WGold;
-        (*this)["-OU"] = WKing;
-        (*this)["-TO"] = WProPawn;
-        (*this)["-NY"] = WProLance;
-        (*this)["-NK"] = WProKnight;
-        (*this)["-NG"] = WProSilver;
-        (*this)["-UM"] = WHorse;
-        (*this)["-RY"] = WDragon;
+        (*this)["+FU"] = B_FU;
+        (*this)["+KY"] = B_KY;
+        (*this)["+KE"] = B_KE;
+        (*this)["+GI"] = B_GI;
+        (*this)["+KA"] = B_KA;
+        (*this)["+HI"] = B_HI;
+        (*this)["+KI"] = B_KI;
+        (*this)["+OU"] = B_OU;
+        (*this)["+TO"] = B_TO;
+        (*this)["+NY"] = B_NY;
+        (*this)["+NK"] = B_NK;
+        (*this)["+NG"] = B_NG;
+        (*this)["+UM"] = B_UM;
+        (*this)["+RY"] = B_RY;
+        (*this)["-FU"] = W_FU;
+        (*this)["-KY"] = W_KY;
+        (*this)["-KE"] = W_KE;
+        (*this)["-GI"] = W_GI;
+        (*this)["-KA"] = W_KA;
+        (*this)["-HI"] = W_HI;
+        (*this)["-KI"] = W_KI;
+        (*this)["-OU"] = W_OU;
+        (*this)["-TO"] = W_TO;
+        (*this)["-NY"] = W_NY;
+        (*this)["-NK"] = W_NK;
+        (*this)["-NG"] = W_NG;
+        (*this)["-UM"] = W_UM;
+        (*this)["-RY"] = W_RY;
     }
     Piece value(const std::string& str) const
     {
@@ -344,15 +344,15 @@ private:
                 } else if (line[1] == 'I') { // PI
                     const Piece initial_board[9][9] = {
                         // clang-format off
-                        {WLance, WKnight, WSilver, WGold, WKing, WGold, WSilver, WKnight, WLance},
-                        {Empty, WRook, Empty, Empty, Empty, Empty, Empty, WBishop, Empty},
-                        {WPawn, WPawn, WPawn, WPawn, WPawn, WPawn, WPawn, WPawn, WPawn},
+                        {W_KY, W_KE, W_GI, W_KI, W_OU, W_KI, W_GI, W_KE, W_KY},
+                        {Empty, W_HI, Empty, Empty, Empty, Empty, Empty, W_KA, Empty},
+                        {W_FU, W_FU, W_FU, W_FU, W_FU, W_FU, W_FU, W_FU, W_FU},
                         {Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty},
                         {Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty},
                         {Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty},
-                        {BPawn, BPawn, BPawn, BPawn, BPawn, BPawn, BPawn, BPawn, BPawn},
-                        {Empty, BBishop, Empty, Empty, Empty, Empty, Empty, BRook, Empty},
-                        {BLance, BKnight, BSilver, BGold, BKing, BGold, BSilver, BKnight, BLance},
+                        {B_FU, B_FU, B_FU, B_FU, B_FU, B_FU, B_FU, B_FU, B_FU},
+                        {Empty, B_KA, Empty, Empty, Empty, Empty, Empty, B_HI, Empty},
+                        {B_KY, B_KE, B_GI, B_KI, B_OU, B_KI, B_GI, B_KE, B_KY},
                         // clang-format on
                     };
                     for (rank_index = 0; rank_index < 9; ++rank_index) {
@@ -444,8 +444,8 @@ private:
 
         // Pieces in hand
         int pih_len = 0;
-        for (Piece p = BPawn; p < PieceNone; ++p) {
-            if (p > BDragon && p < WPawn)
+        for (Piece p = B_FU; p < PieceNone; ++p) {
+            if (p > B_RY && p < W_FU)
                 continue;
             if (pieces_in_hand[p] >= 1) {
                 pih_len += 1;

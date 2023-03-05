@@ -55,14 +55,14 @@ namespace {
     ExtMove* generateDropMoves(ExtMove* moveList, const Position& pos, const Bitboard& target) {
         const Hand hand = pos.hand(US);
         // まず、歩に対して指し手を生成
-        if (hand.exists<HPawn>()) {
+        if (hand.exists<H_FU>()) {
             Bitboard toBB = target;
             // 一段目には打てない
             const Rank TRank1 = (US == color::BLACK ? Rank1 : Rank9);
             toBB.andEqualNot(rankMask<TRank1>());
 
             // 二歩の回避
-            Bitboard pawnsBB = pos.bbOf(Pawn, US);
+            Bitboard pawnsBB = pos.bbOf(FU, US);
             Square pawnsSquare;
             foreachBB(pawnsBB, pawnsSquare, [&](const int part) {
                     toBB.set(part, toBB.p(part) & ~squareFileMask(pawnsSquare).p(part));
@@ -81,14 +81,14 @@ namespace {
                     if (!pos.isPawnDropCheckMate(US, pawnDropCheckSquare))
                         // ここで clearBit だけして MakeMove しないことも出来る。
                         // 指し手が生成される順番が変わり、王手が先に生成されるが、後で問題にならないか?
-                        (*moveList++).move = makeDropMove(Pawn, pawnDropCheckSquare);
+                        (*moveList++).move = makeDropMove(FU, pawnDropCheckSquare);
                     toBB.xorBit(pawnDropCheckSquare);
                 }
             }
 
             Square to;
             FOREACH_BB(toBB, to, {
-                    (*moveList++).move = makeDropMove(Pawn, to);
+                    (*moveList++).move = makeDropMove(FU, to);
                 });
         }
 
@@ -98,14 +98,14 @@ namespace {
             int haveHandNum = 0; // 持ち駒の駒の種類の数
 
             // 桂馬、香車、それ以外の順番で格納する。(駒を打てる位置が限定的な順)
-            if (hand.exists<HKnight>()) haveHand[haveHandNum++] = Knight;
+            if (hand.exists<H_KE>()) haveHand[haveHandNum++] = KE;
             const int noKnightIdx      = haveHandNum; // 桂馬を除く駒でループするときのループの初期値
-            if (hand.exists<HLance >()) haveHand[haveHandNum++] = Lance;
+            if (hand.exists<H_KY >()) haveHand[haveHandNum++] = KY;
             const int noKnightLanceIdx = haveHandNum; // 桂馬, 香車を除く駒でループするときのループの初期値
-            if (hand.exists<HSilver>()) haveHand[haveHandNum++] = Silver;
-            if (hand.exists<HGold  >()) haveHand[haveHandNum++] = Gold;
-            if (hand.exists<HBishop>()) haveHand[haveHandNum++] = Bishop;
-            if (hand.exists<HRook  >()) haveHand[haveHandNum++] = Rook;
+            if (hand.exists<H_GI>()) haveHand[haveHandNum++] = GI;
+            if (hand.exists<H_KI  >()) haveHand[haveHandNum++] = KI;
+            if (hand.exists<H_KA>()) haveHand[haveHandNum++] = KA;
+            if (hand.exists<H_HI  >()) haveHand[haveHandNum++] = HI;
 
             const Rank TRank2 = (US == color::BLACK ? Rank2 : Rank8);
             const Rank TRank1 = (US == color::BLACK ? Rank1 : Rank9);
@@ -159,7 +159,7 @@ namespace {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square /*ksq*/) {
             static_assert(PT == GoldHorseDragon, "");
             // 金、成金、馬、竜のbitboardをまとめて扱う。
-            Bitboard fromBB = (pos.goldsBB() | pos.bbOf(Horse, Dragon)) & pos.bbOf(US);
+            Bitboard fromBB = (pos.goldsBB() | pos.bbOf(UM, RY)) & pos.bbOf(US);
             while (fromBB) {
                 const Square from = fromBB.firstOneFromSQ11();
                 // from にある駒の種類を判別
@@ -173,14 +173,14 @@ namespace {
         }
     };
     // 歩の場合
-    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, Pawn, US, ALL> {
+    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, FU, US, ALL> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square /*ksq*/) {
             // Txxx は先手、後手の情報を吸収した変数。数字は先手に合わせている。
             const Rank TRank4 = (US == color::BLACK ? Rank4 : Rank6);
             const Bitboard TRank123BB = inFrontMask<US, TRank4>();
             const SquareDelta TDeltaS = (US == color::BLACK ? DeltaS : DeltaN);
 
-            Bitboard toBB = pawnAttack<US>(pos.bbOf(Pawn, US)) & target;
+            Bitboard toBB = pawnAttack<US>(pos.bbOf(FU, US)) & target;
 
             // 成り
             if (MT != NonCaptureMinusPro) {
@@ -190,11 +190,11 @@ namespace {
                     Square to;
                     FOREACH_BB(toOn123BB, to, {
                             const Square from = to + TDeltaS;
-                            (*moveList++).move = makePromoteMove<MT>(Pawn, from, to, pos);
+                            (*moveList++).move = makePromoteMove<MT>(FU, from, to, pos);
                             if (MT == NonEvasion || ALL) {
                                 const Rank TRank1 = (US == color::BLACK ? Rank1 : Rank9);
                                 if (makeRank(to) != TRank1)
-                                    (*moveList++).move = makeNonPromoteMove<MT>(Pawn, from, to, pos);
+                                    (*moveList++).move = makeNonPromoteMove<MT>(FU, from, to, pos);
                             }
                         });
                 }
@@ -207,36 +207,36 @@ namespace {
             Square to;
             FOREACH_BB(toBB, to, {
                     const Square from = to + TDeltaS;
-                    (*moveList++).move = makeNonPromoteMove<MT>(Pawn, from, to, pos);
+                    (*moveList++).move = makeNonPromoteMove<MT>(FU, from, to, pos);
                 });
             return moveList;
         }
     };
     // 香車の場合
-    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, Lance, US, ALL> {
+    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, KY, US, ALL> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square /*ksq*/) {
-            Bitboard fromBB = pos.bbOf(Lance, US);
+            Bitboard fromBB = pos.bbOf(KY, US);
             while (fromBB) {
                 const Square from = fromBB.firstOneFromSQ11();
-                Bitboard toBB = pos.attacksFrom<Lance>(US, from) & target;
+                Bitboard toBB = pos.attacksFrom<KY>(US, from) & target;
                 do {
                     if (toBB) {
                         // 駒取り対象は必ず一つ以下なので、toBB のビットを 0 にする必要がない。
                         const Square to = (MT == Capture || MT == CapturePlusPro ? toBB.constFirstOneFromSQ11() : toBB.firstOneFromSQ11());
                         const bool toCanPromote = canPromote(US, makeRank(to));
                         if (toCanPromote) {
-                            (*moveList++).move = makePromoteMove<MT>(Lance, from, to, pos);
+                            (*moveList++).move = makePromoteMove<MT>(KY, from, to, pos);
                             if (MT == NonEvasion || ALL) {
                                 if (isBehind<US, Rank1, Rank9>(makeRank(to))) // 1段目の不成は省く
-                                    (*moveList++).move = makeNonPromoteMove<MT>(Lance, from, to, pos);
+                                    (*moveList++).move = makeNonPromoteMove<MT>(KY, from, to, pos);
                             }
                             else if (MT != NonCapture && MT != NonCaptureMinusPro) { // 駒を取らない3段目の不成を省く
                                 if (isBehind<US, Rank2, Rank8>(makeRank(to))) // 2段目の不成を省く
-                                    (*moveList++).move = makeNonPromoteMove<MT>(Lance, from, to, pos);
+                                    (*moveList++).move = makeNonPromoteMove<MT>(KY, from, to, pos);
                             }
                         }
                         else
-                            (*moveList++).move = makeNonPromoteMove<MT>(Lance, from, to, pos);
+                            (*moveList++).move = makeNonPromoteMove<MT>(KY, from, to, pos);
                     }
                     // 駒取り対象は必ず一つ以下なので、loop は不要。最適化で do while が無くなると良い。
                 } while (!(MT == Capture || MT == CapturePlusPro) && toBB);
@@ -245,62 +245,62 @@ namespace {
         }
     };
     // 桂馬の場合
-    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, Knight, US, ALL> {
+    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, KE, US, ALL> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square /*ksq*/) {
-            Bitboard fromBB = pos.bbOf(Knight, US);
+            Bitboard fromBB = pos.bbOf(KE, US);
             while (fromBB) {
                 const Square from = fromBB.firstOneFromSQ11();
-                Bitboard toBB = pos.attacksFrom<Knight>(US, from) & target;
+                Bitboard toBB = pos.attacksFrom<KE>(US, from) & target;
                 FOREACH_BB(toBB, const Square to, {
                     const bool toCanPromote = canPromote(US, makeRank(to));
                     if (toCanPromote) {
-                        (*moveList++).move = makePromoteMove<MT>(Knight, from, to, pos);
+                        (*moveList++).move = makePromoteMove<MT>(KE, from, to, pos);
                         if (isBehind<US, Rank2, Rank8>(makeRank(to))) // 1, 2段目の不成は省く
-                            (*moveList++).move = makeNonPromoteMove<MT>(Knight, from, to, pos);
+                            (*moveList++).move = makeNonPromoteMove<MT>(KE, from, to, pos);
                     }
                     else
-                        (*moveList++).move = makeNonPromoteMove<MT>(Knight, from, to, pos);
+                        (*moveList++).move = makeNonPromoteMove<MT>(KE, from, to, pos);
                 });
             }
             return moveList;
         }
     };
     // 銀の場合
-    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, Silver, US, ALL> {
+    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, GI, US, ALL> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square /*ksq*/) {
-            Bitboard fromBB = pos.bbOf(Silver, US);
+            Bitboard fromBB = pos.bbOf(GI, US);
             while (fromBB) {
                 const Square from = fromBB.firstOneFromSQ11();
                 const bool fromCanPromote = canPromote(US, makeRank(from));
-                Bitboard toBB = pos.attacksFrom<Silver>(US, from) & target;
+                Bitboard toBB = pos.attacksFrom<GI>(US, from) & target;
                 FOREACH_BB(toBB, const Square to, {
                     const bool toCanPromote = canPromote(US, makeRank(to));
                     if (fromCanPromote | toCanPromote)
-                        (*moveList++).move = makePromoteMove<MT>(Silver, from, to, pos);
-                    (*moveList++).move = makeNonPromoteMove<MT>(Silver, from, to, pos);
+                        (*moveList++).move = makePromoteMove<MT>(GI, from, to, pos);
+                    (*moveList++).move = makeNonPromoteMove<MT>(GI, from, to, pos);
                 });
             }
             return moveList;
         }
     };
-    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, Bishop, US, ALL> {
+    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, KA, US, ALL> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square ksq) {
-            return generateBishopOrRookMoves<MT, Bishop, US, ALL>(moveList, pos, target, ksq);
+            return generateBishopOrRookMoves<MT, KA, US, ALL>(moveList, pos, target, ksq);
         }
     };
-    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, Rook, US, ALL> {
+    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, HI, US, ALL> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square ksq) {
-            return generateBishopOrRookMoves<MT, Rook, US, ALL>(moveList, pos, target, ksq);
+            return generateBishopOrRookMoves<MT, HI, US, ALL>(moveList, pos, target, ksq);
         }
     };
     // 玉の場合
     // 必ず盤上に 1 枚だけあることを前提にすることで、while ループを 1 つ無くして高速化している。
-    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, King, US, ALL> {
+    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, OU, US, ALL> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square /*ksq*/) {
             const Square from = pos.kingSquare(US);
-            Bitboard toBB = pos.attacksFrom<King>(US, from) & target;
+            Bitboard toBB = pos.attacksFrom<OU>(US, from) & target;
             FOREACH_BB(toBB, const Square to, {
-                (*moveList++).move = makeNonPromoteMove<MT>(King, from, to, pos);
+                (*moveList++).move = makeNonPromoteMove<MT>(OU, from, to, pos);
             });
             return moveList;
         }
@@ -314,12 +314,12 @@ namespace {
             const PieceType pt = pieceToPieceType(pos.piece(from));
             switch (pt) {
             case Empty    : assert(false); break; // 最適化の為のダミー
-            case Pawn     : case Lance    : case Knight   : case Silver   : case Bishop   : case Rook     :
+            case FU     : case KY    : case KE   : case GI   : case KA   : case HI     :
                 (*moveList++).move = ((canPromote(us, makeRank(to)) | canPromote(us, makeRank(from))) ?
                                       makePromoteMove<Capture>(pt, from, to, pos) :
                                       makeNonPromoteMove<Capture>(pt, from, to, pos));
                 break;
-            case Gold     : case King     : case ProPawn  : case ProLance : case ProKnight: case ProSilver: case Horse    : case Dragon   :
+            case KI     : case OU     : case TO  : case NY : case NK: case NG: case UM    : case RY   :
                 (*moveList++).move = makeNonPromoteMove<Capture>(pt, from, to, pos);
                 break;
             default       : UNREACHABLE;
@@ -355,14 +355,14 @@ namespace {
                 allOneBB(); // error
             const Square ksq = pos.kingSquare(color::opposite(US));
 
-            moveList = GeneratePieceMoves<MT, Pawn           , US, ALL>()(moveList, pos, targetPawn, ksq);
-            moveList = GeneratePieceMoves<MT, Lance          , US, ALL>()(moveList, pos, targetOther, ksq);
-            moveList = GeneratePieceMoves<MT, Knight         , US, ALL>()(moveList, pos, targetOther, ksq);
-            moveList = GeneratePieceMoves<MT, Silver         , US, ALL>()(moveList, pos, targetOther, ksq);
-            moveList = GeneratePieceMoves<MT, Bishop         , US, ALL>()(moveList, pos, targetOther, ksq);
-            moveList = GeneratePieceMoves<MT, Rook           , US, ALL>()(moveList, pos, targetOther, ksq);
+            moveList = GeneratePieceMoves<MT, FU           , US, ALL>()(moveList, pos, targetPawn, ksq);
+            moveList = GeneratePieceMoves<MT, KY          , US, ALL>()(moveList, pos, targetOther, ksq);
+            moveList = GeneratePieceMoves<MT, KE         , US, ALL>()(moveList, pos, targetOther, ksq);
+            moveList = GeneratePieceMoves<MT, GI         , US, ALL>()(moveList, pos, targetOther, ksq);
+            moveList = GeneratePieceMoves<MT, KA         , US, ALL>()(moveList, pos, targetOther, ksq);
+            moveList = GeneratePieceMoves<MT, HI           , US, ALL>()(moveList, pos, targetOther, ksq);
             moveList = GeneratePieceMoves<MT, GoldHorseDragon, US, ALL>()(moveList, pos, targetOther, ksq);
-            moveList = GeneratePieceMoves<MT, King           , US, ALL>()(moveList, pos, targetOther, ksq);
+            moveList = GeneratePieceMoves<MT, OU           , US, ALL>()(moveList, pos, targetOther, ksq);
 
             return moveList;
         }
@@ -388,42 +388,42 @@ namespace {
     {
         switch (pos.piece(checkSq)) {
 //      case Empty: assert(false); break; // 最適化の為のダミー
-        case (THEM == color::BLACK ? BPawn      : WPawn):
-        case (THEM == color::BLACK ? BKnight    : WKnight):
+        case (THEM == color::BLACK ? B_FU      : W_FU):
+        case (THEM == color::BLACK ? B_KE    : W_KE):
             // 歩、桂馬で王手したときは、どこへ逃げても、その駒で取られることはない。
             // よって、ここでは何もしない。
             assert(
-                pos.piece(checkSq) == (THEM == color::BLACK ? BPawn   : WPawn) ||
-                pos.piece(checkSq) == (THEM == color::BLACK ? BKnight : WKnight)
+                pos.piece(checkSq) == (THEM == color::BLACK ? B_FU   : W_FU) ||
+                pos.piece(checkSq) == (THEM == color::BLACK ? B_KE : W_KE)
                 );
         break;
-        case (THEM == color::BLACK ? BLance     : WLance):
+        case (THEM == color::BLACK ? B_KY     : W_KY):
             bannedKingToBB |= lanceAttackToEdge(THEM, checkSq);
             break;
-        case (THEM == color::BLACK ? BSilver    : WSilver):
+        case (THEM == color::BLACK ? B_GI    : W_GI):
             bannedKingToBB |= silverAttack(THEM, checkSq);
             break;
-        case (THEM == color::BLACK ? BGold      : WGold):
-        case (THEM == color::BLACK ? BProPawn   : WProPawn):
-        case (THEM == color::BLACK ? BProLance  : WProLance):
-        case (THEM == color::BLACK ? BProKnight : WProKnight):
-        case (THEM == color::BLACK ? BProSilver : WProSilver):
+        case (THEM == color::BLACK ? B_KI      : W_KI):
+        case (THEM == color::BLACK ? B_TO   : W_TO):
+        case (THEM == color::BLACK ? B_NY  : W_NY):
+        case (THEM == color::BLACK ? B_NK : W_NK):
+        case (THEM == color::BLACK ? B_NG : W_NG):
             bannedKingToBB |= goldAttack(THEM, checkSq);
         break;
-        case (THEM == color::BLACK ? BBishop    : WBishop):
+        case (THEM == color::BLACK ? B_KA    : W_KA):
             bannedKingToBB |= bishopAttackToEdge(checkSq);
             break;
-        case (THEM == color::BLACK ? BHorse     : WHorse):
+        case (THEM == color::BLACK ? B_UM     : W_UM):
             bannedKingToBB |= horseAttackToEdge(checkSq);
             break;
-        case (THEM == color::BLACK ? BRook      : WRook):
+        case (THEM == color::BLACK ? B_HI      : W_HI):
             bannedKingToBB |= rookAttackToEdge(checkSq);
             break;
-        case (THEM == color::BLACK ? BDragon    : WDragon):
+        case (THEM == color::BLACK ? B_RY    : W_RY):
             if (squareRelation(checkSq, ksq) & DirecDiag) {
                 // 斜めから王手したときは、玉の移動先と王手した駒の間に駒があることがあるので、
                 // dragonAttackToEdge(checkSq) は使えない。
-                bannedKingToBB |= pos.attacksFrom<Dragon>(checkSq);
+                bannedKingToBB |= pos.attacksFrom<RY>(checkSq);
             }
             else {
                 bannedKingToBB |= dragonAttackToEdge(checkSq);
@@ -466,7 +466,7 @@ namespace {
             FOREACH_BB(bb, const Square to, {
                 // 移動先に相手駒の利きがあるか調べずに指し手を生成する。
                 // attackersTo() が重いので、movePicker か search で合法手か調べる。
-                (*moveList++).move = makeNonPromoteMove<Capture>(King, ksq, to, pos);
+                (*moveList++).move = makeNonPromoteMove<Capture>(OU, ksq, to, pos);
             });
 
             // 両王手なら、玉を移動するしか回避方法は無い。
@@ -478,12 +478,12 @@ namespace {
             // pin されているかどうかは movePicker か search で調べる。
             const Bitboard target1 = betweenBB(checkSq, ksq);
             const Bitboard target2 = target1 | checkers;
-            moveList = GeneratePieceMoves<Evasion, Pawn,   US, ALL>()(moveList, pos, target2, ksq);
-            moveList = GeneratePieceMoves<Evasion, Lance,  US, ALL>()(moveList, pos, target2, ksq);
-            moveList = GeneratePieceMoves<Evasion, Knight, US, ALL>()(moveList, pos, target2, ksq);
-            moveList = GeneratePieceMoves<Evasion, Silver, US, ALL>()(moveList, pos, target2, ksq);
-            moveList = GeneratePieceMoves<Evasion, Bishop, US, ALL>()(moveList, pos, target2, ksq);
-            moveList = GeneratePieceMoves<Evasion, Rook,   US, ALL>()(moveList, pos, target2, ksq);
+            moveList = GeneratePieceMoves<Evasion, FU,   US, ALL>()(moveList, pos, target2, ksq);
+            moveList = GeneratePieceMoves<Evasion, KY,  US, ALL>()(moveList, pos, target2, ksq);
+            moveList = GeneratePieceMoves<Evasion, KE, US, ALL>()(moveList, pos, target2, ksq);
+            moveList = GeneratePieceMoves<Evasion, GI, US, ALL>()(moveList, pos, target2, ksq);
+            moveList = GeneratePieceMoves<Evasion, KA, US, ALL>()(moveList, pos, target2, ksq);
+            moveList = GeneratePieceMoves<Evasion, HI,   US, ALL>()(moveList, pos, target2, ksq);
             moveList = GeneratePieceMoves<Evasion, GoldHorseDragon,   US, ALL>()(moveList, pos, target2, ksq);
 
             if (target1)
@@ -504,14 +504,14 @@ namespace {
             target |= pos.bbOf(color::opposite(US));
             const Square ksq = pos.kingSquare(color::opposite(US));
 
-            moveList = GeneratePieceMoves<NonEvasion, Pawn           , US, false>()(moveList, pos, target, ksq);
-            moveList = GeneratePieceMoves<NonEvasion, Lance          , US, false>()(moveList, pos, target, ksq);
-            moveList = GeneratePieceMoves<NonEvasion, Knight         , US, false>()(moveList, pos, target, ksq);
-            moveList = GeneratePieceMoves<NonEvasion, Silver         , US, false>()(moveList, pos, target, ksq);
-            moveList = GeneratePieceMoves<NonEvasion, Bishop         , US, false>()(moveList, pos, target, ksq);
-            moveList = GeneratePieceMoves<NonEvasion, Rook           , US, false>()(moveList, pos, target, ksq);
+            moveList = GeneratePieceMoves<NonEvasion, FU           , US, false>()(moveList, pos, target, ksq);
+            moveList = GeneratePieceMoves<NonEvasion, KY          , US, false>()(moveList, pos, target, ksq);
+            moveList = GeneratePieceMoves<NonEvasion, KE         , US, false>()(moveList, pos, target, ksq);
+            moveList = GeneratePieceMoves<NonEvasion, GI         , US, false>()(moveList, pos, target, ksq);
+            moveList = GeneratePieceMoves<NonEvasion, KA         , US, false>()(moveList, pos, target, ksq);
+            moveList = GeneratePieceMoves<NonEvasion, HI           , US, false>()(moveList, pos, target, ksq);
             moveList = GeneratePieceMoves<NonEvasion, GoldHorseDragon, US, false>()(moveList, pos, target, ksq);
-            moveList = GeneratePieceMoves<NonEvasion, King           , US, false>()(moveList, pos, target, ksq);
+            moveList = GeneratePieceMoves<NonEvasion, OU           , US, false>()(moveList, pos, target, ksq);
 
             return moveList;
         }
@@ -580,7 +580,7 @@ namespace {
     FORCE_INLINE ExtMove* generatCheckMoves(ExtMove* moveList, const PieceType pt, const Position& pos, const Square from, const Square to) {
         switch (pt) {
         case Empty: assert(false); break; // 最適化の為のダミー
-        case Pawn:
+        case FU:
             if (canPromote(US, makeRank(to))) {
                 (*moveList++).move = makePromoteMove<Capture>(pt, from, to, pos);
                 // 不成で移動する升
@@ -592,7 +592,7 @@ namespace {
             else
                 (*moveList++).move = makeNonPromoteMove<Capture>(pt, from, to, pos);
             break;
-        case Lance:
+        case KY:
             if (canPromote(US, makeRank(to))) {
                 (*moveList++).move = makePromoteMove<Capture>(pt, from, to, pos);
                 // 不成で移動する升
@@ -605,7 +605,7 @@ namespace {
             else
                 (*moveList++).move = makeNonPromoteMove<Capture>(pt, from, to, pos);
             break;
-        case Knight:
+        case KE:
             if (canPromote(US, makeRank(to))) {
                 (*moveList++).move = makePromoteMove<Capture>(pt, from, to, pos);
                 // 不成で移動する升
@@ -615,16 +615,16 @@ namespace {
             else
                 (*moveList++).move = makeNonPromoteMove<Capture>(pt, from, to, pos);
             break;
-        case Silver:
+        case GI:
             if (canPromote(US, makeRank(to)) | canPromote(US, makeRank(from))) {
                 (*moveList++).move = makePromoteMove<Capture>(pt, from, to, pos);
             }
             (*moveList++).move = makeNonPromoteMove<Capture>(pt, from, to, pos);
             break;
-        case Gold: case King: case ProPawn: case ProLance: case ProKnight: case ProSilver: case Horse: case Dragon:
+        case KI: case OU: case TO: case NY: case NK: case NG: case UM: case RY:
             (*moveList++).move = makeNonPromoteMove<Capture>(pt, from, to, pos);
             break;
-        case Bishop: case Rook:
+        case KA: case HI:
             if (canPromote(US, makeRank(to)) | canPromote(US, makeRank(from))) {
                 (*moveList++).move = makePromoteMove<Capture>(pt, from, to, pos);
                 // 不成で移動する升
@@ -671,14 +671,14 @@ namespace {
             // 以下の方法だとxとして飛(龍)は100%含まれる。角・馬は60%ぐらいの確率で含まれる。事前条件でもう少し省ければ良いのだが…。
             const Bitboard x =
                 (
-                (pos.bbOf(Pawn)   & pawnCheckTable(US, ksq)) |
-                    (pos.bbOf(Lance)  & lanceCheckTable(US, ksq)) |
-                    (pos.bbOf(Knight) & knightCheckTable(US, ksq)) |
-                    (pos.bbOf(Silver) & silverCheckTable(US, ksq)) |
+                (pos.bbOf(FU)   & pawnCheckTable(US, ksq)) |
+                    (pos.bbOf(KY)  & lanceCheckTable(US, ksq)) |
+                    (pos.bbOf(KE) & knightCheckTable(US, ksq)) |
+                    (pos.bbOf(GI) & silverCheckTable(US, ksq)) |
                     (pos.goldsBB() & goldCheckTable(US, ksq)) |
-                    (pos.bbOf(Bishop) & bishopCheckTable(US, ksq)) |
-                    (pos.bbOf(Rook, Dragon)) | // ROOK,DRAGONは無条件全域
-                    (pos.bbOf(Horse)  & horseCheckTable(US, ksq))
+                    (pos.bbOf(KA) & bishopCheckTable(US, ksq)) |
+                    (pos.bbOf(HI, RY)) | // ROOK,DRAGONは無条件全域
+                    (pos.bbOf(UM)  & horseCheckTable(US, ksq))
                     ) & pos.bbOf(US);
 
             // ここには王を敵玉の8近傍に移動させる指し手も含まれるが、王が近接する形はレアケースなので
@@ -707,7 +707,7 @@ namespace {
                     else if (x.isSet(from)) {
                         const PieceType pt = pieceToPieceType(pos.piece(from));
                         switch (pt) {
-                        case Pawn: // 歩
+                        case FU: // 歩
                         {
                             if (pawnAttack(US, from).isSet(to)) {
                                 // 成って王手
@@ -723,7 +723,7 @@ namespace {
                             }
                             break;
                         }
-                        case Silver: // 銀
+                        case GI: // 銀
                         {
                             if ((silverAttack(opp, ksq) & silverAttack(US, from)).isSet(to)) {
                                 (*moveList++).move = makeNonPromoteMove<Capture>(pt, from, to, pos);
@@ -736,18 +736,18 @@ namespace {
                             }
                             break;
                         }
-                        case Gold: // 金
-                        case ProPawn: // と金
-                        case ProLance: // 成香
-                        case ProKnight: // 成桂
-                        case ProSilver: // 成銀
+                        case KI: // 金
+                        case TO: // と金
+                        case NY: // 成香
+                        case NK: // 成桂
+                        case NG: // 成銀
                         {
                             if ((goldAttack(opp, ksq) & goldAttack(US, from)).isSet(to)) {
                                 (*moveList++).move = makeNonPromoteMove<Capture>(pt, from, to, pos);
                             }
                             break;
                         }
-                        case Horse: // 馬
+                        case UM: // 馬
                         {
                             // 玉が対角上にない場合
                             assert(abs(makeFile(ksq) - makeFile(from)) != abs(makeRank(ksq) - makeRank(from)));
@@ -756,7 +756,7 @@ namespace {
                             }
                             break;
                         }
-                        case Dragon: // 竜
+                        case RY: // 竜
                         {
                             // 玉が直線上にない場合
                             assert(makeFile(ksq) != makeFile(from) && makeRank(ksq) != makeRank(from));
@@ -765,10 +765,10 @@ namespace {
                             }
                             break;
                         }
-                        case Lance: // 香車
-                        case Knight: // 桂馬
-                        case Bishop: // 角
-                        case Rook: // 飛車
+                        case KY: // 香車
+                        case KE: // 桂馬
+                        case KA: // 角
+                        case HI: // 飛車
                         {
                             assert(false);
                             break;
@@ -788,7 +788,7 @@ namespace {
                 // 直接王手のみ。
                 const PieceType pt = pieceToPieceType(pos.piece(from));
                 switch (pt) {
-                case Pawn: // 歩
+                case FU: // 歩
                 {
                     // 成って王手
                     Bitboard toBB = pawnAttack(US, from) & target;
@@ -806,7 +806,7 @@ namespace {
                     });
                     break;
                 }
-                case Lance: // 香車
+                case KY: // 香車
                 {
                     // 玉と筋が異なる場合
                     if (makeFile(ksq) != makeFile(from)) {
@@ -841,7 +841,7 @@ namespace {
                     }
                     break;
                 }
-                case Knight: // 桂馬
+                case KE: // 桂馬
                 {
                     Bitboard toBB = knightAttack(opp, ksq) & knightAttack(US, from) & target;
                     FOREACH_BB(toBB, const Square to, {
@@ -856,7 +856,7 @@ namespace {
                     });
                     break;
                 }
-                case Silver: // 銀
+                case GI: // 銀
                 {
                     Bitboard toBB = silverAttack(opp, ksq) & silverAttack(US, from) & target;
                     FOREACH_BB(toBB, const Square to, {
@@ -871,11 +871,11 @@ namespace {
                     });
                     break;
                 }
-                case Gold: // 金
-                case ProPawn: // と金
-                case ProLance: // 成香
-                case ProKnight: // 成桂
-                case ProSilver: // 成銀
+                case KI: // 金
+                case TO: // と金
+                case NY: // 成香
+                case NK: // 成桂
+                case NG: // 成銀
                 {
                     Bitboard toBB = goldAttack(opp, ksq) & goldAttack(US, from) & target;
                     FOREACH_BB(toBB, const Square to, {
@@ -883,7 +883,7 @@ namespace {
                     });
                     break;
                 }
-                case Bishop: // 角
+                case KA: // 角
                 {
                     // 玉が対角上にない場合
                     if (abs(makeFile(ksq) - makeFile(from)) != abs(makeRank(ksq) - makeRank(from))) {
@@ -926,7 +926,7 @@ namespace {
                     }
                     break;
                 }
-                case Rook: // 飛車
+                case HI: // 飛車
                 {
                     // 玉が直線上にない場合
                     if (makeFile(ksq) != makeFile(from) && makeRank(ksq) != makeRank(from)) {
@@ -968,7 +968,7 @@ namespace {
                     }
                     break;
                 }
-                case Horse: // 馬
+                case UM: // 馬
                 {
                     // 玉が対角上にない場合
                     if (abs(makeFile(ksq) - makeFile(from)) != abs(makeRank(ksq) - makeRank(from))) {
@@ -988,7 +988,7 @@ namespace {
                     }
                     break;
                 }
-                case Dragon: // 竜
+                case RY: // 竜
                 {
                     // 玉が直線上にない場合
                     if (makeFile(ksq) != makeFile(from) && makeRank(ksq) != makeRank(from)) {
@@ -1031,10 +1031,10 @@ namespace {
             const Hand ourHand = pos.hand(US);
 
             // 歩打ち
-            if (ourHand.exists<HPawn>()) {
+            if (ourHand.exists<H_FU>()) {
                 Bitboard toBB = dropTarget & pawnAttack(opp, ksq);
                 // 二歩の回避
-                Bitboard pawnsBB = pos.bbOf(Pawn, US);
+                Bitboard pawnsBB = pos.bbOf(FU, US);
                 Square pawnsSquare;
                 foreachBB(pawnsBB, pawnsSquare, [&](const int part) {
                     toBB.set(part, toBB.p(part) & ~squareFileMask(pawnsSquare).p(part));
@@ -1052,68 +1052,68 @@ namespace {
                         if (!pos.isPawnDropCheckMate(US, pawnDropCheckSquare))
                             // ここで clearBit だけして MakeMove しないことも出来る。
                             // 指し手が生成される順番が変わり、王手が先に生成されるが、後で問題にならないか?
-                            (*moveList++).move = makeDropMove(Pawn, pawnDropCheckSquare);
+                            (*moveList++).move = makeDropMove(FU, pawnDropCheckSquare);
                         toBB.xorBit(pawnDropCheckSquare);
                     }
                 }
 
                 Square to;
                 FOREACH_BB(toBB, to, {
-                    (*moveList++).move = makeDropMove(Pawn, to);
+                    (*moveList++).move = makeDropMove(FU, to);
                 });
             }
 
             // 香車打ち
-            if (ourHand.exists<HLance>()) {
+            if (ourHand.exists<H_KY>()) {
                 Bitboard toBB = dropTarget & lanceAttack(opp, ksq, pos.occupiedBB());
                 Square to;
                 FOREACH_BB(toBB, to, {
-                    (*moveList++).move = makeDropMove(Lance, to);
+                    (*moveList++).move = makeDropMove(KY, to);
                 });
             }
 
             // 桂馬打ち
-            if (ourHand.exists<HKnight>()) {
+            if (ourHand.exists<H_KE>()) {
                 Bitboard toBB = dropTarget & knightAttack(opp, ksq);
                 Square to;
                 FOREACH_BB(toBB, to, {
-                    (*moveList++).move = makeDropMove(Knight, to);
+                    (*moveList++).move = makeDropMove(KE, to);
                 });
             }
 
             // 銀打ち
-            if (ourHand.exists<HSilver>()) {
+            if (ourHand.exists<H_GI>()) {
                 Bitboard toBB = dropTarget & silverAttack(opp, ksq);
                 Square to;
                 FOREACH_BB(toBB, to, {
-                    (*moveList++).move = makeDropMove(Silver, to);
+                    (*moveList++).move = makeDropMove(GI, to);
                 });
             }
 
             // 金打ち
-            if (ourHand.exists<HGold>()) {
+            if (ourHand.exists<H_KI>()) {
                 Bitboard toBB = dropTarget & goldAttack(opp, ksq);
                 Square to;
                 FOREACH_BB(toBB, to, {
-                    (*moveList++).move = makeDropMove(Gold, to);
+                    (*moveList++).move = makeDropMove(KI, to);
                 });
             }
 
             // 角打ち
-            if (ourHand.exists<HBishop>()) {
+            if (ourHand.exists<H_KA>()) {
                 Bitboard toBB = dropTarget & bishopAttack(ksq, pos.occupiedBB());
                 Square to;
                 FOREACH_BB(toBB, to, {
-                    (*moveList++).move = makeDropMove(Bishop, to);
+                    (*moveList++).move = makeDropMove(KA, to);
                 });
             }
 
             // 飛車打ち
-            if (ourHand.exists<HRook>()) {
+            if (ourHand.exists<H_HI>()) {
                 Bitboard toBB = dropTarget & rookAttack(ksq, pos.occupiedBB());
                 Square to;
                 FOREACH_BB(toBB, to, {
-                    (*moveList++).move = makeDropMove(Rook, to);
+                    (*moveList++).move = makeDropMove(HI, to);
                 });
             }
 

@@ -28,13 +28,13 @@
 // 手駒
 // 手駒の状態 (32bit に pack する)
 // 手駒の優劣判定を高速に行う為に各駒の間を1bit空ける。
-// xxxxxxxx xxxxxxxx xxxxxxxx xxx11111  Pawn
-// xxxxxxxx xxxxxxxx xxxxxxx1 11xxxxxx  Lance
-// xxxxxxxx xxxxxxxx xxx111xx xxxxxxxx  Knight
-// xxxxxxxx xxxxxxx1 11xxxxxx xxxxxxxx  Silver
-// xxxxxxxx xxx111xx xxxxxxxx xxxxxxxx  Gold
-// xxxxxxxx 11xxxxxx xxxxxxxx xxxxxxxx  Bishop
-// xxxxx11x xxxxxxxx xxxxxxxx xxxxxxxx  Rook
+// xxxxxxxx xxxxxxxx xxxxxxxx xxx11111  FU
+// xxxxxxxx xxxxxxxx xxxxxxx1 11xxxxxx  KY
+// xxxxxxxx xxxxxxxx xxx111xx xxxxxxxx  KE
+// xxxxxxxx xxxxxxx1 11xxxxxx xxxxxxxx  GI
+// xxxxxxxx xxx111xx xxxxxxxx xxxxxxxx  KI
+// xxxxxxxx 11xxxxxx xxxxxxxx xxxxxxxx  KA
+// xxxxx11x xxxxxxxx xxxxxxxx xxxxxxxx  HI
 class Hand
 {
 public:
@@ -52,13 +52,13 @@ public:
     u32 numOf() const
     {
         return (
-            HP == HPawn     ? ((value() & HPawnMask) >> HPawnShiftBits)
-            : HP == HLance  ? ((value() & HLanceMask) >> HLanceShiftBits)
-            : HP == HKnight ? ((value() & HKnightMask) >> HKnightShiftBits)
-            : HP == HSilver ? ((value() & HSilverMask) >> HSilverShiftBits)
-            : HP == HGold   ? ((value() & HGoldMask) >> HGoldShiftBits)
-            : HP == HBishop ? ((value() & HBishopMask) >> HBishopShiftBits)
-                            : ((value() /*& HRookMask*/) >> HRookShiftBits));
+            HP == H_FU   ? ((value() & HPawnMask) >> HPawnShiftBits)
+            : HP == H_KY ? ((value() & HLanceMask) >> HLanceShiftBits)
+            : HP == H_KE ? ((value() & HKnightMask) >> HKnightShiftBits)
+            : HP == H_GI ? ((value() & HSilverMask) >> HSilverShiftBits)
+            : HP == H_KI ? ((value() & HGoldMask) >> HGoldShiftBits)
+            : HP == H_KA ? ((value() & HBishopMask) >> HBishopShiftBits)
+                         : ((value() /*& HRookMask*/) >> HRookShiftBits));
     }
 
     u32 numOf(const HandPiece handPiece) const
@@ -72,13 +72,13 @@ public:
     u32 exists() const
     {
         return (
-            HP == HPawn     ? (value() & HPawnMask)
-            : HP == HLance  ? (value() & HLanceMask)
-            : HP == HKnight ? (value() & HKnightMask)
-            : HP == HSilver ? (value() & HSilverMask)
-            : HP == HGold   ? (value() & HGoldMask)
-            : HP == HBishop ? (value() & HBishopMask)
-                            : (value() & HRookMask));
+            HP == H_FU   ? (value() & HPawnMask)
+            : HP == H_KY ? (value() & HLanceMask)
+            : HP == H_KE ? (value() & HKnightMask)
+            : HP == H_GI ? (value() & HSilverMask)
+            : HP == H_KI ? (value() & HGoldMask)
+            : HP == H_KA ? (value() & HBishopMask)
+                         : (value() & HRookMask));
     }
     u32 exists(const HandPiece handPiece) const
     {
@@ -116,11 +116,11 @@ public:
     {
 #if 0
         // 全ての駒が ref 以上の枚数なので、true
-        return (ref.exists<HKnight>() <= this->exists<HKnight>()
-                && ref.exists<HSilver>() <= this->exists<HSilver>()
-                && ref.exists<HGold  >() <= this->exists<HGold  >()
-                && ref.exists<HBishop>() <= this->exists<HBishop>()
-                && ref.exists<HRook  >() <= this->exists<HRook  >());
+        return (ref.exists<H_KE>() <= this->exists<H_KE>()
+                && ref.exists<H_GI>() <= this->exists<H_GI>()
+                && ref.exists<H_KI  >() <= this->exists<H_KI  >()
+                && ref.exists<H_KA>() <= this->exists<H_KA>()
+                && ref.exists<H_HI  >() <= this->exists<H_HI  >());
 #else
         // こちらは、同じ意味でより高速
         // ref の方がどれか一つでも多くの枚数の駒を持っていれば、Borrow の位置のビットが立つ。
@@ -136,19 +136,19 @@ public:
     void setPP(const Hand us, const Hand them)
     {
         u32 mask = 0;
-        if (them.exists<HPawn>() == 0)
+        if (them.exists<H_FU>() == 0)
             mask |= HPawnMask;
-        if (them.exists<HLance>() == 0)
+        if (them.exists<H_KY>() == 0)
             mask |= HLanceMask;
-        if (them.exists<HKnight>() == 0)
+        if (them.exists<H_KE>() == 0)
             mask |= HKnightMask;
-        if (them.exists<HSilver>() == 0)
+        if (them.exists<H_GI>() == 0)
             mask |= HSilverMask;
-        if (them.exists<HGold>() == 0)
+        if (them.exists<H_KI>() == 0)
             mask |= HGoldMask;
-        if (them.exists<HBishop>() == 0)
+        if (them.exists<H_KA>() == 0)
             mask |= HBishopMask;
-        if (them.exists<HRook>() == 0)
+        if (them.exists<H_HI>() == 0)
             mask |= HRookMask;
 
         // 相手が一枚も持っていない種類の持駒を一旦0にする

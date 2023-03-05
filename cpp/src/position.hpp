@@ -181,15 +181,15 @@ struct HuffmanCodedPos
     static HuffmanCodeToPieceHash handCodeToPieceHash;
     static void init()
     {
-        for (Piece pc = Empty; pc <= BDragon; ++pc)
+        for (Piece pc = Empty; pc <= B_RY; ++pc)
             if (pieceToPieceType(pc)
-                != King) // 玉は位置で符号化するので、駒の種類では符号化しない。
+                != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
-        for (Piece pc = WPawn; pc <= WDragon; ++pc)
+        for (Piece pc = W_FU; pc <= W_RY; ++pc)
             if (pieceToPieceType(pc)
-                != King) // 玉は位置で符号化するので、駒の種類では符号化しない。
+                != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
-        for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp)
+        for (HandPiece hp = H_FU; hp < HandPieceNum; ++hp)
             for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c)
                 handCodeToPieceHash[handCodeTable[hp][c].key]
                     = colorAndPieceTypeToPiece(c, handPieceToPieceType(hp));
@@ -229,15 +229,15 @@ struct PackedSfen
     static HuffmanCodeToPieceHash handCodeToPieceHash;
     static void init()
     {
-        for (Piece pc = Empty; pc <= BDragon; ++pc)
+        for (Piece pc = Empty; pc <= B_RY; ++pc)
             if (pieceToPieceType(pc)
-                != King) // 玉は位置で符号化するので、駒の種類では符号化しない。
+                != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
-        for (Piece pc = WPawn; pc <= WDragon; ++pc)
+        for (Piece pc = W_FU; pc <= W_RY; ++pc)
             if (pieceToPieceType(pc)
-                != King) // 玉は位置で符号化するので、駒の種類では符号化しない。
+                != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
-        for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp)
+        for (HandPiece hp = H_FU; hp < HandPieceNum; ++hp)
             for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c)
                 handCodeToPieceHash[handCodeTable[hp][c].key]
                     = colorAndPieceTypeToPiece(c, handPieceToPieceType(hp));
@@ -433,7 +433,7 @@ public:
     // toFile と同じ筋に us の歩がないなら true
     bool noPawns(const color::ColorEnum us, const File toFile) const
     {
-        return !bbOf(Pawn, us).andIsAny(fileMask(toFile));
+        return !bbOf(FU, us).andIsAny(fileMask(toFile));
     }
     bool isPawnDropCheckMate(const color::ColorEnum us, const Square sq) const;
     // Pinされているfromの駒がtoに移動出来なければtrueを返す。
@@ -477,7 +477,7 @@ public:
 
     FORCE_INLINE Square kingSquare(const color::ColorEnum c) const
     {
-        assert(kingSquare_[c] == bbOf(King, c).constFirstOneFromSQ11());
+        assert(kingSquare_[c] == bbOf(OU, c).constFirstOneFromSQ11());
         return kingSquare_[c];
     }
 
@@ -524,8 +524,7 @@ public:
     template <PieceType PT>
     Bitboard attacksFrom(const Square sq, const Bitboard& occupied) const
     {
-        static_assert(
-            PT == Bishop || PT == Rook || PT == Horse || PT == Dragon, "");
+        static_assert(PT == KA || PT == HI || PT == UM || PT == RY, "");
         // color::ColorEnum は何でも良い。
         return attacksFrom<PT>(color::NUM_COLORS, sq, occupied);
     }
@@ -533,16 +532,14 @@ public:
     template <PieceType PT>
     Bitboard attacksFrom(const color::ColorEnum c, const Square sq) const
     {
-        static_assert(PT == Gold, ""); // Gold 以外は template 特殊化する。
+        static_assert(PT == KI, ""); // KI 以外は template 特殊化する。
         return goldAttack(c, sq);
     }
     template <PieceType PT>
     Bitboard attacksFrom(const Square sq) const
     {
         static_assert(
-            PT == Bishop || PT == Rook || PT == King || PT == Horse
-                || PT == Dragon,
-            "");
+            PT == KA || PT == HI || PT == OU || PT == UM || PT == RY, "");
         // color::ColorEnum は何でも良い。
         return attacksFrom<PT>(color::NUM_COLORS, sq);
     }
@@ -586,8 +583,8 @@ public:
     bool canPawnDrop(const Square sq) const
     {
         // 歩を持っていて、二歩ではない。
-        return hand(US).exists<HPawn>() > 0
-               && !(bbOf(Pawn, US) & fileMask(makeFile(sq)));
+        return hand(US).exists<H_FU>() > 0
+               && !(bbOf(FU, US) & fileMask(makeFile(sq)));
     }
     Bitboard pinnedPieces(
         const color::ColorEnum us, const Square from, const Square to) const;
@@ -735,10 +732,9 @@ private:
         const Square ksq = kingSquare(FindPinned ? us : them);
 
         // 障害物が無ければ玉に到達出来る駒のBitboardだけ残す。
-        pinners
-            &= (bbOf(Lance) & lanceAttackToEdge((FindPinned ? us : them), ksq))
-               | (bbOf(Rook, Dragon) & rookAttackToEdge(ksq))
-               | (bbOf(Bishop, Horse) & bishopAttackToEdge(ksq));
+        pinners &= (bbOf(KY) & lanceAttackToEdge((FindPinned ? us : them), ksq))
+                   | (bbOf(HI, RY) & rookAttackToEdge(ksq))
+                   | (bbOf(KA, UM) & bishopAttackToEdge(ksq));
 
         while (pinners) {
             const Square sq = pinners.firstOneFromSQ11();
@@ -802,31 +798,31 @@ private:
 };
 
 template <>
-inline Bitboard Position::attacksFrom<Lance>(
+inline Bitboard Position::attacksFrom<KY>(
     const color::ColorEnum c, const Square sq, const Bitboard& occupied)
 {
     return lanceAttack(c, sq, occupied);
 }
 template <>
-inline Bitboard Position::attacksFrom<Bishop>(
+inline Bitboard Position::attacksFrom<KA>(
     const color::ColorEnum, const Square sq, const Bitboard& occupied)
 {
     return bishopAttack(sq, occupied);
 }
 template <>
-inline Bitboard Position::attacksFrom<Rook>(
+inline Bitboard Position::attacksFrom<HI>(
     const color::ColorEnum, const Square sq, const Bitboard& occupied)
 {
     return rookAttack(sq, occupied);
 }
 template <>
-inline Bitboard Position::attacksFrom<Horse>(
+inline Bitboard Position::attacksFrom<UM>(
     const color::ColorEnum, const Square sq, const Bitboard& occupied)
 {
     return horseAttack(sq, occupied);
 }
 template <>
-inline Bitboard Position::attacksFrom<Dragon>(
+inline Bitboard Position::attacksFrom<RY>(
     const color::ColorEnum, const Square sq, const Bitboard& occupied)
 {
     return dragonAttack(sq, occupied);
@@ -834,55 +830,55 @@ inline Bitboard Position::attacksFrom<Dragon>(
 
 template <>
 inline Bitboard
-Position::attacksFrom<Pawn>(const color::ColorEnum c, const Square sq) const
+Position::attacksFrom<FU>(const color::ColorEnum c, const Square sq) const
 {
     return pawnAttack(c, sq);
 }
 template <>
 inline Bitboard
-Position::attacksFrom<Lance>(const color::ColorEnum c, const Square sq) const
+Position::attacksFrom<KY>(const color::ColorEnum c, const Square sq) const
 {
     return lanceAttack(c, sq, occupiedBB());
 }
 template <>
 inline Bitboard
-Position::attacksFrom<Knight>(const color::ColorEnum c, const Square sq) const
+Position::attacksFrom<KE>(const color::ColorEnum c, const Square sq) const
 {
     return knightAttack(c, sq);
 }
 template <>
 inline Bitboard
-Position::attacksFrom<Silver>(const color::ColorEnum c, const Square sq) const
+Position::attacksFrom<GI>(const color::ColorEnum c, const Square sq) const
 {
     return silverAttack(c, sq);
 }
 template <>
 inline Bitboard
-Position::attacksFrom<Bishop>(const color::ColorEnum, const Square sq) const
+Position::attacksFrom<KA>(const color::ColorEnum, const Square sq) const
 {
     return bishopAttack(sq, occupiedBB());
 }
 template <>
 inline Bitboard
-Position::attacksFrom<Rook>(const color::ColorEnum, const Square sq) const
+Position::attacksFrom<HI>(const color::ColorEnum, const Square sq) const
 {
     return rookAttack(sq, occupiedBB());
 }
 template <>
 inline Bitboard
-Position::attacksFrom<King>(const color::ColorEnum, const Square sq) const
+Position::attacksFrom<OU>(const color::ColorEnum, const Square sq) const
 {
     return kingAttack(sq);
 }
 template <>
 inline Bitboard
-Position::attacksFrom<Horse>(const color::ColorEnum, const Square sq) const
+Position::attacksFrom<UM>(const color::ColorEnum, const Square sq) const
 {
     return horseAttack(sq, occupiedBB());
 }
 template <>
 inline Bitboard
-Position::attacksFrom<Dragon>(const color::ColorEnum, const Square sq) const
+Position::attacksFrom<RY>(const color::ColorEnum, const Square sq) const
 {
     return dragonAttack(sq, occupiedBB());
 }
@@ -896,22 +892,22 @@ class CharToPieceUSI : public std::map<char, Piece>
 public:
     CharToPieceUSI()
     {
-        (*this)['P'] = BPawn;
-        (*this)['p'] = WPawn;
-        (*this)['L'] = BLance;
-        (*this)['l'] = WLance;
-        (*this)['N'] = BKnight;
-        (*this)['n'] = WKnight;
-        (*this)['S'] = BSilver;
-        (*this)['s'] = WSilver;
-        (*this)['B'] = BBishop;
-        (*this)['b'] = WBishop;
-        (*this)['R'] = BRook;
-        (*this)['r'] = WRook;
-        (*this)['G'] = BGold;
-        (*this)['g'] = WGold;
-        (*this)['K'] = BKing;
-        (*this)['k'] = WKing;
+        (*this)['P'] = B_FU;
+        (*this)['p'] = W_FU;
+        (*this)['L'] = B_KY;
+        (*this)['l'] = W_KY;
+        (*this)['N'] = B_KE;
+        (*this)['n'] = W_KE;
+        (*this)['S'] = B_GI;
+        (*this)['s'] = W_GI;
+        (*this)['B'] = B_KA;
+        (*this)['b'] = W_KA;
+        (*this)['R'] = B_HI;
+        (*this)['r'] = W_HI;
+        (*this)['G'] = B_KI;
+        (*this)['g'] = W_KI;
+        (*this)['K'] = B_OU;
+        (*this)['k'] = W_OU;
     }
     Piece value(char c) const
     {

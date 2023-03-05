@@ -141,7 +141,7 @@ public:
     }
     bool isCaptureOrPawnPromotion() const
     {
-        return isCapture() || (isPromotion() && pieceTypeFrom() == Pawn);
+        return isCapture() || (isPromotion() && pieceTypeFrom() == FU);
     }
     // 打つ駒の種類
     PieceType pieceTypeDropped() const

@@ -34,13 +34,23 @@ enum PieceType
     // Pro* は 元の 駒の種類に 8 を加算したもの。
     PTPromote = 8,
     Occupied = 0, // 各 PieceType の or をとったもの。
-    // clang-format off
-    Pawn,       Lance,    Knight,    Silver, Bishop,   Rook, Gold, King,
-    ProPawn, ProLance, ProKnight, ProSilver,  Horse, Dragon,
-    // clang-format on
+    FU = 1,
+    KY = 2,
+    KE = 3,
+    GI = 4,
+    KA = 5,
+    HI = 6,
+    KI = 7,
+    OU = 8,
+    TO = PTPromote + FU,
+    NY = PTPromote + KY,
+    NK = PTPromote + KE,
+    NG = PTPromote + GI,
+    UM = PTPromote + KA,
+    RY = PTPromote + HI,
     PieceTypeNum,
+    GoldHorseDragon, // 単にtemnplate引数として使用
 
-    GoldHorseDragon // 単にtemnplate引数として使用
 };
 OverloadEnumOperators(PieceType);
 
@@ -50,11 +60,11 @@ enum Piece
     // Promoted を加算することで、成りを表す。
     // clang-format off
     Empty = 0, UnPromoted = 0, Promoted = 8,
-    BPawn = 1, BLance, BKnight, BSilver, BBishop, BRook, BGold, BKing,
-    BProPawn, BProLance, BProKnight, BProSilver, BHorse, BDragon, // BDragon = 14
-    WPawn = 17, WLance, WKnight, WSilver, WBishop, WRook, WGold, WKing,
-    WProPawn, WProLance, WProKnight, WProSilver, WHorse, WDragon,
-    PieceNone // PieceNone = 31  これを 32 にした方が多重配列のときに有利か。
+    B_FU = 1, B_KY, B_KE, B_GI, B_KA, B_HI, B_KI, B_OU,
+    B_TO, B_NY, B_NK, B_NG, B_UM, B_RY, // B_RY = 14
+    W_FU = 17, W_KY, W_KE, W_GI, W_KA, W_HI, W_KI, W_OU,
+    W_TO, W_NY, W_NK, W_NG, W_UM, W_RY,
+    PieceNone, // PieceNone = 31  これを 32 にした方が多重配列のときに有利か。
     // clang-format on
 };
 OverloadEnumOperators(Piece);
@@ -65,17 +75,17 @@ inline Piece inverse(const Piece pc)
 }
 
 // 持ち駒を表すときに使用する。
-// todo: HGold を HRook の後ろに持っていき、PieceType との変換を簡単に出来るようにする。
+// todo: H_KI を H_HI の後ろに持っていき、PieceType との変換を簡単に出来るようにする。
 enum HandPiece
 {
-    HPawn,
-    HLance,
-    HKnight,
-    HSilver,
-    HGold,
-    HBishop,
-    HRook,
-    HandPieceNum
+    H_FU,
+    H_KY,
+    H_KE,
+    H_GI,
+    H_KI,
+    H_KA,
+    H_HI,
+    HandPieceNum,
 };
 OverloadEnumOperators(HandPiece);
 
@@ -113,27 +123,27 @@ inline bool isSlider(const PieceType pt)
 
 const HandPiece PieceTypeToHandPieceTable[PieceTypeNum]
     = {HandPieceNum,
-       HPawn,
-       HLance,
-       HKnight,
-       HSilver,
-       HBishop,
-       HRook,
-       HGold,
+       H_FU,
+       H_KY,
+       H_KE,
+       H_GI,
+       H_KA,
+       H_HI,
+       H_KI,
        HandPieceNum,
-       HPawn,
-       HLance,
-       HKnight,
-       HSilver,
-       HBishop,
-       HRook};
+       H_FU,
+       H_KY,
+       H_KE,
+       H_GI,
+       H_KA,
+       H_HI};
 inline HandPiece pieceTypeToHandPiece(const PieceType pt)
 {
     return PieceTypeToHandPieceTable[pt];
 }
 
 const PieceType HandPieceToPieceTypeTable[HandPieceNum]
-    = {Pawn, Lance, Knight, Silver, Gold, Bishop, Rook};
+    = {FU, KY, KE, GI, KI, KA, HI};
 inline PieceType handPieceToPieceType(const HandPiece hp)
 {
     return HandPieceToPieceTypeTable[hp];

@@ -342,48 +342,48 @@ public:
     {
         const Hand h = pos.hand((color::ColorEnum)color);
         return std::vector<int>{
-            (int)h.numOf<HPawn>(),
-            (int)h.numOf<HLance>(),
-            (int)h.numOf<HKnight>(),
-            (int)h.numOf<HSilver>(),
-            (int)h.numOf<HGold>(),
-            (int)h.numOf<HBishop>(),
-            (int)h.numOf<HRook>()};
+            (int)h.numOf<H_FU>(),
+            (int)h.numOf<H_KY>(),
+            (int)h.numOf<H_KE>(),
+            (int)h.numOf<H_GI>(),
+            (int)h.numOf<H_KI>(),
+            (int)h.numOf<H_KA>(),
+            (int)h.numOf<H_HI>()};
     }
 
     std::vector<int> pieces() const
     {
         std::vector<int> board(81);
 
-        bbToVector(Pawn, color::BLACK, BPawn, board);
-        bbToVector(Lance, color::BLACK, BLance, board);
-        bbToVector(Knight, color::BLACK, BKnight, board);
-        bbToVector(Silver, color::BLACK, BSilver, board);
-        bbToVector(Bishop, color::BLACK, BBishop, board);
-        bbToVector(Rook, color::BLACK, BRook, board);
-        bbToVector(Gold, color::BLACK, BGold, board);
-        bbToVector(King, color::BLACK, BKing, board);
-        bbToVector(ProPawn, color::BLACK, BProPawn, board);
-        bbToVector(ProLance, color::BLACK, BProLance, board);
-        bbToVector(ProKnight, color::BLACK, BProKnight, board);
-        bbToVector(ProSilver, color::BLACK, BProSilver, board);
-        bbToVector(Horse, color::BLACK, BHorse, board);
-        bbToVector(Dragon, color::BLACK, BDragon, board);
+        bbToVector(FU, color::BLACK, B_FU, board);
+        bbToVector(KY, color::BLACK, B_KY, board);
+        bbToVector(KE, color::BLACK, B_KE, board);
+        bbToVector(GI, color::BLACK, B_GI, board);
+        bbToVector(KA, color::BLACK, B_KA, board);
+        bbToVector(HI, color::BLACK, B_HI, board);
+        bbToVector(KI, color::BLACK, B_KI, board);
+        bbToVector(OU, color::BLACK, B_OU, board);
+        bbToVector(TO, color::BLACK, B_TO, board);
+        bbToVector(NY, color::BLACK, B_NY, board);
+        bbToVector(NK, color::BLACK, B_NK, board);
+        bbToVector(NG, color::BLACK, B_NG, board);
+        bbToVector(UM, color::BLACK, B_UM, board);
+        bbToVector(RY, color::BLACK, B_RY, board);
 
-        bbToVector(Pawn, color::WHITE, WPawn, board);
-        bbToVector(Lance, color::WHITE, WLance, board);
-        bbToVector(Knight, color::WHITE, WKnight, board);
-        bbToVector(Silver, color::WHITE, WSilver, board);
-        bbToVector(Bishop, color::WHITE, WBishop, board);
-        bbToVector(Rook, color::WHITE, WRook, board);
-        bbToVector(Gold, color::WHITE, WGold, board);
-        bbToVector(King, color::WHITE, WKing, board);
-        bbToVector(ProPawn, color::WHITE, WProPawn, board);
-        bbToVector(ProLance, color::WHITE, WProLance, board);
-        bbToVector(ProKnight, color::WHITE, WProKnight, board);
-        bbToVector(ProSilver, color::WHITE, WProSilver, board);
-        bbToVector(Horse, color::WHITE, WHorse, board);
-        bbToVector(Dragon, color::WHITE, WDragon, board);
+        bbToVector(FU, color::WHITE, W_FU, board);
+        bbToVector(KY, color::WHITE, W_KY, board);
+        bbToVector(KE, color::WHITE, W_KE, board);
+        bbToVector(GI, color::WHITE, W_GI, board);
+        bbToVector(KA, color::WHITE, W_KA, board);
+        bbToVector(HI, color::WHITE, W_HI, board);
+        bbToVector(KI, color::WHITE, W_KI, board);
+        bbToVector(OU, color::WHITE, W_OU, board);
+        bbToVector(TO, color::WHITE, W_TO, board);
+        bbToVector(NY, color::WHITE, W_NY, board);
+        bbToVector(NK, color::WHITE, W_NK, board);
+        bbToVector(NG, color::WHITE, W_NG, board);
+        bbToVector(UM, color::WHITE, W_UM, board);
+        bbToVector(RY, color::WHITE, W_RY, board);
 
         return std::move(board);
     }
@@ -394,7 +394,7 @@ public:
         // P2 piece 14 planes
         float* data = (float*)mem;
         for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
-            for (PieceType pt = Pawn; pt < PieceTypeNum; ++pt) {
+            for (PieceType pt = FU; pt < PieceTypeNum; ++pt) {
                 Bitboard bb = pos.bbOf(pt, c);
                 while (bb) {
                     const Square sq = bb.firstOneFromSQ11();
@@ -418,7 +418,7 @@ public:
         // 白の場合
         float* data = (float*)mem;
         for (color::ColorEnum c = color::WHITE; c >= color::BLACK; --c) {
-            for (PieceType pt = Pawn; pt < PieceTypeNum; ++pt) {
+            for (PieceType pt = FU; pt < PieceTypeNum; ++pt) {
                 Bitboard bb = pos.bbOf(pt, c);
                 while (bb) {
                     // 盤面を180度回転
@@ -473,7 +473,7 @@ public:
 
             // 駒の配置
             Bitboard bb[PieceTypeNum];
-            for (PieceType pt = Pawn; pt < PieceTypeNum; ++pt) {
+            for (PieceType pt = FU; pt < PieceTypeNum; ++pt) {
                 bb[pt] = pos.bbOf(pt, c);
             }
 
@@ -481,7 +481,7 @@ public:
                 // 白の場合、盤面を180度回転
                 const Square sq2 = pos.turn() == color::BLACK ? sq : SQ99 - sq;
 
-                for (PieceType pt = Pawn; pt < PieceTypeNum; ++pt) {
+                for (PieceType pt = FU; pt < PieceTypeNum; ++pt) {
                     // 駒の配置
                     if (bb[pt].isSet(sq)) {
                         (*features1)[c2][pt - 1][sq2] = 1;
@@ -505,7 +505,7 @@ public:
             // hand
             const Hand hand = pos.hand(c);
             int p = 0;
-            for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp) {
+            for (HandPiece hp = H_FU; hp < HandPieceNum; ++hp) {
                 u32 num = hand.numOf(hp);
                 if (num >= MAX_PIECES_IN_HAND[hp]) {
                     num = MAX_PIECES_IN_HAND[hp];

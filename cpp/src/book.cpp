@@ -34,7 +34,7 @@ void Book::init()
         for (Square sq = SQ11; sq < SquareNum; ++sq)
             ZobPiece[p][sq] = mt64bit_.random();
     }
-    for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp) {
+    for (HandPiece hp = H_FU; hp < HandPieceNum; ++hp) {
         for (int num = 0; num < 19; ++num)
             ZobHand[hp][num] = mt64bit_.random();
     }
@@ -51,7 +51,7 @@ Key Book::bookKey(const Position& pos)
         key ^= ZobPiece[pos.piece(sq)][sq];
     }
     const Hand hand = pos.hand(pos.turn());
-    for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp)
+    for (HandPiece hp = H_FU; hp < HandPieceNum; ++hp)
         key ^= ZobHand[hp][hand.numOf(hp)];
     if (pos.turn() == color::WHITE)
         key ^= ZobTurn;

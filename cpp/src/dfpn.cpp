@@ -199,11 +199,11 @@ FORCE_INLINE bool moveGivesNeighborCheck(const Position& pos, const Move& move)
     const Square to = move.to();
 
     // 敵玉の8近傍
-    if (pos.attacksFrom<King>(ksq).isSet(to))
+    if (pos.attacksFrom<OU>(ksq).isSet(to))
         return true;
 
     // 桂馬による王手
-    if (move.pieceTypeTo() == Knight)
+    if (move.pieceTypeTo() == KE)
         return true;
 
     return false;
@@ -213,27 +213,27 @@ FORCE_INLINE bool moveGivesNeighborCheck(const Position& pos, const Move& move)
 FORCE_INLINE u32 dp(const Hand& us, const Hand& them)
 {
     u32 dp = 0;
-    u32 pawn = us.exists<HPawn>();
+    u32 pawn = us.exists<H_FU>();
     if (pawn > 0)
-        dp += pawn + them.exists<HPawn>();
-    u32 lance = us.exists<HLance>();
+        dp += pawn + them.exists<H_FU>();
+    u32 lance = us.exists<H_KY>();
     if (lance > 0)
-        dp += lance + them.exists<HLance>();
-    u32 knight = us.exists<HKnight>();
+        dp += lance + them.exists<H_KY>();
+    u32 knight = us.exists<H_KE>();
     if (knight > 0)
-        dp += knight + them.exists<HKnight>();
-    u32 silver = us.exists<HSilver>();
+        dp += knight + them.exists<H_KE>();
+    u32 silver = us.exists<H_GI>();
     if (silver > 0)
-        dp += silver + them.exists<HSilver>();
-    u32 gold = us.exists<HGold>();
+        dp += silver + them.exists<H_GI>();
+    u32 gold = us.exists<H_KI>();
     if (gold > 0)
-        dp += gold + them.exists<HGold>();
-    u32 bishop = us.exists<HBishop>();
+        dp += gold + them.exists<H_KI>();
+    u32 bishop = us.exists<H_KA>();
     if (bishop > 0)
-        dp += bishop + them.exists<HBishop>();
-    u32 rook = us.exists<HRook>();
+        dp += bishop + them.exists<H_KA>();
+    u32 rook = us.exists<H_HI>();
     if (rook > 0)
-        dp += rook + them.exists<HRook>();
+        dp += rook + them.exists<H_HI>();
     return dp;
 }
 
@@ -601,31 +601,31 @@ void DfPn::dfpn_inner(
                     if (child_entry.dn == 0) {
                         const Hand& child_dp = child_entry.hand;
                         // 歩
-                        const u32 child_pawn = child_dp.exists<HPawn>();
+                        const u32 child_pawn = child_dp.exists<H_FU>();
                         if (child_pawn < pawn)
                             pawn = child_pawn;
                         // 香車
-                        const u32 child_lance = child_dp.exists<HLance>();
+                        const u32 child_lance = child_dp.exists<H_KY>();
                         if (child_lance < lance)
                             lance = child_lance;
                         // 桂馬
-                        const u32 child_knight = child_dp.exists<HKnight>();
+                        const u32 child_knight = child_dp.exists<H_KE>();
                         if (child_knight < knight)
                             knight = child_knight;
                         // 銀
-                        const u32 child_silver = child_dp.exists<HSilver>();
+                        const u32 child_silver = child_dp.exists<H_GI>();
                         if (child_silver < silver)
                             silver = child_silver;
                         // 金
-                        const u32 child_gold = child_dp.exists<HGold>();
+                        const u32 child_gold = child_dp.exists<H_KI>();
                         if (child_gold < gold)
                             gold = child_gold;
                         // 角
-                        const u32 child_bishop = child_dp.exists<HBishop>();
+                        const u32 child_bishop = child_dp.exists<H_KA>();
                         if (child_bishop < bishop)
                             bishop = child_bishop;
                         // 飛車
-                        const u32 child_rook = child_dp.exists<HRook>();
+                        const u32 child_rook = child_dp.exists<H_HI>();
                         if (child_rook < rook)
                             rook = child_rook;
                     }
@@ -658,37 +658,37 @@ void DfPn::dfpn_inner(
                     entry.num_searched = REPEAT;
                 else {
                     // 先手が一枚も持っていない種類の先手の持ち駒を反証駒から削除する
-                    u32 curr_pawn = entry.hand.template exists<HPawn>();
+                    u32 curr_pawn = entry.hand.template exists<H_FU>();
                     if (curr_pawn == 0)
                         pawn = 0;
                     else if (pawn < curr_pawn)
                         pawn = curr_pawn;
-                    u32 curr_lance = entry.hand.template exists<HLance>();
+                    u32 curr_lance = entry.hand.template exists<H_KY>();
                     if (curr_lance == 0)
                         lance = 0;
                     else if (lance < curr_lance)
                         lance = curr_lance;
-                    u32 curr_knight = entry.hand.template exists<HKnight>();
+                    u32 curr_knight = entry.hand.template exists<H_KE>();
                     if (curr_knight == 0)
                         knight = 0;
                     else if (knight < curr_knight)
                         knight = curr_knight;
-                    u32 curr_silver = entry.hand.template exists<HSilver>();
+                    u32 curr_silver = entry.hand.template exists<H_GI>();
                     if (curr_silver == 0)
                         silver = 0;
                     else if (silver < curr_silver)
                         silver = curr_silver;
-                    u32 curr_gold = entry.hand.template exists<HGold>();
+                    u32 curr_gold = entry.hand.template exists<H_KI>();
                     if (curr_gold == 0)
                         gold = 0;
                     else if (gold < curr_gold)
                         gold = curr_gold;
-                    u32 curr_bishop = entry.hand.template exists<HBishop>();
+                    u32 curr_bishop = entry.hand.template exists<H_KA>();
                     if (curr_bishop == 0)
                         bishop = 0;
                     else if (bishop < curr_bishop)
                         bishop = curr_bishop;
-                    u32 curr_rook = entry.hand.template exists<HRook>();
+                    u32 curr_rook = entry.hand.template exists<H_HI>();
                     if (curr_rook == 0)
                         rook = 0;
                     else if (rook < curr_rook)
@@ -728,31 +728,31 @@ void DfPn::dfpn_inner(
                     if (child_entry.pn == 0) {
                         const Hand& child_pp = child_entry.hand;
                         // 歩
-                        const u32 child_pawn = child_pp.exists<HPawn>();
+                        const u32 child_pawn = child_pp.exists<H_FU>();
                         if (child_pawn > pawn)
                             pawn = child_pawn;
                         // 香車
-                        const u32 child_lance = child_pp.exists<HLance>();
+                        const u32 child_lance = child_pp.exists<H_KY>();
                         if (child_lance > lance)
                             lance = child_lance;
                         // 桂馬
-                        const u32 child_knight = child_pp.exists<HKnight>();
+                        const u32 child_knight = child_pp.exists<H_KE>();
                         if (child_knight > knight)
                             knight = child_knight;
                         // 銀
-                        const u32 child_silver = child_pp.exists<HSilver>();
+                        const u32 child_silver = child_pp.exists<H_GI>();
                         if (child_silver > silver)
                             silver = child_silver;
                         // 金
-                        const u32 child_gold = child_pp.exists<HGold>();
+                        const u32 child_gold = child_pp.exists<H_KI>();
                         if (child_gold > gold)
                             gold = child_gold;
                         // 角
-                        const u32 child_bishop = child_pp.exists<HBishop>();
+                        const u32 child_bishop = child_pp.exists<H_KA>();
                         if (child_bishop > bishop)
                             bishop = child_bishop;
                         // 飛車
-                        const u32 child_rook = child_pp.exists<HRook>();
+                        const u32 child_rook = child_pp.exists<H_HI>();
                         if (child_rook > rook)
                             rook = child_rook;
                     } else
@@ -812,35 +812,34 @@ void DfPn::dfpn_inner(
                 //cout << n.toSFEN() << " and" << endl;
                 //cout << bitset<32>(entry.hand.value()) << endl;
                 // 証明駒に子局面の証明駒の和集合を設定
-                u32 curr_pawn = entry.hand.template exists<HPawn>();
+                u32 curr_pawn = entry.hand.template exists<H_FU>();
                 if (pawn > curr_pawn)
                     pawn = curr_pawn;
-                u32 curr_lance = entry.hand.template exists<HLance>();
+                u32 curr_lance = entry.hand.template exists<H_KY>();
                 if (lance > curr_lance)
                     lance = curr_lance;
-                u32 curr_knight = entry.hand.template exists<HKnight>();
+                u32 curr_knight = entry.hand.template exists<H_KE>();
                 if (knight > curr_knight)
                     knight = curr_knight;
-                u32 curr_silver = entry.hand.template exists<HSilver>();
+                u32 curr_silver = entry.hand.template exists<H_GI>();
                 if (silver > curr_silver)
                     silver = curr_silver;
-                u32 curr_gold = entry.hand.template exists<HGold>();
+                u32 curr_gold = entry.hand.template exists<H_KI>();
                 if (gold > curr_gold)
                     gold = curr_gold;
-                u32 curr_bishop = entry.hand.template exists<HBishop>();
+                u32 curr_bishop = entry.hand.template exists<H_KA>();
                 if (bishop > curr_bishop)
                     bishop = curr_bishop;
-                u32 curr_rook = entry.hand.template exists<HRook>();
+                u32 curr_rook = entry.hand.template exists<H_HI>();
                 if (rook > curr_rook)
                     rook = curr_rook;
                 entry.hand.set(
                     pawn | lance | knight | silver | gold | bishop | rook);
                 //cout << bitset<32>(entry.hand.value()) << endl;
                 // 後手が一枚も持っていない種類の先手の持ち駒を証明駒に設定する
-                if (!(n.checkersBB()
-                          & n.attacksFrom<King>(n.kingSquare(n.turn()))
+                if (!(n.checkersBB() & n.attacksFrom<OU>(n.kingSquare(n.turn()))
                       || n.checkersBB()
-                             & n.attacksFrom<Knight>(
+                             & n.attacksFrom<KE>(
                                  n.turn(), n.kingSquare(n.turn()))))
                     entry.hand.setPP(
                         n.hand(color::opposite(n.turn())), n.hand(n.turn()));

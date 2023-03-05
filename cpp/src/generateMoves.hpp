@@ -109,7 +109,7 @@ inline Move selectedMakeMove(
     const PieceType pt, const Square from, const Square to, const Position& pos)
 {
     static_assert(PM == Promote || PM == NonPromote, "");
-    assert(!((pt == Gold || pt == King || MT == Drop) && PM == Promote));
+    assert(!((pt == KI || pt == OU || MT == Drop) && PM == Promote));
     Move move
         = ((MT == NonCapture || MT == NonCaptureMinusPro)
                ? makeMove(pt, from, to)
