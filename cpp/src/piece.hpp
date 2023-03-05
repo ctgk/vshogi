@@ -104,7 +104,7 @@ inline PieceTypeEnum to_piece_type(const ColoredPieceEnum p)
 
 inline color::ColorEnum get_color(const ColoredPieceEnum p)
 {
-    assert(p != Empty);
+    assert(p != VOID);
     return static_cast<color::ColorEnum>(p >> 4);
 }
 
