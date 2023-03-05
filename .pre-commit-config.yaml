@@ -31,6 +31,6 @@ repos:
         language: system
     -   id: python-unittest
         name: Run Python UnitTests
-        language: python
-        entry: pytest
+        language: system
+        entry: bash -c 'pip install -e .[develop]; pytest'
         pass_filenames: false
