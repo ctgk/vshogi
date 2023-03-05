@@ -130,7 +130,7 @@ const Bitboard RankMask[RankNum]
        Rank8Mask,
        Rank9Mask};
 
-const Bitboard InFrontMask[ColorNum][RankNum]
+const Bitboard InFrontMask[color::NUM_COLORS][RankNum]
     = {{InFrontOfRank1Black,
         InFrontOfRank2Black,
         InFrontOfRank3Black,
@@ -152,28 +152,28 @@ const Bitboard InFrontMask[ColorNum][RankNum]
 
 // これらは一度値を設定したら二度と変更しない。
 // 本当は const 化したい。
-Bitboard LanceAttack[ColorNum][SquareNum][128];
+Bitboard LanceAttack[color::NUM_COLORS][SquareNum][128];
 Bitboard RookAttackRankToMask[SquareNum][2];
 Bitboard256 BishopAttackToMask[SquareNum][2];
 
 Bitboard KingAttack[SquareNum];
-Bitboard GoldAttack[ColorNum][SquareNum];
-Bitboard SilverAttack[ColorNum][SquareNum];
-Bitboard KnightAttack[ColorNum][SquareNum];
-Bitboard PawnAttack[ColorNum][SquareNum];
+Bitboard GoldAttack[color::NUM_COLORS][SquareNum];
+Bitboard SilverAttack[color::NUM_COLORS][SquareNum];
+Bitboard KnightAttack[color::NUM_COLORS][SquareNum];
+Bitboard PawnAttack[color::NUM_COLORS][SquareNum];
 
 Bitboard BetweenBB[SquareNum][SquareNum];
 
 Bitboard RookAttackToEdge[SquareNum];
 Bitboard BishopAttackToEdge[SquareNum];
-Bitboard LanceAttackToEdge[ColorNum][SquareNum];
+Bitboard LanceAttackToEdge[color::NUM_COLORS][SquareNum];
 
-Bitboard GoldCheckTable[ColorNum][SquareNum];
-Bitboard SilverCheckTable[ColorNum][SquareNum];
-Bitboard KnightCheckTable[ColorNum][SquareNum];
-Bitboard LanceCheckTable[ColorNum][SquareNum];
-Bitboard PawnCheckTable[ColorNum][SquareNum];
-Bitboard BishopCheckTable[ColorNum][SquareNum];
-Bitboard HorseCheckTable[ColorNum][SquareNum];
+Bitboard GoldCheckTable[color::NUM_COLORS][SquareNum];
+Bitboard SilverCheckTable[color::NUM_COLORS][SquareNum];
+Bitboard KnightCheckTable[color::NUM_COLORS][SquareNum];
+Bitboard LanceCheckTable[color::NUM_COLORS][SquareNum];
+Bitboard PawnCheckTable[color::NUM_COLORS][SquareNum];
+Bitboard BishopCheckTable[color::NUM_COLORS][SquareNum];
+Bitboard HorseCheckTable[color::NUM_COLORS][SquareNum];
 
 Bitboard Neighbor5x5Table[SquareNum]; // 25 近傍

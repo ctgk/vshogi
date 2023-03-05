@@ -88,13 +88,14 @@ inline PieceType pieceToPieceType(const Piece p)
     return static_cast<PieceType>(p & 15);
 }
 
-inline Color pieceToColor(const Piece p)
+inline color::ColorEnum pieceToColor(const Piece p)
 {
     assert(p != Empty);
-    return static_cast<Color>(p >> 4);
+    return static_cast<color::ColorEnum>(p >> 4);
 }
 
-inline Piece colorAndPieceTypeToPiece(const Color c, const PieceType pt)
+inline Piece
+colorAndPieceTypeToPiece(const color::ColorEnum c, const PieceType pt)
 {
     return static_cast<Piece>((c << 4) | pt);
 }
@@ -137,7 +138,8 @@ inline PieceType handPieceToPieceType(const HandPiece hp)
 {
     return HandPieceToPieceTypeTable[hp];
 }
-inline Piece colorAndHandPieceToPiece(const Color c, const HandPiece hp)
+inline Piece
+colorAndHandPieceToPiece(const color::ColorEnum c, const HandPiece hp)
 {
     return colorAndPieceTypeToPiece(c, handPieceToPieceType(hp));
 }

@@ -651,7 +651,7 @@ const Bitboard Rank9Mask = Bitboard(UINT64_C(0x40201008040201) << 8, 0x201 << 8)
 
 extern const Bitboard FileMask[FileNum];
 extern const Bitboard RankMask[RankNum];
-extern const Bitboard InFrontMask[ColorNum][RankNum];
+extern const Bitboard InFrontMask[color::NUM_COLORS][RankNum];
 
 inline Bitboard fileMask(const File f)
 {
@@ -727,17 +727,17 @@ const Bitboard InFrontOfRank3White = InFrontOfRank4White | rankMask<Rank4>();
 const Bitboard InFrontOfRank2White = InFrontOfRank3White | rankMask<Rank3>();
 const Bitboard InFrontOfRank1White = InFrontOfRank2White | rankMask<Rank2>();
 
-inline Bitboard inFrontMask(const Color c, const Rank r)
+inline Bitboard inFrontMask(const color::ColorEnum c, const Rank r)
 {
     return InFrontMask[c][r];
 }
-template <Color C, Rank R>
+template <color::ColorEnum C, Rank R>
 inline Bitboard inFrontMask()
 {
-    static_assert(C == Black || C == White, "");
+    static_assert(C == color::BLACK || C == color::WHITE, "");
     static_assert(RankBegin <= R && R < RankNum, "");
     return (
-        C == Black
+        C == color::BLACK
             ? (R == Rank1   ? InFrontOfRank1Black
                : R == Rank2 ? InFrontOfRank2Black
                : R == Rank3 ? InFrontOfRank3Black
@@ -758,44 +758,44 @@ inline Bitboard inFrontMask()
                             : InFrontOfRank9White));
 }
 // 敵陣を表現するBitboard。
-const Bitboard EnemyField[ColorNum]
+const Bitboard EnemyField[color::NUM_COLORS]
     = {rankMask<Rank1>() | rankMask<Rank2>() | rankMask<Rank3>(),
        rankMask<Rank7>() | rankMask<Rank8>() | rankMask<Rank9>()};
-inline const Bitboard enemyField(Color c)
+inline const Bitboard enemyField(color::ColorEnum c)
 {
     return EnemyField[c];
 }
 
 // メモリ節約をせず、無駄なメモリを持っている。
-extern Bitboard LanceAttack[ColorNum][SquareNum][128];
+extern Bitboard LanceAttack[color::NUM_COLORS][SquareNum][128];
 extern Bitboard RookAttackRankToMask[SquareNum][2];
 extern Bitboard256 BishopAttackToMask[SquareNum][2];
 
 extern Bitboard KingAttack[SquareNum];
-extern Bitboard GoldAttack[ColorNum][SquareNum];
-extern Bitboard SilverAttack[ColorNum][SquareNum];
-extern Bitboard KnightAttack[ColorNum][SquareNum];
-extern Bitboard PawnAttack[ColorNum][SquareNum];
+extern Bitboard GoldAttack[color::NUM_COLORS][SquareNum];
+extern Bitboard SilverAttack[color::NUM_COLORS][SquareNum];
+extern Bitboard KnightAttack[color::NUM_COLORS][SquareNum];
+extern Bitboard PawnAttack[color::NUM_COLORS][SquareNum];
 
 extern Bitboard BetweenBB[SquareNum][SquareNum];
 
 extern Bitboard RookAttackToEdge[SquareNum];
 extern Bitboard BishopAttackToEdge[SquareNum];
-extern Bitboard LanceAttackToEdge[ColorNum][SquareNum];
+extern Bitboard LanceAttackToEdge[color::NUM_COLORS][SquareNum];
 
-extern Bitboard GoldCheckTable[ColorNum][SquareNum];
-extern Bitboard SilverCheckTable[ColorNum][SquareNum];
-extern Bitboard KnightCheckTable[ColorNum][SquareNum];
-extern Bitboard LanceCheckTable[ColorNum][SquareNum];
-extern Bitboard PawnCheckTable[ColorNum][SquareNum];
-extern Bitboard BishopCheckTable[ColorNum][SquareNum];
-extern Bitboard HorseCheckTable[ColorNum][SquareNum];
+extern Bitboard GoldCheckTable[color::NUM_COLORS][SquareNum];
+extern Bitboard SilverCheckTable[color::NUM_COLORS][SquareNum];
+extern Bitboard KnightCheckTable[color::NUM_COLORS][SquareNum];
+extern Bitboard LanceCheckTable[color::NUM_COLORS][SquareNum];
+extern Bitboard PawnCheckTable[color::NUM_COLORS][SquareNum];
+extern Bitboard BishopCheckTable[color::NUM_COLORS][SquareNum];
+extern Bitboard HorseCheckTable[color::NUM_COLORS][SquareNum];
 
 extern Bitboard Neighbor5x5Table[SquareNum]; // 25 近傍
 
 // todo: 香車の筋がどこにあるか先に分かっていれば、Bitboard の片方の変数だけを調べれば良くなる。
 inline Bitboard
-lanceAttack(const Color c, const Square sq, const Bitboard& occupied)
+lanceAttack(const color::ColorEnum c, const Square sq, const Bitboard& occupied)
 {
     const int part = Bitboard::part(sq);
     const int index = (occupied.p(part) >> Slide[sq]) & 127;
@@ -806,7 +806,8 @@ inline Bitboard rookAttackFile(const Square sq, const Bitboard& occupied)
 {
     const int part = Bitboard::part(sq);
     const int index = (occupied.p(part) >> Slide[sq]) & 127;
-    return LanceAttack[Black][sq][index] | LanceAttack[White][sq][index];
+    return LanceAttack[color::BLACK][sq][index]
+           | LanceAttack[color::WHITE][sq][index];
 }
 // 飛車の横だけの利き
 // cf. https://www.apply.computer-shogi.org/wcsc31/appeal/Qugiy/appeal_210518.pdf
@@ -878,19 +879,19 @@ inline Bitboard bishopAttack(const Square sq, const Bitboard& occupied)
     // hiの方には、右方向の利き、loは左方向の利きが得られている。
     return (hi.byteReverse() | lo).merge();
 }
-inline Bitboard goldAttack(const Color c, const Square sq)
+inline Bitboard goldAttack(const color::ColorEnum c, const Square sq)
 {
     return GoldAttack[c][sq];
 }
-inline Bitboard silverAttack(const Color c, const Square sq)
+inline Bitboard silverAttack(const color::ColorEnum c, const Square sq)
 {
     return SilverAttack[c][sq];
 }
-inline Bitboard knightAttack(const Color c, const Square sq)
+inline Bitboard knightAttack(const color::ColorEnum c, const Square sq)
 {
     return KnightAttack[c][sq];
 }
-inline Bitboard pawnAttack(const Color c, const Square sq)
+inline Bitboard pawnAttack(const color::ColorEnum c, const Square sq)
 {
     return PawnAttack[c][sq];
 }
@@ -899,14 +900,14 @@ inline Bitboard pawnAttack(const Color c, const Square sq)
 // 1段目には歩は存在しないので、1bit シフトで別の筋に行くことはない。
 // ただし、from に歩以外の駒の Bitboard を入れると、別の筋のビットが立ってしまうことがあるので、
 // 別の筋のビットが立たないか、立っても問題ないかを確認して使用すること。
-template <Color US>
+template <color::ColorEnum US>
 inline Bitboard pawnAttack(const Bitboard& from)
 {
-    return (US == Black ? (from >> 1) : (from << 1));
+    return (US == color::BLACK ? (from >> 1) : (from << 1));
 }
-inline Bitboard pawnAttack(Color c, const Bitboard& from)
+inline Bitboard pawnAttack(color::ColorEnum c, const Bitboard& from)
 {
-    return (c == Black ? (from >> 1) : (from << 1));
+    return (c == color::BLACK ? (from >> 1) : (from << 1));
 }
 inline Bitboard kingAttack(const Square sq)
 {
@@ -938,7 +939,7 @@ inline Bitboard bishopAttackToEdge(const Square sq)
 {
     return BishopAttackToEdge[sq];
 }
-inline Bitboard lanceAttackToEdge(const Color c, const Square sq)
+inline Bitboard lanceAttackToEdge(const color::ColorEnum c, const Square sq)
 {
     return LanceAttackToEdge[c][sq];
 }
@@ -950,31 +951,31 @@ inline Bitboard horseAttackToEdge(const Square sq)
 {
     return bishopAttackToEdge(sq) | kingAttack(sq);
 }
-inline Bitboard goldCheckTable(const Color c, const Square sq)
+inline Bitboard goldCheckTable(const color::ColorEnum c, const Square sq)
 {
     return GoldCheckTable[c][sq];
 }
-inline Bitboard silverCheckTable(const Color c, const Square sq)
+inline Bitboard silverCheckTable(const color::ColorEnum c, const Square sq)
 {
     return SilverCheckTable[c][sq];
 }
-inline Bitboard knightCheckTable(const Color c, const Square sq)
+inline Bitboard knightCheckTable(const color::ColorEnum c, const Square sq)
 {
     return KnightCheckTable[c][sq];
 }
-inline Bitboard lanceCheckTable(const Color c, const Square sq)
+inline Bitboard lanceCheckTable(const color::ColorEnum c, const Square sq)
 {
     return LanceCheckTable[c][sq];
 }
-inline Bitboard pawnCheckTable(const Color c, const Square sq)
+inline Bitboard pawnCheckTable(const color::ColorEnum c, const Square sq)
 {
     return PawnCheckTable[c][sq];
 }
-inline Bitboard bishopCheckTable(const Color c, const Square sq)
+inline Bitboard bishopCheckTable(const color::ColorEnum c, const Square sq)
 {
     return BishopCheckTable[c][sq];
 }
-inline Bitboard horseCheckTable(const Color c, const Square sq)
+inline Bitboard horseCheckTable(const color::ColorEnum c, const Square sq)
 {
     return HorseCheckTable[c][sq];
 }
@@ -986,15 +987,15 @@ inline Bitboard neighbor5x5Table(const Square sq)
 // todo: テーブル引きを検討
 inline Bitboard rookStepAttacks(const Square sq)
 {
-    return goldAttack(Black, sq) & goldAttack(White, sq);
+    return goldAttack(color::BLACK, sq) & goldAttack(color::WHITE, sq);
 }
 // todo: テーブル引きを検討
 inline Bitboard bishopStepAttacks(const Square sq)
 {
-    return silverAttack(Black, sq) & silverAttack(White, sq);
+    return silverAttack(color::BLACK, sq) & silverAttack(color::WHITE, sq);
 }
 // 前方3方向の位置のBitboard
-inline Bitboard goldAndSilverAttacks(const Color c, const Square sq)
+inline Bitboard goldAndSilverAttacks(const color::ColorEnum c, const Square sq)
 {
     return goldAttack(c, sq) & silverAttack(c, sq);
 }

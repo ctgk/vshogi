@@ -24,7 +24,7 @@
 
 namespace {
     // 角, 飛車の場合
-    template <MoveType MT, PieceType PT, Color US, bool ALL>
+    template <MoveType MT, PieceType PT, color::ColorEnum US, bool ALL>
     FORCE_INLINE ExtMove* generateBishopOrRookMoves(ExtMove* moveList, const Position& pos,
                                                     const Bitboard& target, const Square /*ksq*/)
     {
@@ -51,14 +51,14 @@ namespace {
     // 歩以外の持ち駒は、loop の前に持ち駒の種類の数によって switch で展開している。
     // ループの展開はコードが膨れ上がる事によるキャッシュヒット率の低下と、演算回数のバランスを取って決める必要がある。
     // NPSに影響が出ないならシンプルにした方が良さそう。
-    template <Color US>
+    template <color::ColorEnum US>
     ExtMove* generateDropMoves(ExtMove* moveList, const Position& pos, const Bitboard& target) {
         const Hand hand = pos.hand(US);
         // まず、歩に対して指し手を生成
         if (hand.exists<HPawn>()) {
             Bitboard toBB = target;
             // 一段目には打てない
-            const Rank TRank1 = (US == Black ? Rank1 : Rank9);
+            const Rank TRank1 = (US == color::BLACK ? Rank1 : Rank9);
             toBB.andEqualNot(rankMask<TRank1>());
 
             // 二歩の回避
@@ -69,10 +69,10 @@ namespace {
                 });
 
             // 打ち歩詰めの回避
-            const Rank TRank9 = (US == Black ? Rank9 : Rank1);
-            const SquareDelta TDeltaS = (US == Black ? DeltaS : DeltaN);
+            const Rank TRank9 = (US == color::BLACK ? Rank9 : Rank1);
+            const SquareDelta TDeltaS = (US == color::BLACK ? DeltaS : DeltaN);
 
-            const Square ksq = pos.kingSquare(oppositeColor(US));
+            const Square ksq = pos.kingSquare(color::opposite(US));
             // 相手玉が九段目なら、歩で王手出来ないので、打ち歩詰めを調べる必要はない。
             if (makeRank(ksq) != TRank9) {
                 const Square pawnDropCheckSquare = ksq + TDeltaS;
@@ -107,8 +107,8 @@ namespace {
             if (hand.exists<HBishop>()) haveHand[haveHandNum++] = Bishop;
             if (hand.exists<HRook  >()) haveHand[haveHandNum++] = Rook;
 
-            const Rank TRank2 = (US == Black ? Rank2 : Rank8);
-            const Rank TRank1 = (US == Black ? Rank1 : Rank9);
+            const Rank TRank2 = (US == color::BLACK ? Rank2 : Rank8);
+            const Rank TRank1 = (US == color::BLACK ? Rank1 : Rank9);
             const Bitboard TRank2BB = rankMask<TRank2>();
             const Bitboard TRank1BB = rankMask<TRank1>();
 
@@ -155,7 +155,7 @@ namespace {
     }
 
     // 金, 成り金、馬、竜の指し手生成
-    template <MoveType MT, PieceType PT, Color US, bool ALL> struct GeneratePieceMoves {
+    template <MoveType MT, PieceType PT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square /*ksq*/) {
             static_assert(PT == GoldHorseDragon, "");
             // 金、成金、馬、竜のbitboardをまとめて扱う。
@@ -173,12 +173,12 @@ namespace {
         }
     };
     // 歩の場合
-    template <MoveType MT, Color US, bool ALL> struct GeneratePieceMoves<MT, Pawn, US, ALL> {
+    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, Pawn, US, ALL> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square /*ksq*/) {
             // Txxx は先手、後手の情報を吸収した変数。数字は先手に合わせている。
-            const Rank TRank4 = (US == Black ? Rank4 : Rank6);
+            const Rank TRank4 = (US == color::BLACK ? Rank4 : Rank6);
             const Bitboard TRank123BB = inFrontMask<US, TRank4>();
-            const SquareDelta TDeltaS = (US == Black ? DeltaS : DeltaN);
+            const SquareDelta TDeltaS = (US == color::BLACK ? DeltaS : DeltaN);
 
             Bitboard toBB = pawnAttack<US>(pos.bbOf(Pawn, US)) & target;
 
@@ -192,7 +192,7 @@ namespace {
                             const Square from = to + TDeltaS;
                             (*moveList++).move = makePromoteMove<MT>(Pawn, from, to, pos);
                             if (MT == NonEvasion || ALL) {
-                                const Rank TRank1 = (US == Black ? Rank1 : Rank9);
+                                const Rank TRank1 = (US == color::BLACK ? Rank1 : Rank9);
                                 if (makeRank(to) != TRank1)
                                     (*moveList++).move = makeNonPromoteMove<MT>(Pawn, from, to, pos);
                             }
@@ -213,7 +213,7 @@ namespace {
         }
     };
     // 香車の場合
-    template <MoveType MT, Color US, bool ALL> struct GeneratePieceMoves<MT, Lance, US, ALL> {
+    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, Lance, US, ALL> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square /*ksq*/) {
             Bitboard fromBB = pos.bbOf(Lance, US);
             while (fromBB) {
@@ -245,7 +245,7 @@ namespace {
         }
     };
     // 桂馬の場合
-    template <MoveType MT, Color US, bool ALL> struct GeneratePieceMoves<MT, Knight, US, ALL> {
+    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, Knight, US, ALL> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square /*ksq*/) {
             Bitboard fromBB = pos.bbOf(Knight, US);
             while (fromBB) {
@@ -266,7 +266,7 @@ namespace {
         }
     };
     // 銀の場合
-    template <MoveType MT, Color US, bool ALL> struct GeneratePieceMoves<MT, Silver, US, ALL> {
+    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, Silver, US, ALL> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square /*ksq*/) {
             Bitboard fromBB = pos.bbOf(Silver, US);
             while (fromBB) {
@@ -283,19 +283,19 @@ namespace {
             return moveList;
         }
     };
-    template <MoveType MT, Color US, bool ALL> struct GeneratePieceMoves<MT, Bishop, US, ALL> {
+    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, Bishop, US, ALL> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square ksq) {
             return generateBishopOrRookMoves<MT, Bishop, US, ALL>(moveList, pos, target, ksq);
         }
     };
-    template <MoveType MT, Color US, bool ALL> struct GeneratePieceMoves<MT, Rook, US, ALL> {
+    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, Rook, US, ALL> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square ksq) {
             return generateBishopOrRookMoves<MT, Rook, US, ALL>(moveList, pos, target, ksq);
         }
     };
     // 玉の場合
     // 必ず盤上に 1 枚だけあることを前提にすることで、while ループを 1 つ無くして高速化している。
-    template <MoveType MT, Color US, bool ALL> struct GeneratePieceMoves<MT, King, US, ALL> {
+    template <MoveType MT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves<MT, King, US, ALL> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square /*ksq*/) {
             const Square from = pos.kingSquare(US);
             Bitboard toBB = pos.attacksFrom<King>(US, from) & target;
@@ -307,7 +307,7 @@ namespace {
     };
 
     // pin は省かない。
-    FORCE_INLINE ExtMove* generateRecaptureMoves(ExtMove* moveList, const Position& pos, const Square to, const Color us) {
+    FORCE_INLINE ExtMove* generateRecaptureMoves(ExtMove* moveList, const Position& pos, const Square to, const color::ColorEnum us) {
         Bitboard fromBB = pos.attackersTo(us, to);
         while (fromBB) {
             const Square from = fromBB.firstOneFromSQ11();
@@ -331,29 +331,29 @@ namespace {
     // 指し手生成 functor
     // テンプレート引数が複数あり、部分特殊化したかったので、関数ではなく、struct にした。
     // ALL == true のとき、歩、飛、角の不成、香の2段目の不成、香の3段目の駒を取らない不成も生成する。
-    template <MoveType MT, Color US, bool ALL = false> struct GenerateMoves {
+    template <MoveType MT, color::ColorEnum US, bool ALL = false> struct GenerateMoves {
         ExtMove* operator () (ExtMove* moveList, const Position& pos) {
             static_assert(MT == Capture || MT == NonCapture || MT == CapturePlusPro || MT == NonCaptureMinusPro, "");
             // Txxx は先手、後手の情報を吸収した変数。数字は先手に合わせている。
-            const Rank TRank4 = (US == Black ? Rank4 : Rank6);
-            const Rank Trank3 = (US == Black ? Rank3 : Rank7);
-            const Rank TRank2 = (US == Black ? Rank2 : Rank8);
+            const Rank TRank4 = (US == color::BLACK ? Rank4 : Rank6);
+            const Rank Trank3 = (US == color::BLACK ? Rank3 : Rank7);
+            const Rank TRank2 = (US == color::BLACK ? Rank2 : Rank8);
             const Bitboard TRank123BB = inFrontMask<US, TRank4>();
-            const Bitboard TRank4_9BB = inFrontMask<oppositeColor(US), Trank3>();
+            const Bitboard TRank4_9BB = inFrontMask<color::opposite(US), Trank3>();
 
             const Bitboard targetPawn =
-                (MT == Capture           ) ? pos.bbOf(oppositeColor(US))                                             :
+                (MT == Capture           ) ? pos.bbOf(color::opposite(US))                                             :
                 (MT == NonCapture        ) ? pos.emptyBB()                                                           :
-                (MT == CapturePlusPro    ) ? pos.bbOf(oppositeColor(US)) | (pos.occupiedBB().notThisAnd(TRank123BB)) :
+                (MT == CapturePlusPro    ) ? pos.bbOf(color::opposite(US)) | (pos.occupiedBB().notThisAnd(TRank123BB)) :
                 (MT == NonCaptureMinusPro) ? pos.occupiedBB().notThisAnd(TRank4_9BB)                                 :
                 allOneBB(); // error
             const Bitboard targetOther =
-                (MT == Capture           ) ? pos.bbOf(oppositeColor(US)) :
+                (MT == Capture           ) ? pos.bbOf(color::opposite(US)) :
                 (MT == NonCapture        ) ? pos.emptyBB()               :
-                (MT == CapturePlusPro    ) ? pos.bbOf(oppositeColor(US)) :
+                (MT == CapturePlusPro    ) ? pos.bbOf(color::opposite(US)) :
                 (MT == NonCaptureMinusPro) ? pos.emptyBB()               :
                 allOneBB(); // error
-            const Square ksq = pos.kingSquare(oppositeColor(US));
+            const Square ksq = pos.kingSquare(color::opposite(US));
 
             moveList = GeneratePieceMoves<MT, Pawn           , US, ALL>()(moveList, pos, targetPawn, ksq);
             moveList = GeneratePieceMoves<MT, Lance          , US, ALL>()(moveList, pos, targetOther, ksq);
@@ -370,7 +370,7 @@ namespace {
 
     // 部分特殊化
     // 駒打ち生成
-    template <Color US> struct GenerateMoves<Drop, US> {
+    template <color::ColorEnum US> struct GenerateMoves<Drop, US> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos) {
             const Bitboard target = pos.emptyBB();
             moveList = generateDropMoves<US>(moveList, pos, target);
@@ -382,44 +382,44 @@ namespace {
     // 両王手のときには二度連続で呼ばれるため、= ではなく |= を使用している。
     // 最初に呼ばれたときは、bannedKingToBB == allZeroBB() である。
     // todo: FOECE_INLINE と template 省いてNPS比較
-    template <Color THEM>
+    template <color::ColorEnum THEM>
     FORCE_INLINE void makeBannedKingTo(Bitboard& bannedKingToBB, const Position& pos,
                                        const Square checkSq, const Square ksq)
     {
         switch (pos.piece(checkSq)) {
 //      case Empty: assert(false); break; // 最適化の為のダミー
-        case (THEM == Black ? BPawn      : WPawn):
-        case (THEM == Black ? BKnight    : WKnight):
+        case (THEM == color::BLACK ? BPawn      : WPawn):
+        case (THEM == color::BLACK ? BKnight    : WKnight):
             // 歩、桂馬で王手したときは、どこへ逃げても、その駒で取られることはない。
             // よって、ここでは何もしない。
             assert(
-                pos.piece(checkSq) == (THEM == Black ? BPawn   : WPawn) ||
-                pos.piece(checkSq) == (THEM == Black ? BKnight : WKnight)
+                pos.piece(checkSq) == (THEM == color::BLACK ? BPawn   : WPawn) ||
+                pos.piece(checkSq) == (THEM == color::BLACK ? BKnight : WKnight)
                 );
         break;
-        case (THEM == Black ? BLance     : WLance):
+        case (THEM == color::BLACK ? BLance     : WLance):
             bannedKingToBB |= lanceAttackToEdge(THEM, checkSq);
             break;
-        case (THEM == Black ? BSilver    : WSilver):
+        case (THEM == color::BLACK ? BSilver    : WSilver):
             bannedKingToBB |= silverAttack(THEM, checkSq);
             break;
-        case (THEM == Black ? BGold      : WGold):
-        case (THEM == Black ? BProPawn   : WProPawn):
-        case (THEM == Black ? BProLance  : WProLance):
-        case (THEM == Black ? BProKnight : WProKnight):
-        case (THEM == Black ? BProSilver : WProSilver):
+        case (THEM == color::BLACK ? BGold      : WGold):
+        case (THEM == color::BLACK ? BProPawn   : WProPawn):
+        case (THEM == color::BLACK ? BProLance  : WProLance):
+        case (THEM == color::BLACK ? BProKnight : WProKnight):
+        case (THEM == color::BLACK ? BProSilver : WProSilver):
             bannedKingToBB |= goldAttack(THEM, checkSq);
         break;
-        case (THEM == Black ? BBishop    : WBishop):
+        case (THEM == color::BLACK ? BBishop    : WBishop):
             bannedKingToBB |= bishopAttackToEdge(checkSq);
             break;
-        case (THEM == Black ? BHorse     : WHorse):
+        case (THEM == color::BLACK ? BHorse     : WHorse):
             bannedKingToBB |= horseAttackToEdge(checkSq);
             break;
-        case (THEM == Black ? BRook      : WRook):
+        case (THEM == color::BLACK ? BRook      : WRook):
             bannedKingToBB |= rookAttackToEdge(checkSq);
             break;
-        case (THEM == Black ? BDragon    : WDragon):
+        case (THEM == color::BLACK ? BDragon    : WDragon):
             if (squareRelation(checkSq, ksq) & DirecDiag) {
                 // 斜めから王手したときは、玉の移動先と王手した駒の間に駒があることがあるので、
                 // dragonAttackToEdge(checkSq) は使えない。
@@ -439,13 +439,13 @@ namespace {
     // 王手をしている駒による王手は避けるが、
     // 玉の移動先に敵の利きがある場合と、pinされている味方の駒を動かした場合、非合法手を生成する。
     // そのため、pseudo legal である。
-    template <Color US, bool ALL> struct GenerateMoves<Evasion, US, ALL> {
+    template <color::ColorEnum US, bool ALL> struct GenerateMoves<Evasion, US, ALL> {
         /*FORCE_INLINE*/ ExtMove* operator () (ExtMove* moveList, const Position& pos) {
             assert(pos.isOK());
             assert(pos.inCheck());
 
             const Square ksq = pos.kingSquare(US);
-            constexpr Color Them = oppositeColor(US);
+            constexpr color::ColorEnum Them = color::opposite(US);
             const Bitboard checkers = pos.checkersBB();
             Bitboard bb = checkers;
             Bitboard bannedKingToBB = allZeroBB();
@@ -497,12 +497,12 @@ namespace {
     // 王手が掛かっていないときの指し手生成
     // これには、玉が相手駒の利きのある地点に移動する自殺手と、pin されている駒を動かす自殺手を含む。
     // ここで生成した手は pseudo legal
-    template <Color US> struct GenerateMoves<NonEvasion, US> {
+    template <color::ColorEnum US> struct GenerateMoves<NonEvasion, US> {
         /*FORCE_INLINE*/ ExtMove* operator () (ExtMove* moveList, const Position& pos) {
             Bitboard target = pos.emptyBB();
             moveList = generateDropMoves<US>(moveList, pos, target);
-            target |= pos.bbOf(oppositeColor(US));
-            const Square ksq = pos.kingSquare(oppositeColor(US));
+            target |= pos.bbOf(color::opposite(US));
+            const Square ksq = pos.kingSquare(color::opposite(US));
 
             moveList = GeneratePieceMoves<NonEvasion, Pawn           , US, false>()(moveList, pos, target, ksq);
             moveList = GeneratePieceMoves<NonEvasion, Lance          , US, false>()(moveList, pos, target, ksq);
@@ -520,7 +520,7 @@ namespace {
     // 部分特殊化
     // 連続王手の千日手以外の反則手を排除した合法手生成
     // そんなに速度が要求されるところでは呼ばない。
-    template <Color US> struct GenerateMoves<Legal, US> {
+    template <color::ColorEnum US> struct GenerateMoves<Legal, US> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos) {
             ExtMove* curr = moveList;
             const Bitboard pinned = pos.pinnedBB();
@@ -542,7 +542,7 @@ namespace {
 
     // 部分特殊化
     // Evasion のときに歩、飛、角と、香の2段目の不成も生成する。
-    template <Color US> struct GenerateMoves<LegalAll, US> {
+    template <color::ColorEnum US> struct GenerateMoves<LegalAll, US> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos) {
             ExtMove* curr = moveList;
             const Bitboard pinned = pos.pinnedBB();
@@ -564,7 +564,7 @@ namespace {
 
     // 部分特殊化
     // 玉の移動による自殺手と、pinされている駒の移動による自殺手を削除しない
-    template <Color US> struct GenerateMoves<PseudoLegal, US> {
+    template <color::ColorEnum US> struct GenerateMoves<PseudoLegal, US> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos) {
             ExtMove* curr = moveList;
 
@@ -576,7 +576,7 @@ namespace {
     };
 
     // 王手用
-    template <Color US, bool ALL>
+    template <color::ColorEnum US, bool ALL>
     FORCE_INLINE ExtMove* generatCheckMoves(ExtMove* moveList, const PieceType pt, const Position& pos, const Square from, const Square to) {
         switch (pt) {
         case Empty: assert(false); break; // 最適化の為のダミー
@@ -642,7 +642,7 @@ namespace {
 
     // 部分特殊化
     // 王手をかける手を生成する。
-    template <Color US, bool ALL> struct GenerateMoves<Check, US, ALL> {
+    template <color::ColorEnum US, bool ALL> struct GenerateMoves<Check, US, ALL> {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos) {
             ExtMove* curr = moveList;
 
@@ -665,7 +665,7 @@ namespace {
             // yと、yを含まないxとに分けて処理する。
             // すなわち、y と (x | y)^y
 
-            constexpr Color opp = oppositeColor(US);
+            constexpr color::ColorEnum opp = color::opposite(US);
             const Square ksq = pos.kingSquare(opp);
 
             // 以下の方法だとxとして飛(龍)は100%含まれる。角・馬は60%ぐらいの確率で含まれる。事前条件でもう少し省ければ良いのだが…。
@@ -1041,8 +1041,8 @@ namespace {
                 });
 
                 // 打ち歩詰めの回避
-                constexpr Rank TRank9 = (US == Black ? Rank9 : Rank1);
-                constexpr SquareDelta TDeltaS = (US == Black ? DeltaS : DeltaN);
+                constexpr Rank TRank9 = (US == color::BLACK ? Rank9 : Rank1);
+                constexpr SquareDelta TDeltaS = (US == color::BLACK ? DeltaS : DeltaN);
 
                 // 相手玉が九段目なら、歩で王手出来ないので、打ち歩詰めを調べる必要はない。
                 if (makeRank(ksq) != TRank9) {
@@ -1123,7 +1123,7 @@ namespace {
 
     // 部分特殊化
     // Check のときに歩、飛、角と、香の2段目の不成も生成する。
-    template <Color US>
+    template <color::ColorEnum US>
     struct GenerateMoves<CheckAll, US>
     {
         FORCE_INLINE ExtMove* operator()(ExtMove* moveList, const Position& pos)
@@ -1136,9 +1136,8 @@ namespace {
 template <MoveType MT>
 ExtMove* generateMoves(ExtMove* moveList, const Position& pos)
 {
-    return (
-        pos.turn() == Black ? GenerateMoves<MT, Black>()(moveList, pos)
-                            : GenerateMoves<MT, White>()(moveList, pos));
+    return (pos.turn() == color::BLACK ? GenerateMoves<MT, color::BLACK>()(moveList, pos)
+                            : GenerateMoves<MT, color::WHITE>()(moveList, pos));
 }
 template <MoveType MT>
 ExtMove* generateMoves(ExtMove* moveList, const Position& pos, const Square to)

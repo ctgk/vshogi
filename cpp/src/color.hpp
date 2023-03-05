@@ -22,23 +22,31 @@
 #ifndef APERY_COLOR_HPP
 #define APERY_COLOR_HPP
 
+#include <cstdint>
+
 #include "overloadEnumOperators.hpp"
 
-enum Color
+namespace color
 {
-    Black,
-    White,
-    ColorNum
-};
-OverloadEnumOperators(Color);
 
-inline constexpr Color oppositeColor(const Color c)
+enum ColorEnum : std::uint8_t
 {
-    return static_cast<Color>(static_cast<int>(c) ^ 1);
-}
-inline constexpr Color operator~(const Color c)
+    BLACK,
+    WHITE,
+    NUM_COLORS,
+};
+OverloadEnumOperators(ColorEnum);
+
+inline constexpr ColorEnum opposite(const ColorEnum c)
 {
-    return oppositeColor(c);
+    return static_cast<ColorEnum>(static_cast<std::uint8_t>(c) ^ 1);
 }
+
+inline constexpr ColorEnum operator~(const ColorEnum c)
+{
+    return opposite(c);
+}
+
+} // namespace color
 
 #endif // #ifndef APERY_COLOR_HPP

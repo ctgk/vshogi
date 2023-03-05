@@ -41,11 +41,11 @@ bool nyugyoku(const Position& pos)
     if (pos.inCheck())
         return false;
 
-    const Color us = pos.turn();
+    const color::ColorEnum us = pos.turn();
     // 敵陣のマスク
     const Bitboard opponentsField
-        = (us == Black ? inFrontMask<Black, Rank4>()
-                       : inFrontMask<White, Rank6>());
+        = (us == color::BLACK ? inFrontMask<color::BLACK, Rank4>()
+                              : inFrontMask<color::WHITE, Rank6>());
 
     // 二 宣言側の玉が敵陣三段目以内に入っている。
     if (!pos.bbOf(King, us).andIsAny(opponentsField))
@@ -74,7 +74,7 @@ bool nyugyoku(const Position& pos)
     if (val < 31)
         return false;
 #else
-    if (val < (us == Black ? 28 : 27))
+    if (val < (us == color::BLACK ? 28 : 27))
         return false;
 #endif
 

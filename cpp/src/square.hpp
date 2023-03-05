@@ -110,28 +110,28 @@ inline int abs(const Rank r)
 }
 
 // 先手のときは BRANK, 後手のときは WRANK より target が前の段にあるなら true を返す。
-template <Color US, Rank BRANK, Rank WRANK>
+template <color::ColorEnum US, Rank BRANK, Rank WRANK>
 inline bool isInFrontOf(const Rank target)
 {
-    return (US == Black ? (target < BRANK) : (WRANK < target));
+    return (US == color::BLACK ? (target < BRANK) : (WRANK < target));
 }
 
-template <Color US, Rank BRANK, Rank WRANK>
+template <color::ColorEnum US, Rank BRANK, Rank WRANK>
 inline bool isBehind(const Rank target)
 {
-    return (US == Black ? (BRANK < target) : (target < WRANK));
+    return (US == color::BLACK ? (BRANK < target) : (target < WRANK));
 }
 
-template <Color US, File BFILE, File WFILE>
+template <color::ColorEnum US, File BFILE, File WFILE>
 inline bool isLeftOf(const File target)
 {
-    return (US == Black ? (BFILE < target) : (target < WFILE));
+    return (US == color::BLACK ? (BFILE < target) : (target < WFILE));
 }
 
-template <Color US, File BFILE, File WFILE>
+template <color::ColorEnum US, File BFILE, File WFILE>
 inline bool isRightOf(const File target)
 {
-    return (US == Black ? (target < BFILE) : (WFILE < target));
+    return (US == color::BLACK ? (target < BFILE) : (WFILE < target));
 }
 
 enum SquareDelta
@@ -352,37 +352,40 @@ inline Square inverseFile(const Square sq)
     return makeSquare(inverse(makeFile(sq)), makeRank(sq));
 }
 
-inline constexpr Square inverseIfWhite(const Color c, const Square sq)
+inline constexpr Square
+inverseIfWhite(const color::ColorEnum c, const Square sq)
 {
-    return (c == Black ? sq : inverse(sq));
+    return (c == color::BLACK ? sq : inverse(sq));
 }
 
-inline bool canPromote(const Color c, const Rank fromOrToRank)
+inline bool canPromote(const color::ColorEnum c, const Rank fromOrToRank)
 {
 #if 1
-    static_assert(Black == 0, "");
+    static_assert(color::BLACK == 0, "");
     static_assert(Rank1 == 0, "");
     return static_cast<bool>(0x1c00007u & (1u << ((c << 4) + fromOrToRank)));
 #else
     // 同じ意味。
     return (
-        c == Black ? isInFrontOf<Black, Rank4, Rank6>(fromOrToRank)
-                   : isInFrontOf<White, Rank4, Rank6>(fromOrToRank));
+        c == color::BLACK
+            ? isInFrontOf<color::BLACK, Rank4, Rank6>(fromOrToRank)
+            : isInFrontOf<color::WHITE, Rank4, Rank6>(fromOrToRank));
 #endif
 }
 // 移動元、もしくは移動先の升sqを与えたときに、そこが成れるかどうかを判定する。
-inline bool canPromote(const Color c, const Square fromOrTo)
+inline bool canPromote(const color::ColorEnum c, const Square fromOrTo)
 {
     return canPromote(c, makeRank(fromOrTo));
 }
 // 移動元と移動先の升を与えて、成れるかどうかを判定する。
 // (移動元か移動先かのどちらかが敵陣であれば成れる)
-inline bool canPromote(const Color c, const Square from, const Square to)
+inline bool
+canPromote(const color::ColorEnum c, const Square from, const Square to)
 {
     return canPromote(c, from) || canPromote(c, to);
 }
 
-inline bool isOpponentField(const Color c, const Rank r)
+inline bool isOpponentField(const color::ColorEnum c, const Rank r)
 {
     return canPromote(c, r);
 }

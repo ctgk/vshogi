@@ -26,8 +26,8 @@
 #include "mt64bit.hpp"
 #include "generateMoves.hpp"
 
-Key Position::zobrist_[PieceTypeNum][SquareNum][ColorNum];
-Key Position::zobHand_[HandPieceNum][ColorNum];
+Key Position::zobrist_[PieceTypeNum][SquareNum][color::NUM_COLORS];
+Key Position::zobHand_[HandPieceNum][color::NUM_COLORS];
 
 const HuffmanCode HuffmanCodedPos::boardCodeTable[PieceNone] = {
     {Binary<         0>::value, 1}, // Empty
@@ -65,7 +65,7 @@ const HuffmanCode HuffmanCodedPos::boardCodeTable[PieceNone] = {
 
 // 盤上の bit 数 - 1 で表現出来るようにする。持ち駒があると、盤上には Empty の 1 bit が増えるので、
 // これで局面の bit 数が固定化される。
-const HuffmanCode HuffmanCodedPos::handCodeTable[HandPieceNum][ColorNum] = {
+const HuffmanCode HuffmanCodedPos::handCodeTable[HandPieceNum][color::NUM_COLORS] = {
     {{Binary<        0>::value, 3}, {Binary<      100>::value, 3}}, // HPawn
     {{Binary<        1>::value, 5}, {Binary<    10001>::value, 5}}, // HLance
     {{Binary<       11>::value, 5}, {Binary<    10011>::value, 5}}, // HKnight
@@ -146,7 +146,7 @@ const HuffmanCode PackedSfen::boardCodeTable[PieceNone] = {
 
 // 盤上の bit 数 - 1 で表現出来るようにする。持ち駒があると、盤上には Empty の 1 bit が増えるので、
 // これで局面の bit 数が固定化される。
-const HuffmanCode PackedSfen::handCodeTable[HandPieceNum][ColorNum] = {
+const HuffmanCode PackedSfen::handCodeTable[HandPieceNum][color::NUM_COLORS] = {
 	{ { Binary<        0>::value, 3 },{ Binary<      100>::value, 3 } }, // HPawn
 	{ { Binary<        1>::value, 5 },{ Binary<    10001>::value, 5 } }, // HLance
 	{ { Binary<      101>::value, 5 },{ Binary<    10101>::value, 5 } }, // HKnight
@@ -179,7 +179,7 @@ namespace {
 }
 
 CheckInfo::CheckInfo(const Position& pos) {
-    const Color them = oppositeColor(pos.turn());
+    const color::ColorEnum them = color::opposite(pos.turn());
     const Square ksq = pos.kingSquare(them);
 
     pinned = pos.pinnedBB();
@@ -203,7 +203,7 @@ CheckInfo::CheckInfo(const Position& pos) {
     checkBB[Dragon   ] = checkBB[Rook  ] | pos.attacksFrom<King>(ksq);
 }
 
-Bitboard Position::attacksFrom(const PieceType pt, const Color c, const Square sq, const Bitboard& occupied) {
+Bitboard Position::attacksFrom(const PieceType pt, const color::ColorEnum c, const Square sq, const Bitboard& occupied) {
     switch (pt) {
     case Occupied:  return allZeroBB();
     case Pawn:      return pawnAttack(c, sq);
@@ -238,11 +238,11 @@ bool Position::pseudoLegalMoveIsLegal(const Move move, const Bitboard& pinned) c
         return true;
     assert(!move.isDrop());
 
-    const Color us = turn();
+    const color::ColorEnum us = turn();
     const Square from = move.from();
 
     if (!FROMMUSTNOTKING && pieceToPieceType(piece(from)) == King) {
-        const Color them = oppositeColor(us);
+        const color::ColorEnum them = color::opposite(us);
         // 玉の移動先に相手の駒の利きがあれば、合法手でないので、false
         return !attackersToIsAny(them, move.to());
     }
@@ -261,7 +261,7 @@ bool Position::pseudoLegalMoveIsEvasion(const Move move, const Bitboard& pinned)
     if (move.pieceTypeFrom() == King) {
         // 遠隔駒で王手されたとき、王手している遠隔駒の利きには移動しないように指し手を生成している。
         // その為、移動先に他の駒の利きが無いか調べるだけで良い。
-        const bool canMove = !attackersToIsAny(oppositeColor(turn()), move.to());
+        const bool canMove = !attackersToIsAny(color::opposite(turn()), move.to());
         assert(canMove == (pseudoLegalMoveIsLegal<false, false>(move, pinned)));
         return canMove;
     }
@@ -274,7 +274,7 @@ bool Position::pseudoLegalMoveIsEvasion(const Move move, const Bitboard& pinned)
         // 両王手のとき、玉の移動以外の手は指せない。
         return false;
 
-    const Color us = turn();
+    const color::ColorEnum us = turn();
     const Square to = move.to();
     // 移動、又は打った駒が、王手をさえぎるか、王手している駒を取る必要がある。
     target = betweenBB(checkSq, kingSquare(us)) | checkersBB();
@@ -286,8 +286,8 @@ bool Position::pseudoLegalMoveIsEvasion(const Move move, const Bitboard& pinned)
 //            これは非合法手として省いて良い。
 //            false なら、外部入力の合法手判定なので、ルールと同一の条件になる事が望ましい。
 template <bool Searching> bool Position::moveIsPseudoLegal(const Move move) const {
-    const Color us = turn();
-    const Color them = oppositeColor(us);
+    const color::ColorEnum us = turn();
+    const color::ColorEnum them = color::opposite(us);
     const Square to = move.to();
 
     if (move.isDrop()) {
@@ -314,7 +314,7 @@ template <bool Searching> bool Position::moveIsPseudoLegal(const Move move) cons
             if ((bbOf(Pawn, us) & fileMask(makeFile(to))))
                 // 二歩
                 return false;
-            const SquareDelta TDeltaN = (us == Black ? DeltaN : DeltaS);
+            const SquareDelta TDeltaN = (us == color::BLACK ? DeltaN : DeltaS);
             if (to + TDeltaN == kingSquare(them) && isPawnDropCheckMate(us, to))
                 // 王手かつ打ち歩詰め
                 return false;
@@ -347,7 +347,7 @@ template <bool Searching> bool Position::moveIsPseudoLegal(const Move move) cons
                 else {
                     // 1段目の不成は非合法なので省く。2段目の不成と3段目の駒を取らない不成もついでに省く。
                     const Rank toRank = makeRank(to);
-                    if (us == Black ? isInFrontOf<Black, Rank3, Rank7>(toRank) : isInFrontOf<White, Rank3, Rank7>(toRank))
+                    if (us == color::BLACK ? isInFrontOf<color::BLACK, Rank3, Rank7>(toRank) : isInFrontOf<color::WHITE, Rank3, Rank7>(toRank))
                         return false;
                     if (canPromote(us, toRank) && !move.isCapture())
                         return false;
@@ -428,7 +428,7 @@ void Position::doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, co
 
     gamePly_++;
 
-    const Color us = turn();
+    const color::ColorEnum us = turn();
     const Square to = move.to();
     const PieceType ptCaptured = move.cap();
     PieceType ptTo;
@@ -469,7 +469,7 @@ void Position::doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, co
         if (ptCaptured) {
             // 駒を取ったとき
             const HandPiece hpCaptured = pieceTypeToHandPiece(ptCaptured);
-            const Color them = oppositeColor(us);
+            const color::ColorEnum them = color::opposite(us);
 
             boardKey -= zobrist(ptCaptured, to, them);
             handKey += zobHand(hpCaptured, us);
@@ -480,8 +480,8 @@ void Position::doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, co
             hand_[us].plusOne(hpCaptured);
         }
         // Occupied は to, from の位置のビットを操作するよりも、
-        // Black と White の or を取る方が速いはず。
-        byTypeBB_[Occupied] = bbOf(Black) | bbOf(White);
+        // color::BLACK と White の or を取る方が速いはず。
+        byTypeBB_[Occupied] = bbOf(color::BLACK) | bbOf(color::WHITE);
 
         if (ptTo == King)
             kingSquare_[us] = to;
@@ -491,7 +491,7 @@ void Position::doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, co
             st_->checkersBB = ci.checkBB[ptTo] & setMaskBB(to);
 
             // Discovery checks
-            const Square ksq = kingSquare(oppositeColor(us));
+            const Square ksq = kingSquare(color::opposite(us));
             if (isDiscoveredCheck(from, to, ksq, ci.dcBB)) {
                 switch (squareRelation(from, ksq)) {
                 case DirecMisc: assert(false); break; // 最適化の為のダミー
@@ -521,7 +521,7 @@ void Position::doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, co
     st_->handKey = handKey;
     ++st_->pliesFromNull;
 
-    turn_ = oppositeColor(us);
+    turn_ = color::opposite(us);
     st_->hand = hand(turn());
 
     assert(isOK());
@@ -531,8 +531,8 @@ void Position::undoMove(const Move move) {
     assert(isOK());
     assert(move);
 
-    const Color them = turn();
-    const Color us = oppositeColor(them);
+    const color::ColorEnum them = turn();
+    const color::ColorEnum us = color::opposite(them);
     const Square to = move.to();
     turn_ = us;
     // ここで先に turn_ を戻したので、以下、move は us の指し手とする。
@@ -574,8 +574,8 @@ void Position::undoMove(const Move move) {
         piece_[from] = colorAndPieceTypeToPiece(us, ptFrom);
     }
     // Occupied は to, from の位置のビットを操作するよりも、
-    // Black と White の or を取る方が速いはず。
-    byTypeBB_[Occupied] = bbOf(Black) | bbOf(White);
+    // color::BLACK と White の or を取る方が速いはず。
+    byTypeBB_[Occupied] = bbOf(color::BLACK) | bbOf(color::WHITE);
     goldsBB_ = bbOf(Gold, ProPawn, ProLance, ProKnight, ProSilver);
 
     // key などは StateInfo にまとめられているので、
@@ -597,7 +597,7 @@ template <bool DO> void Position::doNullMove(StateInfo& backUpSt) {
     dst->handKey = src->handKey;
     dst->pliesFromNull = src->pliesFromNull;
     dst->hand = hand(turn());
-    turn_ = oppositeColor(turn());
+    turn_ = color::opposite(turn());
 
     if (DO) {
         st_->boardKey ^= zobTurn();
@@ -629,7 +629,7 @@ namespace {
     template <> struct SEENextPieceType<Dragon   > { static const PieceType value = King;      };
 
     template <PieceType PT> FORCE_INLINE PieceType nextAttacker(const Position& pos, const Square to, const Bitboard& opponentAttackers,
-                                                                Bitboard& occupied, Bitboard& attackers, const Color turn)
+                                                                Bitboard& occupied, Bitboard& attackers, const color::ColorEnum turn)
     {
         if (opponentAttackers.andIsAny(pos.bbOf(PT))) {
             const Bitboard bb = opponentAttackers & pos.bbOf(PT);
@@ -638,21 +638,21 @@ namespace {
             // todo: 実際に移動した方向を基にattackersを更新すれば、template, inline を使用しなくても良さそう。
             //       その場合、キャッシュに乗りやすくなるので逆に速くなるかも。
             if (PT == Pawn || PT == Lance)
-                attackers |= (lanceAttack(oppositeColor(turn), to, occupied) & (pos.bbOf(Rook, Dragon) | pos.bbOf(Lance, turn)));
+                attackers |= (lanceAttack(color::opposite(turn), to, occupied) & (pos.bbOf(Rook, Dragon) | pos.bbOf(Lance, turn)));
             if (PT == Gold || PT == ProPawn || PT == ProLance || PT == ProKnight || PT == ProSilver || PT == Horse || PT == Dragon)
-                attackers |= (lanceAttack(oppositeColor(turn), to, occupied) & pos.bbOf(Lance, turn))
-                    | (lanceAttack(turn, to, occupied) & pos.bbOf(Lance, oppositeColor(turn)))
+                attackers |= (lanceAttack(color::opposite(turn), to, occupied) & pos.bbOf(Lance, turn))
+                    | (lanceAttack(turn, to, occupied) & pos.bbOf(Lance, color::opposite(turn)))
                     | (rookAttack(to, occupied) & pos.bbOf(Rook, Dragon))
                     | (bishopAttack(to, occupied) & pos.bbOf(Bishop, Horse));
             if (PT == Silver)
-                attackers |= (lanceAttack(oppositeColor(turn), to, occupied) & pos.bbOf(Lance, turn))
+                attackers |= (lanceAttack(color::opposite(turn), to, occupied) & pos.bbOf(Lance, turn))
                     | (rookAttack(to, occupied) & pos.bbOf(Rook, Dragon))
                     | (bishopAttack(to, occupied) & pos.bbOf(Bishop, Horse));
             if (PT == Bishop)
                 attackers |= (bishopAttack(to, occupied) & pos.bbOf(Bishop, Horse));
             if (PT == Rook)
-                attackers |= (lanceAttack(oppositeColor(turn), to, occupied) & pos.bbOf(Lance, turn))
-                    | (lanceAttack(turn, to, occupied) & pos.bbOf(Lance, oppositeColor(turn)))
+                attackers |= (lanceAttack(color::opposite(turn), to, occupied) & pos.bbOf(Lance, turn))
+                    | (lanceAttack(turn, to, occupied) & pos.bbOf(Lance, color::opposite(turn)))
                     | (rookAttack(to, occupied) & pos.bbOf(Rook, Dragon));
 
             if (PT == Pawn || PT == Lance || PT == Knight)
@@ -666,7 +666,7 @@ namespace {
         return nextAttacker<SEENextPieceType<PT>::value>(pos, to, opponentAttackers, occupied, attackers, turn);
     }
     template <> FORCE_INLINE PieceType nextAttacker<King>(const Position&, const Square, const Bitboard&,
-                                                          Bitboard&, Bitboard&, const Color)
+                                                          Bitboard&, Bitboard&, const color::ColorEnum)
     {
         return King;
     }
@@ -678,8 +678,8 @@ namespace {
     // bb : sq の利きのある場所のBitboard。よって、玉は bb のビットが立っている場所には行けない。
     // sq と ksq の位置の Occupied Bitboard のみは、ここで更新して評価し、元に戻す。
     // (実際にはテンポラリのOccupied Bitboard を使うので、元には戻さない。)
-    bool canKingEscape(const Position& pos, const Color us, const Square sq, const Bitboard& bb) {
-        const Color them = oppositeColor(us);
+    bool canKingEscape(const Position& pos, const color::ColorEnum us, const Square sq, const Bitboard& bb) {
+        const color::ColorEnum them = color::opposite(us);
         const Square ksq = pos.kingSquare(them);
         Bitboard kingMoveBB = bb.notThisAnd(pos.bbOf(them).notThisAnd(kingAttack(ksq)));
         kingMoveBB.clearBit(sq); // sq には行けないので、クリアする。xorBit(sq)ではダメ。
@@ -699,7 +699,7 @@ namespace {
         return false;
     }
     // them(相手) 側の玉以外の駒が sq にある us 側の駒を取れるか。
-    bool canPieceCapture(const Position& pos, const Color them, const Square sq, const Bitboard& dcBB) {
+    bool canPieceCapture(const Position& pos, const color::ColorEnum them, const Square sq, const Bitboard& dcBB) {
         // 玉以外で打った駒を取れる相手側の駒の Bitboard
         Bitboard fromBB = pos.attackersToExceptKing(them, sq);
 
@@ -717,7 +717,7 @@ namespace {
     }
 
     // pos.discoveredCheckBB<false>() を遅延評価するバージョン。
-    bool canPieceCapture(const Position& pos, const Color them, const Square sq) {
+    bool canPieceCapture(const Position& pos, const color::ColorEnum them, const Square sq) {
         Bitboard fromBB = pos.attackersToExceptKing(them, sq);
 
         if (fromBB) {
@@ -738,8 +738,8 @@ namespace {
 // us が sq へ歩を打ったとき、them の玉が詰むか。
 // us が sq へ歩を打つのは王手であると仮定する。
 // 打ち歩詰めのとき、true を返す。
-bool Position::isPawnDropCheckMate(const Color us, const Square sq) const {
-    const Color them = oppositeColor(us);
+bool Position::isPawnDropCheckMate(const color::ColorEnum us, const Square sq) const {
+    const color::ColorEnum them = color::opposite(us);
     // 玉以外の駒で、打たれた歩が取れるなら、打ち歩詰めではない。
     if (canPieceCapture(*this, them, sq))
         return false;
@@ -750,7 +750,7 @@ bool Position::isPawnDropCheckMate(const Color us, const Square sq) const {
 
     // 利きを求める際に、occupied の歩を打った位置の bit を立てた Bitboard を使用する。
     // ここでは歩の Bitboard は更新する必要がない。
-    // color の Bitboard も更新する必要がない。(相手玉が動くとき、こちらの打った歩で玉を取ることは無い為。)
+    // color::ColorEnum の Bitboard も更新する必要がない。(相手玉が動くとき、こちらの打った歩で玉を取ることは無い為。)
     const Bitboard tempOccupied = occupiedBB() | setMaskBB(sq);
     Bitboard kingMoveBB = bbOf(them).notThisAnd(kingAttack(ksq));
 
@@ -766,7 +766,7 @@ bool Position::isPawnDropCheckMate(const Color us, const Square sq) const {
     return true;
 }
 
-inline void Position::xorBBs(const PieceType pt, const Square sq, const Color c) {
+inline void Position::xorBBs(const PieceType pt, const Square sq, const color::ColorEnum c) {
     byTypeBB_[Occupied].xorBit(sq);
     byTypeBB_[pt].xorBit(sq);
     byColorBB_[c].xorBit(sq);
@@ -779,11 +779,11 @@ template <typename T> int sgn(T val) {
 
 // 玉周辺の利きを求めるときに使う、玉周辺に利きをつける候補の駒を表すBB
 // COLORのところは王手する側の駒
-Bitboard CHECK_AROUND_BB[SquareNum + 1][Promoted][ColorNum];
+Bitboard CHECK_AROUND_BB[SquareNum + 1][Promoted][color::NUM_COLORS];
 
 // 敵玉8近傍の利きに関係する自駒の候補のbitboardを返す。ここになければ玉周辺に利きをつけない。
 // pt = Pawn～HDK
-inline Bitboard check_around_bb(Color us, PieceType pt, Square sq_king) {
+inline Bitboard check_around_bb(color::ColorEnum us, PieceType pt, Square sq_king) {
     return CHECK_AROUND_BB[sq_king][pt - 1][us];
 }
 
@@ -797,7 +797,7 @@ inline Square nextSquare(Square sq1, Square sq2) { return (Square)NextSquare[sq1
 void initMate1Ply() {
     for (PieceType p = Pawn; p <= King; ++p)
         for (Square sq = SQ11; sq < SquareNum; ++sq)
-            for (Color c = Black; c < ColorNum; ++c) {
+            for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
                 Bitboard bb = allZeroBB(), tmp = allZeroBB();
                 Square to;
 
@@ -914,7 +914,7 @@ static const Bitboard RANK5_7BB = rankMask<Rank5>() | rankMask<Rank6>() | rankMa
 
 // usのSliderの利きを列挙する。
 // avoid升にいる駒の利きは除外される。
-Bitboard Position::attacksSlider(const Color us, const Bitboard& slide) const {
+Bitboard Position::attacksSlider(const color::ColorEnum us, const Bitboard& slide) const {
     Bitboard bb, sum = allZeroBB();
     Square from;
 
@@ -938,7 +938,7 @@ Bitboard Position::attacksSlider(const Color us, const Bitboard& slide) const {
 
 // usのSliderの利きを列挙する
 // avoid升にいる駒の利きは除外される。
-Bitboard Position::attacksSlider(const Color us, const Square avoid_from, const Bitboard& occ) const {
+Bitboard Position::attacksSlider(const color::ColorEnum us, const Square avoid_from, const Bitboard& occ) const {
     Bitboard bb, sum = allZeroBB();
     Bitboard avoid_bb = ~setMaskBB(avoid_from);
     Square from;
@@ -962,10 +962,10 @@ Bitboard Position::attacksSlider(const Color us, const Square avoid_from, const 
 }
 
 // NonSliderの利きのみ列挙
-template <Color US>
+template <color::ColorEnum US>
 Bitboard Position::attacksAroundKingNonSlider() const {
     const Square sq_king = kingSquare(US);
-    const Color Them = ~US;
+    const color::ColorEnum Them = ~US;
     Square from;
     Bitboard bb;
 
@@ -997,10 +997,10 @@ Bitboard Position::attacksAroundKingNonSlider() const {
 }
 
 // Sliderの利きのみ列挙
-template <Color US>
+template <color::ColorEnum US>
 Bitboard Position::attacksAroundKingSlider() const {
     const Square sq_king = kingSquare(US);
-    const Color Them = ~US;
+    const color::ColorEnum Them = ~US;
     Square from;
     Bitboard bb;
     Bitboard sum = allZeroBB();
@@ -1023,10 +1023,10 @@ Bitboard Position::attacksAroundKingSlider() const {
     return sum;
 }
 
-template <Color US>
+template <color::ColorEnum US>
 Bitboard Position::attacksAroundKingNonSliderInAvoiding(Square avoid_from) const {
     const Square sq_king = kingSquare(US);
-    const Color Them = ~US;
+    const color::ColorEnum Them = ~US;
     Bitboard bb;
     const Bitboard avoid_bb = ~setMaskBB(avoid_from);
     Square from;
@@ -1058,7 +1058,7 @@ Bitboard Position::attacksAroundKingNonSliderInAvoiding(Square avoid_from) const
     return sum;
 }
 
-Bitboard Position::pinnedPieces(const Color us, const Square from, const Square to) const {
+Bitboard Position::pinnedPieces(const color::ColorEnum us, const Square from, const Square to) const {
     Bitboard b, pinners, result = allZeroBB();
     const Square ksq = kingSquare(us);
 
@@ -1085,7 +1085,7 @@ namespace {
 
     // kingがtoとbb_avoid以外の升に逃げられるか
     // toに駒がない場合、駒が打たれているのでこれによって升は遮断されているものとして考える。
-    bool can_king_escape(const Position& pos, const Color us, const Square to, const Bitboard& bb_avoid, const Bitboard& slide_) {
+    bool can_king_escape(const Position& pos, const color::ColorEnum us, const Square to, const Bitboard& bb_avoid, const Bitboard& slide_) {
         // toには駒が置かれているのでこれにより利きの遮断は発生している。(attackers_to()で利きを見るときに重要)
         // captureの場合、もともとtoには駒があるわけで、ここをxorで処理するわけにはいかない。
         const Bitboard slide = slide_ | setMaskBB(to);
@@ -1114,7 +1114,7 @@ namespace {
     // kingがtoとbb_avoid以外の升に逃げられるか
     // toに駒がない場合、駒が打たれているのでこれによって升は遮断されているものとして考える。
     // またfromからは駒が除去されているものとして考える。
-    bool can_king_escape(const Position& pos, const Color us, const Square from, const Square to, const Bitboard& bb_avoid, const Bitboard& slide_) {
+    bool can_king_escape(const Position& pos, const color::ColorEnum us, const Square from, const Square to, const Bitboard& bb_avoid, const Bitboard& slide_) {
         const Square sq_king = pos.kingSquare(us);
 
         // toには駒が置かれているのでこれにより利きの遮断は発生している。(attackers_to()で利きを見るときに重要)
@@ -1143,7 +1143,7 @@ namespace {
     // toに駒がない場合、駒が打たれているのでこれによって升は遮断されているものとして考える。
     // またfromからは駒が除去されているものとして考える。
     // ただしtoには行けるものとする。
-    bool can_king_escape_cangoto(const Position& pos, const Color us, const Square from, const Square to, const Bitboard& bb_avoid, const Bitboard& slide_) {
+    bool can_king_escape_cangoto(const Position& pos, const color::ColorEnum us, const Square from, const Square to, const Bitboard& bb_avoid, const Bitboard& slide_) {
         const Square sq_king = pos.kingSquare(us);
 
         // toには駒が置かれているのでこれにより利きの遮断は発生している。(attackers_to()で利きを見るときに重要)
@@ -1172,7 +1172,7 @@ namespace {
     }
 
     // 玉以外の駒でtoの駒が取れるのか？(toの地点には敵の利きがある or 届かないので玉では取れないものとする)
-    bool can_piece_capture(const Position& pos, const Color us, const Square to, const Bitboard& pinned, const Bitboard& slide) {
+    bool can_piece_capture(const Position& pos, const color::ColorEnum us, const Square to, const Bitboard& pinned, const Bitboard& slide) {
         const Square sq_king = pos.kingSquare(us);
 
         // 玉以外の駒でこれが取れるのか？(toの地点には敵の利きがある or 届かないので玉では取れないものとする)
@@ -1193,7 +1193,7 @@ namespace {
 
     // toにある駒が捕獲できるのか
     // ただしavoid升の駒でのcaptureは除外する。
-    bool can_piece_capture(const Position& pos, const Color us, const Square to, const Square avoid, const Bitboard& pinned, const Bitboard& slide) {
+    bool can_piece_capture(const Position& pos, const color::ColorEnum us, const Square to, const Square avoid, const Bitboard& pinned, const Bitboard& slide) {
         assert(isInSquare(to));
 
         const Square sq_king = pos.kingSquare(us);
@@ -1220,10 +1220,10 @@ namespace {
 // 1手詰みなら、詰みに至る指し手の一部の情報(from, to のみとか)を返す。
 // 1手詰みでないなら、Move::moveNone() を返す。
 // Bitboard の状態を途中で更新する為、const 関数ではない。(更新後、元に戻すが。)
-template <Color US, bool Additional> Move Position::mateMoveIn1Ply() {
-    constexpr Color Them = oppositeColor(US);
+template <color::ColorEnum US, bool Additional> Move Position::mateMoveIn1Ply() {
+    constexpr color::ColorEnum Them = color::opposite(US);
     const Square ksq = kingSquare(Them);
-    const SquareDelta TDeltaS = (US == Black ? DeltaS : DeltaN);
+    const SquareDelta TDeltaS = (US == color::BLACK ? DeltaS : DeltaN);
 
     assert(!attackersToIsAny(Them, kingSquare(US)));
 
@@ -1390,7 +1390,7 @@ silver_drop_end:
     }
 
     // Txxx は先手、後手の情報を吸収した変数。数字は先手に合わせている。
-    const Rank TRank4 = (US == Black ? Rank4 : Rank6);
+    const Rank TRank4 = (US == color::BLACK ? Rank4 : Rank6);
     const Bitboard TRank123BB = inFrontMask<US, TRank4>();
     {
         // 飛車による移動
@@ -1823,8 +1823,8 @@ silver_drop_end:
         Bitboard fromBB = bbOf(Lance, US) & lanceCheckTable(US, ksq);
         if (fromBB) {
             // Txxx は先手、後手の情報を吸収した変数。数字は先手に合わせている。
-            const SquareDelta TDeltaS = (US == Black ? DeltaS : DeltaN);
-            const Rank TRank2 = (US == Black ? Rank2 : Rank8);
+            const SquareDelta TDeltaS = (US == color::BLACK ? DeltaS : DeltaN);
+            const Rank TRank2 = (US == color::BLACK ? Rank2 : Rank8);
             const Bitboard chkBB_promo = attacksFrom<Gold>(Them, ksq) & TRank123BB;
             // 玉の前方1マスのみ。
             // 玉が 1 段目にいるときは、成のみで良いので省く。
@@ -1888,8 +1888,8 @@ silver_drop_end:
         // 歩が移動して王手になるのは、相手玉が1~7段目の時のみ。
         if (isInFrontOf<US, Rank8, Rank2>(krank)) {
             // Txxx は先手、後手の情報を吸収した変数。数字は先手に合わせている。
-            const SquareDelta TDeltaS = (US == Black ? DeltaS : DeltaN);
-            const SquareDelta TDeltaN = (US == Black ? DeltaN : DeltaS);
+            const SquareDelta TDeltaS = (US == color::BLACK ? DeltaS : DeltaN);
+            const SquareDelta TDeltaN = (US == color::BLACK ? DeltaN : DeltaS);
 
             Bitboard fromBB = bbOf(Pawn, US);
             // 玉が敵陣にいないと成で王手になることはない。
@@ -2033,7 +2033,7 @@ silver_drop_end:
 
                     // 十字なら飛車を持ってなきゃ
                     // 上からなら香でもいいのか。
-                    canLanceAttack = (US == Black ? dr == Effect8::DIRECTIONS_D : dr == Effect8::DIRECTIONS_U);
+                    canLanceAttack = (US == color::BLACK ? dr == Effect8::DIRECTIONS_D : dr == Effect8::DIRECTIONS_U);
                     if (canLanceAttack && ourHand.exists<HLance>()) {
                         pt = Lance;
                     }
@@ -2243,7 +2243,7 @@ silver_drop_end:
                     if (makeFile(from) == makeFile(ksq)) { continue; }
 
                     // 移動性の保証
-                    const Square to = from + (US == Black ? DeltaN : DeltaS);
+                    const Square to = from + (US == color::BLACK ? DeltaN : DeltaS);
                     if (piece(to) != Empty && pieceToColor(piece(to)) != ~US) { continue; }
 
                     // toの地点で成れないと駄目
@@ -2503,7 +2503,7 @@ silver_drop_end:
 
                 case Knight:
                     // 成って詰みはあるか..それだけ見るか..
-                    if (!((US == Black ? RANK3_5BB : RANK5_7BB) & setMaskBB(from)))
+                    if (!((US == color::BLACK ? RANK3_5BB : RANK5_7BB) & setMaskBB(from)))
                         continue;
 
                     bb_attacks = knightAttack(US, from) & ~goldAttack(Them, ksq);
@@ -2733,14 +2733,14 @@ silver_drop_end:
 }
 
 template <bool Additional> Move Position::mateMoveIn1Ply() {
-    return (turn() == Black ? mateMoveIn1Ply<Black, Additional>() : mateMoveIn1Ply<White, Additional>());
+    return (turn() == color::BLACK ? mateMoveIn1Ply<color::BLACK, Additional>() : mateMoveIn1Ply<color::WHITE, Additional>());
 }
 
 // 明示的インスタンス化
-template Move Position::mateMoveIn1Ply<Black, false>();
-template Move Position::mateMoveIn1Ply<White, false>();
-template Move Position::mateMoveIn1Ply<Black, true>();
-template Move Position::mateMoveIn1Ply<White, true>();
+template Move Position::mateMoveIn1Ply<color::BLACK, false>();
+template Move Position::mateMoveIn1Ply<color::WHITE, false>();
+template Move Position::mateMoveIn1Ply<color::BLACK, true>();
+template Move Position::mateMoveIn1Ply<color::WHITE, true>();
 template Move Position::mateMoveIn1Ply<false>();
 template Move Position::mateMoveIn1Ply<true>();
 
@@ -2750,19 +2750,19 @@ void Position::initZobrist() {
     // hash値の更新は普通は全て xor を使うが、持ち駒の更新の為に +, - を使用した方が都合が良い。
     for (PieceType pt = Occupied; pt < PieceTypeNum; ++pt) {
         for (Square sq = SQ11; sq < SquareNum; ++sq) {
-            for (Color c = Black; c < ColorNum; ++c)
+            for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c)
                 zobrist_[pt][sq][c] = g_mt64bit.random() & ~UINT64_C(1);
         }
     }
     for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp) {
-        zobHand_[hp][Black] = g_mt64bit.random() & ~UINT64_C(1);
-        zobHand_[hp][White] = g_mt64bit.random() & ~UINT64_C(1);
+        zobHand_[hp][color::BLACK] = g_mt64bit.random() & ~UINT64_C(1);
+        zobHand_[hp][color::WHITE] = g_mt64bit.random() & ~UINT64_C(1);
     }
 }
 
 // ある指し手を指した後のhash keyを返す。
 Key Position::getKeyAfter(const Move m) const {
-	Color Us = this->turn(); // 現局面の手番
+	color::ColorEnum Us = this->turn(); // 現局面の手番
 	Key k = getBoardKey() ^ zobTurn();
 	Key h = getHandKey();
 
@@ -2819,7 +2819,7 @@ Key Position::getKeyAfter(const Move m) const {
 
 // ある指し手を指した後のhash keyを返す。
 Key Position::getBoardKeyAfter(const Move m) const {
-	Color Us = this->turn(); // 現局面の手番
+	color::ColorEnum Us = this->turn(); // 現局面の手番
 	Key k = getBoardKey() ^ zobTurn();
 
 	// 移動先の升
@@ -2881,9 +2881,9 @@ void Position::print(std::ostream& os) const {
             os << pieceToCharCSA(piece(makeSquare(f, r)));
         os << "\n";
     }
-    printHand(os, Black);
-    printHand(os, White);
-    os << (turn() == Black ? "+" : "-") << "\n";
+    printHand(os, color::BLACK);
+    printHand(os, color::WHITE);
+    os << (turn() == color::BLACK ? "+" : "-") << "\n";
 }
 
 std::string Position::toSFEN(const Ply ply) const {
@@ -2910,12 +2910,12 @@ std::string Position::toSFEN(const Ply ply) const {
         if (rank != Rank9)
             ss << "/";
     }
-    ss << (turn() == Black ? " b " : " w ");
-    if (hand(Black).value() == 0 && hand(White).value() == 0)
+    ss << (turn() == color::BLACK ? " b " : " w ");
+    if (hand(color::BLACK).value() == 0 && hand(color::WHITE).value() == 0)
         ss << "- ";
     else {
         // USI の規格として、持ち駒の表記順は決まっており、先手、後手の順で、それぞれ 飛、角、金、銀、桂、香、歩 の順。
-        for (Color color = Black; color < ColorNum; ++color) {
+        for (color::ColorEnum color = color::BLACK; color < color::NUM_COLORS; ++color) {
             for (HandPiece hp : {HRook, HBishop, HGold, HSilver, HKnight, HLance, HPawn}) {
                 const int num = hand(color).numOf(hp);
                 if (num == 0)
@@ -2942,9 +2942,9 @@ std::string Position::toCSAPos() const {
             ss << pieceToCharCSA(piece(makeSquare(f, r)));
         ss << "\n";
     }
-    printHand(ss, Black);
-    printHand(ss, White);
-    ss << (turn() == Black ? "+" : "-") << "\n";
+    printHand(ss, color::BLACK);
+    printHand(ss, color::WHITE);
+    ss << (turn() == color::BLACK ? "+" : "-") << "\n";
     return ss.str();
 }
 
@@ -2955,8 +2955,8 @@ void Position::toHuffmanCodedPos(u8* data) const {
     bs.putBit(turn());
 
     // 玉の位置 (7bit * 2)
-    bs.putBits(kingSquare(Black), 7);
-    bs.putBits(kingSquare(White), 7);
+    bs.putBits(kingSquare(color::BLACK), 7);
+    bs.putBits(kingSquare(color::WHITE), 7);
 
     // 盤上の駒
     for (Square sq = SQ11; sq < SquareNum; ++sq) {
@@ -2968,7 +2968,7 @@ void Position::toHuffmanCodedPos(u8* data) const {
     }
 
     // 持ち駒
-    for (Color c = Black; c < ColorNum; ++c) {
+    for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
         const Hand h = hand(c);
         for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp) {
             const auto hc = HuffmanCodedPos::handCodeTable[hp][c];
@@ -2986,8 +2986,8 @@ void Position::toPackedSfen(u8* data) const {
 	bs.putBit(turn());
 
 	// 玉の位置 (7bit * 2)
-	bs.putBits(kingSquare(Black), 7);
-	bs.putBits(kingSquare(White), 7);
+	bs.putBits(kingSquare(color::BLACK), 7);
+	bs.putBits(kingSquare(color::WHITE), 7);
 
 	// 盤上の駒
 	for (Square sq = SQ11; sq < SquareNum; ++sq) {
@@ -2999,7 +2999,7 @@ void Position::toPackedSfen(u8* data) const {
 	}
 
 	// 持ち駒
-	for (Color c = Black; c < ColorNum; ++c) {
+	for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
 		const Hand h = hand(c);
 		for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp) {
 			const auto hc = PackedSfen::handCodeTable[hp][c];
@@ -3024,9 +3024,9 @@ bool Position::isOK() const {
 
     int failedStep = 0;
     if (debugBitboards) {
-        if ((bbOf(Black) & bbOf(White)))
+        if ((bbOf(color::BLACK) & bbOf(color::WHITE)))
             goto incorrect_position;
-        if ((bbOf(Black) | bbOf(White)) != occupiedBB())
+        if ((bbOf(color::BLACK) | bbOf(color::WHITE)) != occupiedBB())
             goto incorrect_position;
         if ((bbOf(Pawn     ) ^ bbOf(Lance    ) ^ bbOf(Knight) ^ bbOf(Silver ) ^ bbOf(Bishop  ) ^
              bbOf(Rook     ) ^ bbOf(Gold     ) ^ bbOf(King  ) ^ bbOf(ProPawn) ^ bbOf(ProLance) ^
@@ -3044,28 +3044,28 @@ bool Position::isOK() const {
 
     ++failedStep;
     if (debugKingCount) {
-        int kingCount[ColorNum] = {0, 0};
+        int kingCount[color::NUM_COLORS] = {0, 0};
         if (bbOf(King).popCount() != 2)
             goto incorrect_position;
-        if (!bbOf(King, Black).isOneBit())
+        if (!bbOf(King, color::BLACK).isOneBit())
             goto incorrect_position;
-        if (!bbOf(King, White).isOneBit())
+        if (!bbOf(King, color::WHITE).isOneBit())
             goto incorrect_position;
         for (Square sq = SQ11; sq < SquareNum; ++sq) {
             if (piece(sq) == BKing)
-                ++kingCount[Black];
+                ++kingCount[color::BLACK];
             if (piece(sq) == WKing)
-                ++kingCount[White];
+                ++kingCount[color::WHITE];
         }
-        if (kingCount[Black] != 1 || kingCount[White] != 1)
+        if (kingCount[color::BLACK] != 1 || kingCount[color::WHITE] != 1)
             goto incorrect_position;
     }
 
     ++failedStep;
     if (debugKingCapture) {
         // 相手玉を取れないことを確認
-        const Color us = turn();
-        const Color them = oppositeColor(us);
+        const color::ColorEnum us = turn();
+        const color::ColorEnum them = color::opposite(us);
         const Square ksq = kingSquare(them);
         if (attackersTo(us, ksq))
             goto incorrect_position;
@@ -3121,7 +3121,7 @@ Key Position::computeBoardKey() const {
         if (piece(sq) != Empty)
             result += zobrist(pieceToPieceType(piece(sq)), sq, pieceToColor(piece(sq)));
     }
-    if (turn() == White)
+    if (turn() == color::WHITE)
         result ^= zobTurn();
     return result;
 }
@@ -3129,7 +3129,7 @@ Key Position::computeBoardKey() const {
 Key Position::computeHandKey() const {
     Key result = 0;
     for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp) {
-        for (Color c = Black; c < ColorNum; ++c) {
+        for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
             const int num = hand(c).numOf(hp);
             for (int i = 0; i < num; ++i)
                 result += zobHand(hp, c);
@@ -3157,10 +3157,10 @@ RepetitionType Position::isDraw(const int checkMaxPly) const {
             if (stp->key() == st_->key()) {
                 if (i <= st_->continuousCheck[turn()])
                     return RepetitionLose;
-                else if (i <= st_->continuousCheck[oppositeColor(turn())])
+                else if (i <= st_->continuousCheck[color::opposite(turn())])
                     return RepetitionWin;
 #if defined BAN_BLACK_REPETITION
-                return (turn() == Black ? RepetitionLose : RepetitionWin);
+                return (turn() == color::BLACK ? RepetitionLose : RepetitionWin);
 #elif defined BAN_WHITE_REPETITION
                 return (turn() == White ? RepetitionLose : RepetitionWin);
 #else
@@ -3178,9 +3178,9 @@ RepetitionType Position::isDraw(const int checkMaxPly) const {
 }
 
 namespace {
-	void printHandPiece(std::ostream& os, const Position& pos, const HandPiece hp, const Color c, const std::string& str) {
+	void printHandPiece(std::ostream& os, const Position& pos, const HandPiece hp, const color::ColorEnum c, const std::string& str) {
         if (pos.hand(c).numOf(hp)) {
-            const char* sign = (c == Black ? "+" : "-");
+            const char* sign = (c == color::BLACK ? "+" : "-");
             os << "P" << sign;
             for (u32 i = 0; i < pos.hand(c).numOf(hp); ++i)
                 os << "00" << str;
@@ -3188,7 +3188,7 @@ namespace {
         }
     }
 }
-void Position::printHand(std::ostream& os, const Color c) const {
+void Position::printHand(std::ostream& os, const color::ColorEnum c) const {
     printHandPiece(os, *this, HPawn  , c, "FU");
     printHandPiece(os, *this, HLance , c, "KY");
     printHandPiece(os, *this, HKnight, c, "KE");
@@ -3235,16 +3235,16 @@ void Position::set(const std::string& sfen) {
         else
             goto INCORRECT;
     }
-    kingSquare_[Black] = bbOf(King, Black).constFirstOneFromSQ11();
-    kingSquare_[White] = bbOf(King, White).constFirstOneFromSQ11();
+    kingSquare_[color::BLACK] = bbOf(King, color::BLACK).constFirstOneFromSQ11();
+    kingSquare_[color::WHITE] = bbOf(King, color::WHITE).constFirstOneFromSQ11();
     goldsBB_ = bbOf(Gold, ProPawn, ProLance, ProKnight, ProSilver);
 
     // 手番
     while (ss.get(token) && token != ' ') {
         if (token == 'b')
-            turn_ = Black;
+            turn_ = color::BLACK;
         else if (token == 'w')
-            turn_ = White;
+            turn_ = color::WHITE;
         else
             goto INCORRECT;
     }
@@ -3281,7 +3281,7 @@ INCORRECT:
     std::cout << "incorrect SFEN string : " << sfen << std::endl;
 }
 
-void Position::set(const Piece pieces[SquareNum], const int pieces_in_hand[ColorNum][HandPieceNum]) {
+void Position::set(const Piece pieces[SquareNum], const int pieces_in_hand[color::NUM_COLORS][HandPieceNum]) {
     const auto turn = turn_;
     const auto ply = gamePly_;
     clear();
@@ -3292,7 +3292,7 @@ void Position::set(const Piece pieces[SquareNum], const int pieces_in_hand[Color
             setPiece(pieces[sq], sq);
     }
     // 持ち駒
-    for (Color c = Black; c < ColorNum; ++c) {
+    for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
         for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp) {
             setHand(hp, c, pieces_in_hand[c][hp]);
         }
@@ -3300,8 +3300,8 @@ void Position::set(const Piece pieces[SquareNum], const int pieces_in_hand[Color
     // 手番
     turn_ = turn;
 
-    kingSquare_[Black] = bbOf(King, Black).constFirstOneFromSQ11();
-    kingSquare_[White] = bbOf(King, White).constFirstOneFromSQ11();
+    kingSquare_[color::BLACK] = bbOf(King, color::BLACK).constFirstOneFromSQ11();
+    kingSquare_[color::WHITE] = bbOf(King, color::WHITE).constFirstOneFromSQ11();
     goldsBB_ = bbOf(Gold, ProPawn, ProLance, ProKnight, ProSilver);
 
     gamePly_ = ply;
@@ -3320,7 +3320,7 @@ bool Position::set_hcp(const char* hcp_data) {
     BitStream bs(tmp.data);
 
     // 手番
-    turn_ = static_cast<Color>(bs.getBit());
+    turn_ = static_cast<color::ColorEnum>(bs.getBit());
 
     // 玉の位置
     Square sq0 = (Square)bs.getBits(7);
@@ -3359,8 +3359,8 @@ bool Position::set_hcp(const char* hcp_data) {
             goto INCORRECT_HUFFMAN_CODE;
     }
 
-    kingSquare_[Black] = bbOf(King, Black).constFirstOneFromSQ11();
-    kingSquare_[White] = bbOf(King, White).constFirstOneFromSQ11();
+    kingSquare_[color::BLACK] = bbOf(King, color::BLACK).constFirstOneFromSQ11();
+    kingSquare_[color::WHITE] = bbOf(King, color::WHITE).constFirstOneFromSQ11();
     goldsBB_ = bbOf(Gold, ProPawn, ProLance, ProKnight, ProSilver);
 
     gamePly_ = 1; // ply の情報は持っていないので 1 にしておく。
@@ -3385,7 +3385,7 @@ bool Position::set_psfen(const char* psfen_data) {
 	BitStream bs(tmp.data);
 
 	// 手番
-	turn_ = static_cast<Color>(bs.getBit());
+	turn_ = static_cast<color::ColorEnum>(bs.getBit());
 
 	// 玉の位置
 	Square sq0 = (Square)bs.getBits(7);
@@ -3424,8 +3424,8 @@ bool Position::set_psfen(const char* psfen_data) {
 			goto INCORRECT_HUFFMAN_CODE;
 	}
 
-	kingSquare_[Black] = bbOf(King, Black).constFirstOneFromSQ11();
-	kingSquare_[White] = bbOf(King, White).constFirstOneFromSQ11();
+	kingSquare_[color::BLACK] = bbOf(King, color::BLACK).constFirstOneFromSQ11();
+	kingSquare_[color::WHITE] = bbOf(King, color::WHITE).constFirstOneFromSQ11();
 	goldsBB_ = bbOf(Gold, ProPawn, ProLance, ProKnight, ProSilver);
 
 	gamePly_ = 1; // ply の情報は持っていないので 1 にしておく。
@@ -3448,17 +3448,17 @@ void Position::set(std::mt19937& mt) {
     clear();
 
     // 手番の設定。
-    std::uniform_int_distribution<int> colorDist(0, (int)ColorNum - 1);
-    turn_ = (Color)colorDist(mt);
+    std::uniform_int_distribution<int> colorDist(0, (int)color::NUM_COLORS - 1);
+    turn_ = (color::ColorEnum)colorDist(mt);
 
     // 先後両方の持ち駒の数を設定する。持ち駒が多くなるほど、確率が低くなるので、取り敢えずこれで良しとする。todo: 確率分布を指定出来るように。
     auto setHandPieces = [&](const HandPiece hp, const int maxNum) {
         std::uniform_int_distribution<int> handNumDist(0, maxNum);
         while (true) {
-            const int nums[ColorNum] = {handNumDist(mt), handNumDist(mt)};
-            if (nums[Black] + nums[White] <= maxNum) {
-                setHand(hp, Black, nums[Black]);
-                setHand(hp, White, nums[White]);
+            const int nums[color::NUM_COLORS] = {handNumDist(mt), handNumDist(mt)};
+            if (nums[color::BLACK] + nums[color::WHITE] <= maxNum) {
+                setHand(hp, color::BLACK, nums[color::BLACK]);
+                setHand(hp, color::WHITE, nums[color::WHITE]);
             }
             break;
         }
@@ -3474,32 +3474,32 @@ void Position::set(std::mt19937& mt) {
     // 玉の位置の設定。
     std::uniform_int_distribution<int> squareDist(0, (int)SquareNum - 1);
     while (true) {
-        const Square ksqs[ColorNum] = {(Square)squareDist(mt), (Square)squareDist(mt)};
+        const Square ksqs[color::NUM_COLORS] = {(Square)squareDist(mt), (Square)squareDist(mt)};
         // 玉同士が同じ位置、もしくは相手の玉の利きにいる事は絶対にない。その他なら何でも良い。
-        if (ksqs[Black] == ksqs[White])
+        if (ksqs[color::BLACK] == ksqs[color::WHITE])
             continue;
-        if (kingAttack(ksqs[Black]) & setMaskBB(ksqs[White]))
+        if (kingAttack(ksqs[color::BLACK]) & setMaskBB(ksqs[color::WHITE]))
             continue;
         // 先手の玉の利きに後手玉がいなければ、後手玉の利きにも先手玉はいない。
-        //if (kingAttack(ksqs[White]) & setMaskBB(ksqs[Black]))
+        //if (kingAttack(ksqs[color::WHITE]) & setMaskBB(ksqs[color::BLACK]))
         //    continue;
-        setPiece(BKing, ksqs[Black]);
-        setPiece(WKing, ksqs[White]);
-        kingSquare_[Black] = ksqs[Black];
-        kingSquare_[White] = ksqs[White];
+        setPiece(BKing, ksqs[color::BLACK]);
+        setPiece(WKing, ksqs[color::WHITE]);
+        kingSquare_[color::BLACK] = ksqs[color::BLACK];
+        kingSquare_[color::WHITE] = ksqs[color::WHITE];
         break;
     }
 
     // なる為の閾値。これ以上だと成っているとみなす。[0,99]
     // todo: 1段目が選ばれて、成っていなければ、歩香桂はやり直し。分布が偏るが、どういう分布が良いかも分からないのである程度は適当に。
-    static const int promoteThresh[ColorNum][RankNum] = {{30, 30, 30, 40, 60, 90, 99, 99, 99},
+    static const int promoteThresh[color::NUM_COLORS][RankNum] = {{30, 30, 30, 40, 60, 90, 99, 99, 99},
                                                          {99, 99, 99, 90, 60, 40, 30, 30, 30}};
 
     int checkersNum = 0;
     Square checkSquare = SquareNum; // 1つ目の王手している駒の位置。(1つしか保持する必要が無い。)
     // 飛び利きの無い駒の配置。
     auto shortPiecesSet = [&](const PieceType pt, const HandPiece hp, const int maxNum) {
-        for (int i = 0; i < maxNum - (int)(hand(Black).numOf(hp) + hand(White).numOf(hp)); ++i) {
+        for (int i = 0; i < maxNum - (int)(hand(color::BLACK).numOf(hp) + hand(color::WHITE).numOf(hp)); ++i) {
             while (true) {
                 const Square sq = (Square)squareDist(mt);
                 // その場所に既に駒があるか。
@@ -3507,7 +3507,7 @@ void Position::set(std::mt19937& mt) {
                     continue;
                 const File file = makeFile(sq);
                 const Rank rank = makeRank(sq);
-                const Color t = (Color)colorDist(mt);
+                const color::ColorEnum t = (color::ColorEnum)colorDist(mt);
                 // 出来るだけ前にいるほど成っている確率を高めに。
                 std::uniform_int_distribution<int> promoteDist(0, 99);
                 const Piece promoteFlag = (pt != Gold && promoteThresh[t][rank] <= promoteDist(mt) ? Promoted : UnPromoted);
@@ -3518,26 +3518,26 @@ void Position::set(std::mt19937& mt) {
                         if (fileMask(file) & bbOf(Pawn, t))
                             continue;
                         // 行き所が無いかチェック
-                        if (t == Black)
-                            if (isInFrontOf<Black, Rank2, Rank8>(rank))
+                        if (t == color::BLACK)
+                            if (isInFrontOf<color::BLACK, Rank2, Rank8>(rank))
                                 continue;
-                        if (t == White)
-                            if (isInFrontOf<White, Rank2, Rank8>(rank))
+                        if (t == color::WHITE)
+                            if (isInFrontOf<color::WHITE, Rank2, Rank8>(rank))
                                 continue;
                     }
                     else if (pt == Knight) {
                         // 行き所が無いかチェック
-                        if (t == Black)
-                            if (isInFrontOf<Black, Rank3, Rank7>(rank))
+                        if (t == color::BLACK)
+                            if (isInFrontOf<color::BLACK, Rank3, Rank7>(rank))
                                 continue;
-                        if (t == White)
-                            if (isInFrontOf<White, Rank3, Rank7>(rank))
+                        if (t == color::WHITE)
+                            if (isInFrontOf<color::WHITE, Rank3, Rank7>(rank))
                                 continue;
                     }
                 }
                 if (t == turn()) {
                     // 手番側が王手していてはいけない。
-                    if (attacksFrom(pieceToPieceType(pc), t, sq).isSet(kingSquare(oppositeColor(turn()))))
+                    if (attacksFrom(pieceToPieceType(pc), t, sq).isSet(kingSquare(color::opposite(turn()))))
                         continue;
                 }
                 else {
@@ -3562,7 +3562,7 @@ void Position::set(std::mt19937& mt) {
 
     // 飛び利きの駒を配置。
     auto longPiecesSet = [&](const PieceType pt, const HandPiece hp, const int maxNum) {
-        for (int i = 0; i < maxNum - (int)(hand(Black).numOf(hp) + hand(White).numOf(hp)); ++i) {
+        for (int i = 0; i < maxNum - (int)(hand(color::BLACK).numOf(hp) + hand(color::WHITE).numOf(hp)); ++i) {
             while (true) {
                 const Square sq = (Square)squareDist(mt);
                 // その場所に既に駒があるか。
@@ -3570,7 +3570,7 @@ void Position::set(std::mt19937& mt) {
                     continue;
                 const File file = makeFile(sq);
                 const Rank rank = makeRank(sq);
-                const Color t = (Color)colorDist(mt);
+                const color::ColorEnum t = (color::ColorEnum)colorDist(mt);
                 // 出来るだけ前にいるほど成っている確率を高めに。
                 std::uniform_int_distribution<int> promoteDist(0, 99);
                 const Piece promoteFlag = [&] {
@@ -3583,17 +3583,17 @@ void Position::set(std::mt19937& mt) {
                 if (promoteFlag == UnPromoted) {
                     if (pt == Lance) {
                         // 行き所が無いかチェック
-                        if (t == Black)
-                            if (isInFrontOf<Black, Rank2, Rank8>(rank))
+                        if (t == color::BLACK)
+                            if (isInFrontOf<color::BLACK, Rank2, Rank8>(rank))
                                 continue;
-                        if (t == White)
-                            if (isInFrontOf<White, Rank2, Rank8>(rank))
+                        if (t == color::WHITE)
+                            if (isInFrontOf<color::WHITE, Rank2, Rank8>(rank))
                                 continue;
                     }
                 }
                 // 手番側が王手していないか。
                 if (t == turn()) {
-                    if (attacksFrom(pieceToPieceType(pc), t, sq).isSet(kingSquare(oppositeColor(turn()))))
+                    if (attacksFrom(pieceToPieceType(pc), t, sq).isSet(kingSquare(color::opposite(turn()))))
                         continue;
                 }
                 else {
@@ -3611,31 +3611,31 @@ void Position::set(std::mt19937& mt) {
                                     continue; // 両方が近接王ではあり得ない。
                                 // もう1つの王手している駒が遠隔王手。
                                 // この駒の位置を戻すともう1つの王手を隠せる必要がある。
-                                if (!(attacksFrom(pieceToPieceType(piece(sq)), oppositeColor(t), sq) & betweenBB(kingSquare(turn()), checkSquare))) {
+                                if (!(attacksFrom(pieceToPieceType(piece(sq)), color::opposite(t), sq) & betweenBB(kingSquare(turn()), checkSquare))) {
                                     // 王手を隠せなかったので、この駒が成り駒であれば、成る前の動きでチェック。
                                     if (!(piece(sq) & Promoted))
                                         continue; // 成り駒ではなかった。
-                                    const Bitboard hiddenBB = attacksFrom(pieceToPieceType(piece(sq)) - Promoted, oppositeColor(t), sq) & betweenBB(kingSquare(turn()), checkSquare);
+                                    const Bitboard hiddenBB = attacksFrom(pieceToPieceType(piece(sq)) - Promoted, color::opposite(t), sq) & betweenBB(kingSquare(turn()), checkSquare);
                                     if (!hiddenBB)
                                         continue;
                                     // 成る前の利きならもう一方の王手を隠せた。
                                     // 後は、この駒が成っていない状態から、sq に移動して成れたか。
-                                    if (!canPromote(t, makeRank(sq)) && !(hiddenBB & (t == Black ? inFrontMask<Black, Rank4>() : inFrontMask<White, Rank6>())))
+                                    if (!canPromote(t, makeRank(sq)) && !(hiddenBB & (t == color::BLACK ? inFrontMask<color::BLACK, Rank4>() : inFrontMask<color::WHITE, Rank6>())))
                                         continue; // from, to 共に敵陣ではないので、成る事が出来ない。
                                 }
                             }
                             else {
                                 // この駒は遠隔王手。
-                                if (!(attacksFrom(pieceToPieceType(piece(checkSquare)), oppositeColor(t), checkSquare) & betweenBB(kingSquare(turn()), sq))) {
+                                if (!(attacksFrom(pieceToPieceType(piece(checkSquare)), color::opposite(t), checkSquare) & betweenBB(kingSquare(turn()), sq))) {
                                     // この駒の王手を隠せなかった。
                                     if (!(piece(checkSquare) & Promoted))
                                         continue; // もう一方の王手している駒が成り駒ではなかった。
-                                    const Bitboard hiddenBB = attacksFrom(pieceToPieceType(piece(checkSquare)) - Promoted, oppositeColor(t), checkSquare) & betweenBB(kingSquare(turn()), sq);
+                                    const Bitboard hiddenBB = attacksFrom(pieceToPieceType(piece(checkSquare)) - Promoted, color::opposite(t), checkSquare) & betweenBB(kingSquare(turn()), sq);
                                     if (!hiddenBB)
                                         continue;
                                     // 成る前の利きならこの駒の王手を隠せた。
                                     // 後は、もう一方の王手している駒が成っていない状態から、checkSquare に移動して成れたか。
-                                    if (!canPromote(t, makeRank(checkSquare)) && !(hiddenBB & (t == Black ? inFrontMask<Black, Rank4>() : inFrontMask<White, Rank6>())))
+                                    if (!canPromote(t, makeRank(checkSquare)) && !(hiddenBB & (t == color::BLACK ? inFrontMask<color::BLACK, Rank4>() : inFrontMask<color::WHITE, Rank6>())))
                                         continue; // from, to 共に敵陣ではないので、成る事が出来ない。
                                 }
                             }
@@ -3695,7 +3695,7 @@ bool Position::moveGivesCheck(const Move move, const CheckInfo& ci) const
 
         // Discovery Check ?
         if (isDiscoveredCheck(
-                from, to, kingSquare(oppositeColor(turn())), ci.dcBB))
+                from, to, kingSquare(color::opposite(turn())), ci.dcBB))
             return true;
     }
 
@@ -3716,26 +3716,26 @@ void Position::clear()
 // 先手、後手に関わらず、sq へ移動可能な Bitboard を返す。
 Bitboard Position::attackersTo(const Square sq, const Bitboard& occupied) const {
     const Bitboard golds = goldsBB();
-    return (((attacksFrom<Pawn  >(Black, sq          ) & bbOf(Pawn  ))
-             | (attacksFrom<Lance >(Black, sq, occupied) & bbOf(Lance ))
-             | (attacksFrom<Knight>(Black, sq          ) & bbOf(Knight))
-             | (attacksFrom<Silver>(Black, sq          ) & bbOf(Silver))
-             | (attacksFrom<Gold  >(Black, sq          ) & golds       ))
-            & bbOf(White))
-        | (((attacksFrom<Pawn  >(White, sq          ) & bbOf(Pawn  ))
-            | (attacksFrom<Lance >(White, sq, occupied) & bbOf(Lance ))
-            | (attacksFrom<Knight>(White, sq          ) & bbOf(Knight))
-            | (attacksFrom<Silver>(White, sq          ) & bbOf(Silver))
-            | (attacksFrom<Gold  >(White, sq          ) & golds))
-           & bbOf(Black))
+    return (((attacksFrom<Pawn  >(color::BLACK, sq          ) & bbOf(Pawn  ))
+             | (attacksFrom<Lance >(color::BLACK, sq, occupied) & bbOf(Lance ))
+             | (attacksFrom<Knight>(color::BLACK, sq          ) & bbOf(Knight))
+             | (attacksFrom<Silver>(color::BLACK, sq          ) & bbOf(Silver))
+             | (attacksFrom<Gold  >(color::BLACK, sq          ) & golds       ))
+            & bbOf(color::WHITE))
+        | (((attacksFrom<Pawn  >(color::WHITE, sq          ) & bbOf(Pawn  ))
+            | (attacksFrom<Lance >(color::WHITE, sq, occupied) & bbOf(Lance ))
+            | (attacksFrom<Knight>(color::WHITE, sq          ) & bbOf(Knight))
+            | (attacksFrom<Silver>(color::WHITE, sq          ) & bbOf(Silver))
+            | (attacksFrom<Gold  >(color::WHITE, sq          ) & golds))
+           & bbOf(color::BLACK))
         | (attacksFrom<Bishop>(sq, occupied) & bbOf(Bishop, Horse        ))
         | (attacksFrom<Rook  >(sq, occupied) & bbOf(Rook  , Dragon       ))
         | (attacksFrom<King  >(sq          ) & bbOf(King  , Horse, Dragon));
 }
 
 // occupied を Position::occupiedBB() 以外のものを使用する場合に使用する。
-Bitboard Position::attackersTo(const Color c, const Square sq, const Bitboard& occupied) const {
-    const Color opposite = oppositeColor(c);
+Bitboard Position::attackersTo(const color::ColorEnum c, const Square sq, const Bitboard& occupied) const {
+    const color::ColorEnum opposite = color::opposite(c);
     return ((attacksFrom<Pawn  >(opposite, sq          ) & bbOf(Pawn  ))
             | (attacksFrom<Lance >(opposite, sq, occupied) & bbOf(Lance ))
             | (attacksFrom<Knight>(opposite, sq          ) & bbOf(Knight))
@@ -3747,9 +3747,9 @@ Bitboard Position::attackersTo(const Color c, const Square sq, const Bitboard& o
 }
 
 // 玉以外で sq へ移動可能な c 側の駒の Bitboard を返す。
-Bitboard Position::attackersToExceptKing(const Color c, const Square sq) const
+Bitboard Position::attackersToExceptKing(const color::ColorEnum c, const Square sq) const
 {
-    const Color opposite = oppositeColor(c);
+    const color::ColorEnum opposite = color::opposite(c);
     return ((attacksFrom<Pawn  >(opposite, sq) & bbOf(Pawn  ))
             | (attacksFrom<Lance >(opposite, sq) & bbOf(Lance ))
             | (attacksFrom<Knight>(opposite, sq) & bbOf(Knight))

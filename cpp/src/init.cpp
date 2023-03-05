@@ -36,8 +36,8 @@ Bitboard lanceBlockMask(const Square square)
 
 // lance の利きを返す。
 // occupied  障害物があるマスが 1 の bitboard
-Bitboard
-lanceAttackCalc(const Color c, const Square square, const Bitboard& occupied)
+Bitboard lanceAttackCalc(
+    const color::ColorEnum c, const Square square, const Bitboard& occupied)
 {
     File file = makeFile(square);
     Bitboard bb{0, 0};
@@ -83,7 +83,7 @@ indexToOccupied(const int index, const int bits, const Bitboard& blockMask)
 // LanceBlockMask, LanceAttack の値を設定する。
 void initLanceAttacks()
 {
-    for (Color c = Black; c < ColorNum; ++c) {
+    for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
         for (Square sq = SQ11; sq < SquareNum; ++sq) {
             const Bitboard blockMask = lanceBlockMask(sq);
             //const int num1s = blockMask.popCount(); // 常に 7
@@ -188,7 +188,7 @@ void initKingAttacks()
 
 void initGoldAttacks()
 {
-    for (Color c = Black; c < ColorNum; ++c)
+    for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c)
         for (Square sq = SQ11; sq < SquareNum; ++sq)
             GoldAttack[c][sq] = (kingAttack(sq) & inFrontMask(c, makeRank(sq)))
                                 | rookAttack(sq, allOneBB());
@@ -196,7 +196,7 @@ void initGoldAttacks()
 
 void initSilverAttacks()
 {
-    for (Color c = Black; c < ColorNum; ++c)
+    for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c)
         for (Square sq = SQ11; sq < SquareNum; ++sq)
             SilverAttack[c][sq]
                 = (kingAttack(sq) & inFrontMask(c, makeRank(sq)))
@@ -205,7 +205,7 @@ void initSilverAttacks()
 
 void initKnightAttacks()
 {
-    for (Color c = Black; c < ColorNum; ++c) {
+    for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
         for (Square sq = SQ11; sq < SquareNum; ++sq) {
             KnightAttack[c][sq] = allZeroBB();
             const Bitboard bb = pawnAttack(c, sq);
@@ -219,7 +219,7 @@ void initKnightAttacks()
 
 void initPawnAttacks()
 {
-    for (Color c = Black; c < ColorNum; ++c)
+    for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c)
         for (Square sq = SQ11; sq < SquareNum; ++sq)
             PawnAttack[c][sq]
                 = silverAttack(c, sq) ^ bishopAttack(sq, allOneBB());
@@ -260,8 +260,10 @@ void initAttackToEdge()
     for (Square sq = SQ11; sq < SquareNum; ++sq) {
         RookAttackToEdge[sq] = rookAttack(sq, allZeroBB());
         BishopAttackToEdge[sq] = bishopAttack(sq, allZeroBB());
-        LanceAttackToEdge[Black][sq] = lanceAttack(Black, sq, allZeroBB());
-        LanceAttackToEdge[White][sq] = lanceAttack(White, sq, allZeroBB());
+        LanceAttackToEdge[color::BLACK][sq]
+            = lanceAttack(color::BLACK, sq, allZeroBB());
+        LanceAttackToEdge[color::WHITE][sq]
+            = lanceAttack(color::WHITE, sq, allZeroBB());
     }
 }
 
@@ -285,8 +287,8 @@ void initBetweenBB()
 
 void initCheckTable()
 {
-    for (Color c = Black; c < ColorNum; ++c) {
-        const Color opp = oppositeColor(c);
+    for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
+        const color::ColorEnum opp = color::opposite(c);
         for (Square sq = SQ11; sq < SquareNum; ++sq) {
             GoldCheckTable[c][sq] = allZeroBB();
             Bitboard checkBB = goldAttack(opp, sq);
@@ -299,8 +301,8 @@ void initCheckTable()
         }
     }
 
-    for (Color c = Black; c < ColorNum; ++c) {
-        const Color opp = oppositeColor(c);
+    for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
+        const color::ColorEnum opp = color::opposite(c);
         for (Square sq = SQ11; sq < SquareNum; ++sq) {
             SilverCheckTable[c][sq] = allZeroBB();
 
@@ -310,8 +312,8 @@ void initCheckTable()
                 SilverCheckTable[c][sq] |= silverAttack(opp, checkSq);
             }
             const Bitboard TRank123BB
-                = (c == Black ? inFrontMask<Black, Rank4>()
-                              : inFrontMask<White, Rank6>());
+                = (c == color::BLACK ? inFrontMask<color::BLACK, Rank4>()
+                                     : inFrontMask<color::WHITE, Rank6>());
             checkBB = goldAttack(opp, sq);
             while (checkBB) {
                 const Square checkSq = checkBB.firstOneFromSQ11();
@@ -321,7 +323,7 @@ void initCheckTable()
             }
 
             const Bitboard TRank4BB
-                = (c == Black ? rankMask<Rank4>() : rankMask<Rank6>());
+                = (c == color::BLACK ? rankMask<Rank4>() : rankMask<Rank6>());
             // 移動先が3段目で、4段目に移動したときも、成ることが出来る。
             checkBB = goldAttack(opp, sq) & TRank123BB;
             while (checkBB) {
@@ -334,8 +336,8 @@ void initCheckTable()
         }
     }
 
-    for (Color c = Black; c < ColorNum; ++c) {
-        const Color opp = oppositeColor(c);
+    for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
+        const color::ColorEnum opp = color::opposite(c);
         for (Square sq = SQ11; sq < SquareNum; ++sq) {
             KnightCheckTable[c][sq] = allZeroBB();
 
@@ -345,8 +347,8 @@ void initCheckTable()
                 KnightCheckTable[c][sq] |= knightAttack(opp, checkSq);
             }
             const Bitboard TRank123BB
-                = (c == Black ? inFrontMask<Black, Rank4>()
-                              : inFrontMask<White, Rank6>());
+                = (c == color::BLACK ? inFrontMask<color::BLACK, Rank4>()
+                                     : inFrontMask<color::WHITE, Rank6>());
             checkBB = goldAttack(opp, sq) & TRank123BB;
             while (checkBB) {
                 const Square checkSq = checkBB.firstOneFromSQ11();
@@ -355,14 +357,14 @@ void initCheckTable()
         }
     }
 
-    for (Color c = Black; c < ColorNum; ++c) {
-        const Color opp = oppositeColor(c);
+    for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
+        const color::ColorEnum opp = color::opposite(c);
         for (Square sq = SQ11; sq < SquareNum; ++sq) {
             LanceCheckTable[c][sq] = lanceAttackToEdge(opp, sq);
 
             const Bitboard TRank123BB
-                = (c == Black ? inFrontMask<Black, Rank4>()
-                              : inFrontMask<White, Rank6>());
+                = (c == color::BLACK ? inFrontMask<color::BLACK, Rank4>()
+                                     : inFrontMask<color::WHITE, Rank6>());
             Bitboard checkBB = goldAttack(opp, sq) & TRank123BB;
             while (checkBB) {
                 const Square checkSq = checkBB.firstOneFromSQ11();
@@ -374,8 +376,8 @@ void initCheckTable()
     }
 
     // 歩
-    for (Color c = Black; c < ColorNum; ++c) {
-        const Color opp = oppositeColor(c);
+    for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
+        const color::ColorEnum opp = color::opposite(c);
         for (Square sq = SQ11; sq < SquareNum; ++sq) {
             // 歩で王手になる可能性のあるものは、敵玉から２つ離れた歩(不成での移動) + ksqに敵の金をおいた範囲(enemyGold)に成りで移動できる
             PawnCheckTable[c][sq] = allZeroBB();
@@ -386,8 +388,8 @@ void initCheckTable()
                 PawnCheckTable[c][sq] |= pawnAttack(opp, checkSq);
             }
             const Bitboard TRank123BB
-                = (c == Black ? inFrontMask<Black, Rank4>()
-                              : inFrontMask<White, Rank6>());
+                = (c == color::BLACK ? inFrontMask<color::BLACK, Rank4>()
+                                     : inFrontMask<color::WHITE, Rank6>());
             checkBB = goldAttack(opp, sq) & TRank123BB;
             while (checkBB) {
                 const Square checkSq = checkBB.firstOneFromSQ11();
@@ -398,8 +400,8 @@ void initCheckTable()
     }
 
     // 角
-    for (Color c = Black; c < ColorNum; ++c) {
-        const Color opp = oppositeColor(c);
+    for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
+        const color::ColorEnum opp = color::opposite(c);
         for (Square sq = SQ11; sq < SquareNum; ++sq) {
             BishopCheckTable[c][sq] = allZeroBB();
 
@@ -409,8 +411,8 @@ void initCheckTable()
                 BishopCheckTable[c][sq] |= bishopAttack(checkSq, allZeroBB());
             }
             const Bitboard TRank123BB
-                = (c == Black ? inFrontMask<Black, Rank4>()
-                              : inFrontMask<White, Rank6>());
+                = (c == color::BLACK ? inFrontMask<color::BLACK, Rank4>()
+                                     : inFrontMask<color::WHITE, Rank6>());
             checkBB = kingAttack(sq) & TRank123BB;
             while (checkBB) {
                 const Square checkSq = checkBB.firstOneFromSQ11();
@@ -430,8 +432,8 @@ void initCheckTable()
     }
 
     // 馬
-    for (Color c = Black; c < ColorNum; ++c) {
-        const Color opp = oppositeColor(c);
+    for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
+        const color::ColorEnum opp = color::opposite(c);
         for (Square sq = SQ11; sq < SquareNum; ++sq) {
             HorseCheckTable[c][sq] = allZeroBB();
 
@@ -453,8 +455,8 @@ void initSquareDistance()
             case DirecMisc:
                 // DirecMisc な関係は全て距離 1 にしてもKPE学習には問題無いんだけれど。
                 SquareDistance[sq0][sq1] = 0;
-                if (knightAttack(Black, sq0).isSet(sq1)
-                    || knightAttack(White, sq0).isSet(sq1))
+                if (knightAttack(color::BLACK, sq0).isSet(sq1)
+                    || knightAttack(color::WHITE, sq0).isSet(sq1))
                     SquareDistance[sq0][sq1] = 1;
                 break;
             case DirecFile:

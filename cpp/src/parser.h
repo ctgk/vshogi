@@ -148,7 +148,7 @@ private:
         bool pos_initialized = false;
         std::vector<std::string> position_lines;
         std::string current_turn_str;
-        Color lose_color = ColorNum;
+        color::ColorEnum lose_color = color::NUM_COLORS;
         std::string line;
         while (!is.bad() && !is.eof()) {
             std::getline(is, line);
@@ -249,11 +249,11 @@ private:
                     || line == "%ILLEGAL_MOVE")
                     lose_color = pos.turn();
                 else if (line == "%+ILLEGAL_ACTION")
-                    lose_color = Black;
+                    lose_color = color::BLACK;
                 else if (line == "%-ILLEGAL_ACTION")
-                    lose_color = White;
+                    lose_color = color::WHITE;
                 else if (line == "%KACHI")
-                    lose_color = oppositeColor(pos.turn());
+                    lose_color = color::opposite(pos.turn());
 
                 endgame = line;
 
@@ -275,9 +275,9 @@ private:
             line_no += 1;
         }
 
-        if (lose_color == Black)
+        if (lose_color == color::BLACK)
             win = WhiteWin;
-        else if (lose_color == White)
+        else if (lose_color == color::WHITE)
             win = BlackWin;
         else
             win = Draw;
@@ -286,8 +286,8 @@ private:
     static std::string
     parse_position(const std::vector<std::string>& position_block_lines)
     {
-        Color color;
-        Color current_turn;
+        color::ColorEnum color;
+        color::ColorEnum current_turn;
         int rank_index;
         int file_index;
         Piece piece;
@@ -300,7 +300,8 @@ private:
                 auto itrColor = std::find(
                     COLOR_SYMBOLS.begin(), COLOR_SYMBOLS.end(), line[0]);
                 if (itrColor != COLOR_SYMBOLS.end()) {
-                    color = (Color)(itrColor - COLOR_SYMBOLS.begin());
+                    color::ColorEnum
+                        = (color::ColorEnum)(itrColor - COLOR_SYMBOLS.begin());
                     if (line.size() == 1) {
                         // duplicated data
                         current_turn = color;
@@ -400,7 +401,7 @@ private:
     static std::string to_sfen(
         Piece pieces_in_board[9][9],
         int pieces_in_hand[PieceNone],
-        Color current_turn,
+        color::ColorEnum current_turn,
         int move_count = 1)
     {
         std::string sfen;
@@ -434,7 +435,7 @@ private:
         sfen.append(" ");
 
         // Side to move.
-        if (current_turn == White)
+        if (current_turn == color::WHITE)
             sfen.append("w");
         else
             sfen.append("b");

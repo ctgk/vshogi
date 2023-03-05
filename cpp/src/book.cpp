@@ -53,7 +53,7 @@ Key Book::bookKey(const Position& pos)
     const Hand hand = pos.hand(pos.turn());
     for (HandPiece hp = HPawn; hp < HandPieceNum; ++hp)
         key ^= ZobHand[hp][hand.numOf(hp)];
-    if (pos.turn() == White)
+    if (pos.turn() == color::WHITE)
         key ^= ZobTurn;
     return key;
 }

@@ -35,7 +35,8 @@ constexpr u32 MAX_PIECES_IN_HAND[] = {
 constexpr u32 MAX_PIECES_IN_HAND_SUM
     = MAX_HPAWN_NUM + MAX_HLANCE_NUM + MAX_HKNIGHT_NUM + MAX_HSILVER_NUM
       + MAX_HGOLD_NUM + MAX_HBISHOP_NUM + MAX_HROOK_NUM;
-constexpr u32 MAX_FEATURES2_HAND_NUM = (int)ColorNum * MAX_PIECES_IN_HAND_SUM;
+constexpr u32 MAX_FEATURES2_HAND_NUM
+    = (int)color::NUM_COLORS * MAX_PIECES_IN_HAND_SUM;
 constexpr u32 MAX_FEATURES2_NUM = MAX_FEATURES2_HAND_NUM + 1 /*王手*/;
 
 // 移動の定数
@@ -267,7 +268,7 @@ public:
     }
     void setTurn(const int turn)
     {
-        pos.setTurn((Color)turn);
+        pos.setTurn((color::ColorEnum)turn);
     }
     int ply() const
     {
@@ -339,7 +340,7 @@ public:
 
     std::vector<int> pieces_in_hand(const int color) const
     {
-        const Hand h = pos.hand((Color)color);
+        const Hand h = pos.hand((color::ColorEnum)color);
         return std::vector<int>{
             (int)h.numOf<HPawn>(),
             (int)h.numOf<HLance>(),
@@ -354,35 +355,35 @@ public:
     {
         std::vector<int> board(81);
 
-        bbToVector(Pawn, Black, BPawn, board);
-        bbToVector(Lance, Black, BLance, board);
-        bbToVector(Knight, Black, BKnight, board);
-        bbToVector(Silver, Black, BSilver, board);
-        bbToVector(Bishop, Black, BBishop, board);
-        bbToVector(Rook, Black, BRook, board);
-        bbToVector(Gold, Black, BGold, board);
-        bbToVector(King, Black, BKing, board);
-        bbToVector(ProPawn, Black, BProPawn, board);
-        bbToVector(ProLance, Black, BProLance, board);
-        bbToVector(ProKnight, Black, BProKnight, board);
-        bbToVector(ProSilver, Black, BProSilver, board);
-        bbToVector(Horse, Black, BHorse, board);
-        bbToVector(Dragon, Black, BDragon, board);
+        bbToVector(Pawn, color::BLACK, BPawn, board);
+        bbToVector(Lance, color::BLACK, BLance, board);
+        bbToVector(Knight, color::BLACK, BKnight, board);
+        bbToVector(Silver, color::BLACK, BSilver, board);
+        bbToVector(Bishop, color::BLACK, BBishop, board);
+        bbToVector(Rook, color::BLACK, BRook, board);
+        bbToVector(Gold, color::BLACK, BGold, board);
+        bbToVector(King, color::BLACK, BKing, board);
+        bbToVector(ProPawn, color::BLACK, BProPawn, board);
+        bbToVector(ProLance, color::BLACK, BProLance, board);
+        bbToVector(ProKnight, color::BLACK, BProKnight, board);
+        bbToVector(ProSilver, color::BLACK, BProSilver, board);
+        bbToVector(Horse, color::BLACK, BHorse, board);
+        bbToVector(Dragon, color::BLACK, BDragon, board);
 
-        bbToVector(Pawn, White, WPawn, board);
-        bbToVector(Lance, White, WLance, board);
-        bbToVector(Knight, White, WKnight, board);
-        bbToVector(Silver, White, WSilver, board);
-        bbToVector(Bishop, White, WBishop, board);
-        bbToVector(Rook, White, WRook, board);
-        bbToVector(Gold, White, WGold, board);
-        bbToVector(King, White, WKing, board);
-        bbToVector(ProPawn, White, WProPawn, board);
-        bbToVector(ProLance, White, WProLance, board);
-        bbToVector(ProKnight, White, WProKnight, board);
-        bbToVector(ProSilver, White, WProSilver, board);
-        bbToVector(Horse, White, WHorse, board);
-        bbToVector(Dragon, White, WDragon, board);
+        bbToVector(Pawn, color::WHITE, WPawn, board);
+        bbToVector(Lance, color::WHITE, WLance, board);
+        bbToVector(Knight, color::WHITE, WKnight, board);
+        bbToVector(Silver, color::WHITE, WSilver, board);
+        bbToVector(Bishop, color::WHITE, WBishop, board);
+        bbToVector(Rook, color::WHITE, WRook, board);
+        bbToVector(Gold, color::WHITE, WGold, board);
+        bbToVector(King, color::WHITE, WKing, board);
+        bbToVector(ProPawn, color::WHITE, WProPawn, board);
+        bbToVector(ProLance, color::WHITE, WProLance, board);
+        bbToVector(ProKnight, color::WHITE, WProKnight, board);
+        bbToVector(ProSilver, color::WHITE, WProSilver, board);
+        bbToVector(Horse, color::WHITE, WHorse, board);
+        bbToVector(Dragon, color::WHITE, WDragon, board);
 
         return std::move(board);
     }
@@ -392,7 +393,7 @@ public:
         // P1 piece 14 planes
         // P2 piece 14 planes
         float* data = (float*)mem;
-        for (Color c = Black; c < ColorNum; ++c) {
+        for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
             for (PieceType pt = Pawn; pt < PieceTypeNum; ++pt) {
                 Bitboard bb = pos.bbOf(pt, c);
                 while (bb) {
@@ -409,14 +410,14 @@ public:
     {
         // P1 piece 14 planes
         // P2 piece 14 planes
-        if (pos.turn() == Black) {
+        if (pos.turn() == color::BLACK) {
             // 黒の場合
             piece_planes(mem);
             return;
         }
         // 白の場合
         float* data = (float*)mem;
-        for (Color c = White; c >= Black; --c) {
+        for (color::ColorEnum c = color::WHITE; c >= color::BLACK; --c) {
             for (PieceType pt = Pawn; pt < PieceTypeNum; ++pt) {
                 Bitboard bb = pos.bbOf(pt, c);
                 while (bb) {
@@ -432,15 +433,16 @@ public:
     // 駒の利き、王手情報を含む特徴量(dlshogi互換)
     void _dlshogi_make_input_features(char* mem1, char* mem2) const
     {
-        typedef float features1_t[ColorNum][MAX_FEATURES1_NUM][SquareNum];
+        typedef float features1_t[color::NUM_COLORS][MAX_FEATURES1_NUM]
+                                 [SquareNum];
         typedef float features2_t[MAX_FEATURES2_NUM][SquareNum];
         const auto features1 = reinterpret_cast<features1_t* const>(mem1);
         const auto features2 = reinterpret_cast<features2_t* const>(mem2);
-        float(*const features2_hand)[ColorNum][MAX_PIECES_IN_HAND_SUM]
+        float(*const features2_hand)[color::NUM_COLORS][MAX_PIECES_IN_HAND_SUM]
                                     [SquareNum]
             = reinterpret_cast<
-                float(*const)[ColorNum][MAX_PIECES_IN_HAND_SUM][SquareNum]>(
-                mem2);
+                float(*const)[color::NUM_COLORS][MAX_PIECES_IN_HAND_SUM]
+                             [SquareNum]>(mem2);
 
         std::fill_n((float*)features1, sizeof(features1_t) / sizeof(float), 0);
         std::fill_n((float*)features2, sizeof(features2_t) / sizeof(float), 0);
@@ -448,7 +450,7 @@ public:
         const Bitboard occupied_bb = pos.occupiedBB();
 
         // 駒の利き(駒種でマージ)
-        Bitboard attacks[ColorNum][PieceTypeNum] = {
+        Bitboard attacks[color::NUM_COLORS][PieceTypeNum] = {
             // clang-format off
             { { 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 } },
             { { 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 } },
@@ -457,16 +459,17 @@ public:
         for (Square sq = SQ11; sq < SquareNum; sq++) {
             const Piece p = pos.piece(sq);
             if (p != Empty) {
-                const Color pc = pieceToColor(p);
+                const color::ColorEnum pc = pieceToColor(p);
                 const PieceType pt = pieceToPieceType(p);
                 const Bitboard bb = pos.attacksFrom(pt, pc, sq, occupied_bb);
                 attacks[pc][pt] |= bb;
             }
         }
 
-        for (Color c = Black; c < ColorNum; ++c) {
+        for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
             // 白の場合、色を反転
-            const Color c2 = pos.turn() == Black ? c : oppositeColor(c);
+            const color::ColorEnum c2
+                = pos.turn() == color::BLACK ? c : color::opposite(c);
 
             // 駒の配置
             Bitboard bb[PieceTypeNum];
@@ -476,7 +479,7 @@ public:
 
             for (Square sq = SQ11; sq < SquareNum; ++sq) {
                 // 白の場合、盤面を180度回転
-                const Square sq2 = pos.turn() == Black ? sq : SQ99 - sq;
+                const Square sq2 = pos.turn() == color::BLACK ? sq : SQ99 - sq;
 
                 for (PieceType pt = Pawn; pt < PieceTypeNum; ++pt) {
                     // 駒の配置
@@ -529,7 +532,10 @@ private:
     std::deque<std::pair<Move, StateInfo>> history;
 
     void bbToVector(
-        PieceType pt, Color c, Piece piece, std::vector<int>& board) const
+        PieceType pt,
+        color::ColorEnum c,
+        Piece piece,
+        std::vector<int>& board) const
     {
         Bitboard bb = pos.bbOf(pt, c);
         while (bb) {
@@ -741,7 +747,7 @@ int __dlshogi_make_move_label(const int move, const int color)
 
     if (from_sq < SquareNum) {
         // 白の場合、盤面を180度回転
-        if ((Color)color == White) {
+        if ((color::ColorEnum)color == color::WHITE) {
             to_sq = (u16)SQ99 - to_sq;
             from_sq = (u16)SQ99 - from_sq;
         }
@@ -766,7 +772,7 @@ int __dlshogi_make_move_label(const int move, const int color)
     // 持ち駒の場合
     else {
         // 白の場合、盤面を180度回転
-        if ((Color)color == White) {
+        if ((color::ColorEnum)color == color::WHITE) {
             to_sq = (u16)SQ99 - to_sq;
         }
         const int hand_piece = from_sq - (int)SquareNum;

@@ -144,7 +144,7 @@ TTEntry& TranspositionTable::LookUp(const Position& n)
 {
     return LookUp(
         n.getBoardKey(),
-        or_node ? n.hand(n.turn()) : n.hand(oppositeColor(n.turn())),
+        or_node ? n.hand(n.turn()) : n.hand(color::opposite(n.turn())),
         n.gamePly());
 }
 
@@ -166,7 +166,7 @@ void TranspositionTable::GetChildFirstEntry(
             }
         }
     } else {
-        hand = n.hand(oppositeColor(n.turn()));
+        hand = n.hand(color::opposite(n.turn()));
     }
     Key key = n.getBoardKeyAfter(move);
     entries = &tt[key];
@@ -193,7 +193,7 @@ static const constexpr int kInfinitePnDn = 100000000;
 // 王手の指し手が近接王手か
 FORCE_INLINE bool moveGivesNeighborCheck(const Position& pos, const Move& move)
 {
-    const Color them = oppositeColor(pos.turn());
+    const color::ColorEnum them = color::opposite(pos.turn());
     const Square ksq = pos.kingSquare(them);
 
     const Square to = move.to();
@@ -269,7 +269,7 @@ void DfPn::dfpn_inner(
             // 反証駒
             // 持っている持ち駒を最大数にする(後手の持ち駒を加える)
             entry.hand.set(
-                dp(n.hand(n.turn()), n.hand(oppositeColor(n.turn()))));
+                dp(n.hand(n.turn()), n.hand(color::opposite(n.turn()))));
         } else {
             // 相手の手番でここに到達した場合は王手回避の手が無かった、
             // 1手詰めを行っているため、ここに到達することはない
@@ -284,8 +284,8 @@ void DfPn::dfpn_inner(
     if (entry.num_searched == 0) {
         if (or_node) {
             // 3手詰みチェック
-            Color us = n.turn();
-            Color them = oppositeColor(us);
+            color::ColorEnum us = n.turn();
+            color::ColorEnum them = color::opposite(us);
 
             StateInfo si;
             StateInfo si2;
@@ -328,7 +328,8 @@ void DfPn::dfpn_inner(
                     // 後手が一枚も持っていない種類の先手の持ち駒を証明駒に設定する
                     if (!moveGivesNeighborCheck(n, m))
                         entry.hand.setPP(
-                            n.hand(n.turn()), n.hand(oppositeColor(n.turn())));
+                            n.hand(n.turn()),
+                            n.hand(color::opposite(n.turn())));
 
                     return;
                 }
@@ -415,7 +416,8 @@ void DfPn::dfpn_inner(
                     // 後手が一枚も持っていない種類の先手の持ち駒を証明駒に設定する
                     if (!moveGivesNeighborCheck(n, move))
                         entry1.hand.setPP(
-                            n.hand(n.turn()), n.hand(oppositeColor(n.turn())));
+                            n.hand(n.turn()),
+                            n.hand(color::opposite(n.turn())));
                 } else {
                     // 詰んでないので、m2で詰みを逃れている。
                     // 不詰みチェック
@@ -427,8 +429,9 @@ void DfPn::dfpn_inner(
                         entry1.dn = 0;
                         // 反証駒
                         // 持っている持ち駒を最大数にする(後手の持ち駒を加える)
-                        entry1.hand.set(dp(
-                            n.hand(n.turn()), n.hand(oppositeColor(n.turn()))));
+                        entry1.hand.set(
+                            dp(n.hand(n.turn()),
+                               n.hand(color::opposite(n.turn()))));
 
                         n.undoMove(m2);
 
@@ -840,7 +843,7 @@ void DfPn::dfpn_inner(
                              & n.attacksFrom<Knight>(
                                  n.turn(), n.kingSquare(n.turn()))))
                     entry.hand.setPP(
-                        n.hand(oppositeColor(n.turn())), n.hand(n.turn()));
+                        n.hand(color::opposite(n.turn())), n.hand(n.turn()));
                 //cout << bitset<32>(entry.hand.value()) << endl;
             } else {
                 thpn_child = std::min(thpn - entry.pn + best_pn, kInfinitePnDn);
