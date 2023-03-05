@@ -616,7 +616,7 @@ int __piece_to_piece_type(const int p)
 }
 int __hand_piece_to_piece_type(const int hp)
 {
-    return (int)handPieceToPieceType((CapturedPieceTypeEnum)hp);
+    return (int)to_piece_type((CapturedPieceTypeEnum)hp);
 }
 
 // 移動先

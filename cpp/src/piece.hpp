@@ -133,14 +133,14 @@ inline CapturedPieceTypeEnum to_captured_piece_type(const PieceTypeEnum pt)
 
 const PieceTypeEnum HandPieceToPieceTypeTable[NUM_CAPTURED_PIECE_TYPES]
     = {FU, KY, KE, GI, KI, KA, HI};
-inline PieceTypeEnum handPieceToPieceType(const CapturedPieceTypeEnum hp)
+inline PieceTypeEnum to_piece_type(const CapturedPieceTypeEnum hp)
 {
     return HandPieceToPieceTypeTable[hp];
 }
 inline ColoredPieceEnum colorAndHandPieceToPiece(
     const color::ColorEnum c, const CapturedPieceTypeEnum hp)
 {
-    return to_colored_piece(c, handPieceToPieceType(hp));
+    return to_colored_piece(c, to_piece_type(hp));
 }
 
 #endif // #ifndef APERY_PIECE_HPP

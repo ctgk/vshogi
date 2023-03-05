@@ -194,7 +194,7 @@ struct HuffmanCodedPos
              ++hp)
             for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c)
                 handCodeToPieceHash[handCodeTable[hp][c].key]
-                    = to_colored_piece(c, handPieceToPieceType(hp));
+                    = to_colored_piece(c, to_piece_type(hp));
     }
     HuffmanCodedPos()
     {
@@ -244,7 +244,7 @@ struct PackedSfen
              ++hp)
             for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c)
                 handCodeToPieceHash[handCodeTable[hp][c].key]
-                    = to_colored_piece(c, handPieceToPieceType(hp));
+                    = to_colored_piece(c, to_piece_type(hp));
     }
     PackedSfen()
     {
