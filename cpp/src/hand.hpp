@@ -62,10 +62,10 @@ public:
                 : ((value() /*& HRookMask*/) >> HRookShiftBits));
     }
 
-    u32 numOf(const piece::CapturedPieceTypeEnum handPiece) const
+    u32 numOf(const piece::CapturedPieceTypeEnum captured_piece_type) const
     {
-        return (value() & HandPieceMask[handPiece])
-               >> HandPieceShiftBits[handPiece];
+        return (value() & HandPieceMask[captured_piece_type])
+               >> HandPieceShiftBits[captured_piece_type];
     }
     // 2つの PieceStand 型変数の、同じ種類の駒の数を比較する必要があるため、
     // bool じゃなくて、u32 型でそのまま返す。
@@ -81,26 +81,27 @@ public:
             : HP == piece::C_KA ? (value() & HBishopMask)
                                 : (value() & HRookMask));
     }
-    u32 exists(const piece::CapturedPieceTypeEnum handPiece) const
+    u32 exists(const piece::CapturedPieceTypeEnum captured_piece_type) const
     {
-        return value() & HandPieceMask[handPiece];
+        return value() & HandPieceMask[captured_piece_type];
     }
     u32 exceptPawnExists() const
     {
         return value() & HandPieceExceptPawnMask;
     }
     // num が int だけどまあ良いか。
-    void orEqual(const int num, const piece::CapturedPieceTypeEnum handPiece)
+    void orEqual(
+        const int num, const piece::CapturedPieceTypeEnum captured_piece_type)
     {
-        value_ |= num << HandPieceShiftBits[handPiece];
+        value_ |= num << HandPieceShiftBits[captured_piece_type];
     }
-    void plusOne(const piece::CapturedPieceTypeEnum handPiece)
+    void plusOne(const piece::CapturedPieceTypeEnum captured_piece_type)
     {
-        value_ += HandPieceOne[handPiece];
+        value_ += HandPieceOne[captured_piece_type];
     }
-    void minusOne(const piece::CapturedPieceTypeEnum handPiece)
+    void minusOne(const piece::CapturedPieceTypeEnum captured_piece_type)
     {
-        value_ -= HandPieceOne[handPiece];
+        value_ -= HandPieceOne[captured_piece_type];
     }
     bool operator==(const PieceStand rhs) const
     {
