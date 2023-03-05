@@ -65,9 +65,9 @@ bool nyugyoku(const Position& pos)
     const int ownSmallPiecesCount = ownPiecesCount - ownBigPiecesCount;
     const Hand hand = pos.hand(us);
     const int val
-        = ownSmallPiecesCount + hand.numOf<H_FU>() + hand.numOf<H_KY>()
-          + hand.numOf<H_KE>() + hand.numOf<H_GI>() + hand.numOf<H_KI>()
-          + (ownBigPiecesCount + hand.numOf<H_HI>() + hand.numOf<H_KA>()) * 5;
+        = ownSmallPiecesCount + hand.numOf<C_FU>() + hand.numOf<C_KY>()
+          + hand.numOf<C_KE>() + hand.numOf<C_GI>() + hand.numOf<C_KI>()
+          + (ownBigPiecesCount + hand.numOf<C_HI>() + hand.numOf<C_KA>()) * 5;
 #if defined LAW_24
     if (val < 31)
         return false;

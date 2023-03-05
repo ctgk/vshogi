@@ -342,13 +342,13 @@ public:
     {
         const Hand h = pos.hand((color::ColorEnum)color);
         return std::vector<int>{
-            (int)h.numOf<H_FU>(),
-            (int)h.numOf<H_KY>(),
-            (int)h.numOf<H_KE>(),
-            (int)h.numOf<H_GI>(),
-            (int)h.numOf<H_KI>(),
-            (int)h.numOf<H_KA>(),
-            (int)h.numOf<H_HI>()};
+            (int)h.numOf<C_FU>(),
+            (int)h.numOf<C_KY>(),
+            (int)h.numOf<C_KE>(),
+            (int)h.numOf<C_GI>(),
+            (int)h.numOf<C_KI>(),
+            (int)h.numOf<C_KA>(),
+            (int)h.numOf<C_HI>()};
     }
 
     std::vector<int> pieces() const
@@ -505,7 +505,8 @@ public:
             // hand
             const Hand hand = pos.hand(c);
             int p = 0;
-            for (HandPiece hp = H_FU; hp < HandPieceNum; ++hp) {
+            for (CapturedPieceTypeEnum hp = C_FU; hp < NUM_CAPTURED_PIECE_TYPES;
+                 ++hp) {
                 u32 num = hand.numOf(hp);
                 if (num >= MAX_PIECES_IN_HAND[hp]) {
                     num = MAX_PIECES_IN_HAND[hp];
@@ -615,7 +616,7 @@ int __piece_to_piece_type(const int p)
 }
 int __hand_piece_to_piece_type(const int hp)
 {
-    return (int)handPieceToPieceType((HandPiece)hp);
+    return (int)handPieceToPieceType((CapturedPieceTypeEnum)hp);
 }
 
 // 移動先

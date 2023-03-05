@@ -176,7 +176,8 @@ struct HuffmanCodeToPieceHash : public std::unordered_map<u16, ColoredPieceEnum>
 struct HuffmanCodedPos
 {
     static const HuffmanCode boardCodeTable[PieceNone];
-    static const HuffmanCode handCodeTable[HandPieceNum][color::NUM_COLORS];
+    static const HuffmanCode handCodeTable[NUM_CAPTURED_PIECE_TYPES]
+                                          [color::NUM_COLORS];
     static HuffmanCodeToPieceHash boardCodeToPieceHash;
     static HuffmanCodeToPieceHash handCodeToPieceHash;
     static void init()
@@ -189,7 +190,8 @@ struct HuffmanCodedPos
             if (pieceToPieceType(pc)
                 != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
-        for (HandPiece hp = H_FU; hp < HandPieceNum; ++hp)
+        for (CapturedPieceTypeEnum hp = C_FU; hp < NUM_CAPTURED_PIECE_TYPES;
+             ++hp)
             for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c)
                 handCodeToPieceHash[handCodeTable[hp][c].key]
                     = colorAndPieceTypeToPiece(c, handPieceToPieceType(hp));
@@ -224,7 +226,8 @@ static_assert(sizeof(HuffmanCodedPosAndEval) == 38, "");
 struct PackedSfen
 {
     static const HuffmanCode boardCodeTable[PieceNone];
-    static const HuffmanCode handCodeTable[HandPieceNum][color::NUM_COLORS];
+    static const HuffmanCode handCodeTable[NUM_CAPTURED_PIECE_TYPES]
+                                          [color::NUM_COLORS];
     static HuffmanCodeToPieceHash boardCodeToPieceHash;
     static HuffmanCodeToPieceHash handCodeToPieceHash;
     static void init()
@@ -237,7 +240,8 @@ struct PackedSfen
             if (pieceToPieceType(pc)
                 != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
-        for (HandPiece hp = H_FU; hp < HandPieceNum; ++hp)
+        for (CapturedPieceTypeEnum hp = C_FU; hp < NUM_CAPTURED_PIECE_TYPES;
+             ++hp)
             for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c)
                 handCodeToPieceHash[handCodeTable[hp][c].key]
                     = colorAndPieceTypeToPiece(c, handPieceToPieceType(hp));
@@ -311,7 +315,7 @@ public:
     void set(const std::string& sfen);
     void
     set(const ColoredPieceEnum pieces[SquareNum],
-        const int pieces_in_hand[color::NUM_COLORS][HandPieceNum]);
+        const int pieces_in_hand[color::NUM_COLORS][NUM_CAPTURED_PIECE_TYPES]);
     bool set_hcp(const char* hcp_data); // for python
     bool set(const HuffmanCodedPos& hcp)
     {
@@ -585,7 +589,7 @@ public:
     bool canPawnDrop(const Square sq) const
     {
         // 歩を持っていて、二歩ではない。
-        return hand(US).exists<H_FU>() > 0
+        return hand(US).exists<C_FU>() > 0
                && !(bbOf(FU, US) & fileMask(makeFile(sq)));
     }
     Bitboard pinnedPieces(
@@ -696,7 +700,8 @@ private:
         byColorBB_[c].setBit(sq);
         byTypeBB_[Occupied].setBit(sq);
     }
-    void setHand(const HandPiece hp, const color::ColorEnum c, const int num)
+    void setHand(
+        const CapturedPieceTypeEnum hp, const color::ColorEnum c, const int num)
     {
         hand_[c].orEqual(num, hp);
     }
@@ -704,7 +709,7 @@ private:
     {
         const color::ColorEnum c = pieceToColor(piece);
         const PieceTypeEnum pt = pieceToPieceType(piece);
-        const HandPiece hp = pieceTypeToHandPiece(pt);
+        const CapturedPieceTypeEnum hp = pieceTypeToHandPiece(pt);
         setHand(hp, c, num);
     }
 
@@ -772,7 +777,7 @@ private:
     {
         return zobTurn_;
     }
-    static Key zobHand(const HandPiece hp, const color::ColorEnum c)
+    static Key zobHand(const CapturedPieceTypeEnum hp, const color::ColorEnum c)
     {
         return zobHand_[hp][c];
     }
@@ -797,7 +802,7 @@ private:
 
     static Key zobrist_[PieceTypeNum][SquareNum][color::NUM_COLORS];
     static const Key zobTurn_ = 1;
-    static Key zobHand_[HandPieceNum][color::NUM_COLORS];
+    static Key zobHand_[NUM_CAPTURED_PIECE_TYPES][color::NUM_COLORS];
 };
 
 template <>

@@ -55,7 +55,7 @@ namespace {
     ExtMove* generateDropMoves(ExtMove* moveList, const Position& pos, const Bitboard& target) {
         const Hand hand = pos.hand(US);
         // まず、歩に対して指し手を生成
-        if (hand.exists<H_FU>()) {
+        if (hand.exists<C_FU>()) {
             Bitboard toBB = target;
             // 一段目には打てない
             const Rank TRank1 = (US == color::BLACK ? Rank1 : Rank9);
@@ -98,14 +98,14 @@ namespace {
             int haveHandNum = 0; // 持ち駒の駒の種類の数
 
             // 桂馬、香車、それ以外の順番で格納する。(駒を打てる位置が限定的な順)
-            if (hand.exists<H_KE>()) haveHand[haveHandNum++] = KE;
+            if (hand.exists<C_KE>()) haveHand[haveHandNum++] = KE;
             const int noKnightIdx      = haveHandNum; // 桂馬を除く駒でループするときのループの初期値
-            if (hand.exists<H_KY >()) haveHand[haveHandNum++] = KY;
+            if (hand.exists<C_KY >()) haveHand[haveHandNum++] = KY;
             const int noKnightLanceIdx = haveHandNum; // 桂馬, 香車を除く駒でループするときのループの初期値
-            if (hand.exists<H_GI>()) haveHand[haveHandNum++] = GI;
-            if (hand.exists<H_KI  >()) haveHand[haveHandNum++] = KI;
-            if (hand.exists<H_KA>()) haveHand[haveHandNum++] = KA;
-            if (hand.exists<H_HI  >()) haveHand[haveHandNum++] = HI;
+            if (hand.exists<C_GI>()) haveHand[haveHandNum++] = GI;
+            if (hand.exists<C_KI  >()) haveHand[haveHandNum++] = KI;
+            if (hand.exists<C_KA>()) haveHand[haveHandNum++] = KA;
+            if (hand.exists<C_HI  >()) haveHand[haveHandNum++] = HI;
 
             const Rank TRank2 = (US == color::BLACK ? Rank2 : Rank8);
             const Rank TRank1 = (US == color::BLACK ? Rank1 : Rank9);
@@ -1031,7 +1031,7 @@ namespace {
             const Hand ourHand = pos.hand(US);
 
             // 歩打ち
-            if (ourHand.exists<H_FU>()) {
+            if (ourHand.exists<C_FU>()) {
                 Bitboard toBB = dropTarget & pawnAttack(opp, ksq);
                 // 二歩の回避
                 Bitboard pawnsBB = pos.bbOf(FU, US);
@@ -1064,7 +1064,7 @@ namespace {
             }
 
             // 香車打ち
-            if (ourHand.exists<H_KY>()) {
+            if (ourHand.exists<C_KY>()) {
                 Bitboard toBB = dropTarget & lanceAttack(opp, ksq, pos.occupiedBB());
                 Square to;
                 FOREACH_BB(toBB, to, {
@@ -1073,7 +1073,7 @@ namespace {
             }
 
             // 桂馬打ち
-            if (ourHand.exists<H_KE>()) {
+            if (ourHand.exists<C_KE>()) {
                 Bitboard toBB = dropTarget & knightAttack(opp, ksq);
                 Square to;
                 FOREACH_BB(toBB, to, {
@@ -1082,7 +1082,7 @@ namespace {
             }
 
             // 銀打ち
-            if (ourHand.exists<H_GI>()) {
+            if (ourHand.exists<C_GI>()) {
                 Bitboard toBB = dropTarget & silverAttack(opp, ksq);
                 Square to;
                 FOREACH_BB(toBB, to, {
@@ -1091,7 +1091,7 @@ namespace {
             }
 
             // 金打ち
-            if (ourHand.exists<H_KI>()) {
+            if (ourHand.exists<C_KI>()) {
                 Bitboard toBB = dropTarget & goldAttack(opp, ksq);
                 Square to;
                 FOREACH_BB(toBB, to, {
@@ -1100,7 +1100,7 @@ namespace {
             }
 
             // 角打ち
-            if (ourHand.exists<H_KA>()) {
+            if (ourHand.exists<C_KA>()) {
                 Bitboard toBB = dropTarget & bishopAttack(ksq, pos.occupiedBB());
                 Square to;
                 FOREACH_BB(toBB, to, {
@@ -1109,7 +1109,7 @@ namespace {
             }
 
             // 飛車打ち
-            if (ourHand.exists<H_HI>()) {
+            if (ourHand.exists<C_HI>()) {
                 Bitboard toBB = dropTarget & rookAttack(ksq, pos.occupiedBB());
                 Square to;
                 FOREACH_BB(toBB, to, {

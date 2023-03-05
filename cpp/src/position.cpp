@@ -27,7 +27,7 @@
 #include "generateMoves.hpp"
 
 Key Position::zobrist_[PieceTypeNum][SquareNum][color::NUM_COLORS];
-Key Position::zobHand_[HandPieceNum][color::NUM_COLORS];
+Key Position::zobHand_[NUM_CAPTURED_PIECE_TYPES][color::NUM_COLORS];
 
 const HuffmanCode HuffmanCodedPos::boardCodeTable[PieceNone] = {
     {Binary<         0>::value, 1}, // Empty
@@ -65,14 +65,14 @@ const HuffmanCode HuffmanCodedPos::boardCodeTable[PieceNone] = {
 
 // 盤上の bit 数 - 1 で表現出来るようにする。持ち駒があると、盤上には Empty の 1 bit が増えるので、
 // これで局面の bit 数が固定化される。
-const HuffmanCode HuffmanCodedPos::handCodeTable[HandPieceNum][color::NUM_COLORS] = {
-    {{Binary<        0>::value, 3}, {Binary<      100>::value, 3}}, // H_FU
-    {{Binary<        1>::value, 5}, {Binary<    10001>::value, 5}}, // H_KY
-    {{Binary<       11>::value, 5}, {Binary<    10011>::value, 5}}, // H_KE
-    {{Binary<      101>::value, 5}, {Binary<    10101>::value, 5}}, // H_GI
-    {{Binary<      111>::value, 5}, {Binary<    10111>::value, 5}}, // H_KI
-    {{Binary<    11111>::value, 7}, {Binary<  1011111>::value, 7}}, // H_KA
-    {{Binary<   111111>::value, 7}, {Binary<  1111111>::value, 7}}, // H_HI
+const HuffmanCode HuffmanCodedPos::handCodeTable[NUM_CAPTURED_PIECE_TYPES][color::NUM_COLORS] = {
+    {{Binary<        0>::value, 3}, {Binary<      100>::value, 3}}, // C_FU
+    {{Binary<        1>::value, 5}, {Binary<    10001>::value, 5}}, // C_KY
+    {{Binary<       11>::value, 5}, {Binary<    10011>::value, 5}}, // C_KE
+    {{Binary<      101>::value, 5}, {Binary<    10101>::value, 5}}, // C_GI
+    {{Binary<      111>::value, 5}, {Binary<    10111>::value, 5}}, // C_KI
+    {{Binary<    11111>::value, 7}, {Binary<  1011111>::value, 7}}, // C_KA
+    {{Binary<   111111>::value, 7}, {Binary<  1111111>::value, 7}}, // C_HI
 };
 
 HuffmanCodeToPieceHash HuffmanCodedPos::boardCodeToPieceHash;
@@ -146,14 +146,14 @@ const HuffmanCode PackedSfen::boardCodeTable[PieceNone] = {
 
 // 盤上の bit 数 - 1 で表現出来るようにする。持ち駒があると、盤上には Empty の 1 bit が増えるので、
 // これで局面の bit 数が固定化される。
-const HuffmanCode PackedSfen::handCodeTable[HandPieceNum][color::NUM_COLORS] = {
-	{ { Binary<        0>::value, 3 },{ Binary<      100>::value, 3 } }, // H_FU
-	{ { Binary<        1>::value, 5 },{ Binary<    10001>::value, 5 } }, // H_KY
-	{ { Binary<      101>::value, 5 },{ Binary<    10101>::value, 5 } }, // H_KE
-	{ { Binary<       11>::value, 5 },{ Binary<    10011>::value, 5 } }, // H_GI
-	{ { Binary<      111>::value, 5 },{ Binary<    10111>::value, 5 } }, // H_KI
-	{ { Binary<     1111>::value, 7 },{ Binary<  1001111>::value, 7 } }, // H_KA
-	{ { Binary<    11111>::value, 7 },{ Binary<  1011111>::value, 7 } }, // H_HI
+const HuffmanCode PackedSfen::handCodeTable[NUM_CAPTURED_PIECE_TYPES][color::NUM_COLORS] = {
+	{ { Binary<        0>::value, 3 },{ Binary<      100>::value, 3 } }, // C_FU
+	{ { Binary<        1>::value, 5 },{ Binary<    10001>::value, 5 } }, // C_KY
+	{ { Binary<      101>::value, 5 },{ Binary<    10101>::value, 5 } }, // C_KE
+	{ { Binary<       11>::value, 5 },{ Binary<    10011>::value, 5 } }, // C_GI
+	{ { Binary<      111>::value, 5 },{ Binary<    10111>::value, 5 } }, // C_KI
+	{ { Binary<     1111>::value, 7 },{ Binary<  1001111>::value, 7 } }, // C_KA
+	{ { Binary<    11111>::value, 7 },{ Binary<  1011111>::value, 7 } }, // C_HI
 };
 
 HuffmanCodeToPieceHash PackedSfen::boardCodeToPieceHash;
@@ -434,7 +434,7 @@ void Position::doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, co
     PieceTypeEnum ptTo;
     if (move.isDrop()) {
         ptTo = move.pieceTypeDropped();
-        const HandPiece hpTo = pieceTypeToHandPiece(ptTo);
+        const CapturedPieceTypeEnum hpTo = pieceTypeToHandPiece(ptTo);
 
         handKey -= zobHand(hpTo, us);
         boardKey += zobrist(ptTo, to, us);
@@ -468,7 +468,7 @@ void Position::doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, co
 
         if (ptCaptured) {
             // 駒を取ったとき
-            const HandPiece hpCaptured = pieceTypeToHandPiece(ptCaptured);
+            const CapturedPieceTypeEnum hpCaptured = pieceTypeToHandPiece(ptCaptured);
             const color::ColorEnum them = color::opposite(us);
 
             boardKey -= zobrist(ptCaptured, to, them);
@@ -542,7 +542,7 @@ void Position::undoMove(const Move move) {
         byColorBB_[us].xorBit(to);
         piece_[to] = Empty;
 
-        const HandPiece hp = pieceTypeToHandPiece(ptTo);
+        const CapturedPieceTypeEnum hp = pieceTypeToHandPiece(ptTo);
         hand_[us].plusOne(hp);
     }
     else {
@@ -558,7 +558,7 @@ void Position::undoMove(const Move move) {
             // 駒を取ったとき
             byTypeBB_[ptCaptured].xorBit(to);
             byColorBB_[them].xorBit(to);
-            const HandPiece hpCaptured = pieceTypeToHandPiece(ptCaptured);
+            const CapturedPieceTypeEnum hpCaptured = pieceTypeToHandPiece(ptCaptured);
             const ColoredPieceEnum pcCaptured = colorAndPieceTypeToPiece(them, ptCaptured);
             piece_[to] = pcCaptured;
 
@@ -1236,7 +1236,7 @@ template <color::ColorEnum US, bool Additional> Move Position::mateMoveIn1Ply() 
     const Bitboard dcBB_betweenIsThem = discoveredCheckBB<false>();
 
     // 飛車打ち
-    if (ourHand.exists<H_HI>()) {
+    if (ourHand.exists<C_HI>()) {
         // 合駒されるとややこしいので、3手詰み関数の中で調べる。
         // ここでは離れた位置から王手するのは考えない。
         Bitboard toBB = dropTarget & rookStepAttacks(ksq);
@@ -1256,7 +1256,7 @@ template <color::ColorEnum US, bool Additional> Move Position::mateMoveIn1Ply() 
     // 香車打ち
     // 飛車で詰まなければ香車でも詰まないので、else if を使用。
     // 玉が 9(1) 段目にいれば香車で王手出来無いので、それも省く。
-    else if (ourHand.exists<H_KY>() && isInFrontOf<US, Rank9, Rank1>(makeRank(ksq))) {
+    else if (ourHand.exists<C_KY>() && isInFrontOf<US, Rank9, Rank1>(makeRank(ksq))) {
         const Square to = ksq + TDeltaS;
         if (piece(to) == Empty && attackersToIsAny(US, to)) {
             if (!canKingEscape(*this, US, to, lanceAttackToEdge(US, to))
@@ -1268,7 +1268,7 @@ template <color::ColorEnum US, bool Additional> Move Position::mateMoveIn1Ply() 
     }
 
     // 角打ち
-    if (ourHand.exists<H_KA>()) {
+    if (ourHand.exists<C_KA>()) {
         Bitboard toBB = dropTarget & bishopStepAttacks(ksq);
         while (toBB) {
             const Square to = toBB.firstOneFromSQ11();
@@ -1283,9 +1283,9 @@ template <color::ColorEnum US, bool Additional> Move Position::mateMoveIn1Ply() 
     }
 
     // 金打ち
-    if (ourHand.exists<H_KI>()) {
+    if (ourHand.exists<C_KI>()) {
         Bitboard toBB;
-        if (ourHand.exists<H_HI>())
+        if (ourHand.exists<C_HI>())
             // 飛車打ちを先に調べたので、尻金だけは省く。
             toBB = dropTarget & (goldAttack(Them, ksq) ^ pawnAttack(US, ksq));
         else
@@ -1302,19 +1302,19 @@ template <color::ColorEnum US, bool Additional> Move Position::mateMoveIn1Ply() 
         }
     }
 
-    if (ourHand.exists<H_GI>()) {
+    if (ourHand.exists<C_GI>()) {
         Bitboard toBB;
-        if (ourHand.exists<H_KI>()) {
+        if (ourHand.exists<C_KI>()) {
             // 金打ちを先に調べたので、斜め後ろから打つ場合だけを調べる。
 
-            if (ourHand.exists<H_KA>())
+            if (ourHand.exists<C_KA>())
                 // 角打ちを先に調べたので、斜めからの王手も除外できる。銀打ちを調べる必要がない。
                 goto silver_drop_end;
             // 斜め後ろから打つ場合を調べる必要がある。
             toBB = dropTarget & (silverAttack(Them, ksq) & inFrontMask(US, makeRank(ksq)));
         }
         else {
-            if (ourHand.exists<H_KA>())
+            if (ourHand.exists<C_KA>())
                 // 斜め後ろを除外。前方から打つ場合を調べる必要がある。
                 toBB = dropTarget & goldAndSilverAttacks(Them, ksq);
             else
@@ -1333,7 +1333,7 @@ template <color::ColorEnum US, bool Additional> Move Position::mateMoveIn1Ply() 
     }
 silver_drop_end:
 
-    if (ourHand.exists<H_KE>()) {
+    if (ourHand.exists<C_KE>()) {
         Bitboard toBB = dropTarget & knightAttack(Them, ksq);
         while (toBB) {
             const Square to = toBB.firstOneFromSQ11();
@@ -2016,7 +2016,7 @@ silver_drop_end:
 
                 // toの地点にあるのが歩だと、このtoの地点とoneが同じ筋だと
                 // このtoの歩を取ってoneに打てるようになってしまう。
-                if (pieceToPieceType(piece(to)) == FU && makeFile(to) == makeFile(one) && themHand.exists<H_FU>()) continue;
+                if (pieceToPieceType(piece(to)) == FU && makeFile(to) == makeFile(one) && themHand.exists<C_FU>()) continue;
 
                 const auto dr = Effect8::directions_of(ksq, one);
                 PieceTypeEnum pt;
@@ -2025,7 +2025,7 @@ silver_drop_end:
                     pt = KA;
 
                     // 斜めなら角を持ってなきゃ
-                    if (!ourHand.exists<H_KA>())
+                    if (!ourHand.exists<C_KA>())
                         goto NEXT2;
                 }
                 else {
@@ -2034,10 +2034,10 @@ silver_drop_end:
                     // 十字なら飛車を持ってなきゃ
                     // 上からなら香でもいいのか。
                     canLanceAttack = (US == color::BLACK ? dr == Effect8::DIRECTIONS_D : dr == Effect8::DIRECTIONS_U);
-                    if (canLanceAttack && ourHand.exists<H_KY>()) {
+                    if (canLanceAttack && ourHand.exists<C_KY>()) {
                         pt = KY;
                     }
-                    else if (!ourHand.exists<H_HI>())
+                    else if (!ourHand.exists<C_HI>())
                         goto NEXT2;
                 }
 
@@ -2754,7 +2754,7 @@ void Position::initZobrist() {
                 zobrist_[pt][sq][c] = g_mt64bit.random() & ~UINT64_C(1);
         }
     }
-    for (HandPiece hp = H_FU; hp < HandPieceNum; ++hp) {
+    for (CapturedPieceTypeEnum hp = C_FU; hp < NUM_CAPTURED_PIECE_TYPES; ++hp) {
         zobHand_[hp][color::BLACK] = g_mt64bit.random() & ~UINT64_C(1);
         zobHand_[hp][color::WHITE] = g_mt64bit.random() & ~UINT64_C(1);
     }
@@ -2916,7 +2916,7 @@ std::string Position::toSFEN(const Ply ply) const {
     else {
         // USI の規格として、持ち駒の表記順は決まっており、先手、後手の順で、それぞれ 飛、角、金、銀、桂、香、歩 の順。
         for (color::ColorEnum color = color::BLACK; color < color::NUM_COLORS; ++color) {
-            for (HandPiece hp : {H_HI, H_KA, H_KI, H_GI, H_KE, H_KY, H_FU}) {
+            for (CapturedPieceTypeEnum hp : {C_HI, C_KA, C_KI, C_GI, C_KE, C_KY, C_FU}) {
                 const int num = hand(color).numOf(hp);
                 if (num == 0)
                     continue;
@@ -2970,7 +2970,7 @@ void Position::toHuffmanCodedPos(u8* data) const {
     // 持ち駒
     for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
         const Hand h = hand(c);
-        for (HandPiece hp = H_FU; hp < HandPieceNum; ++hp) {
+        for (CapturedPieceTypeEnum hp = C_FU; hp < NUM_CAPTURED_PIECE_TYPES; ++hp) {
             const auto hc = HuffmanCodedPos::handCodeTable[hp][c];
             for (u32 n = 0; n < h.numOf(hp); ++n)
                 bs.putBits(hc.code, hc.numOfBits);
@@ -3001,7 +3001,7 @@ void Position::toPackedSfen(u8* data) const {
 	// 持ち駒
 	for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
 		const Hand h = hand(c);
-		for (HandPiece hp = H_FU; hp < HandPieceNum; ++hp) {
+		for (CapturedPieceTypeEnum hp = C_FU; hp < NUM_CAPTURED_PIECE_TYPES; ++hp) {
 			const auto hc = PackedSfen::handCodeTable[hp][c];
 			for (u32 n = 0; n < h.numOf(hp); ++n)
 				bs.putBits(hc.code, hc.numOfBits);
@@ -3128,7 +3128,7 @@ Key Position::computeBoardKey() const {
 
 Key Position::computeHandKey() const {
     Key result = 0;
-    for (HandPiece hp = H_FU; hp < HandPieceNum; ++hp) {
+    for (CapturedPieceTypeEnum hp = C_FU; hp < NUM_CAPTURED_PIECE_TYPES; ++hp) {
         for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
             const int num = hand(c).numOf(hp);
             for (int i = 0; i < num; ++i)
@@ -3178,7 +3178,7 @@ RepetitionType Position::isDraw(const int checkMaxPly) const {
 }
 
 namespace {
-	void printHandPiece(std::ostream& os, const Position& pos, const HandPiece hp, const color::ColorEnum c, const std::string& str) {
+	void printHandPiece(std::ostream& os, const Position& pos, const CapturedPieceTypeEnum hp, const color::ColorEnum c, const std::string& str) {
         if (pos.hand(c).numOf(hp)) {
             const char* sign = (c == color::BLACK ? "+" : "-");
             os << "P" << sign;
@@ -3189,13 +3189,13 @@ namespace {
     }
 }
 void Position::printHand(std::ostream& os, const color::ColorEnum c) const {
-    printHandPiece(os, *this, H_FU  , c, "FU");
-    printHandPiece(os, *this, H_KY , c, "KY");
-    printHandPiece(os, *this, H_KE, c, "KE");
-    printHandPiece(os, *this, H_GI, c, "GI");
-    printHandPiece(os, *this, H_KI  , c, "KI");
-    printHandPiece(os, *this, H_KA, c, "KA");
-    printHandPiece(os, *this, H_HI  , c, "HI");
+    printHandPiece(os, *this, C_FU  , c, "FU");
+    printHandPiece(os, *this, C_KY , c, "KY");
+    printHandPiece(os, *this, C_KE, c, "KE");
+    printHandPiece(os, *this, C_GI, c, "GI");
+    printHandPiece(os, *this, C_KI  , c, "KI");
+    printHandPiece(os, *this, C_KA, c, "KA");
+    printHandPiece(os, *this, C_HI  , c, "HI");
 }
 
 Position& Position::operator = (const Position& pos) {
@@ -3281,7 +3281,7 @@ INCORRECT:
     std::cout << "incorrect SFEN string : " << sfen << std::endl;
 }
 
-void Position::set(const ColoredPieceEnum pieces[SquareNum], const int pieces_in_hand[color::NUM_COLORS][HandPieceNum]) {
+void Position::set(const ColoredPieceEnum pieces[SquareNum], const int pieces_in_hand[color::NUM_COLORS][NUM_CAPTURED_PIECE_TYPES]) {
     const auto turn = turn_;
     const auto ply = gamePly_;
     clear();
@@ -3293,7 +3293,7 @@ void Position::set(const ColoredPieceEnum pieces[SquareNum], const int pieces_in
     }
     // 持ち駒
     for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
-        for (HandPiece hp = H_FU; hp < HandPieceNum; ++hp) {
+        for (CapturedPieceTypeEnum hp = C_FU; hp < NUM_CAPTURED_PIECE_TYPES; ++hp) {
             setHand(hp, c, pieces_in_hand[c][hp]);
         }
     }
@@ -3452,7 +3452,7 @@ void Position::set(std::mt19937& mt) {
     turn_ = (color::ColorEnum)colorDist(mt);
 
     // 先後両方の持ち駒の数を設定する。持ち駒が多くなるほど、確率が低くなるので、取り敢えずこれで良しとする。todo: 確率分布を指定出来るように。
-    auto setHandPieces = [&](const HandPiece hp, const int maxNum) {
+    auto setHandPieces = [&](const CapturedPieceTypeEnum hp, const int maxNum) {
         std::uniform_int_distribution<int> handNumDist(0, maxNum);
         while (true) {
             const int nums[color::NUM_COLORS] = {handNumDist(mt), handNumDist(mt)};
@@ -3463,13 +3463,13 @@ void Position::set(std::mt19937& mt) {
             break;
         }
     };
-    setHandPieces(H_FU  , 18);
-    setHandPieces(H_KY ,  4);
-    setHandPieces(H_KE,  4);
-    setHandPieces(H_GI,  4);
-    setHandPieces(H_KI  ,  4);
-    setHandPieces(H_KA,  2);
-    setHandPieces(H_HI  ,  2);
+    setHandPieces(C_FU  , 18);
+    setHandPieces(C_KY ,  4);
+    setHandPieces(C_KE,  4);
+    setHandPieces(C_GI,  4);
+    setHandPieces(C_KI  ,  4);
+    setHandPieces(C_KA,  2);
+    setHandPieces(C_HI  ,  2);
 
     // 玉の位置の設定。
     std::uniform_int_distribution<int> squareDist(0, (int)SquareNum - 1);
@@ -3498,7 +3498,7 @@ void Position::set(std::mt19937& mt) {
     int checkersNum = 0;
     Square checkSquare = SquareNum; // 1つ目の王手している駒の位置。(1つしか保持する必要が無い。)
     // 飛び利きの無い駒の配置。
-    auto shortPiecesSet = [&](const PieceTypeEnum pt, const HandPiece hp, const int maxNum) {
+    auto shortPiecesSet = [&](const PieceTypeEnum pt, const CapturedPieceTypeEnum hp, const int maxNum) {
         for (int i = 0; i < maxNum - (int)(hand(color::BLACK).numOf(hp) + hand(color::WHITE).numOf(hp)); ++i) {
             while (true) {
                 const Square sq = (Square)squareDist(mt);
@@ -3555,13 +3555,13 @@ void Position::set(std::mt19937& mt) {
             }
         }
     };
-    shortPiecesSet(FU  , H_FU  , 18);
-    shortPiecesSet(KE, H_KE,  4);
-    shortPiecesSet(GI, H_GI,  4);
-    shortPiecesSet(KI  , H_KI  ,  4);
+    shortPiecesSet(FU  , C_FU  , 18);
+    shortPiecesSet(KE, C_KE,  4);
+    shortPiecesSet(GI, C_GI,  4);
+    shortPiecesSet(KI  , C_KI  ,  4);
 
     // 飛び利きの駒を配置。
-    auto longPiecesSet = [&](const PieceTypeEnum pt, const HandPiece hp, const int maxNum) {
+    auto longPiecesSet = [&](const PieceTypeEnum pt, const CapturedPieceTypeEnum hp, const int maxNum) {
         for (int i = 0; i < maxNum - (int)(hand(color::BLACK).numOf(hp) + hand(color::WHITE).numOf(hp)); ++i) {
             while (true) {
                 const Square sq = (Square)squareDist(mt);
@@ -3652,9 +3652,9 @@ void Position::set(std::mt19937& mt) {
             }
         }
     };
-    longPiecesSet(KY , H_KY , 4);
-    longPiecesSet(KA, H_KA, 2);
-    longPiecesSet(HI  , H_HI  , 2);
+    longPiecesSet(KY , C_KY , 4);
+    longPiecesSet(KA, C_KA, 2);
+    longPiecesSet(HI  , C_HI  , 2);
 
     goldsBB_ = bbOf(KI, TO, NY, NK, NG);
 

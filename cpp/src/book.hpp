@@ -46,7 +46,7 @@ private:
     static MT64bit mt64bit_;
 
     static Key ZobPiece[PieceNone][SquareNum];
-    static Key ZobHand[HandPieceNum][19];
+    static Key ZobHand[NUM_CAPTURED_PIECE_TYPES][19];
     static Key ZobTurn;
 };
 

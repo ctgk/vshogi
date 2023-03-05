@@ -25,7 +25,7 @@
 MT64bit
     Book::mt64bit_; // 定跡のhash生成用なので、seedは固定でデフォルト値を使う。
 Key Book::ZobPiece[PieceNone][SquareNum];
-Key Book::ZobHand[HandPieceNum][19]; // 持ち駒の同一種類の駒の数ごと
+Key Book::ZobHand[NUM_CAPTURED_PIECE_TYPES][19]; // 持ち駒の同一種類の駒の数ごと
 Key Book::ZobTurn;
 
 void Book::init()
@@ -34,7 +34,7 @@ void Book::init()
         for (Square sq = SQ11; sq < SquareNum; ++sq)
             ZobPiece[p][sq] = mt64bit_.random();
     }
-    for (HandPiece hp = H_FU; hp < HandPieceNum; ++hp) {
+    for (CapturedPieceTypeEnum hp = C_FU; hp < NUM_CAPTURED_PIECE_TYPES; ++hp) {
         for (int num = 0; num < 19; ++num)
             ZobHand[hp][num] = mt64bit_.random();
     }
@@ -51,7 +51,7 @@ Key Book::bookKey(const Position& pos)
         key ^= ZobPiece[pos.piece(sq)][sq];
     }
     const Hand hand = pos.hand(pos.turn());
-    for (HandPiece hp = H_FU; hp < HandPieceNum; ++hp)
+    for (CapturedPieceTypeEnum hp = C_FU; hp < NUM_CAPTURED_PIECE_TYPES; ++hp)
         key ^= ZobHand[hp][hand.numOf(hp)];
     if (pos.turn() == color::WHITE)
         key ^= ZobTurn;

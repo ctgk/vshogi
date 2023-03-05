@@ -75,19 +75,19 @@ inline ColoredPieceEnum inverse(const ColoredPieceEnum pc)
 }
 
 // 持ち駒を表すときに使用する。
-// todo: H_KI を H_HI の後ろに持っていき、PieceType との変換を簡単に出来るようにする。
-enum HandPiece
+// todo: C_KI を C_HI の後ろに持っていき、PieceType との変換を簡単に出来るようにする。
+enum CapturedPieceTypeEnum
 {
-    H_FU,
-    H_KY,
-    H_KE,
-    H_GI,
-    H_KI,
-    H_KA,
-    H_HI,
-    HandPieceNum,
+    C_FU,
+    C_KY,
+    C_KE,
+    C_GI,
+    C_KI,
+    C_KA,
+    C_HI,
+    NUM_CAPTURED_PIECE_TYPES,
 };
-OverloadEnumOperators(HandPiece);
+OverloadEnumOperators(CapturedPieceTypeEnum);
 
 // p == Empty のとき、PieceType は OccuPied になってしまうので、
 // Position::bbOf(pieceToPieceType(p)) とすると、
@@ -121,35 +121,35 @@ inline bool isSlider(const PieceTypeEnum pt)
     return (IsSliderVal & (1 << pt)) != 0;
 }
 
-const HandPiece PieceTypeToHandPieceTable[PieceTypeNum]
-    = {HandPieceNum,
-       H_FU,
-       H_KY,
-       H_KE,
-       H_GI,
-       H_KA,
-       H_HI,
-       H_KI,
-       HandPieceNum,
-       H_FU,
-       H_KY,
-       H_KE,
-       H_GI,
-       H_KA,
-       H_HI};
-inline HandPiece pieceTypeToHandPiece(const PieceTypeEnum pt)
+const CapturedPieceTypeEnum PieceTypeToHandPieceTable[PieceTypeNum]
+    = {NUM_CAPTURED_PIECE_TYPES,
+       C_FU,
+       C_KY,
+       C_KE,
+       C_GI,
+       C_KA,
+       C_HI,
+       C_KI,
+       NUM_CAPTURED_PIECE_TYPES,
+       C_FU,
+       C_KY,
+       C_KE,
+       C_GI,
+       C_KA,
+       C_HI};
+inline CapturedPieceTypeEnum pieceTypeToHandPiece(const PieceTypeEnum pt)
 {
     return PieceTypeToHandPieceTable[pt];
 }
 
-const PieceTypeEnum HandPieceToPieceTypeTable[HandPieceNum]
+const PieceTypeEnum HandPieceToPieceTypeTable[NUM_CAPTURED_PIECE_TYPES]
     = {FU, KY, KE, GI, KI, KA, HI};
-inline PieceTypeEnum handPieceToPieceType(const HandPiece hp)
+inline PieceTypeEnum handPieceToPieceType(const CapturedPieceTypeEnum hp)
 {
     return HandPieceToPieceTypeTable[hp];
 }
-inline ColoredPieceEnum
-colorAndHandPieceToPiece(const color::ColorEnum c, const HandPiece hp)
+inline ColoredPieceEnum colorAndHandPieceToPiece(
+    const color::ColorEnum c, const CapturedPieceTypeEnum hp)
 {
     return colorAndPieceTypeToPiece(c, handPieceToPieceType(hp));
 }

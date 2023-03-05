@@ -23,9 +23,9 @@
 
 namespace
 {
-const std::string HandPieceToStringTable[HandPieceNum]
+const std::string HandPieceToStringTable[NUM_CAPTURED_PIECE_TYPES]
     = {"P*", "L*", "N*", "S*", "G*", "B*", "R*"};
-inline std::string handPieceToString(const HandPiece hp)
+inline std::string handPieceToString(const CapturedPieceTypeEnum hp)
 {
     return HandPieceToStringTable[hp];
 }

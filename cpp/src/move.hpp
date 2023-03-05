@@ -153,7 +153,7 @@ public:
     {
         return (isDrop() ? pieceTypeDropped() : pieceTypeFrom());
     }
-    HandPiece handPieceDropped() const
+    CapturedPieceTypeEnum handPieceDropped() const
     {
         assert(this->isDrop());
         return pieceTypeToHandPiece(pieceTypeDropped());
@@ -247,7 +247,7 @@ inline Move from2Move(const Square from)
 }
 
 // 駒打ちの駒の種類から移動元に変換
-// todo: PieceTypeEnum を HandPiece に変更
+// todo: PieceTypeEnum を CapturedPieceTypeEnum に変更
 inline Square drop2From(const PieceTypeEnum pt)
 {
     return static_cast<Square>(SquareNum - 1 + pt);
@@ -312,7 +312,7 @@ inline Move makeCapturePromoteMove(
 }
 
 // 駒打ちの makeMove()
-// todo: PieceTypeEnum を HandPiece に変更
+// todo: PieceTypeEnum を CapturedPieceTypeEnum に変更
 inline Move makeDropMove(const PieceTypeEnum pt, const Square to)
 {
     return from2Move(drop2From(pt)) | to2Move(to);
