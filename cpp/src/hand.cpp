@@ -23,14 +23,14 @@
 #include "common.hpp"
 #include "piece.hpp"
 
-const int PieceStand::HandPieceShiftBits[piece::NUM_CAPTURED_PIECE_TYPES]
-    = {shift_bits_fu,
-       shift_bits_ky,
-       shift_bits_ke,
-       shift_bits_gi,
-       shift_bits_ki,
-       shift_bits_ka,
-       shift_bits_hi};
+// const int PieceStand::PIECE_STAND_SHIFT_BITS[piece::NUM_CAPTURED_PIECE_TYPES]
+//     = {shift_bits_fu,
+//        shift_bits_ky,
+//        shift_bits_ke,
+//        shift_bits_gi,
+//        shift_bits_ki,
+//        shift_bits_ka,
+//        shift_bits_hi};
 const u32 PieceStand::HandPieceMask[piece::NUM_CAPTURED_PIECE_TYPES]
     = {bit_mask_fu,
        bit_mask_ky,

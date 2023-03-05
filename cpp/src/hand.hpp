@@ -25,6 +25,9 @@
 #include "common.hpp"
 #include "piece.hpp"
 
+constexpr int PIECE_STAND_SHIFT_BITS[piece::NUM_CAPTURED_PIECE_TYPES]
+    = {0, 6, 10, 14, 18, 22, 25};
+
 // 手駒
 // 手駒の状態 (32bit に pack する)
 // 手駒の優劣判定を高速に行う為に各駒の間を1bit空ける。
@@ -65,7 +68,7 @@ public:
     u32 numOf(const piece::CapturedPieceTypeEnum captured_piece_type) const
     {
         return (value() & HandPieceMask[captured_piece_type])
-               >> HandPieceShiftBits[captured_piece_type];
+               >> PIECE_STAND_SHIFT_BITS[captured_piece_type];
     }
     // 2つの PieceStand 型変数の、同じ種類の駒の数を比較する必要があるため、
     // bool じゃなくて、u32 型でそのまま返す。
@@ -93,7 +96,7 @@ public:
     void orEqual(
         const int num, const piece::CapturedPieceTypeEnum captured_piece_type)
     {
-        value_ |= num << HandPieceShiftBits[captured_piece_type];
+        value_ |= num << PIECE_STAND_SHIFT_BITS[captured_piece_type];
     }
     void plusOne(const piece::CapturedPieceTypeEnum captured_piece_type)
     {
@@ -180,7 +183,6 @@ private:
     static const u32 HandPieceExceptPawnMask
         = (bit_mask_ky | bit_mask_ke | bit_mask_gi | bit_mask_ki | bit_mask_ka
            | bit_mask_hi);
-    static const int HandPieceShiftBits[piece::NUM_CAPTURED_PIECE_TYPES];
     static const u32 HandPieceMask[piece::NUM_CAPTURED_PIECE_TYPES];
     // 特定の種類の持ち駒を 1 つ増やしたり減らしたりするときに使用するテーブル
     static const u32 HandPieceOne[piece::NUM_CAPTURED_PIECE_TYPES];
