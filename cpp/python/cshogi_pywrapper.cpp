@@ -10,7 +10,6 @@
 #include "parser.h"
 #include "position.hpp"
 
-
 namespace py = pybind11;
 
 PYBIND11_MODULE(_cshogi, m)
@@ -60,11 +59,10 @@ PYBIND11_MODULE(_cshogi, m)
         .def("toCSAPos", &__Board::toCSAPos)
         .def(
             "toHuffmanCodedPos",
-            [](const __Board& self, const py::array_t<uint8_t>& hcp){
-                return self.toHuffmanCodedPos(reinterpret_cast<char*>(
-                    hcp.request().ptr));
-            }
-        )
+            [](const __Board& self, const py::array_t<uint8_t>& hcp) {
+                return self.toHuffmanCodedPos(
+                    reinterpret_cast<char*>(hcp.request().ptr));
+            })
         .def("toPackedSfen", &__Board::toPackedSfen)
         .def("piece", &__Board::piece)
         .def("inCheck", &__Board::inCheck)
@@ -79,7 +77,9 @@ PYBIND11_MODULE(_cshogi, m)
         .def("is_nyugyoku", &__Board::is_nyugyoku)
         .def("piece_planes", &__Board::piece_planes)
         .def("piece_planes_rotate", &__Board::piece_planes_rotate)
-        .def("_dlshogi_make_input_features", &__Board::_dlshogi_make_input_features)
+        .def(
+            "_dlshogi_make_input_features",
+            &__Board::_dlshogi_make_input_features)
         .def("push_pass", &__Board::push_pass)
         .def("pop_pass", &__Board::pop_pass)
         .def("isOK", &__Board::isOK)
@@ -138,8 +138,10 @@ PYBIND11_MODULE(_cshogi, m)
         .def("get_move", &__DfPn::get_move)
         .def("get_pv", &__DfPn::get_pv)
         .def_property_readonly(
-            "pv", [](const __DfPn& self){
-                return std::vector<unsigned int>(self.pv.begin(), self.pv.end());
+            "pv",
+            [](const __DfPn& self) {
+                return std::vector<unsigned int>(
+                    self.pv.begin(), self.pv.end());
             })
         .def("set_draw_ply", &__DfPn::set_draw_ply)
         .def("set_maxdepth", &__DfPn::set_maxdepth)

@@ -19,6 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// clang-format off
+
 #include "position.hpp"
 #include "move.hpp"
 #include "mt64bit.hpp"
@@ -3665,12 +3667,14 @@ void Position::set(std::mt19937& mt) {
     findCheckers();
 }
 
-bool Position::moveGivesCheck(const Move move) const {
+bool Position::moveGivesCheck(const Move move) const
+{
     return moveGivesCheck(move, CheckInfo(*this));
 }
 
 // move が王手なら true
-bool Position::moveGivesCheck(const Move move, const CheckInfo& ci) const {
+bool Position::moveGivesCheck(const Move move, const CheckInfo& ci) const
+{
     assert(isOK());
     assert(ci.dcBB == discoveredCheckBB());
 
@@ -3680,8 +3684,7 @@ bool Position::moveGivesCheck(const Move move, const CheckInfo& ci) const {
         // Direct Check ?
         if (ci.checkBB[ptTo].isSet(to))
             return true;
-    }
-    else {
+    } else {
         const Square from = move.from();
         const PieceType ptFrom = move.pieceTypeFrom();
         const PieceType ptTo = move.pieceTypeTo(ptFrom);
@@ -3691,18 +3694,21 @@ bool Position::moveGivesCheck(const Move move, const CheckInfo& ci) const {
             return true;
 
         // Discovery Check ?
-        if (isDiscoveredCheck(from, to, kingSquare(oppositeColor(turn())), ci.dcBB))
+        if (isDiscoveredCheck(
+                from, to, kingSquare(oppositeColor(turn())), ci.dcBB))
             return true;
     }
 
     return false;
 }
 
-Piece Position::movedPiece(const Move m) const {
+Piece Position::movedPiece(const Move m) const
+{
     return colorAndPieceTypeToPiece(turn(), m.pieceTypeFromOrDropped());
 }
 
-void Position::clear() {
+void Position::clear()
+{
     memset(this, 0, sizeof(Position));
     st_ = &startState_;
 }
@@ -3741,7 +3747,8 @@ Bitboard Position::attackersTo(const Color c, const Square sq, const Bitboard& o
 }
 
 // 玉以外で sq へ移動可能な c 側の駒の Bitboard を返す。
-Bitboard Position::attackersToExceptKing(const Color c, const Square sq) const {
+Bitboard Position::attackersToExceptKing(const Color c, const Square sq) const
+{
     const Color opposite = oppositeColor(c);
     return ((attacksFrom<Pawn  >(opposite, sq) & bbOf(Pawn  ))
             | (attacksFrom<Lance >(opposite, sq) & bbOf(Lance ))

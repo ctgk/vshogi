@@ -35,46 +35,85 @@
 // xxxxxxxx xxx111xx xxxxxxxx xxxxxxxx  Gold
 // xxxxxxxx 11xxxxxx xxxxxxxx xxxxxxxx  Bishop
 // xxxxx11x xxxxxxxx xxxxxxxx xxxxxxxx  Rook
-class Hand {
+class Hand
+{
 public:
-    Hand() {}
-    explicit Hand(u32 v) : value_(v) {}
-    u32 value() const { return value_; }
-    template <HandPiece HP> u32 numOf() const {
-        return (HP == HPawn   ? ((value() & HPawnMask  ) >> HPawnShiftBits  ) :
-                HP == HLance  ? ((value() & HLanceMask ) >> HLanceShiftBits ) :
-                HP == HKnight ? ((value() & HKnightMask) >> HKnightShiftBits) :
-                HP == HSilver ? ((value() & HSilverMask) >> HSilverShiftBits) :
-                HP == HGold   ? ((value() & HGoldMask  ) >> HGoldShiftBits  ) :
-                HP == HBishop ? ((value() & HBishopMask) >> HBishopShiftBits) :
-                /*HP == HRook   ?*/ ((value() /*& HRookMask*/  ) >> HRookShiftBits  ));
+    Hand()
+    {
     }
-    u32 numOf(const HandPiece handPiece) const {
-        return (value() & HandPieceMask[handPiece]) >> HandPieceShiftBits[handPiece];
+    explicit Hand(u32 v) : value_(v)
+    {
+    }
+    u32 value() const
+    {
+        return value_;
+    }
+    template <HandPiece HP>
+    u32 numOf() const
+    {
+        return (
+            HP == HPawn     ? ((value() & HPawnMask) >> HPawnShiftBits)
+            : HP == HLance  ? ((value() & HLanceMask) >> HLanceShiftBits)
+            : HP == HKnight ? ((value() & HKnightMask) >> HKnightShiftBits)
+            : HP == HSilver ? ((value() & HSilverMask) >> HSilverShiftBits)
+            : HP == HGold   ? ((value() & HGoldMask) >> HGoldShiftBits)
+            : HP == HBishop ? ((value() & HBishopMask) >> HBishopShiftBits)
+                            : ((value() /*& HRookMask*/) >> HRookShiftBits));
+    }
+
+    u32 numOf(const HandPiece handPiece) const
+    {
+        return (value() & HandPieceMask[handPiece])
+               >> HandPieceShiftBits[handPiece];
     }
     // 2つの Hand 型変数の、同じ種類の駒の数を比較する必要があるため、
     // bool じゃなくて、u32 型でそのまま返す。
-    template <HandPiece HP> u32 exists() const {
-        return (HP == HPawn   ? (value() & HPawnMask  ) :
-                HP == HLance  ? (value() & HLanceMask ) :
-                HP == HKnight ? (value() & HKnightMask) :
-                HP == HSilver ? (value() & HSilverMask) :
-                HP == HGold   ? (value() & HGoldMask  ) :
-                HP == HBishop ? (value() & HBishopMask) :
-                /*HP == HRook   ?*/ (value() & HRookMask  ));
+    template <HandPiece HP>
+    u32 exists() const
+    {
+        return (
+            HP == HPawn     ? (value() & HPawnMask)
+            : HP == HLance  ? (value() & HLanceMask)
+            : HP == HKnight ? (value() & HKnightMask)
+            : HP == HSilver ? (value() & HSilverMask)
+            : HP == HGold   ? (value() & HGoldMask)
+            : HP == HBishop ? (value() & HBishopMask)
+                            : (value() & HRookMask));
     }
-    u32 exists(const HandPiece handPiece) const { return value() & HandPieceMask[handPiece]; }
-    u32 exceptPawnExists() const { return value() & HandPieceExceptPawnMask; }
+    u32 exists(const HandPiece handPiece) const
+    {
+        return value() & HandPieceMask[handPiece];
+    }
+    u32 exceptPawnExists() const
+    {
+        return value() & HandPieceExceptPawnMask;
+    }
     // num が int だけどまあ良いか。
-    void orEqual(const int num, const HandPiece handPiece) { value_ |= num << HandPieceShiftBits[handPiece]; }
-    void plusOne(const HandPiece handPiece) { value_ += HandPieceOne[handPiece]; }
-    void minusOne(const HandPiece handPiece) { value_ -= HandPieceOne[handPiece]; }
-    bool operator == (const Hand rhs) const { return this->value() == rhs.value(); }
-    bool operator != (const Hand rhs) const { return this->value() != rhs.value(); }
+    void orEqual(const int num, const HandPiece handPiece)
+    {
+        value_ |= num << HandPieceShiftBits[handPiece];
+    }
+    void plusOne(const HandPiece handPiece)
+    {
+        value_ += HandPieceOne[handPiece];
+    }
+    void minusOne(const HandPiece handPiece)
+    {
+        value_ -= HandPieceOne[handPiece];
+    }
+    bool operator==(const Hand rhs) const
+    {
+        return this->value() == rhs.value();
+    }
+    bool operator!=(const Hand rhs) const
+    {
+        return this->value() != rhs.value();
+    }
     // 手駒の優劣判定
     // 手駒が ref と同じか、勝っていれば true
     // 勝っている状態とは、全ての種類の手駒が、ref 以上の枚数があることを言う。
-    bool isEqualOrSuperior(const Hand ref) const {
+    bool isEqualOrSuperior(const Hand ref) const
+    {
 #if 0
         // 全ての駒が ref 以上の枚数なので、true
         return (ref.exists<HKnight>() <= this->exists<HKnight>()
@@ -88,27 +127,39 @@ public:
         return ((this->value() - ref.value()) & BorrowMask) == 0;
 #endif
     }
-	// 証明駒用メソッド
-	void set(const u32 value) { value_ = value; }
-	// 相手が一枚も持っていない種類の持駒を加算
-	void setPP(const Hand us, const Hand them) {
-		u32 mask = 0;
-		if (them.exists<HPawn>() == 0) mask |= HPawnMask;
-		if (them.exists<HLance>() == 0) mask |= HLanceMask;
-		if (them.exists<HKnight>() == 0) mask |= HKnightMask;
-		if (them.exists<HSilver>() == 0) mask |= HSilverMask;
-		if (them.exists<HGold>() == 0) mask |= HGoldMask;
-		if (them.exists<HBishop>() == 0) mask |= HBishopMask;
-		if (them.exists<HRook>() == 0) mask |= HRookMask;
+    // 証明駒用メソッド
+    void set(const u32 value)
+    {
+        value_ = value;
+    }
+    // 相手が一枚も持っていない種類の持駒を加算
+    void setPP(const Hand us, const Hand them)
+    {
+        u32 mask = 0;
+        if (them.exists<HPawn>() == 0)
+            mask |= HPawnMask;
+        if (them.exists<HLance>() == 0)
+            mask |= HLanceMask;
+        if (them.exists<HKnight>() == 0)
+            mask |= HKnightMask;
+        if (them.exists<HSilver>() == 0)
+            mask |= HSilverMask;
+        if (them.exists<HGold>() == 0)
+            mask |= HGoldMask;
+        if (them.exists<HBishop>() == 0)
+            mask |= HBishopMask;
+        if (them.exists<HRook>() == 0)
+            mask |= HRookMask;
 
-		// 相手が一枚も持っていない種類の持駒を一旦0にする
-		value_ &= ~mask;
+        // 相手が一枚も持っていない種類の持駒を一旦0にする
+        value_ &= ~mask;
 
-		// 相手が一枚も持っていない種類の持駒を設定する
-		value_ |= (us.value() & mask);
-	}
+        // 相手が一枚も持っていない種類の持駒を設定する
+        value_ |= (us.value() & mask);
+    }
 
 private:
+    // clang-format off
     static const int HPawnShiftBits   =  0;
     static const int HLanceShiftBits  =  6;
     static const int HKnightShiftBits = 10;
@@ -123,20 +174,22 @@ private:
     static const u32 HGoldMask   = 0x7  << HGoldShiftBits;
     static const u32 HBishopMask = 0x3  << HBishopShiftBits;
     static const u32 HRookMask   = 0x3  << HRookShiftBits;
-    static const u32 HandPieceExceptPawnMask = (HLanceMask  | HKnightMask |
-                                                HSilverMask | HGoldMask   |
-                                                HBishopMask | HRookMask  );
+    // clang-format on
+    static const u32 HandPieceExceptPawnMask
+        = (HLanceMask | HKnightMask | HSilverMask | HGoldMask | HBishopMask
+           | HRookMask);
     static const int HandPieceShiftBits[HandPieceNum];
     static const u32 HandPieceMask[HandPieceNum];
     // 特定の種類の持ち駒を 1 つ増やしたり減らしたりするときに使用するテーブル
     static const u32 HandPieceOne[HandPieceNum];
-    static const u32 BorrowMask = ((HPawnMask   + (1 << HPawnShiftBits  )) |
-                                   (HLanceMask  + (1 << HLanceShiftBits )) |
-                                   (HKnightMask + (1 << HKnightShiftBits)) |
-                                   (HSilverMask + (1 << HSilverShiftBits)) |
-                                   (HGoldMask   + (1 << HGoldShiftBits  )) |
-                                   (HBishopMask + (1 << HBishopShiftBits)) |
-                                   (HRookMask   + (1 << HRookShiftBits  )));
+    static const u32 BorrowMask
+        = ((HPawnMask + (1 << HPawnShiftBits))
+           | (HLanceMask + (1 << HLanceShiftBits))
+           | (HKnightMask + (1 << HKnightShiftBits))
+           | (HSilverMask + (1 << HSilverShiftBits))
+           | (HGoldMask + (1 << HGoldShiftBits))
+           | (HBishopMask + (1 << HBishopShiftBits))
+           | (HRookMask + (1 << HRookShiftBits)));
 
     u32 value_;
 };

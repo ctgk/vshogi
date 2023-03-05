@@ -22,23 +22,28 @@
 #ifndef APERY_BOOK_HPP
 #define APERY_BOOK_HPP
 
-#include "position.hpp"
 #include "mt64bit.hpp"
+#include "position.hpp"
 
-struct BookEntry {
+struct BookEntry
+{
     Key key;
     u16 fromToPro;
     u16 count;
     int score;
 };
 
-class Book {
+class Book
+{
 public:
     static void init();
     static Key bookKey(const Position& pos);
 
 private:
-    static MT64bit mt64bit_; // 定跡のhash生成用なので、seedは固定でデフォルト値を使う。
+    /**
+     * @brief 定跡のhash生成用なので、seedは固定でデフォルト値を使う。
+     */
+    static MT64bit mt64bit_;
 
     static Key ZobPiece[PieceNone][SquareNum];
     static Key ZobHand[HandPieceNum][19];

@@ -19,10 +19,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "common.hpp"
 #include "bitboard.hpp"
+#include "common.hpp"
 
 const Bitboard SetMaskBB[SquareNum] = {
+    // clang-format off
     Bitboard(UINT64_C(1) <<  0,                 0),  // 0 , SQ11
     Bitboard(UINT64_C(1) <<  1,                 0),  // 1 , SQ12
     Bitboard(UINT64_C(1) <<  2,                 0),  // 2 , SQ13
@@ -104,20 +105,50 @@ const Bitboard SetMaskBB[SquareNum] = {
     Bitboard(                0, UINT64_C(1) << 15),  // 78, SQ97
     Bitboard(                0, UINT64_C(1) << 16),  // 79, SQ98
     Bitboard(                0, UINT64_C(1) << 17)   // 80, SQ99
+    // clang-format on
 };
 
-const Bitboard FileMask[FileNum] = {
-    File1Mask, File2Mask, File3Mask, File4Mask, File5Mask, File6Mask, File7Mask, File8Mask, File9Mask
-};
+const Bitboard FileMask[FileNum]
+    = {File1Mask,
+       File2Mask,
+       File3Mask,
+       File4Mask,
+       File5Mask,
+       File6Mask,
+       File7Mask,
+       File8Mask,
+       File9Mask};
 
-const Bitboard RankMask[RankNum] = {
-    Rank1Mask, Rank2Mask, Rank3Mask, Rank4Mask, Rank5Mask, Rank6Mask, Rank7Mask, Rank8Mask, Rank9Mask
-};
+const Bitboard RankMask[RankNum]
+    = {Rank1Mask,
+       Rank2Mask,
+       Rank3Mask,
+       Rank4Mask,
+       Rank5Mask,
+       Rank6Mask,
+       Rank7Mask,
+       Rank8Mask,
+       Rank9Mask};
 
-const Bitboard InFrontMask[ColorNum][RankNum] = {
-    { InFrontOfRank1Black, InFrontOfRank2Black, InFrontOfRank3Black, InFrontOfRank4Black, InFrontOfRank5Black, InFrontOfRank6Black, InFrontOfRank7Black, InFrontOfRank8Black, InFrontOfRank9Black },
-    { InFrontOfRank1White, InFrontOfRank2White, InFrontOfRank3White, InFrontOfRank4White, InFrontOfRank5White, InFrontOfRank6White, InFrontOfRank7White, InFrontOfRank8White, InFrontOfRank9White }
-};
+const Bitboard InFrontMask[ColorNum][RankNum]
+    = {{InFrontOfRank1Black,
+        InFrontOfRank2Black,
+        InFrontOfRank3Black,
+        InFrontOfRank4Black,
+        InFrontOfRank5Black,
+        InFrontOfRank6Black,
+        InFrontOfRank7Black,
+        InFrontOfRank8Black,
+        InFrontOfRank9Black},
+       {InFrontOfRank1White,
+        InFrontOfRank2White,
+        InFrontOfRank3White,
+        InFrontOfRank4White,
+        InFrontOfRank5White,
+        InFrontOfRank6White,
+        InFrontOfRank7White,
+        InFrontOfRank8White,
+        InFrontOfRank9White}};
 
 // これらは一度値を設定したら二度と変更しない。
 // 本当は const 化したい。

@@ -22,9 +22,9 @@
 #ifndef APERY_INIT_HPP
 #define APERY_INIT_HPP
 
-#include "ifdef.hpp"
-#include "common.hpp"
 #include "bitboard.hpp"
+#include "common.hpp"
+#include "ifdef.hpp"
 
 void initTable();
 

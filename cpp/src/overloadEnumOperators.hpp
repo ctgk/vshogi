@@ -22,6 +22,7 @@
 #ifndef APERY_OVERLOADENUMOPERATORS_HPP
 #define APERY_OVERLOADENUMOPERATORS_HPP
 
+// clang-format off
 #define OverloadEnumOperators(T)                                        \
     inline T& operator += (T& lhs, const int rhs) { return lhs  = static_cast<T>(static_cast<int>(lhs) + rhs); } \
     inline T& operator += (T& lhs, const T   rhs) { return lhs += static_cast<int>(rhs); } \
@@ -43,5 +44,6 @@
     inline T operator -- (T& lhs) { lhs -= 1; return lhs; } /* 前置 */  \
     inline T operator ++ (T& lhs, int) { const T temp = lhs; lhs += 1; return temp; } /* 後置 */ \
     /* inline T operator -- (T& lhs, int) { const T temp = lhs; lhs -= 1; return temp; } */ /* 後置 */
+// clang-format on
 
 #endif // #ifndef APERY_OVERLOADENUMOPERATORS_HPP

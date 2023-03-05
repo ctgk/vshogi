@@ -22,12 +22,14 @@
 #include "book.hpp"
 #include "position.hpp"
 
-MT64bit Book::mt64bit_; // 定跡のhash生成用なので、seedは固定でデフォルト値を使う。
+MT64bit
+    Book::mt64bit_; // 定跡のhash生成用なので、seedは固定でデフォルト値を使う。
 Key Book::ZobPiece[PieceNone][SquareNum];
 Key Book::ZobHand[HandPieceNum][19]; // 持ち駒の同一種類の駒の数ごと
 Key Book::ZobTurn;
 
-void Book::init() {
+void Book::init()
+{
     for (Piece p = Empty; p < PieceNone; ++p) {
         for (Square sq = SQ11; sq < SquareNum; ++sq)
             ZobPiece[p][sq] = mt64bit_.random();
@@ -39,7 +41,8 @@ void Book::init() {
     ZobTurn = mt64bit_.random();
 }
 
-Key Book::bookKey(const Position& pos) {
+Key Book::bookKey(const Position& pos)
+{
     Key key = 0;
     Bitboard bb = pos.occupiedBB();
 
@@ -55,6 +58,7 @@ Key Book::bookKey(const Position& pos) {
     return key;
 }
 
-inline bool countCompare(const BookEntry& b1, const BookEntry& b2) {
+inline bool countCompare(const BookEntry& b1, const BookEntry& b2)
+{
     return b1.count < b2.count;
 }

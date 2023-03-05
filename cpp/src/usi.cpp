@@ -20,51 +20,59 @@
 */
 
 #include "usi.hpp"
-#include "position.hpp"
-#include "move.hpp"
 #include "generateMoves.hpp"
+#include "move.hpp"
+#include "position.hpp"
 
-namespace {
-    // 論理的なコア数の取得
-    inline int cpuCoreCount() {
-        // std::thread::hardware_concurrency() は 0 を返す可能性がある。
-        // HyperThreading が有効なら論理コア数だけ thread 生成した方が強い。
-        return std::max(static_cast<int>(std::thread::hardware_concurrency()), 1);
-    }
-
-    class StringToPieceTypeCSA : public std::map<std::string, PieceType> {
-    public:
-        StringToPieceTypeCSA() {
-            (*this)["FU"] = Pawn;
-            (*this)["KY"] = Lance;
-            (*this)["KE"] = Knight;
-            (*this)["GI"] = Silver;
-            (*this)["KA"] = Bishop;
-            (*this)["HI"] = Rook;
-            (*this)["KI"] = Gold;
-            (*this)["OU"] = King;
-            (*this)["TO"] = ProPawn;
-            (*this)["NY"] = ProLance;
-            (*this)["NK"] = ProKnight;
-            (*this)["NG"] = ProSilver;
-            (*this)["UM"] = Horse;
-            (*this)["RY"] = Dragon;
-        }
-        PieceType value(const std::string& str) const {
-            return this->find(str)->second;
-        }
-        bool isLegalString(const std::string& str) const {
-            return (this->find(str) != this->end());
-        }
-    };
-    const StringToPieceTypeCSA g_stringToPieceTypeCSA;
+namespace
+{
+// 論理的なコア数の取得
+inline int cpuCoreCount()
+{
+    // std::thread::hardware_concurrency() は 0 を返す可能性がある。
+    // HyperThreading が有効なら論理コア数だけ thread 生成した方が強い。
+    return std::max(static_cast<int>(std::thread::hardware_concurrency()), 1);
 }
 
-Move usiToMoveBody(const Position& pos, const std::string& moveStr) {
+class StringToPieceTypeCSA : public std::map<std::string, PieceType>
+{
+public:
+    StringToPieceTypeCSA()
+    {
+        (*this)["FU"] = Pawn;
+        (*this)["KY"] = Lance;
+        (*this)["KE"] = Knight;
+        (*this)["GI"] = Silver;
+        (*this)["KA"] = Bishop;
+        (*this)["HI"] = Rook;
+        (*this)["KI"] = Gold;
+        (*this)["OU"] = King;
+        (*this)["TO"] = ProPawn;
+        (*this)["NY"] = ProLance;
+        (*this)["NK"] = ProKnight;
+        (*this)["NG"] = ProSilver;
+        (*this)["UM"] = Horse;
+        (*this)["RY"] = Dragon;
+    }
+    PieceType value(const std::string& str) const
+    {
+        return this->find(str)->second;
+    }
+    bool isLegalString(const std::string& str) const
+    {
+        return (this->find(str) != this->end());
+    }
+};
+const StringToPieceTypeCSA g_stringToPieceTypeCSA;
+} // namespace
+
+Move usiToMoveBody(const Position& pos, const std::string& moveStr)
+{
     Move move;
     if (g_charToPieceUSI.isLegalChar(moveStr[0])) {
         // drop
-        const PieceType ptTo = pieceToPieceType(g_charToPieceUSI.value(moveStr[0]));
+        const PieceType ptTo
+            = pieceToPieceType(g_charToPieceUSI.value(moveStr[0]));
         if (moveStr[1] != '*')
             return Move::moveNone();
         const File toFile = charUSIToFile(moveStr[2]);
@@ -73,8 +81,7 @@ Move usiToMoveBody(const Position& pos, const std::string& moveStr) {
             return Move::moveNone();
         const Square to = makeSquare(toFile, toRank);
         move = makeDropMove(ptTo, to);
-    }
-    else {
+    } else {
         const File fromFile = charUSIToFile(moveStr[0]);
         const Rank fromRank = charUSIToRank(moveStr[1]);
         if (!isInSquare(fromFile, fromRank))
@@ -86,33 +93,35 @@ Move usiToMoveBody(const Position& pos, const std::string& moveStr) {
             return Move::moveNone();
         const Square to = makeSquare(toFile, toRank);
         if (moveStr[4] == '\0')
-            move = makeNonPromoteMove<Capture>(pieceToPieceType(pos.piece(from)), from, to, pos);
+            move = makeNonPromoteMove<Capture>(
+                pieceToPieceType(pos.piece(from)), from, to, pos);
         else if (moveStr[4] == '+') {
             if (moveStr[5] != '\0')
                 return Move::moveNone();
-            move = makePromoteMove<Capture>(pieceToPieceType(pos.piece(from)), from, to, pos);
-        }
-        else
+            move = makePromoteMove<Capture>(
+                pieceToPieceType(pos.piece(from)), from, to, pos);
+        } else
             return Move::moveNone();
     }
 
     if (pos.moveIsPseudoLegal<false>(move)
-        && pos.pseudoLegalMoveIsLegal<false, false>(move, pos.pinnedBB()))
-    {
+        && pos.pseudoLegalMoveIsLegal<false, false>(move, pos.pinnedBB())) {
         return move;
     }
     return Move::moveNone();
 }
 #if !defined NDEBUG
 // for debug
-Move usiToMoveDebug(const Position& pos, const std::string& moveStr) {
+Move usiToMoveDebug(const Position& pos, const std::string& moveStr)
+{
     for (MoveList<LegalAll> ml(pos); !ml.end(); ++ml) {
         if (moveStr == ml.move().toUSI())
             return ml.move();
     }
     return Move::moveNone();
 }
-Move csaToMoveDebug(const Position& pos, const std::string& moveStr) {
+Move csaToMoveDebug(const Position& pos, const std::string& moveStr)
+{
     for (MoveList<LegalAll> ml(pos); !ml.end(); ++ml) {
         if (moveStr == ml.move().toCSA())
             return ml.move();
@@ -120,13 +129,15 @@ Move csaToMoveDebug(const Position& pos, const std::string& moveStr) {
     return Move::moveNone();
 }
 #endif
-Move usiToMove(const Position& pos, const std::string& moveStr) {
+Move usiToMove(const Position& pos, const std::string& moveStr)
+{
     const Move move = usiToMoveBody(pos, moveStr);
     assert(move == usiToMoveDebug(pos, moveStr));
     return move;
 }
 
-Move csaToMoveBody(const Position& pos, const std::string& moveStr) {
+Move csaToMoveBody(const Position& pos, const std::string& moveStr)
+{
     if (moveStr.size() != 6)
         return Move::moveNone();
     const File toFile = charCSAToFile(moveStr[2]);
@@ -160,13 +171,13 @@ Move csaToMoveBody(const Position& pos, const std::string& moveStr) {
     }
 
     if (pos.moveIsPseudoLegal<false>(move)
-        && pos.pseudoLegalMoveIsLegal<false, false>(move, pos.pinnedBB()))
-    {
+        && pos.pseudoLegalMoveIsLegal<false, false>(move, pos.pinnedBB())) {
         return move;
     }
     return Move::moveNone();
 }
-Move csaToMove(const Position& pos, const std::string& moveStr) {
+Move csaToMove(const Position& pos, const std::string& moveStr)
+{
     const Move move = csaToMoveBody(pos, moveStr);
     assert(move == csaToMoveDebug(pos, moveStr));
     return move;
