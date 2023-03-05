@@ -24,7 +24,7 @@
 
 namespace {
     // 角, 飛車の場合
-    template <MoveType MT, PieceType PT, color::ColorEnum US, bool ALL>
+    template <MoveType MT, PieceTypeEnum PT, color::ColorEnum US, bool ALL>
     FORCE_INLINE ExtMove* generateBishopOrRookMoves(ExtMove* moveList, const Position& pos,
                                                     const Bitboard& target, const Square /*ksq*/)
     {
@@ -94,7 +94,7 @@ namespace {
 
         // 歩 以外の駒を持っているか
         if (hand.exceptPawnExists()) {
-            PieceType haveHand[6]; // 歩以外の持ち駒。vector 使いたいけど、速度を求めるので使わない。
+            PieceTypeEnum haveHand[6]; // 歩以外の持ち駒。vector 使いたいけど、速度を求めるので使わない。
             int haveHandNum = 0; // 持ち駒の駒の種類の数
 
             // 桂馬、香車、それ以外の順番で格納する。(駒を打てる位置が限定的な順)
@@ -155,7 +155,7 @@ namespace {
     }
 
     // 金, 成り金、馬、竜の指し手生成
-    template <MoveType MT, PieceType PT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves {
+    template <MoveType MT, PieceTypeEnum PT, color::ColorEnum US, bool ALL> struct GeneratePieceMoves {
         FORCE_INLINE ExtMove* operator () (ExtMove* moveList, const Position& pos, const Bitboard& target, const Square /*ksq*/) {
             static_assert(PT == GoldHorseDragon, "");
             // 金、成金、馬、竜のbitboardをまとめて扱う。
@@ -163,7 +163,7 @@ namespace {
             while (fromBB) {
                 const Square from = fromBB.firstOneFromSQ11();
                 // from にある駒の種類を判別
-                const PieceType pt = pieceToPieceType(pos.piece(from));
+                const PieceTypeEnum pt = pieceToPieceType(pos.piece(from));
                 Bitboard toBB = pos.attacksFrom(pt, US, from) & target;
                 FOREACH_BB(toBB, const Square to, {
                     (*moveList++).move = makeNonPromoteMove<MT>(pt, from, to, pos);
@@ -311,7 +311,7 @@ namespace {
         Bitboard fromBB = pos.attackersTo(us, to);
         while (fromBB) {
             const Square from = fromBB.firstOneFromSQ11();
-            const PieceType pt = pieceToPieceType(pos.piece(from));
+            const PieceTypeEnum pt = pieceToPieceType(pos.piece(from));
             switch (pt) {
             case Empty    : assert(false); break; // 最適化の為のダミー
             case FU     : case KY    : case KE   : case GI   : case KA   : case HI     :
@@ -577,7 +577,7 @@ namespace {
 
     // 王手用
     template <color::ColorEnum US, bool ALL>
-    FORCE_INLINE ExtMove* generatCheckMoves(ExtMove* moveList, const PieceType pt, const Position& pos, const Square from, const Square to) {
+    FORCE_INLINE ExtMove* generatCheckMoves(ExtMove* moveList, const PieceTypeEnum pt, const Position& pos, const Square from, const Square to) {
         switch (pt) {
         case Empty: assert(false); break; // 最適化の為のダミー
         case FU:
@@ -696,7 +696,7 @@ namespace {
                 // 両王手候補なので指し手を生成してしまう。
 
                 // いまの敵玉とfromを通る直線上の升と違うところに移動させれば開き王手が確定する。
-                const PieceType pt = pieceToPieceType(pos.piece(from));
+                const PieceTypeEnum pt = pieceToPieceType(pos.piece(from));
                 Bitboard toBB = pos.attacksFrom(pt, US, from) & target;
                 while (toBB) {
                     const Square to = toBB.firstOneFromSQ11();
@@ -705,7 +705,7 @@ namespace {
                     }
                     // 直接王手にもなるのでx & fromの場合、直線上の升への指し手を生成。
                     else if (x.isSet(from)) {
-                        const PieceType pt = pieceToPieceType(pos.piece(from));
+                        const PieceTypeEnum pt = pieceToPieceType(pos.piece(from));
                         switch (pt) {
                         case FU: // 歩
                         {
@@ -786,7 +786,7 @@ namespace {
                 const Square from = src.firstOneFromSQ11();
 
                 // 直接王手のみ。
-                const PieceType pt = pieceToPieceType(pos.piece(from));
+                const PieceTypeEnum pt = pieceToPieceType(pos.piece(from));
                 switch (pt) {
                 case FU: // 歩
                 {

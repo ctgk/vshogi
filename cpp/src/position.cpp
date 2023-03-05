@@ -203,7 +203,7 @@ CheckInfo::CheckInfo(const Position& pos) {
     checkBB[RY   ] = checkBB[HI  ] | pos.attacksFrom<OU>(ksq);
 }
 
-Bitboard Position::attacksFrom(const PieceType pt, const color::ColorEnum c, const Square sq, const Bitboard& occupied) {
+Bitboard Position::attacksFrom(const PieceTypeEnum pt, const color::ColorEnum c, const Square sq, const Bitboard& occupied) {
     switch (pt) {
     case Occupied:  return allZeroBB();
     case FU:      return pawnAttack(c, sq);
@@ -291,7 +291,7 @@ template <bool Searching> bool Position::moveIsPseudoLegal(const Move move) cons
     const Square to = move.to();
 
     if (move.isDrop()) {
-        const PieceType ptFrom = move.pieceTypeDropped();
+        const PieceTypeEnum ptFrom = move.pieceTypeDropped();
         if (!hand(us).exists(pieceTypeToHandPiece(ptFrom)) || piece(to) != Empty)
             return false;
 
@@ -322,7 +322,7 @@ template <bool Searching> bool Position::moveIsPseudoLegal(const Move move) cons
     }
     else {
         const Square from = move.from();
-        const PieceType ptFrom = move.pieceTypeFrom();
+        const PieceTypeEnum ptFrom = move.pieceTypeFrom();
         if (piece(from) != colorAndPieceTypeToPiece(us, ptFrom) || bbOf(us).isSet(to))
             return false;
 
@@ -430,8 +430,8 @@ void Position::doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, co
 
     const color::ColorEnum us = turn();
     const Square to = move.to();
-    const PieceType ptCaptured = move.cap();
-    PieceType ptTo;
+    const PieceTypeEnum ptCaptured = move.cap();
+    PieceTypeEnum ptTo;
     if (move.isDrop()) {
         ptTo = move.pieceTypeDropped();
         const HandPiece hpTo = pieceTypeToHandPiece(ptTo);
@@ -455,7 +455,7 @@ void Position::doMove(const Move move, StateInfo& newSt, const CheckInfo& ci, co
     }
     else {
         const Square from = move.from();
-        const PieceType ptFrom = move.pieceTypeFrom();
+        const PieceTypeEnum ptFrom = move.pieceTypeFrom();
         ptTo = move.pieceTypeTo(ptFrom);
 
         byTypeBB_[ptFrom].xorBit(from);
@@ -537,7 +537,7 @@ void Position::undoMove(const Move move) {
     turn_ = us;
     // ここで先に turn_ を戻したので、以下、move は us の指し手とする。
     if (move.isDrop()) {
-        const PieceType ptTo = move.pieceTypeDropped();
+        const PieceTypeEnum ptTo = move.pieceTypeDropped();
         byTypeBB_[ptTo].xorBit(to);
         byColorBB_[us].xorBit(to);
         piece_[to] = Empty;
@@ -547,9 +547,9 @@ void Position::undoMove(const Move move) {
     }
     else {
         const Square from = move.from();
-        const PieceType ptFrom = move.pieceTypeFrom();
-        const PieceType ptTo = move.pieceTypeTo(ptFrom);
-        const PieceType ptCaptured = move.cap(); // todo: st_->capturedType 使えば良い。
+        const PieceTypeEnum ptFrom = move.pieceTypeFrom();
+        const PieceTypeEnum ptTo = move.pieceTypeTo(ptFrom);
+        const PieceTypeEnum ptCaptured = move.cap(); // todo: st_->capturedType 使えば良い。
 
         if (ptTo == OU)
             kingSquare_[us] = from;
@@ -613,22 +613,22 @@ template void Position::doNullMove<false>(StateInfo& backUpSt);
 
 namespace {
     // SEE の順番
-    template <PieceType PT> struct SEENextPieceType {}; // これはインスタンス化しない。
-    template <> struct SEENextPieceType<FU     > { static const PieceType value = KY;     };
-    template <> struct SEENextPieceType<KY    > { static const PieceType value = KE;    };
-    template <> struct SEENextPieceType<KE   > { static const PieceType value = TO;   };
-    template <> struct SEENextPieceType<TO  > { static const PieceType value = NY;  };
-    template <> struct SEENextPieceType<NY > { static const PieceType value = NK; };
-    template <> struct SEENextPieceType<NK> { static const PieceType value = GI;    };
-    template <> struct SEENextPieceType<GI   > { static const PieceType value = NG; };
-    template <> struct SEENextPieceType<NG> { static const PieceType value = KI;      };
-    template <> struct SEENextPieceType<KI     > { static const PieceType value = KA;    };
-    template <> struct SEENextPieceType<KA   > { static const PieceType value = UM;     };
-    template <> struct SEENextPieceType<UM    > { static const PieceType value = HI;      };
-    template <> struct SEENextPieceType<HI     > { static const PieceType value = RY;    };
-    template <> struct SEENextPieceType<RY   > { static const PieceType value = OU;      };
+    template <PieceTypeEnum PT> struct SEENextPieceType {}; // これはインスタンス化しない。
+    template <> struct SEENextPieceType<FU     > { static const PieceTypeEnum value = KY;     };
+    template <> struct SEENextPieceType<KY    > { static const PieceTypeEnum value = KE;    };
+    template <> struct SEENextPieceType<KE   > { static const PieceTypeEnum value = TO;   };
+    template <> struct SEENextPieceType<TO  > { static const PieceTypeEnum value = NY;  };
+    template <> struct SEENextPieceType<NY > { static const PieceTypeEnum value = NK; };
+    template <> struct SEENextPieceType<NK> { static const PieceTypeEnum value = GI;    };
+    template <> struct SEENextPieceType<GI   > { static const PieceTypeEnum value = NG; };
+    template <> struct SEENextPieceType<NG> { static const PieceTypeEnum value = KI;      };
+    template <> struct SEENextPieceType<KI     > { static const PieceTypeEnum value = KA;    };
+    template <> struct SEENextPieceType<KA   > { static const PieceTypeEnum value = UM;     };
+    template <> struct SEENextPieceType<UM    > { static const PieceTypeEnum value = HI;      };
+    template <> struct SEENextPieceType<HI     > { static const PieceTypeEnum value = RY;    };
+    template <> struct SEENextPieceType<RY   > { static const PieceTypeEnum value = OU;      };
 
-    template <PieceType PT> FORCE_INLINE PieceType nextAttacker(const Position& pos, const Square to, const Bitboard& opponentAttackers,
+    template <PieceTypeEnum PT> FORCE_INLINE PieceTypeEnum nextAttacker(const Position& pos, const Square to, const Bitboard& opponentAttackers,
                                                                 Bitboard& occupied, Bitboard& attackers, const color::ColorEnum turn)
     {
         if (opponentAttackers.andIsAny(pos.bbOf(PT))) {
@@ -665,7 +665,7 @@ namespace {
         }
         return nextAttacker<SEENextPieceType<PT>::value>(pos, to, opponentAttackers, occupied, attackers, turn);
     }
-    template <> FORCE_INLINE PieceType nextAttacker<OU>(const Position&, const Square, const Bitboard&,
+    template <> FORCE_INLINE PieceTypeEnum nextAttacker<OU>(const Position&, const Square, const Bitboard&,
                                                           Bitboard&, Bitboard&, const color::ColorEnum)
     {
         return OU;
@@ -766,7 +766,7 @@ bool Position::isPawnDropCheckMate(const color::ColorEnum us, const Square sq) c
     return true;
 }
 
-inline void Position::xorBBs(const PieceType pt, const Square sq, const color::ColorEnum c) {
+inline void Position::xorBBs(const PieceTypeEnum pt, const Square sq, const color::ColorEnum c) {
     byTypeBB_[Occupied].xorBit(sq);
     byTypeBB_[pt].xorBit(sq);
     byColorBB_[c].xorBit(sq);
@@ -783,7 +783,7 @@ Bitboard CHECK_AROUND_BB[SquareNum + 1][Promoted][color::NUM_COLORS];
 
 // 敵玉8近傍の利きに関係する自駒の候補のbitboardを返す。ここになければ玉周辺に利きをつけない。
 // pt = FU～HDK
-inline Bitboard check_around_bb(color::ColorEnum us, PieceType pt, Square sq_king) {
+inline Bitboard check_around_bb(color::ColorEnum us, PieceTypeEnum pt, Square sq_king) {
     return CHECK_AROUND_BB[sq_king][pt - 1][us];
 }
 
@@ -795,7 +795,7 @@ inline Square nextSquare(Square sq1, Square sq2) { return (Square)NextSquare[sq1
 
 // CHECK_AROUND_BBの初期化
 void initMate1Ply() {
-    for (PieceType p = FU; p <= OU; ++p)
+    for (PieceTypeEnum p = FU; p <= OU; ++p)
         for (Square sq = SQ11; sq < SquareNum; ++sq)
             for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
                 Bitboard bb = allZeroBB(), tmp = allZeroBB();
@@ -1593,7 +1593,7 @@ silver_drop_end:
             const Square from = fromBB.firstOneFromSQ11();
             Bitboard toBB = moveTarget & attacksFrom<KI>(US, from) & attacksFrom<KI>(Them, ksq);
             if (toBB) {
-                const PieceType pt = pieceToPieceType(piece(from));
+                const PieceTypeEnum pt = pieceToPieceType(piece(from));
                 xorBBs(pt, from, US);
                 goldsBB_.xorBit(from);
                 // 動いた後の dcBB: to の位置の occupied や checkers は関係ないので、ここで生成できる。
@@ -2019,7 +2019,7 @@ silver_drop_end:
                 if (pieceToPieceType(piece(to)) == FU && makeFile(to) == makeFile(one) && themHand.exists<H_FU>()) continue;
 
                 const auto dr = Effect8::directions_of(ksq, one);
-                PieceType pt;
+                PieceTypeEnum pt;
                 bool canLanceAttack = false;
                 if (dr & Effect8::DIRECTIONS_DIAG) {
                     pt = KA;
@@ -2149,7 +2149,7 @@ silver_drop_end:
                             if (!(kingAttack(ksq)
                                 & ~(bbOf(Them) | attacksAroundKingInAvoiding<~US>(from, new_slide) | bb_attacks))) {
                                 // これで詰みが確定した
-                                const PieceType pt = pieceToPieceType(piece(from));
+                                const PieceTypeEnum pt = pieceToPieceType(piece(from));
                                 // 香は不成りでの王手
                                 if (pt != KY && canPromote(US, from, to) && !(pt & PTPromote))
                                     return makePromoteMove<Capture>(pt, from, to, *this);
@@ -2203,7 +2203,7 @@ silver_drop_end:
                                     ))) {
                                 // 貫通で考えておく
                                 // これで詰みが確定した
-                                const PieceType pt = pieceToPieceType(piece(from));
+                                const PieceTypeEnum pt = pieceToPieceType(piece(from));
                                 if (canPromote(US, from, to) && !(pt & PTPromote))
                                     return makePromoteMove<Capture>(pt, from, to, *this);
                                 else
@@ -2233,7 +2233,7 @@ silver_drop_end:
 
             while (dcBB) {
                 const Square from = dcBB.firstOneFromSQ11();
-                PieceType pt = pieceToPieceType(piece(from));
+                PieceTypeEnum pt = pieceToPieceType(piece(from));
                 switch (pt) {
                     // 背後にいる駒は角が普通で、pinされているのは歩で成りとか、飛車で両王手とか、そんなのが
                     // よくあるパターンではないかいな。
@@ -2492,7 +2492,7 @@ silver_drop_end:
                     atk = neighbor5x5Table(ksq) & bb_move; // 別にどこでも良いものとする
                 }
 
-                PieceType pt = pieceToPieceType(piece(from));
+                PieceTypeEnum pt = pieceToPieceType(piece(from));
                 // 攻撃範囲計算用
                 Bitboard bb_attacks;
                 switch ((int)pt) { // intにcastしとかないとhandleしてない値に対して警告がでる。
@@ -2748,7 +2748,7 @@ void Position::initZobrist() {
     // zobTurn_ は 1 であり、その他は 1桁目を使わない。
     // zobTurn のみ xor で更新する為、他の桁に影響しないようにする為。
     // hash値の更新は普通は全て xor を使うが、持ち駒の更新の為に +, - を使用した方が都合が良い。
-    for (PieceType pt = Occupied; pt < PieceTypeNum; ++pt) {
+    for (PieceTypeEnum pt = Occupied; pt < PieceTypeNum; ++pt) {
         for (Square sq = SQ11; sq < SquareNum; ++sq) {
             for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c)
                 zobrist_[pt][sq][c] = g_mt64bit.random() & ~UINT64_C(1);
@@ -2772,7 +2772,7 @@ Key Position::getKeyAfter(const Move m) const {
 	if (m.isDrop())
 	{
 		// --- 駒打ち
-		PieceType pt = m.pieceTypeDropped();
+		PieceTypeEnum pt = m.pieceTypeDropped();
 
 		// Zobrist keyの更新
 		h -= zobHand(pieceTypeToHandPiece(pt), Us);
@@ -2802,7 +2802,7 @@ Key Position::getKeyAfter(const Move m) const {
 		Piece to_pc = piece(to);
 		if (to_pc != Piece::Empty)
 		{
-			PieceType pt = pieceToPieceType(to_pc);
+			PieceTypeEnum pt = pieceToPieceType(to_pc);
 
 			// 捕獲された駒が盤上から消えるので局面のhash keyを更新する
 			k -= zobrist(pt, to, pieceToColor(to_pc));
@@ -2828,7 +2828,7 @@ Key Position::getBoardKeyAfter(const Move m) const {
 	if (m.isDrop())
 	{
 		// --- 駒打ち
-		PieceType pt = m.pieceTypeDropped();
+		PieceTypeEnum pt = m.pieceTypeDropped();
 
 		// Zobrist keyの更新
 		k += zobrist(pt, to, Us);
@@ -2857,7 +2857,7 @@ Key Position::getBoardKeyAfter(const Move m) const {
 		Piece to_pc = piece(to);
 		if (to_pc != Piece::Empty)
 		{
-			PieceType pt = pieceToPieceType(to_pc);
+			PieceTypeEnum pt = pieceToPieceType(to_pc);
 
 			// 捕獲された駒が盤上から消えるので局面のhash keyを更新する
 			k -= zobrist(pt, to, pieceToColor(to_pc));
@@ -3034,8 +3034,8 @@ bool Position::isOK() const {
         {
             goto incorrect_position;
         }
-        for (PieceType pt1 = FU; pt1 < PieceTypeNum; ++pt1) {
-            for (PieceType pt2 = pt1 + 1; pt2 < PieceTypeNum; ++pt2) {
+        for (PieceTypeEnum pt1 = FU; pt1 < PieceTypeNum; ++pt1) {
+            for (PieceTypeEnum pt2 = pt1 + 1; pt2 < PieceTypeNum; ++pt2) {
                 if ((bbOf(pt1) & bbOf(pt2)))
                     goto incorrect_position;
             }
@@ -3498,7 +3498,7 @@ void Position::set(std::mt19937& mt) {
     int checkersNum = 0;
     Square checkSquare = SquareNum; // 1つ目の王手している駒の位置。(1つしか保持する必要が無い。)
     // 飛び利きの無い駒の配置。
-    auto shortPiecesSet = [&](const PieceType pt, const HandPiece hp, const int maxNum) {
+    auto shortPiecesSet = [&](const PieceTypeEnum pt, const HandPiece hp, const int maxNum) {
         for (int i = 0; i < maxNum - (int)(hand(color::BLACK).numOf(hp) + hand(color::WHITE).numOf(hp)); ++i) {
             while (true) {
                 const Square sq = (Square)squareDist(mt);
@@ -3561,7 +3561,7 @@ void Position::set(std::mt19937& mt) {
     shortPiecesSet(KI  , H_KI  ,  4);
 
     // 飛び利きの駒を配置。
-    auto longPiecesSet = [&](const PieceType pt, const HandPiece hp, const int maxNum) {
+    auto longPiecesSet = [&](const PieceTypeEnum pt, const HandPiece hp, const int maxNum) {
         for (int i = 0; i < maxNum - (int)(hand(color::BLACK).numOf(hp) + hand(color::WHITE).numOf(hp)); ++i) {
             while (true) {
                 const Square sq = (Square)squareDist(mt);
@@ -3680,14 +3680,14 @@ bool Position::moveGivesCheck(const Move move, const CheckInfo& ci) const
 
     const Square to = move.to();
     if (move.isDrop()) {
-        const PieceType ptTo = move.pieceTypeDropped();
+        const PieceTypeEnum ptTo = move.pieceTypeDropped();
         // Direct Check ?
         if (ci.checkBB[ptTo].isSet(to))
             return true;
     } else {
         const Square from = move.from();
-        const PieceType ptFrom = move.pieceTypeFrom();
-        const PieceType ptTo = move.pieceTypeTo(ptFrom);
+        const PieceTypeEnum ptFrom = move.pieceTypeFrom();
+        const PieceTypeEnum ptTo = move.pieceTypeTo(ptFrom);
         assert(ptFrom == pieceToPieceType(piece(from)));
         // Direct Check ?
         if (ci.checkBB[ptTo].isSet(to))

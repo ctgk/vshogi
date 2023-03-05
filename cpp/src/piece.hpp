@@ -29,11 +29,11 @@
 #include <iostream>
 #include <string>
 
-enum PieceType
+enum PieceTypeEnum
 {
     // Pro* は 元の 駒の種類に 8 を加算したもの。
     PTPromote = 8,
-    Occupied = 0, // 各 PieceType の or をとったもの。
+    Occupied = 0, // 各 PieceTypeEnum の or をとったもの。
     FU = 1,
     KY = 2,
     KE = 3,
@@ -52,7 +52,7 @@ enum PieceType
     GoldHorseDragon, // 単にtemnplate引数として使用
 
 };
-OverloadEnumOperators(PieceType);
+OverloadEnumOperators(PieceTypeEnum);
 
 enum Piece
 {
@@ -93,9 +93,9 @@ OverloadEnumOperators(HandPiece);
 // Position::bbOf(pieceToPieceType(p)) とすると、
 // Position::emptyBB() ではなく Position::occupiedBB() になってしまうので、
 // 注意すること。出来れば修正したい。
-inline PieceType pieceToPieceType(const Piece p)
+inline PieceTypeEnum pieceToPieceType(const Piece p)
 {
-    return static_cast<PieceType>(p & 15);
+    return static_cast<PieceTypeEnum>(p & 15);
 }
 
 inline color::ColorEnum pieceToColor(const Piece p)
@@ -105,7 +105,7 @@ inline color::ColorEnum pieceToColor(const Piece p)
 }
 
 inline Piece
-colorAndPieceTypeToPiece(const color::ColorEnum c, const PieceType pt)
+colorAndPieceTypeToPiece(const color::ColorEnum c, const PieceTypeEnum pt)
 {
     return static_cast<Piece>((c << 4) | pt);
 }
@@ -116,7 +116,7 @@ inline bool isSlider(const Piece pc)
 {
     return (IsSliderVal & (1 << pc)) != 0;
 }
-inline bool isSlider(const PieceType pt)
+inline bool isSlider(const PieceTypeEnum pt)
 {
     return (IsSliderVal & (1 << pt)) != 0;
 }
@@ -137,14 +137,14 @@ const HandPiece PieceTypeToHandPieceTable[PieceTypeNum]
        H_GI,
        H_KA,
        H_HI};
-inline HandPiece pieceTypeToHandPiece(const PieceType pt)
+inline HandPiece pieceTypeToHandPiece(const PieceTypeEnum pt)
 {
     return PieceTypeToHandPieceTable[pt];
 }
 
-const PieceType HandPieceToPieceTypeTable[HandPieceNum]
+const PieceTypeEnum HandPieceToPieceTypeTable[HandPieceNum]
     = {FU, KY, KE, GI, KI, KA, HI};
-inline PieceType handPieceToPieceType(const HandPiece hp)
+inline PieceTypeEnum handPieceToPieceType(const HandPiece hp)
 {
     return HandPieceToPieceTypeTable[hp];
 }

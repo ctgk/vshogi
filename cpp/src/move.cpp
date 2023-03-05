@@ -46,7 +46,7 @@ const std::string PieceTypeToStringTable[PieceTypeNum]
        "NG",
        "UM",
        "RY"};
-inline std::string pieceTypeToString(const PieceType pt)
+inline std::string pieceTypeToString(const PieceTypeEnum pt)
 {
     return PieceTypeToStringTable[pt];
 }

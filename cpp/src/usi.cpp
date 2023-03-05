@@ -34,7 +34,7 @@ inline int cpuCoreCount()
     return std::max(static_cast<int>(std::thread::hardware_concurrency()), 1);
 }
 
-class StringToPieceTypeCSA : public std::map<std::string, PieceType>
+class StringToPieceTypeCSA : public std::map<std::string, PieceTypeEnum>
 {
 public:
     StringToPieceTypeCSA()
@@ -54,7 +54,7 @@ public:
         (*this)["UM"] = UM;
         (*this)["RY"] = RY;
     }
-    PieceType value(const std::string& str) const
+    PieceTypeEnum value(const std::string& str) const
     {
         return this->find(str)->second;
     }
@@ -71,7 +71,7 @@ Move usiToMoveBody(const Position& pos, const std::string& moveStr)
     Move move;
     if (g_charToPieceUSI.isLegalChar(moveStr[0])) {
         // drop
-        const PieceType ptTo
+        const PieceTypeEnum ptTo
             = pieceToPieceType(g_charToPieceUSI.value(moveStr[0]));
         if (moveStr[1] != '*')
             return Move::moveNone();
@@ -148,7 +148,7 @@ Move csaToMoveBody(const Position& pos, const std::string& moveStr)
     const std::string ptToString(moveStr.begin() + 4, moveStr.end());
     if (!g_stringToPieceTypeCSA.isLegalString(ptToString))
         return Move::moveNone();
-    const PieceType ptTo = g_stringToPieceTypeCSA.value(ptToString);
+    const PieceTypeEnum ptTo = g_stringToPieceTypeCSA.value(ptToString);
     Move move;
     if (moveStr[0] == '0' && moveStr[1] == '0')
         // drop
@@ -159,7 +159,7 @@ Move csaToMoveBody(const Position& pos, const std::string& moveStr)
         if (!isInSquare(fromFile, fromRank))
             return Move::moveNone();
         const Square from = makeSquare(fromFile, fromRank);
-        PieceType ptFrom = pieceToPieceType(pos.piece(from));
+        PieceTypeEnum ptFrom = pieceToPieceType(pos.piece(from));
         if (ptFrom == ptTo)
             // non promote
             move = makeNonPromoteMove<Capture>(ptFrom, from, to, pos);

@@ -17,7 +17,7 @@ std::string rtrim(const std::string& str, const std::string& chars = " ")
     return str.substr(0, str.find_last_not_of(chars) + 1);
 }
 
-class StringToPieceTypeCSA : public std::map<std::string, PieceType>
+class StringToPieceTypeCSA : public std::map<std::string, PieceTypeEnum>
 {
 public:
     StringToPieceTypeCSA()
@@ -37,7 +37,7 @@ public:
         (*this)["UM"] = UM;
         (*this)["RY"] = RY;
     }
-    PieceType value(const std::string& str) const
+    PieceTypeEnum value(const std::string& str) const
     {
         return this->find(str)->second;
     }
@@ -370,7 +370,7 @@ private:
                         char rank_char = line[index];
                         rank_index = rank_char - '1';
                         index += 1;
-                        PieceType piecetype
+                        PieceTypeEnum piecetype
                             = stringToPieceTypeCSA.value(line.substr(index, 2));
                         index += 2;
                         if (rank_char == '0' && file_char == '0') {

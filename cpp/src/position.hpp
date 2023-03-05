@@ -324,7 +324,7 @@ public:
     };
     void set(std::mt19937& mt);
 
-    Bitboard bbOf(const PieceType pt) const
+    Bitboard bbOf(const PieceTypeEnum pt) const
     {
         return byTypeBB_[pt];
     }
@@ -332,48 +332,50 @@ public:
     {
         return byColorBB_[c];
     }
-    Bitboard bbOf(const PieceType pt, const color::ColorEnum c) const
+    Bitboard bbOf(const PieceTypeEnum pt, const color::ColorEnum c) const
     {
         return bbOf(pt) & bbOf(c);
     }
-    Bitboard bbOf(const PieceType pt1, const PieceType pt2) const
+    Bitboard bbOf(const PieceTypeEnum pt1, const PieceTypeEnum pt2) const
     {
         return bbOf(pt1) | bbOf(pt2);
     }
     Bitboard bbOf(
-        const PieceType pt1,
-        const PieceType pt2,
+        const PieceTypeEnum pt1,
+        const PieceTypeEnum pt2,
         const color::ColorEnum c) const
     {
         return bbOf(pt1, pt2) & bbOf(c);
     }
-    Bitboard
-    bbOf(const PieceType pt1, const PieceType pt2, const PieceType pt3) const
+    Bitboard bbOf(
+        const PieceTypeEnum pt1,
+        const PieceTypeEnum pt2,
+        const PieceTypeEnum pt3) const
     {
         return bbOf(pt1, pt2) | bbOf(pt3);
     }
     Bitboard bbOf(
-        const PieceType pt1,
-        const PieceType pt2,
-        const PieceType pt3,
+        const PieceTypeEnum pt1,
+        const PieceTypeEnum pt2,
+        const PieceTypeEnum pt3,
         const color::ColorEnum c) const
     {
         return bbOf(pt1, pt2, pt3) & bbOf(c);
     }
     Bitboard bbOf(
-        const PieceType pt1,
-        const PieceType pt2,
-        const PieceType pt3,
-        const PieceType pt4) const
+        const PieceTypeEnum pt1,
+        const PieceTypeEnum pt2,
+        const PieceTypeEnum pt3,
+        const PieceTypeEnum pt4) const
     {
         return bbOf(pt1, pt2, pt3) | bbOf(pt4);
     }
     Bitboard bbOf(
-        const PieceType pt1,
-        const PieceType pt2,
-        const PieceType pt3,
-        const PieceType pt4,
-        const PieceType pt5) const
+        const PieceTypeEnum pt1,
+        const PieceTypeEnum pt2,
+        const PieceTypeEnum pt3,
+        const PieceTypeEnum pt4,
+        const PieceTypeEnum pt5) const
     {
         return bbOf(pt1, pt2, pt3, pt4) | bbOf(pt5);
     }
@@ -517,11 +519,11 @@ public:
     // 利きの生成
 
     // 任意の occupied に対する利きを生成する。
-    template <PieceType PT>
+    template <PieceTypeEnum PT>
     static Bitboard attacksFrom(
         const color::ColorEnum c, const Square sq, const Bitboard& occupied);
     // 任意の occupied に対する利きを生成する。
-    template <PieceType PT>
+    template <PieceTypeEnum PT>
     Bitboard attacksFrom(const Square sq, const Bitboard& occupied) const
     {
         static_assert(PT == KA || PT == HI || PT == UM || PT == RY, "");
@@ -529,13 +531,13 @@ public:
         return attacksFrom<PT>(color::NUM_COLORS, sq, occupied);
     }
 
-    template <PieceType PT>
+    template <PieceTypeEnum PT>
     Bitboard attacksFrom(const color::ColorEnum c, const Square sq) const
     {
         static_assert(PT == KI, ""); // KI 以外は template 特殊化する。
         return goldAttack(c, sq);
     }
-    template <PieceType PT>
+    template <PieceTypeEnum PT>
     Bitboard attacksFrom(const Square sq) const
     {
         static_assert(
@@ -544,12 +546,12 @@ public:
         return attacksFrom<PT>(color::NUM_COLORS, sq);
     }
     Bitboard attacksFrom(
-        const PieceType pt, const color::ColorEnum c, const Square sq) const
+        const PieceTypeEnum pt, const color::ColorEnum c, const Square sq) const
     {
         return attacksFrom(pt, c, sq, occupiedBB());
     }
     static Bitboard attacksFrom(
-        const PieceType pt,
+        const PieceTypeEnum pt,
         const color::ColorEnum c,
         const Square sq,
         const Bitboard& occupied);
@@ -686,7 +688,7 @@ private:
     void setPiece(const Piece piece, const Square sq)
     {
         const color::ColorEnum c = pieceToColor(piece);
-        const PieceType pt = pieceToPieceType(piece);
+        const PieceTypeEnum pt = pieceToPieceType(piece);
 
         piece_[sq] = piece;
 
@@ -701,7 +703,7 @@ private:
     void setHand(const Piece piece, const int num)
     {
         const color::ColorEnum c = pieceToColor(piece);
-        const PieceType pt = pieceToPieceType(piece);
+        const PieceTypeEnum pt = pieceToPieceType(piece);
         const HandPiece hp = pieceTypeToHandPiece(pt);
         setHand(hp, c, num);
     }
@@ -714,7 +716,8 @@ private:
             color::opposite(turn()), kingSquare(turn()));
     }
 
-    void xorBBs(const PieceType pt, const Square sq, const color::ColorEnum c);
+    void
+    xorBBs(const PieceTypeEnum pt, const Square sq, const color::ColorEnum c);
     // turn() 側が
     // pin されて(して)いる駒の Bitboard を返す。
     // BetweenIsUs == true  : 間の駒が自駒。
@@ -761,7 +764,7 @@ private:
     void printHand(std::ostream& os, const color::ColorEnum c) const;
 
     static Key
-    zobrist(const PieceType pt, const Square sq, const color::ColorEnum c)
+    zobrist(const PieceTypeEnum pt, const Square sq, const color::ColorEnum c)
     {
         return zobrist_[pt][sq][c];
     }

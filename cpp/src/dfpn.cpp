@@ -161,7 +161,7 @@ void TranspositionTable::GetChildFirstEntry(
         } else {
             const Piece to_pc = n.piece(move.to());
             if (to_pc != Empty) {
-                const PieceType pt = pieceToPieceType(to_pc);
+                const PieceTypeEnum pt = pieceToPieceType(to_pc);
                 hand.plusOne(pieceTypeToHandPiece(pt));
             }
         }
@@ -447,7 +447,8 @@ void DfPn::dfpn_inner(
                         else {
                             const Piece to_pc = n.piece(m2.to());
                             if (to_pc != Empty) {
-                                const PieceType pt = pieceToPieceType(to_pc);
+                                const PieceTypeEnum pt
+                                    = pieceToPieceType(to_pc);
                                 const HandPiece hp = pieceTypeToHandPiece(pt);
                                 if (entry.hand.numOf(hp)
                                     > entry1.hand.numOf(hp)) {
@@ -589,7 +590,7 @@ void DfPn::dfpn_inner(
                         const Piece to_pc = n.piece(move.move.to());
                         if (to_pc != Empty) {
                             entry.hand = child_entry.hand;
-                            const PieceType pt = pieceToPieceType(to_pc);
+                            const PieceTypeEnum pt = pieceToPieceType(to_pc);
                             const HandPiece hp = pieceTypeToHandPiece(pt);
                             if (entry.hand.exists(hp))
                                 entry.hand.minusOne(hp);
@@ -780,7 +781,8 @@ void DfPn::dfpn_inner(
                         else {
                             const Piece to_pc = n.piece(move.move.to());
                             if (to_pc != Empty) {
-                                const PieceType pt = pieceToPieceType(to_pc);
+                                const PieceTypeEnum pt
+                                    = pieceToPieceType(to_pc);
                                 const HandPiece hp = pieceTypeToHandPiece(pt);
                                 if (entry.hand.numOf(hp)
                                     > child_entry.hand.numOf(hp)) {

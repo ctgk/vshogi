@@ -28,10 +28,10 @@
 #include "square.hpp"
 
 // xxxxxxxx xxxxxxxx xxxxxxxx x1111111  移動先
-// xxxxxxxx xxxxxxxx xx111111 1xxxxxxx  移動元。駒打ちの際には、PieceType + SquareNum - 1
+// xxxxxxxx xxxxxxxx xx111111 1xxxxxxx  移動元。駒打ちの際には、PieceTypeEnum + SquareNum - 1
 // xxxxxxxx xxxxxxxx x1xxxxxx xxxxxxxx  1 なら成り
-// xxxxxxxx xxxx1111 xxxxxxxx xxxxxxxx  移動する駒の PieceType 駒打ちの際には使用しない。
-// xxxxxxxx 1111xxxx xxxxxxxx xxxxxxxx  取られた駒の PieceType
+// xxxxxxxx xxxx1111 xxxxxxxx xxxxxxxx  移動する駒の PieceTypeEnum 駒打ちの際には使用しない。
+// xxxxxxxx 1111xxxx xxxxxxxx xxxxxxxx  取られた駒の PieceTypeEnum
 
 // todo: piece to move と captured piece は指し手としてパックする必要あるの？
 //       from, to , promo だけだったら、16bit で済む。
@@ -95,9 +95,9 @@ public:
         return (value() >> 0) & 0x7fff;
     }
     // 取った駒の種類
-    PieceType cap() const
+    PieceTypeEnum cap() const
     {
-        return static_cast<PieceType>((value() >> 20) & 0xf);
+        return static_cast<PieceTypeEnum>((value() >> 20) & 0xf);
     }
     // 成るかどうか
     u32 isPromotion() const
@@ -105,22 +105,23 @@ public:
         return value() & PromoteFlag;
     }
     // 移動する駒の種類
-    PieceType pieceTypeFrom() const
+    PieceTypeEnum pieceTypeFrom() const
     {
-        return static_cast<PieceType>((value() >> 16) & 0xf);
+        return static_cast<PieceTypeEnum>((value() >> 16) & 0xf);
     }
     // 移動した後の駒の種類
-    PieceType pieceTypeTo() const
+    PieceTypeEnum pieceTypeTo() const
     {
         return (isDrop() ? pieceTypeDropped() : pieceTypeTo(pieceTypeFrom()));
     }
-    // 移動前の PieceType を引数に取り、移動後の PieceType を返す。
+    // 移動前の PieceTypeEnum を引数に取り、移動後の PieceTypeEnum を返す。
     // 高速化の為、ptFrom が確定しているときに使用する。
-    PieceType pieceTypeTo(const PieceType ptFrom) const
+    PieceTypeEnum pieceTypeTo(const PieceTypeEnum ptFrom) const
     {
         // これらは同じ意味。
 #if 1
-        return (ptFrom + static_cast<PieceType>((value() & PromoteFlag) >> 11));
+        return (
+            ptFrom + static_cast<PieceTypeEnum>((value() & PromoteFlag) >> 11));
 #else
         return (isPromotion()) ? ptFrom + PTPromote : ptFrom;
 #endif
@@ -144,11 +145,11 @@ public:
         return isCapture() || (isPromotion() && pieceTypeFrom() == FU);
     }
     // 打つ駒の種類
-    PieceType pieceTypeDropped() const
+    PieceTypeEnum pieceTypeDropped() const
     {
-        return static_cast<PieceType>(this->from() - SquareNum + 1);
+        return static_cast<PieceTypeEnum>(this->from() - SquareNum + 1);
     }
-    PieceType pieceTypeFromOrDropped() const
+    PieceTypeEnum pieceTypeFromOrDropped() const
     {
         return (isDrop() ? pieceTypeDropped() : pieceTypeFrom());
     }
@@ -246,32 +247,32 @@ inline Move from2Move(const Square from)
 }
 
 // 駒打ちの駒の種類から移動元に変換
-// todo: PieceType を HandPiece に変更
-inline Square drop2From(const PieceType pt)
+// todo: PieceTypeEnum を HandPiece に変更
+inline Square drop2From(const PieceTypeEnum pt)
 {
     return static_cast<Square>(SquareNum - 1 + pt);
 }
 
 // 駒打ち(移動元)から指し手に変換
-inline Move drop2Move(const PieceType pt)
+inline Move drop2Move(const PieceTypeEnum pt)
 {
     return static_cast<Move>(drop2From(pt) << 7);
 }
 
 // 移動する駒の種類から指し手に変換
-inline Move pieceType2Move(const PieceType pt)
+inline Move pieceType2Move(const PieceTypeEnum pt)
 {
     return static_cast<Move>(pt << 16);
 }
 
 // 移動元から駒打ちの駒の種類に変換
-inline PieceType from2Drop(const Square from)
+inline PieceTypeEnum from2Drop(const Square from)
 {
-    return static_cast<PieceType>(from - SquareNum + 1);
+    return static_cast<PieceTypeEnum>(from - SquareNum + 1);
 }
 
 // 取った駒の種類から指し手に変換
-inline Move capturedPieceType2Move(const PieceType captured)
+inline Move capturedPieceType2Move(const PieceTypeEnum captured)
 {
     return static_cast<Move>(captured << 20);
 }
@@ -279,12 +280,12 @@ inline Move capturedPieceType2Move(const PieceType captured)
 // 駒を取らないときは、0 (MoveNone) を返す。
 inline Move capturedPieceType2Move(const Square to, const Position& pos)
 {
-    const PieceType captured = pieceToPieceType(pos.piece(to));
+    const PieceTypeEnum captured = pieceToPieceType(pos.piece(to));
     return capturedPieceType2Move(captured);
 }
 
 // 移動元、移動先、移動する駒の種類から指し手に変換
-inline Move makeMove(const PieceType pt, const Square from, const Square to)
+inline Move makeMove(const PieceTypeEnum pt, const Square from, const Square to)
 {
     return pieceType2Move(pt) | from2Move(from) | to2Move(to);
 }
@@ -292,21 +293,27 @@ inline Move makeMove(const PieceType pt, const Square from, const Square to)
 // 取った駒を判別する必要がある。
 // この関数は駒を取らないときにも使える。
 inline Move makeCaptureMove(
-    const PieceType pt, const Square from, const Square to, const Position& pos)
+    const PieceTypeEnum pt,
+    const Square from,
+    const Square to,
+    const Position& pos)
 {
     return capturedPieceType2Move(to, pos) | makeMove(pt, from, to);
 }
 
 // makeCaptureMove() かつ 成り
 inline Move makeCapturePromoteMove(
-    const PieceType pt, const Square from, const Square to, const Position& pos)
+    const PieceTypeEnum pt,
+    const Square from,
+    const Square to,
+    const Position& pos)
 {
     return makeCaptureMove(pt, from, to, pos) | promoteFlag();
 }
 
 // 駒打ちの makeMove()
-// todo: PieceType を HandPiece に変更
-inline Move makeDropMove(const PieceType pt, const Square to)
+// todo: PieceTypeEnum を HandPiece に変更
+inline Move makeDropMove(const PieceTypeEnum pt, const Square to)
 {
     return from2Move(drop2From(pt)) | to2Move(to);
 }
@@ -354,7 +361,7 @@ inline Move move16toMove(const Move move, const Position& pos)
     if (move.isDrop())
         return move;
     const Square from = move.from();
-    const PieceType ptFrom = pieceToPieceType(pos.piece(from));
+    const PieceTypeEnum ptFrom = pieceToPieceType(pos.piece(from));
     return (
         move | pieceType2Move(ptFrom) | capturedPieceType2Move(move.to(), pos));
 }

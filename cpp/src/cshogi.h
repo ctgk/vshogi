@@ -238,7 +238,7 @@ public:
 
     int drop_move(const int to_square, const int drop_piece_type) const
     {
-        return makeDropMove((PieceType)drop_piece_type, (Square)to_square)
+        return makeDropMove((PieceTypeEnum)drop_piece_type, (Square)to_square)
             .value();
     }
 
@@ -394,7 +394,7 @@ public:
         // P2 piece 14 planes
         float* data = (float*)mem;
         for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
-            for (PieceType pt = FU; pt < PieceTypeNum; ++pt) {
+            for (PieceTypeEnum pt = FU; pt < PieceTypeNum; ++pt) {
                 Bitboard bb = pos.bbOf(pt, c);
                 while (bb) {
                     const Square sq = bb.firstOneFromSQ11();
@@ -418,7 +418,7 @@ public:
         // 白の場合
         float* data = (float*)mem;
         for (color::ColorEnum c = color::WHITE; c >= color::BLACK; --c) {
-            for (PieceType pt = FU; pt < PieceTypeNum; ++pt) {
+            for (PieceTypeEnum pt = FU; pt < PieceTypeNum; ++pt) {
                 Bitboard bb = pos.bbOf(pt, c);
                 while (bb) {
                     // 盤面を180度回転
@@ -460,7 +460,7 @@ public:
             const Piece p = pos.piece(sq);
             if (p != Empty) {
                 const color::ColorEnum pc = pieceToColor(p);
-                const PieceType pt = pieceToPieceType(p);
+                const PieceTypeEnum pt = pieceToPieceType(p);
                 const Bitboard bb = pos.attacksFrom(pt, pc, sq, occupied_bb);
                 attacks[pc][pt] |= bb;
             }
@@ -473,7 +473,7 @@ public:
 
             // 駒の配置
             Bitboard bb[PieceTypeNum];
-            for (PieceType pt = FU; pt < PieceTypeNum; ++pt) {
+            for (PieceTypeEnum pt = FU; pt < PieceTypeNum; ++pt) {
                 bb[pt] = pos.bbOf(pt, c);
             }
 
@@ -481,7 +481,7 @@ public:
                 // 白の場合、盤面を180度回転
                 const Square sq2 = pos.turn() == color::BLACK ? sq : SQ99 - sq;
 
-                for (PieceType pt = FU; pt < PieceTypeNum; ++pt) {
+                for (PieceTypeEnum pt = FU; pt < PieceTypeNum; ++pt) {
                     // 駒の配置
                     if (bb[pt].isSet(sq)) {
                         (*features1)[c2][pt - 1][sq2] = 1;
@@ -532,7 +532,7 @@ private:
     std::deque<std::pair<Move, StateInfo>> history;
 
     void bbToVector(
-        PieceType pt,
+        PieceTypeEnum pt,
         color::ColorEnum c,
         Piece piece,
         std::vector<int>& board) const
@@ -651,7 +651,8 @@ int __move_from_piece_type(const int move)
 // 打つ駒の種類
 int __move_drop_hand_piece(const int move)
 {
-    return pieceTypeToHandPiece((PieceType)__move_from(move) - SquareNum + 1);
+    return pieceTypeToHandPiece(
+        (PieceTypeEnum)__move_from(move) - SquareNum + 1);
 }
 
 unsigned short __move16(const int move)
@@ -739,7 +740,7 @@ int __dlshogi_make_move_label(const int move, const int color)
 {
     // see: move.hpp : 30
     // xxxxxxxx x1111111  移動先
-    // xx111111 1xxxxxxx  移動元。駒打ちの際には、PieceType + SquareNum - 1
+    // xx111111 1xxxxxxx  移動元。駒打ちの際には、PieceTypeEnum + SquareNum - 1
     // x1xxxxxx xxxxxxxx  1 なら成り
     const u16 move16 = (u16)move;
     u16 to_sq = move16 & 0b1111111;
