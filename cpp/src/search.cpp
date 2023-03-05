@@ -48,7 +48,7 @@ bool nyugyoku(const Position& pos)
                               : inFrontMask<color::WHITE, Rank6>());
 
     // 二 宣言側の玉が敵陣三段目以内に入っている。
-    if (!pos.bbOf(OU, us).andIsAny(opponentsField))
+    if (!pos.bbOf(piece::OU, us).andIsAny(opponentsField))
         return false;
 
     // 四 宣言側の敵陣三段目以内の駒は、玉を除いて10枚以上存在する。
@@ -61,13 +61,17 @@ bool nyugyoku(const Position& pos)
     //     後手の場合27点以上の持点がある。
     //     点数の対象となるのは、宣言側の持駒と敵陣三段目以内に存在する玉を除く宣言側の駒のみである。
     const int ownBigPiecesCount
-        = (pos.bbOf(HI, RY, KA, UM) & opponentsField & pos.bbOf(us)).popCount();
+        = (pos.bbOf(piece::HI, piece::RY, piece::KA, piece::UM) & opponentsField
+           & pos.bbOf(us))
+              .popCount();
     const int ownSmallPiecesCount = ownPiecesCount - ownBigPiecesCount;
     const Hand hand = pos.hand(us);
-    const int val
-        = ownSmallPiecesCount + hand.numOf<C_FU>() + hand.numOf<C_KY>()
-          + hand.numOf<C_KE>() + hand.numOf<C_GI>() + hand.numOf<C_KI>()
-          + (ownBigPiecesCount + hand.numOf<C_HI>() + hand.numOf<C_KA>()) * 5;
+    const int val = ownSmallPiecesCount + hand.numOf<piece::C_FU>()
+                    + hand.numOf<piece::C_KY>() + hand.numOf<piece::C_KE>()
+                    + hand.numOf<piece::C_GI>() + hand.numOf<piece::C_KI>()
+                    + (ownBigPiecesCount + hand.numOf<piece::C_HI>()
+                       + hand.numOf<piece::C_KA>())
+                          * 5;
 #if defined LAW_24
     if (val < 31)
         return false;

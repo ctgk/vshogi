@@ -58,7 +58,7 @@ struct CheckInfo
     explicit CheckInfo(const Position&);
     Bitboard dcBB; // discoverd check candidates bitboard
     Bitboard pinned;
-    Bitboard checkBB[PieceTypeNum];
+    Bitboard checkBB[piece::PieceTypeNum];
 };
 
 struct StateInfo
@@ -72,7 +72,7 @@ struct StateInfo
     Key handKey;
     Bitboard checkersBB; // 手番側の玉へ check している駒の Bitboard
 #if 0
-    ColoredPieceEnum capturedPiece;
+    piece::ColoredPieceEnum capturedPiece;
 #endif
     StateInfo* previous;
     Hand hand; // 手番側の持ち駒
@@ -161,13 +161,14 @@ union HuffmanCode
     u16 key; // std::unordered_map の key として使う。
 };
 
-struct HuffmanCodeToPieceHash : public std::unordered_map<u16, ColoredPieceEnum>
+struct HuffmanCodeToPieceHash
+    : public std::unordered_map<u16, piece::ColoredPieceEnum>
 {
-    ColoredPieceEnum value(const u16 key) const
+    piece::ColoredPieceEnum value(const u16 key) const
     {
         const auto it = find(key);
         if (it == std::end(*this))
-            return PieceNone;
+            return piece::PieceNone;
         return it->second;
     }
 };
@@ -175,26 +176,29 @@ struct HuffmanCodeToPieceHash : public std::unordered_map<u16, ColoredPieceEnum>
 // Huffman 符号化された局面のデータ構造。256 bit で局面を表す。
 struct HuffmanCodedPos
 {
-    static const HuffmanCode boardCodeTable[PieceNone];
-    static const HuffmanCode handCodeTable[NUM_CAPTURED_PIECE_TYPES]
+    static const HuffmanCode boardCodeTable[piece::PieceNone];
+    static const HuffmanCode handCodeTable[piece::NUM_CAPTURED_PIECE_TYPES]
                                           [color::NUM_COLORS];
     static HuffmanCodeToPieceHash boardCodeToPieceHash;
     static HuffmanCodeToPieceHash handCodeToPieceHash;
     static void init()
     {
-        for (ColoredPieceEnum pc = Empty; pc <= B_RY; ++pc)
-            if (to_piece_type(pc)
-                != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
+        for (piece::ColoredPieceEnum pc = piece::Empty; pc <= piece::B_RY; ++pc)
+            if (piece::to_piece_type(pc)
+                != piece::
+                    OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
-        for (ColoredPieceEnum pc = W_FU; pc <= W_RY; ++pc)
-            if (to_piece_type(pc)
-                != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
+        for (piece::ColoredPieceEnum pc = piece::W_FU; pc <= piece::W_RY; ++pc)
+            if (piece::to_piece_type(pc)
+                != piece::
+                    OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
-        for (CapturedPieceTypeEnum hp = C_FU; hp < NUM_CAPTURED_PIECE_TYPES;
+        for (piece::CapturedPieceTypeEnum hp = piece::C_FU;
+             hp < piece::NUM_CAPTURED_PIECE_TYPES;
              ++hp)
             for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c)
                 handCodeToPieceHash[handCodeTable[hp][c].key]
-                    = to_colored_piece(c, to_piece_type(hp));
+                    = to_colored_piece(c, piece::to_piece_type(hp));
     }
     HuffmanCodedPos()
     {
@@ -225,26 +229,29 @@ static_assert(sizeof(HuffmanCodedPosAndEval) == 38, "");
 // やねうら王のpacked sfen
 struct PackedSfen
 {
-    static const HuffmanCode boardCodeTable[PieceNone];
-    static const HuffmanCode handCodeTable[NUM_CAPTURED_PIECE_TYPES]
+    static const HuffmanCode boardCodeTable[piece::PieceNone];
+    static const HuffmanCode handCodeTable[piece::NUM_CAPTURED_PIECE_TYPES]
                                           [color::NUM_COLORS];
     static HuffmanCodeToPieceHash boardCodeToPieceHash;
     static HuffmanCodeToPieceHash handCodeToPieceHash;
     static void init()
     {
-        for (ColoredPieceEnum pc = Empty; pc <= B_RY; ++pc)
-            if (to_piece_type(pc)
-                != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
+        for (piece::ColoredPieceEnum pc = piece::Empty; pc <= piece::B_RY; ++pc)
+            if (piece::to_piece_type(pc)
+                != piece::
+                    OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
-        for (ColoredPieceEnum pc = W_FU; pc <= W_RY; ++pc)
-            if (to_piece_type(pc)
-                != OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
+        for (piece::ColoredPieceEnum pc = piece::W_FU; pc <= piece::W_RY; ++pc)
+            if (piece::to_piece_type(pc)
+                != piece::
+                    OU) // 玉は位置で符号化するので、駒の種類では符号化しない。
                 boardCodeToPieceHash[boardCodeTable[pc].key] = pc;
-        for (CapturedPieceTypeEnum hp = C_FU; hp < NUM_CAPTURED_PIECE_TYPES;
+        for (piece::CapturedPieceTypeEnum hp = piece::C_FU;
+             hp < piece::NUM_CAPTURED_PIECE_TYPES;
              ++hp)
             for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c)
                 handCodeToPieceHash[handCodeTable[hp][c].key]
-                    = to_colored_piece(c, to_piece_type(hp));
+                    = to_colored_piece(c, piece::to_piece_type(hp));
     }
     PackedSfen()
     {
@@ -314,8 +321,9 @@ public:
     Position& operator=(const Position& pos);
     void set(const std::string& sfen);
     void
-    set(const ColoredPieceEnum pieces[SquareNum],
-        const int pieces_in_hand[color::NUM_COLORS][NUM_CAPTURED_PIECE_TYPES]);
+    set(const piece::ColoredPieceEnum pieces[SquareNum],
+        const int pieces_in_hand[color::NUM_COLORS]
+                                [piece::NUM_CAPTURED_PIECE_TYPES]);
     bool set_hcp(const char* hcp_data); // for python
     bool set(const HuffmanCodedPos& hcp)
     {
@@ -328,7 +336,7 @@ public:
     };
     void set(std::mt19937& mt);
 
-    Bitboard bbOf(const PieceTypeEnum pt) const
+    Bitboard bbOf(const piece::PieceTypeEnum pt) const
     {
         return byTypeBB_[pt];
     }
@@ -336,56 +344,57 @@ public:
     {
         return byColorBB_[c];
     }
-    Bitboard bbOf(const PieceTypeEnum pt, const color::ColorEnum c) const
+    Bitboard bbOf(const piece::PieceTypeEnum pt, const color::ColorEnum c) const
     {
         return bbOf(pt) & bbOf(c);
     }
-    Bitboard bbOf(const PieceTypeEnum pt1, const PieceTypeEnum pt2) const
+    Bitboard
+    bbOf(const piece::PieceTypeEnum pt1, const piece::PieceTypeEnum pt2) const
     {
         return bbOf(pt1) | bbOf(pt2);
     }
     Bitboard bbOf(
-        const PieceTypeEnum pt1,
-        const PieceTypeEnum pt2,
+        const piece::PieceTypeEnum pt1,
+        const piece::PieceTypeEnum pt2,
         const color::ColorEnum c) const
     {
         return bbOf(pt1, pt2) & bbOf(c);
     }
     Bitboard bbOf(
-        const PieceTypeEnum pt1,
-        const PieceTypeEnum pt2,
-        const PieceTypeEnum pt3) const
+        const piece::PieceTypeEnum pt1,
+        const piece::PieceTypeEnum pt2,
+        const piece::PieceTypeEnum pt3) const
     {
         return bbOf(pt1, pt2) | bbOf(pt3);
     }
     Bitboard bbOf(
-        const PieceTypeEnum pt1,
-        const PieceTypeEnum pt2,
-        const PieceTypeEnum pt3,
+        const piece::PieceTypeEnum pt1,
+        const piece::PieceTypeEnum pt2,
+        const piece::PieceTypeEnum pt3,
         const color::ColorEnum c) const
     {
         return bbOf(pt1, pt2, pt3) & bbOf(c);
     }
     Bitboard bbOf(
-        const PieceTypeEnum pt1,
-        const PieceTypeEnum pt2,
-        const PieceTypeEnum pt3,
-        const PieceTypeEnum pt4) const
+        const piece::PieceTypeEnum pt1,
+        const piece::PieceTypeEnum pt2,
+        const piece::PieceTypeEnum pt3,
+        const piece::PieceTypeEnum pt4) const
     {
         return bbOf(pt1, pt2, pt3) | bbOf(pt4);
     }
     Bitboard bbOf(
-        const PieceTypeEnum pt1,
-        const PieceTypeEnum pt2,
-        const PieceTypeEnum pt3,
-        const PieceTypeEnum pt4,
-        const PieceTypeEnum pt5) const
+        const piece::PieceTypeEnum pt1,
+        const piece::PieceTypeEnum pt2,
+        const piece::PieceTypeEnum pt3,
+        const piece::PieceTypeEnum pt4,
+        const piece::PieceTypeEnum pt5) const
     {
         return bbOf(pt1, pt2, pt3, pt4) | bbOf(pt5);
     }
     Bitboard occupiedBB() const
     {
-        return bbOf(Occupied);
+        return bbOf(piece::Occupied);
     }
     // emptyBB() よりもわずかに速いはず。
     // emptyBB() とは異なり、全く使用しない位置(0 から数えて、right の 63bit目、left の 18 ~ 63bit目)
@@ -409,7 +418,7 @@ public:
         return goldsBB() & bbOf(c);
     }
 
-    ColoredPieceEnum piece(const Square sq) const
+    piece::ColoredPieceEnum piece(const Square sq) const
     {
         return piece_[sq];
     }
@@ -439,7 +448,7 @@ public:
     // toFile と同じ筋に us の歩がないなら true
     bool noPawns(const color::ColorEnum us, const File toFile) const
     {
-        return !bbOf(FU, us).andIsAny(fileMask(toFile));
+        return !bbOf(piece::FU, us).andIsAny(fileMask(toFile));
     }
     bool isPawnDropCheckMate(const color::ColorEnum us, const Square sq) const;
     // Pinされているfromの駒がtoに移動出来なければtrueを返す。
@@ -483,13 +492,13 @@ public:
 
     FORCE_INLINE Square kingSquare(const color::ColorEnum c) const
     {
-        assert(kingSquare_[c] == bbOf(OU, c).constFirstOneFromSQ11());
+        assert(kingSquare_[c] == bbOf(piece::OU, c).constFirstOneFromSQ11());
         return kingSquare_[c];
     }
 
     bool moveGivesCheck(const Move m) const;
     bool moveGivesCheck(const Move move, const CheckInfo& ci) const;
-    ColoredPieceEnum movedPiece(const Move m) const;
+    piece::ColoredPieceEnum movedPiece(const Move m) const;
 
     // attacks
     Bitboard attackersTo(const Square sq, const Bitboard& occupied) const;
@@ -523,39 +532,47 @@ public:
     // 利きの生成
 
     // 任意の occupied に対する利きを生成する。
-    template <PieceTypeEnum PT>
+    template <piece::PieceTypeEnum PT>
     static Bitboard attacksFrom(
         const color::ColorEnum c, const Square sq, const Bitboard& occupied);
     // 任意の occupied に対する利きを生成する。
-    template <PieceTypeEnum PT>
+    template <piece::PieceTypeEnum PT>
     Bitboard attacksFrom(const Square sq, const Bitboard& occupied) const
     {
-        static_assert(PT == KA || PT == HI || PT == UM || PT == RY, "");
+        static_assert(
+            PT == piece::KA || PT == piece::HI || PT == piece::UM
+                || PT == piece::RY,
+            "");
         // color::ColorEnum は何でも良い。
         return attacksFrom<PT>(color::NUM_COLORS, sq, occupied);
     }
 
-    template <PieceTypeEnum PT>
+    template <piece::PieceTypeEnum PT>
     Bitboard attacksFrom(const color::ColorEnum c, const Square sq) const
     {
-        static_assert(PT == KI, ""); // KI 以外は template 特殊化する。
+        static_assert(
+            PT == piece::KI, ""); // piece::KI 以外は template 特殊化する。
         return goldAttack(c, sq);
     }
-    template <PieceTypeEnum PT>
+    template <piece::PieceTypeEnum PT>
     Bitboard attacksFrom(const Square sq) const
     {
         static_assert(
-            PT == KA || PT == HI || PT == OU || PT == UM || PT == RY, "");
+            PT == piece::KA || PT == piece::HI || PT == piece::OU
+                || PT == piece::UM || PT == piece::RY,
+            "");
         // color::ColorEnum は何でも良い。
         return attacksFrom<PT>(color::NUM_COLORS, sq);
     }
     Bitboard attacksFrom(
-        const PieceTypeEnum pt, const color::ColorEnum c, const Square sq) const
+        const piece::PieceTypeEnum pt,
+        const color::ColorEnum c,
+        const Square sq) const
     {
         return attacksFrom(pt, c, sq, occupiedBB());
     }
     static Bitboard attacksFrom(
-        const PieceTypeEnum pt,
+        const piece::PieceTypeEnum pt,
         const color::ColorEnum c,
         const Square sq,
         const Bitboard& occupied);
@@ -589,8 +606,8 @@ public:
     bool canPawnDrop(const Square sq) const
     {
         // 歩を持っていて、二歩ではない。
-        return hand(US).exists<C_FU>() > 0
-               && !(bbOf(FU, US) & fileMask(makeFile(sq)));
+        return hand(US).exists<piece::C_FU>() > 0
+               && !(bbOf(piece::FU, US) & fileMask(makeFile(sq)));
     }
     Bitboard pinnedPieces(
         const color::ColorEnum us, const Square from, const Square to) const;
@@ -689,27 +706,30 @@ public:
 
 private:
     void clear();
-    void setPiece(const ColoredPieceEnum piece, const Square sq)
+    void setPiece(const piece::ColoredPieceEnum piece, const Square sq)
     {
-        const color::ColorEnum c = get_color(piece);
-        const PieceTypeEnum pt = to_piece_type(piece);
+        const color::ColorEnum c = piece::get_color(piece);
+        const piece::PieceTypeEnum pt = piece::to_piece_type(piece);
 
         piece_[sq] = piece;
 
         byTypeBB_[pt].setBit(sq);
         byColorBB_[c].setBit(sq);
-        byTypeBB_[Occupied].setBit(sq);
+        byTypeBB_[piece::Occupied].setBit(sq);
     }
     void setHand(
-        const CapturedPieceTypeEnum hp, const color::ColorEnum c, const int num)
+        const piece::CapturedPieceTypeEnum hp,
+        const color::ColorEnum c,
+        const int num)
     {
         hand_[c].orEqual(num, hp);
     }
-    void setHand(const ColoredPieceEnum piece, const int num)
+    void setHand(const piece::ColoredPieceEnum piece, const int num)
     {
-        const color::ColorEnum c = get_color(piece);
-        const PieceTypeEnum pt = to_piece_type(piece);
-        const CapturedPieceTypeEnum hp = to_captured_piece_type(pt);
+        const color::ColorEnum c = piece::get_color(piece);
+        const piece::PieceTypeEnum pt = piece::to_piece_type(piece);
+        const piece::CapturedPieceTypeEnum hp
+            = piece::to_captured_piece_type(pt);
         setHand(hp, c, num);
     }
 
@@ -721,8 +741,10 @@ private:
             color::opposite(turn()), kingSquare(turn()));
     }
 
-    void
-    xorBBs(const PieceTypeEnum pt, const Square sq, const color::ColorEnum c);
+    void xorBBs(
+        const piece::PieceTypeEnum pt,
+        const Square sq,
+        const color::ColorEnum c);
     // turn() 側が
     // pin されて(して)いる駒の Bitboard を返す。
     // BetweenIsUs == true  : 間の駒が自駒。
@@ -740,9 +762,10 @@ private:
         const Square ksq = kingSquare(FindPinned ? us : them);
 
         // 障害物が無ければ玉に到達出来る駒のBitboardだけ残す。
-        pinners &= (bbOf(KY) & lanceAttackToEdge((FindPinned ? us : them), ksq))
-                   | (bbOf(HI, RY) & rookAttackToEdge(ksq))
-                   | (bbOf(KA, UM) & bishopAttackToEdge(ksq));
+        pinners &= (bbOf(piece::KY)
+                    & lanceAttackToEdge((FindPinned ? us : them), ksq))
+                   | (bbOf(piece::HI, piece::RY) & rookAttackToEdge(ksq))
+                   | (bbOf(piece::KA, piece::UM) & bishopAttackToEdge(ksq));
 
         while (pinners) {
             const Square sq = pinners.firstOneFromSQ11();
@@ -768,8 +791,10 @@ private:
 
     void printHand(std::ostream& os, const color::ColorEnum c) const;
 
-    static Key
-    zobrist(const PieceTypeEnum pt, const Square sq, const color::ColorEnum c)
+    static Key zobrist(
+        const piece::PieceTypeEnum pt,
+        const Square sq,
+        const color::ColorEnum c)
     {
         return zobrist_[pt][sq][c];
     }
@@ -777,19 +802,20 @@ private:
     {
         return zobTurn_;
     }
-    static Key zobHand(const CapturedPieceTypeEnum hp, const color::ColorEnum c)
+    static Key
+    zobHand(const piece::CapturedPieceTypeEnum hp, const color::ColorEnum c)
     {
         return zobHand_[hp][c];
     }
 
     // byTypeBB は敵、味方の駒を区別しない。
     // byColorBB は駒の種類を区別しない。
-    Bitboard byTypeBB_[PieceTypeNum];
+    Bitboard byTypeBB_[piece::PieceTypeNum];
     Bitboard byColorBB_[color::NUM_COLORS];
     Bitboard goldsBB_;
 
     // 各マスの状態
-    ColoredPieceEnum piece_[SquareNum];
+    piece::ColoredPieceEnum piece_[SquareNum];
     Square kingSquare_[color::NUM_COLORS];
 
     // 手駒
@@ -800,93 +826,93 @@ private:
     StateInfo* st_;
     Ply gamePly_;
 
-    static Key zobrist_[PieceTypeNum][SquareNum][color::NUM_COLORS];
+    static Key zobrist_[piece::PieceTypeNum][SquareNum][color::NUM_COLORS];
     static const Key zobTurn_ = 1;
-    static Key zobHand_[NUM_CAPTURED_PIECE_TYPES][color::NUM_COLORS];
+    static Key zobHand_[piece::NUM_CAPTURED_PIECE_TYPES][color::NUM_COLORS];
 };
 
 template <>
-inline Bitboard Position::attacksFrom<KY>(
+inline Bitboard Position::attacksFrom<piece::KY>(
     const color::ColorEnum c, const Square sq, const Bitboard& occupied)
 {
     return lanceAttack(c, sq, occupied);
 }
 template <>
-inline Bitboard Position::attacksFrom<KA>(
+inline Bitboard Position::attacksFrom<piece::KA>(
     const color::ColorEnum, const Square sq, const Bitboard& occupied)
 {
     return bishopAttack(sq, occupied);
 }
 template <>
-inline Bitboard Position::attacksFrom<HI>(
+inline Bitboard Position::attacksFrom<piece::HI>(
     const color::ColorEnum, const Square sq, const Bitboard& occupied)
 {
     return rookAttack(sq, occupied);
 }
 template <>
-inline Bitboard Position::attacksFrom<UM>(
+inline Bitboard Position::attacksFrom<piece::UM>(
     const color::ColorEnum, const Square sq, const Bitboard& occupied)
 {
     return horseAttack(sq, occupied);
 }
 template <>
-inline Bitboard Position::attacksFrom<RY>(
+inline Bitboard Position::attacksFrom<piece::RY>(
     const color::ColorEnum, const Square sq, const Bitboard& occupied)
 {
     return dragonAttack(sq, occupied);
 }
 
 template <>
-inline Bitboard
-Position::attacksFrom<FU>(const color::ColorEnum c, const Square sq) const
+inline Bitboard Position::attacksFrom<piece::FU>(
+    const color::ColorEnum c, const Square sq) const
 {
     return pawnAttack(c, sq);
 }
 template <>
-inline Bitboard
-Position::attacksFrom<KY>(const color::ColorEnum c, const Square sq) const
+inline Bitboard Position::attacksFrom<piece::KY>(
+    const color::ColorEnum c, const Square sq) const
 {
     return lanceAttack(c, sq, occupiedBB());
 }
 template <>
-inline Bitboard
-Position::attacksFrom<KE>(const color::ColorEnum c, const Square sq) const
+inline Bitboard Position::attacksFrom<piece::KE>(
+    const color::ColorEnum c, const Square sq) const
 {
     return knightAttack(c, sq);
 }
 template <>
-inline Bitboard
-Position::attacksFrom<GI>(const color::ColorEnum c, const Square sq) const
+inline Bitboard Position::attacksFrom<piece::GI>(
+    const color::ColorEnum c, const Square sq) const
 {
     return silverAttack(c, sq);
 }
 template <>
 inline Bitboard
-Position::attacksFrom<KA>(const color::ColorEnum, const Square sq) const
+Position::attacksFrom<piece::KA>(const color::ColorEnum, const Square sq) const
 {
     return bishopAttack(sq, occupiedBB());
 }
 template <>
 inline Bitboard
-Position::attacksFrom<HI>(const color::ColorEnum, const Square sq) const
+Position::attacksFrom<piece::HI>(const color::ColorEnum, const Square sq) const
 {
     return rookAttack(sq, occupiedBB());
 }
 template <>
 inline Bitboard
-Position::attacksFrom<OU>(const color::ColorEnum, const Square sq) const
+Position::attacksFrom<piece::OU>(const color::ColorEnum, const Square sq) const
 {
     return kingAttack(sq);
 }
 template <>
 inline Bitboard
-Position::attacksFrom<UM>(const color::ColorEnum, const Square sq) const
+Position::attacksFrom<piece::UM>(const color::ColorEnum, const Square sq) const
 {
     return horseAttack(sq, occupiedBB());
 }
 template <>
 inline Bitboard
-Position::attacksFrom<RY>(const color::ColorEnum, const Square sq) const
+Position::attacksFrom<piece::RY>(const color::ColorEnum, const Square sq) const
 {
     return dragonAttack(sq, occupiedBB());
 }
@@ -895,29 +921,29 @@ Position::attacksFrom<RY>(const color::ColorEnum, const Square sq) const
 // の局面が最大合法手局面で 593 手。番兵の分、+ 1 しておく。
 const int MaxLegalMoves = 593 + 1;
 
-class CharToPieceUSI : public std::map<char, ColoredPieceEnum>
+class CharToPieceUSI : public std::map<char, piece::ColoredPieceEnum>
 {
 public:
     CharToPieceUSI()
     {
-        (*this)['P'] = B_FU;
-        (*this)['p'] = W_FU;
-        (*this)['L'] = B_KY;
-        (*this)['l'] = W_KY;
-        (*this)['N'] = B_KE;
-        (*this)['n'] = W_KE;
-        (*this)['S'] = B_GI;
-        (*this)['s'] = W_GI;
-        (*this)['B'] = B_KA;
-        (*this)['b'] = W_KA;
-        (*this)['R'] = B_HI;
-        (*this)['r'] = W_HI;
-        (*this)['G'] = B_KI;
-        (*this)['g'] = W_KI;
-        (*this)['K'] = B_OU;
-        (*this)['k'] = W_OU;
+        (*this)['P'] = piece::B_FU;
+        (*this)['p'] = piece::W_FU;
+        (*this)['L'] = piece::B_KY;
+        (*this)['l'] = piece::W_KY;
+        (*this)['N'] = piece::B_KE;
+        (*this)['n'] = piece::W_KE;
+        (*this)['S'] = piece::B_GI;
+        (*this)['s'] = piece::W_GI;
+        (*this)['B'] = piece::B_KA;
+        (*this)['b'] = piece::W_KA;
+        (*this)['R'] = piece::B_HI;
+        (*this)['r'] = piece::W_HI;
+        (*this)['G'] = piece::B_KI;
+        (*this)['g'] = piece::W_KI;
+        (*this)['K'] = piece::B_OU;
+        (*this)['k'] = piece::W_OU;
     }
-    ColoredPieceEnum value(char c) const
+    piece::ColoredPieceEnum value(char c) const
     {
         return this->find(c)->second;
     }

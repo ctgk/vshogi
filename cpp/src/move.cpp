@@ -23,18 +23,18 @@
 
 namespace
 {
-const std::string HandPieceToStringTable[NUM_CAPTURED_PIECE_TYPES]
+const std::string HandPieceToStringTable[piece::NUM_CAPTURED_PIECE_TYPES]
     = {"P*", "L*", "N*", "S*", "G*", "B*", "R*"};
-inline std::string handPieceToString(const CapturedPieceTypeEnum hp)
+inline std::string handPieceToString(const piece::CapturedPieceTypeEnum hp)
 {
     return HandPieceToStringTable[hp];
 }
 
-const std::string PieceTypeToStringTable[PieceTypeNum]
+const std::string PieceTypeToStringTable[piece::PieceTypeNum]
     = {"",
        "FU",
        "KY",
-       "KE",
+       "piece::KE",
        "GI",
        "KA",
        "HI",
@@ -46,7 +46,7 @@ const std::string PieceTypeToStringTable[PieceTypeNum]
        "NG",
        "UM",
        "RY"};
-inline std::string pieceTypeToString(const PieceTypeEnum pt)
+inline std::string pieceTypeToString(const piece::PieceTypeEnum pt)
 {
     return PieceTypeToStringTable[pt];
 }

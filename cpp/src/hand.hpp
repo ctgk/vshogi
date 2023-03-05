@@ -28,13 +28,13 @@
 // 手駒
 // 手駒の状態 (32bit に pack する)
 // 手駒の優劣判定を高速に行う為に各駒の間を1bit空ける。
-// xxxxxxxx xxxxxxxx xxxxxxxx xxx11111  FU
-// xxxxxxxx xxxxxxxx xxxxxxx1 11xxxxxx  KY
-// xxxxxxxx xxxxxxxx xxx111xx xxxxxxxx  KE
-// xxxxxxxx xxxxxxx1 11xxxxxx xxxxxxxx  GI
-// xxxxxxxx xxx111xx xxxxxxxx xxxxxxxx  KI
-// xxxxxxxx 11xxxxxx xxxxxxxx xxxxxxxx  KA
-// xxxxx11x xxxxxxxx xxxxxxxx xxxxxxxx  HI
+// xxxxxxxx xxxxxxxx xxxxxxxx xxx11111  piece::FU
+// xxxxxxxx xxxxxxxx xxxxxxx1 11xxxxxx  piece::KY
+// xxxxxxxx xxxxxxxx xxx111xx xxxxxxxx  piece::KE
+// xxxxxxxx xxxxxxx1 11xxxxxx xxxxxxxx  piece::GI
+// xxxxxxxx xxx111xx xxxxxxxx xxxxxxxx  piece::KI
+// xxxxxxxx 11xxxxxx xxxxxxxx xxxxxxxx  piece::KA
+// xxxxx11x xxxxxxxx xxxxxxxx xxxxxxxx  piece::HI
 class Hand
 {
 public:
@@ -48,39 +48,40 @@ public:
     {
         return value_;
     }
-    template <CapturedPieceTypeEnum HP>
+    template <piece::CapturedPieceTypeEnum HP>
     u32 numOf() const
     {
         return (
-            HP == C_FU   ? ((value() & HPawnMask) >> HPawnShiftBits)
-            : HP == C_KY ? ((value() & HLanceMask) >> HLanceShiftBits)
-            : HP == C_KE ? ((value() & HKnightMask) >> HKnightShiftBits)
-            : HP == C_GI ? ((value() & HSilverMask) >> HSilverShiftBits)
-            : HP == C_KI ? ((value() & HGoldMask) >> HGoldShiftBits)
-            : HP == C_KA ? ((value() & HBishopMask) >> HBishopShiftBits)
-                         : ((value() /*& HRookMask*/) >> HRookShiftBits));
+            HP == piece::C_FU   ? ((value() & HPawnMask) >> HPawnShiftBits)
+            : HP == piece::C_KY ? ((value() & HLanceMask) >> HLanceShiftBits)
+            : HP == piece::C_KE ? ((value() & HKnightMask) >> HKnightShiftBits)
+            : HP == piece::C_GI ? ((value() & HSilverMask) >> HSilverShiftBits)
+            : HP == piece::C_KI ? ((value() & HGoldMask) >> HGoldShiftBits)
+            : HP == piece::C_KA
+                ? ((value() & HBishopMask) >> HBishopShiftBits)
+                : ((value() /*& HRookMask*/) >> HRookShiftBits));
     }
 
-    u32 numOf(const CapturedPieceTypeEnum handPiece) const
+    u32 numOf(const piece::CapturedPieceTypeEnum handPiece) const
     {
         return (value() & HandPieceMask[handPiece])
                >> HandPieceShiftBits[handPiece];
     }
     // 2つの Hand 型変数の、同じ種類の駒の数を比較する必要があるため、
     // bool じゃなくて、u32 型でそのまま返す。
-    template <CapturedPieceTypeEnum HP>
+    template <piece::CapturedPieceTypeEnum HP>
     u32 exists() const
     {
         return (
-            HP == C_FU   ? (value() & HPawnMask)
-            : HP == C_KY ? (value() & HLanceMask)
-            : HP == C_KE ? (value() & HKnightMask)
-            : HP == C_GI ? (value() & HSilverMask)
-            : HP == C_KI ? (value() & HGoldMask)
-            : HP == C_KA ? (value() & HBishopMask)
-                         : (value() & HRookMask));
+            HP == piece::C_FU   ? (value() & HPawnMask)
+            : HP == piece::C_KY ? (value() & HLanceMask)
+            : HP == piece::C_KE ? (value() & HKnightMask)
+            : HP == piece::C_GI ? (value() & HSilverMask)
+            : HP == piece::C_KI ? (value() & HGoldMask)
+            : HP == piece::C_KA ? (value() & HBishopMask)
+                                : (value() & HRookMask));
     }
-    u32 exists(const CapturedPieceTypeEnum handPiece) const
+    u32 exists(const piece::CapturedPieceTypeEnum handPiece) const
     {
         return value() & HandPieceMask[handPiece];
     }
@@ -89,15 +90,15 @@ public:
         return value() & HandPieceExceptPawnMask;
     }
     // num が int だけどまあ良いか。
-    void orEqual(const int num, const CapturedPieceTypeEnum handPiece)
+    void orEqual(const int num, const piece::CapturedPieceTypeEnum handPiece)
     {
         value_ |= num << HandPieceShiftBits[handPiece];
     }
-    void plusOne(const CapturedPieceTypeEnum handPiece)
+    void plusOne(const piece::CapturedPieceTypeEnum handPiece)
     {
         value_ += HandPieceOne[handPiece];
     }
-    void minusOne(const CapturedPieceTypeEnum handPiece)
+    void minusOne(const piece::CapturedPieceTypeEnum handPiece)
     {
         value_ -= HandPieceOne[handPiece];
     }
@@ -116,11 +117,11 @@ public:
     {
 #if 0
         // 全ての駒が ref 以上の枚数なので、true
-        return (ref.exists<C_KE>() <= this->exists<C_KE>()
-                && ref.exists<C_GI>() <= this->exists<C_GI>()
-                && ref.exists<C_KI  >() <= this->exists<C_KI  >()
-                && ref.exists<C_KA>() <= this->exists<C_KA>()
-                && ref.exists<C_HI  >() <= this->exists<C_HI  >());
+        return (ref.exists<piece::C_KE>() <= this->exists<piece::C_KE>()
+                && ref.exists<piece::C_GI>() <= this->exists<piece::C_GI>()
+                && ref.exists<piece::C_KI  >() <= this->exists<piece::C_KI  >()
+                && ref.exists<piece::C_KA>() <= this->exists<piece::C_KA>()
+                && ref.exists<piece::C_HI  >() <= this->exists<piece::C_HI  >());
 #else
         // こちらは、同じ意味でより高速
         // ref の方がどれか一つでも多くの枚数の駒を持っていれば、Borrow の位置のビットが立つ。
@@ -136,19 +137,19 @@ public:
     void setPP(const Hand us, const Hand them)
     {
         u32 mask = 0;
-        if (them.exists<C_FU>() == 0)
+        if (them.exists<piece::C_FU>() == 0)
             mask |= HPawnMask;
-        if (them.exists<C_KY>() == 0)
+        if (them.exists<piece::C_KY>() == 0)
             mask |= HLanceMask;
-        if (them.exists<C_KE>() == 0)
+        if (them.exists<piece::C_KE>() == 0)
             mask |= HKnightMask;
-        if (them.exists<C_GI>() == 0)
+        if (them.exists<piece::C_GI>() == 0)
             mask |= HSilverMask;
-        if (them.exists<C_KI>() == 0)
+        if (them.exists<piece::C_KI>() == 0)
             mask |= HGoldMask;
-        if (them.exists<C_KA>() == 0)
+        if (them.exists<piece::C_KA>() == 0)
             mask |= HBishopMask;
-        if (them.exists<C_HI>() == 0)
+        if (them.exists<piece::C_HI>() == 0)
             mask |= HRookMask;
 
         // 相手が一枚も持っていない種類の持駒を一旦0にする
@@ -178,10 +179,10 @@ private:
     static const u32 HandPieceExceptPawnMask
         = (HLanceMask | HKnightMask | HSilverMask | HGoldMask | HBishopMask
            | HRookMask);
-    static const int HandPieceShiftBits[NUM_CAPTURED_PIECE_TYPES];
-    static const u32 HandPieceMask[NUM_CAPTURED_PIECE_TYPES];
+    static const int HandPieceShiftBits[piece::NUM_CAPTURED_PIECE_TYPES];
+    static const u32 HandPieceMask[piece::NUM_CAPTURED_PIECE_TYPES];
     // 特定の種類の持ち駒を 1 つ増やしたり減らしたりするときに使用するテーブル
-    static const u32 HandPieceOne[NUM_CAPTURED_PIECE_TYPES];
+    static const u32 HandPieceOne[piece::NUM_CAPTURED_PIECE_TYPES];
     static const u32 BorrowMask
         = ((HPawnMask + (1 << HPawnShiftBits))
            | (HLanceMask + (1 << HLanceShiftBits))

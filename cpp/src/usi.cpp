@@ -34,27 +34,27 @@ inline int cpuCoreCount()
     return std::max(static_cast<int>(std::thread::hardware_concurrency()), 1);
 }
 
-class StringToPieceTypeCSA : public std::map<std::string, PieceTypeEnum>
+class StringToPieceTypeCSA : public std::map<std::string, piece::PieceTypeEnum>
 {
 public:
     StringToPieceTypeCSA()
     {
-        (*this)["FU"] = FU;
-        (*this)["KY"] = KY;
-        (*this)["KE"] = KE;
-        (*this)["GI"] = GI;
-        (*this)["KA"] = KA;
-        (*this)["HI"] = HI;
-        (*this)["KI"] = KI;
-        (*this)["OU"] = OU;
-        (*this)["TO"] = TO;
-        (*this)["NY"] = NY;
-        (*this)["NK"] = NK;
-        (*this)["NG"] = NG;
-        (*this)["UM"] = UM;
-        (*this)["RY"] = RY;
+        (*this)["FU"] = piece::FU;
+        (*this)["KY"] = piece::KY;
+        (*this)["piece::KE"] = piece::KE;
+        (*this)["GI"] = piece::GI;
+        (*this)["KA"] = piece::KA;
+        (*this)["HI"] = piece::HI;
+        (*this)["KI"] = piece::KI;
+        (*this)["OU"] = piece::OU;
+        (*this)["TO"] = piece::TO;
+        (*this)["NY"] = piece::NY;
+        (*this)["NK"] = piece::NK;
+        (*this)["NG"] = piece::NG;
+        (*this)["UM"] = piece::UM;
+        (*this)["RY"] = piece::RY;
     }
-    PieceTypeEnum value(const std::string& str) const
+    piece::PieceTypeEnum value(const std::string& str) const
     {
         return this->find(str)->second;
     }
@@ -71,8 +71,8 @@ Move usiToMoveBody(const Position& pos, const std::string& moveStr)
     Move move;
     if (g_charToPieceUSI.isLegalChar(moveStr[0])) {
         // drop
-        const PieceTypeEnum ptTo
-            = to_piece_type(g_charToPieceUSI.value(moveStr[0]));
+        const piece::PieceTypeEnum ptTo
+            = piece::to_piece_type(g_charToPieceUSI.value(moveStr[0]));
         if (moveStr[1] != '*')
             return Move::moveNone();
         const File toFile = charUSIToFile(moveStr[2]);
@@ -94,12 +94,12 @@ Move usiToMoveBody(const Position& pos, const std::string& moveStr)
         const Square to = makeSquare(toFile, toRank);
         if (moveStr[4] == '\0')
             move = makeNonPromoteMove<Capture>(
-                to_piece_type(pos.piece(from)), from, to, pos);
+                piece::to_piece_type(pos.piece(from)), from, to, pos);
         else if (moveStr[4] == '+') {
             if (moveStr[5] != '\0')
                 return Move::moveNone();
             move = makePromoteMove<Capture>(
-                to_piece_type(pos.piece(from)), from, to, pos);
+                piece::to_piece_type(pos.piece(from)), from, to, pos);
         } else
             return Move::moveNone();
     }
@@ -148,7 +148,7 @@ Move csaToMoveBody(const Position& pos, const std::string& moveStr)
     const std::string ptToString(moveStr.begin() + 4, moveStr.end());
     if (!g_stringToPieceTypeCSA.isLegalString(ptToString))
         return Move::moveNone();
-    const PieceTypeEnum ptTo = g_stringToPieceTypeCSA.value(ptToString);
+    const piece::PieceTypeEnum ptTo = g_stringToPieceTypeCSA.value(ptToString);
     Move move;
     if (moveStr[0] == '0' && moveStr[1] == '0')
         // drop
@@ -159,11 +159,11 @@ Move csaToMoveBody(const Position& pos, const std::string& moveStr)
         if (!isInSquare(fromFile, fromRank))
             return Move::moveNone();
         const Square from = makeSquare(fromFile, fromRank);
-        PieceTypeEnum ptFrom = to_piece_type(pos.piece(from));
+        piece::PieceTypeEnum ptFrom = piece::to_piece_type(pos.piece(from));
         if (ptFrom == ptTo)
             // non promote
             move = makeNonPromoteMove<Capture>(ptFrom, from, to, pos);
-        else if (ptFrom + PTPromote == ptTo)
+        else if (ptFrom + piece::PTPromote == ptTo)
             // promote
             move = makePromoteMove<Capture>(ptFrom, from, to, pos);
         else

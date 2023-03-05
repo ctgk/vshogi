@@ -137,7 +137,7 @@ public:
     void set_pieces(const int pieces[], const int pieces_in_hand[][7])
     {
         history.clear();
-        pos.set((const ColoredPieceEnum*)pieces, pieces_in_hand);
+        pos.set((const piece::ColoredPieceEnum*)pieces, pieces_in_hand);
     }
     bool set_hcp(char* hcp)
     {
@@ -222,14 +222,14 @@ public:
     {
         if (promotion)
             return makePromoteMove<Capture>(
-                       to_piece_type(pos.piece((Square)from_square)),
+                       piece::to_piece_type(pos.piece((Square)from_square)),
                        (Square)from_square,
                        (Square)to_square,
                        pos)
                 .value();
         else
             return makeNonPromoteMove<Capture>(
-                       to_piece_type(pos.piece((Square)from_square)),
+                       piece::to_piece_type(pos.piece((Square)from_square)),
                        (Square)from_square,
                        (Square)to_square,
                        pos)
@@ -238,7 +238,8 @@ public:
 
     int drop_move(const int to_square, const int drop_piece_type) const
     {
-        return makeDropMove((PieceTypeEnum)drop_piece_type, (Square)to_square)
+        return makeDropMove(
+                   (piece::PieceTypeEnum)drop_piece_type, (Square)to_square)
             .value();
     }
 
@@ -342,48 +343,48 @@ public:
     {
         const Hand h = pos.hand((color::ColorEnum)color);
         return std::vector<int>{
-            (int)h.numOf<C_FU>(),
-            (int)h.numOf<C_KY>(),
-            (int)h.numOf<C_KE>(),
-            (int)h.numOf<C_GI>(),
-            (int)h.numOf<C_KI>(),
-            (int)h.numOf<C_KA>(),
-            (int)h.numOf<C_HI>()};
+            (int)h.numOf<piece::C_FU>(),
+            (int)h.numOf<piece::C_KY>(),
+            (int)h.numOf<piece::C_KE>(),
+            (int)h.numOf<piece::C_GI>(),
+            (int)h.numOf<piece::C_KI>(),
+            (int)h.numOf<piece::C_KA>(),
+            (int)h.numOf<piece::C_HI>()};
     }
 
     std::vector<int> pieces() const
     {
         std::vector<int> board(81);
 
-        bbToVector(FU, color::BLACK, B_FU, board);
-        bbToVector(KY, color::BLACK, B_KY, board);
-        bbToVector(KE, color::BLACK, B_KE, board);
-        bbToVector(GI, color::BLACK, B_GI, board);
-        bbToVector(KA, color::BLACK, B_KA, board);
-        bbToVector(HI, color::BLACK, B_HI, board);
-        bbToVector(KI, color::BLACK, B_KI, board);
-        bbToVector(OU, color::BLACK, B_OU, board);
-        bbToVector(TO, color::BLACK, B_TO, board);
-        bbToVector(NY, color::BLACK, B_NY, board);
-        bbToVector(NK, color::BLACK, B_NK, board);
-        bbToVector(NG, color::BLACK, B_NG, board);
-        bbToVector(UM, color::BLACK, B_UM, board);
-        bbToVector(RY, color::BLACK, B_RY, board);
+        bbToVector(piece::FU, color::BLACK, piece::B_FU, board);
+        bbToVector(piece::KY, color::BLACK, piece::B_KY, board);
+        bbToVector(piece::KE, color::BLACK, piece::B_KE, board);
+        bbToVector(piece::GI, color::BLACK, piece::B_GI, board);
+        bbToVector(piece::KA, color::BLACK, piece::B_KA, board);
+        bbToVector(piece::HI, color::BLACK, piece::B_HI, board);
+        bbToVector(piece::KI, color::BLACK, piece::B_KI, board);
+        bbToVector(piece::OU, color::BLACK, piece::B_OU, board);
+        bbToVector(piece::TO, color::BLACK, piece::B_TO, board);
+        bbToVector(piece::NY, color::BLACK, piece::B_NY, board);
+        bbToVector(piece::NK, color::BLACK, piece::B_NK, board);
+        bbToVector(piece::NG, color::BLACK, piece::B_NG, board);
+        bbToVector(piece::UM, color::BLACK, piece::B_UM, board);
+        bbToVector(piece::RY, color::BLACK, piece::B_RY, board);
 
-        bbToVector(FU, color::WHITE, W_FU, board);
-        bbToVector(KY, color::WHITE, W_KY, board);
-        bbToVector(KE, color::WHITE, W_KE, board);
-        bbToVector(GI, color::WHITE, W_GI, board);
-        bbToVector(KA, color::WHITE, W_KA, board);
-        bbToVector(HI, color::WHITE, W_HI, board);
-        bbToVector(KI, color::WHITE, W_KI, board);
-        bbToVector(OU, color::WHITE, W_OU, board);
-        bbToVector(TO, color::WHITE, W_TO, board);
-        bbToVector(NY, color::WHITE, W_NY, board);
-        bbToVector(NK, color::WHITE, W_NK, board);
-        bbToVector(NG, color::WHITE, W_NG, board);
-        bbToVector(UM, color::WHITE, W_UM, board);
-        bbToVector(RY, color::WHITE, W_RY, board);
+        bbToVector(piece::FU, color::WHITE, piece::W_FU, board);
+        bbToVector(piece::KY, color::WHITE, piece::W_KY, board);
+        bbToVector(piece::KE, color::WHITE, piece::W_KE, board);
+        bbToVector(piece::GI, color::WHITE, piece::W_GI, board);
+        bbToVector(piece::KA, color::WHITE, piece::W_KA, board);
+        bbToVector(piece::HI, color::WHITE, piece::W_HI, board);
+        bbToVector(piece::KI, color::WHITE, piece::W_KI, board);
+        bbToVector(piece::OU, color::WHITE, piece::W_OU, board);
+        bbToVector(piece::TO, color::WHITE, piece::W_TO, board);
+        bbToVector(piece::NY, color::WHITE, piece::W_NY, board);
+        bbToVector(piece::NK, color::WHITE, piece::W_NK, board);
+        bbToVector(piece::NG, color::WHITE, piece::W_NG, board);
+        bbToVector(piece::UM, color::WHITE, piece::W_UM, board);
+        bbToVector(piece::RY, color::WHITE, piece::W_RY, board);
 
         return std::move(board);
     }
@@ -394,7 +395,8 @@ public:
         // P2 piece 14 planes
         float* data = (float*)mem;
         for (color::ColorEnum c = color::BLACK; c < color::NUM_COLORS; ++c) {
-            for (PieceTypeEnum pt = FU; pt < PieceTypeNum; ++pt) {
+            for (piece::PieceTypeEnum pt = piece::FU; pt < piece::PieceTypeNum;
+                 ++pt) {
                 Bitboard bb = pos.bbOf(pt, c);
                 while (bb) {
                     const Square sq = bb.firstOneFromSQ11();
@@ -418,7 +420,8 @@ public:
         // 白の場合
         float* data = (float*)mem;
         for (color::ColorEnum c = color::WHITE; c >= color::BLACK; --c) {
-            for (PieceTypeEnum pt = FU; pt < PieceTypeNum; ++pt) {
+            for (piece::PieceTypeEnum pt = piece::FU; pt < piece::PieceTypeNum;
+                 ++pt) {
                 Bitboard bb = pos.bbOf(pt, c);
                 while (bb) {
                     // 盤面を180度回転
@@ -450,17 +453,17 @@ public:
         const Bitboard occupied_bb = pos.occupiedBB();
 
         // 駒の利き(駒種でマージ)
-        Bitboard attacks[color::NUM_COLORS][PieceTypeNum] = {
+        Bitboard attacks[color::NUM_COLORS][piece::PieceTypeNum] = {
             // clang-format off
             { { 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 } },
             { { 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 },{ 0, 0 } },
             // clang-format on
         };
         for (Square sq = SQ11; sq < SquareNum; sq++) {
-            const ColoredPieceEnum p = pos.piece(sq);
-            if (p != Empty) {
-                const color::ColorEnum pc = get_color(p);
-                const PieceTypeEnum pt = to_piece_type(p);
+            const piece::ColoredPieceEnum p = pos.piece(sq);
+            if (p != piece::Empty) {
+                const color::ColorEnum pc = piece::get_color(p);
+                const piece::PieceTypeEnum pt = piece::to_piece_type(p);
                 const Bitboard bb = pos.attacksFrom(pt, pc, sq, occupied_bb);
                 attacks[pc][pt] |= bb;
             }
@@ -472,8 +475,9 @@ public:
                 = pos.turn() == color::BLACK ? c : color::opposite(c);
 
             // 駒の配置
-            Bitboard bb[PieceTypeNum];
-            for (PieceTypeEnum pt = FU; pt < PieceTypeNum; ++pt) {
+            Bitboard bb[piece::PieceTypeNum];
+            for (piece::PieceTypeEnum pt = piece::FU; pt < piece::PieceTypeNum;
+                 ++pt) {
                 bb[pt] = pos.bbOf(pt, c);
             }
 
@@ -481,7 +485,9 @@ public:
                 // 白の場合、盤面を180度回転
                 const Square sq2 = pos.turn() == color::BLACK ? sq : SQ99 - sq;
 
-                for (PieceTypeEnum pt = FU; pt < PieceTypeNum; ++pt) {
+                for (piece::PieceTypeEnum pt = piece::FU;
+                     pt < piece::PieceTypeNum;
+                     ++pt) {
                     // 駒の配置
                     if (bb[pt].isSet(sq)) {
                         (*features1)[c2][pt - 1][sq2] = 1;
@@ -505,7 +511,8 @@ public:
             // hand
             const Hand hand = pos.hand(c);
             int p = 0;
-            for (CapturedPieceTypeEnum hp = C_FU; hp < NUM_CAPTURED_PIECE_TYPES;
+            for (piece::CapturedPieceTypeEnum hp = piece::C_FU;
+                 hp < piece::NUM_CAPTURED_PIECE_TYPES;
                  ++hp) {
                 u32 num = hand.numOf(hp);
                 if (num >= MAX_PIECES_IN_HAND[hp]) {
@@ -533,9 +540,9 @@ private:
     std::deque<std::pair<Move, StateInfo>> history;
 
     void bbToVector(
-        PieceTypeEnum pt,
+        piece::PieceTypeEnum pt,
         color::ColorEnum c,
-        ColoredPieceEnum piece,
+        piece::ColoredPieceEnum piece,
         std::vector<int>& board) const
     {
         Bitboard bb = pos.bbOf(pt, c);
@@ -612,11 +619,11 @@ private:
 
 int __piece_to_piece_type(const int p)
 {
-    return (int)to_piece_type((ColoredPieceEnum)p);
+    return (int)piece::to_piece_type((piece::ColoredPieceEnum)p);
 }
 int __hand_piece_to_piece_type(const int hp)
 {
-    return (int)to_piece_type((CapturedPieceTypeEnum)hp);
+    return (int)piece::to_piece_type((piece::CapturedPieceTypeEnum)hp);
 }
 
 // 移動先
@@ -652,8 +659,8 @@ int __move_from_piece_type(const int move)
 // 打つ駒の種類
 int __move_drop_hand_piece(const int move)
 {
-    return to_captured_piece_type(
-        (PieceTypeEnum)__move_from(move) - SquareNum + 1);
+    return piece::to_captured_piece_type(
+        (piece::PieceTypeEnum)__move_from(move) - SquareNum + 1);
 }
 
 unsigned short __move16(const int move)
@@ -741,7 +748,7 @@ int __dlshogi_make_move_label(const int move, const int color)
 {
     // see: move.hpp : 30
     // xxxxxxxx x1111111  移動先
-    // xx111111 1xxxxxxx  移動元。駒打ちの際には、PieceTypeEnum + SquareNum - 1
+    // xx111111 1xxxxxxx  移動元。駒打ちの際には、piece::PieceTypeEnum + SquareNum - 1
     // x1xxxxxx xxxxxxxx  1 なら成り
     const u16 move16 = (u16)move;
     u16 to_sq = move16 & 0b1111111;

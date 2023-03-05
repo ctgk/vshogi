@@ -17,76 +17,76 @@ std::string rtrim(const std::string& str, const std::string& chars = " ")
     return str.substr(0, str.find_last_not_of(chars) + 1);
 }
 
-class StringToPieceTypeCSA : public std::map<std::string, PieceTypeEnum>
+class StringToPieceTypeCSA : public std::map<std::string, piece::PieceTypeEnum>
 {
 public:
     StringToPieceTypeCSA()
     {
-        (*this)["FU"] = FU;
-        (*this)["KY"] = KY;
-        (*this)["KE"] = KE;
-        (*this)["GI"] = GI;
-        (*this)["KA"] = KA;
-        (*this)["HI"] = HI;
-        (*this)["KI"] = KI;
-        (*this)["OU"] = OU;
-        (*this)["TO"] = TO;
-        (*this)["NY"] = NY;
-        (*this)["NK"] = NK;
-        (*this)["NG"] = NG;
-        (*this)["UM"] = UM;
-        (*this)["RY"] = RY;
+        (*this)["FU"] = piece::FU;
+        (*this)["KY"] = piece::KY;
+        (*this)["KE"] = piece::KE;
+        (*this)["GI"] = piece::GI;
+        (*this)["KA"] = piece::KA;
+        (*this)["HI"] = piece::HI;
+        (*this)["KI"] = piece::KI;
+        (*this)["OU"] = piece::OU;
+        (*this)["TO"] = piece::TO;
+        (*this)["NY"] = piece::NY;
+        (*this)["NK"] = piece::NK;
+        (*this)["NG"] = piece::NG;
+        (*this)["UM"] = piece::UM;
+        (*this)["RY"] = piece::RY;
     }
-    PieceTypeEnum value(const std::string& str) const
+    piece::PieceTypeEnum value(const std::string& str) const
     {
         return this->find(str)->second;
     }
 };
 const StringToPieceTypeCSA stringToPieceTypeCSA;
 
-class StringToPieceCSA : public std::map<std::string, ColoredPieceEnum>
+class StringToPieceCSA : public std::map<std::string, piece::ColoredPieceEnum>
 {
 public:
     StringToPieceCSA()
     {
-        (*this)[" * "] = Empty;
-        (*this)["+FU"] = B_FU;
-        (*this)["+KY"] = B_KY;
-        (*this)["+KE"] = B_KE;
-        (*this)["+GI"] = B_GI;
-        (*this)["+KA"] = B_KA;
-        (*this)["+HI"] = B_HI;
-        (*this)["+KI"] = B_KI;
-        (*this)["+OU"] = B_OU;
-        (*this)["+TO"] = B_TO;
-        (*this)["+NY"] = B_NY;
-        (*this)["+NK"] = B_NK;
-        (*this)["+NG"] = B_NG;
-        (*this)["+UM"] = B_UM;
-        (*this)["+RY"] = B_RY;
-        (*this)["-FU"] = W_FU;
-        (*this)["-KY"] = W_KY;
-        (*this)["-KE"] = W_KE;
-        (*this)["-GI"] = W_GI;
-        (*this)["-KA"] = W_KA;
-        (*this)["-HI"] = W_HI;
-        (*this)["-KI"] = W_KI;
-        (*this)["-OU"] = W_OU;
-        (*this)["-TO"] = W_TO;
-        (*this)["-NY"] = W_NY;
-        (*this)["-NK"] = W_NK;
-        (*this)["-NG"] = W_NG;
-        (*this)["-UM"] = W_UM;
-        (*this)["-RY"] = W_RY;
+        (*this)[" * "] = piece::Empty;
+        (*this)["+FU"] = piece::B_FU;
+        (*this)["+KY"] = piece::B_KY;
+        (*this)["+KE"] = piece::B_KE;
+        (*this)["+GI"] = piece::B_GI;
+        (*this)["+KA"] = piece::B_KA;
+        (*this)["+HI"] = piece::B_HI;
+        (*this)["+KI"] = piece::B_KI;
+        (*this)["+OU"] = piece::B_OU;
+        (*this)["+TO"] = piece::B_TO;
+        (*this)["+NY"] = piece::B_NY;
+        (*this)["+NK"] = piece::B_NK;
+        (*this)["+NG"] = piece::B_NG;
+        (*this)["+UM"] = piece::B_UM;
+        (*this)["+RY"] = piece::B_RY;
+        (*this)["-FU"] = piece::W_FU;
+        (*this)["-KY"] = piece::W_KY;
+        (*this)["-KE"] = piece::W_KE;
+        (*this)["-GI"] = piece::W_GI;
+        (*this)["-KA"] = piece::W_KA;
+        (*this)["-HI"] = piece::W_HI;
+        (*this)["-KI"] = piece::W_KI;
+        (*this)["-OU"] = piece::W_OU;
+        (*this)["-TO"] = piece::W_TO;
+        (*this)["-NY"] = piece::W_NY;
+        (*this)["-NK"] = piece::W_NK;
+        (*this)["-NG"] = piece::W_NG;
+        (*this)["-UM"] = piece::W_UM;
+        (*this)["-RY"] = piece::W_RY;
     }
-    ColoredPieceEnum value(const std::string& str) const
+    piece::ColoredPieceEnum value(const std::string& str) const
     {
         return this->find(str)->second;
     }
 };
 const StringToPieceCSA stringToPieceCSA;
 
-const char* PieceToCharUSITable[PieceNone]
+const char* PieceToCharUSITable[piece::PieceNone]
     = {"",   "P",  "L",  "N",  "S",  "B",  "R",  "G",  "K", "+P", "+L",
        "+N", "+S", "+B", "+R", "",   "",   "p",  "l",  "n", "s",  "b",
        "r",  "g",  "k",  "+p", "+l", "+n", "+s", "+b", "+r"};
@@ -290,11 +290,11 @@ private:
         color::ColorEnum current_turn;
         int rank_index;
         int file_index;
-        ColoredPieceEnum piece;
-        int pieces_in_hand[PieceNone] = {};
-        ColoredPieceEnum pieces_in_board[9][9];
+        piece::ColoredPieceEnum piece;
+        int pieces_in_hand[piece::PieceNone] = {};
+        piece::ColoredPieceEnum pieces_in_board[9][9];
 
-        // ex.) P1 - KY - KE - GI - KI - OU - KI - GI - KE - KY
+        // ex.) P1 - piece::KY - piece::KE - piece::GI - piece::KI - piece::OU - piece::KI - piece::GI - piece::KE - piece::KY
         for (auto line : position_block_lines) {
             if (line[0] != 'P') {
                 auto itrColor = std::find(
@@ -342,17 +342,17 @@ private:
                         file_index += 1;
                     }
                 } else if (line[1] == 'I') { // PI
-                    const ColoredPieceEnum initial_board[9][9] = {
+                    const piece::ColoredPieceEnum initial_board[9][9] = {
                         // clang-format off
-                        {W_KY, W_KE, W_GI, W_KI, W_OU, W_KI, W_GI, W_KE, W_KY},
-                        {Empty, W_HI, Empty, Empty, Empty, Empty, Empty, W_KA, Empty},
-                        {W_FU, W_FU, W_FU, W_FU, W_FU, W_FU, W_FU, W_FU, W_FU},
-                        {Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty},
-                        {Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty},
-                        {Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty},
-                        {B_FU, B_FU, B_FU, B_FU, B_FU, B_FU, B_FU, B_FU, B_FU},
-                        {Empty, B_KA, Empty, Empty, Empty, Empty, Empty, B_HI, Empty},
-                        {B_KY, B_KE, B_GI, B_KI, B_OU, B_KI, B_GI, B_KE, B_KY},
+                        {piece::W_KY, piece::W_KE, piece::W_GI, piece::W_KI, piece::W_OU, piece::W_KI, piece::W_GI, piece::W_KE, piece::W_KY},
+                        {piece::Empty, piece::W_HI, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::W_KA, piece::Empty},
+                        {piece::W_FU, piece::W_FU, piece::W_FU, piece::W_FU, piece::W_FU, piece::W_FU, piece::W_FU, piece::W_FU, piece::W_FU},
+                        {piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty},
+                        {piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty},
+                        {piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty},
+                        {piece::B_FU, piece::B_FU, piece::B_FU, piece::B_FU, piece::B_FU, piece::B_FU, piece::B_FU, piece::B_FU, piece::B_FU},
+                        {piece::Empty, piece::B_KA, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::Empty, piece::B_HI, piece::Empty},
+                        {piece::B_KY, piece::B_KE, piece::B_GI, piece::B_KI, piece::B_OU, piece::B_KI, piece::B_GI, piece::B_KE, piece::B_KY},
                         // clang-format on
                     };
                     for (rank_index = 0; rank_index < 9; ++rank_index) {
@@ -370,7 +370,7 @@ private:
                         char rank_char = line[index];
                         rank_index = rank_char - '1';
                         index += 1;
-                        PieceTypeEnum piecetype
+                        piece::PieceTypeEnum piecetype
                             = stringToPieceTypeCSA.value(line.substr(index, 2));
                         index += 2;
                         if (rank_char == '0' && file_char == '0') {
@@ -380,13 +380,14 @@ private:
                         }
                         if (rank_index < 0 || rank_index >= 9 || file_index < 0
                             || file_index >= 9
-                            || pieces_in_board[rank_index][file_index] == Empty
-                            || to_piece_type(
+                            || pieces_in_board[rank_index][file_index]
+                                   == piece::Empty
+                            || piece::to_piece_type(
                                    pieces_in_board[rank_index][file_index])
                                    != piecetype)
                             throw std::domain_error("Invalid piece removing on "
                                                     "intializing a board");
-                        pieces_in_board[rank_index][file_index] = Empty;
+                        pieces_in_board[rank_index][file_index] = piece::Empty;
                     }
                 } else {
                     throw std::domain_error(
@@ -399,8 +400,8 @@ private:
     }
 
     static std::string to_sfen(
-        ColoredPieceEnum pieces_in_board[9][9],
-        int pieces_in_hand[PieceNone],
+        piece::ColoredPieceEnum pieces_in_board[9][9],
+        int pieces_in_hand[piece::PieceNone],
         color::ColorEnum current_turn,
         int move_count = 1)
     {
@@ -410,8 +411,8 @@ private:
         // Position part.
         for (int rank = 0; rank < 9; ++rank) {
             for (int file = 0; file < 9; ++file) {
-                ColoredPieceEnum piece = pieces_in_board[rank][file];
-                if (piece == Empty)
+                piece::ColoredPieceEnum piece = pieces_in_board[rank][file];
+                if (piece == piece::Empty)
                     empty += 1;
                 else {
                     if (empty > 0) {
@@ -444,8 +445,9 @@ private:
 
         // Pieces in hand
         int pih_len = 0;
-        for (ColoredPieceEnum p = B_FU; p < PieceNone; ++p) {
-            if (p > B_RY && p < W_FU)
+        for (piece::ColoredPieceEnum p = piece::B_FU; p < piece::PieceNone;
+             ++p) {
+            if (p > piece::B_RY && p < piece::W_FU)
                 continue;
             if (pieces_in_hand[p] >= 1) {
                 pih_len += 1;

@@ -159,10 +159,10 @@ void TranspositionTable::GetChildFirstEntry(
         if (move.isDrop()) {
             hand.minusOne(move.handPieceDropped());
         } else {
-            const ColoredPieceEnum to_pc = n.piece(move.to());
-            if (to_pc != Empty) {
-                const PieceTypeEnum pt = to_piece_type(to_pc);
-                hand.plusOne(to_captured_piece_type(pt));
+            const piece::ColoredPieceEnum to_pc = n.piece(move.to());
+            if (to_pc != piece::Empty) {
+                const piece::PieceTypeEnum pt = piece::to_piece_type(to_pc);
+                hand.plusOne(piece::to_captured_piece_type(pt));
             }
         }
     } else {
@@ -199,11 +199,11 @@ FORCE_INLINE bool moveGivesNeighborCheck(const Position& pos, const Move& move)
     const Square to = move.to();
 
     // 敵玉の8近傍
-    if (pos.attacksFrom<OU>(ksq).isSet(to))
+    if (pos.attacksFrom<piece::OU>(ksq).isSet(to))
         return true;
 
     // 桂馬による王手
-    if (move.pieceTypeTo() == KE)
+    if (move.pieceTypeTo() == piece::KE)
         return true;
 
     return false;
@@ -213,27 +213,27 @@ FORCE_INLINE bool moveGivesNeighborCheck(const Position& pos, const Move& move)
 FORCE_INLINE u32 dp(const Hand& us, const Hand& them)
 {
     u32 dp = 0;
-    u32 pawn = us.exists<C_FU>();
+    u32 pawn = us.exists<piece::C_FU>();
     if (pawn > 0)
-        dp += pawn + them.exists<C_FU>();
-    u32 lance = us.exists<C_KY>();
+        dp += pawn + them.exists<piece::C_FU>();
+    u32 lance = us.exists<piece::C_KY>();
     if (lance > 0)
-        dp += lance + them.exists<C_KY>();
-    u32 knight = us.exists<C_KE>();
+        dp += lance + them.exists<piece::C_KY>();
+    u32 knight = us.exists<piece::C_KE>();
     if (knight > 0)
-        dp += knight + them.exists<C_KE>();
-    u32 silver = us.exists<C_GI>();
+        dp += knight + them.exists<piece::C_KE>();
+    u32 silver = us.exists<piece::C_GI>();
     if (silver > 0)
-        dp += silver + them.exists<C_GI>();
-    u32 gold = us.exists<C_KI>();
+        dp += silver + them.exists<piece::C_GI>();
+    u32 gold = us.exists<piece::C_KI>();
     if (gold > 0)
-        dp += gold + them.exists<C_KI>();
-    u32 bishop = us.exists<C_KA>();
+        dp += gold + them.exists<piece::C_KI>();
+    u32 bishop = us.exists<piece::C_KA>();
     if (bishop > 0)
-        dp += bishop + them.exists<C_KA>();
-    u32 rook = us.exists<C_HI>();
+        dp += bishop + them.exists<piece::C_KA>();
+    u32 rook = us.exists<piece::C_HI>();
     if (rook > 0)
-        dp += rook + them.exists<C_HI>();
+        dp += rook + them.exists<piece::C_HI>();
     return dp;
 }
 
@@ -445,11 +445,13 @@ void DfPn::dfpn_inner(
                         }
                         // 先手の駒を取る手ならば、反証駒に追加する
                         else {
-                            const ColoredPieceEnum to_pc = n.piece(m2.to());
-                            if (to_pc != Empty) {
-                                const PieceTypeEnum pt = to_piece_type(to_pc);
-                                const CapturedPieceTypeEnum hp
-                                    = to_captured_piece_type(pt);
+                            const piece::ColoredPieceEnum to_pc
+                                = n.piece(m2.to());
+                            if (to_pc != piece::Empty) {
+                                const piece::PieceTypeEnum pt
+                                    = piece::to_piece_type(to_pc);
+                                const piece::CapturedPieceTypeEnum hp
+                                    = piece::to_captured_piece_type(pt);
                                 if (entry.hand.numOf(hp)
                                     > entry1.hand.numOf(hp)) {
                                     entry.hand = entry1.hand;
@@ -579,7 +581,7 @@ void DfPn::dfpn_inner(
                     // 子局面の証明駒を設定
                     // 打つ手ならば、証明駒に追加する
                     if (move.move.isDrop()) {
-                        const CapturedPieceTypeEnum hp
+                        const piece::CapturedPieceTypeEnum hp
                             = move.move.handPieceDropped();
                         if (entry.hand.numOf(hp) > child_entry.hand.numOf(hp)) {
                             entry.hand = child_entry.hand;
@@ -588,12 +590,14 @@ void DfPn::dfpn_inner(
                     }
                     // 後手の駒を取る手ならば、証明駒から削除する
                     else {
-                        const ColoredPieceEnum to_pc = n.piece(move.move.to());
-                        if (to_pc != Empty) {
+                        const piece::ColoredPieceEnum to_pc
+                            = n.piece(move.move.to());
+                        if (to_pc != piece::Empty) {
                             entry.hand = child_entry.hand;
-                            const PieceTypeEnum pt = to_piece_type(to_pc);
-                            const CapturedPieceTypeEnum hp
-                                = to_captured_piece_type(pt);
+                            const piece::PieceTypeEnum pt
+                                = piece::to_piece_type(to_pc);
+                            const piece::CapturedPieceTypeEnum hp
+                                = piece::to_captured_piece_type(pt);
                             if (entry.hand.exists(hp))
                                 entry.hand.minusOne(hp);
                         }
@@ -604,31 +608,31 @@ void DfPn::dfpn_inner(
                     if (child_entry.dn == 0) {
                         const Hand& child_dp = child_entry.hand;
                         // 歩
-                        const u32 child_pawn = child_dp.exists<C_FU>();
+                        const u32 child_pawn = child_dp.exists<piece::C_FU>();
                         if (child_pawn < pawn)
                             pawn = child_pawn;
                         // 香車
-                        const u32 child_lance = child_dp.exists<C_KY>();
+                        const u32 child_lance = child_dp.exists<piece::C_KY>();
                         if (child_lance < lance)
                             lance = child_lance;
                         // 桂馬
-                        const u32 child_knight = child_dp.exists<C_KE>();
+                        const u32 child_knight = child_dp.exists<piece::C_KE>();
                         if (child_knight < knight)
                             knight = child_knight;
                         // 銀
-                        const u32 child_silver = child_dp.exists<C_GI>();
+                        const u32 child_silver = child_dp.exists<piece::C_GI>();
                         if (child_silver < silver)
                             silver = child_silver;
                         // 金
-                        const u32 child_gold = child_dp.exists<C_KI>();
+                        const u32 child_gold = child_dp.exists<piece::C_KI>();
                         if (child_gold < gold)
                             gold = child_gold;
                         // 角
-                        const u32 child_bishop = child_dp.exists<C_KA>();
+                        const u32 child_bishop = child_dp.exists<piece::C_KA>();
                         if (child_bishop < bishop)
                             bishop = child_bishop;
                         // 飛車
-                        const u32 child_rook = child_dp.exists<C_HI>();
+                        const u32 child_rook = child_dp.exists<piece::C_HI>();
                         if (child_rook < rook)
                             rook = child_rook;
                     }
@@ -661,37 +665,37 @@ void DfPn::dfpn_inner(
                     entry.num_searched = REPEAT;
                 else {
                     // 先手が一枚も持っていない種類の先手の持ち駒を反証駒から削除する
-                    u32 curr_pawn = entry.hand.template exists<C_FU>();
+                    u32 curr_pawn = entry.hand.template exists<piece::C_FU>();
                     if (curr_pawn == 0)
                         pawn = 0;
                     else if (pawn < curr_pawn)
                         pawn = curr_pawn;
-                    u32 curr_lance = entry.hand.template exists<C_KY>();
+                    u32 curr_lance = entry.hand.template exists<piece::C_KY>();
                     if (curr_lance == 0)
                         lance = 0;
                     else if (lance < curr_lance)
                         lance = curr_lance;
-                    u32 curr_knight = entry.hand.template exists<C_KE>();
+                    u32 curr_knight = entry.hand.template exists<piece::C_KE>();
                     if (curr_knight == 0)
                         knight = 0;
                     else if (knight < curr_knight)
                         knight = curr_knight;
-                    u32 curr_silver = entry.hand.template exists<C_GI>();
+                    u32 curr_silver = entry.hand.template exists<piece::C_GI>();
                     if (curr_silver == 0)
                         silver = 0;
                     else if (silver < curr_silver)
                         silver = curr_silver;
-                    u32 curr_gold = entry.hand.template exists<C_KI>();
+                    u32 curr_gold = entry.hand.template exists<piece::C_KI>();
                     if (curr_gold == 0)
                         gold = 0;
                     else if (gold < curr_gold)
                         gold = curr_gold;
-                    u32 curr_bishop = entry.hand.template exists<C_KA>();
+                    u32 curr_bishop = entry.hand.template exists<piece::C_KA>();
                     if (curr_bishop == 0)
                         bishop = 0;
                     else if (bishop < curr_bishop)
                         bishop = curr_bishop;
-                    u32 curr_rook = entry.hand.template exists<C_HI>();
+                    u32 curr_rook = entry.hand.template exists<piece::C_HI>();
                     if (curr_rook == 0)
                         rook = 0;
                     else if (rook < curr_rook)
@@ -731,31 +735,31 @@ void DfPn::dfpn_inner(
                     if (child_entry.pn == 0) {
                         const Hand& child_pp = child_entry.hand;
                         // 歩
-                        const u32 child_pawn = child_pp.exists<C_FU>();
+                        const u32 child_pawn = child_pp.exists<piece::C_FU>();
                         if (child_pawn > pawn)
                             pawn = child_pawn;
                         // 香車
-                        const u32 child_lance = child_pp.exists<C_KY>();
+                        const u32 child_lance = child_pp.exists<piece::C_KY>();
                         if (child_lance > lance)
                             lance = child_lance;
                         // 桂馬
-                        const u32 child_knight = child_pp.exists<C_KE>();
+                        const u32 child_knight = child_pp.exists<piece::C_KE>();
                         if (child_knight > knight)
                             knight = child_knight;
                         // 銀
-                        const u32 child_silver = child_pp.exists<C_GI>();
+                        const u32 child_silver = child_pp.exists<piece::C_GI>();
                         if (child_silver > silver)
                             silver = child_silver;
                         // 金
-                        const u32 child_gold = child_pp.exists<C_KI>();
+                        const u32 child_gold = child_pp.exists<piece::C_KI>();
                         if (child_gold > gold)
                             gold = child_gold;
                         // 角
-                        const u32 child_bishop = child_pp.exists<C_KA>();
+                        const u32 child_bishop = child_pp.exists<piece::C_KA>();
                         if (child_bishop > bishop)
                             bishop = child_bishop;
                         // 飛車
-                        const u32 child_rook = child_pp.exists<C_HI>();
+                        const u32 child_rook = child_pp.exists<piece::C_HI>();
                         if (child_rook > rook)
                             rook = child_rook;
                     } else
@@ -772,7 +776,7 @@ void DfPn::dfpn_inner(
                         // 子局面の反証駒を設定
                         // 打つ手ならば、反証駒から削除する
                         if (move.move.isDrop()) {
-                            const CapturedPieceTypeEnum hp
+                            const piece::CapturedPieceTypeEnum hp
                                 = move.move.handPieceDropped();
                             if (entry.hand.numOf(hp)
                                 < child_entry.hand.numOf(hp)) {
@@ -782,12 +786,13 @@ void DfPn::dfpn_inner(
                         }
                         // 先手の駒を取る手ならば、反証駒に追加する
                         else {
-                            const ColoredPieceEnum to_pc
+                            const piece::ColoredPieceEnum to_pc
                                 = n.piece(move.move.to());
-                            if (to_pc != Empty) {
-                                const PieceTypeEnum pt = to_piece_type(to_pc);
-                                const CapturedPieceTypeEnum hp
-                                    = to_captured_piece_type(pt);
+                            if (to_pc != piece::Empty) {
+                                const piece::PieceTypeEnum pt
+                                    = piece::to_piece_type(to_pc);
+                                const piece::CapturedPieceTypeEnum hp
+                                    = piece::to_captured_piece_type(pt);
                                 if (entry.hand.numOf(hp)
                                     > child_entry.hand.numOf(hp)) {
                                     entry.hand = child_entry.hand;
@@ -818,34 +823,35 @@ void DfPn::dfpn_inner(
                 //cout << n.toSFEN() << " and" << endl;
                 //cout << bitset<32>(entry.hand.value()) << endl;
                 // 証明駒に子局面の証明駒の和集合を設定
-                u32 curr_pawn = entry.hand.template exists<C_FU>();
+                u32 curr_pawn = entry.hand.template exists<piece::C_FU>();
                 if (pawn > curr_pawn)
                     pawn = curr_pawn;
-                u32 curr_lance = entry.hand.template exists<C_KY>();
+                u32 curr_lance = entry.hand.template exists<piece::C_KY>();
                 if (lance > curr_lance)
                     lance = curr_lance;
-                u32 curr_knight = entry.hand.template exists<C_KE>();
+                u32 curr_knight = entry.hand.template exists<piece::C_KE>();
                 if (knight > curr_knight)
                     knight = curr_knight;
-                u32 curr_silver = entry.hand.template exists<C_GI>();
+                u32 curr_silver = entry.hand.template exists<piece::C_GI>();
                 if (silver > curr_silver)
                     silver = curr_silver;
-                u32 curr_gold = entry.hand.template exists<C_KI>();
+                u32 curr_gold = entry.hand.template exists<piece::C_KI>();
                 if (gold > curr_gold)
                     gold = curr_gold;
-                u32 curr_bishop = entry.hand.template exists<C_KA>();
+                u32 curr_bishop = entry.hand.template exists<piece::C_KA>();
                 if (bishop > curr_bishop)
                     bishop = curr_bishop;
-                u32 curr_rook = entry.hand.template exists<C_HI>();
+                u32 curr_rook = entry.hand.template exists<piece::C_HI>();
                 if (rook > curr_rook)
                     rook = curr_rook;
                 entry.hand.set(
                     pawn | lance | knight | silver | gold | bishop | rook);
                 //cout << bitset<32>(entry.hand.value()) << endl;
                 // 後手が一枚も持っていない種類の先手の持ち駒を証明駒に設定する
-                if (!(n.checkersBB() & n.attacksFrom<OU>(n.kingSquare(n.turn()))
+                if (!(n.checkersBB()
+                          & n.attacksFrom<piece::OU>(n.kingSquare(n.turn()))
                       || n.checkersBB()
-                             & n.attacksFrom<KE>(
+                             & n.attacksFrom<piece::KE>(
                                  n.turn(), n.kingSquare(n.turn()))))
                     entry.hand.setPP(
                         n.hand(color::opposite(n.turn())), n.hand(n.turn()));

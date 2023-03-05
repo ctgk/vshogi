@@ -22,12 +22,16 @@
 #ifndef APERY_PIECE_HPP
 #define APERY_PIECE_HPP
 
-#include "color.hpp"
-#include "common.hpp"
-#include "overloadEnumOperators.hpp"
 #include <cassert>
 #include <iostream>
 #include <string>
+
+#include "color.hpp"
+#include "common.hpp"
+#include "overloadEnumOperators.hpp"
+
+namespace piece
+{
 
 enum PieceTypeEnum
 {
@@ -142,5 +146,7 @@ to_colored_piece(const color::ColorEnum c, const CapturedPieceTypeEnum hp)
 {
     return to_colored_piece(c, to_piece_type(hp));
 }
+
+} // namespace piece
 
 #endif // #ifndef APERY_PIECE_HPP

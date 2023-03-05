@@ -106,13 +106,14 @@ enum PromoteMode
 // Drop, Check, Evasion, の場合は別で指し手生成を行う。
 template <MoveType MT, PromoteMode PM>
 inline Move selectedMakeMove(
-    const PieceTypeEnum pt,
+    const piece::PieceTypeEnum pt,
     const Square from,
     const Square to,
     const Position& pos)
 {
     static_assert(PM == Promote || PM == NonPromote, "");
-    assert(!((pt == KI || pt == OU || MT == Drop) && PM == Promote));
+    assert(
+        !((pt == piece::KI || pt == piece::OU || MT == Drop) && PM == Promote));
     Move move
         = ((MT == NonCapture || MT == NonCaptureMinusPro)
                ? makeMove(pt, from, to)
@@ -124,7 +125,7 @@ inline Move selectedMakeMove(
 
 template <MoveType MT>
 inline Move makePromoteMove(
-    const PieceTypeEnum pt,
+    const piece::PieceTypeEnum pt,
     const Square from,
     const Square to,
     const Position& pos)
@@ -134,7 +135,7 @@ inline Move makePromoteMove(
 
 template <MoveType MT>
 inline Move makeNonPromoteMove(
-    const PieceTypeEnum pt,
+    const piece::PieceTypeEnum pt,
     const Square from,
     const Square to,
     const Position& pos)
