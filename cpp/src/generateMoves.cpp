@@ -456,7 +456,7 @@ namespace {
             // 絶対に王手が掛かっているので、while ではなく、do while
             do {
                 checkSq = bb.firstOneFromSQ11();
-                assert(pieceToColor(pos.piece(checkSq)) == Them);
+                assert(get_color(pos.piece(checkSq)) == Them);
                 ++checkersNum;
                 makeBannedKingTo<Them>(bannedKingToBB, pos, checkSq, ksq);
             } while (bb);

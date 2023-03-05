@@ -691,7 +691,7 @@ private:
     void clear();
     void setPiece(const ColoredPieceEnum piece, const Square sq)
     {
-        const color::ColorEnum c = pieceToColor(piece);
+        const color::ColorEnum c = get_color(piece);
         const PieceTypeEnum pt = to_piece_type(piece);
 
         piece_[sq] = piece;
@@ -707,7 +707,7 @@ private:
     }
     void setHand(const ColoredPieceEnum piece, const int num)
     {
-        const color::ColorEnum c = pieceToColor(piece);
+        const color::ColorEnum c = get_color(piece);
         const PieceTypeEnum pt = to_piece_type(piece);
         const CapturedPieceTypeEnum hp = pieceTypeToHandPiece(pt);
         setHand(hp, c, num);

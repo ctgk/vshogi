@@ -2009,7 +2009,7 @@ silver_drop_end:
                 if (to == SquareNum) continue; // もう駄目
 
                 // toが自駒だとここに移動できないし..
-                if (piece(to) != Empty && pieceToColor(piece(to)) == US) continue;
+                if (piece(to) != Empty && get_color(piece(to)) == US) continue;
 
                 // oneが二歩で打てないことを確認しよう。
                 if (canPawnDrop<~US>(one)) continue; // もう駄目
@@ -2244,7 +2244,7 @@ silver_drop_end:
 
                     // 移動性の保証
                     const Square to = from + (US == color::BLACK ? DeltaN : DeltaS);
-                    if (piece(to) != Empty && pieceToColor(piece(to)) != ~US) { continue; }
+                    if (piece(to) != Empty && get_color(piece(to)) != ~US) { continue; }
 
                     // toの地点で成れないと駄目
                     if (!canPromote(US, to)) continue;
@@ -2805,7 +2805,7 @@ Key Position::getKeyAfter(const Move m) const {
 			PieceTypeEnum pt = to_piece_type(to_pc);
 
 			// 捕獲された駒が盤上から消えるので局面のhash keyを更新する
-			k -= zobrist(pt, to, pieceToColor(to_pc));
+			k -= zobrist(pt, to, get_color(to_pc));
 			h += zobHand(pieceTypeToHandPiece(pt), Us);
 		}
 
@@ -2860,7 +2860,7 @@ Key Position::getBoardKeyAfter(const Move m) const {
 			PieceTypeEnum pt = to_piece_type(to_pc);
 
 			// 捕獲された駒が盤上から消えるので局面のhash keyを更新する
-			k -= zobrist(pt, to, pieceToColor(to_pc));
+			k -= zobrist(pt, to, get_color(to_pc));
 		}
 
 		// fromにあったmoved_pcがtoにmoved_after_pcとして移動した。
@@ -3098,7 +3098,7 @@ bool Position::isOK() const {
                     goto incorrect_position;
             }
             else {
-                if (!bbOf(to_piece_type(pc), pieceToColor(pc)).isSet(sq))
+                if (!bbOf(to_piece_type(pc), get_color(pc)).isSet(sq))
                     goto incorrect_position;
             }
         }
@@ -3119,7 +3119,7 @@ Key Position::computeBoardKey() const {
     Key result = 0;
     for (Square sq = SQ11; sq < SquareNum; ++sq) {
         if (piece(sq) != Empty)
-            result += zobrist(to_piece_type(piece(sq)), sq, pieceToColor(piece(sq)));
+            result += zobrist(to_piece_type(piece(sq)), sq, get_color(piece(sq)));
     }
     if (turn() == color::WHITE)
         result ^= zobTurn();
@@ -3351,7 +3351,7 @@ bool Position::set_hcp(const char* hcp_data) {
             hc.code |= bs.getBit() << hc.numOfBits++;
             const ColoredPieceEnum pc = HuffmanCodedPos::handCodeToPieceHash.value(hc.key);
             if (pc != PieceNone) {
-                hand_[pieceToColor(pc)].plusOne(pieceTypeToHandPiece(to_piece_type(pc)));
+                hand_[get_color(pc)].plusOne(pieceTypeToHandPiece(to_piece_type(pc)));
                 break;
             }
         }
@@ -3416,7 +3416,7 @@ bool Position::set_psfen(const char* psfen_data) {
 			hc.code |= bs.getBit() << hc.numOfBits++;
 			const ColoredPieceEnum pc = PackedSfen::handCodeToPieceHash.value(hc.key);
 			if (pc != PieceNone) {
-				hand_[pieceToColor(pc)].plusOne(pieceTypeToHandPiece(to_piece_type(pc)));
+				hand_[get_color(pc)].plusOne(pieceTypeToHandPiece(to_piece_type(pc)));
 				break;
 			}
 		}
