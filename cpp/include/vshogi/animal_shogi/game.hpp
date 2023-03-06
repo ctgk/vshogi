@@ -4,6 +4,8 @@
 #include <deque>
 #include <string>
 
+#include "vshogi/animal_shogi/state.hpp"
+
 namespace vshogi::animal_shogi
 {
 
@@ -13,9 +15,6 @@ namespace vshogi::animal_shogi
  */
 constexpr char default_initial_sfen[] = "";
 
-struct State
-{
-};
 struct Action
 {
 };
