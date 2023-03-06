@@ -8,7 +8,7 @@ namespace as = vshogi::animal_shogi;
 
 void export_animal_shogi_game(py::module& m)
 {
-    py::class_<as::Game>(m, "Game")
+    py::class_<as::Game>(m, "_Game")
         .def(py::init<>())
         .def(py::init<const std::string&>());
 }

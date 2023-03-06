@@ -1,7 +1,6 @@
 """Animal Shogi module."""
 
-
-from vshogi._vshogi.animal_shogi import Game
+from vshogi.animal_shogi._game import Game
 
 
 _classes = [Game]
