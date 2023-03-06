@@ -63,16 +63,16 @@ cshogiは、盤面管理、合法手生成、指し手の検証、USIプロト�
       >>> print(board)
 
   ::
-    
+
         '  9  8  7  6  5  4  3  2  1
         P1-KY-KE *  *  *  * -GI-OU-KY
-        P2 *  *  * -HI * -KI *  *  * 
-        P3 * -FU *  * -FU-KI-KE-FU * 
+        P2 *  *  * -HI * -KI *  *  *
+        P3 * -FU *  * -FU-KI-KE-FU *
         P4-FU * -FU-FU-GI-KA-FU * -FU
-        P5 *  *  *  *  * -FU *  *  * 
+        P5 *  *  *  *  * -FU *  *  *
         P6 *  * +FU+FU+FU * +FU * +FU
-        P7+FU+FU+KA+GI+GI+KI * +FU * 
-        P8 *  * +HI *  *  * +KI+OU * 
+        P7+FU+FU+KA+GI+GI+KI * +FU *
+        P8 *  * +HI *  *  * +KI+OU *
         P9+KY+KE *  *  *  *  * +KE+KY
         P+00FU
         +
@@ -87,7 +87,7 @@ cshogiは、盤面管理、合法手生成、指し手の検証、USIプロト�
       True
       >>> board.is_nyugyoku()
       False
-      
+
 * 千日手判定
 
   .. code:: python
@@ -121,19 +121,19 @@ cshogiは、盤面管理、合法手生成、指し手の検証、USIプロト�
 * 局面の圧縮形式
 
   Apery、やねうら王で生成した教師局面を読み込むことができる。
-  
+
   .. code:: python
 
       >>> import numpy as np
-      
+
       >>> hcpes = np.fromfile('teacher.hcpe', dtype=cshogi.HuffmanCodedPosAndEval) # Aperyの教師局面(HuffmanCodedPosAndEval)
       >>> board.set_hcp(hcpes[0]['hcp'])
-      
+
       >>> psfens = np.fromfile('sfen.bin', dtype=cshogi.PackedSfenValue) # やねうら王の教師局面(PackedSfenValue)
       >>> board.set_psfen(psfens[0]['sfen'])
 
   局面をAperyの圧縮形式で保存できる。
-  
+
   .. code:: python
 
       >>> hcps = np.empty(1, dtype=cshogi.HuffmanCodedPos)
@@ -143,11 +143,11 @@ cshogiは、盤面管理、合法手生成、指し手の検証、USIプロト�
 * USIエンジンの操作
 
   USIエンジンを起動して操作できる。
-  
+
   .. code:: python
 
       >>> from cshogi.usi import Engine
-      
+
       >>> engine = Engine('/content/LesserkaiSrc/Lesserkai/Lesserkai')
       >>> engine.isready()
       >>> engine.position(sfen='sfen 7nl/5kP2/3p2g1p/2p1gp3/p6sP/s1BGpN3/4nPSp1/1+r4R2/L1+p3K1L w GSNLPb6p 122')
@@ -158,7 +158,7 @@ cshogiは、盤面管理、合法手生成、指し手の検証、USIプロト�
   .. code:: python
 
       >>> from cshogi import cli
-      
+
       >>> cli.main('/content/LesserkaiSrc/Lesserkai/Lesserkai', '/content/LesserkaiSrc/Lesserkai/Lesserkai')
 
 インストール

@@ -34,7 +34,13 @@ repos:
         entry: bash -c 'cd `git rev-parse --show-toplevel`; clang-tidy-11 $@ -p build/pre-commit -extra-arg=-Wno-unknown-warning-option' --
         language: system
         types: [text]
-        files: 'animal_shogi.*.(c|h|cpp|hpp)$'
+        files: '.(c|h|cpp|hpp)$'
+        exclude: 'python'
+    -   id: flake8
+        name: Check Python format
+        entry: flake8 --count --show-source --statistics
+        language: system
+        types: [python]
     -   id: python-unittest
         name: Run Python UnitTests
         language: system

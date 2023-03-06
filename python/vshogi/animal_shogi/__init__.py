@@ -1,3 +1,6 @@
+"""Animal Shogi module."""
+
+
 from vshogi._vshogi.animal_shogi import Game
 
 

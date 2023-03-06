@@ -1,3 +1,5 @@
+"""Shogi API for shogi and its variants."""
+
 from vshogi import animal_shogi
 
 
