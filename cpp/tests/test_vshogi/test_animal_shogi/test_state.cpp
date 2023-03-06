@@ -16,6 +16,10 @@ TEST(animal_shogi_state, get_turn)
         CHECK_EQUAL(BLACK, s.get_turn());
     }
     {
+        const auto s = State(default_initial_sfen);
+        CHECK_EQUAL(BLACK, s.get_turn());
+    }
+    {
         const auto s = State("gle/1c1/1C1/ELG w - 1");
         CHECK_EQUAL(WHITE, s.get_turn());
     }
