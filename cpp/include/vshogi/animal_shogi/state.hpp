@@ -13,6 +13,12 @@ class Board
 {
 };
 
+/**
+ * @brief SFEN string representing default initial state of Animal Shogi.
+ *
+ */
+constexpr char default_initial_sfen[] = "gle/1c1/1C1/ELG b - 1";
+
 class State
 {
 private:
@@ -23,7 +29,6 @@ private:
 public:
     State();
     State(const std::string& sfen);
-    State(const std::string& sfen, const ColorEnum turn);
 
     ColorEnum get_turn() const
     {

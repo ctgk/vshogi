@@ -9,12 +9,6 @@
 namespace vshogi::animal_shogi
 {
 
-/**
- * @brief SFEN string representing default initial state of Animal Shogi.
- *
- */
-constexpr char default_initial_sfen[] = "";
-
 struct Action
 {
 };

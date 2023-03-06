@@ -9,32 +9,20 @@ namespace vshogi::animal_shogi
 namespace internal
 {
 
-constexpr std::uint32_t shift_bits_for_piece_stand[] = {
-    0, // FU
-    6, // KY
-    10, // KE
-    14, // GI
-    18, // KI
-    22, // KA
-    25, // HI
+constexpr std::uint8_t shift_bits_for_piece_stand[] = {
+    0, // CH
+    3, // EL
+    6, // GI
 };
-constexpr std::uint32_t mask_for_piece_stand[] = {
-    0x1f << 0, // FU
-    0x7 << 6, // KY
-    0x7 << 10, // KE
-    0x7 << 14, // GI
-    0x7 << 18, // KI
-    0x3 << 22, // KA
-    0x3 << 25, // HI
+constexpr std::uint8_t mask_for_piece_stand[] = {
+    0b00000011, // CH
+    0b00011000, // EL
+    0b11000000, // GI
 };
-constexpr std::uint32_t delta_for_piece_stand[] = {
-    1 << 0, // FU
-    1 << 6, // KY
-    1 << 10, // KE
-    1 << 14, // GI
-    1 << 18, // KI
-    1 << 22, // KA
-    1 << 25, // HI
+constexpr std::uint8_t delta_for_piece_stand[] = {
+    0b00000001, // CH
+    0b00001000, // EL
+    0b01000000, // GI
 };
 
 } // namespace internal
@@ -43,41 +31,34 @@ class PieceStand
 {
 private:
     /**
-     * @brief 32bit integer representing what is on a piece stand.
+     * @brief 8bit integer representing what is on a piece stand.
      * @details
-     * xxxxxxxx xxxxxxxx xxxxxxxx xxx11111  Pawn
-     * xxxxxxxx xxxxxxxx xxxxxxx1 11xxxxxx  Lance
-     * xxxxxxxx xxxxxxxx xxx111xx xxxxxxxx  Knight
-     * xxxxxxxx xxxxxxx1 11xxxxxx xxxxxxxx  Silver
-     * xxxxxxxx xxx111xx xxxxxxxx xxxxxxxx  Gold
-     * xxxxxxxx 11xxxxxx xxxxxxxx xxxxxxxx  Bishop
-     * xxxxx11x xxxxxxxx xxxxxxxx xxxxxxxx  Rook
+     * ______11  Chick (2bits for 0, 1, or 2 pieces)
+     * ___11___  Elephant (2 bits for 0, 1, or 2 pieces)
+     * 11______  Giraffe (2 bits for 0, 1, or 2 pieces)
      */
-    std::uint32_t m_value;
+    std::uint8_t m_value;
 
 public:
     PieceStand() : m_value(0U)
     {
     }
-    PieceStand(const std::uint32_t v) : m_value(v)
+    PieceStand(const std::uint8_t v) : m_value(v)
     {
     }
 
     enum PieceTypeEnum
     {
-        FU,
-        KY,
-        KE,
-        GI,
-        KI,
-        KA,
-        HI,
+        CH, // Chick (Pawn)
+        EL, // Elephant (limited Bishop)
+        GI, // Giraffe (limited Rook)
     };
 
-    std::uint32_t count(const PieceTypeEnum p) const
+    std::uint8_t count(const PieceTypeEnum p) const
     {
-        return (m_value & internal::mask_for_piece_stand[p])
-               >> internal::shift_bits_for_piece_stand[p];
+        return static_cast<uint8_t>(
+            (m_value & internal::mask_for_piece_stand[p])
+            >> internal::shift_bits_for_piece_stand[p]);
     }
     bool exist(const PieceTypeEnum p) const
     {
@@ -85,12 +66,14 @@ public:
     }
     PieceStand& add(const PieceTypeEnum p)
     {
-        m_value += internal::delta_for_piece_stand[p];
+        m_value = static_cast<std::uint8_t>(
+            m_value + internal::delta_for_piece_stand[p]);
         return *this;
     }
     PieceStand& subtract(const PieceTypeEnum p)
     {
-        m_value -= internal::delta_for_piece_stand[p];
+        m_value = static_cast<std::uint8_t>(
+            m_value - internal::delta_for_piece_stand[p]);
         return *this;
     }
     bool operator==(const PieceStand& other) const

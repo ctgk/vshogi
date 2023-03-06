@@ -11,42 +11,59 @@ TEST_GROUP(animal_shogi_piece_stand){};
 
 TEST(animal_shogi_piece_stand, count)
 {
-    CHECK_EQUAL(3, PieceStand(3).count(PieceStand::FU));
-    CHECK_EQUAL(0, PieceStand(3).count(PieceStand::GI));
+    {
+        const auto ps = PieceStand();
+        CHECK_EQUAL(0, ps.count(PieceStand::CH));
+        CHECK_EQUAL(0, ps.count(PieceStand::EL));
+        CHECK_EQUAL(0, ps.count(PieceStand::GI));
+    }
+    {
+        CHECK_EQUAL(1, PieceStand(1).count(PieceStand::CH));
+        CHECK_EQUAL(0, PieceStand(1).count(PieceStand::GI));
+        CHECK_EQUAL(0, PieceStand(1).count(PieceStand::EL));
+    }
 }
 
 TEST(animal_shogi_piece_stand, add)
 {
-    CHECK_EQUAL(1, PieceStand().add(PieceStand::KA).count(PieceStand::KA));
-    CHECK_EQUAL(
-        1,
-        PieceStand()
-            .add(PieceStand::KA)
-            .add(PieceStand::GI)
-            .count(PieceStand::KA));
-    CHECK_EQUAL(
-        2,
-        PieceStand()
-            .add(PieceStand::KA)
-            .add(PieceStand::KA)
-            .count(PieceStand::KA));
+    {
+        const auto ps = PieceStand().add(PieceStand::EL);
+        CHECK_EQUAL(0, ps.count(PieceStand::CH));
+        CHECK_EQUAL(1, ps.count(PieceStand::EL));
+        CHECK_EQUAL(0, ps.count(PieceStand::GI));
+    }
+    {
+        const auto ps = PieceStand().add(PieceStand::EL).add(PieceStand::GI);
+        CHECK_EQUAL(0, ps.count(PieceStand::CH));
+        CHECK_EQUAL(1, ps.count(PieceStand::EL));
+        CHECK_EQUAL(1, ps.count(PieceStand::GI));
+    }
+    {
+        const auto ps = PieceStand().add(PieceStand::CH).add(PieceStand::CH);
+        CHECK_EQUAL(2, ps.count(PieceStand::CH));
+        CHECK_EQUAL(0, ps.count(PieceStand::EL));
+        CHECK_EQUAL(0, ps.count(PieceStand::GI));
+    }
 }
 
 TEST(animal_shogi_piece_stand, subtract)
 {
-    CHECK_EQUAL(
-        0,
-        PieceStand()
-            .add(PieceStand::KE)
-            .subtract(PieceStand::KE)
-            .count(PieceStand::KE));
-    CHECK_EQUAL(
-        1,
-        PieceStand()
-            .add(PieceStand::KE)
-            .add(PieceStand::KE)
-            .subtract(PieceStand::KE)
-            .count(PieceStand::KE));
+    {
+        const auto ps
+            = PieceStand().add(PieceStand::EL).subtract(PieceStand::EL);
+        CHECK_EQUAL(0, ps.count(PieceStand::CH));
+        CHECK_EQUAL(0, ps.count(PieceStand::EL));
+        CHECK_EQUAL(0, ps.count(PieceStand::GI));
+    }
+    {
+        const auto ps = PieceStand()
+                            .add(PieceStand::EL)
+                            .add(PieceStand::EL)
+                            .subtract(PieceStand::EL);
+        CHECK_EQUAL(0, ps.count(PieceStand::CH));
+        CHECK_EQUAL(1, ps.count(PieceStand::EL));
+        CHECK_EQUAL(0, ps.count(PieceStand::GI));
+    }
 }
 
 TEST(animal_shogi_piece_stand, operator)
