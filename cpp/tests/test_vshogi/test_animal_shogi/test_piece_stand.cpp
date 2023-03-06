@@ -9,6 +9,11 @@ using namespace vshogi::animal_shogi;
 
 TEST_GROUP(animal_shogi_piece_stand){};
 
+TEST(animal_shogi_piece_stand, sizeof)
+{
+    CHECK_EQUAL(sizeof(std::uint8_t), sizeof(PieceStand));
+}
+
 TEST(animal_shogi_piece_stand, count)
 {
     {
