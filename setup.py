@@ -1,44 +1,28 @@
-﻿from setuptools import setup, Extension
-from setuptools.command.build_ext import build_ext
+﻿from glob import glob
+
+from pybind11.setup_helpers import Pybind11Extension, build_ext
+from setuptools import setup
 
 class my_build_ext(build_ext):
     def build_extensions(self):
         if self.compiler.compiler_type == 'unix':
             for e in self.extensions:
                 e.extra_compile_args = ['-msse4.2', '-mavx2']
-
         build_ext.build_extensions(self)
 
-    def finalize_options(self):
-        build_ext.finalize_options(self)
-        __builtins__.__NUMPY_SETUP__ = False
-        import numpy
-        self.include_dirs.append(numpy.get_include())
 
-ext_modules = [
-    Extension('cshogi._cshogi',
-        ['cshogi/_cshogi.pyx',
-         "src/bitboard.cpp", "src/common.cpp", "src/generateMoves.cpp", "src/hand.cpp", "src/init.cpp", "src/move.cpp", "src/mt64bit.cpp", "src/position.cpp", "src/search.cpp", "src/square.cpp", "src/usi.cpp", "src/book.cpp", "src/mate.cpp", "src/dfpn.cpp"],
-        language='c++',
-        include_dirs = ["src"],
-        define_macros=[('HAVE_SSE4', None), ('HAVE_SSE42', None), ('HAVE_AVX2', None)]),
-    Extension('cshogi.gym_shogi.envs.shogi_env',
-        ['cshogi/gym_shogi/envs/shogi_env.pyx'],
-        language='c++'),
-    Extension('cshogi.gym_shogi.envs.shogi_vec_env',
-        ['cshogi/gym_shogi/envs/shogi_vec_env.pyx'],
-        language='c++'),
-]
+extension = Pybind11Extension(
+    name='vshogi._vshogi',
+    sources=sorted(glob('cpp/python/*.cpp')) + sorted(glob('cpp/src/*.cpp')),
+    include_dirs=['cpp/src'],
+    define_macros=[('HAVE_SSE4', None), ('HAVE_SSE42', None), ('HAVE_AVX2', None)],
+)
 
 setup(
-    name='cshogi',
-    version='0.5.0',
-    packages=['cshogi', 'cshogi.usi', 'cshogi.gym_shogi', 'cshogi.gym_shogi.envs', 'cshogi.dlshogi', 'cshogi.web', 'cshogi.web.templates', 'cshogi.web.static'],
-    package_data={'cshogi.web.templates': ['*'], 'cshogi.web.static': ['*']},
-    ext_modules=ext_modules,
+    packages=['vshogi', 'vshogi.usi', 'vshogi.gym_shogi', 'vshogi.gym_shogi.envs', 'vshogi.dlshogi', 'vshogi.web', 'vshogi.web.templates', 'vshogi.web.static'],
+    package_data={'vshogi.web.templates': ['*'], 'vshogi.web.static': ['*']},
+    ext_modules=[extension],
     cmdclass={'build_ext': my_build_ext},
-    author='Tadao Yamaoka',
-    url='https://github.com/TadaoYamaoka/cshogi',
     description = 'A fast Python shogi library',
     classifiers=[
         "Programming Language :: Python :: 3",
