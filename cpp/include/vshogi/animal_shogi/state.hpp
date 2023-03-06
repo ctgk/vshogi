@@ -4,15 +4,12 @@
 #include <string>
 
 #include "vshogi/animal_shogi/color.hpp"
+#include "vshogi/animal_shogi/piece_stand.hpp"
 
 namespace vshogi::animal_shogi
 {
 
 class Board
-{
-};
-
-class PieceStand
 {
 };
 
