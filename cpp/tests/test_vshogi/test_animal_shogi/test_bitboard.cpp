@@ -16,6 +16,13 @@ TEST(animal_shogi_bitboard, one_file_right)
     CHECK_TRUE(BitBoard(0) == file_c_mask.one_file_right());
 }
 
+TEST(animal_shogi_bitboard, one_file_left)
+{
+    CHECK_TRUE(BitBoard(0) == file_a_mask.one_file_left());
+    CHECK_TRUE(file_a_mask == file_b_mask.one_file_left());
+    CHECK_TRUE(file_b_mask == file_c_mask.one_file_left());
+}
+
 TEST(animal_shogi_bitboard, chick_attacks)
 {
     CHECK_TRUE(square_a1_mask == chick_attacks[SQ_A2][BLACK]);
