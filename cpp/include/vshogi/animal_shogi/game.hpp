@@ -4,14 +4,11 @@
 #include <deque>
 #include <string>
 
+#include "vshogi/animal_shogi/move.hpp"
 #include "vshogi/animal_shogi/state.hpp"
 
 namespace vshogi::animal_shogi
 {
-
-struct Action
-{
-};
 
 /**
  * @brief Pair of a state and action. The action turns the state to the next
@@ -21,7 +18,7 @@ struct Action
 struct StateActionPair
 {
     State state;
-    Action action;
+    Move action;
 };
 
 /**
