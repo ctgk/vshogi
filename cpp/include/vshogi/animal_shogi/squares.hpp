@@ -29,6 +29,15 @@ enum SquareEnum
     NUM_SQUARES,
 };
 
+enum RankEnum
+{
+    RANK1,
+    RANK2,
+    RANK3,
+    RANK4,
+    NUM_RANKS,
+};
+
 } // namespace vshogi::animal_shogi
 
 #endif // VSHOGI_ANIMAL_SHOGI_SQUARES_HPP

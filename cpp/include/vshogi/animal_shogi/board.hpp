@@ -53,6 +53,8 @@ class Board
 private:
     BoardPieceTypeEnum m_pieces[NUM_SQUARES];
 
+    const char* set_sfen_rank(const char* const sfen_rank, const RankEnum rank);
+
 public:
     Board()
         : m_pieces{
@@ -60,10 +62,22 @@ public:
             W_GI, W_LI, W_EL,
             VOID, W_CH, VOID,
             VOID, B_CH, VOID,
-            B_EL, B_LI, B_GI
+            B_EL, B_LI, B_GI,
             // clang-format on
         }
     {
+    }
+
+    /**
+     * @brief Set pieces on the board according to given SFEN string.
+     *
+     * @param sfen SFEN string. e.g. "gle/1c1/1C1/ELG b - 1"
+     * @return const char* Remaining SFEN string. e.g. "b - 1"
+     */
+    const char* set_sfen(const char* const sfen);
+    BoardPieceTypeEnum get_piece_at(const SquareEnum sq)
+    {
+        return m_pieces[sq];
     }
 };
 
