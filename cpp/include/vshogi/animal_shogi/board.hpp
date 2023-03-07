@@ -12,7 +12,7 @@ namespace vshogi::animal_shogi
 class Board
 {
 private:
-    BoardPieceTypeEnum m_pieces[NUM_SQUARES];
+    BoardPieceTypeEnum m_pieces[num_squares];
 
     const char* set_sfen_rank(const char* const sfen_rank, const RankEnum rank);
 

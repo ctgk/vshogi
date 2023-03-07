@@ -67,6 +67,18 @@ private:
             m_two_piece_stands[m_turn].add(captured);
         }
     }
+    BoardPieceTypeEnum
+    promote(const BoardPieceTypeEnum p, const SquareEnum source)
+    {
+        if (to_piece_type(p) != CH)
+            return p;
+        const auto r = to_rank(source);
+        if ((m_turn == BLACK) && (r == RANK2))
+            return B_HE;
+        if ((m_turn == WHITE) && (r == RANK3))
+            return W_HE;
+        return p;
+    }
 
     BoardPieceTypeEnum pop_piece_from_stand_or_board(const MoveSourceEnum src)
     {
@@ -74,8 +86,11 @@ private:
             const auto p = to_captured(src);
             m_two_piece_stands[m_turn].subtract(p);
             return to_board_piece(m_turn, p);
+        } else {
+            const auto sq = static_cast<SquareEnum>(src);
+            const auto p = m_board.get_piece_at(sq);
+            return promote(p, sq);
         }
-        return m_board.get_piece_at(static_cast<SquareEnum>(src));
     }
     void place_piece_on_board(const SquareEnum sq, const BoardPieceTypeEnum p)
     {

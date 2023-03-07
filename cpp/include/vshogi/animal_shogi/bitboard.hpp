@@ -125,7 +125,7 @@ constexpr BitBoard he_attack_sqb3[]
 
 } // namespace internal
 
-constexpr BitBoard chick_attacks[NUM_SQUARES][num_colors] = {
+constexpr BitBoard chick_attacks[num_squares][num_colors] = {
     {square_a1_mask.one_rank_above(), square_a1_mask.one_rank_below()},
     {square_b1_mask.one_rank_above(), square_b1_mask.one_rank_below()},
     {square_c1_mask.one_rank_above(), square_c1_mask.one_rank_below()},
@@ -140,7 +140,7 @@ constexpr BitBoard chick_attacks[NUM_SQUARES][num_colors] = {
     {square_c4_mask.one_rank_above(), square_c4_mask.one_rank_below()},
 };
 
-constexpr BitBoard elephant_attacks[NUM_SQUARES] = {
+constexpr BitBoard elephant_attacks[num_squares] = {
     internal::el_attack_sqb3.one_rank_above().one_rank_above().one_file_left(),
     internal::el_attack_sqb3.one_rank_above().one_rank_above(),
     internal::el_attack_sqb3.one_rank_above().one_rank_above().one_file_right(),
@@ -154,7 +154,7 @@ constexpr BitBoard elephant_attacks[NUM_SQUARES] = {
     internal::el_attack_sqb3.one_rank_below(),
     internal::el_attack_sqb3.one_rank_below().one_file_right(),
 };
-constexpr BitBoard giraffe_attacks[NUM_SQUARES] = {
+constexpr BitBoard giraffe_attacks[num_squares] = {
     internal::gi_attack_sqb3.one_rank_above().one_rank_above().one_file_left(),
     internal::gi_attack_sqb3.one_rank_above().one_rank_above(),
     internal::gi_attack_sqb3.one_rank_above().one_rank_above().one_file_right(),
@@ -168,7 +168,7 @@ constexpr BitBoard giraffe_attacks[NUM_SQUARES] = {
     internal::gi_attack_sqb3.one_rank_below(),
     internal::gi_attack_sqb3.one_rank_below().one_file_right(),
 };
-constexpr BitBoard lion_attacks[NUM_SQUARES] = {
+constexpr BitBoard lion_attacks[num_squares] = {
     elephant_attacks[SQ_A1] | giraffe_attacks[SQ_A1],
     elephant_attacks[SQ_B1] | giraffe_attacks[SQ_B1],
     elephant_attacks[SQ_C1] | giraffe_attacks[SQ_C1],
@@ -182,7 +182,7 @@ constexpr BitBoard lion_attacks[NUM_SQUARES] = {
     elephant_attacks[SQ_B4] | giraffe_attacks[SQ_B4],
     elephant_attacks[SQ_C4] | giraffe_attacks[SQ_C4],
 };
-constexpr BitBoard hen_attacks[NUM_SQUARES][num_colors] = {
+constexpr BitBoard hen_attacks[num_squares][num_colors] = {
     {internal::he_attack_sqb3[BLACK]
          .one_rank_above()
          .one_rank_above()

@@ -26,8 +26,8 @@ enum SquareEnum
     SQ_A3, SQ_B3, SQ_C3,
     SQ_A4, SQ_B4, SQ_C4,
     // clang-format on
-    NUM_SQUARES,
 };
+constexpr int num_squares = 12;
 
 enum RankEnum
 {
@@ -35,8 +35,21 @@ enum RankEnum
     RANK2,
     RANK3,
     RANK4,
-    NUM_RANKS,
 };
+constexpr int num_ranks = 4;
+
+inline RankEnum to_rank(const SquareEnum sq)
+{
+    constexpr RankEnum table[] = {
+        // clang-format off
+        RANK1, RANK1, RANK1,
+        RANK2, RANK2, RANK2,
+        RANK3, RANK3, RANK3,
+        RANK4, RANK4, RANK4,
+        // clang-format on
+    };
+    return table[sq];
+}
 
 } // namespace vshogi::animal_shogi
 
