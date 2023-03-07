@@ -32,6 +32,14 @@ public:
     constexpr BitBoard(const std::uint16_t v) : m_value(v & 0x0fff)
     {
     }
+    constexpr BitBoard operator~() const
+    {
+        return BitBoard(static_cast<std::uint16_t>(~m_value));
+    }
+    constexpr BitBoard operator&(const BitBoard other) const
+    {
+        return BitBoard(m_value & other.m_value);
+    }
     bool operator==(const BitBoard other) const
     {
         return m_value == other.m_value;
@@ -48,6 +56,7 @@ public:
     {
         return BitBoard(static_cast<std::uint16_t>(m_value << 3));
     }
+    constexpr BitBoard one_file_right() const;
     bool is_one(const SquareEnum sq) const
     {
         return static_cast<bool>(
@@ -74,6 +83,12 @@ constexpr BitBoard square_c3_mask = BitBoard(0b000100000000);
 constexpr BitBoard square_a4_mask = BitBoard(0b001000000000);
 constexpr BitBoard square_b4_mask = BitBoard(0b010000000000);
 constexpr BitBoard square_c4_mask = BitBoard(0b100000000000);
+
+constexpr BitBoard BitBoard::one_file_right() const
+{
+    return BitBoard(
+        static_cast<std::uint16_t>((m_value & (~file_c_mask.m_value)) << 1));
+}
 
 constexpr BitBoard chick_attacks[NUM_SQUARES][NUM_COLORS] = {
     {square_a1_mask.one_rank_above(), square_a1_mask.one_rank_below()},
