@@ -3,12 +3,13 @@
 
 #include <cstdint>
 
+#include "vshogi/animal_shogi/piece.hpp"
 #include "vshogi/animal_shogi/squares.hpp"
 
 namespace vshogi::animal_shogi
 {
 
-enum MoveSourceEnum
+enum MoveSourceEnum : std::uint8_t
 {
     // clang-format off
     MS_A1, MS_B1, MS_C1,
@@ -18,6 +19,34 @@ enum MoveSourceEnum
     MS_CH, MS_EL, MS_GI, // dropping
     // clang-format on
 };
+
+inline CapturedPieceTypeEnum to_captured(const MoveSourceEnum source)
+{
+    constexpr CapturedPieceTypeEnum table[] = {
+        // clang-format off
+        C_NA, C_NA, C_NA,
+        C_NA, C_NA, C_NA,
+        C_NA, C_NA, C_NA,
+        C_NA, C_NA, C_NA,
+        C_CH, C_EL, C_GI,
+    };
+    // clang-format on
+    return table[source];
+}
+
+inline bool is_drop(const MoveSourceEnum source)
+{
+    constexpr bool table[] = {
+        // clang-format off
+        false, false, false,
+        false, false, false,
+        false, false, false,
+        false, false, false,
+        true, true, true,
+    };
+    // clang-format on
+    return table[source];
+}
 
 /**
  * @brief 8bit integer representing an Animal Shogi move.

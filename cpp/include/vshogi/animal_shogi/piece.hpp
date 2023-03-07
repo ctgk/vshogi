@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+#include "vshogi/animal_shogi/color.hpp"
+
 namespace vshogi::animal_shogi
 {
 
@@ -13,7 +15,7 @@ enum PieceTypeEnum : std::uint8_t
     GI = 0b0010, //!< Giraffe (Limited Rook)
     LI = 0b0011, //!< Lion (King)
     HE = 0b0100, //!< Hen (Promoted Pawn)
-    NA = 0xff, // Not available.
+    NA = 0b0111, // Not available.
 };
 
 /**
@@ -38,7 +40,7 @@ enum BoardPieceTypeEnum : std::uint8_t
     W_GI = 0b1010, //!< White Giraffe (Limited Rook)
     W_LI = 0b1011, //!< White Lion (King)
     W_HE = 0b1100, //!< White Hen (Promoted Pawn)
-    VOID = 0xff,
+    VOID = 0b1111, //!< Empty square.
 };
 
 enum CapturedPieceTypeEnum : std::uint8_t
@@ -46,8 +48,39 @@ enum CapturedPieceTypeEnum : std::uint8_t
     C_CH = 0, // Captured Chick (Pawn)
     C_EL = 1, // Captured Elephant (limited Bishop)
     C_GI = 2, // Captured Giraffe (limited Rook)
-    C_NA = 0xff, // Not available.
+    C_NA = 3, // Not available.
 };
+
+inline PieceTypeEnum to_piece_type(const BoardPieceTypeEnum p)
+{
+    return static_cast<PieceTypeEnum>(p & 0x07);
+}
+
+inline BoardPieceTypeEnum
+to_board_piece(const ColorEnum c, const PieceTypeEnum p)
+{
+    if (p == NA)
+        return VOID;
+    return static_cast<BoardPieceTypeEnum>((c << 3) | p);
+}
+
+inline BoardPieceTypeEnum
+to_board_piece(const ColorEnum c, const CapturedPieceTypeEnum p)
+{
+    if (p == C_NA)
+        return VOID;
+    return static_cast<BoardPieceTypeEnum>((c << 3) | p);
+}
+
+inline CapturedPieceTypeEnum to_captured(const PieceTypeEnum p)
+{
+    return static_cast<CapturedPieceTypeEnum>(p & 0x3);
+}
+
+inline CapturedPieceTypeEnum to_captured(const BoardPieceTypeEnum p)
+{
+    return static_cast<CapturedPieceTypeEnum>(p & 0x3);
+}
 
 } // namespace vshogi::animal_shogi
 

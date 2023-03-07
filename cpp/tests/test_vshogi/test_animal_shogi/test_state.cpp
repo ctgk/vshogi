@@ -25,4 +25,21 @@ TEST(animal_shogi_state, get_turn)
     }
 }
 
+TEST(animal_shogi_state, apply_move)
+{
+    {
+        auto s = State();
+        s.apply_move(Move(SQ_B2, MS_B3));
+
+        CHECK_EQUAL(B_CH, s.get_board().get_piece_at(SQ_B2));
+        CHECK_EQUAL(1, s.get_piece_stand(BLACK).count(C_CH));
+        CHECK_EQUAL(0, s.get_piece_stand(BLACK).count(C_EL));
+        CHECK_EQUAL(0, s.get_piece_stand(BLACK).count(C_GI));
+        CHECK_EQUAL(0, s.get_piece_stand(WHITE).count(C_CH));
+        CHECK_EQUAL(0, s.get_piece_stand(WHITE).count(C_EL));
+        CHECK_EQUAL(0, s.get_piece_stand(WHITE).count(C_GI));
+        CHECK_EQUAL(WHITE, s.get_turn());
+    }
+}
+
 } // namespace test_vshogi::test_animal_shogi

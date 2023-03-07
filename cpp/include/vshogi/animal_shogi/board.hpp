@@ -40,9 +40,24 @@ public:
     {
         return m_pieces[sq];
     }
-    PieceTypeEnum pop_piece_at(const SquareEnum)
+    PieceTypeEnum pop_piece_at(const SquareEnum sq)
     {
-        return CH; // TODO
+        const auto out = to_piece_type(m_pieces[sq]);
+        m_pieces[sq] = VOID;
+        return out;
+    }
+
+    /**
+     * @brief Place piece by overwriting the square.
+     *
+     * @param sq Location to place piece.
+     * @param piece Piece to place.
+     * @return Board& board with the piece placed on the square.
+     */
+    Board& place_piece_at(const SquareEnum sq, const BoardPieceTypeEnum p)
+    {
+        m_pieces[sq] = p;
+        return *this;
     }
 };
 

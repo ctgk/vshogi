@@ -123,11 +123,23 @@ public:
     {
         return m_black;
     }
+    const PieceStand& black() const
+    {
+        return m_black;
+    }
     PieceStand& white()
     {
         return m_white;
     }
+    const PieceStand& white() const
+    {
+        return m_white;
+    }
     PieceStand& operator[](const ColorEnum c)
+    {
+        return (c == BLACK) ? m_black : m_white;
+    }
+    const PieceStand& operator[](const ColorEnum c) const
     {
         return (c == BLACK) ? m_black : m_white;
     }
