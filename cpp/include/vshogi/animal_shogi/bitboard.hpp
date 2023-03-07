@@ -125,7 +125,7 @@ constexpr BitBoard he_attack_sqb3[]
 
 } // namespace internal
 
-constexpr BitBoard chick_attacks[NUM_SQUARES][NUM_COLORS] = {
+constexpr BitBoard chick_attacks[NUM_SQUARES][num_colors] = {
     {square_a1_mask.one_rank_above(), square_a1_mask.one_rank_below()},
     {square_b1_mask.one_rank_above(), square_b1_mask.one_rank_below()},
     {square_c1_mask.one_rank_above(), square_c1_mask.one_rank_below()},
@@ -182,7 +182,7 @@ constexpr BitBoard lion_attacks[NUM_SQUARES] = {
     elephant_attacks[SQ_B4] | giraffe_attacks[SQ_B4],
     elephant_attacks[SQ_C4] | giraffe_attacks[SQ_C4],
 };
-constexpr BitBoard hen_attacks[NUM_SQUARES][NUM_COLORS] = {
+constexpr BitBoard hen_attacks[NUM_SQUARES][num_colors] = {
     {internal::he_attack_sqb3[BLACK]
          .one_rank_above()
          .one_rank_above()

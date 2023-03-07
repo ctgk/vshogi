@@ -36,9 +36,13 @@ public:
      * @return const char* Remaining SFEN string. e.g. "b - 1"
      */
     const char* set_sfen(const char* const sfen);
-    BoardPieceTypeEnum get_piece_at(const SquareEnum sq)
+    BoardPieceTypeEnum get_piece_at(const SquareEnum sq) const
     {
         return m_pieces[sq];
+    }
+    PieceTypeEnum pop_piece_at(const SquareEnum)
+    {
+        return CH; // TODO
     }
 };
 

@@ -21,4 +21,15 @@ State::State(const std::string& sfen)
     m_two_piece_stands.set_sfen_holdings(s);
 }
 
+void State::apply_move(const Move move)
+{
+    const PieceTypeEnum captured_piece
+        = pop_piece_from_board(move.destination());
+    add_captured_piece_to_stand(captured_piece);
+
+    const BoardPieceTypeEnum moving_piece
+        = pop_piece_from_stand_or_board(move.source());
+    place_piece_on_board(moving_piece);
+}
+
 } // namespace vshogi::animal_shogi

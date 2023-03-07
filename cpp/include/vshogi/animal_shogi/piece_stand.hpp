@@ -5,16 +5,10 @@
 #include <string>
 
 #include "vshogi/animal_shogi/color.hpp"
+#include "vshogi/animal_shogi/piece.hpp"
 
 namespace vshogi::animal_shogi
 {
-
-enum CapturedPieceTypeEnum
-{
-    C_CH, // Captured Chick (Pawn)
-    C_EL, // Captured Elephant (limited Bishop)
-    C_GI, // Captured Giraffe (limited Rook)
-};
 
 namespace internal
 {

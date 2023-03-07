@@ -11,12 +11,12 @@ namespace vshogi::animal_shogi
  * @brief Enumeration of colors in Animal Shogi.
  *
  */
-enum ColorEnum
+enum ColorEnum : std::uint8_t
 {
     BLACK = 0, //!< First player's color.
     WHITE = 1, //!< Second player's color.
-    NUM_COLORS = 2,
 };
+constexpr int num_colors = 2;
 
 /**
  * @brief Return opposite color of the input color.

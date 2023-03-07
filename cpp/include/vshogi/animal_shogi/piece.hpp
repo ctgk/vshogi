@@ -1,57 +1,53 @@
 #ifndef VSHOGI_ANIMAL_SHOGI_PIECE_HPP
 #define VSHOGI_ANIMAL_SHOGI_PIECE_HPP
 
+#include <cstdint>
+
 namespace vshogi::animal_shogi
 {
 
-enum PieceTypeEnum
+enum PieceTypeEnum : std::uint8_t
 {
-    CH, //!< Chick (Pawn)
-    EL, //!< Elephant (Limited Bishop)
-    GI, //!< Giraffe (Limited Rook)
-    LI, //!< Lion (King)
-    HE, //!< Hen (Promoted Pawn)
+    CH = 0b0000, //!< Chick (Pawn)
+    EL = 0b0001, //!< Elephant (Limited Bishop)
+    GI = 0b0010, //!< Giraffe (Limited Rook)
+    LI = 0b0011, //!< Lion (King)
+    HE = 0b0100, //!< Hen (Promoted Pawn)
+    NA = 0xff, // Not available.
 };
 
-enum BoardPieceTypeEnum
+/**
+ * @brief Enumeration of pieces on board (plus VOID).
+ * @details
+ *            *--------- Color
+ *            |*-------- Promotion
+ *            ||
+ *            vv
+ * (MSB) xxxx xxxx (LSB)
+ *
+ */
+enum BoardPieceTypeEnum : std::uint8_t
 {
-    VOID = 0,
-    B_CH, //!< Black Chick (Pawn)
-    B_EL, //!< Black Elephant (Limited Bishop)
-    B_GI, //!< Black Giraffe (Limited Rook)
-    B_LI, //!< Black Lion (King)
-    B_HE, //!< Black Hen (Promoted Pawn)
-    W_CH, //!< White Chick (Pawn)
-    W_EL, //!< White Elephant (Limited Bishop)
-    W_GI, //!< White Giraffe (Limited Rook)
-    W_LI, //!< White Lion (King)
-    W_HE, //!< White Hen (Promoted Pawn)
-    NUM_BOARD_PIECE_TYPES,
+    B_CH = 0b0000, //!< Black Chick (Pawn)
+    B_EL = 0b0001, //!< Black Elephant (Limited Bishop)
+    B_GI = 0b0010, //!< Black Giraffe (Limited Rook)
+    B_LI = 0b0011, //!< Black Lion (King)
+    B_HE = 0b0100, //!< Black Hen (Promoted Pawn)
+    W_CH = 0b1000, //!< White Chick (Pawn)
+    W_EL = 0b1001, //!< White Elephant (Limited Bishop)
+    W_GI = 0b1010, //!< White Giraffe (Limited Rook)
+    W_LI = 0b1011, //!< White Lion (King)
+    W_HE = 0b1100, //!< White Hen (Promoted Pawn)
+    VOID = 0xff,
 };
 
-// /**
-//  * @brief Enumeration of board piece types.
-//  * @details
-//  *               *------------ Color
-//  *               | *---------- Promotion
-//  *               | |
-//  *               v v
-//  * (MSB) x x x x x x x x (LSB)
-//  */
-// enum BoardPieceTypeEnum
-// {
-//     VOID = 0b00000000, //!< Void (Empty square)
-//     B_EL = 0b00000001, //!< Black Elephant (Limited Bishop)
-//     B_GI = 0b00000010, //!< Black Giraffe (Limited Rook)
-//     B_LI = 0b00000011, //!< Black Lion (King)
-//     B_CH = 0b00000100, //!< Black Chick (Pawn)
-//     B_HE = 0b00000101, //!< Black Hen (Promoted Pawn)
-//     W_EL = 0b00001001, //!< White Elephant (Limited Bishop)
-//     W_GI = 0b00001010, //!< White Giraffe (Limited Rook)
-//     W_LI = 0b00001011, //!< White Lion (King)
-//     W_CH = 0b00001100, //!< White Chick (Pawn)
-//     W_HE = 0b00001101, //!< White Hen (Promoted Pawn)
-// };
+enum CapturedPieceTypeEnum : std::uint8_t
+{
+    C_CH = 0, // Captured Chick (Pawn)
+    C_EL = 1, // Captured Elephant (limited Bishop)
+    C_GI = 2, // Captured Giraffe (limited Rook)
+    C_NA = 0xff, // Not available.
+};
 
 } // namespace vshogi::animal_shogi
 
