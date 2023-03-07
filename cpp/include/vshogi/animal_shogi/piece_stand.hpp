@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <string>
 
+#include "vshogi/animal_shogi/color.hpp"
+
 namespace vshogi::animal_shogi
 {
 
@@ -91,10 +93,10 @@ public:
     {
         return static_cast<bool>(m_value & internal::mask_for_piece_stand[p]);
     }
-    PieceStand& add(const CapturedPieceTypeEnum p)
+    PieceStand& add(const CapturedPieceTypeEnum p, const std::uint8_t num = 1U)
     {
         m_value = static_cast<std::uint8_t>(
-            m_value + internal::delta_for_piece_stand[p]);
+            m_value + internal::delta_for_piece_stand[p] * num);
         return *this;
     }
     PieceStand& subtract(const CapturedPieceTypeEnum p)
@@ -111,6 +113,31 @@ public:
     {
         return m_value != other.m_value;
     }
+};
+
+class TwoPieceStands
+{
+private:
+    PieceStand m_black;
+    PieceStand m_white;
+
+public:
+    TwoPieceStands() : m_black(), m_white()
+    {
+    }
+    PieceStand& black()
+    {
+        return m_black;
+    }
+    PieceStand& white()
+    {
+        return m_white;
+    }
+    PieceStand& operator[](const ColorEnum c)
+    {
+        return (c == BLACK) ? m_black : m_white;
+    }
+    const char* set_sfen_holdings(const char* const sfen_holdings);
 };
 
 } // namespace vshogi::animal_shogi
