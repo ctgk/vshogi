@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "vshogi/animal_shogi/color.hpp"
+#include "vshogi/animal_shogi/piece.hpp"
 #include "vshogi/animal_shogi/squares.hpp"
 
 namespace vshogi::animal_shogi
@@ -35,6 +36,11 @@ public:
     constexpr BitBoard operator|(const BitBoard other) const
     {
         return BitBoard(m_value | other.m_value);
+    }
+    BitBoard& operator|=(const BitBoard other)
+    {
+        m_value = static_cast<std::uint16_t>(m_value | other.m_value);
+        return *this;
     }
     bool operator==(const BitBoard other) const
     {
@@ -219,6 +225,33 @@ constexpr BitBoard hen_attacks[num_squares][num_colors] = {
     {internal::he_attack_sqb3[BLACK].one_rank_below().one_file_right(),
      internal::he_attack_sqb3[WHITE].one_rank_below().one_file_right()},
 };
+
+constexpr BitBoard
+get_attacks_by(const BoardPieceTypeEnum piece, const SquareEnum location)
+{
+    switch (piece) {
+    case B_CH:
+        return chick_attacks[location][BLACK];
+    case W_CH:
+        return chick_attacks[location][WHITE];
+    case B_EL: // fall-through
+    case W_EL:
+        return elephant_attacks[location];
+    case B_GI: // fall-through
+    case W_GI:
+        return giraffe_attacks[location];
+    case B_LI: // fall-through
+    case W_LI:
+        return lion_attacks[location];
+    case B_HE:
+        return hen_attacks[location][BLACK];
+    case W_HE:
+        return hen_attacks[location][WHITE];
+    default:
+        break;
+    }
+    return BitBoard(0);
+}
 
 } // namespace vshogi::animal_shogi
 

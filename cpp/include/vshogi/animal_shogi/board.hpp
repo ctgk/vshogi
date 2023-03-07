@@ -3,6 +3,7 @@
 
 #include <cstdint>
 
+#include "vshogi/animal_shogi/bitboard.hpp"
 #include "vshogi/animal_shogi/piece.hpp"
 #include "vshogi/animal_shogi/squares.hpp"
 
@@ -13,7 +14,6 @@ class Board
 {
 private:
     BoardPieceTypeEnum m_pieces[num_squares];
-
     const char* set_sfen_rank(const char* const sfen_rank, const RankEnum rank);
 
 public:
@@ -58,6 +58,28 @@ public:
     {
         m_pieces[sq] = p;
         return *this;
+    }
+    BitBoard to_attack_mask(const ColorEnum c) const
+    {
+        BitBoard out = BitBoard();
+        for (auto&& sq : square_array) {
+            const auto p = m_pieces[sq];
+            if (to_color(p) == c)
+                out |= get_attacks_by(p, sq);
+        }
+        return out;
+    }
+    BitBoard to_location_mask(const ColorEnum c) const
+    {
+        BitBoard out = BitBoard();
+        for (auto&& sq : square_array) {
+            const auto p = m_pieces[sq];
+            if (p == VOID)
+                continue;
+            if (to_color(p) == c)
+                out |= square_masks[sq];
+        }
+        return out;
     }
 };
 

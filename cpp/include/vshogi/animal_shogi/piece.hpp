@@ -51,6 +51,17 @@ enum CapturedPieceTypeEnum : std::uint8_t
     C_NA = 3, // Not available.
 };
 
+/**
+ * @brief Return color of the board piece. Note that VOID returns WHITE.
+ *
+ * @param p Board piece
+ * @return ColorEnum Color of the piece.
+ */
+inline ColorEnum to_color(const BoardPieceTypeEnum p)
+{
+    return static_cast<ColorEnum>(p >> 3);
+}
+
 inline PieceTypeEnum to_piece_type(const BoardPieceTypeEnum p)
 {
     return static_cast<PieceTypeEnum>(p & 0x07);

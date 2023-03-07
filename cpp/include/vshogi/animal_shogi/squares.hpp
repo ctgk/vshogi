@@ -21,13 +21,29 @@ namespace vshogi::animal_shogi
 enum SquareEnum
 {
     // clang-format off
-    SQ_A1, SQ_B1, SQ_C1,
+    SQ_A1, //!< First square.
+    SQ_B1, SQ_C1,
     SQ_A2, SQ_B2, SQ_C2,
     SQ_A3, SQ_B3, SQ_C3,
-    SQ_A4, SQ_B4, SQ_C4,
+    SQ_A4, SQ_B4,
+    SQ_C4, //!< Last square.
     // clang-format on
 };
 constexpr int num_squares = 12;
+constexpr SquareEnum square_array[] = {
+    SQ_A1,
+    SQ_B1,
+    SQ_C1,
+    SQ_A2,
+    SQ_B2,
+    SQ_C2,
+    SQ_A3,
+    SQ_B3,
+    SQ_C3,
+    SQ_A4,
+    SQ_B4,
+    SQ_C4,
+};
 
 enum RankEnum
 {
