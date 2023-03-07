@@ -112,6 +112,19 @@ constexpr BitBoard BitBoard::one_file_left() const
         static_cast<std::uint16_t>((m_value & (~file_a_mask.m_value)) >> 1));
 }
 
+namespace internal
+{
+
+constexpr BitBoard el_attack_sqb3
+    = square_a2_mask | square_c2_mask | square_a4_mask | square_c4_mask;
+constexpr BitBoard gi_attack_sqb3
+    = square_a3_mask | square_b2_mask | square_c3_mask | square_b4_mask;
+constexpr BitBoard he_attack_sqb3[]
+    = {gi_attack_sqb3 | square_a2_mask | square_c2_mask,
+       gi_attack_sqb3 | square_a4_mask | square_c4_mask};
+
+} // namespace internal
+
 constexpr BitBoard chick_attacks[NUM_SQUARES][NUM_COLORS] = {
     {square_a1_mask.one_rank_above(), square_a1_mask.one_rank_below()},
     {square_b1_mask.one_rank_above(), square_b1_mask.one_rank_below()},
@@ -126,16 +139,6 @@ constexpr BitBoard chick_attacks[NUM_SQUARES][NUM_COLORS] = {
     {square_b4_mask.one_rank_above(), square_b4_mask.one_rank_below()},
     {square_c4_mask.one_rank_above(), square_c4_mask.one_rank_below()},
 };
-
-namespace internal
-{
-
-constexpr BitBoard el_attack_sqb3
-    = square_a2_mask | square_c2_mask | square_a4_mask | square_c4_mask;
-constexpr BitBoard gi_attack_sqb3
-    = square_a3_mask | square_b2_mask | square_c3_mask | square_b4_mask;
-
-} // namespace internal
 
 constexpr BitBoard elephant_attacks[NUM_SQUARES] = {
     internal::el_attack_sqb3.one_rank_above().one_rank_above().one_file_left(),
@@ -178,6 +181,43 @@ constexpr BitBoard lion_attacks[NUM_SQUARES] = {
     elephant_attacks[SQ_A4] | giraffe_attacks[SQ_A4],
     elephant_attacks[SQ_B4] | giraffe_attacks[SQ_B4],
     elephant_attacks[SQ_C4] | giraffe_attacks[SQ_C4],
+};
+constexpr BitBoard hen_attacks[NUM_SQUARES][NUM_COLORS] = {
+    {internal::he_attack_sqb3[BLACK]
+         .one_rank_above()
+         .one_rank_above()
+         .one_file_left(),
+     internal::he_attack_sqb3[WHITE]
+         .one_rank_above()
+         .one_rank_above()
+         .one_file_left()},
+    {internal::he_attack_sqb3[BLACK].one_rank_above().one_rank_above(),
+     internal::he_attack_sqb3[WHITE].one_rank_above().one_rank_above()},
+    {internal::he_attack_sqb3[BLACK]
+         .one_rank_above()
+         .one_rank_above()
+         .one_file_right(),
+     internal::he_attack_sqb3[WHITE]
+         .one_rank_above()
+         .one_rank_above()
+         .one_file_right()},
+    {internal::he_attack_sqb3[BLACK].one_rank_above().one_file_left(),
+     internal::he_attack_sqb3[WHITE].one_rank_above().one_file_left()},
+    {internal::he_attack_sqb3[BLACK].one_rank_above(),
+     internal::he_attack_sqb3[WHITE].one_rank_above()},
+    {internal::he_attack_sqb3[BLACK].one_rank_above().one_file_right(),
+     internal::he_attack_sqb3[WHITE].one_rank_above().one_file_right()},
+    {internal::he_attack_sqb3[BLACK].one_file_left(),
+     internal::he_attack_sqb3[WHITE].one_file_left()},
+    {internal::he_attack_sqb3[BLACK], internal::he_attack_sqb3[WHITE]},
+    {internal::he_attack_sqb3[BLACK].one_file_right(),
+     internal::he_attack_sqb3[WHITE].one_file_right()},
+    {internal::he_attack_sqb3[BLACK].one_rank_below().one_file_left(),
+     internal::he_attack_sqb3[WHITE].one_rank_below().one_file_left()},
+    {internal::he_attack_sqb3[BLACK].one_rank_below(),
+     internal::he_attack_sqb3[WHITE].one_rank_below()},
+    {internal::he_attack_sqb3[BLACK].one_rank_below().one_file_right(),
+     internal::he_attack_sqb3[WHITE].one_rank_below().one_file_right()},
 };
 
 } // namespace vshogi::animal_shogi

@@ -48,4 +48,10 @@ TEST(animal_shogi_bitboard, lion_attacks)
         == lion_attacks[SQ_A4]);
 }
 
+TEST(animal_shogi_bitboard, hen_attacks)
+{
+    CHECK_TRUE((square_b1_mask | square_c2_mask) == hen_attacks[SQ_C1][BLACK]);
+    CHECK_TRUE((square_b4_mask | square_c3_mask) == hen_attacks[SQ_C4][WHITE]);
+}
+
 } // namespace test_vshogi::test_animal_shogi
