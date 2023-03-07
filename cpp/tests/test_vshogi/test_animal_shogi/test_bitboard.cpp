@@ -36,4 +36,16 @@ TEST(animal_shogi_bitboard, elephant_attacks)
     CHECK_TRUE((square_a3_mask | square_c3_mask) == elephant_attacks[SQ_B4]);
 }
 
+TEST(animal_shogi_bitboard, giraffe_attacks)
+{
+    CHECK_TRUE((square_c3_mask | square_b4_mask) == giraffe_attacks[SQ_C4]);
+}
+
+TEST(animal_shogi_bitboard, lion_attacks)
+{
+    CHECK_TRUE(
+        (square_a3_mask | square_b3_mask | square_b4_mask)
+        == lion_attacks[SQ_A4]);
+}
+
 } // namespace test_vshogi::test_animal_shogi

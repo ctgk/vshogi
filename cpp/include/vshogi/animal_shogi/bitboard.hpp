@@ -127,21 +127,57 @@ constexpr BitBoard chick_attacks[NUM_SQUARES][NUM_COLORS] = {
     {square_c4_mask.one_rank_above(), square_c4_mask.one_rank_below()},
 };
 
-constexpr BitBoard elephant_attack_at_sqb3
+namespace internal
+{
+
+constexpr BitBoard el_attack_sqb3
     = square_a2_mask | square_c2_mask | square_a4_mask | square_c4_mask;
+constexpr BitBoard gi_attack_sqb3
+    = square_a3_mask | square_b2_mask | square_c3_mask | square_b4_mask;
+
+} // namespace internal
+
 constexpr BitBoard elephant_attacks[NUM_SQUARES] = {
-    elephant_attack_at_sqb3.one_rank_above().one_rank_above().one_file_left(),
-    elephant_attack_at_sqb3.one_rank_above().one_rank_above(),
-    elephant_attack_at_sqb3.one_rank_above().one_rank_above().one_file_right(),
-    elephant_attack_at_sqb3.one_rank_above().one_file_left(),
-    elephant_attack_at_sqb3.one_rank_above(),
-    elephant_attack_at_sqb3.one_rank_above().one_file_right(),
-    elephant_attack_at_sqb3.one_file_left(),
-    elephant_attack_at_sqb3,
-    elephant_attack_at_sqb3.one_file_right(),
-    elephant_attack_at_sqb3.one_rank_below().one_file_left(),
-    elephant_attack_at_sqb3.one_rank_below(),
-    elephant_attack_at_sqb3.one_rank_below().one_file_right(),
+    internal::el_attack_sqb3.one_rank_above().one_rank_above().one_file_left(),
+    internal::el_attack_sqb3.one_rank_above().one_rank_above(),
+    internal::el_attack_sqb3.one_rank_above().one_rank_above().one_file_right(),
+    internal::el_attack_sqb3.one_rank_above().one_file_left(),
+    internal::el_attack_sqb3.one_rank_above(),
+    internal::el_attack_sqb3.one_rank_above().one_file_right(),
+    internal::el_attack_sqb3.one_file_left(),
+    internal::el_attack_sqb3,
+    internal::el_attack_sqb3.one_file_right(),
+    internal::el_attack_sqb3.one_rank_below().one_file_left(),
+    internal::el_attack_sqb3.one_rank_below(),
+    internal::el_attack_sqb3.one_rank_below().one_file_right(),
+};
+constexpr BitBoard giraffe_attacks[NUM_SQUARES] = {
+    internal::gi_attack_sqb3.one_rank_above().one_rank_above().one_file_left(),
+    internal::gi_attack_sqb3.one_rank_above().one_rank_above(),
+    internal::gi_attack_sqb3.one_rank_above().one_rank_above().one_file_right(),
+    internal::gi_attack_sqb3.one_rank_above().one_file_left(),
+    internal::gi_attack_sqb3.one_rank_above(),
+    internal::gi_attack_sqb3.one_rank_above().one_file_right(),
+    internal::gi_attack_sqb3.one_file_left(),
+    internal::gi_attack_sqb3,
+    internal::gi_attack_sqb3.one_file_right(),
+    internal::gi_attack_sqb3.one_rank_below().one_file_left(),
+    internal::gi_attack_sqb3.one_rank_below(),
+    internal::gi_attack_sqb3.one_rank_below().one_file_right(),
+};
+constexpr BitBoard lion_attacks[NUM_SQUARES] = {
+    elephant_attacks[SQ_A1] | giraffe_attacks[SQ_A1],
+    elephant_attacks[SQ_B1] | giraffe_attacks[SQ_B1],
+    elephant_attacks[SQ_C1] | giraffe_attacks[SQ_C1],
+    elephant_attacks[SQ_A2] | giraffe_attacks[SQ_A2],
+    elephant_attacks[SQ_B2] | giraffe_attacks[SQ_B2],
+    elephant_attacks[SQ_C2] | giraffe_attacks[SQ_C2],
+    elephant_attacks[SQ_A3] | giraffe_attacks[SQ_A3],
+    elephant_attacks[SQ_B3] | giraffe_attacks[SQ_B3],
+    elephant_attacks[SQ_C3] | giraffe_attacks[SQ_C3],
+    elephant_attacks[SQ_A4] | giraffe_attacks[SQ_A4],
+    elephant_attacks[SQ_B4] | giraffe_attacks[SQ_B4],
+    elephant_attacks[SQ_C4] | giraffe_attacks[SQ_C4],
 };
 
 } // namespace vshogi::animal_shogi
