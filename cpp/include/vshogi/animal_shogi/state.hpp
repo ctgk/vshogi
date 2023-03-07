@@ -89,6 +89,7 @@ private:
         } else {
             const auto sq = static_cast<SquareEnum>(src);
             const auto p = m_board.get_piece_at(sq);
+            m_board.pop_piece_at(sq);
             return promote(p, sq);
         }
     }

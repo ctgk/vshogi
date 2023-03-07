@@ -31,7 +31,8 @@ TEST(animal_shogi_state, apply_move)
         auto s = State();
         s.apply_move(Move(SQ_B2, MS_B3));
 
-        CHECK_EQUAL(B_CH, s.get_board().get_piece_at(SQ_B2));
+        CHECK_EQUAL(B_CH, s.get_board().get_piece_at(SQ_B2)); // destination
+        CHECK_EQUAL(VOID, s.get_board().get_piece_at(SQ_B3)); // source
         CHECK_EQUAL(1, s.get_piece_stand(BLACK).count(C_CH));
         CHECK_EQUAL(0, s.get_piece_stand(BLACK).count(C_EL));
         CHECK_EQUAL(0, s.get_piece_stand(BLACK).count(C_GI));
@@ -45,7 +46,8 @@ TEST(animal_shogi_state, apply_move)
         auto s = State("lge/1C1/1c1/EGL b - 1");
         s.apply_move(Move(SQ_B1, MS_B2));
 
-        CHECK_EQUAL(B_HE, s.get_board().get_piece_at(SQ_B1));
+        CHECK_EQUAL(B_HE, s.get_board().get_piece_at(SQ_B1)); // destination
+        CHECK_EQUAL(VOID, s.get_board().get_piece_at(SQ_B2)); // source
         CHECK_EQUAL(0, s.get_piece_stand(BLACK).count(C_CH));
         CHECK_EQUAL(0, s.get_piece_stand(BLACK).count(C_EL));
         CHECK_EQUAL(1, s.get_piece_stand(BLACK).count(C_GI));
