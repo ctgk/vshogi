@@ -20,7 +20,7 @@ class State
 {
 private:
     Board m_board;
-    PieceStand m_piece_stand[2];
+    TwoPieceStands m_two_piece_stands;
     ColorEnum m_turn; //!< Player to move next.
 
 public:

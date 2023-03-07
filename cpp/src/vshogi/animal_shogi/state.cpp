@@ -3,12 +3,12 @@
 namespace vshogi::animal_shogi
 {
 
-State::State() : m_board(), m_piece_stand(), m_turn(BLACK)
+State::State() : m_board(), m_two_piece_stands(), m_turn(BLACK)
 {
 }
 
 State::State(const std::string& sfen)
-    : m_board(), m_piece_stand(), m_turn(get_current_turn(sfen))
+    : m_board(), m_two_piece_stands(), m_turn(get_current_turn(sfen))
 {
 }
 
