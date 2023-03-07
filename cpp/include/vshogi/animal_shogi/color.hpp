@@ -15,6 +15,7 @@ enum ColorEnum
 {
     BLACK = 0, //!< First player's color.
     WHITE = 1, //!< Second player's color.
+    NUM_COLORS = 2,
 };
 
 /**
