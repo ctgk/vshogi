@@ -18,56 +18,70 @@ TEST(animal_shogi_piece_stand, count)
 {
     {
         const auto ps = PieceStand();
-        CHECK_EQUAL(0, ps.count(PieceStand::CH));
-        CHECK_EQUAL(0, ps.count(PieceStand::EL));
-        CHECK_EQUAL(0, ps.count(PieceStand::GI));
+        CHECK_EQUAL(0, ps.count(C_CH));
+        CHECK_EQUAL(0, ps.count(C_EL));
+        CHECK_EQUAL(0, ps.count(C_GI));
     }
     {
-        CHECK_EQUAL(1, PieceStand(1).count(PieceStand::CH));
-        CHECK_EQUAL(0, PieceStand(1).count(PieceStand::GI));
-        CHECK_EQUAL(0, PieceStand(1).count(PieceStand::EL));
+        CHECK_EQUAL(1, PieceStand(1).count(C_CH));
+        CHECK_EQUAL(0, PieceStand(1).count(C_GI));
+        CHECK_EQUAL(0, PieceStand(1).count(C_EL));
+    }
+    {
+        const auto ps = PieceStand("-");
+        CHECK_EQUAL(0, ps.count(C_CH));
+        CHECK_EQUAL(0, ps.count(C_EL));
+        CHECK_EQUAL(0, ps.count(C_GI));
+    }
+    {
+        const auto ps = PieceStand("2c");
+        CHECK_EQUAL(2, ps.count(C_CH));
+        CHECK_EQUAL(0, ps.count(C_EL));
+        CHECK_EQUAL(0, ps.count(C_GI));
+    }
+    {
+        const auto ps = PieceStand("E2G");
+        CHECK_EQUAL(0, ps.count(C_CH));
+        CHECK_EQUAL(1, ps.count(C_EL));
+        CHECK_EQUAL(2, ps.count(C_GI));
     }
 }
 
 TEST(animal_shogi_piece_stand, add)
 {
     {
-        const auto ps = PieceStand().add(PieceStand::EL);
-        CHECK_EQUAL(0, ps.count(PieceStand::CH));
-        CHECK_EQUAL(1, ps.count(PieceStand::EL));
-        CHECK_EQUAL(0, ps.count(PieceStand::GI));
+        const auto ps = PieceStand().add(C_EL);
+        CHECK_EQUAL(0, ps.count(C_CH));
+        CHECK_EQUAL(1, ps.count(C_EL));
+        CHECK_EQUAL(0, ps.count(C_GI));
     }
     {
-        const auto ps = PieceStand().add(PieceStand::EL).add(PieceStand::GI);
-        CHECK_EQUAL(0, ps.count(PieceStand::CH));
-        CHECK_EQUAL(1, ps.count(PieceStand::EL));
-        CHECK_EQUAL(1, ps.count(PieceStand::GI));
+        const auto ps = PieceStand().add(C_EL).add(C_GI);
+        CHECK_EQUAL(0, ps.count(C_CH));
+        CHECK_EQUAL(1, ps.count(C_EL));
+        CHECK_EQUAL(1, ps.count(C_GI));
     }
     {
-        const auto ps = PieceStand().add(PieceStand::CH).add(PieceStand::CH);
-        CHECK_EQUAL(2, ps.count(PieceStand::CH));
-        CHECK_EQUAL(0, ps.count(PieceStand::EL));
-        CHECK_EQUAL(0, ps.count(PieceStand::GI));
+        const auto ps = PieceStand().add(C_CH).add(C_CH);
+        CHECK_EQUAL(2, ps.count(C_CH));
+        CHECK_EQUAL(0, ps.count(C_EL));
+        CHECK_EQUAL(0, ps.count(C_GI));
     }
 }
 
 TEST(animal_shogi_piece_stand, subtract)
 {
     {
-        const auto ps
-            = PieceStand().add(PieceStand::EL).subtract(PieceStand::EL);
-        CHECK_EQUAL(0, ps.count(PieceStand::CH));
-        CHECK_EQUAL(0, ps.count(PieceStand::EL));
-        CHECK_EQUAL(0, ps.count(PieceStand::GI));
+        const auto ps = PieceStand().add(C_EL).subtract(C_EL);
+        CHECK_EQUAL(0, ps.count(C_CH));
+        CHECK_EQUAL(0, ps.count(C_EL));
+        CHECK_EQUAL(0, ps.count(C_GI));
     }
     {
-        const auto ps = PieceStand()
-                            .add(PieceStand::EL)
-                            .add(PieceStand::EL)
-                            .subtract(PieceStand::EL);
-        CHECK_EQUAL(0, ps.count(PieceStand::CH));
-        CHECK_EQUAL(1, ps.count(PieceStand::EL));
-        CHECK_EQUAL(0, ps.count(PieceStand::GI));
+        const auto ps = PieceStand().add(C_EL).add(C_EL).subtract(C_EL);
+        CHECK_EQUAL(0, ps.count(C_CH));
+        CHECK_EQUAL(1, ps.count(C_EL));
+        CHECK_EQUAL(0, ps.count(C_GI));
     }
 }
 
