@@ -58,4 +58,12 @@ TEST(animal_shogi_state, apply_move)
     }
 }
 
+TEST(animal_shogi_state, is_move_legal)
+{
+    {
+        CHECK_TRUE(State().is_move_legal(Move(SQ_B2, MS_B3)));
+        CHECK_FALSE(State().is_move_legal(Move(SQ_B3, MS_B2)));
+    }
+}
+
 } // namespace test_vshogi::test_animal_shogi

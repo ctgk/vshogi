@@ -41,6 +41,33 @@ public:
     {
         return m_turn;
     }
+
+    /**
+     * @brief Check if a move is legal or not.
+     *
+     * @param move
+     * @return true
+     * @return false
+     */
+    bool is_move_legal(const Move move) const
+    {
+        const auto dst = move.destination();
+        if (move.is_drop()) {
+            const auto piece = to_captured(move.source());
+            return (
+                m_two_piece_stands[m_turn].exist(piece)
+                && (m_board.get_piece_at(dst) == VOID)
+                && is_movable_after_drop(piece, dst));
+        } else {
+            const auto src = to_square(move.source());
+            const auto piece = m_board.get_piece_at(src);
+            return (
+                (to_color(piece) == m_turn)
+                && get_attacks_by(piece, src).is_one(dst)
+                && is_empty_or_opponent_piece_on_square(dst)
+                && !is_check_after_move(piece, dst));
+        }
+    }
     State& apply_move(const Move move)
     {
         const auto dst = move.destination();
@@ -100,6 +127,32 @@ private:
     void change_turn()
     {
         m_turn = opposite(m_turn);
+    }
+    bool is_movable_after_drop(
+        const CapturedPieceTypeEnum p, const SquareEnum destination) const
+    {
+        if (p == C_CH) {
+            const auto r = to_rank(destination);
+            return (m_turn == BLACK) ? (r != RANK1) : (r != RANK4);
+        }
+        return true;
+    }
+    bool is_empty_or_opponent_piece_on_square(const SquareEnum sq) const
+    {
+        const auto p = m_board.get_piece_at(sq);
+        if (p == VOID)
+            return true;
+        return to_color(p) != m_turn;
+    }
+    bool is_check_after_move(
+        const BoardPieceTypeEnum moving_piece,
+        const SquareEnum destination) const
+    {
+        if (to_piece_type(moving_piece) != LI)
+            return false; // there is no discovered attacks in Animal Shogi.
+        const auto attacks_by_opponent
+            = m_board.to_attack_mask(opposite(to_color(moving_piece)));
+        return attacks_by_opponent.is_one(destination);
     }
 };
 

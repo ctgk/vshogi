@@ -34,6 +34,11 @@ inline CapturedPieceTypeEnum to_captured(const MoveSourceEnum source)
     return table[source];
 }
 
+inline SquareEnum to_square(const MoveSourceEnum source)
+{
+    return static_cast<SquareEnum>(source);
+}
+
 inline bool is_drop(const MoveSourceEnum source)
 {
     constexpr bool table[] = {

@@ -67,7 +67,7 @@ inline PieceTypeEnum to_piece_type(const BoardPieceTypeEnum p)
     return static_cast<PieceTypeEnum>(p & 0x07);
 }
 
-inline BoardPieceTypeEnum
+constexpr BoardPieceTypeEnum
 to_board_piece(const ColorEnum c, const PieceTypeEnum p)
 {
     if (p == NA)
