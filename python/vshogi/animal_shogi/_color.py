@@ -18,4 +18,4 @@ class ColorEnum(Enum):
     WHITE = _as.WHITE
 
     def __repr__(self) -> str:
-        return repr(self.value)
+        return f'ColorEnum.{self.name}'
