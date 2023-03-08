@@ -1,6 +1,7 @@
 import typing as tp
 
 from vshogi._vshogi.animal_shogi import _Game
+from vshogi.animal_shogi._move import Move
 
 
 class Game:
@@ -25,3 +26,22 @@ class Game:
         str
         """
         return self._game.get_turn()
+
+    def apply_move(self, move: Move) -> 'Game':
+        """Apply a move.
+
+        Parameters
+        ----------
+        move : Move
+            Move to apply.
+
+        Returns
+        -------
+        Game
+            Game with the move applied.
+        """
+        self._game.apply_move(move._move)
+        return self
+
+    def __repr__(self) -> str:
+        pass

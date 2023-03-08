@@ -63,6 +63,42 @@ void export_move(py::module& m)
         .def("is_drop", &as::Move::is_drop);
 }
 
+void export_board(py::module& m)
+{
+    py::class_<as::Board>(m, "Board")
+        .def(py::init<>())
+        .def("get_piece_at", &as::Board::get_piece_at);
+}
+
+void export_board_piece_type_enum(py::module& m)
+{
+    py::enum_<as::BoardPieceTypeEnum>(m, "BoardPieceTypeEnum")
+        .value("B_CH", as::B_CH)
+        .value("B_EL", as::B_EL)
+        .value("B_GI", as::B_GI)
+        .value("B_LI", as::B_LI)
+        .value("B_HE", as::B_HE)
+        .value("W_CH", as::W_CH)
+        .value("W_EL", as::W_EL)
+        .value("W_GI", as::W_GI)
+        .value("W_LI", as::W_LI)
+        .value("W_HE", as::W_HE)
+        .value("VOID", as::VOID)
+        .export_values();
+}
+
+void export_piece_type_enum(py::module& m)
+{
+    py::enum_<as::PieceTypeEnum>(m, "PieceTypeEnum")
+        .value("CH", as::CH)
+        .value("EL", as::EL)
+        .value("GI", as::GI)
+        .value("LI", as::LI)
+        .value("HE", as::HE)
+        .value("NA", as::NA)
+        .export_values();
+}
+
 void export_animal_shogi_game(py::module& m)
 {
     py::class_<as::Game>(m, "_Game")
@@ -77,6 +113,9 @@ void export_animal_shogi_game(py::module& m)
 PYBIND11_MODULE(_vshogi, m)
 {
     auto animal_shogi_module = m.def_submodule("animal_shogi");
+    export_board(animal_shogi_module);
+    export_board_piece_type_enum(animal_shogi_module);
+    export_piece_type_enum(animal_shogi_module);
     export_color_enum(animal_shogi_module);
     export_square_enum(animal_shogi_module);
     export_move_source_enum(animal_shogi_module);
