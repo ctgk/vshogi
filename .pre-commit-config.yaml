@@ -44,5 +44,5 @@ repos:
     -   id: python-unittest
         name: Run Python UnitTests
         language: system
-        entry: bash -c 'pip install -e .[develop]; pytest'
+        entry: bash -c 'pip install -e .[develop]; pytest --doctest-modules'
         pass_filenames: false

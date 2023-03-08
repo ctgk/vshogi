@@ -1,5 +1,8 @@
+import typing as tp
+
 import vshogi._vshogi.animal_shogi as _as
 from vshogi._enum import _Enum
+from vshogi.animal_shogi._square import SquareEnum
 
 
 class MoveSourceEnum(_Enum):
@@ -37,8 +40,72 @@ class MoveSourceEnum(_Enum):
     GI = _as.MS_GI
 
 
-def _move_repr(self: _as.Move) -> str:
-    return f'Move({self.source().name} -> {self.destination().name})'
+class Move:
+    """Move of a piece.
 
+    Examples
+    --------
+    >>> import vshogi.animal_shogi as shogi
+    >>> m = Move(shogi.SquareEnum.B2, shogi.MoveSourceEnum.B3)
+    >>> m
+    Move(MoveSourceEnum.B3 -> SquareEnum.B2)
+    >>> m.source
+    MoveSourceEnum.B3
+    >>> m.destination
+    SquareEnum.B2
+    >>> m.is_drop()
+    False
+    >>> Move(shogi.SquareEnum.B2, shogi.MoveSourceEnum.GI).is_drop()
+    True
+    """
 
-_as.Move.__repr__ = _move_repr
+    def __init__(
+        self,
+        destination: SquareEnum,
+        source: tp.Union[SquareEnum, MoveSourceEnum],
+    ) -> None:
+        """Initialize move object.
+
+        Parameters
+        ----------
+        destination : SquareEnum
+            Destination on the board.
+        source : tp.Union[SquareEnum, MoveSourceEnum]
+            Source, either from piece stand or a board square.
+        """
+        self._move = _as.Move(destination.value, source.value)
+
+    def __repr__(self) -> str:
+        return f'Move({repr(self.source)} -> {repr(self.destination)})'
+
+    @property
+    def destination(self) -> SquareEnum:
+        """Destination on the board.
+
+        Returns
+        -------
+        SquareEnum
+            A board square.
+        """
+        return SquareEnum(self._move.destination())
+
+    @property
+    def source(self) -> MoveSourceEnum:
+        """Source, either from piece stand or a board square.
+
+        Returns
+        -------
+        MoveSourceEnum
+            A board square or piece stand.
+        """
+        return MoveSourceEnum(self._move.source())
+
+    def is_drop(self) -> bool:
+        """Return true if the move is dropping move.
+
+        Returns
+        -------
+        bool
+            True if the move is dropping move, otherwise false.
+        """
+        return self._move.is_drop()
