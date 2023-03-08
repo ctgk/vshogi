@@ -27,3 +27,8 @@ class BoardPiece(_Enum):
     W_LI = _as.W_LI
     W_HE = _as.W_HE
     VOID = _as.VOID
+
+    def _to_2char(self) -> str:
+        if self == BoardPiece.VOID:
+            return "  "
+        return {'B': '+', 'W': '-'}[self.name[0]] + self.name[2]
