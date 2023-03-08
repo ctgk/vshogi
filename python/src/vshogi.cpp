@@ -70,8 +70,17 @@ void export_board(py::module& m)
         .def("get_piece_at", &as::Board::get_piece_at);
 }
 
-void export_board_piece_type_enum(py::module& m)
+void export_pieces(py::module& m)
 {
+    py::enum_<as::PieceTypeEnum>(m, "PieceTypeEnum")
+        .value("CH", as::CH)
+        .value("EL", as::EL)
+        .value("GI", as::GI)
+        .value("LI", as::LI)
+        .value("HE", as::HE)
+        .value("NA", as::NA)
+        .export_values();
+
     py::enum_<as::BoardPieceTypeEnum>(m, "BoardPieceTypeEnum")
         .value("B_CH", as::B_CH)
         .value("B_EL", as::B_EL)
@@ -85,17 +94,12 @@ void export_board_piece_type_enum(py::module& m)
         .value("W_HE", as::W_HE)
         .value("VOID", as::VOID)
         .export_values();
-}
 
-void export_piece_type_enum(py::module& m)
-{
-    py::enum_<as::PieceTypeEnum>(m, "PieceTypeEnum")
-        .value("CH", as::CH)
-        .value("EL", as::EL)
-        .value("GI", as::GI)
-        .value("LI", as::LI)
-        .value("HE", as::HE)
-        .value("NA", as::NA)
+    py::enum_<as::CapturedPieceTypeEnum>(m, "CapturedPieceTypeEnum")
+        .value("C_CH", as::C_CH)
+        .value("C_EL", as::C_EL)
+        .value("C_GI", as::C_GI)
+        .value("C_NA", as::C_NA)
         .export_values();
 }
 
@@ -114,8 +118,7 @@ PYBIND11_MODULE(_vshogi, m)
 {
     auto animal_shogi_module = m.def_submodule("animal_shogi");
     export_board(animal_shogi_module);
-    export_board_piece_type_enum(animal_shogi_module);
-    export_piece_type_enum(animal_shogi_module);
+    export_pieces(animal_shogi_module);
     export_color_enum(animal_shogi_module);
     export_square_enum(animal_shogi_module);
     export_move_source_enum(animal_shogi_module);

@@ -3,10 +3,14 @@
 from vshogi.animal_shogi._color import ColorEnum
 from vshogi.animal_shogi._game import Game
 from vshogi.animal_shogi._move import Move, MoveSourceEnum
+from vshogi.animal_shogi._piece import BoardPiece, CapturedPiece, Piece
 from vshogi.animal_shogi._square import Square
 
 
-_classes = [ColorEnum, Game, Move, MoveSourceEnum, Square]
+_classes = [
+    BoardPiece, CapturedPiece, ColorEnum, Game, Move, MoveSourceEnum, Piece,
+    Square,
+]
 
 
 for _cls in _classes:
