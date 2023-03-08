@@ -15,3 +15,13 @@ class Game:
             Initial state of the game, by default None
         """
         self._game = _Game() if sfen is None else _Game(sfen)
+
+    @property
+    def turn(self) -> str:
+        """Return current turn.
+
+        Returns
+        -------
+        str
+        """
+        return self._game.get_turn()

@@ -70,6 +70,10 @@ public:
         : m_value(static_cast<std::uint8_t>((source << 4) | destination))
     {
     }
+    Move(const SquareEnum destination, const SquareEnum source)
+        : Move(destination, static_cast<MoveSourceEnum>(source))
+    {
+    }
     SquareEnum destination() const
     {
         return static_cast<SquareEnum>(m_value & 0xf);

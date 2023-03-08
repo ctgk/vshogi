@@ -1,9 +1,10 @@
 """Animal Shogi module."""
 
+from vshogi.animal_shogi._color import ColorEnum
 from vshogi.animal_shogi._game import Game
 
 
-_classes = [Game]
+_classes = [ColorEnum, Game]
 
 
 for _cls in _classes:
