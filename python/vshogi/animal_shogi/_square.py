@@ -1,9 +1,8 @@
-from enum import Enum
-
 import vshogi._vshogi.animal_shogi as _as
+from vshogi._enum import _Enum
 
 
-class SquareEnum(Enum):
+class SquareEnum(_Enum):
     """Enumeration of board squares.
 
     ```
@@ -32,6 +31,3 @@ class SquareEnum(Enum):
     A4 = _as.SQ_A4
     B4 = _as.SQ_B4
     C4 = _as.SQ_C4
-
-    def __repr__(self) -> str:
-        return f'SquareEnum.{self.name}'
