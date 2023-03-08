@@ -2,7 +2,7 @@ import vshogi._vshogi.animal_shogi as _as
 from vshogi._enum import _Enum
 
 
-class SquareEnum(_Enum):
+class Square(_Enum):
     """Enumeration of board squares.
 
     ```

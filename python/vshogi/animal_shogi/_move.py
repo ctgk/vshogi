@@ -2,7 +2,7 @@ import typing as tp
 
 import vshogi._vshogi.animal_shogi as _as
 from vshogi._enum import _Enum
-from vshogi.animal_shogi._square import SquareEnum
+from vshogi.animal_shogi._square import Square
 
 
 class MoveSourceEnum(_Enum):
@@ -46,31 +46,31 @@ class Move:
     Examples
     --------
     >>> import vshogi.animal_shogi as shogi
-    >>> m = Move(shogi.SquareEnum.B2, shogi.MoveSourceEnum.B3)
+    >>> m = Move(shogi.Square.B2, shogi.MoveSourceEnum.B3)
     >>> m
-    Move(MoveSourceEnum.B3 -> SquareEnum.B2)
+    Move(MoveSourceEnum.B3 -> Square.B2)
     >>> m.source
     MoveSourceEnum.B3
     >>> m.destination
-    SquareEnum.B2
+    Square.B2
     >>> m.is_drop()
     False
-    >>> Move(shogi.SquareEnum.B2, shogi.MoveSourceEnum.GI).is_drop()
+    >>> Move(shogi.Square.B2, shogi.MoveSourceEnum.GI).is_drop()
     True
     """
 
     def __init__(
         self,
-        destination: SquareEnum,
-        source: tp.Union[SquareEnum, MoveSourceEnum],
+        destination: Square,
+        source: tp.Union[Square, MoveSourceEnum],
     ) -> None:
         """Initialize move object.
 
         Parameters
         ----------
-        destination : SquareEnum
+        destination : Square
             Destination on the board.
-        source : tp.Union[SquareEnum, MoveSourceEnum]
+        source : tp.Union[Square, MoveSourceEnum]
             Source, either from piece stand or a board square.
         """
         self._move = _as.Move(destination.value, source.value)
@@ -79,15 +79,15 @@ class Move:
         return f'Move({repr(self.source)} -> {repr(self.destination)})'
 
     @property
-    def destination(self) -> SquareEnum:
+    def destination(self) -> Square:
         """Destination on the board.
 
         Returns
         -------
-        SquareEnum
+        Square
             A board square.
         """
-        return SquareEnum(self._move.destination())
+        return Square(self._move.destination())
 
     @property
     def source(self) -> MoveSourceEnum:
