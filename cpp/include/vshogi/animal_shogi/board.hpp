@@ -81,6 +81,15 @@ public:
         }
         return out;
     }
+    std::uint64_t hash() const
+    {
+        std::uint64_t out = 0;
+        for (auto&& piece : m_pieces) {
+            out <<= 4;
+            out |= piece;
+        }
+        return out;
+    }
 };
 
 } // namespace vshogi::animal_shogi

@@ -47,7 +47,7 @@ public:
     PieceStand() : m_value(0U)
     {
     }
-    PieceStand(const std::uint8_t v) : m_value(v)
+    PieceStand(const std::uint8_t v) : m_value(v & 0b11011011)
     {
     }
     PieceStand(const std::string& sfen_holding) : m_value(0U)
@@ -76,7 +76,10 @@ public:
             preceding_number = 0;
         }
     }
-
+    std::uint8_t get_value() const
+    {
+        return m_value;
+    }
     std::uint8_t count(const CapturedPieceTypeEnum p) const
     {
         return static_cast<uint8_t>(
