@@ -1,11 +1,19 @@
 import typing as tp
 
 from vshogi._vshogi.animal_shogi import _Game
+from vshogi.animal_shogi._color import Color
 from vshogi.animal_shogi._move import Move
 
 
 class Game:
-    """Animal Shogi game."""
+    """Animal Shogi game.
+
+    Examples
+    --------
+    >>> game = Game()
+    >>> game.turn
+    Color.BLACK
+    """
 
     def __init__(self, sfen: tp.Optional[str] = None) -> None:
         """Initialize Animal Shogi game.
@@ -18,14 +26,14 @@ class Game:
         self._game = _Game() if sfen is None else _Game(sfen)
 
     @property
-    def turn(self) -> str:
+    def turn(self) -> Color:
         """Return current turn.
 
         Returns
         -------
-        str
+        Color
         """
-        return self._game.get_turn()
+        return Color(self._game.get_turn())
 
     def apply_move(self, move: Move) -> 'Game':
         """Apply a move.

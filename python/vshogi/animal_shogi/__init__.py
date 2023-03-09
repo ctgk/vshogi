@@ -1,6 +1,6 @@
 """Animal Shogi module."""
 
-from vshogi.animal_shogi._color import ColorEnum
+from vshogi.animal_shogi._color import Color
 from vshogi.animal_shogi._game import Game
 from vshogi.animal_shogi._move import Move, MoveSourceEnum
 from vshogi.animal_shogi._piece import BoardPiece, CapturedPiece, Piece
@@ -8,7 +8,7 @@ from vshogi.animal_shogi._square import Square
 
 
 _classes = [
-    BoardPiece, CapturedPiece, ColorEnum, Game, Move, MoveSourceEnum, Piece,
+    BoardPiece, CapturedPiece, Color, Game, Move, MoveSourceEnum, Piece,
     Square,
 ]
 

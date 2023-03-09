@@ -1,9 +1,8 @@
-from enum import Enum
-
 import vshogi._vshogi.animal_shogi as _as
+from vshogi._enum import _Enum
 
 
-class ColorEnum(Enum):
+class Color(_Enum):
     """Enumeration of colors.
 
     Members
@@ -16,6 +15,3 @@ class ColorEnum(Enum):
 
     BLACK = _as.BLACK
     WHITE = _as.WHITE
-
-    def __repr__(self) -> str:
-        return f'ColorEnum.{self.name}'
