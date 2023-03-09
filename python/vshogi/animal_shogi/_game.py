@@ -11,6 +11,7 @@ class Game:
 
     Examples
     --------
+    >>> import vshogi.animal_shogi as shogi
     >>> game = Game()
     >>> game.turn
     Color.BLACK
@@ -23,6 +24,18 @@ class Game:
     2 |  |-C|  |
       *--*--*--*
     3 |  |+C|  |
+      *--*--*--*
+    4 |+E|+L|+G|
+      *--*--*--*
+    >>> game.apply_move(Move(shogi.B2, shogi.B3))
+    Turn: WHITE
+        A  B  C
+      *--*--*--*
+    1 |-G|-L|-E|
+      *--*--*--*
+    2 |  |+C|  |
+      *--*--*--*
+    3 |  |  |  |
       *--*--*--*
     4 |+E|+L|+G|
       *--*--*--*

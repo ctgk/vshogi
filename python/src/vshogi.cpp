@@ -111,7 +111,8 @@ void export_animal_shogi_game(py::module& m)
         .def("get_turn", &as::Game::get_turn)
         .def("get_board", &as::Game::get_board)
         .def("get_piece_stand", &as::Game::get_piece_stand)
-        .def("is_move_legal", &as::Game::is_move_legal);
+        .def("is_move_legal", &as::Game::is_move_legal)
+        .def("apply_move", &as::Game::apply_move);
 }
 
 PYBIND11_MODULE(_vshogi, m)

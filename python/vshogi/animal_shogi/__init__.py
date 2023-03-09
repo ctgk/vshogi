@@ -13,6 +13,9 @@ _classes = [
 ]
 
 
+locals().update(Square.__members__)
+
+
 for _cls in _classes:
     _cls.__module__ = __name__
 
