@@ -38,9 +38,9 @@ class Board:
       *--*--*--*
     """
 
-    def __init__(self) -> None:
+    def __init__(self, **kwargs) -> None:
         """Initialize board."""
-        self._board = _Board()
+        self._board = kwargs.get('_board', _Board())
 
     def __getitem__(self, sq: Square) -> BoardPiece:
         return BoardPiece(self._board.get_piece_at(sq.value))
