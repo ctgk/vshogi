@@ -5,7 +5,7 @@ from vshogi._enum import _Enum
 from vshogi.animal_shogi._square import Square
 
 
-class MoveSourceEnum(_Enum):
+class MoveSource(_Enum):
     """Enumeration of move sources.
 
     ```
@@ -46,23 +46,23 @@ class Move:
     Examples
     --------
     >>> import vshogi.animal_shogi as shogi
-    >>> m = Move(shogi.Square.B2, shogi.MoveSourceEnum.B3)
+    >>> m = Move(shogi.Square.B2, shogi.MoveSource.B3)
     >>> m
-    Move(MoveSourceEnum.B3 -> Square.B2)
+    Move(MoveSource.B3 -> Square.B2)
     >>> m.source
-    MoveSourceEnum.B3
+    MoveSource.B3
     >>> m.destination
     Square.B2
     >>> m.is_drop()
     False
-    >>> Move(shogi.Square.B2, shogi.MoveSourceEnum.GI).is_drop()
+    >>> Move(shogi.Square.B2, shogi.MoveSource.GI).is_drop()
     True
     """
 
     def __init__(
         self,
         destination: Square,
-        source: tp.Union[Square, MoveSourceEnum],
+        source: tp.Union[Square, MoveSource],
     ) -> None:
         """Initialize move object.
 
@@ -70,13 +70,16 @@ class Move:
         ----------
         destination : Square
             Destination on the board.
-        source : tp.Union[Square, MoveSourceEnum]
+        source : tp.Union[Square, MoveSource]
             Source, either from piece stand or a board square.
         """
         self._move = _as.Move(destination.value, source.value)
 
     def __repr__(self) -> str:
-        return f'Move({repr(self.source)} -> {repr(self.destination)})'
+        return (
+            f'{self.__class__.__name__}({repr(self.source)} '
+            f'-> {repr(self.destination)})'
+        )
 
     @property
     def destination(self) -> Square:
@@ -90,7 +93,7 @@ class Move:
         return Square(self._move.destination())
 
     @property
-    def source(self) -> MoveSourceEnum:
+    def source(self) -> MoveSource:
         """Source, either from piece stand or a board square.
 
         Returns
@@ -98,7 +101,7 @@ class Move:
         MoveSourceEnum
             A board square or piece stand.
         """
-        return MoveSourceEnum(self._move.source())
+        return MoveSource(self._move.source())
 
     def is_drop(self) -> bool:
         """Return true if the move is dropping move.
