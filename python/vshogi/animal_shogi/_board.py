@@ -23,7 +23,7 @@ class Board:
     --------
     >>> import vshogi.animal_shogi as shogi
     >>> board = Board()
-    >>> board[shogi.Square.B3]
+    >>> board[shogi.B3]
     BoardPiece.B_CH
     >>> board
         A  B  C

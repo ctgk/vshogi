@@ -46,7 +46,7 @@ class Move:
     Examples
     --------
     >>> import vshogi.animal_shogi as shogi
-    >>> m = Move(shogi.Square.B2, shogi.MoveSource.B3)
+    >>> m = Move(shogi.B2, shogi.B3)
     >>> m
     Move(MoveSource.B3 -> Square.B2)
     >>> m.source
@@ -55,7 +55,7 @@ class Move:
     Square.B2
     >>> m.is_drop()
     False
-    >>> Move(shogi.Square.B2, shogi.MoveSource.GI).is_drop()
+    >>> Move(shogi.B2, shogi.MoveSource.GI).is_drop()
     True
     """
 
