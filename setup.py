@@ -8,9 +8,9 @@ _vshogi_extension = Pybind11Extension(
     name='vshogi._vshogi',
     sources=sorted(
         glob('cpp/src/**/*.cpp', recursive=True)
-        + glob('python/src/**/*.cpp', recursive=True),
+        + glob('cpp/python/**/*.cpp', recursive=True),
     ),
-    include_dirs=['cpp/include', 'cpp/src', 'python/src'],
+    include_dirs=['cpp/include', 'cpp/src', 'cpp/python'],
 )
 
 

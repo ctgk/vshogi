@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.16.3)
 
 project(vshogi CXX)
-include(../cmake/VShogiAddCompileOptions.cmake)
+
+include(./cmake/VShogiAddCompileOptions.cmake)
 
 file(GLOB_RECURSE vshogi_src ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
@@ -12,3 +13,5 @@ target_include_directories(vshogi
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
 vshogi_add_compile_options(vshogi)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests)
