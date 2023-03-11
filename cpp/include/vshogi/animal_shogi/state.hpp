@@ -18,6 +18,14 @@ namespace vshogi::animal_shogi
  */
 constexpr char default_initial_sfen[] = "gle/1c1/1C1/ELG b - 1";
 
+enum ResultEnum : std::uint8_t
+{
+    UNKNOWN,
+    DRAW,
+    BLACK_WIN,
+    WHITE_WIN,
+};
+
 class State
 {
 private:
@@ -77,20 +85,27 @@ public:
      * @brief Apply an applicable move to the state. This method does not check
      * if a move is applicable or not, check it by `is_move_applicable` method.
      *
-     * @param move Applicable move.
+     * @param [in] move Applicable move.
+     * @param [out] moved Piece moved.
+     * @param [out] captured Piece captured.
      * @return State&
      */
-    State& apply_move(const Move move)
+    State& apply_move(
+        const Move move,
+        PieceTypeEnum* const moved = nullptr,
+        PieceTypeEnum* const captured = nullptr)
     {
         const auto dst = move.destination();
-
-        const PieceTypeEnum captured_piece = pop_piece_from_board(dst);
+        const auto captured_piece = pop_piece_from_board(dst);
         add_captured_piece_to_stand(captured_piece);
-
         const BoardPieceTypeEnum moving_piece
             = pop_piece_from_stand_or_board(move.source());
         place_piece_on_board(dst, moving_piece);
         change_turn();
+        if (moved != nullptr)
+            *moved = to_piece_type(moving_piece);
+        if (captured != nullptr)
+            *captured = captured_piece;
         return *this;
     }
 
