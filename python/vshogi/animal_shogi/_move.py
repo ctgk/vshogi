@@ -49,14 +49,21 @@ class Move:
     >>> import vshogi.animal_shogi as shogi
     >>> m = Move(shogi.B2, shogi.B3)
     >>> m
-    Move(MoveSource.B3 -> Square.B2)
+    Move(B3 -> B2)
     >>> m.source
-    MoveSource.B3
+    Square.B3
     >>> m.destination
     Square.B2
     >>> m.is_drop()
     False
-    >>> Move(shogi.B2, shogi.GI).is_drop()
+    >>> m = Move(shogi.A2, shogi.GI)
+    >>> m
+    Move(GI -> A2)
+    >>> m.destination
+    Square.A2
+    >>> m.source
+    Piece.GI
+    >>> m.is_drop()
     True
     """
 
@@ -78,8 +85,8 @@ class Move:
 
     def __repr__(self) -> str:
         return (
-            f'{self.__class__.__name__}({repr(self.source)} '
-            f'-> {repr(self.destination)})'
+            f'{self.__class__.__name__}({self.source.name} '
+            f'-> {self.destination.name})'
         )
 
     @property
@@ -94,15 +101,18 @@ class Move:
         return Square(self._move.destination())
 
     @property
-    def source(self) -> MoveSource:
+    def source(self) -> tp.Union[Piece, Square]:
         """Source, either from piece stand or a board square.
 
         Returns
         -------
-        MoveSourceEnum
+        tp.Union[Piece, Square]
             A board square or piece stand.
         """
-        return MoveSource(self._move.source())
+        value = self._move.source().value
+        if value < _as.MS_CH.value:
+            return Square(_as.SquareEnum(value))
+        return Piece(_as.PieceTypeEnum(value - 12))
 
     def is_drop(self) -> bool:
         """Return true if the move is dropping move.
