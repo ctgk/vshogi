@@ -53,9 +53,9 @@ public:
     {
         return m_current_state.get_piece_stand(c);
     }
-    bool is_move_legal(const Move move) const
+    bool is_move_applicable(const Move move) const
     {
-        return m_current_state.is_move_legal(move);
+        return m_current_state.is_move_applicable(move);
     }
     Game& apply_move(const Move move)
     {
