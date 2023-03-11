@@ -2,6 +2,7 @@ import typing as tp
 
 import vshogi._vshogi.animal_shogi as _as
 from vshogi._enum import _Enum
+from vshogi.animal_shogi._piece import Piece
 from vshogi.animal_shogi._square import Square
 
 
@@ -55,14 +56,14 @@ class Move:
     Square.B2
     >>> m.is_drop()
     False
-    >>> Move(shogi.B2, shogi.MoveSource.GI).is_drop()
+    >>> Move(shogi.B2, shogi.GI).is_drop()
     True
     """
 
     def __init__(
         self,
         destination: Square,
-        source: tp.Union[Square, MoveSource],
+        source: tp.Union[Square, MoveSource, Piece],
     ) -> None:
         """Initialize move object.
 
@@ -70,7 +71,7 @@ class Move:
         ----------
         destination : Square
             Destination on the board.
-        source : tp.Union[Square, MoveSource]
+        source : tp.Union[Square, MoveSource, Piece]
             Source, either from piece stand or a board square.
         """
         self._move = _as.Move(destination.value, source.value)

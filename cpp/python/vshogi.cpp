@@ -58,6 +58,7 @@ void export_move(py::module& m)
     py::class_<as::Move>(m, "Move")
         .def(py::init<const as::SquareEnum, const as::MoveSourceEnum>())
         .def(py::init<const as::SquareEnum, const as::SquareEnum>())
+        .def(py::init<const as::SquareEnum, const as::PieceTypeEnum>())
         .def("destination", &as::Move::destination)
         .def("source", &as::Move::source)
         .def("is_drop", &as::Move::is_drop);

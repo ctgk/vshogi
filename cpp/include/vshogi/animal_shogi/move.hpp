@@ -74,6 +74,14 @@ public:
         : Move(destination, static_cast<MoveSourceEnum>(source))
     {
     }
+    Move(const SquareEnum destination, const PieceTypeEnum source)
+        : Move(
+            destination,
+            static_cast<MoveSourceEnum>(
+                (source < LI) ? source + 12 : destination))
+    {
+        static_assert(static_cast<int>(MS_CH) - static_cast<int>(CH) == 12);
+    }
     SquareEnum destination() const
     {
         return static_cast<SquareEnum>(m_value & 0xf);

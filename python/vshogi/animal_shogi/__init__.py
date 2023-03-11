@@ -14,6 +14,7 @@ _classes = [
 ]
 
 
+locals().update(Piece.__members__)
 locals().update(Square.__members__)
 
 
