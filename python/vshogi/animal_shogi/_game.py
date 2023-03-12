@@ -1,9 +1,20 @@
 import typing as tp
 
+import vshogi._vshogi.animal_shogi as _as
+from vshogi._enum import _Enum
 from vshogi._vshogi.animal_shogi import _Game
 from vshogi.animal_shogi._board import Board
 from vshogi.animal_shogi._color import Color
 from vshogi.animal_shogi._move import Move
+
+
+class Result(_Enum):
+    """Enumeration of game results."""
+
+    ONGOING = _as.ONGOING
+    DRAW = _as.DRAW
+    BLACK_WIN = _as.BLACK_WIN
+    WHITE_WIN = _as.WHITE_WIN
 
 
 class Game:
@@ -15,6 +26,8 @@ class Game:
     >>> game = Game()
     >>> game.turn
     Color.BLACK
+    >>> game.result
+    Result.ONGOING
     >>> game
     Turn: BLACK
         A  B  C
@@ -34,6 +47,19 @@ class Game:
     1 |-G|-L|-E|
       *--*--*--*
     2 |  |+C|  |
+      *--*--*--*
+    3 |  |  |  |
+      *--*--*--*
+    4 |+E|+L|+G|
+      *--*--*--*
+    >>> game.apply_move(Move(shogi.A2, shogi.A1)).apply_move(
+    ...     Move(shogi.B1, shogi.B2))
+    BLACK_WIN
+        A  B  C
+      *--*--*--*
+    1 |  |+H|-E|
+      *--*--*--*
+    2 |-G|  |  |
       *--*--*--*
     3 |  |  |  |
       *--*--*--*
@@ -72,6 +98,17 @@ class Game:
         """
         return Board(_board=self._game.get_board())
 
+    @property
+    def result(self) -> Result:
+        """Return result of the game.
+
+        Returns
+        -------
+        Result
+            Result of the game.
+        """
+        return Result(self._game.get_result())
+
     def apply_move(self, move: Move) -> 'Game':
         """Apply a move.
 
@@ -89,4 +126,8 @@ class Game:
         return self
 
     def __repr__(self) -> str:
-        return f'Turn: {self.turn.name}\n' + repr(self.board)
+        r = self.result
+        return '\n'.join((
+            f'Turn: {self.turn.name}' if r == Result.ONGOING else r.name,
+            repr(self.board),
+        ))
