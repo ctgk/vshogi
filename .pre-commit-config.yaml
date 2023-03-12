@@ -48,7 +48,7 @@ repos:
         language: system
         entry: pip install -e .[develop]
         types: [text]
-        files: '\.(c|h|cpp|hpp)'
+        files: '\.(c|h|cpp|hpp)$'
         pass_filenames: false
     -   id: python-unittest
         name: Run Python UnitTests
