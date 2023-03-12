@@ -49,13 +49,14 @@ public:
      * - Checkmate by dropping a Chick.
      * - Dropping a Chick on the final rank (, which will never promote to Hen)
      * - Perpetual check.
+     *
      * cf. https://en.wikipedia.org/wiki/D%C5%8Dbutsu_sh%C5%8Dgi#Play
      *
      * @param move
      * @return true The move is applicable.
      * @return false The move is not applicable
      */
-    bool is_move_applicable(const Move move) const
+    bool is_applicable(const Move move) const
     {
         const auto dst = move.destination();
         if (move.is_drop()) {

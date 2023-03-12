@@ -58,11 +58,11 @@ TEST(animal_shogi_state, apply_move)
     }
 }
 
-TEST(animal_shogi_state, is_move_applicable)
+TEST(animal_shogi_state, is_applicable)
 {
     {
-        CHECK_TRUE(State().is_move_applicable(Move(SQ_B2, MS_B3)));
-        CHECK_FALSE(State().is_move_applicable(Move(SQ_B3, MS_B2)));
+        CHECK_TRUE(State().is_applicable(Move(SQ_B2, MS_B3)));
+        CHECK_FALSE(State().is_applicable(Move(SQ_B3, MS_B2)));
     }
 }
 

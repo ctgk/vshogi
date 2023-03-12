@@ -56,9 +56,9 @@ public:
     {
         return m_result;
     }
-    bool is_move_applicable(const Move move) const
+    bool is_applicable(const Move move) const
     {
-        return m_current_state.is_move_applicable(move);
+        return m_current_state.is_applicable(move);
     }
 
     /**

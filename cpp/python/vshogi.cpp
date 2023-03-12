@@ -119,7 +119,7 @@ void export_animal_shogi_game(py::module& m)
         .def("get_board", &as::Game::get_board)
         .def("get_piece_stand", &as::Game::get_piece_stand)
         .def("get_result", &as::Game::get_result)
-        .def("is_move_applicable", &as::Game::is_move_applicable)
+        .def("is_applicable", &as::Game::is_applicable)
         .def("apply_move", &as::Game::apply_move);
 }
 

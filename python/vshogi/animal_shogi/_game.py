@@ -40,9 +40,9 @@ class Game:
       *--*--*--*
     4 |+E|+L|+G|
       *--*--*--*
-    >>> game.is_move_applicable(Move(shogi.B2, shogi.B3))
+    >>> game.is_applicable(Move(shogi.B2, shogi.B3))
     True
-    >>> game.is_move_applicable(Move(shogi.A3, shogi.A4))
+    >>> game.is_applicable(Move(shogi.A3, shogi.A4))
     False
     >>> game.apply_move(Move(shogi.B2, shogi.B3))
     Turn: WHITE
@@ -129,7 +129,7 @@ class Game:
         self._game.apply_move(move._move)
         return self
 
-    def is_move_applicable(self, move: Move) -> bool:
+    def is_applicable(self, move: Move) -> bool:
         """Return true if the move is applicable to the current game status.
 
         Unlike ordinary Shogi, the followings are legal (applicable):
@@ -150,7 +150,7 @@ class Game:
         bool
             True if the move is applicable, otherwise false.
         """
-        return self._game.is_move_applicable(move._move)
+        return self._game.is_applicable(move._move)
 
     def __repr__(self) -> str:
         r = self.result
