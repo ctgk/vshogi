@@ -110,19 +110,20 @@ public:
     }
 
     /**
-     * @brief hash current state.
+     * @brief Hash current state in 7 bytes.
      * @details
-     * (MSB) <Turn + alpha: 1byte> <Stand: 1byte> <Board: 1byte> (LSB)
-     * - First 1 byte: Turn (+ alpha)
-     *     - <Turn: 1bit> <Other: 7bit>
-     * - Second 1 bytes: Pieces on stand of the turn player.
+     * (MSB) <None: 1byte> <Turn + Stand: 1byte> <Board: 6byte> (LSB)
+     * - First 1 byte: None
+     * - Second 1 bytes: Turn + Pieces on stand of the turn player.
+     *      - _____x__ : Turn
+     *      - xx_xx_xx : Pieces on stand
      * - Last 6 bytes: Board (4bit x 12squares = 48bit = 6byte)
      * @return std::uint64_t
      */
     std::uint64_t hash() const
     {
         return (
-            (static_cast<std::uint64_t>(m_turn) << 63)
+            (static_cast<std::uint64_t>(m_turn) << 50)
             + (static_cast<std::uint64_t>(
                    m_two_piece_stands[m_turn].get_value())
                << 48)

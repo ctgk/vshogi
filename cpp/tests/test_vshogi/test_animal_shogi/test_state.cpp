@@ -66,4 +66,21 @@ TEST(animal_shogi_state, is_move_applicable)
     }
 }
 
+TEST(animal_shogi_state, hash)
+{
+    {
+        const auto actual = State("gle/1c1/1C1/ELG b - 1").hash();
+        CHECK_TRUE(((actual >> 50) & 0x1) == BLACK);
+    }
+    {
+        const auto actual = State("gle/1c1/1C1/ELG w - 1").hash();
+        CHECK_TRUE(((actual >> 50) & 0x1) == WHITE);
+    }
+    {
+        const auto a = State("gle/1c1/1C1/ELG b - 1").hash();
+        const auto b = State("gle/1c1/1C1/ELG w - 1").hash();
+        CHECK_EQUAL(a & 0x0ffffffffffff, b & 0x0ffffffffffff);
+    }
+}
+
 } // namespace test_vshogi::test_animal_shogi

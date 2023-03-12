@@ -94,6 +94,10 @@ public:
     {
         return source() >= MS_CH;
     }
+    std::uint8_t hash() const
+    {
+        return m_value;
+    }
 };
 
 } // namespace vshogi::animal_shogi
