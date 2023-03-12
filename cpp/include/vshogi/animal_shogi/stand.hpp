@@ -78,7 +78,8 @@ public:
     }
     Stand& add(const PieceTypeEnum p, const std::uint8_t num = 1U)
     {
-        m_value += static_cast<std::uint8_t>(stand_deltas[p & 0x3] * num);
+        m_value
+            = static_cast<std::uint8_t>(m_value + stand_deltas[p & 0x3] * num);
         return *this;
     }
     Stand& subtract(const PieceTypeEnum p)
