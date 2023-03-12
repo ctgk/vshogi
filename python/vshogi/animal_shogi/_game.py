@@ -137,6 +137,7 @@ class Game:
         - Checkmate by dropping a Chick.
         - Dropping a Chick on the final rank (, which will never promote)
         - Perpetual check.
+
         cf. https://en.wikipedia.org/wiki/D%C5%8Dbutsu_sh%C5%8Dgi#Play
 
         Parameters
