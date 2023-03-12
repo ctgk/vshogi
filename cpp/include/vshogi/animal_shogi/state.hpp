@@ -83,7 +83,7 @@ public:
      * @param [out] captured Piece captured.
      * @return State&
      */
-    State& apply_move(
+    State& apply(
         const Move move,
         PieceTypeEnum* const moved = nullptr,
         PieceTypeEnum* const captured = nullptr)

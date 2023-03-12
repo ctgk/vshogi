@@ -67,14 +67,14 @@ public:
      * @param move Applicable move.
      * @return Game&
      */
-    Game& apply_move(const Move move)
+    Game& apply(const Move move)
     {
         m_history.emplace_back(
             (static_cast<std::uint64_t>(move.hash()) << 56)
             + m_current_state.hash());
         const auto turn = get_turn();
         PieceTypeEnum moved_piece, captured_piece;
-        m_current_state.apply_move(move, &moved_piece, &captured_piece);
+        m_current_state.apply(move, &moved_piece, &captured_piece);
         update_result(
             turn, moved_piece, captured_piece, to_rank(move.destination()));
         return *this;

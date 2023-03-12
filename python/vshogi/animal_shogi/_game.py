@@ -44,7 +44,7 @@ class Game:
     True
     >>> game.is_applicable(Move(shogi.A3, shogi.A4))
     False
-    >>> game.apply_move(Move(shogi.B2, shogi.B3))
+    >>> game.apply(Move(shogi.B2, shogi.B3))
     Turn: WHITE
         A  B  C
       *--*--*--*
@@ -56,8 +56,7 @@ class Game:
       *--*--*--*
     4 |+E|+L|+G|
       *--*--*--*
-    >>> game.apply_move(Move(shogi.A2, shogi.A1)).apply_move(
-    ...     Move(shogi.B1, shogi.B2))
+    >>> game.apply(Move(shogi.A2, shogi.A1)).apply(Move(shogi.B1, shogi.B2))
     BLACK_WIN
         A  B  C
       *--*--*--*
@@ -113,7 +112,7 @@ class Game:
         """
         return Result(self._game.get_result())
 
-    def apply_move(self, move: Move) -> 'Game':
+    def apply(self, move: Move) -> 'Game':
         """Apply a move.
 
         Parameters
@@ -126,7 +125,7 @@ class Game:
         Game
             Game with the move applied.
         """
-        self._game.apply_move(move._move)
+        self._game.apply(move._move)
         return self
 
     def is_applicable(self, move: Move) -> bool:
