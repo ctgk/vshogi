@@ -41,8 +41,14 @@ repos:
         entry: flake8 --count --show-source --statistics
         language: system
         types: [python]
+    -   id: python-setup
+        name: Build Python extensions
+        language: system
+        entry: pip install -e .[develop]
+        files: '\.(c|h|cpp|hpp)'
+        pass_filenames: false
     -   id: python-unittest
         name: Run Python UnitTests
         language: system
-        entry: bash -c 'pip install -e .[develop]; pytest --doctest-modules'
+        entry: bash -c 'pytest --doctest-modules'
         pass_filenames: false
