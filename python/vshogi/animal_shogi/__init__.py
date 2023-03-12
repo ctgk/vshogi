@@ -1,15 +1,18 @@
-"""Animal Shogi module."""
+"""Animal Shogi module.
+
+cf. https://en.wikipedia.org/wiki/D%C5%8Dbutsu_sh%C5%8Dgi
+"""
 
 from vshogi.animal_shogi._board import Board
 from vshogi.animal_shogi._color import Color
 from vshogi.animal_shogi._game import Game
 from vshogi.animal_shogi._move import Move
-from vshogi.animal_shogi._piece import BoardPiece, CapturedPiece, Piece
+from vshogi.animal_shogi._piece import BoardPiece, Piece
 from vshogi.animal_shogi._square import Square
 
 
 _classes = [
-    Board, BoardPiece, CapturedPiece, Color, Game, Move, Piece, Square,
+    Board, BoardPiece, Color, Game, Move, Piece, Square,
 ]
 
 

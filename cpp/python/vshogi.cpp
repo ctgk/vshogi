@@ -95,13 +95,6 @@ void export_pieces(py::module& m)
         .value("W_HE", as::W_HE)
         .value("VOID", as::VOID)
         .export_values();
-
-    py::enum_<as::CapturedPieceTypeEnum>(m, "CapturedPieceTypeEnum")
-        .value("C_CH", as::C_CH)
-        .value("C_EL", as::C_EL)
-        .value("C_GI", as::C_GI)
-        .value("C_NA", as::C_NA)
-        .export_values();
 }
 
 void export_piece_stand(py::module& m)

@@ -32,12 +32,3 @@ class BoardPiece(_Enum):
         if self == BoardPiece.VOID:
             return "  "
         return {'B': '+', 'W': '-'}[self.name[0]] + self.name[2]
-
-
-class CapturedPiece(_Enum):
-    """Enumeration of captured piece types."""
-
-    CH = _as.C_CH
-    EL = _as.C_EL
-    GI = _as.C_GI
-    NA = _as.C_NA
