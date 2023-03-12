@@ -1,9 +1,9 @@
-#include "vshogi/animal_shogi/piece_stand.hpp"
+#include "vshogi/animal_shogi/stand.hpp"
 
 namespace vshogi::animal_shogi
 {
 
-const char* TwoPieceStands::set_sfen_holdings(const char* const sfen_holdings)
+const char* BlackWhiteStands::set_sfen_holdings(const char* const sfen_holdings)
 {
     static_assert(static_cast<int>(CH) == 0);
     static_assert(static_cast<int>(EL) == 1);

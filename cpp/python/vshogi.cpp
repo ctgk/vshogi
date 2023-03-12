@@ -99,11 +99,11 @@ void export_pieces(py::module& m)
 
 void export_piece_stand(py::module& m)
 {
-    py::class_<as::PieceStand>(m, "PieceStand")
+    py::class_<as::Stand>(m, "Stand")
         .def(
             "count",
             py::overload_cast<const as::PieceTypeEnum>(
-                &as::PieceStand::count, py::const_));
+                &as::Stand::count, py::const_));
 }
 
 void export_animal_shogi_game(py::module& m)
@@ -119,7 +119,7 @@ void export_animal_shogi_game(py::module& m)
         .def(py::init<const std::string&>())
         .def("get_turn", &as::Game::get_turn)
         .def("get_board", &as::Game::get_board)
-        .def("get_piece_stand", &as::Game::get_piece_stand)
+        .def("get_stand", &as::Game::get_stand)
         .def("get_result", &as::Game::get_result)
         .def("is_applicable", &as::Game::is_applicable)
         .def("apply", &as::Game::apply);

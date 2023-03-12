@@ -48,9 +48,9 @@ public:
     {
         return m_current_state.get_board();
     }
-    const PieceStand& get_piece_stand(const ColorEnum c) const
+    const Stand& get_stand(const ColorEnum c) const
     {
-        return m_current_state.get_piece_stand(c);
+        return m_current_state.get_stand(c);
     }
     ResultEnum get_result() const
     {

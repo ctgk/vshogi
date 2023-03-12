@@ -7,7 +7,7 @@
 #include "vshogi/animal_shogi/color.hpp"
 #include "vshogi/animal_shogi/move.hpp"
 #include "vshogi/animal_shogi/piece.hpp"
-#include "vshogi/animal_shogi/piece_stand.hpp"
+#include "vshogi/animal_shogi/stand.hpp"
 
 namespace vshogi::animal_shogi
 {
@@ -22,20 +22,32 @@ class State
 {
 private:
     Board m_board;
-    TwoPieceStands m_two_piece_stands;
+    BlackWhiteStands m_black_white_stands;
     ColorEnum m_turn; //!< Player to move next.
 
 public:
-    State();
-    State(const std::string& sfen);
+    State() : m_board(), m_black_white_stands(), m_turn(BLACK)
+    {
+    }
+    State(const std::string& sfen) : m_board(), m_black_white_stands(), m_turn()
+    {
+        auto s = sfen.c_str();
+        s = m_board.set_sfen(s);
+        {
+            (*s == 'b') ? m_turn = BLACK : m_turn = WHITE;
+            ++s;
+            ++s;
+        }
+        m_black_white_stands.set_sfen_holdings(s);
+    }
 
     const Board& get_board() const
     {
         return m_board;
     }
-    const PieceStand& get_piece_stand(const ColorEnum c) const
+    const Stand& get_stand(const ColorEnum c) const
     {
-        return m_two_piece_stands[c];
+        return m_black_white_stands[c];
     }
     ColorEnum get_turn() const
     {
@@ -63,7 +75,7 @@ public:
         if (move.is_drop()) {
             const auto piece = to_piece_type(src);
             return (
-                m_two_piece_stands[m_turn].exist(piece)
+                m_black_white_stands[m_turn].exist(piece)
                 && (m_board.get_piece_at(dst) == VOID));
         } else {
             const auto src_sq = to_square(src);
@@ -119,7 +131,7 @@ public:
         return (
             (static_cast<std::uint64_t>(m_turn) << 50)
             + (static_cast<std::uint64_t>(
-                   m_two_piece_stands[m_turn].get_value())
+                   m_black_white_stands[m_turn].get_value())
                << 48)
             + m_board.hash());
     }
@@ -131,7 +143,7 @@ private:
     }
     void add_captured_piece_to_stand(const PieceTypeEnum p)
     {
-        m_two_piece_stands[m_turn].add(p);
+        m_black_white_stands[m_turn].add(p);
     }
     BoardPieceTypeEnum
     promote(const BoardPieceTypeEnum p, const SquareEnum source)
@@ -150,7 +162,7 @@ private:
     {
         if (is_drop(src)) {
             const auto p = to_piece_type(src);
-            m_two_piece_stands[m_turn].subtract(p);
+            m_black_white_stands[m_turn].subtract(p);
             return to_board_piece(m_turn, p);
         } else {
             const auto sq = static_cast<SquareEnum>(src);

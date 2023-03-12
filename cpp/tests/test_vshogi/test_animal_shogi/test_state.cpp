@@ -33,12 +33,12 @@ TEST(animal_shogi_state, apply)
 
         CHECK_EQUAL(B_CH, s.get_board().get_piece_at(SQ_B2)); // destination
         CHECK_EQUAL(VOID, s.get_board().get_piece_at(SQ_B3)); // source
-        CHECK_EQUAL(1, s.get_piece_stand(BLACK).count(CH));
-        CHECK_EQUAL(0, s.get_piece_stand(BLACK).count(EL));
-        CHECK_EQUAL(0, s.get_piece_stand(BLACK).count(GI));
-        CHECK_EQUAL(0, s.get_piece_stand(WHITE).count(CH));
-        CHECK_EQUAL(0, s.get_piece_stand(WHITE).count(EL));
-        CHECK_EQUAL(0, s.get_piece_stand(WHITE).count(GI));
+        CHECK_EQUAL(1, s.get_stand(BLACK).count(CH));
+        CHECK_EQUAL(0, s.get_stand(BLACK).count(EL));
+        CHECK_EQUAL(0, s.get_stand(BLACK).count(GI));
+        CHECK_EQUAL(0, s.get_stand(WHITE).count(CH));
+        CHECK_EQUAL(0, s.get_stand(WHITE).count(EL));
+        CHECK_EQUAL(0, s.get_stand(WHITE).count(GI));
         CHECK_EQUAL(WHITE, s.get_turn());
     }
     {
@@ -48,12 +48,12 @@ TEST(animal_shogi_state, apply)
 
         CHECK_EQUAL(B_HE, s.get_board().get_piece_at(SQ_B1)); // destination
         CHECK_EQUAL(VOID, s.get_board().get_piece_at(SQ_B2)); // source
-        CHECK_EQUAL(0, s.get_piece_stand(BLACK).count(CH));
-        CHECK_EQUAL(0, s.get_piece_stand(BLACK).count(EL));
-        CHECK_EQUAL(1, s.get_piece_stand(BLACK).count(GI));
-        CHECK_EQUAL(0, s.get_piece_stand(WHITE).count(CH));
-        CHECK_EQUAL(0, s.get_piece_stand(WHITE).count(EL));
-        CHECK_EQUAL(0, s.get_piece_stand(WHITE).count(GI));
+        CHECK_EQUAL(0, s.get_stand(BLACK).count(CH));
+        CHECK_EQUAL(0, s.get_stand(BLACK).count(EL));
+        CHECK_EQUAL(1, s.get_stand(BLACK).count(GI));
+        CHECK_EQUAL(0, s.get_stand(WHITE).count(CH));
+        CHECK_EQUAL(0, s.get_stand(WHITE).count(EL));
+        CHECK_EQUAL(0, s.get_stand(WHITE).count(GI));
         CHECK_EQUAL(WHITE, s.get_turn());
     }
 }

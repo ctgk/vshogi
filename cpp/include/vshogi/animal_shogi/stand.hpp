@@ -1,5 +1,5 @@
-#ifndef VSHOGI_ANIMAL_SHOGI_PIECE_STAND_HPP
-#define VSHOGI_ANIMAL_SHOGI_PIECE_STAND_HPP
+#ifndef VSHOGI_ANIMAL_SHOGI_STAND_HPP
+#define VSHOGI_ANIMAL_SHOGI_STAND_HPP
 
 #include <cstdint>
 #include <string>
@@ -10,10 +10,7 @@
 namespace vshogi::animal_shogi
 {
 
-namespace internal
-{
-
-constexpr std::uint8_t shift_bits_for_piece_stand[] = {
+constexpr std::uint8_t stand_shift_bits[] = {
     0, // CH
     3, // EL
     6, // GI
@@ -21,7 +18,7 @@ constexpr std::uint8_t shift_bits_for_piece_stand[] = {
     0, // HE
     0, // NA
 };
-constexpr std::uint8_t mask_for_piece_stand[] = {
+constexpr std::uint8_t stand_masks[] = {
     0b00000011, // CH
     0b00011000, // EL
     0b11000000, // GI
@@ -29,7 +26,7 @@ constexpr std::uint8_t mask_for_piece_stand[] = {
     0, // HE
     0, // NA
 };
-constexpr std::uint8_t delta_for_piece_stand[] = {
+constexpr std::uint8_t stand_deltas[] = {
     0b00000001, // CH
     0b00001000, // EL
     0b01000000, // GI
@@ -38,9 +35,11 @@ constexpr std::uint8_t delta_for_piece_stand[] = {
     0, // NA
 };
 
-} // namespace internal
-
-class PieceStand
+/**
+ * @brief A piece stand class storing captured pieces counts in 8-bit integer.
+ *
+ */
+class Stand
 {
 private:
     /**
@@ -53,14 +52,14 @@ private:
     std::uint8_t m_value;
 
 public:
-    PieceStand() : m_value(0U)
+    Stand() : m_value(0U)
     {
     }
-    PieceStand(const std::uint8_t v) : m_value(v & 0b11011011)
+    Stand(const std::uint8_t v) : m_value(v & 0b11011011)
     {
     }
-    PieceStand(const int num_ch, const int num_el, const int num_gi)
-        : PieceStand(
+    Stand(const int num_ch, const int num_el, const int num_gi)
+        : Stand(
             static_cast<std::uint8_t>((num_gi << 6) + (num_el << 3) + num_ch))
     {
     }
@@ -71,66 +70,63 @@ public:
     std::uint8_t count(const PieceTypeEnum p) const
     {
         return static_cast<uint8_t>(
-            (m_value & internal::mask_for_piece_stand[p])
-            >> internal::shift_bits_for_piece_stand[p]);
+            (m_value & stand_masks[p]) >> stand_shift_bits[p]);
     }
     bool exist(const PieceTypeEnum p) const
     {
-        return static_cast<bool>(m_value & internal::mask_for_piece_stand[p]);
+        return static_cast<bool>(m_value & stand_masks[p]);
     }
-    PieceStand& add(const PieceTypeEnum p, const std::uint8_t num = 1U)
+    Stand& add(const PieceTypeEnum p, const std::uint8_t num = 1U)
     {
-        m_value = static_cast<std::uint8_t>(
-            m_value + internal::delta_for_piece_stand[p & 0x3] * num);
+        m_value += static_cast<std::uint8_t>(stand_deltas[p & 0x3] * num);
         return *this;
     }
-    PieceStand& subtract(const PieceTypeEnum p)
+    Stand& subtract(const PieceTypeEnum p)
     {
-        m_value = static_cast<std::uint8_t>(
-            m_value - internal::delta_for_piece_stand[p]);
+        m_value = static_cast<std::uint8_t>(m_value - stand_deltas[p]);
         return *this;
     }
-    bool operator==(const PieceStand& other) const
+    bool operator==(const Stand& other) const
     {
         return m_value == other.m_value;
     }
-    bool operator!=(const PieceStand& other) const
+    bool operator!=(const Stand& other) const
     {
         return m_value != other.m_value;
     }
 };
 
-class TwoPieceStands
+class BlackWhiteStands
 {
 private:
-    PieceStand m_black;
-    PieceStand m_white;
+    Stand m_black;
+    Stand m_white;
 
 public:
-    TwoPieceStands() : m_black(), m_white()
+    BlackWhiteStands() : m_black(), m_white()
     {
     }
-    PieceStand& black()
-    {
-        return m_black;
-    }
-    const PieceStand& black() const
+    Stand& black()
     {
         return m_black;
     }
-    PieceStand& white()
+    const Stand& black() const
+    {
+        return m_black;
+    }
+    Stand& white()
     {
         return m_white;
     }
-    const PieceStand& white() const
+    const Stand& white() const
     {
         return m_white;
     }
-    PieceStand& operator[](const ColorEnum c)
+    Stand& operator[](const ColorEnum c)
     {
         return (c == BLACK) ? m_black : m_white;
     }
-    const PieceStand& operator[](const ColorEnum c) const
+    const Stand& operator[](const ColorEnum c) const
     {
         return (c == BLACK) ? m_black : m_white;
     }
@@ -139,4 +135,4 @@ public:
 
 } // namespace vshogi::animal_shogi
 
-#endif // VSHOGI_ANIMAL_SHOGI_PIECE_STAND_HPP
+#endif // VSHOGI_ANIMAL_SHOGI_STAND_HPP
