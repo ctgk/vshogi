@@ -11,6 +11,14 @@
 namespace vshogi::animal_shogi
 {
 
+enum ResultEnum : std::uint8_t
+{
+    ONGOING,
+    DRAW,
+    BLACK_WIN,
+    WHITE_WIN,
+};
+
 /**
  * @brief Animal Shogi game.
  *
@@ -26,7 +34,7 @@ private:
     static constexpr std::uint64_t state_mask = 0x0ffffffffffffff;
 
 public:
-    Game() : m_history(), m_current_state(), m_result(UNKNOWN)
+    Game() : m_history(), m_current_state(), m_result(ONGOING)
     {
         m_history.reserve(128);
     }

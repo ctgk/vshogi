@@ -18,14 +18,6 @@ namespace vshogi::animal_shogi
  */
 constexpr char default_initial_sfen[] = "gle/1c1/1C1/ELG b - 1";
 
-enum ResultEnum : std::uint8_t
-{
-    UNKNOWN,
-    DRAW,
-    BLACK_WIN,
-    WHITE_WIN,
-};
-
 class State
 {
 private:

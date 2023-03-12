@@ -106,12 +106,19 @@ void export_pieces(py::module& m)
 
 void export_animal_shogi_game(py::module& m)
 {
+    py::enum_<as::ResultEnum>(m, "ResultEnum")
+        .value("ONGOING", as::ONGOING)
+        .value("DRAW", as::DRAW)
+        .value("BLACK_WIN", as::BLACK_WIN)
+        .value("WHITE_WIN", as::WHITE_WIN)
+        .export_values();
     py::class_<as::Game>(m, "_Game")
         .def(py::init<>())
         .def(py::init<const std::string&>())
         .def("get_turn", &as::Game::get_turn)
         .def("get_board", &as::Game::get_board)
         .def("get_piece_stand", &as::Game::get_piece_stand)
+        .def("get_result", &as::Game::get_result)
         .def("is_move_applicable", &as::Game::is_move_applicable)
         .def("apply_move", &as::Game::apply_move);
 }
