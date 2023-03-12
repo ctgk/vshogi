@@ -16,7 +16,9 @@
 			"extensions": [
 				"streetsidesoftware.code-spell-checker",
 				"ms-vscode.cpptools",
-				"ms-vscode.cmake-tools"
+				"ms-vscode.cmake-tools",
+				"njpwerner.autodocstring",
+				"ms-python.python"
 			]
 		}
 	},
