@@ -104,6 +104,15 @@ void export_pieces(py::module& m)
         .export_values();
 }
 
+void export_piece_stand(py::module& m)
+{
+    py::class_<as::PieceStand>(m, "PieceStand")
+        .def(
+            "count",
+            py::overload_cast<const as::PieceTypeEnum>(
+                &as::PieceStand::count, py::const_));
+}
+
 void export_animal_shogi_game(py::module& m)
 {
     py::enum_<as::ResultEnum>(m, "ResultEnum")
@@ -132,5 +141,6 @@ PYBIND11_MODULE(_vshogi, m)
     export_square_enum(animal_shogi_module);
     export_move_source_enum(animal_shogi_module);
     export_move(animal_shogi_module);
+    export_piece_stand(animal_shogi_module);
     export_animal_shogi_game(animal_shogi_module);
 }

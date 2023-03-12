@@ -17,16 +17,25 @@ constexpr std::uint8_t shift_bits_for_piece_stand[] = {
     0, // CH
     3, // EL
     6, // GI
+    0, // LI
+    0, // HE
+    0, // NA
 };
 constexpr std::uint8_t mask_for_piece_stand[] = {
     0b00000011, // CH
     0b00011000, // EL
     0b11000000, // GI
+    0, // LI
+    0, // HE
+    0, // NA
 };
 constexpr std::uint8_t delta_for_piece_stand[] = {
     0b00000001, // CH
     0b00001000, // EL
     0b01000000, // GI
+    0, // LI
+    0, // HE
+    0, // NA
 };
 
 } // namespace internal
@@ -81,6 +90,12 @@ public:
         return m_value;
     }
     std::uint8_t count(const CapturedPieceTypeEnum p) const
+    {
+        return static_cast<uint8_t>(
+            (m_value & internal::mask_for_piece_stand[p])
+            >> internal::shift_bits_for_piece_stand[p]);
+    }
+    std::uint8_t count(const PieceTypeEnum p) const
     {
         return static_cast<uint8_t>(
             (m_value & internal::mask_for_piece_stand[p])

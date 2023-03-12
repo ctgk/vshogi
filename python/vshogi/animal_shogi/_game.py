@@ -6,6 +6,16 @@ from vshogi._vshogi.animal_shogi import _Game
 from vshogi.animal_shogi._board import Board
 from vshogi.animal_shogi._color import Color
 from vshogi.animal_shogi._move import Move
+from vshogi.animal_shogi._piece import Piece
+
+
+_as.PieceStand.to_dict = lambda self: {
+    Piece(k): self.count(k) for k in (_as.CH, _as.EL, _as.GI)
+}
+_as.PieceStand.__repr__ = lambda self: ','.join([
+    k.name[0] + ('' if v == 1 else str(v)) for k, v in self.to_dict().items()
+    if v > 0
+]) if any(self.to_dict().values()) else '-'
 
 
 class Result(_Enum):
@@ -30,6 +40,7 @@ class Game:
     Result.ONGOING
     >>> game
     Turn: BLACK
+    White: -
         A  B  C
       *--*--*--*
     1 |-G|-L|-E|
@@ -40,12 +51,14 @@ class Game:
       *--*--*--*
     4 |+E|+L|+G|
       *--*--*--*
+    Black: -
     >>> game.is_applicable(Move(shogi.B2, shogi.B3))
     True
     >>> game.is_applicable(Move(shogi.A3, shogi.A4))
     False
     >>> game.apply(Move(shogi.B2, shogi.B3))
     Turn: WHITE
+    White: -
         A  B  C
       *--*--*--*
     1 |-G|-L|-E|
@@ -56,8 +69,14 @@ class Game:
       *--*--*--*
     4 |+E|+L|+G|
       *--*--*--*
+    Black: C
+    >>> game.white_stand
+    {Piece.CH: 0, Piece.EL: 0, Piece.GI: 0}
+    >>> game.black_stand
+    {Piece.CH: 1, Piece.EL: 0, Piece.GI: 0}
     >>> game.apply(Move(shogi.A2, shogi.A1)).apply(Move(shogi.B1, shogi.B2))
     BLACK_WIN
+    White: -
         A  B  C
       *--*--*--*
     1 |  |+H|-E|
@@ -68,6 +87,7 @@ class Game:
       *--*--*--*
     4 |+E|+L|+G|
       *--*--*--*
+    Black: C
     """
 
     def __init__(self, sfen: tp.Optional[str] = None) -> None:
@@ -100,6 +120,28 @@ class Game:
             Current board.
         """
         return Board(_board=self._game.get_board())
+
+    @property
+    def black_stand(self) -> dict:
+        """Return pieces on black stand.
+
+        Returns
+        -------
+        dict
+            Pieces on black stand.
+        """
+        return self._game.get_piece_stand(_as.BLACK).to_dict()
+
+    @property
+    def white_stand(self) -> dict:
+        """Return pieces on white stand.
+
+        Returns
+        -------
+        dict
+            Pieces on white stand.
+        """
+        return self._game.get_piece_stand(_as.WHITE).to_dict()
 
     @property
     def result(self) -> Result:
@@ -155,5 +197,7 @@ class Game:
         r = self.result
         return '\n'.join((
             f'Turn: {self.turn.name}' if r == Result.ONGOING else r.name,
+            f'White: {repr(self._game.get_piece_stand(_as.WHITE))}',
             repr(self.board),
+            f'Black: {repr(self._game.get_piece_stand(_as.BLACK))}',
         ))
