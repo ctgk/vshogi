@@ -23,6 +23,8 @@ private:
     State m_current_state;
     ResultEnum m_result;
 
+    static constexpr std::uint64_t state_mask = 0x0ffffffffffffff;
+
 public:
     Game() : m_history(), m_current_state(), m_result(UNKNOWN)
     {
@@ -75,13 +77,25 @@ public:
     }
 
 private:
+    bool is_fourfold_repetitions() const
+    {
+        constexpr int num_acceptable_repetitions = 3;
+        int num = 0;
+        const auto current_hash = m_current_state.hash();
+        for (auto&& previous_hash : m_history) {
+            num += (current_hash == (previous_hash & state_mask));
+            if (num > num_acceptable_repetitions) {
+                return true;
+            }
+        }
+        return false;
+    }
     void update_result(
         const ColorEnum turn,
         const PieceTypeEnum moving,
         const PieceTypeEnum capturing,
         const RankEnum destination)
     {
-        // TODO: Implement three fold repetitions.
         if (moving == LI) {
             if (turn == BLACK && destination == RANK1)
                 m_result = BLACK_WIN;
@@ -90,6 +104,9 @@ private:
         }
         if (capturing == LI) {
             m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
+        }
+        if (is_fourfold_repetitions()) {
+            m_result = DRAW;
         }
     }
 };
