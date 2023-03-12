@@ -67,7 +67,6 @@ void export_move(py::module& m)
 void export_board(py::module& m)
 {
     py::class_<as::Board>(m, "Board")
-        .def(py::init<>())
         .def("get_piece_at", &as::Board::get_piece_at);
 }
 

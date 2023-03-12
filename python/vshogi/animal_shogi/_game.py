@@ -1,18 +1,18 @@
 import typing as tp
 
-import vshogi._vshogi.animal_shogi as _as
+import vshogi._vshogi.animal_shogi as _shogi
 from vshogi._enum import _Enum
+from vshogi._vshogi.animal_shogi import Board
 from vshogi._vshogi.animal_shogi import _Game
-from vshogi.animal_shogi._board import Board
 from vshogi.animal_shogi._color import Color
 from vshogi.animal_shogi._move import Move
 from vshogi.animal_shogi._piece import Piece
 
 
-_as.Stand.to_dict = lambda self: {
-    Piece(k): self.count(k) for k in (_as.CH, _as.EL, _as.GI)
+_shogi.Stand.to_dict = lambda self: {
+    Piece(k): self.count(k) for k in (_shogi.CH, _shogi.EL, _shogi.GI)
 }
-_as.Stand.__repr__ = lambda self: ','.join([
+_shogi.Stand.__repr__ = lambda self: ','.join([
     k.name[0] + ('' if v == 1 else str(v)) for k, v in self.to_dict().items()
     if v > 0
 ]) if any(self.to_dict().values()) else '-'
@@ -21,10 +21,10 @@ _as.Stand.__repr__ = lambda self: ','.join([
 class Result(_Enum):
     """Enumeration of game results."""
 
-    ONGOING = _as.ONGOING
-    DRAW = _as.DRAW
-    BLACK_WIN = _as.BLACK_WIN
-    WHITE_WIN = _as.WHITE_WIN
+    ONGOING = _shogi.ONGOING
+    DRAW = _shogi.DRAW
+    BLACK_WIN = _shogi.BLACK_WIN
+    WHITE_WIN = _shogi.WHITE_WIN
 
 
 class Game:
@@ -119,7 +119,7 @@ class Game:
         Board
             Current board.
         """
-        return Board(_board=self._game.get_board())
+        return self._game.get_board()
 
     @property
     def black_stand(self) -> dict:
@@ -130,7 +130,7 @@ class Game:
         dict
             Pieces on black stand.
         """
-        return self._game.get_stand(_as.BLACK).to_dict()
+        return self._game.get_stand(_shogi.BLACK).to_dict()
 
     @property
     def white_stand(self) -> dict:
@@ -141,7 +141,7 @@ class Game:
         dict
             Pieces on white stand.
         """
-        return self._game.get_stand(_as.WHITE).to_dict()
+        return self._game.get_stand(_shogi.WHITE).to_dict()
 
     @property
     def result(self) -> Result:
@@ -197,7 +197,7 @@ class Game:
         r = self.result
         return '\n'.join((
             f'Turn: {self.turn.name}' if r == Result.ONGOING else r.name,
-            f'White: {repr(self._game.get_stand(_as.WHITE))}',
+            f'White: {repr(self._game.get_stand(_shogi.WHITE))}',
             repr(self.board),
-            f'Black: {repr(self._game.get_stand(_as.BLACK))}',
+            f'Black: {repr(self._game.get_stand(_shogi.BLACK))}',
         ))
