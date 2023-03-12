@@ -38,8 +38,11 @@ public:
     {
         m_history.reserve(128);
     }
-    Game(const std::string& sfen);
-
+    Game(const std::string& sfen)
+        : m_history(), m_current_state(sfen), m_result(ONGOING)
+    {
+        m_history.reserve(128);
+    }
     ColorEnum get_turn() const
     {
         return m_current_state.get_turn();
