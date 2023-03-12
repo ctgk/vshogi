@@ -59,41 +59,14 @@ public:
     PieceStand(const std::uint8_t v) : m_value(v & 0b11011011)
     {
     }
-    PieceStand(const std::string& sfen_holding) : m_value(0U)
+    PieceStand(const int num_ch, const int num_el, const int num_gi)
+        : PieceStand(
+            static_cast<std::uint8_t>((num_gi << 6) + (num_el << 3) + num_ch))
     {
-        int preceding_number = 0;
-        for (auto&& c : sfen_holding) {
-            switch (c) {
-            case '2': // Possible preceding number in Animal Shogi is '2'.
-                preceding_number = 2;
-                continue;
-            case 'c':
-            case 'C':
-                (preceding_number == 2) ? add(C_CH).add(C_CH) : add(C_CH);
-                break;
-            case 'e':
-            case 'E':
-                (preceding_number == 2) ? add(C_EL).add(C_EL) : add(C_EL);
-                break;
-            case 'g':
-            case 'G':
-                (preceding_number == 2) ? add(C_GI).add(C_GI) : add(C_GI);
-                break;
-            default: // '-'
-                break;
-            }
-            preceding_number = 0;
-        }
     }
     std::uint8_t get_value() const
     {
         return m_value;
-    }
-    std::uint8_t count(const CapturedPieceTypeEnum p) const
-    {
-        return static_cast<uint8_t>(
-            (m_value & internal::mask_for_piece_stand[p])
-            >> internal::shift_bits_for_piece_stand[p]);
     }
     std::uint8_t count(const PieceTypeEnum p) const
     {
@@ -101,17 +74,17 @@ public:
             (m_value & internal::mask_for_piece_stand[p])
             >> internal::shift_bits_for_piece_stand[p]);
     }
-    bool exist(const CapturedPieceTypeEnum p) const
+    bool exist(const PieceTypeEnum p) const
     {
         return static_cast<bool>(m_value & internal::mask_for_piece_stand[p]);
     }
-    PieceStand& add(const CapturedPieceTypeEnum p, const std::uint8_t num = 1U)
+    PieceStand& add(const PieceTypeEnum p, const std::uint8_t num = 1U)
     {
         m_value = static_cast<std::uint8_t>(
-            m_value + internal::delta_for_piece_stand[p] * num);
+            m_value + internal::delta_for_piece_stand[p & 0x3] * num);
         return *this;
     }
-    PieceStand& subtract(const CapturedPieceTypeEnum p)
+    PieceStand& subtract(const PieceTypeEnum p)
     {
         m_value = static_cast<std::uint8_t>(
             m_value - internal::delta_for_piece_stand[p]);

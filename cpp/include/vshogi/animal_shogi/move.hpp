@@ -20,15 +20,15 @@ enum MoveSourceEnum : std::uint8_t
     // clang-format on
 };
 
-inline CapturedPieceTypeEnum to_captured(const MoveSourceEnum source)
+inline PieceTypeEnum to_piece_type(const MoveSourceEnum source)
 {
-    constexpr CapturedPieceTypeEnum table[] = {
+    constexpr PieceTypeEnum table[] = {
         // clang-format off
-        C_NA, C_NA, C_NA,
-        C_NA, C_NA, C_NA,
-        C_NA, C_NA, C_NA,
-        C_NA, C_NA, C_NA,
-        C_CH, C_EL, C_GI,
+        NA, NA, NA,
+        NA, NA, NA,
+        NA, NA, NA,
+        NA, NA, NA,
+        CH, EL, GI,
     };
     // clang-format on
     return table[source];

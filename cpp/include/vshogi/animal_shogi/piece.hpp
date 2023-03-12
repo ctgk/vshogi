@@ -43,14 +43,6 @@ enum BoardPieceTypeEnum : std::uint8_t
     VOID = 0b1111, //!< Empty square.
 };
 
-enum CapturedPieceTypeEnum : std::uint8_t
-{
-    C_CH = 0, // Captured Chick (Pawn)
-    C_EL = 1, // Captured Elephant (limited Bishop)
-    C_GI = 2, // Captured Giraffe (limited Rook)
-    C_NA = 3, // Not available.
-};
-
 /**
  * @brief Return color of the board piece. Note that VOID returns WHITE.
  *
@@ -73,24 +65,6 @@ to_board_piece(const ColorEnum c, const PieceTypeEnum p)
     if (p == NA)
         return VOID;
     return static_cast<BoardPieceTypeEnum>((c << 3) | p);
-}
-
-inline BoardPieceTypeEnum
-to_board_piece(const ColorEnum c, const CapturedPieceTypeEnum p)
-{
-    if (p == C_NA)
-        return VOID;
-    return static_cast<BoardPieceTypeEnum>((c << 3) | p);
-}
-
-inline CapturedPieceTypeEnum to_captured(const PieceTypeEnum p)
-{
-    return static_cast<CapturedPieceTypeEnum>(p & 0x3);
-}
-
-inline CapturedPieceTypeEnum to_captured(const BoardPieceTypeEnum p)
-{
-    return static_cast<CapturedPieceTypeEnum>(p & 0x3);
 }
 
 } // namespace vshogi::animal_shogi
