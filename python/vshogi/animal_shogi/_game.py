@@ -3,16 +3,11 @@ import typing as tp
 import vshogi._vshogi.animal_shogi as _shogi
 from vshogi._vshogi.animal_shogi import Board
 from vshogi._vshogi.animal_shogi import Color
-from vshogi._vshogi.animal_shogi import Piece
 from vshogi._vshogi.animal_shogi import Result
 from vshogi._vshogi.animal_shogi import _Game
 from vshogi.animal_shogi._move import Move
 
 
-_shogi.Stand.to_dict = lambda self: {
-    Piece(k): self.count(k) for k
-    in (_shogi.Piece.CH, _shogi.Piece.EL, _shogi.Piece.GI)
-}
 _shogi.Stand.__str__ = lambda self: ','.join([
     k.name[0] + ('' if v == 1 else str(v)) for k, v in self.to_dict().items()
     if v > 0
