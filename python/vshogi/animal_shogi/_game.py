@@ -3,8 +3,8 @@ import typing as tp
 import vshogi._vshogi.animal_shogi as _shogi
 from vshogi._enum import _Enum
 from vshogi._vshogi.animal_shogi import Board
+from vshogi._vshogi.animal_shogi import Color
 from vshogi._vshogi.animal_shogi import _Game
-from vshogi.animal_shogi._color import Color
 from vshogi.animal_shogi._move import Move
 from vshogi.animal_shogi._piece import Piece
 
@@ -35,7 +35,7 @@ class Game:
     >>> import vshogi.animal_shogi as shogi
     >>> game = Game()
     >>> game.turn
-    Color.BLACK
+    <Color.BLACK: 0>
     >>> game.result
     Result.ONGOING
     >>> game
@@ -108,7 +108,7 @@ class Game:
         -------
         Color
         """
-        return Color(self._game.get_turn())
+        return self._game.get_turn()
 
     @property
     def board(self) -> Board:
@@ -130,7 +130,7 @@ class Game:
         dict
             Pieces on black stand.
         """
-        return self._game.get_stand(_shogi.BLACK).to_dict()
+        return self._game.get_stand(_shogi.Color.BLACK).to_dict()
 
     @property
     def white_stand(self) -> dict:
@@ -141,7 +141,7 @@ class Game:
         dict
             Pieces on white stand.
         """
-        return self._game.get_stand(_shogi.WHITE).to_dict()
+        return self._game.get_stand(_shogi.Color.WHITE).to_dict()
 
     @property
     def result(self) -> Result:
@@ -197,7 +197,7 @@ class Game:
         r = self.result
         return '\n'.join((
             f'Turn: {self.turn.name}' if r == Result.ONGOING else r.name,
-            f'White: {repr(self._game.get_stand(_shogi.WHITE))}',
+            f'White: {repr(self._game.get_stand(_shogi.Color.WHITE))}',
             repr(self.board),
-            f'Black: {repr(self._game.get_stand(_shogi.BLACK))}',
+            f'Black: {repr(self._game.get_stand(_shogi.Color.BLACK))}',
         ))

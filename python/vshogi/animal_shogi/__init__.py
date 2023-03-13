@@ -3,8 +3,7 @@
 cf. https://en.wikipedia.org/wiki/D%C5%8Dbutsu_sh%C5%8Dgi
 """
 
-from vshogi._vshogi.animal_shogi import Board
-from vshogi.animal_shogi._color import Color
+from vshogi._vshogi.animal_shogi import Board, Color
 from vshogi.animal_shogi._game import Game
 from vshogi.animal_shogi._move import Move
 from vshogi.animal_shogi._piece import BoardPiece, Piece
@@ -50,7 +49,7 @@ _classes = [
     Board, BoardPiece, Color, Game, Move, Piece, Square,
 ]
 
-
+locals().update(Color.__members__)
 locals().update(Piece.__members__)
 locals().update(Square.__members__)
 

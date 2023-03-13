@@ -8,10 +8,9 @@ namespace as = vshogi::animal_shogi;
 
 void export_color_enum(py::module& m)
 {
-    py::enum_<as::ColorEnum>(m, "ColorEnum")
+    py::enum_<as::ColorEnum>(m, "Color")
         .value("BLACK", as::BLACK)
-        .value("WHITE", as::WHITE)
-        .export_values();
+        .value("WHITE", as::WHITE);
 }
 
 void export_square_enum(py::module& m)
