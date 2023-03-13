@@ -30,35 +30,20 @@ void export_square_enum(py::module& m)
         .value("C4", as::SQ_C4);
 }
 
-void export_move_source_enum(py::module& m)
-{
-    py::enum_<as::MoveSourceEnum>(m, "MoveSourceEnum")
-        .value("MS_A1", as::MS_A1)
-        .value("MS_B1", as::MS_B1)
-        .value("MS_C1", as::MS_C1)
-        .value("MS_A2", as::MS_A2)
-        .value("MS_B2", as::MS_B2)
-        .value("MS_C2", as::MS_C2)
-        .value("MS_A3", as::MS_A3)
-        .value("MS_B3", as::MS_B3)
-        .value("MS_C3", as::MS_C3)
-        .value("MS_A4", as::MS_A4)
-        .value("MS_B4", as::MS_B4)
-        .value("MS_C4", as::MS_C4)
-        .value("MS_CH", as::MS_CH)
-        .value("MS_EL", as::MS_EL)
-        .value("MS_GI", as::MS_GI)
-        .export_values();
-}
-
 void export_move(py::module& m)
 {
     py::class_<as::Move>(m, "Move")
-        .def(py::init<const as::SquareEnum, const as::MoveSourceEnum>())
         .def(py::init<const as::SquareEnum, const as::SquareEnum>())
         .def(py::init<const as::SquareEnum, const as::PieceTypeEnum>())
         .def("destination", &as::Move::destination)
-        .def("source", &as::Move::source)
+        .def(
+            "source",
+            [](const as::Move& self) -> py::object {
+                if (self.is_drop()) {
+                    return py::cast(as::to_piece_type(self.source()));
+                }
+                return py::cast(as::to_square(self.source()));
+            })
         .def("is_drop", &as::Move::is_drop);
 }
 
@@ -126,7 +111,6 @@ PYBIND11_MODULE(_vshogi, m)
     export_pieces(animal_shogi_module);
     export_color_enum(animal_shogi_module);
     export_square_enum(animal_shogi_module);
-    export_move_source_enum(animal_shogi_module);
     export_move(animal_shogi_module);
     export_piece_stand(animal_shogi_module);
     export_animal_shogi_game(animal_shogi_module);
