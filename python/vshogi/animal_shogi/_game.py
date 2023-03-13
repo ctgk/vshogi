@@ -13,7 +13,7 @@ _shogi.Stand.to_dict = lambda self: {
     Piece(k): self.count(k) for k
     in (_shogi.Piece.CH, _shogi.Piece.EL, _shogi.Piece.GI)
 }
-_shogi.Stand.__repr__ = lambda self: ','.join([
+_shogi.Stand.__str__ = lambda self: ','.join([
     k.name[0] + ('' if v == 1 else str(v)) for k, v in self.to_dict().items()
     if v > 0
 ]) if self.any() else '-'
@@ -189,7 +189,7 @@ class Game:
         r = self.result
         return '\n'.join((
             f'Turn: {self.turn.name}' if r == Result.ONGOING else r.name,
-            f'White: {repr(self._game.get_stand(_shogi.Color.WHITE))}',
+            f'White: {str(self._game.get_stand(_shogi.Color.WHITE))}',
             repr(self.board),
-            f'Black: {repr(self._game.get_stand(_shogi.Color.BLACK))}',
+            f'Black: {str(self._game.get_stand(_shogi.Color.BLACK))}',
         ))
