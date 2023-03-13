@@ -3,11 +3,9 @@
 cf. https://en.wikipedia.org/wiki/D%C5%8Dbutsu_sh%C5%8Dgi
 """
 
-from vshogi._vshogi.animal_shogi import Board, Color
+from vshogi._vshogi.animal_shogi import Board, BoardPiece, Color, Piece, Square
 from vshogi.animal_shogi._game import Game
 from vshogi.animal_shogi._move import Move
-from vshogi.animal_shogi._piece import BoardPiece, Piece
-from vshogi.animal_shogi._square import Square
 
 
 _board_template = '''\
@@ -21,10 +19,6 @@ _board_template = '''\
   *--*--*--*
 4 |{}|{}|{}|
   *--*--*--*'''
-
-
-def _getitem_from_board(self: Board, sq: Square) -> BoardPiece:
-    return BoardPiece(self.get_piece_at(sq.value))
 
 
 def _board_repr(self: Board) -> str:
@@ -41,8 +35,19 @@ def _board_repr(self: Board) -> str:
     )
 
 
-Board.__getitem__ = _getitem_from_board
+def _enum_repr(self) -> str:
+    return f'{self.__class__.__name__}.{self.name}'
+
+
 Board.__repr__ = _board_repr
+BoardPiece.__repr__ = _enum_repr
+BoardPiece._to_2char = lambda self: (
+    "  " if self == BoardPiece.VOID
+    else {'B': '+', 'W': '-'}[self.name[0]] + self.name[2]
+)
+Color.__repr__ = _enum_repr
+Piece.__repr__ = _enum_repr
+Square.__repr__ = _enum_repr
 
 
 _classes = [

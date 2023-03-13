@@ -4,13 +4,14 @@ import vshogi._vshogi.animal_shogi as _shogi
 from vshogi._enum import _Enum
 from vshogi._vshogi.animal_shogi import Board
 from vshogi._vshogi.animal_shogi import Color
+from vshogi._vshogi.animal_shogi import Piece
 from vshogi._vshogi.animal_shogi import _Game
 from vshogi.animal_shogi._move import Move
-from vshogi.animal_shogi._piece import Piece
 
 
 _shogi.Stand.to_dict = lambda self: {
-    Piece(k): self.count(k) for k in (_shogi.CH, _shogi.EL, _shogi.GI)
+    Piece(k): self.count(k) for k
+    in (_shogi.Piece.CH, _shogi.Piece.EL, _shogi.Piece.GI)
 }
 _shogi.Stand.__repr__ = lambda self: ','.join([
     k.name[0] + ('' if v == 1 else str(v)) for k, v in self.to_dict().items()
@@ -35,7 +36,7 @@ class Game:
     >>> import vshogi.animal_shogi as shogi
     >>> game = Game()
     >>> game.turn
-    <Color.BLACK: 0>
+    Color.BLACK
     >>> game.result
     Result.ONGOING
     >>> game

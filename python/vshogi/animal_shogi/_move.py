@@ -1,8 +1,7 @@
 import typing as tp
 
-import vshogi._vshogi.animal_shogi as _as
-from vshogi.animal_shogi._piece import Piece
-from vshogi.animal_shogi._square import Square
+import vshogi._vshogi.animal_shogi as _shogi
+from vshogi._vshogi.animal_shogi import Move as _Move, Piece, Square
 
 
 class Move:
@@ -45,7 +44,7 @@ class Move:
         source : tp.Union[Square, Piece]
             Source, either from piece stand or a board square.
         """
-        self._move = _as.Move(destination.value, source.value)
+        self._move = _Move(destination, source)
 
     def __repr__(self) -> str:
         return (
@@ -74,9 +73,9 @@ class Move:
             A board square or piece stand.
         """
         value = self._move.source().value
-        if value < _as.MS_CH.value:
-            return Square(_as.SquareEnum(value))
-        return Piece(_as.PieceTypeEnum(value - 12))
+        if value < _shogi.MS_CH.value:
+            return Square(value)
+        return Piece(value - 12)
 
     def is_drop(self) -> bool:
         """Return true if the move is dropping move.

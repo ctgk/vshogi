@@ -15,20 +15,19 @@ void export_color_enum(py::module& m)
 
 void export_square_enum(py::module& m)
 {
-    py::enum_<as::SquareEnum>(m, "SquareEnum")
-        .value("SQ_A1", as::SQ_A1)
-        .value("SQ_B1", as::SQ_B1)
-        .value("SQ_C1", as::SQ_C1)
-        .value("SQ_A2", as::SQ_A2)
-        .value("SQ_B2", as::SQ_B2)
-        .value("SQ_C2", as::SQ_C2)
-        .value("SQ_A3", as::SQ_A3)
-        .value("SQ_B3", as::SQ_B3)
-        .value("SQ_C3", as::SQ_C3)
-        .value("SQ_A4", as::SQ_A4)
-        .value("SQ_B4", as::SQ_B4)
-        .value("SQ_C4", as::SQ_C4)
-        .export_values();
+    py::enum_<as::SquareEnum>(m, "Square")
+        .value("A1", as::SQ_A1)
+        .value("B1", as::SQ_B1)
+        .value("C1", as::SQ_C1)
+        .value("A2", as::SQ_A2)
+        .value("B2", as::SQ_B2)
+        .value("C2", as::SQ_C2)
+        .value("A3", as::SQ_A3)
+        .value("B3", as::SQ_B3)
+        .value("C3", as::SQ_C3)
+        .value("A4", as::SQ_A4)
+        .value("B4", as::SQ_B4)
+        .value("C4", as::SQ_C4);
 }
 
 void export_move_source_enum(py::module& m)
@@ -66,21 +65,20 @@ void export_move(py::module& m)
 void export_board(py::module& m)
 {
     py::class_<as::Board>(m, "Board")
-        .def("get_piece_at", &as::Board::get_piece_at);
+        .def("__getitem__", &as::Board::get_piece_at);
 }
 
 void export_pieces(py::module& m)
 {
-    py::enum_<as::PieceTypeEnum>(m, "PieceTypeEnum")
+    py::enum_<as::PieceTypeEnum>(m, "Piece")
         .value("CH", as::CH)
         .value("EL", as::EL)
         .value("GI", as::GI)
         .value("LI", as::LI)
         .value("HE", as::HE)
-        .value("NA", as::NA)
-        .export_values();
+        .value("NA", as::NA);
 
-    py::enum_<as::BoardPieceTypeEnum>(m, "BoardPieceTypeEnum")
+    py::enum_<as::BoardPieceTypeEnum>(m, "BoardPiece")
         .value("B_CH", as::B_CH)
         .value("B_EL", as::B_EL)
         .value("B_GI", as::B_GI)
@@ -91,8 +89,7 @@ void export_pieces(py::module& m)
         .value("W_GI", as::W_GI)
         .value("W_LI", as::W_LI)
         .value("W_HE", as::W_HE)
-        .value("VOID", as::VOID)
-        .export_values();
+        .value("VOID", as::VOID);
 }
 
 void export_piece_stand(py::module& m)
