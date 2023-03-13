@@ -16,7 +16,7 @@ _shogi.Stand.to_dict = lambda self: {
 _shogi.Stand.__repr__ = lambda self: ','.join([
     k.name[0] + ('' if v == 1 else str(v)) for k, v in self.to_dict().items()
     if v > 0
-]) if any(self.to_dict().values()) else '-'
+]) if self.any() else '-'
 
 
 class Game:

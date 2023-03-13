@@ -76,6 +76,10 @@ public:
     {
         return static_cast<bool>(m_value & stand_masks[p]);
     }
+    bool any() const
+    {
+        return static_cast<bool>(m_value);
+    }
     Stand& add(const PieceTypeEnum p, const std::uint8_t num = 1U)
     {
         m_value

@@ -83,7 +83,8 @@ void export_piece_stand(py::module& m)
         .def(
             "count",
             py::overload_cast<const as::PieceTypeEnum>(
-                &as::Stand::count, py::const_));
+                &as::Stand::count, py::const_))
+        .def("any", &as::Stand::any);
 }
 
 void export_animal_shogi_game(py::module& m)
