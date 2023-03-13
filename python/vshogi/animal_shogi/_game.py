@@ -1,10 +1,10 @@
 import typing as tp
 
 import vshogi._vshogi.animal_shogi as _shogi
-from vshogi._enum import _Enum
 from vshogi._vshogi.animal_shogi import Board
 from vshogi._vshogi.animal_shogi import Color
 from vshogi._vshogi.animal_shogi import Piece
+from vshogi._vshogi.animal_shogi import Result
 from vshogi._vshogi.animal_shogi import _Game
 from vshogi.animal_shogi._move import Move
 
@@ -17,15 +17,6 @@ _shogi.Stand.__repr__ = lambda self: ','.join([
     k.name[0] + ('' if v == 1 else str(v)) for k, v in self.to_dict().items()
     if v > 0
 ]) if any(self.to_dict().values()) else '-'
-
-
-class Result(_Enum):
-    """Enumeration of game results."""
-
-    ONGOING = _shogi.ONGOING
-    DRAW = _shogi.DRAW
-    BLACK_WIN = _shogi.BLACK_WIN
-    WHITE_WIN = _shogi.WHITE_WIN
 
 
 class Game:
@@ -153,7 +144,7 @@ class Game:
         Result
             Result of the game.
         """
-        return Result(self._game.get_result())
+        return self._game.get_result()
 
     def apply(self, move: Move) -> 'Game':
         """Apply a move.
