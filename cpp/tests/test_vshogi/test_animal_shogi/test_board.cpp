@@ -22,4 +22,31 @@ TEST(animal_shogi_board, set_sfen)
     CHECK_EQUAL('b', *actual);
 }
 
+TEST(animal_shogi_board, init)
+{
+    //     A  B  C
+    //   *--*--*--*
+    // 1 |-G|-C|-E|
+    //   *--*--*--*
+    // 2 |+L|  |+C|
+    //   *--*--*--*
+    // 3 |  |-L|+G|
+    //   *--*--*--*
+    // 4 |+E|  |  |
+    //   *--*--*--*
+    auto b = Board::from_hash(185353356648959);
+    CHECK_EQUAL(W_GI, b.get_piece_at(SQ_A1));
+    CHECK_EQUAL(W_CH, b.get_piece_at(SQ_B1));
+    CHECK_EQUAL(W_EL, b.get_piece_at(SQ_C1));
+    CHECK_EQUAL(B_LI, b.get_piece_at(SQ_A2));
+    CHECK_EQUAL(VOID, b.get_piece_at(SQ_B2));
+    CHECK_EQUAL(B_CH, b.get_piece_at(SQ_C2));
+    CHECK_EQUAL(VOID, b.get_piece_at(SQ_A3));
+    CHECK_EQUAL(W_LI, b.get_piece_at(SQ_B3));
+    CHECK_EQUAL(B_GI, b.get_piece_at(SQ_C3));
+    CHECK_EQUAL(B_EL, b.get_piece_at(SQ_A4));
+    CHECK_EQUAL(VOID, b.get_piece_at(SQ_B4));
+    CHECK_EQUAL(VOID, b.get_piece_at(SQ_C4));
+}
+
 } // namespace test_vshogi::test_animal_shogi

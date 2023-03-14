@@ -50,7 +50,8 @@ void export_move(py::module& m)
 void export_board(py::module& m)
 {
     py::class_<as::Board>(m, "Board")
-        .def("__getitem__", &as::Board::get_piece_at);
+        .def("__getitem__", &as::Board::get_piece_at)
+        .def("hash", &as::Board::hash);
 }
 
 void export_pieces(py::module& m)

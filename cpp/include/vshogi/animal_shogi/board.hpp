@@ -29,6 +29,16 @@ public:
     {
     }
 
+    static Board from_hash(std::uint64_t value)
+    {
+        auto b = Board();
+        for (int i = num_squares; i--;) {
+            b.m_pieces[i] = static_cast<BoardPieceTypeEnum>(value & 0xf);
+            value >>= 4;
+        }
+        return b;
+    }
+
     /**
      * @brief Set pieces on the board according to given SFEN string.
      *
