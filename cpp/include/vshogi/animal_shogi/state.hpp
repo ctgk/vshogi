@@ -40,6 +40,28 @@ public:
         }
         m_black_white_stands.set_sfen_holdings(s);
     }
+    void set_hash(std::uint64_t value)
+    {
+        m_board.set_hash(value);
+        m_turn = static_cast<ColorEnum>(static_cast<bool>(value & (1UL << 50)));
+
+        auto& turn_stand = m_black_white_stands[m_turn];
+        auto& oppo_stand = m_black_white_stands[~m_turn];
+        turn_stand.set_value(static_cast<std::uint8_t>(value >> 48));
+        oppo_stand.add(
+            CH,
+            static_cast<std::uint8_t>(
+                2 - m_board.count(CH) - m_board.count(HE)
+                - turn_stand.count(CH)));
+        oppo_stand.add(
+            EL,
+            static_cast<std::uint8_t>(
+                2 - m_board.count(EL) - turn_stand.count(EL)));
+        oppo_stand.add(
+            GI,
+            static_cast<std::uint8_t>(
+                2 - m_board.count(GI) - turn_stand.count(GI)));
+    }
 
     const Board& get_board() const
     {

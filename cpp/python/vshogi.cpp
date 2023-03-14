@@ -104,11 +104,13 @@ void export_animal_shogi_game(py::module& m)
         .value("WHITE_WIN", as::WHITE_WIN);
     py::class_<as::Game>(m, "_Game")
         .def(py::init<>())
+        .def(py::init<const std::uint64_t>())
         .def(py::init<const std::string&>())
         .def("get_turn", &as::Game::get_turn)
         .def("get_board", &as::Game::get_board)
         .def("get_stand", &as::Game::get_stand)
         .def("get_result", &as::Game::get_result)
+        .def("hash_current_state", &as::Game::hash_current_state)
         .def("is_applicable", &as::Game::is_applicable)
         .def("apply", &as::Game::apply);
 }

@@ -57,6 +57,7 @@ _classes = [
     Board, BoardPiece, Color, Game, Move, Piece, Square, Result,
 ]
 
+locals().update(BoardPiece.__members__)
 locals().update(Color.__members__)
 locals().update(Piece.__members__)
 locals().update(Square.__members__)

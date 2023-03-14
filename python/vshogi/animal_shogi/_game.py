@@ -77,15 +77,15 @@ class Game:
     Black: C
     """
 
-    def __init__(self, sfen: tp.Optional[str] = None) -> None:
+    def __init__(self, hash_or_sfen: tp.Union[int, str, None] = None) -> None:
         """Initialize Animal Shogi game.
 
         Parameters
         ----------
-        sfen : tp.Optional[str], optional
+        hash_or_sfen : tp.Union[int, str, None], optional
             Initial state of the game, by default None
         """
-        self._game = _Game() if sfen is None else _Game(sfen)
+        self._game = _Game() if hash_or_sfen is None else _Game(hash_or_sfen)
 
     @property
     def turn(self) -> Color:
@@ -140,6 +140,16 @@ class Game:
             Result of the game.
         """
         return self._game.get_result()
+
+    def hash_current_state(self) -> int:
+        """Return hash value of the current state.
+
+        Returns
+        -------
+        int
+            Hash value of the current state.
+        """
+        return self._game.hash_current_state()
 
     def apply(self, move: Move) -> 'Game':
         """Apply a move.

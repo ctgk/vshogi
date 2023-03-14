@@ -32,10 +32,7 @@ public:
     static Board from_hash(std::uint64_t value)
     {
         auto b = Board();
-        for (int i = num_squares; i--;) {
-            b.m_pieces[i] = static_cast<BoardPieceTypeEnum>(value & 0xf);
-            value >>= 4;
-        }
+        b.set_hash(value);
         return b;
     }
 
@@ -49,6 +46,13 @@ public:
     BoardPieceTypeEnum get_piece_at(const SquareEnum sq) const
     {
         return m_pieces[sq];
+    }
+    void set_hash(std::uint64_t value)
+    {
+        for (int i = num_squares; i--;) {
+            m_pieces[i] = static_cast<BoardPieceTypeEnum>(value & 0xf);
+            value >>= 4;
+        }
     }
     PieceTypeEnum pop_piece_at(const SquareEnum sq)
     {
@@ -99,6 +103,14 @@ public:
             out |= piece;
         }
         return out;
+    }
+    int count(const PieceTypeEnum p) const
+    {
+        int num = 0;
+        for (auto&& piece : m_pieces) {
+            num += (to_piece_type(piece) == p);
+        }
+        return num;
     }
 };
 

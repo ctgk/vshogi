@@ -38,6 +38,12 @@ public:
     {
         m_history.reserve(128);
     }
+    Game(const std::uint64_t hash_value)
+        : m_history(), m_current_state(), m_result()
+    {
+        m_history.reserve(128);
+        m_current_state.set_hash(hash_value);
+    }
     Game(const std::string& sfen)
         : m_history(), m_current_state(sfen), m_result(ONGOING)
     {
@@ -58,6 +64,10 @@ public:
     ResultEnum get_result() const
     {
         return m_result;
+    }
+    std::uint64_t hash_current_state() const
+    {
+        return m_current_state.hash();
     }
     bool is_applicable(const Move move) const
     {
