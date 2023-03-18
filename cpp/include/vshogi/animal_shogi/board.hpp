@@ -83,7 +83,16 @@ public:
         }
         return out;
     }
-    BitBoard to_location_mask(const ColorEnum c) const
+    BitBoard to_piece_mask() const
+    {
+        BitBoard out = BitBoard();
+        for (auto sq : square_array) {
+            if (m_pieces[sq] != VOID)
+                out |= square_masks[sq];
+        }
+        return out;
+    }
+    BitBoard to_piece_mask(const ColorEnum c) const
     {
         BitBoard out = BitBoard();
         for (auto&& sq : square_array) {
