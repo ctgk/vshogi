@@ -198,3 +198,15 @@ class Game:
             repr(self.board),
             f'Black: {str(self._game.get_stand(_shogi.Color.BLACK))}',
         ))
+
+    def copy(self) -> 'Game':
+        """Return copy of the game object.
+
+        Returns
+        -------
+        Game
+            Copy of the game object.
+        """
+        g = Game()
+        g._game = self._game.copy()
+        return g

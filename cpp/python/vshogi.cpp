@@ -112,7 +112,12 @@ void export_animal_shogi_game(py::module& m)
         .def("get_result", &as::Game::get_result)
         .def("hash_current_state", &as::Game::hash_current_state)
         .def("is_applicable", &as::Game::is_applicable)
-        .def("apply", &as::Game::apply);
+        .def("apply", &as::Game::apply)
+        .def("copy", [](const as::Game& self) { return as::Game(self); })
+        .def(
+            "__deepcopy__",
+            [](const as::Game& self, py::dict) { return as::Game(self); },
+            py::arg("memo"));
 }
 
 PYBIND11_MODULE(_vshogi, m)
