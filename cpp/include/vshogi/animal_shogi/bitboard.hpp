@@ -42,6 +42,14 @@ public:
         m_value = static_cast<std::uint16_t>(m_value | other.m_value);
         return *this;
     }
+    constexpr BitBoard operator&(const BitBoard other) const
+    {
+        return BitBoard(m_value & other.m_value);
+    }
+    constexpr BitBoard operator~() const
+    {
+        return BitBoard(static_cast<std::uint16_t>(~m_value));
+    }
     bool operator==(const BitBoard other) const
     {
         return m_value == other.m_value;
