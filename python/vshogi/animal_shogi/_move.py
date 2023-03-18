@@ -11,7 +11,7 @@ class Move:
     >>> import vshogi.animal_shogi as shogi
     >>> m = Move(shogi.B2, shogi.B3)
     >>> m
-    Move(B3 -> B2)
+    Move(B2 <- B3)
     >>> m.source
     Square.B3
     >>> m.destination
@@ -20,7 +20,7 @@ class Move:
     False
     >>> m = Move(shogi.A2, shogi.GI)
     >>> m
-    Move(GI -> A2)
+    Move(A2 <- GI)
     >>> m.destination
     Square.A2
     >>> m.source
@@ -47,8 +47,8 @@ class Move:
 
     def __repr__(self) -> str:
         return (
-            f'{self.__class__.__name__}({self.source.name} '
-            f'-> {self.destination.name})'
+            f'{self.__class__.__name__}({self.destination.name} '
+            f'<- {self.source.name})'
         )
 
     @property

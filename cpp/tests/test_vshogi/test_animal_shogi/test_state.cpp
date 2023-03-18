@@ -77,6 +77,16 @@ TEST(animal_shogi_state, is_applicable)
     }
 }
 
+TEST(animal_shogi_state, get_applicable_moves)
+{
+    auto s = State();
+    const auto move_list = s.get_applicable_moves();
+    CHECK_EQUAL(4, move_list.size());
+
+    s.apply(Move(SQ_B2, SQ_B3));
+    CHECK_EQUAL(5, s.get_applicable_moves().size());
+}
+
 TEST(animal_shogi_state, hash)
 {
     {

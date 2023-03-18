@@ -51,6 +51,8 @@ class Game:
     4 |+E|+L|+G|
       *--*--*--*
     Black: -
+    >>> game.get_applicable_moves()
+    [Move(B2 <- B3), Move(A3 <- B4), Move(C3 <- B4), Move(C3 <- C4)]
     >>> game.is_applicable(Move(shogi.B2, shogi.B3))
     True
     >>> game.is_applicable(Move(shogi.A3, shogi.A4))
@@ -201,6 +203,19 @@ class Game:
             True if the move is applicable, otherwise false.
         """
         return self._game.is_applicable(move._move)
+
+    def get_applicable_moves(self) -> tp.List[Move]:
+        """Return list of applicable moves to the current state.
+
+        Returns
+        -------
+        tp.List[Move]
+            Applicable moves.
+        """
+        return [
+            Move(m.destination(), m.source())
+            for m in self._game.get_applicable_moves()
+        ]
 
     def __repr__(self) -> str:
         r = self.result

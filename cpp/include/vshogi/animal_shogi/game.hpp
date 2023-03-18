@@ -73,6 +73,10 @@ public:
     {
         return m_current_state.is_applicable(move);
     }
+    auto get_applicable_moves() const
+    {
+        return m_current_state.get_applicable_moves();
+    }
 
     /**
      * @brief Apply an applicable move to the current state.

@@ -2,6 +2,7 @@
 #define VSHOGI_ANIMAL_SHOGI_STATE_HPP
 
 #include <string>
+#include <vector>
 
 #include "vshogi/animal_shogi/board.hpp"
 #include "vshogi/animal_shogi/color.hpp"
@@ -109,6 +110,14 @@ public:
         }
     }
 
+    std::vector<Move> get_applicable_moves() const
+    {
+        auto out = std::vector<Move>();
+        append_applicable_moves_by_board_pieces(out);
+        append_applicable_moves_by_stand_pieces(out);
+        return out;
+    }
+
     /**
      * @brief Apply an applicable move to the state. This method does not check
      * if a move is applicable or not, check it by `is_move_applicable` method.
@@ -207,6 +216,38 @@ private:
         if (p == VOID)
             return true;
         return to_color(p) != m_turn;
+    }
+    void
+    append_applicable_moves_by_board_pieces(std::vector<Move>& move_list) const
+    {
+        const auto empty_or_opponent_piece = ~m_board.to_piece_mask(m_turn);
+        for (auto src : square_array) {
+            const auto piece = m_board.get_piece_at(src);
+            if ((piece == VOID) || (to_color(piece) != m_turn))
+                continue;
+            const auto attacking = get_attacks_by(piece, src);
+            const auto movable = attacking & empty_or_opponent_piece;
+            for (auto dst : square_array) {
+                if (movable.is_one(dst)) {
+                    move_list.emplace_back(Move(dst, src));
+                }
+            }
+        }
+    }
+    void
+    append_applicable_moves_by_stand_pieces(std::vector<Move>& move_list) const
+    {
+        const auto empty = ~m_board.to_piece_mask();
+        const auto stand = m_black_white_stands[m_turn];
+        for (auto piece : stand_piece_array) {
+            if (!stand.exist(piece))
+                continue;
+            for (auto dst : square_array) {
+                if (empty.is_one(dst)) {
+                    move_list.emplace_back(Move(dst, piece));
+                }
+            }
+        }
     }
 };
 
