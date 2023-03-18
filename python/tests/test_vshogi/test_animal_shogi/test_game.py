@@ -54,5 +54,38 @@ def test_board():
     assert (actual == expected).all()
 
 
+def test_init_from_hash():
+    game = shogi.Game(1452042304300031)
+    assert game.result == shogi.ONGOING
+    print(game)
+
+    game.apply(shogi.Move(shogi.C4, shogi.CH))
+    print(game.result)
+    print(game)
+    assert game.result == shogi.ONGOING
+
+
+def test_play():
+    game = shogi.Game()
+    game.apply(shogi.Move(shogi.B2, shogi.B3))
+    game.apply(shogi.Move(shogi.C2, shogi.B1))
+    game.apply(shogi.Move(shogi.A2, shogi.CH))
+    game.apply(shogi.Move(shogi.B3, shogi.C2))
+    game.apply(shogi.Move(shogi.A1, shogi.A2))
+    game.apply(shogi.Move(shogi.A2, shogi.B3))
+    game.apply(shogi.Move(shogi.C3, shogi.C4))
+    game.apply(shogi.Move(shogi.A1, shogi.A2))
+    game.apply(shogi.Move(shogi.B3, shogi.A4))
+    game.apply(shogi.Move(shogi.B1, shogi.CH))
+    game.apply(shogi.Move(shogi.C2, shogi.B3))
+    game.apply(shogi.Move(shogi.B2, shogi.A1))
+    game.apply(shogi.Move(shogi.A4, shogi.B4))
+    game.apply(shogi.Move(shogi.A3, shogi.B2))
+    game.apply(shogi.Move(shogi.A1, shogi.GI))
+    game.apply(shogi.Move(shogi.C4, shogi.CH))
+    print(game)
+    assert game.result == shogi.ONGOING
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

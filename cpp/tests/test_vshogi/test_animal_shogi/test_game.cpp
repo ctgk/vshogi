@@ -38,6 +38,13 @@ TEST(Game, result)
         game.apply(Move(SQ_A1, SQ_A2));
         CHECK_EQUAL(DRAW, game.get_result()); // #repeat = 4
     }
+    {
+        auto game = Game(1452042304300031UL);
+        CHECK_EQUAL(ONGOING, game.get_result());
+
+        game.apply(Move(SQ_C4, CH));
+        CHECK_EQUAL(ONGOING, game.get_result());
+    }
 }
 
 } // namespace test_vshogi::test_animal_shogi
