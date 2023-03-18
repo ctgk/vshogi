@@ -1,5 +1,6 @@
 from copy import copy, deepcopy
 
+import numpy as np
 import pytest
 
 import vshogi.animal_shogi as shogi
@@ -38,6 +39,19 @@ def test_hash():
     assert shogi.VOID == actual.board[shogi.B3]
     assert {shogi.CH: 1, shogi.EL: 0, shogi.GI: 0} == actual.black_stand
     assert {shogi.CH: 0, shogi.EL: 0, shogi.GI: 0} == actual.white_stand
+
+
+def test_board():
+    game: shogi.Game = shogi.Game()
+    actual = np.asarray(game.board)
+
+    expected = np.array([
+        [shogi.W_GI, shogi.W_LI, shogi.W_EL],
+        [shogi.VOID, shogi.W_CH, shogi.VOID],
+        [shogi.VOID, shogi.B_CH, shogi.VOID],
+        [shogi.B_EL, shogi.B_LI, shogi.B_GI],
+    ])
+    assert (actual == expected).all()
 
 
 if __name__ == '__main__':

@@ -1,9 +1,12 @@
 import typing as tp
 
+import numpy as np
+
 import vshogi._vshogi.animal_shogi as _shogi
 from vshogi._vshogi.animal_shogi import Board
 from vshogi._vshogi.animal_shogi import Color
 from vshogi._vshogi.animal_shogi import Result
+from vshogi._vshogi.animal_shogi import Square
 from vshogi._vshogi.animal_shogi import _Game
 from vshogi.animal_shogi._move import Move
 
@@ -12,6 +15,15 @@ _shogi.Stand.__str__ = lambda self: ','.join([
     k.name[0] + ('' if v == 1 else str(v)) for k, v in self.to_dict().items()
     if v > 0
 ]) if self.any() else '-'
+Board.__array__ = lambda self: np.array(
+    [
+        [self[Square.A1], self[Square.B1], self[Square.C1]],
+        [self[Square.A2], self[Square.B2], self[Square.C2]],
+        [self[Square.A3], self[Square.B3], self[Square.C3]],
+        [self[Square.A4], self[Square.B4], self[Square.C4]],
+    ],
+    dtype=_shogi.BoardPiece,
+)
 
 
 class Game:
