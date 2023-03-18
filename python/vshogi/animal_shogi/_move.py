@@ -51,6 +51,14 @@ class Move:
             f'<- {self.source.name})'
         )
 
+    def __eq__(self, other: 'Move') -> bool:
+        if not isinstance(other, Move):
+            return False
+        return (
+            (self.destination == other.destination)
+            and (self.source == other.source)
+        )
+
     @property
     def destination(self) -> Square:
         """Destination on the board.
