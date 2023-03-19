@@ -116,6 +116,8 @@ void export_animal_shogi_game(py::module& m)
         .def("hash_current_state", &as::Game::hash_current_state)
         .def("is_applicable", &as::Game::is_applicable)
         .def("apply", &as::Game::apply)
+        .def("get_move_at", &as::Game::get_move_at)
+        .def("get_state_hash_at", &as::Game::get_state_hash_at)
         .def("copy", [](const as::Game& self) { return as::Game(self); })
         .def(
             "__deepcopy__",

@@ -66,6 +66,9 @@ private:
     std::uint8_t m_value;
 
 public:
+    Move(const std::uint8_t hashed_value) : m_value(hashed_value)
+    {
+    }
     Move(const SquareEnum destination, const MoveSourceEnum source)
         : m_value(static_cast<std::uint8_t>((source << 4) | destination))
     {

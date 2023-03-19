@@ -102,6 +102,17 @@ public:
     {
         return m_record.size();
     }
+    Move get_move_at(const std::size_t n) const
+    {
+        const auto state_action_hash = m_record[n];
+        const auto action_hash = state_action_hash >> 56;
+        return Move(static_cast<std::uint8_t>(action_hash));
+    }
+    std::uint64_t get_state_hash_at(const std::size_t n) const
+    {
+        const auto state_action_hash = m_record[n];
+        return state_action_hash & 0x0ffffffffffffffUL;
+    }
 
 private:
     bool is_fourfold_repetitions() const

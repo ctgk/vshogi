@@ -91,6 +91,22 @@ class Game:
     Black: C
     >>> game.record_length
     3
+    >>> Game(game.get_state_hash_at(1))
+    Turn: WHITE
+    White: -
+        A  B  C
+      *--*--*--*
+    1 |-G|-L|-E|
+      *--*--*--*
+    2 |  |+C|  |
+      *--*--*--*
+    3 |  |  |  |
+      *--*--*--*
+    4 |+E|+L|+G|
+      *--*--*--*
+    Black: C
+    >>> game.get_move_at(1)
+    Move(A2 <- A1)
     """
 
     def __init__(self, hash_or_sfen: tp.Union[int, str, None] = None) -> None:
@@ -229,6 +245,37 @@ class Game:
             Move(m.destination(), m.source())
             for m in self._game.get_applicable_moves()
         ]
+
+    def get_move_at(self, n: int) -> Move:
+        """Return n-th move of the game, where n starts from 0.
+
+        Parameters
+        ----------
+        n : int
+            Input index.
+
+        Returns
+        -------
+        Move
+            N-th move of the game.
+        """
+        m = self._game.get_move_at(n)
+        return Move(m.destination(), m.source())
+
+    def get_state_hash_at(self, n: int) -> int:
+        """Return hash value of n-th state of the game, where n starts from 0.
+
+        Parameters
+        ----------
+        n : int
+            Input index.
+
+        Returns
+        -------
+        int
+            N-th state of the game.
+        """
+        return self._game.get_state_hash_at(n)
 
     def __repr__(self) -> str:
         r = self.result
