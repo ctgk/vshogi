@@ -89,6 +89,8 @@ class Game:
     4 |+E|+L|+G|
       *--*--*--*
     Black: C
+    >>> game.record_length
+    3
     """
 
     def __init__(self, hash_or_sfen: tp.Union[int, str, None] = None) -> None:
@@ -154,6 +156,17 @@ class Game:
             Result of the game.
         """
         return self._game.get_result()
+
+    @property
+    def record_length(self) -> int:
+        """Return length of the game record.
+
+        Returns
+        -------
+        int
+            Length of the game record
+        """
+        return self._game.record_length()
 
     def hash_current_state(self) -> int:
         """Return hash value of the current state.
