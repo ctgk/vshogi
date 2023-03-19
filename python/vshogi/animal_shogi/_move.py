@@ -51,13 +51,13 @@ class Move:
             f'<- {self.source.name})'
         )
 
+    def __hash__(self) -> int:
+        return self._move.hash()
+
     def __eq__(self, other: 'Move') -> bool:
         if not isinstance(other, Move):
             return False
-        return (
-            (self.destination == other.destination)
-            and (self.source == other.source)
-        )
+        return self._move.hash() == other._move.hash()
 
     @property
     def destination(self) -> Square:

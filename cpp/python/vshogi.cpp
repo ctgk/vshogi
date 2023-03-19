@@ -44,7 +44,8 @@ void export_move(py::module& m)
                 }
                 return py::cast(as::to_square(self.source()));
             })
-        .def("is_drop", &as::Move::is_drop);
+        .def("is_drop", &as::Move::is_drop)
+        .def("hash", &as::Move::hash);
 }
 
 void export_board(py::module& m)
