@@ -87,5 +87,15 @@ def test_play():
     assert game.result == shogi.ONGOING
 
 
+def test_get_applicable_moves():
+    game = shogi.Game()
+    assert len(game.get_applicable_moves()) == 4
+    game.apply(shogi.Move(shogi.A3, shogi.B4))
+    game.apply(shogi.Move(shogi.A2, shogi.B1))
+    game.apply(shogi.Move(shogi.A2, shogi.A3))
+    print(game)
+    assert len(game.get_applicable_moves()) == 0
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

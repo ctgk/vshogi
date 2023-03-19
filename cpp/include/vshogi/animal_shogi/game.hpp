@@ -75,7 +75,9 @@ public:
     }
     auto get_applicable_moves() const
     {
-        return m_current_state.get_applicable_moves();
+        if (m_result == ONGOING)
+            return m_current_state.get_applicable_moves();
+        return std::vector<Move>();
     }
 
     /**
