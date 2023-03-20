@@ -85,6 +85,14 @@ public:
     {
         static_assert(static_cast<int>(MS_CH) - static_cast<int>(CH) == 12);
     }
+    bool operator==(const Move& other) const
+    {
+        return m_value == other.m_value;
+    }
+    bool operator!=(const Move& other) const
+    {
+        return m_value != other.m_value;
+    }
     SquareEnum destination() const
     {
         return static_cast<SquareEnum>(m_value & 0xf);

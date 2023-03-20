@@ -35,8 +35,8 @@ void export_move(py::module& m)
     py::class_<as::Move>(m, "Move")
         .def(py::init<const as::SquareEnum, const as::SquareEnum>())
         .def(py::init<const as::SquareEnum, const as::PieceTypeEnum>())
-        .def("destination", &as::Move::destination)
-        .def(
+        .def_property_readonly("destination", &as::Move::destination)
+        .def_property_readonly(
             "source",
             [](const as::Move& self) -> py::object {
                 if (self.is_drop()) {
@@ -45,7 +45,9 @@ void export_move(py::module& m)
                 return py::cast(as::to_square(self.source()));
             })
         .def("is_drop", &as::Move::is_drop)
-        .def("hash", &as::Move::hash);
+        .def("__hash__", &as::Move::hash)
+        .def("__eq__", &as::Move::operator==)
+        .def("__ne__", &as::Move::operator!=);
 }
 
 void export_board(py::module& m)

@@ -5,10 +5,10 @@ import numpy as np
 import vshogi._vshogi.animal_shogi as _shogi
 from vshogi._vshogi.animal_shogi import Board
 from vshogi._vshogi.animal_shogi import Color
+from vshogi._vshogi.animal_shogi import Move
 from vshogi._vshogi.animal_shogi import Result
 from vshogi._vshogi.animal_shogi import Square
 from vshogi._vshogi.animal_shogi import _Game
-from vshogi.animal_shogi._move import Move
 
 
 _shogi.Stand.__str__ = lambda self: ','.join([
@@ -207,7 +207,7 @@ class Game:
         Game
             Game with the move applied.
         """
-        self._game.apply(move._move)
+        self._game.apply(move)
         return self
 
     def is_applicable(self, move: Move) -> bool:
@@ -231,7 +231,7 @@ class Game:
         bool
             True if the move is applicable, otherwise false.
         """
-        return self._game.is_applicable(move._move)
+        return self._game.is_applicable(move)
 
     def get_applicable_moves(self) -> tp.List[Move]:
         """Return list of applicable moves to the current state.
@@ -241,10 +241,7 @@ class Game:
         tp.List[Move]
             Applicable moves.
         """
-        return [
-            Move(m.destination(), m.source())
-            for m in self._game.get_applicable_moves()
-        ]
+        return self._game.get_applicable_moves()
 
     def get_move_at(self, n: int) -> Move:
         """Return n-th move of the game, where n starts from 0.
@@ -259,8 +256,7 @@ class Game:
         Move
             N-th move of the game.
         """
-        m = self._game.get_move_at(n)
-        return Move(m.destination(), m.source())
+        return self._game.get_move_at(n)
 
     def get_state_hash_at(self, n: int) -> int:
         """Return hash value of n-th state of the game, where n starts from 0.
