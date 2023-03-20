@@ -128,6 +128,17 @@ public:
     {
         return m_value;
     }
+    Move rotate() const
+    {
+        const auto dst_rotated = static_cast<SquareEnum>(
+            num_squares - 1 - static_cast<int>(this->destination()));
+        const auto src_rotated
+            = (this->is_drop())
+                  ? this->source()
+                  : static_cast<MoveSourceEnum>(
+                      num_squares - 1 - static_cast<int>(this->source()));
+        return Move(dst_rotated, src_rotated);
+    }
 };
 
 } // namespace vshogi::animal_shogi

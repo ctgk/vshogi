@@ -47,6 +47,7 @@ void export_move(py::module& m)
                 return py::cast(as::to_square(self.source()));
             })
         .def("is_drop", &as::Move::is_drop)
+        .def("rotate", &as::Move::rotate)
         .def("__hash__", &as::Move::hash)
         .def("__eq__", &as::Move::operator==)
         .def("__ne__", &as::Move::operator!=);
