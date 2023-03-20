@@ -85,6 +85,25 @@ public:
     {
         static_assert(static_cast<int>(MS_CH) - static_cast<int>(CH) == 12);
     }
+    static Move _from_policy_index(const int index) // NOLINT
+    {
+        const auto dst_index = index / (8 + 3);
+        const auto dir_index = index % (8 + 3);
+        const auto destination = static_cast<SquareEnum>(dst_index);
+        if (dir_index >= 8)
+            return Move(destination, static_cast<PieceTypeEnum>(dir_index - 8));
+        constexpr int dir_index_to_diff[] = {
+            // clang-format off
+            -4, -3, -2,
+            -1,      1,
+             2,  3,  4,
+            // clang-format on
+        };
+        return Move(
+            destination,
+            static_cast<SquareEnum>(
+                static_cast<int>(destination) + dir_index_to_diff[dir_index]));
+    }
     bool operator==(const Move& other) const
     {
         return m_value == other.m_value;

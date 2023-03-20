@@ -67,6 +67,26 @@ inline RankEnum to_rank(const SquareEnum sq)
     return table[sq];
 }
 
+enum FileEnum
+{
+    FILE_A,
+    FILE_B,
+    FILE_C,
+};
+constexpr int num_files = 3;
+inline FileEnum to_file(const SquareEnum sq)
+{
+    constexpr FileEnum table[] = {
+        // clang-format off
+        FILE_A, FILE_B, FILE_C,
+        FILE_A, FILE_B, FILE_C,
+        FILE_A, FILE_B, FILE_C,
+        FILE_A, FILE_B, FILE_C,
+        // clang-format on
+    };
+    return table[sq];
+}
+
 } // namespace vshogi::animal_shogi
 
 #endif // VSHOGI_ANIMAL_SHOGI_SQUARES_HPP
