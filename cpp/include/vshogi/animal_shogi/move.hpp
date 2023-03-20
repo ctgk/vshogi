@@ -104,6 +104,17 @@ public:
             static_cast<SquareEnum>(
                 static_cast<int>(destination) + dir_index_to_diff[dir_index]));
     }
+    int _to_policy_index() const // NOLINT
+    {
+        const auto dst_index = static_cast<int>(destination());
+        if (is_drop())
+            return dst_index * (8 + 3) + (source() - MS_CH + 8);
+        constexpr int diff_plus_4_to_dir_index[] = {0, 1, 2, 3, -1, 4, 5, 6, 7};
+        return dst_index * (8 + 3)
+               + diff_plus_4_to_dir_index
+                   [static_cast<int>(source()) - static_cast<int>(destination())
+                    + 4];
+    }
     bool operator==(const Move& other) const
     {
         return m_value == other.m_value;

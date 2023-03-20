@@ -37,6 +37,7 @@ void export_move(py::module& m)
         .def(py::init<const as::SquareEnum, const as::SquareEnum>())
         .def(py::init<const as::SquareEnum, const as::PieceTypeEnum>())
         .def_static("_from_policy_index", &as::Move::_from_policy_index)
+        .def("_to_policy_index", &as::Move::_to_policy_index)
         .def_property_readonly("destination", &as::Move::destination)
         .def_property_readonly(
             "source",
