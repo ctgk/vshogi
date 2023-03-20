@@ -119,6 +119,9 @@ class Game:
         """
         self._game = _Game() if hash_or_sfen is None else _Game(hash_or_sfen)
 
+    def __array__(self) -> np.ndarray:
+        return np.asarray(self._game)
+
     @property
     def turn(self) -> Color:
         """Return current turn.

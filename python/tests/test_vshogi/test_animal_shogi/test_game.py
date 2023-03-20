@@ -97,5 +97,17 @@ def test_get_applicable_moves():
     assert len(game.get_applicable_moves()) == 0
 
 
+def test_array():
+    game = shogi.Game()
+    game.apply(shogi.Move(shogi.B2, shogi.B3))
+    actual = np.asarray(game)
+    assert actual.dtype == np.float32
+    assert actual.shape == (1, 4, 3, 16)
+    assert np.allclose(actual[0, ..., 0], 0)
+    assert np.allclose(actual[0, ..., 8], 1)
+    assert np.allclose(actual[0, 2, 0, 11], 0)
+    assert np.allclose(actual[0, 2, 1, 11], 1)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
