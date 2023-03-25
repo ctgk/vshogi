@@ -4,10 +4,9 @@ cf. https://en.wikipedia.org/wiki/D%C5%8Dbutsu_sh%C5%8Dgi
 """
 
 from vshogi._vshogi.animal_shogi import (
-    Board, BoardPiece, Color, Piece, Result, Square,
+    Board, BoardPiece, Color, Move, Piece, Result, Square,
 )
 from vshogi.animal_shogi._game import Game
-from vshogi.animal_shogi._move import Move
 
 
 _board_template = '''\
@@ -49,6 +48,9 @@ BoardPiece._to_2char = lambda self: (
 )
 Color.__repr__ = _enum_repr
 Piece.__repr__ = _enum_repr
+Move.__repr__ = lambda a: (
+    f'{a.__class__.__name__}({a.destination.name} <- {a.source.name})'
+)
 Square.__repr__ = _enum_repr
 Result.__repr__ = _enum_repr
 
@@ -57,6 +59,7 @@ _classes = [
     Board, BoardPiece, Color, Game, Move, Piece, Square, Result,
 ]
 
+locals().update(BoardPiece.__members__)
 locals().update(Color.__members__)
 locals().update(Piece.__members__)
 locals().update(Square.__members__)

@@ -29,6 +29,13 @@ public:
     {
     }
 
+    static Board from_hash(std::uint64_t value)
+    {
+        auto b = Board();
+        b.set_hash(value);
+        return b;
+    }
+
     /**
      * @brief Set pieces on the board according to given SFEN string.
      *
@@ -39,6 +46,13 @@ public:
     BoardPieceTypeEnum get_piece_at(const SquareEnum sq) const
     {
         return m_pieces[sq];
+    }
+    void set_hash(std::uint64_t value)
+    {
+        for (int i = num_squares; i--;) {
+            m_pieces[i] = static_cast<BoardPieceTypeEnum>(value & 0xf);
+            value >>= 4;
+        }
     }
     PieceTypeEnum pop_piece_at(const SquareEnum sq)
     {
@@ -69,7 +83,16 @@ public:
         }
         return out;
     }
-    BitBoard to_location_mask(const ColorEnum c) const
+    BitBoard to_piece_mask() const
+    {
+        BitBoard out = BitBoard();
+        for (auto sq : square_array) {
+            if (m_pieces[sq] != VOID)
+                out |= square_masks[sq];
+        }
+        return out;
+    }
+    BitBoard to_piece_mask(const ColorEnum c) const
     {
         BitBoard out = BitBoard();
         for (auto&& sq : square_array) {
@@ -89,6 +112,14 @@ public:
             out |= piece;
         }
         return out;
+    }
+    int count(const PieceTypeEnum p) const
+    {
+        int num = 0;
+        for (auto&& piece : m_pieces) {
+            num += (to_piece_type(piece) == p);
+        }
+        return num;
     }
 };
 

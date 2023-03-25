@@ -27,21 +27,27 @@ class Game
 {
 private:
     using StateActionHash = std::uint64_t;
-    std::vector<StateActionHash> m_history;
+    std::vector<StateActionHash> m_record;
     State m_current_state;
     ResultEnum m_result;
 
     static constexpr std::uint64_t state_mask = 0x0ffffffffffffff;
 
 public:
-    Game() : m_history(), m_current_state(), m_result(ONGOING)
+    Game() : m_record(), m_current_state(), m_result(ONGOING)
     {
-        m_history.reserve(128);
+        m_record.reserve(128);
+    }
+    Game(const std::uint64_t hash_value)
+        : m_record(), m_current_state(), m_result()
+    {
+        m_record.reserve(128);
+        m_current_state.set_hash(hash_value);
     }
     Game(const std::string& sfen)
-        : m_history(), m_current_state(sfen), m_result(ONGOING)
+        : m_record(), m_current_state(sfen), m_result(ONGOING)
     {
-        m_history.reserve(128);
+        m_record.reserve(128);
     }
     ColorEnum get_turn() const
     {
@@ -59,9 +65,19 @@ public:
     {
         return m_result;
     }
+    std::uint64_t hash_current_state() const
+    {
+        return m_current_state.hash();
+    }
     bool is_applicable(const Move move) const
     {
         return m_current_state.is_applicable(move);
+    }
+    auto get_applicable_moves() const
+    {
+        if (m_result == ONGOING)
+            return m_current_state.get_applicable_moves();
+        return std::vector<Move>();
     }
 
     /**
@@ -72,7 +88,7 @@ public:
      */
     Game& apply(const Move move)
     {
-        m_history.emplace_back(
+        m_record.emplace_back(
             (static_cast<std::uint64_t>(move.hash()) << 56)
             + m_current_state.hash());
         const auto turn = get_turn();
@@ -82,9 +98,20 @@ public:
             turn, moved_piece, captured_piece, to_rank(move.destination()));
         return *this;
     }
-    std::size_t nth_move() const
+    std::size_t record_length() const
     {
-        return m_history.size() + 1;
+        return m_record.size();
+    }
+    Move get_move_at(const std::size_t n) const
+    {
+        const auto state_action_hash = m_record[n];
+        const auto action_hash = state_action_hash >> 56;
+        return Move(static_cast<std::uint8_t>(action_hash));
+    }
+    std::uint64_t get_state_hash_at(const std::size_t n) const
+    {
+        const auto state_action_hash = m_record[n];
+        return state_action_hash & 0x0ffffffffffffffUL;
     }
 
 private:
@@ -93,7 +120,7 @@ private:
         constexpr int num_acceptable_repetitions = 3;
         int num = 0;
         const auto current_hash = m_current_state.hash();
-        for (auto&& previous_hash : m_history) {
+        for (auto&& previous_hash : m_record) {
             num += (current_hash == (previous_hash & state_mask));
             if (num > num_acceptable_repetitions) {
                 return true;

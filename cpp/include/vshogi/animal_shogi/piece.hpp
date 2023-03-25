@@ -17,6 +17,7 @@ enum PieceTypeEnum : std::uint8_t
     HE = 0b0100, //!< Hen (Promoted Pawn)
     NA = 0b0111, // Not available.
 };
+constexpr PieceTypeEnum stand_piece_array[] = {CH, EL, GI};
 
 /**
  * @brief Enumeration of pieces on board (plus VOID).

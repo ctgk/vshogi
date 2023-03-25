@@ -2,6 +2,7 @@
 #define VSHOGI_ANIMAL_SHOGI_STATE_HPP
 
 #include <string>
+#include <vector>
 
 #include "vshogi/animal_shogi/board.hpp"
 #include "vshogi/animal_shogi/color.hpp"
@@ -39,6 +40,28 @@ public:
             ++s;
         }
         m_black_white_stands.set_sfen_holdings(s);
+    }
+    void set_hash(std::uint64_t value)
+    {
+        m_board.set_hash(value);
+        m_turn = static_cast<ColorEnum>(static_cast<bool>(value & (1UL << 50)));
+
+        auto& turn_stand = m_black_white_stands[m_turn];
+        auto& oppo_stand = m_black_white_stands[~m_turn];
+        turn_stand.set_value(static_cast<std::uint8_t>(value >> 48));
+        oppo_stand.add(
+            CH,
+            static_cast<std::uint8_t>(
+                2 - m_board.count(CH) - m_board.count(HE)
+                - turn_stand.count(CH)));
+        oppo_stand.add(
+            EL,
+            static_cast<std::uint8_t>(
+                2 - m_board.count(EL) - turn_stand.count(EL)));
+        oppo_stand.add(
+            GI,
+            static_cast<std::uint8_t>(
+                2 - m_board.count(GI) - turn_stand.count(GI)));
     }
 
     const Board& get_board() const
@@ -85,6 +108,14 @@ public:
                 && get_attacks_by(piece, src_sq).is_one(dst)
                 && is_empty_or_opponent_piece_on_square(dst));
         }
+    }
+
+    std::vector<Move> get_applicable_moves() const
+    {
+        auto out = std::vector<Move>();
+        append_applicable_moves_by_board_pieces(out);
+        append_applicable_moves_by_stand_pieces(out);
+        return out;
     }
 
     /**
@@ -185,6 +216,38 @@ private:
         if (p == VOID)
             return true;
         return to_color(p) != m_turn;
+    }
+    void
+    append_applicable_moves_by_board_pieces(std::vector<Move>& move_list) const
+    {
+        const auto empty_or_opponent_piece = ~m_board.to_piece_mask(m_turn);
+        for (auto src : square_array) {
+            const auto piece = m_board.get_piece_at(src);
+            if ((piece == VOID) || (to_color(piece) != m_turn))
+                continue;
+            const auto attacking = get_attacks_by(piece, src);
+            const auto movable = attacking & empty_or_opponent_piece;
+            for (auto dst : square_array) {
+                if (movable.is_one(dst)) {
+                    move_list.emplace_back(Move(dst, src));
+                }
+            }
+        }
+    }
+    void
+    append_applicable_moves_by_stand_pieces(std::vector<Move>& move_list) const
+    {
+        const auto empty = ~m_board.to_piece_mask();
+        const auto stand = m_black_white_stands[m_turn];
+        for (auto piece : stand_piece_array) {
+            if (!stand.exist(piece))
+                continue;
+            for (auto dst : square_array) {
+                if (empty.is_one(dst)) {
+                    move_list.emplace_back(Move(dst, piece));
+                }
+            }
+        }
     }
 };
 

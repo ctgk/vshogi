@@ -67,6 +67,10 @@ public:
     {
         return m_value;
     }
+    void set_value(std::uint8_t v)
+    {
+        m_value = v & 0b11011011;
+    }
     std::uint8_t count(const PieceTypeEnum p) const
     {
         return static_cast<uint8_t>(

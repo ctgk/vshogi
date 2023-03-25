@@ -25,6 +25,17 @@ TEST(animal_shogi_state, get_turn)
     }
 }
 
+TEST(animal_shogi_state, copy)
+{
+    auto s1 = State("gl1/1c1/1C1/ELG w E 1");
+    auto s2 = s1;
+    s1.apply(Move(SQ_B3, SQ_B2));
+
+    CHECK_EQUAL(s1.get_stand(BLACK).count(EL), s2.get_stand(BLACK).count(EL));
+    CHECK_TRUE(s1.get_stand(WHITE).any());
+    CHECK_FALSE(s2.get_stand(WHITE).any());
+}
+
 TEST(animal_shogi_state, apply)
 {
     {
@@ -64,6 +75,16 @@ TEST(animal_shogi_state, is_applicable)
         CHECK_TRUE(State().is_applicable(Move(SQ_B2, MS_B3)));
         CHECK_FALSE(State().is_applicable(Move(SQ_B3, MS_B2)));
     }
+}
+
+TEST(animal_shogi_state, get_applicable_moves)
+{
+    auto s = State();
+    const auto move_list = s.get_applicable_moves();
+    CHECK_EQUAL(4, move_list.size());
+
+    s.apply(Move(SQ_B2, SQ_B3));
+    CHECK_EQUAL(5, s.get_applicable_moves().size());
 }
 
 TEST(animal_shogi_state, hash)
