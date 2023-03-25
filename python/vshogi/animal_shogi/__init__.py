@@ -58,20 +58,23 @@ Result.__repr__ = _enum_repr
 _classes = [
     Board, BoardPiece, Color, Game, Move, Piece, Square, Result,
 ]
+_enums = [BoardPiece, Color, Piece, Square, Result]
 
-locals().update(BoardPiece.__members__)
-locals().update(Color.__members__)
-locals().update(Piece.__members__)
-locals().update(Square.__members__)
-locals().update(Result.__members__)
+for _e in _enums:
+    locals().update(_e.__members__)
 
 
 for _cls in _classes:
     _cls.__module__ = __name__
 
 
-__all__ = [_cls.__name__ for _cls in _classes]
+__all__ = (
+    [_cls.__name__ for _cls in _classes]
+    + [m for _e in _enums for m in _e.__members__]
+)
 
 
 del _cls
 del _classes
+del _e
+del _enums
