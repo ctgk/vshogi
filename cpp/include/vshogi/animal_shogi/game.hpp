@@ -118,7 +118,7 @@ private:
     bool is_fourfold_repetitions() const
     {
         constexpr int num_acceptable_repetitions = 3;
-        int num = 0;
+        int num = 1;
         const auto current_hash = m_current_state.hash();
         for (auto&& previous_hash : m_record) {
             num += (current_hash == (previous_hash & state_mask));
