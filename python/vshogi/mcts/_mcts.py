@@ -91,6 +91,7 @@ class _Node:
     def explore(self, c_puct: float = 1., dirichlet_noise_depth: int = 0):
         self._visit_count += 1
         if len(self._policy) == 0:
+            self._update_q(self._value)
             return
         action = self._get_action_with_max_puct_score(
             c_puct, dirichlet_noise_depth > 0)
