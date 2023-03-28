@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-#include "vshogi/animal_shogi/color.hpp"
+#include "vshogi/color.hpp"
 
 namespace vshogi::animal_shogi
 {

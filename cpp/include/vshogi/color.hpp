@@ -1,10 +1,9 @@
-#ifndef VSHOGI_ANIMAL_SHOGI_COLOR_HPP
-#define VSHOGI_ANIMAL_SHOGI_COLOR_HPP
+#ifndef VSHOGI_COLOR_HPP
+#define VSHOGI_COLOR_HPP
 
 #include <cstdint>
-#include <stdexcept>
 
-namespace vshogi::animal_shogi
+namespace vshogi
 {
 
 /**
@@ -40,6 +39,6 @@ inline constexpr ColorEnum operator~(const ColorEnum c)
     return opposite(c);
 }
 
-} // namespace vshogi::animal_shogi
+} // namespace vshogi
 
-#endif // VSHOGI_ANIMAL_SHOGI_COLOR_HPP
+#endif // VSHOGI_COLOR_HPP

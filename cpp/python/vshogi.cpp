@@ -9,9 +9,9 @@ namespace as = vshogi::animal_shogi;
 
 void export_color_enum(py::module& m)
 {
-    py::enum_<as::ColorEnum>(m, "Color")
-        .value("BLACK", as::BLACK)
-        .value("WHITE", as::WHITE);
+    py::enum_<vshogi::ColorEnum>(m, "Color")
+        .value("BLACK", vshogi::BLACK)
+        .value("WHITE", vshogi::WHITE);
 }
 
 void export_square_enum(py::module& m)
@@ -136,7 +136,7 @@ void export_animal_shogi_game(py::module& m)
                         {
                             const auto board = self.get_board();
                             const auto sq
-                                = (turn == as::BLACK)
+                                = (turn == vshogi::BLACK)
                                       ? as::square_array[i * 3 + j]
                                       : as::square_array
                                           [as::num_squares - 1 - i * 3 - j];
