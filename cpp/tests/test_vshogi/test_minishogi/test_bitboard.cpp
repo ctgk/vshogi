@@ -89,7 +89,7 @@ TEST(bitboard, ng)
 TEST(bitboard, ka)
 {
     CHECK_EQUAL(8, get_attacks_by(B_KA, SQ_33).hamming_weight());
-    CHECK_EQUAL(4, get_attacks_by(W_KA, SQ_31).hamming_weight());
+    CHECK_TRUE((bb_22 | bb_13 | bb_42 | bb_53) == get_attacks_by(W_KA, SQ_31));
     CHECK_EQUAL(7, get_attacks_by(B_KA, SQ_33, bb_22).hamming_weight());
     CHECK_EQUAL(7, get_attacks_by(B_KA, SQ_33, bb_22 | bb_55).hamming_weight());
     CHECK_EQUAL(6, get_attacks_by(B_KA, SQ_33, bb_22 | bb_44).hamming_weight());
