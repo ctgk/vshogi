@@ -42,6 +42,15 @@ TEST(board, to_piece_mask)
         == b.to_piece_mask(vshogi::BLACK));
 }
 
+TEST(board, to_attack_mask)
+{
+    auto b = Board();
+    CHECK_TRUE(
+        (bb_52 | bb_12 | bb_53 | bb_43 | bb_13 | bb_54 | bb_44 | bb_34 | bb_24
+         | bb_14 | bb_55 | bb_45 | bb_35 | bb_25)
+        == b.to_attack_mask(vshogi::BLACK));
+}
+
 TEST(board, set_sfen)
 {
     const char sfen[] = "2+S1k/1r2+P/2K2/5/5 b 2bP2GSR 1";

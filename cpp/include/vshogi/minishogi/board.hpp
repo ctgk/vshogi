@@ -130,6 +130,18 @@ public:
         }
         return out;
     }
+    BitBoard to_attack_mask(const ColorEnum c) const
+    {
+        const auto occupied = to_piece_mask();
+        BitBoard out = BitBoard(0U);
+        for (auto sq : square_array) {
+            const auto p = m_pieces[sq];
+            if (get_color(p) == c)
+                out |= get_attacks_by(p, sq, occupied);
+        }
+        return out;
+    }
+
     /**
      * @brief Set pieces on the board given SFEN string.
      *
