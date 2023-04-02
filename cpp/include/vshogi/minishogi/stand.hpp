@@ -140,6 +140,60 @@ public:
     {
         return (c == BLACK) ? m_black : m_white;
     }
+    const char* set_sfen_holdings(const char* const sfen_holdings)
+    {
+        constexpr int max_length = 11; // "2p2s2g2b2r "
+        int preceding_number = 1;
+        const char* ptr = sfen_holdings;
+        for (; ptr - sfen_holdings < max_length; ++ptr) {
+            switch (*ptr) {
+            case '-':
+                ++ptr; // fall-through
+            case ' ':
+                ++ptr; // fall-through
+            case '\0':
+                goto OUT_OF_LOOP;
+            case '2':
+                preceding_number = 2;
+                continue;
+            case 'P':
+                m_black.add(FU, preceding_number);
+                break;
+            case 'S':
+                m_black.add(GI, preceding_number);
+                break;
+            case 'G':
+                m_black.add(KI, preceding_number);
+                break;
+            case 'B':
+                m_black.add(KA, preceding_number);
+                break;
+            case 'R':
+                m_black.add(HI, preceding_number);
+                break;
+            case 'p':
+                m_white.add(FU, preceding_number);
+                break;
+            case 's':
+                m_white.add(GI, preceding_number);
+                break;
+            case 'g':
+                m_white.add(KI, preceding_number);
+                break;
+            case 'b':
+                m_white.add(KA, preceding_number);
+                break;
+            case 'r':
+                m_white.add(HI, preceding_number);
+                break;
+            default:
+                break;
+            }
+            preceding_number = 1;
+        }
+    OUT_OF_LOOP:
+        return ptr;
+    }
 };
 
 } // namespace vshogi::minishogi

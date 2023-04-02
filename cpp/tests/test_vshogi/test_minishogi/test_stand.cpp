@@ -44,4 +44,23 @@ TEST(stand, subtract)
     CHECK_EQUAL(0, Stand(1, 0, 0, 0, 0).subtract(FU).count(FU));
 }
 
+TEST(stand, set_sfen_holdings)
+{
+    const char sfen_holdings[] = "2bP2GSR 3";
+    auto s = BlackWhiteStands();
+    const auto actual = s.set_sfen_holdings(sfen_holdings);
+    CHECK_EQUAL(0, s.white().count(FU));
+    CHECK_EQUAL(0, s.white().count(GI));
+    CHECK_EQUAL(0, s.white().count(KI));
+    CHECK_EQUAL(2, s.white().count(KA));
+    CHECK_EQUAL(0, s.white().count(HI));
+    CHECK_EQUAL(1, s.black().count(FU));
+    CHECK_EQUAL(1, s.black().count(GI));
+    CHECK_EQUAL(2, s.black().count(KI));
+    CHECK_EQUAL(0, s.black().count(KA));
+    CHECK_EQUAL(1, s.black().count(HI));
+    CHECK_EQUAL('3', actual[0]);
+    CHECK_EQUAL('\0', actual[1]);
+}
+
 } // namespace test_vshogi::test_minishogi
