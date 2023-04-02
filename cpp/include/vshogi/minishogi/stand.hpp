@@ -87,13 +87,12 @@ public:
     Stand& add(const PieceTypeEnum p, const int num = 1)
     {
         m_value = static_cast<std::uint16_t>(
-            m_value + stand_deltas[unpromote(p)] * num);
+            m_value + stand_deltas[demote(p)] * num);
         return *this;
     }
     Stand& subtract(const PieceTypeEnum p)
     {
-        m_value
-            = static_cast<std::uint16_t>(m_value - stand_deltas[unpromote(p)]);
+        m_value = static_cast<std::uint16_t>(m_value - stand_deltas[demote(p)]);
         return *this;
     }
     bool operator==(const Stand& other) const

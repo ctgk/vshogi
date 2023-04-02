@@ -37,7 +37,7 @@ inline PieceTypeEnum promote(const PieceTypeEnum p)
     return is_promotable(p) ? static_cast<PieceTypeEnum>(p | 0b1000) : p;
 }
 
-inline PieceTypeEnum unpromote(const PieceTypeEnum p)
+inline PieceTypeEnum demote(const PieceTypeEnum p)
 {
     return (p == NA) ? NA : static_cast<PieceTypeEnum>(p & 0b0111);
 }

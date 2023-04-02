@@ -40,19 +40,19 @@ TEST(piece, promote)
     CHECK_EQUAL(NA, promote(NA));
 }
 
-TEST(piece, unpromote)
+TEST(piece, demote)
 {
-    CHECK_EQUAL(FU, unpromote(FU));
-    CHECK_EQUAL(GI, unpromote(GI));
-    CHECK_EQUAL(KA, unpromote(KA));
-    CHECK_EQUAL(HI, unpromote(HI));
-    CHECK_EQUAL(KI, unpromote(KI));
-    CHECK_EQUAL(OU, unpromote(OU));
-    CHECK_EQUAL(FU, unpromote(TO));
-    CHECK_EQUAL(GI, unpromote(NG));
-    CHECK_EQUAL(KA, unpromote(UM));
-    CHECK_EQUAL(HI, unpromote(RY));
-    CHECK_EQUAL(NA, unpromote(NA));
+    CHECK_EQUAL(FU, demote(FU));
+    CHECK_EQUAL(GI, demote(GI));
+    CHECK_EQUAL(KA, demote(KA));
+    CHECK_EQUAL(HI, demote(HI));
+    CHECK_EQUAL(KI, demote(KI));
+    CHECK_EQUAL(OU, demote(OU));
+    CHECK_EQUAL(FU, demote(TO));
+    CHECK_EQUAL(GI, demote(NG));
+    CHECK_EQUAL(KA, demote(UM));
+    CHECK_EQUAL(HI, demote(RY));
+    CHECK_EQUAL(NA, demote(NA));
 }
 
 TEST(piece, get_color)
