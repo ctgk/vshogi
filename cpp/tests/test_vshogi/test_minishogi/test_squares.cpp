@@ -9,6 +9,12 @@ using namespace vshogi::minishogi;
 
 TEST_GROUP(squares){};
 
+TEST(squares, shift)
+{
+    CHECK_EQUAL(SQ_11, shift(SQ_12, DIR_N));
+    CHECK_EQUAL(SQ_13, shift(SQ_12, DIR_S));
+}
+
 TEST(squares, to_rank)
 {
     CHECK_EQUAL(RANK1, to_rank(SQ_11));

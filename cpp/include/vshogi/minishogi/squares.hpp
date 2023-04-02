@@ -47,6 +47,12 @@ enum DirectionEnum
 };
 constexpr int square_value_diffs[] = {-6, -5, -4, -1, 1, 4, 5, 6};
 
+inline SquareEnum shift(const SquareEnum sq, const DirectionEnum d)
+{
+    return static_cast<SquareEnum>(
+        static_cast<int>(sq) + square_value_diffs[d]);
+}
+
 enum RankEnum
 {
     RANK1,
