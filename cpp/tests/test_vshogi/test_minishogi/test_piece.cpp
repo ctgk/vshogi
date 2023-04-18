@@ -25,6 +25,43 @@ TEST(piece, is_promotable)
     CHECK_FALSE(is_promotable(NA));
 }
 
+TEST(piece, is_promoted)
+{
+    CHECK_FALSE(is_promoted(FU));
+    CHECK_FALSE(is_promoted(GI));
+    CHECK_FALSE(is_promoted(KA));
+    CHECK_FALSE(is_promoted(HI));
+    CHECK_FALSE(is_promoted(KI));
+    CHECK_FALSE(is_promoted(OU));
+    CHECK_TRUE(is_promoted(TO));
+    CHECK_TRUE(is_promoted(NG));
+    CHECK_TRUE(is_promoted(UM));
+    CHECK_TRUE(is_promoted(RY));
+    CHECK_TRUE(is_promoted(NA));
+
+    CHECK_FALSE(is_promoted(B_FU));
+    CHECK_FALSE(is_promoted(B_GI));
+    CHECK_FALSE(is_promoted(B_KA));
+    CHECK_FALSE(is_promoted(B_HI));
+    CHECK_FALSE(is_promoted(B_KI));
+    CHECK_FALSE(is_promoted(B_OU));
+    CHECK_TRUE(is_promoted(B_TO));
+    CHECK_TRUE(is_promoted(B_NG));
+    CHECK_TRUE(is_promoted(B_UM));
+    CHECK_TRUE(is_promoted(B_RY));
+
+    CHECK_FALSE(is_promoted(W_FU));
+    CHECK_FALSE(is_promoted(W_GI));
+    CHECK_FALSE(is_promoted(W_KA));
+    CHECK_FALSE(is_promoted(W_HI));
+    CHECK_FALSE(is_promoted(W_KI));
+    CHECK_FALSE(is_promoted(W_OU));
+    CHECK_TRUE(is_promoted(W_TO));
+    CHECK_TRUE(is_promoted(W_NG));
+    CHECK_TRUE(is_promoted(W_UM));
+    CHECK_TRUE(is_promoted(W_RY));
+}
+
 TEST(piece, promote)
 {
     CHECK_EQUAL(TO, promote(FU));

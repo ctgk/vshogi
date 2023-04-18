@@ -93,6 +93,16 @@ to_board_piece(const ColorEnum c, const PieceTypeEnum p)
     return static_cast<BoardPieceTypeEnum>((c << 4) | p);
 }
 
+inline constexpr bool is_promoted(const PieceTypeEnum p)
+{
+    return static_cast<bool>(p & 0b01000);
+}
+
+inline constexpr bool is_promoted(const BoardPieceTypeEnum p)
+{
+    return static_cast<bool>(p & 0b01000);
+}
+
 } // namespace vshogi::minishogi
 
 #endif // VSHOGI_MINISHOGI_PIECE_HPP
