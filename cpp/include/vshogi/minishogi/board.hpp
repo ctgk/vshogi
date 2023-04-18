@@ -143,6 +143,22 @@ public:
     }
 
     /**
+     * @brief return a square where king locates.
+     *
+     * @param c Color of the king you want to locate.
+     * @return SquareEnum Location of the king.
+     */
+    SquareEnum king_location(const ColorEnum c) const
+    {
+        const auto target = to_board_piece(c, OU);
+        for (auto sq : square_array) {
+            if (m_pieces[sq] == target)
+                return sq;
+        }
+        return SQ_NA;
+    }
+
+    /**
      * @brief Set pieces on the board given SFEN string.
      *
      * @param sfen SFEN string. e.g. "rbsgk/4p/5/P4/KGSBR b - 1"

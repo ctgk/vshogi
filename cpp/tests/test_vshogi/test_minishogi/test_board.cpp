@@ -51,6 +51,17 @@ TEST(board, to_attack_mask)
         == b.to_attack_mask(vshogi::BLACK));
 }
 
+TEST(board, king_location)
+{
+    auto b = Board();
+    CHECK_EQUAL(SQ_55, b.king_location(vshogi::BLACK));
+    CHECK_EQUAL(SQ_11, b.king_location(vshogi::WHITE));
+    b[SQ_55] = VOID;
+    b[SQ_11] = VOID;
+    CHECK_EQUAL(SQ_NA, b.king_location(vshogi::BLACK));
+    CHECK_EQUAL(SQ_NA, b.king_location(vshogi::WHITE));
+}
+
 TEST(board, set_sfen)
 {
     const char sfen[] = "2+S1k/1r2+P/2K2/5/5 b 2bP2GSR 1";

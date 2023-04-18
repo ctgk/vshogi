@@ -29,6 +29,7 @@ enum SquareEnum
     SQ_54 = 15, SQ_44 = 16, SQ_34 = 17, SQ_24 = 18, SQ_14 = 19,
     SQ_55 = 20, SQ_45 = 21, SQ_35 = 22, SQ_25 = 23, SQ_15 = 24,
     // clang-format on
+    SQ_NA,
 };
 constexpr int num_squares = 25;
 constexpr SquareEnum square_array[] = {
