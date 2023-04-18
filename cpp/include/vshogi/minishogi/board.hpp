@@ -159,6 +159,24 @@ public:
     }
 
     /**
+     * @brief return true if the king is in check.
+     *
+     * @param c Color of the king.
+     * @return true
+     * The king is in check.
+     * @return false
+     * The king is not in check or not found.
+     */
+    bool in_check(const ColorEnum c) const
+    {
+        const auto king_sq = king_location(c);
+        if (king_sq == SQ_NA)
+            return false;
+        const auto opponent_attacks = to_attack_mask(~c);
+        return opponent_attacks.is_one(king_sq);
+    }
+
+    /**
      * @brief Set pieces on the board given SFEN string.
      *
      * @param sfen SFEN string. e.g. "rbsgk/4p/5/P4/KGSBR b - 1"

@@ -62,6 +62,17 @@ TEST(board, king_location)
     CHECK_EQUAL(SQ_NA, b.king_location(vshogi::WHITE));
 }
 
+TEST(board, in_check)
+{
+    auto b = Board();
+    CHECK_FALSE(b.in_check(vshogi::BLACK));
+    CHECK_FALSE(b.in_check(vshogi::WHITE));
+    b[SQ_12] = B_FU;
+    b[SQ_54] = W_FU;
+    CHECK_TRUE(b.in_check(vshogi::BLACK));
+    CHECK_TRUE(b.in_check(vshogi::WHITE));
+}
+
 TEST(board, set_sfen)
 {
     const char sfen[] = "2+S1k/1r2+P/2K2/5/5 b 2bP2GSR 1";
