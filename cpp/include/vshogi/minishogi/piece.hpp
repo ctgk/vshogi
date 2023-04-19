@@ -2,6 +2,7 @@
 #define VSHOGI_MINISHOGI_PIECE_HPP
 
 #include <cstdint>
+#include <string>
 
 #include "vshogi/color.hpp"
 
@@ -101,6 +102,42 @@ inline constexpr bool is_promoted(const PieceTypeEnum p)
 inline constexpr bool is_promoted(const BoardPieceTypeEnum p)
 {
     return static_cast<bool>(p & 0b01000);
+}
+
+inline std::string to_sfen_piece(const BoardPieceTypeEnum p)
+{
+    const auto color = get_color(p);
+    const auto promotion = is_promoted(p);
+    const auto pt = demote(to_piece_type(p));
+    char c;
+    switch (pt) {
+    case FU:
+        c = 'p';
+        break;
+    case GI:
+        c = 's';
+        break;
+    case KI:
+        c = 'g';
+        break;
+    case KA:
+        c = 'b';
+        break;
+    case HI:
+        c = 'r';
+        break;
+    case OU:
+        c = 'k';
+        break;
+    default:
+        c = ' ';
+        break;
+    }
+    if (color == BLACK)
+        c = static_cast<char>(std::toupper(static_cast<int>(c)));
+    if (promotion)
+        return std::string("+") + c;
+    return std::string(1, c);
 }
 
 } // namespace vshogi::minishogi
