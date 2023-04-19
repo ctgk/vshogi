@@ -1,6 +1,8 @@
 #ifndef VSHOGI_MINISHOGI_BOARD_HPP
 #define VSHOGI_MINISHOGI_BOARD_HPP
 
+#include <string>
+
 #include "vshogi/minishogi/bitboard.hpp"
 #include "vshogi/minishogi/piece.hpp"
 #include "vshogi/minishogi/squares.hpp"
@@ -84,6 +86,27 @@ private:
         }
     OUT_OF_LOOP:
         return sfen_ptr;
+    }
+    std::string to_sfen_rank(const RankEnum rank) const
+    {
+        auto begin = m_pieces + num_files * static_cast<int>(rank);
+        const auto end = begin + num_files;
+        auto out = std::string();
+        int num_void = 0;
+        for (; begin < end; ++begin) {
+            if (*begin == VOID) {
+                ++num_void;
+                continue;
+            }
+            if (num_void > 0) {
+                out += static_cast<char>('0' + num_void);
+                num_void = 0;
+            }
+            out += to_sfen_piece(*begin);
+        }
+        if (num_void > 0)
+            out += static_cast<char>('0' + num_void);
+        return out;
     }
 
 public:
@@ -190,6 +213,26 @@ public:
         sfen = set_sfen_rank(sfen, RANK4);
         sfen = set_sfen_rank(sfen, RANK5);
         return sfen;
+    }
+
+    /**
+     * @brief return SFEN string of the board.
+     *
+     * @return std::string SFEN string. e.g. "rbsgk/4p/5/P4/KGSBR"
+     */
+    std::string to_sfen() const
+    {
+        auto out = std::string();
+        out += to_sfen_rank(RANK1);
+        out += '/';
+        out += to_sfen_rank(RANK2);
+        out += '/';
+        out += to_sfen_rank(RANK3);
+        out += '/';
+        out += to_sfen_rank(RANK4);
+        out += '/';
+        out += to_sfen_rank(RANK5);
+        return out;
     }
 };
 

@@ -107,4 +107,14 @@ TEST(board, set_sfen)
     CHECK_EQUAL(' ', actual[1]);
 }
 
+TEST(board, to_sfen)
+{
+    const char sfen[] = "2+S1k/1r2+P/2K2/5/5 b 2bP2GSR 1";
+    auto b = Board();
+    b.set_sfen(sfen);
+
+    const char expected[] = "2+S1k/1r2+P/2K2/5/5";
+    STRCMP_EQUAL(expected, b.to_sfen().c_str());
+}
+
 } // namespace test_vshogi::test_minishogi
