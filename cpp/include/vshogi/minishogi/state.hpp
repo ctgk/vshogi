@@ -2,6 +2,7 @@
 #define VSHOGI_MINISHOGI_STATE_HPP
 
 #include <string>
+#include <vector>
 
 #include "vshogi/color.hpp"
 #include "vshogi/minishogi/board.hpp"
@@ -131,9 +132,40 @@ private:
         return (
             (get_color(moving) == m_turn) // No VOID check on purpose
             && is_empty_or_opponent_square(dst)
-            && get_attacks_by(moving, src).is_one(dst) // VOID has no 1 in it.
+            && get_attacks_by(
+                   moving, src, m_piece_masks[m_turn] | m_piece_masks[~m_turn])
+                   .is_one(dst) // VOID has no 1 in it.
             && is_valid_promotion(move)
             && !is_my_king_in_check_after_move(src, dst));
+    }
+    void append_legal_moves_by_board_pieces(std::vector<Move>& out) const
+    {
+        for (auto src : square_array) {
+            const auto piece = m_board[src];
+            if ((piece == VOID) || (get_color(piece) != m_turn))
+                continue;
+            for (auto dst : square_array) {
+                const auto m = Move(dst, src);
+                if (is_legal_board(m))
+                    out.emplace_back(m);
+            }
+        }
+    }
+    void append_legal_moves_by_stand_pieces(std::vector<Move>& out) const
+    {
+        const auto empty = ~m_board.to_piece_mask();
+        const auto stand = m_stands[m_turn];
+        for (auto piece : stand_piece_array) {
+            if (!stand.exist(piece))
+                continue;
+            for (auto dst : square_array) {
+                if (!empty.is_one(dst))
+                    continue;
+                const auto m = Move(dst, piece);
+                if (is_legal_drop(m))
+                    out.emplace_back(m);
+            }
+        }
     }
 
 public:
@@ -186,6 +218,13 @@ public:
         if (move.is_drop())
             return is_legal_drop(move);
         return is_legal_board(move);
+    }
+    std::vector<Move> get_legal_moves() const
+    {
+        auto out = std::vector<Move>();
+        append_legal_moves_by_board_pieces(out);
+        append_legal_moves_by_stand_pieces(out);
+        return out;
     }
 };
 

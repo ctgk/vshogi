@@ -87,4 +87,56 @@ TEST(state, is_legal)
     }
 }
 
+TEST(state, get_legal_moves)
+{
+    {
+        auto s = State();
+        // W:
+        // +---+---+---+---+---+
+        // |+KA|   |   |   |-OU|
+        // +---+---+---+---+---+
+        // |   |+KI|   |-FU|-HI|
+        // +---+---+---+---+---+
+        // |+GI|   |   |   |-GI|
+        // +---+---+---+---+---+
+        // |+HI|+FU|   |-KI|   |
+        // +---+---+---+---+---+
+        // |+OU|   |   |   |-KA|
+        // +---+---+---+---+---+
+        // B:
+        s.set_sfen("B3k/1G1pr/S3s/RP1g1/K3b b - 1");
+
+        const auto actual = s.get_legal_moves();
+        CHECK_EQUAL(8, actual.size());
+    }
+    {
+        auto s = State();
+        // W: -FU
+        // +---+---+---+---+---+
+        // |+KA|   |   |   |-KA|
+        // +---+---+---+---+---+
+        // |+HI|+KI|   |-OU|   |
+        // +---+---+---+---+---+
+        // |+GI|+FU|   |   |-GI|
+        // +---+---+---+---+---+
+        // |   |   |   |   |-HI|
+        // +---+---+---+---+---+
+        // |+OU|   |-KI|   |   |
+        // +---+---+---+---+---+
+        // B:
+        s.set_sfen("B3b/RG1k1/SP2s/4r/K1g2 w p 1");
+
+        const auto actual = s.get_legal_moves();
+        CHECK_EQUAL(
+            // clang-format off
+            4 // -OU (SQ_21, SQ_12, SQ_33, SQ_23)
+            + 1 // -GI (SQ_24)
+            + 5 // -HI (SQ_54, SQ_44, SQ_34, SQ_24, SQ_15)
+            + 3 // -KI (SQ_34, SQ_45, SQ_25)
+            + 10, // -FU (41, 31, 21, 32, 12, 33, 23, 44, 34, 24)
+            // clang-format on
+            actual.size());
+    }
+}
+
 } // namespace test_vshogi::test_minishogi

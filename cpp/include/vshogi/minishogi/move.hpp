@@ -12,11 +12,11 @@ namespace vshogi::minishogi
 enum MoveSourceEnum
 {
     // clang-format off
-    MS_51 = 20, MS_41 = 15, MS_31 = 10, MS_21 = 5, MS_11 = 0,
-    MS_52 = 21, MS_42 = 16, MS_32 = 11, MS_22 = 6, MS_12 = 1,
-    MS_53 = 22, MS_43 = 17, MS_33 = 12, MS_23 = 7, MS_13 = 2,
-    MS_54 = 23, MS_44 = 18, MS_34 = 13, MS_24 = 8, MS_14 = 3,
-    MS_55 = 24, MS_45 = 19, MS_35 = 14, MS_25 = 9, MS_15 = 4,
+    MS_51 = SQ_51, MS_41 = SQ_41, MS_31 = SQ_31, MS_21 = SQ_21, MS_11 = SQ_11,
+    MS_52 = SQ_52, MS_42 = SQ_42, MS_32 = SQ_32, MS_22 = SQ_22, MS_12 = SQ_12,
+    MS_53 = SQ_53, MS_43 = SQ_43, MS_33 = SQ_33, MS_23 = SQ_23, MS_13 = SQ_13,
+    MS_54 = SQ_54, MS_44 = SQ_44, MS_34 = SQ_34, MS_24 = SQ_24, MS_14 = SQ_14,
+    MS_55 = SQ_55, MS_45 = SQ_45, MS_35 = SQ_35, MS_25 = SQ_25, MS_15 = SQ_15,
     MS_FU = 25, MS_GI = 26, MS_KA = 27, MS_HI = 28, MS_KI = 29,
     // clang-format on
 };
