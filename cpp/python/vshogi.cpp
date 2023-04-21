@@ -104,11 +104,11 @@ void export_piece_stand(py::module& m)
 
 void export_animal_shogi_game(py::module& m)
 {
-    py::enum_<as::ResultEnum>(m, "Result")
-        .value("ONGOING", as::ONGOING)
-        .value("DRAW", as::DRAW)
-        .value("BLACK_WIN", as::BLACK_WIN)
-        .value("WHITE_WIN", as::WHITE_WIN);
+    py::enum_<vshogi::ResultEnum>(m, "Result")
+        .value("ONGOING", vshogi::ONGOING)
+        .value("DRAW", vshogi::DRAW)
+        .value("BLACK_WIN", vshogi::BLACK_WIN)
+        .value("WHITE_WIN", vshogi::WHITE_WIN);
     py::class_<as::Game>(m, "_Game")
         .def(py::init<>())
         .def(py::init<const std::uint64_t>())
