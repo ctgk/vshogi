@@ -63,4 +63,13 @@ TEST(stand, set_sfen_holdings)
     CHECK_EQUAL('\0', actual[1]);
 }
 
+TEST(stand, to_sfen_holdings)
+{
+    const char sfen_holdings[] = "2bP2GSR 3";
+    auto s = BlackWhiteStands();
+    s.set_sfen_holdings(sfen_holdings);
+    const auto actual = s.to_sfen_holdings();
+    STRCMP_EQUAL("R2GSP2b", actual.c_str());
+}
+
 } // namespace test_vshogi::test_minishogi

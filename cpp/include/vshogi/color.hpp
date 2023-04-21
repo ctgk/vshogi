@@ -16,6 +16,7 @@ enum ColorEnum : std::uint8_t
     WHITE = 1, //!< Second player's color.
 };
 constexpr int num_colors = 2;
+constexpr ColorEnum color_array[] = {BLACK, WHITE};
 
 /**
  * @brief Return opposite color of the input color.

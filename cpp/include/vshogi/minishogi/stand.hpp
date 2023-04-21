@@ -193,6 +193,24 @@ public:
     OUT_OF_LOOP:
         return ptr;
     }
+    std::string to_sfen_holdings() const
+    {
+        constexpr PieceTypeEnum stand_pieces[] = {HI, KA, KI, GI, FU};
+        auto out = std::string();
+        for (auto c : color_array) {
+            for (auto piece : stand_pieces) {
+                const auto num = operator[](c).count(piece);
+                if (num == 0)
+                    continue;
+                if (num == 1)
+                    out += to_sfen_piece(to_board_piece(c, piece));
+                else
+                    out += static_cast<char>('0' + num)
+                           + to_sfen_piece(to_board_piece(c, piece));
+            }
+        }
+        return out;
+    }
 };
 
 } // namespace vshogi::minishogi
