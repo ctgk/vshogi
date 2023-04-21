@@ -167,6 +167,10 @@ private:
             }
         }
     }
+    std::string to_sfen_turn() const
+    {
+        return (m_turn == BLACK) ? "b" : "w";
+    }
 
 public:
     State() : m_board(), m_stands(), m_turn(BLACK)
@@ -225,6 +229,11 @@ public:
         append_legal_moves_by_board_pieces(out);
         append_legal_moves_by_stand_pieces(out);
         return out;
+    }
+    std::string to_sfen() const
+    {
+        return m_board.to_sfen() + " " + to_sfen_turn() + " "
+               + m_stands.to_sfen_holdings();
     }
 };
 

@@ -39,6 +39,14 @@ TEST(state, set_sfen)
     }
 }
 
+TEST(state, to_sfen)
+{
+    auto s = State();
+    s.set_sfen("2+S1k/1r2+P/2K2/5/5 b R2GSP2b 1");
+    const auto actual = s.to_sfen();
+    STRCMP_EQUAL("2+S1k/1r2+P/2K2/5/5 b R2GSP2b", actual.c_str());
+}
+
 TEST(state, apply)
 {
     {
