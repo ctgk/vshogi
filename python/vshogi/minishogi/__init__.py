@@ -4,13 +4,15 @@ cf. https://en.wikipedia.org/wiki/Minishogi
 """
 
 from vshogi._enum import _enum_repr
-from vshogi._vshogi.minishogi import BoardPiece, Move, Piece, Square, Stand
+from vshogi._vshogi.minishogi import (
+    Board, BoardPiece, Move, Piece, Square, Stand,
+)
 
 
 Square.__repr__ = _enum_repr
 
 
-_classes = [BoardPiece, Move, Piece, Square, Stand]
+_classes = [Board, BoardPiece, Move, Piece, Square, Stand]
 _enums = [BoardPiece, Piece, Square]
 
 for _cls in _classes:

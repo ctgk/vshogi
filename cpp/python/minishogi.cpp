@@ -10,6 +10,15 @@ namespace ms = vshogi::minishogi;
 namespace
 {
 
+void export_board(py::module& m)
+{
+    py::class_<ms::Board>(m, "Board")
+        .def(
+            "__getitem__",
+            py::overload_cast<const ms::SquareEnum>(
+                &ms::Board::operator[], py::const_));
+}
+
 void export_square_enum(py::module& m)
 {
     py::enum_<ms::SquareEnum>(m, "Square")
@@ -126,6 +135,7 @@ void export_piece_stand(py::module& m)
 
 void export_minishogi(py::module& m)
 {
+    export_board(m);
     export_square_enum(m);
     export_move(m);
     export_pieces(m);
