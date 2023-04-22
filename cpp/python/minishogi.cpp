@@ -66,10 +66,50 @@ void export_move(py::module& m)
         .def("__ne__", &ms::Move::operator!=);
 }
 
+void export_pieces(py::module& m)
+{
+    py::enum_<ms::PieceTypeEnum>(m, "Piece")
+        .value("FU", ms::FU)
+        .value("GI", ms::GI)
+        .value("KA", ms::KA)
+        .value("HI", ms::HI)
+        .value("KI", ms::KI)
+        .value("OU", ms::OU)
+        .value("TO", ms::TO)
+        .value("NG", ms::NG)
+        .value("UM", ms::UM)
+        .value("RY", ms::RY)
+        .value("NA", ms::NA);
+
+    py::enum_<ms::BoardPieceTypeEnum>(m, "BoardPiece")
+        .value("B_FU", ms::B_FU)
+        .value("B_GI", ms::B_GI)
+        .value("B_KA", ms::B_KA)
+        .value("B_HI", ms::B_HI)
+        .value("B_KI", ms::B_KI)
+        .value("B_OU", ms::B_OU)
+        .value("B_TO", ms::B_TO)
+        .value("B_NG", ms::B_NG)
+        .value("B_UM", ms::B_UM)
+        .value("B_RY", ms::B_RY)
+        .value("W_FU", ms::W_FU)
+        .value("W_GI", ms::W_GI)
+        .value("W_KA", ms::W_KA)
+        .value("W_HI", ms::W_HI)
+        .value("W_KI", ms::W_KI)
+        .value("W_OU", ms::W_OU)
+        .value("W_TO", ms::W_TO)
+        .value("W_NG", ms::W_NG)
+        .value("W_UM", ms::W_UM)
+        .value("W_RY", ms::W_RY)
+        .value("VOID", ms::VOID);
+}
+
 } // namespace
 
 void export_minishogi(py::module& m)
 {
     export_square_enum(m);
     export_move(m);
+    export_pieces(m);
 }
