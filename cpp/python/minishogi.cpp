@@ -105,6 +105,23 @@ void export_pieces(py::module& m)
         .value("VOID", ms::VOID);
 }
 
+void export_piece_stand(py::module& m)
+{
+    py::class_<ms::Stand>(m, "Stand")
+        .def(
+            "count",
+            py::overload_cast<const ms::PieceTypeEnum>(
+                &ms::Stand::count, py::const_))
+        .def("any", &ms::Stand::any)
+        .def("to_dict", [](const ms::Stand& self) -> py::dict {
+            py::dict out;
+            for (auto p : ms::stand_piece_array) {
+                out[py::cast(p)] = self.count(p);
+            }
+            return out;
+        });
+}
+
 } // namespace
 
 void export_minishogi(py::module& m)
@@ -112,4 +129,5 @@ void export_minishogi(py::module& m)
     export_square_enum(m);
     export_move(m);
     export_pieces(m);
+    export_piece_stand(m);
 }
