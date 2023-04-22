@@ -209,6 +209,8 @@ public:
                            + to_sfen_piece(to_board_piece(c, piece));
             }
         }
+        if (out.empty())
+            out += '-';
         return out;
     }
 };
