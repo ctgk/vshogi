@@ -40,9 +40,36 @@ void export_square_enum(py::module& m)
         .value("SQ_15", ms::SQ_15);
 }
 
+void export_move(py::module& m)
+{
+    py::class_<ms::Move>(m, "Move")
+        .def(
+            py::init<const ms::SquareEnum, const ms::SquareEnum>(),
+            py::arg("destination"),
+            py::arg("source"))
+        .def(
+            py::init<const ms::SquareEnum, const ms::PieceTypeEnum>(),
+            py::arg("destination"),
+            py::arg("source"))
+        .def_property_readonly("destination", &ms::Move::destination)
+        .def_property_readonly(
+            "source",
+            [](const ms::Move& self) -> py::object {
+                if (self.is_drop())
+                    return py::cast(ms::to_piece_type(self.source()));
+                return py::cast(ms::to_square(self.source()));
+            })
+        .def("is_drop", &ms::Move::is_drop)
+        .def("rotate", &ms::Move::rotate)
+        .def("__hash__", &ms::Move::hash)
+        .def("__eq__", &ms::Move::operator==)
+        .def("__ne__", &ms::Move::operator!=);
+}
+
 } // namespace
 
 void export_minishogi(py::module& m)
 {
     export_square_enum(m);
+    export_move(m);
 }

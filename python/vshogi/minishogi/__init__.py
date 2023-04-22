@@ -4,13 +4,13 @@ cf. https://en.wikipedia.org/wiki/Minishogi
 """
 
 from vshogi._enum import _enum_repr
-from vshogi._vshogi.minishogi import Square
+from vshogi._vshogi.minishogi import Move, Square
 
 
 Square.__repr__ = _enum_repr
 
 
-_classes = [Square]
+_classes = [Move, Square]
 _enums = [Square]
 
 for _cls in _classes:
