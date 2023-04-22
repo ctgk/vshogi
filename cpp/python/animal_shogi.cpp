@@ -7,22 +7,8 @@
 namespace py = pybind11;
 namespace as = vshogi::animal_shogi;
 
-void export_board(py::module& m);
-void export_pieces(py::module& m);
-void export_square_enum(py::module& m);
-void export_move(py::module& m);
-void export_piece_stand(py::module& m);
-void export_game(py::module& m);
-
-void export_animal_shogi(py::module& m)
+namespace
 {
-    export_board(m);
-    export_pieces(m);
-    export_square_enum(m);
-    export_move(m);
-    export_piece_stand(m);
-    export_game(m);
-}
 
 void export_square_enum(py::module& m)
 {
@@ -180,4 +166,16 @@ void export_game(py::module& m)
             "__deepcopy__",
             [](const as::Game& self, py::dict) { return as::Game(self); },
             py::arg("memo"));
+}
+
+} // namespace
+
+void export_animal_shogi(py::module& m)
+{
+    export_board(m);
+    export_pieces(m);
+    export_square_enum(m);
+    export_move(m);
+    export_piece_stand(m);
+    export_game(m);
 }

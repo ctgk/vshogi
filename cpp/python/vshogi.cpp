@@ -8,6 +8,7 @@ namespace py = pybind11;
 namespace as = vshogi::animal_shogi;
 
 void export_animal_shogi(py::module& m);
+void export_minishogi(py::module& m);
 
 void export_color_enum(py::module& m)
 {
@@ -31,4 +32,7 @@ PYBIND11_MODULE(_vshogi, m)
 
     auto animal_shogi_module = m.def_submodule("animal_shogi");
     export_animal_shogi(animal_shogi_module);
+
+    auto minishogi_module = m.def_submodule("minishogi");
+    export_minishogi(minishogi_module);
 }
