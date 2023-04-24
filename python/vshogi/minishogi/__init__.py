@@ -9,6 +9,8 @@ from vshogi._vshogi.minishogi import (
 )
 
 
+BoardPiece.__repr__ = _enum_repr
+Piece.__repr__ = _enum_repr
 Square.__repr__ = _enum_repr
 
 
