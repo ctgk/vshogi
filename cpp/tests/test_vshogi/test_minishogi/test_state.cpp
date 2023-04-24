@@ -27,9 +27,9 @@ TEST(state, set_sfen)
         // +---+---+---+---+---+
         // B: +FU +KIx2 +GI +HI
         s.set_sfen("2+S1k/1r2+P/2K2/5/5 b 2bP2GSR 1");
-        CHECK_EQUAL(W_OU, s.get_board()[SQ_11]);
-        CHECK_EQUAL(B_TO, s.get_board()[SQ_12]);
-        CHECK_EQUAL(VOID, s.get_board()[SQ_13]);
+        CHECK_EQUAL(W_OU, s.get_board()[SQ_1A]);
+        CHECK_EQUAL(B_TO, s.get_board()[SQ_1B]);
+        CHECK_EQUAL(VOID, s.get_board()[SQ_1C]);
         CHECK_EQUAL(1, s.get_stand(vshogi::BLACK).count(FU));
         CHECK_EQUAL(2, s.get_stand(vshogi::BLACK).count(KI));
         CHECK_EQUAL(0, s.get_stand(vshogi::BLACK).count(KA));
@@ -51,11 +51,11 @@ TEST(state, apply)
 {
     {
         auto s = State();
-        CHECK_EQUAL(VOID, s.get_board()[SQ_53]);
-        CHECK_EQUAL(B_FU, s.get_board()[SQ_54]);
-        s.apply(Move(SQ_53, SQ_54));
-        CHECK_EQUAL(B_FU, s.get_board()[SQ_53]);
-        CHECK_EQUAL(VOID, s.get_board()[SQ_54]);
+        CHECK_EQUAL(VOID, s.get_board()[SQ_5C]);
+        CHECK_EQUAL(B_FU, s.get_board()[SQ_5D]);
+        s.apply(Move(SQ_5C, SQ_5D));
+        CHECK_EQUAL(B_FU, s.get_board()[SQ_5C]);
+        CHECK_EQUAL(VOID, s.get_board()[SQ_5D]);
     }
 }
 
@@ -63,9 +63,9 @@ TEST(state, is_legal)
 {
     {
         auto s = State();
-        CHECK_TRUE(s.is_legal(Move(SQ_53, SQ_54)));
-        CHECK_FALSE(s.is_legal(Move(SQ_53, SQ_54, true)));
-        CHECK_FALSE(s.is_legal(Move(SQ_52, SQ_54)));
+        CHECK_TRUE(s.is_legal(Move(SQ_5C, SQ_5D)));
+        CHECK_FALSE(s.is_legal(Move(SQ_5C, SQ_5D, true)));
+        CHECK_FALSE(s.is_legal(Move(SQ_5B, SQ_5D)));
     }
     {
         auto s = State();
@@ -84,14 +84,14 @@ TEST(state, is_legal)
         // B: +FUx2 +KIx2 +GI
         s.set_sfen("1r+S1k/1R3/1K3/5/5 b 2b2P2GS 1");
 
-        CHECK_TRUE(s.is_legal(Move(SQ_13, FU)));
-        CHECK_FALSE(s.is_legal(Move(SQ_51, FU))); // Unmovable
-        CHECK_FALSE(s.is_legal(Move(SQ_12, FU))); // pawn drop checkmate
+        CHECK_TRUE(s.is_legal(Move(SQ_1C, FU)));
+        CHECK_FALSE(s.is_legal(Move(SQ_5A, FU))); // Unmovable
+        CHECK_FALSE(s.is_legal(Move(SQ_1B, FU))); // pawn drop checkmate
 
-        CHECK_TRUE(s.is_legal(Move(SQ_41, SQ_42)));
-        CHECK_TRUE(s.is_legal(Move(SQ_41, SQ_42, true)));
-        CHECK_FALSE(s.is_legal(Move(SQ_51, SQ_42)));
-        CHECK_FALSE(s.is_legal(Move(SQ_52, SQ_42))); // discovered check
+        CHECK_TRUE(s.is_legal(Move(SQ_4A, SQ_4B)));
+        CHECK_TRUE(s.is_legal(Move(SQ_4A, SQ_4B, true)));
+        CHECK_FALSE(s.is_legal(Move(SQ_5A, SQ_4B)));
+        CHECK_FALSE(s.is_legal(Move(SQ_5B, SQ_4B))); // discovered check
     }
 }
 
@@ -137,10 +137,10 @@ TEST(state, get_legal_moves)
         const auto actual = s.get_legal_moves();
         CHECK_EQUAL(
             // clang-format off
-            4 // -OU (SQ_21, SQ_12, SQ_33, SQ_23)
-            + 1 // -GI (SQ_24)
-            + 5 // -HI (SQ_54, SQ_44, SQ_34, SQ_24, SQ_15)
-            + 3 // -KI (SQ_34, SQ_45, SQ_25)
+            4 // -OU (SQ_2A, SQ_1B, SQ_3C, SQ_2C)
+            + 1 // -GI (SQ_2D)
+            + 5 // -HI (SQ_5D, SQ_4D, SQ_3D, SQ_2D, SQ_1E)
+            + 3 // -KI (SQ_3D, SQ_4E, SQ_2E)
             + 10, // -FU (41, 31, 21, 32, 12, 33, 23, 44, 34, 24)
             // clang-format on
             actual.size());

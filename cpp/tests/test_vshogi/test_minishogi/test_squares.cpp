@@ -11,66 +11,66 @@ TEST_GROUP(squares){};
 
 TEST(squares, shift)
 {
-    CHECK_EQUAL(SQ_11, shift(SQ_12, DIR_N));
-    CHECK_EQUAL(SQ_13, shift(SQ_12, DIR_S));
+    CHECK_EQUAL(SQ_1A, shift(SQ_1B, DIR_N));
+    CHECK_EQUAL(SQ_1C, shift(SQ_1B, DIR_S));
 }
 
 TEST(squares, to_rank)
 {
-    CHECK_EQUAL(RANK1, to_rank(SQ_11));
-    CHECK_EQUAL(RANK2, to_rank(SQ_12));
-    CHECK_EQUAL(RANK3, to_rank(SQ_13));
-    CHECK_EQUAL(RANK4, to_rank(SQ_14));
-    CHECK_EQUAL(RANK5, to_rank(SQ_15));
-    CHECK_EQUAL(RANK1, to_rank(SQ_21));
-    CHECK_EQUAL(RANK2, to_rank(SQ_22));
-    CHECK_EQUAL(RANK3, to_rank(SQ_23));
-    CHECK_EQUAL(RANK4, to_rank(SQ_24));
-    CHECK_EQUAL(RANK5, to_rank(SQ_25));
-    CHECK_EQUAL(RANK1, to_rank(SQ_31));
-    CHECK_EQUAL(RANK2, to_rank(SQ_32));
-    CHECK_EQUAL(RANK3, to_rank(SQ_33));
-    CHECK_EQUAL(RANK4, to_rank(SQ_34));
-    CHECK_EQUAL(RANK5, to_rank(SQ_35));
-    CHECK_EQUAL(RANK1, to_rank(SQ_41));
-    CHECK_EQUAL(RANK2, to_rank(SQ_42));
-    CHECK_EQUAL(RANK3, to_rank(SQ_43));
-    CHECK_EQUAL(RANK4, to_rank(SQ_44));
-    CHECK_EQUAL(RANK5, to_rank(SQ_45));
-    CHECK_EQUAL(RANK1, to_rank(SQ_51));
-    CHECK_EQUAL(RANK2, to_rank(SQ_52));
-    CHECK_EQUAL(RANK3, to_rank(SQ_53));
-    CHECK_EQUAL(RANK4, to_rank(SQ_54));
-    CHECK_EQUAL(RANK5, to_rank(SQ_55));
+    CHECK_EQUAL(RANK1, to_rank(SQ_1A));
+    CHECK_EQUAL(RANK2, to_rank(SQ_1B));
+    CHECK_EQUAL(RANK3, to_rank(SQ_1C));
+    CHECK_EQUAL(RANK4, to_rank(SQ_1D));
+    CHECK_EQUAL(RANK5, to_rank(SQ_1E));
+    CHECK_EQUAL(RANK1, to_rank(SQ_2A));
+    CHECK_EQUAL(RANK2, to_rank(SQ_2B));
+    CHECK_EQUAL(RANK3, to_rank(SQ_2C));
+    CHECK_EQUAL(RANK4, to_rank(SQ_2D));
+    CHECK_EQUAL(RANK5, to_rank(SQ_2E));
+    CHECK_EQUAL(RANK1, to_rank(SQ_3A));
+    CHECK_EQUAL(RANK2, to_rank(SQ_3B));
+    CHECK_EQUAL(RANK3, to_rank(SQ_3C));
+    CHECK_EQUAL(RANK4, to_rank(SQ_3D));
+    CHECK_EQUAL(RANK5, to_rank(SQ_3E));
+    CHECK_EQUAL(RANK1, to_rank(SQ_4A));
+    CHECK_EQUAL(RANK2, to_rank(SQ_4B));
+    CHECK_EQUAL(RANK3, to_rank(SQ_4C));
+    CHECK_EQUAL(RANK4, to_rank(SQ_4D));
+    CHECK_EQUAL(RANK5, to_rank(SQ_4E));
+    CHECK_EQUAL(RANK1, to_rank(SQ_5A));
+    CHECK_EQUAL(RANK2, to_rank(SQ_5B));
+    CHECK_EQUAL(RANK3, to_rank(SQ_5C));
+    CHECK_EQUAL(RANK4, to_rank(SQ_5D));
+    CHECK_EQUAL(RANK5, to_rank(SQ_5E));
 }
 
 TEST(squares, to_file)
 {
-    CHECK_EQUAL(FILE1, to_file(SQ_11));
-    CHECK_EQUAL(FILE1, to_file(SQ_12));
-    CHECK_EQUAL(FILE1, to_file(SQ_13));
-    CHECK_EQUAL(FILE1, to_file(SQ_14));
-    CHECK_EQUAL(FILE1, to_file(SQ_15));
-    CHECK_EQUAL(FILE2, to_file(SQ_21));
-    CHECK_EQUAL(FILE2, to_file(SQ_22));
-    CHECK_EQUAL(FILE2, to_file(SQ_23));
-    CHECK_EQUAL(FILE2, to_file(SQ_24));
-    CHECK_EQUAL(FILE2, to_file(SQ_25));
-    CHECK_EQUAL(FILE3, to_file(SQ_31));
-    CHECK_EQUAL(FILE3, to_file(SQ_32));
-    CHECK_EQUAL(FILE3, to_file(SQ_33));
-    CHECK_EQUAL(FILE3, to_file(SQ_34));
-    CHECK_EQUAL(FILE3, to_file(SQ_35));
-    CHECK_EQUAL(FILE4, to_file(SQ_41));
-    CHECK_EQUAL(FILE4, to_file(SQ_42));
-    CHECK_EQUAL(FILE4, to_file(SQ_43));
-    CHECK_EQUAL(FILE4, to_file(SQ_44));
-    CHECK_EQUAL(FILE4, to_file(SQ_45));
-    CHECK_EQUAL(FILE5, to_file(SQ_51));
-    CHECK_EQUAL(FILE5, to_file(SQ_52));
-    CHECK_EQUAL(FILE5, to_file(SQ_53));
-    CHECK_EQUAL(FILE5, to_file(SQ_54));
-    CHECK_EQUAL(FILE5, to_file(SQ_55));
+    CHECK_EQUAL(FILE1, to_file(SQ_1A));
+    CHECK_EQUAL(FILE1, to_file(SQ_1B));
+    CHECK_EQUAL(FILE1, to_file(SQ_1C));
+    CHECK_EQUAL(FILE1, to_file(SQ_1D));
+    CHECK_EQUAL(FILE1, to_file(SQ_1E));
+    CHECK_EQUAL(FILE2, to_file(SQ_2A));
+    CHECK_EQUAL(FILE2, to_file(SQ_2B));
+    CHECK_EQUAL(FILE2, to_file(SQ_2C));
+    CHECK_EQUAL(FILE2, to_file(SQ_2D));
+    CHECK_EQUAL(FILE2, to_file(SQ_2E));
+    CHECK_EQUAL(FILE3, to_file(SQ_3A));
+    CHECK_EQUAL(FILE3, to_file(SQ_3B));
+    CHECK_EQUAL(FILE3, to_file(SQ_3C));
+    CHECK_EQUAL(FILE3, to_file(SQ_3D));
+    CHECK_EQUAL(FILE3, to_file(SQ_3E));
+    CHECK_EQUAL(FILE4, to_file(SQ_4A));
+    CHECK_EQUAL(FILE4, to_file(SQ_4B));
+    CHECK_EQUAL(FILE4, to_file(SQ_4C));
+    CHECK_EQUAL(FILE4, to_file(SQ_4D));
+    CHECK_EQUAL(FILE4, to_file(SQ_4E));
+    CHECK_EQUAL(FILE5, to_file(SQ_5A));
+    CHECK_EQUAL(FILE5, to_file(SQ_5B));
+    CHECK_EQUAL(FILE5, to_file(SQ_5C));
+    CHECK_EQUAL(FILE5, to_file(SQ_5D));
+    CHECK_EQUAL(FILE5, to_file(SQ_5E));
 }
 
 TEST(squares, is_edge)

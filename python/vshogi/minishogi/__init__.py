@@ -11,7 +11,7 @@ from vshogi._vshogi.minishogi import (
 
 BoardPiece.__repr__ = _enum_repr
 Piece.__repr__ = _enum_repr
-Square.__repr__ = _enum_repr
+Square.__repr__ = lambda a: f'{a.__class__.__name__}.{a.name[-2:]}'
 
 
 _classes = [Board, BoardPiece, Move, Piece, Square, Stand]

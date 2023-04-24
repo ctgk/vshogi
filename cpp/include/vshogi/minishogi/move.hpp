@@ -12,11 +12,11 @@ namespace vshogi::minishogi
 enum MoveSourceEnum
 {
     // clang-format off
-    MS_51 = SQ_51, MS_41 = SQ_41, MS_31 = SQ_31, MS_21 = SQ_21, MS_11 = SQ_11,
-    MS_52 = SQ_52, MS_42 = SQ_42, MS_32 = SQ_32, MS_22 = SQ_22, MS_12 = SQ_12,
-    MS_53 = SQ_53, MS_43 = SQ_43, MS_33 = SQ_33, MS_23 = SQ_23, MS_13 = SQ_13,
-    MS_54 = SQ_54, MS_44 = SQ_44, MS_34 = SQ_34, MS_24 = SQ_24, MS_14 = SQ_14,
-    MS_55 = SQ_55, MS_45 = SQ_45, MS_35 = SQ_35, MS_25 = SQ_25, MS_15 = SQ_15,
+    MS_5A = SQ_5A, MS_4A = SQ_4A, MS_3A = SQ_3A, MS_2A = SQ_2A, MS_1A = SQ_1A,
+    MS_5B = SQ_5B, MS_4B = SQ_4B, MS_3B = SQ_3B, MS_2B = SQ_2B, MS_1B = SQ_1B,
+    MS_5C = SQ_5C, MS_4C = SQ_4C, MS_3C = SQ_3C, MS_2C = SQ_2C, MS_1C = SQ_1C,
+    MS_5D = SQ_5D, MS_4D = SQ_4D, MS_3D = SQ_3D, MS_2D = SQ_2D, MS_1D = SQ_1D,
+    MS_5E = SQ_5E, MS_4E = SQ_4E, MS_3E = SQ_3E, MS_2E = SQ_2E, MS_1E = SQ_1E,
     MS_FU = 25, MS_GI = 26, MS_KA = 27, MS_HI = 28, MS_KI = 29,
     // clang-format on
 };

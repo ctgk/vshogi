@@ -13,11 +13,11 @@ namespace vshogi::minishogi
 /**
  * @brief N-bit binary board representing ON and OFF of each square.
  * @details
- *              +--------------------------------- SQ_15
- *              |                     +----------- SQ_52
- *              |                     |+---------- SQ_11
- *              |                     ||  +------- SQ_41
- *              |                     ||  |+------ SQ_51
+ *              +--------------------------------- SQ_1E
+ *              |                     +----------- SQ_5B
+ *              |                     |+---------- SQ_1A
+ *              |                     ||  +------- SQ_4A
+ *              |                     ||  |+------ SQ_5A
  *              |                     ||  ||
  *              v                     vv  vv
  * (MSB) xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx (LSB)
@@ -78,13 +78,13 @@ public:
     constexpr BitBoard shift() const
     {
         constexpr auto bb_f1234
-            = ~(BitBoard::from_square(SQ_51) | BitBoard::from_square(SQ_52)
-                | BitBoard::from_square(SQ_53) | BitBoard::from_square(SQ_54)
-                | BitBoard::from_square(SQ_55));
+            = ~(BitBoard::from_square(SQ_5A) | BitBoard::from_square(SQ_5B)
+                | BitBoard::from_square(SQ_5C) | BitBoard::from_square(SQ_5D)
+                | BitBoard::from_square(SQ_5E));
         constexpr auto bb_f2345
-            = ~(BitBoard::from_square(SQ_11) | BitBoard::from_square(SQ_12)
-                | BitBoard::from_square(SQ_13) | BitBoard::from_square(SQ_14)
-                | BitBoard::from_square(SQ_15));
+            = ~(BitBoard::from_square(SQ_1A) | BitBoard::from_square(SQ_1B)
+                | BitBoard::from_square(SQ_1C) | BitBoard::from_square(SQ_1D)
+                | BitBoard::from_square(SQ_1E));
         constexpr BitBoard mask[] = {
             // clang-format off
             bb_f1234, ~BitBoard(0), bb_f2345,
@@ -180,252 +180,252 @@ public:
     }
 };
 
-constexpr BitBoard bb_11 = BitBoard::from_square(SQ_11);
-constexpr BitBoard bb_12 = BitBoard::from_square(SQ_12);
-constexpr BitBoard bb_13 = BitBoard::from_square(SQ_13);
-constexpr BitBoard bb_14 = BitBoard::from_square(SQ_14);
-constexpr BitBoard bb_15 = BitBoard::from_square(SQ_15);
-constexpr BitBoard bb_21 = BitBoard::from_square(SQ_21);
-constexpr BitBoard bb_22 = BitBoard::from_square(SQ_22);
-constexpr BitBoard bb_23 = BitBoard::from_square(SQ_23);
-constexpr BitBoard bb_24 = BitBoard::from_square(SQ_24);
-constexpr BitBoard bb_25 = BitBoard::from_square(SQ_25);
-constexpr BitBoard bb_31 = BitBoard::from_square(SQ_31);
-constexpr BitBoard bb_32 = BitBoard::from_square(SQ_32);
-constexpr BitBoard bb_33 = BitBoard::from_square(SQ_33);
-constexpr BitBoard bb_34 = BitBoard::from_square(SQ_34);
-constexpr BitBoard bb_35 = BitBoard::from_square(SQ_35);
-constexpr BitBoard bb_41 = BitBoard::from_square(SQ_41);
-constexpr BitBoard bb_42 = BitBoard::from_square(SQ_42);
-constexpr BitBoard bb_43 = BitBoard::from_square(SQ_43);
-constexpr BitBoard bb_44 = BitBoard::from_square(SQ_44);
-constexpr BitBoard bb_45 = BitBoard::from_square(SQ_45);
-constexpr BitBoard bb_51 = BitBoard::from_square(SQ_51);
-constexpr BitBoard bb_52 = BitBoard::from_square(SQ_52);
-constexpr BitBoard bb_53 = BitBoard::from_square(SQ_53);
-constexpr BitBoard bb_54 = BitBoard::from_square(SQ_54);
-constexpr BitBoard bb_55 = BitBoard::from_square(SQ_55);
+constexpr BitBoard bb_1a = BitBoard::from_square(SQ_1A);
+constexpr BitBoard bb_1b = BitBoard::from_square(SQ_1B);
+constexpr BitBoard bb_1c = BitBoard::from_square(SQ_1C);
+constexpr BitBoard bb_1d = BitBoard::from_square(SQ_1D);
+constexpr BitBoard bb_1e = BitBoard::from_square(SQ_1E);
+constexpr BitBoard bb_2a = BitBoard::from_square(SQ_2A);
+constexpr BitBoard bb_2b = BitBoard::from_square(SQ_2B);
+constexpr BitBoard bb_2c = BitBoard::from_square(SQ_2C);
+constexpr BitBoard bb_2d = BitBoard::from_square(SQ_2D);
+constexpr BitBoard bb_2e = BitBoard::from_square(SQ_2E);
+constexpr BitBoard bb_3a = BitBoard::from_square(SQ_3A);
+constexpr BitBoard bb_3b = BitBoard::from_square(SQ_3B);
+constexpr BitBoard bb_3c = BitBoard::from_square(SQ_3C);
+constexpr BitBoard bb_3d = BitBoard::from_square(SQ_3D);
+constexpr BitBoard bb_3e = BitBoard::from_square(SQ_3E);
+constexpr BitBoard bb_4a = BitBoard::from_square(SQ_4A);
+constexpr BitBoard bb_4b = BitBoard::from_square(SQ_4B);
+constexpr BitBoard bb_4c = BitBoard::from_square(SQ_4C);
+constexpr BitBoard bb_4d = BitBoard::from_square(SQ_4D);
+constexpr BitBoard bb_4e = BitBoard::from_square(SQ_4E);
+constexpr BitBoard bb_5a = BitBoard::from_square(SQ_5A);
+constexpr BitBoard bb_5b = BitBoard::from_square(SQ_5B);
+constexpr BitBoard bb_5c = BitBoard::from_square(SQ_5C);
+constexpr BitBoard bb_5d = BitBoard::from_square(SQ_5D);
+constexpr BitBoard bb_5e = BitBoard::from_square(SQ_5E);
 
-constexpr BitBoard bb_r1 = bb_11 | bb_21 | bb_31 | bb_41 | bb_51;
-constexpr BitBoard bb_r2 = bb_12 | bb_22 | bb_32 | bb_42 | bb_52;
-constexpr BitBoard bb_r3 = bb_13 | bb_23 | bb_33 | bb_43 | bb_53;
-constexpr BitBoard bb_r4 = bb_14 | bb_24 | bb_34 | bb_44 | bb_54;
-constexpr BitBoard bb_r5 = bb_15 | bb_25 | bb_35 | bb_45 | bb_55;
-constexpr BitBoard rank_bbs[] = {bb_r1, bb_r2, bb_r3, bb_r4, bb_r5};
+constexpr BitBoard bb_ra = bb_1a | bb_2a | bb_3a | bb_4a | bb_5a;
+constexpr BitBoard bb_rb = bb_1b | bb_2b | bb_3b | bb_4b | bb_5b;
+constexpr BitBoard bb_rc = bb_1c | bb_2c | bb_3c | bb_4c | bb_5c;
+constexpr BitBoard bb_rd = bb_1d | bb_2d | bb_3d | bb_4d | bb_5d;
+constexpr BitBoard bb_re = bb_1e | bb_2e | bb_3e | bb_4e | bb_5e;
+constexpr BitBoard rank_bbs[] = {bb_ra, bb_rb, bb_rc, bb_rd, bb_re};
 
-constexpr BitBoard bb_f1 = bb_11 | bb_12 | bb_13 | bb_14 | bb_15;
-constexpr BitBoard bb_f2 = bb_21 | bb_22 | bb_23 | bb_24 | bb_25;
-constexpr BitBoard bb_f3 = bb_31 | bb_32 | bb_33 | bb_34 | bb_35;
-constexpr BitBoard bb_f4 = bb_41 | bb_42 | bb_43 | bb_44 | bb_45;
-constexpr BitBoard bb_f5 = bb_51 | bb_52 | bb_53 | bb_54 | bb_55;
+constexpr BitBoard bb_f1 = bb_1a | bb_1b | bb_1c | bb_1d | bb_1e;
+constexpr BitBoard bb_f2 = bb_2a | bb_2b | bb_2c | bb_2d | bb_2e;
+constexpr BitBoard bb_f3 = bb_3a | bb_3b | bb_3c | bb_3d | bb_3e;
+constexpr BitBoard bb_f4 = bb_4a | bb_4b | bb_4c | bb_4d | bb_4e;
+constexpr BitBoard bb_f5 = bb_5a | bb_5b | bb_5c | bb_5d | bb_5e;
 constexpr BitBoard file_bbs[] = {bb_f1, bb_f2, bb_f3, bb_f4, bb_f5};
 
 namespace internal
 {
 
-constexpr BitBoard attacks_by_bgi_sq33 = bb_22 | bb_24 | bb_32 | bb_42 | bb_44;
-constexpr BitBoard attacks_by_bgi_sq34 = attacks_by_bgi_sq33.shift<DIR_S>();
-constexpr BitBoard attacks_by_bgi_sq35 = attacks_by_bgi_sq34.shift<DIR_S>();
-constexpr BitBoard attacks_by_bgi_sq32 = attacks_by_bgi_sq33.shift<DIR_N>();
-constexpr BitBoard attacks_by_bgi_sq31 = attacks_by_bgi_sq32.shift<DIR_S>();
-constexpr BitBoard attacks_by_bgi_sq21 = attacks_by_bgi_sq31.shift<DIR_E>();
-constexpr BitBoard attacks_by_bgi_sq22 = attacks_by_bgi_sq32.shift<DIR_E>();
-constexpr BitBoard attacks_by_bgi_sq23 = attacks_by_bgi_sq33.shift<DIR_E>();
-constexpr BitBoard attacks_by_bgi_sq24 = attacks_by_bgi_sq34.shift<DIR_E>();
-constexpr BitBoard attacks_by_bgi_sq25 = attacks_by_bgi_sq35.shift<DIR_E>();
-constexpr BitBoard attacks_by_bgi_sq11 = attacks_by_bgi_sq21.shift<DIR_E>();
-constexpr BitBoard attacks_by_bgi_sq12 = attacks_by_bgi_sq22.shift<DIR_E>();
-constexpr BitBoard attacks_by_bgi_sq13 = attacks_by_bgi_sq23.shift<DIR_E>();
-constexpr BitBoard attacks_by_bgi_sq14 = attacks_by_bgi_sq24.shift<DIR_E>();
-constexpr BitBoard attacks_by_bgi_sq15 = attacks_by_bgi_sq25.shift<DIR_E>();
-constexpr BitBoard attacks_by_bgi_sq41 = attacks_by_bgi_sq31.shift<DIR_W>();
-constexpr BitBoard attacks_by_bgi_sq42 = attacks_by_bgi_sq32.shift<DIR_W>();
-constexpr BitBoard attacks_by_bgi_sq43 = attacks_by_bgi_sq33.shift<DIR_W>();
-constexpr BitBoard attacks_by_bgi_sq44 = attacks_by_bgi_sq34.shift<DIR_W>();
-constexpr BitBoard attacks_by_bgi_sq45 = attacks_by_bgi_sq35.shift<DIR_W>();
-constexpr BitBoard attacks_by_bgi_sq51 = attacks_by_bgi_sq41.shift<DIR_W>();
-constexpr BitBoard attacks_by_bgi_sq52 = attacks_by_bgi_sq42.shift<DIR_W>();
-constexpr BitBoard attacks_by_bgi_sq53 = attacks_by_bgi_sq43.shift<DIR_W>();
-constexpr BitBoard attacks_by_bgi_sq54 = attacks_by_bgi_sq44.shift<DIR_W>();
-constexpr BitBoard attacks_by_bgi_sq55 = attacks_by_bgi_sq45.shift<DIR_W>();
+constexpr BitBoard attacks_by_bgi_sq3c = bb_2b | bb_2d | bb_3b | bb_4b | bb_4d;
+constexpr BitBoard attacks_by_bgi_sq3d = attacks_by_bgi_sq3c.shift<DIR_S>();
+constexpr BitBoard attacks_by_bgi_sq3e = attacks_by_bgi_sq3d.shift<DIR_S>();
+constexpr BitBoard attacks_by_bgi_sq3b = attacks_by_bgi_sq3c.shift<DIR_N>();
+constexpr BitBoard attacks_by_bgi_sq3a = attacks_by_bgi_sq3b.shift<DIR_S>();
+constexpr BitBoard attacks_by_bgi_sq2a = attacks_by_bgi_sq3a.shift<DIR_E>();
+constexpr BitBoard attacks_by_bgi_sq2b = attacks_by_bgi_sq3b.shift<DIR_E>();
+constexpr BitBoard attacks_by_bgi_sq2c = attacks_by_bgi_sq3c.shift<DIR_E>();
+constexpr BitBoard attacks_by_bgi_sq2d = attacks_by_bgi_sq3d.shift<DIR_E>();
+constexpr BitBoard attacks_by_bgi_sq2e = attacks_by_bgi_sq3e.shift<DIR_E>();
+constexpr BitBoard attacks_by_bgi_sq1a = attacks_by_bgi_sq2a.shift<DIR_E>();
+constexpr BitBoard attacks_by_bgi_sq1b = attacks_by_bgi_sq2b.shift<DIR_E>();
+constexpr BitBoard attacks_by_bgi_sq1c = attacks_by_bgi_sq2c.shift<DIR_E>();
+constexpr BitBoard attacks_by_bgi_sq1d = attacks_by_bgi_sq2d.shift<DIR_E>();
+constexpr BitBoard attacks_by_bgi_sq1e = attacks_by_bgi_sq2e.shift<DIR_E>();
+constexpr BitBoard attacks_by_bgi_sq4a = attacks_by_bgi_sq3a.shift<DIR_W>();
+constexpr BitBoard attacks_by_bgi_sq4b = attacks_by_bgi_sq3b.shift<DIR_W>();
+constexpr BitBoard attacks_by_bgi_sq4c = attacks_by_bgi_sq3c.shift<DIR_W>();
+constexpr BitBoard attacks_by_bgi_sq4d = attacks_by_bgi_sq3d.shift<DIR_W>();
+constexpr BitBoard attacks_by_bgi_sq4e = attacks_by_bgi_sq3e.shift<DIR_W>();
+constexpr BitBoard attacks_by_bgi_sq5a = attacks_by_bgi_sq4a.shift<DIR_W>();
+constexpr BitBoard attacks_by_bgi_sq5b = attacks_by_bgi_sq4b.shift<DIR_W>();
+constexpr BitBoard attacks_by_bgi_sq5c = attacks_by_bgi_sq4c.shift<DIR_W>();
+constexpr BitBoard attacks_by_bgi_sq5d = attacks_by_bgi_sq4d.shift<DIR_W>();
+constexpr BitBoard attacks_by_bgi_sq5e = attacks_by_bgi_sq4e.shift<DIR_W>();
 
-constexpr BitBoard attacks_by_wgi_sq33 = bb_22 | bb_24 | bb_34 | bb_42 | bb_44;
-constexpr BitBoard attacks_by_wgi_sq34 = attacks_by_wgi_sq33.shift<DIR_S>();
-constexpr BitBoard attacks_by_wgi_sq35 = attacks_by_wgi_sq34.shift<DIR_S>();
-constexpr BitBoard attacks_by_wgi_sq32 = attacks_by_wgi_sq33.shift<DIR_N>();
-constexpr BitBoard attacks_by_wgi_sq31 = attacks_by_wgi_sq32.shift<DIR_S>();
-constexpr BitBoard attacks_by_wgi_sq21 = attacks_by_wgi_sq31.shift<DIR_E>();
-constexpr BitBoard attacks_by_wgi_sq22 = attacks_by_wgi_sq32.shift<DIR_E>();
-constexpr BitBoard attacks_by_wgi_sq23 = attacks_by_wgi_sq33.shift<DIR_E>();
-constexpr BitBoard attacks_by_wgi_sq24 = attacks_by_wgi_sq34.shift<DIR_E>();
-constexpr BitBoard attacks_by_wgi_sq25 = attacks_by_wgi_sq35.shift<DIR_E>();
-constexpr BitBoard attacks_by_wgi_sq11 = attacks_by_wgi_sq21.shift<DIR_E>();
-constexpr BitBoard attacks_by_wgi_sq12 = attacks_by_wgi_sq22.shift<DIR_E>();
-constexpr BitBoard attacks_by_wgi_sq13 = attacks_by_wgi_sq23.shift<DIR_E>();
-constexpr BitBoard attacks_by_wgi_sq14 = attacks_by_wgi_sq24.shift<DIR_E>();
-constexpr BitBoard attacks_by_wgi_sq15 = attacks_by_wgi_sq25.shift<DIR_E>();
-constexpr BitBoard attacks_by_wgi_sq41 = attacks_by_wgi_sq31.shift<DIR_W>();
-constexpr BitBoard attacks_by_wgi_sq42 = attacks_by_wgi_sq32.shift<DIR_W>();
-constexpr BitBoard attacks_by_wgi_sq43 = attacks_by_wgi_sq33.shift<DIR_W>();
-constexpr BitBoard attacks_by_wgi_sq44 = attacks_by_wgi_sq34.shift<DIR_W>();
-constexpr BitBoard attacks_by_wgi_sq45 = attacks_by_wgi_sq35.shift<DIR_W>();
-constexpr BitBoard attacks_by_wgi_sq51 = attacks_by_wgi_sq41.shift<DIR_W>();
-constexpr BitBoard attacks_by_wgi_sq52 = attacks_by_wgi_sq42.shift<DIR_W>();
-constexpr BitBoard attacks_by_wgi_sq53 = attacks_by_wgi_sq43.shift<DIR_W>();
-constexpr BitBoard attacks_by_wgi_sq54 = attacks_by_wgi_sq44.shift<DIR_W>();
-constexpr BitBoard attacks_by_wgi_sq55 = attacks_by_wgi_sq45.shift<DIR_W>();
+constexpr BitBoard attacks_by_wgi_sq3c = bb_2b | bb_2d | bb_3d | bb_4b | bb_4d;
+constexpr BitBoard attacks_by_wgi_sq3d = attacks_by_wgi_sq3c.shift<DIR_S>();
+constexpr BitBoard attacks_by_wgi_sq3e = attacks_by_wgi_sq3d.shift<DIR_S>();
+constexpr BitBoard attacks_by_wgi_sq3b = attacks_by_wgi_sq3c.shift<DIR_N>();
+constexpr BitBoard attacks_by_wgi_sq3a = attacks_by_wgi_sq3b.shift<DIR_S>();
+constexpr BitBoard attacks_by_wgi_sq2a = attacks_by_wgi_sq3a.shift<DIR_E>();
+constexpr BitBoard attacks_by_wgi_sq2b = attacks_by_wgi_sq3b.shift<DIR_E>();
+constexpr BitBoard attacks_by_wgi_sq2c = attacks_by_wgi_sq3c.shift<DIR_E>();
+constexpr BitBoard attacks_by_wgi_sq2d = attacks_by_wgi_sq3d.shift<DIR_E>();
+constexpr BitBoard attacks_by_wgi_sq2e = attacks_by_wgi_sq3e.shift<DIR_E>();
+constexpr BitBoard attacks_by_wgi_sq1a = attacks_by_wgi_sq2a.shift<DIR_E>();
+constexpr BitBoard attacks_by_wgi_sq1b = attacks_by_wgi_sq2b.shift<DIR_E>();
+constexpr BitBoard attacks_by_wgi_sq1c = attacks_by_wgi_sq2c.shift<DIR_E>();
+constexpr BitBoard attacks_by_wgi_sq1d = attacks_by_wgi_sq2d.shift<DIR_E>();
+constexpr BitBoard attacks_by_wgi_sq1e = attacks_by_wgi_sq2e.shift<DIR_E>();
+constexpr BitBoard attacks_by_wgi_sq4a = attacks_by_wgi_sq3a.shift<DIR_W>();
+constexpr BitBoard attacks_by_wgi_sq4b = attacks_by_wgi_sq3b.shift<DIR_W>();
+constexpr BitBoard attacks_by_wgi_sq4c = attacks_by_wgi_sq3c.shift<DIR_W>();
+constexpr BitBoard attacks_by_wgi_sq4d = attacks_by_wgi_sq3d.shift<DIR_W>();
+constexpr BitBoard attacks_by_wgi_sq4e = attacks_by_wgi_sq3e.shift<DIR_W>();
+constexpr BitBoard attacks_by_wgi_sq5a = attacks_by_wgi_sq4a.shift<DIR_W>();
+constexpr BitBoard attacks_by_wgi_sq5b = attacks_by_wgi_sq4b.shift<DIR_W>();
+constexpr BitBoard attacks_by_wgi_sq5c = attacks_by_wgi_sq4c.shift<DIR_W>();
+constexpr BitBoard attacks_by_wgi_sq5d = attacks_by_wgi_sq4d.shift<DIR_W>();
+constexpr BitBoard attacks_by_wgi_sq5e = attacks_by_wgi_sq4e.shift<DIR_W>();
 
-constexpr BitBoard attacks_by_bki_sq33
-    = bb_22 | bb_23 | bb_32 | bb_34 | bb_42 | bb_43;
-constexpr BitBoard attacks_by_bki_sq32 = attacks_by_bki_sq33.shift<DIR_N>();
-constexpr BitBoard attacks_by_bki_sq31 = attacks_by_bki_sq32.shift<DIR_N>();
-constexpr BitBoard attacks_by_bki_sq34 = attacks_by_bki_sq33.shift<DIR_S>();
-constexpr BitBoard attacks_by_bki_sq35 = attacks_by_bki_sq34.shift<DIR_S>();
-constexpr BitBoard attacks_by_bki_sq21 = attacks_by_bki_sq31.shift<DIR_E>();
-constexpr BitBoard attacks_by_bki_sq22 = attacks_by_bki_sq32.shift<DIR_E>();
-constexpr BitBoard attacks_by_bki_sq23 = attacks_by_bki_sq33.shift<DIR_E>();
-constexpr BitBoard attacks_by_bki_sq24 = attacks_by_bki_sq34.shift<DIR_E>();
-constexpr BitBoard attacks_by_bki_sq25 = attacks_by_bki_sq35.shift<DIR_E>();
-constexpr BitBoard attacks_by_bki_sq11 = attacks_by_bki_sq21.shift<DIR_E>();
-constexpr BitBoard attacks_by_bki_sq12 = attacks_by_bki_sq22.shift<DIR_E>();
-constexpr BitBoard attacks_by_bki_sq13 = attacks_by_bki_sq23.shift<DIR_E>();
-constexpr BitBoard attacks_by_bki_sq14 = attacks_by_bki_sq24.shift<DIR_E>();
-constexpr BitBoard attacks_by_bki_sq15 = attacks_by_bki_sq25.shift<DIR_E>();
-constexpr BitBoard attacks_by_bki_sq41 = attacks_by_bki_sq31.shift<DIR_W>();
-constexpr BitBoard attacks_by_bki_sq42 = attacks_by_bki_sq32.shift<DIR_W>();
-constexpr BitBoard attacks_by_bki_sq43 = attacks_by_bki_sq33.shift<DIR_W>();
-constexpr BitBoard attacks_by_bki_sq44 = attacks_by_bki_sq34.shift<DIR_W>();
-constexpr BitBoard attacks_by_bki_sq45 = attacks_by_bki_sq35.shift<DIR_W>();
-constexpr BitBoard attacks_by_bki_sq51 = attacks_by_bki_sq41.shift<DIR_W>();
-constexpr BitBoard attacks_by_bki_sq52 = attacks_by_bki_sq42.shift<DIR_W>();
-constexpr BitBoard attacks_by_bki_sq53 = attacks_by_bki_sq43.shift<DIR_W>();
-constexpr BitBoard attacks_by_bki_sq54 = attacks_by_bki_sq44.shift<DIR_W>();
-constexpr BitBoard attacks_by_bki_sq55 = attacks_by_bki_sq45.shift<DIR_W>();
+constexpr BitBoard attacks_by_bki_sq3c
+    = bb_2b | bb_2c | bb_3b | bb_3d | bb_4b | bb_4c;
+constexpr BitBoard attacks_by_bki_sq3b = attacks_by_bki_sq3c.shift<DIR_N>();
+constexpr BitBoard attacks_by_bki_sq3a = attacks_by_bki_sq3b.shift<DIR_N>();
+constexpr BitBoard attacks_by_bki_sq3d = attacks_by_bki_sq3c.shift<DIR_S>();
+constexpr BitBoard attacks_by_bki_sq3e = attacks_by_bki_sq3d.shift<DIR_S>();
+constexpr BitBoard attacks_by_bki_sq2a = attacks_by_bki_sq3a.shift<DIR_E>();
+constexpr BitBoard attacks_by_bki_sq2b = attacks_by_bki_sq3b.shift<DIR_E>();
+constexpr BitBoard attacks_by_bki_sq2c = attacks_by_bki_sq3c.shift<DIR_E>();
+constexpr BitBoard attacks_by_bki_sq2d = attacks_by_bki_sq3d.shift<DIR_E>();
+constexpr BitBoard attacks_by_bki_sq2e = attacks_by_bki_sq3e.shift<DIR_E>();
+constexpr BitBoard attacks_by_bki_sq1a = attacks_by_bki_sq2a.shift<DIR_E>();
+constexpr BitBoard attacks_by_bki_sq1b = attacks_by_bki_sq2b.shift<DIR_E>();
+constexpr BitBoard attacks_by_bki_sq1c = attacks_by_bki_sq2c.shift<DIR_E>();
+constexpr BitBoard attacks_by_bki_sq1d = attacks_by_bki_sq2d.shift<DIR_E>();
+constexpr BitBoard attacks_by_bki_sq1e = attacks_by_bki_sq2e.shift<DIR_E>();
+constexpr BitBoard attacks_by_bki_sq4a = attacks_by_bki_sq3a.shift<DIR_W>();
+constexpr BitBoard attacks_by_bki_sq4b = attacks_by_bki_sq3b.shift<DIR_W>();
+constexpr BitBoard attacks_by_bki_sq4c = attacks_by_bki_sq3c.shift<DIR_W>();
+constexpr BitBoard attacks_by_bki_sq4d = attacks_by_bki_sq3d.shift<DIR_W>();
+constexpr BitBoard attacks_by_bki_sq4e = attacks_by_bki_sq3e.shift<DIR_W>();
+constexpr BitBoard attacks_by_bki_sq5a = attacks_by_bki_sq4a.shift<DIR_W>();
+constexpr BitBoard attacks_by_bki_sq5b = attacks_by_bki_sq4b.shift<DIR_W>();
+constexpr BitBoard attacks_by_bki_sq5c = attacks_by_bki_sq4c.shift<DIR_W>();
+constexpr BitBoard attacks_by_bki_sq5d = attacks_by_bki_sq4d.shift<DIR_W>();
+constexpr BitBoard attacks_by_bki_sq5e = attacks_by_bki_sq4e.shift<DIR_W>();
 
-constexpr BitBoard attacks_by_wki_sq33
-    = bb_23 | bb_24 | bb_32 | bb_34 | bb_43 | bb_44;
-constexpr BitBoard attacks_by_wki_sq32 = attacks_by_wki_sq33.shift<DIR_N>();
-constexpr BitBoard attacks_by_wki_sq31 = attacks_by_wki_sq32.shift<DIR_N>();
-constexpr BitBoard attacks_by_wki_sq34 = attacks_by_wki_sq33.shift<DIR_S>();
-constexpr BitBoard attacks_by_wki_sq35 = attacks_by_wki_sq34.shift<DIR_S>();
-constexpr BitBoard attacks_by_wki_sq21 = attacks_by_wki_sq31.shift<DIR_E>();
-constexpr BitBoard attacks_by_wki_sq22 = attacks_by_wki_sq32.shift<DIR_E>();
-constexpr BitBoard attacks_by_wki_sq23 = attacks_by_wki_sq33.shift<DIR_E>();
-constexpr BitBoard attacks_by_wki_sq24 = attacks_by_wki_sq34.shift<DIR_E>();
-constexpr BitBoard attacks_by_wki_sq25 = attacks_by_wki_sq35.shift<DIR_E>();
-constexpr BitBoard attacks_by_wki_sq11 = attacks_by_wki_sq21.shift<DIR_E>();
-constexpr BitBoard attacks_by_wki_sq12 = attacks_by_wki_sq22.shift<DIR_E>();
-constexpr BitBoard attacks_by_wki_sq13 = attacks_by_wki_sq23.shift<DIR_E>();
-constexpr BitBoard attacks_by_wki_sq14 = attacks_by_wki_sq24.shift<DIR_E>();
-constexpr BitBoard attacks_by_wki_sq15 = attacks_by_wki_sq25.shift<DIR_E>();
-constexpr BitBoard attacks_by_wki_sq41 = attacks_by_wki_sq31.shift<DIR_W>();
-constexpr BitBoard attacks_by_wki_sq42 = attacks_by_wki_sq32.shift<DIR_W>();
-constexpr BitBoard attacks_by_wki_sq43 = attacks_by_wki_sq33.shift<DIR_W>();
-constexpr BitBoard attacks_by_wki_sq44 = attacks_by_wki_sq34.shift<DIR_W>();
-constexpr BitBoard attacks_by_wki_sq45 = attacks_by_wki_sq35.shift<DIR_W>();
-constexpr BitBoard attacks_by_wki_sq51 = attacks_by_wki_sq41.shift<DIR_W>();
-constexpr BitBoard attacks_by_wki_sq52 = attacks_by_wki_sq42.shift<DIR_W>();
-constexpr BitBoard attacks_by_wki_sq53 = attacks_by_wki_sq43.shift<DIR_W>();
-constexpr BitBoard attacks_by_wki_sq54 = attacks_by_wki_sq44.shift<DIR_W>();
-constexpr BitBoard attacks_by_wki_sq55 = attacks_by_wki_sq45.shift<DIR_W>();
+constexpr BitBoard attacks_by_wki_sq3c
+    = bb_2c | bb_2d | bb_3b | bb_3d | bb_4c | bb_4d;
+constexpr BitBoard attacks_by_wki_sq3b = attacks_by_wki_sq3c.shift<DIR_N>();
+constexpr BitBoard attacks_by_wki_sq3a = attacks_by_wki_sq3b.shift<DIR_N>();
+constexpr BitBoard attacks_by_wki_sq3d = attacks_by_wki_sq3c.shift<DIR_S>();
+constexpr BitBoard attacks_by_wki_sq3e = attacks_by_wki_sq3d.shift<DIR_S>();
+constexpr BitBoard attacks_by_wki_sq2a = attacks_by_wki_sq3a.shift<DIR_E>();
+constexpr BitBoard attacks_by_wki_sq2b = attacks_by_wki_sq3b.shift<DIR_E>();
+constexpr BitBoard attacks_by_wki_sq2c = attacks_by_wki_sq3c.shift<DIR_E>();
+constexpr BitBoard attacks_by_wki_sq2d = attacks_by_wki_sq3d.shift<DIR_E>();
+constexpr BitBoard attacks_by_wki_sq2e = attacks_by_wki_sq3e.shift<DIR_E>();
+constexpr BitBoard attacks_by_wki_sq1a = attacks_by_wki_sq2a.shift<DIR_E>();
+constexpr BitBoard attacks_by_wki_sq1b = attacks_by_wki_sq2b.shift<DIR_E>();
+constexpr BitBoard attacks_by_wki_sq1c = attacks_by_wki_sq2c.shift<DIR_E>();
+constexpr BitBoard attacks_by_wki_sq1d = attacks_by_wki_sq2d.shift<DIR_E>();
+constexpr BitBoard attacks_by_wki_sq1e = attacks_by_wki_sq2e.shift<DIR_E>();
+constexpr BitBoard attacks_by_wki_sq4a = attacks_by_wki_sq3a.shift<DIR_W>();
+constexpr BitBoard attacks_by_wki_sq4b = attacks_by_wki_sq3b.shift<DIR_W>();
+constexpr BitBoard attacks_by_wki_sq4c = attacks_by_wki_sq3c.shift<DIR_W>();
+constexpr BitBoard attacks_by_wki_sq4d = attacks_by_wki_sq3d.shift<DIR_W>();
+constexpr BitBoard attacks_by_wki_sq4e = attacks_by_wki_sq3e.shift<DIR_W>();
+constexpr BitBoard attacks_by_wki_sq5a = attacks_by_wki_sq4a.shift<DIR_W>();
+constexpr BitBoard attacks_by_wki_sq5b = attacks_by_wki_sq4b.shift<DIR_W>();
+constexpr BitBoard attacks_by_wki_sq5c = attacks_by_wki_sq4c.shift<DIR_W>();
+constexpr BitBoard attacks_by_wki_sq5d = attacks_by_wki_sq4d.shift<DIR_W>();
+constexpr BitBoard attacks_by_wki_sq5e = attacks_by_wki_sq4e.shift<DIR_W>();
 
 } // namespace internal
 
 constexpr BitBoard attacks_by_fu[num_squares][num_colors] = {
-    {bb_51.shift<DIR_N>(), bb_51.shift<DIR_S>()},
-    {bb_41.shift<DIR_N>(), bb_41.shift<DIR_S>()},
-    {bb_31.shift<DIR_N>(), bb_31.shift<DIR_S>()},
-    {bb_21.shift<DIR_N>(), bb_21.shift<DIR_S>()},
-    {bb_11.shift<DIR_N>(), bb_11.shift<DIR_S>()},
-    {bb_52.shift<DIR_N>(), bb_52.shift<DIR_S>()},
-    {bb_42.shift<DIR_N>(), bb_42.shift<DIR_S>()},
-    {bb_32.shift<DIR_N>(), bb_32.shift<DIR_S>()},
-    {bb_22.shift<DIR_N>(), bb_22.shift<DIR_S>()},
-    {bb_12.shift<DIR_N>(), bb_12.shift<DIR_S>()},
-    {bb_53.shift<DIR_N>(), bb_53.shift<DIR_S>()},
-    {bb_43.shift<DIR_N>(), bb_43.shift<DIR_S>()},
-    {bb_33.shift<DIR_N>(), bb_33.shift<DIR_S>()},
-    {bb_23.shift<DIR_N>(), bb_23.shift<DIR_S>()},
-    {bb_13.shift<DIR_N>(), bb_13.shift<DIR_S>()},
-    {bb_54.shift<DIR_N>(), bb_54.shift<DIR_S>()},
-    {bb_44.shift<DIR_N>(), bb_44.shift<DIR_S>()},
-    {bb_34.shift<DIR_N>(), bb_34.shift<DIR_S>()},
-    {bb_24.shift<DIR_N>(), bb_24.shift<DIR_S>()},
-    {bb_14.shift<DIR_N>(), bb_14.shift<DIR_S>()},
-    {bb_55.shift<DIR_N>(), bb_55.shift<DIR_S>()},
-    {bb_45.shift<DIR_N>(), bb_45.shift<DIR_S>()},
-    {bb_35.shift<DIR_N>(), bb_35.shift<DIR_S>()},
-    {bb_25.shift<DIR_N>(), bb_25.shift<DIR_S>()},
-    {bb_15.shift<DIR_N>(), bb_15.shift<DIR_S>()},
+    {bb_5a.shift<DIR_N>(), bb_5a.shift<DIR_S>()},
+    {bb_4a.shift<DIR_N>(), bb_4a.shift<DIR_S>()},
+    {bb_3a.shift<DIR_N>(), bb_3a.shift<DIR_S>()},
+    {bb_2a.shift<DIR_N>(), bb_2a.shift<DIR_S>()},
+    {bb_1a.shift<DIR_N>(), bb_1a.shift<DIR_S>()},
+    {bb_5b.shift<DIR_N>(), bb_5b.shift<DIR_S>()},
+    {bb_4b.shift<DIR_N>(), bb_4b.shift<DIR_S>()},
+    {bb_3b.shift<DIR_N>(), bb_3b.shift<DIR_S>()},
+    {bb_2b.shift<DIR_N>(), bb_2b.shift<DIR_S>()},
+    {bb_1b.shift<DIR_N>(), bb_1b.shift<DIR_S>()},
+    {bb_5c.shift<DIR_N>(), bb_5c.shift<DIR_S>()},
+    {bb_4c.shift<DIR_N>(), bb_4c.shift<DIR_S>()},
+    {bb_3c.shift<DIR_N>(), bb_3c.shift<DIR_S>()},
+    {bb_2c.shift<DIR_N>(), bb_2c.shift<DIR_S>()},
+    {bb_1c.shift<DIR_N>(), bb_1c.shift<DIR_S>()},
+    {bb_5d.shift<DIR_N>(), bb_5d.shift<DIR_S>()},
+    {bb_4d.shift<DIR_N>(), bb_4d.shift<DIR_S>()},
+    {bb_3d.shift<DIR_N>(), bb_3d.shift<DIR_S>()},
+    {bb_2d.shift<DIR_N>(), bb_2d.shift<DIR_S>()},
+    {bb_1d.shift<DIR_N>(), bb_1d.shift<DIR_S>()},
+    {bb_5e.shift<DIR_N>(), bb_5e.shift<DIR_S>()},
+    {bb_4e.shift<DIR_N>(), bb_4e.shift<DIR_S>()},
+    {bb_3e.shift<DIR_N>(), bb_3e.shift<DIR_S>()},
+    {bb_2e.shift<DIR_N>(), bb_2e.shift<DIR_S>()},
+    {bb_1e.shift<DIR_N>(), bb_1e.shift<DIR_S>()},
 };
 constexpr BitBoard attacks_by_gi[num_squares][num_colors] = {
-    {internal::attacks_by_bgi_sq51, internal::attacks_by_wgi_sq51},
-    {internal::attacks_by_bgi_sq41, internal::attacks_by_wgi_sq41},
-    {internal::attacks_by_bgi_sq31, internal::attacks_by_wgi_sq31},
-    {internal::attacks_by_bgi_sq21, internal::attacks_by_wgi_sq21},
-    {internal::attacks_by_bgi_sq11, internal::attacks_by_wgi_sq11},
-    {internal::attacks_by_bgi_sq52, internal::attacks_by_wgi_sq52},
-    {internal::attacks_by_bgi_sq42, internal::attacks_by_wgi_sq42},
-    {internal::attacks_by_bgi_sq32, internal::attacks_by_wgi_sq32},
-    {internal::attacks_by_bgi_sq22, internal::attacks_by_wgi_sq22},
-    {internal::attacks_by_bgi_sq12, internal::attacks_by_wgi_sq12},
-    {internal::attacks_by_bgi_sq53, internal::attacks_by_wgi_sq53},
-    {internal::attacks_by_bgi_sq43, internal::attacks_by_wgi_sq43},
-    {internal::attacks_by_bgi_sq33, internal::attacks_by_wgi_sq33},
-    {internal::attacks_by_bgi_sq23, internal::attacks_by_wgi_sq23},
-    {internal::attacks_by_bgi_sq13, internal::attacks_by_wgi_sq13},
-    {internal::attacks_by_bgi_sq54, internal::attacks_by_wgi_sq54},
-    {internal::attacks_by_bgi_sq44, internal::attacks_by_wgi_sq44},
-    {internal::attacks_by_bgi_sq34, internal::attacks_by_wgi_sq34},
-    {internal::attacks_by_bgi_sq24, internal::attacks_by_wgi_sq24},
-    {internal::attacks_by_bgi_sq14, internal::attacks_by_wgi_sq14},
-    {internal::attacks_by_bgi_sq55, internal::attacks_by_wgi_sq55},
-    {internal::attacks_by_bgi_sq45, internal::attacks_by_wgi_sq45},
-    {internal::attacks_by_bgi_sq35, internal::attacks_by_wgi_sq35},
-    {internal::attacks_by_bgi_sq25, internal::attacks_by_wgi_sq25},
-    {internal::attacks_by_bgi_sq15, internal::attacks_by_wgi_sq15},
+    {internal::attacks_by_bgi_sq5a, internal::attacks_by_wgi_sq5a},
+    {internal::attacks_by_bgi_sq4a, internal::attacks_by_wgi_sq4a},
+    {internal::attacks_by_bgi_sq3a, internal::attacks_by_wgi_sq3a},
+    {internal::attacks_by_bgi_sq2a, internal::attacks_by_wgi_sq2a},
+    {internal::attacks_by_bgi_sq1a, internal::attacks_by_wgi_sq1a},
+    {internal::attacks_by_bgi_sq5b, internal::attacks_by_wgi_sq5b},
+    {internal::attacks_by_bgi_sq4b, internal::attacks_by_wgi_sq4b},
+    {internal::attacks_by_bgi_sq3b, internal::attacks_by_wgi_sq3b},
+    {internal::attacks_by_bgi_sq2b, internal::attacks_by_wgi_sq2b},
+    {internal::attacks_by_bgi_sq1b, internal::attacks_by_wgi_sq1b},
+    {internal::attacks_by_bgi_sq5c, internal::attacks_by_wgi_sq5c},
+    {internal::attacks_by_bgi_sq4c, internal::attacks_by_wgi_sq4c},
+    {internal::attacks_by_bgi_sq3c, internal::attacks_by_wgi_sq3c},
+    {internal::attacks_by_bgi_sq2c, internal::attacks_by_wgi_sq2c},
+    {internal::attacks_by_bgi_sq1c, internal::attacks_by_wgi_sq1c},
+    {internal::attacks_by_bgi_sq5d, internal::attacks_by_wgi_sq5d},
+    {internal::attacks_by_bgi_sq4d, internal::attacks_by_wgi_sq4d},
+    {internal::attacks_by_bgi_sq3d, internal::attacks_by_wgi_sq3d},
+    {internal::attacks_by_bgi_sq2d, internal::attacks_by_wgi_sq2d},
+    {internal::attacks_by_bgi_sq1d, internal::attacks_by_wgi_sq1d},
+    {internal::attacks_by_bgi_sq5e, internal::attacks_by_wgi_sq5e},
+    {internal::attacks_by_bgi_sq4e, internal::attacks_by_wgi_sq4e},
+    {internal::attacks_by_bgi_sq3e, internal::attacks_by_wgi_sq3e},
+    {internal::attacks_by_bgi_sq2e, internal::attacks_by_wgi_sq2e},
+    {internal::attacks_by_bgi_sq1e, internal::attacks_by_wgi_sq1e},
 };
 constexpr BitBoard attacks_by_ki[num_squares][num_colors] = {
-    {internal::attacks_by_bki_sq51, internal::attacks_by_wki_sq51},
-    {internal::attacks_by_bki_sq41, internal::attacks_by_wki_sq41},
-    {internal::attacks_by_bki_sq31, internal::attacks_by_wki_sq31},
-    {internal::attacks_by_bki_sq21, internal::attacks_by_wki_sq21},
-    {internal::attacks_by_bki_sq11, internal::attacks_by_wki_sq11},
-    {internal::attacks_by_bki_sq52, internal::attacks_by_wki_sq52},
-    {internal::attacks_by_bki_sq42, internal::attacks_by_wki_sq42},
-    {internal::attacks_by_bki_sq32, internal::attacks_by_wki_sq32},
-    {internal::attacks_by_bki_sq22, internal::attacks_by_wki_sq22},
-    {internal::attacks_by_bki_sq12, internal::attacks_by_wki_sq12},
-    {internal::attacks_by_bki_sq53, internal::attacks_by_wki_sq53},
-    {internal::attacks_by_bki_sq43, internal::attacks_by_wki_sq43},
-    {internal::attacks_by_bki_sq33, internal::attacks_by_wki_sq33},
-    {internal::attacks_by_bki_sq23, internal::attacks_by_wki_sq23},
-    {internal::attacks_by_bki_sq13, internal::attacks_by_wki_sq13},
-    {internal::attacks_by_bki_sq54, internal::attacks_by_wki_sq54},
-    {internal::attacks_by_bki_sq44, internal::attacks_by_wki_sq44},
-    {internal::attacks_by_bki_sq34, internal::attacks_by_wki_sq34},
-    {internal::attacks_by_bki_sq24, internal::attacks_by_wki_sq24},
-    {internal::attacks_by_bki_sq14, internal::attacks_by_wki_sq14},
-    {internal::attacks_by_bki_sq55, internal::attacks_by_wki_sq55},
-    {internal::attacks_by_bki_sq45, internal::attacks_by_wki_sq45},
-    {internal::attacks_by_bki_sq35, internal::attacks_by_wki_sq35},
-    {internal::attacks_by_bki_sq25, internal::attacks_by_wki_sq25},
-    {internal::attacks_by_bki_sq15, internal::attacks_by_wki_sq15},
+    {internal::attacks_by_bki_sq5a, internal::attacks_by_wki_sq5a},
+    {internal::attacks_by_bki_sq4a, internal::attacks_by_wki_sq4a},
+    {internal::attacks_by_bki_sq3a, internal::attacks_by_wki_sq3a},
+    {internal::attacks_by_bki_sq2a, internal::attacks_by_wki_sq2a},
+    {internal::attacks_by_bki_sq1a, internal::attacks_by_wki_sq1a},
+    {internal::attacks_by_bki_sq5b, internal::attacks_by_wki_sq5b},
+    {internal::attacks_by_bki_sq4b, internal::attacks_by_wki_sq4b},
+    {internal::attacks_by_bki_sq3b, internal::attacks_by_wki_sq3b},
+    {internal::attacks_by_bki_sq2b, internal::attacks_by_wki_sq2b},
+    {internal::attacks_by_bki_sq1b, internal::attacks_by_wki_sq1b},
+    {internal::attacks_by_bki_sq5c, internal::attacks_by_wki_sq5c},
+    {internal::attacks_by_bki_sq4c, internal::attacks_by_wki_sq4c},
+    {internal::attacks_by_bki_sq3c, internal::attacks_by_wki_sq3c},
+    {internal::attacks_by_bki_sq2c, internal::attacks_by_wki_sq2c},
+    {internal::attacks_by_bki_sq1c, internal::attacks_by_wki_sq1c},
+    {internal::attacks_by_bki_sq5d, internal::attacks_by_wki_sq5d},
+    {internal::attacks_by_bki_sq4d, internal::attacks_by_wki_sq4d},
+    {internal::attacks_by_bki_sq3d, internal::attacks_by_wki_sq3d},
+    {internal::attacks_by_bki_sq2d, internal::attacks_by_wki_sq2d},
+    {internal::attacks_by_bki_sq1d, internal::attacks_by_wki_sq1d},
+    {internal::attacks_by_bki_sq5e, internal::attacks_by_wki_sq5e},
+    {internal::attacks_by_bki_sq4e, internal::attacks_by_wki_sq4e},
+    {internal::attacks_by_bki_sq3e, internal::attacks_by_wki_sq3e},
+    {internal::attacks_by_bki_sq2e, internal::attacks_by_wki_sq2e},
+    {internal::attacks_by_bki_sq1e, internal::attacks_by_wki_sq1e},
 };
 constexpr BitBoard attacks_by_ou[num_squares] = {
-    bb_51.expand() & (~bb_51), bb_41.expand() & (~bb_41),
-    bb_31.expand() & (~bb_31), bb_21.expand() & (~bb_21),
-    bb_11.expand() & (~bb_11), bb_52.expand() & (~bb_52),
-    bb_42.expand() & (~bb_42), bb_32.expand() & (~bb_32),
-    bb_22.expand() & (~bb_22), bb_12.expand() & (~bb_12),
-    bb_53.expand() & (~bb_53), bb_43.expand() & (~bb_43),
-    bb_33.expand() & (~bb_33), bb_23.expand() & (~bb_23),
-    bb_13.expand() & (~bb_13), bb_54.expand() & (~bb_54),
-    bb_44.expand() & (~bb_44), bb_34.expand() & (~bb_34),
-    bb_24.expand() & (~bb_24), bb_14.expand() & (~bb_14),
-    bb_55.expand() & (~bb_55), bb_45.expand() & (~bb_45),
-    bb_35.expand() & (~bb_35), bb_25.expand() & (~bb_25),
-    bb_15.expand() & (~bb_15),
+    bb_5a.expand() & (~bb_5a), bb_4a.expand() & (~bb_4a),
+    bb_3a.expand() & (~bb_3a), bb_2a.expand() & (~bb_2a),
+    bb_1a.expand() & (~bb_1a), bb_5b.expand() & (~bb_5b),
+    bb_4b.expand() & (~bb_4b), bb_3b.expand() & (~bb_3b),
+    bb_2b.expand() & (~bb_2b), bb_1b.expand() & (~bb_1b),
+    bb_5c.expand() & (~bb_5c), bb_4c.expand() & (~bb_4c),
+    bb_3c.expand() & (~bb_3c), bb_2c.expand() & (~bb_2c),
+    bb_1c.expand() & (~bb_1c), bb_5d.expand() & (~bb_5d),
+    bb_4d.expand() & (~bb_4d), bb_3d.expand() & (~bb_3d),
+    bb_2d.expand() & (~bb_2d), bb_1d.expand() & (~bb_1d),
+    bb_5e.expand() & (~bb_5e), bb_4e.expand() & (~bb_4e),
+    bb_3e.expand() & (~bb_3e), bb_2e.expand() & (~bb_2e),
+    bb_1e.expand() & (~bb_1e),
 };
 
 inline BitBoard get_attacks_by(

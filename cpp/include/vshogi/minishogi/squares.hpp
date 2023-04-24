@@ -5,37 +5,37 @@ namespace vshogi::minishogi
 {
 
 /**
- * @brief Enumeration of board squares.
+ * @brief Enumeration of board squares following SFEN.
  * @details
  *   5   4   3   2   1
  * +---+---+---+---+---+
- * | 0 | 1 | 2 | 3 | 4 | 1
+ * | 0 | 1 | 2 | 3 | 4 | a
  * +---+---+---+---+---+
- * | 5 | 6 | 7 | 8 | 9 | 2
+ * | 5 | 6 | 7 | 8 | 9 | b
  * +---+---+---+---+---+
- * | 10| 11| 12| 13| 14| 3
+ * | 10| 11| 12| 13| 14| c
  * +---+---+---+---+---+
- * | 15| 16| 17| 18| 19| 4
+ * | 15| 16| 17| 18| 19| d
  * +---+---+---+---+---+
- * | 20| 21| 22| 23| 24| 5
+ * | 20| 21| 22| 23| 24| e
  * +---+---+---+---+---+
  */
 enum SquareEnum
 {
     // clang-format off
-    SQ_51 =  0, SQ_41 =  1, SQ_31 =  2, SQ_21 =  3, SQ_11 =  4,
-    SQ_52 =  5, SQ_42 =  6, SQ_32 =  7, SQ_22 =  8, SQ_12 =  9,
-    SQ_53 = 10, SQ_43 = 11, SQ_33 = 12, SQ_23 = 13, SQ_13 = 14,
-    SQ_54 = 15, SQ_44 = 16, SQ_34 = 17, SQ_24 = 18, SQ_14 = 19,
-    SQ_55 = 20, SQ_45 = 21, SQ_35 = 22, SQ_25 = 23, SQ_15 = 24,
+    SQ_5A =  0, SQ_4A =  1, SQ_3A =  2, SQ_2A =  3, SQ_1A =  4,
+    SQ_5B =  5, SQ_4B =  6, SQ_3B =  7, SQ_2B =  8, SQ_1B =  9,
+    SQ_5C = 10, SQ_4C = 11, SQ_3C = 12, SQ_2C = 13, SQ_1C = 14,
+    SQ_5D = 15, SQ_4D = 16, SQ_3D = 17, SQ_2D = 18, SQ_1D = 19,
+    SQ_5E = 20, SQ_4E = 21, SQ_3E = 22, SQ_2E = 23, SQ_1E = 24,
     // clang-format on
     SQ_NA,
 };
 constexpr int num_squares = 25;
 constexpr SquareEnum square_array[] = {
-    SQ_51, SQ_41, SQ_31, SQ_21, SQ_11, SQ_52, SQ_42, SQ_32, SQ_22,
-    SQ_12, SQ_53, SQ_43, SQ_33, SQ_23, SQ_13, SQ_54, SQ_44, SQ_34,
-    SQ_24, SQ_14, SQ_55, SQ_45, SQ_35, SQ_25, SQ_15,
+    SQ_5A, SQ_4A, SQ_3A, SQ_2A, SQ_1A, SQ_5B, SQ_4B, SQ_3B, SQ_2B,
+    SQ_1B, SQ_5C, SQ_4C, SQ_3C, SQ_2C, SQ_1C, SQ_5D, SQ_4D, SQ_3D,
+    SQ_2D, SQ_1D, SQ_5E, SQ_4E, SQ_3E, SQ_2E, SQ_1E,
 };
 
 enum DirectionEnum
