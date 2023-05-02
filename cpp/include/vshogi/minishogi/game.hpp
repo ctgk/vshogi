@@ -54,6 +54,10 @@ public:
         return m_current_state.to_sfen() + " "
                + std::to_string(m_record.size() + 1);
     }
+    bool is_legal(const Move move) const
+    {
+        return m_current_state.is_legal(move);
+    }
     auto get_legal_moves() const
     {
         if (m_result == ONGOING)

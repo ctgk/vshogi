@@ -131,6 +131,29 @@ void export_piece_stand(py::module& m)
         });
 }
 
+void export_game(py::module& m)
+{
+    py::class_<ms::Game>(m, "_Game")
+        .def(py::init<>())
+        .def(py::init<const std::string&>())
+        .def("get_turn", &ms::Game::get_turn)
+        .def("get_board", &ms::Game::get_board)
+        .def("get_stand", &ms::Game::get_stand)
+        .def("get_result", &ms::Game::get_result)
+        .def("record_length", &ms::Game::record_length)
+        .def("get_legal_moves", &ms::Game::get_legal_moves)
+        .def("to_sfen", &ms::Game::to_sfen)
+        .def("is_legal", &ms::Game::is_legal)
+        .def("apply", &ms::Game::apply)
+        .def("get_move_at", &ms::Game::get_move_at)
+        .def("get_sfen_at", &ms::Game::get_sfen_at)
+        .def("copy", [](const ms::Game& self) { return ms::Game(self); })
+        .def(
+            "__deepcopy__",
+            [](const ms::Game& self, py::dict) { return ms::Game(self); },
+            py::arg("memo"));
+}
+
 } // namespace
 
 void export_minishogi(py::module& m)
@@ -140,4 +163,5 @@ void export_minishogi(py::module& m)
     export_move(m);
     export_pieces(m);
     export_piece_stand(m);
+    export_game(m);
 }
