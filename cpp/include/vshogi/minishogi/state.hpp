@@ -208,10 +208,12 @@ public:
     State& apply(const Move move)
     {
         const auto dst = move.destination();
-        const auto moving = pop_piece_from_stand_or_board(move.source());
+        auto moving = pop_piece_from_stand_or_board(move.source());
         const auto captured = to_piece_type(m_board[dst]);
         if (captured != NA)
             m_stands[m_turn].add(captured);
+        if (move.promote())
+            moving = promote(moving);
         m_board[dst] = moving;
         m_turn = ~m_turn;
         update_masks();

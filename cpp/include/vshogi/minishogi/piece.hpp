@@ -104,6 +104,16 @@ inline constexpr bool is_promoted(const BoardPieceTypeEnum p)
     return static_cast<bool>(p & 0b01000);
 }
 
+inline bool is_promotable(const BoardPieceTypeEnum p)
+{
+    return (to_piece_type(p) < 0b0100);
+}
+
+inline BoardPieceTypeEnum promote(const BoardPieceTypeEnum p)
+{
+    return is_promotable(p) ? static_cast<BoardPieceTypeEnum>(p | 0b1000) : p;
+}
+
 inline std::string to_sfen_piece(const BoardPieceTypeEnum p)
 {
     const auto color = get_color(p);

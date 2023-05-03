@@ -57,6 +57,13 @@ TEST(state, apply)
         CHECK_EQUAL(B_FU, s.get_board()[SQ_5C]);
         CHECK_EQUAL(VOID, s.get_board()[SQ_5D]);
     }
+    {
+        auto s = State();
+        s.apply(Move(SQ_4C, SQ_2E));
+        s.apply(Move(SQ_1C, SQ_1B));
+        s.apply(Move(SQ_2A, SQ_4C, true));
+        CHECK_EQUAL(B_UM, s.get_board()[SQ_2A]);
+    }
 }
 
 TEST(state, is_legal)
