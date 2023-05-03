@@ -53,9 +53,10 @@ void export_move(py::module& m)
 {
     py::class_<ms::Move>(m, "Move")
         .def(
-            py::init<const ms::SquareEnum, const ms::SquareEnum>(),
+            py::init<const ms::SquareEnum, const ms::SquareEnum, const bool>(),
             py::arg("destination"),
-            py::arg("source"))
+            py::arg("source"),
+            py::arg("promote") = false)
         .def(
             py::init<const ms::SquareEnum, const ms::PieceTypeEnum>(),
             py::arg("destination"),

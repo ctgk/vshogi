@@ -13,7 +13,7 @@ from vshogi.minishogi._game import Game
 
 
 _board_template = '''\
-    1   2   3   4   5
+    5   4   3   2   1
   *---*---*---*---*---*
 A |{}|{}|{}|{}|{}|
   *---*---*---*---*---*
@@ -44,7 +44,8 @@ BoardPiece._to_3char = lambda self: (
 )
 Piece.__repr__ = _enum_repr
 Stand.__str__ = lambda self: '-' if not self.any() else ','.join([
-    k.name[0] + ('' if v == 1 else str(v)) for k, v in self.to_dict().items()
+    k.name + ('' if v == 1 else f'x{v}') for k, v in self.to_dict().items()
+    if v > 0
 ])
 Square.__repr__ = lambda a: f'{a.__class__.__name__}.{a.name[-2:]}'
 
