@@ -43,6 +43,11 @@ BoardPiece._to_3char = lambda self: (
     "   " if self == BoardPiece.VOID
     else {'B': '+', 'W': '-'}[self.name[0]] + self.name[2:4]
 )
+Move.__repr__ = lambda m: (
+    f'{m.__class__.__name__}(dst={m.destination.name}, src={m.source.name}'
+    + (', promote=True' if m.promote else '')
+    + ')'
+)
 Piece.__repr__ = _enum_repr
 Stand.__str__ = lambda self: '-' if not self.any() else ','.join([
     k.name + ('' if v == 1 else f'x{v}') for k, v in self.to_dict().items()

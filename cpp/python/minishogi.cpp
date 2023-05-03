@@ -54,14 +54,15 @@ void export_move(py::module& m)
     py::class_<ms::Move>(m, "Move")
         .def(
             py::init<const ms::SquareEnum, const ms::SquareEnum, const bool>(),
-            py::arg("destination"),
-            py::arg("source"),
+            py::arg("dst"),
+            py::arg("src"),
             py::arg("promote") = false)
         .def(
             py::init<const ms::SquareEnum, const ms::PieceTypeEnum>(),
-            py::arg("destination"),
-            py::arg("source"))
+            py::arg("dst"),
+            py::arg("src"))
         .def_property_readonly("destination", &ms::Move::destination)
+        .def_property_readonly("promote", &ms::Move::promote)
         .def_property_readonly(
             "source",
             [](const ms::Move& self) -> py::object {
@@ -161,8 +162,8 @@ void export_minishogi(py::module& m)
 {
     export_board(m);
     export_square_enum(m);
-    export_move(m);
     export_pieces(m);
     export_piece_stand(m);
+    export_move(m);
     export_game(m);
 }
