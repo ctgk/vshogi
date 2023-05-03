@@ -1,6 +1,6 @@
 """Shogi API for shogi and its variants."""
 
-from vshogi import animal_shogi
+from vshogi import animal_shogi, minishogi
 from vshogi import mcts
 from vshogi._enum import _enum_repr
 from vshogi._vshogi import Color, Result
@@ -10,7 +10,7 @@ Result.__repr__ = _enum_repr
 
 _classes = [Color, Result]
 _enums = [Color, Result]
-_modules = [animal_shogi, mcts]
+_modules = [animal_shogi, mcts, minishogi]
 
 
 for _e in _enums:
