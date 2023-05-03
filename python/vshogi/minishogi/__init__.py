@@ -6,6 +6,7 @@ cf. https://en.wikipedia.org/wiki/Minishogi
 import numpy as np
 
 from vshogi._enum import _enum_repr
+from vshogi._vshogi import Color, Result
 from vshogi._vshogi.minishogi import (
     Board, BoardPiece, Move, Piece, Square, Stand,
 )
@@ -50,7 +51,7 @@ Stand.__str__ = lambda self: '-' if not self.any() else ','.join([
 Square.__repr__ = lambda a: f'{a.__class__.__name__}.{a.name[-2:]}'
 
 _classes = [Board, BoardPiece, Move, Piece, Square, Stand, Game]
-_enums = [BoardPiece, Piece, Square]
+_enums = [BoardPiece, Color, Piece, Result, Square]
 
 for _cls in _classes:
     _cls.__module__ = __name__
@@ -58,7 +59,10 @@ for _e in _enums:
     locals().update(_e.__members__)
 
 
-__all__ = [_cls.__name__ for _cls in _classes]
+__all__ = (
+    [_cls.__name__ for _cls in _classes] + ['Color', 'Result']
+    + [m for _e in _enums for m in _e.__members__]
+)
 
 
 del _cls
