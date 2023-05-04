@@ -53,7 +53,7 @@ class Game:
       *--*--*--*
     Black: -
     >>> game.get_applicable_moves()
-    [Move(B2 <- B3), Move(A3 <- B4), Move(C3 <- B4), Move(C3 <- C4)]
+    [Move(dst=B2, src=B3), Move(dst=A3, src=B4), ...
     >>> game.is_applicable(Move(shogi.B2, shogi.B3))
     True
     >>> game.is_applicable(Move(shogi.A3, shogi.A4))
@@ -107,7 +107,7 @@ class Game:
       *--*--*--*
     Black: C
     >>> game.get_move_at(1)
-    Move(A2 <- A1)
+    Move(dst=A2, src=A1)
     """
 
     def __init__(self, hash_or_sfen: tp.Union[int, str, None] = None) -> None:

@@ -46,7 +46,7 @@ BoardPiece._to_2char = lambda self: (
 )
 Piece.__repr__ = _enum_repr
 Move.__repr__ = lambda a: (
-    f'{a.__class__.__name__}({a.destination.name} <- {a.source.name})'
+    f'{a.__class__.__name__}(dst={a.destination.name}, src={a.source.name})'
 )
 Square.__repr__ = _enum_repr
 

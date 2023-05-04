@@ -30,8 +30,14 @@ void export_square_enum(py::module& m)
 void export_move(py::module& m)
 {
     py::class_<as::Move>(m, "Move")
-        .def(py::init<const as::SquareEnum, const as::SquareEnum>())
-        .def(py::init<const as::SquareEnum, const as::PieceTypeEnum>())
+        .def(
+            py::init<const as::SquareEnum, const as::SquareEnum>(),
+            py::arg("dst"),
+            py::arg("src"))
+        .def(
+            py::init<const as::SquareEnum, const as::PieceTypeEnum>(),
+            py::arg("dst"),
+            py::arg("src"))
         .def_static("_from_policy_index", &as::Move::_from_policy_index)
         .def("_to_policy_index", &as::Move::_to_policy_index)
         .def_property_readonly("destination", &as::Move::destination)
