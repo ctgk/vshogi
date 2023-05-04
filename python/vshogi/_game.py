@@ -10,9 +10,8 @@ class Game(abc.ABC):
     """Base class for Shogi games."""
 
     @classmethod
-    @property
     @abc.abstractmethod
-    def _backend_game_class(cls) -> type:
+    def _get_backend_game_class(cls) -> type:
         pass
 
     def __init__(self, sfen: tp.Optional[str] = None) -> None:
@@ -23,7 +22,7 @@ class Game(abc.ABC):
         sfen : tp.Optional[str], optional
             Initial game status in SFEN, by default None
         """
-        cls_ = self._backend_game_class
+        cls_ = self._get_backend_game_class()
         self._game = cls_() if sfen is None else cls_(sfen)
 
     def __array__(self) -> np.ndarray:

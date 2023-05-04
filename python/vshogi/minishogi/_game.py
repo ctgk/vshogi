@@ -80,6 +80,5 @@ class Game(BaseGame):
     """
 
     @classmethod
-    @property
-    def _backend_game_class(cls) -> type:
+    def _get_backend_game_class(cls) -> type:
         return _MinishogiGame
