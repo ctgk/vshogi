@@ -2,6 +2,7 @@ import typing as tp
 from copy import deepcopy
 
 import numpy as np
+import scipy.special as sp
 
 
 Policy = tp.Dict['Move', float]
@@ -91,6 +92,7 @@ class _Node:
     def explore(self, c_puct: float = 1., dirichlet_noise_depth: int = 0):
         self._visit_count += 1
         if len(self._policy) == 0:
+            self._update_q(self._value)
             return
         action = self._get_action_with_max_puct_score(
             c_puct, dirichlet_noise_depth > 0)
@@ -210,9 +212,8 @@ class MonteCarloTreeSearcher:
         """
         d = getattr(self, f'get_{by}')()
         moves = list(d.keys())
-        v = list(d.values())
+        v = np.array(list(d.values()))
         if temperature is None:
             return moves[np.argmax(v)]
-        probas = np.array(v) ** (1 / temperature)
-        probas = probas / np.sum(probas)
+        probas = sp.softmax(np.log(v + 1e-3) / temperature)
         return np.random.choice(moves, p=probas)

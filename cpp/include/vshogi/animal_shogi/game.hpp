@@ -7,17 +7,10 @@
 
 #include "vshogi/animal_shogi/move.hpp"
 #include "vshogi/animal_shogi/state.hpp"
+#include "vshogi/result.hpp"
 
 namespace vshogi::animal_shogi
 {
-
-enum ResultEnum : std::uint8_t
-{
-    ONGOING,
-    DRAW,
-    BLACK_WIN,
-    WHITE_WIN,
-};
 
 /**
  * @brief Animal Shogi game.

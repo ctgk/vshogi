@@ -3,9 +3,9 @@
 
 #include <cstdint>
 
-#include "vshogi/animal_shogi/color.hpp"
 #include "vshogi/animal_shogi/piece.hpp"
 #include "vshogi/animal_shogi/squares.hpp"
+#include "vshogi/color.hpp"
 
 namespace vshogi::animal_shogi
 {

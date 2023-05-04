@@ -5,10 +5,10 @@
 #include <vector>
 
 #include "vshogi/animal_shogi/board.hpp"
-#include "vshogi/animal_shogi/color.hpp"
 #include "vshogi/animal_shogi/move.hpp"
 #include "vshogi/animal_shogi/piece.hpp"
 #include "vshogi/animal_shogi/stand.hpp"
+#include "vshogi/color.hpp"
 
 namespace vshogi::animal_shogi
 {

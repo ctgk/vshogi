@@ -1,10 +1,9 @@
-#ifndef VSHOGI_ANIMAL_SHOGI_COLOR_HPP
-#define VSHOGI_ANIMAL_SHOGI_COLOR_HPP
+#ifndef VSHOGI_COLOR_HPP
+#define VSHOGI_COLOR_HPP
 
 #include <cstdint>
-#include <stdexcept>
 
-namespace vshogi::animal_shogi
+namespace vshogi
 {
 
 /**
@@ -17,6 +16,7 @@ enum ColorEnum : std::uint8_t
     WHITE = 1, //!< Second player's color.
 };
 constexpr int num_colors = 2;
+constexpr ColorEnum color_array[] = {BLACK, WHITE};
 
 /**
  * @brief Return opposite color of the input color.
@@ -40,6 +40,6 @@ inline constexpr ColorEnum operator~(const ColorEnum c)
     return opposite(c);
 }
 
-} // namespace vshogi::animal_shogi
+} // namespace vshogi
 
-#endif // VSHOGI_ANIMAL_SHOGI_COLOR_HPP
+#endif // VSHOGI_COLOR_HPP

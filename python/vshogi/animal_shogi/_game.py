@@ -2,16 +2,17 @@ import typing as tp
 
 import numpy as np
 
-import vshogi._vshogi.animal_shogi as _shogi
+from vshogi._vshogi import Color
+from vshogi._vshogi import Result
 from vshogi._vshogi.animal_shogi import Board
-from vshogi._vshogi.animal_shogi import Color
+from vshogi._vshogi.animal_shogi import BoardPiece
 from vshogi._vshogi.animal_shogi import Move
-from vshogi._vshogi.animal_shogi import Result
 from vshogi._vshogi.animal_shogi import Square
+from vshogi._vshogi.animal_shogi import Stand
 from vshogi._vshogi.animal_shogi import _Game
 
 
-_shogi.Stand.__str__ = lambda self: ','.join([
+Stand.__str__ = lambda self: ','.join([
     k.name[0] + ('' if v == 1 else str(v)) for k, v in self.to_dict().items()
     if v > 0
 ]) if self.any() else '-'
@@ -22,7 +23,7 @@ Board.__array__ = lambda self: np.array(
         [self[Square.A3], self[Square.B3], self[Square.C3]],
         [self[Square.A4], self[Square.B4], self[Square.C4]],
     ],
-    dtype=_shogi.BoardPiece,
+    dtype=BoardPiece,
 )
 
 
@@ -152,7 +153,7 @@ class Game:
         dict
             Pieces on black stand.
         """
-        return self._game.get_stand(_shogi.Color.BLACK).to_dict()
+        return self._game.get_stand(Color.BLACK).to_dict()
 
     @property
     def white_stand(self) -> dict:
@@ -163,7 +164,7 @@ class Game:
         dict
             Pieces on white stand.
         """
-        return self._game.get_stand(_shogi.Color.WHITE).to_dict()
+        return self._game.get_stand(Color.WHITE).to_dict()
 
     @property
     def result(self) -> Result:
@@ -280,9 +281,9 @@ class Game:
         r = self.result
         return '\n'.join((
             f'Turn: {self.turn.name}' if r == Result.ONGOING else r.name,
-            f'White: {str(self._game.get_stand(_shogi.Color.WHITE))}',
+            f'White: {str(self._game.get_stand(Color.WHITE))}',
             repr(self.board),
-            f'Black: {str(self._game.get_stand(_shogi.Color.BLACK))}',
+            f'Black: {str(self._game.get_stand(Color.BLACK))}',
         ))
 
     def copy(self) -> 'Game':

@@ -75,6 +75,40 @@ def test_q_values_by_dirichlet_noise():
     assert actual[m] > actual_with_noise[m]
 
 
+def test_q_value_near_game_end():
+    # Turn: WHITE
+    # White: -
+    #     A  B  C
+    #   *--*--*--*
+    # 1 |-G|-L|-E|
+    #   *--*--*--*
+    # 2 |  |+C|  |
+    #   *--*--*--*
+    # 3 |  |  |  |
+    #   *--*--*--*
+    # 4 |+E|+L|+G|
+    #   *--*--*--*
+    # Black: C
+    game = shogi.Game(1314599563424050)
+
+    def _pv_func(game: shogi.Game):
+        m = shogi.Move(shogi.A2, shogi.A1)
+        if m in game.get_applicable_moves():
+            return {m: 1.}, 0.
+        return pv_func(game)
+
+    searcher = MonteCarloTreeSearcher(_pv_func)
+    searcher.set_root(game)
+    searcher.explore(n=1000, c_puct=0.1, dirichlet_noise_depth=1)
+    actual = searcher.get_q_values()
+    print(actual)
+    print(searcher._root._children)
+    assert np.isclose(
+        actual[shogi.Move(shogi.A2, shogi.A1)], -1.,
+        rtol=0, atol=1e-2,
+    )
+
+
 def test_visit_counts():
     game = shogi.Game()
     seacher = MonteCarloTreeSearcher(pv_func)
