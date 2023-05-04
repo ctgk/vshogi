@@ -136,6 +136,16 @@ class Game(abc.ABC):
         """
         return self._game.get_legal_moves()
 
+    def to_sfen(self) -> str:
+        """Return current game state in SFEN.
+
+        Returns
+        -------
+        str
+            Current game state in SFEN.
+        """
+        return self._game.to_sfen()
+
     def get_move_at(self, n: int):
         """Return n-th move applied to the game, where n starts from 0.
 
