@@ -70,22 +70,22 @@ TEST(animal_shogi_state, apply)
     }
 }
 
-TEST(animal_shogi_state, is_applicable)
+TEST(animal_shogi_state, is_legal)
 {
     {
-        CHECK_TRUE(State().is_applicable(Move(SQ_B2, MS_B3)));
-        CHECK_FALSE(State().is_applicable(Move(SQ_B3, MS_B2)));
+        CHECK_TRUE(State().is_legal(Move(SQ_B2, MS_B3)));
+        CHECK_FALSE(State().is_legal(Move(SQ_B3, MS_B2)));
     }
 }
 
-TEST(animal_shogi_state, get_applicable_moves)
+TEST(animal_shogi_state, get_legal_moves)
 {
     auto s = State();
-    const auto move_list = s.get_applicable_moves();
+    const auto move_list = s.get_legal_moves();
     CHECK_EQUAL(4, move_list.size());
 
     s.apply(Move(SQ_B2, SQ_B3));
-    CHECK_EQUAL(5, s.get_applicable_moves().size());
+    CHECK_EQUAL(5, s.get_legal_moves().size());
 }
 
 TEST(animal_shogi_state, hash)

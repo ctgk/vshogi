@@ -78,7 +78,7 @@ public:
     }
 
     /**
-     * @brief Check if a move is applicable or not.
+     * @brief Check if a move is legal or not.
      * @details Unlike ordinary Shogi, the followings are legal:
      * - Two Chicks in one file.
      * - Checkmate by dropping a Chick.
@@ -88,10 +88,10 @@ public:
      * cf. https://en.wikipedia.org/wiki/D%C5%8Dbutsu_sh%C5%8Dgi#Play
      *
      * @param move
-     * @return true The move is applicable.
-     * @return false The move is not applicable
+     * @return true The move is legal.
+     * @return false The move is not legal
      */
-    bool is_applicable(const Move move) const
+    bool is_legal(const Move move) const
     {
         const auto src = move.source();
         const auto dst = move.destination();
@@ -110,19 +110,19 @@ public:
         }
     }
 
-    std::vector<Move> get_applicable_moves() const
+    std::vector<Move> get_legal_moves() const
     {
         auto out = std::vector<Move>();
-        append_applicable_moves_by_board_pieces(out);
-        append_applicable_moves_by_stand_pieces(out);
+        append_legal_moves_by_board_pieces(out);
+        append_legal_moves_by_stand_pieces(out);
         return out;
     }
 
     /**
-     * @brief Apply an applicable move to the state. This method does not check
-     * if a move is applicable or not, check it by `is_move_applicable` method.
+     * @brief Apply an legal move to the state. This method does not check
+     * if a move is legal or not, check it by `is_move_legal` method.
      *
-     * @param [in] move Applicable move.
+     * @param [in] move legal move.
      * @param [out] moved Piece moved.
      * @param [out] captured Piece captured.
      * @return State&
@@ -217,8 +217,7 @@ private:
             return true;
         return to_color(p) != m_turn;
     }
-    void
-    append_applicable_moves_by_board_pieces(std::vector<Move>& move_list) const
+    void append_legal_moves_by_board_pieces(std::vector<Move>& move_list) const
     {
         const auto empty_or_opponent_piece = ~m_board.to_piece_mask(m_turn);
         for (auto src : square_array) {
@@ -234,8 +233,7 @@ private:
             }
         }
     }
-    void
-    append_applicable_moves_by_stand_pieces(std::vector<Move>& move_list) const
+    void append_legal_moves_by_stand_pieces(std::vector<Move>& move_list) const
     {
         const auto empty = ~m_board.to_piece_mask();
         const auto stand = m_black_white_stands[m_turn];

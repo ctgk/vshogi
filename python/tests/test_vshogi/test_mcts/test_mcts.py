@@ -6,7 +6,7 @@ from vshogi.mcts import MonteCarloTreeSearcher
 
 
 def pv_func(game):
-    moves = game.get_applicable_moves()
+    moves = game.get_legal_moves()
     n = len(moves)
     policy = {m: p for m, p in zip(moves, np.ones(n) / n)}
     value = {
@@ -93,7 +93,7 @@ def test_q_value_near_game_end():
 
     def _pv_func(game: shogi.Game):
         m = shogi.Move(shogi.A2, shogi.A1)
-        if m in game.get_applicable_moves():
+        if m in game.get_legal_moves():
             return {m: 1.}, 0.
         return pv_func(game)
 

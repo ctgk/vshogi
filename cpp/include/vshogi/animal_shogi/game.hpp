@@ -62,21 +62,21 @@ public:
     {
         return m_current_state.hash();
     }
-    bool is_applicable(const Move move) const
+    bool is_legal(const Move move) const
     {
-        return m_current_state.is_applicable(move);
+        return m_current_state.is_legal(move);
     }
-    auto get_applicable_moves() const
+    auto get_legal_moves() const
     {
         if (m_result == ONGOING)
-            return m_current_state.get_applicable_moves();
+            return m_current_state.get_legal_moves();
         return std::vector<Move>();
     }
 
     /**
-     * @brief Apply an applicable move to the current state.
+     * @brief Apply an legal move to the current state.
      *
-     * @param move Applicable move.
+     * @param move legal move.
      * @return Game&
      */
     Game& apply(const Move move)

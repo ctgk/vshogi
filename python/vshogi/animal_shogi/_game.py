@@ -52,11 +52,11 @@ class Game:
     4 |+E|+L|+G|
       *--*--*--*
     Black: -
-    >>> game.get_applicable_moves()
+    >>> game.get_legal_moves()
     [Move(dst=B2, src=B3), Move(dst=A3, src=B4), ...
-    >>> game.is_applicable(Move(shogi.B2, shogi.B3))
+    >>> game.is_legal(Move(shogi.B2, shogi.B3))
     True
-    >>> game.is_applicable(Move(shogi.A3, shogi.A4))
+    >>> game.is_legal(Move(shogi.A3, shogi.A4))
     False
     >>> game.apply(Move(shogi.B2, shogi.B3))
     Turn: WHITE
@@ -214,10 +214,10 @@ class Game:
         self._game.apply(move)
         return self
 
-    def is_applicable(self, move: Move) -> bool:
-        """Return true if the move is applicable to the current game status.
+    def is_legal(self, move: Move) -> bool:
+        """Return true if the move is legal to the current game status.
 
-        Unlike ordinary Shogi, the followings are legal (applicable):
+        Unlike ordinary Shogi, the followings are legal (legal):
         - Two Chicks in one file.
         - Checkmate by dropping a Chick.
         - Dropping a Chick on the final rank (, which will never promote)
@@ -233,19 +233,19 @@ class Game:
         Returns
         -------
         bool
-            True if the move is applicable, otherwise false.
+            True if the move is legal, otherwise false.
         """
-        return self._game.is_applicable(move)
+        return self._game.is_legal(move)
 
-    def get_applicable_moves(self) -> tp.List[Move]:
-        """Return list of applicable moves to the current state.
+    def get_legal_moves(self) -> tp.List[Move]:
+        """Return list of legal moves to the current state.
 
         Returns
         -------
         tp.List[Move]
-            Applicable moves.
+            Legal moves.
         """
-        return self._game.get_applicable_moves()
+        return self._game.get_legal_moves()
 
     def get_move_at(self, n: int) -> Move:
         """Return n-th move of the game, where n starts from 0.
