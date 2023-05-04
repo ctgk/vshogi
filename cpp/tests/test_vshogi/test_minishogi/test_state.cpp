@@ -146,9 +146,36 @@ TEST(state, get_legal_moves)
             // clang-format off
             4 // -OU (SQ_2A, SQ_1B, SQ_3C, SQ_2C)
             + 1 // -GI (SQ_2D)
-            + 5 // -HI (SQ_5D, SQ_4D, SQ_3D, SQ_2D, SQ_1E)
+            + 6 // -HI (SQ_5D, SQ_4D, SQ_3D, SQ_2D, SQ_1E, SQ_1E+)
             + 3 // -KI (SQ_3D, SQ_4E, SQ_2E)
             + 10, // -FU (41, 31, 21, 32, 12, 33, 23, 44, 34, 24)
+            // clang-format on
+            actual.size());
+    }
+    {
+        auto s = State();
+        // Turn: BLACK
+        // White: -
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |   |   |   |   |-OU|
+        //   *---*---*---*---*---*
+        // B |+OU|   |   |   |   |
+        //   *---*---*---*---*---*
+        // C |   |+KA|   |   |   |
+        //   *---*---*---*---*---*
+        // D |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // E |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // Black: -
+        s.set_sfen("4k/K4/1B3/5/5 b - 1");
+
+        const auto actual = s.get_legal_moves();
+        CHECK_EQUAL(
+            // clang-format off
+            6 // +KA (SQ_2A, SQ_2A+, SQ_3B, SQ_5D, SQ_3D, SQ_2E)
+            + 4, // +OU (SQ_5A, 4A, 4B, 5C)
             // clang-format on
             actual.size());
     }

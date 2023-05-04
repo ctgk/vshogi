@@ -138,6 +138,16 @@ private:
             && is_valid_promotion(move)
             && !is_my_king_in_check_after_move(src, dst));
     }
+    bool is_promotion_zone(const RankEnum r) const
+    {
+        if (m_turn == BLACK)
+            return r == RANK1;
+        return r == RANK5;
+    }
+    bool is_promotion_zone(const SquareEnum sq) const
+    {
+        return is_promotion_zone(to_rank(sq));
+    }
     void append_legal_moves_by_board_pieces(std::vector<Move>& out) const
     {
         for (auto src : square_array) {
@@ -148,6 +158,11 @@ private:
                 const auto m = Move(dst, src);
                 if (is_legal_board(m))
                     out.emplace_back(m);
+                if (is_promotion_zone(dst)) {
+                    const auto promotion_move = Move(dst, src, true);
+                    if (is_legal_board(promotion_move))
+                        out.emplace_back(promotion_move);
+                }
             }
         }
     }
