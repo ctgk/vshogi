@@ -158,11 +158,11 @@ public:
                 case 0:
                     continue;
                 case 1:
-                    sfen += to_sfen(to_board_piece(c, piece));
+                    sfen += to_sfen_piece(to_board_piece(c, piece));
                     break;
                 default:
                     sfen += static_cast<char>('0' + num);
-                    sfen += to_sfen(to_board_piece(c, piece));
+                    sfen += to_sfen_piece(to_board_piece(c, piece));
                     break;
                 }
             }

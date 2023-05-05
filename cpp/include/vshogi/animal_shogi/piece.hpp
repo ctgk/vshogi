@@ -68,7 +68,7 @@ to_board_piece(const ColorEnum c, const PieceTypeEnum p)
     return static_cast<BoardPieceTypeEnum>((c << 3) | p);
 }
 
-inline char to_sfen(const BoardPieceTypeEnum p)
+inline char to_sfen_piece(const BoardPieceTypeEnum p)
 {
     switch (p) {
     case B_CH:

@@ -2,6 +2,7 @@
 #define VSHOGI_ANIMAL_SHOGI_BOARD_HPP
 
 #include <cstdint>
+#include <string>
 
 #include "vshogi/animal_shogi/bitboard.hpp"
 #include "vshogi/animal_shogi/piece.hpp"
@@ -15,6 +16,25 @@ class Board
 private:
     BoardPieceTypeEnum m_pieces[num_squares];
     const char* set_sfen_rank(const char* const sfen_rank, const RankEnum rank);
+    void append_rank_sfen(const RankEnum rank, std::string& sfen) const
+    {
+        auto begin = m_pieces + num_files * static_cast<int>(rank);
+        const auto end = begin + num_files;
+        int num_void = 0;
+        for (; begin < end; ++begin) {
+            if (*begin == VOID) {
+                ++num_void;
+                continue;
+            }
+            if (num_void > 0) {
+                sfen += static_cast<char>('0' + num_void);
+                num_void = 0;
+            }
+            sfen += to_sfen_piece(*begin);
+        }
+        if (num_void > 0)
+            sfen += static_cast<char>('0' + num_void);
+    }
 
 public:
     Board()
@@ -120,6 +140,18 @@ public:
             num += (to_piece_type(piece) == p);
         }
         return num;
+    }
+    std::string to_sfen() const
+    {
+        auto out = std::string();
+        append_rank_sfen(RANK1, out);
+        out += '/';
+        append_rank_sfen(RANK2, out);
+        out += '/';
+        append_rank_sfen(RANK3, out);
+        out += '/';
+        append_rank_sfen(RANK4, out);
+        return out;
     }
 };
 

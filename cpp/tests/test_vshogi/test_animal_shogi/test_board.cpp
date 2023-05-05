@@ -22,6 +22,15 @@ TEST(animal_shogi_board, set_sfen)
     CHECK_EQUAL('b', *actual);
 }
 
+TEST(animal_shogi_board, to_sfen)
+{
+    {
+        auto b = Board();
+        const auto actual = b.to_sfen();
+        STRCMP_EQUAL("gle/1c1/1C1/ELG", actual.c_str());
+    }
+}
+
 TEST(animal_shogi_board, init)
 {
     //     A  B  C
