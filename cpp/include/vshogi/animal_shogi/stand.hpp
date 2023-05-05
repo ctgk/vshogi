@@ -84,6 +84,10 @@ public:
     {
         return static_cast<bool>(m_value);
     }
+    bool empty() const
+    {
+        return !static_cast<bool>(m_value);
+    }
     Stand& add(const PieceTypeEnum p, const std::uint8_t num = 1U)
     {
         m_value
@@ -140,6 +144,30 @@ public:
         return (c == BLACK) ? m_black : m_white;
     }
     const char* set_sfen_holdings(const char* const sfen_holdings);
+    void append_to_sfen(std::string& sfen) const
+    {
+        if (m_white.empty() && m_black.empty()) {
+            sfen += '-';
+            return;
+        }
+
+        for (auto c : color_array) {
+            for (auto piece : stand_piece_array) {
+                const auto num = operator[](c).count(piece);
+                switch (num) {
+                case 0:
+                    continue;
+                case 1:
+                    sfen += to_sfen(to_board_piece(c, piece));
+                    break;
+                default:
+                    sfen += static_cast<char>('0' + num);
+                    sfen += to_sfen(to_board_piece(c, piece));
+                    break;
+                }
+            }
+        }
+    }
 };
 
 } // namespace vshogi::animal_shogi
