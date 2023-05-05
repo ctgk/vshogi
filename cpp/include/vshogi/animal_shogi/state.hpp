@@ -63,6 +63,15 @@ public:
             static_cast<std::uint8_t>(
                 2 - m_board.count(GI) - turn_stand.count(GI)));
     }
+    std::string to_sfen() const
+    {
+        auto out = m_board.to_sfen();
+        out += ' ';
+        out += m_turn == BLACK ? 'b' : 'w';
+        out += ' ';
+        m_black_white_stands.append_to_sfen(out);
+        return out;
+    }
 
     const Board& get_board() const
     {

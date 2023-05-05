@@ -105,4 +105,19 @@ TEST(animal_shogi_state, hash)
     }
 }
 
+TEST(animal_shogi_state, to_sfen)
+{
+    {
+        const auto actual = State().to_sfen();
+        STRCMP_EQUAL("gle/1c1/1C1/ELG b -", actual.c_str());
+    }
+    {
+        auto s = State();
+        s.apply(Move(SQ_B2, SQ_B3));
+        s.apply(Move(SQ_B2, SQ_B1));
+        const auto actual = s.to_sfen();
+        STRCMP_EQUAL("g1e/1l1/3/ELG b Cc", actual.c_str());
+    }
+}
+
 } // namespace test_vshogi::test_animal_shogi
