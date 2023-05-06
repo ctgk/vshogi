@@ -9,6 +9,14 @@ using namespace vshogi::animal_shogi;
 
 TEST_GROUP(Game){};
 
+TEST(Game, to_sfen)
+{
+    {
+        const auto actual = Game().to_sfen();
+        STRCMP_EQUAL("gle/1c1/1C1/ELG b - 1", actual.c_str());
+    }
+}
+
 TEST(Game, result)
 {
     {

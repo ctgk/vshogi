@@ -42,6 +42,13 @@ public:
     {
         m_record.reserve(128);
     }
+    std::string to_sfen() const
+    {
+        auto out = m_current_state.to_sfen();
+        out += ' ';
+        out += std::to_string(m_record.size() + 1);
+        return out;
+    }
     ColorEnum get_turn() const
     {
         return m_current_state.get_turn();
