@@ -113,6 +113,12 @@ public:
         const auto state_action_hash = m_record[n];
         return state_action_hash & 0x0ffffffffffffffUL;
     }
+    std::string get_sfen_at(const std::size_t n) const
+    {
+        auto s = State();
+        s.set_hash(get_state_hash_at(n));
+        return s.to_sfen() + ' ' + std::to_string(n + 1);
+    }
 
 private:
     bool is_fourfold_repetitions() const

@@ -167,6 +167,7 @@ void export_game(py::module& m)
         .def("is_legal", &as::Game::is_legal)
         .def("apply", &as::Game::apply)
         .def("get_move_at", &as::Game::get_move_at)
+        .def("get_sfen_at", &as::Game::get_sfen_at)
         .def("get_state_hash_at", &as::Game::get_state_hash_at)
         .def("copy", [](const as::Game& self) { return as::Game(self); })
         .def(

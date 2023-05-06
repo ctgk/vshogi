@@ -17,6 +17,21 @@ TEST(Game, to_sfen)
     }
 }
 
+TEST(Game, get_sfen_at)
+{
+    {
+        const auto actual = Game().apply(Move(SQ_B2, SQ_B3)).get_sfen_at(0);
+        STRCMP_EQUAL("gle/1c1/1C1/ELG b - 1", actual.c_str());
+    }
+    {
+        const auto actual = Game()
+                                .apply(Move(SQ_B2, SQ_B3))
+                                .apply(Move(SQ_B2, SQ_B1))
+                                .get_sfen_at(1);
+        STRCMP_EQUAL("gle/1C1/3/ELG w C 2", actual.c_str());
+    }
+}
+
 TEST(Game, result)
 {
     {
