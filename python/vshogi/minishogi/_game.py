@@ -7,13 +7,15 @@ class Game(BaseGame):
 
     Examples
     --------
-    >>> import vshogi.minishogi as shogi
+    >>> from vshogi.minishogi import *
     >>> game = Game()
     >>> game.turn
     Color.BLACK
     >>> game.result
     Result.ONGOING
-    >>> game
+    >>> repr(game)
+    'Game(sfen="rbsgk/4p/5/P4/KGSBR b - 1")'
+    >>> print(game)
     Turn: BLACK
     White: -
         5   4   3   2   1
@@ -29,54 +31,8 @@ class Game(BaseGame):
     E |+OU|+KI|+GI|+KA|+HI|
       *---*---*---*---*---*
     Black: -
-    >>> game.apply(shogi.Move(shogi.SQ_4C, shogi.SQ_2E))
-    Turn: WHITE
-    White: -
-        5   4   3   2   1
-      *---*---*---*---*---*
-    A |-HI|-KA|-GI|-KI|-OU|
-      *---*---*---*---*---*
-    B |   |   |   |   |-FU|
-      *---*---*---*---*---*
-    C |   |+KA|   |   |   |
-      *---*---*---*---*---*
-    D |+FU|   |   |   |   |
-      *---*---*---*---*---*
-    E |+OU|+KI|+GI|   |+HI|
-      *---*---*---*---*---*
-    Black: -
-    >>> game.apply(shogi.Move(shogi.SQ_1C, shogi.SQ_1B))
-    Turn: BLACK
-    White: -
-        5   4   3   2   1
-      *---*---*---*---*---*
-    A |-HI|-KA|-GI|-KI|-OU|
-      *---*---*---*---*---*
-    B |   |   |   |   |   |
-      *---*---*---*---*---*
-    C |   |+KA|   |   |-FU|
-      *---*---*---*---*---*
-    D |+FU|   |   |   |   |
-      *---*---*---*---*---*
-    E |+OU|+KI|+GI|   |+HI|
-      *---*---*---*---*---*
-    Black: -
-    >>> game.apply(shogi.Move(shogi.SQ_2A, shogi.SQ_4C, True))
-    Turn: WHITE
-    White: -
-        5   4   3   2   1
-      *---*---*---*---*---*
-    A |-HI|-KA|-GI|+UM|-OU|
-      *---*---*---*---*---*
-    B |   |   |   |   |   |
-      *---*---*---*---*---*
-    C |   |   |   |   |-FU|
-      *---*---*---*---*---*
-    D |+FU|   |   |   |   |
-      *---*---*---*---*---*
-    E |+OU|+KI|+GI|   |+HI|
-      *---*---*---*---*---*
-    Black: KI
+    >>> game.apply(Move(SQ_4C, SQ_2E))
+    Game(sfen="rbsgk/4p/1B3/P4/KGS1R w - 2")
     """
 
     @classmethod

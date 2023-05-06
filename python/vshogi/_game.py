@@ -176,6 +176,16 @@ class Game(abc.ABC):
         return self._game.get_sfen_at(n)
 
     def __repr__(self) -> str:
+        """Return representation of the object for debugging.
+
+        Returns
+        -------
+        str
+            Representation of the object for debugging.
+        """
+        return f'{self.__class__.__name__}(sfen="{self.to_sfen()}")'
+
+    def __str__(self) -> str:
         """Return string describing current game state.
 
         Returns
