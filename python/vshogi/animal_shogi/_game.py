@@ -2,14 +2,13 @@ import typing as tp
 
 import numpy as np
 
+from vshogi._game import Game as BaseGame
 from vshogi._vshogi import Color
-from vshogi._vshogi import Result
 from vshogi._vshogi.animal_shogi import Board
 from vshogi._vshogi.animal_shogi import BoardPiece
-from vshogi._vshogi.animal_shogi import Move
 from vshogi._vshogi.animal_shogi import Square
 from vshogi._vshogi.animal_shogi import Stand
-from vshogi._vshogi.animal_shogi import _Game
+from vshogi._vshogi.animal_shogi import _Game as _AnimalshogiGame
 
 
 Stand.__str__ = lambda self: ','.join([
@@ -27,7 +26,7 @@ Board.__array__ = lambda self: np.array(
 )
 
 
-class Game:
+class Game(BaseGame):
     """Animal Shogi game.
 
     Examples
@@ -118,31 +117,12 @@ class Game:
         hash_or_sfen : tp.Union[int, str, None], optional
             Initial state of the game, by default None
         """
-        self._game = _Game() if hash_or_sfen is None else _Game(hash_or_sfen)
+        cls_ = self._get_backend_game_class()
+        self._game = cls_() if hash_or_sfen is None else cls_(hash_or_sfen)
 
-    def __array__(self) -> np.ndarray:
-        return np.asarray(self._game)
-
-    @property
-    def turn(self) -> Color:
-        """Return current turn.
-
-        Returns
-        -------
-        Color
-        """
-        return self._game.get_turn()
-
-    @property
-    def board(self) -> Board:
-        """Return current board.
-
-        Returns
-        -------
-        Board
-            Current board.
-        """
-        return self._game.get_board()
+    @classmethod
+    def _get_backend_game_class(cls) -> type:
+        return _AnimalshogiGame
 
     @property
     def black_stand(self) -> dict:
@@ -166,28 +146,6 @@ class Game:
         """
         return self._game.get_stand(Color.WHITE).to_dict()
 
-    @property
-    def result(self) -> Result:
-        """Return result of the game.
-
-        Returns
-        -------
-        Result
-            Result of the game.
-        """
-        return self._game.get_result()
-
-    @property
-    def record_length(self) -> int:
-        """Return length of the game record.
-
-        Returns
-        -------
-        int
-            Length of the game record
-        """
-        return self._game.record_length()
-
     def hash_current_state(self) -> int:
         """Return hash value of the current state.
 
@@ -197,70 +155,6 @@ class Game:
             Hash value of the current state.
         """
         return self._game.hash_current_state()
-
-    def apply(self, move: Move) -> 'Game':
-        """Apply a move.
-
-        Parameters
-        ----------
-        move : Move
-            Move to apply.
-
-        Returns
-        -------
-        Game
-            Game with the move applied.
-        """
-        self._game.apply(move)
-        return self
-
-    def is_legal(self, move: Move) -> bool:
-        """Return true if the move is legal to the current game status.
-
-        Unlike ordinary Shogi, the followings are legal (legal):
-        - Two Chicks in one file.
-        - Checkmate by dropping a Chick.
-        - Dropping a Chick on the final rank (, which will never promote)
-        - Perpetual check.
-
-        cf. https://en.wikipedia.org/wiki/D%C5%8Dbutsu_sh%C5%8Dgi#Play
-
-        Parameters
-        ----------
-        move : Move
-            Input move.
-
-        Returns
-        -------
-        bool
-            True if the move is legal, otherwise false.
-        """
-        return self._game.is_legal(move)
-
-    def get_legal_moves(self) -> tp.List[Move]:
-        """Return list of legal moves to the current state.
-
-        Returns
-        -------
-        tp.List[Move]
-            Legal moves.
-        """
-        return self._game.get_legal_moves()
-
-    def get_move_at(self, n: int) -> Move:
-        """Return n-th move of the game, where n starts from 0.
-
-        Parameters
-        ----------
-        n : int
-            Input index.
-
-        Returns
-        -------
-        Move
-            N-th move of the game.
-        """
-        return self._game.get_move_at(n)
 
     def get_state_hash_at(self, n: int) -> int:
         """Return hash value of n-th state of the game, where n starts from 0.
@@ -276,24 +170,3 @@ class Game:
             N-th state of the game.
         """
         return self._game.get_state_hash_at(n)
-
-    def __repr__(self) -> str:
-        r = self.result
-        return '\n'.join((
-            f'Turn: {self.turn.name}' if r == Result.ONGOING else r.name,
-            f'White: {str(self._game.get_stand(Color.WHITE))}',
-            repr(self.board),
-            f'Black: {str(self._game.get_stand(Color.BLACK))}',
-        ))
-
-    def copy(self) -> 'Game':
-        """Return copy of the game object.
-
-        Returns
-        -------
-        Game
-            Copy of the game object.
-        """
-        g = Game()
-        g._game = self._game.copy()
-        return g
