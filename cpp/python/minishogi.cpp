@@ -149,6 +149,49 @@ void export_game(py::module& m)
         .def("apply", &ms::Game::apply)
         .def("get_move_at", &ms::Game::get_move_at)
         .def("get_sfen_at", &ms::Game::get_sfen_at)
+        .def(
+            "__array__",
+            [](const ms::Game& self) -> py::array_t<float> {
+                constexpr int num_ch = 10 + 10 + 5 + 5;
+                const auto shape = std::vector<py::ssize_t>({1, 5, 5, num_ch});
+                auto out = py::array_t<float>(shape);
+                out[py::make_tuple(py::ellipsis())] = 0.f;
+                const auto turn = self.get_turn();
+                const auto stand_turn = self.get_stand(turn);
+                const auto stand_oppo = self.get_stand(~turn);
+                for (int k = 5; k--;) {
+                    const auto num_turn = static_cast<float>(
+                        stand_turn.count(ms::stand_piece_array[k]));
+                    const auto num_oppo = static_cast<float>(
+                        stand_oppo.count(ms::stand_piece_array[k]));
+                    for (int i = 5; i--;) {
+                        for (int j = 5; j--;) {
+                            *out.mutable_data(0, i, j, k) = num_turn;
+                            *out.mutable_data(0, i, j, k + 15) = num_oppo;
+                        }
+                    }
+                }
+
+                const auto board = self.get_board();
+                for (int i = 5; i--;) {
+                    for (int j = 5; j--;) {
+                        const auto sq = ms::square_array
+                            [(turn == vshogi::BLACK)
+                                 ? (i * 5 + j)
+                                 : (ms::num_squares - 1 - i * 5 - j)];
+                        const auto board_piece = board[sq];
+                        if (board_piece == ms::VOID)
+                            continue;
+                        const auto color = ms::get_color(board_piece);
+                        const auto piece_type = ms::to_piece_type(board_piece);
+                        auto k = static_cast<int>(ms::demote(piece_type));
+                        k += (ms::is_promoted(piece_type)) ? 6 : 0;
+                        k += (turn == color) ? 0 : 15;
+                        *out.mutable_data(0, i, j, k + 5) = 1.f;
+                    }
+                }
+                return out;
+            })
         .def("copy", [](const ms::Game& self) { return ms::Game(self); })
         .def(
             "__deepcopy__",
