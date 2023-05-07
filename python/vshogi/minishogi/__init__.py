@@ -22,15 +22,15 @@ D |+FU|   |   |   |   |
 E |+OU|+KI|+GI|+KA|+HI|
   *---*---*---*---*---*
 Black: -
->>> game.apply(Move(SQ_4C, SQ_2E))
+>>> game.apply(SQ_4C, SQ_2E)
 Game(sfen="rbsgk/4p/1B3/P4/KGS1R w - 2")
->>> game.apply(Move(SQ_1C, SQ_1B))
+>>> game.apply(SQ_1C, SQ_1B)
 Game(sfen="rbsgk/5/1B2p/P4/KGS1R b - 3")
->>> game.apply(Move(SQ_2E, SQ_1E))
+>>> game.apply(SQ_2E, SQ_1E)
 Game(sfen="rbsgk/5/1B2p/P4/KGSR1 w - 4")
->>> game.apply(Move(SQ_1D, SQ_1C))
+>>> game.apply(SQ_1D, SQ_1C)
 Game(sfen="rbsgk/5/1B3/P3p/KGSR1 b - 5")
->>> game.apply(Move(SQ_2A, SQ_2E, promote=True))
+>>> game.apply(SQ_2A, SQ_2E, promote=True)
 Game(sfen="rbs+Rk/5/1B3/P3p/KGS2 w G 6")
 >>> print(game)
 BLACK_WIN

@@ -14,6 +14,11 @@ class Game(abc.ABC):
     def _get_backend_game_class(cls) -> type:
         pass
 
+    @classmethod
+    @abc.abstractmethod
+    def _get_move_class(cls) -> type:
+        pass
+
     def __init__(self, sfen: tp.Optional[str] = None) -> None:
         """Initialize shogi game.
 
@@ -94,35 +99,43 @@ class Game(abc.ABC):
         """
         return self._game.record_length()
 
-    def apply(self, move) -> 'Game':
+    def apply(self, move=None, *arg, **kwargs) -> 'Game':
         """Apply a move.
 
         Parameters
         ----------
         move : Move
             Move to apply to the current state.
+            But if there are multiple arguments, they are treated as parameters
+            of move class initialization and converted automatically.
 
         Returns
         -------
         Game
             Game with the move applied.
         """
+        if arg or kwargs:
+            move = self._get_move_class()(move, *arg, **kwargs)
         self._game.apply(move)
         return self
 
-    def is_legal(self, move) -> bool:
+    def is_legal(self, move=None, *arg, **kwargs) -> bool:
         """Return true if the move is legal at the current state.
 
         Parameters
         ----------
         move : Move
             Input move to check.
+            But if there are multiple arguments, they are treated as parameters
+            of move class initialization and converted automatically.
 
         Returns
         -------
         bool
             True if the move is legal, otherwise false.
         """
+        if arg or kwargs:
+            move = self._get_move_class()(move, *arg, **kwargs)
         return self._game.is_legal(move)
 
     def get_legal_moves(self) -> list:
