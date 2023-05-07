@@ -100,6 +100,27 @@ TEST(state, is_legal)
         CHECK_FALSE(s.is_legal(Move(SQ_5A, SQ_4B)));
         CHECK_FALSE(s.is_legal(Move(SQ_5B, SQ_4B))); // discovered check
     }
+    {
+        // Turn: BLACK
+        // White: -
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |-HI|-KA|-GI|+KA|-OU|
+        //   *---*---*---*---*---*
+        // B |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // C |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // D |+FU|   |   |   |-FU|
+        //   *---*---*---*---*---*
+        // E |+OU|+KI|+GI|   |+HI|
+        //   *---*---*---*---*---*
+        // Black: KI
+        auto s = State();
+        s.set_sfen("rbsBk/5/5/P3p/KGS1R b G 5");
+        CHECK_TRUE(s.is_legal(Move(SQ_1B, SQ_2A, true)));
+        CHECK_FALSE(s.is_legal(Move(SQ_1D, SQ_1E, true)));
+    }
 }
 
 TEST(state, get_legal_moves)

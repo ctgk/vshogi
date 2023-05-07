@@ -119,9 +119,10 @@ private:
         if (!is_promotable(p))
             return false;
 
-        if (m_turn == BLACK)
-            return to_rank(move.destination()) == RANK1;
-        return to_rank(move.destination()) == RANK5;
+        const auto dst = to_rank(move.destination());
+        const auto src = to_rank(to_square(move.source()));
+        const auto r = (m_turn == BLACK) ? RANK1 : RANK5;
+        return (dst == r) || (src == r);
     }
 
     bool is_legal_board(const Move move) const
