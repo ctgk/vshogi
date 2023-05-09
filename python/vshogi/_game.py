@@ -148,15 +148,20 @@ class Game(abc.ABC):
         """
         return self._game.get_legal_moves()
 
-    def to_sfen(self) -> str:
+    def to_sfen(self, include_move_count: bool = True) -> str:
         """Return current game state in SFEN.
+
+        Parameters
+        ----------
+        include_move_count : bool, optional
+            Include move count after pieces in hand if True.
 
         Returns
         -------
         str
             Current game state in SFEN.
         """
-        return self._game.to_sfen()
+        return self._game.to_sfen(include_move_count)
 
     def get_move_at(self, n: int):
         """Return n-th move applied to the game, where n starts from 0.

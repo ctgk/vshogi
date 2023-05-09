@@ -49,10 +49,13 @@ public:
     {
         return m_result;
     }
-    std::string to_sfen() const
+    std::string to_sfen(const bool include_move_count = true) const
     {
-        return m_current_state.to_sfen() + " "
-               + std::to_string(m_record.size() + 1);
+        if (include_move_count)
+            return m_current_state.to_sfen() + " "
+                   + std::to_string(m_record.size() + 1);
+        else
+            return m_current_state.to_sfen();
     }
     bool is_legal(const Move move) const
     {
