@@ -108,6 +108,15 @@ class MonteCarloTreeSearcher:
     def __init__(
         self,
         policy_value_func: tp.Callable[['Game'], tp.Tuple[Policy, Value]],
+        num_explorations: int = 100,
+        coeff_puct: float = 1.,
+        depth_to_add_dirichlet_noise: int = 1,
+        select_move_by: tp.Literal[
+            'visit_counts', 'q_values',
+        ] = 'visit_counts',
+        temperature_for_move_selection: tp.Union[
+            float, tp.Literal['max'],
+        ] = 'max',
     ) -> None:
         """Initialize MCT searcher.
 
@@ -115,10 +124,29 @@ class MonteCarloTreeSearcher:
         ----------
         policy_value_func : tp.Callable[[Game], tp.Tuple[Policy, Value]]
             Function to return policy and value given a game.
+        num_explorations : int, optional
+            Default number of times to explore, by default 100
+        coeff_puct : float, optional
+            Default coefficient used to compute PUCT score. Higher the value
+            is, the more weight on action policy than state value.
+        depth_to_add_dirichlet_noise : int, optional
+            Default depth to add dirichlet noise for exploration, by default 1.
+        select_move_by : tp.Literal['visit_counts', 'q_values']
+            Default strategy to select best move by. Default is 'visit_counts'.
+        temperature_for_move_selection : tp.Union[float, tp.Literal['max']]
+            Temperature parameter for the random selection, by default 'max'
+            which returns a move with maximum index determined at
+            `select_move_by`.
         """
         self._policy_value_func = policy_value_func
         self._root: _Node = None
         self._pv_cache: tp.Dict[tp.Hashable, tp.Tuple[Policy, Value]] = {}
+
+        self._num_explorations = num_explorations
+        self._coeff_puct = coeff_puct
+        self._depth_to_add_dirichlet_noise = depth_to_add_dirichlet_noise
+        self._select_move_by = select_move_by
+        self._temperature_for_move_selection = temperature_for_move_selection
 
     def _get_policy_value(self, game: 'Game') -> tp.Tuple[Policy, Value]:
         hash_value = game.hash_current_state()
@@ -140,22 +168,28 @@ class MonteCarloTreeSearcher:
 
     def explore(
         self,
-        n: int = 1,
-        c_puct: float = 1.,
-        dirichlet_noise_depth: int = 1,
+        n: tp.Optional[int] = None,
+        c_puct: tp.Optional[float] = None,
+        dirichlet_noise_depth: tp.Optional[int] = None,
     ):
         """Explore from root node for n times.
 
         Parameters
         ----------
         n : int, optional
-            Number of times to explore, by default 1
+            Number of times to explore, by default None
         c_puct : float, optional
             Coefficient used to compute PUCT score. Higher the value is,
             the more weight on action policy than state value.
         dirichlet_noise_depth : int, optional
-            Depth to add dirichlet noise for exploration, by default 1
+            Depth to add dirichlet noise for exploration, by default None
         """
+        if n is None:
+            n = self._num_explorations
+        if c_puct is None:
+            c_puct = self._coeff_puct
+        if dirichlet_noise_depth is None:
+            dirichlet_noise_depth = self._depth_to_add_dirichlet_noise
         for _ in range(n):
             self._root.explore(c_puct, dirichlet_noise_depth)
 
@@ -193,16 +227,17 @@ class MonteCarloTreeSearcher:
 
     def select(
         self,
-        by: str = 'visit_counts',
-        temperature: float = None,
+        by: tp.Optional[tp.Literal['visit_counts', 'q_values']] = None,
+        temperature: tp.Union[float, tp.Literal['max'], None] = None,
     ) -> 'Move':
         """Return selected action based on visit counts.
 
         Parameters
         ----------
-        by : str, optional
-            Index to refer for selection.
-        temperature : float, optional
+        by : tp.Optional[tp.Literal['visit_counts', 'q_values']]
+            Strategy to select a best move by. Default is None, which refers to
+            default strategy set at initialization of the object.
+        temperature : tp.Union[float, tp.Literal['max'], None], optional
             Temperature parameter for the random selection, by default None
 
         Returns
@@ -210,10 +245,17 @@ class MonteCarloTreeSearcher:
         Move
             Selected action.
         """
+        if by is None:
+            by = self._select_move_by
+        if temperature is None:
+            temperature = self._temperature_for_move_selection
+
         d = getattr(self, f'get_{by}')()
         moves = list(d.keys())
         v = np.array(list(d.values()))
-        if temperature is None:
+
+        if temperature == 'max':
             return moves[np.argmax(v)]
-        probas = sp.softmax(np.log(v + 1e-3) / temperature)
-        return np.random.choice(moves, p=probas)
+        else:
+            probas = sp.softmax(np.log(v + 1e-3) / temperature)
+            return np.random.choice(moves, p=probas)
