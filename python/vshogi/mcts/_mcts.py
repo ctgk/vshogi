@@ -149,11 +149,11 @@ class MonteCarloTreeSearcher:
         self._temperature_for_move_selection = temperature_for_move_selection
 
     def _get_policy_value(self, game: 'Game') -> tp.Tuple[Policy, Value]:
-        hash_value = game.hash_current_state()
-        if hash_value in self._pv_cache:
-            return self._pv_cache[hash_value]
+        sfen = game.to_sfen(include_move_count=False)
+        if sfen in self._pv_cache:
+            return self._pv_cache[sfen]
         pv = self._policy_value_func(game)
-        self._pv_cache[hash_value] = pv
+        self._pv_cache[sfen] = pv
         return pv
 
     def set_root(self, game: 'Game'):
