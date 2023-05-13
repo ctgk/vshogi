@@ -48,7 +48,16 @@ inline constexpr bool is_drop(const MoveSourceEnum src)
 class Move
 {
 private:
-    const std::uint16_t m_value;
+    /**
+    * @brief 16-bit integer representing a move in Minishogi game.
+    * @details
+    *       ________ ___*****       destination square (25-possibility)
+    *       ________ __*_____       Promotion flag (2-possibility)
+    *       ___***** ________       source square (30-possibility = 25-square + 5-drop)
+    * (MSB) xxxxxxxx xxxxxxxx (LSB)
+     *
+     */
+    std::uint16_t m_value;
 
 public:
     Move(const std::uint16_t hashed_value)

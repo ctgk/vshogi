@@ -202,4 +202,68 @@ TEST(state, get_legal_moves)
     }
 }
 
+TEST(state, get_valid_move_to)
+{
+    {
+        auto s = State();
+        // Turn: BLACK
+        // White: -
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |-HI|-KA|-GI|-KI|-OU|
+        //   *---*---*---*---*---*
+        // B |   |   |   |   |-FU|
+        //   *---*---*---*---*---*
+        // C |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // D |+FU|   |   |   |   |
+        //   *---*---*---*---*---*
+        // E |+OU|+KI|+GI|+KA|+HI|
+        //   *---*---*---*---*---*
+        // Black: -
+        const auto actual = s.get_valid_move_to(SQ_1B, vshogi::DIR_S);
+        CHECK_TRUE(Move(SQ_1B, SQ_1E) == actual);
+    }
+    {
+        auto s = State();
+        // Turn: BLACK
+        // White: -
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |-HI|-KA|-GI|-KI|-OU|
+        //   *---*---*---*---*---*
+        // B |   |   |   |   |-FU|
+        //   *---*---*---*---*---*
+        // C |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // D |+FU|   |   |   |   |
+        //   *---*---*---*---*---*
+        // E |+OU|+KI|+GI|+KA|+HI|
+        //   *---*---*---*---*---*
+        // Black: -
+        const auto actual = s.get_valid_move_to(SQ_1B, vshogi::DIR_S);
+        CHECK_TRUE(Move(SQ_1B, SQ_1E) == actual);
+    }
+    {
+        auto s = State();
+        // Turn: BLACK
+        // White: -
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |-HI|-KA|-GI|-KI|-OU|
+        //   *---*---*---*---*---*
+        // B |   |   |   |   |-FU|
+        //   *---*---*---*---*---*
+        // C |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // D |+FU|   |   |   |   |
+        //   *---*---*---*---*---*
+        // E |+OU|+KI|+GI|+KA|+HI|
+        //   *---*---*---*---*---*
+        // Black: -
+        const auto actual = s.get_valid_move_to(SQ_3C, vshogi::DIR_N);
+        CHECK_FALSE(s.is_legal(actual));
+    }
+}
+
 } // namespace test_vshogi::test_minishogi

@@ -3,7 +3,10 @@ import typing as tp
 
 import numpy as np
 
-from vshogi._vshogi import Color, Result
+from vshogi._vshogi import Color, Direction, Result
+
+
+Move = tp.TypeVar('Move')
 
 
 class Game(abc.ABC):
@@ -138,12 +141,12 @@ class Game(abc.ABC):
             move = self._get_move_class()(move, *arg, **kwargs)
         return self._game.is_legal(move)
 
-    def get_legal_moves(self) -> list:
+    def get_legal_moves(self) -> tp.List[Move]:
         """Return list of legal moves at the current state.
 
         Returns
         -------
-        list
+        tp.List[Move]
             List of legal moves.
         """
         return self._game.get_legal_moves()
@@ -192,6 +195,34 @@ class Game(abc.ABC):
             N-th game state in SFEN.
         """
         return self._game.get_sfen_at(n)
+
+    def get_valid_move_to(
+        self,
+        sq,
+        direction: Direction,
+        promote: bool = False,
+    ) -> tp.Union[Move, None]:
+        """Return a valid board move to the square from the given direction.
+
+        Parameters
+        ----------
+        sq : Square
+            Destination square of the move.
+        direction : Direction
+            Direction to move a piece from.
+        promote : bool, optional
+            Promote the piece if true, by default False.
+
+        Returns
+        -------
+        tp.Union[Move, None]
+            A valid board move or None if no valid move found.
+        """
+        m = self._game.get_valid_move_to(sq, direction, promote)
+        if self.is_legal(m):
+            return m
+        else:
+            return None
 
     def __repr__(self) -> str:
         """Return representation of the object for debugging.

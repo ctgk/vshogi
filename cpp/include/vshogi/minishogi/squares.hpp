@@ -46,12 +46,6 @@ constexpr int direction_to_delta(const DirectionEnum d)
     return table[d];
 }
 
-inline SquareEnum shift(const SquareEnum sq, const DirectionEnum d)
-{
-    return static_cast<SquareEnum>(
-        static_cast<int>(sq) + direction_to_delta(d));
-}
-
 enum RankEnum
 {
     RANK1,
@@ -90,6 +84,22 @@ inline constexpr FileEnum to_file(const SquareEnum sq)
 inline constexpr bool is_edge(const FileEnum f)
 {
     return (f == FILE1) || (f == FILE5);
+}
+
+inline SquareEnum shift(const SquareEnum sq, const DirectionEnum d)
+{
+    const auto r = to_rank(sq);
+    const auto f = to_file(sq);
+    if (r == RANK1 && (d == DIR_NW || d == DIR_N || d == DIR_NE))
+        return sq;
+    if (r == RANK5 && (d == DIR_SW || d == DIR_S || d == DIR_SE))
+        return sq;
+    if (f == FILE1 && (d == DIR_NE || d == DIR_E || d == DIR_SE))
+        return sq;
+    if (f == FILE5 && (d == DIR_NW || d == DIR_W || d == DIR_SW))
+        return sq;
+    return static_cast<SquareEnum>(
+        static_cast<int>(sq) + direction_to_delta(d));
 }
 
 } // namespace vshogi::minishogi

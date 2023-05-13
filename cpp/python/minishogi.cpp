@@ -150,6 +150,7 @@ void export_game(py::module& m)
         .def("apply", &ms::Game::apply)
         .def("get_move_at", &ms::Game::get_move_at)
         .def("get_sfen_at", &ms::Game::get_sfen_at)
+        .def("get_valid_move_to", &ms::Game::get_valid_move_to)
         .def(
             "__array__",
             [](const ms::Game& self) -> py::array_t<float> {

@@ -86,6 +86,13 @@ public:
     {
         return m_record[n].first;
     }
+    Move get_valid_move_to(
+        const SquareEnum dst,
+        const DirectionEnum dir,
+        const bool promote = false) const
+    {
+        return m_current_state.get_valid_move_to(dst, dir, promote);
+    }
 
 private:
     void update_result()

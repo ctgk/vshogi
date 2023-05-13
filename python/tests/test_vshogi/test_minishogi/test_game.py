@@ -18,5 +18,27 @@ def test_array():
     assert np.allclose(actual[0, 3, 3, 8], 0)  # not white's rook
 
 
+def test_get_valid_move_to():
+    # Turn: BLACK
+    # White: -
+    #     5   4   3   2   1
+    #   *---*---*---*---*---*
+    # A |   |-KA|-GI|-KI|-OU|
+    #   *---*---*---*---*---*
+    # B |-HI|   |   |   |-FU|
+    #   *---*---*---*---*---*
+    # C |   |   |   |   |   |
+    #   *---*---*---*---*---*
+    # D |+FU|   |   |   |+HI|
+    #   *---*---*---*---*---*
+    # E |+OU|+KI|+GI|+KA|   |
+    #   *---*---*---*---*---*
+    # Black: -
+    game = shogi.Game(sfen="1bsgk/r3p/5/P3R/KGSB1 b -")
+    assert game.get_valid_move_to(shogi.SQ_1B, shogi.SOUTH) == shogi.Move(
+        shogi.SQ_1B, shogi.SQ_1D)
+    assert game.get_valid_move_to(shogi.SQ_1B, shogi.SOUTH, True) is None
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
