@@ -1,6 +1,8 @@
 #ifndef VSHOGI_MINISHOGI_SQUARES_HPP
 #define VSHOGI_MINISHOGI_SQUARES_HPP
 
+#include "vshogi/direction.hpp"
+
 namespace vshogi::minishogi
 {
 
@@ -38,20 +40,16 @@ constexpr SquareEnum square_array[] = {
     SQ_2D, SQ_1D, SQ_5E, SQ_4E, SQ_3E, SQ_2E, SQ_1E,
 };
 
-enum DirectionEnum
+constexpr int direction_to_delta(const DirectionEnum d)
 {
-    // clang-format off
-    DIR_NW = 0,  DIR_N = 1, DIR_NE = 2,
-     DIR_W = 3,              DIR_E = 4,
-    DIR_SW = 5,  DIR_S = 6, DIR_SE = 7,
-    // clang-format on
-};
-constexpr int square_value_diffs[] = {-6, -5, -4, -1, 1, 4, 5, 6};
+    constexpr int table[] = {-6, -5, -4, -1, 1, 4, 5, 6};
+    return table[d];
+}
 
 inline SquareEnum shift(const SquareEnum sq, const DirectionEnum d)
 {
     return static_cast<SquareEnum>(
-        static_cast<int>(sq) + square_value_diffs[d]);
+        static_cast<int>(sq) + direction_to_delta(d));
 }
 
 enum RankEnum

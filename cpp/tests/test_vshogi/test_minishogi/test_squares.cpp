@@ -11,8 +11,8 @@ TEST_GROUP(squares){};
 
 TEST(squares, shift)
 {
-    CHECK_EQUAL(SQ_1A, shift(SQ_1B, DIR_N));
-    CHECK_EQUAL(SQ_1C, shift(SQ_1B, DIR_S));
+    CHECK_EQUAL(SQ_1A, shift(SQ_1B, vshogi::DIR_N));
+    CHECK_EQUAL(SQ_1C, shift(SQ_1B, vshogi::DIR_S));
 }
 
 TEST(squares, to_rank)

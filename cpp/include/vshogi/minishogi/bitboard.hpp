@@ -92,7 +92,7 @@ public:
             bb_f1234, ~BitBoard(0), bb_f2345,
             // clang-format on
         };
-        return (*this & mask[D]) << square_value_diffs[D];
+        return (*this & mask[D]) << direction_to_delta(D);
     }
     constexpr BitBoard rotate() const
     {
