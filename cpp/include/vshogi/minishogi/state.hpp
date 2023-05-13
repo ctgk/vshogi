@@ -253,20 +253,23 @@ public:
         return m_board.to_sfen() + " " + to_sfen_turn() + " "
                + m_stands.to_sfen_holdings();
     }
-    Move get_valid_move_to(
+    Move get_legal_move_to(
         const SquareEnum dst,
         const DirectionEnum dir,
         const bool promote = false) const
     {
         SquareEnum src = dst;
-        Move m = Move(dst, dst, false);
         for (int i = 4; i--;) {
+            src = shift(src, dir);
+            const auto m = Move(dst, src, promote);
             if (is_legal(m))
                 return m;
-            src = shift(src, dir);
-            m = Move(dst, src, promote);
         }
         return Move(dst, dst, false);
+    }
+    Move get_legal_move_to(const SquareEnum dst, const PieceTypeEnum p) const
+    {
+        return Move(dst, p);
     }
 };
 

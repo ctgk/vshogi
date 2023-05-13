@@ -196,29 +196,32 @@ class Game(abc.ABC):
         """
         return self._game.get_sfen_at(n)
 
-    def get_valid_move_to(
+    def get_legal_move_to(
         self,
         sq,
-        direction: Direction,
+        direction_or_piece: tp.Union[Direction, tp.TypeVar('Piece')],
         promote: bool = False,
     ) -> tp.Union[Move, None]:
-        """Return a valid board move to the square from the given direction.
+        """Return a legal move to the square from the given direction or piece.
 
         Parameters
         ----------
         sq : Square
             Destination square of the move.
-        direction : Direction
-            Direction to move a piece from.
+        direction_or_piece : tp.Union[Direction, tp.TypeVar('Piece')]
+            Direction to move a piece from or a captured piece.
         promote : bool, optional
             Promote the piece if true, by default False.
 
         Returns
         -------
         tp.Union[Move, None]
-            A valid board move or None if no valid move found.
+            A legal move or None if no matching legal move found.
         """
-        m = self._game.get_valid_move_to(sq, direction, promote)
+        if isinstance(direction_or_piece, Direction):
+            m = self._game.get_legal_move_to(sq, direction_or_piece, promote)
+        else:
+            m = self._game.get_legal_move_to(sq, direction_or_piece)
         if self.is_legal(m):
             return m
         else:

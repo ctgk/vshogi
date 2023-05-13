@@ -202,7 +202,7 @@ TEST(state, get_legal_moves)
     }
 }
 
-TEST(state, get_valid_move_to)
+TEST(state, get_legal_move_to)
 {
     {
         auto s = State();
@@ -221,7 +221,7 @@ TEST(state, get_valid_move_to)
         // E |+OU|+KI|+GI|+KA|+HI|
         //   *---*---*---*---*---*
         // Black: -
-        const auto actual = s.get_valid_move_to(SQ_1B, vshogi::DIR_S);
+        const auto actual = s.get_legal_move_to(SQ_1B, vshogi::DIR_S);
         CHECK_TRUE(Move(SQ_1B, SQ_1E) == actual);
     }
     {
@@ -241,7 +241,7 @@ TEST(state, get_valid_move_to)
         // E |+OU|+KI|+GI|+KA|+HI|
         //   *---*---*---*---*---*
         // Black: -
-        const auto actual = s.get_valid_move_to(SQ_1B, vshogi::DIR_S);
+        const auto actual = s.get_legal_move_to(SQ_1B, vshogi::DIR_S);
         CHECK_TRUE(Move(SQ_1B, SQ_1E) == actual);
     }
     {
@@ -261,7 +261,7 @@ TEST(state, get_valid_move_to)
         // E |+OU|+KI|+GI|+KA|+HI|
         //   *---*---*---*---*---*
         // Black: -
-        const auto actual = s.get_valid_move_to(SQ_3C, vshogi::DIR_N);
+        const auto actual = s.get_legal_move_to(SQ_3C, vshogi::DIR_N);
         CHECK_FALSE(s.is_legal(actual));
     }
 }
