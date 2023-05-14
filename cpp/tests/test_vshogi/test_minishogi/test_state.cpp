@@ -121,6 +121,26 @@ TEST(state, is_legal)
         CHECK_TRUE(s.is_legal(Move(SQ_1B, SQ_2A, true)));
         CHECK_FALSE(s.is_legal(Move(SQ_1D, SQ_1E, true)));
     }
+    {
+        auto s = State();
+        // Turn: WHITE
+        // White: -
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |+UM|   |-GI|   |   |
+        //   *---*---*---*---*---*
+        // B |+KA|   |-KI|   |-FU|
+        //   *---*---*---*---*---*
+        // C |   |   |   |-OU|   |
+        //   *---*---*---*---*---*
+        // D |+FU|+GI|   |+HI|   |
+        //   *---*---*---*---*---*
+        // E |+OU|+KI|   |   |+HI|
+        //   *---*---*---*---*---*
+        // Black: -
+        s.set_sfen("+B1s2/B1g1p/3k1/PS1R1/KG2R w - 10");
+        CHECK_FALSE(s.is_legal(Move(SQ_2D, SQ_3A)));
+    }
 }
 
 TEST(state, get_legal_moves)
@@ -199,6 +219,27 @@ TEST(state, get_legal_moves)
             + 4, // +OU (SQ_5A, 4A, 4B, 5C)
             // clang-format on
             actual.size());
+    }
+    {
+        auto s = State();
+        // Turn: WHITE
+        // White: -
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |+UM|   |-GI|   |   |
+        //   *---*---*---*---*---*
+        // B |+KA|   |-KI|   |-FU|
+        //   *---*---*---*---*---*
+        // C |   |   |   |-OU|   |
+        //   *---*---*---*---*---*
+        // D |+FU|+GI|   |+HI|   |
+        //   *---*---*---*---*---*
+        // E |+OU|+KI|   |   |+HI|
+        //   *---*---*---*---*---*
+        // Black: -
+        s.set_sfen("+B1s2/B1g1p/3k1/PS1R1/KG2R w - 10");
+        const auto actual = s.get_legal_moves();
+        CHECK_EQUAL(0, actual.size());
     }
 }
 

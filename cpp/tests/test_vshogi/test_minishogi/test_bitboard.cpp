@@ -42,6 +42,10 @@ TEST(bitboard, gi)
         CHECK_TRUE(actual.is_one(SQ_1D));
         CHECK_TRUE(actual.is_one(SQ_3D));
     }
+    {
+        const auto actual = get_attacks_by(W_GI, SQ_3A);
+        CHECK_FALSE(actual.is_one(SQ_2D));
+    }
 }
 
 TEST(bitboard, ki)
