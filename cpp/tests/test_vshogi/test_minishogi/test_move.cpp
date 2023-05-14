@@ -47,4 +47,15 @@ TEST(move, rotate)
     CHECK_TRUE(Move(SQ_3A, MS_GI, false) == Move(SQ_3E, MS_GI, false).rotate());
 }
 
+TEST(move, to_dlshogi_policy_index)
+{
+    CHECK_EQUAL(
+        12 * (8 * 2 + 5) + 7, Move(SQ_3C, SQ_1E).to_dlshogi_policy_index());
+    CHECK_EQUAL(
+        16 * (8 * 2 + 5) + 2 + 8,
+        Move(SQ_4D, SQ_1A, true).to_dlshogi_policy_index());
+    CHECK_EQUAL(
+        6 * (8 * 2 + 5) + 8 * 2 + 1, Move(SQ_4B, GI).to_dlshogi_policy_index());
+}
+
 } // namespace test_vshogi::test_minishogi

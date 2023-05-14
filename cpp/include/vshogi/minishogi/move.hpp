@@ -59,6 +59,26 @@ private:
      */
     std::uint16_t m_value;
 
+    int to_dlshogi_source_index() const
+    {
+        if (is_drop())
+            return 8 * 2 + (static_cast<int>(source()) - num_squares);
+        const auto dst = destination();
+        const auto src = to_square(source());
+        const auto promotion = promote();
+        constexpr DirectionEnum directions[]
+            = {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE};
+        for (auto d : directions) {
+            SquareEnum sq = dst;
+            for (int i = 4; i--;) {
+                sq = shift(sq, d);
+                if (sq == src)
+                    return static_cast<int>(d) + (promotion ? 8 : 0);
+            }
+        }
+        return 0;
+    }
+
 public:
     Move(const std::uint16_t hashed_value)
         : m_value(hashed_value & 0b0001111100111111)
@@ -119,6 +139,13 @@ public:
                         : static_cast<MoveSourceEnum>(
                             num_squares - 1 - static_cast<int>(source()));
         return Move(dst_rotated, src_rotated, promote());
+    }
+    int to_dlshogi_policy_index() const
+    {
+        constexpr int num_policies_at_each_square = 8 * 2 + 5;
+        const auto dst_index = static_cast<int>(destination());
+        const auto src_index = to_dlshogi_source_index();
+        return dst_index * num_policies_at_each_square + src_index;
     }
 };
 

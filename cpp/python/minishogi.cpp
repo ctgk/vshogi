@@ -72,6 +72,7 @@ void export_move(py::module& m)
             })
         .def("is_drop", &ms::Move::is_drop)
         .def("rotate", &ms::Move::rotate)
+        .def("_to_dlshogi_policy_index", &ms::Move::to_dlshogi_policy_index)
         .def("__hash__", &ms::Move::hash)
         .def("__eq__", &ms::Move::operator==)
         .def("__ne__", &ms::Move::operator!=);
