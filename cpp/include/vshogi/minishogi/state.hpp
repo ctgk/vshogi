@@ -256,8 +256,15 @@ public:
     Move get_legal_move_to(
         const SquareEnum dst,
         const DirectionEnum dir,
-        const bool promote = false) const
+        const bool promote = false,
+        const bool is_white_view = false) const
     {
+        if (is_white_view)
+            return get_legal_move_to(
+                static_cast<SquareEnum>(
+                    num_squares - 1 - static_cast<int>(dst)),
+                static_cast<DirectionEnum>(8 - 1 - static_cast<int>(dir)),
+                promote);
         SquareEnum src = dst;
         for (int i = 4; i--;) {
             src = shift(src, dir);
@@ -267,8 +274,16 @@ public:
         }
         return Move(dst, dst, false);
     }
-    Move get_legal_move_to(const SquareEnum dst, const PieceTypeEnum p) const
+    Move get_legal_move_to(
+        const SquareEnum dst,
+        const PieceTypeEnum p,
+        const bool is_white_view = false) const
     {
+        if (is_white_view)
+            return Move(
+                static_cast<SquareEnum>(
+                    num_squares - 1 - static_cast<int>(dst)),
+                p);
         return Move(dst, p);
     }
 };

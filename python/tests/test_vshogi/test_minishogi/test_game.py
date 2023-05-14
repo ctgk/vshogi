@@ -18,7 +18,7 @@ def test_array():
     assert np.allclose(actual[0, 3, 3, 8], 0)  # not white's rook
 
 
-def test_get_valid_move_to():
+def test_get_legal_move_to():
     # Turn: BLACK
     # White: -
     #     5   4   3   2   1
@@ -37,6 +37,9 @@ def test_get_valid_move_to():
     game = shogi.Game(sfen="1bsgk/r3p/5/P3R/KGSB1 b -")
     assert game.get_legal_move_to(shogi.SQ_1B, shogi.SOUTH) == shogi.Move(
         shogi.SQ_1B, shogi.SQ_1D)
+    assert game.get_legal_move_to(
+        shogi.SQ_5D, shogi.NORTH, promote=False, is_white_view=True,
+    ) == shogi.Move(shogi.SQ_1B, shogi.SQ_1D)
     assert game.get_legal_move_to(shogi.SQ_1B, shogi.SOUTH, True) is None
     assert game.get_legal_move_to(shogi.SQ_5A, shogi.FU) is None
 

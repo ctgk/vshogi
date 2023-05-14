@@ -155,11 +155,14 @@ void export_game(py::module& m)
             py::overload_cast<
                 const ms::SquareEnum,
                 const vshogi::DirectionEnum,
+                const bool,
                 const bool>(&ms::Game::get_legal_move_to, py::const_))
         .def(
             "get_legal_move_to",
-            py::overload_cast<const ms::SquareEnum, const ms::PieceTypeEnum>(
-                &ms::Game::get_legal_move_to, py::const_))
+            py::overload_cast<
+                const ms::SquareEnum,
+                const ms::PieceTypeEnum,
+                const bool>(&ms::Game::get_legal_move_to, py::const_))
         .def(
             "__array__",
             [](const ms::Game& self) -> py::array_t<float> {
