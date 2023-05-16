@@ -305,6 +305,27 @@ TEST(state, get_legal_move_to)
         const auto actual = s.get_legal_move_to(SQ_3C, vshogi::DIR_N);
         CHECK_FALSE(s.is_legal(actual));
     }
+    {
+        auto s = State();
+        // Turn: BLACK
+        // White: KA
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |-HI|   |   |-KI|-OU|
+        //   *---*---*---*---*---*
+        // B |-KA|   |   |   |-FU|
+        //   *---*---*---*---*---*
+        // C |   |+OU|   |   |   |
+        //   *---*---*---*---*---*
+        // D |+FU|   |   |   |   |
+        //   *---*---*---*---*---*
+        // E |   |+KI|+GI|   |+HI|
+        //   *---*---*---*---*---*
+        // Black: GI
+        s.set_sfen("r2gk/b3p/1K3/P4/1GS1R b Sb 2");
+        const auto actual = s.is_legal(Move(SQ_1D, GI));
+        CHECK_FALSE(actual);
+    }
 }
 
 } // namespace test_vshogi::test_minishogi

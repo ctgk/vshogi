@@ -91,18 +91,22 @@ private:
         return (
             has_piece_on_turn_player_stand(p) && is_empty_square(dst)
             && has_movable_square_after_drop(p, dst) && is_valid_promotion(move)
-            && (!is_checkmate_by_pawn_drop(p, dst)));
+            && (!is_checkmate_by_pawn_drop(p, dst))
+            && (!is_my_king_in_check_after_move(move)));
     }
     bool is_empty_or_opponent_square(const SquareEnum sq) const
     {
         const auto p = m_board[sq];
         return (p == VOID) || (get_color(p) == (~m_turn));
     }
-    bool is_my_king_in_check_after_move(
-        const SquareEnum src, const SquareEnum dst) const
+    bool is_my_king_in_check_after_move(const Move m) const
     {
+        const auto dst = m.destination();
         auto b = m_board;
-        {
+        if (m.is_drop()) {
+            b[dst] = to_board_piece(m_turn, to_piece_type(m.source()));
+        } else {
+            const auto src = to_square(m.source());
             const auto tmp = b[src];
             b[src] = VOID;
             b[dst] = tmp;
@@ -137,7 +141,7 @@ private:
                    moving, src, m_piece_masks[m_turn] | m_piece_masks[~m_turn])
                    .is_one(dst) // VOID has no 1 in it.
             && is_valid_promotion(move)
-            && !is_my_king_in_check_after_move(src, dst));
+            && !is_my_king_in_check_after_move(move));
     }
     bool is_promotion_zone(const RankEnum r) const
     {
