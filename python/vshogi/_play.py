@@ -7,6 +7,7 @@ def play_game(
     game: Game,
     player_black: MonteCarloTreeSearcher,
     player_white: MonteCarloTreeSearcher,
+    max_moves: int = 400,
 ) -> Game:
     """Make two players play the game until an end.
 
@@ -18,13 +19,16 @@ def play_game(
         First player
     player_white : MonteCarloTreeSearcher
         Second player
+    max_moves : int
+        Maximum number of moves to apply to the game.
+        If it reaches the value, return the game even if it is ongoing.
 
     Returns
     -------
     Game
         The game the two players played.
     """
-    while True:
+    for _ in range(max_moves):
         if game.result != Result.ONGOING:
             break
         player = player_black if game.turn == Color.BLACK else player_white
