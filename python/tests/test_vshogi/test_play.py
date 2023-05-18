@@ -3,7 +3,7 @@ import pytest
 
 import vshogi.minishogi as shogi
 from vshogi import play_game
-from vshogi.mcts import MonteCarloTreeSearcher
+from vshogi.engine import MonteCarloTreeSearcher
 
 
 def test_play_game():

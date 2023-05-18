@@ -4,6 +4,8 @@ from copy import deepcopy
 import numpy as np
 import scipy.special as sp
 
+from vshogi._game import Game
+
 
 Policy = tp.Dict['Move', float]
 Value = float
@@ -13,8 +15,8 @@ class _Node:
 
     def __init__(
         self,
-        game: 'Game',
-        policy_value_func: tp.Callable[['Game'], tp.Tuple[Policy, Value]],
+        game: Game,
+        policy_value_func: tp.Callable[[Game], tp.Tuple[Policy, Value]],
         parent: '_Node' = None,
     ) -> None:
         self._game = game
@@ -156,7 +158,7 @@ class MonteCarloTreeSearcher:
         self._pv_cache[sfen] = pv
         return pv
 
-    def set_root(self, game: 'Game'):
+    def set_root(self, game: Game):
         """Set root node.
 
         Parameters
@@ -201,13 +203,13 @@ class MonteCarloTreeSearcher:
         tp.Dict[Move, float]
             Q value of each action.
         """
-        return {
-            m: (
-                -self._root._children[m]._q_value
-                if m in self._root._children else 0
-            )
+        move_q_pair_list = [
+            (m, -self._root._children[m]._q_value)
+            if m in self._root._children else (m, 0)
             for m in self._root._policy.keys()
-        }
+        ]
+        move_q_pair_list.sort(key=lambda a: a[1], reverse=True)
+        return {m: q for m, q in move_q_pair_list}
 
     def get_visit_counts(self) -> tp.Dict['Move', int]:
         """Return visit counts of each action.
@@ -217,13 +219,13 @@ class MonteCarloTreeSearcher:
         tp.Dict[Move, int]
             Visit counts of each action.
         """
-        return {
-            m: (
-                self._root._children[m]._visit_count
-                if m in self._root._children else 0
-            )
+        move_visit_count_pair_list = [
+            (m, self._root._children[m]._visit_count)
+            if m in self._root._children else (m, 0)
             for m in self._root._policy.keys()
-        }
+        ]
+        move_visit_count_pair_list.sort(key=lambda a: a[1], reverse=True)
+        return {m: v for m, v in move_visit_count_pair_list}
 
     def select(
         self,

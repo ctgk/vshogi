@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 import vshogi.animal_shogi as shogi
-from vshogi.mcts import MonteCarloTreeSearcher
+from vshogi.engine import MonteCarloTreeSearcher
 
 
 def pv_func(game):

@@ -1,6 +1,6 @@
 from vshogi._game import Game
 from vshogi._vshogi import Color, Result
-from vshogi.mcts._mcts import MonteCarloTreeSearcher
+from vshogi.engine._mcts import MonteCarloTreeSearcher
 
 
 def play_game(

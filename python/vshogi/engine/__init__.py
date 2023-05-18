@@ -1,6 +1,6 @@
-"""Module for Monte Carlo Tree Search."""
+"""Module for Shogi engine."""
 
-from vshogi.mcts._mcts import MonteCarloTreeSearcher
+from vshogi.engine._mcts import MonteCarloTreeSearcher
 
 
 _classes = [MonteCarloTreeSearcher]
