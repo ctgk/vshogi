@@ -3,7 +3,6 @@ import typing as tp
 import numpy as np
 
 from vshogi._game import Game as BaseGame
-from vshogi._vshogi import Color
 from vshogi._vshogi.animal_shogi import Board
 from vshogi._vshogi.animal_shogi import BoardPiece
 from vshogi._vshogi.animal_shogi import Move
@@ -62,9 +61,9 @@ class Game(BaseGame):
     False
     >>> game.apply(Move(B2, B3))
     Game(sfen="gle/1C1/3/ELG w C 2")
-    >>> game.white_stand
+    >>> game.stand(WHITE)
     {Piece.CH: 0, Piece.EL: 0, Piece.GI: 0}
-    >>> game.black_stand
+    >>> game.stand(BLACK)
     {Piece.CH: 1, Piece.EL: 0, Piece.GI: 0}
     >>> game.apply(Move(A2, A1)).apply(Move(B1, B2))
     Game(sfen="1He/g2/3/ELG w C 4")
@@ -108,28 +107,6 @@ class Game(BaseGame):
     @classmethod
     def _get_move_class(cls) -> type:
         return Move
-
-    @property
-    def black_stand(self) -> dict:
-        """Return pieces on black stand.
-
-        Returns
-        -------
-        dict
-            Pieces on black stand.
-        """
-        return self._game.get_stand(Color.BLACK).to_dict()
-
-    @property
-    def white_stand(self) -> dict:
-        """Return pieces on white stand.
-
-        Returns
-        -------
-        dict
-            Pieces on white stand.
-        """
-        return self._game.get_stand(Color.WHITE).to_dict()
 
     def hash_current_state(self) -> int:
         """Return hash value of the current state.
