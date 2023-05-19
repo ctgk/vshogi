@@ -86,22 +86,6 @@ public:
     {
         return m_record[n].first;
     }
-    Move get_legal_move_to(
-        const SquareEnum dst,
-        const DirectionEnum dir,
-        const bool promote = false,
-        const bool is_white_view = false) const
-    {
-        return m_current_state.get_legal_move_to(
-            dst, dir, promote, is_white_view);
-    }
-    Move get_legal_move_to(
-        const SquareEnum dst,
-        const PieceTypeEnum p,
-        const bool is_white_view = false) const
-    {
-        return m_current_state.get_legal_move_to(dst, p, is_white_view);
-    }
 
 private:
     void update_result()

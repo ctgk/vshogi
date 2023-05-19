@@ -3,7 +3,7 @@ import typing as tp
 
 import numpy as np
 
-from vshogi._vshogi import Color, Direction, Result
+from vshogi._vshogi import Color, Result
 
 
 Move = tp.TypeVar('Move')
@@ -195,44 +195,6 @@ class Game(abc.ABC):
             N-th game state in SFEN.
         """
         return self._game.get_sfen_at(n)
-
-    def get_legal_move_to(
-        self,
-        sq,
-        direction_or_piece: tp.Union[Direction, tp.TypeVar('Piece')],
-        promote: bool = False,
-        is_white_view: bool = False,
-    ) -> tp.Union[Move, None]:
-        """Return a legal move to the square from the given direction or piece.
-
-        Parameters
-        ----------
-        sq : Square
-            Destination square of the move.
-        direction_or_piece : tp.Union[Direction, tp.TypeVar('Piece')]
-            Direction to move a piece from or a captured piece.
-        promote : bool, optional
-            Promote the piece if true, by default False.
-        is_white_view : bool, optional
-            Set true if you use white view notation for `sq` and `direction`.
-
-        Returns
-        -------
-        tp.Union[Move, None]
-            A legal move or None if no matching legal move found. Note that
-            regardless of `is_white_view` value, the returned move is denoted
-            from black's view.
-        """
-        if isinstance(direction_or_piece, Direction):
-            m = self._game.get_legal_move_to(
-                sq, direction_or_piece, promote, is_white_view)
-        else:
-            m = self._game.get_legal_move_to(
-                sq, direction_or_piece, is_white_view)
-        if self.is_legal(m):
-            return m
-        else:
-            return None
 
     def __repr__(self) -> str:
         """Return representation of the object for debugging.
