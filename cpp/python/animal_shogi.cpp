@@ -82,23 +82,6 @@ void export_pieces(py::module& m)
         .value("VOID", as::VOID);
 }
 
-void export_piece_stand(py::module& m)
-{
-    py::class_<as::Stand>(m, "Stand")
-        .def(
-            "count",
-            py::overload_cast<const as::PieceTypeEnum>(
-                &as::Stand::count, py::const_))
-        .def("any", &as::Stand::any)
-        .def("to_dict", [](const as::Stand& self) -> py::dict {
-            py::dict out;
-            out[py::cast(as::CH)] = self.count(as::CH);
-            out[py::cast(as::EL)] = self.count(as::EL);
-            out[py::cast(as::GI)] = self.count(as::GI);
-            return out;
-        });
-}
-
 void export_game(py::module& m)
 {
     py::class_<as::Game>(m, "_Game")
@@ -180,7 +163,11 @@ void export_animal_shogi(py::module& m)
     export_square_enum(m);
 
     pyvshogi::export_board<as::Board, as::SquareEnum>(m);
+    pyvshogi::export_piece_stand<
+        as::Stand,
+        as::PieceTypeEnum,
+        as::stand_piece_array,
+        3>(m);
     export_move(m);
-    export_piece_stand(m);
     export_game(m);
 }

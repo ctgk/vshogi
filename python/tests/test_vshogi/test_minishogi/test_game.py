@@ -44,5 +44,30 @@ def test_get_legal_move_to():
     assert game.get_legal_move_to(shogi.SQ_5A, shogi.FU) is None
 
 
+def test_stand():
+    game = shogi.Game('2r2/1p1B+B/k1s2/G1R2/K1G2 w SP 2')
+    # Turn: WHITE
+    # White: -
+    #     5   4   3   2   1
+    #   *---*---*---*---*---*
+    # A |   |   |-HI|   |   |
+    #   *---*---*---*---*---*
+    # B |   |-FU|   |+KA|+UM|
+    #   *---*---*---*---*---*
+    # C |-OU|   |-GI|   |   |
+    #   *---*---*---*---*---*
+    # D |+KI|   |+HI|   |   |
+    #   *---*---*---*---*---*
+    # E |+OU|   |+KI|   |   |
+    #   *---*---*---*---*---*
+    # Black: GI,FU
+    assert game.stand(shogi.BLACK) == {
+        shogi.HI: 0, shogi.KA: 0, shogi.KI: 0, shogi.GI: 1, shogi.FU: 1,
+    }
+    assert game.stand(shogi.WHITE) == {
+        shogi.HI: 0, shogi.KA: 0, shogi.KI: 0, shogi.GI: 0, shogi.FU: 0,
+    }
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

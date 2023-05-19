@@ -135,23 +135,6 @@ void export_pieces(py::module& m)
         .value("VOID", ms::VOID);
 }
 
-void export_piece_stand(py::module& m)
-{
-    py::class_<ms::Stand>(m, "Stand")
-        .def(
-            "count",
-            py::overload_cast<const ms::PieceTypeEnum>(
-                &ms::Stand::count, py::const_))
-        .def("any", &ms::Stand::any)
-        .def("to_dict", [](const ms::Stand& self) -> py::dict {
-            py::dict out;
-            for (auto p : ms::stand_piece_array) {
-                out[py::cast(p)] = self.count(p);
-            }
-            return out;
-        });
-}
-
 void export_game(py::module& m)
 {
     py::class_<ms::Game>(m, "_Game")
@@ -240,7 +223,11 @@ void export_minishogi(py::module& m)
     export_pieces(m);
 
     pyvshogi::export_board<ms::Board, ms::SquareEnum>(m);
-    export_piece_stand(m);
+    pyvshogi::export_piece_stand<
+        ms::Stand,
+        ms::PieceTypeEnum,
+        ms::stand_piece_array,
+        5>(m);
     export_move(m);
     export_game(m);
 }
