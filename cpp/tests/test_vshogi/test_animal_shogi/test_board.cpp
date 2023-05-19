@@ -15,10 +15,10 @@ TEST(animal_shogi_board, set_sfen)
     const char sfen[] = "gle/1c1/1C1/ELG b - 1";
     auto b = Board();
     const auto actual = b.set_sfen(sfen);
-    CHECK_EQUAL(W_GI, b.get_piece_at(SQ_A1));
-    CHECK_EQUAL(W_CH, b.get_piece_at(SQ_B2));
-    CHECK_EQUAL(VOID, b.get_piece_at(SQ_C3));
-    CHECK_EQUAL(B_LI, b.get_piece_at(SQ_B4));
+    CHECK_EQUAL(W_GI, b[SQ_A1]);
+    CHECK_EQUAL(W_CH, b[SQ_B2]);
+    CHECK_EQUAL(VOID, b[SQ_C3]);
+    CHECK_EQUAL(B_LI, b[SQ_B4]);
     CHECK_EQUAL('b', *actual);
 }
 
@@ -44,18 +44,18 @@ TEST(animal_shogi_board, init)
     // 4 |+E|  |  |
     //   *--*--*--*
     auto b = Board::from_hash(185353356648959);
-    CHECK_EQUAL(W_GI, b.get_piece_at(SQ_A1));
-    CHECK_EQUAL(W_CH, b.get_piece_at(SQ_B1));
-    CHECK_EQUAL(W_EL, b.get_piece_at(SQ_C1));
-    CHECK_EQUAL(B_LI, b.get_piece_at(SQ_A2));
-    CHECK_EQUAL(VOID, b.get_piece_at(SQ_B2));
-    CHECK_EQUAL(B_CH, b.get_piece_at(SQ_C2));
-    CHECK_EQUAL(VOID, b.get_piece_at(SQ_A3));
-    CHECK_EQUAL(W_LI, b.get_piece_at(SQ_B3));
-    CHECK_EQUAL(B_GI, b.get_piece_at(SQ_C3));
-    CHECK_EQUAL(B_EL, b.get_piece_at(SQ_A4));
-    CHECK_EQUAL(VOID, b.get_piece_at(SQ_B4));
-    CHECK_EQUAL(VOID, b.get_piece_at(SQ_C4));
+    CHECK_EQUAL(W_GI, b[SQ_A1]);
+    CHECK_EQUAL(W_CH, b[SQ_B1]);
+    CHECK_EQUAL(W_EL, b[SQ_C1]);
+    CHECK_EQUAL(B_LI, b[SQ_A2]);
+    CHECK_EQUAL(VOID, b[SQ_B2]);
+    CHECK_EQUAL(B_CH, b[SQ_C2]);
+    CHECK_EQUAL(VOID, b[SQ_A3]);
+    CHECK_EQUAL(W_LI, b[SQ_B3]);
+    CHECK_EQUAL(B_GI, b[SQ_C3]);
+    CHECK_EQUAL(B_EL, b[SQ_A4]);
+    CHECK_EQUAL(VOID, b[SQ_B4]);
+    CHECK_EQUAL(VOID, b[SQ_C4]);
 }
 
 } // namespace test_vshogi::test_animal_shogi

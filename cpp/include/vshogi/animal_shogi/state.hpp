@@ -108,10 +108,10 @@ public:
             const auto piece = to_piece_type(src);
             return (
                 m_black_white_stands[m_turn].exist(piece)
-                && (m_board.get_piece_at(dst) == VOID));
+                && (m_board[dst] == VOID));
         } else {
             const auto src_sq = to_square(src);
-            const auto piece = m_board.get_piece_at(src_sq);
+            const auto piece = m_board[src_sq];
             return (
                 (to_color(piece) == m_turn)
                 && get_attacks_by(piece, src_sq).is_one(dst)
@@ -146,7 +146,7 @@ public:
         add_captured_piece_to_stand(captured_piece);
         const BoardPieceTypeEnum moving_piece
             = pop_piece_from_stand_or_board(move.source());
-        place_piece_on_board(dst, moving_piece);
+        m_board[dst] = moving_piece;
         change_turn();
         if (moved != nullptr)
             *moved = to_piece_type(moving_piece);
@@ -179,7 +179,9 @@ public:
 private:
     PieceTypeEnum pop_piece_from_board(const SquareEnum sq)
     {
-        return m_board.pop_piece_at(sq);
+        const auto p = m_board[sq];
+        m_board[sq] = VOID;
+        return to_piece_type(p);
     }
     void add_captured_piece_to_stand(const PieceTypeEnum p)
     {
@@ -206,14 +208,10 @@ private:
             return to_board_piece(m_turn, p);
         } else {
             const auto sq = static_cast<SquareEnum>(src);
-            const auto p = m_board.get_piece_at(sq);
-            m_board.pop_piece_at(sq);
+            const auto p = m_board[sq];
+            m_board[sq] = VOID;
             return promote(p, sq);
         }
-    }
-    void place_piece_on_board(const SquareEnum sq, const BoardPieceTypeEnum p)
-    {
-        m_board.place_piece_at(sq, p);
     }
     void change_turn()
     {
@@ -221,7 +219,7 @@ private:
     }
     bool is_empty_or_opponent_piece_on_square(const SquareEnum sq) const
     {
-        const auto p = m_board.get_piece_at(sq);
+        const auto p = m_board[sq];
         if (p == VOID)
             return true;
         return to_color(p) != m_turn;
@@ -230,7 +228,7 @@ private:
     {
         const auto empty_or_opponent_piece = ~m_board.to_piece_mask(m_turn);
         for (auto src : square_array) {
-            const auto piece = m_board.get_piece_at(src);
+            const auto piece = m_board[src];
             if ((piece == VOID) || (to_color(piece) != m_turn))
                 continue;
             const auto attacking = get_attacks_by(piece, src);

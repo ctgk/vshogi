@@ -48,6 +48,14 @@ public:
         }
     {
     }
+    BoardPieceTypeEnum operator[](const SquareEnum sq) const
+    {
+        return m_pieces[sq];
+    }
+    BoardPieceTypeEnum& operator[](const SquareEnum sq)
+    {
+        return m_pieces[sq];
+    }
 
     static Board from_hash(std::uint64_t value)
     {
@@ -63,35 +71,12 @@ public:
      * @return const char* Remaining SFEN string. e.g. "b - 1"
      */
     const char* set_sfen(const char* const sfen);
-    BoardPieceTypeEnum get_piece_at(const SquareEnum sq) const
-    {
-        return m_pieces[sq];
-    }
     void set_hash(std::uint64_t value)
     {
         for (int i = num_squares; i--;) {
             m_pieces[i] = static_cast<BoardPieceTypeEnum>(value & 0xf);
             value >>= 4;
         }
-    }
-    PieceTypeEnum pop_piece_at(const SquareEnum sq)
-    {
-        const auto out = to_piece_type(m_pieces[sq]);
-        m_pieces[sq] = VOID;
-        return out;
-    }
-
-    /**
-     * @brief Place piece by overwriting the square.
-     *
-     * @param sq Location to place piece.
-     * @param piece Piece to place.
-     * @return Board& board with the piece placed on the square.
-     */
-    Board& place_piece_at(const SquareEnum sq, const BoardPieceTypeEnum p)
-    {
-        m_pieces[sq] = p;
-        return *this;
     }
     BitBoard to_attack_mask(const ColorEnum c) const
     {

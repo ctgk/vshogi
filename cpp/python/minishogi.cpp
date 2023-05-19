@@ -4,20 +4,13 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "vshogi.hpp"
+
 namespace py = pybind11;
 namespace ms = vshogi::minishogi;
 
 namespace
 {
-
-void export_board(py::module& m)
-{
-    py::class_<ms::Board>(m, "Board")
-        .def(
-            "__getitem__",
-            py::overload_cast<const ms::SquareEnum>(
-                &ms::Board::operator[], py::const_));
-}
 
 void export_square_enum(py::module& m)
 {
@@ -243,9 +236,10 @@ void export_game(py::module& m)
 
 void export_minishogi(py::module& m)
 {
-    export_board(m);
     export_square_enum(m);
     export_pieces(m);
+
+    pyvshogi::export_board<ms::Board, ms::SquareEnum>(m);
     export_piece_stand(m);
     export_move(m);
     export_game(m);
