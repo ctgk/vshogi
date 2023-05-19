@@ -141,6 +141,27 @@ TEST(state, is_legal)
         s.set_sfen("+B1s2/B1g1p/3k1/PS1R1/KG2R w - 10");
         CHECK_FALSE(s.is_legal(Move(SQ_2D, SQ_3A)));
     }
+    {
+        auto s = State();
+        // Turn: BLACK
+        // White: GI
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |+TO|   |   |-KI|-OU|
+        //   *---*---*---*---*---*
+        // B |   |+FU|-KA|-GI|   |
+        //   *---*---*---*---*---*
+        // C |   |   |-KA|   |   |
+        //   *---*---*---*---*---*
+        // D |   |+HI|   |   |   |
+        //   *---*---*---*---*---*
+        // E |+OU|+KI|   |   |-RY|
+        //   *---*---*---*---*---*
+        // Black: -
+        s.set_sfen("+P2gk/1Pbs1/2b2/1R3/KG2+r b s 2");
+        CHECK_FALSE(s.is_legal(Move(SQ_4A, SQ_4B)));
+        CHECK_TRUE(s.is_legal(Move(SQ_4A, SQ_4B, true)));
+    }
 }
 
 TEST(state, get_legal_moves)
