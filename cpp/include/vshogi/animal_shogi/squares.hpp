@@ -28,6 +28,7 @@ enum SquareEnum
     SQ_A4, SQ_B4,
     SQ_C4, //!< Last square.
     // clang-format on
+    NUM_SQ = 12,
 };
 constexpr int num_squares = 12;
 constexpr SquareEnum square_array[] = {

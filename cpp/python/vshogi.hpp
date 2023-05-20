@@ -16,7 +16,7 @@ inline void export_board(pybind11::module& m)
                 &Board::operator[], pybind11::const_));
 }
 
-template <class Stand, class PieceType, const PieceType array[], int Size>
+template <class Stand, class Piece, const Piece array[], int Size>
 inline void export_piece_stand(pybind11::module& m)
 {
     pybind11::class_<Stand>(m, "Stand")
@@ -30,6 +30,38 @@ inline void export_piece_stand(pybind11::module& m)
             }
             return out;
         });
+}
+
+template <class Move, class Square, class Piece>
+inline void export_move(pybind11::module& m)
+{
+    pybind11::class_<Move>(m, "Move")
+        .def(
+            pybind11::init<const Square, const Square, const bool>(),
+            pybind11::arg("dst"),
+            pybind11::arg("src"),
+            pybind11::arg("promote") = false)
+        .def(
+            pybind11::init<const Square, const Piece>(),
+            pybind11::arg("dst"),
+            pybind11::arg("src"))
+        .def_property_readonly("destination", &Move::destination)
+        .def_property_readonly("promote", &Move::promote)
+        .def_property_readonly(
+            "source",
+            [](const Move& self) -> pybind11::object {
+                if (self.is_drop())
+                    return pybind11::cast(static_cast<Piece>(
+                        static_cast<int>(self.source())
+                        - static_cast<int>(Square::NUM_SQ)));
+                return pybind11::cast(static_cast<Square>(self.source()));
+            })
+        .def("is_drop", &Move::is_drop)
+        .def("rotate", &Move::rotate)
+        .def("_to_dlshogi_policy_index", &Move::to_dlshogi_policy_index)
+        .def("__hash__", &Move::hash)
+        .def("__eq__", &Move::operator==)
+        .def("__ne__", &Move::operator!=);
 }
 
 } // namespace pyvshogi

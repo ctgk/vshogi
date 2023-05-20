@@ -67,35 +67,6 @@ void export_square_enum(py::module& m)
         .value("E1", ms::SQ_1E);
 }
 
-void export_move(py::module& m)
-{
-    py::class_<ms::Move>(m, "Move")
-        .def(
-            py::init<const ms::SquareEnum, const ms::SquareEnum, const bool>(),
-            py::arg("dst"),
-            py::arg("src"),
-            py::arg("promote") = false)
-        .def(
-            py::init<const ms::SquareEnum, const ms::PieceTypeEnum>(),
-            py::arg("dst"),
-            py::arg("src"))
-        .def_property_readonly("destination", &ms::Move::destination)
-        .def_property_readonly("promote", &ms::Move::promote)
-        .def_property_readonly(
-            "source",
-            [](const ms::Move& self) -> py::object {
-                if (self.is_drop())
-                    return py::cast(ms::to_piece_type(self.source()));
-                return py::cast(ms::to_square(self.source()));
-            })
-        .def("is_drop", &ms::Move::is_drop)
-        .def("rotate", &ms::Move::rotate)
-        .def("_to_dlshogi_policy_index", &ms::Move::to_dlshogi_policy_index)
-        .def("__hash__", &ms::Move::hash)
-        .def("__eq__", &ms::Move::operator==)
-        .def("__ne__", &ms::Move::operator!=);
-}
-
 void export_pieces(py::module& m)
 {
     py::enum_<ms::PieceTypeEnum>(m, "Piece")
@@ -215,6 +186,6 @@ void export_minishogi(py::module& m)
         ms::PieceTypeEnum,
         ms::stand_piece_array,
         5>(m);
-    export_move(m);
+    pyvshogi::export_move<ms::Move, ms::SquareEnum, ms::PieceTypeEnum>(m);
     export_game(m);
 }

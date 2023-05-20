@@ -29,34 +29,6 @@ void export_square_enum(py::module& m)
         .value("C4", as::SQ_C4);
 }
 
-void export_move(py::module& m)
-{
-    py::class_<as::Move>(m, "Move")
-        .def(
-            py::init<const as::SquareEnum, const as::SquareEnum>(),
-            py::arg("dst"),
-            py::arg("src"))
-        .def(
-            py::init<const as::SquareEnum, const as::PieceTypeEnum>(),
-            py::arg("dst"),
-            py::arg("src"))
-        .def("_to_dlshogi_policy_index", &as::Move::to_dlshogi_policy_index)
-        .def_property_readonly("destination", &as::Move::destination)
-        .def_property_readonly(
-            "source",
-            [](const as::Move& self) -> py::object {
-                if (self.is_drop()) {
-                    return py::cast(as::to_piece_type(self.source()));
-                }
-                return py::cast(as::to_square(self.source()));
-            })
-        .def("is_drop", &as::Move::is_drop)
-        .def("rotate", &as::Move::rotate)
-        .def("__hash__", &as::Move::hash)
-        .def("__eq__", &as::Move::operator==)
-        .def("__ne__", &as::Move::operator!=);
-}
-
 void export_pieces(py::module& m)
 {
     py::enum_<as::PieceTypeEnum>(m, "Piece")
@@ -167,6 +139,6 @@ void export_animal_shogi(py::module& m)
         as::PieceTypeEnum,
         as::stand_piece_array,
         3>(m);
-    export_move(m);
+    pyvshogi::export_move<as::Move, as::SquareEnum, as::PieceTypeEnum>(m);
     export_game(m);
 }

@@ -73,7 +73,10 @@ public:
         : m_value(static_cast<std::uint8_t>((source << 4) | destination))
     {
     }
-    Move(const SquareEnum destination, const SquareEnum source)
+    Move(
+        const SquareEnum destination,
+        const SquareEnum source,
+        const bool = false)
         : Move(destination, static_cast<MoveSourceEnum>(source))
     {
     }
@@ -130,6 +133,10 @@ public:
                + diff_plus_4_to_dir_index
                    [static_cast<int>(source()) - static_cast<int>(destination())
                     + 4];
+    }
+    static bool promote()
+    {
+        return false;
     }
 };
 
