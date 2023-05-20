@@ -40,8 +40,7 @@ void export_move(py::module& m)
             py::init<const as::SquareEnum, const as::PieceTypeEnum>(),
             py::arg("dst"),
             py::arg("src"))
-        .def_static("_from_policy_index", &as::Move::_from_policy_index)
-        .def("_to_policy_index", &as::Move::_to_policy_index)
+        .def("_to_dlshogi_policy_index", &as::Move::to_dlshogi_policy_index)
         .def_property_readonly("destination", &as::Move::destination)
         .def_property_readonly(
             "source",

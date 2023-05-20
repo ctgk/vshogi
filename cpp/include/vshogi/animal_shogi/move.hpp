@@ -85,36 +85,6 @@ public:
     {
         static_assert(static_cast<int>(MS_CH) - static_cast<int>(CH) == 12);
     }
-    static Move _from_policy_index(const int index) // NOLINT
-    {
-        const auto dst_index = index / (8 + 3);
-        const auto dir_index = index % (8 + 3);
-        const auto destination = static_cast<SquareEnum>(dst_index);
-        if (dir_index >= 8)
-            return Move(destination, static_cast<PieceTypeEnum>(dir_index - 8));
-        constexpr int dir_index_to_diff[] = {
-            // clang-format off
-            -4, -3, -2,
-            -1,      1,
-             2,  3,  4,
-            // clang-format on
-        };
-        return Move(
-            destination,
-            static_cast<SquareEnum>(
-                static_cast<int>(destination) + dir_index_to_diff[dir_index]));
-    }
-    int _to_policy_index() const // NOLINT
-    {
-        const auto dst_index = static_cast<int>(destination());
-        if (is_drop())
-            return dst_index * (8 + 3) + (source() - MS_CH + 8);
-        constexpr int diff_plus_4_to_dir_index[] = {0, 1, 2, 3, -1, 4, 5, 6, 7};
-        return dst_index * (8 + 3)
-               + diff_plus_4_to_dir_index
-                   [static_cast<int>(source()) - static_cast<int>(destination())
-                    + 4];
-    }
     bool operator==(const Move& other) const
     {
         return m_value == other.m_value;
@@ -149,6 +119,17 @@ public:
                   : static_cast<MoveSourceEnum>(
                       num_squares - 1 - static_cast<int>(this->source()));
         return Move(dst_rotated, src_rotated);
+    }
+    int to_dlshogi_policy_index() const
+    {
+        const auto dst_index = static_cast<int>(destination());
+        if (is_drop())
+            return dst_index * (8 + 3) + (source() - MS_CH + 8);
+        constexpr int diff_plus_4_to_dir_index[] = {0, 1, 2, 3, -1, 4, 5, 6, 7};
+        return dst_index * (8 + 3)
+               + diff_plus_4_to_dir_index
+                   [static_cast<int>(source()) - static_cast<int>(destination())
+                    + 4];
     }
 };
 
