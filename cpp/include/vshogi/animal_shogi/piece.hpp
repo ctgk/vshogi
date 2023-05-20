@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-#include "vshogi/animal_shogi/color.hpp"
+#include "vshogi/color.hpp"
 
 namespace vshogi::animal_shogi
 {
@@ -66,6 +66,35 @@ to_board_piece(const ColorEnum c, const PieceTypeEnum p)
     if (p == NA)
         return VOID;
     return static_cast<BoardPieceTypeEnum>((c << 3) | p);
+}
+
+inline char to_sfen_piece(const BoardPieceTypeEnum p)
+{
+    switch (p) {
+    case B_CH:
+        return 'C';
+    case B_EL:
+        return 'E';
+    case B_GI:
+        return 'G';
+    case B_LI:
+        return 'L';
+    case B_HE:
+        return 'H';
+    case W_CH:
+        return 'c';
+    case W_EL:
+        return 'e';
+    case W_GI:
+        return 'g';
+    case W_LI:
+        return 'l';
+    case W_HE:
+        return 'h';
+    default:
+        break;
+    }
+    return ' ';
 }
 
 } // namespace vshogi::animal_shogi

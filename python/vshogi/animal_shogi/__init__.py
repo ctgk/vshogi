@@ -3,8 +3,10 @@
 cf. https://en.wikipedia.org/wiki/D%C5%8Dbutsu_sh%C5%8Dgi
 """
 
+from vshogi._enum import _enum_repr
+from vshogi._vshogi import Color, Result
 from vshogi._vshogi.animal_shogi import (
-    Board, BoardPiece, Color, Move, Piece, Result, Square,
+    Board, BoardPiece, Move, Piece, Square,
 )
 from vshogi.animal_shogi._game import Game
 
@@ -36,42 +38,39 @@ def _board_repr(self: Board) -> str:
     )
 
 
-def _enum_repr(self) -> str:
-    return f'{self.__class__.__name__}.{self.name}'
-
-
 Board.__repr__ = _board_repr
 BoardPiece.__repr__ = _enum_repr
 BoardPiece._to_2char = lambda self: (
     "  " if self == BoardPiece.VOID
     else {'B': '+', 'W': '-'}[self.name[0]] + self.name[2]
 )
-Color.__repr__ = _enum_repr
 Piece.__repr__ = _enum_repr
 Move.__repr__ = lambda a: (
-    f'{a.__class__.__name__}({a.destination.name} <- {a.source.name})'
+    f'{a.__class__.__name__}(dst={a.destination.name}, src={a.source.name})'
 )
 Square.__repr__ = _enum_repr
-Result.__repr__ = _enum_repr
 
 
 _classes = [
-    Board, BoardPiece, Color, Game, Move, Piece, Square, Result,
+    Board, BoardPiece, Game, Move, Piece, Square,
 ]
+_enums = [BoardPiece, Color, Piece, Square, Result]
 
-locals().update(BoardPiece.__members__)
-locals().update(Color.__members__)
-locals().update(Piece.__members__)
-locals().update(Square.__members__)
-locals().update(Result.__members__)
+for _e in _enums:
+    locals().update(_e.__members__)
 
 
 for _cls in _classes:
     _cls.__module__ = __name__
 
 
-__all__ = [_cls.__name__ for _cls in _classes]
+__all__ = (
+    [_cls.__name__ for _cls in _classes]
+    + [m for _e in _enums for m in _e.__members__]
+)
 
 
 del _cls
 del _classes
+del _e
+del _enums

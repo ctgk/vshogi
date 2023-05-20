@@ -5,10 +5,10 @@
 #include <vector>
 
 #include "vshogi/animal_shogi/board.hpp"
-#include "vshogi/animal_shogi/color.hpp"
 #include "vshogi/animal_shogi/move.hpp"
 #include "vshogi/animal_shogi/piece.hpp"
 #include "vshogi/animal_shogi/stand.hpp"
+#include "vshogi/color.hpp"
 
 namespace vshogi::animal_shogi
 {
@@ -63,6 +63,15 @@ public:
             static_cast<std::uint8_t>(
                 2 - m_board.count(GI) - turn_stand.count(GI)));
     }
+    std::string to_sfen() const
+    {
+        auto out = m_board.to_sfen();
+        out += ' ';
+        out += m_turn == BLACK ? 'b' : 'w';
+        out += ' ';
+        m_black_white_stands.append_to_sfen(out);
+        return out;
+    }
 
     const Board& get_board() const
     {
@@ -78,7 +87,7 @@ public:
     }
 
     /**
-     * @brief Check if a move is applicable or not.
+     * @brief Check if a move is legal or not.
      * @details Unlike ordinary Shogi, the followings are legal:
      * - Two Chicks in one file.
      * - Checkmate by dropping a Chick.
@@ -88,10 +97,10 @@ public:
      * cf. https://en.wikipedia.org/wiki/D%C5%8Dbutsu_sh%C5%8Dgi#Play
      *
      * @param move
-     * @return true The move is applicable.
-     * @return false The move is not applicable
+     * @return true The move is legal.
+     * @return false The move is not legal
      */
-    bool is_applicable(const Move move) const
+    bool is_legal(const Move move) const
     {
         const auto src = move.source();
         const auto dst = move.destination();
@@ -99,10 +108,10 @@ public:
             const auto piece = to_piece_type(src);
             return (
                 m_black_white_stands[m_turn].exist(piece)
-                && (m_board.get_piece_at(dst) == VOID));
+                && (m_board[dst] == VOID));
         } else {
             const auto src_sq = to_square(src);
-            const auto piece = m_board.get_piece_at(src_sq);
+            const auto piece = m_board[src_sq];
             return (
                 (to_color(piece) == m_turn)
                 && get_attacks_by(piece, src_sq).is_one(dst)
@@ -110,19 +119,19 @@ public:
         }
     }
 
-    std::vector<Move> get_applicable_moves() const
+    std::vector<Move> get_legal_moves() const
     {
         auto out = std::vector<Move>();
-        append_applicable_moves_by_board_pieces(out);
-        append_applicable_moves_by_stand_pieces(out);
+        append_legal_moves_by_board_pieces(out);
+        append_legal_moves_by_stand_pieces(out);
         return out;
     }
 
     /**
-     * @brief Apply an applicable move to the state. This method does not check
-     * if a move is applicable or not, check it by `is_move_applicable` method.
+     * @brief Apply an legal move to the state. This method does not check
+     * if a move is legal or not, check it by `is_move_legal` method.
      *
-     * @param [in] move Applicable move.
+     * @param [in] move legal move.
      * @param [out] moved Piece moved.
      * @param [out] captured Piece captured.
      * @return State&
@@ -137,7 +146,7 @@ public:
         add_captured_piece_to_stand(captured_piece);
         const BoardPieceTypeEnum moving_piece
             = pop_piece_from_stand_or_board(move.source());
-        place_piece_on_board(dst, moving_piece);
+        m_board[dst] = moving_piece;
         change_turn();
         if (moved != nullptr)
             *moved = to_piece_type(moving_piece);
@@ -170,7 +179,9 @@ public:
 private:
     PieceTypeEnum pop_piece_from_board(const SquareEnum sq)
     {
-        return m_board.pop_piece_at(sq);
+        const auto p = m_board[sq];
+        m_board[sq] = VOID;
+        return to_piece_type(p);
     }
     void add_captured_piece_to_stand(const PieceTypeEnum p)
     {
@@ -197,14 +208,10 @@ private:
             return to_board_piece(m_turn, p);
         } else {
             const auto sq = static_cast<SquareEnum>(src);
-            const auto p = m_board.get_piece_at(sq);
-            m_board.pop_piece_at(sq);
+            const auto p = m_board[sq];
+            m_board[sq] = VOID;
             return promote(p, sq);
         }
-    }
-    void place_piece_on_board(const SquareEnum sq, const BoardPieceTypeEnum p)
-    {
-        m_board.place_piece_at(sq, p);
     }
     void change_turn()
     {
@@ -212,17 +219,16 @@ private:
     }
     bool is_empty_or_opponent_piece_on_square(const SquareEnum sq) const
     {
-        const auto p = m_board.get_piece_at(sq);
+        const auto p = m_board[sq];
         if (p == VOID)
             return true;
         return to_color(p) != m_turn;
     }
-    void
-    append_applicable_moves_by_board_pieces(std::vector<Move>& move_list) const
+    void append_legal_moves_by_board_pieces(std::vector<Move>& move_list) const
     {
         const auto empty_or_opponent_piece = ~m_board.to_piece_mask(m_turn);
         for (auto src : square_array) {
-            const auto piece = m_board.get_piece_at(src);
+            const auto piece = m_board[src];
             if ((piece == VOID) || (to_color(piece) != m_turn))
                 continue;
             const auto attacking = get_attacks_by(piece, src);
@@ -234,8 +240,7 @@ private:
             }
         }
     }
-    void
-    append_applicable_moves_by_stand_pieces(std::vector<Move>& move_list) const
+    void append_legal_moves_by_stand_pieces(std::vector<Move>& move_list) const
     {
         const auto empty = ~m_board.to_piece_mask();
         const auto stand = m_black_white_stands[m_turn];

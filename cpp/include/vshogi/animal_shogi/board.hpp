@@ -2,6 +2,7 @@
 #define VSHOGI_ANIMAL_SHOGI_BOARD_HPP
 
 #include <cstdint>
+#include <string>
 
 #include "vshogi/animal_shogi/bitboard.hpp"
 #include "vshogi/animal_shogi/piece.hpp"
@@ -15,6 +16,25 @@ class Board
 private:
     BoardPieceTypeEnum m_pieces[num_squares];
     const char* set_sfen_rank(const char* const sfen_rank, const RankEnum rank);
+    void append_rank_sfen(const RankEnum rank, std::string& sfen) const
+    {
+        auto begin = m_pieces + num_files * static_cast<int>(rank);
+        const auto end = begin + num_files;
+        int num_void = 0;
+        for (; begin < end; ++begin) {
+            if (*begin == VOID) {
+                ++num_void;
+                continue;
+            }
+            if (num_void > 0) {
+                sfen += static_cast<char>('0' + num_void);
+                num_void = 0;
+            }
+            sfen += to_sfen_piece(*begin);
+        }
+        if (num_void > 0)
+            sfen += static_cast<char>('0' + num_void);
+    }
 
 public:
     Board()
@@ -27,6 +47,14 @@ public:
             // clang-format on
         }
     {
+    }
+    BoardPieceTypeEnum operator[](const SquareEnum sq) const
+    {
+        return m_pieces[sq];
+    }
+    BoardPieceTypeEnum& operator[](const SquareEnum sq)
+    {
+        return m_pieces[sq];
     }
 
     static Board from_hash(std::uint64_t value)
@@ -43,35 +71,12 @@ public:
      * @return const char* Remaining SFEN string. e.g. "b - 1"
      */
     const char* set_sfen(const char* const sfen);
-    BoardPieceTypeEnum get_piece_at(const SquareEnum sq) const
-    {
-        return m_pieces[sq];
-    }
     void set_hash(std::uint64_t value)
     {
         for (int i = num_squares; i--;) {
             m_pieces[i] = static_cast<BoardPieceTypeEnum>(value & 0xf);
             value >>= 4;
         }
-    }
-    PieceTypeEnum pop_piece_at(const SquareEnum sq)
-    {
-        const auto out = to_piece_type(m_pieces[sq]);
-        m_pieces[sq] = VOID;
-        return out;
-    }
-
-    /**
-     * @brief Place piece by overwriting the square.
-     *
-     * @param sq Location to place piece.
-     * @param piece Piece to place.
-     * @return Board& board with the piece placed on the square.
-     */
-    Board& place_piece_at(const SquareEnum sq, const BoardPieceTypeEnum p)
-    {
-        m_pieces[sq] = p;
-        return *this;
     }
     BitBoard to_attack_mask(const ColorEnum c) const
     {
@@ -120,6 +125,18 @@ public:
             num += (to_piece_type(piece) == p);
         }
         return num;
+    }
+    std::string to_sfen() const
+    {
+        auto out = std::string();
+        append_rank_sfen(RANK1, out);
+        out += '/';
+        append_rank_sfen(RANK2, out);
+        out += '/';
+        append_rank_sfen(RANK3, out);
+        out += '/';
+        append_rank_sfen(RANK4, out);
+        return out;
     }
 };
 

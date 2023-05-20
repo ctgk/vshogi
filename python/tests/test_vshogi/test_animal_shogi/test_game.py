@@ -37,8 +37,8 @@ def test_hash():
     actual = shogi.Game(game.hash_current_state())
     assert shogi.B_CH == actual.board[shogi.B2]
     assert shogi.VOID == actual.board[shogi.B3]
-    assert {shogi.CH: 1, shogi.EL: 0, shogi.GI: 0} == actual.black_stand
-    assert {shogi.CH: 0, shogi.EL: 0, shogi.GI: 0} == actual.white_stand
+    assert {shogi.CH: 1, shogi.EL: 0, shogi.GI: 0} == actual.stand(shogi.BLACK)
+    assert {shogi.CH: 0, shogi.EL: 0, shogi.GI: 0} == actual.stand(shogi.WHITE)
 
 
 def test_board():
@@ -87,14 +87,14 @@ def test_play():
     assert game.result == shogi.ONGOING
 
 
-def test_get_applicable_moves():
+def test_get_legal_moves():
     game = shogi.Game()
-    assert len(game.get_applicable_moves()) == 4
+    assert len(game.get_legal_moves()) == 4
     game.apply(shogi.Move(shogi.A3, shogi.B4))
     game.apply(shogi.Move(shogi.A2, shogi.B1))
     game.apply(shogi.Move(shogi.A2, shogi.A3))
     print(game)
-    assert len(game.get_applicable_moves()) == 0
+    assert len(game.get_legal_moves()) == 0
 
 
 def test_array():

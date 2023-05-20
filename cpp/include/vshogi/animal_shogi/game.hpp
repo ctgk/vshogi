@@ -7,17 +7,10 @@
 
 #include "vshogi/animal_shogi/move.hpp"
 #include "vshogi/animal_shogi/state.hpp"
+#include "vshogi/result.hpp"
 
 namespace vshogi::animal_shogi
 {
-
-enum ResultEnum : std::uint8_t
-{
-    ONGOING,
-    DRAW,
-    BLACK_WIN,
-    WHITE_WIN,
-};
 
 /**
  * @brief Animal Shogi game.
@@ -49,6 +42,15 @@ public:
     {
         m_record.reserve(128);
     }
+    std::string to_sfen(const bool include_move_count = true) const
+    {
+        auto out = m_current_state.to_sfen();
+        if (include_move_count) {
+            out += ' ';
+            out += std::to_string(m_record.size() + 1);
+        }
+        return out;
+    }
     ColorEnum get_turn() const
     {
         return m_current_state.get_turn();
@@ -69,21 +71,21 @@ public:
     {
         return m_current_state.hash();
     }
-    bool is_applicable(const Move move) const
+    bool is_legal(const Move move) const
     {
-        return m_current_state.is_applicable(move);
+        return m_current_state.is_legal(move);
     }
-    auto get_applicable_moves() const
+    auto get_legal_moves() const
     {
         if (m_result == ONGOING)
-            return m_current_state.get_applicable_moves();
+            return m_current_state.get_legal_moves();
         return std::vector<Move>();
     }
 
     /**
-     * @brief Apply an applicable move to the current state.
+     * @brief Apply an legal move to the current state.
      *
-     * @param move Applicable move.
+     * @param move legal move.
      * @return Game&
      */
     Game& apply(const Move move)
@@ -113,12 +115,18 @@ public:
         const auto state_action_hash = m_record[n];
         return state_action_hash & 0x0ffffffffffffffUL;
     }
+    std::string get_sfen_at(const std::size_t n) const
+    {
+        auto s = State();
+        s.set_hash(get_state_hash_at(n));
+        return s.to_sfen() + ' ' + std::to_string(n + 1);
+    }
 
 private:
     bool is_fourfold_repetitions() const
     {
         constexpr int num_acceptable_repetitions = 3;
-        int num = 0;
+        int num = 1;
         const auto current_hash = m_current_state.hash();
         for (auto&& previous_hash : m_record) {
             num += (current_hash == (previous_hash & state_mask));
