@@ -142,21 +142,12 @@ class MonteCarloTreeSearcher:
         """
         self._policy_value_func = policy_value_func
         self._root: _Node = None
-        self._pv_cache: tp.Dict[tp.Hashable, tp.Tuple[Policy, Value]] = {}
 
         self._num_explorations = num_explorations
         self._coeff_puct = coeff_puct
         self._depth_to_add_dirichlet_noise = depth_to_add_dirichlet_noise
         self._select_move_by = select_move_by
         self._temperature_for_move_selection = temperature_for_move_selection
-
-    def _get_policy_value(self, game: 'Game') -> tp.Tuple[Policy, Value]:
-        sfen = game.to_sfen(include_move_count=False)
-        if sfen in self._pv_cache:
-            return self._pv_cache[sfen]
-        pv = self._policy_value_func(game)
-        self._pv_cache[sfen] = pv
-        return pv
 
     def set_root(self, game: Game):
         """Set root node.
@@ -166,7 +157,7 @@ class MonteCarloTreeSearcher:
         game : Game
             Game to set at root node.
         """
-        self._root = _Node(game, self._get_policy_value)
+        self._root = _Node(game, self._policy_value_func)
 
     def explore(
         self,
