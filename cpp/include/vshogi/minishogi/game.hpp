@@ -95,8 +95,8 @@ public:
         constexpr int stand_piece_types = 5;
         constexpr int board_piece_types = 10;
         constexpr int unpromoted_piece_types = 6;
+        constexpr int ch_half = stand_piece_types + board_piece_types;
         constexpr int ch = feature_channels();
-        constexpr int ch_half = 15;
 
         const auto turn = get_turn();
         const auto stand_curr = get_stand(turn);

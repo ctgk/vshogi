@@ -62,47 +62,10 @@ void export_game(py::module& m)
         .def(
             "__array__",
             [](const as::Game& self) -> py::array_t<float> {
-                const auto shape = std::vector<py::ssize_t>({1, 4, 3, 16});
+                const auto shape = std::vector<py::ssize_t>(
+                    {1, as::num_ranks, as::num_files, self.feature_channels()});
                 auto out = py::array_t<float>(shape);
-                for (int i = 4; i--;) {
-                    for (int j = 3; j--;) {
-                        const auto turn = self.get_turn();
-                        {
-                            const auto stand_turn = self.get_stand(turn);
-                            const auto stand_oppo = self.get_stand(~turn);
-                            for (int k = 3; k--;) {
-                                *out.mutable_data(0, i, j, k)
-                                    = static_cast<float>(stand_turn.count(
-                                        as::stand_piece_array[k]));
-                                *out.mutable_data(0, i, j, k + 8)
-                                    = static_cast<float>(stand_oppo.count(
-                                        as::stand_piece_array[k]));
-                            }
-                        }
-                        {
-                            const auto board = self.get_board();
-                            const auto sq
-                                = (turn == vshogi::BLACK)
-                                      ? as::square_array[i * 3 + j]
-                                      : as::square_array
-                                          [as::num_squares - 1 - i * 3 - j];
-                            for (int k = 5; k--;) {
-                                const auto piece_type
-                                    = static_cast<as::PieceTypeEnum>(k);
-                                *out.mutable_data(0, i, j, k + 3)
-                                    = static_cast<float>(
-                                        board[sq]
-                                        == as::to_board_piece(
-                                            turn, piece_type));
-                                *out.mutable_data(0, i, j, k + 8 + 3)
-                                    = static_cast<float>(
-                                        board[sq]
-                                        == as::to_board_piece(
-                                            ~turn, piece_type));
-                            }
-                        }
-                    }
-                }
+                self.to_feature_map(out.mutable_data());
                 return out;
             })
         .def("get_turn", &as::Game::get_turn)
