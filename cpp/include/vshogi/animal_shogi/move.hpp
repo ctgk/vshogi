@@ -127,9 +127,9 @@ public:
     {
         const auto dst_index = static_cast<int>(destination());
         if (is_drop())
-            return dst_index * (8 + 3) + (source() - MS_CH + 8);
+            return dst_index * num_policy_per_square() + (source() - MS_CH + 8);
         constexpr int diff_plus_4_to_dir_index[] = {0, 1, 2, 3, -1, 4, 5, 6, 7};
-        return dst_index * (8 + 3)
+        return dst_index * num_policy_per_square()
                + diff_plus_4_to_dir_index
                    [static_cast<int>(source()) - static_cast<int>(destination())
                     + 4];
@@ -137,6 +137,10 @@ public:
     static bool promote()
     {
         return false;
+    }
+    static constexpr int num_policy_per_square()
+    {
+        return 8 + 3; // 8-direction + 3-drop-piece
     }
 };
 

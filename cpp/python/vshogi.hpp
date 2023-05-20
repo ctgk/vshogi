@@ -59,6 +59,7 @@ inline void export_move(pybind11::module& m)
         .def("is_drop", &Move::is_drop)
         .def("rotate", &Move::rotate)
         .def("_to_dlshogi_policy_index", &Move::to_dlshogi_policy_index)
+        .def_static("_num_policy_per_square", &Move::num_policy_per_square)
         .def("__hash__", &Move::hash)
         .def("__eq__", &Move::operator==)
         .def("__ne__", &Move::operator!=);
