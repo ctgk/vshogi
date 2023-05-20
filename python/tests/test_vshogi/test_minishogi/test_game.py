@@ -7,15 +7,60 @@ import vshogi.minishogi as shogi
 def test_array():
     game = shogi.Game()
     game.apply(shogi.Move(shogi.SQ_1B, shogi.SQ_1E))
+    # Turn: WHITE
+    # White: -
+    #     5   4   3   2   1
+    #   *---*---*---*---*---*
+    # A |-HI|-KA|-GI|-KI|-OU|
+    #   *---*---*---*---*---*
+    # B |   |   |   |   |+HI|
+    #   *---*---*---*---*---*
+    # C |   |   |   |   |   |
+    #   *---*---*---*---*---*
+    # D |+FU|   |   |   |   |
+    #   *---*---*---*---*---*
+    # E |+OU|+KI|+GI|+KA|   |
+    #   *---*---*---*---*---*
+    # Black: FU
+
     actual = np.asarray(game)
     assert actual.dtype == np.float32
     assert actual.shape == (1, 5, 5, 30)
     assert np.allclose(actual[0, ..., 0], 0)  # white's captured pawn
+    assert np.allclose(actual[0, ..., 1], 0)  # white's captured silver
+    assert np.allclose(actual[0, ..., 2], 0)  # white's captured gold
+    assert np.allclose(actual[0, ..., 3], 0)  # white's captured bishop
+    assert np.allclose(actual[0, ..., 4], 0)  # white's captured rook
+    assert np.allclose(actual[0, ..., 5], 0)  # white's board pawn
+    assert np.allclose(actual[0, ..., 6], [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0],
+    ])  # white's board silver
+    assert np.allclose(actual[0, ..., 7], [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 0],
+    ])  # white's board bishop
+    assert np.allclose(actual[0, ..., 8], [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1],
+    ])  # white's board rook
     assert np.allclose(actual[0, ..., 15], 1)  # black's captured pawn
-    assert np.allclose(actual[0, 3, 0, 23], 1)  # black's rook
-    assert np.allclose(actual[0, 2, 0, 25], 0)  # not black's rook
-    assert np.allclose(actual[0, 4, 4, 8], 1)  # white's rook
-    assert np.allclose(actual[0, 3, 3, 8], 0)  # not white's rook
+    assert np.allclose(actual[0, ..., 23], [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+    ])  # black's rook
 
 
 def test_stand():
