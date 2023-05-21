@@ -65,6 +65,42 @@ inline void export_move(pybind11::module& m)
         .def("__ne__", &Move::operator!=);
 }
 
+template <class Game>
+inline void export_game(pybind11::module& m)
+{
+    pybind11::class_<Game>(m, "_Game")
+        .def(pybind11::init<>())
+        .def(pybind11::init<const std::string&>())
+        .def("get_turn", &Game::get_turn)
+        .def("get_board", &Game::get_board)
+        .def("get_stand", &Game::get_stand)
+        .def("get_result", &Game::get_result)
+        .def("record_length", &Game::record_length)
+        .def("get_legal_moves", &Game::get_legal_moves)
+        .def("to_sfen", &Game::to_sfen)
+        .def("is_legal", &Game::is_legal)
+        .def("apply", &Game::apply)
+        .def("get_move_at", &Game::get_move_at)
+        .def("get_sfen_at", &Game::get_sfen_at)
+        .def(
+            "__array__",
+            [](const Game& self) -> pybind11::array_t<float> {
+                const auto shape = std::vector<pybind11::ssize_t>(
+                    {1,
+                     Game::ranks(),
+                     Game::files(),
+                     Game::feature_channels()});
+                auto out = pybind11::array_t<float>(shape);
+                self.to_feature_map(out.mutable_data());
+                return out;
+            })
+        .def("copy", [](const Game& self) { return Game(self); })
+        .def(
+            "__deepcopy__",
+            [](const Game& self, pybind11::dict) { return Game(self); },
+            pybind11::arg("memo"));
+}
+
 } // namespace pyvshogi
 
 #endif // PYTHON_VSHOGI_HPP

@@ -53,42 +53,6 @@ void export_pieces(py::module& m)
         .value("VOID", as::VOID);
 }
 
-void export_game(py::module& m)
-{
-    py::class_<as::Game>(m, "_Game")
-        .def(py::init<>())
-        .def(py::init<const std::uint64_t>())
-        .def(py::init<const std::string&>())
-        .def(
-            "__array__",
-            [](const as::Game& self) -> py::array_t<float> {
-                const auto shape = std::vector<py::ssize_t>(
-                    {1, as::num_ranks, as::num_files, self.feature_channels()});
-                auto out = py::array_t<float>(shape);
-                self.to_feature_map(out.mutable_data());
-                return out;
-            })
-        .def("get_turn", &as::Game::get_turn)
-        .def("get_board", &as::Game::get_board)
-        .def("get_stand", &as::Game::get_stand)
-        .def("get_result", &as::Game::get_result)
-        .def("record_length", &as::Game::record_length)
-        .def("get_legal_moves", &as::Game::get_legal_moves)
-        .def(
-            "to_sfen", &as::Game::to_sfen, py::arg("include_move_count") = true)
-        .def("hash_current_state", &as::Game::hash_current_state)
-        .def("is_legal", &as::Game::is_legal)
-        .def("apply", &as::Game::apply)
-        .def("get_move_at", &as::Game::get_move_at)
-        .def("get_sfen_at", &as::Game::get_sfen_at)
-        .def("get_state_hash_at", &as::Game::get_state_hash_at)
-        .def("copy", [](const as::Game& self) { return as::Game(self); })
-        .def(
-            "__deepcopy__",
-            [](const as::Game& self, py::dict) { return as::Game(self); },
-            py::arg("memo"));
-}
-
 } // namespace
 
 void export_animal_shogi(py::module& m)
@@ -103,5 +67,5 @@ void export_animal_shogi(py::module& m)
         as::stand_piece_array,
         3>(m);
     pyvshogi::export_move<as::Move, as::SquareEnum, as::PieceTypeEnum>(m);
-    export_game(m);
+    pyvshogi::export_game<as::Game>(m);
 }

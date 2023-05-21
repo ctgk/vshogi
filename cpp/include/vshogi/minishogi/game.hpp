@@ -86,6 +86,14 @@ public:
     {
         return m_record[n].first;
     }
+    static constexpr int ranks()
+    {
+        return num_ranks;
+    }
+    static constexpr int files()
+    {
+        return num_files;
+    }
     static constexpr int feature_channels()
     {
         return 2 * (10 + 5); // 2-player * (10-board-piece + 5-stand-piece)

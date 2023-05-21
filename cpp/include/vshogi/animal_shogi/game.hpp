@@ -121,6 +121,14 @@ public:
         s.set_hash(get_state_hash_at(n));
         return s.to_sfen() + ' ' + std::to_string(n + 1);
     }
+    static constexpr int ranks()
+    {
+        return num_ranks;
+    }
+    static constexpr int files()
+    {
+        return num_files;
+    }
     static constexpr int feature_channels()
     {
         return 2 * (5 + 3); // 2-player * (5-board-piece + 3-stand-piece)

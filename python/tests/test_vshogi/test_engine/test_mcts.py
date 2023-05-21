@@ -30,7 +30,7 @@ def test_q_values():
     # 4 |+E|  |+G|
     #   *--*--*--*
     # Black: -
-    game = shogi.Game(193099782435314)
+    game = shogi.Game('g1e/1cl/1CL/E1G b -')
     m = shogi.Move(shogi.C2, shogi.C3)
 
     searcher = MonteCarloTreeSearcher(pv_func)
@@ -55,7 +55,7 @@ def test_q_values_by_dirichlet_noise():
     # 4 |+E|  |+G|
     #   *--*--*--*
     # Black: -
-    game = shogi.Game(193082669674994)
+    game = shogi.Game('g1e/lc1/1CL/E1G b -')
     m = shogi.Move(shogi.C2, shogi.C3)
 
     searcher = MonteCarloTreeSearcher(pv_func)
@@ -89,7 +89,7 @@ def test_q_value_near_game_end():
     # 4 |+E|+L|+G|
     #   *--*--*--*
     # Black: C
-    game = shogi.Game(1314599563424050)
+    game = shogi.Game('gle/1C1/3/ELG w C')
 
     def _pv_func(game: shogi.Game):
         m = shogi.Move(shogi.A2, shogi.A1)
@@ -131,7 +131,7 @@ def test_visit_counts_by_dirichlet_noise():
     # 4 |+E|  |+G|
     #   *--*--*--*
     # Black: -
-    game = shogi.Game(193099782435314)
+    game = shogi.Game('g1e/1cl/1CL/E1G b -')
     m = shogi.Move(shogi.C2, shogi.C3)
 
     searcher = MonteCarloTreeSearcher(pv_func)

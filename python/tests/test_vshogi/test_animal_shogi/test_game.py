@@ -31,10 +31,10 @@ def test_deepcopy():
     assert g1.board[shogi.B2] != g2.board[shogi.B2]
 
 
-def test_hash():
+def test_to_sfen():
     game = shogi.Game().apply(shogi.Move(shogi.B2, shogi.B3))
 
-    actual = shogi.Game(game.hash_current_state())
+    actual = shogi.Game(game.to_sfen())
     assert shogi.B_CH == actual.board[shogi.B2]
     assert shogi.VOID == actual.board[shogi.B3]
     assert {shogi.CH: 1, shogi.EL: 0, shogi.GI: 0} == actual.stand(shogi.BLACK)
@@ -54,8 +54,8 @@ def test_board():
     assert (actual == expected).all()
 
 
-def test_init_from_hash():
-    game = shogi.Game(1452042304300031)
+def test_init_from_sfen():
+    game = shogi.Game('Gce/2E/l1G/L2 w c')
     assert game.result == shogi.ONGOING
     print(game)
 
