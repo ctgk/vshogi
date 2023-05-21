@@ -6,6 +6,18 @@ import pytest
 import vshogi.animal_shogi as shogi
 
 
+def test_ranks():
+    assert 4 == shogi.Game.ranks
+
+
+def test_files():
+    assert 3 == shogi.Game.files
+
+
+def test_feature_channels():
+    assert 2 * (5 + 3) == shogi.Game.feature_channels
+
+
 def test_init():
     shogi.Game()
 

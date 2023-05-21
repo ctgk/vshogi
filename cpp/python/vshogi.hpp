@@ -82,6 +82,9 @@ inline void export_game(pybind11::module& m)
         .def("apply", &Game::apply)
         .def("get_move_at", &Game::get_move_at)
         .def("get_sfen_at", &Game::get_sfen_at)
+        .def_static("ranks", &Game::ranks)
+        .def_static("files", &Game::files)
+        .def_static("feature_channels", &Game::feature_channels)
         .def(
             "__array__",
             [](const Game& self) -> pybind11::array_t<float> {

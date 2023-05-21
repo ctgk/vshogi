@@ -4,6 +4,21 @@ import pytest
 import vshogi.minishogi as shogi
 
 
+def test_ranks():
+    assert 5 == shogi.Game.ranks
+    assert 5 == shogi.Game().ranks
+
+
+def test_files():
+    assert 5 == shogi.Game.files
+    assert 5 == shogi.Game().files
+
+
+def test_feature_channels():
+    assert 2 * (10 + 5) == shogi.Game.feature_channels
+    assert 2 * (10 + 5) == shogi.Game().feature_channels
+
+
 def test_array():
     game = shogi.Game()
     game.apply(shogi.Move(shogi.SQ_1B, shogi.SQ_1E))

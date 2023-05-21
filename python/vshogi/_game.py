@@ -9,6 +9,15 @@ from vshogi._vshogi import Color, Result
 Move = tp.TypeVar('Move')
 
 
+class _ClassProperty:
+
+    def __init__(self, func: callable):
+        self._func = func
+
+    def __get__(self, _, owner):
+        return self._func(owner)
+
+
 class Game(abc.ABC):
     """Base class for Shogi games."""
 
@@ -42,6 +51,39 @@ class Game(abc.ABC):
             DL-shogi input.
         """
         return np.asarray(self._game)
+
+    @_ClassProperty
+    def ranks(self) -> int:
+        """Return number of horizontal rows of the board.
+
+        Returns
+        -------
+        int
+            Number of horizontal rows of the board.
+        """
+        return self._get_backend_game_class().ranks()
+
+    @_ClassProperty
+    def files(self) -> int:
+        """Return number of vertical columns of the board.
+
+        Returns
+        -------
+        int
+            Number of vertical columns of the board.
+        """
+        return self._get_backend_game_class().files()
+
+    @_ClassProperty
+    def feature_channels(self) -> int:
+        """Return number of channels of feature map of the game.
+
+        Returns
+        -------
+        int
+            Number of channels of feature map of the game.
+        """
+        return self._get_backend_game_class().feature_channels()
 
     @property
     def turn(self) -> Color:
