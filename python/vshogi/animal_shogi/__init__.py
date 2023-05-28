@@ -76,7 +76,7 @@ for _cls in _classes:
 
 
 __all__ = (
-    [_cls.__name__ for _cls in _classes]
+    [_cls.__name__ for _cls in _classes] + ['Color', 'Result']
     + [m for _e in _enums for m in _e.__members__]
 )
 
