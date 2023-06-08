@@ -16,13 +16,18 @@ class _Node:
     def __init__(
         self,
         game: Game,
-        policy_value_func: tp.Callable[[Game], tp.Tuple[Policy, Value]],
+        policy: Policy,
+        value: Value,
         parent: '_Node' = None,
     ) -> None:
         self._game = game
-        self._policy_value_func = policy_value_func
-        self._policy, self._value = self._policy_value_func(self._game)
+        self._policy, self._value = policy, value
         self._visit_count = 1
+
+        # Computing sqrt of `self._visit_count` beforehand cuts half of the
+        # computation time of `self._u()` function.
+        self._sqrt_visit_count = 1
+
         self._children: tp.Dict['Move', '_Node'] = {}
         self._parent: '_Node' = parent
         self._q_value: float = self._value
@@ -32,20 +37,22 @@ class _Node:
     def __repr__(self) -> str:
         return f'_Node(#visit={self._visit_count},Q={self._q_value})'
 
-    def _u(self, add_dirichlet_noise: bool) -> tp.Dict['Move', float]:
+    def _get_policy(self, add_dirichlet_noise: bool):
         if add_dirichlet_noise:
             n = len(self._policy)
             p_d = {
                 k: p for k, p in zip(
                     self._policy, np.random.dirichlet(np.ones(n) * 10 / n))
             }
-            policy = {k: (3 * p + p_d[k]) / 4 for k, p in self._policy.items()}
+            return {k: (3 * p + p_d[k]) / 4 for k, p in self._policy.items()}
         else:
-            policy = self._policy
-        assert max(policy.values()) <= 1, (self._policy, p_d)
+            return self._policy
+
+    def _u(self, add_dirichlet_noise: bool) -> tp.Dict['Move', float]:
+        policy = self._get_policy(add_dirichlet_noise)
         return {
             k: (
-                p * np.sqrt(self._visit_count) / (
+                p * self._sqrt_visit_count / (
                     1 + (
                         self._children[k]._visit_count
                         if k in self._children else 0
@@ -87,21 +94,35 @@ class _Node:
             key=lambda t: t[1],
         )[0]
 
-    def _add_node(self, action: 'Move'):
-        g = deepcopy(self._game).apply(action)
-        self._children[action] = _Node(g, self._policy_value_func, self)
+    def add_node(
+        self,
+        action: 'Move',
+        game_after_action: Game,
+        policy: Policy,
+        value: Value,
+    ):
+        self._children[action] = _Node(game_after_action, policy, value, self)
 
-    def explore(self, c_puct: float = 1., dirichlet_noise_depth: int = 0):
+    def _increment_visit_count(self):
         self._visit_count += 1
+        self._sqrt_visit_count = np.sqrt(self._visit_count)
+
+    def explore(
+        self,
+        c_puct: float = 1.,
+        dirichlet_noise_depth: int = 0,
+    ) -> tp.Tuple['_Node', 'Move']:
+        self._increment_visit_count()
         if len(self._policy) == 0:
             self._update_q(self._value)
-            return
+            return (self, None)
         action = self._get_action_with_max_puct_score(
             c_puct, dirichlet_noise_depth > 0)
         if action in self._children:
-            self._children[action].explore(c_puct, dirichlet_noise_depth - 1)
+            return self._children[action].explore(
+                c_puct, dirichlet_noise_depth - 1)
         else:
-            self._add_node(action)
+            return (self, action)
 
 
 class MonteCarloTreeSearcher:
@@ -157,7 +178,8 @@ class MonteCarloTreeSearcher:
         game : Game
             Game to set at root node.
         """
-        self._root = _Node(game, self._policy_value_func)
+        policy, value = self._policy_value_func(game)
+        self._root = _Node(game, policy, value)
 
     def explore(
         self,
@@ -183,8 +205,14 @@ class MonteCarloTreeSearcher:
             c_puct = self._coeff_puct
         if dirichlet_noise_depth is None:
             dirichlet_noise_depth = self._depth_to_add_dirichlet_noise
+
         for _ in range(n):
-            self._root.explore(c_puct, dirichlet_noise_depth)
+            node, action = self._root.explore(c_puct, dirichlet_noise_depth)
+            if action is None:
+                continue
+            game = deepcopy(node._game).apply(action)
+            policy, value = self._policy_value_func(game)
+            node.add_node(action, game, policy, value)
 
     def get_q_values(self) -> tp.Dict['Move', float]:
         """Return Q value of each action.
