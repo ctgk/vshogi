@@ -181,6 +181,49 @@ class MonteCarloTreeSearcher:
         policy, value = self._policy_value_func(game)
         self._root = _Node(game, policy, value)
 
+    def is_ready(self) -> bool:
+        """Return true if it is ready to explore otherwise false.
+
+        Returns
+        -------
+        bool
+            True if it is ready to start exploration otherwise false.
+        """
+        return self._root is not None
+
+    def clear(self) -> None:
+        """Clear explorations done so far."""
+        self._root = None
+
+    def apply(self, move: 'Move'):
+        """Apply a move to the current root node.
+
+        Parameters
+        ----------
+        move : Move
+            Move to apply to the current root node.
+        """
+        if not self.is_ready():
+            return
+        if move in self._root._children:
+            self._root = self._root._children[move]
+            self._root._parent = None
+        else:
+            self._root = None
+
+    @property
+    def num_explored(self) -> int:
+        """Return number of times explored so far.
+
+        Returns
+        -------
+        int
+            Number of times explored so far.
+        """
+        if self._root is None:
+            return 0
+        return self._root._visit_count
+
     def explore(
         self,
         n: tp.Optional[int] = None,

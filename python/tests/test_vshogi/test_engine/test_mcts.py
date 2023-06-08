@@ -16,6 +16,74 @@ def pv_func(game):
     return policy, value
 
 
+def test_is_ready():
+    # Turn: BLACK
+    # White: -
+    #     A  B  C
+    #   *--*--*--*
+    # 1 |-G|  |-E|
+    #   *--*--*--*
+    # 2 |  |-C|-L|
+    #   *--*--*--*
+    # 3 |  |+C|+L|
+    #   *--*--*--*
+    # 4 |+E|  |+G|
+    #   *--*--*--*
+    # Black: -
+    game = shogi.Game('g1e/1cl/1CL/E1G b -')
+
+    searcher = MonteCarloTreeSearcher(pv_func)
+    assert searcher.is_ready() is False
+    searcher.set_root(game)
+    assert searcher.is_ready()
+
+
+def test_num_explored():
+    # Turn: BLACK
+    # White: -
+    #     A  B  C
+    #   *--*--*--*
+    # 1 |-G|  |-E|
+    #   *--*--*--*
+    # 2 |  |-C|-L|
+    #   *--*--*--*
+    # 3 |  |+C|+L|
+    #   *--*--*--*
+    # 4 |+E|  |+G|
+    #   *--*--*--*
+    # Black: -
+    game = shogi.Game('g1e/1cl/1CL/E1G b -')
+
+    searcher = MonteCarloTreeSearcher(pv_func)
+    searcher.set_root(game)
+    searcher.explore(n=100)
+    assert searcher.num_explored == 100 + 1
+
+
+def test_clear():
+    # Turn: BLACK
+    # White: -
+    #     A  B  C
+    #   *--*--*--*
+    # 1 |-G|  |-E|
+    #   *--*--*--*
+    # 2 |  |-C|-L|
+    #   *--*--*--*
+    # 3 |  |+C|+L|
+    #   *--*--*--*
+    # 4 |+E|  |+G|
+    #   *--*--*--*
+    # Black: -
+    game = shogi.Game('g1e/1cl/1CL/E1G b -')
+
+    searcher = MonteCarloTreeSearcher(pv_func)
+    searcher.set_root(game)
+    searcher.explore(n=100)
+    searcher.clear()
+    assert searcher.is_ready() is False
+    assert searcher.num_explored == 0
+
+
 def test_q_values():
     # Turn: BLACK
     # White: -
