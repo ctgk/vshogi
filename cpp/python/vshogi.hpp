@@ -1,6 +1,8 @@
 #ifndef PYTHON_VSHOGI_HPP
 #define PYTHON_VSHOGI_HPP
 
+#include "vshogi/engine/mcts.hpp"
+
 #include <pybind11/pybind11.h>
 
 namespace pyvshogi
@@ -102,6 +104,49 @@ inline void export_game(pybind11::module& m)
             "__deepcopy__",
             [](const Game& self, pybind11::dict) { return Game(self); },
             pybind11::arg("memo"));
+}
+
+template <class Game, class Move>
+inline void export_node(pybind11::module& m)
+{
+    using Node = vshogi::engine::Node<Game, Move>;
+    pybind11::class_<Node>(m, "Node")
+        .def(
+            pybind11::init<
+                const float,
+                const std::vector<Move>&,
+                const std::vector<float>&>(),
+            pybind11::arg("value"),
+            pybind11::arg("actions"),
+            pybind11::arg("probas"))
+        .def("get_visit_count", &Node::get_visit_count)
+        .def("get_value", &Node::get_value)
+        .def("get_q_value", &Node::get_q_value)
+        .def("get_actions", &Node::get_actions)
+        .def("get_proba", &Node::get_proba)
+        .def(
+            "get_child",
+            [](Node& node, const Move& action) {
+                return pybind11::cast(
+                    node.get_child(action),
+                    pybind11::return_value_policy::reference);
+            })
+        .def("set_value_action_proba", &Node::set_value_action_proba)
+        .def(
+            "explore",
+            [](Node& node,
+               Game& game,
+               const float coeff_puct,
+               const float random_proba,
+               const int random_depth) -> pybind11::object {
+                const auto out = node.explore(
+                    game, coeff_puct, random_proba, random_depth);
+                if (out == nullptr)
+                    return pybind11::none();
+                return pybind11::cast(
+                    *out, pybind11::return_value_policy::reference);
+            })
+        .def("pop_child", &Node::pop_child);
 }
 
 } // namespace pyvshogi

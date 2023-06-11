@@ -31,6 +31,11 @@ class Game(abc.ABC):
     def _get_move_class(cls) -> type:
         pass
 
+    @classmethod
+    @abc.abstractmethod
+    def _get_node_class(cls) -> type:
+        pass
+
     def __init__(self, sfen: tp.Optional[str] = None) -> None:
         """Initialize shogi game.
 

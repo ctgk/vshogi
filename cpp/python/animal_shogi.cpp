@@ -68,4 +68,5 @@ void export_animal_shogi(py::module& m)
         3>(m);
     pyvshogi::export_move<as::Move, as::SquareEnum, as::PieceTypeEnum>(m);
     pyvshogi::export_game<as::Game>(m);
+    pyvshogi::export_node<as::Game, as::Move>(m);
 }

@@ -1,5 +1,5 @@
 from vshogi._game import Game as BaseGame
-from vshogi._vshogi.animal_shogi import Move
+from vshogi._vshogi.animal_shogi import Move, Node
 from vshogi._vshogi.animal_shogi import Stand
 from vshogi._vshogi.animal_shogi import _Game as _AnimalshogiGame
 
@@ -78,3 +78,7 @@ class Game(BaseGame):
     @classmethod
     def _get_move_class(cls) -> type:
         return Move
+
+    @classmethod
+    def _get_node_class(cls) -> type:
+        return Node
