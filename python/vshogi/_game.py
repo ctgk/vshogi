@@ -243,6 +243,9 @@ class Game(abc.ABC):
         """
         return self._game.get_sfen_at(n)
 
+    def _policy_logits_to_policy_dict_probas(self, logits: np.ndarray) -> dict:
+        return self._game._policy_logits_to_policy_dict_probas(logits)
+
     def __repr__(self) -> str:
         """Return representation of the object for debugging.
 

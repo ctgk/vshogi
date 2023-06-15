@@ -121,5 +121,30 @@ def test_array():
     assert np.allclose(actual[0, 2, 1, 11], 1)
 
 
+def test_policy_logits_to_policy_dict_probas():
+    # Turn: BLACK
+    # White: -
+    #     A  B  C
+    #   *--*--*--*
+    # 1 |-G|-L|-E|
+    #   *--*--*--*
+    # 2 |  |-C|  |
+    #   *--*--*--*
+    # 3 |  |+C|  |
+    #   *--*--*--*
+    # 4 |+E|+L|+G|
+    #   *--*--*--*
+    # Black: -
+    game = shogi.Game()
+    logits = np.zeros(12 * 11, dtype=np.float32)
+    logits[50] = 1
+    actual = game._policy_logits_to_policy_dict_probas(logits)
+    assert len(actual) == 4  # == len(game.get_legal_moves())
+    assert np.isclose(actual[shogi.Move(shogi.B2, shogi.B3)], 0.4753, 0, 1e-2)
+    assert np.isclose(actual[shogi.Move(shogi.A3, shogi.B4)], 0.1748, 0, 1e-2)
+    assert np.isclose(actual[shogi.Move(shogi.C3, shogi.B4)], 0.1748, 0, 1e-2)
+    assert np.isclose(actual[shogi.Move(shogi.C3, shogi.C4)], 0.1748, 0, 1e-2)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

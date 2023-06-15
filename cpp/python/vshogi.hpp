@@ -1,12 +1,29 @@
 #ifndef PYTHON_VSHOGI_HPP
 #define PYTHON_VSHOGI_HPP
 
+#include <algorithm>
+#include <cmath>
+
 #include "vshogi/engine/mcts.hpp"
 
 #include <pybind11/pybind11.h>
 
 namespace pyvshogi
 {
+
+inline void softmax(std::vector<float>& v)
+{
+    const float maximum_value = *std::max_element(v.cbegin(), v.cend());
+    float sum = 0.f;
+    for (auto&& e : v) {
+        e -= maximum_value;
+        e = std::exp(e);
+        sum += e;
+    }
+    for (auto&& e : v) {
+        e /= sum;
+    }
+}
 
 template <class Board, class Square>
 inline void export_board(pybind11::module& m)
@@ -97,6 +114,33 @@ inline void export_game(pybind11::module& m)
                      Game::feature_channels()});
                 auto out = pybind11::array_t<float>(shape);
                 self.to_feature_map(out.mutable_data());
+                return out;
+            })
+        .def(
+            "_policy_logits_to_policy_dict_probas",
+            [](const Game& self, const pybind11::array_t<float>& policy_logits)
+                -> pybind11::dict {
+                const auto moves = self.get_legal_moves();
+                if (moves.empty()) {
+                    return pybind11::dict();
+                }
+
+                const float* const ptr = policy_logits.data();
+                auto probas = std::vector<float>(moves.size());
+                const auto turn = self.get_turn();
+                for (std::size_t ii = moves.size(); ii--;) {
+                    const auto index
+                        = (turn == vshogi::BLACK)
+                              ? moves[ii].to_dlshogi_policy_index()
+                              : moves[ii].rotate().to_dlshogi_policy_index();
+                    probas[ii] = ptr[index];
+                }
+                softmax(probas);
+
+                pybind11::dict out;
+                for (std::size_t ii = moves.size(); ii--;) {
+                    out[pybind11::cast(moves[ii])] = probas[ii];
+                }
                 return out;
             })
         .def("copy", [](const Game& self) { return Game(self); })
