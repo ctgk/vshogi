@@ -7,7 +7,8 @@ import scipy.special as sp
 from vshogi._game import Game
 
 
-Policy = tp.Dict['Move', float]
+Move = tp.TypeVar('Move')
+Policy = tp.Dict[Move, float]
 Value = float
 
 
@@ -118,7 +119,7 @@ class MonteCarloTreeSearcher:
         """Clear explorations done so far."""
         self._root = None
 
-    def apply(self, move: 'Move'):
+    def apply(self, move: Move):
         """Apply a move to the current root node.
 
         Parameters
@@ -189,7 +190,7 @@ class MonteCarloTreeSearcher:
             node.set_value_action_proba(
                 value, list(policy.keys()), list(policy.values()))
 
-    def get_q_values(self) -> tp.Dict['Move', float]:
+    def get_q_values(self) -> tp.Dict[Move, float]:
         """Return Q value of each action.
 
         Returns
@@ -204,7 +205,7 @@ class MonteCarloTreeSearcher:
         move_q_pair_list.sort(key=lambda a: a[1], reverse=True)
         return {m: q for m, q in move_q_pair_list}
 
-    def get_visit_counts(self) -> tp.Dict['Move', int]:
+    def get_visit_counts(self) -> tp.Dict[Move, int]:
         """Return visit counts of each action.
 
         Returns
@@ -223,7 +224,7 @@ class MonteCarloTreeSearcher:
         self,
         by: tp.Optional[tp.Literal['visit_counts', 'q_values']] = None,
         temperature: tp.Union[float, tp.Literal['max'], None] = None,
-    ) -> 'Move':
+    ) -> Move:
         """Return selected action based on visit counts.
 
         Parameters
