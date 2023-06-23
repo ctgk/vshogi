@@ -75,7 +75,7 @@ constexpr SquareEnum square_array[] = {
 
 constexpr int direction_to_delta(const DirectionEnum d)
 {
-    constexpr int table[] = {-10, -9, -8, -1, 1, 8, 9, 10, -19, -17, 17, 19};
+    constexpr int table[] = {-10, -9, -8, -1, 1, 8, 9, 10, 17, 19, -19, -17};
     return table[d];
 }
 
