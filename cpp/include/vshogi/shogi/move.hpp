@@ -46,7 +46,7 @@ class Move
 {
 private:
     /**
-     * @brief N-bit integer representing a move in shogi game.
+     * @brief 16-bit integer representing a move in shogi game.
      * @details
      *       ________ _*******       Destination square (81 possibilities)
      *       ________ *_______       Promotion flag (2 possibilities)
