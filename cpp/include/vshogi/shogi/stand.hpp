@@ -37,7 +37,7 @@ class Stand
 {
 private:
     /**
-     * @brief N-bit integer representing pieces on a stand.
+     * @brief 32-bit integer representing pieces on a stand.
      * @details
      * ________ ________ ________ ___*****  FU (18 pieces)
      * ________ ________ _______* **______  KY (4 pieces)
