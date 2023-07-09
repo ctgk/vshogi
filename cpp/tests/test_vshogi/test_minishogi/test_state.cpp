@@ -93,7 +93,7 @@ TEST(state, is_legal)
 
         CHECK_TRUE(s.is_legal(Move(SQ_1C, FU)));
         CHECK_FALSE(s.is_legal(Move(SQ_5A, FU))); // Unmovable
-        CHECK_FALSE(s.is_legal(Move(SQ_1B, FU))); // pawn drop checkmate
+        CHECK_FALSE(s.is_legal(Move(SQ_1B, FU))); // drop pawn mate
 
         CHECK_TRUE(s.is_legal(Move(SQ_4A, SQ_4B)));
         CHECK_TRUE(s.is_legal(Move(SQ_4A, SQ_4B, true)));
@@ -180,7 +180,7 @@ TEST(state, is_legal)
         //   *---*---*---*---*---*
         // Black: FU
         s.set_sfen("R2gk/5/4G/5/K4 b P");
-        CHECK_FALSE(s.is_legal(Move(SQ_1B, FU))); // Pawn-drop checkmate
+        CHECK_FALSE(s.is_legal(Move(SQ_1B, FU))); // drop pawn mate
     }
 }
 

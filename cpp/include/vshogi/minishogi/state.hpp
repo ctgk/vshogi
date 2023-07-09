@@ -62,8 +62,7 @@ private:
     {
         return has_movable_square_after_move(to_board_piece(m_turn, p), dst);
     }
-    bool
-    is_checkmate_by_pawn_drop(const PieceTypeEnum p, const SquareEnum dst) const
+    bool is_drop_pawn_mate(const PieceTypeEnum p, const SquareEnum dst) const
     {
         if (p != FU)
             return false;
@@ -100,7 +99,7 @@ private:
         return (
             has_piece_on_turn_player_stand(p) && is_empty_square(dst)
             && has_movable_square_after_move(p, dst) && is_valid_promotion(move)
-            && (!is_checkmate_by_pawn_drop(p, dst))
+            && (!is_drop_pawn_mate(p, dst))
             && (!is_my_king_in_check_after_move(move)));
     }
     bool is_empty_or_opponent_square(const SquareEnum sq) const
