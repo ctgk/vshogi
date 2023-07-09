@@ -162,6 +162,26 @@ TEST(state, is_legal)
         CHECK_FALSE(s.is_legal(Move(SQ_4A, SQ_4B)));
         CHECK_TRUE(s.is_legal(Move(SQ_4A, SQ_4B, true)));
     }
+    {
+        auto s = State();
+        // Turn: BLACK
+        // White: -
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |+HI|   |   |-KI|-OU|
+        //   *---*---*---*---*---*
+        // B |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // C |   |   |   |   |+KI|
+        //   *---*---*---*---*---*
+        // D |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // E |+OU|   |   |   |   |
+        //   *---*---*---*---*---*
+        // Black: FU
+        s.set_sfen("R2gk/5/4G/5/K4 b P");
+        CHECK_FALSE(s.is_legal(Move(SQ_1B, FU))); // Pawn-drop checkmate
+    }
 }
 
 TEST(state, get_legal_moves)

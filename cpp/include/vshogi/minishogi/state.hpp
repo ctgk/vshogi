@@ -63,31 +63,35 @@ private:
         return has_movable_square_after_move(to_board_piece(m_turn, p), dst);
     }
     bool
-    is_checkmate_by_pawn_drop(const PieceTypeEnum p, const SquareEnum sq) const
+    is_checkmate_by_pawn_drop(const PieceTypeEnum p, const SquareEnum dst) const
     {
         if (p != FU)
             return false;
 
         // Note that `has_movable_square_after_drop` precedes this method.
-        const auto attacking_sq = shift(sq, (m_turn == BLACK) ? DIR_N : DIR_S);
+        const auto attacking_sq = shift(dst, (m_turn == BLACK) ? DIR_N : DIR_S);
         const auto attacked = m_board[attacking_sq];
         if (attacked != to_board_piece(~m_turn, OU))
             return false;
-        {
-            auto b = m_board;
-            b[attacking_sq] = VOID;
-            const auto attack_mask = b.to_attack_mask(~m_turn);
-            if (attack_mask.is_one(sq))
-                return false; // Opponent can capture my pawn next turn.
+        return !can_opponent_capture_piece_at(dst);
+    }
+    bool can_opponent_capture_piece_at(const SquareEnum target) const
+    {
+        const auto occupied = m_piece_masks[BLACK] | m_piece_masks[WHITE];
+        for (auto src : square_array) {
+            const auto p = m_board[src];
+            if ((p == VOID) || (get_color(p) == m_turn))
+                continue;
+            const auto attacks = get_attacks_by(p, src, occupied);
+            if (attacks.is_one(target)) {
+                auto b = m_board;
+                b[src] = VOID;
+                b[target] = p;
+                if (!b.in_check(~m_turn))
+                    return true;
+            }
         }
-
-        const auto opponent_king_attacks
-            = get_attacks_by(attacked, attacking_sq);
-        const auto opponent_king_movable = opponent_king_attacks
-                                           & (~m_piece_masks[~m_turn])
-                                           & (~m_attack_masks[m_turn]);
-        const auto opponent_king_is_alive = opponent_king_movable.any();
-        return !opponent_king_is_alive;
+        return false;
     }
     bool is_legal_drop(const Move move) const
     {
