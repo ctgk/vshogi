@@ -173,7 +173,7 @@ private:
                 const auto m = Move(dst, src);
                 if (is_legal_board(m))
                     out.emplace_back(m);
-                if (is_promotion_zone(dst)) {
+                if (is_promotion_zone(dst) || is_promotion_zone(src)) {
                     const auto promotion_move = Move(dst, src, true);
                     if (is_legal_board(promotion_move))
                         out.emplace_back(promotion_move);

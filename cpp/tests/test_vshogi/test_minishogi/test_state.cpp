@@ -282,6 +282,27 @@ TEST(state, get_legal_moves)
         const auto actual = s.get_legal_moves();
         CHECK_EQUAL(0, actual.size());
     }
+    {
+        auto s = State();
+        // Turn: BLACK
+        // White: -
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |+GI|   |   |   |   |
+        //   *---*---*---*---*---*
+        // B |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // C |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // D |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // E |+OU|   |   |   |-OU|
+        //   *---*---*---*---*---*
+        // Black: -
+        s.set_sfen("S4/5/5/5/K3k b -");
+        const auto actual = s.get_legal_moves();
+        CHECK_EQUAL(2 + 3, actual.size());
+    }
 }
 
 } // namespace test_vshogi::test_minishogi
