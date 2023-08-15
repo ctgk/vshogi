@@ -106,7 +106,7 @@ def test_q_values():
     searcher.explore(n=100, random_depth=0)
     actual = searcher.get_q_values()
     print(actual)
-    assert np.isclose(actual[m], 1)
+    assert np.isclose(actual[m], 1, rtol=0, atol=1e-2)
 
 
 def test_visit_count_by_dirichlet_noise():

@@ -62,7 +62,10 @@ TEST(node, explore_one_action)
     {
         CHECK_EQUAL(2, root.get_visit_count());
         DOUBLES_EQUAL(1.f, root.get_value(), 1e-2f);
-        DOUBLES_EQUAL((1.f + 0.8f) * 0.5f, root.get_q_value(), 1e-2f);
+        DOUBLES_EQUAL(
+            std::tanh((5.f + std::atanh(0.8f)) * 0.5f),
+            root.get_q_value(),
+            1e-2f);
 
         CHECK_TRUE(actual->is_valid());
         CHECK_EQUAL(1, actual->get_visit_count());
@@ -78,27 +81,27 @@ TEST(node, explore_two_action)
 {
 
     /**
-     *                       Node(v=0)
+     *                        Node(v=0)
      *                        /     \
      *                       /       \
      *                    p=0.8     p=0.2
      *                     /           \
      *                    /             \
-     *              Node(v=-0.3)   Node(v=0.2)
+     *             Node(v=-0.3)     Node(v=0.2)
      *
      * PUCT scores (Q + U * c)
      * - step1
      *     - Move(SQ_B2, SQ_B3): 0 + 0.8 * 1 = 0.8 <-
      *     - Move(SQ_C3, SQ_C4): 0 + 0.2 * 1 = 0.2
      * - step2
-     *     - Move(SQ_B2, SQ_B3): -0.3 + (0.8 * sqrt(2) / 2) * 1 = 0.265
+     *     - Move(SQ_B2, SQ_B3): -0.3 + (0.8 * sqrt(2) / 2) * 1 = 0.266
      *     - Move(SQ_C3, SQ_C4): 0 + (0.2 * sqrt(2) / 1) * 1 = 0.282 <-
      * - step3
-     *     - Move(SQ_B2, SQ_B3): -0.3 + (0.8 * sqrt(3) / 2) * 1 = 0.392 <-
+     *     - Move(SQ_B2, SQ_B3): -0.3 + (0.8 * sqrt(3) / 2) * 1 = 0.393 <-
      *     - Move(SQ_C3, SQ_C4): 0.2 + (0.2 * sqrt(3) / 2) * 1 = 0.373
      * - step4
      *     - Move(SQ_B2, SQ_B3): -0.3 + (0.8 * sqrt(4) / 3) * 1 = 0.233
-     *     - Move(SQ_C3, SQ_C4): 0.2 + (0.2 * sqrt(4) / 2) * 1 = 0.4 <-
+     *     - Move(SQ_C3, SQ_C4): 0.2 + (0.2 * sqrt(4) / 2) * 1 = 0.400 <-
      * - step5
      *     - Move(SQ_B2, SQ_B3): -0.3 + (0.8 * sqrt(5) / 3) * 1 = 0.296
      *     - Move(SQ_C3, SQ_C4): 0.2 + (0.2 * sqrt(5) / 3) * 1 = 0.349 <-
@@ -106,14 +109,16 @@ TEST(node, explore_two_action)
 
     std::vector<float> input_value = {0.3f, -0.2f};
     std::vector<bool> expected_leaf_nullptr = {false, false, true, true, true};
+    const float atanh0p3 = std::atanh(0.3f);
+    const float atanh0p2 = std::atanh(0.2f);
     std::vector<float> expected_q_value = {
         // At first, Move(SQ_B2, SQ_B3) is selected due to higher probability
         // clang-format off
-        (0.f + -0.3f) / 2.f,                    // Move(SQ_B2, SQ_B3) selected
-        (0.f + -0.3f + 0.2f) / 3.f,             // Move(SQ_C3, SQ_C4) selected
-        (0.f + -0.3f * 2.f + 0.2f) / 4.f,       // Move(SQ_B2, SQ_B3) selected
-        (0.f + -0.3f * 2.f + 0.2f * 2.f) / 5.f, // Move(SQ_C3, SQ_C4) selected
-        (0.f + -0.3f * 2.f + 0.2f * 3.f) / 6.f, // Move(SQ_C3, SQ_C4) selected
+        std::tanh((0.f + -atanh0p3) / 2.f),                        // Move(SQ_B2, SQ_B3) selected
+        std::tanh((0.f + -atanh0p3 + atanh0p2) / 3.f),             // Move(SQ_C3, SQ_C4) selected
+        std::tanh((0.f + -atanh0p3 * 2.f + atanh0p2) / 4.f),       // Move(SQ_B2, SQ_B3) selected
+        std::tanh((0.f + -atanh0p3 * 2.f + atanh0p2 * 2.f) / 5.f), // Move(SQ_C3, SQ_C4) selected
+        std::tanh((0.f + -atanh0p3 * 2.f + atanh0p2 * 3.f) / 6.f), // Move(SQ_C3, SQ_C4) selected
         // clang-format on
         // In the end, Move(SQ_C3, SQ_C4) is selected due to higher value
         // (lower value from the opponent perspective).
@@ -138,19 +143,19 @@ TEST(node, explore_two_layer)
 {
 
     /**
-     *                        Node(v=0)
+     *                     Node(atanhv=0)
      *                        /     \
      *                       /       \
      *                    p=0.9     p=0.1
      *                     /           \
      *                    /             \
-     *             Node(v=-0.9)     Node(v=0.9)
+     *          Node(atanhv=-0.9) Node(atanhv=0.9)
      *                /     \
      *               /       \
      *           p=0.9      p=0.1
      *             /           \
      *            /             \
-     *      Node(v=-0.5)   Node(v=0.8)
+     *  Node(atanhv=-0.5) Node(atanhv=0.8)
      *
      * PUCT scores (Q + U * c)
      * - step1
@@ -166,7 +171,7 @@ TEST(node, explore_two_layer)
      *         - Move(SQ_A2, SQ_B1): 0 + 0.1 * 1
      * - step3
      *     - Layer1
-     *         - Move(SQ_B2, SQ_B3): 0.95 + (0.9 * sqrt(3) / 3) * 1 = 1.469 <-
+     *         - Move(SQ_B2, SQ_B3): tanh((atanh(0.9)-atanh(0.5))/2) + (0.9 * sqrt(3) / 3) * 1 = 0.951 <-
      *         - Move(SQ_C3, SQ_C4): 0 + (0.1 * sqrt(3) / 1) * 1 = 0.173
      *     - Layer2
      *         - Move(SQ_B2, SQ_B1): 0.5 + (0.9 * sqrt(2) / 2) * 1 = 1.136 <-
@@ -175,13 +180,6 @@ TEST(node, explore_two_layer)
 
     std::vector<float> input_value = {-0.9f, -0.5f};
     std::vector<bool> expected_leaf_nullptr = {false, false, true};
-    std::vector<float> expected_q_value = {
-        // clang-format off
-        (0.f + 0.9f) / 2.f,
-        (0.f + 0.9f + -0.5f) / 3.f,
-        (0.f + 0.9f + -0.5f * 2.f) / 4.f,
-        // clang-format on
-    };
 
     auto root
         = Node(0.f, {Move(SQ_B2, SQ_B3), Move(SQ_C3, SQ_C4)}, {0.8f, 0.2f});
@@ -192,28 +190,39 @@ TEST(node, explore_two_layer)
         CHECK_TRUE(actual != nullptr);
         actual->set_value_action_proba(
             -0.9f, {Move(SQ_B2, SQ_B1), Move(SQ_A2, SQ_B1)}, {0.9f, 0.1f});
-        DOUBLES_EQUAL((0.f + 0.9f) / 2.f, root.get_q_value(), 1e-3f);
+        DOUBLES_EQUAL(
+            std::tanh((0.f + std::atanh(0.9f)) / 2.f),
+            root.get_q_value(),
+            1e-3f);
     }
     {
         auto g = Game();
         const auto actual = root.explore(g, 1.f, 0.f, 0);
         CHECK_TRUE(actual != nullptr);
         actual->set_value_action_proba(-0.5f, {}, {});
-        DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(), 1e-3f);
+        DOUBLES_EQUAL(
+            std::tanh((0.f + std::atanh(0.9f) + std::atanh(-0.5f)) / 3.f),
+            root.get_q_value(),
+            1e-3f);
     }
     {
         auto g = Game();
         const auto actual = root.explore(g, 1.f, 0.f, 0);
         CHECK_TRUE(actual == nullptr);
         DOUBLES_EQUAL(
-            (0.f + 0.9f + -0.5f * 2.f) / 4.f, root.get_q_value(), 1e-3f);
+            std::tanh((0.f + std::atanh(0.9f) + std::atanh(-0.5f) * 2.f) / 4.f),
+            root.get_q_value(),
+            1e-3f);
     }
     {
         auto n = root.pop_child(Move(SQ_B2, SQ_B3));
         CHECK_EQUAL(1, root.get_visit_count());
         DOUBLES_EQUAL(0.f, root.get_q_value(), 1e-3f);
         CHECK_EQUAL(3, n.get_visit_count());
-        DOUBLES_EQUAL((-0.9f + 0.5f * 2.f) / 3.f, n.get_q_value(), 1e-3f);
+        DOUBLES_EQUAL(
+            std::tanh((std::atanh(-0.9f) + std::atanh(0.5f) * 2.f) / 3.f),
+            n.get_q_value(),
+            1e-3f);
     }
 }
 
@@ -221,19 +230,19 @@ TEST(node, get_child_pointer_after_pop)
 {
 
     /**
-     *                        Node(v=0)
+     *                     Node(atanhv=0)
      *                        /     \
      *                       /       \
      *                    p=0.9     p=0.1
      *                     /           \
      *                    /             \
-     *             Node(v=-0.9)     Node(v=0.9)
+     *          Node(atanhv=-0.9) Node(atanhv=0.9)
      *                /     \
      *               /       \
      *           p=0.9      p=0.1
      *             /           \
      *            /             \
-     *      Node(v=-0.5)   Node(v=0.8)
+     *  Node(atanhv=-0.5) Node(atanhv=0.8)
      *
      * PUCT scores (Q + U * c)
      * - step1
@@ -242,7 +251,7 @@ TEST(node, get_child_pointer_after_pop)
      *         - Move(SQ_C3, SQ_C4): 0 + 0.1 * 1 = 0.1
      * - step2
      *     - Layer1
-     *         - Move(SQ_B2, SQ_B3): 0.9 + (0.9 * sqrt(2) / 2) * 1 = 1.536 <-
+     *         - Move(SQ_B2, SQ_B3): tanh(0.9) + (0.9 * sqrt(2) / 2) * 1 = 1.353 <-
      *         - Move(SQ_C3, SQ_C4): 0 + (0.1 * sqrt(2) / 1) * 1 = 0.141
      *     - Layer2
      *         - Move(SQ_B2, SQ_B1): 0 + 0.9 * 1 <-
@@ -258,7 +267,10 @@ TEST(node, get_child_pointer_after_pop)
         CHECK_TRUE(actual != nullptr);
         actual->set_value_action_proba(
             -0.9f, {Move(SQ_B2, SQ_B1), Move(SQ_A2, SQ_B1)}, {0.9f, 0.1f});
-        DOUBLES_EQUAL((0.f + 0.9f) / 2.f, root.get_q_value(), 1e-3f);
+        DOUBLES_EQUAL(
+            std::tanh((0.f + std::atanh(0.9f)) / 2.f),
+            root.get_q_value(),
+            1e-3f);
     }
     const Node* expected = nullptr;
     {
@@ -266,7 +278,10 @@ TEST(node, get_child_pointer_after_pop)
         const auto actual = root.explore(g, 1.f, 0.f, 0);
         CHECK_TRUE(actual != nullptr);
         actual->set_value_action_proba(-0.5f, {}, {});
-        DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(), 1e-3f);
+        DOUBLES_EQUAL(
+            std::tanh((0.f + std::atanh(0.9f) + std::atanh(-0.5f)) / 3.f),
+            root.get_q_value(),
+            1e-3f);
         expected = actual;
     }
     root = root.pop_child(Move(SQ_B2, SQ_B3));

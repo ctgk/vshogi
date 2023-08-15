@@ -15,6 +15,33 @@ static std::random_device dev;
 static std::mt19937 rng(dev());
 static std::uniform_real_distribution<float> uniform01(0, 1);
 
+namespace internal
+{
+
+// arctanh(0.9999) = 4.951718775643098
+constexpr float tanh_max = 0.9999f;
+constexpr float atanh_max = 5.f;
+
+inline float arctanh(const float x)
+{
+    if (x > tanh_max)
+        return atanh_max;
+    if (x < -tanh_max)
+        return -atanh_max;
+    return std::atanh(x);
+}
+
+inline float tanh(const float x)
+{
+    if (x > atanh_max)
+        return 1.f;
+    if (x < -atanh_max)
+        return -1.f;
+    return std::tanh(x);
+}
+
+} // namespace internal
+
 template <class Game, class Move>
 class Node
 {
@@ -22,12 +49,14 @@ private:
     using NodeGM = Node<Game, Move>;
 
     /**
-     * @brief 1 ~ -1 scaled probability of the turn player winning the game.
+     * @brief `arctanh` of 1 ~ -1 scaled probability of the turn player winning
+     * the game.
      * If the turn is black, then this value shows winning rate of black.
      * If the turn is white, then it shows the rate of white.
-     * @details This is typically a raw estimate of a machine learning model.
+     * @details This is typically a raw estimate without `tanh` activation of a
+     * machine learning model.
      */
-    float m_value;
+    float m_value_arctanh;
 
     std::vector<Move> m_actions;
     std::vector<float> m_probas;
@@ -47,25 +76,25 @@ private:
     float m_sqrt_visit_count;
 
     /**
-     * @brief Average of `m_value` of all the node below this and this node
-     * weighted by their `m_visit_count`.
+     * @brief Average of `m_value_arctanh` of all the node below this and this
+     * node weighted by their `m_visit_count`.
      */
-    float m_q_value;
+    float m_q_arctanh;
 
     std::uniform_int_distribution<std::size_t> m_uniform_action_index;
 
 public:
     Node()
-        : m_value(0.f), m_actions(), m_probas(), m_parent(nullptr),
+        : m_value_arctanh(0.f), m_actions(), m_probas(), m_parent(nullptr),
           m_children(), m_visit_count(0), m_sqrt_visit_count(0.f),
-          m_q_value(0.f), m_uniform_action_index()
+          m_q_arctanh(0.f), m_uniform_action_index()
     {
     }
 
     /**
      * @brief Construct a new Node object
      *
-     * @param value 1 ~ -1 scaled probability of turn player winning a game.
+     * @param value 1 ~ -1 scaled probability of turn player winning the game.
      * @param actions List of possible actions on the game.
      * @param probas 01-scaled probability of selecting corresponding actions.
      * It is users responsibility to make sure that the sum of them is 1.
@@ -87,7 +116,8 @@ public:
      * @note This will initialize almost all the members except pointer to
      * parent node.
      *
-     * @param value 1 ~ -1 scaled probability of turn player winning a game.
+     * @param value 1 ~ -1 scaled probability of turn player
+     * winning the game.
      * @param actions List of possible actions on the game.
      * @param probas 01-scaled probability of selecting corresponding actions.
      * It is users responsibility to make sure that the sum of them is 1.
@@ -102,18 +132,18 @@ public:
                 "# of actions (" + std::to_string(actions.size())
                 + ") != # of probas (" + std::to_string(probas.size()) + ")");
         // m_parent = parent; Update everything except `m_parent`
-        m_value = value;
+        m_value_arctanh = internal::arctanh(value);
         m_actions = actions;
         m_probas = probas;
         m_children = std::vector<NodeGM>(actions.size());
         m_visit_count = 1;
         m_sqrt_visit_count = 1.f;
-        m_q_value = value;
+        m_q_arctanh = m_value_arctanh;
         m_uniform_action_index
             = std::uniform_int_distribution<std::size_t>(0, actions.size() - 1);
 
         if (m_parent != nullptr)
-            m_parent->update_q(-value);
+            m_parent->update_q_arctanh(-m_value_arctanh);
     }
 
     // Rules of 5
@@ -147,7 +177,7 @@ public:
      */
     float get_value() const
     {
-        return m_value;
+        return internal::tanh(m_value_arctanh);
     }
 
     /**
@@ -159,7 +189,7 @@ public:
      */
     float get_q_value() const
     {
-        return m_q_value;
+        return internal::tanh(m_q_arctanh);
     }
     const std::vector<Move>& get_actions() const
     {
@@ -209,7 +239,7 @@ public:
             return this;
         if (m_actions.empty()) { // game end
             increment_visit_count();
-            update_q(m_value);
+            update_q_arctanh(m_value_arctanh);
             return nullptr;
         }
 
@@ -225,13 +255,14 @@ public:
     {
         const auto index = get_index_of(action);
         auto out = std::move(m_children[index]);
+        const auto visit_count_before = static_cast<float>(m_visit_count);
         m_children[index] = NodeGM();
         out.m_parent = nullptr;
         m_visit_count -= out.m_visit_count;
         m_sqrt_visit_count = std::sqrt(static_cast<float>(m_visit_count));
-        m_q_value
-            = (m_q_value * static_cast<float>(m_visit_count + out.m_visit_count)
-               + out.m_q_value * static_cast<float>(out.m_visit_count))
+        m_q_arctanh
+            = (m_q_arctanh * visit_count_before
+               + out.m_q_arctanh * static_cast<float>(out.m_visit_count))
               / static_cast<float>(m_visit_count);
         return out;
     }
@@ -252,12 +283,16 @@ private:
                 + ") not found in the node.");
         return static_cast<std::size_t>(std::distance(m_actions.cbegin(), it));
     }
-    void update_q(const float v)
+    void update_q_arctanh(const float v_arctanh)
     {
-        m_q_value = (v + static_cast<float>(m_visit_count - 1) * m_q_value)
-                    / static_cast<float>(m_visit_count);
+        const auto count = static_cast<float>(m_visit_count);
+        // The following two lines are equivalent with
+        // `m_q_arctanh = (v_arctanh + (count - 1) * m_q_arctanh) / count;`.
+        // But the following possibly prevents overflows.
+        m_q_arctanh *= (count - 1.f) / count;
+        m_q_arctanh += v_arctanh / count;
         if (m_parent != nullptr)
-            m_parent->update_q(-v);
+            m_parent->update_q_arctanh(-v_arctanh);
     }
 
     float puct_u(const std::size_t index) const
@@ -269,7 +304,7 @@ private:
     }
     float puct_q(const std::size_t index) const
     {
-        return -m_children[index].m_q_value;
+        return std::tanh(-m_children[index].m_q_arctanh);
     }
     float puct_score(const std::size_t index, const float coeff_puct) const
     {
