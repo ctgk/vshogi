@@ -22,16 +22,15 @@ def _repr_node(n) -> str:
 def _tree(
     root,
     depth: int = 1,
-    sort_key=lambda n: n.get_q_value(),
-    reverse=False,
+    sort_key=lambda n: -n.get_visit_count(),
 ) -> str:
     out = f"{_repr_node(root)}"
     if depth == 0:
         return out
     children = [(a, root.get_child(a)) for a in root.get_actions()]
-    children.sort(key=lambda t: sort_key(t[1]), reverse=reverse)
+    children.sort(key=lambda t: sort_key(t[1]), reverse=False)
     for i, (a, child) in enumerate(children):
-        s = _tree(child, depth - 1, sort_key, not reverse)
+        s = _tree(child, depth - 1, sort_key)
         if i == len(children) - 1:
             s = s.replace('\n', '\n    ')
         else:
@@ -258,6 +257,6 @@ class MonteCarloTreeSearcher:
     def _tree(
         self,
         depth: int = 1,
-        sort_key: callable = lambda n: n.get_q_value(),
+        sort_key: callable = lambda n: -n.get_visit_count(),
     ) -> str:
         return _tree(self._root, depth, sort_key)
