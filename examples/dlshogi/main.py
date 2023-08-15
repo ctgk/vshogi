@@ -21,12 +21,12 @@ NUM_VALUE_LAYERS = 2
 NUM_EXPLORATIONS = 1000
 COEFF_PUCT = 4.
 NUM_SELF_PLAY = 200
-NUM_RANDOM_MOVES = 2
+NUM_RANDOM_MOVES = 0
 NUM_VALIDATION_PLAYS_PER_MODEL = 20
 MAX_POLICY = 1.0
 MINIBATCH = 32
 EPOCHS = 20
-NUM_SELF_PLAY_VALIDATE_TRAIN_CYCLE = 20
+NUM_SELF_PLAY_VALIDATE_TRAIN_CYCLE = 50
 
 # from vshogi.minishogi import *
 # NUM_CHANNELS = 32
@@ -265,8 +265,11 @@ def load_player_of(index_or_network) -> vshogi.engine.MonteCarloTreeSearcher:
 def self_play_and_dump_records(player, index: int, n: int = NUM_SELF_PLAY):
     for i in tqdm(range(n)):
         while True:
+            sfen = '{}l{}/1{}1/1{}1/{}L{} b - 1'.format(
+                *np.random.choice(['c', 'e', 'g'], 3, replace=False),
+                *np.random.choice(['C', 'E', 'G'], 3, replace=False))
             game = play_game(
-                Game(), player, player,
+                Game(sfen), player, player,
                 temperature=lambda g: 0.01 if g.record_length > NUM_RANDOM_MOVES else 100,
             )
             if game.result != vshogi.ONGOING:
@@ -289,8 +292,11 @@ def play_against_past_players(player, index: int, dump_records: bool = False):
         pbar = tqdm(range(NUM_VALIDATION_PLAYS_PER_MODEL))
         for n in pbar:
             if n % 2 == 0:
+                sfen = '{}l{}/1{}1/1{}1/{}L{} b - 1'.format(
+                    *np.random.choice(['c', 'e', 'g'], 3, replace=False),
+                    *np.random.choice(['C', 'E', 'G'], 3, replace=False))
                 game = play_game(
-                    Game(), player, player_prev,
+                    Game(sfen), player, player_prev,
                     temperature=lambda g: 0.01 if g.record_length > NUM_RANDOM_MOVES else 100,
                 )
                 validation_results[{
@@ -304,8 +310,11 @@ def play_against_past_players(player, index: int, dump_records: bool = False):
                     with open(path, mode='w') as f:
                         dump_game_records(f, game)
             else:
+                sfen = '{}l{}/1{}1/1{}1/{}L{} b - 1'.format(
+                    *np.random.choice(['c', 'e', 'g'], 3, replace=False),
+                    *np.random.choice(['C', 'E', 'G'], 3, replace=False))
                 game = play_game(
-                    Game(), player_prev, player,
+                    Game(sfen), player_prev, player,
                     temperature=lambda g: 0.01 if g.record_length > NUM_RANDOM_MOVES else 100,
                 )
                 validation_results[{
