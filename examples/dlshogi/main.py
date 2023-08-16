@@ -270,7 +270,7 @@ def self_play_and_dump_records(player, index: int, n: int = NUM_SELF_PLAY):
                 *np.random.choice(['C', 'E', 'G'], 3, replace=False))
             game = play_game(
                 Game(sfen), player, player,
-                temperature=lambda g: 0.01 if g.record_length > NUM_RANDOM_MOVES else 100,
+                temperature=lambda g: 0.01 if g.record_length >= NUM_RANDOM_MOVES else 100,
             )
             if game.result != vshogi.ONGOING:
                 break
@@ -297,7 +297,7 @@ def play_against_past_players(player, index: int, dump_records: bool = False):
                     *np.random.choice(['C', 'E', 'G'], 3, replace=False))
                 game = play_game(
                     Game(sfen), player, player_prev,
-                    temperature=lambda g: 0.01 if g.record_length > NUM_RANDOM_MOVES else 100,
+                    temperature=lambda g: 0.01 if g.record_length >= NUM_RANDOM_MOVES else 100,
                 )
                 validation_results[{
                     vshogi.BLACK_WIN: 'win',
@@ -315,7 +315,7 @@ def play_against_past_players(player, index: int, dump_records: bool = False):
                     *np.random.choice(['C', 'E', 'G'], 3, replace=False))
                 game = play_game(
                     Game(sfen), player_prev, player,
-                    temperature=lambda g: 0.01 if g.record_length > NUM_RANDOM_MOVES else 100,
+                    temperature=lambda g: 0.01 if g.record_length >= NUM_RANDOM_MOVES else 100,
                 )
                 validation_results[{
                     vshogi.BLACK_WIN: 'loss',
