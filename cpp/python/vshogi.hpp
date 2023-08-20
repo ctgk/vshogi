@@ -104,6 +104,7 @@ inline void export_game(pybind11::module& m)
         .def_static("ranks", &Game::ranks)
         .def_static("files", &Game::files)
         .def_static("feature_channels", &Game::feature_channels)
+        .def_static("num_dlshogi_policy", &Game::num_dlshogi_policy)
         .def(
             "__array__",
             [](const Game& self) -> pybind11::array_t<float> {

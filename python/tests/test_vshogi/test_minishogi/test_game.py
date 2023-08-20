@@ -19,6 +19,11 @@ def test_feature_channels():
     assert 2 * (10 + 5) == shogi.Game().feature_channels
 
 
+def test_num_dlshogi_policy():
+    assert 5 * 5 * (2 * 8 + 5) == shogi.Game.num_dlshogi_policy
+    assert 5 * 5 * (2 * 8 + 5) == shogi.Game().num_dlshogi_policy
+
+
 def test_array():
     game = shogi.Game()
     game.apply(shogi.Move(shogi.SQ_1B, shogi.SQ_1E))

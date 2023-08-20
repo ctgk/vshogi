@@ -18,6 +18,11 @@ def test_feature_channels():
     assert 2 * (5 + 3) == shogi.Game.feature_channels
 
 
+def test_num_dlshogi_policy():
+    assert 3 * 4 * (8 + 3) == shogi.Game.num_dlshogi_policy
+    assert 3 * 4 * (8 + 3) == shogi.Game().num_dlshogi_policy
+
+
 def test_init():
     shogi.Game()
 

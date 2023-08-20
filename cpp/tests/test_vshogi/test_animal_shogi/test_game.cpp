@@ -9,6 +9,11 @@ using namespace vshogi::animal_shogi;
 
 TEST_GROUP(Game){};
 
+TEST(Game, num_dlshogi_policy)
+{
+    CHECK_EQUAL(3 * 4 * (8 + 3), Game::num_dlshogi_policy());
+}
+
 TEST(Game, to_sfen)
 {
     {

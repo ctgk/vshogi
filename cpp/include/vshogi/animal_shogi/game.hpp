@@ -133,6 +133,10 @@ public:
     {
         return 2 * (5 + 3); // 2-player * (5-board-piece + 3-stand-piece)
     }
+    static constexpr int num_dlshogi_policy()
+    {
+        return ranks() * files() * Move::num_policy_per_square();
+    }
     void to_feature_map(float* const data) const
     {
         constexpr int stand_piece_types = 3;

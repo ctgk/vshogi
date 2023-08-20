@@ -90,6 +90,17 @@ class Game(abc.ABC):
         """
         return self._get_backend_game_class().feature_channels()
 
+    @_ClassProperty
+    def num_dlshogi_policy(self) -> int:
+        """Return number of DL-shogi policy options in the game.
+
+        Returns
+        -------
+        int
+            Number of DL-shogi policy options in the game.
+        """
+        return self._get_backend_game_class().num_dlshogi_policy()
+
     @property
     def turn(self) -> Color:
         """Return current turn.
