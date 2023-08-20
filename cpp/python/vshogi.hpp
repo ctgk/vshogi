@@ -25,6 +25,12 @@ inline void softmax(std::vector<float>& v)
     }
 }
 
+template <class T>
+inline bool has(const std::vector<T>& vec, const T& target)
+{
+    return std::find(vec.cbegin(), vec.cend(), target) != vec.cend();
+}
+
 template <class Board, class Square>
 inline void export_board(pybind11::module& m)
 {
@@ -84,7 +90,7 @@ inline void export_move(pybind11::module& m)
         .def("__ne__", &Move::operator!=);
 }
 
-template <class Game>
+template <class Game, class Move>
 inline void export_game(pybind11::module& m)
 {
     pybind11::class_<Game>(m, "_Game")
@@ -141,6 +147,34 @@ inline void export_game(pybind11::module& m)
                 pybind11::dict out;
                 for (std::size_t ii = moves.size(); ii--;) {
                     out[pybind11::cast(moves[ii])] = probas[ii];
+                }
+                return out;
+            })
+        .def(
+            "to_dlshogi_policy",
+            [](const Game& self,
+               const Move action,
+               float max_value) -> pybind11::array_t<float> {
+                const auto turn = self.get_turn();
+                const auto legal_moves = self.get_legal_moves();
+                const auto num_legal_moves
+                    = static_cast<float>(legal_moves.size());
+                const auto action_is_legal = has(legal_moves, action);
+                const auto eps = (1.f - max_value)
+                                 / (action_is_legal ? (num_legal_moves - 1.f)
+                                                    : num_legal_moves);
+
+                const auto size = Game::num_dlshogi_policy();
+                auto out = pybind11::array_t<float>(
+                    std::vector<pybind11::ssize_t>({size}));
+                float* const data = out.mutable_data();
+                std::fill(data, data + size, 0.f);
+                for (auto&& move : legal_moves) {
+                    const auto index
+                        = (turn == vshogi::BLACK)
+                              ? move.to_dlshogi_policy_index()
+                              : move.rotate().to_dlshogi_policy_index();
+                    data[index] = (action == move) ? max_value : eps;
                 }
                 return out;
             })

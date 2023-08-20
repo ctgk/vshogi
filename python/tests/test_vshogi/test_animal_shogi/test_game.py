@@ -151,5 +151,19 @@ def test_policy_logits_to_policy_dict_probas():
     assert np.isclose(actual[shogi.Move(shogi.C3, shogi.C4)], 0.1748, 0, 1e-2)
 
 
+def test_to_dlshogi_policy():
+    game = shogi.Game()
+    a = shogi.Move(shogi.B2, shogi.B3)
+    actual = game.to_dlshogi_policy(a, 0.7)
+
+    expected = np.zeros(12 * 11)
+    expected[a._to_dlshogi_policy_index()] = 0.7
+    for m in game.get_legal_moves():
+        if m == a:
+            continue
+        expected[m._to_dlshogi_policy_index()] = 0.1
+    assert np.allclose(expected, actual)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

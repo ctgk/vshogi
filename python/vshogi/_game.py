@@ -257,6 +257,39 @@ class Game(abc.ABC):
     def _policy_logits_to_policy_dict_probas(self, logits: np.ndarray) -> dict:
         return self._game._policy_logits_to_policy_dict_probas(logits)
 
+    def to_dlshogi_policy(
+        self,
+        action: Move,
+        max_value: float = 1.,
+    ) -> np.ndarray:
+        """Convert an action into DL-shogi policy array.
+
+        A value of an element corresponding to `action` equals to `max_value`.
+        The rest of the value (`1 - max_value`) is equally divided to the
+        elements of the rest of the legal actions.
+
+        Parameters
+        ----------
+        action : Move
+            Action to turn into DL-shogi policy format.
+        max_value : float, optional
+            Policy value for the action, by default 1.
+
+        Returns
+        -------
+        np.ndarray
+            DL-shogi policy array.
+
+        Raises
+        ------
+        ValueError
+            `max_value` is out-of-range.
+        """
+        if ((max_value > 1) or (max_value <= 0)):
+            raise ValueError(
+                f"`max_value` must be in range (0, 1], but was {max_value}.")
+        return self._game.to_dlshogi_policy(action, max_value)
+
     def __repr__(self) -> str:
         """Return representation of the object for debugging.
 
