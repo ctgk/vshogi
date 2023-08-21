@@ -170,18 +170,19 @@ def _df_to_xy(df: pd.DataFrame, max_policy: float = MAX_POLICY):
         if int(row['state'].split(' ')[-1]) <= 2 * NUM_RANDOM_MOVES:
             continue
         game = Game(row['state'])
-        x = np.asarray(game)
         move = eval(row['move'])
-        policy = np.zeros((1, num_policies), dtype=np.float32) + non_max_policy
-        policy[0, move._to_dlshogi_policy_index()] = max_policy
-        value = value_options[(eval(row['result']), game.turn)]
+        result = eval(row['result'])
+
+        x = np.asarray(game)
+        policy = game.to_dlshogi_policy(move, max_policy)
+        value = value_options[(result, game.turn)]
 
         x_list.append(x)
         policy_list.append(policy)
         value_list.append(value)
     return (
         np.concatenate(x_list, axis=0),
-        np.concatenate(policy_list, axis=0),
+        np.asarray(policy_list, dtype=np.float32),
         np.asarray(value_list, dtype=np.float32),
     )
 
