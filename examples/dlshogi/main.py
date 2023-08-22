@@ -27,19 +27,26 @@ MAX_POLICY = 1.0
 MINIBATCH = 32
 EPOCHS = 20
 NUM_SELF_PLAY_VALIDATE_TRAIN_CYCLE = 50
+GET_SFEN = lambda: '{}l{}/1{}1/1{}1/{}L{} b - 1'.format(
+    *np.random.choice(list('ceg'), 3, replace=False),
+    *np.random.choice(list('CEG'), 3, replace=False))
 
 # from vshogi.minishogi import *
 # NUM_CHANNELS = 32
 # NUM_BACKBONE_LAYERS = 6
 # NUM_POLICY_LAYERS = 3
 # NUM_VALUE_LAYERS = 3
-# NUM_EXPLORATIONS = 400
-# NUM_SELF_PLAY = 200
-# NUM_RANDOM_MOVES = 4
-# NUM_VALIDATION_PLAYS_PER_MODEL = 20
+# NUM_EXPLORATIONS = 2000
+# NUM_SELF_PLAY = 400
+# NUM_RANDOM_MOVES = 0
+# NUM_VALIDATION_PLAYS_PER_MODEL = 40
+# MAX_POLICY = 1.0
 # MINIBATCH = 32
 # EPOCHS = 20
 # NUM_SELF_PLAY_VALIDATE_TRAIN_CYCLE = 20
+# GET_SFEN = lambda: '{}{}{}{}k/4{}/5/{}4/K{}{}{}{} b - 1'.format(
+#     *np.random.choice(list('rbsgp'), 5, replace=False),
+#     *np.random.choice(list('RBSGP'), 5, replace=False))
 
 
 def build_policy_value_network(
@@ -132,7 +139,7 @@ def dump_game_records(file_, game: vshogi.Game) -> None:
     print("state\tmove\tresult", file=file_)
     for i in range(game.record_length):
         print(
-            game.get_sfen_at(i),
+            game.get_sfen_at(i, include_move_count=True),
             game.get_move_at(i),
             game.result,
             file=file_, sep='\t',
@@ -265,9 +272,7 @@ def load_player_of(index_or_network) -> vshogi.engine.MonteCarloTreeSearcher:
 def self_play_and_dump_records(player, index: int, n: int = NUM_SELF_PLAY):
     for i in tqdm(range(n)):
         while True:
-            sfen = '{}l{}/1{}1/1{}1/{}L{} b - 1'.format(
-                *np.random.choice(['c', 'e', 'g'], 3, replace=False),
-                *np.random.choice(['C', 'E', 'G'], 3, replace=False))
+            sfen = GET_SFEN()
             game = play_game(
                 Game(sfen), player, player,
                 temperature=lambda g: 0.01 if g.record_length >= NUM_RANDOM_MOVES else 100,
@@ -292,9 +297,7 @@ def play_against_past_players(player, index: int, dump_records: bool = False):
         pbar = tqdm(range(NUM_VALIDATION_PLAYS_PER_MODEL))
         for n in pbar:
             if n % 2 == 0:
-                sfen = '{}l{}/1{}1/1{}1/{}L{} b - 1'.format(
-                    *np.random.choice(['c', 'e', 'g'], 3, replace=False),
-                    *np.random.choice(['C', 'E', 'G'], 3, replace=False))
+                sfen = GET_SFEN()
                 game = play_game(
                     Game(sfen), player, player_prev,
                     temperature=lambda g: 0.01 if g.record_length >= NUM_RANDOM_MOVES else 100,
@@ -310,9 +313,7 @@ def play_against_past_players(player, index: int, dump_records: bool = False):
                     with open(path, mode='w') as f:
                         dump_game_records(f, game)
             else:
-                sfen = '{}l{}/1{}1/1{}1/{}L{} b - 1'.format(
-                    *np.random.choice(['c', 'e', 'g'], 3, replace=False),
-                    *np.random.choice(['C', 'E', 'G'], 3, replace=False))
+                sfen = GET_SFEN()
                 game = play_game(
                     Game(sfen), player_prev, player,
                     temperature=lambda g: 0.01 if g.record_length >= NUM_RANDOM_MOVES else 100,
