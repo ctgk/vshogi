@@ -9,6 +9,15 @@ from vshogi._vshogi import Color, Result
 Move = tp.TypeVar('Move')
 
 
+class _ClassProperty:
+
+    def __init__(self, func: callable):
+        self._func = func
+
+    def __get__(self, _, owner):
+        return self._func(owner)
+
+
 class Game(abc.ABC):
     """Base class for Shogi games."""
 
@@ -20,6 +29,11 @@ class Game(abc.ABC):
     @classmethod
     @abc.abstractmethod
     def _get_move_class(cls) -> type:
+        pass
+
+    @classmethod
+    @abc.abstractmethod
+    def _get_node_class(cls) -> type:
         pass
 
     def __init__(self, sfen: tp.Optional[str] = None) -> None:
@@ -42,6 +56,50 @@ class Game(abc.ABC):
             DL-shogi input.
         """
         return np.asarray(self._game)
+
+    @_ClassProperty
+    def ranks(self) -> int:
+        """Return number of horizontal rows of the board.
+
+        Returns
+        -------
+        int
+            Number of horizontal rows of the board.
+        """
+        return self._get_backend_game_class().ranks()
+
+    @_ClassProperty
+    def files(self) -> int:
+        """Return number of vertical columns of the board.
+
+        Returns
+        -------
+        int
+            Number of vertical columns of the board.
+        """
+        return self._get_backend_game_class().files()
+
+    @_ClassProperty
+    def feature_channels(self) -> int:
+        """Return number of channels of feature map of the game.
+
+        Returns
+        -------
+        int
+            Number of channels of feature map of the game.
+        """
+        return self._get_backend_game_class().feature_channels()
+
+    @_ClassProperty
+    def num_dlshogi_policy(self) -> int:
+        """Return number of DL-shogi policy options in the game.
+
+        Returns
+        -------
+        int
+            Number of DL-shogi policy options in the game.
+        """
+        return self._get_backend_game_class().num_dlshogi_policy()
 
     @property
     def turn(self) -> Color:
@@ -195,6 +253,42 @@ class Game(abc.ABC):
             N-th game state in SFEN.
         """
         return self._game.get_sfen_at(n)
+
+    def _policy_logits_to_policy_dict_probas(self, logits: np.ndarray) -> dict:
+        return self._game._policy_logits_to_policy_dict_probas(logits)
+
+    def to_dlshogi_policy(
+        self,
+        action: Move,
+        max_value: float = 1.,
+    ) -> np.ndarray:
+        """Convert an action into DL-shogi policy array.
+
+        A value of an element corresponding to `action` equals to `max_value`.
+        The rest of the value (`1 - max_value`) is equally divided to the
+        elements of the rest of the legal actions.
+
+        Parameters
+        ----------
+        action : Move
+            Action to turn into DL-shogi policy format.
+        max_value : float, optional
+            Policy value for the action, by default 1.
+
+        Returns
+        -------
+        np.ndarray
+            DL-shogi policy array.
+
+        Raises
+        ------
+        ValueError
+            `max_value` is out-of-range.
+        """
+        if ((max_value > 1) or (max_value <= 0)):
+            raise ValueError(
+                f"`max_value` must be in range (0, 1], but was {max_value}.")
+        return self._game.to_dlshogi_policy(action, max_value)
 
     def __repr__(self) -> str:
         """Return representation of the object for debugging.

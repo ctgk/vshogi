@@ -5,13 +5,13 @@ from vshogi import engine
 from vshogi._enum import _enum_repr
 from vshogi._game import Game
 from vshogi._play import play_game
-from vshogi._vshogi import Color, Direction, Result
+from vshogi._vshogi import Color, Result
 
 Color.__repr__ = _enum_repr
 Result.__repr__ = _enum_repr
 
-_classes = [Color, Direction, Result, Game]
-_enums = [Color, Direction, Result]
+_classes = [Color, Result, Game]
+_enums = [Color, Result]
 _modules = [animal_shogi, engine, minishogi]
 _functions = [play_game]
 

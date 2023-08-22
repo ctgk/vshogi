@@ -9,6 +9,11 @@ using namespace vshogi::minishogi;
 
 TEST_GROUP(game){};
 
+TEST(game, num_dlshogi_policy)
+{
+    CHECK_EQUAL(5 * 5 * (2 * 8 + 5), Game::num_dlshogi_policy());
+}
+
 TEST(game, record_length)
 {
     auto game = Game();

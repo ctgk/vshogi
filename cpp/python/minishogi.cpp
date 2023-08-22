@@ -67,35 +67,6 @@ void export_square_enum(py::module& m)
         .value("E1", ms::SQ_1E);
 }
 
-void export_move(py::module& m)
-{
-    py::class_<ms::Move>(m, "Move")
-        .def(
-            py::init<const ms::SquareEnum, const ms::SquareEnum, const bool>(),
-            py::arg("dst"),
-            py::arg("src"),
-            py::arg("promote") = false)
-        .def(
-            py::init<const ms::SquareEnum, const ms::PieceTypeEnum>(),
-            py::arg("dst"),
-            py::arg("src"))
-        .def_property_readonly("destination", &ms::Move::destination)
-        .def_property_readonly("promote", &ms::Move::promote)
-        .def_property_readonly(
-            "source",
-            [](const ms::Move& self) -> py::object {
-                if (self.is_drop())
-                    return py::cast(ms::to_piece_type(self.source()));
-                return py::cast(ms::to_square(self.source()));
-            })
-        .def("is_drop", &ms::Move::is_drop)
-        .def("rotate", &ms::Move::rotate)
-        .def("_to_dlshogi_policy_index", &ms::Move::to_dlshogi_policy_index)
-        .def("__hash__", &ms::Move::hash)
-        .def("__eq__", &ms::Move::operator==)
-        .def("__ne__", &ms::Move::operator!=);
-}
-
 void export_pieces(py::module& m)
 {
     py::enum_<ms::PieceTypeEnum>(m, "Piece")
@@ -135,73 +106,6 @@ void export_pieces(py::module& m)
         .value("VOID", ms::VOID);
 }
 
-void export_game(py::module& m)
-{
-    py::class_<ms::Game>(m, "_Game")
-        .def(py::init<>())
-        .def(py::init<const std::string&>())
-        .def("get_turn", &ms::Game::get_turn)
-        .def("get_board", &ms::Game::get_board)
-        .def("get_stand", &ms::Game::get_stand)
-        .def("get_result", &ms::Game::get_result)
-        .def("record_length", &ms::Game::record_length)
-        .def("get_legal_moves", &ms::Game::get_legal_moves)
-        .def(
-            "to_sfen", &ms::Game::to_sfen, py::arg("include_move_count") = true)
-        .def("is_legal", &ms::Game::is_legal)
-        .def("apply", &ms::Game::apply)
-        .def("get_move_at", &ms::Game::get_move_at)
-        .def("get_sfen_at", &ms::Game::get_sfen_at)
-        .def(
-            "__array__",
-            [](const ms::Game& self) -> py::array_t<float> {
-                constexpr int num_ch = 10 + 10 + 5 + 5;
-                const auto shape = std::vector<py::ssize_t>({1, 5, 5, num_ch});
-                auto out = py::array_t<float>(shape);
-                out[py::make_tuple(py::ellipsis())] = 0.f;
-                const auto turn = self.get_turn();
-                const auto stand_turn = self.get_stand(turn);
-                const auto stand_oppo = self.get_stand(~turn);
-                for (int k = 5; k--;) {
-                    const auto num_turn = static_cast<float>(
-                        stand_turn.count(ms::stand_piece_array[k]));
-                    const auto num_oppo = static_cast<float>(
-                        stand_oppo.count(ms::stand_piece_array[k]));
-                    for (int i = 5; i--;) {
-                        for (int j = 5; j--;) {
-                            *out.mutable_data(0, i, j, k) = num_turn;
-                            *out.mutable_data(0, i, j, k + 15) = num_oppo;
-                        }
-                    }
-                }
-
-                const auto board = self.get_board();
-                for (int i = 5; i--;) {
-                    for (int j = 5; j--;) {
-                        const auto sq = ms::square_array
-                            [(turn == vshogi::BLACK)
-                                 ? (i * 5 + j)
-                                 : (ms::num_squares - 1 - i * 5 - j)];
-                        const auto board_piece = board[sq];
-                        if (board_piece == ms::VOID)
-                            continue;
-                        const auto color = ms::get_color(board_piece);
-                        const auto piece_type = ms::to_piece_type(board_piece);
-                        auto k = static_cast<int>(ms::demote(piece_type));
-                        k += (ms::is_promoted(piece_type)) ? 6 : 0;
-                        k += (turn == color) ? 0 : 15;
-                        *out.mutable_data(0, i, j, k + 5) = 1.f;
-                    }
-                }
-                return out;
-            })
-        .def("copy", [](const ms::Game& self) { return ms::Game(self); })
-        .def(
-            "__deepcopy__",
-            [](const ms::Game& self, py::dict) { return ms::Game(self); },
-            py::arg("memo"));
-}
-
 } // namespace
 
 void export_minishogi(py::module& m)
@@ -215,6 +119,7 @@ void export_minishogi(py::module& m)
         ms::PieceTypeEnum,
         ms::stand_piece_array,
         5>(m);
-    export_move(m);
-    export_game(m);
+    pyvshogi::export_move<ms::Move, ms::SquareEnum, ms::PieceTypeEnum>(m);
+    pyvshogi::export_game<ms::Game, ms::Move>(m);
+    pyvshogi::export_node<ms::Game, ms::Move>(m);
 }

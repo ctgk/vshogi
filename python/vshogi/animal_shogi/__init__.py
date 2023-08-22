@@ -3,6 +3,8 @@
 cf. https://en.wikipedia.org/wiki/D%C5%8Dbutsu_sh%C5%8Dgi
 """
 
+import numpy as np
+
 from vshogi._enum import _enum_repr
 from vshogi._vshogi import Color, Result
 from vshogi._vshogi.animal_shogi import (
@@ -38,6 +40,15 @@ def _board_repr(self: Board) -> str:
     )
 
 
+Board.__array__ = lambda self: np.array(
+    [
+        [self[Square.A1], self[Square.B1], self[Square.C1]],
+        [self[Square.A2], self[Square.B2], self[Square.C2]],
+        [self[Square.A3], self[Square.B3], self[Square.C3]],
+        [self[Square.A4], self[Square.B4], self[Square.C4]],
+    ],
+    dtype=BoardPiece,
+)
 Board.__repr__ = _board_repr
 BoardPiece.__repr__ = _enum_repr
 BoardPiece._to_2char = lambda self: (
@@ -65,7 +76,7 @@ for _cls in _classes:
 
 
 __all__ = (
-    [_cls.__name__ for _cls in _classes]
+    [_cls.__name__ for _cls in _classes] + ['Color', 'Result']
     + [m for _e in _enums for m in _e.__members__]
 )
 

@@ -32,6 +32,7 @@ enum SquareEnum
     SQ_5E = 20, SQ_4E = 21, SQ_3E = 22, SQ_2E = 23, SQ_1E = 24,
     // clang-format on
     SQ_NA,
+    NUM_SQ = 25,
 };
 constexpr int num_squares = 25;
 constexpr SquareEnum square_array[] = {

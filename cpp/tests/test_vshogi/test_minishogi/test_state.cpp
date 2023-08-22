@@ -93,7 +93,7 @@ TEST(state, is_legal)
 
         CHECK_TRUE(s.is_legal(Move(SQ_1C, FU)));
         CHECK_FALSE(s.is_legal(Move(SQ_5A, FU))); // Unmovable
-        CHECK_FALSE(s.is_legal(Move(SQ_1B, FU))); // pawn drop checkmate
+        CHECK_FALSE(s.is_legal(Move(SQ_1B, FU))); // drop pawn mate
 
         CHECK_TRUE(s.is_legal(Move(SQ_4A, SQ_4B)));
         CHECK_TRUE(s.is_legal(Move(SQ_4A, SQ_4B, true)));
@@ -161,6 +161,26 @@ TEST(state, is_legal)
         s.set_sfen("+P2gk/1Pbs1/2b2/1R3/KG2+r b s 2");
         CHECK_FALSE(s.is_legal(Move(SQ_4A, SQ_4B)));
         CHECK_TRUE(s.is_legal(Move(SQ_4A, SQ_4B, true)));
+    }
+    {
+        auto s = State();
+        // Turn: BLACK
+        // White: -
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |+HI|   |   |-KI|-OU|
+        //   *---*---*---*---*---*
+        // B |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // C |   |   |   |   |+KI|
+        //   *---*---*---*---*---*
+        // D |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // E |+OU|   |   |   |   |
+        //   *---*---*---*---*---*
+        // Black: FU
+        s.set_sfen("R2gk/5/4G/5/K4 b P");
+        CHECK_FALSE(s.is_legal(Move(SQ_1B, FU))); // drop pawn mate
     }
 }
 
@@ -261,6 +281,27 @@ TEST(state, get_legal_moves)
         s.set_sfen("+B1s2/B1g1p/3k1/PS1R1/KG2R w - 10");
         const auto actual = s.get_legal_moves();
         CHECK_EQUAL(0, actual.size());
+    }
+    {
+        auto s = State();
+        // Turn: BLACK
+        // White: -
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |+GI|   |   |   |   |
+        //   *---*---*---*---*---*
+        // B |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // C |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // D |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // E |+OU|   |   |   |-OU|
+        //   *---*---*---*---*---*
+        // Black: -
+        s.set_sfen("S4/5/5/5/K3k b -");
+        const auto actual = s.get_legal_moves();
+        CHECK_EQUAL(2 + 3, actual.size());
     }
 }
 

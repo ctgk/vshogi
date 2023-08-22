@@ -62,32 +62,35 @@ private:
     {
         return has_movable_square_after_move(to_board_piece(m_turn, p), dst);
     }
-    bool
-    is_checkmate_by_pawn_drop(const PieceTypeEnum p, const SquareEnum sq) const
+    bool is_drop_pawn_mate(const PieceTypeEnum p, const SquareEnum dst) const
     {
         if (p != FU)
             return false;
 
         // Note that `has_movable_square_after_drop` precedes this method.
-        const auto attacking_sq = shift(sq, (m_turn == BLACK) ? DIR_N : DIR_S);
+        const auto attacking_sq = shift(dst, (m_turn == BLACK) ? DIR_N : DIR_S);
         const auto attacked = m_board[attacking_sq];
         if (attacked != to_board_piece(~m_turn, OU))
             return false;
-        {
-            auto b = m_board;
-            b[attacking_sq] = VOID;
-            const auto attack_mask = b.to_attack_mask(~m_turn);
-            if (attack_mask.is_one(sq))
-                return false; // Opponent can capture my pawn next turn.
+        return !can_opponent_capture_piece_at(dst);
+    }
+    bool can_opponent_capture_piece_at(const SquareEnum target) const
+    {
+        const auto occupied = m_piece_masks[BLACK] | m_piece_masks[WHITE];
+        for (auto src : square_array) {
+            const auto p = m_board[src];
+            if ((p == VOID) || (get_color(p) == m_turn))
+                continue;
+            const auto attacks = get_attacks_by(p, src, occupied);
+            if (attacks.is_one(target)) {
+                auto b = m_board;
+                b[src] = VOID;
+                b[target] = p;
+                if (!b.in_check(~m_turn))
+                    return true;
+            }
         }
-
-        const auto opponent_king_attacks
-            = get_attacks_by(attacked, attacking_sq);
-        const auto opponent_king_movable = opponent_king_attacks
-                                           & (~m_piece_masks[~m_turn])
-                                           & (~m_attack_masks[m_turn]);
-        const auto opponent_king_is_alive = opponent_king_movable.any();
-        return !opponent_king_is_alive;
+        return false;
     }
     bool is_legal_drop(const Move move) const
     {
@@ -96,7 +99,7 @@ private:
         return (
             has_piece_on_turn_player_stand(p) && is_empty_square(dst)
             && has_movable_square_after_move(p, dst) && is_valid_promotion(move)
-            && (!is_checkmate_by_pawn_drop(p, dst))
+            && (!is_drop_pawn_mate(p, dst))
             && (!is_my_king_in_check_after_move(move)));
     }
     bool is_empty_or_opponent_square(const SquareEnum sq) const
@@ -170,7 +173,7 @@ private:
                 const auto m = Move(dst, src);
                 if (is_legal_board(m))
                     out.emplace_back(m);
-                if (is_promotion_zone(dst)) {
+                if (is_promotion_zone(dst) || is_promotion_zone(src)) {
                     const auto promotion_move = Move(dst, src, true);
                     if (is_legal_board(promotion_move))
                         out.emplace_back(promotion_move);

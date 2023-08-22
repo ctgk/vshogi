@@ -7,101 +7,36 @@ import scipy.special as sp
 from vshogi._game import Game
 
 
-Policy = tp.Dict['Move', float]
+Move = tp.TypeVar('Move')
+Policy = tp.Dict[Move, float]
 Value = float
 
 
-class _Node:
+def _repr_node(n) -> str:
+    return (
+        f"Node(v={n.get_value():.2f}, q={n.get_q_value():.2f}, "
+        f"#visit={n.get_visit_count()})"
+    )
 
-    def __init__(
-        self,
-        game: Game,
-        policy_value_func: tp.Callable[[Game], tp.Tuple[Policy, Value]],
-        parent: '_Node' = None,
-    ) -> None:
-        self._game = game
-        self._policy_value_func = policy_value_func
-        self._policy, self._value = self._policy_value_func(self._game)
-        self._visit_count = 1
-        self._children: tp.Dict['Move', '_Node'] = {}
-        self._parent: '_Node' = parent
-        self._q_value: float = self._value
-        if parent is not None:
-            parent._update_q(-self._value)
 
-    def __repr__(self) -> str:
-        return f'_Node(#visit={self._visit_count},Q={self._q_value})'
-
-    def _u(self, add_dirichlet_noise: bool) -> tp.Dict['Move', float]:
-        if add_dirichlet_noise:
-            n = len(self._policy)
-            p_d = {
-                k: p for k, p in zip(
-                    self._policy, np.random.dirichlet(np.ones(n) * 10 / n))
-            }
-            policy = {k: (3 * p + p_d[k]) / 4 for k, p in self._policy.items()}
+def _tree(
+    root,
+    depth: int = 1,
+    sort_key=lambda n: -n.get_visit_count(),
+) -> str:
+    out = f"{_repr_node(root)}"
+    if depth == 0:
+        return out
+    children = [(a, root.get_child(a)) for a in root.get_actions()]
+    children.sort(key=lambda t: sort_key(t[1]), reverse=False)
+    for i, (a, child) in enumerate(children):
+        s = _tree(child, depth - 1, sort_key)
+        if i == len(children) - 1:
+            s = s.replace('\n', '\n    ')
         else:
-            policy = self._policy
-        assert max(policy.values()) <= 1, (self._policy, p_d)
-        return {
-            k: (
-                p * np.sqrt(self._visit_count) / (
-                    1 + (
-                        self._children[k]._visit_count
-                        if k in self._children else 0
-                    )
-                )
-            )
-            for k, p in policy.items()
-        }
-
-    def _update_q(self, value):
-        self._q_value = (
-            value + (self._visit_count - 1) * self._q_value
-        ) / self._visit_count
-        if self._parent is not None:
-            self._parent._update_q(-value)
-
-    def _q(self) -> tp.Dict['Move', float]:
-        return {
-            k: 0 if k not in self._children else -self._children[k]._q_value
-            for k in self._policy
-        }
-
-    def _puct_score(
-        self,
-        c_puct: float = 1.,
-        add_dirichlet_noise: bool = False,
-    ) -> tp.Dict['Move', float]:
-        q, u = self._q(), self._u(add_dirichlet_noise)
-        scores = {k: q[k] + u[k] * c_puct for k in q.keys()}
-        return scores
-
-    def _get_action_with_max_puct_score(
-        self,
-        c_puct: float = 1.,
-        add_dirichlet_noise: bool = False,
-    ) -> 'Move':
-        return max(
-            list(self._puct_score(c_puct, add_dirichlet_noise).items()),
-            key=lambda t: t[1],
-        )[0]
-
-    def _add_node(self, action: 'Move'):
-        g = deepcopy(self._game).apply(action)
-        self._children[action] = _Node(g, self._policy_value_func, self)
-
-    def explore(self, c_puct: float = 1., dirichlet_noise_depth: int = 0):
-        self._visit_count += 1
-        if len(self._policy) == 0:
-            self._update_q(self._value)
-            return
-        action = self._get_action_with_max_puct_score(
-            c_puct, dirichlet_noise_depth > 0)
-        if action in self._children:
-            self._children[action].explore(c_puct, dirichlet_noise_depth - 1)
-        else:
-            self._add_node(action)
+            s = s.replace('\n', '\n|   ')
+        out += f'\n+-- p={root.get_proba(a):.4f} {a} -> {s}'
+    return out
 
 
 class MonteCarloTreeSearcher:
@@ -112,7 +47,8 @@ class MonteCarloTreeSearcher:
         policy_value_func: tp.Callable[['Game'], tp.Tuple[Policy, Value]],
         num_explorations: int = 100,
         coeff_puct: float = 1.,
-        depth_to_add_dirichlet_noise: int = 1,
+        random_proba: float = 0.25,
+        random_depth: int = 1,
         select_move_by: tp.Literal[
             'visit_counts', 'q_values',
         ] = 'visit_counts',
@@ -131,8 +67,12 @@ class MonteCarloTreeSearcher:
         coeff_puct : float, optional
             Default coefficient used to compute PUCT score. Higher the value
             is, the more weight on action policy than state value.
-        depth_to_add_dirichlet_noise : int, optional
-            Default depth to add dirichlet noise for exploration, by default 1.
+        random_proba : float, optional
+            Default probability of selecting action in a random manner,
+            by default 0.25.
+        random_depth : int, optional
+            Default depth of explorations to select action in a random manner,
+            by default 1.
         select_move_by : tp.Literal['visit_counts', 'q_values']
             Default strategy to select best move by. Default is 'visit_counts'.
         temperature_for_move_selection : tp.Union[float, tp.Literal['max']]
@@ -141,11 +81,12 @@ class MonteCarloTreeSearcher:
             `select_move_by`.
         """
         self._policy_value_func = policy_value_func
-        self._root: _Node = None
+        self._root = None
 
         self._num_explorations = num_explorations
         self._coeff_puct = coeff_puct
-        self._depth_to_add_dirichlet_noise = depth_to_add_dirichlet_noise
+        self._random_proba = random_proba
+        self._random_depth = random_depth
         self._select_move_by = select_move_by
         self._temperature_for_move_selection = temperature_for_move_selection
 
@@ -157,13 +98,62 @@ class MonteCarloTreeSearcher:
         game : Game
             Game to set at root node.
         """
-        self._root = _Node(game, self._policy_value_func)
+        game = deepcopy(game)
+        policy, value = self._policy_value_func(game)
+        self._root = game._get_node_class()(
+            value, list(policy.keys()), list(policy.values()))
+        self._game = game
+
+    def is_ready(self) -> bool:
+        """Return true if it is ready to explore otherwise false.
+
+        Returns
+        -------
+        bool
+            True if it is ready to start exploration otherwise false.
+        """
+        return self._root is not None
+
+    def clear(self) -> None:
+        """Clear explorations done so far."""
+        self._root = None
+
+    def apply(self, move: Move):
+        """Apply a move to the current root node.
+
+        Parameters
+        ----------
+        move : Move
+            Move to apply to the current root node.
+        """
+        if not self.is_ready():
+            return
+        try:
+            self._root = self._root.pop_child(move)
+            self._game.apply(move)
+        except Exception:
+            self._root = None
+            self._game = None
+
+    @property
+    def num_explored(self) -> int:
+        """Return number of times explored so far.
+
+        Returns
+        -------
+        int
+            Number of times explored so far.
+        """
+        if self._root is None:
+            return 0
+        return self._root.get_visit_count()
 
     def explore(
         self,
         n: tp.Optional[int] = None,
         c_puct: tp.Optional[float] = None,
-        dirichlet_noise_depth: tp.Optional[int] = None,
+        random_proba: tp.Optional[float] = None,
+        random_depth: tp.Optional[int] = None,
     ):
         """Explore from root node for n times.
 
@@ -174,19 +164,32 @@ class MonteCarloTreeSearcher:
         c_puct : float, optional
             Coefficient used to compute PUCT score. Higher the value is,
             the more weight on action policy than state value.
-        dirichlet_noise_depth : int, optional
-            Depth to add dirichlet noise for exploration, by default None
+        random_proba : float, optional
+            Probability of selecting an action in a random manner,
+            by default None
+        random_depth : int, optional
+            Depth to select action in a random manner, by default None
         """
         if n is None:
             n = self._num_explorations
         if c_puct is None:
             c_puct = self._coeff_puct
-        if dirichlet_noise_depth is None:
-            dirichlet_noise_depth = self._depth_to_add_dirichlet_noise
-        for _ in range(n):
-            self._root.explore(c_puct, dirichlet_noise_depth)
+        if random_proba is None:
+            random_proba = self._random_proba
+        if random_depth is None:
+            random_depth = self._random_depth
 
-    def get_q_values(self) -> tp.Dict['Move', float]:
+        for _ in range(n):
+            game = deepcopy(self._game)
+            node = self._root.explore(
+                game._game, c_puct, random_proba, random_depth)
+            if node is None:
+                continue
+            policy, value = self._policy_value_func(game)
+            node.set_value_action_proba(
+                value, list(policy.keys()), list(policy.values()))
+
+    def get_q_values(self) -> tp.Dict[Move, float]:
         """Return Q value of each action.
 
         Returns
@@ -195,14 +198,13 @@ class MonteCarloTreeSearcher:
             Q value of each action.
         """
         move_q_pair_list = [
-            (m, -self._root._children[m]._q_value)
-            if m in self._root._children else (m, 0)
-            for m in self._root._policy.keys()
+            (m, -self._root.get_child(m).get_q_value())
+            for m in self._root.get_actions()
         ]
         move_q_pair_list.sort(key=lambda a: a[1], reverse=True)
         return {m: q for m, q in move_q_pair_list}
 
-    def get_visit_counts(self) -> tp.Dict['Move', int]:
+    def get_visit_counts(self) -> tp.Dict[Move, int]:
         """Return visit counts of each action.
 
         Returns
@@ -211,9 +213,8 @@ class MonteCarloTreeSearcher:
             Visit counts of each action.
         """
         move_visit_count_pair_list = [
-            (m, self._root._children[m]._visit_count)
-            if m in self._root._children else (m, 0)
-            for m in self._root._policy.keys()
+            (m, self._root.get_child(m).get_visit_count())
+            for m in self._root.get_actions()
         ]
         move_visit_count_pair_list.sort(key=lambda a: a[1], reverse=True)
         return {m: v for m, v in move_visit_count_pair_list}
@@ -222,7 +223,7 @@ class MonteCarloTreeSearcher:
         self,
         by: tp.Optional[tp.Literal['visit_counts', 'q_values']] = None,
         temperature: tp.Union[float, tp.Literal['max'], None] = None,
-    ) -> 'Move':
+    ) -> Move:
         """Return selected action based on visit counts.
 
         Parameters
@@ -252,3 +253,10 @@ class MonteCarloTreeSearcher:
         else:
             probas = sp.softmax(np.log(v + 1e-3) / temperature)
             return np.random.choice(moves, p=probas)
+
+    def _tree(
+        self,
+        depth: int = 1,
+        sort_key: callable = lambda n: -n.get_visit_count(),
+    ) -> str:
+        return _tree(self._root, depth, sort_key)

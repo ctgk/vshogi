@@ -1,12 +1,5 @@
-import typing as tp
-
-import numpy as np
-
 from vshogi._game import Game as BaseGame
-from vshogi._vshogi.animal_shogi import Board
-from vshogi._vshogi.animal_shogi import BoardPiece
-from vshogi._vshogi.animal_shogi import Move
-from vshogi._vshogi.animal_shogi import Square
+from vshogi._vshogi.animal_shogi import Move, Node
 from vshogi._vshogi.animal_shogi import Stand
 from vshogi._vshogi.animal_shogi import _Game as _AnimalshogiGame
 
@@ -15,15 +8,6 @@ Stand.__str__ = lambda self: ','.join([
     k.name[0] + ('' if v == 1 else str(v)) for k, v in self.to_dict().items()
     if v > 0
 ]) if self.any() else '-'
-Board.__array__ = lambda self: np.array(
-    [
-        [self[Square.A1], self[Square.B1], self[Square.C1]],
-        [self[Square.A2], self[Square.B2], self[Square.C2]],
-        [self[Square.A3], self[Square.B3], self[Square.C3]],
-        [self[Square.A4], self[Square.B4], self[Square.C4]],
-    ],
-    dtype=BoardPiece,
-)
 
 
 class Game(BaseGame):
@@ -83,22 +67,9 @@ class Game(BaseGame):
     Black: C
     >>> game.record_length
     3
-    >>> Game(game.get_state_hash_at(1))
-    Game(sfen="gle/1C1/3/ELG w C 1")
     >>> game.get_move_at(1)
     Move(dst=A2, src=A1)
     """
-
-    def __init__(self, hash_or_sfen: tp.Union[int, str, None] = None) -> None:
-        """Initialize Animal Shogi game.
-
-        Parameters
-        ----------
-        hash_or_sfen : tp.Union[int, str, None], optional
-            Initial state of the game, by default None
-        """
-        cls_ = self._get_backend_game_class()
-        self._game = cls_() if hash_or_sfen is None else cls_(hash_or_sfen)
 
     @classmethod
     def _get_backend_game_class(cls) -> type:
@@ -108,27 +79,6 @@ class Game(BaseGame):
     def _get_move_class(cls) -> type:
         return Move
 
-    def hash_current_state(self) -> int:
-        """Return hash value of the current state.
-
-        Returns
-        -------
-        int
-            Hash value of the current state.
-        """
-        return self._game.hash_current_state()
-
-    def get_state_hash_at(self, n: int) -> int:
-        """Return hash value of n-th state of the game, where n starts from 0.
-
-        Parameters
-        ----------
-        n : int
-            Input index.
-
-        Returns
-        -------
-        int
-            N-th state of the game.
-        """
-        return self._game.get_state_hash_at(n)
+    @classmethod
+    def _get_node_class(cls) -> type:
+        return Node

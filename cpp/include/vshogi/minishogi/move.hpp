@@ -142,10 +142,13 @@ public:
     }
     int to_dlshogi_policy_index() const
     {
-        constexpr int num_policies_at_each_square = 8 * 2 + 5;
         const auto dst_index = static_cast<int>(destination());
         const auto src_index = to_dlshogi_source_index();
-        return dst_index * num_policies_at_each_square + src_index;
+        return dst_index * num_policy_per_square() + src_index;
+    }
+    static constexpr int num_policy_per_square()
+    {
+        return 8 * 2 + 5; // 8-direction * 2-promotion + 5-drop-piece
     }
 };
 

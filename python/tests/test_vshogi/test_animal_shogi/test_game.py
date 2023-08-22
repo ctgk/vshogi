@@ -6,6 +6,23 @@ import pytest
 import vshogi.animal_shogi as shogi
 
 
+def test_ranks():
+    assert 4 == shogi.Game.ranks
+
+
+def test_files():
+    assert 3 == shogi.Game.files
+
+
+def test_feature_channels():
+    assert 2 * (5 + 3) == shogi.Game.feature_channels
+
+
+def test_num_dlshogi_policy():
+    assert 3 * 4 * (8 + 3) == shogi.Game.num_dlshogi_policy
+    assert 3 * 4 * (8 + 3) == shogi.Game().num_dlshogi_policy
+
+
 def test_init():
     shogi.Game()
 
@@ -31,10 +48,10 @@ def test_deepcopy():
     assert g1.board[shogi.B2] != g2.board[shogi.B2]
 
 
-def test_hash():
+def test_to_sfen():
     game = shogi.Game().apply(shogi.Move(shogi.B2, shogi.B3))
 
-    actual = shogi.Game(game.hash_current_state())
+    actual = shogi.Game(game.to_sfen())
     assert shogi.B_CH == actual.board[shogi.B2]
     assert shogi.VOID == actual.board[shogi.B3]
     assert {shogi.CH: 1, shogi.EL: 0, shogi.GI: 0} == actual.stand(shogi.BLACK)
@@ -54,8 +71,8 @@ def test_board():
     assert (actual == expected).all()
 
 
-def test_init_from_hash():
-    game = shogi.Game(1452042304300031)
+def test_init_from_sfen():
+    game = shogi.Game('Gce/2E/l1G/L2 w c')
     assert game.result == shogi.ONGOING
     print(game)
 
@@ -107,6 +124,45 @@ def test_array():
     assert np.allclose(actual[0, ..., 8], 1)
     assert np.allclose(actual[0, 2, 0, 11], 0)
     assert np.allclose(actual[0, 2, 1, 11], 1)
+
+
+def test_policy_logits_to_policy_dict_probas():
+    # Turn: BLACK
+    # White: -
+    #     A  B  C
+    #   *--*--*--*
+    # 1 |-G|-L|-E|
+    #   *--*--*--*
+    # 2 |  |-C|  |
+    #   *--*--*--*
+    # 3 |  |+C|  |
+    #   *--*--*--*
+    # 4 |+E|+L|+G|
+    #   *--*--*--*
+    # Black: -
+    game = shogi.Game()
+    logits = np.zeros(12 * 11, dtype=np.float32)
+    logits[50] = 1
+    actual = game._policy_logits_to_policy_dict_probas(logits)
+    assert len(actual) == 4  # == len(game.get_legal_moves())
+    assert np.isclose(actual[shogi.Move(shogi.B2, shogi.B3)], 0.4753, 0, 1e-2)
+    assert np.isclose(actual[shogi.Move(shogi.A3, shogi.B4)], 0.1748, 0, 1e-2)
+    assert np.isclose(actual[shogi.Move(shogi.C3, shogi.B4)], 0.1748, 0, 1e-2)
+    assert np.isclose(actual[shogi.Move(shogi.C3, shogi.C4)], 0.1748, 0, 1e-2)
+
+
+def test_to_dlshogi_policy():
+    game = shogi.Game()
+    a = shogi.Move(shogi.B2, shogi.B3)
+    actual = game.to_dlshogi_policy(a, 0.7)
+
+    expected = np.zeros(12 * 11)
+    expected[a._to_dlshogi_policy_index()] = 0.7
+    for m in game.get_legal_moves():
+        if m == a:
+            continue
+        expected[m._to_dlshogi_policy_index()] = 0.1
+    assert np.allclose(expected, actual)
 
 
 if __name__ == '__main__':

@@ -11,7 +11,7 @@ namespace vshogi::minishogi
 {
 
 /**
- * @brief N-bit binary board representing ON and OFF of each square.
+ * @brief 32-bit binary board representing ON and OFF of each square.
  * @details
  *              +--------------------------------- SQ_1E
  *              |                     +----------- SQ_5B
