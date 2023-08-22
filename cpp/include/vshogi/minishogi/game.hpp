@@ -82,8 +82,11 @@ public:
     {
         return m_record[n].second;
     }
-    std::string get_sfen_at(const std::size_t n) const
+    std::string
+    get_sfen_at(const std::size_t n, const bool include_move_count = true) const
     {
+        if (include_move_count)
+            return m_record[n].first + ' ' + std::to_string(n + 1);
         return m_record[n].first;
     }
     static constexpr int ranks()

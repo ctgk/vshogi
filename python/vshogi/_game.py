@@ -239,20 +239,22 @@ class Game(abc.ABC):
         """
         return self._game.get_move_at(n)
 
-    def get_sfen_at(self, n: int) -> str:
+    def get_sfen_at(self, n: int, include_move_count: bool = True) -> str:
         """Return n-th game state in SFEN, where n starts from 0.
 
         Parameters
         ----------
         n : int
             Input index.
+        include_move_count : bool
+            Include move count in SFEN if true, otherwise excluded.
 
         Returns
         -------
         str
             N-th game state in SFEN.
         """
-        return self._game.get_sfen_at(n)
+        return self._game.get_sfen_at(n, include_move_count)
 
     def _policy_logits_to_policy_dict_probas(self, logits: np.ndarray) -> dict:
         return self._game._policy_logits_to_policy_dict_probas(logits)
