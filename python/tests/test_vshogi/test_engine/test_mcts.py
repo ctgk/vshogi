@@ -140,5 +140,16 @@ def test_visit_count_by_dirichlet_noise():
     assert visit_count > visit_count_with_noise
 
 
+def test_tree():
+    game = shogi.Game()
+    searcher = MonteCarloTreeSearcher(uniform_pv_func)
+    searcher.set_root(game)
+    searcher.explore(n=100)
+
+    searcher._tree(depth=2, breadth=3)
+    searcher._tree(depth=2, breadth=5)
+    searcher._tree(depth=2, breadth=-1)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
