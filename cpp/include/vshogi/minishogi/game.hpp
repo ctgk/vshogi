@@ -20,18 +20,21 @@ private:
      *
      */
     std::vector<std::pair<std::string, Move>> m_record;
+    std::vector<Move> m_legal_moves;
     State m_current_state;
     ResultEnum m_result;
 
 public:
-    Game() : m_record(), m_current_state(), m_result(ONGOING)
+    Game() : m_record(), m_legal_moves(), m_current_state(), m_result(ONGOING)
     {
         m_record.reserve(128);
+        update_result();
     }
     Game(const std::string sfen)
-        : m_record(), m_current_state(sfen), m_result(ONGOING)
+        : m_record(), m_legal_moves(), m_current_state(sfen), m_result(ONGOING)
     {
         m_record.reserve(128);
+        update_result();
     }
     ColorEnum get_turn() const
     {
@@ -61,11 +64,9 @@ public:
     {
         return m_current_state.is_legal(move);
     }
-    auto get_legal_moves() const
+    const std::vector<Move>& get_legal_moves() const
     {
-        if (m_result == ONGOING)
-            return m_current_state.get_legal_moves();
-        return std::vector<Move>();
+        return m_legal_moves;
     }
     Game& apply(const Move move)
     {
@@ -150,8 +151,8 @@ private:
     void update_result()
     {
         const auto turn = get_turn();
-        const auto legal_moves = get_legal_moves();
-        if (legal_moves.empty())
+        m_legal_moves = m_current_state.get_legal_moves();
+        if (m_legal_moves.empty())
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
         if (is_fourfold_repetitions()) {
             if (get_board().in_check(turn))
@@ -159,6 +160,8 @@ private:
             else
                 m_result = DRAW;
         }
+        if (m_result != ONGOING)
+            m_legal_moves.clear();
     }
     bool is_fourfold_repetitions() const
     {
