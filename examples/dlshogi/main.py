@@ -135,6 +135,7 @@ class PolicyValueFunction:
         self._model.set_tensor(self._input_details[0]['index'], x)
         self._model.invoke()
         value = float(self._model.get_tensor(self._output_details[0]['index']))
+        value = np.clip(value, -0.99, 0.99)
         policy_logits = self._model.get_tensor(self._output_details[1]['index'])
         policy = game._policy_logits_to_policy_dict_probas(policy_logits)
         return policy, value

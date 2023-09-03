@@ -11,7 +11,7 @@ def uniform_pv_func(game):
     policy = {m: p for m, p in zip(moves, np.ones(n) / n)}
     value = {
         shogi.ONGOING: 0, shogi.DRAW: 0,
-        shogi.BLACK_WIN: -1, shogi.WHITE_WIN: -1,
+        shogi.BLACK_WIN: -10, shogi.WHITE_WIN: -10,
     }[game.result]
     return policy, value
 
@@ -84,7 +84,7 @@ def test_clear():
     assert searcher.num_explored == 0
 
 
-def test_q_values():
+def test_q_values_mate_in_one():
     # Turn: BLACK
     # White: -
     #     A  B  C
@@ -107,6 +107,38 @@ def test_q_values():
     actual = searcher.get_q_values()
     print(actual)
     assert np.isclose(actual[m], 1, rtol=0, atol=1e-2)
+
+
+def test_mate_in_three():
+    # Turn: BLACK
+    # White: -
+    #     A  B  C
+    #   *--*--*--*
+    # 1 |-G|  |-E|
+    #   *--*--*--*
+    # 2 |-L|-C|  |
+    #   *--*--*--*
+    # 3 |  |+C|+L|
+    #   *--*--*--*
+    # 4 |+E|  |+G|
+    #   *--*--*--*
+    # Black: -
+    game = shogi.Game('l1e/gc1/1CL/E1G b -')
+    m = shogi.Move(shogi.C2, shogi.C3)
+
+    searcher = MonteCarloTreeSearcher(uniform_pv_func)
+    searcher.set_root(game)
+    searcher.explore(n=100, random_depth=0)
+
+    actual = searcher.get_q_values()
+    print(actual)
+    print(searcher._tree(depth=3))
+    assert np.isclose(actual[m], 1, rtol=0, atol=1e-2)
+
+    visit_count = searcher.get_visit_counts()[m]
+    searcher.explore(n=100, random_depth=0)
+    # If there is a mate, all explorations go through the mate.
+    assert searcher.get_visit_counts()[m] == visit_count + 100
 
 
 def test_visit_count_by_dirichlet_noise():
