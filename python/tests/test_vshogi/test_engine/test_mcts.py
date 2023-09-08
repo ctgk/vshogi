@@ -11,7 +11,7 @@ def uniform_pv_func(game):
     policy = {m: p for m, p in zip(moves, np.ones(n) / n)}
     value = {
         shogi.ONGOING: 0, shogi.DRAW: 0,
-        shogi.BLACK_WIN: -10, shogi.WHITE_WIN: -10,
+        shogi.BLACK_WIN: -1, shogi.WHITE_WIN: -1,
     }[game.result]
     return policy, value
 
@@ -141,22 +141,22 @@ def test_mate_in_three():
     assert searcher.get_visit_counts()[m] == visit_count + 100
 
 
-def test_visit_count_by_dirichlet_noise():
+def test_visit_count_by_random():
     # Turn: BLACK
     # White: -
     #     A  B  C
     #   *--*--*--*
-    # 1 |-G|-C|-E|
+    # 1 |-G|-C|  |
     #   *--*--*--*
-    # 2 |  |-L|  |
+    # 2 |-L|-E|  |
     #   *--*--*--*
-    # 3 |  |+L|  |
+    # 3 |  |  |+L|
     #   *--*--*--*
     # 4 |+E|+C|+G|
     #   *--*--*--*
     # Black: -
-    game = shogi.Game('gce/1l1/1L1/ECG b -')
-    m = shogi.Move(shogi.B2, shogi.B3)
+    game = shogi.Game('gc1/le1/2L/ECG b -')
+    m = shogi.Move(shogi.C2, shogi.C3)
 
     searcher = MonteCarloTreeSearcher(uniform_pv_func)
     searcher.set_root(game)
