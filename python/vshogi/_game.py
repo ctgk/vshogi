@@ -169,6 +169,15 @@ class Game(abc.ABC):
         -------
         int
             Length of the game record.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> game = shogi.Game()
+        >>> game.record_length
+        0
+        >>> game.apply(shogi.D3, shogi.E2).record_length
+        1
         """
         return self._game.record_length()
 
