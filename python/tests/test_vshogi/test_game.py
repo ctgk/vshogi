@@ -14,6 +14,10 @@ def run_doctest_of_class_method(class_method):
         assert actual.failed == 0
 
 
+def test_apply():
+    run_doctest_of_class_method(Game.apply)
+
+
 def test_to_policy_probas():
     run_doctest_of_class_method(Game.to_policy_probas)
 

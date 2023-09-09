@@ -160,6 +160,14 @@ class Game(abc.ABC):
         """
         return self._game.record_length()
 
+    @classmethod
+    def _get_move(cls, move=None, *arg, **kwargs) -> Move:
+        if not (arg or kwargs):
+            return move
+        if move is None:
+            return cls._get_move_class()(*arg, **kwargs)
+        return cls._get_move_class()(move, *arg, **kwargs)
+
     def apply(self, move=None, *arg, **kwargs) -> 'Game':
         """Apply a move.
 
@@ -174,9 +182,21 @@ class Game(abc.ABC):
         -------
         Game
             Game with the move applied.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> game = shogi.Game()
+        >>> game.apply(shogi.Move(shogi.D3, shogi.E2))
+        Game(sfen="rbsgk/4p/5/P1B2/KGS1R w - 2")
+        >>> game.apply(shogi.B2, shogi.A3)
+        Game(sfen="rb1gk/3sp/5/P1B2/KGS1R b - 3")
+        >>> game.apply(dst=shogi.D2, src=shogi.E3)
+        Game(sfen="rb1gk/3sp/5/P1BS1/KG2R w - 4")
+        >>> game.apply(shogi.B3, shogi.A4).apply(shogi.D4, shogi.E4)
+        Game(sfen="r2gk/2bsp/5/PGBS1/K3R w - 6")
         """
-        if arg or kwargs:
-            move = self._get_move_class()(move, *arg, **kwargs)
+        move = self._get_move(move, *arg, **kwargs)
         self._game.apply(move)
         return self
 
@@ -195,8 +215,7 @@ class Game(abc.ABC):
         bool
             True if the move is legal, otherwise false.
         """
-        if arg or kwargs:
-            move = self._get_move_class()(move, *arg, **kwargs)
+        move = self._get_move(move, *arg, **kwargs)
         return self._game.is_legal(move)
 
     def get_legal_moves(self) -> tp.List[Move]:
