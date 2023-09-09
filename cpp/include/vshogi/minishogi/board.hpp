@@ -234,6 +234,15 @@ public:
         out += to_sfen_rank(RANK5);
         return out;
     }
+
+    static constexpr int ranks()
+    {
+        return num_ranks;
+    }
+    static constexpr int files()
+    {
+        return num_files;
+    }
 };
 
 } // namespace vshogi::minishogi

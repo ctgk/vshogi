@@ -1,16 +1,16 @@
-#ifndef VSHOGI_MINISHOGI_GAME_HPP
-#define VSHOGI_MINISHOGI_GAME_HPP
+#ifndef VSHOGI_SHOGI_GAME_HPP
+#define VSHOGI_SHOGI_GAME_HPP
 
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "vshogi/game.hpp"
-#include "vshogi/minishogi/move.hpp"
-#include "vshogi/minishogi/state.hpp"
 #include "vshogi/result.hpp"
+#include "vshogi/shogi/move.hpp"
+#include "vshogi/shogi/state.hpp"
 
-namespace vshogi::minishogi
+namespace vshogi::shogi
 {
 
 class Game : public vshogi::Game<State, Board, Stand, Move>
@@ -25,7 +25,7 @@ public:
     }
     static constexpr int feature_channels()
     {
-        return 2 * (10 + 5); // 2-player * (10-board-piece + 5-stand-piece)
+        return 2 * (14 + 7); // 2-player * (14-board-piece + 7-stand-piece)
     }
     static constexpr int num_dlshogi_policy()
     {
@@ -40,9 +40,9 @@ public:
     }
     void to_feature_map(float* const data) const
     {
-        constexpr int stand_piece_types = 5;
-        constexpr int board_piece_types = 10;
-        constexpr int unpromoted_piece_types = 6;
+        constexpr int stand_piece_types = 7;
+        constexpr int board_piece_types = 14;
+        constexpr int unpromoted_piece_types = stand_piece_types + 1; // + OU
         constexpr int ch_half = stand_piece_types + board_piece_types;
         constexpr int ch = feature_channels();
 
@@ -80,6 +80,6 @@ public:
     }
 };
 
-} // namespace vshogi::minishogi
+} // namespace vshogi::shogi
 
-#endif // VSHOGI_MINISHOGI_GAME_HPP
+#endif // VSHOGI_SHOGI_GAME_HPP
