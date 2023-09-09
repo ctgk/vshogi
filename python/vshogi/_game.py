@@ -253,7 +253,22 @@ class Game(abc.ABC):
         -------
         str
             N-th game state in SFEN.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> game = shogi.Game()
+        >>> game.apply(shogi.D3, shogi.E2).apply(shogi.B2, shogi.A3)
+        Game(sfen="rb1gk/3sp/5/P1B2/KGS1R b - 3")
+        >>> game.get_sfen_at(0)
+        'rbsgk/4p/5/P4/KGSBR b - 1'
+        >>> game.get_sfen_at(1)
+        'rbsgk/4p/5/P1B2/KGS1R w - 2'
+        >>> game.get_sfen_at(-1)
+        'rbsgk/4p/5/P1B2/KGS1R w - 2'
         """
+        if n < 0:
+            n = self.record_length + n
         return self._game.get_sfen_at(n, include_move_count)
 
     def to_policy_probas(
