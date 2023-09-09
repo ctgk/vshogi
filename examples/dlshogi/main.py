@@ -16,11 +16,30 @@ from tqdm import tqdm
 
 import vshogi
 
-# from vshogi.animal_shogi import *
+from vshogi.animal_shogi import *
+NUM_CHANNELS = 32
+NUM_BACKBONE_LAYERS = 3
+NUM_POLICY_LAYERS = 2
+NUM_VALUE_LAYERS = 2
+NUM_EXPLORATIONS = 1000
+COEFF_PUCT = 4.
+NUM_SELF_PLAY = 200
+NUM_RANDOM_MOVES = 0
+NUM_VALIDATION_PLAYS_PER_MODEL = 20
+MAX_POLICY = 0.5
+MINIBATCH = 32
+EPOCHS = 20
+NUM_SELF_PLAY_VALIDATE_TRAIN_CYCLE = 20
+NUM_JOBS = 1
+GET_SFEN = lambda: '{}l{}/1{}1/1{}1/{}L{} b - 1'.format(
+    *np.random.choice(list('ceg'), 3, replace=False),
+    *np.random.choice(list('CEG'), 3, replace=False))
+
+# from vshogi.minishogi import *
 # NUM_CHANNELS = 32
-# NUM_BACKBONE_LAYERS = 3
-# NUM_POLICY_LAYERS = 2
-# NUM_VALUE_LAYERS = 2
+# NUM_BACKBONE_LAYERS = 6
+# NUM_POLICY_LAYERS = 3
+# NUM_VALUE_LAYERS = 3
 # NUM_EXPLORATIONS = 1000
 # COEFF_PUCT = 4.
 # NUM_SELF_PLAY = 200
@@ -30,28 +49,10 @@ import vshogi
 # MINIBATCH = 32
 # EPOCHS = 20
 # NUM_SELF_PLAY_VALIDATE_TRAIN_CYCLE = 50
-# GET_SFEN = lambda: '{}l{}/1{}1/1{}1/{}L{} b - 1'.format(
-#     *np.random.choice(list('ceg'), 3, replace=False),
-#     *np.random.choice(list('CEG'), 3, replace=False))
-
-from vshogi.minishogi import *
-NUM_CHANNELS = 32
-NUM_BACKBONE_LAYERS = 6
-NUM_POLICY_LAYERS = 3
-NUM_VALUE_LAYERS = 3
-NUM_EXPLORATIONS = 1000
-COEFF_PUCT = 4.
-NUM_SELF_PLAY = 200
-NUM_RANDOM_MOVES = 0
-NUM_VALIDATION_PLAYS_PER_MODEL = 20
-MAX_POLICY = 1.0
-MINIBATCH = 32
-EPOCHS = 20
-NUM_SELF_PLAY_VALIDATE_TRAIN_CYCLE = 50
-NUM_JOBS = 4
-GET_SFEN = lambda: '{}{}{}{}k/4{}/5/{}4/K{}{}{}{} b - 1'.format(
-    *np.random.choice(list('rbsgp'), 5, replace=False),
-    *np.random.choice(list('RBSGP'), 5, replace=False))
+# NUM_JOBS = 4
+# GET_SFEN = lambda: '{}{}{}{}k/4{}/5/{}4/K{}{}{}{} b - 1'.format(
+#     *np.random.choice(list('rbsgp'), 5, replace=False),
+#     *np.random.choice(list('RBSGP'), 5, replace=False))
 
 
 def build_policy_value_network(
@@ -137,7 +138,7 @@ class PolicyValueFunction:
         value = float(self._model.get_tensor(self._output_details[0]['index']))
         value = np.clip(value, -0.99, 0.99)
         policy_logits = self._model.get_tensor(self._output_details[1]['index'])
-        policy = game._policy_logits_to_policy_dict_probas(policy_logits)
+        policy = game.to_policy_probas(policy_logits)
         return policy, value
 
 
@@ -407,8 +408,10 @@ if __name__ == '__main__':
         # Self-play!
         if not os.path.isdir(f'datasets/dataset_{i:04d}'):
             os.makedirs(f'datasets/dataset_{i:04d}')
-        # self_play_and_dump_records(player, i)
-        self_play_and_dump_records_in_parallel(network, i)
+        if NUM_JOBS == 1:
+            self_play_and_dump_records(player, i)
+        else:
+            self_play_and_dump_records_in_parallel(network, i, n_jobs=NUM_JOBS)
 
         # Validate!
         play_against_past_players(player, i, dump_records=True)

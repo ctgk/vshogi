@@ -126,29 +126,62 @@ def test_array():
     assert np.allclose(actual[0, 2, 1, 11], 1)
 
 
-def test_policy_logits_to_policy_dict_probas():
-    # Turn: BLACK
-    # White: -
-    #     A  B  C
-    #   *--*--*--*
-    # 1 |-G|-L|-E|
-    #   *--*--*--*
-    # 2 |  |-C|  |
-    #   *--*--*--*
-    # 3 |  |+C|  |
-    #   *--*--*--*
-    # 4 |+E|+L|+G|
-    #   *--*--*--*
-    # Black: -
-    game = shogi.Game()
-    logits = np.zeros(12 * 11, dtype=np.float32)
-    logits[50] = 1
-    actual = game._policy_logits_to_policy_dict_probas(logits)
-    assert len(actual) == 4  # == len(game.get_legal_moves())
-    assert np.isclose(actual[shogi.Move(shogi.B2, shogi.B3)], 0.4753, 0, 1e-2)
-    assert np.isclose(actual[shogi.Move(shogi.A3, shogi.B4)], 0.1748, 0, 1e-2)
-    assert np.isclose(actual[shogi.Move(shogi.C3, shogi.B4)], 0.1748, 0, 1e-2)
-    assert np.isclose(actual[shogi.Move(shogi.C3, shogi.C4)], 0.1748, 0, 1e-2)
+@pytest.mark.parametrize('game, logits, expected', [
+    (
+        # Turn: BLACK
+        # White: -
+        #     A  B  C
+        #   *--*--*--*
+        # 1 |-G|-L|-E|
+        #   *--*--*--*
+        # 2 |  |-C|  |
+        #   *--*--*--*
+        # 3 |  |+C|  |
+        #   *--*--*--*
+        # 4 |+E|+L|+G|
+        #   *--*--*--*
+        # Black: -
+        shogi.Game('gle/1c1/1C1/ELG b -'),
+        np.eye(12 * 11, dtype=np.float32)[50],
+        {
+            shogi.Move(shogi.B2, shogi.B3): 0.4753,
+            shogi.Move(shogi.A3, shogi.B4): 0.1748,
+            shogi.Move(shogi.C3, shogi.B4): 0.1748,
+            shogi.Move(shogi.C3, shogi.C4): 0.1748,
+        },
+        # cf. Move(dst=B2, src=B3)._to_dlshogi_policy_index() == 50
+    ),
+    (
+        # Turn: WHITE
+        # White: -
+        #     A  B  C
+        #   *--*--*--*
+        # 1 |-G|-L|-E|
+        #   *--*--*--*
+        # 2 |  |-C|  |
+        #   *--*--*--*
+        # 3 |  |+C|  |
+        #   *--*--*--*
+        # 4 |+E|+L|+G|
+        #   *--*--*--*
+        # Black: -
+        shogi.Game('gle/1c1/1C1/ELG w -'),
+        np.eye(12 * 11, dtype=np.float32)[50] * 2,
+        {
+            shogi.Move(shogi.B3, shogi.B2): 0.7112,
+            shogi.Move(shogi.C2, shogi.B1): 0.0963,
+            shogi.Move(shogi.A2, shogi.B1): 0.0963,
+            shogi.Move(shogi.A2, shogi.A1): 0.0963,
+        },
+        # cf. Move(dst=B2, src=B3)._to_dlshogi_policy_index() == 50
+    ),
+])
+def test_to_policy_probas(game: shogi.Game, logits, expected):
+    actual = game.to_policy_probas(logits)
+    assert len(actual) == len(expected)
+    for action, expected_proba in expected.items():
+        assert action in actual
+        assert np.isclose(actual[action], expected_proba, 0, 1e-2)
 
 
 def test_to_dlshogi_policy():
