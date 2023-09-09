@@ -1,8 +1,9 @@
 import doctest
+import inspect
 
 import pytest
 
-from vshogi import Game
+import vshogi.animal_shogi as shogi
 
 
 def run_doctest_of_class_method(class_method):
@@ -14,20 +15,12 @@ def run_doctest_of_class_method(class_method):
         assert actual.failed == 0
 
 
-def test_apply():
-    run_doctest_of_class_method(Game.apply)
-
-
-def test_to_policy_probas():
-    run_doctest_of_class_method(Game.to_policy_probas)
-
-
-def test_get_move_at():
-    run_doctest_of_class_method(Game.get_move_at)
-
-
-def test_get_sfen_at():
-    run_doctest_of_class_method(Game.get_sfen_at)
+def test_game_methods():
+    for _, method in inspect.getmembers(
+        shogi.Game(),
+        predicate=inspect.ismethod,
+    ):
+        run_doctest_of_class_method(method)
 
 
 if __name__ == '__main__':

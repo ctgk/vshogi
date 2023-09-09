@@ -1,4 +1,5 @@
 import abc
+import sys
 import typing as tp
 
 import numpy as np
@@ -325,6 +326,70 @@ class Game(abc.ABC):
         if n < 0:
             n = self.record_length + n
         return self._game.get_sfen_at(n, include_move_count)
+
+    def dump_records(
+        self,
+        getters: tp.Tuple[
+            tp.Callable[['Game', int], object],
+            tp.Iterable[tp.Callable[['Game', int], object]],
+        ] = lambda g, i: g.get_sfen_at(i),
+        names: tp.Optional[tp.Iterable[str]] = None,
+        sep: str = '\t',
+        file_: tp.TextIO = sys.stdout,
+    ) -> None:
+        r"""Dump game records.
+
+        Parameters
+        ----------
+        getters :
+            Callable or iterable of callables to get desired values.
+        names : tp.Optional[tp.Iterable[str]], optional
+            Dump a header if passed, by default None
+        sep : str, optional
+            Separator of column names and values, by default '\t'
+        file_ : tp.TextIO, optional
+            Location to dump to, by default sys.stdout.
+
+        Examples
+        --------
+        >>> import vshogi.animal_shogi as shogi; import io
+        >>> game = shogi.Game().apply(shogi.A3, shogi.B4).apply(
+        ...     shogi.A2, shogi.B1).apply(shogi.A2, shogi.A3)
+        >>> with io.StringIO() as f:
+        ...     game.dump_records(file_=f)
+        ...     _ = f.seek(0)
+        ...     print(f.read())
+        gle/1c1/1C1/ELG b - 1
+        gle/1c1/LC1/E1G w - 2
+        g1e/lc1/LC1/E1G b - 3
+        <BLANKLINE>
+        >>> with io.StringIO() as f:
+        ...     game.dump_records(
+        ...         (
+        ...             lambda g, i: g.get_sfen_at(i),
+        ...             lambda g, i: g.get_move_at(i),
+        ...             lambda g, i: g.result,
+        ...         ),
+        ...         names=('sfen', 'move', 'result'),
+        ...         file_=f,
+        ...     )
+        ...     _ = f.seek(0)
+        ...     print(f.read())  #doctest: +NORMALIZE_WHITESPACE
+        sfen        move    result
+        gle/1c1/1C1/ELG b - 1       Move(dst=A3, src=B4)    Result.BLACK_WIN
+        gle/1c1/LC1/E1G w - 2       Move(dst=A2, src=B1)    Result.BLACK_WIN
+        g1e/lc1/LC1/E1G b - 3       Move(dst=A2, src=A3)    Result.BLACK_WIN
+        <BLANKLINE>
+        """
+        if names is not None:
+            print(*names, file=file_, sep=sep)
+        if callable(getters):
+            getters = (getters,)
+        for i in range(self.record_length):
+            print(
+                *(getter(self, i) for getter in getters),
+                sep='\t', file=file_,
+            )
 
     def to_policy_probas(
         self,

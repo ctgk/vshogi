@@ -143,14 +143,14 @@ class PolicyValueFunction:
 
 
 def dump_game_records(file_, game: vshogi.Game) -> None:
-    print("state\tmove\tresult", file=file_)
-    for i in range(game.record_length):
-        print(
-            game.get_sfen_at(i, include_move_count=True),
-            game.get_move_at(i),
-            game.result,
-            file=file_, sep='\t',
-        )
+    game.dump_records(
+        (
+            lambda g, i: g.get_sfen_at(i, include_move_count=True),
+            lambda g, i: g.get_move_at(i),
+            lambda g, _: g.result,
+        ),
+        names=('state', 'move', 'result'), file_=file_,
+    )
 
 
 def _df_to_xy(df: pd.DataFrame, max_policy: float = MAX_POLICY):
