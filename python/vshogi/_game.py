@@ -236,7 +236,22 @@ class Game(abc.ABC):
         -------
         Move
             N-th move.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> game = shogi.Game()
+        >>> game.apply(shogi.D3, shogi.E2).apply(shogi.B2, shogi.A3)
+        Game(sfen="rb1gk/3sp/5/P1B2/KGS1R b - 3")
+        >>> game.get_move_at(0)
+        Move(dst=SQ_3D, src=SQ_2E)
+        >>> game.get_move_at(1)
+        Move(dst=SQ_2B, src=SQ_3A)
+        >>> game.get_move_at(-1)
+        Move(dst=SQ_2B, src=SQ_3A)
         """
+        if n < 0:
+            n = self.record_length + n
         return self._game.get_move_at(n)
 
     def get_sfen_at(self, n: int, include_move_count: bool = True) -> str:
