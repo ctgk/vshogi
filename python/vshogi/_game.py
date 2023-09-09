@@ -146,6 +146,18 @@ class Game(abc.ABC):
         -------
         Result
             Result of the game.
+
+        Examples
+        --------
+        >>> import vshogi.animal_shogi as shogi
+        >>> game = shogi.Game()
+        >>> game.result
+        Result.ONGOING
+        >>> game.apply(shogi.A3, shogi.B4).apply(
+        ...     shogi.A2, shogi.B1).apply(shogi.A2, shogi.A3)
+        Game(sfen="g1e/Lc1/1C1/E1G w - 4")
+        >>> game.result
+        Result.BLACK_WIN
         """
         return self._game.get_result()
 
