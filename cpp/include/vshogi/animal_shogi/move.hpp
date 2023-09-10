@@ -134,7 +134,7 @@ public:
                    [static_cast<int>(source()) - static_cast<int>(destination())
                     + 4];
     }
-    static bool promote()
+    bool promote() const
     {
         return false;
     }
