@@ -107,7 +107,7 @@ public:
     {
         return sizeof(stand_piece_array) / sizeof(stand_piece_array[0]);
     }
-    static constexpr PieceTypeEnum piece_types(const int i)
+    static constexpr PieceTypeEnum to_piece_type(const int i)
     {
         return stand_piece_array[i];
     }

@@ -12,7 +12,7 @@ constexpr int stand_shift_bits[] = {0, 6, 10, 14, 18, 21, 24};
 constexpr std::uint32_t stand_masks[] = {
     // clang-format off
     0x0000001f, // FU
-    0x000000c0, // KY
+    0x000001c0, // KY
     0x00001c00, // KE
     0x0001c000, // GI
     0x000c0000, // KA
@@ -112,7 +112,7 @@ public:
     {
         return sizeof(stand_piece_array) / sizeof(stand_piece_array[0]);
     }
-    static constexpr PieceTypeEnum piece_types(const int i)
+    static constexpr PieceTypeEnum to_piece_type(const int i)
     {
         return stand_piece_array[i];
     }

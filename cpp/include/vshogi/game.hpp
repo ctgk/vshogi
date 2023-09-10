@@ -114,7 +114,7 @@ public:
         const auto board = get_board();
 
         for (int k = stand_piece_types; k--;) {
-            const auto p = Stand::piece_types(k);
+            const auto p = Stand::to_piece_type(k);
             const auto num_curr = static_cast<float>(stand_curr.count(p));
             const auto num_next = static_cast<float>(stand_next.count(p));
             for (int i = num_squares; i--;) {
