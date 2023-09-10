@@ -224,8 +224,9 @@ public:
     std::string to_sfen_holdings() const
     {
         auto out = std::string();
+        constexpr PieceTypeEnum pieces[] = {HI, KA, KI, GI, KE, KY, FU};
         for (auto c : color_array) {
-            for (auto piece : stand_piece_array) {
+            for (auto piece : pieces) {
                 const auto num = operator[](c).count(piece);
                 if (num == 0)
                     continue;

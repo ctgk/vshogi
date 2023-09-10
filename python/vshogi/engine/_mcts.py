@@ -15,22 +15,25 @@ Value = float
 def _repr_node(n) -> str:
     return (
         f"Node(v={n.get_value():.2f}, q={n.get_q_value():.2f}, "
-        f"#visit={n.get_visit_count()})"
+        f"count={n.get_visit_count()})"
     )
 
 
 def _tree(
     root,
     depth: int = 1,
+    breadth: int = 3,
     sort_key=lambda n: -n.get_visit_count(),
 ) -> str:
-    out = f"{_repr_node(root)}"
+    out = _repr_node(root)
     if depth == 0:
         return out
     children = [(a, root.get_child(a)) for a in root.get_actions()]
     children.sort(key=lambda t: sort_key(t[1]), reverse=False)
+    if breadth > 0:
+        children = children[:breadth]
     for i, (a, child) in enumerate(children):
-        s = _tree(child, depth - 1, sort_key)
+        s = _tree(child, depth - 1, breadth, sort_key)
         if i == len(children) - 1:
             s = s.replace('\n', '\n    ')
         else:
@@ -257,6 +260,7 @@ class MonteCarloTreeSearcher:
     def _tree(
         self,
         depth: int = 1,
+        breadth: int = 3,
         sort_key: callable = lambda n: -n.get_visit_count(),
     ) -> str:
-        return _tree(self._root, depth, sort_key)
+        return _tree(self._root, depth, breadth, sort_key)

@@ -5,7 +5,7 @@ cf. https://en.wikipedia.org/wiki/D%C5%8Dbutsu_sh%C5%8Dgi
 
 import numpy as np
 
-from vshogi._enum import _enum_repr
+from vshogi._repr import _repr_enum, _repr_move
 from vshogi._vshogi import Color, Result
 from vshogi._vshogi.animal_shogi import (
     Board, BoardPiece, Move, Piece, Square,
@@ -50,16 +50,14 @@ Board.__array__ = lambda self: np.array(
     dtype=BoardPiece,
 )
 Board.__repr__ = _board_repr
-BoardPiece.__repr__ = _enum_repr
+BoardPiece.__repr__ = _repr_enum
 BoardPiece._to_2char = lambda self: (
     "  " if self == BoardPiece.VOID
     else {'B': '+', 'W': '-'}[self.name[0]] + self.name[2]
 )
-Piece.__repr__ = _enum_repr
-Move.__repr__ = lambda a: (
-    f'{a.__class__.__name__}(dst={a.destination.name}, src={a.source.name})'
-)
-Square.__repr__ = _enum_repr
+Piece.__repr__ = _repr_enum
+Move.__repr__ = _repr_move
+Square.__repr__ = _repr_enum
 
 
 _classes = [

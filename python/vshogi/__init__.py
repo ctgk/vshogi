@@ -2,13 +2,13 @@
 
 from vshogi import animal_shogi, minishogi
 from vshogi import engine
-from vshogi._enum import _enum_repr
 from vshogi._game import Game
 from vshogi._play import play_game
+from vshogi._repr import _repr_enum
 from vshogi._vshogi import Color, Result
 
-Color.__repr__ = _enum_repr
-Result.__repr__ = _enum_repr
+Color.__repr__ = _repr_enum
+Result.__repr__ = _repr_enum
 
 _classes = [Color, Result, Game]
 _enums = [Color, Result]

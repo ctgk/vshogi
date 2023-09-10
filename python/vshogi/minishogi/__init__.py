@@ -52,7 +52,7 @@ Black: KI
 
 import numpy as np
 
-from vshogi._enum import _enum_repr
+from vshogi._repr import _repr_enum, _repr_move, _repr_square, _repr_stand
 from vshogi._vshogi import Color, Result
 from vshogi._vshogi.minishogi import (
     Board, BoardPiece, Move, Piece, Square, Stand,
@@ -85,22 +85,15 @@ Board.__array__ = lambda self: np.array([
     self[Square(i)] for i in range(25)
 ], dtype=BoardPiece).reshape(5, 5)
 Board.__repr__ = _board_repr
-BoardPiece.__repr__ = _enum_repr
+BoardPiece.__repr__ = _repr_enum
 BoardPiece._to_3char = lambda self: (
     "   " if self == BoardPiece.VOID
     else {'B': '+', 'W': '-'}[self.name[0]] + self.name[2:4]
 )
-Move.__repr__ = lambda m: (
-    f'{m.__class__.__name__}(dst={m.destination.name}, src={m.source.name}'
-    + (', promote=True' if m.promote else '')
-    + ')'
-)
-Piece.__repr__ = _enum_repr
-Stand.__str__ = lambda self: '-' if not self.any() else ','.join([
-    k.name + ('' if v == 1 else f'x{v}') for k, v in self.to_dict().items()
-    if v > 0
-])
-Square.__repr__ = lambda a: f'{a.__class__.__name__}.{a.name[-2:]}'
+Move.__repr__ = _repr_move
+Piece.__repr__ = _repr_enum
+Stand.__str__ = _repr_stand
+Square.__repr__ = _repr_square
 
 _classes = [Board, BoardPiece, Move, Piece, Square, Stand, Game]
 _enums = [BoardPiece, Color, Piece, Result, Square]

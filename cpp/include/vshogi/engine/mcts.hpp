@@ -15,38 +15,22 @@ static std::random_device dev;
 static std::mt19937 rng(dev());
 static std::uniform_real_distribution<float> uniform01(0, 1);
 
-namespace internal
-{
-
-// arctanh(0.9999) = 4.951718775643098
-constexpr float tanh_max = 0.9999f;
-constexpr float atanh_max = 5.f;
-
-inline float arctanh(const float x)
-{
-    if (x > tanh_max)
-        return atanh_max;
-    if (x < -tanh_max)
-        return -atanh_max;
-    return std::atanh(x);
-}
-
-inline float tanh(const float x)
-{
-    if (x > atanh_max)
-        return 1.f;
-    if (x < -atanh_max)
-        return -1.f;
-    return std::tanh(x);
-}
-
-} // namespace internal
-
 template <class Game, class Move>
 class Node
 {
 private:
     using NodeGM = Node<Game, Move>;
+    static constexpr float value_threshold = 0.999f;
+    static constexpr float atanh_max = 10.f;
+
+    /**
+     * @brief 1 ~ -1 scaled probability of the turn player winning the game.
+     * @details This is typically a raw estimate of a machine learning model.
+     * If the turn is black, then this value shows winning rate of black.
+     * If the turn is white, then it shows the rate of white. If the value is
+     * out of [-1, 1] range, then it means that there is a winner.
+     */
+    float m_value;
 
     /**
      * @brief `arctanh` of 1 ~ -1 scaled probability of the turn player winning
@@ -76,6 +60,12 @@ private:
     float m_sqrt_visit_count;
 
     /**
+     * @brief Average of `m_value` of all the nodes below this including this
+     * one weighted by their `m_visit_count`.
+     */
+    float m_q_value;
+
+    /**
      * @brief Average of `m_value_arctanh` of all the node below this and this
      * node weighted by their `m_visit_count`.
      */
@@ -85,9 +75,10 @@ private:
 
 public:
     Node()
-        : m_value_arctanh(0.f), m_actions(), m_probas(), m_parent(nullptr),
-          m_children(), m_visit_count(0), m_sqrt_visit_count(0.f),
-          m_q_arctanh(0.f), m_uniform_action_index()
+        : m_value(0.f), m_value_arctanh(0.f), m_actions(), m_probas(),
+          m_parent(nullptr), m_children(), m_visit_count(0),
+          m_sqrt_visit_count(0.f), m_q_value(0.f), m_q_arctanh(0.f),
+          m_uniform_action_index()
     {
     }
 
@@ -132,12 +123,14 @@ public:
                 "# of actions (" + std::to_string(actions.size())
                 + ") != # of probas (" + std::to_string(probas.size()) + ")");
         // m_parent = parent; Update everything except `m_parent`
-        m_value_arctanh = internal::arctanh(value);
+        m_value = value;
+        m_value_arctanh = arctanh(value);
         m_actions = actions;
         m_probas = probas;
         m_children = std::vector<NodeGM>(actions.size());
         m_visit_count = 1;
         m_sqrt_visit_count = 1.f;
+        m_q_value = value;
         m_q_arctanh = m_value_arctanh;
         m_uniform_action_index
             = std::uniform_int_distribution<std::size_t>(0, actions.size() - 1);
@@ -177,7 +170,7 @@ public:
      */
     float get_value() const
     {
-        return internal::tanh(m_value_arctanh);
+        return m_value;
     }
 
     /**
@@ -189,7 +182,7 @@ public:
      */
     float get_q_value() const
     {
-        return internal::tanh(m_q_arctanh);
+        return m_q_value;
     }
     const std::vector<Move>& get_actions() const
     {
@@ -264,10 +257,23 @@ public:
             = (m_q_arctanh * visit_count_before
                + out.m_q_arctanh * static_cast<float>(out.m_visit_count))
               / static_cast<float>(m_visit_count);
+        m_q_value = tanh(m_q_arctanh);
         return out;
     }
 
 private:
+    float tanh(const float x) const
+    {
+        return std::tanh(x);
+    }
+    float arctanh(const float x) const
+    {
+        if (x >= value_threshold)
+            return atanh_max;
+        if (x <= -value_threshold)
+            return -atanh_max;
+        return std::atanh(x);
+    }
     void increment_visit_count()
     {
         m_visit_count += 1;
@@ -291,6 +297,7 @@ private:
         // But the following possibly prevents overflows.
         m_q_arctanh *= (count - 1.f) / count;
         m_q_arctanh += v_arctanh / count;
+        m_q_value = tanh(m_q_arctanh);
         if (m_parent != nullptr)
             m_parent->update_q_arctanh(-v_arctanh);
     }
@@ -304,17 +311,20 @@ private:
     }
     float puct_q(const std::size_t index) const
     {
-        return std::tanh(-m_children[index].m_q_arctanh);
+        return -m_children[index].m_q_value;
     }
     float puct_score(const std::size_t index, const float coeff_puct) const
     {
-        const auto score = puct_q(index) + puct_u(index) * coeff_puct;
+        const auto q = puct_q(index);
+        if (std::abs(q) > value_threshold)
+            return q * (1.f + m_sqrt_visit_count * coeff_puct);
+        const auto score = q + puct_u(index) * coeff_puct;
         return score;
     }
     std::size_t action_index_with_max_puct_score(const float coeff_puct) const
     {
-        std::size_t index = m_actions.size();
-        float max_puct_score = -100.f;
+        std::size_t index = m_actions.size() - 1;
+        float max_puct_score = puct_score(index, coeff_puct);
         for (std::size_t ii = index; ii--;) {
             const auto score = puct_score(ii, coeff_puct);
             if (score > max_puct_score) {
@@ -328,17 +338,45 @@ private:
     {
         return m_uniform_action_index(rng);
     }
+    std::size_t random_action_index_excluding_mate_to_loss()
+    {
+        constexpr int num_max_dice_roll = 10;
+        std::size_t index;
+        for (int ii = num_max_dice_roll; ii--;) {
+            index = random_action_index();
+            const bool is_mate_to_loss = (puct_q(index) < -value_threshold);
+            if (is_mate_to_loss)
+                continue;
+            return index;
+        }
+        return index;
+    }
     std::size_t get_action_index(
         const float coeff_puct,
         const float random_proba,
         const int random_depth)
     {
-        const auto use_random
-            = (random_depth > 0) && (uniform01(rng) > random_proba);
-        const auto index = use_random
-                               ? random_action_index()
-                               : action_index_with_max_puct_score(coeff_puct);
-        return index;
+        if (use_random(random_proba, random_depth))
+            return random_action_index_excluding_mate_to_loss();
+        return action_index_with_max_puct_score(coeff_puct);
+    }
+    bool use_random(const float random_proba, const int random_depth) const
+    {
+        if (random_depth <= 0)
+            return false;
+        if (uniform01(rng) > random_proba)
+            return false;
+        if (has_mate_to_win())
+            return false;
+        return true;
+    }
+    bool has_mate_to_win() const
+    {
+        for (std::size_t ii = m_actions.size(); ii--;) {
+            if (puct_q(ii) > value_threshold)
+                return true;
+        }
+        return false;
     }
 };
 

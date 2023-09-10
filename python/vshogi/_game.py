@@ -1,4 +1,5 @@
 import abc
+import sys
 import typing as tp
 
 import numpy as np
@@ -146,6 +147,18 @@ class Game(abc.ABC):
         -------
         Result
             Result of the game.
+
+        Examples
+        --------
+        >>> import vshogi.animal_shogi as shogi
+        >>> game = shogi.Game()
+        >>> game.result
+        Result.ONGOING
+        >>> game.apply(shogi.A3, shogi.B4).apply(
+        ...     shogi.A2, shogi.B1).apply(shogi.A2, shogi.A3)
+        Game(sfen="g1e/Lc1/1C1/E1G w - 4")
+        >>> game.result
+        Result.BLACK_WIN
         """
         return self._game.get_result()
 
@@ -157,8 +170,25 @@ class Game(abc.ABC):
         -------
         int
             Length of the game record.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> game = shogi.Game()
+        >>> game.record_length
+        0
+        >>> game.apply(shogi.D3, shogi.E2).record_length
+        1
         """
         return self._game.record_length()
+
+    @classmethod
+    def _get_move(cls, move=None, *arg, **kwargs) -> Move:
+        if not (arg or kwargs):
+            return move
+        if move is None:
+            return cls._get_move_class()(*arg, **kwargs)
+        return cls._get_move_class()(move, *arg, **kwargs)
 
     def apply(self, move=None, *arg, **kwargs) -> 'Game':
         """Apply a move.
@@ -174,9 +204,21 @@ class Game(abc.ABC):
         -------
         Game
             Game with the move applied.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> game = shogi.Game()
+        >>> game.apply(shogi.Move(shogi.D3, shogi.E2))
+        Game(sfen="rbsgk/4p/5/P1B2/KGS1R w - 2")
+        >>> game.apply(shogi.B2, shogi.A3)
+        Game(sfen="rb1gk/3sp/5/P1B2/KGS1R b - 3")
+        >>> game.apply(dst=shogi.D2, src=shogi.E3)
+        Game(sfen="rb1gk/3sp/5/P1BS1/KG2R w - 4")
+        >>> game.apply(shogi.B3, shogi.A4).apply(shogi.D4, shogi.E4)
+        Game(sfen="r2gk/2bsp/5/PGBS1/K3R w - 6")
         """
-        if arg or kwargs:
-            move = self._get_move_class()(move, *arg, **kwargs)
+        move = self._get_move(move, *arg, **kwargs)
         self._game.apply(move)
         return self
 
@@ -195,8 +237,7 @@ class Game(abc.ABC):
         bool
             True if the move is legal, otherwise false.
         """
-        if arg or kwargs:
-            move = self._get_move_class()(move, *arg, **kwargs)
+        move = self._get_move(move, *arg, **kwargs)
         return self._game.is_legal(move)
 
     def get_legal_moves(self) -> tp.List[Move]:
@@ -236,26 +277,153 @@ class Game(abc.ABC):
         -------
         Move
             N-th move.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> game = shogi.Game()
+        >>> game.apply(shogi.D3, shogi.E2).apply(shogi.B2, shogi.A3)
+        Game(sfen="rb1gk/3sp/5/P1B2/KGS1R b - 3")
+        >>> game.get_move_at(0)
+        Move(dst=SQ_3D, src=SQ_2E)
+        >>> game.get_move_at(1)
+        Move(dst=SQ_2B, src=SQ_3A)
+        >>> game.get_move_at(-1)
+        Move(dst=SQ_2B, src=SQ_3A)
         """
+        if n < 0:
+            n = self.record_length + n
         return self._game.get_move_at(n)
 
-    def get_sfen_at(self, n: int) -> str:
+    def get_sfen_at(self, n: int, include_move_count: bool = True) -> str:
         """Return n-th game state in SFEN, where n starts from 0.
 
         Parameters
         ----------
         n : int
             Input index.
+        include_move_count : bool
+            Include move count in SFEN if true, otherwise excluded.
 
         Returns
         -------
         str
             N-th game state in SFEN.
-        """
-        return self._game.get_sfen_at(n)
 
-    def _policy_logits_to_policy_dict_probas(self, logits: np.ndarray) -> dict:
-        return self._game._policy_logits_to_policy_dict_probas(logits)
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> game = shogi.Game()
+        >>> game.apply(shogi.D3, shogi.E2).apply(shogi.B2, shogi.A3)
+        Game(sfen="rb1gk/3sp/5/P1B2/KGS1R b - 3")
+        >>> game.get_sfen_at(0)
+        'rbsgk/4p/5/P4/KGSBR b - 1'
+        >>> game.get_sfen_at(1)
+        'rbsgk/4p/5/P1B2/KGS1R w - 2'
+        >>> game.get_sfen_at(-1)
+        'rbsgk/4p/5/P1B2/KGS1R w - 2'
+        """
+        if n < 0:
+            n = self.record_length + n
+        return self._game.get_sfen_at(n, include_move_count)
+
+    def dump_records(
+        self,
+        getters: tp.Tuple[
+            tp.Callable[['Game', int], object],
+            tp.Iterable[tp.Callable[['Game', int], object]],
+        ] = lambda g, i: g.get_sfen_at(i),
+        names: tp.Optional[tp.Iterable[str]] = None,
+        sep: str = '\t',
+        file_: tp.TextIO = sys.stdout,
+    ) -> None:
+        r"""Dump game records.
+
+        Parameters
+        ----------
+        getters :
+            Callable or iterable of callables to get desired values.
+        names : tp.Optional[tp.Iterable[str]], optional
+            Dump a header if passed, by default None
+        sep : str, optional
+            Separator of column names and values, by default '\t'
+        file_ : tp.TextIO, optional
+            Location to dump to, by default sys.stdout.
+
+        Examples
+        --------
+        >>> import vshogi.animal_shogi as shogi; import io
+        >>> game = shogi.Game().apply(shogi.A3, shogi.B4).apply(
+        ...     shogi.A2, shogi.B1).apply(shogi.A2, shogi.A3)
+        >>> with io.StringIO() as f:
+        ...     game.dump_records(file_=f)
+        ...     _ = f.seek(0)
+        ...     print(f.read())
+        gle/1c1/1C1/ELG b - 1
+        gle/1c1/LC1/E1G w - 2
+        g1e/lc1/LC1/E1G b - 3
+        <BLANKLINE>
+        >>> with io.StringIO() as f:
+        ...     game.dump_records(
+        ...         (
+        ...             lambda g, i: g.get_sfen_at(i),
+        ...             lambda g, i: g.get_move_at(i),
+        ...             lambda g, i: g.result,
+        ...         ),
+        ...         names=('sfen', 'move', 'result'),
+        ...         file_=f,
+        ...     )
+        ...     _ = f.seek(0)
+        ...     print(f.read())  #doctest: +NORMALIZE_WHITESPACE
+        sfen        move    result
+        gle/1c1/1C1/ELG b - 1       Move(dst=A3, src=B4)    Result.BLACK_WIN
+        gle/1c1/LC1/E1G w - 2       Move(dst=A2, src=B1)    Result.BLACK_WIN
+        g1e/lc1/LC1/E1G b - 3       Move(dst=A2, src=A3)    Result.BLACK_WIN
+        <BLANKLINE>
+        """
+        if names is not None:
+            print(*names, file=file_, sep=sep)
+        if callable(getters):
+            getters = (getters,)
+        for i in range(self.record_length):
+            print(
+                *(getter(self, i) for getter in getters),
+                sep='\t', file=file_,
+            )
+
+    def to_policy_probas(
+        self,
+        dlshogi_logits: np.ndarray,
+    ) -> tp.Dict[Move, float]:
+        """Return dict of probabilities of legal actions.
+
+        Parameters
+        ----------
+        dlshogi_logits : np.ndarray
+            Array of DL-shogi format policy logits.
+            Note that the logits are in view from the turn player. Please see
+            the examples.
+
+        Returns
+        -------
+        tp.Dict[Move, float]
+            Dictionary of probabilities of legal actions.
+
+        Examples
+        --------
+        >>> import numpy as np; import vshogi.animal_shogi as shogi
+        >>> onehot = lambda index: np.eye(12 * 11, dtype=np.float32)[index]
+        >>> # Note that `Move(dst=B2, src=B3)._to_dlshogi_policy_index() == 50`
+        >>> shogi.Game('gle/1c1/1C1/ELG b -').to_policy_probas(
+        ...     onehot(50) * 10)[shogi.Move(dst=shogi.B2, src=shogi.B3)]
+        ...     #doctest: +ELLIPSIS
+        0.999...
+        >>> shogi.Game('gle/1c1/1C1/ELG w -').to_policy_probas(
+        ...     onehot(50) * 10)[shogi.Move(dst=shogi.B3, src=shogi.B2)]
+        ...     #doctest: +ELLIPSIS
+        0.999...
+        """
+        return self._game._policy_logits_to_policy_dict_probas(dlshogi_logits)
 
     def to_dlshogi_policy(
         self,

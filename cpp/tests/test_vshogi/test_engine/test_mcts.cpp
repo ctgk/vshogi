@@ -43,15 +43,15 @@ TEST(node, explore_no_child)
 TEST(node, explore_one_action)
 {
     auto g = Game();
-    auto root = Node(1.f, {Move(SQ_B2, SQ_B3)}, {1.f});
+    auto root = Node(0.1f, {Move(SQ_B2, SQ_B3)}, {1.f});
 
     const auto actual = root.explore(g, 1.f, 0.f, 0);
     {
         STRCMP_EQUAL("gle/1C1/3/ELG w C 2", g.to_sfen().c_str());
 
         CHECK_EQUAL(2, root.get_visit_count());
-        DOUBLES_EQUAL(1.f, root.get_value(), 1e-2f);
-        DOUBLES_EQUAL(1.f, root.get_q_value(), 1e-2f);
+        DOUBLES_EQUAL(0.1f, root.get_value(), 1e-2f);
+        DOUBLES_EQUAL(0.1f, root.get_q_value(), 1e-2f);
 
         CHECK_TRUE(actual != nullptr);
         CHECK_TRUE(actual != &root);
@@ -61,9 +61,9 @@ TEST(node, explore_one_action)
     actual->set_value_action_proba(-0.8f, {}, {});
     {
         CHECK_EQUAL(2, root.get_visit_count());
-        DOUBLES_EQUAL(1.f, root.get_value(), 1e-2f);
+        DOUBLES_EQUAL(0.1f, root.get_value(), 1e-2f);
         DOUBLES_EQUAL(
-            std::tanh((5.f + std::atanh(0.8f)) * 0.5f),
+            std::tanh((std::atanh(0.1f) + std::atanh(0.8f)) * 0.5f),
             root.get_q_value(),
             1e-2f);
 

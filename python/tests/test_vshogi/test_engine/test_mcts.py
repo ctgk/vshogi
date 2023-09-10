@@ -84,7 +84,7 @@ def test_clear():
     assert searcher.num_explored == 0
 
 
-def test_q_values():
+def test_q_values_mate_in_one():
     # Turn: BLACK
     # White: -
     #     A  B  C
@@ -109,22 +109,54 @@ def test_q_values():
     assert np.isclose(actual[m], 1, rtol=0, atol=1e-2)
 
 
-def test_visit_count_by_dirichlet_noise():
+def test_mate_in_three():
     # Turn: BLACK
     # White: -
     #     A  B  C
     #   *--*--*--*
-    # 1 |-G|-C|-E|
+    # 1 |-G|  |-E|
     #   *--*--*--*
-    # 2 |  |-L|  |
+    # 2 |-L|-C|  |
     #   *--*--*--*
-    # 3 |  |+L|  |
+    # 3 |  |+C|+L|
+    #   *--*--*--*
+    # 4 |+E|  |+G|
+    #   *--*--*--*
+    # Black: -
+    game = shogi.Game('l1e/gc1/1CL/E1G b -')
+    m = shogi.Move(shogi.C2, shogi.C3)
+
+    searcher = MonteCarloTreeSearcher(uniform_pv_func)
+    searcher.set_root(game)
+    searcher.explore(n=100, random_depth=0)
+
+    actual = searcher.get_q_values()
+    print(actual)
+    print(searcher._tree(depth=3))
+    assert np.isclose(actual[m], 1, rtol=0, atol=1e-2)
+
+    visit_count = searcher.get_visit_counts()[m]
+    searcher.explore(n=100, random_depth=0)
+    # If there is a mate, all explorations go through the mate.
+    assert searcher.get_visit_counts()[m] == visit_count + 100
+
+
+def test_visit_count_by_random():
+    # Turn: BLACK
+    # White: -
+    #     A  B  C
+    #   *--*--*--*
+    # 1 |-G|-C|  |
+    #   *--*--*--*
+    # 2 |-L|-E|  |
+    #   *--*--*--*
+    # 3 |  |  |+L|
     #   *--*--*--*
     # 4 |+E|+C|+G|
     #   *--*--*--*
     # Black: -
-    game = shogi.Game('gce/1l1/1L1/ECG b -')
-    m = shogi.Move(shogi.B2, shogi.B3)
+    game = shogi.Game('gc1/le1/2L/ECG b -')
+    m = shogi.Move(shogi.C2, shogi.C3)
 
     searcher = MonteCarloTreeSearcher(uniform_pv_func)
     searcher.set_root(game)
@@ -138,6 +170,17 @@ def test_visit_count_by_dirichlet_noise():
     print(searcher._tree(depth=2))
 
     assert visit_count > visit_count_with_noise
+
+
+def test_tree():
+    game = shogi.Game()
+    searcher = MonteCarloTreeSearcher(uniform_pv_func)
+    searcher.set_root(game)
+    searcher.explore(n=100)
+
+    searcher._tree(depth=2, breadth=3)
+    searcher._tree(depth=2, breadth=5)
+    searcher._tree(depth=2, breadth=-1)
 
 
 if __name__ == '__main__':

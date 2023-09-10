@@ -1,11 +1,14 @@
 # flake8: noqa
 
+import contextlib
 from glob import glob
 import os
 import typing as tp
 
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
+import joblib
+from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -23,23 +26,33 @@ COEFF_PUCT = 4.
 NUM_SELF_PLAY = 200
 NUM_RANDOM_MOVES = 0
 NUM_VALIDATION_PLAYS_PER_MODEL = 20
-MAX_POLICY = 1.0
+MAX_POLICY = 0.5
 MINIBATCH = 32
 EPOCHS = 20
-NUM_SELF_PLAY_VALIDATE_TRAIN_CYCLE = 50
+NUM_SELF_PLAY_VALIDATE_TRAIN_CYCLE = 20
+NUM_JOBS = 1
+GET_SFEN = lambda: '{}l{}/1{}1/1{}1/{}L{} b - 1'.format(
+    *np.random.choice(list('ceg'), 3, replace=False),
+    *np.random.choice(list('CEG'), 3, replace=False))
 
 # from vshogi.minishogi import *
 # NUM_CHANNELS = 32
 # NUM_BACKBONE_LAYERS = 6
 # NUM_POLICY_LAYERS = 3
 # NUM_VALUE_LAYERS = 3
-# NUM_EXPLORATIONS = 400
+# NUM_EXPLORATIONS = 1000
+# COEFF_PUCT = 4.
 # NUM_SELF_PLAY = 200
-# NUM_RANDOM_MOVES = 4
+# NUM_RANDOM_MOVES = 0
 # NUM_VALIDATION_PLAYS_PER_MODEL = 20
+# MAX_POLICY = 1.0
 # MINIBATCH = 32
 # EPOCHS = 20
-# NUM_SELF_PLAY_VALIDATE_TRAIN_CYCLE = 20
+# NUM_SELF_PLAY_VALIDATE_TRAIN_CYCLE = 50
+# NUM_JOBS = 4
+# GET_SFEN = lambda: '{}{}{}{}k/4{}/5/{}4/K{}{}{}{} b - 1'.format(
+#     *np.random.choice(list('rbsgp'), 5, replace=False),
+#     *np.random.choice(list('RBSGP'), 5, replace=False))
 
 
 def build_policy_value_network(
@@ -123,20 +136,21 @@ class PolicyValueFunction:
         self._model.set_tensor(self._input_details[0]['index'], x)
         self._model.invoke()
         value = float(self._model.get_tensor(self._output_details[0]['index']))
+        value = np.clip(value, -0.99, 0.99)
         policy_logits = self._model.get_tensor(self._output_details[1]['index'])
-        policy = game._policy_logits_to_policy_dict_probas(policy_logits)
+        policy = game.to_policy_probas(policy_logits)
         return policy, value
 
 
 def dump_game_records(file_, game: vshogi.Game) -> None:
-    print("state\tmove\tresult", file=file_)
-    for i in range(game.record_length):
-        print(
-            game.get_sfen_at(i),
-            game.get_move_at(i),
-            game.result,
-            file=file_, sep='\t',
-        )
+    game.dump_records(
+        (
+            lambda g, i: g.get_sfen_at(i, include_move_count=True),
+            lambda g, i: g.get_move_at(i),
+            lambda g, _: g.result,
+        ),
+        names=('state', 'move', 'result'), file_=file_,
+    )
 
 
 def _df_to_xy(df: pd.DataFrame, max_policy: float = MAX_POLICY):
@@ -157,18 +171,19 @@ def _df_to_xy(df: pd.DataFrame, max_policy: float = MAX_POLICY):
         if int(row['state'].split(' ')[-1]) <= 2 * NUM_RANDOM_MOVES:
             continue
         game = Game(row['state'])
-        x = np.asarray(game)
         move = eval(row['move'])
-        policy = np.zeros((1, num_policies), dtype=np.float32) + non_max_policy
-        policy[0, move._to_dlshogi_policy_index()] = max_policy
-        value = value_options[(eval(row['result']), game.turn)]
+        result = eval(row['result'])
+
+        x = np.asarray(game)
+        policy = game.to_dlshogi_policy(move, max_policy)
+        value = value_options[(result, game.turn)]
 
         x_list.append(x)
         policy_list.append(policy)
         value_list.append(value)
     return (
         np.concatenate(x_list, axis=0),
-        np.concatenate(policy_list, axis=0),
+        np.asarray(policy_list, dtype=np.float32),
         np.asarray(value_list, dtype=np.float32),
     )
 
@@ -203,6 +218,13 @@ def train_network(
     if output_path is not None:
         network.save(output_path)
     return network
+
+
+def load_data_and_train_network(network, index: int):
+    x, y_policy, y_value = tsv_to_xy(
+        glob(f'datasets/dataset_{index-1:04d}/*.tsv'))
+    return train_network(
+        network, x, y_policy, y_value, output_path=f'models/model_{index:04d}')
 
 
 def play_game(
@@ -256,33 +278,71 @@ def play_game(
 
 def load_player_of(index_or_network) -> vshogi.engine.MonteCarloTreeSearcher:
     if isinstance(index_or_network, int):
-        network = tf.keras.models.load_model(f'models/model_{index_or_network:04d}')
+        network = tf.keras.models.load_model(f'models/model_{index_or_network:04d}', compile=False)
     else:
         network = index_or_network
     return vshogi.engine.MonteCarloTreeSearcher(PolicyValueFunction(network), coeff_puct=COEFF_PUCT)
 
 
+def _self_play_and_dump_record(network_or_player, index, nth_game: int) -> vshogi.Game:
+    if isinstance(network_or_player, vshogi.engine.MonteCarloTreeSearcher):
+        player = network_or_player
+    else:
+        player = load_player_of(network)
+    while True:
+        sfen = GET_SFEN()
+        game = play_game(
+            Game(sfen), player, player,
+            temperature=lambda g: 0.01 if g.record_length >= NUM_RANDOM_MOVES else 100,
+        )
+        if game.result != vshogi.ONGOING:
+            break
+    with open(f'datasets/dataset_{index:04d}/record_{nth_game:04d}.tsv', mode='w') as f:
+        dump_game_records(f, game)
+
+
 def self_play_and_dump_records(player, index: int, n: int = NUM_SELF_PLAY):
     for i in tqdm(range(n)):
-        while True:
-            sfen = '{}l{}/1{}1/1{}1/{}L{} b - 1'.format(
-                *np.random.choice(['c', 'e', 'g'], 3, replace=False),
-                *np.random.choice(['C', 'E', 'G'], 3, replace=False))
-            game = play_game(
-                Game(sfen), player, player,
-                temperature=lambda g: 0.01 if g.record_length >= NUM_RANDOM_MOVES else 100,
+        _self_play_and_dump_record(player, index, i)
+
+
+@contextlib.contextmanager
+def tqdm_joblib(tqdm_object):
+    """Context manager to patch joblib to report into tqdm progress bar given as argument"""
+    class TqdmBatchCompletionCallback(joblib.parallel.BatchCompletionCallBack):
+        def __call__(self, *args, **kwargs):
+            tqdm_object.update(n=self.batch_size)
+            return super().__call__(*args, **kwargs)
+
+    old_batch_callback = joblib.parallel.BatchCompletionCallBack
+    joblib.parallel.BatchCompletionCallBack = TqdmBatchCompletionCallback
+    try:
+        yield tqdm_object
+    finally:
+        joblib.parallel.BatchCompletionCallBack = old_batch_callback
+        tqdm_object.close()
+
+
+def self_play_and_dump_records_in_parallel(
+    network,
+    index: int,
+    num_self_play: int = NUM_SELF_PLAY,
+    n_jobs: int = NUM_JOBS,
+):
+
+    def _self_play_and_dump_record_n_times(network, index, nth_game: list):
+        player = load_player_of(network)
+        for i in nth_game:
+            _self_play_and_dump_record(player, index, i)
+
+    group_size = 10
+    with tqdm_joblib(tqdm(total=num_self_play // group_size)):
+        Parallel(n_jobs=n_jobs)(
+            delayed(_self_play_and_dump_record_n_times)(
+                network, index, list(range(i, i + group_size)),
             )
-            if game.result != vshogi.ONGOING:
-                break
-        with open(f'datasets/dataset_{index:04d}/record_{i:04d}.tsv', mode='w') as f:
-            dump_game_records(f, game)
-
-
-def load_data_and_train_network(network, index: int):
-    x, y_policy, y_value = tsv_to_xy(
-        glob(f'datasets/dataset_{index-1:04d}/*.tsv'))
-    return train_network(
-        network, x, y_policy, y_value, output_path=f'models/model_{index:04d}')
+            for i in range(0, num_self_play, group_size)
+        )
 
 
 def play_against_past_players(player, index: int, dump_records: bool = False):
@@ -292,36 +352,36 @@ def play_against_past_players(player, index: int, dump_records: bool = False):
         pbar = tqdm(range(NUM_VALIDATION_PLAYS_PER_MODEL))
         for n in pbar:
             if n % 2 == 0:
-                sfen = '{}l{}/1{}1/1{}1/{}L{} b - 1'.format(
-                    *np.random.choice(['c', 'e', 'g'], 3, replace=False),
-                    *np.random.choice(['C', 'E', 'G'], 3, replace=False))
-                game = play_game(
-                    Game(sfen), player, player_prev,
-                    temperature=lambda g: 0.01 if g.record_length >= NUM_RANDOM_MOVES else 100,
-                )
+                while True:
+                    sfen = GET_SFEN()
+                    game = play_game(
+                        Game(sfen), player, player_prev,
+                        temperature=lambda g: 0.01 if g.record_length >= NUM_RANDOM_MOVES else 100,
+                    )
+                    if game.result != vshogi.ONGOING:
+                        break
                 validation_results[{
                     vshogi.BLACK_WIN: 'win',
                     vshogi.WHITE_WIN: 'loss',
                     vshogi.DRAW: 'draw',
-                    vshogi.ONGOING: 'draw',
                 }[game.result]] += 1
                 if dump_records:
                     path = f'datasets/dataset_{index:04d}/record_B{index:02d}vsW{i_prev:02d}_{n:04d}.tsv'
                     with open(path, mode='w') as f:
                         dump_game_records(f, game)
             else:
-                sfen = '{}l{}/1{}1/1{}1/{}L{} b - 1'.format(
-                    *np.random.choice(['c', 'e', 'g'], 3, replace=False),
-                    *np.random.choice(['C', 'E', 'G'], 3, replace=False))
-                game = play_game(
-                    Game(sfen), player_prev, player,
-                    temperature=lambda g: 0.01 if g.record_length >= NUM_RANDOM_MOVES else 100,
-                )
+                while True:
+                    sfen = GET_SFEN()
+                    game = play_game(
+                        Game(sfen), player_prev, player,
+                        temperature=lambda g: 0.01 if g.record_length >= NUM_RANDOM_MOVES else 100,
+                    )
+                    if game.result != vshogi.ONGOING:
+                        break
                 validation_results[{
                     vshogi.BLACK_WIN: 'loss',
                     vshogi.WHITE_WIN: 'win',
                     vshogi.DRAW: 'draw',
-                    vshogi.ONGOING: 'draw',
                 }[game.result]] += 1
                 if dump_records:
                     path = f'datasets/dataset_{index:04d}/record_B{i_prev:02d}vsW{index:02d}_{n:04d}.tsv'
@@ -348,7 +408,10 @@ if __name__ == '__main__':
         # Self-play!
         if not os.path.isdir(f'datasets/dataset_{i:04d}'):
             os.makedirs(f'datasets/dataset_{i:04d}')
-        self_play_and_dump_records(player, i)
+        if NUM_JOBS == 1:
+            self_play_and_dump_records(player, i)
+        else:
+            self_play_and_dump_records_in_parallel(network, i, n_jobs=NUM_JOBS)
 
         # Validate!
         play_against_past_players(player, i, dump_records=True)

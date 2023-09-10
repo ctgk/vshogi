@@ -137,5 +137,14 @@ def test_to_dlshogi_policy():
     assert np.allclose(expected, actual)
 
 
+def test_get_sfen_at():
+    actual = shogi.Game().apply(shogi.C5, shogi.D5).get_sfen_at(0)
+    assert "rbsgk/4p/5/P4/KGSBR b - 1" == actual
+
+    actual = shogi.Game().apply(shogi.C5, shogi.D5).get_sfen_at(
+        0, include_move_count=False)
+    assert "rbsgk/4p/5/P4/KGSBR b -" == actual
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

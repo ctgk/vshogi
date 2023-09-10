@@ -87,7 +87,7 @@ TEST(stand, to_sfen_holdings)
         auto s = BlackWhiteStands();
         s.set_sfen_holdings(sfen_holdings);
         const auto actual = s.to_sfen_holdings();
-        STRCMP_EQUAL("3P4NG10pl2r", actual.c_str());
+        STRCMP_EQUAL("G4N3P2rl10p", actual.c_str());
     }
 }
 

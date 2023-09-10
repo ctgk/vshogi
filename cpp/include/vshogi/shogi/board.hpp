@@ -132,6 +132,14 @@ public:
         out += to_sfen_rank(RANK9);
         return out;
     }
+    static constexpr int ranks()
+    {
+        return num_ranks;
+    }
+    static constexpr int files()
+    {
+        return num_files;
+    }
 
 private:
     const char* set_sfen_rank(const char* const sfen_rank, const RankEnum rank)
