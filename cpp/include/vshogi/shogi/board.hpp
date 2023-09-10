@@ -40,11 +40,15 @@ public:
     {
         return m_pieces[sq];
     }
+    bool is_empty(const SquareEnum sq) const
+    {
+        return (m_pieces[sq] == VOID);
+    }
     BitBoard to_piece_mask() const
     {
         BitBoard out = BitBoard();
         for (auto sq : square_array) {
-            if (m_pieces[sq] != VOID)
+            if (!is_empty(sq))
                 out |= BitBoard::from_square(sq);
         }
         return out;
@@ -139,6 +143,14 @@ public:
     static constexpr int files()
     {
         return num_files;
+    }
+    static constexpr int num_piece_types()
+    {
+        return sizeof(piece_array) / sizeof(piece_array[0]);
+    }
+    static constexpr SquareEnum square(const int i)
+    {
+        return square_array[i];
     }
 
 private:

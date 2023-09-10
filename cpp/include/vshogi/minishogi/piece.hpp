@@ -26,6 +26,8 @@ enum PieceTypeEnum : std::uint8_t
 
     NA = 0b1111, //!< Not available
 };
+constexpr PieceTypeEnum piece_array[]
+    = {FU, GI, KA, HI, KI, OU, TO, NG, UM, RY};
 constexpr PieceTypeEnum stand_piece_array[] = {FU, GI, KI, KA, HI};
 
 inline bool is_promotable(const PieceTypeEnum p)

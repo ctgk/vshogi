@@ -103,6 +103,14 @@ public:
     {
         return m_value != other.m_value;
     }
+    static constexpr int num_piece_types()
+    {
+        return sizeof(stand_piece_array) / sizeof(stand_piece_array[0]);
+    }
+    static constexpr PieceTypeEnum piece_types(const int i)
+    {
+        return stand_piece_array[i];
+    }
 };
 
 class BlackWhiteStands
@@ -114,6 +122,10 @@ private:
 public:
     BlackWhiteStands() : m_black(), m_white()
     {
+    }
+    static constexpr int num_piece_types()
+    {
+        return Stand::num_piece_types();
     }
     Stand& black()
     {
