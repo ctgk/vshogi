@@ -18,7 +18,7 @@ private:
 
     const char* set_sfen_rank(const char* const sfen_rank, const RankEnum rank)
     {
-        constexpr int max_length = 10; // e.g. "+r+b+s+gk/"
+        constexpr int max_length = 11; // e.g. "+r+b+s+p+P/"
         auto piece_str = m_pieces + num_files * static_cast<int>(rank);
         const char* sfen_ptr = sfen_rank;
         bool promotion_flag = false;
