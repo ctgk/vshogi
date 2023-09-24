@@ -2,10 +2,11 @@
 
 #include <CppUTest/TestHarness.h>
 
+#include "test_vshogi/test_shogi/test_shogi.hpp"
+
 namespace test_vshogi::test_shogi
 {
 
-using namespace vshogi;
 using namespace vshogi::shogi;
 
 TEST_GROUP(state){};
@@ -18,22 +19,22 @@ TEST(state, set_sfen)
         CHECK_EQUAL(B_NY, s.get_board()[SQ_1A]);
         CHECK_EQUAL(W_OU, s.get_board()[SQ_5E]);
         CHECK_EQUAL(B_OU, s.get_board()[SQ_7H]);
-        CHECK_EQUAL(2, s.get_stand(WHITE).count(KA));
-        CHECK_EQUAL(1, s.get_stand(WHITE).count(HI));
-        CHECK_EQUAL(10, s.get_stand(BLACK).count(FU));
-        CHECK_EQUAL(1, s.get_stand(BLACK).count(HI));
-        CHECK_EQUAL(WHITE, s.get_turn());
+        CHECK_EQUAL(2, s.get_stand(vshogi::WHITE).count(KA));
+        CHECK_EQUAL(1, s.get_stand(vshogi::WHITE).count(HI));
+        CHECK_EQUAL(10, s.get_stand(vshogi::BLACK).count(FU));
+        CHECK_EQUAL(1, s.get_stand(vshogi::BLACK).count(HI));
+        CHECK_EQUAL(vshogi::WHITE, s.get_turn());
     }
     {
         const auto s = State("8+L/9/9/9/4k4/9/9/2K6/9 w 2br10PR");
         CHECK_EQUAL(B_NY, s.get_board()[SQ_1A]);
         CHECK_EQUAL(W_OU, s.get_board()[SQ_5E]);
         CHECK_EQUAL(B_OU, s.get_board()[SQ_7H]);
-        CHECK_EQUAL(2, s.get_stand(WHITE).count(KA));
-        CHECK_EQUAL(1, s.get_stand(WHITE).count(HI));
-        CHECK_EQUAL(10, s.get_stand(BLACK).count(FU));
-        CHECK_EQUAL(1, s.get_stand(BLACK).count(HI));
-        CHECK_EQUAL(WHITE, s.get_turn());
+        CHECK_EQUAL(2, s.get_stand(vshogi::WHITE).count(KA));
+        CHECK_EQUAL(1, s.get_stand(vshogi::WHITE).count(HI));
+        CHECK_EQUAL(10, s.get_stand(vshogi::BLACK).count(FU));
+        CHECK_EQUAL(1, s.get_stand(vshogi::BLACK).count(HI));
+        CHECK_EQUAL(vshogi::WHITE, s.get_turn());
     }
 }
 
@@ -42,14 +43,14 @@ TEST(state, apply)
     {
         auto s = State();
         s.set_sfen("8+L/8g/9/9/4k4/9/9/2K6/9 w 2br10PR");
-        CHECK_EQUAL(0, s.get_stand(WHITE).count(KY));
+        CHECK_EQUAL(0, s.get_stand(vshogi::WHITE).count(KY));
         CHECK_EQUAL(W_KI, s.get_board()[SQ_1B]);
         CHECK_EQUAL(B_NY, s.get_board()[SQ_1A]);
         s.apply(Move(SQ_1A, SQ_1B));
-        CHECK_EQUAL(1, s.get_stand(WHITE).count(KY));
+        CHECK_EQUAL(1, s.get_stand(vshogi::WHITE).count(KY));
         CHECK_EQUAL(VOID, s.get_board()[SQ_1B]);
         CHECK_EQUAL(W_KI, s.get_board()[SQ_1A]);
-        CHECK_EQUAL(BLACK, s.get_turn());
+        CHECK_EQUAL(vshogi::BLACK, s.get_turn());
     }
 }
 

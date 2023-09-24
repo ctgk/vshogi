@@ -5,53 +5,10 @@
 
 #include "vshogi/animal_shogi/piece.hpp"
 #include "vshogi/animal_shogi/squares.hpp"
+#include "vshogi/move.hpp"
 
 namespace vshogi::animal_shogi
 {
-
-enum MoveSourceEnum : std::uint8_t
-{
-    // clang-format off
-    MS_A1, MS_B1, MS_C1,
-    MS_A2, MS_B2, MS_C2,
-    MS_A3, MS_B3, MS_C3,
-    MS_A4, MS_B4, MS_C4,
-    MS_CH, MS_EL, MS_GI, // dropping
-    // clang-format on
-};
-
-inline PieceTypeEnum to_piece_type(const MoveSourceEnum source)
-{
-    constexpr PieceTypeEnum table[] = {
-        // clang-format off
-        NA, NA, NA,
-        NA, NA, NA,
-        NA, NA, NA,
-        NA, NA, NA,
-        CH, EL, GI,
-    };
-    // clang-format on
-    return table[source];
-}
-
-inline SquareEnum to_square(const MoveSourceEnum source)
-{
-    return static_cast<SquareEnum>(source);
-}
-
-inline bool is_drop(const MoveSourceEnum source)
-{
-    constexpr bool table[] = {
-        // clang-format off
-        false, false, false,
-        false, false, false,
-        false, false, false,
-        false, false, false,
-        true, true, true,
-    };
-    // clang-format on
-    return table[source];
-}
 
 /**
  * @brief 8bit integer representing an Animal Shogi move.
@@ -60,90 +17,80 @@ inline bool is_drop(const MoveSourceEnum source)
  *       **** ____       source square (15 = 12 squares + 3 pieces to drop)
  * (MSB) xxxx xxxx (LSB)
  */
-class Move
-{
-private:
-    std::uint8_t m_value;
-
-public:
-    Move(const std::uint8_t hashed_value) : m_value(hashed_value)
-    {
-    }
-    Move(const SquareEnum destination, const MoveSourceEnum source)
-        : m_value(static_cast<std::uint8_t>((source << 4) | destination))
-    {
-    }
-    Move(
-        const SquareEnum destination,
-        const SquareEnum source,
-        const bool = false)
-        : Move(destination, static_cast<MoveSourceEnum>(source))
-    {
-    }
-    Move(const SquareEnum destination, const PieceTypeEnum source)
-        : Move(
-            destination,
-            static_cast<MoveSourceEnum>(
-                (source < LI) ? source + 12 : destination))
-    {
-        static_assert(static_cast<int>(MS_CH) - static_cast<int>(CH) == 12);
-    }
-    bool operator==(const Move& other) const
-    {
-        return m_value == other.m_value;
-    }
-    bool operator!=(const Move& other) const
-    {
-        return m_value != other.m_value;
-    }
-    SquareEnum destination() const
-    {
-        return static_cast<SquareEnum>(m_value & 0xf);
-    }
-    MoveSourceEnum source() const
-    {
-        return static_cast<MoveSourceEnum>(m_value >> 4);
-    }
-    bool is_drop() const
-    {
-        return source() >= MS_CH;
-    }
-    std::uint8_t hash() const
-    {
-        return m_value;
-    }
-    Move rotate() const
-    {
-        const auto dst_rotated = static_cast<SquareEnum>(
-            num_squares - 1 - static_cast<int>(this->destination()));
-        const auto src_rotated
-            = (this->is_drop())
-                  ? this->source()
-                  : static_cast<MoveSourceEnum>(
-                      num_squares - 1 - static_cast<int>(this->source()));
-        return Move(dst_rotated, src_rotated);
-    }
-    int to_dlshogi_policy_index() const
-    {
-        const auto dst_index = static_cast<int>(destination());
-        if (is_drop())
-            return dst_index * num_policy_per_square() + (source() - MS_CH + 8);
-        constexpr int diff_plus_4_to_dir_index[] = {0, 1, 2, 3, -1, 4, 5, 6, 7};
-        return dst_index * num_policy_per_square()
-               + diff_plus_4_to_dir_index
-                   [static_cast<int>(source()) - static_cast<int>(destination())
-                    + 4];
-    }
-    bool promote() const
-    {
-        return false;
-    }
-    static constexpr int num_policy_per_square()
-    {
-        return 8 + 3; // 8-direction + 3-drop-piece
-    }
-};
+using Move = vshogi::Move<Squares, Pieces, std::uint8_t>;
 
 } // namespace vshogi::animal_shogi
+
+namespace vshogi
+{
+
+template <>
+inline animal_shogi::Move::Move(const std::uint8_t value) : m_value(value)
+{
+}
+
+template <>
+inline animal_shogi::Move::Move(
+    const SquareEnum dst, const SquareEnum src, const bool)
+    : m_value(static_cast<std::uint8_t>((src << 4) | dst))
+{
+}
+
+template <>
+inline animal_shogi::Move::Move(const SquareEnum dst, const PieceTypeEnum src)
+    : m_value(static_cast<std::uint8_t>(((src + num_squares) << 4) | dst))
+{
+}
+
+template <>
+inline animal_shogi::Squares::SquareEnum animal_shogi::Move::destination() const
+{
+    return static_cast<SquareEnum>(m_value & 0x0f);
+}
+
+template <>
+template <>
+inline animal_shogi::Squares::SquareEnum animal_shogi::Move::source<>() const
+{
+    return static_cast<SquareEnum>(m_value >> 4);
+}
+
+template <>
+template <>
+inline animal_shogi::Pieces::PieceTypeEnum animal_shogi::Move::source<>() const
+{
+    return static_cast<PieceTypeEnum>((m_value >> 4) - num_squares);
+}
+
+template <>
+inline bool animal_shogi::Move::promote() const
+{
+    return false;
+}
+
+template <>
+inline bool animal_shogi::Move::is_drop() const
+{
+    return (m_value >> 4) >= num_squares;
+}
+
+template <>
+inline int animal_shogi::Move::to_dlshogi_source_index() const
+{
+    if (is_drop())
+        return 8 + static_cast<int>(source<PieceTypeEnum>());
+    constexpr int diff_plus_4_to_dir_index[] = {0, 1, 2, 3, -1, 4, 5, 6, 7};
+    return diff_plus_4_to_dir_index
+        [static_cast<int>(source<SquareEnum>())
+         - static_cast<int>(destination()) + 4];
+}
+
+template <>
+constexpr int animal_shogi::Move::num_policy_per_square()
+{
+    return 8 + 3;
+}
+
+} // namespace vshogi
 
 #endif // VSHOGI_ANIMAL_SHOGI_MOVE_HPP

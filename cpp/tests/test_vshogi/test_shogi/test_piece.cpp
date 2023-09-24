@@ -2,6 +2,8 @@
 
 #include <CppUTest/TestHarness.h>
 
+#include "test_vshogi/test_shogi/test_shogi.hpp"
+
 namespace test_vshogi::test_shogi
 {
 
@@ -282,37 +284,37 @@ TEST(piece, to_board_piece)
     CHECK_EQUAL(VOID, to_board_piece(WHITE, NA));
 }
 
-TEST(piece, to_sfen_piece)
+TEST(piece, to_sfen)
 {
-    STRCMP_EQUAL("P", to_sfen_piece(B_FU).c_str());
-    STRCMP_EQUAL("L", to_sfen_piece(B_KY).c_str());
-    STRCMP_EQUAL("N", to_sfen_piece(B_KE).c_str());
-    STRCMP_EQUAL("S", to_sfen_piece(B_GI).c_str());
-    STRCMP_EQUAL("B", to_sfen_piece(B_KA).c_str());
-    STRCMP_EQUAL("R", to_sfen_piece(B_HI).c_str());
-    STRCMP_EQUAL("G", to_sfen_piece(B_KI).c_str());
-    STRCMP_EQUAL("K", to_sfen_piece(B_OU).c_str());
-    STRCMP_EQUAL("+P", to_sfen_piece(B_TO).c_str());
-    STRCMP_EQUAL("+L", to_sfen_piece(B_NY).c_str());
-    STRCMP_EQUAL("+N", to_sfen_piece(B_NK).c_str());
-    STRCMP_EQUAL("+S", to_sfen_piece(B_NG).c_str());
-    STRCMP_EQUAL("+B", to_sfen_piece(B_UM).c_str());
-    STRCMP_EQUAL("+R", to_sfen_piece(B_RY).c_str());
+    STRCMP_EQUAL("P", to_sfen(B_FU).c_str());
+    STRCMP_EQUAL("L", to_sfen(B_KY).c_str());
+    STRCMP_EQUAL("N", to_sfen(B_KE).c_str());
+    STRCMP_EQUAL("S", to_sfen(B_GI).c_str());
+    STRCMP_EQUAL("B", to_sfen(B_KA).c_str());
+    STRCMP_EQUAL("R", to_sfen(B_HI).c_str());
+    STRCMP_EQUAL("G", to_sfen(B_KI).c_str());
+    STRCMP_EQUAL("K", to_sfen(B_OU).c_str());
+    STRCMP_EQUAL("+P", to_sfen(B_TO).c_str());
+    STRCMP_EQUAL("+L", to_sfen(B_NY).c_str());
+    STRCMP_EQUAL("+N", to_sfen(B_NK).c_str());
+    STRCMP_EQUAL("+S", to_sfen(B_NG).c_str());
+    STRCMP_EQUAL("+B", to_sfen(B_UM).c_str());
+    STRCMP_EQUAL("+R", to_sfen(B_RY).c_str());
 
-    STRCMP_EQUAL("p", to_sfen_piece(W_FU).c_str());
-    STRCMP_EQUAL("l", to_sfen_piece(W_KY).c_str());
-    STRCMP_EQUAL("n", to_sfen_piece(W_KE).c_str());
-    STRCMP_EQUAL("s", to_sfen_piece(W_GI).c_str());
-    STRCMP_EQUAL("b", to_sfen_piece(W_KA).c_str());
-    STRCMP_EQUAL("r", to_sfen_piece(W_HI).c_str());
-    STRCMP_EQUAL("g", to_sfen_piece(W_KI).c_str());
-    STRCMP_EQUAL("k", to_sfen_piece(W_OU).c_str());
-    STRCMP_EQUAL("+p", to_sfen_piece(W_TO).c_str());
-    STRCMP_EQUAL("+l", to_sfen_piece(W_NY).c_str());
-    STRCMP_EQUAL("+n", to_sfen_piece(W_NK).c_str());
-    STRCMP_EQUAL("+s", to_sfen_piece(W_NG).c_str());
-    STRCMP_EQUAL("+b", to_sfen_piece(W_UM).c_str());
-    STRCMP_EQUAL("+r", to_sfen_piece(W_RY).c_str());
+    STRCMP_EQUAL("p", to_sfen(W_FU).c_str());
+    STRCMP_EQUAL("l", to_sfen(W_KY).c_str());
+    STRCMP_EQUAL("n", to_sfen(W_KE).c_str());
+    STRCMP_EQUAL("s", to_sfen(W_GI).c_str());
+    STRCMP_EQUAL("b", to_sfen(W_KA).c_str());
+    STRCMP_EQUAL("r", to_sfen(W_HI).c_str());
+    STRCMP_EQUAL("g", to_sfen(W_KI).c_str());
+    STRCMP_EQUAL("k", to_sfen(W_OU).c_str());
+    STRCMP_EQUAL("+p", to_sfen(W_TO).c_str());
+    STRCMP_EQUAL("+l", to_sfen(W_NY).c_str());
+    STRCMP_EQUAL("+n", to_sfen(W_NK).c_str());
+    STRCMP_EQUAL("+s", to_sfen(W_NG).c_str());
+    STRCMP_EQUAL("+b", to_sfen(W_UM).c_str());
+    STRCMP_EQUAL("+r", to_sfen(W_RY).c_str());
 }
 
 } // namespace test_vshogi::test_shogi

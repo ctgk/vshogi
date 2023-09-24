@@ -2,6 +2,8 @@
 
 #include <CppUTest/TestHarness.h>
 
+#include "test_vshogi/test_shogi/test_shogi.hpp"
+
 namespace test_vshogi::test_shogi
 {
 
@@ -11,14 +13,14 @@ TEST_GROUP(move){};
 
 TEST(move, destination)
 {
-    CHECK_EQUAL(SQ_1A, Move(SQ_1A, MS_1B, true).destination());
+    CHECK_EQUAL(SQ_1A, Move(SQ_1A, SQ_1B, true).destination());
     CHECK_EQUAL(SQ_3E, Move(SQ_3E, KY).destination());
 }
 
 TEST(move, source)
 {
-    CHECK_EQUAL(MS_1B, Move(SQ_1A, SQ_1B, false).source());
-    CHECK_EQUAL(MS_KE, Move(SQ_3I, MS_KE).source());
+    CHECK_EQUAL(SQ_1B, Move(SQ_1A, SQ_1B, false).source<SquareEnum>());
+    CHECK_EQUAL(KE, Move(SQ_3I, KE).source<PieceTypeEnum>());
 }
 
 TEST(move, promote)
@@ -36,9 +38,8 @@ TEST(move, is_drop)
 TEST(move, hash)
 {
     CHECK_TRUE(
-        Move(SQ_1A, MS_1B, true) == Move(Move(SQ_1A, MS_1B, true).hash()));
-    CHECK_TRUE(
-        Move(SQ_3E, MS_GI, false) == Move(Move(SQ_3E, MS_GI, false).hash()));
+        Move(SQ_1A, SQ_1B, true) == Move(Move(SQ_1A, SQ_1B, true).hash()));
+    CHECK_TRUE(Move(SQ_3E, GI) == Move(Move(SQ_3E, GI).hash()));
 }
 
 TEST(move, rotate)

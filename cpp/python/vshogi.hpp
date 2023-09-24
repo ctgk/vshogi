@@ -78,10 +78,8 @@ inline void export_move(pybind11::module& m)
             "source",
             [](const Move& self) -> pybind11::object {
                 if (self.is_drop())
-                    return pybind11::cast(static_cast<Piece>(
-                        static_cast<int>(self.source())
-                        - static_cast<int>(Square::NUM_SQ)));
-                return pybind11::cast(static_cast<Square>(self.source()));
+                    return pybind11::cast(self.source_piece());
+                return pybind11::cast(self.source_square());
             })
         .def("is_drop", &Move::is_drop)
         .def("rotate", &Move::rotate)

@@ -71,12 +71,12 @@ public:
     {
         m_value = v & 0b11011011;
     }
-    std::uint8_t count(const PieceTypeEnum p) const
+    std::uint8_t count(const Pieces::PieceTypeEnum p) const
     {
         return static_cast<uint8_t>(
             (m_value & stand_masks[p]) >> stand_shift_bits[p]);
     }
-    bool exist(const PieceTypeEnum p) const
+    bool exist(const Pieces::PieceTypeEnum p) const
     {
         return static_cast<bool>(m_value & stand_masks[p]);
     }
@@ -88,13 +88,13 @@ public:
     {
         return !static_cast<bool>(m_value);
     }
-    Stand& add(const PieceTypeEnum p, const std::uint8_t num = 1U)
+    Stand& add(const Pieces::PieceTypeEnum p, const std::uint8_t num = 1U)
     {
         m_value
             = static_cast<std::uint8_t>(m_value + stand_deltas[p & 0x3] * num);
         return *this;
     }
-    Stand& subtract(const PieceTypeEnum p)
+    Stand& subtract(const Pieces::PieceTypeEnum p)
     {
         m_value = static_cast<std::uint8_t>(m_value - stand_deltas[p]);
         return *this;
@@ -116,6 +116,7 @@ private:
     Stand m_white;
 
 public:
+    using StandType = Stand;
     BlackWhiteStands() : m_black(), m_white()
     {
     }
@@ -144,29 +145,26 @@ public:
         return (c == BLACK) ? m_black : m_white;
     }
     const char* set_sfen_holdings(const char* const sfen_holdings);
-    void append_to_sfen(std::string& sfen) const
+    std::string to_sfen_holdings() const
     {
-        if (m_white.empty() && m_black.empty()) {
-            sfen += '-';
-            return;
-        }
-
+        constexpr Pieces::PieceTypeEnum stand_pieces[]
+            = {Pieces::GI, Pieces::EL, Pieces::CH};
+        auto out = std::string();
         for (auto c : color_array) {
-            for (auto piece : stand_piece_array) {
+            for (auto piece : stand_pieces) {
                 const auto num = operator[](c).count(piece);
-                switch (num) {
-                case 0:
+                if (num == 0)
                     continue;
-                case 1:
-                    sfen += to_sfen_piece(to_board_piece(c, piece));
-                    break;
-                default:
-                    sfen += static_cast<char>('0' + num);
-                    sfen += to_sfen_piece(to_board_piece(c, piece));
-                    break;
-                }
+                if (num == 1)
+                    out += Pieces::to_sfen(Pieces::to_board_piece(c, piece));
+                else
+                    out += std::to_string(static_cast<int>(num))
+                           + Pieces::to_sfen(Pieces::to_board_piece(c, piece));
             }
         }
+        if (out.empty())
+            out += '-';
+        return out;
     }
 };
 
