@@ -24,7 +24,34 @@ def test_num_dlshogi_policy():
     assert 5 * 5 * (2 * 8 + 5) == shogi.Game().num_dlshogi_policy
 
 
-def test_array():
+def test_array_black():
+    # Turn: BLACK
+    # White: KA
+    #     5   4   3   2   1
+    #   *---*---*---*---*---*
+    # A |   |-KA|-GI|-OU|   |
+    #   *---*---*---*---*---*
+    # B |-HI|   |   |   |-FU|
+    #   *---*---*---*---*---*
+    # C |   |   |   |   |   |
+    #   *---*---*---*---*---*
+    # D |+FU|   |   |   |   |
+    #   *---*---*---*---*---*
+    # E |+OU|+KI|+GI|   |+HI|
+    #   *---*---*---*---*---*
+    # Black: KI
+    game = shogi.Game().apply(shogi.C4, shogi.E2).apply(shogi.B5, shogi.A5)
+    game.apply(shogi.A2, shogi.C4, True).apply(shogi.A2, shogi.A1)
+
+    actual = np.asarray(game)
+    assert np.allclose(actual[0, ..., 0], 0)  # white's captured pawn
+    assert np.allclose(actual[0, ..., 1], 0)  # white's captured silver
+    assert np.allclose(actual[0, ..., 2], 0)  # white's captured bishop
+    assert np.allclose(actual[0, ..., 3], 0)  # white's captured rook
+    assert np.allclose(actual[0, ..., 4], 1)  # white's captured gold
+
+
+def test_array_white():
     game = shogi.Game()
     game.apply(shogi.Move(shogi.SQ_1B, shogi.SQ_1E))
     # Turn: WHITE
@@ -73,6 +100,13 @@ def test_array():
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 1],
     ])  # white's board rook
+    assert np.allclose(actual[0, ..., 9], [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0],
+    ])  # white's board gold
     assert np.allclose(actual[0, ..., 15], 1)  # black's captured pawn
     assert np.allclose(actual[0, ..., 23], [
         [0, 0, 0, 0, 0],
@@ -144,6 +178,11 @@ def test_get_sfen_at():
     actual = shogi.Game().apply(shogi.C5, shogi.D5).get_sfen_at(
         0, include_move_count=False)
     assert "rbsgk/4p/5/P4/KGSBR b -" == actual
+
+    game = shogi.Game('4k/5/5/5/K4 b RBGSPrbgsp')
+    game.apply(game.get_legal_moves()[0])
+    actual = game.get_sfen_at(-1)
+    assert "4k/5/5/5/K4 b RBGSPrbgsp 1" == actual
 
 
 if __name__ == '__main__':

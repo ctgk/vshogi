@@ -8,6 +8,18 @@ namespace test_vshogi::test_engine
 
 using namespace vshogi::animal_shogi;
 using Node = vshogi::engine::Node<Game, Move>;
+constexpr auto SQ_A4 = vshogi::animal_shogi::Squares::SQ_A4; // NOLINT
+constexpr auto SQ_A3 = vshogi::animal_shogi::Squares::SQ_A3; // NOLINT
+constexpr auto SQ_A2 = vshogi::animal_shogi::Squares::SQ_A2; // NOLINT
+constexpr auto SQ_A1 = vshogi::animal_shogi::Squares::SQ_A1; // NOLINT
+constexpr auto SQ_B4 = vshogi::animal_shogi::Squares::SQ_B4; // NOLINT
+constexpr auto SQ_B3 = vshogi::animal_shogi::Squares::SQ_B3; // NOLINT
+constexpr auto SQ_B2 = vshogi::animal_shogi::Squares::SQ_B2; // NOLINT
+constexpr auto SQ_B1 = vshogi::animal_shogi::Squares::SQ_B1; // NOLINT
+constexpr auto SQ_C4 = vshogi::animal_shogi::Squares::SQ_C4; // NOLINT
+constexpr auto SQ_C3 = vshogi::animal_shogi::Squares::SQ_C3; // NOLINT
+constexpr auto SQ_C2 = vshogi::animal_shogi::Squares::SQ_C2; // NOLINT
+constexpr auto SQ_C1 = vshogi::animal_shogi::Squares::SQ_C1; // NOLINT
 
 TEST_GROUP(node){};
 

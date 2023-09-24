@@ -2,6 +2,8 @@
 
 #include <CppUTest/TestHarness.h>
 
+#include "test_vshogi/test_animal_shogi/test_animal_shogi.hpp"
+
 namespace test_vshogi::test_animal_shogi
 {
 
@@ -11,8 +13,9 @@ TEST_GROUP(Move){};
 
 TEST(Move, source)
 {
-    CHECK_EQUAL(MS_GI, Move(SQ_A1, GI).source());
-    CHECK_EQUAL(MS_A1, Move(SQ_A1, LI).source());
+    CHECK_EQUAL(GI, Move(SQ_A1, GI).source_piece());
+    CHECK_EQUAL(LI, Move(SQ_A1, LI).source_piece());
+    CHECK_EQUAL(GI, Move(SQ_A1, GI).source_piece());
 }
 
 TEST(Move, to_dlshogi_policy_index)

@@ -2,17 +2,20 @@
 
 #include <CppUTest/TestHarness.h>
 
+#include "test_vshogi/test_minishogi/test_minishogi.hpp"
+
 namespace test_vshogi::test_minishogi
 {
 
+using namespace vshogi;
 using namespace vshogi::minishogi;
 
 TEST_GROUP(squares){};
 
 TEST(squares, shift)
 {
-    CHECK_EQUAL(SQ_1A, shift(SQ_1B, vshogi::DIR_N));
-    CHECK_EQUAL(SQ_1C, shift(SQ_1B, vshogi::DIR_S));
+    CHECK_EQUAL(SQ_1A, shift(SQ_1B, DIR_N));
+    CHECK_EQUAL(SQ_1C, shift(SQ_1B, DIR_S));
 }
 
 TEST(squares, to_rank)
@@ -93,9 +96,11 @@ TEST(squares, is_edge)
 
 TEST(squares, square_array)
 {
-    CHECK_EQUAL(num_squares, sizeof(square_array) / sizeof(square_array[0]));
+    CHECK_EQUAL(
+        num_squares,
+        sizeof(Squares::square_array) / sizeof(Squares::square_array[0]));
     for (int i = num_squares; i--;) {
-        CHECK_EQUAL(i, static_cast<int>(square_array[i]));
+        CHECK_EQUAL(i, static_cast<int>(Squares::square_array[i]));
     }
 }
 

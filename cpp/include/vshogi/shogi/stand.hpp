@@ -12,7 +12,7 @@ constexpr int stand_shift_bits[] = {0, 6, 10, 14, 18, 21, 24};
 constexpr std::uint32_t stand_masks[] = {
     // clang-format off
     0x0000001f, // FU
-    0x000000c0, // KY
+    0x000001c0, // KY
     0x00001c00, // KE
     0x0001c000, // GI
     0x000c0000, // KA
@@ -48,6 +48,23 @@ private:
      * _____*** ________ ________ ________  KI (4 pieces)
      */
     std::uint32_t m_value;
+
+    using PieceTypeEnum = typename Pieces::PieceTypeEnum;
+    static constexpr auto FU = Pieces::PieceTypeEnum::FU; // NOLINT
+    static constexpr auto KY = Pieces::PieceTypeEnum::KY; // NOLINT
+    static constexpr auto KE = Pieces::PieceTypeEnum::KE; // NOLINT
+    static constexpr auto GI = Pieces::PieceTypeEnum::GI; // NOLINT
+    static constexpr auto KA = Pieces::PieceTypeEnum::KA; // NOLINT
+    static constexpr auto HI = Pieces::PieceTypeEnum::HI; // NOLINT
+    static constexpr auto KI = Pieces::PieceTypeEnum::KI; // NOLINT
+    static constexpr auto OU = Pieces::PieceTypeEnum::OU; // NOLINT
+    static constexpr auto TO = Pieces::PieceTypeEnum::TO; // NOLINT
+    static constexpr auto NY = Pieces::PieceTypeEnum::NY; // NOLINT
+    static constexpr auto NK = Pieces::PieceTypeEnum::NK; // NOLINT
+    static constexpr auto NG = Pieces::PieceTypeEnum::NG; // NOLINT
+    static constexpr auto UM = Pieces::PieceTypeEnum::UM; // NOLINT
+    static constexpr auto RY = Pieces::PieceTypeEnum::RY; // NOLINT
+    static constexpr auto NA = Pieces::PieceTypeEnum::NA; // NOLINT
 
 public:
     Stand() : m_value(0U)
@@ -92,12 +109,14 @@ public:
     }
     Stand& add(const PieceTypeEnum p, const int num = 1)
     {
-        m_value += stand_deltas[demote(p)] * static_cast<std::uint32_t>(num);
+        m_value += stand_deltas[Pieces::demote(p)]
+                   * static_cast<std::uint32_t>(num);
         return *this;
     }
     Stand& subtract(const PieceTypeEnum p)
     {
-        m_value = static_cast<std::uint32_t>(m_value - stand_deltas[demote(p)]);
+        m_value = static_cast<std::uint32_t>(
+            m_value - stand_deltas[Pieces::demote(p)]);
         return *this;
     }
     bool operator==(const Stand& other) const
@@ -113,10 +132,28 @@ public:
 class BlackWhiteStands
 {
 private:
+    using PieceTypeEnum = typename Pieces::PieceTypeEnum;
+    static constexpr auto to_board_piece = Pieces::to_board_piece;
+    static constexpr auto FU = Pieces::PieceTypeEnum::FU; // NOLINT
+    static constexpr auto KY = Pieces::PieceTypeEnum::KY; // NOLINT
+    static constexpr auto KE = Pieces::PieceTypeEnum::KE; // NOLINT
+    static constexpr auto GI = Pieces::PieceTypeEnum::GI; // NOLINT
+    static constexpr auto KA = Pieces::PieceTypeEnum::KA; // NOLINT
+    static constexpr auto HI = Pieces::PieceTypeEnum::HI; // NOLINT
+    static constexpr auto KI = Pieces::PieceTypeEnum::KI; // NOLINT
+    static constexpr auto OU = Pieces::PieceTypeEnum::OU; // NOLINT
+    static constexpr auto TO = Pieces::PieceTypeEnum::TO; // NOLINT
+    static constexpr auto NY = Pieces::PieceTypeEnum::NY; // NOLINT
+    static constexpr auto NK = Pieces::PieceTypeEnum::NK; // NOLINT
+    static constexpr auto NG = Pieces::PieceTypeEnum::NG; // NOLINT
+    static constexpr auto UM = Pieces::PieceTypeEnum::UM; // NOLINT
+    static constexpr auto RY = Pieces::PieceTypeEnum::RY; // NOLINT
+    static constexpr auto NA = Pieces::PieceTypeEnum::NA; // NOLINT
     Stand m_black;
     Stand m_white;
 
 public:
+    using StandType = Stand;
     BlackWhiteStands() : m_black(), m_white()
     {
     }
@@ -231,10 +268,10 @@ public:
                 if (num == 0)
                     continue;
                 if (num == 1)
-                    out += to_sfen_piece(to_board_piece(c, piece));
+                    out += Pieces::to_sfen(to_board_piece(c, piece));
                 else
                     out += std::to_string(num)
-                           + to_sfen_piece(to_board_piece(c, piece));
+                           + Pieces::to_sfen(to_board_piece(c, piece));
             }
         }
         if (out.empty())

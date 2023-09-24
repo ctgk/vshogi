@@ -57,10 +57,11 @@ public:
         const int num_hi,
         const int num_ki)
         : Stand(static_cast<std::uint16_t>(
-            (num_ki << stand_shift_bits[KI]) + (num_hi << stand_shift_bits[HI])
-            + (num_ka << stand_shift_bits[KA])
-            + (num_gi << stand_shift_bits[GI])
-            + (num_fu << stand_shift_bits[FU])))
+            (num_ki << stand_shift_bits[Pieces::KI])
+            + (num_hi << stand_shift_bits[Pieces::HI])
+            + (num_ka << stand_shift_bits[Pieces::KA])
+            + (num_gi << stand_shift_bits[Pieces::GI])
+            + (num_fu << stand_shift_bits[Pieces::FU])))
     {
     }
     std::uint16_t get_value() const
@@ -71,12 +72,12 @@ public:
     {
         m_value = v & stand_setter_mask;
     }
-    int count(const PieceTypeEnum p) const
+    int count(const Pieces::PieceTypeEnum p) const
     {
         return static_cast<int>(
             (m_value & stand_masks[p]) >> stand_shift_bits[p]);
     }
-    bool exist(const PieceTypeEnum p) const
+    bool exist(const Pieces::PieceTypeEnum p) const
     {
         return (m_value & stand_masks[p]) > 0u;
     }
@@ -84,15 +85,16 @@ public:
     {
         return m_value > 0u;
     }
-    Stand& add(const PieceTypeEnum p, const int num = 1)
+    Stand& add(const Pieces::PieceTypeEnum p, const int num = 1)
     {
         m_value = static_cast<std::uint16_t>(
-            m_value + stand_deltas[demote(p)] * num);
+            m_value + stand_deltas[Pieces::demote(p)] * num);
         return *this;
     }
-    Stand& subtract(const PieceTypeEnum p)
+    Stand& subtract(const Pieces::PieceTypeEnum p)
     {
-        m_value = static_cast<std::uint16_t>(m_value - stand_deltas[demote(p)]);
+        m_value = static_cast<std::uint16_t>(
+            m_value - stand_deltas[Pieces::demote(p)]);
         return *this;
     }
     bool operator==(const Stand& other) const
@@ -112,6 +114,7 @@ private:
     Stand m_white;
 
 public:
+    using StandType = Stand;
     BlackWhiteStands() : m_black(), m_white()
     {
     }
@@ -156,34 +159,34 @@ public:
                 preceding_number = 2;
                 continue;
             case 'P':
-                m_black.add(FU, preceding_number);
+                m_black.add(Pieces::FU, preceding_number);
                 break;
             case 'S':
-                m_black.add(GI, preceding_number);
+                m_black.add(Pieces::GI, preceding_number);
                 break;
             case 'G':
-                m_black.add(KI, preceding_number);
+                m_black.add(Pieces::KI, preceding_number);
                 break;
             case 'B':
-                m_black.add(KA, preceding_number);
+                m_black.add(Pieces::KA, preceding_number);
                 break;
             case 'R':
-                m_black.add(HI, preceding_number);
+                m_black.add(Pieces::HI, preceding_number);
                 break;
             case 'p':
-                m_white.add(FU, preceding_number);
+                m_white.add(Pieces::FU, preceding_number);
                 break;
             case 's':
-                m_white.add(GI, preceding_number);
+                m_white.add(Pieces::GI, preceding_number);
                 break;
             case 'g':
-                m_white.add(KI, preceding_number);
+                m_white.add(Pieces::KI, preceding_number);
                 break;
             case 'b':
-                m_white.add(KA, preceding_number);
+                m_white.add(Pieces::KA, preceding_number);
                 break;
             case 'r':
-                m_white.add(HI, preceding_number);
+                m_white.add(Pieces::HI, preceding_number);
                 break;
             default:
                 break;
@@ -195,7 +198,8 @@ public:
     }
     std::string to_sfen_holdings() const
     {
-        constexpr PieceTypeEnum stand_pieces[] = {HI, KA, KI, GI, FU};
+        constexpr Pieces::PieceTypeEnum stand_pieces[]
+            = {Pieces::HI, Pieces::KA, Pieces::KI, Pieces::GI, Pieces::FU};
         auto out = std::string();
         for (auto c : color_array) {
             for (auto piece : stand_pieces) {
@@ -203,10 +207,10 @@ public:
                 if (num == 0)
                     continue;
                 if (num == 1)
-                    out += to_sfen_piece(to_board_piece(c, piece));
+                    out += Pieces::to_sfen(Pieces::to_board_piece(c, piece));
                 else
                     out += static_cast<char>('0' + num)
-                           + to_sfen_piece(to_board_piece(c, piece));
+                           + Pieces::to_sfen(Pieces::to_board_piece(c, piece));
             }
         }
         if (out.empty())

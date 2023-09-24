@@ -2,6 +2,8 @@
 
 #include <CppUTest/TestHarness.h>
 
+#include "test_vshogi/test_animal_shogi/test_animal_shogi.hpp"
+
 namespace test_vshogi::test_animal_shogi
 {
 
@@ -152,14 +154,13 @@ TEST(animal_shogi_black_white_stands, set_sfen_holdings)
     }
 }
 
-TEST(animal_shogi_black_white_stands, append_to_sfen)
+TEST(animal_shogi_black_white_stands, to_sfen_holdings)
 {
     {
         auto s = BlackWhiteStands();
         s.set_sfen_holdings("C2E2cg");
-        std::string actual = "abc ";
-        s.append_to_sfen(actual);
-        STRCMP_EQUAL("abc C2E2cg", actual.c_str());
+        const auto actual = s.to_sfen_holdings();
+        STRCMP_EQUAL("2ECg2c", actual.c_str());
     }
 }
 

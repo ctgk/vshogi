@@ -2,10 +2,11 @@
 
 #include <CppUTest/TestHarness.h>
 
+#include "test_vshogi/test_shogi/test_shogi.hpp"
+
 namespace test_vshogi::test_shogi
 {
 
-using namespace vshogi;
 using namespace vshogi::shogi;
 
 TEST_GROUP(board){};
@@ -40,13 +41,13 @@ TEST(board, to_piece_mask)
         CHECK_TRUE(actual.is_one(SQ_9I));
     }
     {
-        const auto actual = b.to_piece_mask(BLACK);
+        const auto actual = b.to_piece_mask(vshogi::BLACK);
         CHECK_EQUAL(21, actual.hamming_weight());
         CHECK_FALSE(actual.is_one(SQ_1A));
         CHECK_TRUE(actual.is_one(SQ_9I));
     }
     {
-        const auto actual = b.to_piece_mask(WHITE);
+        const auto actual = b.to_piece_mask(vshogi::WHITE);
         CHECK_EQUAL(20, actual.hamming_weight());
         CHECK_TRUE(actual.is_one(SQ_1A));
         CHECK_FALSE(actual.is_one(SQ_9I));
@@ -57,12 +58,12 @@ TEST(board, to_attack_mask)
 {
     auto b = Board();
     {
-        const auto actual = b.to_attack_mask(BLACK);
+        const auto actual = b.to_attack_mask(vshogi::BLACK);
         CHECK_FALSE(actual.is_one(SQ_1D));
         CHECK_TRUE(actual.is_one(SQ_1F));
     }
     {
-        const auto actual = b.to_attack_mask(WHITE);
+        const auto actual = b.to_attack_mask(vshogi::WHITE);
         CHECK_TRUE(actual.is_one(SQ_1D));
         CHECK_FALSE(actual.is_one(SQ_1F));
     }
@@ -72,20 +73,20 @@ TEST(board, king_location)
 {
     {
         const auto b = Board();
-        const auto actual = b.king_location(BLACK);
+        const auto actual = b.king_location(vshogi::BLACK);
         CHECK_EQUAL(SQ_5I, actual);
     }
     {
         auto b = Board();
         b[SQ_5A] = VOID;
         b[SQ_1B] = W_OU;
-        const auto actual = b.king_location(WHITE);
+        const auto actual = b.king_location(vshogi::WHITE);
         CHECK_EQUAL(SQ_1B, actual);
     }
     {
         auto b = Board();
         b[SQ_5I] = VOID;
-        const auto actual = b.king_location(BLACK);
+        const auto actual = b.king_location(vshogi::BLACK);
         CHECK_EQUAL(SQ_NA, actual);
     }
 }
@@ -94,20 +95,20 @@ TEST(board, in_check)
 {
     {
         const auto b = Board();
-        CHECK_FALSE(b.in_check(BLACK));
-        CHECK_FALSE(b.in_check(WHITE));
+        CHECK_FALSE(b.in_check(vshogi::BLACK));
+        CHECK_FALSE(b.in_check(vshogi::WHITE));
     }
     {
         auto b = Board();
         b[SQ_5B] = B_FU;
-        CHECK_FALSE(b.in_check(BLACK));
-        CHECK_TRUE(b.in_check(WHITE));
+        CHECK_FALSE(b.in_check(vshogi::BLACK));
+        CHECK_TRUE(b.in_check(vshogi::WHITE));
     }
     {
         auto b = Board();
         b[SQ_5H] = W_FU;
-        CHECK_TRUE(b.in_check(BLACK));
-        CHECK_FALSE(b.in_check(WHITE));
+        CHECK_TRUE(b.in_check(vshogi::BLACK));
+        CHECK_FALSE(b.in_check(vshogi::WHITE));
     }
 }
 

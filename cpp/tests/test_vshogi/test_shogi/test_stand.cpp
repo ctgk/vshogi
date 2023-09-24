@@ -2,6 +2,8 @@
 
 #include <CppUTest/TestHarness.h>
 
+#include "test_vshogi/test_shogi/test_shogi.hpp"
+
 namespace test_vshogi::test_shogi
 {
 
@@ -12,9 +14,9 @@ TEST_GROUP(stand){};
 
 TEST(stand, count)
 {
-    const auto s = Stand(0, 1, 2, 0, 1, 2, 1);
+    const auto s = Stand(0, 4, 2, 0, 1, 2, 1);
     CHECK_EQUAL(0, s.count(FU));
-    CHECK_EQUAL(1, s.count(KY));
+    CHECK_EQUAL(4, s.count(KY));
     CHECK_EQUAL(2, s.count(KE));
     CHECK_EQUAL(0, s.count(GI));
     CHECK_EQUAL(1, s.count(KA));

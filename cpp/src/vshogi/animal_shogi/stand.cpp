@@ -5,9 +5,9 @@ namespace vshogi::animal_shogi
 
 const char* BlackWhiteStands::set_sfen_holdings(const char* const sfen_holdings)
 {
-    static_assert(static_cast<int>(CH) == 0);
-    static_assert(static_cast<int>(EL) == 1);
-    static_assert(static_cast<int>(GI) == 2);
+    static_assert(static_cast<int>(Pieces::CH) == 0);
+    static_assert(static_cast<int>(Pieces::EL) == 1);
+    static_assert(static_cast<int>(Pieces::GI) == 2);
     std::uint8_t preceding_number = 1;
     constexpr int max_length = 13; // "2C2E2G2c2e2g "
     const char* ptr;
@@ -28,10 +28,10 @@ const char* BlackWhiteStands::set_sfen_holdings(const char* const sfen_holdings)
         ('A' < *ptr && *ptr < 'Z')
             ? m_black.add(
                 // 'C' -> CH(0), 'E' -> EL(1), 'G' -> GI(2)
-                static_cast<PieceTypeEnum>((*ptr - 'C') >> 1),
+                static_cast<Pieces::PieceTypeEnum>((*ptr - 'C') >> 1),
                 preceding_number)
             : m_white.add(
-                static_cast<PieceTypeEnum>((*ptr - 'c') >> 1),
+                static_cast<Pieces::PieceTypeEnum>((*ptr - 'c') >> 1),
                 preceding_number);
         preceding_number = 1;
     }

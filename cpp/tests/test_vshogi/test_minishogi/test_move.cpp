@@ -2,6 +2,8 @@
 
 #include <CppUTest/TestHarness.h>
 
+#include "test_vshogi/test_minishogi/test_minishogi.hpp"
+
 namespace test_vshogi::test_minishogi
 {
 
@@ -11,40 +13,39 @@ TEST_GROUP(move){};
 
 TEST(move, destination)
 {
-    CHECK_EQUAL(SQ_1A, Move(SQ_1A, MS_1B, true).destination());
-    CHECK_EQUAL(SQ_3E, Move(SQ_3E, MS_GI, false).destination());
+    CHECK_EQUAL(SQ_1A, Move(SQ_1A, SQ_1B, true).destination());
+    CHECK_EQUAL(SQ_3E, Move(SQ_3E, GI).destination());
 }
 
 TEST(move, source)
 {
-    CHECK_EQUAL(MS_1B, Move(SQ_1A, MS_1B, true).source());
-    CHECK_EQUAL(MS_GI, Move(SQ_3E, MS_GI, false).source());
+    CHECK_EQUAL(SQ_1B, Move(SQ_1A, SQ_1B, true).source<SquareEnum>());
+    CHECK_EQUAL(GI, Move(SQ_3E, GI).source<PieceTypeEnum>());
 }
 
 TEST(move, promote)
 {
-    CHECK_TRUE(Move(SQ_1A, MS_1B, true).promote());
-    CHECK_FALSE(Move(SQ_3E, MS_GI, false).promote());
+    CHECK_TRUE(Move(SQ_1A, SQ_1B, true).promote());
+    CHECK_FALSE(Move(SQ_3E, GI).promote());
 }
 
 TEST(move, is_drop)
 {
-    CHECK_FALSE(Move(SQ_1A, MS_1B, true).is_drop());
-    CHECK_TRUE(Move(SQ_3E, MS_GI, false).is_drop());
+    CHECK_FALSE(Move(SQ_1A, SQ_1B, true).is_drop());
+    CHECK_TRUE(Move(SQ_3E, GI).is_drop());
 }
 
 TEST(move, hash)
 {
     CHECK_TRUE(
-        Move(SQ_1A, MS_1B, true) == Move(Move(SQ_1A, MS_1B, true).hash()));
-    CHECK_TRUE(
-        Move(SQ_3E, MS_GI, false) == Move(Move(SQ_3E, MS_GI, false).hash()));
+        Move(SQ_1A, SQ_1B, true) == Move(Move(SQ_1A, SQ_1B, true).hash()));
+    CHECK_TRUE(Move(SQ_3E, GI) == Move(Move(SQ_3E, GI).hash()));
 }
 
 TEST(move, rotate)
 {
-    CHECK_TRUE(Move(SQ_5E, MS_5D, true) == Move(SQ_1A, MS_1B, true).rotate());
-    CHECK_TRUE(Move(SQ_3A, MS_GI, false) == Move(SQ_3E, MS_GI, false).rotate());
+    CHECK_TRUE(Move(SQ_5E, SQ_5D, true) == Move(SQ_1A, SQ_1B, true).rotate());
+    CHECK_TRUE(Move(SQ_3A, GI) == Move(SQ_3E, GI).rotate());
 }
 
 TEST(move, to_dlshogi_policy_index)

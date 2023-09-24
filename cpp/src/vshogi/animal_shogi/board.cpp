@@ -1,14 +1,41 @@
 #include "vshogi/animal_shogi/board.hpp"
+#include "vshogi/animal_shogi/piece.hpp"
 
-namespace vshogi::animal_shogi
+namespace vshogi
 {
 
-const char*
-Board::set_sfen_rank(const char* const sfen_rank, const RankEnum nth_rank)
+static constexpr auto B_CH = vshogi::animal_shogi::Pieces::B_CH; // NOLINT
+static constexpr auto B_EL = vshogi::animal_shogi::Pieces::B_EL; // NOLINT
+static constexpr auto B_GI = vshogi::animal_shogi::Pieces::B_GI; // NOLINT
+static constexpr auto B_LI = vshogi::animal_shogi::Pieces::B_LI; // NOLINT
+static constexpr auto B_HE = vshogi::animal_shogi::Pieces::B_HE; // NOLINT
+static constexpr auto W_CH = vshogi::animal_shogi::Pieces::W_CH; // NOLINT
+static constexpr auto W_EL = vshogi::animal_shogi::Pieces::W_EL; // NOLINT
+static constexpr auto W_GI = vshogi::animal_shogi::Pieces::W_GI; // NOLINT
+static constexpr auto W_LI = vshogi::animal_shogi::Pieces::W_LI; // NOLINT
+static constexpr auto W_HE = vshogi::animal_shogi::Pieces::W_HE; // NOLINT
+static constexpr auto VOID = vshogi::animal_shogi::Pieces::VOID; // NOLINT
+
+template <>
+animal_shogi::Board::Board()
+    : m_pieces{
+        // clang-format off
+        W_GI, W_LI, W_EL,
+        VOID, W_CH, VOID,
+        VOID, B_CH, VOID,
+        B_EL, B_LI, B_GI,
+        // clang-format on
+    }
+{
+}
+
+template <>
+const char* animal_shogi::Board::set_sfen_rank(
+    const char* const sfen_rank, const RankEnum rank)
 {
     static_assert(static_cast<int>(RANK1) == 0);
     constexpr int max_length = 4; // "ELG ", "1c1/", ...
-    auto piece_ptr = m_pieces + 3 * static_cast<int>(nth_rank);
+    auto piece_ptr = m_pieces + 3 * static_cast<int>(rank);
     const char* sfen_ptr;
     for (sfen_ptr = sfen_rank; sfen_ptr < sfen_rank + max_length; ++sfen_ptr) {
         switch (*sfen_ptr) {
@@ -62,13 +89,4 @@ OUT_OF_LOOP:
     return sfen_ptr;
 }
 
-const char* Board::set_sfen(const char* sfen)
-{
-    sfen = set_sfen_rank(sfen, RANK1);
-    sfen = set_sfen_rank(sfen, RANK2);
-    sfen = set_sfen_rank(sfen, RANK3);
-    sfen = set_sfen_rank(sfen, RANK4);
-    return sfen;
-}
-
-} // namespace vshogi::animal_shogi
+} // namespace vshogi
