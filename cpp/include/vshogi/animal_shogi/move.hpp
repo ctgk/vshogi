@@ -88,7 +88,7 @@ inline int animal_shogi::Move::to_dlshogi_source_index() const
 template <>
 constexpr int animal_shogi::Move::num_policy_per_square()
 {
-    return 8 + 3;
+    return 8 + num_stand_piece_types;
 }
 
 } // namespace vshogi

@@ -34,6 +34,8 @@ struct Pieces
     };
     static constexpr PieceTypeEnum stand_piece_array[]
         = {FU, KY, KE, GI, KA, HI, KI};
+    static constexpr int num_stand_piece_types
+        = sizeof(stand_piece_array) / sizeof(stand_piece_array[0]);
     static constexpr PieceTypeEnum piece_array[]
         = {FU, KY, KE, GI, KA, HI, KI, OU, TO, NY, NK, NG, UM, RY};
 

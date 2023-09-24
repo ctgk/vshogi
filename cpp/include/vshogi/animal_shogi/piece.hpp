@@ -21,6 +21,8 @@ struct Pieces
         NA = 0b0111, // Not available.
     };
     static constexpr PieceTypeEnum stand_piece_array[] = {CH, EL, GI};
+    static constexpr int num_stand_piece_types
+        = sizeof(stand_piece_array) / sizeof(stand_piece_array[0]);
     static constexpr PieceTypeEnum piece_array[] = {CH, EL, GI, LI, HE};
 
     /**

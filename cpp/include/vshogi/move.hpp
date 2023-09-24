@@ -15,6 +15,7 @@ public:
 
 private:
     static constexpr auto num_squares = Squares::num_squares;
+    static constexpr auto num_stand_piece_types = Pieces::num_stand_piece_types;
 
 private:
     /**

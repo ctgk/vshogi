@@ -82,7 +82,7 @@ inline bool minishogi::Move::is_drop() const
 template <>
 constexpr int minishogi::Move::num_policy_per_square()
 {
-    return 2 * 8 + 5;
+    return 2 * 8 + num_stand_piece_types;
 }
 
 template <>

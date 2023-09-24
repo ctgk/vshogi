@@ -82,7 +82,7 @@ inline bool judkins_shogi::Move::is_drop() const
 template <>
 constexpr int judkins_shogi::Move::num_policy_per_square()
 {
-    return 2 * 10 + 6;
+    return 2 * 10 + num_stand_piece_types;
 }
 
 template <>

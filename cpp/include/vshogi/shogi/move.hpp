@@ -80,7 +80,7 @@ inline bool shogi::Move::is_drop() const
 template <>
 constexpr int shogi::Move::num_policy_per_square()
 {
-    return 2 * 10 + 7;
+    return 2 * 10 + num_stand_piece_types;
 }
 
 template <>
