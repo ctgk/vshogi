@@ -351,7 +351,11 @@ def parse_args():
 
     @classopt(default_long=True)
     class Config:
-        shogi_variant: str = config(long=False, choices=['shogi', 'animal_shogi', 'minishogi'], help='Choose a variant of shogi to train!')
+        shogi_variant: str = config(
+            long=False,
+            choices=['shogi', 'animal_shogi', 'judkins_shogi', 'minishogi'],
+            help='Choose a variant of shogi to train!',
+        )
         rl_cycle: int = config(type=int, default=10, help='# of Reinforcement Learning cycle. By default 10.')
         nn_channels: int = config(type=int, default=None, help='# of hidden channels in NN. Default value varies in shogi games.')
         nn_backbones: int = config(type=int, default=None, help='# of backbone layers in NN. Default value varies in shogi games.')
@@ -385,6 +389,12 @@ def parse_args():
                 *np.random.choice(list('RBSGP'), 5, replace=False),
             ),
         ),
+        'judkins_shogi': lambda: vshogi.judkins_shogi.Game(
+            '{}{}{}{}{}k/5{}/6/6/{}5/K{}{}{}{}{} b - 1'.format(
+                *np.random.choice(list('rbnsgp'), 6, replace=False),
+                *np.random.choice(list('RBNSGP'), 6, replace=False),
+            ),
+        ),
         'shogi': lambda: vshogi.shogi.Game(
             '{}{}{}{}k{}{}{}{}/1{}6{}1/ppppppppp/9/9/9/'
             'PPPPPPPPP/1{}6{}1/{}{}{}{}K{}{}{}{} b - 1'.format(
@@ -395,9 +405,10 @@ def parse_args():
     }[config_.shogi_variant]
     config_.shogi = getattr(vshogi, config_.shogi_variant)
     default_configs = {
-        'animal_shogi': {'nn_channels':  32, 'nn_backbones':  4, 'nn_policy': 2, 'nn_value': 2},
-        'minishogi':    {'nn_channels':  64, 'nn_backbones':  6, 'nn_policy': 2, 'nn_value': 2},
-        'shogi':        {'nn_channels': 128, 'nn_backbones': 10, 'nn_policy': 3, 'nn_value': 3},
+        'animal_shogi':  {'nn_channels':  32, 'nn_backbones':  4, 'nn_policy': 2, 'nn_value': 2},
+        'minishogi':     {'nn_channels':  64, 'nn_backbones':  6, 'nn_policy': 2, 'nn_value': 2},
+        'judkins_shogi': {'nn_channels':  64, 'nn_backbones':  7, 'nn_policy': 2, 'nn_value': 2},
+        'shogi':         {'nn_channels': 128, 'nn_backbones': 10, 'nn_policy': 3, 'nn_value': 3},
     }
     if config_.shogi_variant in default_configs:
         for key, value in default_configs[config_.shogi_variant].items():

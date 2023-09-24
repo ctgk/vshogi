@@ -9,8 +9,8 @@ Here are lists of shogi implemented or to be implemented:
 |--------------|----------|------|
 |[Animal shogi](https://en.wikipedia.org/wiki/D%C5%8Dbutsu_sh%C5%8Dgi)|3x4|`vshogi.animal_shogi`|
 |[Minishogi](https://en.wikipedia.org/wiki/Minishogi)|5x5|`vshogi.minishogi`|
+|[Judkins shogi](https://en.wikipedia.org/wiki/Judkins_shogi)|6x6|`vshogi.judkins_shogi`|
 |[Shogi](https://en.wikipedia.org/wiki/Shogi)|9x9|`vshogi.shogi`|
-|[Judkins shogi](https://en.wikipedia.org/wiki/Judkins_shogi)|6x6||
 
 ## Getting Started
 

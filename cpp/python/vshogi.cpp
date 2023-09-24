@@ -8,6 +8,7 @@
 namespace py = pybind11;
 
 void export_animal_shogi(py::module& m);
+void export_judkins_shogi(py::module& m);
 void export_minishogi(py::module& m);
 void export_shogi(py::module& m);
 
@@ -33,6 +34,9 @@ PYBIND11_MODULE(_vshogi, m)
 
     auto animal_shogi_module = m.def_submodule("animal_shogi");
     export_animal_shogi(animal_shogi_module);
+
+    auto judkins_shogi_module = m.def_submodule("judkins_shogi");
+    export_judkins_shogi(judkins_shogi_module);
 
     auto minishogi_module = m.def_submodule("minishogi");
     export_minishogi(minishogi_module);

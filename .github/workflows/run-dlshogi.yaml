@@ -13,6 +13,7 @@ jobs:
         command: [
           "pip install .[dlshogi]; python examples/dlshogi.py animal_shogi --rl_cycle 5",
           "pip install .[dlshogi]; python examples/dlshogi.py minishogi --rl_cycle 5",
+          "pip install .[dlshogi]; python examples/dlshogi.py judkins_shogi --rl_cycle 5",
         ]
       fail-fast: false
 
