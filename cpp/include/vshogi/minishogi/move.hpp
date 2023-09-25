@@ -54,27 +54,21 @@ constexpr std::uint16_t minishogi::Move::source_mask()
 }
 
 template <>
-constexpr int minishogi::Move::num_policy_per_square()
-{
-    return 2 * 8 + num_stand_piece_types;
-}
-
-template <>
 inline int minishogi::Move::to_dlshogi_source_index() const
 {
     if (is_drop())
-        return 8 * 2 + static_cast<int>(source_piece());
+        return minishogi::Squares::num_dlshogi_directions * 2
+               + static_cast<int>(source_piece());
     const auto dst = destination();
     const auto src = source_square();
-    const auto promotion = promote();
-    constexpr DirectionEnum directions[]
-        = {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE};
-    for (auto d : directions) {
+    const auto promo_offset
+        = promote() ? minishogi::Squares::num_dlshogi_directions : 0;
+    for (auto d : minishogi::Squares::dlshogi_direction_array) {
         SquareEnum sq = dst;
         for (int i = 4; i--;) {
             sq = minishogi::Squares::shift(sq, d);
             if (sq == src)
-                return static_cast<int>(d) + (promotion ? 8 : 0);
+                return static_cast<int>(d) + promo_offset;
         }
     }
     return 0;

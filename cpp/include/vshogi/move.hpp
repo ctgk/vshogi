@@ -83,7 +83,10 @@ public:
         const auto src_index = to_dlshogi_source_index();
         return dst_index * num_policy_per_square() + src_index;
     }
-    static constexpr int num_policy_per_square();
+    static constexpr int num_policy_per_square()
+    {
+        return 2 * Squares::num_dlshogi_directions + num_stand_piece_types;
+    }
 
 private:
     static constexpr int source_shift();

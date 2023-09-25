@@ -45,12 +45,6 @@ struct Squares
         SQ_2D, SQ_1D, SQ_5E, SQ_4E, SQ_3E, SQ_2E, SQ_1E,
     };
 
-    static constexpr int direction_to_delta(const DirectionEnum d)
-    {
-        constexpr int table[] = {-6, -5, -4, -1, 1, 4, 5, 6};
-        return table[d];
-    }
-
     enum RankEnum
     {
         RANK1,
@@ -90,7 +84,33 @@ struct Squares
     {
         return (f == FILE1) || (f == FILE5);
     }
+    static constexpr bool is_promotion_zone(const RankEnum r, const ColorEnum c)
+    {
+        return (c == BLACK) ? (r <= RANK1) : (r >= RANK5);
+    }
+    static constexpr bool
+    is_promotion_zone(const SquareEnum sq, const ColorEnum c)
+    {
+        return is_promotion_zone(to_rank(sq), c);
+    }
 
+    constexpr static DirectionEnum dlshogi_direction_array[] = {
+        DIR_NW,
+        DIR_N,
+        DIR_NE,
+        DIR_W,
+        DIR_E,
+        DIR_SW,
+        DIR_S,
+        DIR_SE,
+    };
+    constexpr static int num_dlshogi_directions
+        = sizeof(dlshogi_direction_array) / sizeof(dlshogi_direction_array[0]);
+    static constexpr int direction_to_delta(const DirectionEnum d)
+    {
+        constexpr int table[] = {-6, -5, -4, -1, 1, 4, 5, 6};
+        return table[d];
+    }
     static constexpr SquareEnum
     shift(const SquareEnum sq, const DirectionEnum d)
     {
@@ -106,15 +126,6 @@ struct Squares
             return sq;
         return static_cast<SquareEnum>(
             static_cast<int>(sq) + direction_to_delta(d));
-    }
-    static constexpr bool is_promotion_zone(const RankEnum r, const ColorEnum c)
-    {
-        return (c == BLACK) ? (r <= RANK1) : (r >= RANK5);
-    }
-    static constexpr bool
-    is_promotion_zone(const SquareEnum sq, const ColorEnum c)
-    {
-        return is_promotion_zone(to_rank(sq), c);
     }
 };
 

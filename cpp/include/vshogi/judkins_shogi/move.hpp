@@ -53,32 +53,17 @@ constexpr std::uint16_t judkins_shogi::Move::source_mask()
 }
 
 template <>
-constexpr int judkins_shogi::Move::num_policy_per_square()
-{
-    return 2 * 10 + num_stand_piece_types;
-}
-
-template <>
 inline int judkins_shogi::Move::to_dlshogi_source_index() const
 {
     if (is_drop())
-        return 2 * 10 + static_cast<int>(source_piece());
+        return 2 * judkins_shogi::Squares::num_dlshogi_directions
+               + static_cast<int>(source_piece());
     const auto dst = destination();
     const auto src = source_square();
-    const auto promo_offset = promote() ? 10 : 0;
-    constexpr DirectionEnum directions[]
-        = {DIR_NW,
-           DIR_N,
-           DIR_NE,
-           DIR_W,
-           DIR_E,
-           DIR_SW,
-           DIR_S,
-           DIR_SE,
-           DIR_SSW,
-           DIR_SSE};
+    const auto promo_offset
+        = promote() ? judkins_shogi::Squares::num_dlshogi_directions : 0;
     constexpr int max_range = 5;
-    for (auto d : directions) {
+    for (auto d : judkins_shogi::Squares::dlshogi_direction_array) {
         SquareEnum sq = dst;
         for (int ii = max_range; ii--;) {
             sq = judkins_shogi::Squares::shift(sq, d);

@@ -51,11 +51,6 @@ struct Squares
         SQ_B4,
         SQ_C4,
     };
-    static constexpr int direction_to_delta(const DirectionEnum d)
-    {
-        constexpr int table[] = {-4, -3, -2, -1, 1, 2, 3, 4};
-        return table[d];
-    }
 
     enum RankEnum
     {
@@ -97,6 +92,24 @@ struct Squares
             // clang-format on
         };
         return table[sq];
+    }
+
+    constexpr static DirectionEnum dlshogi_direction_array[] = {
+        DIR_NW,
+        DIR_N,
+        DIR_NE,
+        DIR_W,
+        DIR_E,
+        DIR_SW,
+        DIR_S,
+        DIR_SE,
+    };
+    constexpr static int num_dlshogi_directions
+        = sizeof(dlshogi_direction_array) / sizeof(dlshogi_direction_array[0]);
+    static constexpr int direction_to_delta(const DirectionEnum d)
+    {
+        constexpr int table[] = {-4, -3, -2, -1, 1, 2, 3, 4};
+        return table[d];
     }
 };
 
