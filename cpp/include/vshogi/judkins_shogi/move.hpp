@@ -27,56 +27,29 @@ namespace vshogi
 {
 
 template <>
-inline judkins_shogi::Move::Move(const std::uint16_t value)
-    : m_value(value & 0x3f7f)
+constexpr int judkins_shogi::Move::source_shift()
 {
+    return 8;
 }
-
 template <>
-inline judkins_shogi::Move::Move(
-    const SquareEnum dst, const SquareEnum src, const bool promote)
-    : m_value(static_cast<std::uint16_t>((src << 8) | (promote << 6) | dst))
+constexpr int judkins_shogi::Move::promote_shift()
 {
+    return 6;
 }
-
 template <>
-inline judkins_shogi::Move::Move(const SquareEnum dst, const PieceTypeEnum src)
-    : m_value(static_cast<std::uint16_t>(((src + num_squares) << 8) | dst))
+constexpr std::uint16_t judkins_shogi::Move::destination_mask()
 {
+    return 0x003f;
 }
-
 template <>
-inline judkins_shogi::Squares::SquareEnum
-judkins_shogi::Move::destination() const
+constexpr std::uint16_t judkins_shogi::Move::promote_mask()
 {
-    return static_cast<SquareEnum>(m_value & 0x003f);
+    return 0x0040;
 }
-
 template <>
-template <>
-inline judkins_shogi::Squares::SquareEnum judkins_shogi::Move::source<>() const
+constexpr std::uint16_t judkins_shogi::Move::source_mask()
 {
-    return static_cast<SquareEnum>(m_value >> 8);
-}
-
-template <>
-template <>
-inline judkins_shogi::Pieces::PieceTypeEnum
-judkins_shogi::Move::source<>() const
-{
-    return static_cast<PieceTypeEnum>((m_value >> 8) - num_squares);
-}
-
-template <>
-inline bool judkins_shogi::Move::promote() const
-{
-    return static_cast<bool>(m_value & 0x0040);
-}
-
-template <>
-inline bool judkins_shogi::Move::is_drop() const
-{
-    return (m_value >> 8) >= num_squares;
+    return 0x3f00;
 }
 
 template <>
@@ -89,9 +62,9 @@ template <>
 inline int judkins_shogi::Move::to_dlshogi_source_index() const
 {
     if (is_drop())
-        return 2 * 10 + static_cast<int>(source<PieceTypeEnum>());
+        return 2 * 10 + static_cast<int>(source_piece());
     const auto dst = destination();
-    const auto src = source<SquareEnum>();
+    const auto src = source_square();
     const auto promo_offset = promote() ? 10 : 0;
     constexpr DirectionEnum directions[]
         = {DIR_NW,

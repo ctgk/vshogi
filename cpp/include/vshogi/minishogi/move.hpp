@@ -28,55 +28,29 @@ namespace vshogi
 {
 
 template <>
-inline minishogi::Move::Move(const std::uint16_t value)
-    : m_value(value & 0x1f3f)
+constexpr int minishogi::Move::source_shift()
 {
+    return 8;
 }
-
 template <>
-inline minishogi::Move::Move(
-    const SquareEnum dst, const SquareEnum src, const bool promote)
-    : m_value(static_cast<std::uint16_t>((src << 8) | (promote << 5) | dst))
+constexpr int minishogi::Move::promote_shift()
 {
+    return 5;
 }
-
 template <>
-inline minishogi::Move::Move(const SquareEnum dst, const PieceTypeEnum src)
-    : m_value(static_cast<std::uint16_t>(
-        ((static_cast<int>(src) + num_squares) << 8) | dst))
+constexpr std::uint16_t minishogi::Move::destination_mask()
 {
+    return 0x001f;
 }
-
 template <>
-inline minishogi::Squares::SquareEnum minishogi::Move::destination() const
+constexpr std::uint16_t minishogi::Move::promote_mask()
 {
-    return static_cast<SquareEnum>(m_value & 0x1f);
+    return 0x0020;
 }
-
 template <>
-template <>
-inline minishogi::Squares::SquareEnum minishogi::Move::source<>() const
+constexpr std::uint16_t minishogi::Move::source_mask()
 {
-    return static_cast<SquareEnum>(m_value >> 8);
-}
-
-template <>
-template <>
-inline minishogi::Pieces::PieceTypeEnum minishogi::Move::source<>() const
-{
-    return static_cast<PieceTypeEnum>((m_value >> 8) - num_squares);
-}
-
-template <>
-inline bool minishogi::Move::promote() const
-{
-    return static_cast<bool>(m_value & 0x0020);
-}
-
-template <>
-inline bool minishogi::Move::is_drop() const
-{
-    return (m_value >> 8) >= num_squares;
+    return 0x1f00;
 }
 
 template <>
@@ -89,9 +63,9 @@ template <>
 inline int minishogi::Move::to_dlshogi_source_index() const
 {
     if (is_drop())
-        return 8 * 2 + static_cast<int>(source<PieceTypeEnum>());
+        return 8 * 2 + static_cast<int>(source_piece());
     const auto dst = destination();
-    const auto src = source<SquareEnum>();
+    const auto src = source_square();
     const auto promotion = promote();
     constexpr DirectionEnum directions[]
         = {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE};

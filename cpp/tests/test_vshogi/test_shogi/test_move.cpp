@@ -19,8 +19,8 @@ TEST(move, destination)
 
 TEST(move, source)
 {
-    CHECK_EQUAL(SQ_1B, Move(SQ_1A, SQ_1B, false).source<SquareEnum>());
-    CHECK_EQUAL(KE, Move(SQ_3I, KE).source<PieceTypeEnum>());
+    CHECK_EQUAL(SQ_1B, Move(SQ_1A, SQ_1B, false).source_square());
+    CHECK_EQUAL(KE, Move(SQ_3I, KE).source_piece());
 }
 
 TEST(move, promote)

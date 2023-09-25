@@ -27,54 +27,29 @@ namespace vshogi
 {
 
 template <>
-inline shogi::Move::Move(const std::uint16_t value) : m_value(value & 0x7fff)
+constexpr int shogi::Move::source_shift()
 {
+    return 8;
 }
-
 template <>
-inline shogi::Move::Move(
-    const SquareEnum dst, const SquareEnum src, const bool promote)
-    : m_value(static_cast<std::uint16_t>((src << 8) | (promote << 7) | dst))
+constexpr int shogi::Move::promote_shift()
 {
+    return 7;
 }
-
 template <>
-inline shogi::Move::Move(const SquareEnum dst, const PieceTypeEnum src)
-    : m_value(static_cast<std::uint16_t>(
-        ((static_cast<int>(src) + num_squares) << 8) | dst))
+constexpr std::uint16_t shogi::Move::destination_mask()
 {
+    return 0x007f;
 }
-
 template <>
-inline shogi::Squares::SquareEnum shogi::Move::destination() const
+constexpr std::uint16_t shogi::Move::source_mask()
 {
-    return static_cast<SquareEnum>(m_value & 0x007f);
+    return 0x7f00;
 }
-
 template <>
-template <>
-inline shogi::Squares::SquareEnum shogi::Move::source<>() const
+constexpr std::uint16_t shogi::Move::promote_mask()
 {
-    return static_cast<SquareEnum>(m_value >> 8);
-}
-
-template <>
-template <>
-inline shogi::Pieces::PieceTypeEnum shogi::Move::source<>() const
-{
-    return static_cast<PieceTypeEnum>((m_value >> 8) - num_squares);
-}
-
-template <>
-inline bool shogi::Move::promote() const
-{
-    return static_cast<bool>(m_value & 0x0080);
-}
-
-template <>
-inline bool shogi::Move::is_drop() const
-{
-    return (m_value >> 8) >= num_squares;
+    return 0x0080;
 }
 
 template <>
@@ -87,10 +62,10 @@ template <>
 inline int shogi::Move::to_dlshogi_source_index() const
 {
     if (is_drop())
-        return 10 * 2 + static_cast<int>(source<PieceTypeEnum>());
+        return 10 * 2 + static_cast<int>(source_piece());
 
     const auto dst = destination();
-    const auto src = source<SquareEnum>();
+    const auto src = source_square();
     const auto promo_offset = promote() ? 10 : 0;
     constexpr DirectionEnum directions[]
         = {DIR_NW,

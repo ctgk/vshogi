@@ -24,10 +24,18 @@ private:
     Int m_value;
 
 public:
-    Move(const Int value);
-    Move(
-        const SquareEnum dst, const SquareEnum src, const bool promote = false);
-    Move(const SquareEnum dst, const PieceTypeEnum src);
+    Move(const Int value)
+        : m_value(value & (source_mask() | promote_mask() | destination_mask()))
+    {
+    }
+    Move(const SquareEnum dst, const SquareEnum src, const bool promote = false)
+        : Move(dst, static_cast<int>(src), promote)
+    {
+    }
+    Move(const SquareEnum dst, const PieceTypeEnum src)
+        : Move(dst, static_cast<int>(src) + num_squares)
+    {
+    }
     Int hash() const
     {
         return m_value;
@@ -40,25 +48,33 @@ public:
     {
         return m_value != other.m_value;
     }
-    SquareEnum destination() const;
-    template <class T>
-    T source() const;
+    SquareEnum destination() const
+    {
+        return static_cast<SquareEnum>(m_value & destination_mask());
+    }
     SquareEnum source_square() const
     {
-        return source<SquareEnum>();
+        return static_cast<SquareEnum>(m_value >> source_shift());
     }
     PieceTypeEnum source_piece() const
     {
-        return source<PieceTypeEnum>();
+        return static_cast<PieceTypeEnum>(
+            (m_value >> source_shift()) - num_squares);
     }
-    bool promote() const;
-    bool is_drop() const;
+    bool promote() const
+    {
+        return static_cast<bool>(m_value & promote_mask());
+    }
+    bool is_drop() const
+    {
+        return (m_value >> source_shift()) >= num_squares;
+    }
     Move rotate() const
     {
         const auto dst_rotated = rotate_square(destination());
         if (is_drop())
-            return Move(dst_rotated, source<PieceTypeEnum>());
-        const auto src_rotated = rotate_square(source<SquareEnum>());
+            return Move(dst_rotated, source_piece());
+        const auto src_rotated = rotate_square(source_square());
         return Move(dst_rotated, src_rotated, promote());
     }
     int to_dlshogi_policy_index() const
@@ -70,6 +86,16 @@ public:
     static constexpr int num_policy_per_square();
 
 private:
+    static constexpr int source_shift();
+    static constexpr int promote_shift();
+    static constexpr Int destination_mask();
+    static constexpr Int source_mask();
+    static constexpr Int promote_mask();
+    Move(const SquareEnum dst, const int src, const bool promote = false)
+        : m_value(static_cast<Int>(
+            (src << source_shift()) | (promote << promote_shift()) | dst))
+    {
+    }
     static constexpr SquareEnum rotate_square(const SquareEnum sq)
     {
         return static_cast<SquareEnum>(num_squares - 1 - static_cast<int>(sq));

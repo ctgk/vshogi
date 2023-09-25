@@ -25,64 +25,40 @@ namespace vshogi
 {
 
 template <>
-inline animal_shogi::Move::Move(const std::uint8_t value) : m_value(value)
+constexpr int animal_shogi::Move::source_shift()
 {
+    return 4;
 }
-
 template <>
-inline animal_shogi::Move::Move(
-    const SquareEnum dst, const SquareEnum src, const bool)
-    : m_value(static_cast<std::uint8_t>((src << 4) | dst))
+constexpr int animal_shogi::Move::promote_shift()
 {
+    return 8;
 }
-
 template <>
-inline animal_shogi::Move::Move(const SquareEnum dst, const PieceTypeEnum src)
-    : m_value(static_cast<std::uint8_t>(((src + num_squares) << 4) | dst))
+constexpr std::uint8_t animal_shogi::Move::destination_mask()
 {
+    return 0x0f;
 }
-
 template <>
-inline animal_shogi::Squares::SquareEnum animal_shogi::Move::destination() const
+constexpr std::uint8_t animal_shogi::Move::promote_mask()
 {
-    return static_cast<SquareEnum>(m_value & 0x0f);
+    return 0x00;
 }
-
 template <>
-template <>
-inline animal_shogi::Squares::SquareEnum animal_shogi::Move::source<>() const
+constexpr std::uint8_t animal_shogi::Move::source_mask()
 {
-    return static_cast<SquareEnum>(m_value >> 4);
-}
-
-template <>
-template <>
-inline animal_shogi::Pieces::PieceTypeEnum animal_shogi::Move::source<>() const
-{
-    return static_cast<PieceTypeEnum>((m_value >> 4) - num_squares);
-}
-
-template <>
-inline bool animal_shogi::Move::promote() const
-{
-    return false;
-}
-
-template <>
-inline bool animal_shogi::Move::is_drop() const
-{
-    return (m_value >> 4) >= num_squares;
+    return 0xf0;
 }
 
 template <>
 inline int animal_shogi::Move::to_dlshogi_source_index() const
 {
     if (is_drop())
-        return 8 + static_cast<int>(source<PieceTypeEnum>());
+        return 8 + static_cast<int>(source_piece());
     constexpr int diff_plus_4_to_dir_index[] = {0, 1, 2, 3, -1, 4, 5, 6, 7};
     return diff_plus_4_to_dir_index
-        [static_cast<int>(source<SquareEnum>())
-         - static_cast<int>(destination()) + 4];
+        [static_cast<int>(source_square()) - static_cast<int>(destination())
+         + 4];
 }
 
 template <>
