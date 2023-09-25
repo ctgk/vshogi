@@ -5,7 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "vshogi/animal_shogi/move.hpp"
+#include "vshogi/animal_shogi/piece.hpp"
+#include "vshogi/animal_shogi/squares.hpp"
 #include "vshogi/animal_shogi/state.hpp"
 #include "vshogi/game.hpp"
 #include "vshogi/result.hpp"
@@ -13,7 +14,7 @@
 namespace vshogi::animal_shogi
 {
 
-using Game = vshogi::Game<State, Board, Stand, Move, Squares, Pieces>;
+using Game = vshogi::Game<State>;
 
 namespace internal
 {

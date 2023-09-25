@@ -26,12 +26,14 @@ private:
     using Squares = typename Board::SquaresType;
     using Pieces = typename Board::PiecesType;
     using Stand = typename Stands::StandType;
+
+public:
+    using BoardType = Board;
     using BitBoardType = typename Board::BitBoardType;
     using SquaresType = typename Board::SquaresType;
     using PiecesType = typename Board::PiecesType;
     using StandType = typename Stands::StandType;
-
-public:
+    using MoveType = Move;
     using PieceTypeEnum = typename Pieces::PieceTypeEnum;
     using BoardPieceTypeEnum = typename Pieces::BoardPieceTypeEnum;
     using RankEnum = typename Squares::RankEnum;

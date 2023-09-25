@@ -2,15 +2,12 @@
 #define VSHOGI_JUDKINS_SHOGI_GAME_HPP
 
 #include "vshogi/game.hpp"
-#include "vshogi/judkins_shogi/board.hpp"
-#include "vshogi/judkins_shogi/move.hpp"
-#include "vshogi/judkins_shogi/stand.hpp"
 #include "vshogi/judkins_shogi/state.hpp"
 
 namespace vshogi::judkins_shogi
 {
 
-using Game = vshogi::Game<State, Board, Stand, Move, Squares, Pieces>;
+using Game = vshogi::Game<State>;
 
 } // namespace vshogi::judkins_shogi
 

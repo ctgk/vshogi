@@ -6,14 +6,13 @@
 #include <vector>
 
 #include "vshogi/game.hpp"
-#include "vshogi/minishogi/move.hpp"
 #include "vshogi/minishogi/state.hpp"
 #include "vshogi/result.hpp"
 
 namespace vshogi::minishogi
 {
 
-using Game = vshogi::Game<State, Board, Stand, Move, Squares, Pieces>;
+using Game = vshogi::Game<State>;
 
 } // namespace vshogi::minishogi
 

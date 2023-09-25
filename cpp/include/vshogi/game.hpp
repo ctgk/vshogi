@@ -10,15 +10,16 @@
 namespace vshogi
 {
 
-template <
-    class State,
-    class Board,
-    class Stand,
-    class Move,
-    class Squares,
-    class Pieces>
+template <class State>
 class Game
 {
+public:
+    using Board = typename State::BoardType;
+    using Stand = typename State::StandType;
+    using Move = typename State::MoveType;
+    using Squares = typename State::SquaresType;
+    using Pieces = typename State::PiecesType;
+
 protected:
     /**
      * @brief Pairs of SFEN (without #ply) and the move.
