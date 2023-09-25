@@ -53,27 +53,6 @@ constexpr std::uint16_t minishogi::Move::source_mask()
     return 0x1f00;
 }
 
-template <>
-inline int minishogi::Move::to_dlshogi_source_index() const
-{
-    if (is_drop())
-        return minishogi::Squares::num_dlshogi_directions * 2
-               + static_cast<int>(source_piece());
-    const auto dst = destination();
-    const auto src = source_square();
-    const auto promo_offset
-        = promote() ? minishogi::Squares::num_dlshogi_directions : 0;
-    for (auto d : minishogi::Squares::dlshogi_direction_array) {
-        SquareEnum sq = dst;
-        for (int i = 4; i--;) {
-            sq = minishogi::Squares::shift(sq, d);
-            if (sq == src)
-                return static_cast<int>(d) + promo_offset;
-        }
-    }
-    return 0;
-}
-
 } // namespace vshogi
 
 #endif // VSHOGI_MINISHOGI_MOVE_HPP

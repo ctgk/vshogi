@@ -127,6 +127,38 @@ struct Squares
         return static_cast<SquareEnum>(
             static_cast<int>(sq) + direction_to_delta(d));
     }
+    static constexpr DirectionEnum
+    get_direction_of_src(const SquareEnum dst, const SquareEnum src)
+    {
+        if (to_file(dst) == to_file(src))
+            return (src < dst) ? DIR_N : DIR_S;
+        if (to_rank(dst) == to_rank(src))
+            return (src < dst) ? DIR_W : DIR_E;
+        switch (static_cast<int>(dst - src)) {
+        case 6:
+        case 18:
+        case 24:
+            return DIR_NW;
+        case 4:
+        case 8:
+        case 16:
+            return DIR_NE;
+        case 12:
+            return (Squares::to_file(dst) < Squares::FILE4) ? DIR_NW : DIR_NE;
+        case -4:
+        case -8:
+        case -16:
+            return DIR_SW;
+        case -6:
+        case -18:
+        case -24:
+            return DIR_SE;
+        case -12:
+            return (Squares::to_file(dst) < Squares::FILE3) ? DIR_SW : DIR_SE;
+        default:
+            return DIR_NA;
+        }
+    }
 };
 
 } // namespace vshogi::minishogi

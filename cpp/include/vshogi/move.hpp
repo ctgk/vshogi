@@ -1,6 +1,8 @@
 #ifndef VSHOGI_MOVE_HPP
 #define VSHOGI_MOVE_HPP
 
+#include "vshogi/direction.hpp"
+
 namespace vshogi
 {
 
@@ -81,6 +83,8 @@ public:
     {
         const auto dst_index = static_cast<int>(destination());
         const auto src_index = to_dlshogi_source_index();
+        if (src_index < 0)
+            return src_index;
         return dst_index * num_policy_per_square() + src_index;
     }
     static constexpr int num_policy_per_square()
@@ -103,7 +107,19 @@ private:
     {
         return static_cast<SquareEnum>(num_squares - 1 - static_cast<int>(sq));
     }
-    int to_dlshogi_source_index() const;
+    int to_dlshogi_source_index() const
+    {
+        if (is_drop())
+            return Squares::num_dlshogi_directions * 2
+                   + static_cast<int>(source_piece());
+        const auto promo_offset
+            = promote() ? Squares::num_dlshogi_directions : 0;
+        const auto direction
+            = Squares::get_direction_of_src(destination(), source_square());
+        if (direction == DIR_NA)
+            return -1;
+        return static_cast<int>(direction) + promo_offset;
+    }
 };
 
 } // namespace vshogi

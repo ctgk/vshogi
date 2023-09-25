@@ -80,6 +80,8 @@ static auto is_edge(const T a)
 {
     return vshogi::judkins_shogi::Squares::is_edge(a);
 }
+static constexpr auto get_direction_of_src
+    = vshogi::judkins_shogi::Squares::get_direction_of_src;
 static constexpr auto num_squares = vshogi::judkins_shogi::Squares::num_squares;
 static constexpr auto RANK1 = vshogi::judkins_shogi::Squares::RANK1; // NOLINT
 static constexpr auto RANK2 = vshogi::judkins_shogi::Squares::RANK2; // NOLINT

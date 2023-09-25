@@ -13,6 +13,7 @@ enum DirectionEnum
      DIR_SW = 5,  DIR_S = 6,  DIR_SE = 7,
     DIR_SSW = 8,             DIR_SSE = 9, // knights come from SSW or SSE.
     // clang-format on
+    DIR_NA = -1,
 };
 
 } // namespace vshogi

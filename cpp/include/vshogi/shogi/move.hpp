@@ -52,28 +52,6 @@ constexpr std::uint16_t shogi::Move::promote_mask()
     return 0x0080;
 }
 
-template <>
-inline int shogi::Move::to_dlshogi_source_index() const
-{
-    if (is_drop())
-        return shogi::Squares::num_dlshogi_directions * 2
-               + static_cast<int>(source_piece());
-
-    const auto dst = destination();
-    const auto src = source_square();
-    const auto promo_offset
-        = promote() ? shogi::Squares::num_dlshogi_directions : 0;
-    for (auto d : shogi::Squares::dlshogi_direction_array) {
-        SquareEnum sq = dst;
-        for (int ii = 8; ii--;) {
-            sq = shogi::Squares::shift(sq, d);
-            if (sq == src)
-                return static_cast<int>(d) + promo_offset;
-        }
-    }
-    return 0;
-}
-
 } // namespace vshogi
 
 #endif // VSHOGI_SHOGI_MOVE_HPP

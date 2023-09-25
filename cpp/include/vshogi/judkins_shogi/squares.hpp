@@ -158,6 +158,46 @@ struct Squares
         return static_cast<SquareEnum>(
             static_cast<int>(sq) + direction_to_delta(d));
     }
+    static constexpr DirectionEnum
+    get_direction_of_src(const SquareEnum dst, const SquareEnum src)
+    {
+        if (to_file(dst) == to_file(src))
+            return (src < dst) ? DIR_N : DIR_S;
+        if (to_rank(dst) == to_rank(src))
+            return (src < dst) ? DIR_W : DIR_E;
+        switch (static_cast<int>(dst - src)) {
+        case 7:
+        case 14:
+        case 21:
+        case 28:
+        case 35:
+            return DIR_NW;
+        case 5:
+        case 10:
+        case 15:
+        case 20:
+        case 25:
+            return DIR_NE;
+        case -5:
+        case -10:
+        case -15:
+        case -20:
+        case -25:
+            return DIR_SW;
+        case -7:
+        case -14:
+        case -21:
+        case -28:
+        case -35:
+            return DIR_SE;
+        case -11:
+            return DIR_SSW;
+        case -13:
+            return DIR_SSE;
+        default:
+            return DIR_NA;
+        }
+    }
 };
 
 } // namespace vshogi::judkins_shogi
