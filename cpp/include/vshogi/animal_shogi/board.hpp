@@ -20,7 +20,6 @@ template <>
 inline animal_shogi::BitBoard
 animal_shogi::Board::to_attack_mask(const ColorEnum c) const
 {
-    const auto occupied = to_piece_mask();
     animal_shogi::BitBoard out = animal_shogi::BitBoard();
     for (auto sq : animal_shogi::Squares::square_array) {
         const auto p = m_pieces[sq];

@@ -43,7 +43,7 @@ inline void export_board(pybind11::module& m)
                 &Board::operator[], pybind11::const_));
 }
 
-template <class Stand, class Piece, const Piece array[], int Size>
+template <class Stand, class Pieces>
 inline void export_piece_stand(pybind11::module& m)
 {
     pybind11::class_<Stand>(m, "Stand")
@@ -51,25 +51,25 @@ inline void export_piece_stand(pybind11::module& m)
         .def("any", &Stand::any)
         .def("to_dict", [](const Stand& self) -> pybind11::dict {
             pybind11::dict out;
-            for (int i = 0; i < Size; ++i) {
-                const auto p = array[i];
+            for (auto p : Pieces::stand_piece_array)
                 out[pybind11::cast(p)] = self.count(p);
-            }
             return out;
         });
 }
 
-template <class Move, class Square, class Piece>
+template <class Move>
 inline void export_move(pybind11::module& m)
 {
+    using SquareEnum = typename Move::SquareEnum;
+    using PieceTypeEnum = typename Move::PieceTypeEnum;
     pybind11::class_<Move>(m, "Move")
         .def(
-            pybind11::init<const Square, const Square, const bool>(),
+            pybind11::init<const SquareEnum, const SquareEnum, const bool>(),
             pybind11::arg("dst"),
             pybind11::arg("src"),
             pybind11::arg("promote") = false)
         .def(
-            pybind11::init<const Square, const Piece>(),
+            pybind11::init<const SquareEnum, const PieceTypeEnum>(),
             pybind11::arg("dst"),
             pybind11::arg("src"))
         .def_property_readonly("destination", &Move::destination)
@@ -90,9 +90,10 @@ inline void export_move(pybind11::module& m)
         .def("__ne__", &Move::operator!=);
 }
 
-template <class Game, class Move>
+template <class Game>
 inline void export_game(pybind11::module& m)
 {
+    using Move = typename Game::Move;
     pybind11::class_<Game>(m, "_Game")
         .def(pybind11::init<>())
         .def(pybind11::init<const std::string&>())

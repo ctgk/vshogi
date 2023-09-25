@@ -114,15 +114,8 @@ void export_minishogi(py::module& m)
     export_pieces(m);
 
     pyvshogi::export_board<ms::Board, ms::Squares::SquareEnum>(m);
-    pyvshogi::export_piece_stand<
-        ms::Stand,
-        ms::Pieces::PieceTypeEnum,
-        ms::Pieces::stand_piece_array,
-        5>(m);
-    pyvshogi::export_move<
-        ms::Move,
-        ms::Squares::SquareEnum,
-        ms::Pieces::PieceTypeEnum>(m);
-    pyvshogi::export_game<ms::Game, ms::Move>(m);
+    pyvshogi::export_piece_stand<ms::Stand, ms::Pieces>(m);
+    pyvshogi::export_move<ms::Move>(m);
+    pyvshogi::export_game<ms::Game>(m);
     pyvshogi::export_node<ms::Game, ms::Move>(m);
 }

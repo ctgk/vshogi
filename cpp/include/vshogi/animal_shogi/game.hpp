@@ -64,7 +64,6 @@ inline void animal_shogi::Game::to_feature_map(float* const data) const
     constexpr int num_squares = ranks() * files();
     constexpr int sp_types = stand_piece_types();
     constexpr int bp_types = board_piece_types();
-    constexpr int unpromoted_piece_types = sp_types + 1; // + OU
     constexpr int ch_half = sp_types + bp_types;
     constexpr int ch = feature_channels();
 
