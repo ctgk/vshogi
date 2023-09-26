@@ -180,12 +180,25 @@ private:
             has_piece_on_turn_player_stand(p) && m_board.is_empty(dst)
             && has_movable_square_after_move(
                 Pieces::to_board_piece(m_turn, p), dst)
-            && is_valid_promotion(move) && (!is_drop_pawn_mate(p, dst))
+            && (!is_drop_pawn_on_pawn_existing_file(p, dst))
+            && (!is_drop_pawn_mate(p, dst))
             && (!king_in_check_after_move(move, m_turn)));
     }
     bool has_piece_on_turn_player_stand(const PieceTypeEnum p) const
     {
         return m_stands[m_turn].exist(p);
+    }
+    bool is_drop_pawn_on_pawn_existing_file(
+        const PieceTypeEnum p, const SquareEnum dst) const
+    {
+        if (p != Pieces::FU)
+            return false;
+        const auto file_dst = Squares::to_file(dst);
+        for (auto sq : Squares::squares_in_file[file_dst]) {
+            if (m_board[sq] == Pieces::to_board_piece(m_turn, Pieces::FU))
+                return true;
+        }
+        return false;
     }
     bool is_drop_pawn_mate(const PieceTypeEnum p, const SquareEnum dst) const
     {

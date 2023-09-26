@@ -74,6 +74,13 @@ struct Squares
         FILE5,
     };
     static constexpr int num_files = 5;
+    static constexpr SquareEnum squares_in_file[5][5] = {
+        {SQ_1A, SQ_1B, SQ_1C, SQ_1D, SQ_1E},
+        {SQ_2A, SQ_2B, SQ_2C, SQ_2D, SQ_2E},
+        {SQ_3A, SQ_3B, SQ_3C, SQ_3D, SQ_3E},
+        {SQ_4A, SQ_4B, SQ_4C, SQ_4D, SQ_4E},
+        {SQ_5A, SQ_5B, SQ_5C, SQ_5D, SQ_5E},
+    };
 
     static constexpr FileEnum to_file(const SquareEnum sq)
     {

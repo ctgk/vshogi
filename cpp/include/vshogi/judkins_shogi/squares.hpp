@@ -84,6 +84,14 @@ struct Squares
         FILE6,
     };
     static constexpr int num_files = 6;
+    static constexpr SquareEnum squares_in_file[6][6] = {
+        {SQ_1A, SQ_1B, SQ_1C, SQ_1D, SQ_1E, SQ_1F},
+        {SQ_2A, SQ_2B, SQ_2C, SQ_2D, SQ_2E, SQ_2F},
+        {SQ_3A, SQ_3B, SQ_3C, SQ_3D, SQ_3E, SQ_3F},
+        {SQ_4A, SQ_4B, SQ_4C, SQ_4D, SQ_4E, SQ_4F},
+        {SQ_5A, SQ_5B, SQ_5C, SQ_5D, SQ_5E, SQ_5F},
+        {SQ_6A, SQ_6B, SQ_6C, SQ_6D, SQ_6E, SQ_6F},
+    };
 
     static constexpr RankEnum to_rank(const SquareEnum sq)
     {

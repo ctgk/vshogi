@@ -176,13 +176,16 @@ TEST(state, is_legal)
         //   *---*---*---*---*---*
         // C |   |   |   |   |+KI|
         //   *---*---*---*---*---*
-        // D |   |   |   |   |   |
+        // D |   |+FU|   |   |   |
         //   *---*---*---*---*---*
         // E |+OU|   |   |   |   |
         //   *---*---*---*---*---*
         // Black: FU
-        s.set_sfen("R2gk/5/4G/5/K4 b P");
+        s.set_sfen("R2gk/5/4G/1P3/K4 b P");
         CHECK_FALSE(s.is_legal(Move(SQ_1B, FU))); // drop pawn mate
+        CHECK_FALSE(s.is_legal(Move(SQ_4B, FU))); // two pawns on the same file
+        CHECK_FALSE(s.is_legal(Move(SQ_3A, FU))); // unmovable after drop
+        CHECK_TRUE(s.is_legal(Move(SQ_3B, FU)));
     }
 }
 
