@@ -8,6 +8,9 @@
 #include <stdexcept>
 #include <vector>
 
+#include "vshogi/color.hpp"
+#include "vshogi/result.hpp"
+
 namespace vshogi::engine
 {
 
@@ -228,8 +231,20 @@ public:
         const float random_proba,
         const int random_depth)
     {
-        if (!is_valid())
-            return this;
+        if (!is_valid()) {
+            const auto result = game.get_result();
+            if (result == ResultEnum::ONGOING)
+                return this;
+            if (result == ResultEnum::DRAW)
+                set_value_action_proba(0.f, {}, {});
+            else {
+                const auto turn = game.get_turn();
+                const auto winner = (result == BLACK_WIN) ? BLACK : WHITE;
+                const auto value = (winner == turn) ? 1.f : -1.f;
+                set_value_action_proba(value, {}, {});
+            }
+            return nullptr;
+        }
         if (m_actions.empty()) { // game end
             increment_visit_count();
             update_q_arctanh(m_value_arctanh);

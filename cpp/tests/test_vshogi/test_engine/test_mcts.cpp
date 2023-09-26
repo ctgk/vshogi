@@ -52,6 +52,17 @@ TEST(node, explore_no_child)
     CHECK_TRUE(nullptr == actual);
 }
 
+TEST(node, explore_game_end)
+{
+    auto g = Game("3/1l1/1L1/3 b -");
+    auto root = Node(0.f, {Move(SQ_B2, SQ_B3)}, {1.f});
+    DOUBLES_EQUAL(0.f, root.get_q_value(), 1e-2f);
+    const auto actual = root.explore(g, 1.f, 0.f, 0);
+    CHECK_TRUE(nullptr == actual);
+    DOUBLES_EQUAL(0.f, root.get_value(), 1e-2f);
+    CHECK_TRUE(root.get_q_value() > 0.5f);
+}
+
 TEST(node, explore_one_action)
 {
     auto g = Game();
