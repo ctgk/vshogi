@@ -357,6 +357,7 @@ def parse_args():
             help='Choose a variant of shogi to train!',
         )
         rl_cycle: int = config(type=int, default=10, help='# of Reinforcement Learning cycle. By default 10.')
+        resume_rl_cycle_from: int = config(type=int, default=0, help='Resume Reinforcement Learning cycle if given. By default 0.')
         nn_channels: int = config(type=int, default=None, help='# of hidden channels in NN. Default value varies in shogi games.')
         nn_backbones: int = config(type=int, default=None, help='# of backbone layers in NN. Default value varies in shogi games.')
         nn_policy: int = config(type=int, default=None, help='# of layers for policy head in NN. Default value varies in shogi games.')
@@ -396,8 +397,8 @@ def parse_args():
             ),
         ),
         'shogi': lambda: vshogi.shogi.Game(
-            '{}{}{}{}k{}{}{}{}/1{}6{}1/ppppppppp/9/9/9/'
-            'PPPPPPPPP/1{}6{}1/{}{}{}{}K{}{}{}{} b - 1'.format(
+            '{}{}{}{}k{}{}{}{}/1{}5{}1/ppppppppp/9/9/9/'
+            'PPPPPPPPP/1{}5{}1/{}{}{}{}K{}{}{}{} b - 1'.format(
                 *np.random.choice(list('lnsggsnlrb'), 10, replace=False),
                 *np.random.choice(list('BRLNSGGSNL'), 10, replace=False),
             ),
@@ -434,7 +435,7 @@ if __name__ == '__main__':
 
     shogi = config.shogi
 
-    for i in range(config.rl_cycle):
+    for i in range(config.resume_rl_cycle_from, config.rl_cycle):
         # Initialize network or train!
         if 'network' not in locals():
             network = build_policy_value_network(
