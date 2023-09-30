@@ -35,16 +35,6 @@ private:
      */
     float m_value;
 
-    /**
-     * @brief `arctanh` of 1 ~ -1 scaled probability of the turn player winning
-     * the game.
-     * If the turn is black, then this value shows winning rate of black.
-     * If the turn is white, then it shows the rate of white.
-     * @details This is typically a raw estimate without `tanh` activation of a
-     * machine learning model.
-     */
-    float m_value_arctanh;
-
     std::vector<Move> m_actions;
     std::vector<float> m_probas;
     NodeGM* m_parent;
@@ -69,7 +59,7 @@ private:
     float m_q_value;
 
     /**
-     * @brief Average of `m_value_arctanh` of all the node below this and this
+     * @brief Average of `atanh(m_value)` of all the node below this and this
      * node weighted by their `m_visit_count`.
      */
     float m_q_arctanh;
@@ -78,10 +68,9 @@ private:
 
 public:
     Node()
-        : m_value(0.f), m_value_arctanh(0.f), m_actions(), m_probas(),
-          m_parent(nullptr), m_children(), m_visit_count(0),
-          m_sqrt_visit_count(0.f), m_q_value(0.f), m_q_arctanh(0.f),
-          m_uniform_action_index()
+        : m_value(0.f), m_actions(), m_probas(), m_parent(nullptr),
+          m_children(), m_visit_count(0), m_sqrt_visit_count(0.f),
+          m_q_value(0.f), m_q_arctanh(0.f), m_uniform_action_index()
     {
     }
     Node(
@@ -217,7 +206,8 @@ public:
         }
         if (m_actions.empty()) { // game end
             increment_visit_count();
-            update_q_arctanh(m_value_arctanh);
+            // `m_q_arctanh == std::atanh(m_value)` at game end.
+            update_q_arctanh(m_q_arctanh);
             return nullptr;
         }
 
@@ -265,19 +255,18 @@ private:
     {
         // m_parent = parent; Update everything except `m_parent`
         m_value = value;
-        m_value_arctanh = arctanh(value);
         m_actions = actions;
         m_probas = probas;
         m_children = std::vector<NodeGM>(actions.size());
         m_visit_count = 1;
         m_sqrt_visit_count = 1.f;
         m_q_value = value;
-        m_q_arctanh = m_value_arctanh;
+        m_q_arctanh = arctanh(value);
         m_uniform_action_index
             = std::uniform_int_distribution<std::size_t>(0, actions.size() - 1);
 
         if (m_parent != nullptr)
-            m_parent->update_q_arctanh(-m_value_arctanh);
+            m_parent->update_q_arctanh(-m_q_arctanh);
     }
     static float tanh(const float x)
     {
