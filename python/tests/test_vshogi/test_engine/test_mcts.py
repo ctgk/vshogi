@@ -6,14 +6,7 @@ from vshogi.engine import MonteCarloTreeSearcher
 
 
 def uniform_pv_func(game):
-    moves = game.get_legal_moves()
-    n = len(moves)
-    policy = {m: p for m, p in zip(moves, np.ones(n) / n)}
-    value = {
-        shogi.ONGOING: 0, shogi.DRAW: 0,
-        shogi.BLACK_WIN: -1, shogi.WHITE_WIN: -1,
-    }[game.result]
-    return policy, value
+    return np.zeros(game.num_dlshogi_policy), 0.
 
 
 def test_is_ready():

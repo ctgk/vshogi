@@ -84,62 +84,32 @@ public:
           m_uniform_action_index()
     {
     }
-
-    /**
-     * @brief Construct a new Node object
-     *
-     * @param value 1 ~ -1 scaled probability of turn player winning the game.
-     * @param actions List of possible actions on the game.
-     * @param probas 01-scaled probability of selecting corresponding actions.
-     * It is users responsibility to make sure that the sum of them is 1.
-     * @param parent Pointer to parent node if there is.
-     */
     Node(
+        const Game& game,
         const float value,
-        const std::vector<Move>& actions,
-        const std::vector<float>& probas,
+        const float* const policy_logits,
         Node<Game, Move>* const parent = nullptr)
         : Node()
     {
         m_parent = parent;
-        set_value_action_proba(value, actions, probas);
+        set_value_policy_logits(game, value, policy_logits);
     }
 
-    /**
-     * @brief Set new value, actions, and probas.
-     * @note This will initialize almost all the members except pointer to
-     * parent node.
-     *
-     * @param value 1 ~ -1 scaled probability of turn player
-     * winning the game.
-     * @param actions List of possible actions on the game.
-     * @param probas 01-scaled probability of selecting corresponding actions.
-     * It is users responsibility to make sure that the sum of them is 1.
-     */
-    void set_value_action_proba(
-        const float value,
-        const std::vector<Move>& actions,
-        const std::vector<float>& probas)
+    void set_value_policy_logits(
+        const Game& game, const float value, const float* const policy_logits)
     {
-        if (actions.size() != probas.size())
-            throw std::invalid_argument(
-                "# of actions (" + std::to_string(actions.size())
-                + ") != # of probas (" + std::to_string(probas.size()) + ")");
-        // m_parent = parent; Update everything except `m_parent`
-        m_value = value;
-        m_value_arctanh = arctanh(value);
-        m_actions = actions;
-        m_probas = probas;
-        m_children = std::vector<NodeGM>(actions.size());
-        m_visit_count = 1;
-        m_sqrt_visit_count = 1.f;
-        m_q_value = value;
-        m_q_arctanh = m_value_arctanh;
-        m_uniform_action_index
-            = std::uniform_int_distribution<std::size_t>(0, actions.size() - 1);
-
-        if (m_parent != nullptr)
-            m_parent->update_q_arctanh(-m_value_arctanh);
+        const auto moves = game.get_legal_moves();
+        auto probas = std::vector<float>(moves.size());
+        const auto is_black_turn = (game.get_turn() == ColorEnum::BLACK);
+        for (std::size_t ii = moves.size(); ii--;) {
+            const auto index
+                = (is_black_turn)
+                      ? moves[ii].to_dlshogi_policy_index()
+                      : moves[ii].rotate().to_dlshogi_policy_index();
+            probas[ii] = policy_logits[index];
+        }
+        softmax(probas);
+        set_value_action_proba(value, moves, probas);
     }
 
     // Rules of 5
@@ -277,17 +247,64 @@ public:
     }
 
 private:
-    float tanh(const float x) const
+    /**
+     * @brief Set new value, actions, and probas.
+     * @note This will initialize almost all the members except pointer to
+     * parent node.
+     *
+     * @param value 1 ~ -1 scaled probability of turn player
+     * winning the game.
+     * @param actions List of possible actions on the game.
+     * @param probas 01-scaled probability of selecting corresponding actions.
+     * It is users responsibility to make sure that the sum of them is 1.
+     */
+    void set_value_action_proba(
+        const float value,
+        const std::vector<Move>& actions,
+        const std::vector<float>& probas)
+    {
+        // m_parent = parent; Update everything except `m_parent`
+        m_value = value;
+        m_value_arctanh = arctanh(value);
+        m_actions = actions;
+        m_probas = probas;
+        m_children = std::vector<NodeGM>(actions.size());
+        m_visit_count = 1;
+        m_sqrt_visit_count = 1.f;
+        m_q_value = value;
+        m_q_arctanh = m_value_arctanh;
+        m_uniform_action_index
+            = std::uniform_int_distribution<std::size_t>(0, actions.size() - 1);
+
+        if (m_parent != nullptr)
+            m_parent->update_q_arctanh(-m_value_arctanh);
+    }
+    static float tanh(const float x)
     {
         return std::tanh(x);
     }
-    float arctanh(const float x) const
+    static float arctanh(const float x)
     {
         if (x >= value_threshold)
             return atanh_max;
         if (x <= -value_threshold)
             return -atanh_max;
         return std::atanh(x);
+    }
+    static void softmax(std::vector<float>& v)
+    {
+        if (v.empty())
+            return;
+        const float maximum_value = *std::max_element(v.cbegin(), v.cend());
+        float sum = 0.f;
+        for (auto&& e : v) {
+            e -= maximum_value;
+            e = std::exp(e);
+            sum += e;
+        }
+        for (auto&& e : v) {
+            e /= sum;
+        }
     }
     void increment_visit_count()
     {

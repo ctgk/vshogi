@@ -102,9 +102,8 @@ class MonteCarloTreeSearcher:
             Game to set at root node.
         """
         game = deepcopy(game)
-        policy, value = self._policy_value_func(game)
-        self._root = game._get_node_class()(
-            value, list(policy.keys()), list(policy.values()))
+        policy_logits, value = self._policy_value_func(game)
+        self._root = game._get_node_class()(game._game, value, policy_logits)
         self._game = game
 
     def is_ready(self) -> bool:
@@ -188,9 +187,8 @@ class MonteCarloTreeSearcher:
                 game._game, c_puct, random_proba, random_depth)
             if node is None:
                 continue
-            policy, value = self._policy_value_func(game)
-            node.set_value_action_proba(
-                value, list(policy.keys()), list(policy.values()))
+            policy_logits, value = self._policy_value_func(game)
+            node.set_value_policy_logits(game._game, value, policy_logits)
 
     def get_q_values(self) -> tp.Dict[Move, float]:
         """Return Q value of each action.

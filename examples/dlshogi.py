@@ -97,9 +97,10 @@ class PolicyValueFunction:
         self._input_details = self._interpreter.get_input_details()
         self._output_details = self._interpreter.get_output_details()
 
-    def __call__(self, game: vshogi.Game) -> tp.Tuple[dict, float]:
+    def __call__(self, game: vshogi.Game) -> tp.Tuple[np.ndarray, float]:
         if game.result != vshogi.Result.ONGOING:
-            return {}, (0. if game.result == vshogi.Result.DRAW else -1.)
+            value = (0. if game.result == vshogi.Result.DRAW else -1.)
+            return np.zeros(game.num_dlshogi_policy, dtype=np.float32), value
 
         x = np.asarray(game)
         self._interpreter.set_tensor(self._input_details[0]['index'], x)
@@ -107,8 +108,7 @@ class PolicyValueFunction:
         value = float(self._interpreter.get_tensor(self._output_details[0]['index']))
         value = np.clip(value, -0.99, 0.99)
         policy_logits = self._interpreter.get_tensor(self._output_details[1]['index'])
-        policy = game.to_policy_probas(policy_logits)
-        return policy, value
+        return policy_logits, value
 
     def save_model_as_tflite(self, output_path: str):
         if self._model_content is None:

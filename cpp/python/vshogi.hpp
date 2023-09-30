@@ -125,33 +125,6 @@ inline void export_game(pybind11::module& m)
                 return out;
             })
         .def(
-            "_policy_logits_to_policy_dict_probas",
-            [](const Game& self, const pybind11::array_t<float>& policy_logits)
-                -> pybind11::dict {
-                const auto moves = self.get_legal_moves();
-                if (moves.empty()) {
-                    return pybind11::dict();
-                }
-
-                const float* const ptr = policy_logits.data();
-                auto probas = std::vector<float>(moves.size());
-                const auto turn = self.get_turn();
-                for (std::size_t ii = moves.size(); ii--;) {
-                    const auto index
-                        = (turn == vshogi::BLACK)
-                              ? moves[ii].to_dlshogi_policy_index()
-                              : moves[ii].rotate().to_dlshogi_policy_index();
-                    probas[ii] = ptr[index];
-                }
-                softmax(probas);
-
-                pybind11::dict out;
-                for (std::size_t ii = moves.size(); ii--;) {
-                    out[pybind11::cast(moves[ii])] = probas[ii];
-                }
-                return out;
-            })
-        .def(
             "to_dlshogi_policy",
             [](const Game& self,
                const Move action,
@@ -192,13 +165,14 @@ inline void export_node(pybind11::module& m)
     using Node = vshogi::engine::Node<Game, Move>;
     pybind11::class_<Node>(m, "Node")
         .def(
-            pybind11::init<
-                const float,
-                const std::vector<Move>&,
-                const std::vector<float>&>(),
+            pybind11::init([](const Game& g,
+                              const float v,
+                              const pybind11::array_t<float>& logits) {
+                return Node(g, v, logits.data());
+            }),
+            pybind11::arg("game"),
             pybind11::arg("value"),
-            pybind11::arg("actions"),
-            pybind11::arg("probas"))
+            pybind11::arg("policy_logits"))
         .def("get_visit_count", &Node::get_visit_count)
         .def("get_value", &Node::get_value)
         .def("get_q_value", &Node::get_q_value)
@@ -211,7 +185,15 @@ inline void export_node(pybind11::module& m)
                     node.get_child(action),
                     pybind11::return_value_policy::reference);
             })
-        .def("set_value_action_proba", &Node::set_value_action_proba)
+        .def(
+            "set_value_policy_logits",
+            [](Node& self,
+               const Game& game,
+               const float value,
+               const pybind11::array_t<float>& policy_logits) {
+                const auto data = policy_logits.data();
+                self.set_value_policy_logits(game, value, data);
+            })
         .def(
             "explore",
             [](Node& node,

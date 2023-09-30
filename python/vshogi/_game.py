@@ -391,40 +391,6 @@ class Game(abc.ABC):
                 sep='\t', file=file_,
             )
 
-    def to_policy_probas(
-        self,
-        dlshogi_logits: np.ndarray,
-    ) -> tp.Dict[Move, float]:
-        """Return dict of probabilities of legal actions.
-
-        Parameters
-        ----------
-        dlshogi_logits : np.ndarray
-            Array of DL-shogi format policy logits.
-            Note that the logits are in view from the turn player. Please see
-            the examples.
-
-        Returns
-        -------
-        tp.Dict[Move, float]
-            Dictionary of probabilities of legal actions.
-
-        Examples
-        --------
-        >>> import numpy as np; import vshogi.animal_shogi as shogi
-        >>> onehot = lambda index: np.eye(12 * 11, dtype=np.float32)[index]
-        >>> # Note that `Move(dst=B2, src=B3)._to_dlshogi_policy_index() == 50`
-        >>> shogi.Game('gle/1c1/1C1/ELG b -').to_policy_probas(
-        ...     onehot(50) * 10)[shogi.Move(dst=shogi.B2, src=shogi.B3)]
-        ...     #doctest: +ELLIPSIS
-        0.999...
-        >>> shogi.Game('gle/1c1/1C1/ELG w -').to_policy_probas(
-        ...     onehot(50) * 10)[shogi.Move(dst=shogi.B3, src=shogi.B2)]
-        ...     #doctest: +ELLIPSIS
-        0.999...
-        """
-        return self._game._policy_logits_to_policy_dict_probas(dlshogi_logits)
-
     def to_dlshogi_policy(
         self,
         action: Move,

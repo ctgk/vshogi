@@ -8,18 +8,7 @@ from vshogi.engine import MonteCarloTreeSearcher
 
 def test_play_game():
     def uniform_policy_zero_value_func(game):
-        legal_moves = game.get_legal_moves()
-        if len(legal_moves) == 0:
-            return {}, (0. if game.result == shogi.DRAW else -1.)
-        return (
-            {
-                m: p for m, p in zip(
-                    legal_moves,
-                    np.ones(len(legal_moves)) / len(legal_moves),
-                )
-            },
-            0.,  # value
-        )
+        return np.zeros(game.num_dlshogi_policy), 0.
 
     game = shogi.Game()
     play_game(
