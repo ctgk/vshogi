@@ -102,7 +102,7 @@ class PolicyValueFunction:
             value = (0. if game.result == vshogi.Result.DRAW else -1.)
             return np.zeros(game.num_dlshogi_policy, dtype=np.float32), value
 
-        x = np.asarray(game)
+        x = game.to_dlshogi_features()
         self._interpreter.set_tensor(self._input_details[0]['index'], x)
         self._interpreter.invoke()
         value = float(self._interpreter.get_tensor(self._output_details[0]['index']))
@@ -148,7 +148,7 @@ def _df_to_xy(df: pd.DataFrame):
                 ).replace('src=', f'src=vshogi.{config.shogi_variant}.'))
         result = eval('vshogi.' + config.shogi_variant + '.' + row['result'])
 
-        x = np.asarray(game)
+        x = game.to_dlshogi_features()
         policy = game.to_dlshogi_policy(move, config.nn_max_policy)
         value = value_options[(result, game.turn)]
 

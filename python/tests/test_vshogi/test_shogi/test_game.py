@@ -139,7 +139,7 @@ def test_array_black():
     game = shogi.Game(
         '1nkg3+R1/2s1g3l/Ppppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/1NG1G3+b '
         'b BP2l4p')
-    actual = np.asarray(game)
+    actual = game.to_dlshogi_features()
     assert actual.dtype == np.float32
     assert actual.shape == (1, 9, 9, 2 * (7 + 14))
     assert np.allclose(actual[0, ..., 0], 1)  # black's captured pawn
@@ -258,7 +258,7 @@ def test_array_white():
     game = shogi.Game(
         'l8/1k2g4/1pn1p4/2Nps1p1p/9/2S4PP/PP1PP2+b1/2K1+p4/1NG6 w '
         'RG2S2L2Prbgnl4p')
-    actual = np.asarray(game)
+    actual = game.to_dlshogi_features()
     assert np.allclose(actual[0, ..., 0], 4)  # White's captured pawn
     assert np.allclose(actual[0, ..., 1], 1)  # White's captured lance
     assert np.allclose(actual[0, ..., 2], 1)  # White's captured knight

@@ -99,8 +99,8 @@ inline void export_game(pybind11::module& m)
         .def_static("feature_channels", &Game::feature_channels)
         .def_static("num_dlshogi_policy", &Game::num_dlshogi_policy)
         .def(
-            "__array__",
-            [](const Game& self) -> pybind11::array_t<float> {
+            "to_dlshogi_features",
+            [](const Game& self) {
                 const auto shape = std::vector<pybind11::ssize_t>(
                     {1,
                      Game::ranks(),

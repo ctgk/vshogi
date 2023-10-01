@@ -117,7 +117,7 @@ def test_get_legal_moves():
 def test_array():
     game = shogi.Game()
     game.apply(shogi.Move(shogi.B2, shogi.B3))
-    actual = np.asarray(game)
+    actual = game.to_dlshogi_features()
     assert actual.dtype == np.float32
     assert actual.shape == (1, 4, 3, 16)
     assert np.allclose(actual[0, ..., 0], 0)

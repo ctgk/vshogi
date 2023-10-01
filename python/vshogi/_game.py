@@ -48,16 +48,6 @@ class Game(abc.ABC):
         cls_ = self._get_backend_game_class()
         self._game = cls_() if sfen is None else cls_(sfen)
 
-    def __array__(self) -> np.ndarray:
-        """Return numpy array of DL-shogi input format.
-
-        Returns
-        -------
-        np.ndarray
-            DL-shogi input.
-        """
-        return np.asarray(self._game)
-
     @_ClassProperty
     def ranks(self) -> int:
         """Return number of horizontal rows of the board.
@@ -390,6 +380,52 @@ class Game(abc.ABC):
                 *(getter(self, i) for getter in getters),
                 sep='\t', file=file_,
             )
+
+    def to_dlshogi_features(self) -> np.ndarray:
+        """Return DL-shogi features.
+
+        Returns
+        -------
+        np.ndarray
+            Return DL-shogi feature array.
+
+        Examples
+        --------
+        >>> import vshogi.animal_shogi as shogi
+        >>> x = shogi.Game("3/elg/1C1/ELG b C").to_dlshogi_features()
+        >>> print(x[0, ..., 0]) # Black's CH on stand
+        [[1. 1. 1.]
+         [1. 1. 1.]
+         [1. 1. 1.]
+         [1. 1. 1.]]
+        >>> print(x[0, ..., 6]) # Black's LI on board
+        [[0. 0. 0.]
+         [0. 0. 0.]
+         [0. 0. 0.]
+         [0. 1. 0.]]
+        >>> print(x[0, ..., 8]) # White's CH on stand
+        [[0. 0. 0.]
+         [0. 0. 0.]
+         [0. 0. 0.]
+         [0. 0. 0.]]
+        >>> print(x[0, ..., 14]) # White's LI on board
+        [[0. 0. 0.]
+         [0. 1. 0.]
+         [0. 0. 0.]
+         [0. 0. 0.]]
+        >>> x = shogi.Game("3/elg/1C1/ELG C w").to_dlshogi_features()
+        >>> print(x[0, ..., 6]) # White's LI on board from white's view
+        [[0. 0. 0.]
+         [0. 0. 0.]
+         [0. 1. 0.]
+         [0. 0. 0.]]
+        >>> print(x[0, ..., 14]) # Black's LI on board from white's view
+        [[0. 1. 0.]
+         [0. 0. 0.]
+         [0. 0. 0.]
+         [0. 0. 0.]]
+        """
+        return self._game.to_dlshogi_features()
 
     def to_dlshogi_policy(
         self,

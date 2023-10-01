@@ -43,7 +43,7 @@ def test_array_black():
     game = shogi.Game().apply(shogi.C4, shogi.E2).apply(shogi.B5, shogi.A5)
     game.apply(shogi.A2, shogi.C4, True).apply(shogi.A2, shogi.A1)
 
-    actual = np.asarray(game)
+    actual = game.to_dlshogi_features()
     assert np.allclose(actual[0, ..., 0], 0)  # white's captured pawn
     assert np.allclose(actual[0, ..., 1], 0)  # white's captured silver
     assert np.allclose(actual[0, ..., 2], 0)  # white's captured bishop
@@ -70,7 +70,7 @@ def test_array_white():
     #   *---*---*---*---*---*
     # Black: FU
 
-    actual = np.asarray(game)
+    actual = game.to_dlshogi_features()
     assert actual.dtype == np.float32
     assert actual.shape == (1, 5, 5, 30)
     assert np.allclose(actual[0, ..., 0], 0)  # white's captured pawn
