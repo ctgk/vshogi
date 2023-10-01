@@ -2,7 +2,7 @@
 
 #include <pybind11/pybind11.h>
 
-#include "vshogi.hpp"
+#include "vshogi_wrapper.hpp"
 
 namespace py = pybind11;
 namespace sg = vshogi::shogi;

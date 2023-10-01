@@ -1,5 +1,5 @@
-#ifndef PYTHON_VSHOGI_HPP
-#define PYTHON_VSHOGI_HPP
+#ifndef PYTHON_VSHOGI_WRAPPER_HPP
+#define PYTHON_VSHOGI_WRAPPER_HPP
 
 #include <algorithm>
 #include <cmath>
@@ -12,20 +12,6 @@
 
 namespace pyvshogi
 {
-
-inline void softmax(std::vector<float>& v)
-{
-    const float maximum_value = *std::max_element(v.cbegin(), v.cend());
-    float sum = 0.f;
-    for (auto&& e : v) {
-        e -= maximum_value;
-        e = std::exp(e);
-        sum += e;
-    }
-    for (auto&& e : v) {
-        e /= sum;
-    }
-}
 
 template <class T>
 inline bool has(const std::vector<T>& vec, const T& target)
@@ -213,4 +199,4 @@ inline void export_node(pybind11::module& m)
 
 } // namespace pyvshogi
 
-#endif // PYTHON_VSHOGI_HPP
+#endif // PYTHON_VSHOGI_WRAPPER_HPP

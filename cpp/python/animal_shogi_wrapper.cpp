@@ -4,7 +4,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "vshogi.hpp"
+#include "vshogi_wrapper.hpp"
 
 namespace py = pybind11;
 namespace as = vshogi::animal_shogi;
