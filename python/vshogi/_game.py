@@ -46,7 +46,12 @@ class Game(abc.ABC):
             Initial game status in SFEN, by default None
         """
         cls_ = self._get_backend_game_class()
-        self._game = cls_() if sfen is None else cls_(sfen)
+        if sfen is None:
+            self._game = cls_()
+        elif isinstance(sfen, cls_):
+            self._game = sfen
+        else:
+            self._game = cls_(sfen)
 
     @_ClassProperty
     def ranks(self) -> int:
@@ -494,6 +499,4 @@ class Game(abc.ABC):
         Game
             Copy of the game object.
         """
-        g = self.__class__()
-        g._game = self._game.copy()
-        return g
+        return self.__class__(self._game.copy())
