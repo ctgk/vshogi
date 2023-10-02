@@ -138,11 +138,7 @@ inline void export_game(pybind11::module& m)
                 }
                 return out;
             })
-        .def("copy", [](const Game& self) { return Game(self); })
-        .def(
-            "__deepcopy__",
-            [](const Game& self, pybind11::dict) { return Game(self); },
-            pybind11::arg("memo"));
+        .def("copy", [](const Game& self) { return Game(self); });
 }
 
 template <class Game, class Move>

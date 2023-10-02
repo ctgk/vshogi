@@ -1,5 +1,4 @@
 import typing as tp
-from copy import deepcopy
 
 import numpy as np
 import scipy.special as sp
@@ -101,7 +100,7 @@ class MonteCarloTreeSearcher:
         game : Game
             Game to set at root node.
         """
-        game = deepcopy(game)
+        game = game.copy()
         policy_logits, value = self._policy_value_func(game)
         self._root = game._get_node_class()(game._game, value, policy_logits)
         self._game = game
@@ -182,7 +181,7 @@ class MonteCarloTreeSearcher:
             random_depth = self._random_depth
 
         for _ in range(n):
-            game = deepcopy(self._game)
+            game = self._game.copy()
             node = self._root.explore(
                 game._game, c_puct, random_proba, random_depth)
             if node is None:

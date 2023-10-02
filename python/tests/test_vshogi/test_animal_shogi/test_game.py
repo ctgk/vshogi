@@ -1,4 +1,4 @@
-from copy import copy, deepcopy
+from copy import copy
 
 import numpy as np
 import pytest
@@ -27,13 +27,6 @@ def test_init():
     shogi.Game()
 
 
-def test_copy():
-    g1 = shogi.Game()
-    g2 = g1.copy()
-    g1.apply(shogi.Move(shogi.B2, shogi.B3))
-    assert g1.board[shogi.B2] != g2.board[shogi.B2]
-
-
 def test_shallow_copy():
     g1 = shogi.Game()
     g2 = copy(g1)
@@ -41,9 +34,9 @@ def test_shallow_copy():
     assert g1.board[shogi.B2] == g2.board[shogi.B2]
 
 
-def test_deepcopy():
+def test_copy():
     g1 = shogi.Game()
-    g2 = deepcopy(g1)
+    g2 = g1.copy()
     g1.apply(shogi.Move(shogi.B2, shogi.B3))
     assert g1.board[shogi.B2] != g2.board[shogi.B2]
 
