@@ -1,5 +1,5 @@
 from vshogi._game import Game
-from vshogi._vshogi import Color, Result
+from vshogi._vshogi_extension import Color, Result
 from vshogi.engine._mcts import MonteCarloTreeSearcher
 
 

@@ -3,8 +3,8 @@ import pytest
 import vshogi.minishogi as shogi
 
 
-def test_repr():
-    assert repr(shogi.SQ_1A) == 'Square.1A'
+def test_equal():
+    assert shogi.SQ_1A == shogi.A1
 
 
 if __name__ == '__main__':

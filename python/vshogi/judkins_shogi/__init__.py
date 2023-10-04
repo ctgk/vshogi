@@ -5,9 +5,9 @@ cf. https://en.wikipedia.org/wiki/Judkins_shogi
 
 import numpy as np
 
-from vshogi._repr import _repr_enum, _repr_move, _repr_square, _repr_stand
-from vshogi._vshogi import Color, Result
-from vshogi._vshogi.judkins_shogi import (
+from vshogi._repr import _repr_move, _repr_stand
+from vshogi._vshogi_extension import Color, Result
+from vshogi._vshogi_extension.judkins_shogi import (
     Board, BoardPiece, Move, Piece, Square, Stand,
 )
 from vshogi.judkins_shogi._game import Game
@@ -40,28 +40,31 @@ Board.__array__ = lambda self: np.array([
     self[Square(i)] for i in range(36)
 ], dtype=BoardPiece).reshape(6, 6)
 Board.__repr__ = _board_repr
-BoardPiece.__repr__ = _repr_enum
 BoardPiece._to_3char = lambda self: (
     "   " if self == BoardPiece.VOID
-    else {'B': '+', 'W': '-'}[self.name[0]] + self.name[2:4]
+    else {'B': '+', 'W': '-'}[self.__name__[0]] + self.__name__[2:4]
 )
 Move.__repr__ = _repr_move
-Piece.__repr__ = _repr_enum
 Stand.__repr__ = _repr_stand
-Square.__repr__ = _repr_square
 
 _classes = [Board, BoardPiece, Move, Piece, Square, Stand, Game]
 _enums = [BoardPiece, Color, Piece, Result, Square]
 
 for _cls in _classes:
-    _cls.__module__ = __name__
+    _cls.__module__ = 'vshogi.judkins_shogi'
 for _e in _enums:
-    locals().update(_e.__members__)
+    locals().update({
+        k: getattr(_e, k) for k in dir(_e)
+        if not (k.startswith('@') or k.startswith('_'))
+    })
 
 
 __all__ = (
     [_cls.__name__ for _cls in _classes] + ['Color', 'Result']
-    + [m for _e in _enums for m in _e.__members__]
+    + [
+        m for _e in _enums for m in dir(_e)
+        if not (m.startswith('@') or m.startswith('_'))
+    ]
 )
 
 

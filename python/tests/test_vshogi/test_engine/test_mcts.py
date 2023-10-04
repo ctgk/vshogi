@@ -6,7 +6,7 @@ from vshogi.engine import MonteCarloTreeSearcher
 
 
 def uniform_pv_func(game):
-    return np.zeros(game.num_dlshogi_policy), 0.
+    return np.zeros(game.num_dlshogi_policy, dtype=np.float32), 0.
 
 
 def test_is_ready():

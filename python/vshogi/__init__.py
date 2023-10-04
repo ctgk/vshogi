@@ -4,11 +4,8 @@ from vshogi import animal_shogi, judkins_shogi, minishogi, shogi
 from vshogi import engine
 from vshogi._game import Game
 from vshogi._play import play_game
-from vshogi._repr import _repr_enum
-from vshogi._vshogi import Color, Result
+from vshogi._vshogi_extension import Color, Result
 
-Color.__repr__ = _repr_enum
-Result.__repr__ = _repr_enum
 
 _classes = [Color, Result, Game]
 _enums = [Color, Result]
@@ -17,11 +14,14 @@ _functions = [play_game]
 
 
 for _e in _enums:
-    locals().update(_e.__members__)
+    locals().update({
+        k: getattr(_e, k) for k in dir(_e)
+        if not (k.startswith('@') or k.startswith('_'))
+    })
 
 
 for _cls in _classes:
-    _cls.__module__ = __name__
+    _cls.__module__ = 'vshogi'
 
 
 __all__ = (

@@ -1,8 +1,52 @@
 [build-system]
-requires = [
-    "pybind11",
-    "setuptools>=42",
-    "wheel",
+requires = ["scikit-build-core >=0.4.3", "nanobind >=1.3.2"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "vshogi"
+version = "0.0.2"
+description = "Shogi API for Shogi and its variants"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    { name = "ctgk", email = "r1135nj54w@gmail.com" },
+]
+license = { file = "LICENSE" }
+# Optional: runtime dependency specification
+dependencies = [
+    "numpy", "scipy",
 ]
 
-build-backend = "setuptools.build_meta"
+[project.urls]
+Homepage = "https://github.com/ctgk/vshogi"
+
+[project.optional-dependencies]
+develop = [
+    "pre-commit",
+    "nanobind",
+    "scikit-build-core[pyproject]",
+    "pytest",
+
+    "flake8",
+    "flake8-absolute-import",
+    "flake8-broken-line",
+    "flake8-builtins",
+    "flake8-commas",
+    "flake8-docstrings",
+    "flake8-import-order",
+    "flake8-multiline-containers",
+    "flake8-mutable",
+    "pep8-naming",
+]
+dlshogi = [
+    "classopt",
+    "pandas",
+    "tensorflow",
+    "tqdm",
+]
+
+[tool.scikit-build]
+build-dir = "build/vshogi_extension_{wheel_tag}"
+
+[tool.scikit-build.cmake]
+source-dir = "./cpp/python"

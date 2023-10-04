@@ -7,7 +7,7 @@ _classes = [MonteCarloTreeSearcher]
 
 
 for _cls in _classes:
-    _cls.__module__ = __name__
+    _cls.__module__ = 'vshogi.engine'
 
 
 __all__ = [_cls.__name__ for _cls in _classes]

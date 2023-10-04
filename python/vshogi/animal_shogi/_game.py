@@ -1,12 +1,12 @@
 from vshogi._game import Game as BaseGame
-from vshogi._vshogi.animal_shogi import Move, Node
-from vshogi._vshogi.animal_shogi import Stand
-from vshogi._vshogi.animal_shogi import _Game as _AnimalshogiGame
+from vshogi._vshogi_extension.animal_shogi import Move, Node
+from vshogi._vshogi_extension.animal_shogi import Stand
+from vshogi._vshogi_extension.animal_shogi import _Game as _AnimalshogiGame
 
 
 Stand.__str__ = lambda self: ','.join([
-    k.name[0] + ('' if v == 1 else str(v)) for k, v in self.to_dict().items()
-    if v > 0
+    k.__name__[0] + ('' if v == 1 else str(v))
+    for k, v in self.to_dict().items() if v > 0
 ]) if self.any() else '-'
 
 
@@ -18,9 +18,9 @@ class Game(BaseGame):
     >>> from vshogi.animal_shogi import *
     >>> game = Game()
     >>> game.turn
-    Color.BLACK
+    vshogi.Color.BLACK
     >>> game.result
-    Result.ONGOING
+    vshogi.Result.ONGOING
     >>> repr(game)
     'Game(sfen="gle/1c1/1C1/ELG b - 1")'
     >>> print(game)
@@ -46,9 +46,11 @@ class Game(BaseGame):
     >>> game.apply(Move(B2, B3))
     Game(sfen="gle/1C1/3/ELG w C 2")
     >>> game.stand(WHITE)
-    {Piece.CH: 0, Piece.EL: 0, Piece.GI: 0}
+    {vshogi.animal_shogi.Piece.CH: 0, vshogi.animal_shogi.Piece.EL: 0, \
+vshogi.animal_shogi.Piece.GI: 0}
     >>> game.stand(BLACK)
-    {Piece.CH: 1, Piece.EL: 0, Piece.GI: 0}
+    {vshogi.animal_shogi.Piece.CH: 1, vshogi.animal_shogi.Piece.EL: 0, \
+vshogi.animal_shogi.Piece.GI: 0}
     >>> game.apply(Move(A2, A1)).apply(Move(B1, B2))
     Game(sfen="1He/g2/3/ELG w C 4")
     >>> print(game)

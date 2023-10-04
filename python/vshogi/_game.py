@@ -4,7 +4,7 @@ import typing as tp
 
 import numpy as np
 
-from vshogi._vshogi import Color, Result
+from vshogi._vshogi_extension import Color, Result
 
 
 Move = tp.TypeVar('Move')
@@ -148,12 +148,12 @@ class Game(abc.ABC):
         >>> import vshogi.animal_shogi as shogi
         >>> game = shogi.Game()
         >>> game.result
-        Result.ONGOING
+        vshogi.Result.ONGOING
         >>> game.apply(shogi.A3, shogi.B4).apply(
         ...     shogi.A2, shogi.B1).apply(shogi.A2, shogi.A3)
         Game(sfen="g1e/Lc1/1C1/E1G w - 4")
         >>> game.result
-        Result.BLACK_WIN
+        vshogi.Result.BLACK_WIN
         """
         return self._game.get_result()
 
@@ -363,7 +363,7 @@ class Game(abc.ABC):
         ...         (
         ...             lambda g, i: g.get_sfen_at(i),
         ...             lambda g, i: g.get_move_at(i),
-        ...             lambda g, i: g.result,
+        ...             lambda g, i: g.result.__name__,
         ...         ),
         ...         names=('sfen', 'move', 'result'),
         ...         file_=f,
@@ -371,9 +371,9 @@ class Game(abc.ABC):
         ...     _ = f.seek(0)
         ...     print(f.read())  #doctest: +NORMALIZE_WHITESPACE
         sfen        move    result
-        gle/1c1/1C1/ELG b - 1       Move(dst=A3, src=B4)    Result.BLACK_WIN
-        gle/1c1/LC1/E1G w - 2       Move(dst=A2, src=B1)    Result.BLACK_WIN
-        g1e/lc1/LC1/E1G b - 3       Move(dst=A2, src=A3)    Result.BLACK_WIN
+        gle/1c1/1C1/ELG b - 1       Move(dst=A3, src=B4)    BLACK_WIN
+        gle/1c1/LC1/E1G w - 2       Move(dst=A2, src=B1)    BLACK_WIN
+        g1e/lc1/LC1/E1G b - 3       Move(dst=A2, src=A3)    BLACK_WIN
         <BLANKLINE>
         """
         if names is not None:
@@ -386,7 +386,7 @@ class Game(abc.ABC):
                 sep='\t', file=file_,
             )
 
-    def to_dlshogi_features(self) -> np.ndarray:
+    def to_dlshogi_features(self, out=None) -> np.ndarray:
         """Return DL-shogi features.
 
         Returns
@@ -430,7 +430,10 @@ class Game(abc.ABC):
          [0. 0. 0.]
          [0. 0. 0.]]
         """
-        return self._game.to_dlshogi_features()
+        if out is None:
+            return self._game.to_dlshogi_features()
+        else:
+            self._game.to_dlshogi_features(out)
 
     def to_dlshogi_policy(
         self,
@@ -485,7 +488,10 @@ class Game(abc.ABC):
         """
         r = self.result
         return '\n'.join((
-            f'Turn: {self.turn.name}' if r == Result.ONGOING else r.name,
+            (
+                f'Turn: {self.turn.__name__}'
+                if r == Result.ONGOING else r.__name__
+            ),
             f'White: {str(self._game.get_stand(Color.WHITE))}',
             repr(self.board),
             f'Black: {str(self._game.get_stand(Color.BLACK))}',

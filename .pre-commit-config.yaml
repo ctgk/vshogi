@@ -46,14 +46,14 @@ repos:
     -   id: python-setup
         name: Build Python extensions
         language: system
-        entry: pip install -e .[develop]
+        entry: pip install --no-build-isolation -ve .[develop]
         types: [text]
         files: '\.(c|h|cpp|hpp)$'
         pass_filenames: false
     -   id: python-unittest
         name: Run Python UnitTests
         language: system
-        entry: bash -c 'pytest --doctest-modules python/'
+        entry: bash -c 'pytest --doctest-modules --import-mode=importlib python/'
         types: [text]
         files: '\.(c|h|cpp|hpp|py)$'
         pass_filenames: false

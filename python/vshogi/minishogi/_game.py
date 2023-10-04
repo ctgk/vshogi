@@ -1,5 +1,7 @@
 from vshogi._game import Game as BaseGame
-from vshogi._vshogi.minishogi import Move, Node, _Game as _MinishogiGame
+from vshogi._vshogi_extension.minishogi import (
+    Move, Node, _Game as _MinishogiGame,
+)
 
 
 class Game(BaseGame):
@@ -10,9 +12,9 @@ class Game(BaseGame):
     >>> from vshogi.minishogi import *
     >>> game = Game()
     >>> game.turn
-    Color.BLACK
+    vshogi.Color.BLACK
     >>> game.result
-    Result.ONGOING
+    vshogi.Result.ONGOING
     >>> repr(game)
     'Game(sfen="rbsgk/4p/5/P4/KGSBR b - 1")'
     >>> print(game)

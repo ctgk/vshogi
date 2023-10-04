@@ -102,7 +102,8 @@ class MonteCarloTreeSearcher:
         """
         game = game.copy()
         policy_logits, value = self._policy_value_func(game)
-        self._root = game._get_node_class()(game._game, value, policy_logits)
+        self._root = game._get_node_class()(
+            game._game, value, policy_logits.ravel())
         self._game = game
 
     def is_ready(self) -> bool:
@@ -187,7 +188,8 @@ class MonteCarloTreeSearcher:
             if node is None:
                 continue
             policy_logits, value = self._policy_value_func(game)
-            node.set_value_policy_logits(game._game, value, policy_logits)
+            node.set_value_policy_logits(
+                game._game, value, policy_logits.ravel())
 
     def get_q_values(self) -> tp.Dict[Move, float]:
         """Return Q value of each action.

@@ -5,9 +5,9 @@ cf. https://en.wikipedia.org/wiki/D%C5%8Dbutsu_sh%C5%8Dgi
 
 import numpy as np
 
-from vshogi._repr import _repr_enum, _repr_move
-from vshogi._vshogi import Color, Result
-from vshogi._vshogi.animal_shogi import (
+from vshogi._repr import _repr_move
+from vshogi._vshogi_extension import Color, Result
+from vshogi._vshogi_extension.animal_shogi import (
     Board, BoardPiece, Move, Piece, Square,
 )
 from vshogi.animal_shogi._game import Game
@@ -50,14 +50,11 @@ Board.__array__ = lambda self: np.array(
     dtype=BoardPiece,
 )
 Board.__repr__ = _board_repr
-BoardPiece.__repr__ = _repr_enum
 BoardPiece._to_2char = lambda self: (
     "  " if self == BoardPiece.VOID
-    else {'B': '+', 'W': '-'}[self.name[0]] + self.name[2]
+    else {'B': '+', 'W': '-'}[self.__name__[0]] + self.__name__[2]
 )
-Piece.__repr__ = _repr_enum
 Move.__repr__ = _repr_move
-Square.__repr__ = _repr_enum
 
 
 _classes = [
@@ -66,16 +63,22 @@ _classes = [
 _enums = [BoardPiece, Color, Piece, Square, Result]
 
 for _e in _enums:
-    locals().update(_e.__members__)
+    locals().update({
+        k: getattr(_e, k) for k in dir(_e)
+        if not (k.startswith('@') or k.startswith('_'))
+    })
 
 
 for _cls in _classes:
-    _cls.__module__ = __name__
+    _cls.__module__ = 'vshogi.animal_shogi'
 
 
 __all__ = (
     [_cls.__name__ for _cls in _classes] + ['Color', 'Result']
-    + [m for _e in _enums for m in _e.__members__]
+    + [
+        m for _e in _enums for m in dir(_e)
+        if not (m.startswith('@') or m.startswith('_'))
+    ]
 )
 
 
