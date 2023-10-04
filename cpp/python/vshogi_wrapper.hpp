@@ -111,6 +111,11 @@ inline void export_game(pybind11::module& m)
                 return out;
             })
         .def(
+            "to_dlshogi_features",
+            [](const Game& self, pybind11::array_t<float>& out) {
+                self.to_feature_map(out.mutable_data());
+            })
+        .def(
             "to_dlshogi_policy",
             [](const Game& self,
                const Move action,

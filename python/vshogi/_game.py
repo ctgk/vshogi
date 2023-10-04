@@ -386,13 +386,18 @@ class Game(abc.ABC):
                 sep='\t', file=file_,
             )
 
-    def to_dlshogi_features(self) -> np.ndarray:
+    def to_dlshogi_features(self, *, out: np.ndarray = None) -> np.ndarray:
         """Return DL-shogi features.
+
+        Parameters
+        ----------
+        out : np.ndarray, optional
+            Dump DL-shogi features into `out` if given.
 
         Returns
         -------
         np.ndarray
-            Return DL-shogi feature array.
+            Return DL-shogi feature array if `out` is not None.
 
         Examples
         --------
@@ -418,7 +423,7 @@ class Game(abc.ABC):
          [0. 1. 0.]
          [0. 0. 0.]
          [0. 0. 0.]]
-        >>> x = shogi.Game("3/elg/1C1/ELG C w").to_dlshogi_features()
+        >>> shogi.Game("3/elg/1C1/ELG C w").to_dlshogi_features(out=x)
         >>> print(x[0, ..., 6]) # White's LI on board from white's view
         [[0. 0. 0.]
          [0. 0. 0.]
@@ -430,7 +435,10 @@ class Game(abc.ABC):
          [0. 0. 0.]
          [0. 0. 0.]]
         """
-        return self._game.to_dlshogi_features()
+        if out is None:
+            return self._game.to_dlshogi_features()
+        else:
+            return self._game.to_dlshogi_features(out)
 
     def to_dlshogi_policy(
         self,

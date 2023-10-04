@@ -94,20 +94,19 @@ class PolicyValueFunction:
             self._interpreter = tf.lite.Interpreter(model_content=self._model_content)
 
         self._interpreter.allocate_tensors()
-        self._input_details = self._interpreter.get_input_details()
-        self._output_details = self._interpreter.get_output_details()
+        input_details = self._interpreter.get_input_details()[0]
+        self._input_placeholder = np.empty(input_details['shape'], dtype=np.float32)
+        self._input_index = input_details['index']
+        output_details = self._interpreter.get_output_details()
+        self._value_index = output_details[0]['index']
+        self._policy_index = output_details[1]['index']
 
     def __call__(self, game: vshogi.Game) -> tp.Tuple[np.ndarray, float]:
-        if game.result != vshogi.Result.ONGOING:
-            value = (0. if game.result == vshogi.Result.DRAW else -1.)
-            return np.zeros(game.num_dlshogi_policy, dtype=np.float32), value
-
-        x = game.to_dlshogi_features()
-        self._interpreter.set_tensor(self._input_details[0]['index'], x)
+        game.to_dlshogi_features(out=self._input_placeholder)
+        self._interpreter.set_tensor(self._input_index, self._input_placeholder)
         self._interpreter.invoke()
-        value = float(self._interpreter.get_tensor(self._output_details[0]['index']))
-        value = np.clip(value, -0.99, 0.99)
-        policy_logits = self._interpreter.get_tensor(self._output_details[1]['index'])
+        value = self._interpreter.get_tensor(self._value_index).item()
+        policy_logits = self._interpreter.get_tensor(self._policy_index)
         return policy_logits, value
 
     def save_model_as_tflite(self, output_path: str):
