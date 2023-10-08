@@ -101,6 +101,16 @@ struct Squares
         return is_promotion_zone(to_rank(sq), c);
     }
 
+    constexpr static DirectionEnum direction_array[] = {
+        DIR_NW,
+        DIR_N,
+        DIR_NE,
+        DIR_W,
+        DIR_E,
+        DIR_SW,
+        DIR_S,
+        DIR_SE,
+    };
     constexpr static DirectionEnum dlshogi_direction_array[] = {
         DIR_NW,
         DIR_N,

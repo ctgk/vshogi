@@ -124,6 +124,20 @@ struct Squares
         return is_promotion_zone(to_rank(sq), c);
     }
 
+    constexpr static DirectionEnum direction_array[] = {
+        DIR_NW,
+        DIR_N,
+        DIR_NE,
+        DIR_W,
+        DIR_E,
+        DIR_SW,
+        DIR_S,
+        DIR_SE,
+        DIR_SSW,
+        DIR_SSE,
+        DIR_NNW,
+        DIR_NNE,
+    };
     constexpr static DirectionEnum dlshogi_direction_array[] = {
         DIR_NW,
         DIR_N,
@@ -147,24 +161,27 @@ struct Squares
     {
         const auto r = to_rank(sq);
         const auto f = to_file(sq);
-        if (r == RANK1
-            && (d == DIR_NNW || d == DIR_NW || d == DIR_N || d == DIR_NE
-                || d == DIR_NNE))
-            return sq;
-        if (r == RANK6
-            && (d == DIR_SSW || d == DIR_SW || d == DIR_S || d == DIR_SE
-                || d == DIR_SSE))
-            return sq;
-        if (f == FILE1
-            && (d == DIR_E || d == DIR_NE || d == DIR_NNE || d == DIR_SE
-                || d == DIR_SSE))
-            return sq;
-        if (f == FILE6
-            && (d == DIR_W || d == DIR_NW || d == DIR_NNW || d == DIR_SW
-                || d == DIR_SSW))
-            return sq;
-        return static_cast<SquareEnum>(
+        const auto dst = static_cast<SquareEnum>(
             static_cast<int>(sq) + direction_to_delta(d));
+        if ((dst < 0) || (dst >= num_squares))
+            return sq;
+        switch (d) {
+        case DIR_NNW:
+        case DIR_NW:
+        case DIR_W:
+        case DIR_SW:
+        case DIR_SSW:
+            return (f == FILE6) ? sq : dst;
+        case DIR_NNE:
+        case DIR_NE:
+        case DIR_E:
+        case DIR_SE:
+        case DIR_SSE:
+            return (f == FILE1) ? sq : dst;
+        default:
+            break;
+        }
+        return dst;
     }
     static constexpr DirectionEnum
     get_direction_of_src(const SquareEnum dst, const SquareEnum src)

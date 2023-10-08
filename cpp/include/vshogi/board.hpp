@@ -92,8 +92,24 @@ public:
         const auto king_sq = king_location(c);
         if (king_sq == SQ_NA)
             return false;
-        const auto opponent_attacks = to_attack_mask(~c);
-        return opponent_attacks.is_one(king_sq);
+
+        const auto max_length
+            = std::min(Squares::num_files, Squares::num_ranks) - 1;
+        for (auto dir : Squares::direction_array) {
+            auto sq = king_sq;
+            for (int ii = max_length; ii--;) {
+                sq = Squares::shift(sq, dir);
+                if (is_empty(sq))
+                    continue;
+                const auto p = m_pieces[sq];
+                if (get_color(p) == c)
+                    break;
+                if (BitBoard::get_attacks_by(p, sq).is_one(king_sq))
+                    return true;
+                break;
+            }
+        }
+        return false;
     }
     const char* set_sfen(const char* sfen)
     {

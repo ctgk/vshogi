@@ -73,7 +73,7 @@ public:
     {
         return BitBoard(m_value | other.m_value);
     }
-    BitBoard& operator|=(const BitBoard other)
+    BitBoard& operator|=(const BitBoard& other)
     {
         m_value = static_cast<std::uint32_t>(m_value | other.m_value);
         return *this;
@@ -173,20 +173,17 @@ public:
     static BitBoard
     ranging_attacks_to(const SquareEnum sq, const BitBoard occupied)
     {
-        const auto base = BitBoard::from_square(sq);
-        auto attacks = base;
-        for (int i = 4; i--;) {
-            const auto expansion = attacks.shift<D>() & (~attacks);
-            if (!expansion.any())
-                break; // reached the end of the board.
-            else if ((expansion & occupied).any()) {
-                attacks |= expansion;
-                break; // reached a piece.
-            } else {
-                attacks |= expansion; // continue.
-            }
-        }
-        return attacks & (~base);
+        BitBoard r = BitBoard::from_square(sq).shift<D>();
+        if ((r & occupied).any())
+            return r;
+        r |= r.shift<D>();
+        if ((r & occupied).any())
+            return r;
+        r |= r.shift<D>();
+        if ((r & occupied).any())
+            return r;
+        r |= r.shift<D>();
+        return r;
     }
     static BitBoard
     ranging_attacks_to_diagonal(const SquareEnum sq, const BitBoard occupied)

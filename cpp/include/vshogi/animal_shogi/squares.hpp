@@ -61,7 +61,7 @@ struct Squares
     };
     static constexpr int num_ranks = 4;
 
-    static inline RankEnum to_rank(const SquareEnum sq)
+    static constexpr RankEnum to_rank(const SquareEnum sq)
     {
         constexpr RankEnum table[] = {
             // clang-format off
@@ -81,19 +81,29 @@ struct Squares
         FILE_C,
     };
     static constexpr int num_files = 3;
-    static inline FileEnum to_file(const SquareEnum sq)
+    static constexpr FileEnum to_file(const SquareEnum sq)
     {
         constexpr FileEnum table[] = {
             // clang-format off
-        FILE_A, FILE_B, FILE_C,
-        FILE_A, FILE_B, FILE_C,
-        FILE_A, FILE_B, FILE_C,
-        FILE_A, FILE_B, FILE_C,
+            FILE_A, FILE_B, FILE_C,
+            FILE_A, FILE_B, FILE_C,
+            FILE_A, FILE_B, FILE_C,
+            FILE_A, FILE_B, FILE_C,
             // clang-format on
         };
         return table[sq];
     }
 
+    constexpr static DirectionEnum direction_array[] = {
+        DIR_NW,
+        DIR_N,
+        DIR_NE,
+        DIR_W,
+        DIR_E,
+        DIR_SW,
+        DIR_S,
+        DIR_SE,
+    };
     constexpr static DirectionEnum dlshogi_direction_array[] = {
         DIR_NW,
         DIR_N,
@@ -110,6 +120,22 @@ struct Squares
     {
         constexpr int table[] = {-4, -3, -2, -1, 1, 2, 3, 4};
         return table[d];
+    }
+    static constexpr SquareEnum
+    shift(const SquareEnum sq, const DirectionEnum d)
+    {
+        const auto r = to_rank(sq);
+        const auto f = to_file(sq);
+        if (r == RANK1 && (d == DIR_NW || d == DIR_N || d == DIR_NE))
+            return sq;
+        if (r == RANK4 && (d == DIR_SW || d == DIR_S || d == DIR_SE))
+            return sq;
+        if (f == FILE_C && (d == DIR_NE || d == DIR_E || d == DIR_SE))
+            return sq;
+        if (f == FILE_A && (d == DIR_NW || d == DIR_W || d == DIR_SW))
+            return sq;
+        return static_cast<SquareEnum>(
+            static_cast<int>(sq) + direction_to_delta(d));
     }
 };
 

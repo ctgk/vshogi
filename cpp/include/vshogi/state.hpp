@@ -44,14 +44,15 @@ private:
     Stands m_stands;
     ColorEnum m_turn; //!< Player to make a move in the current state.
 
-    BitBoard m_piece_masks[num_colors];
+    BitBoard m_occupied;
 
 public:
-    State() : m_board(), m_stands(), m_turn(BLACK)
+    State() : m_board(), m_stands(), m_turn(BLACK), m_occupied()
     {
         update_masks();
     }
-    State(const std::string& sfen) : m_board(), m_stands(), m_turn()
+    State(const std::string& sfen)
+        : m_board(), m_stands(), m_turn(), m_occupied()
     {
         set_sfen(sfen);
     }
@@ -114,8 +115,7 @@ public:
 private:
     void update_masks()
     {
-        m_piece_masks[BLACK] = m_board.to_piece_mask(BLACK);
-        m_piece_masks[WHITE] = m_board.to_piece_mask(WHITE);
+        m_occupied = m_board.to_piece_mask();
     }
     std::string to_sfen_turn() const
     {
@@ -137,13 +137,12 @@ private:
     }
     void append_legal_moves_by_stand_pieces(std::vector<Move>& out) const
     {
-        const auto occupied = (m_piece_masks[BLACK] | m_piece_masks[WHITE]);
         const auto stand = m_stands[m_turn];
         for (auto piece : Pieces::stand_piece_array) {
             if (!stand.exist(piece))
                 continue;
             for (auto dst : Squares::square_array) {
-                if (occupied.is_one(dst))
+                if (m_occupied.is_one(dst))
                     continue;
                 const auto m = Move(dst, piece);
                 if (is_legal_drop(m))
@@ -154,19 +153,36 @@ private:
     void append_legal_moves_by_board_pieces(std::vector<Move>& out) const
     {
         for (auto src : Squares::square_array) {
-            const auto piece = m_board[src];
-            if (m_board.is_empty(src) || (Pieces::get_color(piece) != m_turn))
+            if (m_board.is_empty(src))
                 continue;
+            const auto piece = m_board[src];
+            if (Pieces::get_color(piece) != m_turn)
+                continue;
+            const auto attacks
+                = BitBoard::get_attacks_by(piece, src, m_occupied);
+            const auto promotable = Pieces::is_promotable(piece);
+            const auto src_in_promotable_zone
+                = Squares::is_promotion_zone(src, m_turn);
             for (auto dst : Squares::square_array) {
+                if (!attacks.is_one(dst))
+                    continue;
+                if (!is_empty_or_opponent_square(dst))
+                    continue;
                 const auto m = Move(dst, src);
-                if (is_legal_board(m))
+                if (king_in_check_after_move(m, m_turn))
+                    continue;
+                if (!promotable) {
                     out.emplace_back(m);
-                if (Squares::is_promotion_zone(dst, m_turn)
-                    || Squares::is_promotion_zone(src, m_turn)) {
-                    const auto promotion_move = Move(dst, src, true);
-                    if (is_legal_board(promotion_move))
-                        out.emplace_back(promotion_move);
+                    continue;
                 }
+                if (has_movable_square_after_move(piece, dst))
+                    out.emplace_back(m);
+
+                const auto n = Move(dst, src, true);
+                if (src_in_promotable_zone)
+                    out.emplace_back(n);
+                else if (Squares::is_promotion_zone(dst, m_turn))
+                    out.emplace_back(n);
             }
         }
     }
@@ -215,12 +231,11 @@ private:
     }
     bool can_opponent_capture_piece_at(const SquareEnum target) const
     {
-        const auto occupied = m_piece_masks[BLACK] | m_piece_masks[WHITE];
         for (auto src : Squares::square_array) {
             const auto p = m_board[src];
             if ((p == Pieces::VOID) || (Pieces::get_color(p) == m_turn))
                 continue;
-            const auto attacks = BitBoard::get_attacks_by(p, src, occupied);
+            const auto attacks = BitBoard::get_attacks_by(p, src, m_occupied);
             if (attacks.is_one(target)) {
                 auto b = m_board;
                 b[src] = Pieces::VOID;
@@ -241,8 +256,7 @@ private:
         return (
             (Pieces::get_color(moving) == m_turn) // No VOID check on purpose
             && is_empty_or_opponent_square(dst)
-            && BitBoard::get_attacks_by(
-                   moving, src, m_piece_masks[BLACK] | m_piece_masks[WHITE])
+            && BitBoard::get_attacks_by(moving, src, m_occupied)
                    .is_one(dst) // VOID should return false here.
             && is_valid_promotion(move)
             && has_movable_square_after_move(
