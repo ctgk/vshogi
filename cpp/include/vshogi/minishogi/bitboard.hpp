@@ -203,8 +203,11 @@ public:
     }
     static BitBoard get_attacks_by(
         const Pieces::BoardPieceTypeEnum piece,
+        const Squares::SquareEnum location);
+    static BitBoard get_attacks_by(
+        const Pieces::BoardPieceTypeEnum piece,
         const Squares::SquareEnum location,
-        const BitBoard occupied = BitBoard(0));
+        const BitBoard occupied);
 };
 
 constexpr BitBoard bb_1a = BitBoard::from_square(Squares::SQ_1A);

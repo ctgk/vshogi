@@ -44,15 +44,6 @@ TEST(board, to_piece_mask)
         == b.to_piece_mask(vshogi::BLACK));
 }
 
-TEST(board, to_attack_mask)
-{
-    auto b = Board();
-    CHECK_TRUE(
-        (bb_5b | bb_1b | bb_5c | bb_4c | bb_1c | bb_5d | bb_4d | bb_3d | bb_2d
-         | bb_1d | bb_5e | bb_4e | bb_3e | bb_2e)
-        == b.to_attack_mask(vshogi::BLACK));
-}
-
 TEST(board, king_location)
 {
     auto b = Board();

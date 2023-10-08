@@ -289,18 +289,18 @@ TEST(squares, is_edge)
 
 TEST(squares, shift)
 {
-    CHECK_EQUAL(SQ_1A, shift(SQ_1A, DIR_NNW));
-    CHECK_EQUAL(SQ_1A, shift(SQ_1A, DIR_NNE));
-    CHECK_EQUAL(SQ_1A, shift(SQ_1A, DIR_NW));
-    CHECK_EQUAL(SQ_1A, shift(SQ_1A, DIR_N));
-    CHECK_EQUAL(SQ_1A, shift(SQ_1A, DIR_NE));
+    CHECK_EQUAL(SQ_NA, shift(SQ_1A, DIR_NNW));
+    CHECK_EQUAL(SQ_NA, shift(SQ_1A, DIR_NNE));
+    CHECK_EQUAL(SQ_NA, shift(SQ_1A, DIR_NW));
+    CHECK_EQUAL(SQ_NA, shift(SQ_1A, DIR_N));
+    CHECK_EQUAL(SQ_NA, shift(SQ_1A, DIR_NE));
     CHECK_EQUAL(SQ_2A, shift(SQ_1A, DIR_W));
-    CHECK_EQUAL(SQ_1A, shift(SQ_1A, DIR_E));
+    CHECK_EQUAL(SQ_NA, shift(SQ_1A, DIR_E));
     CHECK_EQUAL(SQ_2B, shift(SQ_1A, DIR_SW));
     CHECK_EQUAL(SQ_1B, shift(SQ_1A, DIR_S));
-    CHECK_EQUAL(SQ_1A, shift(SQ_1A, DIR_SE));
+    CHECK_EQUAL(SQ_NA, shift(SQ_1A, DIR_SE));
     CHECK_EQUAL(SQ_2C, shift(SQ_1A, DIR_SSW));
-    CHECK_EQUAL(SQ_1A, shift(SQ_1A, DIR_SSE));
+    CHECK_EQUAL(SQ_NA, shift(SQ_1A, DIR_SSE));
 
     CHECK_EQUAL(SQ_6C, shift(SQ_5E, DIR_NNW));
     CHECK_EQUAL(SQ_4C, shift(SQ_5E, DIR_NNE));
@@ -315,18 +315,18 @@ TEST(squares, shift)
     CHECK_EQUAL(SQ_6G, shift(SQ_5E, DIR_SSW));
     CHECK_EQUAL(SQ_4G, shift(SQ_5E, DIR_SSE));
 
-    CHECK_EQUAL(SQ_9I, shift(SQ_9I, DIR_NNW));
+    CHECK_EQUAL(SQ_NA, shift(SQ_9I, DIR_NNW));
     CHECK_EQUAL(SQ_8G, shift(SQ_9I, DIR_NNE));
-    CHECK_EQUAL(SQ_9I, shift(SQ_9I, DIR_NW));
+    CHECK_EQUAL(SQ_NA, shift(SQ_9I, DIR_NW));
     CHECK_EQUAL(SQ_9H, shift(SQ_9I, DIR_N));
     CHECK_EQUAL(SQ_8H, shift(SQ_9I, DIR_NE));
-    CHECK_EQUAL(SQ_9I, shift(SQ_9I, DIR_W));
+    CHECK_EQUAL(SQ_NA, shift(SQ_9I, DIR_W));
     CHECK_EQUAL(SQ_8I, shift(SQ_9I, DIR_E));
-    CHECK_EQUAL(SQ_9I, shift(SQ_9I, DIR_SW));
-    CHECK_EQUAL(SQ_9I, shift(SQ_9I, DIR_S));
-    CHECK_EQUAL(SQ_9I, shift(SQ_9I, DIR_SE));
-    CHECK_EQUAL(SQ_9I, shift(SQ_9I, DIR_SSW));
-    CHECK_EQUAL(SQ_9I, shift(SQ_9I, DIR_SSE));
+    CHECK_EQUAL(SQ_NA, shift(SQ_9I, DIR_SW));
+    CHECK_EQUAL(SQ_NA, shift(SQ_9I, DIR_S));
+    CHECK_EQUAL(SQ_NA, shift(SQ_9I, DIR_SE));
+    CHECK_EQUAL(SQ_NA, shift(SQ_9I, DIR_SSW));
+    CHECK_EQUAL(SQ_NA, shift(SQ_9I, DIR_SSE));
 }
 
 TEST(squares, get_direction_of_src)

@@ -184,8 +184,11 @@ public:
     }
     static BitBoard get_attacks_by(
         const Pieces::BoardPieceTypeEnum piece,
+        const Squares::SquareEnum location);
+    static BitBoard get_attacks_by(
+        const Pieces::BoardPieceTypeEnum piece,
         const Squares::SquareEnum location,
-        const BitBoard occupied = BitBoard());
+        const BitBoard occupied);
     std::uint64_t get_value_9a_to_9h() const
     {
         return m_value_9a_to_9h;
@@ -447,6 +450,43 @@ constexpr BitBoard bb_9f = BitBoard::from_square(Squares::SQ_9F);
 constexpr BitBoard bb_9g = BitBoard::from_square(Squares::SQ_9G);
 constexpr BitBoard bb_9h = BitBoard::from_square(Squares::SQ_9H);
 constexpr BitBoard bb_9i = BitBoard::from_square(Squares::SQ_9I);
+
+constexpr BitBoard bb_file1
+    = bb_1a | bb_1b | bb_1c | bb_1d | bb_1e | bb_1f | bb_1g | bb_1h | bb_1i;
+constexpr BitBoard bb_file2
+    = bb_2a | bb_2b | bb_2c | bb_2d | bb_2e | bb_2f | bb_2g | bb_2h | bb_2i;
+constexpr BitBoard bb_file3
+    = bb_3a | bb_3b | bb_3c | bb_3d | bb_3e | bb_3f | bb_3g | bb_3h | bb_3i;
+constexpr BitBoard bb_file4
+    = bb_4a | bb_4b | bb_4c | bb_4d | bb_4e | bb_4f | bb_4g | bb_4h | bb_4i;
+constexpr BitBoard bb_file5
+    = bb_5a | bb_5b | bb_5c | bb_5d | bb_5e | bb_5f | bb_5g | bb_5h | bb_5i;
+constexpr BitBoard bb_file6
+    = bb_6a | bb_6b | bb_6c | bb_6d | bb_6e | bb_6f | bb_6g | bb_6h | bb_6i;
+constexpr BitBoard bb_file7
+    = bb_7a | bb_7b | bb_7c | bb_7d | bb_7e | bb_7f | bb_7g | bb_7h | bb_7i;
+constexpr BitBoard bb_file8
+    = bb_8a | bb_8b | bb_8c | bb_8d | bb_8e | bb_8f | bb_8g | bb_8h | bb_8i;
+constexpr BitBoard bb_file9
+    = bb_9a | bb_9b | bb_9c | bb_9d | bb_9e | bb_9f | bb_9g | bb_9h | bb_9i;
+constexpr BitBoard bb_ranka
+    = bb_1a | bb_2a | bb_3a | bb_4a | bb_5a | bb_6a | bb_7a | bb_8a | bb_9a;
+constexpr BitBoard bb_rankb
+    = bb_1b | bb_2b | bb_3b | bb_4b | bb_5b | bb_6b | bb_7b | bb_8b | bb_9b;
+constexpr BitBoard bb_rankc
+    = bb_1c | bb_2c | bb_3c | bb_4c | bb_5c | bb_6c | bb_7c | bb_8c | bb_9c;
+constexpr BitBoard bb_rankd
+    = bb_1d | bb_2d | bb_3d | bb_4d | bb_5d | bb_6d | bb_7d | bb_8d | bb_9d;
+constexpr BitBoard bb_ranke
+    = bb_1e | bb_2e | bb_3e | bb_4e | bb_5e | bb_6e | bb_7e | bb_8e | bb_9e;
+constexpr BitBoard bb_rankf
+    = bb_1f | bb_2f | bb_3f | bb_4f | bb_5f | bb_6f | bb_7f | bb_8f | bb_9f;
+constexpr BitBoard bb_rankg
+    = bb_1g | bb_2g | bb_3g | bb_4g | bb_5g | bb_6g | bb_7g | bb_8g | bb_9g;
+constexpr BitBoard bb_rankh
+    = bb_1h | bb_2h | bb_3h | bb_4h | bb_5h | bb_6h | bb_7h | bb_8h | bb_9h;
+constexpr BitBoard bb_ranki
+    = bb_1i | bb_2i | bb_3i | bb_4i | bb_5i | bb_6i | bb_7i | bb_8i | bb_9i;
 
 } // namespace vshogi::shogi
 

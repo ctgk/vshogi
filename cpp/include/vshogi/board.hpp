@@ -67,17 +67,6 @@ public:
         }
         return out;
     }
-    BitBoard to_attack_mask(const ColorEnum c) const
-    {
-        const auto occupied = to_piece_mask();
-        BitBoard out = BitBoard();
-        for (auto sq : Squares::square_array) {
-            const auto p = m_pieces[sq];
-            if (get_color(p) == c)
-                out |= BitBoard::get_attacks_by(p, sq, occupied);
-        }
-        return out;
-    }
     SquareEnum king_location(const ColorEnum c) const
     {
         const auto target = to_board_piece(c, Pieces::OU);
@@ -93,15 +82,16 @@ public:
         if (king_sq == SQ_NA)
             return false;
 
-        const auto max_length
-            = std::min(Squares::num_files, Squares::num_ranks) - 1;
+        const auto max_length = std::min(num_files, num_ranks) - 1;
         for (auto dir : Squares::direction_array) {
             auto sq = king_sq;
             for (int ii = max_length; ii--;) {
                 sq = Squares::shift(sq, dir);
-                if (is_empty(sq))
-                    continue;
+                if (sq == SQ_NA)
+                    break;
                 const auto p = m_pieces[sq];
+                if (p == VOID)
+                    continue;
                 if (get_color(p) == c)
                     break;
                 if (BitBoard::get_attacks_by(p, sq).is_one(king_sq))

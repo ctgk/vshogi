@@ -54,21 +54,6 @@ TEST(board, to_piece_mask)
     }
 }
 
-TEST(board, to_attack_mask)
-{
-    auto b = Board();
-    {
-        const auto actual = b.to_attack_mask(vshogi::BLACK);
-        CHECK_FALSE(actual.is_one(SQ_1D));
-        CHECK_TRUE(actual.is_one(SQ_1F));
-    }
-    {
-        const auto actual = b.to_attack_mask(vshogi::WHITE);
-        CHECK_TRUE(actual.is_one(SQ_1D));
-        CHECK_FALSE(actual.is_one(SQ_1F));
-    }
-}
-
 TEST(board, king_location)
 {
     {
@@ -115,7 +100,7 @@ TEST(board, in_check)
 TEST(board, set_sfen)
 {
     auto b = Board();
-    const auto sfen = "8k/9/9/9/9/9/9/4K4/9 b - 1";
+    const auto sfen = "8k/8P/9/9/9/9/9/4K4/9 b - 1";
     const auto actual = b.set_sfen(sfen);
     CHECK_EQUAL('b', actual[0]);
     CHECK_EQUAL(' ', actual[1]);

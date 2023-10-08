@@ -210,6 +210,104 @@ constexpr BitBoard attacks_by_ou[Squares::num_squares] = {
     bb_3e.expand() & (~bb_3e), bb_2e.expand() & (~bb_2e),
     bb_1e.expand() & (~bb_1e),
 };
+constexpr BitBoard attacks_by_hi[Squares::num_squares] = {
+    (bb_f5 | bb_ra) & (~bb_5a), (bb_f4 | bb_ra) & (~bb_4a),
+    (bb_f3 | bb_ra) & (~bb_3a), (bb_f2 | bb_ra) & (~bb_2a),
+    (bb_f1 | bb_ra) & (~bb_1a), (bb_f5 | bb_rb) & (~bb_5b),
+    (bb_f4 | bb_rb) & (~bb_4b), (bb_f3 | bb_rb) & (~bb_3b),
+    (bb_f2 | bb_rb) & (~bb_2b), (bb_f1 | bb_rb) & (~bb_1b),
+    (bb_f5 | bb_rc) & (~bb_5c), (bb_f4 | bb_rc) & (~bb_4c),
+    (bb_f3 | bb_rc) & (~bb_3c), (bb_f2 | bb_rc) & (~bb_2c),
+    (bb_f1 | bb_rc) & (~bb_1c), (bb_f5 | bb_rd) & (~bb_5d),
+    (bb_f4 | bb_rd) & (~bb_4d), (bb_f3 | bb_rd) & (~bb_3d),
+    (bb_f2 | bb_rd) & (~bb_2d), (bb_f1 | bb_rd) & (~bb_1d),
+    (bb_f5 | bb_re) & (~bb_5e), (bb_f4 | bb_re) & (~bb_4e),
+    (bb_f3 | bb_re) & (~bb_3e), (bb_f2 | bb_re) & (~bb_2e),
+    (bb_f1 | bb_re) & (~bb_1e),
+};
+
+namespace internal
+{
+
+constexpr BitBoard diagonal_5a_to_se = bb_5a | bb_4b | bb_3c | bb_2d | bb_1e;
+constexpr BitBoard diagonal_4a_to_se = diagonal_5a_to_se.shift<DIR_N>();
+constexpr BitBoard diagonal_3a_to_se = diagonal_4a_to_se.shift<DIR_N>();
+constexpr BitBoard diagonal_2a_to_se = diagonal_3a_to_se.shift<DIR_N>();
+constexpr BitBoard diagonal_1a_to_se = bb_1a;
+constexpr BitBoard diagonal_5b_to_se = diagonal_5a_to_se.shift<DIR_S>();
+constexpr BitBoard diagonal_5c_to_se = diagonal_5b_to_se.shift<DIR_S>();
+constexpr BitBoard diagonal_5d_to_se = diagonal_5c_to_se.shift<DIR_S>();
+constexpr BitBoard diagonal_5e_to_se = bb_5e;
+
+constexpr BitBoard diagonal_1a_to_sw = bb_1a | bb_2b | bb_3c | bb_4d | bb_5e;
+constexpr BitBoard diagonal_2a_to_sw = diagonal_1a_to_sw.shift<DIR_N>();
+constexpr BitBoard diagonal_3a_to_sw = diagonal_2a_to_sw.shift<DIR_N>();
+constexpr BitBoard diagonal_4a_to_sw = diagonal_3a_to_sw.shift<DIR_N>();
+constexpr BitBoard diagonal_5a_to_sw = bb_5a;
+constexpr BitBoard diagonal_1b_to_sw = diagonal_1a_to_sw.shift<DIR_S>();
+constexpr BitBoard diagonal_1c_to_sw = diagonal_1b_to_sw.shift<DIR_S>();
+constexpr BitBoard diagonal_1d_to_sw = diagonal_1c_to_sw.shift<DIR_S>();
+constexpr BitBoard diagonal_1e_to_sw = bb_1e;
+
+} // namespace internal
+
+constexpr BitBoard attacks_by_ka[Squares::num_squares] = {
+    (internal::diagonal_5a_to_se | internal::diagonal_5a_to_sw) & (~bb_5a),
+    (internal::diagonal_4a_to_se | internal::diagonal_4a_to_sw) & (~bb_4a),
+    (internal::diagonal_3a_to_se | internal::diagonal_3a_to_sw) & (~bb_3a),
+    (internal::diagonal_2a_to_se | internal::diagonal_2a_to_sw) & (~bb_2a),
+    (internal::diagonal_1a_to_se | internal::diagonal_1a_to_sw) & (~bb_1a),
+    (internal::diagonal_5b_to_se | internal::diagonal_4a_to_sw) & (~bb_5b),
+    (internal::diagonal_5a_to_se | internal::diagonal_3a_to_sw) & (~bb_4b),
+    (internal::diagonal_4a_to_se | internal::diagonal_2a_to_sw) & (~bb_3b),
+    (internal::diagonal_3a_to_se | internal::diagonal_1a_to_sw) & (~bb_2b),
+    (internal::diagonal_2a_to_se | internal::diagonal_1b_to_sw) & (~bb_1b),
+    (internal::diagonal_5c_to_se | internal::diagonal_3a_to_sw) & (~bb_5c),
+    (internal::diagonal_5b_to_se | internal::diagonal_2a_to_sw) & (~bb_4c),
+    (internal::diagonal_5a_to_se | internal::diagonal_1a_to_sw) & (~bb_3c),
+    (internal::diagonal_4a_to_se | internal::diagonal_1b_to_sw) & (~bb_2c),
+    (internal::diagonal_3a_to_se | internal::diagonal_1c_to_sw) & (~bb_1c),
+    (internal::diagonal_5d_to_se | internal::diagonal_2a_to_sw) & (~bb_5d),
+    (internal::diagonal_5c_to_se | internal::diagonal_1a_to_sw) & (~bb_4d),
+    (internal::diagonal_5b_to_se | internal::diagonal_1b_to_sw) & (~bb_3d),
+    (internal::diagonal_5a_to_se | internal::diagonal_1c_to_sw) & (~bb_2d),
+    (internal::diagonal_4a_to_se | internal::diagonal_1d_to_sw) & (~bb_1d),
+    (internal::diagonal_5e_to_se | internal::diagonal_1a_to_sw) & (~bb_5e),
+    (internal::diagonal_5d_to_se | internal::diagonal_1b_to_sw) & (~bb_4e),
+    (internal::diagonal_5c_to_se | internal::diagonal_1c_to_sw) & (~bb_3e),
+    (internal::diagonal_5b_to_se | internal::diagonal_1d_to_sw) & (~bb_2e),
+    (internal::diagonal_5a_to_se | internal::diagonal_1e_to_sw) & (~bb_1e),
+};
+
+BitBoard BitBoard::get_attacks_by(
+    const Pieces::BoardPieceTypeEnum piece, const Squares::SquareEnum location)
+{
+    const auto piece_type = Pieces::to_piece_type(piece);
+    const auto color = Pieces::get_color(piece);
+    switch (piece_type) {
+    case Pieces::FU:
+        return attacks_by_fu[location][color];
+    case Pieces::GI:
+        return attacks_by_gi[location][color];
+    case Pieces::KA:
+        return attacks_by_ka[location];
+    case Pieces::HI:
+        return attacks_by_hi[location];
+    case Pieces::KI:
+    case Pieces::TO:
+    case Pieces::NG:
+        return attacks_by_ki[location][color];
+    case Pieces::UM:
+        return attacks_by_ou[location] | attacks_by_ka[location];
+    case Pieces::RY:
+        return attacks_by_ou[location] | attacks_by_hi[location];
+    case Pieces::OU:
+        return attacks_by_ou[location];
+    default:
+        break;
+    }
+    return BitBoard(0);
+}
 
 BitBoard BitBoard::get_attacks_by(
     const Pieces::BoardPieceTypeEnum piece,

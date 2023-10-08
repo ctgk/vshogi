@@ -184,29 +184,28 @@ struct Squares
     static constexpr SquareEnum
     shift(const SquareEnum sq, const DirectionEnum d)
     {
-        const auto r = to_rank(sq);
         const auto f = to_file(sq);
-        const auto dst = static_cast<SquareEnum>(
+        const auto out = static_cast<SquareEnum>(
             static_cast<int>(sq) + direction_to_delta(d));
-        if ((dst < 0) || (dst >= num_squares))
-            return sq;
+        if ((out < 0) || (out >= num_squares))
+            return SQ_NA;
         switch (d) {
         case DIR_NNW:
         case DIR_NW:
         case DIR_W:
         case DIR_SW:
         case DIR_SSW:
-            return (f == FILE9) ? sq : dst;
+            return (f == FILE9) ? SQ_NA : out;
         case DIR_NNE:
         case DIR_NE:
         case DIR_E:
         case DIR_SE:
         case DIR_SSE:
-            return (f == FILE1) ? sq : dst;
+            return (f == FILE1) ? SQ_NA : out;
         default:
             break;
         }
-        return dst;
+        return out;
     }
     static constexpr DirectionEnum
     get_direction_of_src(const SquareEnum dst, const SquareEnum src)

@@ -39,8 +39,11 @@ public:
     }
     static BitBoard get_attacks_by(
         const Pieces::BoardPieceTypeEnum piece,
+        const Squares::SquareEnum location);
+    static BitBoard get_attacks_by(
+        const Pieces::BoardPieceTypeEnum piece,
         const Squares::SquareEnum location,
-        const BitBoard occupied = BitBoard());
+        const BitBoard occupied);
     std::uint64_t get_value() const
     {
         return m_value;
@@ -227,6 +230,19 @@ constexpr BitBoard bb_6c = BitBoard::from_square(Squares::SQ_6C);
 constexpr BitBoard bb_6d = BitBoard::from_square(Squares::SQ_6D);
 constexpr BitBoard bb_6e = BitBoard::from_square(Squares::SQ_6E);
 constexpr BitBoard bb_6f = BitBoard::from_square(Squares::SQ_6F);
+
+constexpr BitBoard bb_file1 = bb_1a | bb_1b | bb_1c | bb_1d | bb_1e | bb_1f;
+constexpr BitBoard bb_file2 = bb_2a | bb_2b | bb_2c | bb_2d | bb_2e | bb_2f;
+constexpr BitBoard bb_file3 = bb_3a | bb_3b | bb_3c | bb_3d | bb_3e | bb_3f;
+constexpr BitBoard bb_file4 = bb_4a | bb_4b | bb_4c | bb_4d | bb_4e | bb_4f;
+constexpr BitBoard bb_file5 = bb_5a | bb_5b | bb_5c | bb_5d | bb_5e | bb_5f;
+constexpr BitBoard bb_file6 = bb_6a | bb_6b | bb_6c | bb_6d | bb_6e | bb_6f;
+constexpr BitBoard bb_ranka = bb_1a | bb_2a | bb_3a | bb_4a | bb_5a | bb_6a;
+constexpr BitBoard bb_rankb = bb_1b | bb_2b | bb_3b | bb_4b | bb_5b | bb_6b;
+constexpr BitBoard bb_rankc = bb_1c | bb_2c | bb_3c | bb_4c | bb_5c | bb_6c;
+constexpr BitBoard bb_rankd = bb_1d | bb_2d | bb_3d | bb_4d | bb_5d | bb_6d;
+constexpr BitBoard bb_ranke = bb_1e | bb_2e | bb_3e | bb_4e | bb_5e | bb_6e;
+constexpr BitBoard bb_rankf = bb_1f | bb_2f | bb_3f | bb_4f | bb_5f | bb_6f;
 
 constexpr BitBoard attacks_by_fu[Squares::num_squares][num_colors] = {
     {bb_6a.shift<DIR_N>(), bb_6a.shift<DIR_S>()},
@@ -495,6 +511,32 @@ constexpr BitBoard attacks_by_wki_sq1d = attacks_by_wki_sq2d.shift<DIR_E>();
 constexpr BitBoard attacks_by_wki_sq1e = attacks_by_wki_sq2e.shift<DIR_E>();
 constexpr BitBoard attacks_by_wki_sq1f = attacks_by_wki_sq2f.shift<DIR_E>();
 
+constexpr BitBoard diagonal_6a_to_se
+    = bb_6a | bb_5b | bb_4c | bb_3d | bb_2e | bb_1f;
+constexpr BitBoard diagonal_5a_to_se = diagonal_6a_to_se.shift<DIR_N>();
+constexpr BitBoard diagonal_4a_to_se = diagonal_5a_to_se.shift<DIR_N>();
+constexpr BitBoard diagonal_3a_to_se = diagonal_4a_to_se.shift<DIR_N>();
+constexpr BitBoard diagonal_2a_to_se = diagonal_3a_to_se.shift<DIR_N>();
+constexpr BitBoard diagonal_1a_to_se = diagonal_2a_to_se.shift<DIR_N>();
+constexpr BitBoard diagonal_6b_to_se = diagonal_6a_to_se.shift<DIR_S>();
+constexpr BitBoard diagonal_6c_to_se = diagonal_6b_to_se.shift<DIR_S>();
+constexpr BitBoard diagonal_6d_to_se = diagonal_6c_to_se.shift<DIR_S>();
+constexpr BitBoard diagonal_6e_to_se = diagonal_6d_to_se.shift<DIR_S>();
+constexpr BitBoard diagonal_6f_to_se = diagonal_6e_to_se.shift<DIR_S>();
+
+constexpr BitBoard diagonal_1a_to_sw
+    = bb_1a | bb_2b | bb_3c | bb_4d | bb_5e | bb_6f;
+constexpr BitBoard diagonal_2a_to_sw = diagonal_1a_to_sw.shift<DIR_N>();
+constexpr BitBoard diagonal_3a_to_sw = diagonal_2a_to_sw.shift<DIR_N>();
+constexpr BitBoard diagonal_4a_to_sw = diagonal_3a_to_sw.shift<DIR_N>();
+constexpr BitBoard diagonal_5a_to_sw = diagonal_4a_to_sw.shift<DIR_N>();
+constexpr BitBoard diagonal_6a_to_sw = diagonal_5a_to_sw.shift<DIR_N>();
+constexpr BitBoard diagonal_1b_to_sw = diagonal_1a_to_sw.shift<DIR_S>();
+constexpr BitBoard diagonal_1c_to_sw = diagonal_1b_to_sw.shift<DIR_S>();
+constexpr BitBoard diagonal_1d_to_sw = diagonal_1c_to_sw.shift<DIR_S>();
+constexpr BitBoard diagonal_1e_to_sw = diagonal_1d_to_sw.shift<DIR_S>();
+constexpr BitBoard diagonal_1f_to_sw = diagonal_1e_to_sw.shift<DIR_S>();
+
 } // namespace internal
 
 constexpr BitBoard attacks_by_gi[Squares::num_squares][num_colors] = {
@@ -595,6 +637,99 @@ constexpr BitBoard attacks_by_ou[Squares::num_squares] = {
     bb_4f.expand_neighbor() & ~bb_4f, bb_3f.expand_neighbor() & ~bb_3f,
     bb_2f.expand_neighbor() & ~bb_2f, bb_1f.expand_neighbor() & ~bb_1f,
 };
+
+constexpr BitBoard attacks_by_hi[Squares::num_squares] = {
+    (bb_file6 | bb_ranka) & (~bb_6a), (bb_file5 | bb_ranka) & (~bb_5a),
+    (bb_file4 | bb_ranka) & (~bb_4a), (bb_file3 | bb_ranka) & (~bb_3a),
+    (bb_file2 | bb_ranka) & (~bb_2a), (bb_file1 | bb_ranka) & (~bb_1a),
+    (bb_file6 | bb_rankb) & (~bb_6b), (bb_file5 | bb_rankb) & (~bb_5b),
+    (bb_file4 | bb_rankb) & (~bb_4b), (bb_file3 | bb_rankb) & (~bb_3b),
+    (bb_file2 | bb_rankb) & (~bb_2b), (bb_file1 | bb_rankb) & (~bb_1b),
+    (bb_file6 | bb_rankc) & (~bb_6c), (bb_file5 | bb_rankc) & (~bb_5c),
+    (bb_file4 | bb_rankc) & (~bb_4c), (bb_file3 | bb_rankc) & (~bb_3c),
+    (bb_file2 | bb_rankc) & (~bb_2c), (bb_file1 | bb_rankc) & (~bb_1c),
+    (bb_file6 | bb_rankd) & (~bb_6d), (bb_file5 | bb_rankd) & (~bb_5d),
+    (bb_file4 | bb_rankd) & (~bb_4d), (bb_file3 | bb_rankd) & (~bb_3d),
+    (bb_file2 | bb_rankd) & (~bb_2d), (bb_file1 | bb_rankd) & (~bb_1d),
+    (bb_file6 | bb_ranke) & (~bb_6e), (bb_file5 | bb_ranke) & (~bb_5e),
+    (bb_file4 | bb_ranke) & (~bb_4e), (bb_file3 | bb_ranke) & (~bb_3e),
+    (bb_file2 | bb_ranke) & (~bb_2e), (bb_file1 | bb_ranke) & (~bb_1e),
+    (bb_file6 | bb_rankf) & (~bb_6f), (bb_file5 | bb_rankf) & (~bb_5f),
+    (bb_file4 | bb_rankf) & (~bb_4f), (bb_file3 | bb_rankf) & (~bb_3f),
+    (bb_file2 | bb_rankf) & (~bb_2f), (bb_file1 | bb_rankf) & (~bb_1f),
+};
+
+constexpr BitBoard attacks_by_ka[Squares::num_squares] = {
+    (internal::diagonal_6a_to_se | internal::diagonal_6a_to_sw) & (~bb_6a),
+    (internal::diagonal_5a_to_se | internal::diagonal_5a_to_sw) & (~bb_5a),
+    (internal::diagonal_4a_to_se | internal::diagonal_4a_to_sw) & (~bb_4a),
+    (internal::diagonal_3a_to_se | internal::diagonal_3a_to_sw) & (~bb_3a),
+    (internal::diagonal_2a_to_se | internal::diagonal_2a_to_sw) & (~bb_2a),
+    (internal::diagonal_1a_to_se | internal::diagonal_1a_to_sw) & (~bb_1a),
+    (internal::diagonal_6b_to_se | internal::diagonal_5a_to_sw) & (~bb_6b),
+    (internal::diagonal_6a_to_se | internal::diagonal_4a_to_sw) & (~bb_5b),
+    (internal::diagonal_5a_to_se | internal::diagonal_3a_to_sw) & (~bb_4b),
+    (internal::diagonal_4a_to_se | internal::diagonal_2a_to_sw) & (~bb_3b),
+    (internal::diagonal_3a_to_se | internal::diagonal_1a_to_sw) & (~bb_2b),
+    (internal::diagonal_2a_to_se | internal::diagonal_1b_to_sw) & (~bb_1b),
+    (internal::diagonal_6c_to_se | internal::diagonal_4a_to_sw) & (~bb_6c),
+    (internal::diagonal_6b_to_se | internal::diagonal_3a_to_sw) & (~bb_5c),
+    (internal::diagonal_6a_to_se | internal::diagonal_2a_to_sw) & (~bb_4c),
+    (internal::diagonal_5a_to_se | internal::diagonal_1a_to_sw) & (~bb_3c),
+    (internal::diagonal_4a_to_se | internal::diagonal_1b_to_sw) & (~bb_2c),
+    (internal::diagonal_3a_to_se | internal::diagonal_1c_to_sw) & (~bb_1c),
+    (internal::diagonal_6d_to_se | internal::diagonal_2a_to_sw) & (~bb_6d),
+    (internal::diagonal_6c_to_se | internal::diagonal_2a_to_sw) & (~bb_5d),
+    (internal::diagonal_6b_to_se | internal::diagonal_1a_to_sw) & (~bb_4d),
+    (internal::diagonal_6a_to_se | internal::diagonal_1b_to_sw) & (~bb_3d),
+    (internal::diagonal_5a_to_se | internal::diagonal_1c_to_sw) & (~bb_2d),
+    (internal::diagonal_4a_to_se | internal::diagonal_1d_to_sw) & (~bb_1d),
+    (internal::diagonal_6e_to_se | internal::diagonal_1a_to_sw) & (~bb_6e),
+    (internal::diagonal_6d_to_se | internal::diagonal_1a_to_sw) & (~bb_5e),
+    (internal::diagonal_6c_to_se | internal::diagonal_1b_to_sw) & (~bb_4e),
+    (internal::diagonal_6b_to_se | internal::diagonal_1c_to_sw) & (~bb_3e),
+    (internal::diagonal_6a_to_se | internal::diagonal_1d_to_sw) & (~bb_2e),
+    (internal::diagonal_5a_to_se | internal::diagonal_1e_to_sw) & (~bb_1e),
+    (internal::diagonal_6f_to_se | internal::diagonal_1a_to_sw) & (~bb_6f),
+    (internal::diagonal_6e_to_se | internal::diagonal_1a_to_sw) & (~bb_5f),
+    (internal::diagonal_6d_to_se | internal::diagonal_1b_to_sw) & (~bb_4f),
+    (internal::diagonal_6c_to_se | internal::diagonal_1c_to_sw) & (~bb_3f),
+    (internal::diagonal_6b_to_se | internal::diagonal_1d_to_sw) & (~bb_2f),
+    (internal::diagonal_6a_to_se | internal::diagonal_1e_to_sw) & (~bb_1f),
+};
+
+inline BitBoard BitBoard::get_attacks_by(
+    const Pieces::BoardPieceTypeEnum piece, const Squares::SquareEnum location)
+{
+    const auto piece_type = Pieces::to_piece_type(piece);
+    const auto color = Pieces::get_color(piece);
+    switch (piece_type) {
+    case Pieces::FU:
+        return attacks_by_fu[location][color];
+    case Pieces::KE:
+        return attacks_by_ke[location][color];
+    case Pieces::GI:
+        return attacks_by_gi[location][color];
+    case Pieces::KA:
+        return attacks_by_ka[location];
+    case Pieces::KI:
+    case Pieces::TO:
+    case Pieces::NK:
+    case Pieces::NG:
+        return attacks_by_ki[location][color];
+    case Pieces::HI:
+        return attacks_by_hi[location];
+    case Pieces::UM:
+        return attacks_by_ou[location] | attacks_by_ka[location];
+    case Pieces::RY:
+        return attacks_by_ou[location] | attacks_by_hi[location];
+    case Pieces::OU:
+        return attacks_by_ou[location];
+    default:
+        break;
+    }
+    return BitBoard(0);
+}
 
 inline BitBoard BitBoard::get_attacks_by(
     const Pieces::BoardPieceTypeEnum piece,
