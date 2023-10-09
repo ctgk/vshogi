@@ -39,12 +39,12 @@ TEST(game, result)
 {
     {
         auto game = Game();
-        game.apply(Move(SQ_3D, SQ_4E))
-            .apply(Move(SQ_3B, SQ_2A))
-            .apply(Move(SQ_2C, SQ_3D))
-            .apply(Move(SQ_5B, SQ_5A));
+        game.apply(Move(SQ_4C, SQ_2E))
+            .apply(Move(SQ_1C, SQ_1B))
+            .apply(Move(SQ_2E, SQ_1E))
+            .apply(Move(SQ_1D, SQ_1C));
         CHECK_EQUAL(vshogi::ONGOING, game.get_result());
-        game.apply(Move(SQ_1B, SQ_2C));
+        game.apply(Move(SQ_2A, SQ_2E, true));
         CHECK_EQUAL(vshogi::BLACK_WIN, game.get_result());
     }
     {

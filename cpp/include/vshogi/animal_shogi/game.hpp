@@ -47,6 +47,7 @@ template <>
 inline animal_shogi::Game&
 animal_shogi::Game::apply(const animal_shogi::Move move)
 {
+    const auto illegal = !is_legal(move);
     m_record.emplace_back(std::make_pair(m_current_state.to_sfen(), move));
     if (!move.is_drop()) {
         const auto moving = get_board()[move.source_square()];
@@ -54,7 +55,12 @@ animal_shogi::Game::apply(const animal_shogi::Move move)
         m_result = animal_shogi::internal::move_result(move, moving, captured);
     }
     m_current_state.apply(move);
-    update_internals(move);
+    if (illegal) {
+        m_result = (get_turn() == BLACK) ? BLACK_WIN : WHITE_WIN;
+        m_legal_moves.clear();
+    } else {
+        update_internals();
+    }
     return *this;
 }
 

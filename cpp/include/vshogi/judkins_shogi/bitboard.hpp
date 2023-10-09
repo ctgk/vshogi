@@ -65,6 +65,11 @@ public:
     {
         return BitBoard(m_value & other.m_value);
     }
+    BitBoard& operator&=(const BitBoard other)
+    {
+        m_value &= other.m_value;
+        return *this;
+    }
     constexpr BitBoard operator~() const
     {
         return BitBoard(~m_value);

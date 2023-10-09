@@ -40,4 +40,30 @@ TEST(game, result)
     }
 }
 
+TEST(game, get_legal_moves)
+{
+    {
+        auto game = Game();
+        game.apply(Move(SQ_4D, SQ_2F));
+        CHECK_EQUAL(4, game.get_legal_moves().size());
+    }
+    {
+        auto game = Game("4gk/5p/6/6/P5/KGSNBR b rbns");
+        game.apply(Move(SQ_4D, SQ_2F));
+        CHECK_EQUAL(9, game.get_legal_moves().size());
+        game.apply(Move(SQ_2B, GI)).apply(Move(SQ_2B, SQ_4D, true));
+        CHECK_EQUAL(2, game.get_legal_moves().size());
+    }
+    {
+        auto game = Game("6/4gk/6/5B/6/K4R b p");
+        game.apply(Move(SQ_2C, SQ_1D));
+        CHECK_EQUAL(2, game.get_legal_moves().size());
+    }
+    {
+        auto game = Game("6/4gk/6/5B/6/K4R b p");
+        game.apply(Move(SQ_3B, SQ_1D, true));
+        CHECK_EQUAL(4, game.get_legal_moves().size());
+    }
+}
+
 } // namespace test_vshogi::test_judkins_shogi

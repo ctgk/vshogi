@@ -131,6 +131,8 @@ struct Squares
     static constexpr SquareEnum
     shift(const SquareEnum sq, const DirectionEnum d)
     {
+        if (d == DIR_NA)
+            return SQ_NA;
         const auto f = to_file(sq);
         const auto out = static_cast<SquareEnum>(
             static_cast<int>(sq) + direction_to_delta(d));

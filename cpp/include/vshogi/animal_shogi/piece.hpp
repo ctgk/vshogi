@@ -19,6 +19,8 @@ struct Pieces
         LI = 0b0011, //!< Lion (King)
         HE = 0b0100, //!< Hen (Promoted Pawn)
         NA = 0b0111, // Not available.
+
+        OU = LI,
     };
     static constexpr PieceTypeEnum stand_piece_array[] = {CH, EL, GI};
     static constexpr int num_stand_piece_types

@@ -215,6 +215,12 @@ public:
             m_value_9a_to_9h & other.m_value_9a_to_9h,
             m_value_8h_to_1i & other.m_value_8h_to_1i);
     }
+    BitBoard& operator&=(const BitBoard other)
+    {
+        m_value_9a_to_9h &= other.m_value_9a_to_9h;
+        m_value_8h_to_1i &= other.m_value_8h_to_1i;
+        return *this;
+    }
     constexpr BitBoard operator~() const
     {
         return BitBoard(~m_value_9a_to_9h, ~m_value_8h_to_1i);

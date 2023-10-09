@@ -68,6 +68,11 @@ public:
     {
         return BitBoard(m_value & other.m_value);
     }
+    BitBoard& operator&=(const BitBoard other)
+    {
+        m_value = static_cast<std::uint16_t>(m_value & other.m_value);
+        return *this;
+    }
     constexpr BitBoard operator~() const
     {
         return BitBoard(static_cast<std::uint16_t>(~m_value));
@@ -117,6 +122,13 @@ public:
     static constexpr BitBoard get_attacks_by(
         const Pieces::BoardPieceTypeEnum pieces,
         const Squares::SquareEnum location);
+    static constexpr BitBoard get_attacks_by(
+        const Pieces::BoardPieceTypeEnum pieces,
+        const Squares::SquareEnum location,
+        const BitBoard)
+    {
+        return get_attacks_by(pieces, location);
+    }
 };
 
 constexpr BitBoard rank_1_mask = BitBoard(0b000000000111);
