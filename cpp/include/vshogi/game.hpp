@@ -35,13 +35,13 @@ public:
     Game() : m_record(), m_legal_moves(), m_current_state(), m_result(ONGOING)
     {
         m_record.reserve(128);
-        update_result();
+        update_internals();
     }
     Game(const std::string& sfen)
         : m_record(), m_legal_moves(), m_current_state(sfen), m_result(ONGOING)
     {
         m_record.reserve(128);
-        update_result();
+        update_internals();
     }
     static constexpr int ranks()
     {
@@ -116,7 +116,7 @@ public:
     {
         m_record.emplace_back(std::make_pair(m_current_state.to_sfen(), move));
         m_current_state.apply(move);
-        update_result();
+        update_internals(move);
         return *this;
     }
     bool is_legal(const Move move) const
@@ -168,7 +168,7 @@ public:
     }
 
 protected:
-    void update_result()
+    void update_internals()
     {
         const auto turn = get_turn();
         m_current_state.get_legal_moves(m_legal_moves);
@@ -182,6 +182,16 @@ protected:
         }
         if (m_result != ONGOING)
             m_legal_moves.clear();
+    }
+    void update_internals(const Move move)
+    {
+        const auto turn = get_turn();
+        if (!is_legal(move)) {
+            m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
+            m_legal_moves.clear();
+        } else {
+            update_internals();
+        }
     }
     bool is_fourfold_repetitions() const
     {

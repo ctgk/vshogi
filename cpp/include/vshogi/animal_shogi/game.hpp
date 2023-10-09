@@ -54,7 +54,7 @@ animal_shogi::Game::apply(const animal_shogi::Move move)
         m_result = animal_shogi::internal::move_result(move, moving, captured);
     }
     m_current_state.apply(move);
-    update_result();
+    update_internals(move);
     return *this;
 }
 
