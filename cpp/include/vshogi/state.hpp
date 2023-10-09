@@ -168,21 +168,19 @@ private:
                     continue;
                 if (!is_empty_or_opponent_square(dst))
                     continue;
-                const auto m = Move(dst, src);
-                if (king_in_check_after_move(m, m_turn))
+                if (in_check_after_move(dst, src))
                     continue;
                 if (!promotable) {
-                    out.emplace_back(m);
+                    out.emplace_back(dst, src, false);
                     continue;
                 }
                 if (has_movable_square_after_move(piece, dst))
-                    out.emplace_back(m);
+                    out.emplace_back(dst, src);
 
-                const auto n = Move(dst, src, true);
                 if (src_in_promotable_zone)
-                    out.emplace_back(n);
+                    out.emplace_back(dst, src, true);
                 else if (Squares::is_promotion_zone(dst, m_turn))
-                    out.emplace_back(n);
+                    out.emplace_back(dst, src, true);
             }
         }
     }
@@ -197,8 +195,7 @@ private:
             && has_movable_square_after_move(
                 Pieces::to_board_piece(m_turn, p), dst)
             && (!is_drop_pawn_on_pawn_existing_file(p, dst))
-            && (!is_drop_pawn_mate(p, dst))
-            && (!king_in_check_after_move(move, m_turn)));
+            && (!is_drop_pawn_mate(p, dst)) && (!in_check_after_move(dst, p)));
     }
     bool has_piece_on_turn_player_stand(const PieceTypeEnum p) const
     {
@@ -261,7 +258,7 @@ private:
             && is_valid_promotion(move)
             && has_movable_square_after_move(
                 move.promote() ? Pieces::promote(moving) : moving, dst)
-            && !king_in_check_after_move(move, m_turn));
+            && !in_check_after_move(dst, src));
     }
     bool is_empty_or_opponent_square(const SquareEnum sq) const
     {
@@ -273,19 +270,20 @@ private:
     {
         return BitBoard::get_attacks_by(p, dst).any();
     }
-    bool king_in_check_after_move(const Move m, const ColorEnum c) const
+    bool in_check_after_move(const SquareEnum dst, const SquareEnum src) const
     {
-        const auto dst = m.destination();
         auto b = m_board;
-        if (m.is_drop()) {
-            b[dst] = Pieces::to_board_piece(m_turn, m.source_piece());
-        } else {
-            const auto src = m.source_square();
-            const auto tmp = b[src];
-            b[src] = Pieces::VOID;
-            b[dst] = tmp;
-        }
-        return b.in_check(c);
+        const auto tmp = b[src];
+        b[src] = Pieces::VOID;
+        b[dst] = tmp;
+        return b.in_check(m_turn);
+    }
+    bool
+    in_check_after_move(const SquareEnum dst, const PieceTypeEnum src) const
+    {
+        auto b = m_board;
+        b[dst] = Pieces::to_board_piece(m_turn, src);
+        return b.in_check(m_turn);
     }
 
 private:

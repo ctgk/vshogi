@@ -82,7 +82,7 @@ public:
         if (king_sq == SQ_NA)
             return false;
 
-        const auto max_length = std::min(num_files, num_ranks) - 1;
+        constexpr int max_length = std::min(num_files, num_ranks) - 1;
         for (auto dir : Squares::direction_array) {
             auto sq = king_sq;
             for (int ii = max_length; ii--;) {
