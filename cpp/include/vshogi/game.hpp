@@ -171,7 +171,7 @@ protected:
     void update_result()
     {
         const auto turn = get_turn();
-        m_legal_moves = m_current_state.get_legal_moves();
+        m_current_state.get_legal_moves(m_legal_moves);
         if (m_legal_moves.empty())
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
         if (is_fourfold_repetitions()) {

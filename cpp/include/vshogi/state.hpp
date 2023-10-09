@@ -98,12 +98,11 @@ public:
         update_masks();
         return *this;
     }
-    std::vector<Move> get_legal_moves() const
+    void get_legal_moves(std::vector<Move>& out) const
     {
-        auto out = std::vector<Move>();
+        out.clear();
         append_legal_moves_by_board_pieces(out);
         append_legal_moves_by_stand_pieces(out);
-        return out;
     }
 
 private:

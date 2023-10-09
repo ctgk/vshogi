@@ -61,7 +61,8 @@ TEST(state, get_legal_moves)
     {
         auto s = State();
         s.set_sfen("8+L/8g/9/9/4k4/9/9/2K6/9 w 2br10PR");
-        const auto actual = s.get_legal_moves();
+        auto actual = std::vector<Move>();
+        s.get_legal_moves(actual);
         CHECK_TRUE(
             std::find(actual.cbegin(), actual.cend(), Move(SQ_1A, SQ_1B))
             != actual.cend());
@@ -98,7 +99,8 @@ TEST(state, get_legal_moves)
         //   +---+---+---+---+---+---+---+---+---+
         // Black: -
         s.set_sfen("8k/8p/9/9/9/9/9/4+p4/K8 w 10p");
-        const auto actual = s.get_legal_moves();
+        auto actual = std::vector<Move>();
+        s.get_legal_moves(actual);
         CHECK_FALSE(
             std::find(actual.cbegin(), actual.cend(), Move(SQ_1F, FU))
             != actual.cend()); // two pawns on the same file
@@ -115,7 +117,8 @@ TEST(state, get_legal_moves)
     {
         auto s = State();
         s.set_sfen("9/9/9/9/4k4/9/9/2K6/9 b -");
-        const auto actual = s.get_legal_moves();
+        auto actual = std::vector<Move>();
+        s.get_legal_moves(actual);
         CHECK_EQUAL(8, actual.size());
     }
 }

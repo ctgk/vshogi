@@ -76,7 +76,8 @@ TEST(state, get_legal_moves)
 {
     {
         auto s = State();
-        const auto actual = s.get_legal_moves();
+        auto actual = std::vector<Move>();
+        s.get_legal_moves(actual);
         CHECK_TRUE(
             std::find(actual.cbegin(), actual.cend(), Move(SQ_6D, SQ_6E))
             != actual.cend());
@@ -108,7 +109,8 @@ TEST(state, get_legal_moves)
         // +---+---+---+---+---+---+
         // B: +FUx1
         s.set_sfen("2rG1k/2R3/2K3/6/6/6 b P");
-        const auto actual = s.get_legal_moves();
+        auto actual = std::vector<Move>();
+        s.get_legal_moves(actual);
         CHECK_TRUE(
             std::find(actual.cbegin(), actual.cend(), Move(SQ_1C, FU))
             != actual.cend());
@@ -147,7 +149,8 @@ TEST(state, get_legal_moves)
         // +---+---+---+---+---+---+
         // B:
         s.set_sfen("5k/6/2n3/6/2p1+rb/K5 w -");
-        const auto actual = s.get_legal_moves();
+        auto actual = std::vector<Move>();
+        s.get_legal_moves(actual);
         CHECK_TRUE(
             std::find(actual.cbegin(), actual.cend(), Move(SQ_5A, SQ_1E))
             != actual.cend());
@@ -204,7 +207,8 @@ TEST(state, get_legal_moves)
         // +---+---+---+---+---+---+
         // B:
         s.set_sfen("6/5P/6/6/6/6 b -");
-        const auto actual = s.get_legal_moves();
+        auto actual = std::vector<Move>();
+        s.get_legal_moves(actual);
         CHECK_EQUAL(1, actual.size());
         CHECK_TRUE(Move(SQ_1A, SQ_1B, true) == actual[0]);
     }
@@ -226,7 +230,8 @@ TEST(state, get_legal_moves)
         // +---+---+---+---+---+---+
         // B:
         s.set_sfen("6/6/6/6/6/6 w n");
-        const auto actual = s.get_legal_moves();
+        auto actual = std::vector<Move>();
+        s.get_legal_moves(actual);
         CHECK_EQUAL(6 * 4, actual.size());
         for (auto a : actual)
             CHECK_TRUE(KE == a.source_piece());
