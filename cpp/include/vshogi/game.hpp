@@ -1,6 +1,7 @@
 #ifndef VSHOGI_GAME_HPP
 #define VSHOGI_GAME_HPP
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -120,7 +121,9 @@ public:
     }
     bool is_legal(const Move move) const
     {
-        return m_current_state.is_legal(move);
+        return (
+            std::find(m_legal_moves.cbegin(), m_legal_moves.cend(), move)
+            != m_legal_moves.cend());
     }
     void to_feature_map(float* const data) const
     {

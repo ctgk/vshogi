@@ -98,12 +98,6 @@ public:
         update_masks();
         return *this;
     }
-    bool is_legal(const Move move) const
-    {
-        if (move.is_drop())
-            return is_legal_drop(move);
-        return is_legal_board(move);
-    }
     std::vector<Move> get_legal_moves() const
     {
         auto out = std::vector<Move>();
@@ -245,21 +239,6 @@ private:
     }
 
 private:
-    bool is_legal_board(const Move move) const
-    {
-        const auto src = move.source_square();
-        const auto moving = m_board[src];
-        const auto dst = move.destination();
-        return (
-            (Pieces::get_color(moving) == m_turn) // No VOID check on purpose
-            && is_empty_or_opponent_square(dst)
-            && BitBoard::get_attacks_by(moving, src, m_occupied)
-                   .is_one(dst) // VOID should return false here.
-            && is_valid_promotion(move)
-            && has_movable_square_after_move(
-                move.promote() ? Pieces::promote(moving) : moving, dst)
-            && !in_check_after_move(dst, src));
-    }
     bool is_empty_or_opponent_square(const SquareEnum sq) const
     {
         return (
@@ -284,23 +263,6 @@ private:
         auto b = m_board;
         b[dst] = Pieces::to_board_piece(m_turn, src);
         return b.in_check(m_turn);
-    }
-
-private:
-    bool is_valid_promotion(const Move move) const
-    {
-        if (!move.promote())
-            return true;
-        if (move.is_drop())
-            return false;
-        const auto p = Pieces::to_piece_type(m_board[move.source_square()]);
-        if (!Pieces::is_promotable(p))
-            return false;
-
-        const auto dst = move.destination();
-        const auto src = move.source_square();
-        return Squares::is_promotion_zone(dst, m_turn)
-               || Squares::is_promotion_zone(src, m_turn);
     }
 };
 

@@ -71,21 +71,6 @@ animal_shogi::State::is_legal_drop(const animal_shogi::Move move) const
 }
 
 template <>
-inline bool
-animal_shogi::State::is_legal_board(const animal_shogi::Move move) const
-{
-    const auto src = move.source_square();
-    const auto moving = m_board[src];
-    const auto dst = move.destination();
-    return (
-        (Pieces::get_color(moving) == m_turn) // No VOID check on purpose
-        && is_empty_or_opponent_square(dst)
-        && BitBoard::get_attacks_by(moving, src)
-               .is_one(dst) // VOID should return false here.
-    );
-}
-
-template <>
 inline void animal_shogi::State::append_legal_moves_by_board_pieces(
     std::vector<animal_shogi::Move>& out) const
 {
@@ -95,12 +80,16 @@ inline void animal_shogi::State::append_legal_moves_by_board_pieces(
         const auto piece = m_board[src];
         if (m_board.is_empty(src) || (Pieces::get_color(piece) != m_turn))
             continue;
+        const auto attacks = BitBoard::get_attacks_by(piece, src);
         for (auto dir : direction_array) {
-            const auto dst = static_cast<Squares::SquareEnum>(
-                src + Squares::direction_to_delta(dir));
-            const auto m = animal_shogi::Move(dst, src);
-            if (is_legal_board(m))
-                out.emplace_back(m);
+            const auto dst = Squares::shift(src, dir);
+            if (dst == Squares::SQ_NA)
+                continue;
+            const auto target = m_board[dst];
+            if (!m_board.is_empty(dst) && (Pieces::get_color(target) == m_turn))
+                continue;
+            if (attacks.is_one(dst))
+                out.emplace_back(dst, src);
         }
     }
 }

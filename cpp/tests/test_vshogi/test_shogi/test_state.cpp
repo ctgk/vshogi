@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "vshogi/shogi/state.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -54,14 +56,21 @@ TEST(state, apply)
     }
 }
 
-TEST(state, is_legal)
+TEST(state, get_legal_moves)
 {
     {
         auto s = State();
         s.set_sfen("8+L/8g/9/9/4k4/9/9/2K6/9 w 2br10PR");
-        CHECK_TRUE(s.is_legal(Move(SQ_1A, SQ_1B)));
-        CHECK_TRUE(s.is_legal(Move(SQ_2A, KA)));
-        CHECK_FALSE(s.is_legal(Move(SQ_1A, KA)));
+        const auto actual = s.get_legal_moves();
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_1A, SQ_1B))
+            != actual.cend());
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_2A, KA))
+            != actual.cend());
+        CHECK_FALSE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_1A, KA))
+            != actual.cend());
     }
     {
         auto s = State();
@@ -89,15 +98,20 @@ TEST(state, is_legal)
         //   +---+---+---+---+---+---+---+---+---+
         // Black: -
         s.set_sfen("8k/8p/9/9/9/9/9/4+p4/K8 w 10p");
-        CHECK_FALSE(s.is_legal(Move(SQ_1F, FU))); // two pawns on the same file
-        CHECK_TRUE(s.is_legal(Move(SQ_2F, FU)));
-        CHECK_FALSE(s.is_legal(Move(SQ_2I, FU))); // unmovable after drop
-        CHECK_TRUE(s.is_legal(Move(SQ_5G, FU)));
+        const auto actual = s.get_legal_moves();
+        CHECK_FALSE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_1F, FU))
+            != actual.cend()); // two pawns on the same file
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_2F, FU))
+            != actual.cend());
+        CHECK_FALSE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_2I, FU))
+            != actual.cend()); // unmovable after drop
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_5G, FU))
+            != actual.cend());
     }
-}
-
-TEST(state, get_legal_moves)
-{
     {
         auto s = State();
         s.set_sfen("9/9/9/9/4k4/9/9/2K6/9 b -");

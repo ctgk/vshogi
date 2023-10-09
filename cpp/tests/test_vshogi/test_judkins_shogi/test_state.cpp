@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "vshogi/judkins_shogi/state.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -70,14 +72,23 @@ TEST(state, apply)
     }
 }
 
-TEST(state, is_legal)
+TEST(state, get_legal_moves)
 {
     {
         auto s = State();
-        CHECK_TRUE(s.is_legal(Move(SQ_6D, SQ_6E)));
-        CHECK_TRUE(s.is_legal(Move(SQ_4D, SQ_3F)));
-        CHECK_FALSE(s.is_legal(Move(SQ_1A, SQ_1F)));
-        CHECK_FALSE(s.is_legal(Move(SQ_4D, SQ_3F, true)));
+        const auto actual = s.get_legal_moves();
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_6D, SQ_6E))
+            != actual.cend());
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_4D, SQ_3F))
+            != actual.cend());
+        CHECK_FALSE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_1A, SQ_1F))
+            != actual.cend());
+        CHECK_FALSE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_4D, SQ_3F, true))
+            != actual.cend());
     }
     {
         auto s = State();
@@ -97,13 +108,26 @@ TEST(state, is_legal)
         // +---+---+---+---+---+---+
         // B: +FUx1
         s.set_sfen("2rG1k/2R3/2K3/6/6/6 b P");
-        CHECK_TRUE(s.is_legal(Move(SQ_1C, FU)));
-        CHECK_FALSE(s.is_legal(Move(SQ_1B, FU))); // drop pawn mate
-        CHECK_FALSE(s.is_legal(Move(SQ_6A, FU))); // unmovable
+        const auto actual = s.get_legal_moves();
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_1C, FU))
+            != actual.cend());
+        CHECK_FALSE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_1B, FU))
+            != actual.cend()); // drop pawn mate
+        CHECK_FALSE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_6A, FU))
+            != actual.cend()); // unmovable
 
-        CHECK_TRUE(s.is_legal(Move(SQ_4A, SQ_4B)));
-        CHECK_TRUE(s.is_legal(Move(SQ_4A, SQ_4B, true)));
-        CHECK_FALSE(s.is_legal(Move(SQ_1B, SQ_4B))); // pinned
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_4A, SQ_4B))
+            != actual.cend());
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_4A, SQ_4B, true))
+            != actual.cend());
+        CHECK_FALSE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_1B, SQ_4B))
+            != actual.cend()); // pinned
     }
     {
         auto s = State();
@@ -123,25 +147,45 @@ TEST(state, is_legal)
         // +---+---+---+---+---+---+
         // B:
         s.set_sfen("5k/6/2n3/6/2p1+rb/K5 w -");
-        CHECK_TRUE(s.is_legal(Move(SQ_5A, SQ_1E)));
-        CHECK_TRUE(s.is_legal(Move(SQ_5A, SQ_1E, true)));
-        CHECK_TRUE(s.is_legal(Move(SQ_2F, SQ_1E)));
-        CHECK_TRUE(s.is_legal(Move(SQ_2F, SQ_1E, true)));
-        CHECK_TRUE(s.is_legal(Move(SQ_2A, SQ_2E)));
+        const auto actual = s.get_legal_moves();
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_5A, SQ_1E))
+            != actual.cend());
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_5A, SQ_1E, true))
+            != actual.cend());
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_2F, SQ_1E))
+            != actual.cend());
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_2F, SQ_1E, true))
+            != actual.cend());
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_2A, SQ_2E))
+            != actual.cend());
         // promotion of promoted piece
-        CHECK_FALSE(s.is_legal(Move(SQ_2A, SQ_2E, true)));
-        CHECK_FALSE(s.is_legal(Move(SQ_1E, SQ_2E)));
+        CHECK_FALSE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_2A, SQ_2E, true))
+            != actual.cend());
+        CHECK_FALSE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_1E, SQ_2E))
+            != actual.cend());
 
-        CHECK_FALSE(s.is_legal(Move(SQ_3E, SQ_4C))); // unmovable
-        CHECK_TRUE(s.is_legal(Move(SQ_3E, SQ_4C, true)));
+        CHECK_FALSE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_3E, SQ_4C))
+            != actual.cend()); // unmovable
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_3E, SQ_4C, true))
+            != actual.cend());
 
-        CHECK_FALSE(s.is_legal(Move(SQ_4F, SQ_4E))); // unmovable
-        CHECK_TRUE(s.is_legal(Move(SQ_4F, SQ_4E, true)));
+        CHECK_FALSE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_4F, SQ_4E))
+            != actual.cend()); // unmovable
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_4F, SQ_4E, true))
+            != actual.cend());
     }
-}
 
-TEST(state, get_legal_moves)
-{
     {
         auto s = State();
         // W:
