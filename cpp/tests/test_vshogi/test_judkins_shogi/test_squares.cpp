@@ -126,18 +126,18 @@ TEST(squares, square_array)
     }
 }
 
-TEST(squares, get_direction_of_src)
+TEST(squares, get_direction)
 {
-    CHECK_EQUAL(DIR_NW, get_direction_of_src(SQ_1B, SQ_2A));
-    CHECK_EQUAL(DIR_N, get_direction_of_src(SQ_6F, SQ_6B));
-    CHECK_EQUAL(DIR_NE, get_direction_of_src(SQ_6F, SQ_1A));
-    CHECK_EQUAL(DIR_W, get_direction_of_src(SQ_1D, SQ_4D));
-    CHECK_EQUAL(DIR_E, get_direction_of_src(SQ_3D, SQ_1D));
-    CHECK_EQUAL(DIR_SW, get_direction_of_src(SQ_3A, SQ_4B));
-    CHECK_EQUAL(DIR_S, get_direction_of_src(SQ_1A, SQ_1E));
-    CHECK_EQUAL(DIR_SE, get_direction_of_src(SQ_6A, SQ_1F));
-    CHECK_EQUAL(DIR_SSW, get_direction_of_src(SQ_5A, SQ_6C));
-    CHECK_EQUAL(DIR_SSE, get_direction_of_src(SQ_3B, SQ_2D));
+    CHECK_EQUAL(DIR_NW, get_direction(SQ_2A, SQ_1B));
+    CHECK_EQUAL(DIR_N, get_direction(SQ_6B, SQ_6F));
+    CHECK_EQUAL(DIR_NE, get_direction(SQ_1A, SQ_6F));
+    CHECK_EQUAL(DIR_W, get_direction(SQ_4D, SQ_1D));
+    CHECK_EQUAL(DIR_E, get_direction(SQ_1D, SQ_3D));
+    CHECK_EQUAL(DIR_SW, get_direction(SQ_4B, SQ_3A));
+    CHECK_EQUAL(DIR_S, get_direction(SQ_1E, SQ_1A));
+    CHECK_EQUAL(DIR_SE, get_direction(SQ_1F, SQ_6A));
+    CHECK_EQUAL(DIR_SSW, get_direction(SQ_6C, SQ_5A));
+    CHECK_EQUAL(DIR_SSE, get_direction(SQ_2D, SQ_3B));
 }
 
 } // namespace test_vshogi::test_judkins_shogi

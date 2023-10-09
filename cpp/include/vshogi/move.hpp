@@ -115,7 +115,7 @@ private:
         const auto promo_offset
             = promote() ? Squares::num_dlshogi_directions : 0;
         const auto direction
-            = Squares::get_direction_of_src(destination(), source_square());
+            = Squares::get_direction(source_square(), destination());
         if (direction == DIR_NA)
             return -1;
         return static_cast<int>(direction) + promo_offset;

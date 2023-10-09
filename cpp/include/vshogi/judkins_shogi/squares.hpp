@@ -29,7 +29,6 @@ struct Squares
     * | 30| 31| 32| 33| 34| 35| f
     * +---+---+---+---+---+---+
     */
-
     enum SquareEnum
     {
         // clang-format off
@@ -184,13 +183,13 @@ struct Squares
         return out;
     }
     static constexpr DirectionEnum
-    get_direction_of_src(const SquareEnum dst, const SquareEnum src)
+    get_direction(const SquareEnum dst, const SquareEnum src)
     {
         if (to_file(dst) == to_file(src))
-            return (src < dst) ? DIR_N : DIR_S;
+            return (src < dst) ? DIR_S : DIR_N;
         if (to_rank(dst) == to_rank(src))
-            return (src < dst) ? DIR_W : DIR_E;
-        switch (static_cast<int>(dst - src)) {
+            return (src < dst) ? DIR_E : DIR_W;
+        switch (static_cast<int>(src - dst)) {
         case 7:
         case 14:
         case 21:

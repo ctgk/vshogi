@@ -208,13 +208,13 @@ struct Squares
         return out;
     }
     static constexpr DirectionEnum
-    get_direction_of_src(const SquareEnum dst, const SquareEnum src)
+    get_direction(const SquareEnum dst, const SquareEnum src)
     {
         if (to_file(dst) == to_file(src))
-            return (src < dst) ? DIR_N : DIR_S;
+            return (src < dst) ? DIR_S : DIR_N;
         if (to_rank(dst) == to_rank(src))
-            return (src < dst) ? DIR_W : DIR_E;
-        switch (static_cast<int>(dst - src)) {
+            return (src < dst) ? DIR_E : DIR_W;
+        switch (static_cast<int>(src - dst)) {
         case 10:
         case 20:
         case 30:
@@ -234,7 +234,7 @@ struct Squares
         case 64:
             return DIR_NE;
         case 40:
-            return (Squares::to_file(dst) < Squares::FILE6) ? DIR_NW : DIR_NE;
+            return (Squares::to_file(src) < Squares::FILE6) ? DIR_NW : DIR_NE;
         case -8:
         case -16:
         case -24:
@@ -254,7 +254,7 @@ struct Squares
         case -80:
             return DIR_SE;
         case -40:
-            return (Squares::to_file(dst) < Squares::FILE5) ? DIR_SW : DIR_SE;
+            return (Squares::to_file(src) < Squares::FILE5) ? DIR_SW : DIR_SE;
         case -17:
             return DIR_SSW;
         case -19:

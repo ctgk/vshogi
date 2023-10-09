@@ -87,8 +87,7 @@ static auto is_edge(const T a)
 static constexpr auto to_rank = vshogi::shogi::Squares::to_rank;
 static constexpr auto to_file = vshogi::shogi::Squares::to_file;
 static constexpr auto shift = vshogi::shogi::Squares::shift;
-static constexpr auto get_direction_of_src
-    = vshogi::shogi::Squares::get_direction_of_src;
+static constexpr auto get_direction = vshogi::shogi::Squares::get_direction;
 static constexpr auto num_squares = vshogi::shogi::Squares::num_squares;
 static constexpr auto RANK1 = vshogi::shogi::Squares::RANK1; // NOLINT
 static constexpr auto RANK2 = vshogi::shogi::Squares::RANK2; // NOLINT
