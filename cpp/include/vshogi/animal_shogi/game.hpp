@@ -42,6 +42,63 @@ inline ResultEnum move_result(
 
 namespace vshogi
 {
+template <>
+inline bool animal_shogi::Game::is_repetitions() const
+{
+    constexpr int num_acceptable_repetitions = 2;
+    int num = 1;
+    const auto current_sfen = m_current_state.to_sfen();
+    for (auto&& previous_record : m_record) {
+        num += (current_sfen == previous_record.first);
+        if (num > num_acceptable_repetitions)
+            return true;
+    }
+    return false;
+}
+
+template <>
+inline void animal_shogi::Game::update_result()
+{
+    const auto turn = get_turn();
+    if (m_legal_moves.empty())
+        m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
+    if (is_repetitions())
+        m_result = DRAW;
+    if (m_result != ONGOING)
+        m_legal_moves.clear();
+}
+
+template <>
+inline void animal_shogi::Game::update_internals()
+{
+    const auto turn = get_turn();
+    const auto& board = get_board();
+    const auto& stand = get_stand(turn);
+    m_legal_moves.clear();
+    for (auto src : Squares::square_array) {
+        const auto p = board[src];
+        if ((p == Pieces::VOID) || (Pieces::get_color(p) != turn))
+            continue;
+        for (auto dir : Squares::direction_array) {
+            const auto dst = Squares::shift(src, dir);
+            if (dst == Squares::SQ_NA)
+                continue;
+            const auto t = board[dst];
+            if (((t == Pieces::VOID) || (Pieces::get_color(t) == ~turn))
+                && BitBoard::get_attacks_by(p, src).is_one(dst))
+                m_legal_moves.emplace_back(dst, src);
+        }
+    }
+    for (auto dst : Squares::square_array) {
+        if (!board.is_empty(dst))
+            continue;
+        for (auto pt : Pieces::stand_piece_array) {
+            if (stand.exist(pt))
+                m_legal_moves.emplace_back(Move(dst, pt));
+        }
+    }
+    update_result();
+}
 
 template <>
 inline animal_shogi::Game&
@@ -58,8 +115,10 @@ animal_shogi::Game::apply(const animal_shogi::Move move)
     if (illegal) {
         m_result = (get_turn() == BLACK) ? BLACK_WIN : WHITE_WIN;
         m_legal_moves.clear();
-    } else {
+    } else if (m_result == ONGOING) {
         update_internals();
+    } else {
+        m_legal_moves.clear();
     }
     return *this;
 }

@@ -212,6 +212,8 @@ struct Squares
     static constexpr DirectionEnum
     get_direction(const SquareEnum dst, const SquareEnum src)
     {
+        if ((dst == SQ_NA) || (src == SQ_NA))
+            return DIR_NA;
         if (to_file(dst) == to_file(src))
             return (src < dst) ? DIR_S : DIR_N;
         if (to_rank(dst) == to_rank(src))

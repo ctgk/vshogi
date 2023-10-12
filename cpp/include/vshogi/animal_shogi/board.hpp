@@ -13,21 +13,4 @@ using Board = vshogi::Board<Squares, Pieces, BitBoard>;
 
 } // namespace vshogi::animal_shogi
 
-namespace vshogi
-{
-
-template <>
-inline animal_shogi::Squares::SquareEnum
-animal_shogi::Board::king_location(const ColorEnum c) const
-{
-    const auto target = to_board_piece(c, animal_shogi::Pieces::LI);
-    for (auto sq : animal_shogi::Squares::square_array) {
-        if (m_pieces[sq] == target)
-            return sq;
-    }
-    return SQ_NA;
-}
-
-} // namespace vshogi
-
 #endif // VSHOGI_ANIMAL_SHOGI_BOARD_HPP

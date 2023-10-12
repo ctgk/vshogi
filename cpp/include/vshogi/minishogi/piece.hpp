@@ -94,7 +94,7 @@ struct Pieces
         return static_cast<PieceTypeEnum>(p & 0x0f);
     }
 
-    static constexpr BoardPieceTypeEnum
+    static inline BoardPieceTypeEnum
     to_board_piece(const ColorEnum c, const PieceTypeEnum p)
     {
         if (p == NA)

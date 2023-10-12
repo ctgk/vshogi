@@ -4,6 +4,7 @@
 #include <string>
 
 #include "vshogi/color.hpp"
+#include "vshogi/direction.hpp"
 
 namespace vshogi
 {
@@ -46,61 +47,6 @@ public:
     {
         return (m_pieces[sq] == VOID);
     }
-    BitBoard to_piece_mask() const
-    {
-        BitBoard out = BitBoard();
-        for (auto sq : Squares::square_array) {
-            if (!is_empty(sq))
-                out |= BitBoard::from_square(sq);
-        }
-        return out;
-    }
-    BitBoard to_piece_mask(const ColorEnum c) const
-    {
-        BitBoard out = BitBoard();
-        for (auto sq : Squares::square_array) {
-            const auto p = m_pieces[sq];
-            if (p == VOID)
-                continue;
-            if (get_color(p) == c)
-                out |= BitBoard::from_square(sq);
-        }
-        return out;
-    }
-    SquareEnum king_location(const ColorEnum c) const
-    {
-        const auto target = to_board_piece(c, Pieces::OU);
-        for (auto sq : Squares::square_array) {
-            if (m_pieces[sq] == target)
-                return sq;
-        }
-        return SQ_NA;
-    }
-    bool in_check(const ColorEnum c) const
-    {
-        const auto king_sq = king_location(c);
-        if (king_sq == SQ_NA)
-            return false;
-
-        constexpr int max_length = std::min(num_files, num_ranks) - 1;
-        for (auto dir : Squares::direction_array) {
-            auto sq = king_sq;
-            for (int ii = max_length; ii--;) {
-                sq = Squares::shift(sq, dir);
-                if (sq == SQ_NA)
-                    break;
-                const auto p = m_pieces[sq];
-                if (p == VOID)
-                    continue;
-                if (get_color(p) == c)
-                    break;
-                if (BitBoard::get_attacks_by(p, sq).is_one(king_sq))
-                    return true;
-                break;
-            }
-        }
-        return false;
-    }
     const char* set_sfen(const char* sfen)
     {
         for (int ir = 0; ir < num_ranks; ++ir) {
@@ -117,6 +63,26 @@ public:
             out += to_sfen_rank(static_cast<RankEnum>(ir));
         }
         return out;
+    }
+    SquareEnum find_attacker(
+        const ColorEnum attacker_color,
+        const SquareEnum attacked,
+        const DirectionEnum dir,
+        const SquareEnum skip = SQ_NA) const
+    {
+        auto sq = attacked;
+        while (true) {
+            sq = Squares::shift(sq, dir);
+            if (sq == SQ_NA)
+                return SQ_NA;
+            const auto p = m_pieces[sq];
+            if ((p == VOID) || (sq == skip))
+                continue;
+            if ((Pieces::get_color(p) == attacker_color)
+                && BitBoard::get_attacks_by(p, sq).is_one(attacked))
+                return sq;
+            return SQ_NA;
+        }
     }
 
 private:

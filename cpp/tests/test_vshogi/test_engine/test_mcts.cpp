@@ -224,7 +224,7 @@ TEST(node_animal_shogi, explore_two_layer)
     auto root = Node(g, 0.f, logits);
 
     {
-        auto g_copy = Game("2g/3/3/G2 b -");
+        auto g_copy = g;
         const auto actual = root.explore(g_copy, 1.f, 0.f, 0);
         CHECK_TRUE(actual != nullptr);
         STRCMP_EQUAL("2g/3/G2/3 w - 2", g_copy.to_sfen().c_str());
@@ -238,7 +238,7 @@ TEST(node_animal_shogi, explore_two_layer)
             1e-3f);
     }
     {
-        auto g_copy = Game("2g/3/3/G2 b -");
+        auto g_copy = g;
         const auto actual = root.explore(g_copy, 1.f, 0.f, 0);
         CHECK_TRUE(actual != nullptr);
         STRCMP_EQUAL("3/2g/G2/3 b - 3", g_copy.to_sfen().c_str());
@@ -285,6 +285,7 @@ TEST(node_animal_shogi, explore_from_popped_child)
     }
 
     const auto selected = Move(SQ_B2, SQ_B3);
+    CHECK_TRUE(g.is_legal(selected));
     root = root.pop_child(selected);
     g.apply(selected);
     for (int ii = 100; ii--;) {

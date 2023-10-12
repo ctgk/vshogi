@@ -71,24 +71,6 @@ TEST(animal_shogi_state, apply)
     }
 }
 
-TEST(animal_shogi_state, get_legal_moves)
-{
-    auto s = State();
-    auto actual = std::vector<Move>();
-    s.get_legal_moves(actual);
-    CHECK_EQUAL(4, actual.size());
-    CHECK_TRUE(
-        std::find(actual.cbegin(), actual.cend(), Move(SQ_B2, SQ_B3))
-        != actual.cend());
-    CHECK_FALSE(
-        std::find(actual.cbegin(), actual.cend(), Move(SQ_B3, SQ_B2))
-        != actual.cend());
-
-    s.apply(Move(SQ_B2, SQ_B3));
-    s.get_legal_moves(actual);
-    CHECK_EQUAL(5, actual.size());
-}
-
 TEST(animal_shogi_state, to_sfen)
 {
     {

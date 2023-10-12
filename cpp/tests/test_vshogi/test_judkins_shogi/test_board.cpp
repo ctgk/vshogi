@@ -27,43 +27,6 @@ TEST(board, set)
     CHECK_EQUAL(W_GI, b[SQ_2D]);
 }
 
-TEST(board, to_piece_mask)
-{
-    auto b = Board();
-    CHECK_TRUE(
-        (bb_6a | bb_5a | bb_4a | bb_3a | bb_2a | bb_1a | bb_1b | bb_6e | bb_6f
-         | bb_5f | bb_4f | bb_3f | bb_2f | bb_1f)
-        == b.to_piece_mask());
-    CHECK_TRUE(
-        (bb_6a | bb_5a | bb_4a | bb_3a | bb_2a | bb_1a | bb_1b)
-        == b.to_piece_mask(vshogi::WHITE));
-    CHECK_TRUE(
-        (bb_6f | bb_5f | bb_4f | bb_3f | bb_2f | bb_1f | bb_6e)
-        == b.to_piece_mask(vshogi::BLACK));
-}
-
-TEST(board, king_location)
-{
-    auto b = Board();
-    CHECK_EQUAL(SQ_6F, b.king_location(vshogi::BLACK));
-    CHECK_EQUAL(SQ_1A, b.king_location(vshogi::WHITE));
-    b[SQ_6F] = VOID;
-    b[SQ_1A] = VOID;
-    CHECK_EQUAL(SQ_NA, b.king_location(vshogi::BLACK));
-    CHECK_EQUAL(SQ_NA, b.king_location(vshogi::WHITE));
-}
-
-TEST(board, in_check)
-{
-    auto b = Board();
-    CHECK_FALSE(b.in_check(vshogi::BLACK));
-    CHECK_FALSE(b.in_check(vshogi::WHITE));
-    b[SQ_1B] = B_FU;
-    b[SQ_6E] = W_FU;
-    CHECK_TRUE(b.in_check(vshogi::BLACK));
-    CHECK_TRUE(b.in_check(vshogi::WHITE));
-}
-
 TEST(board, set_sfen)
 {
     {

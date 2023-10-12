@@ -57,41 +57,7 @@ animal_shogi::State::apply(const animal_shogi::Move move)
     moving = animal_shogi::internal::promote_if_possible(moving, move);
     m_board[dst] = moving;
     m_turn = ~m_turn;
-    update_masks();
     return *this;
-}
-
-template <>
-inline bool
-animal_shogi::State::is_legal_drop(const animal_shogi::Move move) const
-{
-    const auto p = move.source_piece();
-    const auto dst = move.destination();
-    return (has_piece_on_turn_player_stand(p) && m_board.is_empty(dst));
-}
-
-template <>
-inline void animal_shogi::State::append_legal_moves_by_board_pieces(
-    std::vector<animal_shogi::Move>& out) const
-{
-    constexpr DirectionEnum direction_array[]
-        = {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE};
-    for (auto src : Squares::square_array) {
-        const auto piece = m_board[src];
-        if (m_board.is_empty(src) || (Pieces::get_color(piece) != m_turn))
-            continue;
-        const auto attacks = BitBoard::get_attacks_by(piece, src);
-        for (auto dir : direction_array) {
-            const auto dst = Squares::shift(src, dir);
-            if (dst == Squares::SQ_NA)
-                continue;
-            const auto target = m_board[dst];
-            if (!m_board.is_empty(dst) && (Pieces::get_color(target) == m_turn))
-                continue;
-            if (attacks.is_one(dst))
-                out.emplace_back(dst, src);
-        }
-    }
 }
 
 } // namespace vshogi
