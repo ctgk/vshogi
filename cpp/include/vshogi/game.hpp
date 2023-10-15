@@ -369,29 +369,37 @@ protected:
         const auto king_location = m_king_locations[turn];
         const auto target_in_promotion_zone
             = Squares::is_promotion_zone(dst, turn);
-        for (auto src : Squares::square_array) {
-            if (src == king_location)
-                continue;
-            if (!m_occupied[turn].is_one(src))
-                continue;
-            const auto p = board[src];
-            if (!BitBoard::get_attacks_by(p, src, m_occupied[2]).is_one(dst))
-                continue;
-            const auto dir = Squares::get_direction(src, king_location);
-            if ((dir != DIR_NA)
-                && (dir != Squares::get_direction(dst, king_location))
-                && (board.find_attacker(~turn, king_location, dir, src)
-                    != Squares::SQ_NA))
-                continue;
+        const auto empty_mask = ~m_occupied[2];
+        const auto src_mask
+            = m_occupied[turn] & (~BitBoard::from_square(king_location));
+        for (auto dir : Squares::direction_array) {
+            SquareEnum src = dst;
+            while (true) {
+                src = Squares::shift(src, dir);
+                if (empty_mask.is_one(src))
+                    continue;
+                if (!src_mask.is_one(src))
+                    break;
+                const auto p = board[src];
+                if (!BitBoard::get_attacks_by(p, src).is_one(dst))
+                    break;
+                const auto src_dir = Squares::get_direction(src, king_location);
+                if ((src_dir != DIR_NA)
+                    && (src_dir != Squares::get_direction(dst, king_location))
+                    && (board.find_attacker(~turn, king_location, src_dir, src)
+                        != Squares::SQ_NA))
+                    break;
 
-            if (Pieces::is_promotable(p)) {
-                if (BitBoard::get_attacks_by(p, dst).any())
+                if (Pieces::is_promotable(p)) {
+                    if (BitBoard::get_attacks_by(p, dst).any())
+                        m_legal_moves.emplace_back(dst, src, false);
+                    if (target_in_promotion_zone
+                        || Squares::is_promotion_zone(src, turn))
+                        m_legal_moves.emplace_back(dst, src, true);
+                } else {
                     m_legal_moves.emplace_back(dst, src, false);
-                if (target_in_promotion_zone
-                    || Squares::is_promotion_zone(src, turn))
-                    m_legal_moves.emplace_back(dst, src, true);
-            } else {
-                m_legal_moves.emplace_back(dst, src, false);
+                }
+                break;
             }
         }
     }

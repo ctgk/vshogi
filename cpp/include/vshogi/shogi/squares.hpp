@@ -239,6 +239,10 @@ struct Squares
             return DIR_NE;
         case 40:
             return (Squares::to_file(src) < Squares::FILE6) ? DIR_NW : DIR_NE;
+        case 17:
+            return DIR_NNE;
+        case 19:
+            return DIR_NNW;
         case -8:
         case -16:
         case -24:

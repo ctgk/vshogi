@@ -206,6 +206,10 @@ struct Squares
         case 20:
         case 25:
             return DIR_NE;
+        case 11:
+            return DIR_NNE;
+        case 13:
+            return DIR_NNW;
         case -5:
         case -10:
         case -15:
