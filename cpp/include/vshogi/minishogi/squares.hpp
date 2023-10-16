@@ -111,6 +111,8 @@ struct Squares
         DIR_S,
         DIR_SE,
     };
+    constexpr static int num_directions
+        = sizeof(direction_array) / sizeof(direction_array[0]);
     constexpr static DirectionEnum dlshogi_direction_array[] = {
         DIR_NW,
         DIR_N,
@@ -128,29 +130,38 @@ struct Squares
         constexpr int table[] = {-6, -5, -4, -1, 1, 4, 5, 6};
         return table[d];
     }
+    constexpr static SquareEnum shift_table[num_squares][num_directions] = {
+        //  NW,     N,    NE,     W,     E,    SW,     S,    SE
+        {SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_4A, SQ_NA, SQ_5B, SQ_4B}, // 5A
+        {SQ_NA, SQ_NA, SQ_NA, SQ_5A, SQ_3A, SQ_5B, SQ_4B, SQ_3B}, // 4A
+        {SQ_NA, SQ_NA, SQ_NA, SQ_4A, SQ_2A, SQ_4B, SQ_3B, SQ_2B}, // 3A
+        {SQ_NA, SQ_NA, SQ_NA, SQ_3A, SQ_1A, SQ_3B, SQ_2B, SQ_1B}, // 2A
+        {SQ_NA, SQ_NA, SQ_NA, SQ_2A, SQ_NA, SQ_2B, SQ_1B, SQ_NA}, // 1A
+        {SQ_NA, SQ_5A, SQ_4A, SQ_NA, SQ_4B, SQ_NA, SQ_5C, SQ_4C}, // 5B
+        {SQ_5A, SQ_4A, SQ_3A, SQ_5B, SQ_3B, SQ_5C, SQ_4C, SQ_3C}, // 4B
+        {SQ_4A, SQ_3A, SQ_2A, SQ_4B, SQ_2B, SQ_4C, SQ_3C, SQ_2C}, // 3B
+        {SQ_3A, SQ_2A, SQ_1A, SQ_3B, SQ_1B, SQ_3C, SQ_2C, SQ_1C}, // 2B
+        {SQ_2A, SQ_1A, SQ_NA, SQ_2B, SQ_NA, SQ_2C, SQ_1C, SQ_NA}, // 1B
+        {SQ_NA, SQ_5B, SQ_4B, SQ_NA, SQ_4C, SQ_NA, SQ_5D, SQ_4D}, // 5C
+        {SQ_5B, SQ_4B, SQ_3B, SQ_5C, SQ_3C, SQ_5D, SQ_4D, SQ_3D}, // 4C
+        {SQ_4B, SQ_3B, SQ_2B, SQ_4C, SQ_2C, SQ_4D, SQ_3D, SQ_2D}, // 3C
+        {SQ_3B, SQ_2B, SQ_1B, SQ_3C, SQ_1C, SQ_3D, SQ_2D, SQ_1D}, // 2C
+        {SQ_2B, SQ_1B, SQ_NA, SQ_2C, SQ_NA, SQ_2D, SQ_1D, SQ_NA}, // 1C
+        {SQ_NA, SQ_5C, SQ_4C, SQ_NA, SQ_4D, SQ_NA, SQ_5E, SQ_4E}, // 5D
+        {SQ_5C, SQ_4C, SQ_3C, SQ_5D, SQ_3D, SQ_5E, SQ_4E, SQ_3E}, // 4D
+        {SQ_4C, SQ_3C, SQ_2C, SQ_4D, SQ_2D, SQ_4E, SQ_3E, SQ_2E}, // 3D
+        {SQ_3C, SQ_2C, SQ_1C, SQ_3D, SQ_1D, SQ_3E, SQ_2E, SQ_1E}, // 2D
+        {SQ_2C, SQ_1C, SQ_NA, SQ_2D, SQ_NA, SQ_2E, SQ_1E, SQ_NA}, // 1D
+        {SQ_NA, SQ_5D, SQ_4D, SQ_NA, SQ_4E, SQ_NA, SQ_NA, SQ_NA}, // 5E
+        {SQ_5D, SQ_4D, SQ_3D, SQ_5E, SQ_3E, SQ_NA, SQ_NA, SQ_NA}, // 4E
+        {SQ_4D, SQ_3D, SQ_2D, SQ_4E, SQ_2E, SQ_NA, SQ_NA, SQ_NA}, // 3E
+        {SQ_3D, SQ_2D, SQ_1D, SQ_3E, SQ_1E, SQ_NA, SQ_NA, SQ_NA}, // 2E
+        {SQ_2D, SQ_1D, SQ_NA, SQ_2E, SQ_NA, SQ_NA, SQ_NA, SQ_NA}, // 1E
+    };
     static constexpr SquareEnum
     shift(const SquareEnum sq, const DirectionEnum d)
     {
-        if (d == DIR_NA)
-            return SQ_NA;
-        const auto f = to_file(sq);
-        const auto out = static_cast<SquareEnum>(
-            static_cast<int>(sq) + direction_to_delta(d));
-        if ((out < 0) || (out >= num_squares))
-            return SQ_NA;
-        switch (d) {
-        case DIR_NW:
-        case DIR_W:
-        case DIR_SW:
-            return (f == FILE5) ? SQ_NA : out;
-        case DIR_NE:
-        case DIR_E:
-        case DIR_SE:
-            return (f == FILE1) ? SQ_NA : out;
-        default:
-            break;
-        }
-        return out;
+        return (d == DIR_NA) ? SQ_NA : shift_table[sq][d];
     }
     static constexpr DirectionEnum
     get_direction(const SquareEnum dst, const SquareEnum src)

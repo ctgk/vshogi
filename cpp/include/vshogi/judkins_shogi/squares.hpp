@@ -137,6 +137,8 @@ struct Squares
         DIR_NNW,
         DIR_NNE,
     };
+    constexpr static int num_directions
+        = sizeof(direction_array) / sizeof(direction_array[0]);
     constexpr static DirectionEnum dlshogi_direction_array[] = {
         DIR_NW,
         DIR_N,
@@ -156,33 +158,50 @@ struct Squares
         constexpr int table[] = {-7, -6, -5, -1, 1, 5, 6, 7, 11, 13, -13, -11};
         return table[d];
     }
+    static constexpr SquareEnum shift_table[num_squares][num_directions] = {
+        // clang-format off
+        //  NW,     N,    NE,     W,     E,    SW,     S,    SE,   SSW,   SSE,   NNW,   NNE
+        {SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_5A, SQ_NA, SQ_6B, SQ_5B, SQ_NA, SQ_5C, SQ_NA, SQ_NA}, // 6A
+        {SQ_NA, SQ_NA, SQ_NA, SQ_6A, SQ_4A, SQ_6B, SQ_5B, SQ_4B, SQ_6C, SQ_4C, SQ_NA, SQ_NA}, // 5A
+        {SQ_NA, SQ_NA, SQ_NA, SQ_5A, SQ_3A, SQ_5B, SQ_4B, SQ_3B, SQ_5C, SQ_3C, SQ_NA, SQ_NA}, // 4A
+        {SQ_NA, SQ_NA, SQ_NA, SQ_4A, SQ_2A, SQ_4B, SQ_3B, SQ_2B, SQ_4C, SQ_2C, SQ_NA, SQ_NA}, // 3A
+        {SQ_NA, SQ_NA, SQ_NA, SQ_3A, SQ_1A, SQ_3B, SQ_2B, SQ_1B, SQ_3C, SQ_1C, SQ_NA, SQ_NA}, // 2A
+        {SQ_NA, SQ_NA, SQ_NA, SQ_2A, SQ_NA, SQ_2B, SQ_1B, SQ_NA, SQ_2C, SQ_NA, SQ_NA, SQ_NA}, // 1A
+        {SQ_NA, SQ_6A, SQ_5A, SQ_NA, SQ_5B, SQ_NA, SQ_6C, SQ_5C, SQ_NA, SQ_5D, SQ_NA, SQ_NA}, // 6B
+        {SQ_6A, SQ_5A, SQ_4A, SQ_6B, SQ_4B, SQ_6C, SQ_5C, SQ_4C, SQ_6D, SQ_4D, SQ_NA, SQ_NA}, // 5B
+        {SQ_5A, SQ_4A, SQ_3A, SQ_5B, SQ_3B, SQ_5C, SQ_4C, SQ_3C, SQ_5D, SQ_3D, SQ_NA, SQ_NA}, // 4B
+        {SQ_4A, SQ_3A, SQ_2A, SQ_4B, SQ_2B, SQ_4C, SQ_3C, SQ_2C, SQ_4D, SQ_2D, SQ_NA, SQ_NA}, // 3B
+        {SQ_3A, SQ_2A, SQ_1A, SQ_3B, SQ_1B, SQ_3C, SQ_2C, SQ_1C, SQ_3D, SQ_1D, SQ_NA, SQ_NA}, // 2B
+        {SQ_2A, SQ_1A, SQ_NA, SQ_2B, SQ_NA, SQ_2C, SQ_1C, SQ_NA, SQ_2D, SQ_NA, SQ_NA, SQ_NA}, // 1B
+        {SQ_NA, SQ_6B, SQ_5B, SQ_NA, SQ_5C, SQ_NA, SQ_6D, SQ_5D, SQ_NA, SQ_5E, SQ_NA, SQ_5A}, // 6C
+        {SQ_6B, SQ_5B, SQ_4B, SQ_6C, SQ_4C, SQ_6D, SQ_5D, SQ_4D, SQ_6E, SQ_4E, SQ_6A, SQ_4A}, // 5C
+        {SQ_5B, SQ_4B, SQ_3B, SQ_5C, SQ_3C, SQ_5D, SQ_4D, SQ_3D, SQ_5E, SQ_3E, SQ_5A, SQ_3A}, // 4C
+        {SQ_4B, SQ_3B, SQ_2B, SQ_4C, SQ_2C, SQ_4D, SQ_3D, SQ_2D, SQ_4E, SQ_2E, SQ_4A, SQ_2A}, // 3C
+        {SQ_3B, SQ_2B, SQ_1B, SQ_3C, SQ_1C, SQ_3D, SQ_2D, SQ_1D, SQ_3E, SQ_1E, SQ_3A, SQ_1A}, // 2C
+        {SQ_2B, SQ_1B, SQ_NA, SQ_2C, SQ_NA, SQ_2D, SQ_1D, SQ_NA, SQ_2E, SQ_NA, SQ_2A, SQ_NA}, // 1C
+        {SQ_NA, SQ_6C, SQ_5C, SQ_NA, SQ_5D, SQ_NA, SQ_6E, SQ_5E, SQ_NA, SQ_5F, SQ_NA, SQ_5B}, // 6D
+        {SQ_6C, SQ_5C, SQ_4C, SQ_6D, SQ_4D, SQ_6E, SQ_5E, SQ_4E, SQ_6F, SQ_4F, SQ_6B, SQ_4B}, // 5D
+        {SQ_5C, SQ_4C, SQ_3C, SQ_5D, SQ_3D, SQ_5E, SQ_4E, SQ_3E, SQ_5F, SQ_3F, SQ_5B, SQ_3B}, // 4D
+        {SQ_4C, SQ_3C, SQ_2C, SQ_4D, SQ_2D, SQ_4E, SQ_3E, SQ_2E, SQ_4F, SQ_2F, SQ_4B, SQ_2B}, // 3D
+        {SQ_3C, SQ_2C, SQ_1C, SQ_3D, SQ_1D, SQ_3E, SQ_2E, SQ_1E, SQ_3F, SQ_1F, SQ_3B, SQ_1B}, // 2D
+        {SQ_2C, SQ_1C, SQ_NA, SQ_2D, SQ_NA, SQ_2E, SQ_1E, SQ_NA, SQ_2F, SQ_NA, SQ_2B, SQ_NA}, // 1D
+        {SQ_NA, SQ_6D, SQ_5D, SQ_NA, SQ_5E, SQ_NA, SQ_6F, SQ_5F, SQ_NA, SQ_NA, SQ_NA, SQ_5C}, // 6E
+        {SQ_6D, SQ_5D, SQ_4D, SQ_6E, SQ_4E, SQ_6F, SQ_5F, SQ_4F, SQ_NA, SQ_NA, SQ_6C, SQ_4C}, // 5E
+        {SQ_5D, SQ_4D, SQ_3D, SQ_5E, SQ_3E, SQ_5F, SQ_4F, SQ_3F, SQ_NA, SQ_NA, SQ_5C, SQ_3C}, // 4E
+        {SQ_4D, SQ_3D, SQ_2D, SQ_4E, SQ_2E, SQ_4F, SQ_3F, SQ_2F, SQ_NA, SQ_NA, SQ_4C, SQ_2C}, // 3E
+        {SQ_3D, SQ_2D, SQ_1D, SQ_3E, SQ_1E, SQ_3F, SQ_2F, SQ_1F, SQ_NA, SQ_NA, SQ_3C, SQ_1C}, // 2E
+        {SQ_2D, SQ_1D, SQ_NA, SQ_2E, SQ_NA, SQ_2F, SQ_1F, SQ_NA, SQ_NA, SQ_NA, SQ_2C, SQ_NA}, // 1E
+        {SQ_NA, SQ_6E, SQ_5E, SQ_NA, SQ_5F, SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_5D}, // 6F
+        {SQ_6E, SQ_5E, SQ_4E, SQ_6F, SQ_4F, SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_6D, SQ_4D}, // 5F
+        {SQ_5E, SQ_4E, SQ_3E, SQ_5F, SQ_3F, SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_5D, SQ_3D}, // 4F
+        {SQ_4E, SQ_3E, SQ_2E, SQ_4F, SQ_2F, SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_4D, SQ_2D}, // 3F
+        {SQ_3E, SQ_2E, SQ_1E, SQ_3F, SQ_1F, SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_3D, SQ_1D}, // 2F
+        {SQ_2E, SQ_1E, SQ_NA, SQ_2F, SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_2D, SQ_NA}, // 1F
+        // clang-format on
+    };
     static SquareEnum shift(const SquareEnum sq, const DirectionEnum d)
     {
-        if (d == DIR_NA)
-            return SQ_NA;
-        const auto r = to_rank(sq);
-        const auto f = to_file(sq);
-        const auto out = static_cast<SquareEnum>(
-            static_cast<int>(sq) + direction_to_delta(d));
-        if ((out < 0) || (out >= num_squares))
-            return SQ_NA;
-        switch (d) {
-        case DIR_NNW:
-        case DIR_NW:
-        case DIR_W:
-        case DIR_SW:
-        case DIR_SSW:
-            return (f == FILE6) ? SQ_NA : out;
-        case DIR_NNE:
-        case DIR_NE:
-        case DIR_E:
-        case DIR_SE:
-        case DIR_SSE:
-            return (f == FILE1) ? SQ_NA : out;
-        default:
-            break;
-        }
-        return out;
+        return (d == DIR_NA) ? SQ_NA : shift_table[sq][d];
     }
     static constexpr DirectionEnum
     get_direction(const SquareEnum dst, const SquareEnum src)

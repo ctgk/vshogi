@@ -104,6 +104,8 @@ struct Squares
         DIR_S,
         DIR_SE,
     };
+    constexpr static int num_directions
+        = sizeof(direction_array) / sizeof(direction_array[0]);
     constexpr static DirectionEnum dlshogi_direction_array[] = {
         DIR_NW,
         DIR_N,
@@ -121,29 +123,25 @@ struct Squares
         constexpr int table[] = {-4, -3, -2, -1, 1, 2, 3, 4};
         return table[d];
     }
+    static constexpr SquareEnum shift_table[num_squares][num_directions] = {
+        //  NW,     N,    NE,     W,     E,    SW,     S,    SE
+        {SQ_NA, SQ_NA, SQ_NA, SQ_NA, SQ_B1, SQ_NA, SQ_A2, SQ_B2}, // A1
+        {SQ_NA, SQ_NA, SQ_NA, SQ_A1, SQ_C1, SQ_A2, SQ_B2, SQ_C2}, // B1
+        {SQ_NA, SQ_NA, SQ_NA, SQ_B1, SQ_NA, SQ_B2, SQ_C2, SQ_NA}, // C1
+        {SQ_NA, SQ_A1, SQ_B1, SQ_NA, SQ_B2, SQ_NA, SQ_A3, SQ_B3}, // A2
+        {SQ_A1, SQ_B1, SQ_C1, SQ_A2, SQ_C2, SQ_A3, SQ_B3, SQ_C3}, // B2
+        {SQ_B1, SQ_C1, SQ_NA, SQ_B2, SQ_NA, SQ_B3, SQ_C3, SQ_NA}, // C2
+        {SQ_NA, SQ_A2, SQ_B2, SQ_NA, SQ_B3, SQ_NA, SQ_A4, SQ_B4}, // A3
+        {SQ_A2, SQ_B2, SQ_C2, SQ_A3, SQ_C3, SQ_A4, SQ_B4, SQ_C4}, // B3
+        {SQ_B2, SQ_C2, SQ_NA, SQ_B3, SQ_NA, SQ_B4, SQ_C4, SQ_NA}, // C3
+        {SQ_NA, SQ_A3, SQ_B3, SQ_NA, SQ_B4, SQ_NA, SQ_NA, SQ_NA}, // A4
+        {SQ_A3, SQ_B3, SQ_C3, SQ_A4, SQ_C4, SQ_NA, SQ_NA, SQ_NA}, // B4
+        {SQ_B3, SQ_C3, SQ_NA, SQ_B4, SQ_NA, SQ_NA, SQ_NA, SQ_NA}, // C4
+    };
     static constexpr SquareEnum
     shift(const SquareEnum sq, const DirectionEnum d)
     {
-        if (d == DIR_NA)
-            return SQ_NA;
-        const auto f = to_file(sq);
-        const auto out = static_cast<SquareEnum>(
-            static_cast<int>(sq) + direction_to_delta(d));
-        if ((out < 0) || (out >= num_squares))
-            return SQ_NA;
-        switch (d) {
-        case DIR_NW:
-        case DIR_W:
-        case DIR_SW:
-            return (f == FILE_A) ? SQ_NA : out;
-        case DIR_NE:
-        case DIR_E:
-        case DIR_SE:
-            return (f == FILE_C) ? SQ_NA : out;
-        default:
-            break;
-        }
-        return out;
+        return (d == DIR_NA) ? SQ_NA : shift_table[sq][d];
     }
 };
 
