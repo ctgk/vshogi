@@ -336,7 +336,6 @@ protected:
         const auto king_sq = m_king_locations[turn];
         const auto moving = board[src];
         const auto promotable = Pieces::is_promotable(moving);
-        const auto ranging = Pieces::is_ranging(moving);
         const auto src_dir = Squares::get_direction(src, king_sq);
         const auto hidden_attacker_sq
             = board.find_attacker(~turn, king_sq, src_dir, src);
@@ -369,6 +368,7 @@ protected:
         }
         for (auto dir : Squares::direction_array) {
             SquareEnum dst = src;
+            const bool ranging = Pieces::is_ranging_to(moving, dir);
             while (true) {
                 dst = Squares::shift(dst, dir);
                 if ((dst == Squares::SQ_NA) || m_occupied[turn].is_one(dst)
@@ -385,7 +385,7 @@ protected:
                 } else {
                     m_legal_moves.emplace_back(dst, src, false);
                 }
-                if ((!ranging) || m_occupied[~turn].is_one(dst))
+                if (!ranging || m_occupied[~turn].is_one(dst))
                     break;
             }
         }

@@ -5,6 +5,7 @@
 #include <string>
 
 #include "vshogi/color.hpp"
+#include "vshogi/direction.hpp"
 
 namespace vshogi::minishogi
 {
@@ -123,13 +124,16 @@ struct Pieces
                                 : p;
     }
 
-    static constexpr bool is_ranging(const PieceTypeEnum p)
+    static inline bool
+    is_ranging_to(const BoardPieceTypeEnum p, const DirectionEnum d)
     {
-        return (p == KA) || (p == HI) || (p == UM) || (p == RY);
-    }
-    static constexpr bool is_ranging(const BoardPieceTypeEnum p)
-    {
-        return is_ranging(to_piece_type(p));
+        const auto base = demote(to_piece_type(p));
+        if (base == HI)
+            return (d == DIR_N) || (d == DIR_W) || (d == DIR_E) || (d == DIR_S);
+        if (base == KA)
+            return (d == DIR_NW) || (d == DIR_NE) || (d == DIR_SW)
+                   || (d == DIR_SE);
+        return false;
     }
 
     static std::string to_sfen(const BoardPieceTypeEnum p)
