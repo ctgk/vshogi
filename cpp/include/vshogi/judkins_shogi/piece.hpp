@@ -118,6 +118,14 @@ struct Pieces
     {
         return static_cast<BoardPieceTypeEnum>(p & 0b10111);
     }
+    static constexpr bool is_ranging(const PieceTypeEnum p)
+    {
+        return (p == KA) || (p == HI) || (p == UM) || (p == RY);
+    }
+    static constexpr bool is_ranging(const BoardPieceTypeEnum p)
+    {
+        return is_ranging(to_piece_type(p));
+    }
     static inline std::string to_sfen(const BoardPieceTypeEnum p)
     {
         const auto color = get_color(p);

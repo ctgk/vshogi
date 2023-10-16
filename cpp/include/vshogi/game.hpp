@@ -336,6 +336,7 @@ protected:
         const auto king_sq = m_king_locations[turn];
         const auto moving = board[src];
         const auto promotable = Pieces::is_promotable(moving);
+        const auto ranging = Pieces::is_ranging(moving);
         const auto src_dir = Squares::get_direction(src, king_sq);
         const auto hidden_attacker_sq
             = board.find_attacker(~turn, king_sq, src_dir, src);
@@ -384,7 +385,7 @@ protected:
                 } else {
                     m_legal_moves.emplace_back(dst, src, false);
                 }
-                if (m_occupied[~turn].is_one(dst))
+                if ((!ranging) || m_occupied[~turn].is_one(dst))
                     break;
             }
         }
