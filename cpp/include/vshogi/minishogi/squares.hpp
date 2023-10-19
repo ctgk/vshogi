@@ -91,14 +91,14 @@ struct Squares
     {
         return (f == FILE1) || (f == FILE5);
     }
-    static constexpr bool is_promotion_zone(const RankEnum r, const ColorEnum c)
+    static constexpr bool in_promotion_zone(const RankEnum r, const ColorEnum c)
     {
         return (c == BLACK) ? (r <= RANK1) : (r >= RANK5);
     }
     static constexpr bool
-    is_promotion_zone(const SquareEnum sq, const ColorEnum c)
+    in_promotion_zone(const SquareEnum sq, const ColorEnum c)
     {
-        return is_promotion_zone(to_rank(sq), c);
+        return in_promotion_zone(to_rank(sq), c);
     }
 
     constexpr static DirectionEnum direction_array[] = {
@@ -161,7 +161,7 @@ struct Squares
     static constexpr SquareEnum
     shift(const SquareEnum sq, const DirectionEnum d)
     {
-        return (d == DIR_NA) ? SQ_NA : shift_table[sq][d];
+        return (d == DIR_NA || sq == SQ_NA) ? SQ_NA : shift_table[sq][d];
     }
     static constexpr DirectionEnum
     get_direction(const SquareEnum dst, const SquareEnum src)

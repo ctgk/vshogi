@@ -176,6 +176,25 @@ public:
 protected:
     void update_internals()
     {
+        update_king_occupied_checkers();
+        update_legal_moves();
+        update_result();
+    }
+    void update_internals(const Move& move)
+    {
+        if (!is_legal(move)) {
+            m_result = (get_turn() == BLACK) ? BLACK_WIN : WHITE_WIN;
+            m_legal_moves.clear();
+            return;
+        }
+        update_king_occupied_checkers(move);
+        update_legal_moves();
+        update_result();
+    }
+
+protected:
+    void update_king_occupied_checkers()
+    {
         m_king_locations[BLACK] = Squares::SQ_NA;
         m_king_locations[WHITE] = Squares::SQ_NA;
         m_occupied[BLACK] = BitBoard();
@@ -209,18 +228,9 @@ protected:
                     break;
             }
         }
-        update_legal_moves();
-        update_result();
     }
-    void update_internals(const Move move)
+    void update_king_occupied_checkers(const Move& move)
     {
-        if (!is_legal(move)) {
-            const auto turn = get_turn();
-            m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
-            m_legal_moves.clear();
-            return;
-        }
-
         const auto turn = get_turn();
         const auto& board = get_board();
         const auto dst = move.destination();
@@ -263,10 +273,9 @@ protected:
             m_checker_locations[0] = Squares::SQ_NA;
             m_checker_locations[1] = Squares::SQ_NA;
         }
-
-        update_legal_moves();
-        update_result();
     }
+
+protected:
     void update_result()
     {
         const auto turn = get_turn();
@@ -293,17 +302,22 @@ protected:
         }
         return false;
     }
+
+protected:
     void update_legal_moves()
     {
         m_legal_moves.clear();
         append_legal_moves_by_king();
         if (m_checker_locations[0] == Squares::SQ_NA) {
             const auto turn = get_turn();
+            const auto empty_ally_mask = ~m_occupied[~turn];
+            const auto empty_mask = ~m_occupied[2];
+            const auto& king_sq = m_king_locations[turn];
             for (auto sq : Squares::square_array) {
-                if (!m_occupied[~turn].is_one(sq)) { // Empty or ally square
-                    if (m_king_locations[turn] != sq)
+                if (empty_ally_mask.is_one(sq)) { // Empty or ally square
+                    if (king_sq != sq)
                         append_legal_moves_by_non_king_at(sq);
-                    if (!m_occupied[2].is_one(sq)) // empty
+                    if (empty_mask.is_one(sq)) // empty
                         append_legal_moves_dropping_to(sq);
                 }
             }
@@ -313,19 +327,19 @@ protected:
     }
     void append_legal_moves_by_king()
     {
-        m_legal_moves.clear();
-        const auto turn = get_turn();
-        const auto src = m_king_locations[turn];
+        const auto ac = get_turn(); //!< ally color
+        const auto ec = ~ac; //!< enemy color
+        const auto src = m_king_locations[ac];
         if (src == Squares::SQ_NA)
             return;
         const auto& board = get_board();
         const auto moving = board[src];
-        const auto movable = BitBoard::get_attacks_by(moving, src);
-        for (auto dir : Squares::direction_array) {
+        const auto movable
+            = BitBoard::get_attacks_by(moving, src) & (~m_occupied[ac]);
+        for (auto dir :
+             {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE}) {
             const auto dst = Squares::shift(src, dir);
-            if ((!movable.is_one(dst)) || m_occupied[turn].is_one(dst))
-                continue;
-            if (!is_square_attacked(dst, ~turn, src))
+            if (movable.is_one(dst) && (!is_square_attacked(dst, ec, src)))
                 m_legal_moves.emplace_back(dst, src, false);
         }
     }
@@ -340,8 +354,7 @@ protected:
         const auto hidden_attacker_sq
             = board.find_attacker(~turn, king_sq, src_dir, src);
         const auto attacks = BitBoard::get_attacks_by(moving, src);
-        const auto src_in_promotion_zone
-            = Squares::is_promotion_zone(src, turn);
+        const auto promotable_src = Squares::in_promotion_zone(src, turn);
         if (hidden_attacker_sq != Squares::SQ_NA) {
             SquareEnum dst = king_sq;
             while (true) {
@@ -349,46 +362,71 @@ protected:
                 if (dst == src)
                     continue;
                 if (attacks.is_one(dst)) {
-                    if (!BitBoard::get_attacks_by(moving, dst).any())
-                        m_legal_moves.emplace_back(dst, src, true);
-                    else if (
-                        promotable
-                        && (src_in_promotion_zone
-                            || Squares::is_promotion_zone(dst, turn))) {
-                        m_legal_moves.emplace_back(dst, src, false);
-                        m_legal_moves.emplace_back(dst, src, true);
-                    } else {
-                        m_legal_moves.emplace_back(dst, src, false);
-                    }
+                    const bool promote
+                        = promotable
+                          && (promotable_src
+                              || Squares::in_promotion_zone(dst, turn));
+                    append_legal_move_or_moves(moving, dst, src, promote);
                 }
                 if (dst == hidden_attacker_sq)
                     break;
             }
             return;
         }
-        for (auto dir : Squares::direction_array) {
-            SquareEnum dst = src;
-            const bool ranging = Pieces::is_ranging_to(moving, dir);
+        append_legal_moves_by_non_king_ignoring_discovered_check(
+            moving,
+            attacks & (~m_occupied[turn]),
+            src,
+            promotable,
+            promotable_src,
+            turn);
+    }
+    void append_legal_moves_by_non_king_ignoring_discovered_check(
+        const typename Pieces::BoardPieceTypeEnum& p,
+        const BitBoard& dst_mask,
+        const SquareEnum& src,
+        const bool& promotable,
+        const bool& src_promote,
+        const ColorEnum& turn)
+    {
+        const auto& enemy_mask = m_occupied[~turn];
+        for (auto&& dir : Squares::direction_array) {
+            SquareEnum dst = Squares::shift(src, dir);
+            if (!dst_mask.is_one(dst)) // note that dst=SQ_NA -> continue
+                continue;
+            bool promote
+                = promotable
+                  && (src_promote || Squares::in_promotion_zone(dst, turn));
+            append_legal_move_or_moves(p, dst, src, promote);
+            if ((!Pieces::is_ranging_to(p, dir)) || enemy_mask.is_one(dst))
+                continue;
+
             while (true) {
                 dst = Squares::shift(dst, dir);
-                if ((dst == Squares::SQ_NA) || m_occupied[turn].is_one(dst)
-                    || (!attacks.is_one(dst)))
+                if (!dst_mask.is_one(dst))
                     break;
-                if (!BitBoard::get_attacks_by(moving, dst).any())
-                    m_legal_moves.emplace_back(dst, src, true);
-                else if (
-                    promotable
-                    && (src_in_promotion_zone
-                        || Squares::is_promotion_zone(dst, turn))) {
-                    m_legal_moves.emplace_back(dst, src, false);
-                    m_legal_moves.emplace_back(dst, src, true);
-                } else {
-                    m_legal_moves.emplace_back(dst, src, false);
-                }
-                if (!ranging || m_occupied[~turn].is_one(dst))
+                promote
+                    = promotable
+                      && (src_promote || Squares::in_promotion_zone(dst, turn));
+                append_legal_move_or_moves(p, dst, src, promote);
+                if (enemy_mask.is_one(dst))
                     break;
             }
         }
+    }
+    void append_legal_move_or_moves(
+        const typename Pieces::BoardPieceTypeEnum& p,
+        const SquareEnum& dst,
+        const SquareEnum& src,
+        const bool& promotable)
+    {
+        if (!BitBoard::get_attacks_by(p, dst).any())
+            m_legal_moves.emplace_back(dst, src, true);
+        else if (promotable) {
+            m_legal_moves.emplace_back(dst, src, false);
+            m_legal_moves.emplace_back(dst, src, true);
+        } else
+            m_legal_moves.emplace_back(dst, src, false);
     }
     bool is_square_attacked(
         const SquareEnum sq,
@@ -430,7 +468,7 @@ protected:
         const auto& board = get_board();
         const auto king_location = m_king_locations[turn];
         const auto target_in_promotion_zone
-            = Squares::is_promotion_zone(dst, turn);
+            = Squares::in_promotion_zone(dst, turn);
         const auto empty_mask = ~m_occupied[2];
         const auto src_mask
             = m_occupied[turn] & (~BitBoard::from_square(king_location));
@@ -452,15 +490,10 @@ protected:
                         != Squares::SQ_NA))
                     break;
 
-                if (Pieces::is_promotable(p)) {
-                    if (BitBoard::get_attacks_by(p, dst).any())
-                        m_legal_moves.emplace_back(dst, src, false);
-                    if (target_in_promotion_zone
-                        || Squares::is_promotion_zone(src, turn))
-                        m_legal_moves.emplace_back(dst, src, true);
-                } else {
-                    m_legal_moves.emplace_back(dst, src, false);
-                }
+                const auto promote = Pieces::is_promotable(p)
+                                     && (Squares::in_promotion_zone(src, turn)
+                                         || target_in_promotion_zone);
+                append_legal_move_or_moves(p, dst, src, promote);
                 break;
             }
         }

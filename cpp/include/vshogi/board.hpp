@@ -65,10 +65,10 @@ public:
         return out;
     }
     SquareEnum find_attacker(
-        const ColorEnum attacker_color,
-        const SquareEnum attacked,
-        const DirectionEnum dir,
-        const SquareEnum skip = SQ_NA) const
+        const ColorEnum& attacker_color,
+        const SquareEnum& attacked,
+        const DirectionEnum& dir,
+        const SquareEnum& skip = SQ_NA) const
     {
         auto sq = attacked;
         while (true) {
