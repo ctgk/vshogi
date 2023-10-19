@@ -70,11 +70,11 @@ public:
         const DirectionEnum& dir,
         const SquareEnum& skip = SQ_NA) const
     {
-        auto sq = attacked;
-        while (true) {
-            sq = Squares::shift(sq, dir);
-            if (sq == SQ_NA)
-                return SQ_NA;
+        auto ptr_sq = BitBoard::get_squares_along(dir, attacked);
+        if (ptr_sq == nullptr)
+            return SQ_NA;
+        for (; *ptr_sq != SQ_NA; ++ptr_sq) {
+            const auto sq = *ptr_sq;
             const auto p = m_pieces[sq];
             if ((p == VOID) || (sq == skip))
                 continue;
@@ -83,6 +83,7 @@ public:
                 return sq;
             return SQ_NA;
         }
+        return SQ_NA;
     }
 
 private:

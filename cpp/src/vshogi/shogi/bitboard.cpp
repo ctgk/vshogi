@@ -1322,6 +1322,9 @@ BitBoard BitBoard::get_attacks_by(
  */
 static Squares::SquareEnum non_ranging_attacks[9][Squares::num_squares][8];
 
+static Squares::SquareEnum ranging_squares_to[Squares::num_squares]
+                                             [Squares::num_directions][9];
+
 void init_non_ranging_attacks_table()
 {
     constexpr int size
@@ -1348,6 +1351,28 @@ void init_non_ranging_attacks_table()
             for (auto& dst : Squares::square_array) {
                 if (attacks.is_one(dst))
                     non_ranging_attacks[ii][src][index++] = dst;
+            }
+        }
+    }
+}
+
+void init_ranging_squares_table()
+{
+    constexpr int size
+        = sizeof(ranging_squares_to) / sizeof(ranging_squares_to[0][0][0]);
+    std::fill_n(&ranging_squares_to[0][0][0], size, Squares::SQ_NA);
+
+    for (auto& src : Squares::square_array) {
+        for (auto& dir : Squares::direction_array) {
+            auto dst = src;
+            int index = 0;
+            while (true) {
+                dst = Squares::shift(dst, dir);
+                if (dst == Squares::SQ_NA)
+                    break;
+                ranging_squares_to[src][dir][index++] = dst;
+                if (dir > DIR_SE)
+                    break;
             }
         }
     }
@@ -1388,6 +1413,14 @@ const Squares::SquareEnum* BitBoard::get_attacks_by_non_ranging(
     default:
         return nullptr;
     }
+}
+
+const Squares::SquareEnum* BitBoard::get_squares_along(
+    const DirectionEnum& direction, const Squares::SquareEnum& location)
+{
+    if ((direction == DIR_NA) || (location == Squares::SQ_NA))
+        return nullptr;
+    return ranging_squares_to[location][direction];
 }
 
 } // namespace vshogi::shogi

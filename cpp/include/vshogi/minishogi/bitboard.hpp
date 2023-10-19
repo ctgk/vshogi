@@ -101,6 +101,17 @@ public:
         const Pieces::BoardPieceTypeEnum& piece,
         const Squares::SquareEnum& location);
 
+    /**
+     * @brief Get pointer to array of squares along the given direction
+     * from the given location.
+     *
+     * @param direction
+     * @param location
+     * @return const Squares::SquareEnum*
+     */
+    static const Squares::SquareEnum* get_squares_along(
+        const DirectionEnum& direction, const Squares::SquareEnum& location);
+
     constexpr std::uint32_t get_value() const
     {
         return m_value;
@@ -229,6 +240,7 @@ public:
 };
 
 void init_non_ranging_attacks_table();
+void init_ranging_squares_table();
 
 constexpr BitBoard bb_1a = BitBoard::from_square(Squares::SQ_1A);
 constexpr BitBoard bb_1b = BitBoard::from_square(Squares::SQ_1B);

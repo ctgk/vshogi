@@ -360,9 +360,9 @@ protected:
         const auto attacks = BitBoard::get_attacks_by(moving, src);
         const auto promotable_src = Squares::in_promotion_zone(src, turn);
         if (hidden_attacker_sq != Squares::SQ_NA) {
-            SquareEnum dst = king_sq;
-            while (true) {
-                dst = Squares::shift(dst, src_dir);
+            auto ptr_dst = BitBoard::get_squares_along(src_dir, king_sq);
+            for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
+                const auto dst = *ptr_dst;
                 if (dst == src)
                     continue;
                 if (attacks.is_one(dst)) {
@@ -393,7 +393,6 @@ protected:
         const bool& src_promote,
         const ColorEnum& turn)
     {
-        const auto& enemy_mask = m_occupied[~turn];
         auto ptr_dst = BitBoard::get_attacks_by_non_ranging(p, src);
         if (ptr_dst != nullptr) {
             for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
@@ -408,26 +407,18 @@ protected:
             return;
         }
 
+        const auto& enemy_mask = m_occupied[~turn];
         for (auto& dir : Squares::direction_array) {
-            SquareEnum dst = Squares::shift(src, dir);
-            if (!dst_mask.is_one(dst)) // note that dst=SQ_NA -> continue
-                continue;
-            bool promote
-                = promotable
-                  && (src_promote || Squares::in_promotion_zone(dst, turn));
-            append_legal_move_or_moves(p, dst, src, promote);
-            if ((!Pieces::is_ranging_to(p, dir)) || enemy_mask.is_one(dst))
-                continue;
-
-            while (true) {
-                dst = Squares::shift(dst, dir);
-                if (!dst_mask.is_one(dst))
+            ptr_dst = BitBoard::get_squares_along(dir, src);
+            for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
+                if (!dst_mask.is_one(*ptr_dst))
                     break;
-                promote
+                bool promote
                     = promotable
-                      && (src_promote || Squares::in_promotion_zone(dst, turn));
-                append_legal_move_or_moves(p, dst, src, promote);
-                if (enemy_mask.is_one(dst))
+                      && (src_promote
+                          || Squares::in_promotion_zone(*ptr_dst, turn));
+                append_legal_move_or_moves(p, *ptr_dst, src, promote);
+                if (enemy_mask.is_one(*ptr_dst))
                     break;
             }
         }
@@ -470,13 +461,12 @@ protected:
         if (!is_neighbor(king_location, checker_location)) {
             const auto dir
                 = Squares::get_direction(checker_location, king_location);
-            SquareEnum dst = king_location;
-            while (true) {
-                dst = Squares::shift(dst, dir);
-                if ((dst == checker_location) || (dst == Squares::SQ_NA))
+            auto ptr_dst = BitBoard::get_squares_along(dir, king_location);
+            for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
+                if (*ptr_dst == checker_location)
                     break;
-                append_legal_moves_by_non_king_moving_to(dst);
-                append_legal_moves_dropping_to(dst);
+                append_legal_moves_by_non_king_moving_to(*ptr_dst);
+                append_legal_moves_dropping_to(*ptr_dst);
             }
         }
     }
@@ -491,9 +481,9 @@ protected:
         const auto src_mask
             = m_occupied[turn] & (~BitBoard::from_square(king_location));
         for (auto dir : Squares::direction_array) {
-            SquareEnum src = dst;
-            while (true) {
-                src = Squares::shift(src, dir);
+            auto ptr_src = BitBoard::get_squares_along(dir, dst);
+            for (; *ptr_src != Squares::SQ_NA; ++ptr_src) {
+                const auto src = *ptr_src;
                 if (empty_mask.is_one(src))
                     continue;
                 if (!src_mask.is_one(src))
