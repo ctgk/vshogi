@@ -253,6 +253,10 @@ TEST(bitboard, ka)
     CHECK_EQUAL(
         6,
         BitBoard::get_attacks_by(B_KA, SQ_3C, bb_2b | bb_4d).hamming_weight());
+    CHECK_TRUE(
+        (bb_3a | bb_4b | bb_5c | bb_5e | bb_4f)
+        == BitBoard::get_attacks_by(W_KA, SQ_6D));
+    CHECK_TRUE(BitBoard::get_attacks_by(B_KA, SQ_6E).is_one(SQ_2A));
     CHECK_TRUE(nullptr == BitBoard::get_attacks_by_non_ranging(B_KA, SQ_3C));
 }
 

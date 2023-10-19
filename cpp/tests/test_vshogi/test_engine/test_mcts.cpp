@@ -1,5 +1,6 @@
 #include "vshogi/animal_shogi/game.hpp"
 #include "vshogi/engine/mcts.hpp"
+#include "vshogi/judkins_shogi/game.hpp"
 #include "vshogi/minishogi/game.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -26,9 +27,9 @@ constexpr auto SQ_C2 = vshogi::animal_shogi::Squares::SQ_C2; // NOLINT
 constexpr auto SQ_C1 = vshogi::animal_shogi::Squares::SQ_C1; // NOLINT
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
-TEST_GROUP(node_animal_shogi){};
+TEST_GROUP(animal_shogi_node){};
 
-TEST(node_animal_shogi, init_default)
+TEST(animal_shogi_node, init_default)
 {
     auto root = Node();
     CHECK_FALSE(root.is_valid());
@@ -37,7 +38,7 @@ TEST(node_animal_shogi, init_default)
     DOUBLES_EQUAL(0.f, root.get_q_value(), 1e-2f);
 }
 
-TEST(node_animal_shogi, init_with_args)
+TEST(animal_shogi_node, init_with_args)
 {
     auto game = Game("3/3/3/3 b -");
     auto root = Node(game, 1.f, zeros);
@@ -47,7 +48,7 @@ TEST(node_animal_shogi, init_with_args)
     DOUBLES_EQUAL(1.f, root.get_q_value(), 1e-2f);
 }
 
-TEST(node_animal_shogi, explore_no_child)
+TEST(animal_shogi_node, explore_no_child)
 {
     auto g = Game("3/3/3/3 b -");
     auto root = Node(g, 1.f, zeros);
@@ -58,7 +59,7 @@ TEST(node_animal_shogi, explore_no_child)
     CHECK_TRUE(nullptr == actual);
 }
 
-TEST(node_animal_shogi, explore_game_end)
+TEST(animal_shogi_node, explore_game_end)
 {
     auto g = Game("3/1l1/1C1/3 b -");
     auto root = Node(g, 0.f, zeros);
@@ -69,7 +70,7 @@ TEST(node_animal_shogi, explore_game_end)
     CHECK_TRUE(root.get_q_value() > 0.5f);
 }
 
-TEST(node_animal_shogi, explore_one_action)
+TEST(animal_shogi_node, explore_one_action)
 {
     auto g = Game("1l1/3/1C1/3 b -");
     auto root = Node(g, 0.1f, zeros);
@@ -106,7 +107,7 @@ TEST(node_animal_shogi, explore_one_action)
     }
 }
 
-TEST(node_animal_shogi, explore_two_action)
+TEST(animal_shogi_node, explore_two_action)
 {
 
     /**
@@ -174,7 +175,7 @@ TEST(node_animal_shogi, explore_two_action)
     }
 }
 
-TEST(node_animal_shogi, explore_two_layer)
+TEST(animal_shogi_node, explore_two_layer)
 {
 
     /**
@@ -272,7 +273,7 @@ TEST(node_animal_shogi, explore_two_layer)
     }
 }
 
-TEST(node_animal_shogi, explore_from_popped_child)
+TEST(animal_shogi_node, explore_from_popped_child)
 {
     auto g = Game();
     const auto moves = g.get_legal_moves();
@@ -296,7 +297,7 @@ TEST(node_animal_shogi, explore_from_popped_child)
     }
 }
 
-TEST(node_animal_shogi, explore_until_game_end)
+TEST(animal_shogi_node, explore_until_game_end)
 {
     auto g = Game();
     auto root = Node(g, 0.f, zeros);
@@ -333,9 +334,9 @@ using namespace vshogi::minishogi;
 using Node = vshogi::engine::Node<Game, Move>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
-TEST_GROUP(node_minishogi){};
+TEST_GROUP(minishogi_node){};
 
-TEST(node_minishogi, explore_until_game_end)
+TEST(minishogi_node, explore_until_game_end)
 {
     auto g = Game();
     auto root = Node(g, 0.f, zeros);
@@ -364,5 +365,44 @@ TEST(node_minishogi, explore_until_game_end)
 }
 
 } // namespace test_minishogi
+
+namespace test_judkins_shogi
+{
+
+using namespace vshogi::judkins_shogi;
+using Node = vshogi::engine::Node<Game, Move>;
+static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
+
+TEST_GROUP(judkins_shogi_node){};
+
+TEST(judkins_shogi_node, explore_until_game_end)
+{
+    auto g = Game();
+    auto root = Node(g, 0.f, zeros);
+    while (true) {
+        if (g.get_result() != vshogi::ONGOING)
+            break;
+        for (int ii = (100 - root.get_visit_count()); ii--;) {
+            auto g_copy = Game(g);
+            const auto n = root.explore(g_copy, 4.f, 0.25f, 1);
+            if (n != nullptr)
+                n->set_value_policy_logits(g_copy, 0.f, zeros);
+        }
+
+        const auto& actions = root.get_actions();
+        auto visit_counts = std::vector<int>();
+        for (auto&& a : actions) {
+            visit_counts.emplace_back(root.get_child(a).get_visit_count());
+        }
+        const auto index = static_cast<std::size_t>(std::distance(
+            visit_counts.cbegin(),
+            std::max_element(visit_counts.cbegin(), visit_counts.cend())));
+        const auto action = actions[index];
+        g.apply(action);
+        root = root.pop_child(action);
+    }
+}
+
+} // namespace test_judkins_shogi
 
 } // namespace test_vshogi::test_engine

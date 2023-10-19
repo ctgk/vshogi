@@ -217,6 +217,30 @@ TEST(judkins_shogi_game, get_legal_moves)
         for (auto a : actual)
             CHECK_TRUE(KE == a.source_piece());
     }
+    {
+        // Turn: BLACK
+        // White: -
+        //     6   5   4   3   2   1
+        //   +---+---+---+---+---+---+
+        // A |-HI|-KA|-KE|-GI|   |-RY|
+        //   +---+---+---+---+---+---+
+        // B |   |   |   |   |-KI|   |
+        //   +---+---+---+---+---+---+
+        // C |   |   |   |   |   |   |
+        //   +---+---+---+---+---+---+
+        // D |+FU|   |   |   |+KE|-OU|
+        //   +---+---+---+---+---+---+
+        // E |   |   |+OU|   |+FU|   |
+        //   +---+---+---+---+---+---+
+        // F |   |+KI|+GI|   |+UM|   |
+        //   +---+---+---+---+---+---+
+        // Black: -
+        const auto g = Game("rbns1+r/4g1/6/P3Nk/2K1P1/1GS1+B1 b -");
+        const auto& actual = g.get_legal_moves();
+        CHECK_FALSE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_1D, SQ_2F))
+            != actual.cend());
+    }
 }
 
 } // namespace test_vshogi::test_judkins_shogi

@@ -337,10 +337,14 @@ protected:
         auto ptr_dst = BitBoard::get_attacks_by_non_ranging(moving, src);
         const auto end = ptr_dst + 8;
         const auto& ally_mask = m_occupied[ac];
-        for (; (ptr_dst < end) && (*ptr_dst != Squares::SQ_NA); ++ptr_dst) {
-            if (!ally_mask.is_one(*ptr_dst)
-                && (!is_square_attacked(*ptr_dst, ec, src)))
-                m_legal_moves.emplace_back(*ptr_dst, src, false);
+        for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
+            if (ptr_dst >= end)
+                break;
+            if (ally_mask.is_one(*ptr_dst))
+                continue;
+            if (is_square_attacked(*ptr_dst, ec, src))
+                continue;
+            m_legal_moves.emplace_back(*ptr_dst, src, false);
         }
     }
     void append_legal_moves_by_non_king_at(const SquareEnum src)
@@ -404,8 +408,7 @@ protected:
             return;
         }
 
-        for (auto& dir :
-             {DIR_NW, DIR_NE, DIR_SW, DIR_SE, DIR_N, DIR_W, DIR_E, DIR_S}) {
+        for (auto& dir : Squares::direction_array) {
             SquareEnum dst = Squares::shift(src, dir);
             if (!dst_mask.is_one(dst)) // note that dst=SQ_NA -> continue
                 continue;
