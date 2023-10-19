@@ -135,6 +135,7 @@ void export_pieces(py::module& m)
 
 void export_judkins_shogi(py::module& m)
 {
+    js::init_non_ranging_attacks_table();
     export_square_enum(m);
     export_pieces(m);
     pyvshogi::export_board<js::Board, js::Squares::SquareEnum>(m);

@@ -232,6 +232,7 @@ void export_pieces(py::module& m)
 
 void export_shogi(py::module& m)
 {
+    sg::init_non_ranging_attacks_table();
     export_square_enum(m);
     export_pieces(m);
 

@@ -70,9 +70,19 @@ TEST(bitboard, get_attacks_by_fu)
         CHECK_TRUE(actual.is_one(SQ_2F));
     }
     {
+        const auto actual = BitBoard::get_attacks_by_non_ranging(B_FU, SQ_2G);
+        CHECK_EQUAL(SQ_2F, actual[0]);
+        CHECK_EQUAL(SQ_NA, actual[1]);
+    }
+    {
         const auto actual = BitBoard::get_attacks_by(W_FU, SQ_2G);
         CHECK_EQUAL(1, actual.hamming_weight());
         CHECK_TRUE(actual.is_one(SQ_2H));
+    }
+    {
+        const auto actual = BitBoard::get_attacks_by_non_ranging(W_FU, SQ_2G);
+        CHECK_EQUAL(SQ_2H, actual[0]);
+        CHECK_EQUAL(SQ_NA, actual[1]);
     }
 }
 
@@ -89,6 +99,10 @@ TEST(bitboard, get_attacks_by_ky)
         CHECK_TRUE(actual.is_one(SQ_1F));
         CHECK_TRUE(actual.is_one(SQ_1G));
         CHECK_TRUE(actual.is_one(SQ_1H));
+    }
+    {
+        CHECK_TRUE(
+            nullptr == BitBoard::get_attacks_by_non_ranging(B_KY, SQ_1I));
     }
     {
         const auto actual = BitBoard::get_attacks_by(
@@ -132,15 +146,32 @@ TEST(bitboard, get_attacks_by_ke)
         CHECK_TRUE(actual.is_one(SQ_6C));
     }
     {
+        const auto actual = BitBoard::get_attacks_by_non_ranging(B_KE, SQ_5E);
+        CHECK_EQUAL(SQ_6C, actual[0]);
+        CHECK_EQUAL(SQ_4C, actual[1]);
+        CHECK_EQUAL(SQ_NA, actual[2]);
+    }
+    {
         const auto actual = BitBoard::get_attacks_by(B_KE, SQ_1D);
         CHECK_EQUAL(1, actual.hamming_weight());
         CHECK_TRUE(actual.is_one(SQ_2B));
+    }
+    {
+        const auto actual = BitBoard::get_attacks_by_non_ranging(B_KE, SQ_1D);
+        CHECK_EQUAL(SQ_2B, actual[0]);
+        CHECK_EQUAL(SQ_NA, actual[1]);
     }
     {
         const auto actual = BitBoard::get_attacks_by(W_KE, SQ_5E);
         CHECK_EQUAL(2, actual.hamming_weight());
         CHECK_TRUE(actual.is_one(SQ_4G));
         CHECK_TRUE(actual.is_one(SQ_6G));
+    }
+    {
+        const auto actual = BitBoard::get_attacks_by_non_ranging(W_KE, SQ_5E);
+        CHECK_EQUAL(SQ_6G, actual[0]);
+        CHECK_EQUAL(SQ_4G, actual[1]);
+        CHECK_EQUAL(SQ_NA, actual[2]);
     }
 }
 
@@ -154,15 +185,33 @@ TEST(bitboard, get_attacks_by_gi)
         CHECK_TRUE(actual.is_one(SQ_8E));
     }
     {
+        const auto actual = BitBoard::get_attacks_by_non_ranging(B_GI, SQ_9D);
+        CHECK_EQUAL(SQ_9C, actual[0]);
+        CHECK_EQUAL(SQ_8C, actual[1]);
+        CHECK_EQUAL(SQ_8E, actual[2]);
+        CHECK_EQUAL(SQ_NA, actual[3]);
+    }
+    {
         const auto actual = BitBoard::get_attacks_by(B_GI, SQ_1A);
         CHECK_EQUAL(1, actual.hamming_weight());
         CHECK_TRUE(actual.is_one(SQ_2B));
+    }
+    {
+        const auto actual = BitBoard::get_attacks_by_non_ranging(B_GI, SQ_1A);
+        CHECK_EQUAL(SQ_2B, actual[0]);
+        CHECK_EQUAL(SQ_NA, actual[1]);
     }
     {
         const auto actual = BitBoard::get_attacks_by(W_GI, SQ_1A);
         CHECK_EQUAL(2, actual.hamming_weight());
         CHECK_TRUE(actual.is_one(SQ_1B));
         CHECK_TRUE(actual.is_one(SQ_2B));
+    }
+    {
+        const auto actual = BitBoard::get_attacks_by_non_ranging(W_GI, SQ_1A);
+        CHECK_EQUAL(SQ_2B, actual[0]);
+        CHECK_EQUAL(SQ_1B, actual[1]);
+        CHECK_EQUAL(SQ_NA, actual[2]);
     }
 }
 
@@ -177,10 +226,24 @@ TEST(bitboard, get_attacks_by_ki)
         CHECK_TRUE(actual.is_one(SQ_9E));
     }
     {
+        const auto actual = BitBoard::get_attacks_by_non_ranging(B_KI, SQ_9D);
+        CHECK_EQUAL(SQ_9C, actual[0]);
+        CHECK_EQUAL(SQ_8C, actual[1]);
+        CHECK_EQUAL(SQ_8D, actual[2]);
+        CHECK_EQUAL(SQ_9E, actual[3]);
+        CHECK_EQUAL(SQ_NA, actual[4]);
+    }
+    {
         const auto actual = BitBoard::get_attacks_by(B_NY, SQ_1A);
         CHECK_EQUAL(2, actual.hamming_weight());
         CHECK_TRUE(actual.is_one(SQ_2A));
         CHECK_TRUE(actual.is_one(SQ_1B));
+    }
+    {
+        const auto actual = BitBoard::get_attacks_by_non_ranging(B_NY, SQ_1A);
+        CHECK_EQUAL(SQ_2A, actual[0]);
+        CHECK_EQUAL(SQ_1B, actual[1]);
+        CHECK_EQUAL(SQ_NA, actual[2]);
     }
     {
         const auto actual = BitBoard::get_attacks_by(W_TO, SQ_1A);
@@ -188,6 +251,13 @@ TEST(bitboard, get_attacks_by_ki)
         CHECK_TRUE(actual.is_one(SQ_1B));
         CHECK_TRUE(actual.is_one(SQ_2B));
         CHECK_TRUE(actual.is_one(SQ_2A));
+    }
+    {
+        const auto actual = BitBoard::get_attacks_by_non_ranging(W_TO, SQ_1A);
+        CHECK_EQUAL(SQ_2A, actual[0]);
+        CHECK_EQUAL(SQ_2B, actual[1]);
+        CHECK_EQUAL(SQ_1B, actual[2]);
+        CHECK_EQUAL(SQ_NA, actual[3]);
     }
 }
 
@@ -222,6 +292,7 @@ TEST(bitboard, get_attacks_by_ka)
         CHECK_TRUE(actual.is_one(SQ_3D));
         CHECK_FALSE(actual.is_one(SQ_4E));
     }
+    CHECK_TRUE(nullptr == BitBoard::get_attacks_by_non_ranging(W_KA, SQ_1B));
 }
 
 TEST(bitboard, get_attacks_by_hi)
@@ -265,6 +336,8 @@ TEST(bitboard, get_attacks_by_hi)
         CHECK_TRUE(actual.is_one(SQ_4E));
         CHECK_TRUE(actual.is_one(SQ_6E));
     }
+    CHECK_TRUE(nullptr == BitBoard::get_attacks_by_non_ranging(B_HI, SQ_5E));
+    CHECK_TRUE(nullptr == BitBoard::get_attacks_by_non_ranging(W_HI, SQ_5E));
 }
 
 TEST(bitboard, get_attacks_by_um)
@@ -305,6 +378,8 @@ TEST(bitboard, get_attacks_by_um)
         CHECK_TRUE(actual.is_one(SQ_2B));
         CHECK_TRUE(actual.is_one(SQ_1C));
     }
+    CHECK_TRUE(nullptr == BitBoard::get_attacks_by_non_ranging(B_UM, SQ_5E));
+    CHECK_TRUE(nullptr == BitBoard::get_attacks_by_non_ranging(W_UM, SQ_1B));
 }
 
 TEST(bitboard, get_attacks_by_ry)
@@ -356,6 +431,7 @@ TEST(bitboard, get_attacks_by_ry)
         CHECK_TRUE(actual.is_one(SQ_4F));
         CHECK_TRUE(actual.is_one(SQ_6F));
     }
+    CHECK_TRUE(nullptr == BitBoard::get_attacks_by_non_ranging(W_RY, SQ_5E));
 }
 
 TEST(bitboard, get_attacks_by_ou)
@@ -370,6 +446,15 @@ TEST(bitboard, get_attacks_by_ou)
         CHECK_TRUE(actual.is_one(SQ_6B));
     }
     {
+        const auto actual = BitBoard::get_attacks_by_non_ranging(B_OU, SQ_5A);
+        CHECK_EQUAL(SQ_6A, actual[0]);
+        CHECK_EQUAL(SQ_4A, actual[1]);
+        CHECK_EQUAL(SQ_6B, actual[2]);
+        CHECK_EQUAL(SQ_5B, actual[3]);
+        CHECK_EQUAL(SQ_4B, actual[4]);
+        CHECK_EQUAL(SQ_NA, actual[5]);
+    }
+    {
         const auto actual = BitBoard::get_attacks_by(W_OU, SQ_8H);
         CHECK_EQUAL(8, actual.hamming_weight());
         CHECK_TRUE(actual.is_one(SQ_7G));
@@ -380,6 +465,17 @@ TEST(bitboard, get_attacks_by_ou)
         CHECK_TRUE(actual.is_one(SQ_7I));
         CHECK_TRUE(actual.is_one(SQ_8I));
         CHECK_TRUE(actual.is_one(SQ_9I));
+    }
+    {
+        const auto actual = BitBoard::get_attacks_by_non_ranging(W_OU, SQ_8H);
+        CHECK_EQUAL(SQ_9G, actual[0]);
+        CHECK_EQUAL(SQ_8G, actual[1]);
+        CHECK_EQUAL(SQ_7G, actual[2]);
+        CHECK_EQUAL(SQ_9H, actual[3]);
+        CHECK_EQUAL(SQ_7H, actual[4]);
+        CHECK_EQUAL(SQ_9I, actual[5]);
+        CHECK_EQUAL(SQ_8I, actual[6]);
+        CHECK_EQUAL(SQ_7I, actual[7]);
     }
 }
 

@@ -110,6 +110,7 @@ void export_pieces(py::module& m)
 
 void export_minishogi(py::module& m)
 {
+    ms::init_non_ranging_attacks_table();
     export_square_enum(m);
     export_pieces(m);
 

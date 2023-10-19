@@ -334,13 +334,13 @@ protected:
             return;
         const auto& board = get_board();
         const auto moving = board[src];
-        const auto movable
-            = BitBoard::get_attacks_by(moving, src) & (~m_occupied[ac]);
-        for (auto dir :
-             {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE}) {
-            const auto dst = Squares::shift(src, dir);
-            if (movable.is_one(dst) && (!is_square_attacked(dst, ec, src)))
-                m_legal_moves.emplace_back(dst, src, false);
+        auto ptr_dst = BitBoard::get_attacks_by_non_ranging(moving, src);
+        const auto end = ptr_dst + 8;
+        const auto& ally_mask = m_occupied[ac];
+        for (; (ptr_dst < end) && (*ptr_dst != Squares::SQ_NA); ++ptr_dst) {
+            if (!ally_mask.is_one(*ptr_dst)
+                && (!is_square_attacked(*ptr_dst, ec, src)))
+                m_legal_moves.emplace_back(*ptr_dst, src, false);
         }
     }
     void append_legal_moves_by_non_king_at(const SquareEnum src)
@@ -390,7 +390,22 @@ protected:
         const ColorEnum& turn)
     {
         const auto& enemy_mask = m_occupied[~turn];
-        for (auto&& dir : Squares::direction_array) {
+        auto ptr_dst = BitBoard::get_attacks_by_non_ranging(p, src);
+        if (ptr_dst != nullptr) {
+            for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
+                if (!dst_mask.is_one(*ptr_dst))
+                    continue;
+                const bool promote
+                    = promotable
+                      && (src_promote
+                          || Squares::in_promotion_zone(*ptr_dst, turn));
+                append_legal_move_or_moves(p, *ptr_dst, src, promote);
+            }
+            return;
+        }
+
+        for (auto& dir :
+             {DIR_NW, DIR_NE, DIR_SW, DIR_SE, DIR_N, DIR_W, DIR_E, DIR_S}) {
             SquareEnum dst = Squares::shift(src, dir);
             if (!dst_mask.is_one(dst)) // note that dst=SQ_NA -> continue
                 continue;

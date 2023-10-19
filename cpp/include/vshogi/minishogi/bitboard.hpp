@@ -65,6 +65,42 @@ public:
     {
         return BitBoard(static_cast<std::uint32_t>(1 << static_cast<int>(sq)));
     }
+    static BitBoard
+    ranging_attacks_to_diagonal(const SquareEnum sq, const BitBoard occupied)
+    {
+        return ranging_attacks_to<DIR_NW>(sq, occupied)
+               | ranging_attacks_to<DIR_NE>(sq, occupied)
+               | ranging_attacks_to<DIR_SW>(sq, occupied)
+               | ranging_attacks_to<DIR_SE>(sq, occupied);
+    }
+    static BitBoard
+    ranging_attacks_to_adjacent(const SquareEnum sq, const BitBoard occupied)
+    {
+        return ranging_attacks_to<DIR_N>(sq, occupied)
+               | ranging_attacks_to<DIR_E>(sq, occupied)
+               | ranging_attacks_to<DIR_W>(sq, occupied)
+               | ranging_attacks_to<DIR_S>(sq, occupied);
+    }
+    static BitBoard get_attacks_by(
+        const Pieces::BoardPieceTypeEnum& piece,
+        const Squares::SquareEnum& location);
+    static BitBoard get_attacks_by(
+        const Pieces::BoardPieceTypeEnum& piece,
+        const Squares::SquareEnum& location,
+        const BitBoard& occupied);
+
+    /**
+     * @brief Get pointer to array of attacking squares by non ranging piece.
+     * @note Note that the array's length is 8.
+     *
+     * @param piece
+     * @param location
+     * @return const Squares::SquareEnum*
+     */
+    static const Squares::SquareEnum* get_attacks_by_non_ranging(
+        const Pieces::BoardPieceTypeEnum& piece,
+        const Squares::SquareEnum& location);
+
     constexpr std::uint32_t get_value() const
     {
         return m_value;
@@ -190,30 +226,9 @@ public:
         r |= r.shift<D>();
         return r;
     }
-    static BitBoard
-    ranging_attacks_to_diagonal(const SquareEnum sq, const BitBoard occupied)
-    {
-        return ranging_attacks_to<DIR_NW>(sq, occupied)
-               | ranging_attacks_to<DIR_NE>(sq, occupied)
-               | ranging_attacks_to<DIR_SW>(sq, occupied)
-               | ranging_attacks_to<DIR_SE>(sq, occupied);
-    }
-    static BitBoard
-    ranging_attacks_to_adjacent(const SquareEnum sq, const BitBoard occupied)
-    {
-        return ranging_attacks_to<DIR_N>(sq, occupied)
-               | ranging_attacks_to<DIR_E>(sq, occupied)
-               | ranging_attacks_to<DIR_W>(sq, occupied)
-               | ranging_attacks_to<DIR_S>(sq, occupied);
-    }
-    static BitBoard get_attacks_by(
-        const Pieces::BoardPieceTypeEnum piece,
-        const Squares::SquareEnum location);
-    static BitBoard get_attacks_by(
-        const Pieces::BoardPieceTypeEnum piece,
-        const Squares::SquareEnum location,
-        const BitBoard occupied);
 };
+
+void init_non_ranging_attacks_table();
 
 constexpr BitBoard bb_1a = BitBoard::from_square(Squares::SQ_1A);
 constexpr BitBoard bb_1b = BitBoard::from_square(Squares::SQ_1B);

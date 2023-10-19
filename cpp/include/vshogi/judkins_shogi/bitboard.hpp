@@ -44,6 +44,19 @@ public:
         const Pieces::BoardPieceTypeEnum piece,
         const Squares::SquareEnum location,
         const BitBoard occupied);
+
+    /**
+     * @brief Get pointer to array of attacking squares by non ranging piece.
+     * @note Note that the array's length is 8.
+     *
+     * @param piece
+     * @param location
+     * @return const Squares::SquareEnum*
+     */
+    static const Squares::SquareEnum* get_attacks_by_non_ranging(
+        const Pieces::BoardPieceTypeEnum& piece,
+        const Squares::SquareEnum& location);
+
     std::uint64_t get_value() const
     {
         return m_value;
@@ -198,6 +211,8 @@ public:
         return x & 0x7f;
     }
 };
+
+void init_non_ranging_attacks_table();
 
 constexpr BitBoard bb_1a = BitBoard::from_square(Squares::SQ_1A);
 constexpr BitBoard bb_1b = BitBoard::from_square(Squares::SQ_1B);
