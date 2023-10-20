@@ -9,9 +9,9 @@ namespace test_vshogi::test_shogi
 
 using namespace vshogi::shogi;
 
-TEST_GROUP(board){};
+TEST_GROUP(shogi_board){};
 
-TEST(board, get)
+TEST(shogi_board, get)
 {
     const auto b = Board();
     CHECK_EQUAL(VOID, b[SQ_5E]);
@@ -19,7 +19,7 @@ TEST(board, get)
     CHECK_EQUAL(B_KA, b[SQ_8H]);
 }
 
-TEST(board, set)
+TEST(shogi_board, set)
 {
     auto b = Board();
     b[SQ_5E] = B_HI;
@@ -30,7 +30,7 @@ TEST(board, set)
     CHECK_EQUAL(W_UM, b[SQ_8H]);
 }
 
-TEST(board, set_sfen)
+TEST(shogi_board, set_sfen)
 {
     auto b = Board();
     const auto sfen = "8k/8P/9/9/9/9/9/4K4/9 b - 1";
@@ -43,10 +43,11 @@ TEST(board, set_sfen)
     CHECK_EQUAL(VOID, b[SQ_5I]);
 }
 
-TEST(board, to_sfen)
+TEST(shogi_board, append_sfen)
 {
     const auto b = Board();
-    const auto actual = b.to_sfen();
+    auto actual = std::string();
+    b.append_sfen(actual);
     STRCMP_EQUAL(
         "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL",
         actual.c_str());

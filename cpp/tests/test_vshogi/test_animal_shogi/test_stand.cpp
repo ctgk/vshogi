@@ -154,12 +154,13 @@ TEST(animal_shogi_black_white_stands, set_sfen_holdings)
     }
 }
 
-TEST(animal_shogi_black_white_stands, to_sfen_holdings)
+TEST(animal_shogi_black_white_stands, append_sfen)
 {
     {
         auto s = BlackWhiteStands();
         s.set_sfen_holdings("C2E2cg");
-        const auto actual = s.to_sfen_holdings();
+        auto actual = std::string();
+        s.append_sfen(actual);
         STRCMP_EQUAL("2ECg2c", actual.c_str());
     }
 }

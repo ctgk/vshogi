@@ -10,9 +10,9 @@ namespace test_vshogi::test_minishogi
 using namespace vshogi;
 using namespace vshogi::minishogi;
 
-TEST_GROUP(piece){};
+TEST_GROUP(minishogi_piece){};
 
-TEST(piece, is_promotable)
+TEST(minishogi_piece, is_promotable)
 {
     CHECK_TRUE(is_promotable(FU));
     CHECK_TRUE(is_promotable(GI));
@@ -27,7 +27,7 @@ TEST(piece, is_promotable)
     CHECK_FALSE(is_promotable(NA));
 }
 
-TEST(piece, is_promoted)
+TEST(minishogi_piece, is_promoted)
 {
     CHECK_FALSE(is_promoted(FU));
     CHECK_FALSE(is_promoted(GI));
@@ -64,7 +64,7 @@ TEST(piece, is_promoted)
     CHECK_TRUE(is_promoted(W_RY));
 }
 
-TEST(piece, promote)
+TEST(minishogi_piece, promote)
 {
     CHECK_EQUAL(TO, promote(FU));
     CHECK_EQUAL(NG, promote(GI));
@@ -79,7 +79,7 @@ TEST(piece, promote)
     CHECK_EQUAL(NA, promote(NA));
 }
 
-TEST(piece, demote)
+TEST(minishogi_piece, demote)
 {
     CHECK_EQUAL(FU, demote(FU));
     CHECK_EQUAL(GI, demote(GI));
@@ -94,7 +94,7 @@ TEST(piece, demote)
     CHECK_EQUAL(NA, demote(NA));
 }
 
-TEST(piece, get_color)
+TEST(minishogi_piece, get_color)
 {
     CHECK_EQUAL(BLACK, get_color(B_FU));
     CHECK_EQUAL(BLACK, get_color(B_GI));
@@ -119,7 +119,7 @@ TEST(piece, get_color)
     CHECK_EQUAL(WHITE, get_color(W_RY));
 }
 
-TEST(piece, to_piece_type)
+TEST(minishogi_piece, to_piece_type)
 {
     CHECK_EQUAL(FU, to_piece_type(B_FU));
     CHECK_EQUAL(GI, to_piece_type(B_GI));
@@ -144,7 +144,7 @@ TEST(piece, to_piece_type)
     CHECK_EQUAL(RY, to_piece_type(W_RY));
 }
 
-TEST(piece, to_board_piece)
+TEST(minishogi_piece, to_board_piece)
 {
     CHECK_EQUAL(B_FU, to_board_piece(BLACK, FU));
     CHECK_EQUAL(B_GI, to_board_piece(BLACK, GI));
@@ -172,29 +172,31 @@ TEST(piece, to_board_piece)
     CHECK_EQUAL(VOID, to_board_piece(WHITE, NA));
 }
 
-TEST(piece, to_sfen)
+TEST(minishogi_piece, append_sfen)
 {
-    STRCMP_EQUAL("P", to_sfen(B_FU).c_str());
-    STRCMP_EQUAL("S", to_sfen(B_GI).c_str());
-    STRCMP_EQUAL("B", to_sfen(B_KA).c_str());
-    STRCMP_EQUAL("R", to_sfen(B_HI).c_str());
-    STRCMP_EQUAL("G", to_sfen(B_KI).c_str());
-    STRCMP_EQUAL("K", to_sfen(B_OU).c_str());
-    STRCMP_EQUAL("+P", to_sfen(B_TO).c_str());
-    STRCMP_EQUAL("+S", to_sfen(B_NG).c_str());
-    STRCMP_EQUAL("+B", to_sfen(B_UM).c_str());
-    STRCMP_EQUAL("+R", to_sfen(B_RY).c_str());
+    // clang-format off
+    {auto actual = std::string(); append_sfen(B_FU, actual); STRCMP_EQUAL("P", actual.c_str());}
+    {auto actual = std::string(); append_sfen(B_GI, actual); STRCMP_EQUAL("S", actual.c_str());}
+    {auto actual = std::string(); append_sfen(B_KA, actual); STRCMP_EQUAL("B", actual.c_str());}
+    {auto actual = std::string(); append_sfen(B_HI, actual); STRCMP_EQUAL("R", actual.c_str());}
+    {auto actual = std::string(); append_sfen(B_KI, actual); STRCMP_EQUAL("G", actual.c_str());}
+    {auto actual = std::string(); append_sfen(B_OU, actual); STRCMP_EQUAL("K", actual.c_str());}
+    {auto actual = std::string(); append_sfen(B_TO, actual); STRCMP_EQUAL("+P", actual.c_str());}
+    {auto actual = std::string(); append_sfen(B_NG, actual); STRCMP_EQUAL("+S", actual.c_str());}
+    {auto actual = std::string(); append_sfen(B_UM, actual); STRCMP_EQUAL("+B", actual.c_str());}
+    {auto actual = std::string(); append_sfen(B_RY, actual); STRCMP_EQUAL("+R", actual.c_str());}
 
-    STRCMP_EQUAL("p", to_sfen(W_FU).c_str());
-    STRCMP_EQUAL("s", to_sfen(W_GI).c_str());
-    STRCMP_EQUAL("b", to_sfen(W_KA).c_str());
-    STRCMP_EQUAL("r", to_sfen(W_HI).c_str());
-    STRCMP_EQUAL("g", to_sfen(W_KI).c_str());
-    STRCMP_EQUAL("k", to_sfen(W_OU).c_str());
-    STRCMP_EQUAL("+p", to_sfen(W_TO).c_str());
-    STRCMP_EQUAL("+s", to_sfen(W_NG).c_str());
-    STRCMP_EQUAL("+b", to_sfen(W_UM).c_str());
-    STRCMP_EQUAL("+r", to_sfen(W_RY).c_str());
+    {auto actual = std::string(); append_sfen(W_FU, actual); STRCMP_EQUAL("p", actual.c_str());}
+    {auto actual = std::string(); append_sfen(W_GI, actual); STRCMP_EQUAL("s", actual.c_str());}
+    {auto actual = std::string(); append_sfen(W_KA, actual); STRCMP_EQUAL("b", actual.c_str());}
+    {auto actual = std::string(); append_sfen(W_HI, actual); STRCMP_EQUAL("r", actual.c_str());}
+    {auto actual = std::string(); append_sfen(W_KI, actual); STRCMP_EQUAL("g", actual.c_str());}
+    {auto actual = std::string(); append_sfen(W_OU, actual); STRCMP_EQUAL("k", actual.c_str());}
+    {auto actual = std::string(); append_sfen(W_TO, actual); STRCMP_EQUAL("+p", actual.c_str());}
+    {auto actual = std::string(); append_sfen(W_NG, actual); STRCMP_EQUAL("+s", actual.c_str());}
+    {auto actual = std::string(); append_sfen(W_UM, actual); STRCMP_EQUAL("+b", actual.c_str());}
+    {auto actual = std::string(); append_sfen(W_RY, actual); STRCMP_EQUAL("+r", actual.c_str());}
+    // clang-format on
 }
 
 } // namespace test_vshogi::test_minishogi

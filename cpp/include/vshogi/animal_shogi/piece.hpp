@@ -2,6 +2,7 @@
 #define VSHOGI_ANIMAL_SHOGI_PIECE_HPP
 
 #include <cstdint>
+#include <string>
 
 #include "vshogi/color.hpp"
 
@@ -76,33 +77,42 @@ struct Pieces
         return static_cast<BoardPieceTypeEnum>((c << 3) | p);
     }
 
-    static inline char to_sfen(const BoardPieceTypeEnum p)
+    static void append_sfen(const BoardPieceTypeEnum p, std::string& out)
     {
         switch (p) {
         case B_CH:
-            return 'C';
+            out += 'C';
+            break;
         case B_EL:
-            return 'E';
+            out += 'E';
+            break;
         case B_GI:
-            return 'G';
+            out += 'G';
+            break;
         case B_LI:
-            return 'L';
+            out += 'L';
+            break;
         case B_HE:
-            return 'H';
+            out += 'H';
+            break;
         case W_CH:
-            return 'c';
+            out += 'c';
+            break;
         case W_EL:
-            return 'e';
+            out += 'e';
+            break;
         case W_GI:
-            return 'g';
+            out += 'g';
+            break;
         case W_LI:
-            return 'l';
+            out += 'l';
+            break;
         case W_HE:
-            return 'h';
+            out += 'h';
+            break;
         default:
             break;
         }
-        return ' ';
     }
 };
 

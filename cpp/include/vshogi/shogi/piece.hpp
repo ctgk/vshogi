@@ -151,7 +151,7 @@ struct Pieces
         return false;
     }
 
-    static std::string to_sfen(const BoardPieceTypeEnum p)
+    static void append_sfen(const BoardPieceTypeEnum p, std::string& out)
     {
         const auto color = get_color(p);
         const auto promotion = is_promoted(p);
@@ -189,8 +189,8 @@ struct Pieces
         if (color == BLACK)
             c = static_cast<char>(std::toupper(static_cast<int>(c)));
         if (promotion)
-            return std::string("+") + c;
-        return std::string(1, c);
+            out += '+';
+        out += c;
     }
 };
 

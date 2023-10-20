@@ -10,9 +10,9 @@ namespace test_vshogi::test_judkins_shogi
 using namespace vshogi;
 using namespace vshogi::judkins_shogi;
 
-TEST_GROUP(stand){};
+TEST_GROUP(judkins_shogi_stand){};
 
-TEST(stand, count)
+TEST(judkins_shogi_stand, count)
 {
     {
         const auto s = Stand(0, 2, 0, 1, 2, 1);
@@ -34,7 +34,7 @@ TEST(stand, count)
     }
 }
 
-TEST(stand, exist)
+TEST(judkins_shogi_stand, exist)
 {
     {
         const auto s = Stand(0, 2, 0, 1, 2, 1);
@@ -56,24 +56,24 @@ TEST(stand, exist)
     }
 }
 
-TEST(stand, any)
+TEST(judkins_shogi_stand, any)
 {
     CHECK_TRUE(Stand(1, 0, 0, 0, 0, 0).any());
     CHECK_FALSE(Stand(0, 0, 0, 0, 0, 0).any());
 }
 
-TEST(stand, add)
+TEST(judkins_shogi_stand, add)
 {
     CHECK_EQUAL(1, Stand().add(FU).count(FU));
     CHECK_EQUAL(0, Stand().add(GI).count(FU));
 }
 
-TEST(stand, subtract)
+TEST(judkins_shogi_stand, subtract)
 {
     CHECK_EQUAL(1, Stand(2, 0, 0, 0, 0, 0).subtract(FU).count(FU));
 }
 
-TEST(stand, set_sfen_holdings)
+TEST(judkins_shogi_stand, set_sfen_holdings)
 {
     {
         const char sfen_holdings[] = "RBGSNPrbgsnp 10";
@@ -134,19 +134,21 @@ TEST(stand, set_sfen_holdings)
     }
 }
 
-TEST(stand, to_sfen_holdings)
+TEST(judkins_shogi_stand, append_sfen)
 {
     {
         auto s = BlackWhiteStands();
         s.set_sfen_holdings("-");
-        const auto actual = s.to_sfen_holdings();
+        auto actual = std::string();
+        s.append_sfen(actual);
         STRCMP_EQUAL("-", actual.c_str());
     }
     {
         const char sfen_holdings[] = "RBGSNPrbgsnp 10";
         auto s = BlackWhiteStands();
         s.set_sfen_holdings(sfen_holdings);
-        const auto actual = s.to_sfen_holdings();
+        auto actual = std::string();
+        s.append_sfen(actual);
         STRCMP_EQUAL("RBGSNPrbgsnp", actual.c_str());
     }
 }

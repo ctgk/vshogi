@@ -188,9 +188,12 @@ public:
     OUT_OF_LOOP:
         return ptr;
     }
-    std::string to_sfen_holdings() const
+    void append_sfen(std::string& out) const
     {
-        auto out = std::string();
+        if (!(m_black.any() || m_white.any())) {
+            out += '-';
+            return;
+        }
         constexpr Pieces::PieceTypeEnum pieces[]
             = {Pieces::HI,
                Pieces::KA,
@@ -203,16 +206,11 @@ public:
                 const auto num = operator[](c).count(piece);
                 if (num == 0)
                     continue;
-                if (num == 1)
-                    out += Pieces::to_sfen(Pieces::to_board_piece(c, piece));
-                else
-                    out += std::to_string(num)
-                           + Pieces::to_sfen(Pieces::to_board_piece(c, piece));
+                if (num > 1)
+                    out += static_cast<char>('0' + num);
+                Pieces::append_sfen(Pieces::to_board_piece(c, piece), out);
             }
         }
-        if (out.empty())
-            out += '-';
-        return out;
     }
 };
 

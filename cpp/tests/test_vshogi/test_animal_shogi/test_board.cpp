@@ -45,11 +45,12 @@ TEST(animal_shogi_board, set_sfen)
     CHECK_EQUAL('b', *actual);
 }
 
-TEST(animal_shogi_board, to_sfen)
+TEST(animal_shogi_board, append_sfen)
 {
     {
         auto b = Board();
-        const auto actual = b.to_sfen();
+        auto actual = std::string();
+        b.append_sfen(actual);
         STRCMP_EQUAL("gle/1c1/1C1/ELG", actual.c_str());
     }
 }

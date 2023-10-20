@@ -33,7 +33,7 @@ static constexpr auto get_color = vshogi::minishogi::Pieces::get_color;
 static constexpr auto to_piece_type = vshogi::minishogi::Pieces::to_piece_type;
 static constexpr auto to_board_piece
     = vshogi::minishogi::Pieces::to_board_piece;
-static constexpr auto to_sfen = vshogi::minishogi::Pieces::to_sfen;
+static constexpr auto append_sfen = vshogi::minishogi::Pieces::append_sfen;
 static constexpr auto FU = vshogi::minishogi::Pieces::FU; // NOLINT
 static constexpr auto GI = vshogi::minishogi::Pieces::GI; // NOLINT
 static constexpr auto KI = vshogi::minishogi::Pieces::KI; // NOLINT

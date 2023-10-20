@@ -76,8 +76,13 @@ public:
     }
     std::string to_sfen() const
     {
-        return m_board.to_sfen() + " " + to_sfen_turn() + " "
-               + m_stands.to_sfen_holdings();
+        auto out = std::string();
+        m_board.append_sfen(out);
+        out += ' ';
+        append_sfen_turn(out);
+        out += ' ';
+        m_stands.append_sfen(out);
+        return out;
     }
     State& apply(const Move move)
     {
@@ -94,9 +99,9 @@ public:
     }
 
 private:
-    std::string to_sfen_turn() const
+    void append_sfen_turn(std::string& out) const
     {
-        return (m_turn == BLACK) ? "b" : "w";
+        out += ((m_turn == BLACK) ? 'b' : 'w');
     }
     BoardPieceTypeEnum pop_piece_from_stand_or_board(const Move move)
     {

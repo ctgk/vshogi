@@ -9,9 +9,9 @@ namespace test_vshogi::test_minishogi
 
 using namespace vshogi::minishogi;
 
-TEST_GROUP(board){};
+TEST_GROUP(minishogi_board){};
 
-TEST(board, get)
+TEST(minishogi_board, get)
 {
     auto b = Board();
     CHECK_EQUAL(W_HI, b[SQ_5A]);
@@ -19,7 +19,7 @@ TEST(board, get)
     CHECK_EQUAL(VOID, b[SQ_1D]);
 }
 
-TEST(board, set)
+TEST(minishogi_board, set)
 {
     auto b = Board();
     b[SQ_2D] = W_GI;
@@ -29,7 +29,7 @@ TEST(board, set)
     CHECK_EQUAL(VOID, b[SQ_1D]);
 }
 
-TEST(board, set_sfen)
+TEST(minishogi_board, set_sfen)
 {
     {
         const char sfen[] = "2+S1k/1r2+P/2K2/5/5 b 2bP2GSR 1";
@@ -97,14 +97,16 @@ TEST(board, set_sfen)
     }
 }
 
-TEST(board, to_sfen)
+TEST(minishogi_board, append_sfen)
 {
     const char sfen[] = "2+S1k/1r2+P/2K2/5/5 b 2bP2GSR 1";
     auto b = Board();
     b.set_sfen(sfen);
 
     const char expected[] = "2+S1k/1r2+P/2K2/5/5";
-    STRCMP_EQUAL(expected, b.to_sfen().c_str());
+    auto actual = std::string();
+    b.append_sfen(actual);
+    STRCMP_EQUAL(expected, actual.c_str());
 }
 
 } // namespace test_vshogi::test_minishogi

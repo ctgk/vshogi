@@ -32,7 +32,7 @@ static auto demote(const T p)
 static constexpr auto get_color = vshogi::shogi::Pieces::get_color;
 static constexpr auto to_piece_type = vshogi::shogi::Pieces::to_piece_type;
 static constexpr auto to_board_piece = vshogi::shogi::Pieces::to_board_piece;
-static constexpr auto to_sfen = vshogi::shogi::Pieces::to_sfen;
+static constexpr auto append_sfen = vshogi::shogi::Pieces::append_sfen;
 static constexpr auto FU = vshogi::shogi::Pieces::FU; // NOLINT
 static constexpr auto KY = vshogi::shogi::Pieces::KY; // NOLINT
 static constexpr auto KE = vshogi::shogi::Pieces::KE; // NOLINT

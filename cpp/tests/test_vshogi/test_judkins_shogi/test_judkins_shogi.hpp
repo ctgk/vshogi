@@ -32,7 +32,7 @@ static constexpr auto to_piece_type
     = vshogi::judkins_shogi::Pieces::to_piece_type;
 static constexpr auto to_board_piece
     = vshogi::judkins_shogi::Pieces::to_board_piece;
-static constexpr auto to_sfen = vshogi::judkins_shogi::Pieces::to_sfen;
+static constexpr auto append_sfen = vshogi::judkins_shogi::Pieces::append_sfen;
 static constexpr auto FU = vshogi::judkins_shogi::Pieces::FU; // NOLINT
 static constexpr auto KE = vshogi::judkins_shogi::Pieces::KE; // NOLINT
 static constexpr auto GI = vshogi::judkins_shogi::Pieces::GI; // NOLINT

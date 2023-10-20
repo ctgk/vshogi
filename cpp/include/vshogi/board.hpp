@@ -54,15 +54,13 @@ public:
         }
         return sfen;
     }
-    std::string to_sfen() const
+    void append_sfen(std::string& out) const
     {
-        auto out = std::string();
-        out += to_sfen_rank(RANK1);
+        append_sfen_rank(RANK1, out);
         for (int ir = 1; ir < num_ranks; ++ir) {
             out += '/';
-            out += to_sfen_rank(static_cast<RankEnum>(ir));
+            append_sfen_rank(static_cast<RankEnum>(ir), out);
         }
-        return out;
     }
     SquareEnum find_attacker(
         const ColorEnum& attacker_color,
@@ -88,14 +86,13 @@ public:
 
 private:
     const char* set_sfen_rank(const char* const sfen_rank, const RankEnum rank);
-    std::string to_sfen_rank(const RankEnum rank) const
+    void append_sfen_rank(const RankEnum rank, std::string& out) const
     {
-        auto begin = m_pieces + num_files * static_cast<int>(rank);
-        const auto end = begin + num_files;
-        auto out = std::string();
+        auto ptr = m_pieces + num_files * static_cast<int>(rank);
+        const auto end = ptr + num_files;
         int num_void = 0;
-        for (; begin < end; ++begin) {
-            if (*begin == VOID) {
+        for (; ptr < end; ++ptr) {
+            if (*ptr == VOID) {
                 ++num_void;
                 continue;
             }
@@ -103,11 +100,10 @@ private:
                 out += static_cast<char>('0' + num_void);
                 num_void = 0;
             }
-            out += Pieces::to_sfen(*begin);
+            Pieces::append_sfen(*ptr, out);
         }
         if (num_void > 0)
             out += static_cast<char>('0' + num_void);
-        return out;
     }
 };
 

@@ -9,9 +9,9 @@ namespace test_vshogi::test_judkins_shogi
 
 using namespace vshogi::judkins_shogi;
 
-TEST_GROUP(board){};
+TEST_GROUP(judkins_shogi_board){};
 
-TEST(board, get)
+TEST(judkins_shogi_board, get)
 {
     auto b = Board();
     CHECK_EQUAL(W_HI, b[SQ_6A]);
@@ -19,7 +19,7 @@ TEST(board, get)
     CHECK_EQUAL(VOID, b[SQ_1D]);
 }
 
-TEST(board, set)
+TEST(judkins_shogi_board, set)
 {
     auto b = Board();
     CHECK_EQUAL(VOID, b[SQ_2D]);
@@ -27,7 +27,7 @@ TEST(board, set)
     CHECK_EQUAL(W_GI, b[SQ_2D]);
 }
 
-TEST(board, set_sfen)
+TEST(judkins_shogi_board, set_sfen)
 {
     {
         const char sfen[] = "+r+b+n+s+p+P/+S+N+B+RGg/6/5k/6/K5 b - 1";
@@ -117,14 +117,16 @@ TEST(board, set_sfen)
     }
 }
 
-TEST(board, to_sfen)
+TEST(judkins_shogi_board, append_sfen)
 {
     const char sfen[] = "+r+b+n+s+p+P/+S+N+B+RGg/6/5k/6/K5 b - 1";
     auto b = Board();
     b.set_sfen(sfen);
 
     const char expected[] = "+r+b+n+s+p+P/+S+N+B+RGg/6/5k/6/K5";
-    STRCMP_EQUAL(expected, b.to_sfen().c_str());
+    auto actual = std::string();
+    b.append_sfen(actual);
+    STRCMP_EQUAL(expected, actual.c_str());
 }
 
 } // namespace test_vshogi::test_judkins_shogi

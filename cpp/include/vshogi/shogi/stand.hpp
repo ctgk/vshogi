@@ -258,25 +258,25 @@ public:
     OUT_OF_LOOP:
         return ptr;
     }
-    std::string to_sfen_holdings() const
+    void append_sfen(std::string& out) const
     {
-        auto out = std::string();
         constexpr PieceTypeEnum pieces[] = {HI, KA, KI, GI, KE, KY, FU};
+        if (!(m_black.any() || m_white.any())) {
+            out += '-';
+            return;
+        }
         for (auto c : color_array) {
             for (auto piece : pieces) {
                 const auto num = operator[](c).count(piece);
                 if (num == 0)
                     continue;
-                if (num == 1)
-                    out += Pieces::to_sfen(to_board_piece(c, piece));
-                else
-                    out += std::to_string(num)
-                           + Pieces::to_sfen(to_board_piece(c, piece));
+                if (num > 9)
+                    out += '1';
+                if (num > 1)
+                    out += static_cast<char>('0' + num % 10);
+                Pieces::append_sfen(to_board_piece(c, piece), out);
             }
         }
-        if (out.empty())
-            out += '-';
-        return out;
     }
 };
 
