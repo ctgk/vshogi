@@ -167,35 +167,37 @@ inline void export_node(pybind11::module& m)
         .def("get_proba", &Node::get_proba)
         .def(
             "get_child",
-            [](Node& node, const Move& action) {
-                return pybind11::cast(
-                    node.get_child(action),
-                    pybind11::return_value_policy::reference);
-            })
-        .def(
-            "set_value_policy_logits",
-            [](Node& self,
-               const Game& game,
-               const float value,
-               const pybind11::array_t<float>& policy_logits) {
-                const auto data = policy_logits.data();
-                self.set_value_policy_logits(game, value, data);
-            })
-        .def(
-            "explore",
-            [](Node& node,
-               Game& game,
-               const float coeff_puct,
-               const float random_proba,
-               const int random_depth) -> pybind11::object {
-                const auto out = node.explore(
-                    game, coeff_puct, random_proba, random_depth);
+            [](Node& node, const Move& action) -> pybind11::object {
+                const auto out = node.get_child(action);
                 if (out == nullptr)
                     return pybind11::none();
                 return pybind11::cast(
                     *out, pybind11::return_value_policy::reference);
             })
-        .def("pop_child", &Node::pop_child);
+        .def(
+            "simulate_expand_and_backprop",
+            [](Node& self,
+               const Game& game,
+               const float value,
+               const pybind11::array_t<float>& policy_logits) {
+                const auto data = policy_logits.data();
+                self.simulate_expand_and_backprop(game, value, data);
+            })
+        .def(
+            "select",
+            [](Node& node,
+               Game& game,
+               const float coeff_puct,
+               const int non_random_ratio,
+               const int random_depth) -> pybind11::object {
+                const auto out = node.select(
+                    game, coeff_puct, non_random_ratio, random_depth);
+                if (out == nullptr)
+                    return pybind11::none();
+                return pybind11::cast(
+                    *out, pybind11::return_value_policy::reference);
+            })
+        .def("apply", &Node::apply);
 }
 
 } // namespace pyvshogi

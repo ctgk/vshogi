@@ -37,7 +37,7 @@ def _tree(
             s = s.replace('\n', '\n    ')
         else:
             s = s.replace('\n', '\n|   ')
-        out += f'\n+-- p={root.get_proba(a):.4f} {a} -> {s}'
+        out += f'\n+-- p={child.get_proba():.4f} {a} -> {s}'
     return out
 
 
@@ -49,7 +49,7 @@ class MonteCarloTreeSearcher:
         policy_value_func: tp.Callable[['Game'], tp.Tuple[Policy, Value]],
         num_explorations: int = 100,
         coeff_puct: float = 1.,
-        random_proba: float = 0.25,
+        non_random_ratio: int = 3,
         random_depth: int = 1,
         select_move_by: tp.Literal[
             'visit_counts', 'q_values',
@@ -69,9 +69,9 @@ class MonteCarloTreeSearcher:
         coeff_puct : float, optional
             Default coefficient used to compute PUCT score. Higher the value
             is, the more weight on action policy than state value.
-        random_proba : float, optional
-            Default probability of selecting action in a random manner,
-            by default 0.25.
+        non_random_ratio : int, optional
+            Default ratio of selecting action in a non-random manner,
+            by default 3.
         random_depth : int, optional
             Default depth of explorations to select action in a random manner,
             by default 1.
@@ -87,7 +87,7 @@ class MonteCarloTreeSearcher:
 
         self._num_explorations = num_explorations
         self._coeff_puct = coeff_puct
-        self._random_proba = random_proba
+        self._non_random_ratio = non_random_ratio
         self._random_depth = random_depth
         self._select_move_by = select_move_by
         self._temperature_for_move_selection = temperature_for_move_selection
@@ -153,7 +153,7 @@ class MonteCarloTreeSearcher:
         self,
         n: tp.Optional[int] = None,
         c_puct: tp.Optional[float] = None,
-        random_proba: tp.Optional[float] = None,
+        non_random_ratio: tp.Optional[int] = None,
         random_depth: tp.Optional[int] = None,
     ):
         """Explore from root node for n times.
@@ -165,8 +165,8 @@ class MonteCarloTreeSearcher:
         c_puct : float, optional
             Coefficient used to compute PUCT score. Higher the value is,
             the more weight on action policy than state value.
-        random_proba : float, optional
-            Probability of selecting an action in a random manner,
+        non_random_ratio : int, optional
+            Ratio of selecting actions in non-random manner,
             by default None
         random_depth : int, optional
             Depth to select action in a random manner, by default None
@@ -175,19 +175,19 @@ class MonteCarloTreeSearcher:
             n = self._num_explorations
         if c_puct is None:
             c_puct = self._coeff_puct
-        if random_proba is None:
-            random_proba = self._random_proba
+        if non_random_ratio is None:
+            non_random_ratio = self._non_random_ratio
         if random_depth is None:
             random_depth = self._random_depth
 
         for _ in range(n):
             game = self._game.copy()
-            node = self._root.explore(
-                game._game, c_puct, random_proba, random_depth)
+            node = self._root.select(
+                game._game, c_puct, non_random_ratio, random_depth)
             if node is None:
                 continue
             policy_logits, value = self._policy_value_func(game)
-            node.set_value_policy_logits(game._game, value, policy_logits)
+            node.simulate_expand_and_backprop(game._game, value, policy_logits)
 
     def get_q_values(self) -> tp.Dict[Move, float]:
         """Return Q value of each action.
