@@ -87,32 +87,6 @@ static constexpr auto FILE2 = vshogi::minishogi::Squares::FILE2; // NOLINT
 static constexpr auto FILE3 = vshogi::minishogi::Squares::FILE3; // NOLINT
 static constexpr auto FILE4 = vshogi::minishogi::Squares::FILE4; // NOLINT
 static constexpr auto FILE5 = vshogi::minishogi::Squares::FILE5; // NOLINT
-static constexpr auto SQ_5A = vshogi::minishogi::Squares::SQ_5A; // NOLINT
-static constexpr auto SQ_4A = vshogi::minishogi::Squares::SQ_4A; // NOLINT
-static constexpr auto SQ_3A = vshogi::minishogi::Squares::SQ_3A; // NOLINT
-static constexpr auto SQ_2A = vshogi::minishogi::Squares::SQ_2A; // NOLINT
-static constexpr auto SQ_1A = vshogi::minishogi::Squares::SQ_1A; // NOLINT
-static constexpr auto SQ_5B = vshogi::minishogi::Squares::SQ_5B; // NOLINT
-static constexpr auto SQ_4B = vshogi::minishogi::Squares::SQ_4B; // NOLINT
-static constexpr auto SQ_3B = vshogi::minishogi::Squares::SQ_3B; // NOLINT
-static constexpr auto SQ_2B = vshogi::minishogi::Squares::SQ_2B; // NOLINT
-static constexpr auto SQ_1B = vshogi::minishogi::Squares::SQ_1B; // NOLINT
-static constexpr auto SQ_5C = vshogi::minishogi::Squares::SQ_5C; // NOLINT
-static constexpr auto SQ_4C = vshogi::minishogi::Squares::SQ_4C; // NOLINT
-static constexpr auto SQ_3C = vshogi::minishogi::Squares::SQ_3C; // NOLINT
-static constexpr auto SQ_2C = vshogi::minishogi::Squares::SQ_2C; // NOLINT
-static constexpr auto SQ_1C = vshogi::minishogi::Squares::SQ_1C; // NOLINT
-static constexpr auto SQ_5D = vshogi::minishogi::Squares::SQ_5D; // NOLINT
-static constexpr auto SQ_4D = vshogi::minishogi::Squares::SQ_4D; // NOLINT
-static constexpr auto SQ_3D = vshogi::minishogi::Squares::SQ_3D; // NOLINT
-static constexpr auto SQ_2D = vshogi::minishogi::Squares::SQ_2D; // NOLINT
-static constexpr auto SQ_1D = vshogi::minishogi::Squares::SQ_1D; // NOLINT
-static constexpr auto SQ_5E = vshogi::minishogi::Squares::SQ_5E; // NOLINT
-static constexpr auto SQ_4E = vshogi::minishogi::Squares::SQ_4E; // NOLINT
-static constexpr auto SQ_3E = vshogi::minishogi::Squares::SQ_3E; // NOLINT
-static constexpr auto SQ_2E = vshogi::minishogi::Squares::SQ_2E; // NOLINT
-static constexpr auto SQ_1E = vshogi::minishogi::Squares::SQ_1E; // NOLINT
-static constexpr auto SQ_NA = vshogi::minishogi::Squares::SQ_NA; // NOLINT
 
 } // namespace test_vshogi::test_minishogi
 

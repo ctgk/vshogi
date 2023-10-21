@@ -151,6 +151,20 @@ struct Pieces
         return false;
     }
 
+    static int get_point(const PieceTypeEnum p)
+    {
+        const auto pt = demote(p);
+        if (pt == OU)
+            return 0;
+        if ((pt == HI) || (pt == KA))
+            return 5;
+        return 1;
+    }
+    static int get_point(const BoardPieceTypeEnum p)
+    {
+        return get_point(to_piece_type(p));
+    }
+
     static void append_sfen(const BoardPieceTypeEnum p, std::string& out)
     {
         const auto color = get_color(p);

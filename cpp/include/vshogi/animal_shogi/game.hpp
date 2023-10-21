@@ -42,6 +42,7 @@ inline ResultEnum move_result(
 
 namespace vshogi
 {
+
 template <>
 inline bool animal_shogi::Game::is_repetitions() const
 {
@@ -163,6 +164,24 @@ inline void animal_shogi::Game::to_feature_map(float* const data) const
         k += (turn == color) ? 0 : ch_half;
         data[i * ch + k + sp_types] = 1.f;
     }
+}
+
+template <>
+inline animal_shogi::Game::Game()
+    : m_current_state(), m_record(), m_legal_moves(),
+      m_result(ONGOING), m_half_num_pieces{0, 0}, m_initial_points{0, 0}
+{
+    m_record.reserve(128);
+    update_internals();
+}
+
+template <>
+inline animal_shogi::Game::Game(const std::string& sfen)
+    : m_current_state(sfen), m_record(), m_legal_moves(),
+      m_result(ONGOING), m_half_num_pieces{0, 0}, m_initial_points{0, 0}
+{
+    m_record.reserve(128);
+    update_internals();
 }
 
 } // namespace vshogi

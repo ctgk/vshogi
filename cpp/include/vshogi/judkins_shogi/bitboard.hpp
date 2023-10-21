@@ -44,6 +44,7 @@ public:
         const Pieces::BoardPieceTypeEnum piece,
         const Squares::SquareEnum location,
         const BitBoard occupied);
+    static BitBoard get_promotion_zone(const ColorEnum& c);
 
     /**
      * @brief Get pointer to array of attacking squares by non ranging piece.
@@ -798,6 +799,11 @@ inline BitBoard BitBoard::get_attacks_by(
         break;
     }
     return BitBoard(0);
+}
+
+inline BitBoard BitBoard::get_promotion_zone(const ColorEnum& c)
+{
+    return (c == BLACK) ? (bb_ranka | bb_rankb) : (bb_ranke | bb_rankf);
 }
 
 } // namespace vshogi::judkins_shogi

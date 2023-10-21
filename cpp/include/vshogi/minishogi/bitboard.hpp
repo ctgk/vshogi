@@ -88,6 +88,7 @@ public:
         const Pieces::BoardPieceTypeEnum& piece,
         const Squares::SquareEnum& location,
         const BitBoard& occupied);
+    static BitBoard get_promotion_zone(const ColorEnum& c);
 
     /**
      * @brief Get pointer to array of attacking squares by non ranging piece.
@@ -281,6 +282,11 @@ constexpr BitBoard bb_f3 = bb_3a | bb_3b | bb_3c | bb_3d | bb_3e;
 constexpr BitBoard bb_f4 = bb_4a | bb_4b | bb_4c | bb_4d | bb_4e;
 constexpr BitBoard bb_f5 = bb_5a | bb_5b | bb_5c | bb_5d | bb_5e;
 constexpr BitBoard file_bbs[] = {bb_f1, bb_f2, bb_f3, bb_f4, bb_f5};
+
+inline BitBoard BitBoard::get_promotion_zone(const ColorEnum& c)
+{
+    return (c == BLACK) ? bb_ra : bb_re;
+}
 
 } // namespace vshogi::minishogi
 

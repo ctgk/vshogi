@@ -12,6 +12,53 @@
 namespace vshogi
 {
 
+namespace internal
+{
+
+template <class State>
+int num_pieces(const State& s, const ColorEnum& c)
+{
+    using Squares = typename State::SquaresType;
+    using Pieces = typename State::PiecesType;
+    const auto& board = s.get_board();
+    const auto& stand = s.get_stand(c);
+    int out = 0;
+    for (auto& sq : Squares::square_array) {
+        const auto p = board[sq];
+        if (p == Pieces::VOID)
+            continue;
+        if (Pieces::get_color(p) == c)
+            out += 1;
+    }
+    for (auto& pt : Pieces::stand_piece_array) {
+        out += stand.count(pt);
+    }
+    return out;
+}
+
+template <class State>
+int total_point(const State& s, const ColorEnum& c)
+{
+    using Squares = typename State::SquaresType;
+    using Pieces = typename State::PiecesType;
+    int out = 0;
+    const auto& board = s.get_board();
+    const auto& stand = s.get_stand(c);
+    for (auto& sq : Squares::square_array) {
+        const auto p = board[sq];
+        if (p == Pieces::VOID)
+            continue;
+        if (Pieces::get_color(p) == c)
+            out += Pieces::get_point(p);
+    }
+    for (auto& pt : Pieces::stand_piece_array) {
+        out += stand.count(pt) * Pieces::get_point(pt);
+    }
+    return out;
+}
+
+} // namespace internal
+
 template <class State>
 class Game
 {
@@ -25,26 +72,41 @@ public:
     using Pieces = typename State::PiecesType;
 
 private:
+    State m_current_state;
+
     /**
      * @brief Pairs of SFEN (without #ply) and the move.
-     *
      */
     std::vector<std::pair<std::string, Move>> m_record;
     std::vector<Move> m_legal_moves;
-    State m_current_state;
     ResultEnum m_result;
+    const int m_half_num_pieces[2];
+    const int m_initial_points[2];
     BitBoard m_occupied[num_colors + 1];
     SquareEnum m_king_locations[num_colors];
     SquareEnum m_checker_locations[2];
 
 public:
-    Game() : m_record(), m_legal_moves(), m_current_state(), m_result(ONGOING)
+    Game()
+        : m_current_state(), m_record(), m_legal_moves(), m_result(ONGOING),
+          m_half_num_pieces{
+              internal::num_pieces(m_current_state, BLACK),
+              internal::num_pieces(m_current_state, WHITE)},
+          m_initial_points{
+              internal::total_point(m_current_state, BLACK),
+              internal::total_point(m_current_state, WHITE)}
     {
         m_record.reserve(128);
         update_internals();
     }
     Game(const std::string& sfen)
-        : m_record(), m_legal_moves(), m_current_state(sfen), m_result(ONGOING)
+        : m_current_state(sfen), m_record(), m_legal_moves(), m_result(ONGOING),
+          m_half_num_pieces{
+              internal::num_pieces(m_current_state, BLACK) / 2,
+              internal::num_pieces(m_current_state, WHITE) / 2},
+          m_initial_points{
+              internal::total_point(m_current_state, BLACK),
+              internal::total_point(m_current_state, WHITE)}
     {
         m_record.reserve(128);
         update_internals();
@@ -287,6 +349,8 @@ protected:
             else
                 m_result = DRAW;
         }
+        if (can_declare_win_by_king_enter())
+            m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
         if (m_result != ONGOING)
             m_legal_moves.clear();
     }
@@ -301,6 +365,47 @@ protected:
                 return true;
         }
         return false;
+    }
+    bool can_declare_win_by_king_enter() const
+    {
+        const auto turn = get_turn();
+        // http://www2.computer-shogi.org/wcsc17/rule_e.html
+        // (1) The King of the declaring side is in the third rank or beyond.
+        if (!Squares::in_promotion_zone(m_king_locations[turn], turn))
+            return false;
+
+        // (4) There is no check on the King of the declaring side.
+        if (m_checker_locations[0] != Squares::SQ_NA)
+            return false;
+
+        const auto promo_zone_mask = BitBoard::get_promotion_zone(turn);
+        const auto piece_mask = (promo_zone_mask & m_occupied[turn]);
+        const int num_pieces_in_zone = piece_mask.hamming_weight();
+
+        // (3) The declaring side has 10 or more pieces other than the King in the third rank or beyond.
+        if (num_pieces_in_zone <= m_half_num_pieces[turn])
+            return false;
+
+        // (2) The declaring side has 28 (the first player (sente, black)) or 27 (the second player (gote, white)) piece points or more.
+        if (turn == BLACK)
+            return count_point_in(turn, piece_mask) > m_initial_points[turn];
+        else
+            return count_point_in(turn, piece_mask) >= m_initial_points[turn];
+    }
+    int count_point_in(const ColorEnum& c, const BitBoard& piece_mask) const
+    {
+        int out = 0;
+        const auto& board = get_board();
+        for (auto& sq : Squares::square_array) {
+            if (piece_mask.is_one(sq)) {
+                out += Pieces::get_point(board[sq]);
+            }
+        }
+        const auto& stand = get_stand(c);
+        for (auto& pt : Pieces::stand_piece_array) {
+            out += stand.count(pt) * Pieces::get_point(pt);
+        }
+        return out;
     }
 
 protected:

@@ -77,6 +77,7 @@ public:
     std::string to_sfen() const
     {
         auto out = std::string();
+        out.reserve(Squares::num_squares);
         m_board.append_sfen(out);
         out += ' ';
         append_sfen_turn(out);

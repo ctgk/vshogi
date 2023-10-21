@@ -199,6 +199,33 @@ struct Squares
     }
 };
 
+constexpr auto SQ_5A = vshogi::minishogi::Squares::SQ_5A; // NOLINT
+constexpr auto SQ_4A = vshogi::minishogi::Squares::SQ_4A; // NOLINT
+constexpr auto SQ_3A = vshogi::minishogi::Squares::SQ_3A; // NOLINT
+constexpr auto SQ_2A = vshogi::minishogi::Squares::SQ_2A; // NOLINT
+constexpr auto SQ_1A = vshogi::minishogi::Squares::SQ_1A; // NOLINT
+constexpr auto SQ_5B = vshogi::minishogi::Squares::SQ_5B; // NOLINT
+constexpr auto SQ_4B = vshogi::minishogi::Squares::SQ_4B; // NOLINT
+constexpr auto SQ_3B = vshogi::minishogi::Squares::SQ_3B; // NOLINT
+constexpr auto SQ_2B = vshogi::minishogi::Squares::SQ_2B; // NOLINT
+constexpr auto SQ_1B = vshogi::minishogi::Squares::SQ_1B; // NOLINT
+constexpr auto SQ_5C = vshogi::minishogi::Squares::SQ_5C; // NOLINT
+constexpr auto SQ_4C = vshogi::minishogi::Squares::SQ_4C; // NOLINT
+constexpr auto SQ_3C = vshogi::minishogi::Squares::SQ_3C; // NOLINT
+constexpr auto SQ_2C = vshogi::minishogi::Squares::SQ_2C; // NOLINT
+constexpr auto SQ_1C = vshogi::minishogi::Squares::SQ_1C; // NOLINT
+constexpr auto SQ_5D = vshogi::minishogi::Squares::SQ_5D; // NOLINT
+constexpr auto SQ_4D = vshogi::minishogi::Squares::SQ_4D; // NOLINT
+constexpr auto SQ_3D = vshogi::minishogi::Squares::SQ_3D; // NOLINT
+constexpr auto SQ_2D = vshogi::minishogi::Squares::SQ_2D; // NOLINT
+constexpr auto SQ_1D = vshogi::minishogi::Squares::SQ_1D; // NOLINT
+constexpr auto SQ_5E = vshogi::minishogi::Squares::SQ_5E; // NOLINT
+constexpr auto SQ_4E = vshogi::minishogi::Squares::SQ_4E; // NOLINT
+constexpr auto SQ_3E = vshogi::minishogi::Squares::SQ_3E; // NOLINT
+constexpr auto SQ_2E = vshogi::minishogi::Squares::SQ_2E; // NOLINT
+constexpr auto SQ_1E = vshogi::minishogi::Squares::SQ_1E; // NOLINT
+constexpr auto SQ_NA = vshogi::minishogi::Squares::SQ_NA; // NOLINT
+
 } // namespace vshogi::minishogi
 
 #endif // VSHOGI_MINISHOGI_SQUARES_HPP
