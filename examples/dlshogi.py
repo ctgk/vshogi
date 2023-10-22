@@ -140,15 +140,15 @@ def _df_to_xy(df: pd.DataFrame):
         (vshogi.WHITE_WIN, vshogi.WHITE): 1.,
     }
     for _, row in df.iterrows():
-        game = config.shogi.Game(row['state'])
+        game = args._shogi.Game(row['state'])
         move = eval(
-            row['move'].replace('Move', f'vshogi.{config.shogi_variant}.Move',
-                ).replace('dst=', f'dst=vshogi.{config.shogi_variant}.',
-                ).replace('src=', f'src=vshogi.{config.shogi_variant}.'))
-        result = eval('vshogi.' + config.shogi_variant + '.' + row['result'])
+            row['move'].replace('Move', f'vshogi.{args.shogi_variant}.Move',
+                ).replace('dst=', f'dst=vshogi.{args.shogi_variant}.',
+                ).replace('src=', f'src=vshogi.{args.shogi_variant}.'))
+        result = eval('vshogi.' + args.shogi_variant + '.' + row['result'])
 
         x = game.to_dlshogi_features()
-        policy = game.to_dlshogi_policy(move, config.nn_max_policy)
+        policy = game.to_dlshogi_policy(move, args.nn_max_policy)
         value = value_options[(result, game.turn)]
 
         x_list.append(x)
@@ -177,13 +177,13 @@ def train_network(
             tf.keras.losses.CategoricalCrossentropy(from_logits=True),
             tf.keras.losses.MeanSquaredError(),
         ],
-        optimizer=tf.keras.optimizers.Adam(),
+        optimizer=tf.keras.optimizers.Adam(args.nn_learning_rate),
     )
     network.fit(
         x_train,
         [y_policy_train, y_value_train],
-        batch_size=config.nn_minibatch,
-        epochs=config.nn_epochs,
+        batch_size=args.nn_minibatch,
+        epochs=args.nn_epochs,
     )
     return network
 
@@ -227,10 +227,10 @@ def play_game(
         player = player_black if game.turn == vshogi.Color.BLACK else player_white
         if not player.is_ready():
             player.set_root(game)
-        player.explore(n=config.mcts_explorations - player.num_explored)
+        player.explore(n=args.mcts_explorations - player.num_explored)
         move = player.select(
             temperature=(
-                config.mcts_temperature(game) if callable(config.mcts_temperature) else config.mcts_temperature
+                args.mcts_temperature(game) if callable(args.mcts_temperature) else args.mcts_temperature
             ),
         )
         game.apply(move)
@@ -247,17 +247,17 @@ def load_player_of(index_path_or_network) -> vshogi.engine.MonteCarloTreeSearche
         i = index_path_or_network
         return vshogi.engine.MonteCarloTreeSearcher(
             PolicyValueFunction(f'models/model_{i:04d}.tflite'),
-            coeff_puct=config.mcts_coeff_puct,
+            coeff_puct=args.mcts_coeff_puct,
         )
     return vshogi.engine.MonteCarloTreeSearcher(
         PolicyValueFunction(index_path_or_network),
-        coeff_puct=config.mcts_coeff_puct,
+        coeff_puct=args.mcts_coeff_puct,
     )
 
 
 def _self_play_and_dump_record(player, index, nth_game: int) -> vshogi.Game:
     while True:
-        game = play_game(config.game_getter(), player, player)
+        game = play_game(args._game_getter(), player, player)
         if game.result != vshogi.ONGOING:
             break
     with open(f'datasets/dataset_{index:04d}/record_{nth_game:04d}.tsv', mode='w') as f:
@@ -290,22 +290,22 @@ def self_play_and_dump_records_in_parallel(index: int, n_jobs: int):
             _self_play_and_dump_record(player, index, i)
 
     group_size = 10
-    with tqdm_joblib(tqdm(total=config.self_play // group_size)):
+    with tqdm_joblib(tqdm(total=args.self_play // group_size)):
         Parallel(n_jobs=n_jobs)(
             delayed(_self_play_and_dump_record_n_times)(
                 index, list(range(i, i + group_size)),
             )
-            for i in range(0, config.self_play, group_size)
+            for i in range(0, args.self_play, group_size)
         )
 
 
 def self_play_and_dump_records(index: int):
-    if config.jobs == 1:
+    if args.jobs == 1:
         player = load_player_of(f'models/model_{index:04d}.tflite')
-        for i in tqdm(range(config.self_play)):
+        for i in tqdm(range(args.self_play)):
             _self_play_and_dump_record(player, index, i)
     else:
-        self_play_and_dump_records_in_parallel(index, config.jobs)
+        self_play_and_dump_records_in_parallel(index, args.jobs)
 
 
 def play_against_past_players(index: int, dump_records: bool = False):
@@ -313,11 +313,11 @@ def play_against_past_players(index: int, dump_records: bool = False):
     for i_prev in range(index - 1, -1, -1):
         player_prev = load_player_of(i_prev)
         validation_results = {'win': 0, 'loss': 0, 'draw': 0}
-        pbar = tqdm(range(config.validations))
+        pbar = tqdm(range(args.validations))
         for n in pbar:
             if n % 2 == 0:
                 while True:
-                    game = play_game(config.game_getter(), player, player_prev)
+                    game = play_game(args._game_getter(), player, player_prev)
                     if game.result != vshogi.ONGOING:
                         break
                 validation_results[{
@@ -331,7 +331,7 @@ def play_against_past_players(index: int, dump_records: bool = False):
                         dump_game_records(f, game)
             else:
                 while True:
-                    game = play_game(config.game_getter(), player_prev, player)
+                    game = play_game(args._game_getter(), player_prev, player)
                     if game.result != vshogi.ONGOING:
                         break
                 validation_results[{
@@ -349,7 +349,7 @@ def play_against_past_players(index: int, dump_records: bool = False):
 def parse_args():
 
     @classopt(default_long=True)
-    class Config:
+    class Args:
         shogi_variant: str = config(
             long=False,
             choices=['shogi', 'animal_shogi', 'judkins_shogi', 'minishogi'],
@@ -363,6 +363,7 @@ def parse_args():
         nn_value: int = config(type=int, default=None, help='# of layers for value head in NN. Default value varies in shogi games.')
         nn_epochs: int = config(type=int, default=20, help='# of epochs in NN training. By default 20.')
         nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
+        nn_learning_rate: float = config(type=float, default=1e-3)
         nn_max_policy: float = config(type=float, default=0.8, help='Maximum value of supervised signal of policy in NN training, default=0.8')
         mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000')
         mcts_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in MCTS, default=4.')
@@ -371,12 +372,10 @@ def parse_args():
         validations: int = config(type=int, default=10, help='# of validation plays per model, default=10')
         jobs: int = config(short=False, type=int, default=1, help='# of jobs to run self-play in parallel, default=1')
         output: str = config(short=True, type=str, help='Output path of self-play datasets and trained NN models, default=`shogi`')
-        game_getter: callable = config(default=None, type=callable, help='Do not use this option!')
-        shogi: types.ModuleType = config(default=None, help='Do not use this option!')
 
 
-    config_ = Config.from_args()
-    config_.game_getter = {
+    args = Args.from_args()
+    args._game_getter = {
         'animal_shogi': lambda: vshogi.animal_shogi.Game(
             '{}l{}/1{}1/1{}1/{}L{} b - 1'.format(
                 *np.random.choice(list('ceg'), 3, replace=False),
@@ -402,49 +401,49 @@ def parse_args():
                 *np.random.choice(list('BRLNSGGSNL'), 10, replace=False),
             ),
         ),
-    }[config_.shogi_variant]
-    config_.shogi = getattr(vshogi, config_.shogi_variant)
+    }[args.shogi_variant]
+    args._shogi = getattr(vshogi, args.shogi_variant)
     default_configs = {
         'animal_shogi':  {'nn_channels':  32, 'nn_backbones':  4, 'nn_policy': 2, 'nn_value': 2},
         'minishogi':     {'nn_channels':  64, 'nn_backbones':  6, 'nn_policy': 2, 'nn_value': 2},
         'judkins_shogi': {'nn_channels':  64, 'nn_backbones':  7, 'nn_policy': 2, 'nn_value': 2},
         'shogi':         {'nn_channels': 128, 'nn_backbones': 10, 'nn_policy': 3, 'nn_value': 3},
     }
-    if config_.shogi_variant in default_configs:
-        for key, value in default_configs[config_.shogi_variant].items():
-            if getattr(config_, key) is None:
-                setattr(config_, key, value)
-    if config_.output is None:
-        config_.output = config_.shogi_variant
+    if args.shogi_variant in default_configs:
+        for key, value in default_configs[args.shogi_variant].items():
+            if getattr(args, key) is None:
+                setattr(args, key, value)
+    if args.output is None:
+        args.output = args.shogi_variant
 
-    print(config_)
-    return config_
+    print(args)
+    return args
 
 
 if __name__ == '__main__':
-    config = parse_args()
+    args = parse_args()
 
-    if not os.path.isdir(config.output):
-        os.makedirs(config.output)
-    os.chdir(config.output)
+    if not os.path.isdir(args.output):
+        os.makedirs(args.output)
+    os.chdir(args.output)
     if not os.path.isdir('models'):
         os.makedirs('models')
     if not os.path.isdir('datasets'):
         os.makedirs('datasets')
 
-    shogi = config.shogi
+    shogi = args._shogi
 
-    for i in range(config.resume_rl_cycle_from, config.rl_cycle):
+    for i in range(args.resume_rl_cycle_from, args.rl_cycle):
         # Initialize network or train!
         if 'network' not in locals():
             network = build_policy_value_network(
                 input_size=(shogi.Game.ranks, shogi.Game.files),
                 input_channels=shogi.Game.feature_channels,
                 num_policy_per_square=shogi.Move._num_policy_per_square(),
-                num_channels_in_hidden_layer=config.nn_channels,
-                num_backbone_layers=config.nn_backbones,
-                num_policy_layers=config.nn_policy,
-                num_value_layers=config.nn_value,
+                num_channels_in_hidden_layer=args.nn_channels,
+                num_backbone_layers=args.nn_backbones,
+                num_policy_layers=args.nn_policy,
+                num_value_layers=args.nn_value,
             )
         if i != 0:
             network = load_data_and_train_network(network, i)
