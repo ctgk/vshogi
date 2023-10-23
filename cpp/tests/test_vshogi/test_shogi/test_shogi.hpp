@@ -29,8 +29,12 @@ static auto demote(const T p)
 {
     return vshogi::shogi::Pieces::demote(p);
 }
+template <class T>
+static auto to_piece_type(const T a)
+{
+    return vshogi::shogi::Pieces::to_piece_type(a);
+}
 static constexpr auto get_color = vshogi::shogi::Pieces::get_color;
-static constexpr auto to_piece_type = vshogi::shogi::Pieces::to_piece_type;
 static constexpr auto to_board_piece = vshogi::shogi::Pieces::to_board_piece;
 static constexpr auto append_sfen = vshogi::shogi::Pieces::append_sfen;
 static constexpr auto FU = vshogi::shogi::Pieces::FU; // NOLINT

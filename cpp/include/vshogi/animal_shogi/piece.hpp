@@ -1,6 +1,7 @@
 #ifndef VSHOGI_ANIMAL_SHOGI_PIECE_HPP
 #define VSHOGI_ANIMAL_SHOGI_PIECE_HPP
 
+#include <cctype>
 #include <cstdint>
 #include <string>
 
@@ -68,6 +69,23 @@ struct Pieces
     {
         return static_cast<PieceTypeEnum>(p & 0x07);
     }
+    static inline PieceTypeEnum to_piece_type(const char c)
+    {
+        switch (std::tolower(c)) {
+        case 'c':
+            return CH;
+        case 'e':
+            return EL;
+        case 'g':
+            return GI;
+        case 'h':
+            return HE;
+        case 'l':
+            return LI;
+        default:
+            return NA;
+        }
+    }
 
     static inline BoardPieceTypeEnum
     to_board_piece(const ColorEnum c, const PieceTypeEnum p)
@@ -75,6 +93,11 @@ struct Pieces
         if (p == NA)
             return VOID;
         return static_cast<BoardPieceTypeEnum>((c << 3) | p);
+    }
+
+    static inline PieceTypeEnum demote(const PieceTypeEnum p)
+    {
+        return (p == HE) ? CH : p;
     }
 
     static void append_sfen(const BoardPieceTypeEnum p, std::string& out)

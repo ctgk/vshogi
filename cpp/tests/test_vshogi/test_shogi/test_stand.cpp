@@ -7,7 +7,6 @@
 namespace test_vshogi::test_shogi
 {
 
-using namespace vshogi;
 using namespace vshogi::shogi;
 
 TEST_GROUP(shogi_stand){};
@@ -53,25 +52,25 @@ TEST(shogi_stand, subtract)
     CHECK_EQUAL(7, Stand(8, 0, 0, 0, 0, 0, 0).subtract(FU).count(FU));
 }
 
-TEST(shogi_stand, set_sfen_holdings)
+TEST(shogi_stand, set_sfen)
 {
     const char sfen_holdings[] = "3P4NG10pl2r 5";
     auto s = BlackWhiteStands();
-    const auto actual = s.set_sfen_holdings(sfen_holdings);
-    CHECK_EQUAL(3, s[BLACK].count(FU));
-    CHECK_EQUAL(0, s[BLACK].count(KY));
-    CHECK_EQUAL(4, s[BLACK].count(KE));
-    CHECK_EQUAL(0, s[BLACK].count(GI));
-    CHECK_EQUAL(0, s[BLACK].count(KA));
-    CHECK_EQUAL(0, s[BLACK].count(HI));
-    CHECK_EQUAL(1, s[BLACK].count(KI));
-    CHECK_EQUAL(10, s[WHITE].count(FU));
-    CHECK_EQUAL(1, s[WHITE].count(KY));
-    CHECK_EQUAL(0, s[WHITE].count(KE));
-    CHECK_EQUAL(0, s[WHITE].count(GI));
-    CHECK_EQUAL(0, s[WHITE].count(KA));
-    CHECK_EQUAL(2, s[WHITE].count(HI));
-    CHECK_EQUAL(0, s[WHITE].count(KI));
+    const auto actual = s.set_sfen(sfen_holdings);
+    CHECK_EQUAL(3, s[vshogi::BLACK].count(FU));
+    CHECK_EQUAL(0, s[vshogi::BLACK].count(KY));
+    CHECK_EQUAL(4, s[vshogi::BLACK].count(KE));
+    CHECK_EQUAL(0, s[vshogi::BLACK].count(GI));
+    CHECK_EQUAL(0, s[vshogi::BLACK].count(KA));
+    CHECK_EQUAL(0, s[vshogi::BLACK].count(HI));
+    CHECK_EQUAL(1, s[vshogi::BLACK].count(KI));
+    CHECK_EQUAL(10, s[vshogi::WHITE].count(FU));
+    CHECK_EQUAL(1, s[vshogi::WHITE].count(KY));
+    CHECK_EQUAL(0, s[vshogi::WHITE].count(KE));
+    CHECK_EQUAL(0, s[vshogi::WHITE].count(GI));
+    CHECK_EQUAL(0, s[vshogi::WHITE].count(KA));
+    CHECK_EQUAL(2, s[vshogi::WHITE].count(HI));
+    CHECK_EQUAL(0, s[vshogi::WHITE].count(KI));
     CHECK_EQUAL('5', actual[0]);
     CHECK_EQUAL('\0', actual[1]);
 }
@@ -80,7 +79,7 @@ TEST(shogi_stand, append_sfen)
 {
     {
         auto s = BlackWhiteStands();
-        s.set_sfen_holdings("-");
+        s.set_sfen("-");
         auto actual = std::string();
         s.append_sfen(actual);
         STRCMP_EQUAL("-", actual.c_str());
@@ -88,7 +87,7 @@ TEST(shogi_stand, append_sfen)
     {
         const char sfen_holdings[] = "3P4NG10pl2r 5";
         auto s = BlackWhiteStands();
-        s.set_sfen_holdings(sfen_holdings);
+        s.set_sfen(sfen_holdings);
         auto actual = std::string();
         s.append_sfen(actual);
         STRCMP_EQUAL("G4N3P2rl10p", actual.c_str());

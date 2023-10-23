@@ -1,6 +1,7 @@
 #ifndef VSHOGI_SHOGI_PIECE_HPP
 #define VSHOGI_SHOGI_PIECE_HPP
 
+#include <cctype>
 #include <cstdint>
 #include <string>
 
@@ -125,6 +126,29 @@ struct Pieces
     static constexpr PieceTypeEnum to_piece_type(const BoardPieceTypeEnum p)
     {
         return static_cast<PieceTypeEnum>(p & 0x0f);
+    }
+    static inline PieceTypeEnum to_piece_type(const char c)
+    {
+        switch (std::tolower(c)) {
+        case 'p':
+            return FU;
+        case 'l':
+            return KY;
+        case 'n':
+            return KE;
+        case 's':
+            return GI;
+        case 'b':
+            return KA;
+        case 'r':
+            return HI;
+        case 'g':
+            return KI;
+        case 'k':
+            return OU;
+        default:
+            return NA;
+        }
     }
 
     static constexpr BoardPieceTypeEnum

@@ -52,7 +52,7 @@ animal_shogi::State::apply(const animal_shogi::Move move)
     const auto dst = move.destination();
     auto moving = pop_piece_from_stand_or_board(move);
     const auto captured = Pieces::to_piece_type(m_board[dst]);
-    if (captured != Pieces::NA)
+    if ((captured != Pieces::NA) && (captured != Pieces::LI))
         m_stands[m_turn].add(captured);
     moving = animal_shogi::internal::promote_if_possible(moving, move);
     m_board[dst] = moving;

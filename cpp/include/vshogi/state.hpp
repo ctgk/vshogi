@@ -72,7 +72,7 @@ public:
             (*s == 'b') ? m_turn = BLACK : m_turn = WHITE;
             s += 2;
         }
-        m_stands.set_sfen_holdings(s);
+        m_stands.set_sfen(s);
     }
     std::string to_sfen() const
     {

@@ -4,12 +4,35 @@
 #include <cstdint>
 
 #include "vshogi/judkins_shogi/piece.hpp"
+#include "vshogi/stand.hpp"
 
 namespace vshogi::judkins_shogi
 {
 
-constexpr int stand_shift_bits[] = {0, 2, 4, 6, 8, 10};
-constexpr std::uint16_t stand_masks[] = {
+/**
+ * @brief 16-bit integer representing pieces on a stand.
+ * @details
+ * ________ ______**  FU (2 pieces)
+ * ________ ____**__  KE (2 pieces)
+ * ________ __**____  GI (2 pieces)
+ * ________ **______  KA (2 pieces)
+ * ______** ________  HI (2 pieces)
+ * ____**__ ________  KI (2 pieces)
+ */
+using Stand = vshogi::Stand<Pieces, std::uint16_t>;
+
+using BlackWhiteStands = vshogi::BlackWhiteStands<Stand, Pieces>;
+
+} // namespace vshogi::judkins_shogi
+
+namespace vshogi
+{
+
+template <>
+inline const int judkins_shogi::Stand::shift_bits[] = {0, 2, 4, 6, 8, 10};
+
+template <>
+inline const std::uint16_t judkins_shogi::Stand::masks[] = {
     // clang-format off
     0x0003, // FU
     0x000c, // KE
@@ -19,7 +42,9 @@ constexpr std::uint16_t stand_masks[] = {
     0x0c00, // KI
     // clang-format on
 };
-constexpr std::uint16_t stand_deltas[] = {
+
+template <>
+inline const std::uint16_t judkins_shogi::Stand::deltas[] = {
     // clang-format off
     0x0001, // FU
     0x0004, // KE
@@ -29,191 +54,43 @@ constexpr std::uint16_t stand_deltas[] = {
     0x0400, // KI
     // clang-format on
 };
-constexpr std::uint16_t stand_setter_mask = 0x0fff;
 
-class Stand
+template <>
+inline const std::uint16_t judkins_shogi::Stand::mask = 0x0fff;
+
+template <>
+template <>
+inline judkins_shogi::Stand::Stand(
+    const int num_fu,
+    const int num_ke,
+    const int num_gi,
+    const int num_ka,
+    const int num_hi,
+    const int num_ki)
+    : Stand(static_cast<std::uint16_t>(
+        (num_fu << shift_bits[judkins_shogi::Pieces::FU])
+        + (num_ke << shift_bits[judkins_shogi::Pieces::KE])
+        + (num_gi << shift_bits[judkins_shogi::Pieces::GI])
+        + (num_ka << shift_bits[judkins_shogi::Pieces::KA])
+        + (num_hi << shift_bits[judkins_shogi::Pieces::HI])
+        + (num_ki << shift_bits[judkins_shogi::Pieces::KI])))
 {
-private:
-    /**
-     * @brief 16-bit integer representing pieces on a stand.
-     * @details
-     * ________ ______**  FU (2 pieces)
-     * ________ ____**__  KE (2 pieces)
-     * ________ __**____  GI (2 pieces)
-     * ________ **______  KA (2 pieces)
-     * ______** ________  HI (2 pieces)
-     * ____**__ ________  KI (2 pieces)
-     */
-    std::uint16_t m_value;
+}
 
-public:
-    Stand() : m_value(0U)
-    {
-    }
-    Stand(const std::uint16_t v) : m_value(v & stand_setter_mask)
-    {
-    }
-    Stand(
-        const int num_fu,
-        const int num_ke,
-        const int num_gi,
-        const int num_ka,
-        const int num_hi,
-        const int num_ki)
-        : Stand(static_cast<std::uint16_t>(
-            (num_fu << stand_shift_bits[Pieces::FU])
-            + (num_ke << stand_shift_bits[Pieces::KE])
-            + (num_gi << stand_shift_bits[Pieces::GI])
-            + (num_ka << stand_shift_bits[Pieces::KA])
-            + (num_hi << stand_shift_bits[Pieces::HI])
-            + (num_ki << stand_shift_bits[Pieces::KI])))
-    {
-    }
-    std::uint32_t get_value() const
-    {
-        return m_value;
-    }
-    int count(const Pieces::PieceTypeEnum p) const
-    {
-        return static_cast<int>(
-            (m_value & stand_masks[p]) >> stand_shift_bits[p]);
-    }
-    bool exist(const Pieces::PieceTypeEnum p) const
-    {
-        return (m_value & stand_masks[p]) > 0u;
-    }
-    bool any() const
-    {
-        return m_value > 0u;
-    }
-    Stand& add(const Pieces::PieceTypeEnum p, const int num = 1)
-    {
-        for (int ii = num; ii--;)
-            m_value = static_cast<std::uint16_t>(
-                m_value + stand_deltas[Pieces::demote(p)]);
-        return *this;
-    }
-    Stand& subtract(const Pieces::PieceTypeEnum p)
-    {
-        m_value = static_cast<std::uint16_t>(
-            m_value - stand_deltas[Pieces::demote(p)]);
-        return *this;
-    }
-    bool operator==(const Stand& other) const
-    {
-        return m_value == other.m_value;
-    }
-    bool operator!=(const Stand& other) const
-    {
-        return m_value != other.m_value;
-    }
-};
+template <>
+inline const judkins_shogi::Pieces::PieceTypeEnum
+    judkins_shogi::BlackWhiteStands::stand_pieces_in_sfen_order[]
+    = {judkins_shogi::Pieces::HI,
+       judkins_shogi::Pieces::KA,
+       judkins_shogi::Pieces::KI,
+       judkins_shogi::Pieces::GI,
+       judkins_shogi::Pieces::KE,
+       judkins_shogi::Pieces::FU};
 
-class BlackWhiteStands
-{
-private:
-    Stand m_black;
-    Stand m_white;
+template <>
+inline const int judkins_shogi::BlackWhiteStands::max_sfen_length
+    = 13; // "RBGSNPrbgsnp "
 
-public:
-    using StandType = vshogi::judkins_shogi::Stand;
-    BlackWhiteStands() : m_black(), m_white()
-    {
-    }
-    Stand& operator[](const ColorEnum c)
-    {
-        return (c == BLACK) ? m_black : m_white;
-    }
-    const Stand& operator[](const ColorEnum c) const
-    {
-        return (c == BLACK) ? m_black : m_white;
-    }
-    const char* set_sfen_holdings(const char* const sfen_holdings)
-    {
-        constexpr int max_length = 13; // "RBGSNPrbgsnp "
-        int num = 1;
-        const char* ptr = sfen_holdings;
-        for (; ptr - sfen_holdings < max_length; ++ptr) {
-            switch (*ptr) {
-            case '-':
-                ++ptr; // fall-through
-            case ' ':
-                ++ptr; // fall-through
-            case '\0':
-                goto OUT_OF_LOOP;
-            case '2':
-                num = 2;
-                continue;
-            case 'P':
-                m_black.add(Pieces::FU, num);
-                break;
-            case 'N':
-                m_black.add(Pieces::KE, num);
-                break;
-            case 'S':
-                m_black.add(Pieces::GI, num);
-                break;
-            case 'B':
-                m_black.add(Pieces::KA, num);
-                break;
-            case 'R':
-                m_black.add(Pieces::HI, num);
-                break;
-            case 'G':
-                m_black.add(Pieces::KI, num);
-                break;
-            case 'p':
-                m_white.add(Pieces::FU, num);
-                break;
-            case 'n':
-                m_white.add(Pieces::KE, num);
-                break;
-            case 's':
-                m_white.add(Pieces::GI, num);
-                break;
-            case 'b':
-                m_white.add(Pieces::KA, num);
-                break;
-            case 'r':
-                m_white.add(Pieces::HI, num);
-                break;
-            case 'g':
-                m_white.add(Pieces::KI, num);
-                break;
-            default:
-                break;
-            }
-            num = 1;
-        }
-    OUT_OF_LOOP:
-        return ptr;
-    }
-    void append_sfen(std::string& out) const
-    {
-        if (!(m_black.any() || m_white.any())) {
-            out += '-';
-            return;
-        }
-        constexpr Pieces::PieceTypeEnum pieces[]
-            = {Pieces::HI,
-               Pieces::KA,
-               Pieces::KI,
-               Pieces::GI,
-               Pieces::KE,
-               Pieces::FU};
-        for (auto c : color_array) {
-            for (auto piece : pieces) {
-                const auto num = operator[](c).count(piece);
-                if (num == 0)
-                    continue;
-                if (num > 1)
-                    out += static_cast<char>('0' + num);
-                Pieces::append_sfen(Pieces::to_board_piece(c, piece), out);
-            }
-        }
-    }
-};
-
-} // namespace vshogi::judkins_shogi
+} // namespace vshogi
 
 #endif // VSHOGI_JUDKINS_SHOGI_STAND_HPP

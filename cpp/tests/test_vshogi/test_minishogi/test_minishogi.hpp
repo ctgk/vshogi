@@ -29,8 +29,12 @@ static auto demote(const T p)
 {
     return vshogi::minishogi::Pieces::demote(p);
 }
+template <class T>
+static auto to_piece_type(const T a)
+{
+    return vshogi::minishogi::Pieces::to_piece_type(a);
+}
 static constexpr auto get_color = vshogi::minishogi::Pieces::get_color;
-static constexpr auto to_piece_type = vshogi::minishogi::Pieces::to_piece_type;
 static constexpr auto to_board_piece
     = vshogi::minishogi::Pieces::to_board_piece;
 static constexpr auto append_sfen = vshogi::minishogi::Pieces::append_sfen;

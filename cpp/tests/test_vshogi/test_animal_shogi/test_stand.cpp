@@ -108,13 +108,13 @@ TEST(animal_shogi_black_white_stands, sizeof)
     CHECK_EQUAL(sizeof(std::uint16_t), sizeof(BlackWhiteStands));
 }
 
-TEST(animal_shogi_black_white_stands, set_sfen_holdings)
+TEST(animal_shogi_black_white_stands, set_sfen)
 {
     {
         const auto s = "- 1";
         auto stands = BlackWhiteStands();
 
-        const auto actual = stands.set_sfen_holdings(s);
+        const auto actual = stands.set_sfen(s);
 
         CHECK_EQUAL(0, stands.black().count(CH));
         CHECK_EQUAL(0, stands.black().count(EL));
@@ -128,7 +128,7 @@ TEST(animal_shogi_black_white_stands, set_sfen_holdings)
         const auto s = "2C2E2G2c2e2g 7";
         auto stands = BlackWhiteStands();
 
-        const auto actual = stands.set_sfen_holdings(s);
+        const auto actual = stands.set_sfen(s);
 
         CHECK_EQUAL(2, stands.black().count(CH));
         CHECK_EQUAL(2, stands.black().count(EL));
@@ -142,7 +142,7 @@ TEST(animal_shogi_black_white_stands, set_sfen_holdings)
         const auto s = "C2E2cg\0aabbbccc";
         auto stands = BlackWhiteStands();
 
-        const auto actual = stands.set_sfen_holdings(s);
+        const auto actual = stands.set_sfen(s);
 
         CHECK_EQUAL(1, stands.black().count(CH));
         CHECK_EQUAL(2, stands.black().count(EL));
@@ -158,7 +158,7 @@ TEST(animal_shogi_black_white_stands, append_sfen)
 {
     {
         auto s = BlackWhiteStands();
-        s.set_sfen_holdings("C2E2cg");
+        s.set_sfen("C2E2cg");
         auto actual = std::string();
         s.append_sfen(actual);
         STRCMP_EQUAL("2ECg2c", actual.c_str());

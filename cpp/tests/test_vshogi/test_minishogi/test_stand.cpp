@@ -46,11 +46,11 @@ TEST(minishogi_stand, subtract)
     CHECK_EQUAL(0, Stand(1, 0, 0, 0, 0).subtract(FU).count(FU));
 }
 
-TEST(minishogi_stand, set_sfen_holdings)
+TEST(minishogi_stand, set_sfen)
 {
     const char sfen_holdings[] = "2bP2GSR 3";
     auto s = BlackWhiteStands();
-    const auto actual = s.set_sfen_holdings(sfen_holdings);
+    const auto actual = s.set_sfen(sfen_holdings);
     CHECK_EQUAL(0, s.white().count(FU));
     CHECK_EQUAL(0, s.white().count(GI));
     CHECK_EQUAL(0, s.white().count(KI));
@@ -69,7 +69,7 @@ TEST(minishogi_stand, append_sfen)
 {
     {
         auto s = BlackWhiteStands();
-        s.set_sfen_holdings("-");
+        s.set_sfen("-");
         auto actual = std::string();
         s.append_sfen(actual);
         STRCMP_EQUAL("-", actual.c_str());
@@ -77,7 +77,7 @@ TEST(minishogi_stand, append_sfen)
     {
         const char sfen_holdings[] = "2bP2GSR 3";
         auto s = BlackWhiteStands();
-        s.set_sfen_holdings(sfen_holdings);
+        s.set_sfen(sfen_holdings);
         auto actual = std::string();
         s.append_sfen(actual);
         STRCMP_EQUAL("R2GSP2b", actual.c_str());

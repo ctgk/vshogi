@@ -76,6 +76,27 @@ struct Pieces
     {
         return static_cast<PieceTypeEnum>(p & 0x0f);
     }
+    static inline PieceTypeEnum to_piece_type(const char c)
+    {
+        switch (std::tolower(c)) {
+        case 'p':
+            return FU;
+        case 'n':
+            return KE;
+        case 's':
+            return GI;
+        case 'b':
+            return KA;
+        case 'r':
+            return HI;
+        case 'g':
+            return KI;
+        case 'k':
+            return OU;
+        default:
+            return NA;
+        }
+    }
     static inline BoardPieceTypeEnum
     to_board_piece(const ColorEnum c, const PieceTypeEnum p)
     {
