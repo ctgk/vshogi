@@ -14,7 +14,7 @@
 namespace vshogi::animal_shogi
 {
 
-using Game = vshogi::Game<State>;
+using Game = vshogi::Game<State, 2>;
 
 namespace internal
 {
@@ -42,20 +42,6 @@ inline ResultEnum move_result(
 
 namespace vshogi
 {
-
-template <>
-inline bool animal_shogi::Game::is_repetitions() const
-{
-    constexpr int num_acceptable_repetitions = 2;
-    int num = 1;
-    const auto current_sfen = m_current_state.to_sfen();
-    for (auto&& previous_record : m_record) {
-        num += (current_sfen == previous_record.first);
-        if (num > num_acceptable_repetitions)
-            return true;
-    }
-    return false;
-}
 
 template <>
 inline void animal_shogi::Game::update_result()
@@ -106,13 +92,13 @@ inline animal_shogi::Game&
 animal_shogi::Game::apply(const animal_shogi::Move move)
 {
     const auto illegal = !is_legal(move);
-    m_record.emplace_back(std::make_pair(m_current_state.to_sfen(), move));
+    m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
     if (!move.is_drop()) {
         const auto moving = get_board()[move.source_square()];
         const auto captured = get_board()[move.destination()];
         m_result = animal_shogi::internal::move_result(move, moving, captured);
     }
-    m_current_state.apply(move);
+    m_current_state.apply(move, &m_zobrist_hash);
     if (illegal) {
         m_result = (get_turn() == BLACK) ? BLACK_WIN : WHITE_WIN;
         m_legal_moves.clear();
@@ -168,8 +154,10 @@ inline void animal_shogi::Game::to_feature_map(float* const data) const
 
 template <>
 inline animal_shogi::Game::Game()
-    : m_current_state(), m_record(), m_legal_moves(),
-      m_result(ONGOING), m_half_num_pieces{0, 0}, m_initial_points{0, 0}
+    : m_current_state(), m_record(), m_legal_moves(), m_result(ONGOING),
+      m_zobrist_hash(m_current_state.zobrist_hash()),
+      m_initial_sfen_without_ply(m_current_state.to_sfen()),
+      m_half_num_pieces{0, 0}, m_initial_points{0, 0}
 {
     m_record.reserve(128);
     update_internals();
@@ -177,8 +165,10 @@ inline animal_shogi::Game::Game()
 
 template <>
 inline animal_shogi::Game::Game(const std::string& sfen)
-    : m_current_state(sfen), m_record(), m_legal_moves(),
-      m_result(ONGOING), m_half_num_pieces{0, 0}, m_initial_points{0, 0}
+    : m_current_state(sfen), m_record(), m_legal_moves(), m_result(ONGOING),
+      m_zobrist_hash(m_current_state.zobrist_hash()),
+      m_initial_sfen_without_ply(m_current_state.to_sfen()),
+      m_half_num_pieces{0, 0}, m_initial_points{0, 0}
 {
     m_record.reserve(128);
     update_internals();

@@ -10,7 +10,7 @@
 namespace vshogi::animal_shogi
 {
 
-using State = vshogi::State<Board, BlackWhiteStands, Move>;
+using State = vshogi::State<Board, BlackWhiteStands, Move, 2>;
 
 namespace internal
 {
@@ -46,16 +46,27 @@ namespace vshogi
 {
 
 template <>
-inline animal_shogi::State&
-animal_shogi::State::apply(const animal_shogi::Move move)
+inline std::uint64_t animal_shogi::State::zobrist_board
+    [animal_shogi::Squares::num_squares]
+    [num_colors * animal_shogi::Pieces::num_piece_types + 1]
+    = {};
+
+template <>
+inline std::uint64_t animal_shogi::State::zobrist_stand
+    [num_colors][animal_shogi::Pieces::num_stand_piece_types][3]
+    = {};
+
+template <>
+inline animal_shogi::State& animal_shogi::State::apply(
+    const animal_shogi::Move& move, std::uint64_t* const hash)
 {
     const auto dst = move.destination();
-    auto moving = pop_piece_from_stand_or_board(move);
+    auto moving = pop_piece_from_stand_or_board(move, hash);
     const auto captured = Pieces::to_piece_type(m_board[dst]);
     if ((captured != Pieces::NA) && (captured != Pieces::LI))
-        m_stands[m_turn].add(captured);
+        add_captured_to_stand(Pieces::demote(captured), hash);
     moving = animal_shogi::internal::promote_if_possible(moving, move);
-    m_board[dst] = moving;
+    place_piece_at(dst, moving, hash);
     m_turn = ~m_turn;
     return *this;
 }

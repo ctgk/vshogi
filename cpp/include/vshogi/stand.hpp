@@ -79,17 +79,17 @@ public:
     BlackWhiteStands() : m_black(), m_white()
     {
     }
-    Stand& black()
+    bool operator==(const BlackWhiteStands& other) const
     {
-        return m_black;
+        return (m_black == other.m_black) && (m_white == other.m_white);
+    }
+    bool operator!=(const BlackWhiteStands& other) const
+    {
+        return (m_black != other.m_black) || (m_white != other.m_white);
     }
     const Stand& black() const
     {
         return m_black;
-    }
-    Stand& white()
-    {
-        return m_white;
     }
     const Stand& white() const
     {

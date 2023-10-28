@@ -232,6 +232,7 @@ void export_pieces(py::module& m)
 
 void export_shogi(py::module& m)
 {
+    sg::State::init_zobrist_table();
     sg::init_non_ranging_attacks_table();
     sg::init_ranging_squares_table();
 

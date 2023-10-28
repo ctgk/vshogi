@@ -36,6 +36,8 @@ struct Pieces
     static constexpr PieceTypeEnum stand_piece_array[] = {FU, GI, KA, HI, KI};
     static constexpr int num_stand_piece_types
         = sizeof(stand_piece_array) / sizeof(stand_piece_array[0]);
+    static constexpr int num_piece_types
+        = sizeof(piece_array) / sizeof(piece_array[0]);
 
     static inline bool is_promotable(const PieceTypeEnum p)
     {

@@ -30,11 +30,14 @@ public:
         : m_value(value & (source_mask() | promote_mask() | destination_mask()))
     {
     }
-    Move(const SquareEnum dst, const SquareEnum src, const bool promote = false)
+    Move(
+        const SquareEnum dst,
+        const SquareEnum src,
+        const bool promote = false) noexcept
         : Move(dst, static_cast<int>(src), promote)
     {
     }
-    Move(const SquareEnum dst, const PieceTypeEnum src)
+    Move(const SquareEnum dst, const PieceTypeEnum src) noexcept
         : Move(dst, static_cast<int>(src) + num_squares)
     {
     }

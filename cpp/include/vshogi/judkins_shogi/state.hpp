@@ -13,8 +13,24 @@
 namespace vshogi::judkins_shogi
 {
 
-using State = vshogi::State<Board, BlackWhiteStands, Move>;
+using State = vshogi::State<Board, BlackWhiteStands, Move, 2>;
 
-} // namespace vshogi::judkins_shogi
+}
+
+namespace vshogi
+{
+
+template <>
+inline std::uint64_t judkins_shogi::State::zobrist_board
+    [judkins_shogi::Squares::num_squares]
+    [num_colors * judkins_shogi::Pieces::num_piece_types + 1]
+    = {};
+
+template <>
+inline std::uint64_t judkins_shogi::State::zobrist_stand
+    [num_colors][judkins_shogi::Pieces::num_stand_piece_types][3]
+    = {};
+
+} // namespace vshogi
 
 #endif // VSHOGI_JUDKINS_SHOGI_STATE_HPP

@@ -35,6 +35,22 @@ private:
 
 public:
     Board();
+    bool operator==(const Board& other) const
+    {
+        for (auto& sq : Squares::square_array) {
+            if (m_pieces[sq] != other.m_pieces[sq])
+                return false;
+        }
+        return true;
+    }
+    bool operator!=(const Board& other) const
+    {
+        for (auto& sq : Squares::square_array) {
+            if (m_pieces[sq] != other.m_pieces[sq])
+                return true;
+        }
+        return false;
+    }
     BoardPieceTypeEnum operator[](const SquareEnum sq) const
     {
         return m_pieces[sq];

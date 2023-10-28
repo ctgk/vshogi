@@ -10,8 +10,25 @@
 namespace vshogi::minishogi
 {
 
-using State = vshogi::State<Board, BlackWhiteStands, Move>;
+using State = vshogi::State<Board, BlackWhiteStands, Move, 2>;
 
-} // namespace vshogi::minishogi
+}
+
+namespace vshogi
+{
+
+template <>
+inline std::uint64_t minishogi::State::zobrist_board
+    [minishogi::Squares::num_squares]
+    [num_colors * minishogi::Pieces::num_piece_types + 1]
+    = {};
+
+template <>
+inline std::uint64_t
+    minishogi::State::zobrist_stand[num_colors]
+                                   [minishogi::Pieces::num_stand_piece_types][3]
+    = {};
+
+} // namespace vshogi
 
 #endif // VSHOGI_MINISHOGI_STATE_HPP

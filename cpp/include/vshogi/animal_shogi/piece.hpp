@@ -28,6 +28,8 @@ struct Pieces
     static constexpr int num_stand_piece_types
         = sizeof(stand_piece_array) / sizeof(stand_piece_array[0]);
     static constexpr PieceTypeEnum piece_array[] = {CH, EL, GI, LI, HE};
+    static constexpr int num_piece_types
+        = sizeof(piece_array) / sizeof(piece_array[0]);
 
     /**
  * @brief Enumeration of pieces on board (plus VOID).
@@ -98,6 +100,16 @@ struct Pieces
     static inline PieceTypeEnum demote(const PieceTypeEnum p)
     {
         return (p == HE) ? CH : p;
+    }
+
+    static constexpr bool is_promoted(const PieceTypeEnum p)
+    {
+        return (p == HE);
+    }
+
+    static bool is_promoted(const BoardPieceTypeEnum p)
+    {
+        return is_promoted(to_piece_type(p));
     }
 
     static void append_sfen(const BoardPieceTypeEnum p, std::string& out)

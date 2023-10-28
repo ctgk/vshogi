@@ -59,7 +59,7 @@ int total_point(const State& s, const ColorEnum& c)
 
 } // namespace internal
 
-template <class State>
+template <class State, int MaxAcceptableRepetition = 3>
 class Game
 {
 public:
@@ -75,11 +75,13 @@ private:
     State m_current_state;
 
     /**
-     * @brief Pairs of SFEN (without #ply) and the move.
+     * @brief Pairs of zobrist hash and the move.
      */
-    std::vector<std::pair<std::string, Move>> m_record;
+    std::vector<std::pair<std::uint64_t, Move>> m_record;
     std::vector<Move> m_legal_moves;
     ResultEnum m_result;
+    std::uint64_t m_zobrist_hash;
+    const std::string m_initial_sfen_without_ply;
     const int m_half_num_pieces[2];
     const int m_initial_points[2];
     BitBoard m_occupied[num_colors + 1];
@@ -89,6 +91,8 @@ private:
 public:
     Game()
         : m_current_state(), m_record(), m_legal_moves(), m_result(ONGOING),
+          m_zobrist_hash(m_current_state.zobrist_hash()),
+          m_initial_sfen_without_ply(m_current_state.to_sfen()),
           m_half_num_pieces{
               internal::num_pieces(m_current_state, BLACK),
               internal::num_pieces(m_current_state, WHITE)},
@@ -101,6 +105,8 @@ public:
     }
     Game(const std::string& sfen)
         : m_current_state(sfen), m_record(), m_legal_moves(), m_result(ONGOING),
+          m_zobrist_hash(m_current_state.zobrist_hash()),
+          m_initial_sfen_without_ply(m_current_state.to_sfen()),
           m_half_num_pieces{
               internal::num_pieces(m_current_state, BLACK) / 2,
               internal::num_pieces(m_current_state, WHITE) / 2},
@@ -176,14 +182,18 @@ public:
     std::string
     get_sfen_at(const std::size_t n, const bool include_move_count = true) const
     {
+        auto s = State(m_initial_sfen_without_ply);
+        for (std::size_t ii = 0; ii < n; ++ii) {
+            s.apply(m_record[ii].second);
+        }
         if (include_move_count)
-            return m_record[n].first + ' ' + std::to_string(n + 1);
-        return m_record[n].first;
+            return s.to_sfen() + ' ' + std::to_string(n + 1);
+        return s.to_sfen();
     }
     Game& apply(const Move move)
     {
-        m_record.emplace_back(std::make_pair(m_current_state.to_sfen(), move));
-        m_current_state.apply(move);
+        m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
+        m_current_state.apply(move, &m_zobrist_hash);
         update_internals(move);
         return *this;
     }
@@ -356,13 +366,16 @@ protected:
     }
     bool is_repetitions() const
     {
-        constexpr int num_acceptable_repetitions = 3;
         int num = 1;
-        const auto current_sfen = m_current_state.to_sfen();
-        for (auto&& previous_record : m_record) {
-            num += (current_sfen == previous_record.first);
-            if (num > num_acceptable_repetitions)
-                return true;
+        auto s = State(m_initial_sfen_without_ply);
+        const auto n = m_record.size();
+        for (std::size_t ii = 0; ii < n; ++ii) {
+            if (((n - ii) % 2 == 0) && (m_zobrist_hash == m_record[ii].first)) {
+                num += (m_current_state == s);
+                if (num > MaxAcceptableRepetition)
+                    return true;
+            }
+            s.apply(m_record[ii].second);
         }
         return false;
     }
@@ -382,11 +395,13 @@ protected:
         const auto piece_mask = (promo_zone_mask & m_occupied[turn]);
         const int num_pieces_in_zone = piece_mask.hamming_weight();
 
-        // (3) The declaring side has 10 or more pieces other than the King in the third rank or beyond.
+        // (3) The declaring side has 10 or more pieces other than the King in
+        // the third rank or beyond.
         if (num_pieces_in_zone <= m_half_num_pieces[turn])
             return false;
 
-        // (2) The declaring side has 28 (the first player (sente, black)) or 27 (the second player (gote, white)) piece points or more.
+        // (2) The declaring side has 28 (the first player (sente, black)) or
+        // 27 (the second player (gote, white)) piece points or more.
         if (turn == BLACK)
             return count_point_in(turn, piece_mask) > m_initial_points[turn];
         else

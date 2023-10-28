@@ -68,6 +68,8 @@ struct Pieces
         = sizeof(stand_piece_array) / sizeof(stand_piece_array[0]);
     static constexpr PieceTypeEnum piece_array[]
         = {FU, KE, GI, KA, HI, KI, OU, TO, NK, NG, UM, RY};
+    static constexpr int num_piece_types
+        = sizeof(piece_array) / sizeof(piece_array[0]);
     static constexpr ColorEnum get_color(const BoardPieceTypeEnum p)
     {
         return static_cast<ColorEnum>(p >> 4);

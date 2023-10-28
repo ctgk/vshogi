@@ -40,6 +40,8 @@ struct Pieces
         = sizeof(stand_piece_array) / sizeof(stand_piece_array[0]);
     static constexpr PieceTypeEnum piece_array[]
         = {FU, KY, KE, GI, KA, HI, KI, OU, TO, NY, NK, NG, UM, RY};
+    static constexpr int num_piece_types
+        = sizeof(piece_array) / sizeof(piece_array[0]);
 
     enum BoardPieceTypeEnum : std::uint8_t
     {

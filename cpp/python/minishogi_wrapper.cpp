@@ -110,6 +110,7 @@ void export_pieces(py::module& m)
 
 void export_minishogi(py::module& m)
 {
+    ms::State::init_zobrist_table();
     ms::init_non_ranging_attacks_table();
     ms::init_ranging_squares_table();
 

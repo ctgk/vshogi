@@ -135,6 +135,7 @@ void export_pieces(py::module& m)
 
 void export_judkins_shogi(py::module& m)
 {
+    js::State::init_zobrist_table();
     js::init_non_ranging_attacks_table();
     js::init_ranging_squares_table();
 
