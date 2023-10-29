@@ -20,8 +20,6 @@ class Node
 {
 private:
     using NodeGM = Node<Game, Move>;
-    static constexpr float value_threshold = 0.999f;
-    static constexpr float atanh_max = 10.f;
 
     /**
      * @brief Pointer to parent node.
@@ -66,14 +64,14 @@ private:
     /**
      * @brief Average of `m_value` of all the nodes below this including this
      * one weighted by their `m_visit_count`.
+     * @note `m_q_arctanh = atanh(m_q_value)` does not necessarily hold.
      */
     float m_q_value;
 
     /**
-     * @brief Average of `atanh(m_value)` of all the node below this and this
-     * node weighted by their `m_visit_count`.
+     * @brief True if the node is in mate or leads to mate, otherwise false.
      */
-    float m_q_arctanh;
+    bool m_is_mate;
 
     /**
      * @brief Child nodes.
@@ -84,7 +82,7 @@ public:
     Node()
         : m_parent(nullptr), m_action(0), m_proba(0.f), m_visit_count(0),
           m_sqrt_visit_count(0.f), m_value(0.f), m_q_value(0.f),
-          m_q_arctanh(0.f), m_children()
+          m_is_mate(false), m_children()
     {
     }
     Node(const Game& game, const float value, const float* const policy_logits)
@@ -95,7 +93,7 @@ public:
     Node(const Move action, const float proba) noexcept
         : m_parent(nullptr), m_action(action), m_proba(proba), m_visit_count(0),
           m_sqrt_visit_count(0.f), m_value(0.f), m_q_value(0.f),
-          m_q_arctanh(0.f), m_children()
+          m_is_mate(false), m_children()
     {
     }
 
@@ -216,7 +214,7 @@ public:
         m_sqrt_visit_count = 0.f;
         m_value = 0.f;
         m_q_value = 0.f;
-        m_q_arctanh = 0.f;
+        m_is_mate = false;
         m_children = std::vector<NodeGM>();
         return *this;
     }
@@ -267,10 +265,20 @@ private:
     bool has_mate_to_win() const
     {
         for (std::size_t ii = m_children.size(); ii--;) {
-            if (puct_q(ii) > value_threshold)
+            if (is_mate_to_win(ii))
                 return true;
         }
         return false;
+    }
+    bool is_mate_to_win(const std::size_t& index) const
+    {
+        const auto& child = m_children[index];
+        return child.m_is_mate && (child.m_q_value < 0);
+    }
+    bool is_mate_to_lose(const std::size_t& index) const
+    {
+        const auto& child = m_children[index];
+        return child.m_is_mate && (child.m_q_value > 0);
     }
     std::size_t select_random() const
     {
@@ -281,7 +289,7 @@ private:
         const auto end = integer + std::min(num, num_max_try);
         auto index = integer % num;
         for (; integer < end; ++integer) {
-            if (m_children[index].m_q_value > -value_threshold)
+            if (!is_mate_to_lose(index))
                 return index;
             index++;
             index %= num;
@@ -305,8 +313,10 @@ private:
     puct_score(const std::size_t index, const float coeff_puct) const noexcept
     {
         const auto q = puct_q(index);
-        if (std::abs(q) > value_threshold)
-            return q * (1.f + m_sqrt_visit_count * coeff_puct);
+        if (is_mate_to_win(index)) {
+            const auto p_plus_1 = m_children[index].m_proba + 1.f;
+            return (q + 2.f) + p_plus_1 * m_sqrt_visit_count * coeff_puct;
+        }
         return q + puct_u(index) * coeff_puct;
     }
     float puct_q(const std::size_t index) const noexcept
@@ -326,19 +336,19 @@ private:
     {
         m_value = value;
         m_q_value = value;
-        m_q_arctanh = arctanh(value);
     }
     void simulate_end_game(const Game& game)
     {
         const auto result = game.get_result();
         if (result == ResultEnum::DRAW)
             return; // Skip simulation as no change from initial values.
+
         const auto turn = game.get_turn();
         const auto winner = (result == BLACK_WIN) ? BLACK : WHITE;
         const auto value = (winner == turn) ? 1.f : -1.f;
         m_value = value;
         m_q_value = value;
-        m_q_arctanh = arctanh(value);
+        m_is_mate = true;
     }
 
 private:
@@ -363,38 +373,61 @@ private:
     }
 
 private:
-    void backprop_internal_vertex(const float v_arctanh)
+    void backprop_at_internal_vertex(const float v)
     {
         const auto count_before = static_cast<float>(m_visit_count);
         m_visit_count += 1;
         const auto count_after = static_cast<float>(m_visit_count);
         m_sqrt_visit_count = std::sqrt(count_after);
-        m_q_arctanh *= count_before / count_after;
-        m_q_arctanh += v_arctanh / count_after;
-        m_q_value = std::tanh(m_q_arctanh);
-        if (m_parent != nullptr) {
-            m_parent->backprop_internal_vertex(-v_arctanh);
+
+        m_q_value *= count_before / count_after;
+        m_q_value += v / count_after;
+
+        if (m_parent != nullptr)
+            m_parent->backprop_at_internal_vertex(-v);
+    }
+    void backprop_mate_at_internal_vertex(const float v)
+    {
+        const auto count_before = static_cast<float>(m_visit_count);
+        m_visit_count += 1;
+        const auto count_after = static_cast<float>(m_visit_count);
+        m_sqrt_visit_count = std::sqrt(count_after);
+
+        if ((!m_is_mate) && (v < 0) && has_non_mate_child()) {
+            m_is_mate = false;
+            m_q_value *= count_before / count_after;
+            m_q_value += v / count_after;
+            if (m_parent != nullptr)
+                m_parent->backprop_at_internal_vertex(-v);
+        } else {
+            m_is_mate = true;
+            m_q_value = v;
+            if (m_parent != nullptr)
+                m_parent->backprop_mate_at_internal_vertex(-v);
         }
+    }
+    bool has_non_mate_child() const
+    {
+        for (auto&& child : m_children) {
+            if (!child.m_is_mate)
+                return true;
+        }
+        return false;
     }
     void backprop_leaf()
     {
-        // skip updating `m_q_arctanh` and `m_q_value`
+        // skip updating `m_q_value` because there should be no value change.
         m_visit_count += 1;
         m_sqrt_visit_count = std::sqrt(static_cast<float>(m_visit_count));
         if (m_parent != nullptr) {
-            m_parent->backprop_internal_vertex(-m_q_arctanh);
+            if (m_is_mate)
+                m_parent->backprop_mate_at_internal_vertex(-m_q_value);
+            else
+                m_parent->backprop_at_internal_vertex(-m_q_value);
         }
     }
 
 private:
-    static float arctanh(const float x)
-    {
-        if (x >= value_threshold)
-            return atanh_max;
-        if (x <= -value_threshold)
-            return -atanh_max;
-        return std::atanh(x);
-    }
     static void softmax(std::vector<float>& v)
     {
         if (v.empty())
