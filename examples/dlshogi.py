@@ -367,7 +367,7 @@ def parse_args():
         nn_max_policy: float = config(type=float, default=0.8, help='Maximum value of supervised signal of policy in NN training, default=0.8')
         mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000')
         mcts_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in MCTS, default=4.')
-        mcts_temperature: float = config(type=float, default=1., help='Temperature for selecting action in MCTS, default=1.')
+        mcts_temperature: float = config(type=float, default=0.1, help='Temperature for selecting action in MCTS, default=0.1')
         self_play: int = config(type=int, default=200, help='# of self-play in one RL cycle, default=200')
         validations: int = config(type=int, default=10, help='# of validation plays per model, default=10')
         jobs: int = config(short=False, type=int, default=1, help='# of jobs to run self-play in parallel, default=1')
