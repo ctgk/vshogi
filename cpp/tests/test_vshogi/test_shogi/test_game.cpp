@@ -124,6 +124,38 @@ TEST(shogi_game, get_legal_moves)
         const auto& actual = g.get_legal_moves();
         CHECK_EQUAL(8, actual.size());
     }
+    {
+        // Turn: BLACK
+        // White: FUx2
+        //     9   8   7   6   5   4   3   2   1
+        //   +---+---+---+---+---+---+---+---+---+
+        // A |-GI|-KY|-KI|   |   |   |   |-KY|-KA|
+        //   +---+---+---+---+---+---+---+---+---+
+        // B |-KI|-HI|   |-OU|   |   |   |   |   |
+        //   +---+---+---+---+---+---+---+---+---+
+        // C |   |-FU|-FU|-FU|   |-GI|   |   |-FU|
+        //   +---+---+---+---+---+---+---+---+---+
+        // D |   |   |   |   |   |-FU|   |-FU|-KE|
+        //   +---+---+---+---+---+---+---+---+---+
+        // E |-FU|   |   |   |-FU|-KE|   |+FU|   |
+        //   +---+---+---+---+---+---+---+---+---+
+        // F |+KI|+FU|+FU|   |   |   |-FU|   |+FU|
+        //   +---+---+---+---+---+---+---+---+---+
+        // G |   |   |   |+FU|   |+FU|+FU|+GI|   |
+        //   +---+---+---+---+---+---+---+---+---+
+        // H |   |   |   |   |   |+OU|   |+KY|+KI|
+        //   +---+---+---+---+---+---+---+---+---+
+        // I |+KE|+KY|+HI|+KE|   |+GI|   |   |+KA|
+        //   +---+---+---+---+---+---+---+---+---+
+        // Black: -
+        constexpr char sfen[] = "slg4lb/gr1k5/1ppp1s2p/5p1pn/p3pn1P1/GPP3p1P/"
+                                "3P1PPS1/5K1LG/NLRN1S2B b 2p";
+        auto g = Game(sfen);
+        const auto& actual = g.get_legal_moves();
+        CHECK_FALSE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_5G, SQ_4H))
+            != actual.cend());
+    }
 }
 
 } // namespace test_vshogi::test_shogi

@@ -240,14 +240,14 @@ struct Squares
         {SQ_4E, SQ_3E, SQ_2E, SQ_4F, SQ_2F, SQ_4G, SQ_3G, SQ_2G, SQ_4H, SQ_2H, SQ_4D, SQ_2D}, // 3F
         {SQ_3E, SQ_2E, SQ_1E, SQ_3F, SQ_1F, SQ_3G, SQ_2G, SQ_1G, SQ_3H, SQ_1H, SQ_3D, SQ_1D}, // 2F
         {SQ_2E, SQ_1E, SQ_NA, SQ_2F, SQ_NA, SQ_2G, SQ_1G, SQ_NA, SQ_2H, SQ_NA, SQ_2D, SQ_NA}, // 1F
-        {SQ_NA, SQ_9F, SQ_8F, SQ_NA, SQ_8G, SQ_NA, SQ_9H, SQ_8H, SQ_NA, SQ_8I, SQ_NA, SQ_8D}, // 9G
-        {SQ_9F, SQ_8F, SQ_7F, SQ_9G, SQ_7G, SQ_9H, SQ_8H, SQ_7H, SQ_9I, SQ_7I, SQ_9E, SQ_7D}, // 8G
-        {SQ_8F, SQ_7F, SQ_6F, SQ_8G, SQ_6G, SQ_8H, SQ_7H, SQ_6H, SQ_8I, SQ_6I, SQ_8E, SQ_6D}, // 7G
-        {SQ_7F, SQ_6F, SQ_5F, SQ_7G, SQ_5G, SQ_7H, SQ_6H, SQ_5H, SQ_7I, SQ_5I, SQ_7E, SQ_5D}, // 6G
-        {SQ_6F, SQ_5F, SQ_4F, SQ_6G, SQ_4G, SQ_6H, SQ_5H, SQ_4H, SQ_6I, SQ_4I, SQ_6E, SQ_4D}, // 5G
-        {SQ_5F, SQ_4F, SQ_3F, SQ_5G, SQ_3G, SQ_5H, SQ_4H, SQ_3H, SQ_5I, SQ_3I, SQ_5E, SQ_3D}, // 4G
-        {SQ_4F, SQ_3F, SQ_2F, SQ_4G, SQ_2G, SQ_4H, SQ_3H, SQ_2H, SQ_4I, SQ_2I, SQ_4E, SQ_2D}, // 3G
-        {SQ_3F, SQ_2F, SQ_1F, SQ_3G, SQ_1G, SQ_3H, SQ_2H, SQ_1H, SQ_3I, SQ_1I, SQ_3E, SQ_1D}, // 2G
+        {SQ_NA, SQ_9F, SQ_8F, SQ_NA, SQ_8G, SQ_NA, SQ_9H, SQ_8H, SQ_NA, SQ_8I, SQ_NA, SQ_8E}, // 9G
+        {SQ_9F, SQ_8F, SQ_7F, SQ_9G, SQ_7G, SQ_9H, SQ_8H, SQ_7H, SQ_9I, SQ_7I, SQ_9E, SQ_7E}, // 8G
+        {SQ_8F, SQ_7F, SQ_6F, SQ_8G, SQ_6G, SQ_8H, SQ_7H, SQ_6H, SQ_8I, SQ_6I, SQ_8E, SQ_6E}, // 7G
+        {SQ_7F, SQ_6F, SQ_5F, SQ_7G, SQ_5G, SQ_7H, SQ_6H, SQ_5H, SQ_7I, SQ_5I, SQ_7E, SQ_5E}, // 6G
+        {SQ_6F, SQ_5F, SQ_4F, SQ_6G, SQ_4G, SQ_6H, SQ_5H, SQ_4H, SQ_6I, SQ_4I, SQ_6E, SQ_4E}, // 5G
+        {SQ_5F, SQ_4F, SQ_3F, SQ_5G, SQ_3G, SQ_5H, SQ_4H, SQ_3H, SQ_5I, SQ_3I, SQ_5E, SQ_3E}, // 4G
+        {SQ_4F, SQ_3F, SQ_2F, SQ_4G, SQ_2G, SQ_4H, SQ_3H, SQ_2H, SQ_4I, SQ_2I, SQ_4E, SQ_2E}, // 3G
+        {SQ_3F, SQ_2F, SQ_1F, SQ_3G, SQ_1G, SQ_3H, SQ_2H, SQ_1H, SQ_3I, SQ_1I, SQ_3E, SQ_1E}, // 2G
         {SQ_2F, SQ_1F, SQ_NA, SQ_2G, SQ_NA, SQ_2H, SQ_1H, SQ_NA, SQ_2I, SQ_NA, SQ_2E, SQ_NA}, // 1G
         {SQ_NA, SQ_9G, SQ_8G, SQ_NA, SQ_8H, SQ_NA, SQ_9I, SQ_8I, SQ_NA, SQ_NA, SQ_NA, SQ_8F}, // 9H
         {SQ_9G, SQ_8G, SQ_7G, SQ_9H, SQ_7H, SQ_9I, SQ_8I, SQ_7I, SQ_NA, SQ_NA, SQ_9F, SQ_7F}, // 8H
