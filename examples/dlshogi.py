@@ -28,22 +28,38 @@ def build_policy_value_network(
 ):
     r = tf.keras.regularizers.L2(0.001)
 
-    def resblock(x):
+    def bottleneck_multidilation(x):
+        h = tf.keras.layers.Conv2D(
+            num_channels_in_hidden_layer // 4, 1, activation='relu6',
+            kernel_regularizer=r)(x)
+        h = tf.keras.layers.Concatenate()([
+            tf.keras.layers.DepthwiseConv2D(
+                3, dilation_rate=d, activation='relu6', padding='same',
+                kernel_regularizer=r)(h)
+            for d in range(1, min(input_size))
+        ])
+        h = tf.keras.layers.Conv2D(
+            num_channels_in_hidden_layer, 1, activation='relu6',
+            kernel_regularizer=r)(h)
+        return h
+
+    def bottleneck(x):
         h = tf.keras.layers.Conv2D(
             num_channels_in_hidden_layer // 4, 1, activation='relu6',
             kernel_regularizer=r)(x)
         h = tf.keras.layers.DepthwiseConv2D(
-            3, activation='relu6', padding='same', kernel_regularizer=r)(h)
+                3, activation='relu6', padding='same', kernel_regularizer=r)(h)
         h = tf.keras.layers.Conv2D(
             num_channels_in_hidden_layer, 1, activation='relu6',
             kernel_regularizer=r)(h)
+        return h
+
+    def resblock(x):
+        h = bottleneck(x)
         return tf.keras.layers.Add()([x, h])
 
     def backbone_network(x):
-        h = tf.keras.layers.SeparableConv2D(
-            num_channels_in_hidden_layer, 3,
-            activation='relu6', padding='same', kernel_regularizer=r,
-        )(x)
+        h = bottleneck_multidilation(x)
         for _ in range(num_backbone_layers - 1):
             h = resblock(h)
         return h
@@ -359,11 +375,11 @@ def parse_args():
         resume_rl_cycle_from: int = config(type=int, default=0, help='Resume Reinforcement Learning cycle if given. By default 0.')
         nn_channels: int = config(type=int, default=None, help='# of hidden channels in NN. Default value varies in shogi games.')
         nn_backbones: int = config(type=int, default=None, help='# of backbone layers in NN. Default value varies in shogi games.')
-        nn_policy: int = config(type=int, default=None, help='# of layers for policy head in NN. Default value varies in shogi games.')
-        nn_value: int = config(type=int, default=None, help='# of layers for value head in NN. Default value varies in shogi games.')
+        nn_policy: int = config(type=int, default=1, help='# of layers for policy head in NN. By default 1.')
+        nn_value: int = config(type=int, default=2, help='# of layers for value head in NN. By default 2.')
         nn_epochs: int = config(type=int, default=20, help='# of epochs in NN training. By default 20.')
         nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
-        nn_learning_rate: float = config(type=float, default=1e-3)
+        nn_learning_rate: float = config(type=float, default=1e-4)
         nn_max_policy: float = config(type=float, default=0.8, help='Maximum value of supervised signal of policy in NN training, default=0.8')
         mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000')
         mcts_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in MCTS, default=4.')
@@ -404,10 +420,10 @@ def parse_args():
     }[args.shogi_variant]
     args._shogi = getattr(vshogi, args.shogi_variant)
     default_configs = {
-        'animal_shogi':  {'nn_channels':  32, 'nn_backbones':  4, 'nn_policy': 2, 'nn_value': 2},
-        'minishogi':     {'nn_channels':  64, 'nn_backbones':  6, 'nn_policy': 2, 'nn_value': 2},
-        'judkins_shogi': {'nn_channels':  64, 'nn_backbones':  7, 'nn_policy': 2, 'nn_value': 2},
-        'shogi':         {'nn_channels': 128, 'nn_backbones': 10, 'nn_policy': 3, 'nn_value': 3},
+        'animal_shogi':  {'nn_channels':  32, 'nn_backbones': 3},
+        'minishogi':     {'nn_channels':  64, 'nn_backbones': 3},
+        'judkins_shogi': {'nn_channels':  64, 'nn_backbones': 3},
+        'shogi':         {'nn_channels': 128, 'nn_backbones': 4},
     }
     if args.shogi_variant in default_configs:
         for key, value in default_configs[args.shogi_variant].items():
