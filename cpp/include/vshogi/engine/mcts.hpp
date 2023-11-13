@@ -202,10 +202,15 @@ public:
         if (m_parent != nullptr)
             return *this;
 
-        for (std::size_t ii = m_children.size(); ii--;) {
-            if (m_children[ii].m_action == action) {
-                *this = std::move(m_children[ii]);
-                m_parent = nullptr;
+        for (auto&& child : m_children) {
+            if (child.m_action == action) {
+                m_visit_count = child.m_visit_count;
+                m_sqrt_visit_count = child.m_sqrt_visit_count;
+                m_value = child.m_value;
+                m_q_value = child.m_q_value;
+                m_is_mate = child.m_is_mate;
+                const std::vector<NodeGM> tmp = std::move(child.m_children);
+                m_children = std::move(tmp);
                 return *this;
             }
         }
