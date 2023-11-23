@@ -53,6 +53,21 @@ def test_num_explored():
     assert searcher.num_explored == 100 + 1
 
 
+def test_apply():
+    game = shogi.Game()
+    searcher = MonteCarloTreeSearcher(uniform_pv_func)
+    searcher.set_root(game)
+    searcher.explore(n=1000)
+    m = shogi.Move(shogi.B2, shogi.B3)
+    assert searcher.num_explored == 1000 + 1
+
+    expected = searcher._root.get_child(m).get_visit_count()
+
+    searcher.apply(m)
+
+    assert searcher.num_explored == expected
+
+
 def test_clear():
     # Turn: BLACK
     # White: -
