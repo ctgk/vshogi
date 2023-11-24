@@ -235,8 +235,6 @@ def play_game(
     Game
         The game the two players played.
     """
-    player_black.clear()
-    player_white.clear()
     for _ in range(max_moves):
         if game.result != vshogi.Result.ONGOING:
             break
@@ -248,8 +246,7 @@ def play_game(
             break
 
         player = player_black if game.turn == vshogi.Color.BLACK else player_white
-        if not player.is_ready():
-            player.set_root(game)
+        player.set_root(game)
         player.explore(n=args.mcts_explorations - player.num_explored)
         move = player.select(
             temperature=(
@@ -257,11 +254,6 @@ def play_game(
             ),
         )
         game.apply(move)
-        player_black.apply(move)
-        if player_white is not player_black:
-            player_white.apply(move)
-    player_black.clear()
-    player_white.clear()
     return game
 
 

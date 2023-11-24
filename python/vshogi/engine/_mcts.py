@@ -128,9 +128,10 @@ class MonteCarloTreeSearcher:
         move : Move
             Move to apply to the current root node.
         """
-        if self.is_ready():
-            self._root.apply(move)
-            self._game.apply(move)
+        raise NotImplementedError("Something wrong with `apply()`")
+        # if self.is_ready():
+        #     self._root.apply(move)
+        #     self._game.apply(move)
 
     @property
     def num_explored(self) -> int:
