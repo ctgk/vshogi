@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "vshogi/engine/dfpn.hpp"
 #include "vshogi/engine/mcts.hpp"
 
 #include <pybind11/numpy.h>
@@ -79,10 +80,11 @@ inline void export_move(pybind11::module& m)
 template <class Game>
 inline void export_game(pybind11::module& m)
 {
+    namespace py = pybind11;
     using Move = typename Game::Move;
-    pybind11::class_<Game>(m, "_Game")
-        .def(pybind11::init<>())
-        .def(pybind11::init<const std::string&>())
+    py::class_<Game>(m, "_Game")
+        .def(py::init<>())
+        .def(py::init<const std::string&>())
         .def("get_turn", &Game::get_turn)
         .def("get_board", &Game::get_board)
         .def("get_stand", &Game::get_stand)
@@ -101,25 +103,25 @@ inline void export_game(pybind11::module& m)
         .def(
             "to_dlshogi_features",
             [](const Game& self) {
-                const auto shape = std::vector<pybind11::ssize_t>(
+                const auto shape = std::vector<py::ssize_t>(
                     {1,
                      Game::ranks(),
                      Game::files(),
                      Game::feature_channels()});
-                auto out = pybind11::array_t<float>(shape);
+                auto out = py::array_t<float>(shape);
                 self.to_feature_map(out.mutable_data());
                 return out;
             })
         .def(
             "to_dlshogi_features",
-            [](const Game& self, pybind11::array_t<float>& out) {
+            [](const Game& self, py::array_t<float>& out) {
                 self.to_feature_map(out.mutable_data());
             })
         .def(
             "to_dlshogi_policy",
             [](const Game& self,
                const Move action,
-               float max_value) -> pybind11::array_t<float> {
+               float max_value) -> py::array_t<float> {
                 const auto turn = self.get_turn();
                 const auto legal_moves = self.get_legal_moves();
                 const auto num_legal_moves
@@ -130,8 +132,7 @@ inline void export_game(pybind11::module& m)
                                                     : num_legal_moves);
 
                 const auto size = Game::num_dlshogi_policy();
-                auto out = pybind11::array_t<float>(
-                    std::vector<pybind11::ssize_t>({size}));
+                auto out = py::array_t<float>(std::vector<py::ssize_t>({size}));
                 float* const data = out.mutable_data();
                 std::fill(data, data + size, 0.f);
                 for (auto&& move : legal_moves) {
@@ -143,14 +144,27 @@ inline void export_game(pybind11::module& m)
                 }
                 return out;
             })
+        .def(
+            "get_mate_moves_if_any",
+            [](const Game& self, const int num_dfpn_nodes) -> py::object {
+                auto dfpn = vshogi::engine::dfpn::Searcher<Game, Move>(
+                    num_dfpn_nodes);
+                dfpn.set_root(self);
+                if (dfpn.explore()) {
+                    return py::cast(dfpn.get_mate_moves());
+                } else {
+                    return py::none();
+                }
+            },
+            py::arg("num_dfpn_nodes"))
         .def("copy", [](const Game& self) { return Game(self); });
 }
 
 template <class Game, class Move>
-inline void export_node(pybind11::module& m)
+inline void export_mcts_node(pybind11::module& m)
 {
-    using Node = vshogi::engine::Node<Game, Move>;
-    pybind11::class_<Node>(m, "Node")
+    using Node = vshogi::engine::mcts::Node<Game, Move>;
+    pybind11::class_<Node>(m, "MctsNode")
         .def(
             pybind11::init([](const Game& g,
                               const float v,
@@ -198,6 +212,23 @@ inline void export_node(pybind11::module& m)
                     *out, pybind11::return_value_policy::reference);
             })
         .def("apply", &Node::apply);
+}
+
+template <class Game>
+void export_classes(pybind11::module& m)
+{
+    using Board = typename Game::Board;
+    using Move = typename Game::Move;
+    using Pieces = typename Game::Pieces;
+    using Squares = typename Game::Squares;
+    using SquareEnum = typename Game::SquareEnum;
+    using Stand = typename Game::Stand;
+
+    export_board<Board, SquareEnum>(m);
+    export_piece_stand<Stand, Pieces>(m);
+    export_move<Move>(m);
+    export_game<Game>(m);
+    export_mcts_node<Game, Move>(m);
 }
 
 } // namespace pyvshogi

@@ -10,7 +10,7 @@
 #include "vshogi/color.hpp"
 #include "vshogi/result.hpp"
 
-namespace vshogi::engine
+namespace vshogi::engine::mcts
 {
 
 static std::size_t integer = 0UL;
@@ -450,6 +450,6 @@ private:
     }
 };
 
-} // namespace vshogi::engine
+} // namespace vshogi::engine::mcts
 
 #endif // VSHOGI_ENGINE_MCTS_HPP

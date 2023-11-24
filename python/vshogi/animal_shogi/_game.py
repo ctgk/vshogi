@@ -1,5 +1,7 @@
+import warnings
+
 from vshogi._game import Game as BaseGame
-from vshogi._vshogi.animal_shogi import Move, Node
+from vshogi._vshogi.animal_shogi import MctsNode, Move
 from vshogi._vshogi.animal_shogi import Stand
 from vshogi._vshogi.animal_shogi import _Game as _AnimalshogiGame
 
@@ -80,5 +82,15 @@ class Game(BaseGame):
         return Move
 
     @classmethod
-    def _get_node_class(cls) -> type:
-        return Node
+    def _get_mcts_node_class(cls) -> type:
+        return MctsNode
+
+    def get_mate_moves_if_any(
+        self,
+        num_dfpn_nodes: int = 10000,
+    ) -> None:
+        """Not implemented yet for animal shogi."""
+        warnings.warn(
+            "`vshogi.animal_shogi.Game.get_mate_moves_if_any()` "
+            "is not supported yet.")
+        return None

@@ -240,6 +240,13 @@ def play_game(
     for _ in range(max_moves):
         if game.result != vshogi.Result.ONGOING:
             break
+
+        mate_moves = game.get_mate_moves_if_any()
+        if mate_moves is not None:
+            for move in mate_moves:
+                game.apply(move)
+            break
+
         player = player_black if game.turn == vshogi.Color.BLACK else player_white
         if not player.is_ready():
             player.set_root(game)

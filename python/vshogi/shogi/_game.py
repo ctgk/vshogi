@@ -1,5 +1,9 @@
 from vshogi._game import Game as BaseGame
-from vshogi._vshogi.shogi import Move, Node, _Game as _ShogiGame
+from vshogi._vshogi.shogi import (
+    MctsNode,
+    Move,
+    _Game as _ShogiGame,
+)
 
 
 class Game(BaseGame):
@@ -54,5 +58,5 @@ LNSGKGSNL w - 2")
         return Move
 
     @classmethod
-    def _get_node_class(cls) -> type:
-        return Node
+    def _get_mcts_node_class(cls) -> type:
+        return MctsNode

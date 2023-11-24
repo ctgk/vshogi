@@ -203,6 +203,17 @@ public:
             std::find(m_legal_moves.cbegin(), m_legal_moves.cend(), move)
             != m_legal_moves.cend());
     }
+
+    /**
+     * @brief Whether current turn player's king is in check or not.
+     *
+     * @return true Current turn player's king is in check.
+     * @return false Current turn player's king is not in check.
+     */
+    bool in_check() const
+    {
+        return m_checker_locations[0] != Squares::SQ_NA;
+    }
     void to_feature_map(float* const data) const
     {
         constexpr int num_squares = ranks() * files();

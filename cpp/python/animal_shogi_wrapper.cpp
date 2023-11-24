@@ -61,9 +61,5 @@ void export_animal_shogi(py::module& m)
     export_pieces(m);
     export_square_enum(m);
 
-    pyvshogi::export_board<as::Board, as::Squares::SquareEnum>(m);
-    pyvshogi::export_piece_stand<as::Stand, as::Pieces>(m);
-    pyvshogi::export_move<as::Move>(m);
-    pyvshogi::export_game<as::Game>(m);
-    pyvshogi::export_node<as::Game, as::Move>(m);
+    pyvshogi::export_classes<as::Game>(m);
 }

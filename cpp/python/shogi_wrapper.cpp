@@ -239,9 +239,5 @@ void export_shogi(py::module& m)
     export_square_enum(m);
     export_pieces(m);
 
-    pyvshogi::export_board<sg::Board, sg::Squares::SquareEnum>(m);
-    pyvshogi::export_piece_stand<sg::Stand, sg::Pieces>(m);
-    pyvshogi::export_move<sg::Move>(m);
-    pyvshogi::export_game<sg::Game>(m);
-    pyvshogi::export_node<sg::Game, sg::Move>(m);
+    pyvshogi::export_classes<sg::Game>(m);
 }

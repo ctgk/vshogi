@@ -102,7 +102,8 @@ class MonteCarloTreeSearcher:
         """
         game = game.copy()
         policy_logits, value = self._policy_value_func(game)
-        self._root = game._get_node_class()(game._game, value, policy_logits)
+        self._root = game._get_mcts_node_class()(
+            game._game, value, policy_logits)
         self._game = game
 
     def is_ready(self) -> bool:

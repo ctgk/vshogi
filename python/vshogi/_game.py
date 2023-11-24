@@ -34,7 +34,7 @@ class Game(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def _get_node_class(cls) -> type:
+    def _get_mcts_node_class(cls) -> type:
         pass
 
     def __init__(self, sfen: tp.Optional[str] = None) -> None:
@@ -472,6 +472,32 @@ class Game(abc.ABC):
             raise ValueError(
                 f"`max_value` must be in range (0, 1], but was {max_value}.")
         return self._game.to_dlshogi_policy(action, max_value)
+
+    def get_mate_moves_if_any(
+        self,
+        num_dfpn_nodes: int = 10000,
+    ) -> tp.Union[tp.List[Move], None]:
+        """Return a sequence of moves leading to checkmate if there is any.
+
+        Parameters
+        ----------
+        num_dfpn_nodes : int, optional
+            Number of nodes to explore using Depth First Proof Number
+            algorithm, by default 1000.
+
+        Returns
+        -------
+        tp.Union[tp.List[Move], None]
+            A sequence of moves to check mate if any otherwise `None`.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> g = shogi.Game("5/2k2/5/2P2/2K2 b 2G")
+        >>> g.get_mate_moves_if_any() # doctest: +ELLIPSIS
+        [Move(dst=SQ_3C, src=KI), ...]
+        """
+        return self._game.get_mate_moves_if_any(num_dfpn_nodes)
 
     def __repr__(self) -> str:
         """Return representation of the object for debugging.

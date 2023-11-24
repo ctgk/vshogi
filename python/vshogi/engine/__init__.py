@@ -3,7 +3,9 @@
 from vshogi.engine._mcts import MonteCarloTreeSearcher
 
 
-_classes = [MonteCarloTreeSearcher]
+_classes = [
+    MonteCarloTreeSearcher,
+]
 
 
 for _cls in _classes:

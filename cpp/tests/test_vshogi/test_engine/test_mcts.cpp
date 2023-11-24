@@ -13,7 +13,7 @@ namespace test_animal_shogi
 {
 
 using namespace vshogi::animal_shogi;
-using Node = vshogi::engine::Node<Game, Move>;
+using Node = vshogi::engine::mcts::Node<Game, Move>;
 constexpr auto SQ_A4 = vshogi::animal_shogi::Squares::SQ_A4; // NOLINT
 constexpr auto SQ_A3 = vshogi::animal_shogi::Squares::SQ_A3; // NOLINT
 constexpr auto SQ_A2 = vshogi::animal_shogi::Squares::SQ_A2; // NOLINT
@@ -293,7 +293,7 @@ namespace test_minishogi
 {
 
 using namespace vshogi::minishogi;
-using Node = vshogi::engine::Node<Game, Move>;
+using Node = vshogi::engine::mcts::Node<Game, Move>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
 TEST_GROUP(minishogi_node){};
@@ -332,7 +332,7 @@ namespace test_judkins_shogi
 {
 
 using namespace vshogi::judkins_shogi;
-using Node = vshogi::engine::Node<Game, Move>;
+using Node = vshogi::engine::mcts::Node<Game, Move>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
 TEST_GROUP(judkins_shogi_node){};
@@ -371,7 +371,7 @@ namespace test_shogi
 {
 
 using namespace vshogi::shogi;
-using Node = vshogi::engine::Node<Game, Move>;
+using Node = vshogi::engine::mcts::Node<Game, Move>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
 TEST_GROUP(shogi_node){};

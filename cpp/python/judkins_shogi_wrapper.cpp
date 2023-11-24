@@ -141,9 +141,5 @@ void export_judkins_shogi(py::module& m)
 
     export_square_enum(m);
     export_pieces(m);
-    pyvshogi::export_board<js::Board, js::Squares::SquareEnum>(m);
-    pyvshogi::export_piece_stand<js::Stand, js::Pieces>(m);
-    pyvshogi::export_move<js::Move>(m);
-    pyvshogi::export_game<js::Game>(m);
-    pyvshogi::export_node<js::Game, js::Move>(m);
+    pyvshogi::export_classes<js::Game>(m);
 }
