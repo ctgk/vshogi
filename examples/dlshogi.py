@@ -1,9 +1,16 @@
-# flake8: noqa
+"""Script to run DL-shogi training.
+
+| index |        Self-play       |          Train NN         |        Validation       |
+|-------|------------------------|---------------------------|-------------------------|
+|   0   |          (skip)        | NN0 = Initialized         |          (skip)         |
+|   1   | DATASET1  = NN0 vs NN0 | NN1 = Trained by DATASET1 | DATASET2 = NN1 vs NN0   |
+|   2   | DATASET2 += NN1 vs NN1 | NN2 = Trained by DATASET2 | DATASET3 = NN2 vs NN1,0 |
+|  ...  |          ...           |             ...           |           ...           |
+"""
 
 import contextlib
 from glob import glob
 import os
-import types
 import typing as tp
 
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
@@ -206,7 +213,7 @@ def train_network(
 
 def load_data_and_train_network(network, index: int):
     x, y_policy, y_value = tsv_to_xy(
-        glob(f'datasets/dataset_{index-1:04d}/*.tsv'))
+        glob(f'datasets/dataset_{index:04d}/*.tsv'))
     return train_network(network, x, y_policy, y_value)
 
 
@@ -300,7 +307,7 @@ def self_play_and_dump_records_in_parallel(index: int, n_jobs: int):
             tqdm_object.close()
 
     def _self_play_and_dump_record_n_times(index, nth_game: list):
-        player = load_player_of(f'models/model_{index:04d}.tflite')
+        player = load_player_of(index - 1)
         for i in nth_game:
             _self_play_and_dump_record(player, index, i)
 
@@ -316,7 +323,7 @@ def self_play_and_dump_records_in_parallel(index: int, n_jobs: int):
 
 def self_play_and_dump_records(index: int):
     if args.jobs == 1:
-        player = load_player_of(f'models/model_{index:04d}.tflite')
+        player = load_player_of(index - 1)
         for i in tqdm(range(args.self_play)):
             _self_play_and_dump_record(player, index, i)
     else:
@@ -341,7 +348,7 @@ def play_against_past_players(index: int, dump_records: bool = False):
                     vshogi.DRAW: 'draw',
                 }[game.result]] += 1
                 if dump_records:
-                    path = f'datasets/dataset_{index:04d}/record_B{index:02d}vsW{i_prev:02d}_{n:04d}.tsv'
+                    path = f'datasets/dataset_{index + 1:04d}/record_B{index:02d}vsW{i_prev:02d}_{n:04d}.tsv'
                     with open(path, mode='w') as f:
                         dump_game_records(f, game)
             else:
@@ -355,7 +362,7 @@ def play_against_past_players(index: int, dump_records: bool = False):
                     vshogi.DRAW: 'draw',
                 }[game.result]] += 1
                 if dump_records:
-                    path = f'datasets/dataset_{index:04d}/record_B{i_prev:02d}vsW{index:02d}_{n:04d}.tsv'
+                    path = f'datasets/dataset_{index + 1:04d}/record_B{i_prev:02d}vsW{index:02d}_{n:04d}.tsv'
                     with open(path, mode='w') as f:
                         dump_game_records(f, game)
             pbar.set_description(f'{index} vs {i_prev}: {validation_results}')
@@ -371,7 +378,7 @@ def parse_args():
             help='Choose a variant of shogi to train!',
         )
         rl_cycle: int = config(type=int, default=10, help='# of Reinforcement Learning cycle. By default 10.')
-        resume_rl_cycle_from: int = config(type=int, default=0, help='Resume Reinforcement Learning cycle if given. By default 0.')
+        resume_rl_cycle_from: int = config(type=int, default=1, help='Resume Reinforcement Learning cycle if given. By default 0.')
         nn_channels: int = config(type=int, default=None, help='# of hidden channels in NN. Default value varies in shogi games.')
         nn_backbones: int = config(type=int, default=None, help='# of backbone layers in NN. Default value varies in shogi games.')
         nn_policy: int = config(type=int, default=1, help='# of layers for policy head in NN. By default 1.')
@@ -448,26 +455,30 @@ if __name__ == '__main__':
 
     shogi = args._shogi
 
-    for i in range(args.resume_rl_cycle_from, args.rl_cycle):
-        # Initialize network or train!
-        if 'network' not in locals():
-            network = build_policy_value_network(
-                input_size=(shogi.Game.ranks, shogi.Game.files),
-                input_channels=shogi.Game.feature_channels,
-                num_policy_per_square=shogi.Move._num_policy_per_square(),
-                num_channels_in_hidden_layer=args.nn_channels,
-                num_backbone_layers=args.nn_backbones,
-                num_policy_layers=args.nn_policy,
-                num_value_layers=args.nn_value,
-            )
-        if i != 0:
-            network = load_data_and_train_network(network, i)
-        PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
+    network = build_policy_value_network(
+        input_size=(shogi.Game.ranks, shogi.Game.files),
+        input_channels=shogi.Game.feature_channels,
+        num_policy_per_square=shogi.Move._num_policy_per_square(),
+        num_channels_in_hidden_layer=args.nn_channels,
+        num_backbone_layers=args.nn_backbones,
+        num_policy_layers=args.nn_policy,
+        num_value_layers=args.nn_value,
+    )
+    if args.resume_rl_cycle_from == 1:
+        PolicyValueFunction(network).save_model_as_tflite(f'models/model_{0:04d}.tflite')
 
-        # Self-play!
+    for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
         if not os.path.isdir(f'datasets/dataset_{i:04d}'):
             os.makedirs(f'datasets/dataset_{i:04d}')
+
+        # Self-play!
         self_play_and_dump_records(i)
 
+        # Train NN!
+        load_data_and_train_network(network, i)
+        PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
+
+        if not os.path.isdir(f'datasets/dataset_{i + 1:04d}'):
+            os.makedirs(f'datasets/dataset_{i + 1:04d}')
         # Validate!
         play_against_past_players(i, dump_records=True)
