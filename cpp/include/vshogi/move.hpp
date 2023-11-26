@@ -82,6 +82,14 @@ public:
         const auto src_rotated = rotate_square(source_square());
         return Move(dst_rotated, src_rotated, promote());
     }
+    Move hflip() const
+    {
+        const auto dst_hflipped = hflip_square(destination());
+        if (is_drop())
+            return Move(dst_hflipped, source_piece());
+        const auto src_hflipped = hflip_square(source_square());
+        return Move(dst_hflipped, src_hflipped, promote());
+    }
     int to_dlshogi_policy_index() const
     {
         const auto dst_index = static_cast<int>(destination());
@@ -109,6 +117,13 @@ private:
     static constexpr SquareEnum rotate_square(const SquareEnum sq)
     {
         return static_cast<SquareEnum>(num_squares - 1 - static_cast<int>(sq));
+    }
+    static SquareEnum hflip_square(const SquareEnum& sq)
+    {
+        const auto f = static_cast<int>(sq % Squares::num_files);
+        const auto r = static_cast<int>(sq / Squares::num_files);
+        const auto f_hflipped = (Squares::num_files - 1) - f;
+        return static_cast<SquareEnum>(r * Squares::num_files + f_hflipped);
     }
     int to_dlshogi_source_index() const
     {

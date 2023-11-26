@@ -89,33 +89,11 @@ private:
     SquareEnum m_checker_locations[2];
 
 public:
-    Game()
-        : m_current_state(), m_record(), m_legal_moves(), m_result(ONGOING),
-          m_zobrist_hash(m_current_state.zobrist_hash()),
-          m_initial_sfen_without_ply(m_current_state.to_sfen()),
-          m_half_num_pieces{
-              internal::num_pieces(m_current_state, BLACK) / 2,
-              internal::num_pieces(m_current_state, WHITE) / 2},
-          m_initial_points{
-              internal::total_point(m_current_state, BLACK),
-              internal::total_point(m_current_state, WHITE)}
+    Game() : Game(State())
     {
-        m_record.reserve(128);
-        update_internals();
     }
-    Game(const std::string& sfen)
-        : m_current_state(sfen), m_record(), m_legal_moves(), m_result(ONGOING),
-          m_zobrist_hash(m_current_state.zobrist_hash()),
-          m_initial_sfen_without_ply(m_current_state.to_sfen()),
-          m_half_num_pieces{
-              internal::num_pieces(m_current_state, BLACK) / 2,
-              internal::num_pieces(m_current_state, WHITE) / 2},
-          m_initial_points{
-              internal::total_point(m_current_state, BLACK),
-              internal::total_point(m_current_state, WHITE)}
+    Game(const std::string& sfen) : Game(State(sfen))
     {
-        m_record.reserve(128);
-        update_internals();
     }
     static constexpr int ranks()
     {
@@ -190,6 +168,16 @@ public:
             return s.to_sfen() + ' ' + std::to_string(n + 1);
         return s.to_sfen();
     }
+
+    /**
+     * @brief Return new game with horizontally flipped current positions.
+     * @note Returned game does not have game records of the original.
+     * @return Game New game with horizontally flipped current positions.
+     */
+    Game hflip() const
+    {
+        return Game(m_current_state.hflip());
+    }
     Game& apply(const Move move)
     {
         m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
@@ -257,6 +245,20 @@ public:
     }
 
 protected:
+    Game(const State& s)
+        : m_current_state(s), m_record(), m_legal_moves(), m_result(ONGOING),
+          m_zobrist_hash(m_current_state.zobrist_hash()),
+          m_initial_sfen_without_ply(m_current_state.to_sfen()),
+          m_half_num_pieces{
+              internal::num_pieces(m_current_state, BLACK) / 2,
+              internal::num_pieces(m_current_state, WHITE) / 2},
+          m_initial_points{
+              internal::total_point(m_current_state, BLACK),
+              internal::total_point(m_current_state, WHITE)}
+    {
+        m_record.reserve(128);
+        update_internals();
+    }
     void update_internals()
     {
         update_king_occupied_checkers();

@@ -153,19 +153,8 @@ inline void animal_shogi::Game::to_feature_map(float* const data) const
 }
 
 template <>
-inline animal_shogi::Game::Game()
-    : m_current_state(), m_record(), m_legal_moves(), m_result(ONGOING),
-      m_zobrist_hash(m_current_state.zobrist_hash()),
-      m_initial_sfen_without_ply(m_current_state.to_sfen()),
-      m_half_num_pieces{0, 0}, m_initial_points{0, 0}
-{
-    m_record.reserve(128);
-    update_internals();
-}
-
-template <>
-inline animal_shogi::Game::Game(const std::string& sfen)
-    : m_current_state(sfen), m_record(), m_legal_moves(), m_result(ONGOING),
+inline animal_shogi::Game::Game(const animal_shogi::State& s)
+    : m_current_state(s), m_record(), m_legal_moves(), m_result(ONGOING),
       m_zobrist_hash(m_current_state.zobrist_hash()),
       m_initial_sfen_without_ply(m_current_state.to_sfen()),
       m_half_num_pieces{0, 0}, m_initial_points{0, 0}

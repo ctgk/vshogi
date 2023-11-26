@@ -99,6 +99,19 @@ public:
         }
         return SQ_NA;
     }
+    Board hflip() const
+    {
+        Board out;
+        for (auto&& sq : Squares::square_array) {
+            const auto f = static_cast<int>(sq % num_files);
+            const auto r = static_cast<int>(sq / num_files);
+            const auto f_hflipped = (num_files - 1) - f;
+            const auto sq_hflipped
+                = static_cast<SquareEnum>(r * num_files + f_hflipped);
+            out.m_pieces[sq_hflipped] = m_pieces[sq];
+        }
+        return out;
+    }
 
 private:
     const char* set_sfen_rank(const char* const sfen_rank, const RankEnum rank);

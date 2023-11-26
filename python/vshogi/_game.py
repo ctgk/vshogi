@@ -386,6 +386,54 @@ class Game(abc.ABC):
                 sep='\t', file=file_,
             )
 
+    def hflip(self) -> 'Game':
+        """Return new game with horizontally flipped current positions.
+
+        Returns
+        -------
+        Game
+            New game with horizontally flipped current positions.
+
+        Examples
+        --------
+        >>> import vshogi.animal_shogi as shogi
+        >>> g = shogi.Game()
+        >>> print(g.apply(shogi.C3, shogi.C4))
+        Turn: WHITE
+        White: -
+            A  B  C
+          *--*--*--*
+        1 |-G|-L|-E|
+          *--*--*--*
+        2 |  |-C|  |
+          *--*--*--*
+        3 |  |+C|+G|
+          *--*--*--*
+        4 |+E|+L|  |
+          *--*--*--*
+        Black: -
+        >>> g_hflip = g.hflip()
+        >>> print(g_hflip)
+        Turn: WHITE
+        White: -
+            A  B  C
+          *--*--*--*
+        1 |-E|-L|-G|
+          *--*--*--*
+        2 |  |-C|  |
+          *--*--*--*
+        3 |+G|+C|  |
+          *--*--*--*
+        4 |  |+L|+E|
+          *--*--*--*
+        Black: -
+        >>> g.record_length
+        1
+        >>> g_hflip.record_length
+        0
+        """
+        return self.__class__(self._game.hflip())
+
     def to_dlshogi_features(self, *, out: np.ndarray = None) -> np.ndarray:
         """Return DL-shogi features.
 

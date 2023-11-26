@@ -29,6 +29,16 @@ TEST(minishogi_board, set)
     CHECK_EQUAL(VOID, b[SQ_1D]);
 }
 
+TEST(minishogi_board, hflip)
+{
+    const auto b = Board();
+    const auto actual = b.hflip();
+    CHECK_EQUAL(W_OU, actual[SQ_5A]);
+    CHECK_EQUAL(VOID, actual[SQ_1B]);
+    CHECK_EQUAL(B_FU, actual[SQ_1D]);
+    CHECK_EQUAL(B_HI, actual[SQ_5E]);
+}
+
 TEST(minishogi_board, set_sfen)
 {
     {

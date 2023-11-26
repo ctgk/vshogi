@@ -48,6 +48,12 @@ TEST(move, rotate)
     CHECK_TRUE(Move(SQ_3A, GI) == Move(SQ_3E, GI).rotate());
 }
 
+TEST(move, hflip)
+{
+    CHECK_TRUE(Move(SQ_5A, SQ_5B, true) == Move(SQ_1A, SQ_1B, true).hflip());
+    CHECK_TRUE(Move(SQ_3E, GI) == Move(SQ_3E, GI).hflip());
+}
+
 TEST(move, to_dlshogi_policy_index)
 {
     CHECK_EQUAL(

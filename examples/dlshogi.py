@@ -169,13 +169,21 @@ def _df_to_xy(df: pd.DataFrame):
                 ).replace('dst=', f'dst=vshogi.{args.shogi_variant}.',
                 ).replace('src=', f'src=vshogi.{args.shogi_variant}.'))
         result = eval('vshogi.' + args.shogi_variant + '.' + row['result'])
+        game_hflip = game.hflip()
+        move_hflip = move.hflip()
+        assert game_hflip.is_legal(move_hflip)
 
         x = game.to_dlshogi_features()
         policy = game.to_dlshogi_policy(move, args.nn_max_policy)
         value = value_options[(result, game.turn)]
+        x_hflip = game_hflip.to_dlshogi_features()
+        policy_hflip = game_hflip.to_dlshogi_policy(move_hflip, args.nn_max_policy)
 
         x_list.append(x)
         policy_list.append(policy)
+        value_list.append(value)
+        x_list.append(x_hflip)
+        policy_list.append(policy_hflip)
         value_list.append(value)
     return (
         np.concatenate(x_list, axis=0),

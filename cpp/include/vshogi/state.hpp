@@ -103,6 +103,10 @@ public:
         m_stands.append_sfen(out);
         return out;
     }
+    State hflip() const
+    {
+        return State(m_board.hflip(), m_stands, m_turn);
+    }
     State& apply(const Move& move, std::uint64_t* const hash = nullptr)
     {
         const auto dst = move.destination();
@@ -151,6 +155,10 @@ public:
     }
 
 private:
+    State(const Board& b, const Stands& s, const ColorEnum& turn)
+        : m_board(b), m_stands(s), m_turn(turn)
+    {
+    }
     void append_sfen_turn(std::string& out) const
     {
         out += ((m_turn == BLACK) ? 'b' : 'w');
