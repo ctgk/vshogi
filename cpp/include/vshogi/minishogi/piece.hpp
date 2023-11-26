@@ -207,6 +207,18 @@ struct Pieces
     }
 };
 
+constexpr auto FU = vshogi::minishogi::Pieces::FU; // NOLINT
+constexpr auto GI = vshogi::minishogi::Pieces::GI; // NOLINT
+constexpr auto KA = vshogi::minishogi::Pieces::KA; // NOLINT
+constexpr auto HI = vshogi::minishogi::Pieces::HI; // NOLINT
+constexpr auto KI = vshogi::minishogi::Pieces::KI; // NOLINT
+constexpr auto OU = vshogi::minishogi::Pieces::OU; // NOLINT
+constexpr auto TO = vshogi::minishogi::Pieces::TO; // NOLINT
+constexpr auto NG = vshogi::minishogi::Pieces::NG; // NOLINT
+constexpr auto UM = vshogi::minishogi::Pieces::UM; // NOLINT
+constexpr auto RY = vshogi::minishogi::Pieces::RY; // NOLINT
+constexpr auto NA = vshogi::minishogi::Pieces::NA; // NOLINT
+
 } // namespace vshogi::minishogi
 
 #endif // VSHOGI_MINISHOGI_PIECE_HPP

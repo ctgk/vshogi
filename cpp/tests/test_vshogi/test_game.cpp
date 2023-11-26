@@ -7,6 +7,47 @@ namespace test_vshogi::test_game
 
 TEST_GROUP(minishogi_king_entering){};
 
+TEST(minishogi_king_entering, from_default_start_position)
+{
+    using namespace vshogi::minishogi;
+    auto game = Game();
+    game.apply(Move(SQ_1B, SQ_1E));
+    game.apply(Move(SQ_1B, SQ_1A));
+    game.apply(Move(SQ_5B, SQ_2E));
+    game.apply(Move(SQ_5B, SQ_4A));
+    game.apply(Move(SQ_5C, SQ_5D));
+    game.apply(Move(SQ_2E, SQ_5B, true));
+    game.apply(Move(SQ_5B, SQ_5C));
+    game.apply(Move(SQ_1C, SQ_1B));
+    game.apply(Move(SQ_5A, SQ_5B, true));
+    game.apply(Move(SQ_1D, SQ_1C));
+    game.apply(Move(SQ_5D, SQ_5E));
+    game.apply(Move(SQ_1E, SQ_1D));
+    game.apply(Move(SQ_4D, SQ_3E));
+    game.apply(Move(SQ_3E, KA));
+    game.apply(Move(SQ_5C, SQ_5D));
+    game.apply(Move(SQ_5E, HI));
+    CHECK_EQUAL(vshogi::ONGOING, game.get_result());
+    game.apply(Move(SQ_5D, SQ_4E));
+
+    // Turn: WHITE
+    // White: -
+    //     5   4   3   2   1
+    //   *---*---*---*---*---*
+    // A |+TO|   |-GI|-KI|   |
+    //   *---*---*---*---*---*
+    // B |   |   |   |   |   |
+    //   *---*---*---*---*---*
+    // C |+OU|   |   |   |   |
+    //   *---*---*---*---*---*
+    // D |+KI|+GI|   |   |   |
+    //   *---*---*---*---*---*
+    // E |-HI|   |-KA|-UM|-OU|
+    //   *---*---*---*---*---*
+    // Black: FU,HI
+    CHECK_EQUAL(vshogi::WHITE_WIN, game.get_result());
+}
+
 TEST(minishogi_king_entering, black_win)
 {
     using namespace vshogi::minishogi;

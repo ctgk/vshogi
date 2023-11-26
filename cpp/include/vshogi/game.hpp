@@ -94,8 +94,8 @@ public:
           m_zobrist_hash(m_current_state.zobrist_hash()),
           m_initial_sfen_without_ply(m_current_state.to_sfen()),
           m_half_num_pieces{
-              internal::num_pieces(m_current_state, BLACK),
-              internal::num_pieces(m_current_state, WHITE)},
+              internal::num_pieces(m_current_state, BLACK) / 2,
+              internal::num_pieces(m_current_state, WHITE) / 2},
           m_initial_points{
               internal::total_point(m_current_state, BLACK),
               internal::total_point(m_current_state, WHITE)}
