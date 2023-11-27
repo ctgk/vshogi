@@ -202,6 +202,24 @@ public:
     {
         return m_checker_locations[0] != Squares::SQ_NA;
     }
+    bool in_check_after_move(const Move& move) const
+    {
+        if (!is_legal(move))
+            return false;
+        const auto dst = move.destination();
+        const auto board_after_move
+            = State(m_current_state).apply(move).get_board();
+        const auto piece = board_after_move[dst];
+        BitBoard occupied_after_move = BitBoard();
+        for (auto&& sq : Squares::square_array) {
+            if (board_after_move[sq] != Pieces::VOID) {
+                occupied_after_move |= BitBoard::from_square(sq);
+            }
+        }
+        const auto enemy_king_sq = m_king_locations[~get_turn()];
+        return BitBoard::get_attacks_by(piece, dst, occupied_after_move)
+            .is_one(enemy_king_sq);
+    }
     void to_feature_map(float* const data) const
     {
         constexpr int num_squares = ranks() * files();

@@ -175,7 +175,7 @@ private:
     {
         const std::vector<Move>& legal_moves = game.get_legal_moves();
         for (auto&& m : legal_moves) {
-            if ((!Attacker) || Game(game).apply(m).in_check()) {
+            if ((!Attacker) || game.in_check_after_move(m)) {
                 m_children.emplace_back(Node<Game, Move, !Attacker>(m));
             }
         }
