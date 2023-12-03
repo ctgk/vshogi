@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <memory>
+#include <random>
 #include <stdexcept>
 #include <vector>
 
@@ -13,6 +14,9 @@
 namespace vshogi::engine::mcts
 {
 
+static std::random_device seed_gen;
+static std::default_random_engine engine(seed_gen());
+static std::uniform_real_distribution<float> dist(0.f, 1.f);
 static std::size_t integer = 0UL;
 
 template <class Game, class Move>
@@ -26,6 +30,18 @@ private:
      *
      */
     NodeGM* m_parent;
+
+    /**
+     * @brief Pointer to sibling node.
+     * @ref https://blog.mozilla.org/nnethercote/2012/03/07/n-ary-trees-in-c/
+     */
+    std::unique_ptr<NodeGM> m_sibling;
+
+    /**
+     * @brief Pointer to first child node.
+     * @ref https://blog.mozilla.org/nnethercote/2012/03/07/n-ary-trees-in-c/
+     */
+    std::unique_ptr<NodeGM> m_child;
 
     /**
      * @brief Action to perform to get to this node from parent node.
@@ -73,16 +89,11 @@ private:
      */
     bool m_is_mate;
 
-    /**
-     * @brief Child nodes.
-     */
-    std::vector<NodeGM> m_children;
-
 public:
     Node()
-        : m_parent(nullptr), m_action(0), m_proba(0.f), m_visit_count(0),
-          m_sqrt_visit_count(0.f), m_value(0.f), m_q_value(0.f),
-          m_is_mate(false), m_children()
+        : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr), m_action(0),
+          m_proba(0.f), m_visit_count(0), m_sqrt_visit_count(0.f), m_value(0.f),
+          m_q_value(0.f), m_is_mate(false)
     {
     }
     Node(const Game& game, const float value, const float* const policy_logits)
@@ -91,9 +102,10 @@ public:
         simulate_expand_and_backprop(game, value, policy_logits);
     }
     Node(const Move action, const float proba) noexcept
-        : m_parent(nullptr), m_action(action), m_proba(proba), m_visit_count(0),
+        : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr),
+          m_action(action), m_proba(proba), m_visit_count(0),
           m_sqrt_visit_count(0.f), m_value(0.f), m_q_value(0.f),
-          m_is_mate(false), m_children()
+          m_is_mate(false)
     {
     }
 
@@ -132,22 +144,44 @@ public:
     {
         return m_proba;
     }
-    std::vector<Move> get_actions() const noexcept
+    Move get_action() const
     {
-        std::vector<Move> out = std::vector<Move>();
-        out.reserve(m_children.size());
-        for (auto& child : m_children) {
-            out.emplace_back(child.m_action);
+        return m_action;
+    }
+    std::size_t get_num_child() const
+    {
+        const NodeGM* ch = m_child.get();
+        std::size_t out = 0UL;
+        while (true) {
+            if (ch == nullptr)
+                break;
+            ++out;
+            ch = ch->m_sibling.get();
         }
         return out;
     }
-    const Node<Game, Move>* get_child(const Move& action) const noexcept
+    const Node<Game, Move>* get_child(std::size_t index = 0UL) const
     {
-        for (const NodeGM& child : m_children) {
-            if (child.m_action == action)
-                return &child;
+        const Node<Game, Move>* node = m_child.get();
+        for (; index--;) {
+            if (node->m_sibling == nullptr)
+                break;
+            node = node->m_sibling.get();
+        }
+        return node;
+    }
+    const Node<Game, Move>* get_child(const Move& action) const
+    {
+        const NodeGM* ch = m_child.get();
+        for (; ch != nullptr; ch = ch->m_sibling.get()) {
+            if (ch->m_action == action)
+                return ch;
         }
         return nullptr;
+    }
+    const Node<Game, Move>* get_sibling() const
+    {
+        return m_sibling.get();
     }
 
     /**
@@ -176,7 +210,7 @@ public:
     {
         NodeGM* node = this;
         while (true) {
-            if (node->m_children.empty())
+            if (node->m_child == nullptr)
                 return node->select_at_leaf(game);
             node = node->select_at_internal_vertex(
                 game, coeff_puct, non_random_ratio, random_depth--);
@@ -199,29 +233,67 @@ public:
     }
     Node<Game, Move>& apply(const Move& action)
     {
-        if (m_parent != nullptr)
-            return *this;
-
-        for (auto&& child : m_children) {
-            if (child.m_action == action) {
-                m_visit_count = child.m_visit_count;
-                m_sqrt_visit_count = child.m_sqrt_visit_count;
-                m_value = child.m_value;
-                m_q_value = child.m_q_value;
-                m_is_mate = child.m_is_mate;
-                const std::vector<NodeGM> tmp = std::move(child.m_children);
-                m_children = std::move(tmp);
+        NodeGM* ch = m_child.get();
+        for (; ch != nullptr; ch = ch->m_sibling.get()) {
+            if (ch->m_action == action) {
+                m_action = ch->m_action;
+                m_proba = ch->m_proba;
+                m_visit_count = ch->m_visit_count;
+                m_sqrt_visit_count = ch->m_sqrt_visit_count;
+                m_value = ch->m_value;
+                m_q_value = ch->m_q_value;
+                m_is_mate = ch->m_is_mate;
+                m_child = std::move(ch->m_child);
                 return *this;
             }
         }
 
+        m_child = nullptr;
         m_visit_count = 0;
         m_sqrt_visit_count = 0.f;
         m_value = 0.f;
         m_q_value = 0.f;
         m_is_mate = false;
-        m_children = std::vector<NodeGM>();
         return *this;
+    }
+
+    Move get_best_action() const
+    {
+        Move out = Move(0);
+        int max_visit_count = -1;
+
+        const NodeGM* ch = m_child.get();
+        for (; ch != nullptr; ch = ch->m_sibling.get()) {
+            if (ch->m_visit_count > max_visit_count) {
+                out = ch->m_action;
+                max_visit_count = ch->m_visit_count;
+            }
+        }
+        return out;
+    }
+    Move get_best_move(const float temperature) const
+    {
+        constexpr float eps = 1e-3f;
+
+        std::vector<float> probas(get_num_child());
+        const NodeGM* ch = m_child.get();
+        for (std::size_t ii = 0; ch != nullptr; ch = ch->m_sibling.get()) {
+            const auto v = static_cast<float>(ch->m_visit_count);
+            probas[ii++] = std::log((v + eps) / temperature);
+        }
+        softmax(probas);
+
+        float s = dist(engine);
+        Move out = Move(0);
+        ch = m_child.get();
+        for (std::size_t ii = 0; ch != nullptr; ch = ch->m_sibling.get()) {
+            const auto p = probas[ii++];
+            if (s < p)
+                return ch->m_action;
+            s -= p;
+            out = ch->m_action; // For numerical instability.
+        }
+        return out;
     }
 
 private:
@@ -234,23 +306,31 @@ private:
         backprop_leaf();
         return nullptr;
     }
+    NodeGM* get_child(std::size_t index)
+    {
+        Node<Game, Move>* node = m_child.get();
+        for (; index--;) {
+            if (node->m_sibling == nullptr)
+                break;
+            node = node->m_sibling.get();
+        }
+        return node;
+    }
     NodeGM* select_at_internal_vertex(
         Game& game,
         const float coeff_puct,
         const int non_random_ratio,
         const int random_depth)
     {
-        const auto index
-            = select_action_index(coeff_puct, non_random_ratio, random_depth);
-        NodeGM* out = &m_children[index];
-        out->m_parent = this; // In order to cope with move operations.
-        game.apply(out->m_action);
-        return out;
+        NodeGM* ch = select_child(coeff_puct, non_random_ratio, random_depth);
+        ch->m_parent = this; // In order to cope with move operations.
+        game.apply(ch->m_action);
+        return ch;
     }
-    std::size_t select_action_index(
+    NodeGM* select_child(
         const float coeff_puct,
         const int non_random_ratio,
-        const int random_depth) const
+        const int random_depth)
     {
         if (use_random(non_random_ratio, random_depth))
             return select_random();
@@ -269,71 +349,77 @@ private:
     }
     bool has_mate_to_win() const
     {
-        for (std::size_t ii = m_children.size(); ii--;) {
-            if (is_mate_to_win(ii))
+        const NodeGM* ch = m_child.get();
+        for (; ch != nullptr; ch = ch->m_sibling.get()) {
+            if (ch->is_mate_to_win())
                 return true;
         }
         return false;
     }
-    bool is_mate_to_win(const std::size_t& index) const
+    bool is_mate_to_win() const
     {
-        const auto& child = m_children[index];
-        return child.m_is_mate && (child.m_q_value < 0);
+        return m_is_mate && (m_q_value > 0);
+    }
+    bool is_mate_to_lose() const
+    {
+        return m_is_mate && (m_q_value < 0);
     }
     bool is_mate_to_lose(const std::size_t& index) const
     {
-        const auto& child = m_children[index];
-        return child.m_is_mate && (child.m_q_value > 0);
+        const NodeGM* const child = get_child(index);
+        return child->m_is_mate && (child->m_q_value > 0);
     }
-    std::size_t select_random() const
+    NodeGM* select_random()
     {
         constexpr std::size_t num_max_try = 3;
-        const auto num = m_children.size();
-        if (integer + num < num)
-            integer %= num;
-        const auto end = integer + std::min(num, num_max_try);
-        auto index = integer % num;
-        for (; integer < end; ++integer) {
-            if (!is_mate_to_lose(index))
-                return index;
-            index++;
-            index %= num;
-        }
-        return index;
-    }
-    std::size_t select_max_puct(const float coeff_puct) const
-    {
-        auto index = m_children.size() - 1UL;
-        auto max_puct_score = puct_score(index, coeff_puct);
-        for (auto ii = index; ii--;) {
-            const auto score = puct_score(ii, coeff_puct);
-            if (score > max_puct_score) {
-                max_puct_score = score;
-                index = ii;
+        const std::size_t num = get_num_child();
+        const float p = 1.f / static_cast<float>(num);
+        Node* ch = nullptr;
+        for (std::size_t ii = num_max_try; ii--;) {
+            float s = dist(engine);
+            for (ch = m_child.get(); ch != nullptr; ch = ch->m_sibling.get()) {
+                if (ch->m_proba > s) {
+                    if (!ch->is_mate_to_win())
+                        return ch;
+                    else
+                        break;
+                }
+                s -= ch->m_proba;
             }
         }
-        return index;
+        return ch;
     }
-    float
-    puct_score(const std::size_t index, const float coeff_puct) const noexcept
+    NodeGM* select_max_puct(const float coeff_puct) const
     {
-        const auto q = puct_q(index);
-        if (is_mate_to_win(index)) {
-            const auto p_plus_1 = m_children[index].m_proba + 1.f;
-            return (q + 2.f) + p_plus_1 * m_sqrt_visit_count * coeff_puct;
+        NodeGM* ch = m_child.get();
+        NodeGM* out = ch;
+        float max_puct_score
+            = ch->puct_score_from_parent_view(coeff_puct, m_sqrt_visit_count);
+
+        ch = ch->m_sibling.get();
+        for (; ch != nullptr;) {
+            const float score = ch->puct_score_from_parent_view(
+                coeff_puct, m_sqrt_visit_count);
+            if (score > max_puct_score) {
+                max_puct_score = score;
+                out = ch;
+            }
+            ch = ch->m_sibling.get();
         }
-        return q + puct_u(index) * coeff_puct;
+        return out;
     }
-    float puct_q(const std::size_t index) const noexcept
+    float puct_score_from_parent_view(
+        const float coeff_puct, const float sqrt_visit_count_of_parent) const
     {
-        return -m_children[index].m_q_value;
-    }
-    float puct_u(const std::size_t index) const noexcept
-    {
-        const NodeGM& child = m_children[index];
-        const auto p = child.m_proba;
-        const auto count = child.m_visit_count;
-        return p * m_sqrt_visit_count / static_cast<float>(1 + count);
+        const float q = -m_q_value;
+        if (is_mate_to_lose()) {
+            const float p_plus_1 = m_proba + 1.f;
+            return (q + 2.f)
+                   + p_plus_1 * sqrt_visit_count_of_parent * coeff_puct;
+        }
+        const float u = m_proba * sqrt_visit_count_of_parent
+                        / static_cast<float>(1 + m_visit_count);
+        return q + u * coeff_puct;
     }
 
 private:
@@ -361,6 +447,8 @@ private:
     {
         const std::vector<Move>& moves = game.get_legal_moves();
         const auto num = moves.size();
+        if (num == 0)
+            return;
         auto probas = std::vector<float>(num);
         const auto is_black_turn = (game.get_turn() == ColorEnum::BLACK);
         for (std::size_t ii = num; ii--;) {
@@ -372,9 +460,12 @@ private:
         }
         softmax(probas);
 
-        m_children.reserve(num);
-        for (std::size_t ii = 0; ii < num; ++ii)
-            m_children.emplace_back(moves[ii], probas[ii]);
+        m_child = std::make_unique<NodeGM>(moves[0], probas[0]);
+        NodeGM* child = m_child.get();
+        for (std::size_t ii = 1; ii < num; ++ii) {
+            child->m_sibling = std::make_unique<NodeGM>(moves[ii], probas[ii]);
+            child = child->m_sibling.get();
+        }
     }
 
 private:
@@ -413,8 +504,9 @@ private:
     }
     bool has_non_mate_child() const
     {
-        for (auto&& child : m_children) {
-            if (!child.m_is_mate)
+        const NodeGM* ch = m_child.get();
+        for (; ch != nullptr; ch = ch->m_sibling.get()) {
+            if (!ch->m_is_mate)
                 return true;
         }
         return false;

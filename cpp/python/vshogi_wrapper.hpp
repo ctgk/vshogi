@@ -179,7 +179,17 @@ inline void export_mcts_node(pybind11::module& m)
         .def("get_visit_count", &Node::get_visit_count)
         .def("get_value", &Node::get_value)
         .def("get_q_value", &Node::get_q_value)
-        .def("get_actions", &Node::get_actions)
+        .def(
+            "get_actions",
+            [](const Node& self) {
+                std::vector<Move> out;
+                out.reserve(self.get_num_child());
+                const Node* ch = self.get_child();
+                for (; ch != nullptr; ch = ch->get_sibling()) {
+                    out.emplace_back(ch->get_action());
+                }
+                return out;
+            })
         .def("get_proba", &Node::get_proba)
         .def(
             "get_child",
@@ -222,7 +232,6 @@ void export_classes(pybind11::module& m)
     using Board = typename Game::Board;
     using Move = typename Game::Move;
     using Pieces = typename Game::Pieces;
-    using Squares = typename Game::Squares;
     using SquareEnum = typename Game::SquareEnum;
     using Stand = typename Game::Stand;
 

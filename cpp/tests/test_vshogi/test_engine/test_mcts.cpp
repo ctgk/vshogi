@@ -147,9 +147,7 @@ TEST(animal_shogi_node, explore_two_action)
     for (std::size_t ii = 0; ii < 2; ++ii) {
         auto g_copy = Game(g);
         const auto actual = root.select(g_copy, 1.f, -1, 0);
-        auto g_tmp = Game("3/1l1/1L1/3 w -");
-        g_tmp.apply(Move(SQ_B3, SQ_B2));
-        actual->simulate_expand_and_backprop(g_tmp, input_value[ii], zeros);
+        actual->simulate_expand_and_backprop(g_copy, input_value[ii], zeros);
 
         CHECK_EQUAL(root.get_child(moves[ii]), actual);
         DOUBLES_EQUAL(expected_q_value[ii], root.get_q_value(), 1e-3f);
@@ -217,7 +215,11 @@ TEST(animal_shogi_node, explore_two_layer)
             actual);
         STRCMP_EQUAL("3/2g/G2/3 b - 3", g_copy.to_sfen().c_str());
         actual->simulate_expand_and_backprop(
-            Game("3/1L1/3/3 b -").apply(Move(SQ_B1, SQ_B2)), -0.5f, zeros);
+            Game("2g/3/3/G2 b -")
+                .apply(Move(SQ_A3, SQ_A4))
+                .apply(Move(SQ_C2, SQ_C1)),
+            -0.5f,
+            zeros);
         DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(), 1e-3f);
     }
     {
@@ -273,15 +275,7 @@ TEST(animal_shogi_node, explore_until_game_end)
                 n->simulate_expand_and_backprop(g_copy, 0.f, zeros);
         }
 
-        const auto& actions = root.get_actions();
-        auto visit_counts = std::vector<int>();
-        for (auto&& a : actions) {
-            visit_counts.emplace_back(root.get_child(a)->get_visit_count());
-        }
-        const auto index = static_cast<std::size_t>(std::distance(
-            visit_counts.cbegin(),
-            std::max_element(visit_counts.cbegin(), visit_counts.cend())));
-        const auto action = actions[index];
+        const auto action = root.get_best_action();
         g.apply(action);
         root.apply(action);
     }
@@ -312,15 +306,7 @@ TEST(minishogi_node, explore_until_game_end)
                 n->simulate_expand_and_backprop(g_copy, 0.f, zeros);
         }
 
-        const auto& actions = root.get_actions();
-        auto visit_counts = std::vector<int>();
-        for (auto&& a : actions) {
-            visit_counts.emplace_back(root.get_child(a)->get_visit_count());
-        }
-        const auto index = static_cast<std::size_t>(std::distance(
-            visit_counts.cbegin(),
-            std::max_element(visit_counts.cbegin(), visit_counts.cend())));
-        const auto action = actions[index];
+        const auto action = root.get_best_action();
         g.apply(action);
         root.apply(action);
     }
@@ -351,15 +337,7 @@ TEST(judkins_shogi_node, explore_until_game_end)
                 n->simulate_expand_and_backprop(g_copy, 0.f, zeros);
         }
 
-        const auto& actions = root.get_actions();
-        auto visit_counts = std::vector<int>();
-        for (auto&& a : actions) {
-            visit_counts.emplace_back(root.get_child(a)->get_visit_count());
-        }
-        const auto index = static_cast<std::size_t>(std::distance(
-            visit_counts.cbegin(),
-            std::max_element(visit_counts.cbegin(), visit_counts.cend())));
-        const auto action = actions[index];
+        const auto action = root.get_best_action();
         g.apply(action);
         root.apply(action);
     }
@@ -390,15 +368,7 @@ TEST(shogi_node, explore_until_game_end)
                 n->simulate_expand_and_backprop(g_copy, 0.f, zeros);
         }
 
-        const auto& actions = root.get_actions();
-        auto visit_counts = std::vector<int>();
-        for (auto&& a : actions) {
-            visit_counts.emplace_back(root.get_child(a)->get_visit_count());
-        }
-        const auto index = static_cast<std::size_t>(std::distance(
-            visit_counts.cbegin(),
-            std::max_element(visit_counts.cbegin(), visit_counts.cend())));
-        const auto action = actions[index];
+        const auto action = root.get_best_action();
         g.apply(action);
         root.apply(action);
     }

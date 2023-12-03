@@ -150,32 +150,24 @@ def test_mate_in_three():
 
 
 def test_visit_count_by_random():
-    # Turn: BLACK
-    # White: -
-    #     A  B  C
-    #   *--*--*--*
-    # 1 |-G|-C|  |
-    #   *--*--*--*
-    # 2 |-L|-E|  |
-    #   *--*--*--*
-    # 3 |  |  |+L|
-    #   *--*--*--*
-    # 4 |+E|+C|+G|
-    #   *--*--*--*
-    # Black: -
-    game = shogi.Game('gc1/le1/2L/ECG b -')
-    m = shogi.Move(shogi.C2, shogi.C3)
+    game = shogi.Game('l2/3/3/2L b -')
+    m = shogi.Move(shogi.B3, shogi.C4)
 
-    searcher = MonteCarloTreeSearcher(uniform_pv_func)
+    searcher = MonteCarloTreeSearcher(
+        lambda g: (
+            np.zeros(g.num_dlshogi_policy),
+            -0.99 if g.to_sfen(False) == 'l2/3/1L1/3 w -' else 0.,
+        ),
+    )
     searcher.set_root(game)
-    searcher.explore(n=100, random_depth=0)
+    searcher.explore(n=50, random_depth=0)
     visit_count = searcher.get_visit_counts()[m]
-    print(searcher._tree(depth=2))
+    print(searcher._tree(depth=2, breadth=-1))
 
     searcher.set_root(game)
-    searcher.explore(n=100, random_depth=1)
+    searcher.explore(n=50, random_depth=1, non_random_ratio=0)
     visit_count_with_noise = searcher.get_visit_counts()[m]
-    print(searcher._tree(depth=2))
+    print(searcher._tree(depth=2, breadth=-1))
 
     assert visit_count > visit_count_with_noise
 
