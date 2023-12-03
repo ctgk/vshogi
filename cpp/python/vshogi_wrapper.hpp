@@ -216,6 +216,32 @@ inline void export_mcts_node(pybind11::module& m)
         .def("apply", &Node::apply);
 }
 
+template <class Game, class Move>
+inline void export_mcts_searcher(pybind11::module& m)
+{
+    namespace py = pybind11;
+    using Searcher = vshogi::engine::mcts::Searcher<Game, Move>;
+    py::class_<Searcher>(m, "MonteCarloTreeSearcher")
+        .def(py::init<const float, const int, const int>())
+        .def("set_root", &Searcher::set_root)
+        .def("is_ready", &Searcher::is_ready)
+        .def("clear", &Searcher::clear)
+        .def("get_tree_size", &Searcher::get_tree_size)
+        .def(
+            "select",
+            [](Searcher& self) -> py::object {
+                const auto out = self.select();
+                if (out == nullptr)
+                    return py::none();
+                return py::cast(*out, py::return_value_policy::reference);
+            })
+        .def(
+            "get_root",
+            &Searcher::get_root,
+            py::return_value_policy::reference)
+        .def("get_best_move", &Searcher::get_best_move);
+}
+
 template <class Game>
 void export_classes(pybind11::module& m)
 {

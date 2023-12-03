@@ -13,6 +13,28 @@
 namespace vshogi::engine::mcts
 {
 
+namespace internal
+{
+
+void softmax(std::vector<float>& v)
+{
+    if (v.empty())
+        return;
+    const float maximum_value = *std::max_element(v.cbegin(), v.cend());
+    float sum = 0.f;
+    for (auto&& e : v) {
+        e -= maximum_value;
+        e = std::exp(e);
+        sum += e;
+    }
+    for (auto&& e : v) {
+        e /= sum;
+    }
+}
+
+} // namespace internal
+
+
 static std::size_t integer = 0UL;
 
 template <class Game, class Move>
@@ -116,6 +138,10 @@ public:
     {
         return m_visit_count > 0;
     }
+    Move get_action() const
+    {
+        return m_action;
+    }
     int get_visit_count() const
     {
         return m_visit_count;
@@ -131,6 +157,10 @@ public:
     float get_proba() const
     {
         return m_proba;
+    }
+    std::size_t get_num_children() const
+    {
+        return m_children.size();
     }
     std::vector<Move> get_actions() const noexcept
     {
@@ -148,6 +178,10 @@ public:
                 return &child;
         }
         return nullptr;
+    }
+    const Node<Game, Move>* get_child(std::size_t index) const
+    {
+        return m_children[index];
     }
 
     /**
@@ -370,7 +404,7 @@ private:
                       : moves[ii].rotate().to_dlshogi_policy_index();
             probas[ii] = policy_logits[index];
         }
-        softmax(probas);
+        internal::softmax(probas);
 
         m_children.reserve(num);
         for (std::size_t ii = 0; ii < num; ++ii)
@@ -431,22 +465,67 @@ private:
                 m_parent->backprop_at_internal_vertex(-m_q_value);
         }
     }
+};
 
+template <class Game, class Move>
+class Searcher
+{
 private:
-    static void softmax(std::vector<float>& v)
+    const float m_coeff_puct;
+    const int m_non_random_ratio;
+    const int m_random_depth;
+    Node<Game, Move> m_root;
+    std::unique_ptr<Game> m_game_ptr;
+
+public:
+    Searcher(
+        const float coeff_puct,
+        const int non_random_ratio,
+        const int random_depth)
+        : m_coeff_puct(coeff_puct), m_non_random_ratio(non_random_ratio),
+          m_random_depth(random_depth), m_root(), m_game_ptr(nullptr)
     {
-        if (v.empty())
-            return;
-        const float maximum_value = *std::max_element(v.cbegin(), v.cend());
-        float sum = 0.f;
-        for (auto&& e : v) {
-            e -= maximum_value;
-            e = std::exp(e);
-            sum += e;
+    }
+    void set_root(const Game& g)
+    {
+        m_root = Node<Game, Move>();
+        m_game_ptr = std::make_unique<Game>(Game(g));
+    }
+    bool is_ready() const
+    {
+        return (m_game_ptr != nullptr);
+    }
+    void clear()
+    {
+        m_game_ptr = nullptr;
+    }
+    int get_tree_size() const
+    {
+        return m_root.get_visit_count();
+    }
+    Node<Game, Move>* select()
+    {
+        auto g_tmp = Game(*m_game_ptr);
+        return m_root.select(
+            g_tmp, m_coeff_puct, m_non_random_ratio, m_random_depth);
+    }
+    const Node<Game, Move>* get_root() const
+    {
+        return &m_root;
+    }
+    Move get_best_move() const
+    {
+        Move out = Move();
+        int visit_count = 0;
+        std::size_t n = m_root.get_num_children();
+        for (; n--; ) {
+            const Node<Game, Move>* const child_ptr = m_root.get_child(n);
+            if (child_ptr->get_visit_count() > visit_count) {
+                out = child_ptr->get_action();
+                visit_count = child_ptr->get_visit_count();
+            }
         }
-        for (auto&& e : v) {
-            e /= sum;
-        }
+        return out;
     }
 };
 
