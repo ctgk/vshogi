@@ -11,6 +11,7 @@
 import contextlib
 from glob import glob
 import os
+import sys
 import typing as tp
 
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
@@ -460,6 +461,9 @@ if __name__ == '__main__':
         os.makedirs('models')
     if not os.path.isdir('datasets'):
         os.makedirs('datasets')
+    with open('command.txt', 'w') as f:
+        f.write(f'python {" ".join(sys.argv)}')
+    os.system(f"cp {__file__} ./")
 
     shogi = args._shogi
 
