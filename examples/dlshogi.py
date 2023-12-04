@@ -109,13 +109,14 @@ class PolicyValueFunction:
     def __init__(
         self,
         model: tp.Union[tf.keras.Model, str],
+        num_threads: int = 1,
     ) -> None:
         if isinstance(model, str):
             self._model_content = None
-            self._interpreter = tf.lite.Interpreter(model_path=model)
+            self._interpreter = tf.lite.Interpreter(model_path=model, num_threads=num_threads)
         else:
             self._model_content = tf.lite.TFLiteConverter.from_keras_model(model).convert()
-            self._interpreter = tf.lite.Interpreter(model_content=self._model_content)
+            self._interpreter = tf.lite.Interpreter(model_content=self._model_content, num_threads=num_threads)
 
         self._interpreter.allocate_tensors()
         input_details = self._interpreter.get_input_details()[0]
@@ -172,7 +173,6 @@ def _df_to_xy(df: pd.DataFrame):
         result = eval('vshogi.' + args.shogi_variant + '.' + row['result'])
         game_hflip = game.hflip()
         move_hflip = move.hflip()
-        assert game_hflip.is_legal(move_hflip)
 
         x = game.to_dlshogi_features()
         policy = game.to_dlshogi_policy(move, args.nn_max_policy)
@@ -273,15 +273,15 @@ def play_game(
     return game
 
 
-def load_player_of(index_path_or_network) -> vshogi.engine.MonteCarloTreeSearcher:
+def load_player_of(index_path_or_network, num_threads=1) -> vshogi.engine.MonteCarloTreeSearcher:
     if isinstance(index_path_or_network, int):
         i = index_path_or_network
         return vshogi.engine.MonteCarloTreeSearcher(
-            PolicyValueFunction(f'models/model_{i:04d}.tflite'),
+            PolicyValueFunction(f'models/model_{i:04d}.tflite', num_threads),
             coeff_puct=args.mcts_coeff_puct,
         )
     return vshogi.engine.MonteCarloTreeSearcher(
-        PolicyValueFunction(index_path_or_network),
+        PolicyValueFunction(index_path_or_network, num_threads),
         coeff_puct=args.mcts_coeff_puct,
     )
 
@@ -340,9 +340,9 @@ def self_play_and_dump_records(index: int):
 
 
 def play_against_past_players(index: int, dump_records: bool = False):
-    player = load_player_of(index)
+    player = load_player_of(index, args.jobs)
     for i_prev in range(index - 1, -1, -1):
-        player_prev = load_player_of(i_prev)
+        player_prev = load_player_of(i_prev, args.jobs)
         validation_results = {'win': 0, 'loss': 0, 'draw': 0}
         pbar = tqdm(range(args.validations))
         for n in pbar:
@@ -381,6 +381,7 @@ def parse_args():
 
     @classopt(default_long=True)
     class Args:
+        run: str = config(long=False, choices=['rl', 'self-play', 'validation'])
         shogi_variant: str = config(
             long=False,
             choices=['shogi', 'animal_shogi', 'judkins_shogi', 'minishogi'],
@@ -452,18 +453,37 @@ def parse_args():
 
 
 if __name__ == '__main__':
+    import subprocess
+    import sys
+
     args = parse_args()
 
-    if not os.path.isdir(args.output):
-        os.makedirs(args.output)
-    os.chdir(args.output)
+    if os.path.basename(os.getcwd()) != args.output:
+        if not os.path.isdir(args.output):
+            os.makedirs(args.output)
+        os.chdir(args.output)
     if not os.path.isdir('models'):
         os.makedirs('models')
     if not os.path.isdir('datasets'):
         os.makedirs('datasets')
-    with open('command.txt', 'w') as f:
-        f.write(f'python {" ".join(sys.argv)}')
-    os.system(f"cp {__file__} ./")
+
+    if args.run == 'rl':
+        with open('command.txt', 'w') as f:
+            f.write(f'python {" ".join(sys.argv)}')
+        os.system(f"cp {__file__} ./")
+
+    if args.run == 'self-play':
+        i = args.resume_rl_cycle_from
+        if not os.path.isdir(f'datasets/dataset_{i:04d}'):
+            os.makedirs(f'datasets/dataset_{i:04d}')
+        self_play_and_dump_records(i)
+        sys.exit(0)
+    elif args.run == 'validation':
+        i = args.resume_rl_cycle_from
+        if not os.path.isdir(f'datasets/dataset_{i + 1:04d}'):
+            os.makedirs(f'datasets/dataset_{i + 1:04d}')
+        play_against_past_players(i, dump_records=True)
+        sys.exit(0)
 
     shogi = args._shogi
 
@@ -480,17 +500,30 @@ if __name__ == '__main__':
         PolicyValueFunction(network).save_model_as_tflite(f'models/model_{0:04d}.tflite')
 
     for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
-        if not os.path.isdir(f'datasets/dataset_{i:04d}'):
-            os.makedirs(f'datasets/dataset_{i:04d}')
-
         # Self-play!
-        self_play_and_dump_records(i)
+        subprocess.call([
+            sys.executable, "dlshogi.py", "self-play", args.shogi_variant,
+            "--resume_rl_cycle_from", str(i),
+            "--mcts_explorations", str(args.mcts_explorations),
+            "--mcts_coeff_puct", str(args.mcts_coeff_puct),
+            "--mcts_temperature", str(args.mcts_temperature),
+            "--self_play", str(args.self_play),
+            "--jobs", str(args.jobs),
+            "--output", args.output,
+        ])
 
         # Train NN!
         load_data_and_train_network(network, i)
         PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
 
-        if not os.path.isdir(f'datasets/dataset_{i + 1:04d}'):
-            os.makedirs(f'datasets/dataset_{i + 1:04d}')
         # Validate!
-        play_against_past_players(i, dump_records=True)
+        subprocess.call([
+            sys.executable, "dlshogi.py", "validation", args.shogi_variant,
+            "--resume_rl_cycle_from", str(i),
+            "--mcts_explorations", str(args.mcts_explorations),
+            "--mcts_coeff_puct", str(args.mcts_coeff_puct),
+            "--mcts_temperature", str(args.mcts_temperature),
+            "--validations", str(args.validations),
+            "--jobs", str(args.jobs),
+            "--output", args.output,
+        ])
