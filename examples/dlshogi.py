@@ -152,10 +152,7 @@ def dump_game_records(file_, game: vshogi.Game) -> None:
     )
 
 
-def _df_to_xy(df: pd.DataFrame):
-    x_list = []
-    policy_list = []
-    value_list = []
+def _get_generator_from_df(df: pd.DataFrame):
     value_options = {
         (vshogi.DRAW, vshogi.BLACK): 0.,
         (vshogi.DRAW, vshogi.WHITE): 0.,
@@ -164,45 +161,41 @@ def _df_to_xy(df: pd.DataFrame):
         (vshogi.WHITE_WIN, vshogi.BLACK): -1.,
         (vshogi.WHITE_WIN, vshogi.WHITE): 1.,
     }
-    for _, row in df.iterrows():
-        game = args._shogi.Game(row['state'])
-        move = eval(
-            row['move'].replace('Move', f'vshogi.{args.shogi_variant}.Move',
-                ).replace('dst=', f'dst=vshogi.{args.shogi_variant}.',
-                ).replace('src=', f'src=vshogi.{args.shogi_variant}.'))
-        result = eval('vshogi.' + args.shogi_variant + '.' + row['result'])
-        game_hflip = game.hflip()
-        move_hflip = move.hflip()
 
-        x = game.to_dlshogi_features()
-        policy = game.to_dlshogi_policy(move, args.nn_max_policy)
-        value = value_options[(result, game.turn)]
-        x_hflip = game_hflip.to_dlshogi_features()
-        policy_hflip = game_hflip.to_dlshogi_policy(move_hflip, args.nn_max_policy)
+    def _generator():
+        for _, row in df.sample(n=len(df), replace=False).iterrows():
+            game = args._shogi.Game(row['state'])
+            move = eval(
+                row['move'].replace('Move', f'vshogi.{args.shogi_variant}.Move',
+                    ).replace('dst=', f'dst=vshogi.{args.shogi_variant}.',
+                    ).replace('src=', f'src=vshogi.{args.shogi_variant}.'))
+            result = eval('vshogi.' + args.shogi_variant + '.' + row['result'])
+            if np.random.uniform() > 0.5:
+                game = game.hflip()
+                move = move.hflip()
 
-        x_list.append(x)
-        policy_list.append(policy)
-        value_list.append(value)
-        x_list.append(x_hflip)
-        policy_list.append(policy_hflip)
-        value_list.append(value)
-    return (
-        np.concatenate(x_list, axis=0),
-        np.asarray(policy_list, dtype=np.float32),
-        np.asarray(value_list, dtype=np.float32),
+            x = game.to_dlshogi_features()
+            policy = game.to_dlshogi_policy(move, args.nn_max_policy)
+            value = value_options[(result, game.turn)]
+
+            yield np.squeeze(x), (policy, value)
+
+    return _generator
+
+
+def get_dataset(tsv_list: tp.List[str]):
+    df = pd.concat([pd.read_csv(p, sep='\t') for p in tsv_list], ignore_index=True)
+    dataset = tf.data.Dataset.from_generator(
+        _get_generator_from_df(df),
+        output_types=(tf.float32, (tf.float32, tf.float32)),
     )
-
-
-def tsv_to_xy(tsv_list: tp.List[str]):
-    return _df_to_xy(pd.concat(
-        [pd.read_csv(p, sep='\t') for p in tsv_list], ignore_index=True))
+    dataset = dataset.batch(args.nn_minibatch)
+    return dataset
 
 
 def train_network(
     network: tf.keras.Model,
-    x_train: np.ndarray,
-    y_policy_train: np.ndarray,
-    y_value_train: np.ndarray,
+    dataset: tf.data.Dataset,
 ) -> tf.keras.Model:
     network.compile(
         loss=[
@@ -212,18 +205,15 @@ def train_network(
         optimizer=tf.keras.optimizers.Adam(args.nn_learning_rate),
     )
     network.fit(
-        x_train,
-        [y_policy_train, y_value_train],
-        batch_size=args.nn_minibatch,
+        dataset,
         epochs=args.nn_epochs,
     )
     return network
 
 
 def load_data_and_train_network(network, index: int):
-    x, y_policy, y_value = tsv_to_xy(
-        glob(f'datasets/dataset_{index:04d}/*.tsv'))
-    return train_network(network, x, y_policy, y_value)
+    dataset = get_dataset(glob(f'datasets/dataset_{index:04d}/*.tsv'))
+    return train_network(network, dataset)
 
 
 def play_game(
