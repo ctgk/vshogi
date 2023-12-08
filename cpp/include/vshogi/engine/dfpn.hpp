@@ -16,21 +16,39 @@ template <class Game, class Move, bool Attacker = true>
 class Node
 {
 private:
-    Node<Game, Move, !Attacker>* m_parent;
+    using NodeAlly = Node<Game, Move, Attacker>;
+    using NodeEnemy = Node<Game, Move, !Attacker>;
+
+    NodeEnemy* m_parent;
+
+    /**
+     * @brief Pointer to sibling node.
+     * @ref https://blog.mozilla.org/nnethercote/2012/03/07/n-ary-trees-in-c/
+     */
+    std::unique_ptr<NodeAlly> m_sibling;
+
+    /**
+     * @brief Pointer to first child node.
+     * @ref https://blog.mozilla.org/nnethercote/2012/03/07/n-ary-trees-in-c/
+     */
+    std::unique_ptr<NodeEnemy> m_child;
+
     Move m_action;
     std::uint32_t m_pn;
     std::uint32_t m_dn;
-    std::vector<Node<Game, Move, !Attacker>> m_children;
     static constexpr std::uint32_t max_number
         = std::numeric_limits<std::uint32_t>::max();
     friend class Node<Game, Move, !Attacker>;
 
 public:
-    Node() : m_parent(nullptr), m_action(0), m_pn(1), m_dn(1), m_children()
+    Node()
+        : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr), m_action(0),
+          m_pn(1), m_dn(1)
     {
     }
     Node(const Move& action)
-        : m_parent(nullptr), m_action(action), m_pn(1), m_dn(1), m_children()
+        : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr),
+          m_action(action), m_pn(1), m_dn(1)
     {
     }
 
@@ -59,14 +77,14 @@ public:
         if (!found_mate())
             return out;
 
-        const Node<Game, Move, Attacker>* node = this;
+        const NodeAlly* node = this;
         while (true) {
-            const Node<Game, Move, !Attacker>* n1 = node->select();
-            out.emplace_back(n1->m_action); // Attack move
-            if (n1->m_children.empty()) {
+            const NodeEnemy* node_enemy = node->select();
+            out.emplace_back(node_enemy->m_action); // Attack move
+            if (node_enemy->m_child == nullptr) {
                 return out;
             }
-            node = n1->select();
+            node = node_enemy->select();
             out.emplace_back(node->m_action); // Defence move
         }
     }
@@ -85,60 +103,60 @@ public:
 
     void select_simulate_expand_backprop(Game& game)
     {
-        if (m_children.empty()) {
+        if (m_child == nullptr) {
             // pn and dn should not be infinity when there are no children.
             simulate_expand_backprop(game);
         } else {
-            Node<Game, Move, !Attacker>* child = select();
+            NodeEnemy* child = select();
             child->m_parent = this;
             child->select_simulate_expand_backprop(game.apply(child->m_action));
         }
     }
 
 private:
-    Node<Game, Move, !Attacker>* select()
+    NodeEnemy* select()
     {
         if (Attacker) {
             std::uint32_t min_pn = max_number;
-            Node<Game, Move, !Attacker>* out = &m_children[0];
-            for (auto&& ch : m_children) {
-                if (min_pn > ch.m_pn) {
-                    min_pn = ch.m_pn;
-                    out = &ch;
+            NodeEnemy* out = m_child.get();
+            for (NodeEnemy* ch = out; ch != nullptr; ch = ch->m_sibling.get()) {
+                if (min_pn > ch->m_pn) {
+                    min_pn = ch->m_pn;
+                    out = ch;
                 }
             }
             return out;
         } else {
             std::uint32_t min_dn = max_number;
-            Node<Game, Move, !Attacker>* out = &m_children[0];
-            for (auto&& ch : m_children) {
-                if (min_dn > ch.m_dn) {
-                    min_dn = ch.m_dn;
-                    out = &ch;
+            NodeEnemy* out = m_child.get();
+            for (NodeEnemy* ch = out; ch != nullptr; ch = ch->m_sibling.get()) {
+                if (min_dn > ch->m_dn) {
+                    min_dn = ch->m_dn;
+                    out = ch;
                 }
             }
             return out;
         }
     }
-    const Node<Game, Move, !Attacker>* select() const
+    const NodeEnemy* select() const
     {
         if (Attacker) {
             std::uint32_t min_pn = max_number;
-            const Node<Game, Move, !Attacker>* out = &m_children[0];
-            for (auto&& ch : m_children) {
-                if (min_pn > ch.m_pn) {
-                    min_pn = ch.m_pn;
-                    out = &ch;
+            const NodeEnemy* out = m_child.get();
+            for (auto ch = out; ch != nullptr; ch = ch->m_sibling.get()) {
+                if (min_pn > ch->m_pn) {
+                    min_pn = ch->m_pn;
+                    out = ch;
                 }
             }
             return out;
         } else {
             std::uint32_t min_dn = max_number;
-            const Node<Game, Move, !Attacker>* out = &m_children[0];
-            for (auto&& ch : m_children) {
-                if (min_dn > ch.m_dn) {
-                    min_dn = ch.m_dn;
-                    out = &ch;
+            const NodeEnemy* out = m_child.get();
+            for (auto ch = out; ch != nullptr; ch = ch->m_sibling.get()) {
+                if (min_dn > ch->m_dn) {
+                    min_dn = ch->m_dn;
+                    out = ch;
                 }
             }
             return out;
@@ -174,19 +192,23 @@ private:
     void expand(const Game& game)
     {
         const std::vector<Move>& legal_moves = game.get_legal_moves();
+        std::unique_ptr<NodeEnemy>* ch = &m_child;
+        int num_child = 0;
         for (auto&& m : legal_moves) {
             if ((!Attacker) || game.in_check_after_move(m)) {
-                m_children.emplace_back(Node<Game, Move, !Attacker>(m));
+                *ch = std::make_unique<NodeEnemy>(m);
+                ch = &ch->get()->m_sibling;
+                ++num_child;
             }
         }
-        if (m_children.empty())
-            set_pndn_no_mate();
+        if (m_child == nullptr)
+            set_pndn_no_mate(); // game is ongoing but no check move.
         else {
             if (Attacker) {
                 m_pn = 1;
-                m_dn = static_cast<std::uint32_t>(m_children.size());
+                m_dn = static_cast<std::uint32_t>(num_child);
             } else {
-                m_pn = static_cast<std::uint32_t>(m_children.size());
+                m_pn = static_cast<std::uint32_t>(num_child);
                 m_dn = 1;
             }
         }
@@ -201,9 +223,10 @@ private:
         const std::uint32_t dn_original = m_dn;
         if (Attacker) {
             m_pn = max_number;
-            for (auto&& child : m_children) {
-                if (m_pn > child.m_pn)
-                    m_pn = child.m_pn;
+            const NodeEnemy* ch = m_child.get();
+            for (; ch != nullptr; ch = ch->m_sibling.get()) {
+                if (m_pn > ch->m_pn)
+                    m_pn = ch->m_pn;
             }
             if ((m_dn == max_number) || (dn == max_number)) {
                 m_dn = max_number;
@@ -221,9 +244,10 @@ private:
                     - static_cast<int>(pn_prev));
             }
             m_dn = max_number;
-            for (auto&& child : m_children) {
-                if (m_dn > child.m_dn)
-                    m_dn = child.m_dn;
+            const NodeEnemy* ch = m_child.get();
+            for (; ch != nullptr; ch = ch->m_sibling.get()) {
+                if (m_dn > ch->m_dn)
+                    m_dn = ch->m_dn;
             }
         }
         if (m_parent != nullptr)
