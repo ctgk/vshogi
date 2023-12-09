@@ -1,7 +1,8 @@
 #include "vshogi/engine/dfpn.hpp"
+#include "vshogi/judkins_shogi/game.hpp"
 #include "vshogi/minishogi/game.hpp"
+
 #include <CppUTest/TestHarness.h>
-#include <iostream>
 
 namespace test_vshogi::test_engine
 {
@@ -262,6 +263,38 @@ TEST(dfpn, no_mate_1)
     CHECK_FALSE(searcher.explore(10000));
     CHECK_FALSE(searcher.found_mate());
     CHECK_TRUE(searcher.found_no_mate());
+}
+
+TEST(dfpn, king_entering_before_mate)
+{
+    using namespace vshogi::judkins_shogi;
+    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    // Turn: WHITE
+    // White: -
+    //     6   5   4   3   2   1
+    //   +---+---+---+---+---+---+
+    // A |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+
+    // B |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+
+    // C |   |   |   |-KE|   |   |
+    //   +---+---+---+---+---+---+
+    // D |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+
+    // E |+FU|   |   |   |   |-RY|
+    //   +---+---+---+---+---+---+
+    // F |   |+OU|   |   |   |-OU|
+    //   +---+---+---+---+---+---+
+    // Black: -
+    auto g = Game("6/6/3n2/6/P4+r/1K3k w -");
+    auto searcher = Searcher();
+    searcher.set_root(g);
+    CHECK_TRUE(searcher.explore(100));
+    CHECK_TRUE(searcher.found_mate());
+    const auto actual = searcher.get_mate_moves();
+    CHECK_EQUAL(2, actual.size());
+    CHECK_TRUE(actual[0] == Move(Squares::SQ_4E, Squares::SQ_3C, true));
+    CHECK_TRUE(actual[1] == Move(Squares::SQ_6F, Squares::SQ_5F));
 }
 
 } // namespace test_vshogi::test_engine

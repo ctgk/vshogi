@@ -79,6 +79,11 @@ public:
 
         const NodeAlly* node = this;
         while (true) {
+            if (node->m_child == nullptr) {
+                // Length of mate moves can be even number
+                // by king entering declaration.
+                return out;
+            }
             const NodeEnemy* node_enemy = node->select();
             out.emplace_back(node_enemy->m_action); // Attack move
             if (node_enemy->m_child == nullptr) {
@@ -249,6 +254,9 @@ private:
                 if (m_dn > ch->m_dn)
                     m_dn = ch->m_dn;
             }
+        }
+        if (found_no_mate()) {
+            m_child.reset();
         }
         if (m_parent != nullptr)
             m_parent->backprop(m_pn, m_dn, pn_original, dn_original);
