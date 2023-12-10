@@ -47,26 +47,27 @@ inline void export_piece_stand(pybind11::module& m)
 template <class Move>
 inline void export_move(pybind11::module& m)
 {
+    namespace py = pybind11;
     using SquareEnum = typename Move::SquareEnum;
     using PieceTypeEnum = typename Move::PieceTypeEnum;
-    pybind11::class_<Move>(m, "Move")
+    py::class_<Move>(m, "Move")
         .def(
-            pybind11::init<const SquareEnum, const SquareEnum, const bool>(),
-            pybind11::arg("dst"),
-            pybind11::arg("src"),
-            pybind11::arg("promote") = false)
+            py::init<const SquareEnum, const SquareEnum, const bool>(),
+            py::arg("dst"),
+            py::arg("src"),
+            py::arg("promote") = false)
         .def(
-            pybind11::init<const SquareEnum, const PieceTypeEnum>(),
-            pybind11::arg("dst"),
-            pybind11::arg("src"))
+            py::init<const SquareEnum, const PieceTypeEnum>(),
+            py::arg("dst"),
+            py::arg("src"))
         .def_property_readonly("destination", &Move::destination)
         .def_property_readonly("promote", &Move::promote)
         .def_property_readonly(
             "source",
-            [](const Move& self) -> pybind11::object {
+            [](const Move& self) -> py::object {
                 if (self.is_drop())
-                    return pybind11::cast(self.source_piece());
-                return pybind11::cast(self.source_square());
+                    return py::cast(self.source_piece());
+                return py::cast(self.source_square());
             })
         .def("is_drop", &Move::is_drop)
         .def("rotate", &Move::rotate)
@@ -75,7 +76,10 @@ inline void export_move(pybind11::module& m)
         .def_static("_num_policy_per_square", &Move::num_policy_per_square)
         .def("__hash__", &Move::hash)
         .def("__eq__", &Move::operator==)
-        .def("__ne__", &Move::operator!=);
+        .def("__ne__", &Move::operator!=)
+        .def(py::pickle(
+            [](const Move& self) { return py::make_tuple(self.hash()); },
+            [](py::tuple t) { return Move(t[0].cast<std::size_t>()); }));
 }
 
 template <class Game>
