@@ -17,7 +17,6 @@ namespace vshogi::engine::mcts
 static std::random_device seed_gen;
 static std::default_random_engine engine(seed_gen());
 static std::uniform_real_distribution<float> dist(0.f, 1.f);
-static std::size_t integer = 0UL;
 
 template <class Game, class Move>
 class Node
@@ -340,8 +339,9 @@ private:
     {
         if (random_depth <= 0)
             return false;
-        const auto denominator = static_cast<std::size_t>(1 + non_random_ratio);
-        if ((integer++ % denominator) != 0)
+        const float u = dist(engine);
+        const float p_random = 1.f / static_cast<float>(1 + non_random_ratio);
+        if (u > p_random)
             return false;
         if (has_mate_to_win())
             return false;
