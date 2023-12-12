@@ -14,7 +14,7 @@ import os
 import sys
 import typing as tp
 
-os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
 
 from classopt import classopt, config
 import numpy as np
@@ -38,33 +38,45 @@ def build_policy_value_network(
 
     def bottleneck_multidilation(x):
         h = tf.keras.layers.Conv2D(
-            num_channels_in_hidden_layer // 4, 1, activation='relu6',
-            kernel_regularizer=r)(x)
+            num_channels_in_hidden_layer // 4, 1,
+            use_bias=False, kernel_regularizer=r)(x)
+        h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
+        h = tf.nn.relu6(h)
         h = tf.keras.layers.Concatenate()([
             tf.keras.layers.DepthwiseConv2D(
-                3, dilation_rate=d, activation='relu6', padding='same',
-                kernel_regularizer=r)(h)
+                3, dilation_rate=d, padding='same',
+                use_bias=False, kernel_regularizer=r)(h)
             for d in range(1, min(input_size))
         ])
+        h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
+        h = tf.nn.relu6(h)
         h = tf.keras.layers.Conv2D(
-            num_channels_in_hidden_layer, 1, activation='relu6',
-            kernel_regularizer=r)(h)
-        return h
-
-    def bottleneck(x):
-        h = tf.keras.layers.Conv2D(
-            num_channels_in_hidden_layer // 4, 1, activation='relu6',
-            kernel_regularizer=r)(x)
-        h = tf.keras.layers.DepthwiseConv2D(
-                3, activation='relu6', padding='same', kernel_regularizer=r)(h)
-        h = tf.keras.layers.Conv2D(
-            num_channels_in_hidden_layer, 1, activation='relu6',
-            kernel_regularizer=r)(h)
+            num_channels_in_hidden_layer, 1,
+            use_bias=False, kernel_regularizer=r)(h)
+        h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
+        h = tf.nn.relu6(h)
         return h
 
     def resblock(x):
-        h = bottleneck(x)
-        return tf.keras.layers.Add()([x, h])
+        h = tf.keras.layers.Conv2D(
+            num_channels_in_hidden_layer // 4, 1,
+            use_bias=False, kernel_regularizer=r)(x)
+        h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
+        h = tf.nn.relu6(h)
+        h = tf.keras.layers.Concatenate()([
+            tf.keras.layers.DepthwiseConv2D(
+                3, dilation_rate=d, padding='same',
+                use_bias=False, kernel_regularizer=r)(h)
+            for d in range(1, min(input_size))
+        ])
+        h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
+        h = tf.nn.relu6(h)
+        h = tf.keras.layers.Conv2D(
+            num_channels_in_hidden_layer, 1,
+            use_bias=False, kernel_regularizer=r)(h)
+        h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
+        h = tf.keras.layers.Add()([x, h])
+        return tf.nn.relu6(h)
 
     def backbone_network(x):
         h = bottleneck_multidilation(x)
@@ -76,8 +88,9 @@ def build_policy_value_network(
         for _ in range(num_policy_layers - 1):
             h = tf.keras.layers.Conv2D(
                 num_channels_in_hidden_layer, 1,
-                activation='relu6', kernel_regularizer=r,
-            )(h)
+                use_bias=False, kernel_regularizer=r)(h)
+            h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
+            h = tf.nn.relu6(h)
         policy_logits = tf.keras.layers.Conv2D(
             num_policy_per_square, 1, kernel_regularizer=r,
         )(h)
@@ -90,7 +103,9 @@ def build_policy_value_network(
         for _ in range(num_value_layers - 1):
             h = tf.keras.layers.SeparableConv2D(
                 num_channels_in_hidden_layer // 4, 3,
-                activation='relu6', padding='valid', kernel_regularizer=r)(h)
+                padding='valid', use_bias=False, kernel_regularizer=r)(h)
+            h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
+            h = tf.nn.relu6(h)
         h = tf.keras.layers.Flatten()(h)
         value = tf.keras.layers.Dense(
             1, activation='tanh', name='value', kernel_regularizer=r)(h)
@@ -196,13 +211,14 @@ def get_dataset(tsv_list: tp.List[str]):
 def train_network(
     network: tf.keras.Model,
     dataset: tf.data.Dataset,
+    learning_rate: float,
 ) -> tf.keras.Model:
     network.compile(
         loss=[
             tf.keras.losses.CategoricalCrossentropy(from_logits=True),
             tf.keras.losses.MeanSquaredError(),
         ],
-        optimizer=tf.keras.optimizers.Adam(args.nn_learning_rate),
+        optimizer=tf.keras.optimizers.Adam(learning_rate),
     )
     network.fit(
         dataset,
@@ -211,9 +227,9 @@ def train_network(
     return network
 
 
-def load_data_and_train_network(network, index: int):
+def load_data_and_train_network(network, index: int, learning_rate: float):
     dataset = get_dataset(glob(f'datasets/dataset_{index:04d}/*.tsv'))
-    return train_network(network, dataset)
+    return train_network(network, dataset, learning_rate)
 
 
 def play_game(
@@ -281,7 +297,7 @@ def _self_play_and_dump_record(player, index, nth_game: int) -> vshogi.Game:
         game = play_game(args._game_getter(), player, player)
         if game.result != vshogi.ONGOING:
             break
-    with open(f'datasets/dataset_{index:04d}/record_{nth_game:04d}.tsv', mode='w') as f:
+    with open(f'datasets/dataset_{index:04d}/record_{nth_game:05d}.tsv', mode='w') as f:
         dump_game_records(f, game)
 
 
@@ -311,30 +327,68 @@ def self_play_and_dump_records_in_parallel(index: int, n_jobs: int):
             _self_play_and_dump_record(player, index, i)
 
     group_size = 10
-    with tqdm_joblib(tqdm(total=args.self_play // group_size)):
+    with tqdm_joblib(tqdm(total=args.self_play // group_size, ncols=100)):
         Parallel(n_jobs=n_jobs)(
             delayed(_self_play_and_dump_record_n_times)(
                 index, list(range(i, i + group_size)),
             )
-            for i in range(0, args.self_play, group_size)
+            for i in range(args.self_play_index_from, args.self_play_index_from + args.self_play, group_size)
         )
 
 
 def self_play_and_dump_records(index: int):
     if args.jobs == 1:
         player = load_player_of(index - 1)
-        for i in tqdm(range(args.self_play)):
+        for i in tqdm(range(args.self_play_index_from, args.self_play_index_from + args.self_play), ncols=100):
             _self_play_and_dump_record(player, index, i)
     else:
         self_play_and_dump_records_in_parallel(index, args.jobs)
 
 
+def get_best_player_index(current: int, best: int):
+    results = {'win': 0, 'loss': 0, 'draw': 0}
+    player_curr = load_player_of(current, args.jobs)
+    player_best = load_player_of(best, args.jobs)
+    num_play = 40
+    pbar = tqdm(range(num_play), ncols=100)
+    for n in pbar:
+        if n % 2 == 0:
+            while True:
+                game = play_game(args._game_getter(), player_curr, player_best)
+                if game.result != vshogi.ONGOING:
+                    break
+            results[{
+                vshogi.BLACK_WIN: 'win',
+                vshogi.WHITE_WIN: 'loss',
+                vshogi.DRAW: 'draw',
+            }[game.result]] += 1
+        else:
+            while True:
+                game = play_game(args._game_getter(), player_best, player_curr)
+                if game.result != vshogi.ONGOING:
+                    break
+            results[{
+                vshogi.BLACK_WIN: 'loss',
+                vshogi.WHITE_WIN: 'win',
+                vshogi.DRAW: 'draw',
+            }[game.result]] += 1
+        pbar.set_description(f'{current} vs {best}: {results}')
+    return current if results['win'] > (num_play * 0.55) else best
+
+
 def play_against_past_players(index: int, dump_records: bool = False):
     player = load_player_of(index, args.jobs)
-    for i_prev in range(index - 1, -1, -1):
-        player_prev = load_player_of(i_prev, args.jobs)
+    indices_prev = list(range(index - 1, -1, -1))
+    n = 10
+    if len(indices_prev) > n:
+        p = np.array(indices_prev) + 1
+        p = p / np.sum(p)
+        indices_prev = np.random.choice(indices_prev, size=n, replace=False, p=p)
+        indices_prev = np.sort(indices_prev)[::-1]
+    for i_prev in indices_prev:
+        player_prev = load_player_of(int(i_prev), args.jobs)
         validation_results = {'win': 0, 'loss': 0, 'draw': 0}
-        pbar = tqdm(range(args.validations))
+        pbar = tqdm(range(args.validations), ncols=100)
         for n in pbar:
             if n % 2 == 0:
                 while True:
@@ -350,6 +404,7 @@ def play_against_past_players(index: int, dump_records: bool = False):
                     path = f'datasets/dataset_{index + 1:04d}/record_B{index:02d}vsW{i_prev:02d}_{n:04d}.tsv'
                     with open(path, mode='w') as f:
                         dump_game_records(f, game)
+                    os.system(f'cat {path} | grep -e " b " -e "state" > tmp.tsv; mv tmp.tsv {path}')
             else:
                 while True:
                     game = play_game(args._game_getter(), player_prev, player)
@@ -364,6 +419,7 @@ def play_against_past_players(index: int, dump_records: bool = False):
                     path = f'datasets/dataset_{index + 1:04d}/record_B{i_prev:02d}vsW{index:02d}_{n:04d}.tsv'
                     with open(path, mode='w') as f:
                         dump_game_records(f, game)
+                    os.system(f'cat {path} | grep -e " w " -e "state" > tmp.tsv; mv tmp.tsv {path}')
             pbar.set_description(f'{index} vs {i_prev}: {validation_results}')
 
 
@@ -385,15 +441,33 @@ def parse_args():
         nn_value: int = config(type=int, default=2, help='# of layers for value head in NN. By default 2.')
         nn_epochs: int = config(type=int, default=20, help='# of epochs in NN training. By default 20.')
         nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
-        nn_learning_rate: float = config(type=float, default=1e-4)
-        nn_max_policy: float = config(type=float, default=0.8, help='Maximum value of supervised signal of policy in NN training, default=0.8')
-        mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000')
+        nn_learning_rate: float = config(type=float, default=1e-3, help='Learning rate of NN weight update')
+        nn_max_policy: float = config(type=float, default=1.0, help='Maximum value of supervised signal of policy in NN training, default=1.0')
+        mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000. Alpha Zero used 800 simulations.')
         mcts_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in MCTS, default=4.')
         mcts_temperature: float = config(type=float, default=0.1, help='Temperature for selecting action in MCTS, default=0.1')
         self_play: int = config(type=int, default=200, help='# of self-play in one RL cycle, default=200')
+        self_play_index_from: int = config(type=int, default=0, help='Index to start self-play from, default=0')
         validations: int = config(type=int, default=10, help='# of validation plays per model, default=10')
         jobs: int = config(short=False, type=int, default=1, help='# of jobs to run self-play in parallel, default=1')
         output: str = config(short=True, type=str, help='Output path of self-play datasets and trained NN models, default=`shogi`')
+
+
+    def shogi_game_getter():
+        g = vshogi.shogi.Game()
+        first_moves = g.get_legal_moves()
+        g.apply(first_moves[0])
+        second_moves = g.get_legal_moves()
+
+        def get_random_game():
+            if np.random.uniform() < 0.1:
+                return vshogi.shogi.Game()
+            m1 = np.random.choice(first_moves)
+            m2 = np.random.choice(second_moves)
+            sfen = vshogi.shogi.Game().apply(m1).apply(m2).to_sfen(include_move_count=False)
+            return vshogi.shogi.Game(sfen=sfen)
+
+        return get_random_game
 
 
     args = Args.from_args()
@@ -416,13 +490,7 @@ def parse_args():
                 *np.random.choice(list('RBNSGP'), 6, replace=False),
             ),
         ),
-        'shogi': lambda: vshogi.shogi.Game(
-            '{}{}{}{}k{}{}{}{}/1{}5{}1/ppppppppp/9/9/9/'
-            'PPPPPPPPP/1{}5{}1/{}{}{}{}K{}{}{}{} b - 1'.format(
-                *np.random.choice(list('lnsggsnlrb'), 10, replace=False),
-                *np.random.choice(list('BRLNSGGSNL'), 10, replace=False),
-            ),
-        ),
+        'shogi': shogi_game_getter(),
     }[args.shogi_variant]
     args._shogi = getattr(vshogi, args.shogi_variant)
     default_configs = {
@@ -489,22 +557,34 @@ if __name__ == '__main__':
     if args.resume_rl_cycle_from == 1:
         PolicyValueFunction(network).save_model_as_tflite(f'models/model_{0:04d}.tflite')
 
-    for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
-        # Self-play!
-        subprocess.call([
-            sys.executable, "dlshogi.py", "self-play", args.shogi_variant,
-            "--resume_rl_cycle_from", str(i),
-            "--mcts_explorations", str(args.mcts_explorations),
-            "--mcts_coeff_puct", str(args.mcts_coeff_puct),
-            "--mcts_temperature", str(args.mcts_temperature),
-            "--self_play", str(args.self_play),
-            "--jobs", str(args.jobs),
-            "--output", args.output,
-        ])
 
-        # Train NN!
-        load_data_and_train_network(network, i)
-        PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
+    for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
+
+        self_play_index_from = 0
+        learning_rate = args.nn_learning_rate
+        while True:
+            # Self-play!
+            subprocess.call([
+                sys.executable, "dlshogi.py", "self-play", args.shogi_variant,
+                "--resume_rl_cycle_from", str(i),
+                "--mcts_explorations", str(args.mcts_explorations),
+                "--mcts_coeff_puct", str(args.mcts_coeff_puct),
+                "--mcts_temperature", str(args.mcts_temperature),
+                "--self_play", str(args.self_play),
+                "--self_play_index_from", str(self_play_index_from),
+                "--jobs", str(args.jobs),
+                "--output", args.output,
+            ])
+
+            # Train NN!
+            load_data_and_train_network(network, i, learning_rate)
+            PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
+
+            if (i == 1) or (get_best_player_index(i, i - 1) == i):
+                break
+            else:
+                self_play_index_from += args.self_play
+                learning_rate *= 0.5
 
         # Validate!
         subprocess.call([
