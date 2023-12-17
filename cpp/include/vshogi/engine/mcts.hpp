@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "vshogi/color.hpp"
+#include "vshogi/engine/dfpn.hpp"
 #include "vshogi/result.hpp"
 
 namespace vshogi::engine::mcts
@@ -198,6 +199,8 @@ public:
      * e.g. If `random_depth == 2`, `non_random_ratio` takes effect when
      * selecting child nodes from root node and from nodes beneath the root
      * node. `non_random_ratio` takes no effect for the nodes further below.
+     * @param [in] num_dfpn_nodes Number of nodes to explore at leaf node using
+     * DFPN algorithm.
      * @return Node<Game, Move> Leaf node selected by PUCT algorithm.
      * If it is game end, then output is null pointer.
      */
@@ -205,12 +208,13 @@ public:
         Game& game,
         const float coeff_puct,
         const int non_random_ratio,
-        int random_depth) noexcept
+        int random_depth,
+        const std::size_t num_dfpn_nodes = 0)
     {
         NodeGM* node = this;
         while (true) {
             if (node->m_child == nullptr)
-                return node->select_at_leaf(game);
+                return node->select_at_leaf(game, num_dfpn_nodes);
             node = node->select_at_internal_vertex(
                 game, coeff_puct, non_random_ratio, random_depth--);
         }
@@ -296,10 +300,27 @@ public:
     }
 
 private:
-    NodeGM* select_at_leaf(const Game& game)
+    NodeGM* select_at_leaf(const Game& game, const std::size_t num_dfpn_nodes)
     {
-        if (game.get_result() == ResultEnum::ONGOING)
-            return this; // Call `simulate_expand_and_backprop()` later on!
+        if (game.get_result() == ResultEnum::ONGOING) {
+            if constexpr (!std::is_same<Game, animal_shogi::Game>::value) {
+                if ((num_dfpn_nodes > 0)
+                    && (!std::is_same<Game, animal_shogi::Game>::value)) {
+                    auto searcher = dfpn::Searcher<Game, Move>(num_dfpn_nodes);
+                    searcher.set_root(game);
+                    searcher.explore();
+                    if (searcher.found_mate()) {
+                        m_value = 1.f;
+                        m_q_value = 1.f;
+                        m_is_mate = true;
+                        backprop_leaf(); // Increment `m_visit_count`.
+                        return nullptr;
+                    }
+                }
+            }
+            return this;
+        }
+
         if (m_visit_count == 0)
             simulate_end_game(game);
         backprop_leaf();

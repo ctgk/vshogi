@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 
+#include "vshogi/animal_shogi/game.hpp"
 #include "vshogi/color.hpp"
 #include "vshogi/result.hpp"
 
@@ -15,6 +16,8 @@ namespace vshogi::engine::dfpn
 template <class Game, class Move, bool Attacker = true>
 class Node
 {
+    static_assert(!std::is_same<Game, animal_shogi::Game>::value);
+
 private:
     using NodeAlly = Node<Game, Move, Attacker>;
     using NodeEnemy = Node<Game, Move, !Attacker>;
@@ -277,12 +280,12 @@ template <class Game, class Move>
 class Searcher
 {
 private:
-    const int m_default_num_nodes;
+    const std::size_t m_default_num_nodes;
     Node<Game, Move, true> m_root;
     std::unique_ptr<Game> m_game_ptr;
 
 public:
-    Searcher(const int default_num_nodes = 1000)
+    Searcher(const std::size_t default_num_nodes = 1000)
         : m_default_num_nodes(default_num_nodes), m_root(), m_game_ptr(nullptr)
     {
     }

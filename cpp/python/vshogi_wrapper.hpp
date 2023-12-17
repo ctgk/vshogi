@@ -153,13 +153,18 @@ inline void export_game(pybind11::module& m)
         .def(
             "get_mate_moves_if_any",
             [](const Game& self, const int num_dfpn_nodes) -> py::object {
-                auto dfpn = vshogi::engine::dfpn::Searcher<Game, Move>(
-                    num_dfpn_nodes);
-                dfpn.set_root(self);
-                if (dfpn.explore()) {
-                    return py::cast(dfpn.get_mate_moves());
-                } else {
+                if constexpr (std::is_same<Game, vshogi::animal_shogi::Game>::
+                                  value) {
                     return py::none();
+                } else {
+                    auto dfpn = vshogi::engine::dfpn::Searcher<Game, Move>(
+                        num_dfpn_nodes);
+                    dfpn.set_root(self);
+                    if (dfpn.explore()) {
+                        return py::cast(dfpn.get_mate_moves());
+                    } else {
+                        return py::none();
+                    }
                 }
             },
             py::arg("num_dfpn_nodes"))
@@ -169,17 +174,19 @@ inline void export_game(pybind11::module& m)
 template <class Game, class Move>
 inline void export_mcts_node(pybind11::module& m)
 {
+    namespace py = pybind11;
     using Node = vshogi::engine::mcts::Node<Game, Move>;
-    pybind11::class_<Node>(m, "MctsNode")
+
+    py::class_<Node>(m, "MctsNode")
         .def(
-            pybind11::init([](const Game& g,
-                              const float v,
-                              const pybind11::array_t<float>& logits) {
+            py::init([](const Game& g,
+                        const float v,
+                        const py::array_t<float>& logits) {
                 return Node(g, v, logits.data());
             }),
-            pybind11::arg("game"),
-            pybind11::arg("value"),
-            pybind11::arg("policy_logits"))
+            py::arg("game"),
+            py::arg("value"),
+            py::arg("policy_logits"))
         .def("get_visit_count", &Node::get_visit_count)
         .def("get_value", &Node::get_value)
         .def("get_q_value", &Node::get_q_value)
@@ -197,19 +204,18 @@ inline void export_mcts_node(pybind11::module& m)
         .def("get_proba", &Node::get_proba)
         .def(
             "get_child",
-            [](Node& node, const Move& action) -> pybind11::object {
+            [](Node& node, const Move& action) -> py::object {
                 const auto out = node.get_child(action);
                 if (out == nullptr)
-                    return pybind11::none();
-                return pybind11::cast(
-                    *out, pybind11::return_value_policy::reference);
+                    return py::none();
+                return py::cast(*out, py::return_value_policy::reference);
             })
         .def(
             "simulate_expand_and_backprop",
             [](Node& self,
                const Game& game,
                const float value,
-               const pybind11::array_t<float>& policy_logits) {
+               const py::array_t<float>& policy_logits) {
                 const auto data = policy_logits.data();
                 self.simulate_expand_and_backprop(game, value, data);
             })
@@ -219,13 +225,17 @@ inline void export_mcts_node(pybind11::module& m)
                Game& game,
                const float coeff_puct,
                const int non_random_ratio,
-               const int random_depth) -> pybind11::object {
+               const int random_depth,
+               const std::size_t num_dfpn_nodes) -> py::object {
                 const auto out = node.select(
-                    game, coeff_puct, non_random_ratio, random_depth);
+                    game,
+                    coeff_puct,
+                    non_random_ratio,
+                    random_depth,
+                    num_dfpn_nodes);
                 if (out == nullptr)
-                    return pybind11::none();
-                return pybind11::cast(
-                    *out, pybind11::return_value_policy::reference);
+                    return py::none();
+                return py::cast(*out, py::return_value_policy::reference);
             })
         .def("apply", &Node::apply);
 }

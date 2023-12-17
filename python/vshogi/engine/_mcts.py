@@ -152,6 +152,7 @@ class MonteCarloTreeSearcher:
         c_puct: tp.Optional[float] = None,
         non_random_ratio: tp.Optional[int] = None,
         random_depth: tp.Optional[int] = None,
+        num_dfpn_nodes: tp.Optional[int] = 0,
     ):
         """Explore from root node for n times.
 
@@ -167,6 +168,9 @@ class MonteCarloTreeSearcher:
             by default None
         random_depth : int, optional
             Depth to select action in a random manner, by default None
+        num_dfpn_nodes : int, optional
+            Number of nodes to look for mate moves at leaf node using DFPN
+            algorithm, by default 0.
         """
         if n is None:
             n = self._num_explorations
@@ -180,7 +184,9 @@ class MonteCarloTreeSearcher:
         for _ in range(n):
             game = self._game.copy()
             node = self._root.select(
-                game._game, c_puct, non_random_ratio, random_depth)
+                game._game, c_puct, non_random_ratio, random_depth,
+                num_dfpn_nodes,
+            )
             if node is None:
                 continue
             policy_logits, value = self._policy_value_func(game)
