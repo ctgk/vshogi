@@ -11,10 +11,10 @@ jobs:
       matrix:
         python-version: ['3.11']
         command: [
-          "pip install .[dlshogi]; python examples/dlshogi.py rl animal_shogi --rl_cycle 5",
-          "pip install .[dlshogi]; python examples/dlshogi.py rl minishogi --rl_cycle 5",
-          "pip install .[dlshogi]; python examples/dlshogi.py rl judkins_shogi --rl_cycle 5",
-          "pip install .[dlshogi]; python examples/dlshogi.py rl shogi --rl_cycle 2 --nn_backbones 3 --mcts_explorations 100 --self_play 100",
+          "pip install .[dlshogi]; python examples/dlshogi.py rl animal_shogi --rl_cycle 5 --mcts_explorations 100 --self_play 200 --win_ratio_threshold 0.1",
+          "pip install .[dlshogi]; python examples/dlshogi.py rl minishogi --rl_cycle 4 --mcts_explorations 100 --self_play 100 --win_ratio_threshold 0.1",
+          "pip install .[dlshogi]; python examples/dlshogi.py rl judkins_shogi --rl_cycle 3 --mcts_explorations 100 --self_play 100 --win_ratio_threshold 0.1",
+          "pip install .[dlshogi]; python examples/dlshogi.py rl shogi --rl_cycle 1 --nn_backbones 2 --mcts_explorations 100 --self_play 100 --win_ratio_threshold 0.1",
         ]
       fail-fast: false
 

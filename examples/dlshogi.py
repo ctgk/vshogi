@@ -31,85 +31,60 @@ def build_policy_value_network(
     num_policy_per_square: int,
     num_channels_in_hidden_layer: int,
     num_backbone_layers: int,
-    num_policy_layers: int,
-    num_value_layers: int,
 ):
     r = tf.keras.regularizers.L2(0.001)
 
-    def bottleneck_multidilation(x):
-        h = tf.keras.layers.Conv2D(
-            num_channels_in_hidden_layer // 4, 1,
-            use_bias=False, kernel_regularizer=r)(x)
-        h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
-        h = tf.nn.relu6(h)
-        h = tf.keras.layers.Concatenate()([
+    def pointwise_conv2d(x, ch):
+        return tf.keras.layers.Conv2D(
+            ch, 1, use_bias=False, kernel_regularizer=r)(x)
+
+    def bn(x):
+        return tf.keras.layers.BatchNormalization(center=False, scale=False)(x)
+
+    def depthwise_multidilation_conv2d(x, dilations: tp.Iterable[int]):
+        return tf.keras.layers.Concatenate()([
             tf.keras.layers.DepthwiseConv2D(
                 3, dilation_rate=d, padding='same',
-                use_bias=False, kernel_regularizer=r)(h)
-            for d in range(1, min(input_size))
+                use_bias=False, kernel_regularizer=r)(x)
+            for d in dilations
         ])
-        h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
+
+    def bottleneck(x):
+        h = pointwise_conv2d(x, num_channels_in_hidden_layer // 4)
+        h = bn(h)
         h = tf.nn.relu6(h)
-        h = tf.keras.layers.Conv2D(
-            num_channels_in_hidden_layer, 1,
-            use_bias=False, kernel_regularizer=r)(h)
-        h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
+
+        h = depthwise_multidilation_conv2d(h, range(1, min(input_size)))
+        h = bn(h)
         h = tf.nn.relu6(h)
+
+        h = pointwise_conv2d(h, num_channels_in_hidden_layer)
+        h = bn(h)
         return h
 
     def resblock(x):
-        h = tf.keras.layers.Conv2D(
-            num_channels_in_hidden_layer // 4, 1,
-            use_bias=False, kernel_regularizer=r)(x)
-        h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
-        h = tf.nn.relu6(h)
-        h = tf.keras.layers.Concatenate()([
-            tf.keras.layers.DepthwiseConv2D(
-                3, dilation_rate=d, padding='same',
-                use_bias=False, kernel_regularizer=r)(h)
-            for d in range(1, min(input_size))
-        ])
-        h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
-        h = tf.nn.relu6(h)
-        h = tf.keras.layers.Conv2D(
-            num_channels_in_hidden_layer, 1,
-            use_bias=False, kernel_regularizer=r)(h)
-        h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
+        h = bottleneck(x)
         h = tf.keras.layers.Add()([x, h])
         return tf.nn.relu6(h)
 
     def backbone_network(x):
-        h = bottleneck_multidilation(x)
+        h = tf.nn.relu6(bottleneck(x))
         for _ in range(num_backbone_layers - 1):
             h = resblock(h)
         return h
 
-    def policy_network(h):
-        for _ in range(num_policy_layers - 1):
-            h = tf.keras.layers.Conv2D(
-                num_channels_in_hidden_layer, 1,
-                use_bias=False, kernel_regularizer=r)(h)
-            h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
-            h = tf.nn.relu6(h)
-        policy_logits = tf.keras.layers.Conv2D(
-            num_policy_per_square, 1, kernel_regularizer=r,
-        )(h)
-        policy_logits = tf.keras.layers.Flatten(
-            name='policy_logits',
-        )(policy_logits)
-        return policy_logits
+    def policy_network(x):
+        h = pointwise_conv2d(x, num_policy_per_square)
+        return tf.keras.layers.Flatten(name='policy_logits')(h)
 
-    def value_network(h):
-        for _ in range(num_value_layers - 1):
-            h = tf.keras.layers.SeparableConv2D(
-                num_channels_in_hidden_layer // 4, 3,
-                padding='valid', use_bias=False, kernel_regularizer=r)(h)
-            h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
-            h = tf.nn.relu6(h)
+    def value_network(x):
+        h = pointwise_conv2d(x, num_channels_in_hidden_layer // 4)
+        h = bn(h)
+        h = tf.nn.relu6(h)
+
         h = tf.keras.layers.Flatten()(h)
-        value = tf.keras.layers.Dense(
+        return tf.keras.layers.Dense(
             1, activation='tanh', name='value', kernel_regularizer=r)(h)
-        return value
 
     x = tf.keras.Input(shape=(*input_size, input_channels))
     backbone_feature = backbone_network(x)
@@ -261,7 +236,7 @@ def play_game(
         if game.result != vshogi.Result.ONGOING:
             break
 
-        mate_moves = game.get_mate_moves_if_any()
+        mate_moves = game.get_mate_moves_if_any(num_dfpn_nodes=10000)
         if mate_moves is not None:
             for move in mate_moves:
                 game.apply(move)
@@ -269,7 +244,10 @@ def play_game(
 
         player = player_black if game.turn == vshogi.Color.BLACK else player_white
         player.set_root(game)
-        player.explore(n=args.mcts_explorations - player.num_explored)
+        player.explore(
+            n=args.mcts_explorations - player.num_explored,
+            num_dfpn_nodes=100, # approximately worth three-move mate
+        )
         move = player.select(
             temperature=(
                 args.mcts_temperature(game) if callable(args.mcts_temperature) else args.mcts_temperature
@@ -350,6 +328,8 @@ def get_best_player_index(current: int, best: int):
     player_curr = load_player_of(current, args.jobs)
     player_best = load_player_of(best, args.jobs)
     num_play = 40
+    win_threshold = num_play * args.win_ratio_threshold
+    loss_threshold = num_play * (1 - args.win_ratio_threshold)
     pbar = tqdm(range(num_play), ncols=100)
     for n in pbar:
         if n % 2 == 0:
@@ -373,7 +353,9 @@ def get_best_player_index(current: int, best: int):
                 vshogi.DRAW: 'draw',
             }[game.result]] += 1
         pbar.set_description(f'{current} vs {best}: {results}')
-    return current if results['win'] > (num_play * 0.55) else best
+        if (results['win'] > win_threshold) or (results['loss'] > loss_threshold):
+            break
+    return current if results['win'] > win_threshold else best
 
 
 def play_against_past_players(index: int, dump_records: bool = False):
@@ -437,8 +419,6 @@ def parse_args():
         resume_rl_cycle_from: int = config(type=int, default=1, help='Resume Reinforcement Learning cycle if given. By default 0.')
         nn_channels: int = config(type=int, default=None, help='# of hidden channels in NN. Default value varies in shogi games.')
         nn_backbones: int = config(type=int, default=None, help='# of backbone layers in NN. Default value varies in shogi games.')
-        nn_policy: int = config(type=int, default=1, help='# of layers for policy head in NN. By default 1.')
-        nn_value: int = config(type=int, default=2, help='# of layers for value head in NN. By default 2.')
         nn_epochs: int = config(type=int, default=20, help='# of epochs in NN training. By default 20.')
         nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
         nn_learning_rate: float = config(type=float, default=1e-3, help='Learning rate of NN weight update')
@@ -448,6 +428,7 @@ def parse_args():
         mcts_temperature: float = config(type=float, default=0.1, help='Temperature for selecting action in MCTS, default=0.1')
         self_play: int = config(type=int, default=200, help='# of self-play in one RL cycle, default=200')
         self_play_index_from: int = config(type=int, default=0, help='Index to start self-play from, default=0')
+        win_ratio_threshold: float = config(type=float, default=0.55, help='Threshold of win ratio to adopt new model against previous one, default=0.55')
         validations: int = config(type=int, default=10, help='# of validation plays per model, default=10')
         jobs: int = config(short=False, type=int, default=1, help='# of jobs to run self-play in parallel, default=1')
         output: str = config(short=True, type=str, help='Output path of self-play datasets and trained NN models, default=`shogi`')
@@ -551,8 +532,6 @@ if __name__ == '__main__':
         num_policy_per_square=shogi.Move._num_policy_per_square(),
         num_channels_in_hidden_layer=args.nn_channels,
         num_backbone_layers=args.nn_backbones,
-        num_policy_layers=args.nn_policy,
-        num_value_layers=args.nn_value,
     )
     if args.resume_rl_cycle_from == 1:
         PolicyValueFunction(network).save_model_as_tflite(f'models/model_{0:04d}.tflite')
