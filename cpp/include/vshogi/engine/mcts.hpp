@@ -399,13 +399,13 @@ private:
         for (std::size_t ii = num_max_try; ii--;) {
             float s = dist(engine);
             for (ch = m_child.get(); ch != nullptr; ch = ch->m_sibling.get()) {
-                if (ch->m_proba > s) {
+                if (p > s) {
                     if (!ch->is_mate_to_win())
                         return ch;
                     else
                         break;
                 }
-                s -= ch->m_proba;
+                s -= p;
             }
         }
         return ch;

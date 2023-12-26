@@ -172,6 +172,24 @@ def test_visit_count_by_random():
     assert visit_count > visit_count_with_noise
 
 
+def test_visit_count_by_random_2():
+    game = shogi.Game()
+    m = shogi.Move(shogi.C3, shogi.C4)
+
+    searcher = MonteCarloTreeSearcher(
+        lambda g: (np.arange(g.num_dlshogi_policy), 0.))
+    searcher.set_root(game)
+    searcher.explore(n=100, random_depth=0)
+    visit_count = searcher.get_visit_counts()[m]
+    print(searcher._tree(depth=2, breadth=-1))
+
+    searcher.set_root(game)
+    searcher.explore(n=100, random_depth=1, non_random_ratio=0)
+    visit_count_with_noise = searcher.get_visit_counts()[m]
+    print(searcher._tree(depth=2, breadth=-1))
+    assert visit_count > visit_count_with_noise + 10
+
+
 def test_tree():
     game = shogi.Game()
     searcher = MonteCarloTreeSearcher(uniform_pv_func)
