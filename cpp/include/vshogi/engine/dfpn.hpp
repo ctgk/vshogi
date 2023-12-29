@@ -294,10 +294,25 @@ public:
         m_root = Node<Game, Move, true>();
         m_game_ptr = std::make_unique<Game>(Game(g));
     }
+
+    /**
+     * @brief Explore mate moves at given game state.
+     *
+     * @return true Found mate moves.
+     * @return false No mate moves found which may be found by further explorations.
+     */
     bool explore()
     {
         return explore(m_default_num_nodes);
     }
+
+    /**
+     * @brief Explore mate moves at given game state.
+     *
+     * @param n Number of nodes to explore.
+     * @return true Found mate moves.
+     * @return false No mate moves found which may be found by further explorations.
+     */
     bool explore(std::size_t n)
     {
         const Game& g = *m_game_ptr;
