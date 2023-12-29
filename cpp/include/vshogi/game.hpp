@@ -202,21 +202,30 @@ public:
     {
         return m_checker_locations[0] != Squares::SQ_NA;
     }
-    bool in_check_after_move(const Move& move) const
+    bool is_check_move(const Move& move) const
     {
         if (!is_legal(move))
             return false;
+        const auto turn = get_turn();
         const auto dst = move.destination();
         const auto board_after_move
             = State(m_current_state).apply(move).get_board();
         const auto piece = board_after_move[dst];
-        BitBoard occupied_after_move = BitBoard();
-        for (auto&& sq : Squares::square_array) {
-            if (board_after_move[sq] != Pieces::VOID) {
-                occupied_after_move |= BitBoard::from_square(sq);
-            }
-        }
         const auto enemy_king_sq = m_king_locations[~get_turn()];
+
+        BitBoard occupied_after_move
+            = m_occupied[2] | BitBoard::from_square(dst);
+        auto discovered_checker_location = Squares::SQ_NA;
+        if (!move.is_drop()) {
+            const auto src = move.source_square();
+            const auto dir = Squares::get_direction(src, enemy_king_sq);
+            if ((dir != DIR_NA)
+                && (dir != Squares::get_direction(dst, enemy_king_sq))
+                && (board_after_move.find_attacker(turn, enemy_king_sq, dir)
+                    != Squares::SQ_NA))
+                return true; // discovered check
+            occupied_after_move &= (~BitBoard::from_square(src));
+        }
         return BitBoard::get_attacks_by(piece, dst, occupied_after_move)
             .is_one(enemy_king_sq);
     }
