@@ -22,6 +22,8 @@ private:
     using NodeAlly = Node<Game, Move, Attacker>;
     using NodeEnemy = Node<Game, Move, !Attacker>;
 
+    std::unique_ptr<Game> m_game;
+
     NodeEnemy* m_parent;
 
     /**
@@ -44,14 +46,14 @@ private:
     friend class Node<Game, Move, !Attacker>;
 
 public:
-    Node()
-        : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr), m_action(0),
-          m_pn(1), m_dn(1)
+    Node(const Game& g)
+        : m_game(std::make_unique<Game>(Game(g))), m_parent(nullptr),
+          m_sibling(nullptr), m_child(nullptr), m_action(0), m_pn(1), m_dn(1)
     {
     }
     Node(const Move& action)
-        : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr),
-          m_action(action), m_pn(1), m_dn(1)
+        : m_game(nullptr), m_parent(nullptr), m_sibling(nullptr),
+          m_child(nullptr), m_action(action), m_pn(1), m_dn(1)
     {
     }
 
@@ -109,15 +111,19 @@ public:
         return (found_mate() || found_no_mate());
     }
 
-    void select_simulate_expand_backprop(Game& game)
+    void select_simulate_expand_backprop()
     {
         if (m_child == nullptr) {
             // pn and dn should not be infinity when there are no children.
-            simulate_expand_backprop(game);
+            simulate_expand_backprop();
         } else {
             NodeEnemy* child = select();
             child->m_parent = this;
-            child->select_simulate_expand_backprop(game.apply(child->m_action));
+            if (child->m_game == nullptr) {
+                child->m_game = std::make_unique<Game>(
+                    Game(*m_game).apply(child->m_action));
+            }
+            child->select_simulate_expand_backprop();
         }
     }
 
@@ -170,10 +176,11 @@ private:
             return out;
         }
     }
-    void simulate_expand_backprop(const Game& game)
+    void simulate_expand_backprop()
     {
         const std::uint32_t pn_original = m_pn;
         const std::uint32_t dn_original = m_dn;
+        const Game& game = *m_game;
         const auto r = game.get_result();
         if (r == ONGOING) {
             expand(game);
@@ -280,19 +287,13 @@ template <class Game, class Move>
 class Searcher
 {
 private:
-    const std::size_t m_default_num_nodes;
     Node<Game, Move, true> m_root;
-    std::unique_ptr<Game> m_game_ptr;
+    const std::size_t m_default_num_nodes;
 
 public:
-    Searcher(const std::size_t default_num_nodes = 1000)
-        : m_default_num_nodes(default_num_nodes), m_root(), m_game_ptr(nullptr)
+    Searcher(const Game& g, const std::size_t default_num_nodes = 1000)
+        : m_root(g), m_default_num_nodes(default_num_nodes)
     {
-    }
-    void set_root(const Game& g)
-    {
-        m_root = Node<Game, Move, true>();
-        m_game_ptr = std::make_unique<Game>(Game(g));
     }
 
     /**
@@ -315,12 +316,10 @@ public:
      */
     bool explore(std::size_t n)
     {
-        const Game& g = *m_game_ptr;
         for (; n--;) {
             if (m_root.found_conclusion())
                 break;
-            auto g_tmp = Game(g);
-            m_root.select_simulate_expand_backprop(g_tmp);
+            m_root.select_simulate_expand_backprop();
         }
         return m_root.found_mate();
     }

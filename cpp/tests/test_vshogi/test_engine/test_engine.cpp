@@ -24,8 +24,7 @@ TEST(shogi_engine, mcts_with_dfpn)
         if (g.get_result() != vshogi::ONGOING)
             break;
 
-        auto dfpn = vshogi::engine::dfpn::Searcher<Game, Move>(10000);
-        dfpn.set_root(g);
+        auto dfpn = vshogi::engine::dfpn::Searcher<Game, Move>(g, 10000);
         if (dfpn.explore())
             break;
 

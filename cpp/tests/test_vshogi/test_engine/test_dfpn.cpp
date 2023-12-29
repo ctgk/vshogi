@@ -29,19 +29,14 @@ TEST(dfpn, mate_in_one_black)
     // E |   |   |+OU|   |   |
     //   *---*---*---*---*---*
     // Black: -
-    auto g = Game("2k2/5/2GB1/5/2K2 b -");
-    auto root = Node();
-    {
-        auto g_tmp = Game(g);
-        root.select_simulate_expand_backprop(g_tmp);
-        CHECK_EQUAL(1, root.get_pn());
-        CHECK_EQUAL(4, root.get_dn());
-    }
+    auto root = Node(Game("2k2/5/2GB1/5/2K2 b -"));
+    root.select_simulate_expand_backprop();
+    CHECK_EQUAL(1, root.get_pn());
+    CHECK_EQUAL(4, root.get_dn());
     for (int ii = 10; ii--;) {
         if (root.found_mate())
             break;
-        auto g_tmp = Game(g);
-        root.select_simulate_expand_backprop(g_tmp);
+        root.select_simulate_expand_backprop();
     }
 
     const auto actual = root.get_mate_moves();
@@ -69,9 +64,7 @@ TEST(dfpn, mate_in_three_white)
     // E |   |   |   |   |   |
     //   *---*---*---*---*---*
     // Black: -
-    auto g = Game("5/2p2/5/2K2/5 w 2g");
-    auto searcher = Searcher();
-    searcher.set_root(g);
+    auto searcher = Searcher(Game("5/2p2/5/2K2/5 w 2g"));
     CHECK_TRUE(searcher.explore(100));
     CHECK_TRUE(searcher.found_mate());
     const auto actual = searcher.get_mate_moves();
@@ -99,36 +92,31 @@ TEST(dfpn, mate_in_three_straight_forward)
     // E |   |   |   |   |+OU|
     //   *---*---*---*---*---*
     // Black: HI
-    auto g = Game("3bk/3s1/3BP/4+R/4K b -");
-    auto root = Node();
+    auto root = Node(Game("3bk/3s1/3BP/4+R/4K b -"));
     {
         CHECK_FALSE(root.found_mate());
-        auto g_tmp = Game(g);
-        root.select_simulate_expand_backprop(g_tmp);
+        root.select_simulate_expand_backprop();
         // root
         CHECK_EQUAL(1, root.get_pn());
         CHECK_EQUAL(1, root.get_dn());
     }
     {
         CHECK_FALSE(root.found_mate());
-        auto g_tmp = Game(g);
-        root.select_simulate_expand_backprop(g_tmp);
+        root.select_simulate_expand_backprop();
         // root -> Move(B1, C1)
         CHECK_EQUAL(1, root.get_pn());
         CHECK_EQUAL(1, root.get_dn());
     }
     {
         CHECK_FALSE(root.found_mate());
-        auto g_tmp = Game(g);
-        root.select_simulate_expand_backprop(g_tmp);
+        root.select_simulate_expand_backprop();
         // root -> Move(B1, C1) -> Move(B1, A2)
         CHECK_EQUAL(1, root.get_pn());
         CHECK_EQUAL(1, root.get_dn());
     }
     {
         CHECK_FALSE(root.found_mate());
-        auto g_tmp = Game(g);
-        root.select_simulate_expand_backprop(g_tmp);
+        root.select_simulate_expand_backprop();
         // root -> Move(B1, C1) -> Move(B1, A2) -> Move(B1, D1)
         const auto actual = root.get_mate_moves();
         CHECK_EQUAL(3, actual.size());
@@ -158,13 +146,11 @@ TEST(dfpn, mate_in_three)
     // E |   |   |   |   |+OU|
     //   *---*---*---*---*---*
     // Black: HI
-    auto g = Game("2sgk/5/3RG/5/4K b R");
-    auto root = Node();
+    auto root = Node(Game("2sgk/5/3RG/5/4K b R"));
     for (int ii = 500; ii--;) {
         if (root.found_mate())
             break;
-        auto g_tmp = Game(g);
-        root.select_simulate_expand_backprop(g_tmp);
+        root.select_simulate_expand_backprop();
     }
     const auto actual = root.get_mate_moves();
     CHECK_EQUAL(3, actual.size());
@@ -197,13 +183,11 @@ TEST(dfpn, mate_in_five)
     // E |   |   |   |   |   |
     //   *---*---*---*---*---*
     // Black: GIx2
-    auto g = Game("2pkb/4R/2+bG1/5/5 b 2S");
-    auto root = Node();
+    auto root = Node(Game("2pkb/4R/2+bG1/5/5 b 2S"));
     for (int ii = 2000; ii--;) {
         if (root.found_mate())
             break;
-        auto g_tmp = Game(g);
-        root.select_simulate_expand_backprop(g_tmp);
+        root.select_simulate_expand_backprop();
     }
     const auto actual = root.get_mate_moves();
     CHECK_EQUAL(5, actual.size());
@@ -230,9 +214,8 @@ TEST(dfpn, no_mate_no_check)
     // E |   |   |+OU|   |   |
     //   *---*---*---*---*---*
     // Black: -
-    auto g = Game("2k2/5/5/5/2K2 b -");
-    auto root = Node();
-    root.select_simulate_expand_backprop(g);
+    auto root = Node(Game("2k2/5/5/5/2K2 b -"));
+    root.select_simulate_expand_backprop();
     CHECK_FALSE(root.found_mate());
     CHECK_TRUE(root.found_no_mate());
 }
@@ -257,9 +240,7 @@ TEST(dfpn, no_mate_1)
     // E |   |   |   |   |   |
     //   *---*---*---*---*---*
     // Black: GIx2
-    auto g = Game("2k2/5/1+P3/5/5 b 2S");
-    auto searcher = Searcher();
-    searcher.set_root(g);
+    auto searcher = Searcher(Game("2k2/5/1+P3/5/5 b 2S"));
     CHECK_FALSE(searcher.explore(10000));
     CHECK_FALSE(searcher.found_mate());
     CHECK_TRUE(searcher.found_no_mate());
@@ -286,9 +267,7 @@ TEST(dfpn, king_entering_before_mate)
     // F |   |+OU|   |   |   |-OU|
     //   +---+---+---+---+---+---+
     // Black: -
-    auto g = Game("6/6/3n2/6/P4+r/1K3k w -");
-    auto searcher = Searcher();
-    searcher.set_root(g);
+    auto searcher = Searcher(Game("6/6/3n2/6/P4+r/1K3k w -"));
     CHECK_TRUE(searcher.explore(100));
     CHECK_TRUE(searcher.found_mate());
     const auto actual = searcher.get_mate_moves();

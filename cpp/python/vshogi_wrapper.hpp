@@ -158,8 +158,7 @@ inline void export_game(pybind11::module& m)
                     return py::none();
                 } else {
                     auto dfpn = vshogi::engine::dfpn::Searcher<Game, Move>(
-                        num_dfpn_nodes);
-                    dfpn.set_root(self);
+                        self, num_dfpn_nodes);
                     if (dfpn.explore()) {
                         return py::cast(dfpn.get_mate_moves());
                     } else {

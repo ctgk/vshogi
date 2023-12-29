@@ -306,10 +306,9 @@ private:
             if constexpr (!std::is_same<Game, animal_shogi::Game>::value) {
                 if ((num_dfpn_nodes > 0)
                     && (!std::is_same<Game, animal_shogi::Game>::value)) {
-                    auto searcher = dfpn::Searcher<Game, Move>(num_dfpn_nodes);
-                    searcher.set_root(game);
-                    searcher.explore();
-                    if (searcher.found_mate()) {
+                    auto searcher
+                        = dfpn::Searcher<Game, Move>(game, num_dfpn_nodes);
+                    if (searcher.explore()) {
                         m_value = 1.f;
                         m_q_value = 1.f;
                         m_is_mate = true;
