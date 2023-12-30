@@ -17,8 +17,7 @@ int main(int argc, char* argv[])
     vshogi::judkins_shogi::init_ranging_squares_table();
     vshogi::judkins_shogi::State::init_zobrist_table();
 
-    vshogi::shogi::init_non_ranging_attacks_table();
-    vshogi::shogi::init_ranging_squares_table();
+    vshogi::shogi::BitBoard::init_tables();
     vshogi::shogi::State::init_zobrist_table();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }

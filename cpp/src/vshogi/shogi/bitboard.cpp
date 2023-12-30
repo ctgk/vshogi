@@ -1316,14 +1316,27 @@ BitBoard BitBoard::get_attacks_by(
     return BitBoard(0, 0);
 }
 
+namespace
+{
+
+void init_non_ranging_attacks_table();
+void init_ranging_squares_table();
+void init_square_to_bitboard_array();
+
 /**
  * @brief Table of attacks by non-ranging pieces:
  * B_FU, B_KE, B_GI, B_KI, W_FU, W_KE, W_GI, W_KI, and OU.
  */
-static Squares::SquareEnum non_ranging_attacks[9][Squares::num_squares][8];
+Squares::SquareEnum non_ranging_attacks[9][Squares::num_squares][8];
 
-static Squares::SquareEnum ranging_squares_to[Squares::num_squares]
-                                             [Squares::num_directions][9];
+Squares::SquareEnum ranging_squares_to[Squares::num_squares]
+                                      [Squares::num_directions][9];
+
+/**
+ * @brief Array to convert square to bitboard mask.
+ * `square_to_bitboard_array[SQ_1A] == bb_1a`
+*/
+BitBoard square_to_bitboard_array[Squares::num_squares];
 
 void init_non_ranging_attacks_table()
 {
@@ -1378,6 +1391,23 @@ void init_ranging_squares_table()
     }
 }
 
+void init_square_to_bitboard_array()
+{
+    for (auto sq : Squares::square_array) {
+        square_to_bitboard_array[static_cast<int>(sq)]
+            = (BitBoard(1, 0) << static_cast<unsigned int>(sq));
+    }
+}
+
+} // namespace
+
+void BitBoard::init_tables()
+{
+    init_non_ranging_attacks_table();
+    init_ranging_squares_table();
+    init_square_to_bitboard_array();
+}
+
 const Squares::SquareEnum* BitBoard::get_attacks_by_non_ranging(
     const Pieces::BoardPieceTypeEnum& piece,
     const Squares::SquareEnum& location)
@@ -1421,6 +1451,11 @@ const Squares::SquareEnum* BitBoard::get_squares_along(
     if ((direction == DIR_NA) || (location == Squares::SQ_NA))
         return nullptr;
     return ranging_squares_to[location][direction];
+}
+
+BitBoard BitBoard::from_square(const Squares::SquareEnum sq)
+{
+    return square_to_bitboard_array[sq];
 }
 
 } // namespace vshogi::shogi
