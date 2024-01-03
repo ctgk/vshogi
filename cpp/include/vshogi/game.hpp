@@ -202,9 +202,11 @@ public:
     {
         return m_checker_locations[0] != Squares::SQ_NA;
     }
+
+    template <bool CheckLegality = true>
     bool is_check_move(const Move& move) const
     {
-        if (!is_legal(move))
+        if (CheckLegality && (!is_legal(move)))
             return false;
         const auto turn = get_turn();
         const auto dst = move.destination();

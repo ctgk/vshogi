@@ -210,7 +210,7 @@ private:
         std::unique_ptr<NodeEnemy>* ch = &m_child;
         int num_child = 0;
         for (auto&& m : legal_moves) {
-            if ((!Attacker) || game.is_check_move(m)) {
+            if ((!Attacker) || game.template is_check_move<false>(m)) {
                 *ch = std::make_unique<NodeEnemy>(m);
                 ch = &ch->get()->m_sibling;
                 ++num_child;
