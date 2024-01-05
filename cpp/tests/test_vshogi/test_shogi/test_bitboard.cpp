@@ -16,15 +16,11 @@ TEST(bitboard, from_square)
 {
     {
         const auto bb = BitBoard::from_square(SQ_9H);
-        CHECK_EQUAL(0x8000000000000000UL, bb.get_value_9a_to_9h());
-        CHECK_EQUAL(0, bb.get_value_8h_to_1i());
         CHECK_EQUAL(1, bb.hamming_weight());
         CHECK_TRUE(bb.is_one(SQ_9H));
     }
     {
         const auto bb = BitBoard::from_square(SQ_8H);
-        CHECK_EQUAL(0, bb.get_value_9a_to_9h());
-        CHECK_EQUAL(1, bb.get_value_8h_to_1i());
         CHECK_EQUAL(1, bb.hamming_weight());
         CHECK_TRUE(bb.is_one(SQ_8H));
     }
@@ -34,8 +30,6 @@ TEST(bitboard, bitshift)
 {
     {
         const auto bb = BitBoard::from_square(SQ_9H) << 1;
-        CHECK_EQUAL(0, bb.get_value_9a_to_9h());
-        CHECK_EQUAL(1, bb.get_value_8h_to_1i());
         CHECK_EQUAL(1, bb.hamming_weight());
         CHECK_TRUE(bb.is_one(SQ_8H));
     }
@@ -476,6 +470,23 @@ TEST(bitboard, get_attacks_by_ou)
         CHECK_EQUAL(SQ_9I, actual[5]);
         CHECK_EQUAL(SQ_8I, actual[6]);
         CHECK_EQUAL(SQ_7I, actual[7]);
+    }
+    {
+        const auto actual = BitBoard::get_attacks_by(W_OU, SQ_1H);
+        CHECK_EQUAL(5, actual.hamming_weight());
+        CHECK_TRUE(actual.is_one(SQ_2G));
+        CHECK_TRUE(actual.is_one(SQ_1G));
+        CHECK_TRUE(actual.is_one(SQ_2H));
+        CHECK_TRUE(actual.is_one(SQ_2I));
+        CHECK_TRUE(actual.is_one(SQ_1I));
+    }
+    {
+        const auto actual = BitBoard::get_attacks_by_non_ranging(W_OU, SQ_1H);
+        CHECK_EQUAL(SQ_2G, actual[0]);
+        CHECK_EQUAL(SQ_1G, actual[1]);
+        CHECK_EQUAL(SQ_2H, actual[2]);
+        CHECK_EQUAL(SQ_2I, actual[3]);
+        CHECK_EQUAL(SQ_1I, actual[4]);
     }
 }
 

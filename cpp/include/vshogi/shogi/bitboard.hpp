@@ -9,82 +9,217 @@
 namespace vshogi::shogi
 {
 
-class BitBoard
+template <int Mask64bitHigher>
+class UInt128
 {
 private:
-    /**
-     * @brief 64-bit binary representing ON and OFF of squares from 9A to 9H.
-     * @details
-     *       +----------------------------------- SQ_9H
-     *       |                  +---------------- SQ_9B
-     *       |                  |+--------------- SQ_1A
-     *       |                  ||       +------- SQ_8A
-     *       |                  ||       |+------ SQ_9A
-     *       |                  ||       ||
-     *       v                  vv       vv
-     * (MSB) xxxxxxxx ... xxxxxxxx xxxxxxxx (LSB)
-     */
-    std::uint64_t m_value_9a_to_9h;
+#ifdef __SIZEOF_INT128__
+    __uint128_t m_value;
+    static constexpr __uint128_t mask128
+        = (static_cast<__uint128_t>(Mask64bitHigher) << 64)
+          | 0xffffffffffffffff;
+#elif
+    std::uint64_t m_value[2];
+#endif
 
-    /**
-     * @brief 32-bit binary representing ON and OFF of squares from 8H to 1I.
-     * @details
-     *                       +------------------------ 1I
-     *                       | +---------------------- 2I
-     *                       | |      +--------------- 9I
-     *                       | |      | +------------- 1H
-     *                       | |      | |     +------- 7H
-     *                       | |      | |     |+------ 8H
-     *                       | |      | |     ||
-     *                       v v      v v     vv
-     * (MSB) xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx (LSB)
-     */
-    std::uint32_t m_value_8h_to_1i;
-
-    constexpr std::uint64_t
-    lshift_9a_to_9h(const unsigned int shift_width) const
+#ifdef __SIZEOF_INT128__
+    constexpr UInt128(const __uint128_t& a) : m_value{a}
     {
-        return (shift_width == 0)   ? m_value_9a_to_9h
+    }
+#elif
+    constexpr UInt128(const std::uint64_t& higher, const std::uint64_t& lower)
+        : m_value{higher, lower}
+    {
+    }
+#endif
+
+public:
+    constexpr UInt128() : m_value{}
+    {
+    }
+#ifdef __SIZEOF_INT128__
+    constexpr UInt128(const std::uint64_t& a)
+        : m_value{static_cast<__uint128_t>(a)}
+    {
+    }
+#elif
+    constexpr UInt128(const std::uint64_t& a) : m_value{0UL, a}
+    {
+    }
+#endif
+
+    constexpr operator bool() const
+    {
+#ifdef __SIZEOF_INT128__
+        return static_cast<bool>(m_value & mask128);
+#elif
+        return static_cast<bool>(m_value[1] & Mask64bitHigher)
+               || static_cast<bool>(m_value[0]);
+#endif
+    }
+    constexpr operator std::uint64_t() const
+    {
+#ifdef __SIZEOF_INT128__
+        return static_cast<std::uint64_t>(m_value);
+#elif
+        return m_value[0];
+#endif
+    }
+
+    constexpr UInt128 operator~() const
+    {
+#ifdef __SIZEOF_INT128__
+        return UInt128(~m_value);
+#elif
+        return UInt128(~m_value[1], ~m_value[0]);
+#endif
+    }
+
+    constexpr UInt128 operator|(const UInt128& other) const
+    {
+#ifdef __SIZEOF_INT128__
+        return UInt128(m_value | other.m_value);
+#elif
+        return UInt128(
+            m_value[1] | other.m_value[1], m_value[0] | other.m_value[0]);
+#endif
+    }
+
+    constexpr UInt128 operator&(const UInt128& other) const
+    {
+#ifdef __SIZEOF_INT128__
+        return UInt128(m_value & other.m_value);
+#elif
+        return UInt128(
+            m_value[1] & other.m_value[1], m_value[0] & other.m_value[0]);
+#endif
+    }
+
+    constexpr UInt128 operator^(const UInt128& other) const
+    {
+#ifdef __SIZEOF_INT128__
+        return UInt128(m_value ^ other.m_value);
+#elif
+        return UInt128(
+            m_value[1] ^ other.m_value[1], m_value[0] ^ other.m_value[0]);
+#endif
+    }
+
+    constexpr UInt128 operator<<(const unsigned int shift_width) const
+    {
+#ifdef __SIZEOF_INT128__
+        return UInt128(m_value << shift_width);
+#elif
+        UInt128(lshift_higher(shift_width), lshift_lower(shift_width));
+#endif
+    }
+
+    constexpr UInt128 operator>>(const unsigned int shift_width) const
+    {
+#ifdef __SIZEOF_INT128__
+        return UInt128((m_value & mask128) >> shift_width);
+#elif
+        UInt128(
+            rshift_higher(shift_width) & Mask64bitHigher,
+            rshift_lower(shift_width));
+#endif
+    }
+
+    UInt128& operator|=(const UInt128& other)
+    {
+#ifdef __SIZEOF_INT128__
+        m_value |= other.m_value;
+#elif
+        m_value[0] |= other.m_value[0];
+        m_value[1] |= other.m_value[1];
+#endif
+        return *this;
+    }
+    UInt128& operator&=(const UInt128& other)
+    {
+#ifdef __SIZEOF_INT128__
+        m_value &= other.m_value;
+#elif
+        m_value[0] &= other.m_value[0];
+        m_value[1] &= other.m_value[1];
+#endif
+        return *this;
+    }
+    UInt128& operator^=(const UInt128& other)
+    {
+#ifdef __SIZEOF_INT128__
+        m_value ^= other.m_value;
+#elif
+        m_value[0] ^= other.m_value[0];
+        m_value[1] ^= other.m_value[1];
+#endif
+        return *this;
+    }
+
+#ifndef __SIZEOF_INT128__
+private:
+    constexpr std::uint64_t lshift_lower(const unsigned int shift_width) const
+    {
+        return (shift_width == 0)   ? m_value[0]
                : (shift_width > 63) ? 0
-                                    : (m_value_9a_to_9h << shift_width);
+                                    : (m_value[0] << shift_width);
     }
-    constexpr std::uint32_t lshift_carry(const unsigned int shift_width) const
+    constexpr std::uint64_t lshift_carry(const unsigned int shift_width) const
     {
-        return static_cast<std::uint32_t>(
-            (shift_width == 0)   ? 0
-            : (shift_width < 64) ? (m_value_9a_to_9h >> (64 - shift_width))
-            : (shift_width < 96) ? (m_value_9a_to_9h << (shift_width - 64))
-                                 : 0);
+        return static_cast<std::uint64_t>(
+            (shift_width == 0)    ? 0
+            : (shift_width < 64)  ? (m_value[0] >> (64 - shift_width))
+            : (shift_width < 128) ? (m_value[0] << (shift_width - 64))
+                                  : 0);
     }
-    constexpr std::uint32_t
-    lshift_8h_to_1i(const unsigned int shift_width) const
+    constexpr std::uint64_t lshift_higher(const unsigned int shift_width) const
     {
         const auto c = lshift_carry(shift_width);
-        const auto v = (shift_width < 32) ? m_value_8h_to_1i << shift_width : 0;
+        const auto v = (shift_width < 64) ? m_value[1] << shift_width : 0;
         return v | c;
     }
-    constexpr std::uint64_t
-    rshift_9a_to_9h(const unsigned int shift_width) const
+    constexpr std::uint64_t rshift_lower(const unsigned int shift_width) const
     {
-        const auto v = (shift_width == 0)   ? m_value_9a_to_9h
+        const auto v = (shift_width == 0)   ? m_value[0]
                        : (shift_width > 63) ? 0
-                                            : (m_value_9a_to_9h >> shift_width);
+                                            : (m_value[0] >> shift_width);
         const auto c = rshift_carry(shift_width);
         return v | c;
     }
     constexpr std::uint64_t rshift_carry(const unsigned int shift_width) const
     {
-        const auto v = static_cast<std::uint64_t>(m_value_8h_to_1i);
-        return (shift_width == 0)    ? 0
-               : (shift_width <= 64) ? (v << (64 - shift_width))
-               : (shift_width <= 96) ? (v >> (shift_width - 64))
-                                     : 0;
+        const auto v = static_cast<std::uint64_t>(m_value[1]);
+        return (shift_width == 0)     ? 0
+               : (shift_width <= 64)  ? (v << (64 - shift_width))
+               : (shift_width <= 128) ? (v >> (shift_width - 64))
+                                      : 0;
     }
-    constexpr std::uint32_t
-    rshift_8h_to_1i(const unsigned int shift_width) const
+    constexpr std::uint64_t rshift_higher(const unsigned int shift_width) const
     {
-        return (shift_width <= 32) ? (m_value_8h_to_1i >> shift_width) : 0;
+        return (shift_width <= 64) ? ((m_value[1]) >> shift_width) : 0;
     }
+#endif
+};
+
+class BitBoard
+{
+private:
+    /**
+     * @brief 128-bit binary representing ON and OFF of squares from 9A to 1I.
+     * @details
+     *                  +------------------------------------------------------- SQ_1I (80)
+     *                  |                 +------------------------------------- SQ_8H (64)
+     *                  |                 | +----------------------------------- SQ_9H (63)
+     *                  |                 | |                  +---------------- SQ_9B
+     *                  |                 | |                  |+--------------- SQ_1A
+     *                  |                 | |                  ||       +------- SQ_8A
+     *                  |                 | |                  ||       |+------ SQ_9A (0)
+     *                  |                 | |                  ||       ||
+     *                  v                 v v                  vv       vv
+     * (MSB) ... xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx ... xxxxxxxx xxxxxxxx (LSB)
+     */
+    UInt128<0x01ffff> m_value;
+
     using SquareEnum = Squares::SquareEnum;
     static constexpr auto SQ_9A = Squares::SQ_9A; // NOLINT
     static constexpr auto SQ_8A = Squares::SQ_8A; // NOLINT
@@ -169,13 +304,13 @@ private:
     static constexpr auto SQ_1I = Squares::SQ_1I; // NOLINT
 
 public:
-    constexpr BitBoard() : m_value_9a_to_9h(0UL), m_value_8h_to_1i(0U)
+    constexpr BitBoard() : m_value{}
     {
     }
-    constexpr BitBoard(
-        const std::uint64_t v_9a_to_9h, const std::uint32_t v_8h_to_1i)
-        : m_value_9a_to_9h(v_9a_to_9h),
-          m_value_8h_to_1i(v_8h_to_1i & 0x0001ffff)
+    constexpr BitBoard(const std::uint64_t v) : m_value{v}
+    {
+    }
+    constexpr BitBoard(const UInt128<0x01ffff>& v) : m_value{v}
     {
     }
     static void init_tables();
@@ -212,86 +347,70 @@ public:
     static const Squares::SquareEnum* get_squares_along(
         const DirectionEnum& direction, const Squares::SquareEnum& location);
 
-    std::uint64_t get_value_9a_to_9h() const
-    {
-        return m_value_9a_to_9h;
-    }
-    std::uint32_t get_value_8h_to_1i() const
-    {
-        return m_value_8h_to_1i;
-    }
     constexpr BitBoard operator|(const BitBoard other) const
     {
-        return BitBoard(
-            m_value_9a_to_9h | other.m_value_9a_to_9h,
-            m_value_8h_to_1i | other.m_value_8h_to_1i);
+        return BitBoard(m_value | other.m_value);
     }
     BitBoard& operator|=(const BitBoard other)
     {
-        m_value_9a_to_9h |= other.m_value_9a_to_9h;
-        m_value_8h_to_1i |= other.m_value_8h_to_1i;
+        m_value |= other.m_value;
         return *this;
     }
     constexpr BitBoard operator&(const BitBoard other) const
     {
-        return BitBoard(
-            m_value_9a_to_9h & other.m_value_9a_to_9h,
-            m_value_8h_to_1i & other.m_value_8h_to_1i);
+        return BitBoard(m_value & other.m_value);
     }
     BitBoard& operator&=(const BitBoard other)
     {
-        m_value_9a_to_9h &= other.m_value_9a_to_9h;
-        m_value_8h_to_1i &= other.m_value_8h_to_1i;
+        m_value &= other.m_value;
         return *this;
     }
     constexpr BitBoard operator~() const
     {
-        return BitBoard(~m_value_9a_to_9h, ~m_value_8h_to_1i);
+        return BitBoard(~m_value);
     }
     constexpr bool any() const
     {
-        return (m_value_9a_to_9h > 0) || (m_value_8h_to_1i > 0);
+        return static_cast<bool>(m_value);
     }
     constexpr BitBoard operator<<(const unsigned int shift_width) const
     {
-        return BitBoard(
-            lshift_9a_to_9h(shift_width), lshift_8h_to_1i(shift_width));
+        return BitBoard(m_value << shift_width);
     }
     constexpr BitBoard operator>>(const unsigned int shift_width) const
     {
-        return BitBoard(
-            rshift_9a_to_9h(shift_width), rshift_8h_to_1i(shift_width));
+        return BitBoard(m_value >> shift_width);
     }
     template <DirectionEnum D>
     constexpr BitBoard shift() const
     {
         constexpr auto bb_f12345678
-            = ~((BitBoard(1, 0) << static_cast<unsigned int>(SQ_9A))
-                | (BitBoard(1, 0) << static_cast<unsigned int>(SQ_9B))
-                | (BitBoard(1, 0) << static_cast<unsigned int>(SQ_9C))
-                | (BitBoard(1, 0) << static_cast<unsigned int>(SQ_9D))
-                | (BitBoard(1, 0) << static_cast<unsigned int>(SQ_9E))
-                | (BitBoard(1, 0) << static_cast<unsigned int>(SQ_9F))
-                | (BitBoard(1, 0) << static_cast<unsigned int>(SQ_9G))
-                | (BitBoard(1, 0) << static_cast<unsigned int>(SQ_9H))
-                | (BitBoard(1, 0) << static_cast<unsigned int>(SQ_9I)));
+            = ~((BitBoard(1) << static_cast<unsigned int>(SQ_9A))
+                | (BitBoard(1) << static_cast<unsigned int>(SQ_9B))
+                | (BitBoard(1) << static_cast<unsigned int>(SQ_9C))
+                | (BitBoard(1) << static_cast<unsigned int>(SQ_9D))
+                | (BitBoard(1) << static_cast<unsigned int>(SQ_9E))
+                | (BitBoard(1) << static_cast<unsigned int>(SQ_9F))
+                | (BitBoard(1) << static_cast<unsigned int>(SQ_9G))
+                | (BitBoard(1) << static_cast<unsigned int>(SQ_9H))
+                | (BitBoard(1) << static_cast<unsigned int>(SQ_9I)));
         constexpr auto bb_f23456789
-            = ~((BitBoard(1, 0) << static_cast<unsigned int>(SQ_1A))
-                | (BitBoard(1, 0) << static_cast<unsigned int>(SQ_1B))
-                | (BitBoard(1, 0) << static_cast<unsigned int>(SQ_1C))
-                | (BitBoard(1, 0) << static_cast<unsigned int>(SQ_1D))
-                | (BitBoard(1, 0) << static_cast<unsigned int>(SQ_1E))
-                | (BitBoard(1, 0) << static_cast<unsigned int>(SQ_1F))
-                | (BitBoard(1, 0) << static_cast<unsigned int>(SQ_1G))
-                | (BitBoard(1, 0) << static_cast<unsigned int>(SQ_1H))
-                | (BitBoard(1, 0) << static_cast<unsigned int>(SQ_1I)));
+            = ~((BitBoard(1) << static_cast<unsigned int>(SQ_1A))
+                | (BitBoard(1) << static_cast<unsigned int>(SQ_1B))
+                | (BitBoard(1) << static_cast<unsigned int>(SQ_1C))
+                | (BitBoard(1) << static_cast<unsigned int>(SQ_1D))
+                | (BitBoard(1) << static_cast<unsigned int>(SQ_1E))
+                | (BitBoard(1) << static_cast<unsigned int>(SQ_1F))
+                | (BitBoard(1) << static_cast<unsigned int>(SQ_1G))
+                | (BitBoard(1) << static_cast<unsigned int>(SQ_1H))
+                | (BitBoard(1) << static_cast<unsigned int>(SQ_1I)));
         constexpr BitBoard mask[] = {
             // clang-format off
-            bb_f12345678, ~BitBoard(0, 0), bb_f23456789,
-            bb_f12345678,                  bb_f23456789,
-            bb_f12345678, ~BitBoard(0, 0), bb_f23456789,
-            bb_f12345678,                  bb_f23456789,
-            bb_f12345678,                  bb_f23456789,
+            bb_f12345678, ~BitBoard(0), bb_f23456789,
+            bb_f12345678,               bb_f23456789,
+            bb_f12345678, ~BitBoard(0), bb_f23456789,
+            bb_f12345678,               bb_f23456789,
+            bb_f12345678,               bb_f23456789,
             // clang-format on
         };
         constexpr auto delta = Squares::direction_to_delta(D);
@@ -360,27 +479,24 @@ public:
     }
     bool is_one(const SquareEnum sq) const
     {
-        if (sq < SQ_8H) {
-            return static_cast<bool>(
-                (1UL << static_cast<std::uint64_t>(sq)) & m_value_9a_to_9h);
-        } else {
-            return static_cast<bool>(
-                (1U << (static_cast<std::uint32_t>(sq) - 64))
-                & m_value_8h_to_1i);
-        }
+        return static_cast<bool>(
+            (UInt128<0x01ffff>(1UL) << static_cast<unsigned int>(sq))
+            & m_value);
     }
     int hamming_weight() const
     {
-        return hamming_weight_9a_to_9h() + hamming_weight_8h_to_1i();
+        return hamming_weight_64bit(static_cast<std::uint64_t>(m_value))
+               + hamming_weight_64bit(
+                   static_cast<std::uint64_t>(m_value >> 64U));
     }
 
 private:
-    int hamming_weight_9a_to_9h() const
+    static int hamming_weight_64bit(std::uint64_t x)
     {
+        // https://en.wikipedia.org/wiki/Hamming_weight
         constexpr std::uint64_t m1 = 0x5555555555555555; // 0101...
         constexpr std::uint64_t m2 = 0x3333333333333333; // 00110011..
         constexpr std::uint64_t m4 = 0x0f0f0f0f0f0f0f0f; // 0000111100001111..
-        auto x = m_value_9a_to_9h;
         x -= (x >> 1) & m1; //put count of each 2 bits into those 2 bits
         x = (x & m2) + ((x >> 2) & m2); // each 4 bits into those 4 bits
         x = (x + (x >> 4)) & m4; //put count of each 8 bits into those 8 bits
@@ -389,105 +505,90 @@ private:
         x += x >> 32; //put count of each 64 bits into their lowest 8 bits
         return x & 0x7f;
     }
-    int hamming_weight_8h_to_1i() const
-    {
-        // https://en.wikipedia.org/wiki/Hamming_weight
-        constexpr std::uint32_t m1 = 0x55555555;
-        constexpr std::uint32_t m2 = 0x33333333;
-        constexpr std::uint32_t m4 = 0x0f0f0f0f;
-        constexpr std::uint32_t h01 = 0x01010101;
-        auto x = m_value_8h_to_1i;
-        x -= (x >> 1U) & m1;
-        x = (x & m2) + ((x >> 2) & m2);
-        x = (x + (x >> 4)) & m4;
-        x += x >> 8;
-        x += x >> 16;
-        return x & 0x7f;
-    }
 };
 
 // clang-format off
-constexpr BitBoard bb_1a = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_1A));
-constexpr BitBoard bb_1b = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_1B));
-constexpr BitBoard bb_1c = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_1C));
-constexpr BitBoard bb_1d = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_1D));
-constexpr BitBoard bb_1e = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_1E));
-constexpr BitBoard bb_1f = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_1F));
-constexpr BitBoard bb_1g = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_1G));
-constexpr BitBoard bb_1h = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_1H));
-constexpr BitBoard bb_1i = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_1I));
-constexpr BitBoard bb_2a = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_2A));
-constexpr BitBoard bb_2b = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_2B));
-constexpr BitBoard bb_2c = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_2C));
-constexpr BitBoard bb_2d = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_2D));
-constexpr BitBoard bb_2e = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_2E));
-constexpr BitBoard bb_2f = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_2F));
-constexpr BitBoard bb_2g = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_2G));
-constexpr BitBoard bb_2h = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_2H));
-constexpr BitBoard bb_2i = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_2I));
-constexpr BitBoard bb_3a = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_3A));
-constexpr BitBoard bb_3b = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_3B));
-constexpr BitBoard bb_3c = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_3C));
-constexpr BitBoard bb_3d = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_3D));
-constexpr BitBoard bb_3e = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_3E));
-constexpr BitBoard bb_3f = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_3F));
-constexpr BitBoard bb_3g = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_3G));
-constexpr BitBoard bb_3h = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_3H));
-constexpr BitBoard bb_3i = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_3I));
-constexpr BitBoard bb_4a = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_4A));
-constexpr BitBoard bb_4b = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_4B));
-constexpr BitBoard bb_4c = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_4C));
-constexpr BitBoard bb_4d = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_4D));
-constexpr BitBoard bb_4e = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_4E));
-constexpr BitBoard bb_4f = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_4F));
-constexpr BitBoard bb_4g = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_4G));
-constexpr BitBoard bb_4h = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_4H));
-constexpr BitBoard bb_4i = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_4I));
-constexpr BitBoard bb_5a = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_5A));
-constexpr BitBoard bb_5b = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_5B));
-constexpr BitBoard bb_5c = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_5C));
-constexpr BitBoard bb_5d = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_5D));
-constexpr BitBoard bb_5e = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_5E));
-constexpr BitBoard bb_5f = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_5F));
-constexpr BitBoard bb_5g = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_5G));
-constexpr BitBoard bb_5h = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_5H));
-constexpr BitBoard bb_5i = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_5I));
-constexpr BitBoard bb_6a = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_6A));
-constexpr BitBoard bb_6b = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_6B));
-constexpr BitBoard bb_6c = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_6C));
-constexpr BitBoard bb_6d = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_6D));
-constexpr BitBoard bb_6e = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_6E));
-constexpr BitBoard bb_6f = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_6F));
-constexpr BitBoard bb_6g = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_6G));
-constexpr BitBoard bb_6h = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_6H));
-constexpr BitBoard bb_6i = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_6I));
-constexpr BitBoard bb_7a = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_7A));
-constexpr BitBoard bb_7b = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_7B));
-constexpr BitBoard bb_7c = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_7C));
-constexpr BitBoard bb_7d = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_7D));
-constexpr BitBoard bb_7e = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_7E));
-constexpr BitBoard bb_7f = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_7F));
-constexpr BitBoard bb_7g = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_7G));
-constexpr BitBoard bb_7h = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_7H));
-constexpr BitBoard bb_7i = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_7I));
-constexpr BitBoard bb_8a = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_8A));
-constexpr BitBoard bb_8b = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_8B));
-constexpr BitBoard bb_8c = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_8C));
-constexpr BitBoard bb_8d = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_8D));
-constexpr BitBoard bb_8e = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_8E));
-constexpr BitBoard bb_8f = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_8F));
-constexpr BitBoard bb_8g = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_8G));
-constexpr BitBoard bb_8h = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_8H));
-constexpr BitBoard bb_8i = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_8I));
-constexpr BitBoard bb_9a = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_9A));
-constexpr BitBoard bb_9b = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_9B));
-constexpr BitBoard bb_9c = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_9C));
-constexpr BitBoard bb_9d = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_9D));
-constexpr BitBoard bb_9e = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_9E));
-constexpr BitBoard bb_9f = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_9F));
-constexpr BitBoard bb_9g = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_9G));
-constexpr BitBoard bb_9h = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_9H));
-constexpr BitBoard bb_9i = (BitBoard(1, 0) << static_cast<unsigned int>(Squares::SQ_9I));
+constexpr BitBoard bb_1a = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_1A));
+constexpr BitBoard bb_1b = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_1B));
+constexpr BitBoard bb_1c = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_1C));
+constexpr BitBoard bb_1d = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_1D));
+constexpr BitBoard bb_1e = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_1E));
+constexpr BitBoard bb_1f = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_1F));
+constexpr BitBoard bb_1g = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_1G));
+constexpr BitBoard bb_1h = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_1H));
+constexpr BitBoard bb_1i = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_1I));
+constexpr BitBoard bb_2a = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_2A));
+constexpr BitBoard bb_2b = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_2B));
+constexpr BitBoard bb_2c = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_2C));
+constexpr BitBoard bb_2d = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_2D));
+constexpr BitBoard bb_2e = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_2E));
+constexpr BitBoard bb_2f = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_2F));
+constexpr BitBoard bb_2g = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_2G));
+constexpr BitBoard bb_2h = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_2H));
+constexpr BitBoard bb_2i = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_2I));
+constexpr BitBoard bb_3a = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_3A));
+constexpr BitBoard bb_3b = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_3B));
+constexpr BitBoard bb_3c = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_3C));
+constexpr BitBoard bb_3d = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_3D));
+constexpr BitBoard bb_3e = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_3E));
+constexpr BitBoard bb_3f = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_3F));
+constexpr BitBoard bb_3g = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_3G));
+constexpr BitBoard bb_3h = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_3H));
+constexpr BitBoard bb_3i = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_3I));
+constexpr BitBoard bb_4a = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_4A));
+constexpr BitBoard bb_4b = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_4B));
+constexpr BitBoard bb_4c = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_4C));
+constexpr BitBoard bb_4d = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_4D));
+constexpr BitBoard bb_4e = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_4E));
+constexpr BitBoard bb_4f = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_4F));
+constexpr BitBoard bb_4g = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_4G));
+constexpr BitBoard bb_4h = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_4H));
+constexpr BitBoard bb_4i = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_4I));
+constexpr BitBoard bb_5a = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_5A));
+constexpr BitBoard bb_5b = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_5B));
+constexpr BitBoard bb_5c = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_5C));
+constexpr BitBoard bb_5d = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_5D));
+constexpr BitBoard bb_5e = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_5E));
+constexpr BitBoard bb_5f = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_5F));
+constexpr BitBoard bb_5g = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_5G));
+constexpr BitBoard bb_5h = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_5H));
+constexpr BitBoard bb_5i = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_5I));
+constexpr BitBoard bb_6a = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_6A));
+constexpr BitBoard bb_6b = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_6B));
+constexpr BitBoard bb_6c = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_6C));
+constexpr BitBoard bb_6d = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_6D));
+constexpr BitBoard bb_6e = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_6E));
+constexpr BitBoard bb_6f = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_6F));
+constexpr BitBoard bb_6g = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_6G));
+constexpr BitBoard bb_6h = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_6H));
+constexpr BitBoard bb_6i = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_6I));
+constexpr BitBoard bb_7a = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_7A));
+constexpr BitBoard bb_7b = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_7B));
+constexpr BitBoard bb_7c = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_7C));
+constexpr BitBoard bb_7d = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_7D));
+constexpr BitBoard bb_7e = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_7E));
+constexpr BitBoard bb_7f = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_7F));
+constexpr BitBoard bb_7g = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_7G));
+constexpr BitBoard bb_7h = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_7H));
+constexpr BitBoard bb_7i = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_7I));
+constexpr BitBoard bb_8a = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_8A));
+constexpr BitBoard bb_8b = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_8B));
+constexpr BitBoard bb_8c = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_8C));
+constexpr BitBoard bb_8d = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_8D));
+constexpr BitBoard bb_8e = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_8E));
+constexpr BitBoard bb_8f = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_8F));
+constexpr BitBoard bb_8g = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_8G));
+constexpr BitBoard bb_8h = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_8H));
+constexpr BitBoard bb_8i = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_8I));
+constexpr BitBoard bb_9a = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_9A));
+constexpr BitBoard bb_9b = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_9B));
+constexpr BitBoard bb_9c = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_9C));
+constexpr BitBoard bb_9d = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_9D));
+constexpr BitBoard bb_9e = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_9E));
+constexpr BitBoard bb_9f = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_9F));
+constexpr BitBoard bb_9g = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_9G));
+constexpr BitBoard bb_9h = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_9H));
+constexpr BitBoard bb_9i = (BitBoard(1) << static_cast<unsigned int>(Squares::SQ_9I));
 constexpr BitBoard bb_file1 = bb_1a | bb_1b | bb_1c | bb_1d | bb_1e | bb_1f | bb_1g | bb_1h | bb_1i;
 constexpr BitBoard bb_file2 = bb_2a | bb_2b | bb_2c | bb_2d | bb_2e | bb_2f | bb_2g | bb_2h | bb_2i;
 constexpr BitBoard bb_file3 = bb_3a | bb_3b | bb_3c | bb_3d | bb_3e | bb_3f | bb_3g | bb_3h | bb_3i;

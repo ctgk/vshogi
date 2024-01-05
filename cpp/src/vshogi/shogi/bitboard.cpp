@@ -1271,7 +1271,7 @@ BitBoard BitBoard::get_attacks_by(
     default:
         break;
     }
-    return BitBoard(0, 0);
+    return BitBoard(0);
 }
 
 BitBoard BitBoard::get_attacks_by(
@@ -1313,7 +1313,7 @@ BitBoard BitBoard::get_attacks_by(
     default:
         break;
     }
-    return BitBoard(0, 0);
+    return BitBoard(0);
 }
 
 namespace
@@ -1395,7 +1395,7 @@ void init_square_to_bitboard_array()
 {
     for (auto sq : Squares::square_array) {
         square_to_bitboard_array[static_cast<int>(sq)]
-            = (BitBoard(1, 0) << static_cast<unsigned int>(sq));
+            = (BitBoard(1) << static_cast<unsigned int>(sq));
     }
 }
 
