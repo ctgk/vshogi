@@ -31,26 +31,26 @@ void export_square_enum(py::module& m)
 
 void export_pieces(py::module& m)
 {
-    py::enum_<as::Pieces::PieceTypeEnum>(m, "Piece")
-        .value("CH", as::Pieces::CH)
-        .value("EL", as::Pieces::EL)
-        .value("GI", as::Pieces::GI)
-        .value("LI", as::Pieces::LI)
-        .value("HE", as::Pieces::HE)
-        .value("NA", as::Pieces::NA);
+    py::enum_<as::PieceTypeEnum>(m, "Piece")
+        .value("CH", as::CH)
+        .value("EL", as::EL)
+        .value("GI", as::GI)
+        .value("LI", as::LI)
+        .value("HE", as::HE)
+        .value("NA", as::NA);
 
-    py::enum_<as::Pieces::BoardPieceTypeEnum>(m, "BoardPiece")
-        .value("B_CH", as::Pieces::B_CH)
-        .value("B_EL", as::Pieces::B_EL)
-        .value("B_GI", as::Pieces::B_GI)
-        .value("B_LI", as::Pieces::B_LI)
-        .value("B_HE", as::Pieces::B_HE)
-        .value("W_CH", as::Pieces::W_CH)
-        .value("W_EL", as::Pieces::W_EL)
-        .value("W_GI", as::Pieces::W_GI)
-        .value("W_LI", as::Pieces::W_LI)
-        .value("W_HE", as::Pieces::W_HE)
-        .value("VOID", as::Pieces::VOID);
+    py::enum_<as::BoardPieceTypeEnum>(m, "BoardPiece")
+        .value("B_CH", as::B_CH)
+        .value("B_EL", as::B_EL)
+        .value("B_GI", as::B_GI)
+        .value("B_LI", as::B_LI)
+        .value("B_HE", as::B_HE)
+        .value("W_CH", as::W_CH)
+        .value("W_EL", as::W_EL)
+        .value("W_GI", as::W_GI)
+        .value("W_LI", as::W_LI)
+        .value("W_HE", as::W_HE)
+        .value("VOID", as::VOID);
 }
 
 } // namespace

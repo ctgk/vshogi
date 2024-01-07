@@ -1239,34 +1239,34 @@ constexpr BitBoard attacks_by_ka[Squares::num_squares] = {
 };
 
 BitBoard BitBoard::get_attacks_by(
-    const Pieces::BoardPieceTypeEnum piece, const Squares::SquareEnum location)
+    const BoardPieceTypeEnum piece, const SquareEnum location)
 {
     const auto piece_type = Pieces::to_piece_type(piece);
     const auto color = Pieces::get_color(piece);
     switch (piece_type) {
-    case Pieces::FU:
+    case FU:
         return attacks_by_fu[location][color];
-    case Pieces::KY:
+    case KY:
         return attacks_by_ky[location][color];
-    case Pieces::KE:
+    case KE:
         return attacks_by_ke[location][color];
-    case Pieces::GI:
+    case GI:
         return attacks_by_gi[location][color];
-    case Pieces::KA:
+    case KA:
         return attacks_by_ka[location];
-    case Pieces::KI:
-    case Pieces::TO:
-    case Pieces::NY:
-    case Pieces::NK:
-    case Pieces::NG:
+    case KI:
+    case TO:
+    case NY:
+    case NK:
+    case NG:
         return attacks_by_ki[location][color];
-    case Pieces::HI:
+    case HI:
         return attacks_by_hi[location];
-    case Pieces::UM:
+    case UM:
         return attacks_by_ou[location] | attacks_by_ka[location];
-    case Pieces::RY:
+    case RY:
         return attacks_by_ou[location] | attacks_by_hi[location];
-    case Pieces::OU:
+    case OU:
         return attacks_by_ou[location];
     default:
         break;
@@ -1275,40 +1275,40 @@ BitBoard BitBoard::get_attacks_by(
 }
 
 BitBoard BitBoard::get_attacks_by(
-    const Pieces::BoardPieceTypeEnum piece,
-    const Squares::SquareEnum location,
+    const BoardPieceTypeEnum piece,
+    const SquareEnum location,
     const BitBoard occupied)
 {
     const auto piece_type = Pieces::to_piece_type(piece);
     const auto color = Pieces::get_color(piece);
     switch (piece_type) {
-    case Pieces::FU:
+    case FU:
         return attacks_by_fu[location][color];
-    case Pieces::KY:
+    case KY:
         return (color == BLACK)
                    ? BitBoard::ranging_attacks_to<DIR_N>(location, occupied)
                    : BitBoard::ranging_attacks_to<DIR_S>(location, occupied);
-    case Pieces::KE:
+    case KE:
         return attacks_by_ke[location][color];
-    case Pieces::GI:
+    case GI:
         return attacks_by_gi[location][color];
-    case Pieces::KA:
+    case KA:
         return BitBoard::ranging_attacks_to_diagonal(location, occupied);
-    case Pieces::KI:
-    case Pieces::TO:
-    case Pieces::NY:
-    case Pieces::NK:
-    case Pieces::NG:
+    case KI:
+    case TO:
+    case NY:
+    case NK:
+    case NG:
         return attacks_by_ki[location][color];
-    case Pieces::HI:
+    case HI:
         return BitBoard::ranging_attacks_to_adjacent(location, occupied);
-    case Pieces::UM:
+    case UM:
         return attacks_by_ou[location]
                | BitBoard::ranging_attacks_to_diagonal(location, occupied);
-    case Pieces::RY:
+    case RY:
         return attacks_by_ou[location]
                | BitBoard::ranging_attacks_to_adjacent(location, occupied);
-    case Pieces::OU:
+    case OU:
         return attacks_by_ou[location];
     default:
         break;
@@ -1327,10 +1327,9 @@ void init_square_to_bitboard_array();
  * @brief Table of attacks by non-ranging pieces:
  * B_FU, B_KE, B_GI, B_KI, W_FU, W_KE, W_GI, W_KI, and OU.
  */
-Squares::SquareEnum non_ranging_attacks[9][Squares::num_squares][8];
+SquareEnum non_ranging_attacks[9][Squares::num_squares][8];
 
-Squares::SquareEnum ranging_squares_to[Squares::num_squares]
-                                      [Squares::num_directions][9];
+SquareEnum ranging_squares_to[Squares::num_squares][Squares::num_directions][9];
 
 /**
  * @brief Array to convert square to bitboard mask.
@@ -1344,16 +1343,8 @@ void init_non_ranging_attacks_table()
         = sizeof(non_ranging_attacks) / sizeof(non_ranging_attacks[0][0][0]);
     std::fill_n(&non_ranging_attacks[0][0][0], size, Squares::SQ_NA);
 
-    constexpr Pieces::BoardPieceTypeEnum non_ranging_pieces[]
-        = {Pieces::B_FU,
-           Pieces::B_KE,
-           Pieces::B_GI,
-           Pieces::B_KI,
-           Pieces::W_FU,
-           Pieces::W_KE,
-           Pieces::W_GI,
-           Pieces::W_KI,
-           Pieces::B_OU};
+    constexpr BoardPieceTypeEnum non_ranging_pieces[]
+        = {B_FU, B_KE, B_GI, B_KI, W_FU, W_KE, W_GI, W_KI, B_OU};
     constexpr int num
         = sizeof(non_ranging_pieces) / sizeof(non_ranging_pieces[0]);
     for (int ii = 0; ii < num; ++ii) {
@@ -1408,52 +1399,51 @@ void BitBoard::init_tables()
     init_square_to_bitboard_array();
 }
 
-const Squares::SquareEnum* BitBoard::get_attacks_by_non_ranging(
-    const Pieces::BoardPieceTypeEnum& piece,
-    const Squares::SquareEnum& location)
+const SquareEnum* BitBoard::get_attacks_by_non_ranging(
+    const BoardPieceTypeEnum& piece, const SquareEnum& location)
 {
     switch (piece) {
-    case Pieces::B_FU:
+    case B_FU:
         return non_ranging_attacks[0][location];
-    case Pieces::B_KE:
+    case B_KE:
         return non_ranging_attacks[1][location];
-    case Pieces::B_GI:
+    case B_GI:
         return non_ranging_attacks[2][location];
-    case Pieces::B_KI:
-    case Pieces::B_TO:
-    case Pieces::B_NY:
-    case Pieces::B_NK:
-    case Pieces::B_NG:
+    case B_KI:
+    case B_TO:
+    case B_NY:
+    case B_NK:
+    case B_NG:
         return non_ranging_attacks[3][location];
-    case Pieces::W_FU:
+    case W_FU:
         return non_ranging_attacks[4][location];
-    case Pieces::W_KE:
+    case W_KE:
         return non_ranging_attacks[5][location];
-    case Pieces::W_GI:
+    case W_GI:
         return non_ranging_attacks[6][location];
-    case Pieces::W_KI:
-    case Pieces::W_TO:
-    case Pieces::W_NY:
-    case Pieces::W_NK:
-    case Pieces::W_NG:
+    case W_KI:
+    case W_TO:
+    case W_NY:
+    case W_NK:
+    case W_NG:
         return non_ranging_attacks[7][location];
-    case Pieces::B_OU:
-    case Pieces::W_OU:
+    case B_OU:
+    case W_OU:
         return non_ranging_attacks[8][location];
     default:
         return nullptr;
     }
 }
 
-const Squares::SquareEnum* BitBoard::get_squares_along(
-    const DirectionEnum& direction, const Squares::SquareEnum& location)
+const SquareEnum* BitBoard::get_squares_along(
+    const DirectionEnum& direction, const SquareEnum& location)
 {
     if ((direction == DIR_NA) || (location == Squares::SQ_NA))
         return nullptr;
     return ranging_squares_to[location][direction];
 }
 
-BitBoard BitBoard::from_square(const Squares::SquareEnum sq)
+BitBoard BitBoard::from_square(const SquareEnum sq)
 {
     return square_to_bitboard_array[sq];
 }

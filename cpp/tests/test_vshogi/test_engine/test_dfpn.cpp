@@ -69,7 +69,7 @@ TEST(dfpn, mate_in_three_white)
     CHECK_TRUE(searcher.found_mate());
     const auto actual = searcher.get_mate_moves();
     CHECK_EQUAL(3, actual.size());
-    CHECK_TRUE(Move(SQ_3C, Pieces::KI) == actual[0]);
+    CHECK_TRUE(Move(SQ_3C, KI) == actual[0]);
 }
 
 TEST(dfpn, mate_in_three_straight_forward)
@@ -156,10 +156,10 @@ TEST(dfpn, mate_in_three)
     CHECK_EQUAL(3, actual.size());
     CHECK_TRUE(Move(SQ_1B, SQ_1C) == actual[0]);
     if (actual[1] == Move(SQ_1B, SQ_1A)) {
-        CHECK_TRUE(Move(SQ_1C, Pieces::HI) == actual[2]);
+        CHECK_TRUE(Move(SQ_1C, HI) == actual[2]);
     } else {
         CHECK_TRUE(Move(SQ_1B, SQ_2A) == actual[1]);
-        CHECK_TRUE(Move(SQ_2A, Pieces::HI) == actual[2]);
+        CHECK_TRUE(Move(SQ_2A, HI) == actual[2]);
     }
 }
 
@@ -191,7 +191,7 @@ TEST(dfpn, mate_in_five)
     }
     const auto actual = root.get_mate_moves();
     CHECK_EQUAL(5, actual.size());
-    CHECK_TRUE(Move(SQ_2B, Pieces::GI) == actual[0]);
+    CHECK_TRUE(Move(SQ_2B, GI) == actual[0]);
 }
 
 TEST(dfpn, no_mate_no_check)

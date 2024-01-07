@@ -232,12 +232,11 @@ public:
     }
     static void init_tables();
     static BitBoard from_square(const SquareEnum sq);
+    static BitBoard
+    get_attacks_by(const BoardPieceTypeEnum piece, const SquareEnum location);
     static BitBoard get_attacks_by(
-        const Pieces::BoardPieceTypeEnum piece,
-        const Squares::SquareEnum location);
-    static BitBoard get_attacks_by(
-        const Pieces::BoardPieceTypeEnum piece,
-        const Squares::SquareEnum location,
+        const BoardPieceTypeEnum piece,
+        const SquareEnum location,
         const BitBoard occupied);
     static BitBoard get_promotion_zone(const ColorEnum& c);
 
@@ -247,11 +246,10 @@ public:
      *
      * @param piece
      * @param location
-     * @return const Squares::SquareEnum*
+     * @return const SquareEnum*
      */
-    static const Squares::SquareEnum* get_attacks_by_non_ranging(
-        const Pieces::BoardPieceTypeEnum& piece,
-        const Squares::SquareEnum& location);
+    static const SquareEnum* get_attacks_by_non_ranging(
+        const BoardPieceTypeEnum& piece, const SquareEnum& location);
 
     /**
      * @brief Get pointer to array of squares along the given direction
@@ -259,10 +257,10 @@ public:
      *
      * @param direction
      * @param location
-     * @return const Squares::SquareEnum*
+     * @return const SquareEnum*
      */
-    static const Squares::SquareEnum* get_squares_along(
-        const DirectionEnum& direction, const Squares::SquareEnum& location);
+    static const SquareEnum* get_squares_along(
+        const DirectionEnum& direction, const SquareEnum& location);
 
     constexpr BitBoard operator|(const BitBoard other) const
     {

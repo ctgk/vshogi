@@ -280,29 +280,28 @@ constexpr BitBoard attacks_by_ka[Squares::num_squares] = {
 };
 
 BitBoard BitBoard::get_attacks_by(
-    const Pieces::BoardPieceTypeEnum& piece,
-    const Squares::SquareEnum& location)
+    const BoardPieceTypeEnum& piece, const SquareEnum& location)
 {
     const auto piece_type = Pieces::to_piece_type(piece);
     const auto color = Pieces::get_color(piece);
     switch (piece_type) {
-    case Pieces::FU:
+    case FU:
         return attacks_by_fu[location][color];
-    case Pieces::GI:
+    case GI:
         return attacks_by_gi[location][color];
-    case Pieces::KA:
+    case KA:
         return attacks_by_ka[location];
-    case Pieces::HI:
+    case HI:
         return attacks_by_hi[location];
-    case Pieces::KI:
-    case Pieces::TO:
-    case Pieces::NG:
+    case KI:
+    case TO:
+    case NG:
         return attacks_by_ki[location][color];
-    case Pieces::UM:
+    case UM:
         return attacks_by_ou[location] | attacks_by_ka[location];
-    case Pieces::RY:
+    case RY:
         return attacks_by_ou[location] | attacks_by_hi[location];
-    case Pieces::OU:
+    case OU:
         return attacks_by_ou[location];
     default:
         break;
@@ -311,32 +310,32 @@ BitBoard BitBoard::get_attacks_by(
 }
 
 BitBoard BitBoard::get_attacks_by(
-    const Pieces::BoardPieceTypeEnum& piece,
-    const Squares::SquareEnum& location,
+    const BoardPieceTypeEnum& piece,
+    const SquareEnum& location,
     const BitBoard& occupied)
 {
     const auto piece_type = Pieces::to_piece_type(piece);
     const auto color = Pieces::get_color(piece);
     switch (piece_type) {
-    case Pieces::FU:
+    case FU:
         return attacks_by_fu[location][color];
-    case Pieces::GI:
+    case GI:
         return attacks_by_gi[location][color];
-    case Pieces::KA:
+    case KA:
         return BitBoard::ranging_attacks_to_diagonal(location, occupied);
-    case Pieces::HI:
+    case HI:
         return BitBoard::ranging_attacks_to_adjacent(location, occupied);
-    case Pieces::KI:
-    case Pieces::TO:
-    case Pieces::NG:
+    case KI:
+    case TO:
+    case NG:
         return attacks_by_ki[location][color];
-    case Pieces::UM:
+    case UM:
         return attacks_by_ou[location]
                | BitBoard::ranging_attacks_to_diagonal(location, occupied);
-    case Pieces::RY:
+    case RY:
         return attacks_by_ou[location]
                | BitBoard::ranging_attacks_to_adjacent(location, occupied);
-    case Pieces::OU:
+    case OU:
         return attacks_by_ou[location];
     default:
         break;
@@ -348,25 +347,19 @@ BitBoard BitBoard::get_attacks_by(
  * @brief Table of attacks by non-ranging pieces:
  * B_FU, B_GI, B_KI, W_FU, W_GI, W_KI, and OU.
  */
-static Squares::SquareEnum non_ranging_attacks[7][Squares::num_squares][8];
+static SquareEnum non_ranging_attacks[7][Squares::num_squares][8];
 
-static Squares::SquareEnum ranging_squares_to[Squares::num_squares]
-                                             [Squares::num_directions][5];
+static SquareEnum ranging_squares_to[Squares::num_squares]
+                                    [Squares::num_directions][5];
 
 void init_non_ranging_attacks_table()
 {
     constexpr int size
         = sizeof(non_ranging_attacks) / sizeof(non_ranging_attacks[0][0][0]);
-    std::fill_n(&non_ranging_attacks[0][0][0], size, Squares::SQ_NA);
+    std::fill_n(&non_ranging_attacks[0][0][0], size, SQ_NA);
 
-    constexpr Pieces::BoardPieceTypeEnum non_ranging_pieces[]
-        = {Pieces::B_FU,
-           Pieces::B_GI,
-           Pieces::B_KI,
-           Pieces::W_FU,
-           Pieces::W_GI,
-           Pieces::W_KI,
-           Pieces::B_OU};
+    constexpr BoardPieceTypeEnum non_ranging_pieces[]
+        = {B_FU, B_GI, B_KI, W_FU, W_GI, W_KI, B_OU};
     constexpr int num
         = sizeof(non_ranging_pieces) / sizeof(non_ranging_pieces[0]);
     for (int ii = 0; ii < num; ++ii) {
@@ -386,7 +379,7 @@ void init_ranging_squares_table()
 {
     constexpr int size
         = sizeof(ranging_squares_to) / sizeof(ranging_squares_to[0][0][0]);
-    std::fill_n(&ranging_squares_to[0][0][0], size, Squares::SQ_NA);
+    std::fill_n(&ranging_squares_to[0][0][0], size, SQ_NA);
 
     for (auto& src : Squares::square_array) {
         for (auto& dir : Squares::direction_array) {
@@ -394,7 +387,7 @@ void init_ranging_squares_table()
             int index = 0;
             while (true) {
                 dst = Squares::shift(dst, dir);
-                if (dst == Squares::SQ_NA)
+                if (dst == SQ_NA)
                     break;
                 ranging_squares_to[src][dir][index++] = dst;
             }
@@ -402,39 +395,38 @@ void init_ranging_squares_table()
     }
 }
 
-const Squares::SquareEnum* BitBoard::get_attacks_by_non_ranging(
-    const Pieces::BoardPieceTypeEnum& piece,
-    const Squares::SquareEnum& location)
+const SquareEnum* BitBoard::get_attacks_by_non_ranging(
+    const BoardPieceTypeEnum& piece, const SquareEnum& location)
 {
     switch (piece) {
-    case Pieces::B_FU:
+    case B_FU:
         return non_ranging_attacks[0][location];
-    case Pieces::B_GI:
+    case B_GI:
         return non_ranging_attacks[1][location];
-    case Pieces::B_KI:
-    case Pieces::B_TO:
-    case Pieces::B_NG:
+    case B_KI:
+    case B_TO:
+    case B_NG:
         return non_ranging_attacks[2][location];
-    case Pieces::W_FU:
+    case W_FU:
         return non_ranging_attacks[3][location];
-    case Pieces::W_GI:
+    case W_GI:
         return non_ranging_attacks[4][location];
-    case Pieces::W_KI:
-    case Pieces::W_TO:
-    case Pieces::W_NG:
+    case W_KI:
+    case W_TO:
+    case W_NG:
         return non_ranging_attacks[5][location];
-    case Pieces::B_OU:
-    case Pieces::W_OU:
+    case B_OU:
+    case W_OU:
         return non_ranging_attacks[6][location];
     default:
         return nullptr;
     }
 }
 
-const Squares::SquareEnum* BitBoard::get_squares_along(
-    const DirectionEnum& direction, const Squares::SquareEnum& location)
+const SquareEnum* BitBoard::get_squares_along(
+    const DirectionEnum& direction, const SquareEnum& location)
 {
-    if ((direction == DIR_NA) || (location == Squares::SQ_NA))
+    if ((direction == DIR_NA) || (location == SQ_NA))
         return nullptr;
     return ranging_squares_to[location][direction];
 }

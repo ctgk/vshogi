@@ -217,7 +217,6 @@ public:
 
         BitBoard occupied_after_move
             = m_occupied[2] | BitBoard::from_square(dst);
-        auto discovered_checker_location = Squares::SQ_NA;
         if (!move.is_drop()) {
             const auto src = move.source_square();
             const auto dir = Squares::get_direction(src, enemy_king_sq);
@@ -611,7 +610,6 @@ protected:
     void append_legal_moves_to_defend_king()
     {
         const auto turn = get_turn();
-        const auto& board = get_board();
         const auto checker_location = m_checker_locations[0];
         const auto king_location = m_king_locations[turn];
         append_legal_moves_by_non_king_moving_to(checker_location);

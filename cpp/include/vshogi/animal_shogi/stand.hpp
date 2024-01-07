@@ -53,18 +53,16 @@ template <>
 inline animal_shogi::Stand::Stand(
     const int num_ch, const int num_el, const int num_gi)
     : Stand(static_cast<std::uint8_t>(
-        (num_ch << shift_bits[animal_shogi::Pieces::CH])
-        + (num_el << shift_bits[animal_shogi::Pieces::EL])
-        + (num_gi << shift_bits[animal_shogi::Pieces::GI])))
+        (num_ch << shift_bits[animal_shogi::CH])
+        + (num_el << shift_bits[animal_shogi::EL])
+        + (num_gi << shift_bits[animal_shogi::GI])))
 {
 }
 
 template <>
-inline const animal_shogi::Pieces::PieceTypeEnum
+inline const animal_shogi::PieceTypeEnum
     animal_shogi::BlackWhiteStands::stand_pieces_in_sfen_order[]
-    = {animal_shogi::Pieces::GI,
-       animal_shogi::Pieces::EL,
-       animal_shogi::Pieces::CH};
+    = {animal_shogi::GI, animal_shogi::EL, animal_shogi::CH};
 
 template <>
 inline const int animal_shogi::BlackWhiteStands::max_sfen_length

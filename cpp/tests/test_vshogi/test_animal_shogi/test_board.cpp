@@ -7,17 +7,6 @@ namespace test_vshogi::test_animal_shogi
 {
 
 using namespace vshogi::animal_shogi;
-static constexpr auto B_CH = Pieces::B_CH; // NOLINT
-static constexpr auto B_EL = Pieces::B_EL; // NOLINT
-static constexpr auto B_GI = Pieces::B_GI; // NOLINT
-static constexpr auto B_LI = Pieces::B_LI; // NOLINT
-static constexpr auto B_HE = Pieces::B_HE; // NOLINT
-static constexpr auto W_CH = Pieces::W_CH; // NOLINT
-static constexpr auto W_EL = Pieces::W_EL; // NOLINT
-static constexpr auto W_GI = Pieces::W_GI; // NOLINT
-static constexpr auto W_LI = Pieces::W_LI; // NOLINT
-static constexpr auto W_HE = Pieces::W_HE; // NOLINT
-static constexpr auto VOID = Pieces::VOID; // NOLINT
 
 TEST_GROUP(animal_shogi_board){};
 

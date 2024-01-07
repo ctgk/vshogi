@@ -21,17 +21,17 @@ namespace internal
 
 inline ResultEnum move_result(
     const Move move,
-    const Pieces::BoardPieceTypeEnum moving,
-    const Pieces::BoardPieceTypeEnum captured)
+    const BoardPieceTypeEnum moving,
+    const BoardPieceTypeEnum captured)
 {
-    if (captured == Pieces::B_LI)
+    if (captured == B_LI)
         return WHITE_WIN;
-    if (captured == Pieces::W_LI)
+    if (captured == W_LI)
         return BLACK_WIN;
     const auto r_dst = Squares::to_rank(move.destination());
-    if ((moving == Pieces::B_LI) && (r_dst == RANK1))
+    if ((moving == B_LI) && (r_dst == RANK1))
         return BLACK_WIN;
-    if ((moving == Pieces::W_LI) && (r_dst == RANK4))
+    if ((moving == W_LI) && (r_dst == RANK4))
         return WHITE_WIN;
     return ONGOING;
 }

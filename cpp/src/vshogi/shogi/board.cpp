@@ -4,35 +4,35 @@
 namespace vshogi
 {
 
-static constexpr auto B_FU = vshogi::shogi::Pieces::B_FU; // NOLINT
-static constexpr auto B_KY = vshogi::shogi::Pieces::B_KY; // NOLINT
-static constexpr auto B_KE = vshogi::shogi::Pieces::B_KE; // NOLINT
-static constexpr auto B_GI = vshogi::shogi::Pieces::B_GI; // NOLINT
-static constexpr auto B_KI = vshogi::shogi::Pieces::B_KI; // NOLINT
-static constexpr auto B_KA = vshogi::shogi::Pieces::B_KA; // NOLINT
-static constexpr auto B_HI = vshogi::shogi::Pieces::B_HI; // NOLINT
-static constexpr auto B_OU = vshogi::shogi::Pieces::B_OU; // NOLINT
-static constexpr auto B_TO = vshogi::shogi::Pieces::B_TO; // NOLINT
-static constexpr auto B_NY = vshogi::shogi::Pieces::B_NY; // NOLINT
-static constexpr auto B_NK = vshogi::shogi::Pieces::B_NK; // NOLINT
-static constexpr auto B_NG = vshogi::shogi::Pieces::B_NG; // NOLINT
-static constexpr auto B_UM = vshogi::shogi::Pieces::B_UM; // NOLINT
-static constexpr auto B_RY = vshogi::shogi::Pieces::B_RY; // NOLINT
-static constexpr auto W_FU = vshogi::shogi::Pieces::W_FU; // NOLINT
-static constexpr auto W_KY = vshogi::shogi::Pieces::W_KY; // NOLINT
-static constexpr auto W_KE = vshogi::shogi::Pieces::W_KE; // NOLINT
-static constexpr auto W_GI = vshogi::shogi::Pieces::W_GI; // NOLINT
-static constexpr auto W_KI = vshogi::shogi::Pieces::W_KI; // NOLINT
-static constexpr auto W_KA = vshogi::shogi::Pieces::W_KA; // NOLINT
-static constexpr auto W_HI = vshogi::shogi::Pieces::W_HI; // NOLINT
-static constexpr auto W_OU = vshogi::shogi::Pieces::W_OU; // NOLINT
-static constexpr auto W_TO = vshogi::shogi::Pieces::W_TO; // NOLINT
-static constexpr auto W_NY = vshogi::shogi::Pieces::W_NY; // NOLINT
-static constexpr auto W_NK = vshogi::shogi::Pieces::W_NK; // NOLINT
-static constexpr auto W_NG = vshogi::shogi::Pieces::W_NG; // NOLINT
-static constexpr auto W_UM = vshogi::shogi::Pieces::W_UM; // NOLINT
-static constexpr auto W_RY = vshogi::shogi::Pieces::W_RY; // NOLINT
-static constexpr auto VOID = vshogi::shogi::Pieces::VOID; // NOLINT
+static constexpr auto B_FU = vshogi::shogi::B_FU; // NOLINT
+static constexpr auto B_KY = vshogi::shogi::B_KY; // NOLINT
+static constexpr auto B_KE = vshogi::shogi::B_KE; // NOLINT
+static constexpr auto B_GI = vshogi::shogi::B_GI; // NOLINT
+static constexpr auto B_KI = vshogi::shogi::B_KI; // NOLINT
+static constexpr auto B_KA = vshogi::shogi::B_KA; // NOLINT
+static constexpr auto B_HI = vshogi::shogi::B_HI; // NOLINT
+static constexpr auto B_OU = vshogi::shogi::B_OU; // NOLINT
+static constexpr auto B_TO = vshogi::shogi::B_TO; // NOLINT
+static constexpr auto B_NY = vshogi::shogi::B_NY; // NOLINT
+static constexpr auto B_NK = vshogi::shogi::B_NK; // NOLINT
+static constexpr auto B_NG = vshogi::shogi::B_NG; // NOLINT
+static constexpr auto B_UM = vshogi::shogi::B_UM; // NOLINT
+static constexpr auto B_RY = vshogi::shogi::B_RY; // NOLINT
+static constexpr auto W_FU = vshogi::shogi::W_FU; // NOLINT
+static constexpr auto W_KY = vshogi::shogi::W_KY; // NOLINT
+static constexpr auto W_KE = vshogi::shogi::W_KE; // NOLINT
+static constexpr auto W_GI = vshogi::shogi::W_GI; // NOLINT
+static constexpr auto W_KI = vshogi::shogi::W_KI; // NOLINT
+static constexpr auto W_KA = vshogi::shogi::W_KA; // NOLINT
+static constexpr auto W_HI = vshogi::shogi::W_HI; // NOLINT
+static constexpr auto W_OU = vshogi::shogi::W_OU; // NOLINT
+static constexpr auto W_TO = vshogi::shogi::W_TO; // NOLINT
+static constexpr auto W_NY = vshogi::shogi::W_NY; // NOLINT
+static constexpr auto W_NK = vshogi::shogi::W_NK; // NOLINT
+static constexpr auto W_NG = vshogi::shogi::W_NG; // NOLINT
+static constexpr auto W_UM = vshogi::shogi::W_UM; // NOLINT
+static constexpr auto W_RY = vshogi::shogi::W_RY; // NOLINT
+static constexpr auto VOID = vshogi::shogi::VOID; // NOLINT
 
 template <>
 shogi::Board::Board()

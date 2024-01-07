@@ -20,19 +20,19 @@ promote_if_possible(const Pieces::BoardPieceTypeEnum p, const Move move)
 {
     if (move.is_drop())
         return p;
-    if (Pieces::to_piece_type(p) != Pieces::CH)
+    if (Pieces::to_piece_type(p) != CH)
         return p;
     const auto r_src = Squares::to_rank(move.source_square());
     const auto r_dst = Squares::to_rank(move.destination());
     const auto c = Pieces::get_color(p);
     if (c == BLACK) {
         if ((r_src == RANK2) && (r_dst == RANK1))
-            return Pieces::to_board_piece(c, Pieces::HE);
+            return Pieces::to_board_piece(c, HE);
         else
             return p;
     } else {
         if ((r_src == RANK3) && (r_dst == RANK4))
-            return Pieces::to_board_piece(c, Pieces::HE);
+            return Pieces::to_board_piece(c, HE);
         else
             return p;
     }
@@ -63,7 +63,7 @@ inline animal_shogi::State& animal_shogi::State::apply(
     const auto dst = move.destination();
     auto moving = pop_piece_from_stand_or_board(move, hash);
     const auto captured = Pieces::to_piece_type(m_board[dst]);
-    if ((captured != Pieces::NA) && (captured != Pieces::LI))
+    if ((captured != Pieces::NA) && (captured != animal_shogi::LI))
         add_captured_to_stand(Pieces::demote(captured), hash);
     moving = animal_shogi::internal::promote_if_possible(moving, move);
     place_piece_at(dst, moving, hash);

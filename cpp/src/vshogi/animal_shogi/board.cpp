@@ -4,17 +4,17 @@
 namespace vshogi
 {
 
-static constexpr auto B_CH = vshogi::animal_shogi::Pieces::B_CH; // NOLINT
-static constexpr auto B_EL = vshogi::animal_shogi::Pieces::B_EL; // NOLINT
-static constexpr auto B_GI = vshogi::animal_shogi::Pieces::B_GI; // NOLINT
-static constexpr auto B_LI = vshogi::animal_shogi::Pieces::B_LI; // NOLINT
-static constexpr auto B_HE = vshogi::animal_shogi::Pieces::B_HE; // NOLINT
-static constexpr auto W_CH = vshogi::animal_shogi::Pieces::W_CH; // NOLINT
-static constexpr auto W_EL = vshogi::animal_shogi::Pieces::W_EL; // NOLINT
-static constexpr auto W_GI = vshogi::animal_shogi::Pieces::W_GI; // NOLINT
-static constexpr auto W_LI = vshogi::animal_shogi::Pieces::W_LI; // NOLINT
-static constexpr auto W_HE = vshogi::animal_shogi::Pieces::W_HE; // NOLINT
-static constexpr auto VOID = vshogi::animal_shogi::Pieces::VOID; // NOLINT
+static constexpr auto B_CH = vshogi::animal_shogi::B_CH; // NOLINT
+static constexpr auto B_EL = vshogi::animal_shogi::B_EL; // NOLINT
+static constexpr auto B_GI = vshogi::animal_shogi::B_GI; // NOLINT
+static constexpr auto B_LI = vshogi::animal_shogi::B_LI; // NOLINT
+static constexpr auto B_HE = vshogi::animal_shogi::B_HE; // NOLINT
+static constexpr auto W_CH = vshogi::animal_shogi::W_CH; // NOLINT
+static constexpr auto W_EL = vshogi::animal_shogi::W_EL; // NOLINT
+static constexpr auto W_GI = vshogi::animal_shogi::W_GI; // NOLINT
+static constexpr auto W_LI = vshogi::animal_shogi::W_LI; // NOLINT
+static constexpr auto W_HE = vshogi::animal_shogi::W_HE; // NOLINT
+static constexpr auto VOID = vshogi::animal_shogi::VOID; // NOLINT
 
 template <>
 animal_shogi::Board::Board()
@@ -53,34 +53,34 @@ const char* animal_shogi::Board::set_sfen_rank(
             (*piece_ptr++) = VOID;
             break;
         case 'C':
-            (*piece_ptr++) = B_CH;
+            (*piece_ptr++) = vshogi::animal_shogi::B_CH;
             break;
         case 'E':
-            (*piece_ptr++) = B_EL;
+            (*piece_ptr++) = vshogi::animal_shogi::B_EL;
             break;
         case 'G':
-            (*piece_ptr++) = B_GI;
+            (*piece_ptr++) = vshogi::animal_shogi::B_GI;
             break;
         case 'H':
-            (*piece_ptr++) = B_HE;
+            (*piece_ptr++) = vshogi::animal_shogi::B_HE;
             break;
         case 'L':
-            (*piece_ptr++) = B_LI;
+            (*piece_ptr++) = vshogi::animal_shogi::B_LI;
             break;
         case 'c':
-            (*piece_ptr++) = W_CH;
+            (*piece_ptr++) = vshogi::animal_shogi::W_CH;
             break;
         case 'e':
-            (*piece_ptr++) = W_EL;
+            (*piece_ptr++) = vshogi::animal_shogi::W_EL;
             break;
         case 'g':
-            (*piece_ptr++) = W_GI;
+            (*piece_ptr++) = vshogi::animal_shogi::W_GI;
             break;
         case 'h':
-            (*piece_ptr++) = W_HE;
+            (*piece_ptr++) = vshogi::animal_shogi::W_HE;
             break;
         case 'l':
-            (*piece_ptr++) = W_LI;
+            (*piece_ptr++) = vshogi::animal_shogi::W_LI;
             break;
         default:
             break;

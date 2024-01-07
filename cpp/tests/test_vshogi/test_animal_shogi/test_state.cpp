@@ -4,8 +4,6 @@
 
 #include <CppUTest/TestHarness.h>
 
-#include "test_vshogi/test_animal_shogi/test_animal_shogi.hpp"
-
 namespace test_vshogi::test_animal_shogi
 {
 

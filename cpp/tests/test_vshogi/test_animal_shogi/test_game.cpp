@@ -6,11 +6,6 @@ namespace test_vshogi::test_animal_shogi
 {
 
 using namespace vshogi::animal_shogi;
-static constexpr auto CH = Pieces::CH; // NOLINT
-static constexpr auto EL = Pieces::EL; // NOLINT
-static constexpr auto GI = Pieces::GI; // NOLINT
-static constexpr auto LI = Pieces::LI; // NOLINT
-static constexpr auto HE = Pieces::HE; // NOLINT
 
 TEST_GROUP(animal_shogi_game){};
 

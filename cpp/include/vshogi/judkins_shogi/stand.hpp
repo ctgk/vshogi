@@ -68,24 +68,24 @@ inline judkins_shogi::Stand::Stand(
     const int num_hi,
     const int num_ki)
     : Stand(static_cast<std::uint16_t>(
-        (num_fu << shift_bits[judkins_shogi::Pieces::FU])
-        + (num_ke << shift_bits[judkins_shogi::Pieces::KE])
-        + (num_gi << shift_bits[judkins_shogi::Pieces::GI])
-        + (num_ka << shift_bits[judkins_shogi::Pieces::KA])
-        + (num_hi << shift_bits[judkins_shogi::Pieces::HI])
-        + (num_ki << shift_bits[judkins_shogi::Pieces::KI])))
+        (num_fu << shift_bits[judkins_shogi::FU])
+        + (num_ke << shift_bits[judkins_shogi::KE])
+        + (num_gi << shift_bits[judkins_shogi::GI])
+        + (num_ka << shift_bits[judkins_shogi::KA])
+        + (num_hi << shift_bits[judkins_shogi::HI])
+        + (num_ki << shift_bits[judkins_shogi::KI])))
 {
 }
 
 template <>
-inline const judkins_shogi::Pieces::PieceTypeEnum
+inline const judkins_shogi::PieceTypeEnum
     judkins_shogi::BlackWhiteStands::stand_pieces_in_sfen_order[]
-    = {judkins_shogi::Pieces::HI,
-       judkins_shogi::Pieces::KA,
-       judkins_shogi::Pieces::KI,
-       judkins_shogi::Pieces::GI,
-       judkins_shogi::Pieces::KE,
-       judkins_shogi::Pieces::FU};
+    = {judkins_shogi::HI,
+       judkins_shogi::KA,
+       judkins_shogi::KI,
+       judkins_shogi::GI,
+       judkins_shogi::KE,
+       judkins_shogi::FU};
 
 template <>
 inline const int judkins_shogi::BlackWhiteStands::max_sfen_length

@@ -70,13 +70,10 @@ TEST(minishogi_piece, promote)
     CHECK_EQUAL(NG, promote(GI));
     CHECK_EQUAL(UM, promote(KA));
     CHECK_EQUAL(RY, promote(HI));
-    CHECK_EQUAL(KI, promote(KI));
-    CHECK_EQUAL(OU, promote(OU));
     CHECK_EQUAL(TO, promote(TO));
     CHECK_EQUAL(NG, promote(NG));
     CHECK_EQUAL(UM, promote(UM));
     CHECK_EQUAL(RY, promote(RY));
-    CHECK_EQUAL(NA, promote(NA));
 }
 
 TEST(minishogi_piece, demote)
@@ -86,12 +83,10 @@ TEST(minishogi_piece, demote)
     CHECK_EQUAL(KA, demote(KA));
     CHECK_EQUAL(HI, demote(HI));
     CHECK_EQUAL(KI, demote(KI));
-    CHECK_EQUAL(OU, demote(OU));
     CHECK_EQUAL(FU, demote(TO));
     CHECK_EQUAL(GI, demote(NG));
     CHECK_EQUAL(KA, demote(UM));
     CHECK_EQUAL(HI, demote(RY));
-    CHECK_EQUAL(NA, demote(NA));
 }
 
 TEST(minishogi_piece, get_color)

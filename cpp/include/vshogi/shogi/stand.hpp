@@ -72,26 +72,23 @@ inline shogi::Stand::Stand(
     const int num_hi,
     const int num_ki)
     : Stand(static_cast<std::uint32_t>(
-        (num_fu << shift_bits[shogi::Pieces::FU])
-        + (num_ky << shift_bits[shogi::Pieces::KY])
-        + (num_ke << shift_bits[shogi::Pieces::KE])
-        + (num_gi << shift_bits[shogi::Pieces::GI])
-        + (num_ka << shift_bits[shogi::Pieces::KA])
-        + (num_hi << shift_bits[shogi::Pieces::HI])
-        + (num_ki << shift_bits[shogi::Pieces::KI])))
+        (num_fu << shift_bits[shogi::FU]) + (num_ky << shift_bits[shogi::KY])
+        + (num_ke << shift_bits[shogi::KE]) + (num_gi << shift_bits[shogi::GI])
+        + (num_ka << shift_bits[shogi::KA]) + (num_hi << shift_bits[shogi::HI])
+        + (num_ki << shift_bits[shogi::KI])))
 {
 }
 
 template <>
 inline const shogi::Pieces::PieceTypeEnum
     shogi::BlackWhiteStands::stand_pieces_in_sfen_order[]
-    = {shogi::Pieces::HI,
-       shogi::Pieces::KA,
-       shogi::Pieces::KI,
-       shogi::Pieces::GI,
-       shogi::Pieces::KE,
-       shogi::Pieces::KY,
-       shogi::Pieces::FU};
+    = {shogi::HI,
+       shogi::KA,
+       shogi::KI,
+       shogi::GI,
+       shogi::KE,
+       shogi::KY,
+       shogi::FU};
 template <>
 inline const int shogi::BlackWhiteStands::max_sfen_length
     = 26; // "10p2l2n2sbr2g2P2L2N2SBR2G "

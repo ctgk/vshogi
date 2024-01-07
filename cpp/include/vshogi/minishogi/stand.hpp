@@ -64,22 +64,22 @@ inline minishogi::Stand::Stand(
     const int num_hi,
     const int num_ki)
     : Stand(static_cast<std::uint16_t>(
-        (num_ki << shift_bits[minishogi::Pieces::KI])
-        + (num_hi << shift_bits[minishogi::Pieces::HI])
-        + (num_ka << shift_bits[minishogi::Pieces::KA])
-        + (num_gi << shift_bits[minishogi::Pieces::GI])
-        + (num_fu << shift_bits[minishogi::Pieces::FU])))
+        (num_ki << shift_bits[minishogi::KI])
+        + (num_hi << shift_bits[minishogi::HI])
+        + (num_ka << shift_bits[minishogi::KA])
+        + (num_gi << shift_bits[minishogi::GI])
+        + (num_fu << shift_bits[minishogi::FU])))
 {
 }
 
 template <>
-inline const minishogi::Pieces::PieceTypeEnum
+inline const minishogi::PieceTypeEnum
     minishogi::BlackWhiteStands::stand_pieces_in_sfen_order[]
-    = {minishogi::Pieces::HI,
-       minishogi::Pieces::KA,
-       minishogi::Pieces::KI,
-       minishogi::Pieces::GI,
-       minishogi::Pieces::FU};
+    = {minishogi::HI,
+       minishogi::KA,
+       minishogi::KI,
+       minishogi::GI,
+       minishogi::FU};
 template <>
 inline const int minishogi::BlackWhiteStands::max_sfen_length
     = 11; // "2p2s2g2b2r "

@@ -33,16 +33,15 @@ public:
     constexpr BitBoard(const std::uint64_t v) : m_value(v & 0x0fffffffff)
     {
     }
-    constexpr static BitBoard from_square(const Squares::SquareEnum sq)
+    constexpr static BitBoard from_square(const SquareEnum sq)
     {
         return BitBoard(1) << static_cast<unsigned int>(sq);
     }
+    static BitBoard
+    get_attacks_by(const BoardPieceTypeEnum piece, const SquareEnum location);
     static BitBoard get_attacks_by(
-        const Pieces::BoardPieceTypeEnum piece,
-        const Squares::SquareEnum location);
-    static BitBoard get_attacks_by(
-        const Pieces::BoardPieceTypeEnum piece,
-        const Squares::SquareEnum location,
+        const BoardPieceTypeEnum piece,
+        const SquareEnum location,
         const BitBoard occupied);
     static BitBoard get_promotion_zone(const ColorEnum& c);
 
@@ -52,11 +51,10 @@ public:
      *
      * @param piece
      * @param location
-     * @return const Squares::SquareEnum*
+     * @return const SquareEnum*
      */
-    static const Squares::SquareEnum* get_attacks_by_non_ranging(
-        const Pieces::BoardPieceTypeEnum& piece,
-        const Squares::SquareEnum& location);
+    static const SquareEnum* get_attacks_by_non_ranging(
+        const BoardPieceTypeEnum& piece, const SquareEnum& location);
 
     /**
      * @brief Get pointer to array of squares along the given direction
@@ -64,10 +62,10 @@ public:
      *
      * @param direction
      * @param location
-     * @return const Squares::SquareEnum*
+     * @return const SquareEnum*
      */
-    static const Squares::SquareEnum* get_squares_along(
-        const DirectionEnum& direction, const Squares::SquareEnum& location);
+    static const SquareEnum* get_squares_along(
+        const DirectionEnum& direction, const SquareEnum& location);
 
     std::uint64_t get_value() const
     {
@@ -162,7 +160,7 @@ public:
      */
     template <DirectionEnum D>
     static BitBoard
-    ranging_attacks_to(const Squares::SquareEnum sq, const BitBoard occupied)
+    ranging_attacks_to(const SquareEnum sq, const BitBoard occupied)
     {
         const auto base = BitBoard::from_square(sq);
         auto attacks = base;
@@ -180,23 +178,23 @@ public:
         }
         return attacks & (~base);
     }
-    static BitBoard ranging_attacks_to_diagonal(
-        const Squares::SquareEnum sq, const BitBoard occupied)
+    static BitBoard
+    ranging_attacks_to_diagonal(const SquareEnum sq, const BitBoard occupied)
     {
         return ranging_attacks_to<DIR_NW>(sq, occupied)
                | ranging_attacks_to<DIR_NE>(sq, occupied)
                | ranging_attacks_to<DIR_SW>(sq, occupied)
                | ranging_attacks_to<DIR_SE>(sq, occupied);
     }
-    static BitBoard ranging_attacks_to_adjacent(
-        const Squares::SquareEnum sq, const BitBoard occupied)
+    static BitBoard
+    ranging_attacks_to_adjacent(const SquareEnum sq, const BitBoard occupied)
     {
         return ranging_attacks_to<DIR_N>(sq, occupied)
                | ranging_attacks_to<DIR_E>(sq, occupied)
                | ranging_attacks_to<DIR_W>(sq, occupied)
                | ranging_attacks_to<DIR_S>(sq, occupied);
     }
-    bool is_one(const Squares::SquareEnum sq) const
+    bool is_one(const SquareEnum sq) const
     {
         return static_cast<bool>(
             (1UL << static_cast<std::uint64_t>(sq)) & m_value);
@@ -726,31 +724,31 @@ constexpr BitBoard attacks_by_ka[Squares::num_squares] = {
 };
 
 inline BitBoard BitBoard::get_attacks_by(
-    const Pieces::BoardPieceTypeEnum piece, const Squares::SquareEnum location)
+    const BoardPieceTypeEnum piece, const SquareEnum location)
 {
     const auto piece_type = Pieces::to_piece_type(piece);
     const auto color = Pieces::get_color(piece);
     switch (piece_type) {
-    case Pieces::FU:
+    case FU:
         return attacks_by_fu[location][color];
-    case Pieces::KE:
+    case KE:
         return attacks_by_ke[location][color];
-    case Pieces::GI:
+    case GI:
         return attacks_by_gi[location][color];
-    case Pieces::KA:
+    case KA:
         return attacks_by_ka[location];
-    case Pieces::KI:
-    case Pieces::TO:
-    case Pieces::NK:
-    case Pieces::NG:
+    case KI:
+    case TO:
+    case NK:
+    case NG:
         return attacks_by_ki[location][color];
-    case Pieces::HI:
+    case HI:
         return attacks_by_hi[location];
-    case Pieces::UM:
+    case UM:
         return attacks_by_ou[location] | attacks_by_ka[location];
-    case Pieces::RY:
+    case RY:
         return attacks_by_ou[location] | attacks_by_hi[location];
-    case Pieces::OU:
+    case OU:
         return attacks_by_ou[location];
     default:
         break;
@@ -759,35 +757,35 @@ inline BitBoard BitBoard::get_attacks_by(
 }
 
 inline BitBoard BitBoard::get_attacks_by(
-    const Pieces::BoardPieceTypeEnum piece,
-    const Squares::SquareEnum location,
+    const BoardPieceTypeEnum piece,
+    const SquareEnum location,
     const BitBoard occupied)
 {
     const auto piece_type = Pieces::to_piece_type(piece);
     const auto color = Pieces::get_color(piece);
     switch (piece_type) {
-    case Pieces::FU:
+    case FU:
         return attacks_by_fu[location][color];
-    case Pieces::KE:
+    case KE:
         return attacks_by_ke[location][color];
-    case Pieces::GI:
+    case GI:
         return attacks_by_gi[location][color];
-    case Pieces::KA:
+    case KA:
         return BitBoard::ranging_attacks_to_diagonal(location, occupied);
-    case Pieces::KI:
-    case Pieces::TO:
-    case Pieces::NK:
-    case Pieces::NG:
+    case KI:
+    case TO:
+    case NK:
+    case NG:
         return attacks_by_ki[location][color];
-    case Pieces::HI:
+    case HI:
         return BitBoard::ranging_attacks_to_adjacent(location, occupied);
-    case Pieces::UM:
+    case UM:
         return attacks_by_ou[location]
                | BitBoard::ranging_attacks_to_diagonal(location, occupied);
-    case Pieces::RY:
+    case RY:
         return attacks_by_ou[location]
                | BitBoard::ranging_attacks_to_adjacent(location, occupied);
-    case Pieces::OU:
+    case OU:
         return attacks_by_ou[location];
     default:
         break;

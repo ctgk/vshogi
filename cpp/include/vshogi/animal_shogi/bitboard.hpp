@@ -267,22 +267,22 @@ constexpr BitBoard BitBoard::get_attacks_by(
     const Pieces::BoardPieceTypeEnum piece, const Squares::SquareEnum location)
 {
     switch (piece) {
-    case Pieces::B_CH:
+    case B_CH:
         return chick_attacks[location][BLACK];
-    case Pieces::W_CH:
+    case W_CH:
         return chick_attacks[location][WHITE];
-    case Pieces::B_EL: // fall-through
-    case Pieces::W_EL:
+    case B_EL: // fall-through
+    case W_EL:
         return elephant_attacks[location];
-    case Pieces::B_GI: // fall-through
-    case Pieces::W_GI:
+    case B_GI: // fall-through
+    case W_GI:
         return giraffe_attacks[location];
-    case Pieces::B_LI: // fall-through
-    case Pieces::W_LI:
+    case B_LI: // fall-through
+    case W_LI:
         return lion_attacks[location];
-    case Pieces::B_HE:
+    case B_HE:
         return hen_attacks[location][BLACK];
-    case Pieces::W_HE:
+    case W_HE:
         return hen_attacks[location][WHITE];
     default:
         break;
