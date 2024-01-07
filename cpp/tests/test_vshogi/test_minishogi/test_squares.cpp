@@ -7,15 +7,14 @@
 namespace test_vshogi::test_minishogi
 {
 
-using namespace vshogi;
 using namespace vshogi::minishogi;
 
 TEST_GROUP(squares){};
 
 TEST(squares, shift)
 {
-    CHECK_EQUAL(SQ_1A, shift(SQ_1B, DIR_N));
-    CHECK_EQUAL(SQ_1C, shift(SQ_1B, DIR_S));
+    CHECK_EQUAL(SQ_1A, shift(SQ_1B, vshogi::DIR_N));
+    CHECK_EQUAL(SQ_1C, shift(SQ_1B, vshogi::DIR_S));
 }
 
 TEST(squares, to_rank)
@@ -74,24 +73,6 @@ TEST(squares, to_file)
     CHECK_EQUAL(FILE5, to_file(SQ_5C));
     CHECK_EQUAL(FILE5, to_file(SQ_5D));
     CHECK_EQUAL(FILE5, to_file(SQ_5E));
-}
-
-TEST(squares, is_edge)
-{
-    {
-        CHECK_TRUE(is_edge(RANK1));
-        CHECK_FALSE(is_edge(RANK2));
-        CHECK_FALSE(is_edge(RANK3));
-        CHECK_FALSE(is_edge(RANK4));
-        CHECK_TRUE(is_edge(RANK5));
-    }
-    {
-        CHECK_TRUE(is_edge(FILE1));
-        CHECK_FALSE(is_edge(FILE2));
-        CHECK_FALSE(is_edge(FILE3));
-        CHECK_FALSE(is_edge(FILE4));
-        CHECK_TRUE(is_edge(FILE5));
-    }
 }
 
 TEST(squares, square_array)

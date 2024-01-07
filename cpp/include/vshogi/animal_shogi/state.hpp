@@ -26,12 +26,12 @@ promote_if_possible(const Pieces::BoardPieceTypeEnum p, const Move move)
     const auto r_dst = Squares::to_rank(move.destination());
     const auto c = Pieces::get_color(p);
     if (c == BLACK) {
-        if ((r_src == Squares::RANK2) && (r_dst == Squares::RANK1))
+        if ((r_src == RANK2) && (r_dst == RANK1))
             return Pieces::to_board_piece(c, Pieces::HE);
         else
             return p;
     } else {
-        if ((r_src == Squares::RANK3) && (r_dst == Squares::RANK4))
+        if ((r_src == RANK3) && (r_dst == RANK4))
             return Pieces::to_board_piece(c, Pieces::HE);
         else
             return p;

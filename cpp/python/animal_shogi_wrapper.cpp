@@ -14,19 +14,19 @@ namespace
 
 void export_square_enum(py::module& m)
 {
-    py::enum_<as::Squares::SquareEnum>(m, "Square")
-        .value("A1", as::Squares::SQ_A1)
-        .value("B1", as::Squares::SQ_B1)
-        .value("C1", as::Squares::SQ_C1)
-        .value("A2", as::Squares::SQ_A2)
-        .value("B2", as::Squares::SQ_B2)
-        .value("C2", as::Squares::SQ_C2)
-        .value("A3", as::Squares::SQ_A3)
-        .value("B3", as::Squares::SQ_B3)
-        .value("C3", as::Squares::SQ_C3)
-        .value("A4", as::Squares::SQ_A4)
-        .value("B4", as::Squares::SQ_B4)
-        .value("C4", as::Squares::SQ_C4);
+    py::enum_<as::SquareEnum>(m, "Square")
+        .value("A1", as::SQ_A1)
+        .value("B1", as::SQ_B1)
+        .value("C1", as::SQ_C1)
+        .value("A2", as::SQ_A2)
+        .value("B2", as::SQ_B2)
+        .value("C2", as::SQ_C2)
+        .value("A3", as::SQ_A3)
+        .value("B3", as::SQ_B3)
+        .value("C3", as::SQ_C3)
+        .value("A4", as::SQ_A4)
+        .value("B4", as::SQ_B4)
+        .value("C4", as::SQ_C4);
 }
 
 void export_pieces(py::module& m)
@@ -57,6 +57,7 @@ void export_pieces(py::module& m)
 
 void export_animal_shogi(py::module& m)
 {
+    as::Squares::init_tables();
     as::State::init_zobrist_table();
     export_pieces(m);
     export_square_enum(m);

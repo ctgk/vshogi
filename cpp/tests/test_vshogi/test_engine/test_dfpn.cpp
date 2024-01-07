@@ -41,7 +41,7 @@ TEST(dfpn, mate_in_one_black)
 
     const auto actual = root.get_mate_moves();
     CHECK_EQUAL(1, actual.size());
-    CHECK_TRUE(Move(Squares::SQ_3B, Squares::SQ_3C) == actual[0]);
+    CHECK_TRUE(Move(SQ_3B, SQ_3C) == actual[0]);
 }
 
 TEST(dfpn, mate_in_three_white)
@@ -69,7 +69,7 @@ TEST(dfpn, mate_in_three_white)
     CHECK_TRUE(searcher.found_mate());
     const auto actual = searcher.get_mate_moves();
     CHECK_EQUAL(3, actual.size());
-    CHECK_TRUE(Move(Squares::SQ_3C, Pieces::KI) == actual[0]);
+    CHECK_TRUE(Move(SQ_3C, Pieces::KI) == actual[0]);
 }
 
 TEST(dfpn, mate_in_three_straight_forward)
@@ -120,9 +120,9 @@ TEST(dfpn, mate_in_three_straight_forward)
         // root -> Move(B1, C1) -> Move(B1, A2) -> Move(B1, D1)
         const auto actual = root.get_mate_moves();
         CHECK_EQUAL(3, actual.size());
-        CHECK_TRUE(Move(Squares::SQ_1B, Squares::SQ_1C) == actual[0]);
-        CHECK_TRUE(Move(Squares::SQ_1B, Squares::SQ_2A) == actual[1]);
-        CHECK_TRUE(Move(Squares::SQ_1B, Squares::SQ_1D) == actual[2]);
+        CHECK_TRUE(Move(SQ_1B, SQ_1C) == actual[0]);
+        CHECK_TRUE(Move(SQ_1B, SQ_2A) == actual[1]);
+        CHECK_TRUE(Move(SQ_1B, SQ_1D) == actual[2]);
     }
 }
 
@@ -154,12 +154,12 @@ TEST(dfpn, mate_in_three)
     }
     const auto actual = root.get_mate_moves();
     CHECK_EQUAL(3, actual.size());
-    CHECK_TRUE(Move(Squares::SQ_1B, Squares::SQ_1C) == actual[0]);
-    if (actual[1] == Move(Squares::SQ_1B, Squares::SQ_1A)) {
-        CHECK_TRUE(Move(Squares::SQ_1C, Pieces::HI) == actual[2]);
+    CHECK_TRUE(Move(SQ_1B, SQ_1C) == actual[0]);
+    if (actual[1] == Move(SQ_1B, SQ_1A)) {
+        CHECK_TRUE(Move(SQ_1C, Pieces::HI) == actual[2]);
     } else {
-        CHECK_TRUE(Move(Squares::SQ_1B, Squares::SQ_2A) == actual[1]);
-        CHECK_TRUE(Move(Squares::SQ_2A, Pieces::HI) == actual[2]);
+        CHECK_TRUE(Move(SQ_1B, SQ_2A) == actual[1]);
+        CHECK_TRUE(Move(SQ_2A, Pieces::HI) == actual[2]);
     }
 }
 
@@ -191,7 +191,7 @@ TEST(dfpn, mate_in_five)
     }
     const auto actual = root.get_mate_moves();
     CHECK_EQUAL(5, actual.size());
-    CHECK_TRUE(Move(Squares::SQ_2B, Pieces::GI) == actual[0]);
+    CHECK_TRUE(Move(SQ_2B, Pieces::GI) == actual[0]);
 }
 
 TEST(dfpn, no_mate_no_check)
@@ -272,8 +272,8 @@ TEST(dfpn, king_entering_before_mate)
     CHECK_TRUE(searcher.found_mate());
     const auto actual = searcher.get_mate_moves();
     CHECK_EQUAL(2, actual.size());
-    CHECK_TRUE(actual[0] == Move(Squares::SQ_4E, Squares::SQ_3C, true));
-    CHECK_TRUE(actual[1] == Move(Squares::SQ_6F, Squares::SQ_5F));
+    CHECK_TRUE(actual[0] == Move(SQ_4E, SQ_3C, true));
+    CHECK_TRUE(actual[1] == Move(SQ_6F, SQ_5F));
 }
 
 } // namespace test_vshogi::test_engine

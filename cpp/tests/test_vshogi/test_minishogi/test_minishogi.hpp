@@ -72,25 +72,10 @@ static constexpr auto W_RY = vshogi::minishogi::Pieces::W_RY; // NOLINT
 static constexpr auto VOID = vshogi::minishogi::Pieces::VOID; // NOLINT
 
 using SquareEnum = vshogi::minishogi::Squares::SquareEnum;
-template <class T>
-static auto is_edge(const T a)
-{
-    return vshogi::minishogi::Squares::is_edge(a);
-}
 static constexpr auto to_rank = vshogi::minishogi::Squares::to_rank;
 static constexpr auto to_file = vshogi::minishogi::Squares::to_file;
 static constexpr auto shift = vshogi::minishogi::Squares::shift;
 static constexpr auto num_squares = vshogi::minishogi::Squares::num_squares;
-static constexpr auto RANK1 = vshogi::minishogi::Squares::RANK1; // NOLINT
-static constexpr auto RANK2 = vshogi::minishogi::Squares::RANK2; // NOLINT
-static constexpr auto RANK3 = vshogi::minishogi::Squares::RANK3; // NOLINT
-static constexpr auto RANK4 = vshogi::minishogi::Squares::RANK4; // NOLINT
-static constexpr auto RANK5 = vshogi::minishogi::Squares::RANK5; // NOLINT
-static constexpr auto FILE1 = vshogi::minishogi::Squares::FILE1; // NOLINT
-static constexpr auto FILE2 = vshogi::minishogi::Squares::FILE2; // NOLINT
-static constexpr auto FILE3 = vshogi::minishogi::Squares::FILE3; // NOLINT
-static constexpr auto FILE4 = vshogi::minishogi::Squares::FILE4; // NOLINT
-static constexpr auto FILE5 = vshogi::minishogi::Squares::FILE5; // NOLINT
 
 } // namespace test_vshogi::test_minishogi
 

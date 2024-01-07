@@ -26,18 +26,6 @@ class BitBoard
 private:
     using SquareEnum = Squares::SquareEnum;
     static constexpr auto direction_to_delta = Squares::direction_to_delta;
-    static constexpr auto SQ_A4 = Squares::SQ_A4; // NOLINT
-    static constexpr auto SQ_A3 = Squares::SQ_A3; // NOLINT
-    static constexpr auto SQ_A2 = Squares::SQ_A2; // NOLINT
-    static constexpr auto SQ_A1 = Squares::SQ_A1; // NOLINT
-    static constexpr auto SQ_B4 = Squares::SQ_B4; // NOLINT
-    static constexpr auto SQ_B3 = Squares::SQ_B3; // NOLINT
-    static constexpr auto SQ_B2 = Squares::SQ_B2; // NOLINT
-    static constexpr auto SQ_B1 = Squares::SQ_B1; // NOLINT
-    static constexpr auto SQ_C4 = Squares::SQ_C4; // NOLINT
-    static constexpr auto SQ_C3 = Squares::SQ_C3; // NOLINT
-    static constexpr auto SQ_C2 = Squares::SQ_C2; // NOLINT
-    static constexpr auto SQ_C1 = Squares::SQ_C1; // NOLINT
     std::uint16_t m_value;
 
 public:
@@ -143,18 +131,18 @@ constexpr BitBoard file_b_mask = BitBoard(0b010010010010);
 constexpr BitBoard file_c_mask = BitBoard(0b100100100100);
 constexpr BitBoard file_masks[] = {file_a_mask, file_b_mask, file_c_mask};
 
-constexpr BitBoard bb_a1 = BitBoard::from_square(Squares::SQ_A1);
-constexpr BitBoard bb_b1 = BitBoard::from_square(Squares::SQ_B1);
-constexpr BitBoard bb_c1 = BitBoard::from_square(Squares::SQ_C1);
-constexpr BitBoard bb_a2 = BitBoard::from_square(Squares::SQ_A2);
-constexpr BitBoard bb_b2 = BitBoard::from_square(Squares::SQ_B2);
-constexpr BitBoard bb_c2 = BitBoard::from_square(Squares::SQ_C2);
-constexpr BitBoard bb_a3 = BitBoard::from_square(Squares::SQ_A3);
-constexpr BitBoard bb_b3 = BitBoard::from_square(Squares::SQ_B3);
-constexpr BitBoard bb_c3 = BitBoard::from_square(Squares::SQ_C3);
-constexpr BitBoard bb_a4 = BitBoard::from_square(Squares::SQ_A4);
-constexpr BitBoard bb_b4 = BitBoard::from_square(Squares::SQ_B4);
-constexpr BitBoard bb_c4 = BitBoard::from_square(Squares::SQ_C4);
+constexpr BitBoard bb_a1 = BitBoard::from_square(SQ_A1);
+constexpr BitBoard bb_b1 = BitBoard::from_square(SQ_B1);
+constexpr BitBoard bb_c1 = BitBoard::from_square(SQ_C1);
+constexpr BitBoard bb_a2 = BitBoard::from_square(SQ_A2);
+constexpr BitBoard bb_b2 = BitBoard::from_square(SQ_B2);
+constexpr BitBoard bb_c2 = BitBoard::from_square(SQ_C2);
+constexpr BitBoard bb_a3 = BitBoard::from_square(SQ_A3);
+constexpr BitBoard bb_b3 = BitBoard::from_square(SQ_B3);
+constexpr BitBoard bb_c3 = BitBoard::from_square(SQ_C3);
+constexpr BitBoard bb_a4 = BitBoard::from_square(SQ_A4);
+constexpr BitBoard bb_b4 = BitBoard::from_square(SQ_B4);
+constexpr BitBoard bb_c4 = BitBoard::from_square(SQ_C4);
 constexpr BitBoard square_masks[] = {
     bb_a1,
     bb_b1,
@@ -224,18 +212,18 @@ constexpr BitBoard giraffe_attacks[Squares::num_squares] = {
     internal::gi_attack_sqb3.shift<DIR_S>().shift<DIR_E>(),
 };
 constexpr BitBoard lion_attacks[Squares::num_squares] = {
-    elephant_attacks[Squares::SQ_A1] | giraffe_attacks[Squares::SQ_A1],
-    elephant_attacks[Squares::SQ_B1] | giraffe_attacks[Squares::SQ_B1],
-    elephant_attacks[Squares::SQ_C1] | giraffe_attacks[Squares::SQ_C1],
-    elephant_attacks[Squares::SQ_A2] | giraffe_attacks[Squares::SQ_A2],
-    elephant_attacks[Squares::SQ_B2] | giraffe_attacks[Squares::SQ_B2],
-    elephant_attacks[Squares::SQ_C2] | giraffe_attacks[Squares::SQ_C2],
-    elephant_attacks[Squares::SQ_A3] | giraffe_attacks[Squares::SQ_A3],
-    elephant_attacks[Squares::SQ_B3] | giraffe_attacks[Squares::SQ_B3],
-    elephant_attacks[Squares::SQ_C3] | giraffe_attacks[Squares::SQ_C3],
-    elephant_attacks[Squares::SQ_A4] | giraffe_attacks[Squares::SQ_A4],
-    elephant_attacks[Squares::SQ_B4] | giraffe_attacks[Squares::SQ_B4],
-    elephant_attacks[Squares::SQ_C4] | giraffe_attacks[Squares::SQ_C4],
+    elephant_attacks[SQ_A1] | giraffe_attacks[SQ_A1],
+    elephant_attacks[SQ_B1] | giraffe_attacks[SQ_B1],
+    elephant_attacks[SQ_C1] | giraffe_attacks[SQ_C1],
+    elephant_attacks[SQ_A2] | giraffe_attacks[SQ_A2],
+    elephant_attacks[SQ_B2] | giraffe_attacks[SQ_B2],
+    elephant_attacks[SQ_C2] | giraffe_attacks[SQ_C2],
+    elephant_attacks[SQ_A3] | giraffe_attacks[SQ_A3],
+    elephant_attacks[SQ_B3] | giraffe_attacks[SQ_B3],
+    elephant_attacks[SQ_C3] | giraffe_attacks[SQ_C3],
+    elephant_attacks[SQ_A4] | giraffe_attacks[SQ_A4],
+    elephant_attacks[SQ_B4] | giraffe_attacks[SQ_B4],
+    elephant_attacks[SQ_C4] | giraffe_attacks[SQ_C4],
 };
 constexpr BitBoard hen_attacks[Squares::num_squares][num_colors] = {
     {internal::he_attack_sqb3[BLACK]

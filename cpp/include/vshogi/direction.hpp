@@ -16,6 +16,34 @@ enum DirectionEnum
     DIR_NA = -1,
 };
 
+inline bool has_dir_n(const DirectionEnum& d)
+{
+    return (
+        (d == DIR_NNW) || (d == DIR_NNE) || (d == DIR_NW) || (d == DIR_N)
+        || (d == DIR_NE));
+}
+
+inline bool has_dir_s(const DirectionEnum& d)
+{
+    return (
+        (d == DIR_SSW) || (d == DIR_SSE) || (d == DIR_SW) || (d == DIR_S)
+        || (d == DIR_SE));
+}
+
+inline bool has_dir_w(const DirectionEnum& d)
+{
+    return (
+        (d == DIR_NNW) || (d == DIR_SSW) || (d == DIR_NW) || (d == DIR_W)
+        || (d == DIR_SW));
+}
+
+inline bool has_dir_e(const DirectionEnum& d)
+{
+    return (
+        (d == DIR_NNE) || (d == DIR_SSE) || (d == DIR_NE) || (d == DIR_E)
+        || (d == DIR_SE));
+}
+
 } // namespace vshogi
 
 #endif // VSHOGI_DIRECTION_HPP

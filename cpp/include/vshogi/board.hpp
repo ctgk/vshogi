@@ -27,7 +27,6 @@ private:
     static constexpr auto num_files = Squares::num_files;
     static constexpr auto num_ranks = Squares::num_ranks;
     static constexpr auto num_squares = Squares::num_squares;
-    static constexpr auto RANK1 = Squares::RANK1; // NOLINT
     static constexpr auto SQ_NA = Squares::SQ_NA; // NOLINT
 
 private:
@@ -72,7 +71,7 @@ public:
     }
     void append_sfen(std::string& out) const
     {
-        append_sfen_rank(RANK1, out);
+        append_sfen_rank(static_cast<RankEnum>(0), out);
         for (int ir = 1; ir < num_ranks; ++ir) {
             out += '/';
             append_sfen_rank(static_cast<RankEnum>(ir), out);

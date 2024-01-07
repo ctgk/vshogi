@@ -100,7 +100,7 @@ public:
     }
     static constexpr int num_policy_per_square()
     {
-        return 2 * Squares::num_dlshogi_directions + num_stand_piece_types;
+        return 2 * Squares::num_directions_dlshogi + num_stand_piece_types;
     }
 
 private:
@@ -128,10 +128,10 @@ private:
     int to_dlshogi_source_index() const
     {
         if (is_drop())
-            return Squares::num_dlshogi_directions * 2
+            return Squares::num_directions_dlshogi * 2
                    + static_cast<int>(source_piece());
         const auto promo_offset
-            = promote() ? Squares::num_dlshogi_directions : 0;
+            = promote() ? Squares::num_directions_dlshogi : 0;
         const auto direction
             = Squares::get_direction(source_square(), destination());
         if (direction == DIR_NA)

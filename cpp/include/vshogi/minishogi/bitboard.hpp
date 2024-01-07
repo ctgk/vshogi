@@ -28,31 +28,6 @@ private:
     std::uint32_t m_value;
     using SquareEnum = Squares::SquareEnum;
     static constexpr auto direction_to_delta = Squares::direction_to_delta;
-    static constexpr auto SQ_5A = Squares::SQ_5A; // NOLINT
-    static constexpr auto SQ_4A = Squares::SQ_4A; // NOLINT
-    static constexpr auto SQ_3A = Squares::SQ_3A; // NOLINT
-    static constexpr auto SQ_2A = Squares::SQ_2A; // NOLINT
-    static constexpr auto SQ_1A = Squares::SQ_1A; // NOLINT
-    static constexpr auto SQ_5B = Squares::SQ_5B; // NOLINT
-    static constexpr auto SQ_4B = Squares::SQ_4B; // NOLINT
-    static constexpr auto SQ_3B = Squares::SQ_3B; // NOLINT
-    static constexpr auto SQ_2B = Squares::SQ_2B; // NOLINT
-    static constexpr auto SQ_1B = Squares::SQ_1B; // NOLINT
-    static constexpr auto SQ_5C = Squares::SQ_5C; // NOLINT
-    static constexpr auto SQ_4C = Squares::SQ_4C; // NOLINT
-    static constexpr auto SQ_3C = Squares::SQ_3C; // NOLINT
-    static constexpr auto SQ_2C = Squares::SQ_2C; // NOLINT
-    static constexpr auto SQ_1C = Squares::SQ_1C; // NOLINT
-    static constexpr auto SQ_5D = Squares::SQ_5D; // NOLINT
-    static constexpr auto SQ_4D = Squares::SQ_4D; // NOLINT
-    static constexpr auto SQ_3D = Squares::SQ_3D; // NOLINT
-    static constexpr auto SQ_2D = Squares::SQ_2D; // NOLINT
-    static constexpr auto SQ_1D = Squares::SQ_1D; // NOLINT
-    static constexpr auto SQ_5E = Squares::SQ_5E; // NOLINT
-    static constexpr auto SQ_4E = Squares::SQ_4E; // NOLINT
-    static constexpr auto SQ_3E = Squares::SQ_3E; // NOLINT
-    static constexpr auto SQ_2E = Squares::SQ_2E; // NOLINT
-    static constexpr auto SQ_1E = Squares::SQ_1E; // NOLINT
 
 public:
     constexpr BitBoard() : m_value(0U)
@@ -243,31 +218,31 @@ public:
 void init_non_ranging_attacks_table();
 void init_ranging_squares_table();
 
-constexpr BitBoard bb_1a = BitBoard::from_square(Squares::SQ_1A);
-constexpr BitBoard bb_1b = BitBoard::from_square(Squares::SQ_1B);
-constexpr BitBoard bb_1c = BitBoard::from_square(Squares::SQ_1C);
-constexpr BitBoard bb_1d = BitBoard::from_square(Squares::SQ_1D);
-constexpr BitBoard bb_1e = BitBoard::from_square(Squares::SQ_1E);
-constexpr BitBoard bb_2a = BitBoard::from_square(Squares::SQ_2A);
-constexpr BitBoard bb_2b = BitBoard::from_square(Squares::SQ_2B);
-constexpr BitBoard bb_2c = BitBoard::from_square(Squares::SQ_2C);
-constexpr BitBoard bb_2d = BitBoard::from_square(Squares::SQ_2D);
-constexpr BitBoard bb_2e = BitBoard::from_square(Squares::SQ_2E);
-constexpr BitBoard bb_3a = BitBoard::from_square(Squares::SQ_3A);
-constexpr BitBoard bb_3b = BitBoard::from_square(Squares::SQ_3B);
-constexpr BitBoard bb_3c = BitBoard::from_square(Squares::SQ_3C);
-constexpr BitBoard bb_3d = BitBoard::from_square(Squares::SQ_3D);
-constexpr BitBoard bb_3e = BitBoard::from_square(Squares::SQ_3E);
-constexpr BitBoard bb_4a = BitBoard::from_square(Squares::SQ_4A);
-constexpr BitBoard bb_4b = BitBoard::from_square(Squares::SQ_4B);
-constexpr BitBoard bb_4c = BitBoard::from_square(Squares::SQ_4C);
-constexpr BitBoard bb_4d = BitBoard::from_square(Squares::SQ_4D);
-constexpr BitBoard bb_4e = BitBoard::from_square(Squares::SQ_4E);
-constexpr BitBoard bb_5a = BitBoard::from_square(Squares::SQ_5A);
-constexpr BitBoard bb_5b = BitBoard::from_square(Squares::SQ_5B);
-constexpr BitBoard bb_5c = BitBoard::from_square(Squares::SQ_5C);
-constexpr BitBoard bb_5d = BitBoard::from_square(Squares::SQ_5D);
-constexpr BitBoard bb_5e = BitBoard::from_square(Squares::SQ_5E);
+constexpr BitBoard bb_1a = BitBoard::from_square(SQ_1A);
+constexpr BitBoard bb_1b = BitBoard::from_square(SQ_1B);
+constexpr BitBoard bb_1c = BitBoard::from_square(SQ_1C);
+constexpr BitBoard bb_1d = BitBoard::from_square(SQ_1D);
+constexpr BitBoard bb_1e = BitBoard::from_square(SQ_1E);
+constexpr BitBoard bb_2a = BitBoard::from_square(SQ_2A);
+constexpr BitBoard bb_2b = BitBoard::from_square(SQ_2B);
+constexpr BitBoard bb_2c = BitBoard::from_square(SQ_2C);
+constexpr BitBoard bb_2d = BitBoard::from_square(SQ_2D);
+constexpr BitBoard bb_2e = BitBoard::from_square(SQ_2E);
+constexpr BitBoard bb_3a = BitBoard::from_square(SQ_3A);
+constexpr BitBoard bb_3b = BitBoard::from_square(SQ_3B);
+constexpr BitBoard bb_3c = BitBoard::from_square(SQ_3C);
+constexpr BitBoard bb_3d = BitBoard::from_square(SQ_3D);
+constexpr BitBoard bb_3e = BitBoard::from_square(SQ_3E);
+constexpr BitBoard bb_4a = BitBoard::from_square(SQ_4A);
+constexpr BitBoard bb_4b = BitBoard::from_square(SQ_4B);
+constexpr BitBoard bb_4c = BitBoard::from_square(SQ_4C);
+constexpr BitBoard bb_4d = BitBoard::from_square(SQ_4D);
+constexpr BitBoard bb_4e = BitBoard::from_square(SQ_4E);
+constexpr BitBoard bb_5a = BitBoard::from_square(SQ_5A);
+constexpr BitBoard bb_5b = BitBoard::from_square(SQ_5B);
+constexpr BitBoard bb_5c = BitBoard::from_square(SQ_5C);
+constexpr BitBoard bb_5d = BitBoard::from_square(SQ_5D);
+constexpr BitBoard bb_5e = BitBoard::from_square(SQ_5E);
 
 constexpr BitBoard bb_ra = bb_1a | bb_2a | bb_3a | bb_4a | bb_5a;
 constexpr BitBoard bb_rb = bb_1b | bb_2b | bb_3b | bb_4b | bb_5b;

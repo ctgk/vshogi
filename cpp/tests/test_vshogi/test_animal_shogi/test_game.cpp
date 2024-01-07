@@ -11,18 +11,6 @@ static constexpr auto EL = Pieces::EL; // NOLINT
 static constexpr auto GI = Pieces::GI; // NOLINT
 static constexpr auto LI = Pieces::LI; // NOLINT
 static constexpr auto HE = Pieces::HE; // NOLINT
-static constexpr auto SQ_A4 = Squares::SQ_A4; // NOLINT
-static constexpr auto SQ_A3 = Squares::SQ_A3; // NOLINT
-static constexpr auto SQ_A2 = Squares::SQ_A2; // NOLINT
-static constexpr auto SQ_A1 = Squares::SQ_A1; // NOLINT
-static constexpr auto SQ_B4 = Squares::SQ_B4; // NOLINT
-static constexpr auto SQ_B3 = Squares::SQ_B3; // NOLINT
-static constexpr auto SQ_B2 = Squares::SQ_B2; // NOLINT
-static constexpr auto SQ_B1 = Squares::SQ_B1; // NOLINT
-static constexpr auto SQ_C4 = Squares::SQ_C4; // NOLINT
-static constexpr auto SQ_C3 = Squares::SQ_C3; // NOLINT
-static constexpr auto SQ_C2 = Squares::SQ_C2; // NOLINT
-static constexpr auto SQ_C1 = Squares::SQ_C1; // NOLINT
 
 TEST_GROUP(animal_shogi_game){};
 

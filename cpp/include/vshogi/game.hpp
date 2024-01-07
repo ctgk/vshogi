@@ -684,7 +684,7 @@ protected:
         const auto turn = get_turn();
         const auto& board = get_board();
         const auto pawn = Pieces::to_board_piece(turn, Pieces::FU);
-        for (auto sq : Squares::squares_in_file[f]) {
+        for (auto sq : Squares::file_to_square_array[f]) {
             if (pawn == board[sq])
                 return true;
         }

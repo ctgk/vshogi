@@ -29,9 +29,9 @@ inline ResultEnum move_result(
     if (captured == Pieces::W_LI)
         return BLACK_WIN;
     const auto r_dst = Squares::to_rank(move.destination());
-    if ((moving == Pieces::B_LI) && (r_dst == Squares::RANK1))
+    if ((moving == Pieces::B_LI) && (r_dst == RANK1))
         return BLACK_WIN;
-    if ((moving == Pieces::W_LI) && (r_dst == Squares::RANK4))
+    if ((moving == Pieces::W_LI) && (r_dst == RANK4))
         return WHITE_WIN;
     return ONGOING;
 }

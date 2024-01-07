@@ -115,19 +115,13 @@ public:
     constexpr BitBoard shift() const
     {
         constexpr auto bb_f12345
-            = ~(BitBoard::from_square(Squares::SQ_6A)
-                | BitBoard::from_square(Squares::SQ_6B)
-                | BitBoard::from_square(Squares::SQ_6C)
-                | BitBoard::from_square(Squares::SQ_6D)
-                | BitBoard::from_square(Squares::SQ_6E)
-                | BitBoard::from_square(Squares::SQ_6F));
+            = ~(BitBoard::from_square(SQ_6A) | BitBoard::from_square(SQ_6B)
+                | BitBoard::from_square(SQ_6C) | BitBoard::from_square(SQ_6D)
+                | BitBoard::from_square(SQ_6E) | BitBoard::from_square(SQ_6F));
         constexpr auto bb_f23456
-            = ~(BitBoard::from_square(Squares::SQ_1A)
-                | BitBoard::from_square(Squares::SQ_1B)
-                | BitBoard::from_square(Squares::SQ_1C)
-                | BitBoard::from_square(Squares::SQ_1D)
-                | BitBoard::from_square(Squares::SQ_1E)
-                | BitBoard::from_square(Squares::SQ_1F));
+            = ~(BitBoard::from_square(SQ_1A) | BitBoard::from_square(SQ_1B)
+                | BitBoard::from_square(SQ_1C) | BitBoard::from_square(SQ_1D)
+                | BitBoard::from_square(SQ_1E) | BitBoard::from_square(SQ_1F));
         constexpr BitBoard mask[] = {
             // clang-format off
             bb_f12345, ~BitBoard(0), bb_f23456,
@@ -227,42 +221,42 @@ public:
 void init_non_ranging_attacks_table();
 void init_ranging_squares_table();
 
-constexpr BitBoard bb_1a = BitBoard::from_square(Squares::SQ_1A);
-constexpr BitBoard bb_1b = BitBoard::from_square(Squares::SQ_1B);
-constexpr BitBoard bb_1c = BitBoard::from_square(Squares::SQ_1C);
-constexpr BitBoard bb_1d = BitBoard::from_square(Squares::SQ_1D);
-constexpr BitBoard bb_1e = BitBoard::from_square(Squares::SQ_1E);
-constexpr BitBoard bb_1f = BitBoard::from_square(Squares::SQ_1F);
-constexpr BitBoard bb_2a = BitBoard::from_square(Squares::SQ_2A);
-constexpr BitBoard bb_2b = BitBoard::from_square(Squares::SQ_2B);
-constexpr BitBoard bb_2c = BitBoard::from_square(Squares::SQ_2C);
-constexpr BitBoard bb_2d = BitBoard::from_square(Squares::SQ_2D);
-constexpr BitBoard bb_2e = BitBoard::from_square(Squares::SQ_2E);
-constexpr BitBoard bb_2f = BitBoard::from_square(Squares::SQ_2F);
-constexpr BitBoard bb_3a = BitBoard::from_square(Squares::SQ_3A);
-constexpr BitBoard bb_3b = BitBoard::from_square(Squares::SQ_3B);
-constexpr BitBoard bb_3c = BitBoard::from_square(Squares::SQ_3C);
-constexpr BitBoard bb_3d = BitBoard::from_square(Squares::SQ_3D);
-constexpr BitBoard bb_3e = BitBoard::from_square(Squares::SQ_3E);
-constexpr BitBoard bb_3f = BitBoard::from_square(Squares::SQ_3F);
-constexpr BitBoard bb_4a = BitBoard::from_square(Squares::SQ_4A);
-constexpr BitBoard bb_4b = BitBoard::from_square(Squares::SQ_4B);
-constexpr BitBoard bb_4c = BitBoard::from_square(Squares::SQ_4C);
-constexpr BitBoard bb_4d = BitBoard::from_square(Squares::SQ_4D);
-constexpr BitBoard bb_4e = BitBoard::from_square(Squares::SQ_4E);
-constexpr BitBoard bb_4f = BitBoard::from_square(Squares::SQ_4F);
-constexpr BitBoard bb_5a = BitBoard::from_square(Squares::SQ_5A);
-constexpr BitBoard bb_5b = BitBoard::from_square(Squares::SQ_5B);
-constexpr BitBoard bb_5c = BitBoard::from_square(Squares::SQ_5C);
-constexpr BitBoard bb_5d = BitBoard::from_square(Squares::SQ_5D);
-constexpr BitBoard bb_5e = BitBoard::from_square(Squares::SQ_5E);
-constexpr BitBoard bb_5f = BitBoard::from_square(Squares::SQ_5F);
-constexpr BitBoard bb_6a = BitBoard::from_square(Squares::SQ_6A);
-constexpr BitBoard bb_6b = BitBoard::from_square(Squares::SQ_6B);
-constexpr BitBoard bb_6c = BitBoard::from_square(Squares::SQ_6C);
-constexpr BitBoard bb_6d = BitBoard::from_square(Squares::SQ_6D);
-constexpr BitBoard bb_6e = BitBoard::from_square(Squares::SQ_6E);
-constexpr BitBoard bb_6f = BitBoard::from_square(Squares::SQ_6F);
+constexpr BitBoard bb_1a = BitBoard::from_square(SQ_1A);
+constexpr BitBoard bb_1b = BitBoard::from_square(SQ_1B);
+constexpr BitBoard bb_1c = BitBoard::from_square(SQ_1C);
+constexpr BitBoard bb_1d = BitBoard::from_square(SQ_1D);
+constexpr BitBoard bb_1e = BitBoard::from_square(SQ_1E);
+constexpr BitBoard bb_1f = BitBoard::from_square(SQ_1F);
+constexpr BitBoard bb_2a = BitBoard::from_square(SQ_2A);
+constexpr BitBoard bb_2b = BitBoard::from_square(SQ_2B);
+constexpr BitBoard bb_2c = BitBoard::from_square(SQ_2C);
+constexpr BitBoard bb_2d = BitBoard::from_square(SQ_2D);
+constexpr BitBoard bb_2e = BitBoard::from_square(SQ_2E);
+constexpr BitBoard bb_2f = BitBoard::from_square(SQ_2F);
+constexpr BitBoard bb_3a = BitBoard::from_square(SQ_3A);
+constexpr BitBoard bb_3b = BitBoard::from_square(SQ_3B);
+constexpr BitBoard bb_3c = BitBoard::from_square(SQ_3C);
+constexpr BitBoard bb_3d = BitBoard::from_square(SQ_3D);
+constexpr BitBoard bb_3e = BitBoard::from_square(SQ_3E);
+constexpr BitBoard bb_3f = BitBoard::from_square(SQ_3F);
+constexpr BitBoard bb_4a = BitBoard::from_square(SQ_4A);
+constexpr BitBoard bb_4b = BitBoard::from_square(SQ_4B);
+constexpr BitBoard bb_4c = BitBoard::from_square(SQ_4C);
+constexpr BitBoard bb_4d = BitBoard::from_square(SQ_4D);
+constexpr BitBoard bb_4e = BitBoard::from_square(SQ_4E);
+constexpr BitBoard bb_4f = BitBoard::from_square(SQ_4F);
+constexpr BitBoard bb_5a = BitBoard::from_square(SQ_5A);
+constexpr BitBoard bb_5b = BitBoard::from_square(SQ_5B);
+constexpr BitBoard bb_5c = BitBoard::from_square(SQ_5C);
+constexpr BitBoard bb_5d = BitBoard::from_square(SQ_5D);
+constexpr BitBoard bb_5e = BitBoard::from_square(SQ_5E);
+constexpr BitBoard bb_5f = BitBoard::from_square(SQ_5F);
+constexpr BitBoard bb_6a = BitBoard::from_square(SQ_6A);
+constexpr BitBoard bb_6b = BitBoard::from_square(SQ_6B);
+constexpr BitBoard bb_6c = BitBoard::from_square(SQ_6C);
+constexpr BitBoard bb_6d = BitBoard::from_square(SQ_6D);
+constexpr BitBoard bb_6e = BitBoard::from_square(SQ_6E);
+constexpr BitBoard bb_6f = BitBoard::from_square(SQ_6F);
 
 constexpr BitBoard bb_file1 = bb_1a | bb_1b | bb_1c | bb_1d | bb_1e | bb_1f;
 constexpr BitBoard bb_file2 = bb_2a | bb_2b | bb_2c | bb_2d | bb_2e | bb_2f;

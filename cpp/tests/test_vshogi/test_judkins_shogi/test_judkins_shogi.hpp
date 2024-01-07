@@ -78,63 +78,9 @@ static constexpr auto VOID = vshogi::judkins_shogi::Pieces::VOID; // NOLINT
 static constexpr auto shift = vshogi::judkins_shogi::Squares::shift;
 static constexpr auto to_rank = vshogi::judkins_shogi::Squares::to_rank;
 static constexpr auto to_file = vshogi::judkins_shogi::Squares::to_file;
-template <class T>
-static auto is_edge(const T a)
-{
-    return vshogi::judkins_shogi::Squares::is_edge(a);
-}
 static constexpr auto get_direction
     = vshogi::judkins_shogi::Squares::get_direction;
 static constexpr auto num_squares = vshogi::judkins_shogi::Squares::num_squares;
-static constexpr auto RANK1 = vshogi::judkins_shogi::Squares::RANK1; // NOLINT
-static constexpr auto RANK2 = vshogi::judkins_shogi::Squares::RANK2; // NOLINT
-static constexpr auto RANK3 = vshogi::judkins_shogi::Squares::RANK3; // NOLINT
-static constexpr auto RANK4 = vshogi::judkins_shogi::Squares::RANK4; // NOLINT
-static constexpr auto RANK5 = vshogi::judkins_shogi::Squares::RANK5; // NOLINT
-static constexpr auto RANK6 = vshogi::judkins_shogi::Squares::RANK6; // NOLINT
-static constexpr auto FILE1 = vshogi::judkins_shogi::Squares::FILE1; // NOLINT
-static constexpr auto FILE2 = vshogi::judkins_shogi::Squares::FILE2; // NOLINT
-static constexpr auto FILE3 = vshogi::judkins_shogi::Squares::FILE3; // NOLINT
-static constexpr auto FILE4 = vshogi::judkins_shogi::Squares::FILE4; // NOLINT
-static constexpr auto FILE5 = vshogi::judkins_shogi::Squares::FILE5; // NOLINT
-static constexpr auto FILE6 = vshogi::judkins_shogi::Squares::FILE6; // NOLINT
-static constexpr auto SQ_6A = vshogi::judkins_shogi::Squares::SQ_6A; // NOLINT
-static constexpr auto SQ_5A = vshogi::judkins_shogi::Squares::SQ_5A; // NOLINT
-static constexpr auto SQ_4A = vshogi::judkins_shogi::Squares::SQ_4A; // NOLINT
-static constexpr auto SQ_3A = vshogi::judkins_shogi::Squares::SQ_3A; // NOLINT
-static constexpr auto SQ_2A = vshogi::judkins_shogi::Squares::SQ_2A; // NOLINT
-static constexpr auto SQ_1A = vshogi::judkins_shogi::Squares::SQ_1A; // NOLINT
-static constexpr auto SQ_6B = vshogi::judkins_shogi::Squares::SQ_6B; // NOLINT
-static constexpr auto SQ_5B = vshogi::judkins_shogi::Squares::SQ_5B; // NOLINT
-static constexpr auto SQ_4B = vshogi::judkins_shogi::Squares::SQ_4B; // NOLINT
-static constexpr auto SQ_3B = vshogi::judkins_shogi::Squares::SQ_3B; // NOLINT
-static constexpr auto SQ_2B = vshogi::judkins_shogi::Squares::SQ_2B; // NOLINT
-static constexpr auto SQ_1B = vshogi::judkins_shogi::Squares::SQ_1B; // NOLINT
-static constexpr auto SQ_6C = vshogi::judkins_shogi::Squares::SQ_6C; // NOLINT
-static constexpr auto SQ_5C = vshogi::judkins_shogi::Squares::SQ_5C; // NOLINT
-static constexpr auto SQ_4C = vshogi::judkins_shogi::Squares::SQ_4C; // NOLINT
-static constexpr auto SQ_3C = vshogi::judkins_shogi::Squares::SQ_3C; // NOLINT
-static constexpr auto SQ_2C = vshogi::judkins_shogi::Squares::SQ_2C; // NOLINT
-static constexpr auto SQ_1C = vshogi::judkins_shogi::Squares::SQ_1C; // NOLINT
-static constexpr auto SQ_6D = vshogi::judkins_shogi::Squares::SQ_6D; // NOLINT
-static constexpr auto SQ_5D = vshogi::judkins_shogi::Squares::SQ_5D; // NOLINT
-static constexpr auto SQ_4D = vshogi::judkins_shogi::Squares::SQ_4D; // NOLINT
-static constexpr auto SQ_3D = vshogi::judkins_shogi::Squares::SQ_3D; // NOLINT
-static constexpr auto SQ_2D = vshogi::judkins_shogi::Squares::SQ_2D; // NOLINT
-static constexpr auto SQ_1D = vshogi::judkins_shogi::Squares::SQ_1D; // NOLINT
-static constexpr auto SQ_6E = vshogi::judkins_shogi::Squares::SQ_6E; // NOLINT
-static constexpr auto SQ_5E = vshogi::judkins_shogi::Squares::SQ_5E; // NOLINT
-static constexpr auto SQ_4E = vshogi::judkins_shogi::Squares::SQ_4E; // NOLINT
-static constexpr auto SQ_3E = vshogi::judkins_shogi::Squares::SQ_3E; // NOLINT
-static constexpr auto SQ_2E = vshogi::judkins_shogi::Squares::SQ_2E; // NOLINT
-static constexpr auto SQ_1E = vshogi::judkins_shogi::Squares::SQ_1E; // NOLINT
-static constexpr auto SQ_6F = vshogi::judkins_shogi::Squares::SQ_6F; // NOLINT
-static constexpr auto SQ_5F = vshogi::judkins_shogi::Squares::SQ_5F; // NOLINT
-static constexpr auto SQ_4F = vshogi::judkins_shogi::Squares::SQ_4F; // NOLINT
-static constexpr auto SQ_3F = vshogi::judkins_shogi::Squares::SQ_3F; // NOLINT
-static constexpr auto SQ_2F = vshogi::judkins_shogi::Squares::SQ_2F; // NOLINT
-static constexpr auto SQ_1F = vshogi::judkins_shogi::Squares::SQ_1F; // NOLINT
-static constexpr auto SQ_NA = vshogi::judkins_shogi::Squares::SQ_NA; // NOLINT
 
 } // namespace test_vshogi::test_judkins_shogi
 
