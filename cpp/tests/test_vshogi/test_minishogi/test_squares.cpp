@@ -85,4 +85,113 @@ TEST(squares, square_array)
     }
 }
 
+TEST(squares, get_non_ranging_attacks_by)
+{
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_FU, SQ_3A);
+        CHECK_EQUAL(SQ_NA, actual[0]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_FU, SQ_4B);
+        CHECK_EQUAL(SQ_4A, actual[0]);
+        CHECK_EQUAL(SQ_NA, actual[1]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(W_FU, SQ_4B);
+        CHECK_EQUAL(SQ_4C, actual[0]);
+        CHECK_EQUAL(SQ_NA, actual[1]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_GI, SQ_2E);
+        CHECK_EQUAL(SQ_3D, actual[0]);
+        CHECK_EQUAL(SQ_2D, actual[1]);
+        CHECK_EQUAL(SQ_1D, actual[2]);
+        CHECK_EQUAL(SQ_NA, actual[3]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(W_GI, SQ_2E);
+        CHECK_EQUAL(SQ_3D, actual[0]);
+        CHECK_EQUAL(SQ_1D, actual[1]);
+        CHECK_EQUAL(SQ_NA, actual[2]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(W_GI, SQ_3A);
+        CHECK_EQUAL(SQ_4B, actual[0]);
+        CHECK_EQUAL(SQ_3B, actual[1]);
+        CHECK_EQUAL(SQ_2B, actual[2]);
+        CHECK_EQUAL(SQ_NA, actual[3]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_KI, SQ_5A);
+        CHECK_EQUAL(SQ_4A, actual[0]);
+        CHECK_EQUAL(SQ_5B, actual[1]);
+        CHECK_EQUAL(SQ_NA, actual[2]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(W_KI, SQ_3C);
+        CHECK_EQUAL(SQ_3B, actual[0]);
+        CHECK_EQUAL(SQ_4C, actual[1]);
+        CHECK_EQUAL(SQ_2C, actual[2]);
+        CHECK_EQUAL(SQ_4D, actual[3]);
+        CHECK_EQUAL(SQ_3D, actual[4]);
+        CHECK_EQUAL(SQ_2D, actual[5]);
+        CHECK_EQUAL(SQ_NA, actual[6]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_TO, SQ_5A);
+        CHECK_EQUAL(SQ_4A, actual[0]);
+        CHECK_EQUAL(SQ_5B, actual[1]);
+        CHECK_EQUAL(SQ_NA, actual[2]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(W_TO, SQ_3C);
+        CHECK_EQUAL(SQ_3B, actual[0]);
+        CHECK_EQUAL(SQ_4C, actual[1]);
+        CHECK_EQUAL(SQ_2C, actual[2]);
+        CHECK_EQUAL(SQ_4D, actual[3]);
+        CHECK_EQUAL(SQ_3D, actual[4]);
+        CHECK_EQUAL(SQ_2D, actual[5]);
+        CHECK_EQUAL(SQ_NA, actual[6]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_NG, SQ_5A);
+        CHECK_EQUAL(SQ_4A, actual[0]);
+        CHECK_EQUAL(SQ_5B, actual[1]);
+        CHECK_EQUAL(SQ_NA, actual[2]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(W_NG, SQ_3C);
+        CHECK_EQUAL(SQ_3B, actual[0]);
+        CHECK_EQUAL(SQ_4C, actual[1]);
+        CHECK_EQUAL(SQ_2C, actual[2]);
+        CHECK_EQUAL(SQ_4D, actual[3]);
+        CHECK_EQUAL(SQ_3D, actual[4]);
+        CHECK_EQUAL(SQ_2D, actual[5]);
+        CHECK_EQUAL(SQ_NA, actual[6]);
+    }
+    CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(B_KA, SQ_3C));
+    CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(W_UM, SQ_3C));
+    CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(B_HI, SQ_3C));
+    CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(W_RY, SQ_3C));
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_OU, SQ_2B);
+        CHECK_EQUAL(SQ_3A, actual[0]);
+        CHECK_EQUAL(SQ_2A, actual[1]);
+        CHECK_EQUAL(SQ_1A, actual[2]);
+        CHECK_EQUAL(SQ_3B, actual[3]);
+        CHECK_EQUAL(SQ_1B, actual[4]);
+        CHECK_EQUAL(SQ_3C, actual[5]);
+        CHECK_EQUAL(SQ_2C, actual[6]);
+        CHECK_EQUAL(SQ_1C, actual[7]);
+        CHECK_EQUAL(SQ_NA, actual[8]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(W_OU, SQ_5E);
+        CHECK_EQUAL(SQ_5D, actual[0]);
+        CHECK_EQUAL(SQ_4D, actual[1]);
+        CHECK_EQUAL(SQ_4E, actual[2]);
+        CHECK_EQUAL(SQ_NA, actual[3]);
+    }
+}
+
 } // namespace test_vshogi::test_minishogi

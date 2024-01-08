@@ -56,17 +56,6 @@ public:
     static const SquareEnum* get_attacks_by_non_ranging(
         const BoardPieceTypeEnum& piece, const SquareEnum& location);
 
-    /**
-     * @brief Get pointer to array of squares along the given direction
-     * from the given location.
-     *
-     * @param direction
-     * @param location
-     * @return const SquareEnum*
-     */
-    static const SquareEnum* get_squares_along(
-        const DirectionEnum& direction, const SquareEnum& location);
-
     std::uint64_t get_value() const
     {
         return m_value;

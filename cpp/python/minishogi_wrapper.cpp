@@ -112,7 +112,6 @@ void export_minishogi(py::module& m)
 {
     ms::Squares::init_tables();
     ms::State::init_zobrist_table();
-    ms::init_non_ranging_attacks_table();
 
     export_square_enum(m);
     export_pieces(m);

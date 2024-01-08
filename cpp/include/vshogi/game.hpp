@@ -494,7 +494,7 @@ protected:
             return;
         const auto& board = get_board();
         const auto moving = board[src];
-        auto ptr_dst = BitBoard::get_attacks_by_non_ranging(moving, src);
+        auto ptr_dst = Squares::get_non_ranging_attacks_by(moving, src);
         const auto end = ptr_dst + 8;
         const auto& ally_mask = m_occupied[ac];
         for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
@@ -551,7 +551,7 @@ protected:
         const bool& src_promote,
         const ColorEnum& turn)
     {
-        auto ptr_dst = BitBoard::get_attacks_by_non_ranging(p, src);
+        auto ptr_dst = Squares::get_non_ranging_attacks_by(p, src);
         if (ptr_dst != nullptr) {
             for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
                 if (!dst_mask.is_one(*ptr_dst))

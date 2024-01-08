@@ -46,7 +46,7 @@ enum RankEnum
     RANK4,
 };
 
-using Squares = vshogi::Squares<3, 4, SquareEnum, FileEnum, RankEnum, 8, 8>;
+using Squares = vshogi::Squares<3, 4, SquareEnum, FileEnum, RankEnum, 8, 8, 7>;
 
 } // namespace vshogi::animal_shogi
 
@@ -59,6 +59,11 @@ inline bool vshogi::animal_shogi::Squares::in_promotion_zone(
 {
     return (c == BLACK) ? (r == vshogi::animal_shogi::RANK1)
                         : (r == vshogi::animal_shogi::RANK4);
+}
+
+template <>
+inline void vshogi::animal_shogi::Squares::init_non_ranging_attacks_array()
+{
 }
 
 } // namespace vshogi

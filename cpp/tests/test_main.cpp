@@ -11,11 +11,9 @@ int main(int argc, char* argv[])
     vshogi::animal_shogi::State::init_zobrist_table();
 
     vshogi::minishogi::Squares::init_tables();
-    vshogi::minishogi::init_non_ranging_attacks_table();
     vshogi::minishogi::State::init_zobrist_table();
 
     vshogi::judkins_shogi::Squares::init_tables();
-    vshogi::judkins_shogi::init_non_ranging_attacks_table();
     vshogi::judkins_shogi::State::init_zobrist_table();
 
     vshogi::shogi::Squares::init_tables();

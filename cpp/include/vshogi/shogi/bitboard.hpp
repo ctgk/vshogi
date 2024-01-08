@@ -251,17 +251,6 @@ public:
     static const SquareEnum* get_attacks_by_non_ranging(
         const BoardPieceTypeEnum& piece, const SquareEnum& location);
 
-    /**
-     * @brief Get pointer to array of squares along the given direction
-     * from the given location.
-     *
-     * @param direction
-     * @param location
-     * @return const SquareEnum*
-     */
-    static const SquareEnum* get_squares_along(
-        const DirectionEnum& direction, const SquareEnum& location);
-
     constexpr BitBoard operator|(const BitBoard other) const
     {
         return BitBoard(m_value | other.m_value);

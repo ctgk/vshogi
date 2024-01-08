@@ -3,6 +3,7 @@
 
 #include "vshogi/color.hpp"
 #include "vshogi/direction.hpp"
+#include "vshogi/minishogi/piece.hpp"
 #include "vshogi/squares.hpp"
 
 namespace vshogi::minishogi
@@ -53,7 +54,7 @@ enum RankEnum
     RANK5,
 };
 
-using Squares = vshogi::Squares<5, 5, SquareEnum, FileEnum, RankEnum, 8, 8>;
+using Squares = vshogi::Squares<5, 5, SquareEnum, FileEnum, RankEnum, 8, 8, 7>;
 
 } // namespace vshogi::minishogi
 
@@ -97,6 +98,73 @@ vshogi::minishogi::Squares::get_direction_for_diagonal_or_knight(
         return (to_file(src) < vshogi::minishogi::FILE3) ? DIR_SW : DIR_SE;
     default:
         return DIR_NA;
+    }
+}
+
+template <>
+template <>
+inline const vshogi::minishogi::SquareEnum*
+vshogi::minishogi::Squares::get_non_ranging_attacks_by(
+    const vshogi::minishogi::BoardPieceTypeEnum& p,
+    const vshogi::minishogi::SquareEnum& location)
+{
+    switch (p) {
+    case vshogi::minishogi::B_FU:
+        return non_ranging_attacks_array[0][location];
+    case vshogi::minishogi::B_GI:
+        return non_ranging_attacks_array[1][location];
+    case vshogi::minishogi::B_KI:
+    case vshogi::minishogi::B_TO:
+    case vshogi::minishogi::B_NG:
+        return non_ranging_attacks_array[2][location];
+    case vshogi::minishogi::W_FU:
+        return non_ranging_attacks_array[3][location];
+    case vshogi::minishogi::W_GI:
+        return non_ranging_attacks_array[4][location];
+    case vshogi::minishogi::W_KI:
+    case vshogi::minishogi::W_TO:
+    case vshogi::minishogi::W_NG:
+        return non_ranging_attacks_array[5][location];
+    case vshogi::minishogi::B_OU:
+    case vshogi::minishogi::W_OU:
+        return non_ranging_attacks_array[6][location];
+    default:
+        return nullptr;
+    }
+}
+
+template <>
+inline void vshogi::minishogi::Squares::init_non_ranging_attacks_array()
+{
+    constexpr int size = sizeof(non_ranging_attacks_array)
+                         / sizeof(non_ranging_attacks_array[0][0][0]);
+    std::fill_n(
+        &non_ranging_attacks_array[0][0][0], size, vshogi::minishogi::SQ_NA);
+
+    // B_FU, B_GI, B_KI, W_FU, W_GI, W_KI, OU
+    constexpr DirectionEnum piece_to_direction[7][9] = {
+        // clang-format off
+        {DIR_N, DIR_NA}, // B_FU
+        {DIR_NW, DIR_N, DIR_NE, DIR_SW, DIR_SE, DIR_NA}, // B_GI
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S, DIR_NA}, // B_KI
+        {DIR_S, DIR_NA}, // W_FU
+        {DIR_NW, DIR_NE, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // W_GI
+        {DIR_N, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // W_KI
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // OU
+        // clang-format on
+    };
+    for (int i = 0; i < 7; ++i) {
+        for (auto&& sq : square_array) {
+            int index = 0;
+            for (auto&& dir : piece_to_direction[i]) {
+                if (dir == DIR_NA)
+                    break;
+                const auto dst = shift(sq, dir);
+                if (dst == SQ_NA)
+                    continue;
+                non_ranging_attacks_array[i][sq][index++] = dst;
+            }
+        }
     }
 }
 

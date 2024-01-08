@@ -77,17 +77,6 @@ public:
         const Pieces::BoardPieceTypeEnum& piece,
         const Squares::SquareEnum& location);
 
-    /**
-     * @brief Get pointer to array of squares along the given direction
-     * from the given location.
-     *
-     * @param direction
-     * @param location
-     * @return const Squares::SquareEnum*
-     */
-    static const Squares::SquareEnum* get_squares_along(
-        const DirectionEnum& direction, const Squares::SquareEnum& location);
-
     constexpr std::uint32_t get_value() const
     {
         return m_value;

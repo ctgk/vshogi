@@ -119,4 +119,147 @@ TEST(squares, get_direction)
     CHECK_EQUAL(vshogi::DIR_SSE, get_direction(SQ_2D, SQ_3B));
 }
 
+TEST(squares, get_non_ranging_attacks_by)
+{
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_FU, SQ_3A);
+        CHECK_EQUAL(SQ_NA, actual[0]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_FU, SQ_4B);
+        CHECK_EQUAL(SQ_4A, actual[0]);
+        CHECK_EQUAL(SQ_NA, actual[1]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(W_FU, SQ_4B);
+        CHECK_EQUAL(SQ_4C, actual[0]);
+        CHECK_EQUAL(SQ_NA, actual[1]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_KE, SQ_5E);
+        CHECK_EQUAL(SQ_6C, actual[0]);
+        CHECK_EQUAL(SQ_4C, actual[1]);
+        CHECK_EQUAL(SQ_NA, actual[2]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_KE, SQ_1D);
+        CHECK_EQUAL(SQ_2B, actual[0]);
+        CHECK_EQUAL(SQ_NA, actual[1]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(W_KE, SQ_5B);
+        CHECK_EQUAL(SQ_6D, actual[0]);
+        CHECK_EQUAL(SQ_4D, actual[1]);
+        CHECK_EQUAL(SQ_NA, actual[2]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_GI, SQ_2E);
+        CHECK_EQUAL(SQ_3D, actual[0]);
+        CHECK_EQUAL(SQ_2D, actual[1]);
+        CHECK_EQUAL(SQ_1D, actual[2]);
+        CHECK_EQUAL(SQ_3F, actual[3]);
+        CHECK_EQUAL(SQ_1F, actual[4]);
+        CHECK_EQUAL(SQ_NA, actual[5]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(W_GI, SQ_2F);
+        CHECK_EQUAL(SQ_3E, actual[0]);
+        CHECK_EQUAL(SQ_1E, actual[1]);
+        CHECK_EQUAL(SQ_NA, actual[2]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(W_GI, SQ_3A);
+        CHECK_EQUAL(SQ_4B, actual[0]);
+        CHECK_EQUAL(SQ_3B, actual[1]);
+        CHECK_EQUAL(SQ_2B, actual[2]);
+        CHECK_EQUAL(SQ_NA, actual[3]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_KI, SQ_6A);
+        CHECK_EQUAL(SQ_5A, actual[0]);
+        CHECK_EQUAL(SQ_6B, actual[1]);
+        CHECK_EQUAL(SQ_NA, actual[2]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(W_KI, SQ_3C);
+        CHECK_EQUAL(SQ_3B, actual[0]);
+        CHECK_EQUAL(SQ_4C, actual[1]);
+        CHECK_EQUAL(SQ_2C, actual[2]);
+        CHECK_EQUAL(SQ_4D, actual[3]);
+        CHECK_EQUAL(SQ_3D, actual[4]);
+        CHECK_EQUAL(SQ_2D, actual[5]);
+        CHECK_EQUAL(SQ_NA, actual[6]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_TO, SQ_6A);
+        CHECK_EQUAL(SQ_5A, actual[0]);
+        CHECK_EQUAL(SQ_6B, actual[1]);
+        CHECK_EQUAL(SQ_NA, actual[2]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(W_TO, SQ_3C);
+        CHECK_EQUAL(SQ_3B, actual[0]);
+        CHECK_EQUAL(SQ_4C, actual[1]);
+        CHECK_EQUAL(SQ_2C, actual[2]);
+        CHECK_EQUAL(SQ_4D, actual[3]);
+        CHECK_EQUAL(SQ_3D, actual[4]);
+        CHECK_EQUAL(SQ_2D, actual[5]);
+        CHECK_EQUAL(SQ_NA, actual[6]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_NK, SQ_6A);
+        CHECK_EQUAL(SQ_5A, actual[0]);
+        CHECK_EQUAL(SQ_6B, actual[1]);
+        CHECK_EQUAL(SQ_NA, actual[2]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(W_NK, SQ_3C);
+        CHECK_EQUAL(SQ_3B, actual[0]);
+        CHECK_EQUAL(SQ_4C, actual[1]);
+        CHECK_EQUAL(SQ_2C, actual[2]);
+        CHECK_EQUAL(SQ_4D, actual[3]);
+        CHECK_EQUAL(SQ_3D, actual[4]);
+        CHECK_EQUAL(SQ_2D, actual[5]);
+        CHECK_EQUAL(SQ_NA, actual[6]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_NG, SQ_6A);
+        CHECK_EQUAL(SQ_5A, actual[0]);
+        CHECK_EQUAL(SQ_6B, actual[1]);
+        CHECK_EQUAL(SQ_NA, actual[2]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(W_NG, SQ_3C);
+        CHECK_EQUAL(SQ_3B, actual[0]);
+        CHECK_EQUAL(SQ_4C, actual[1]);
+        CHECK_EQUAL(SQ_2C, actual[2]);
+        CHECK_EQUAL(SQ_4D, actual[3]);
+        CHECK_EQUAL(SQ_3D, actual[4]);
+        CHECK_EQUAL(SQ_2D, actual[5]);
+        CHECK_EQUAL(SQ_NA, actual[6]);
+    }
+    CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(B_KA, SQ_3C));
+    CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(W_UM, SQ_3A));
+    CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(W_HI, SQ_3A));
+    CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(B_RY, SQ_3C));
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(B_OU, SQ_2B);
+        CHECK_EQUAL(SQ_3A, actual[0]);
+        CHECK_EQUAL(SQ_2A, actual[1]);
+        CHECK_EQUAL(SQ_1A, actual[2]);
+        CHECK_EQUAL(SQ_3B, actual[3]);
+        CHECK_EQUAL(SQ_1B, actual[4]);
+        CHECK_EQUAL(SQ_3C, actual[5]);
+        CHECK_EQUAL(SQ_2C, actual[6]);
+        CHECK_EQUAL(SQ_1C, actual[7]);
+    }
+    {
+        const auto actual = Squares::get_non_ranging_attacks_by(W_OU, SQ_6F);
+        CHECK_EQUAL(SQ_6E, actual[0]);
+        CHECK_EQUAL(SQ_5E, actual[1]);
+        CHECK_EQUAL(SQ_5F, actual[2]);
+        CHECK_EQUAL(SQ_NA, actual[3]);
+    }
+}
+
 } // namespace test_vshogi::test_judkins_shogi

@@ -17,7 +17,8 @@ template <
     class File,
     class Rank,
     int NumDir,
-    int NumDirDL>
+    int NumDirDL,
+    int NumNonRangingBoardPiece>
 struct Squares
 {
     Squares() = delete;
@@ -52,6 +53,8 @@ private:
                           [static_cast<std::size_t>(num_directions)]
                           [static_cast<std::size_t>(
                               (NumFiles > NumRanks) ? NumFiles : NumRanks)];
+    inline static Square non_ranging_attacks_array[static_cast<std::size_t>(
+        NumNonRangingBoardPiece)][static_cast<std::size_t>(num_squares)][9UL];
 
 public:
     static constexpr File to_file(const Square& sq)
@@ -108,6 +111,7 @@ public:
         }
 
         init_ranging_squares_table();
+        init_non_ranging_attacks_array();
     }
 
     static bool in_promotion_zone(const Rank& r, const ColorEnum& c);
@@ -154,6 +158,9 @@ public:
             return nullptr;
         return ranging_squares_to[location][direction];
     }
+    template <class BoardPiece>
+    static const Square*
+    get_non_ranging_attacks_by(const BoardPiece& p, const Square& location);
 
 private:
     static DirectionEnum
@@ -177,6 +184,7 @@ private:
             }
         }
     }
+    static void init_non_ranging_attacks_array();
 };
 
 } // namespace vshogi
