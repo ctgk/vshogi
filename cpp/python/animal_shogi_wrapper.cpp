@@ -58,6 +58,7 @@ void export_pieces(py::module& m)
 void export_animal_shogi(py::module& m)
 {
     as::Squares::init_tables();
+    as::BitBoard::init_tables();
     as::State::init_zobrist_table();
     export_pieces(m);
     export_square_enum(m);

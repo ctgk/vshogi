@@ -11,6 +11,12 @@ using namespace vshogi::minishogi;
 
 TEST_GROUP(bitboard){};
 
+TEST(bitboard, is_one)
+{
+    CHECK_FALSE(bb_1a.is_one(SQ_NA));
+    CHECK_TRUE(bb_1a.is_one(SQ_1A));
+}
+
 TEST(bitboard, fu)
 {
     {

@@ -8,12 +8,15 @@
 int main(int argc, char* argv[])
 {
     vshogi::animal_shogi::Squares::init_tables();
+    vshogi::animal_shogi::BitBoard::init_tables();
     vshogi::animal_shogi::State::init_zobrist_table();
 
     vshogi::minishogi::Squares::init_tables();
+    vshogi::minishogi::BitBoard::init_tables();
     vshogi::minishogi::State::init_zobrist_table();
 
     vshogi::judkins_shogi::Squares::init_tables();
+    vshogi::judkins_shogi::BitBoard::init_tables();
     vshogi::judkins_shogi::State::init_zobrist_table();
 
     vshogi::shogi::Squares::init_tables();

@@ -7,7 +7,6 @@
 namespace test_vshogi::test_shogi
 {
 
-using namespace vshogi;
 using namespace vshogi::shogi;
 
 TEST_GROUP(bitboard){};
@@ -39,19 +38,19 @@ TEST(bitboard, shift)
 {
     {
         const auto bb = BitBoard::from_square(SQ_9A);
-        const auto actual = bb.shift<DIR_E>();
+        const auto actual = bb.shift<vshogi::DIR_E>();
         CHECK_EQUAL(1, actual.hamming_weight());
         CHECK_TRUE(actual.is_one(SQ_8A));
     }
     {
         const auto bb = BitBoard::from_square(SQ_9A);
-        const auto actual = bb.shift<DIR_SSE>();
+        const auto actual = bb.shift<vshogi::DIR_SSE>();
         CHECK_EQUAL(1, actual.hamming_weight());
         CHECK_TRUE(actual.is_one(SQ_8C));
     }
     {
         const auto bb = BitBoard::from_square(SQ_1A);
-        const auto actual = bb.shift<DIR_E>();
+        const auto actual = bb.shift<vshogi::DIR_E>();
         CHECK_FALSE(actual.any());
     }
 }

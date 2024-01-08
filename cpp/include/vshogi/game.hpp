@@ -694,17 +694,14 @@ protected:
         const auto& board = get_board();
         const auto pawn = Pieces::to_board_piece(turn, Pieces::FU);
         const auto enemy_king_sq = m_king_locations[~turn];
-        if (!BitBoard::get_attacks_by(pawn, dst).is_one(enemy_king_sq))
+        if (Squares::get_non_ranging_attacks_by(pawn, dst)[0] != enemy_king_sq)
             return false;
 
         // if opponent king can move away from the attack, then return false.
-        const auto enemy_king_movable = BitBoard::get_attacks_by(
-            Pieces::to_board_piece(~turn, Pieces::OU), enemy_king_sq);
-        for (auto dir : Squares::direction_array) {
-            const auto sq = Squares::shift(enemy_king_sq, dir);
-            if (!enemy_king_movable.is_one(sq))
-                continue;
-            if (is_square_attacked(board, sq, turn, enemy_king_sq))
+        const SquareEnum* sq_ptr = Squares::get_non_ranging_attacks_by(
+            board[enemy_king_sq], enemy_king_sq);
+        for (; *sq_ptr != Squares::SQ_NA; ++sq_ptr) {
+            if (is_square_attacked(board, *sq_ptr, turn, enemy_king_sq))
                 continue;
             return false;
         }

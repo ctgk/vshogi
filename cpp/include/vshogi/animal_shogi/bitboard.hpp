@@ -5,291 +5,143 @@
 
 #include "vshogi/animal_shogi/piece.hpp"
 #include "vshogi/animal_shogi/squares.hpp"
+#include "vshogi/bitboard.hpp"
 #include "vshogi/color.hpp"
 
 namespace vshogi::animal_shogi
 {
 
-/**
- * @brief Binary board representing ON and OFF of each squares.
- * @details
- *            *------------------- C4
- *            |           *------- B1
- *            |           |*------ A1
- *            |           ||
- *            v           vv
- * (MSB) xxxx xxxx xxxx xxxx (LSB)
- *
- */
-class BitBoard
-{
-private:
-    using SquareEnum = Squares::SquareEnum;
-    static constexpr auto direction_to_delta = Squares::direction_to_delta;
-    std::uint16_t m_value;
+constexpr unsigned int num_attack_types = 7;
+using BitBoard = vshogi::
+    BitBoard<std::uint16_t, Squares, BoardPieceTypeEnum, num_attack_types>;
 
-public:
-    constexpr BitBoard() : m_value(0U)
-    {
-    }
-    constexpr BitBoard(const std::uint16_t v) : m_value(v & 0x0fff)
-    {
-    }
-    constexpr static BitBoard from_square(const SquareEnum sq)
-    {
-        return BitBoard(static_cast<std::uint16_t>(1 << static_cast<int>(sq)));
-    }
-    constexpr std::uint16_t get_value() const
-    {
-        return m_value;
-    }
-    constexpr BitBoard operator|(const BitBoard other) const
-    {
-        return BitBoard(m_value | other.m_value);
-    }
-    BitBoard& operator|=(const BitBoard other)
-    {
-        m_value = static_cast<std::uint16_t>(m_value | other.m_value);
-        return *this;
-    }
-    constexpr BitBoard operator&(const BitBoard other) const
-    {
-        return BitBoard(m_value & other.m_value);
-    }
-    BitBoard& operator&=(const BitBoard other)
-    {
-        m_value = static_cast<std::uint16_t>(m_value & other.m_value);
-        return *this;
-    }
-    constexpr BitBoard operator~() const
-    {
-        return BitBoard(static_cast<std::uint16_t>(~m_value));
-    }
-    constexpr BitBoard operator<<(const int shift_width) const
-    {
-        return (shift_width > 0) ? BitBoard(
-                   static_cast<std::uint16_t>(m_value << shift_width))
-                                 : BitBoard(static_cast<std::uint16_t>(
-                                     m_value >> -shift_width));
-    }
-    bool operator==(const BitBoard other) const
-    {
-        return m_value == other.m_value;
-    }
-    bool operator!=(const BitBoard other) const
-    {
-        return m_value != other.m_value;
-    }
-    template <DirectionEnum D>
-    constexpr BitBoard shift() const
-    {
-        constexpr auto bb_fab
-            = ~(BitBoard::from_square(SQ_C1) | BitBoard::from_square(SQ_C2)
-                | BitBoard::from_square(SQ_C3) | BitBoard::from_square(SQ_C4));
-        constexpr auto bb_fbc
-            = ~(BitBoard::from_square(SQ_A1) | BitBoard::from_square(SQ_A2)
-                | BitBoard::from_square(SQ_A3) | BitBoard::from_square(SQ_A4));
-        constexpr BitBoard mask[] = {
-            // clang-format off
-            bb_fbc, ~BitBoard(), bb_fab,
-            bb_fbc,              bb_fab,
-            bb_fbc, ~BitBoard(), bb_fab,
-            // clang-format on
-        };
-        return (*this & mask[D]) << direction_to_delta(D);
-    }
-    bool any() const
-    {
-        return m_value > 0;
-    }
-    bool is_one(const SquareEnum sq) const
-    {
-        return static_cast<bool>(
-            (1 << static_cast<std::uint16_t>(sq)) & m_value);
-    }
-    static constexpr BitBoard get_attacks_by(
-        const Pieces::BoardPieceTypeEnum pieces,
-        const Squares::SquareEnum location);
-    static constexpr BitBoard get_attacks_by(
-        const Pieces::BoardPieceTypeEnum pieces,
-        const Squares::SquareEnum location,
-        const BitBoard)
-    {
-        return get_attacks_by(pieces, location);
-    }
-};
+constexpr BitBoard bb_a1 = (BitBoard(1) << static_cast<unsigned int>(SQ_A1));
+constexpr BitBoard bb_b1 = (BitBoard(1) << static_cast<unsigned int>(SQ_B1));
+constexpr BitBoard bb_c1 = (BitBoard(1) << static_cast<unsigned int>(SQ_C1));
+constexpr BitBoard bb_a2 = (BitBoard(1) << static_cast<unsigned int>(SQ_A2));
+constexpr BitBoard bb_b2 = (BitBoard(1) << static_cast<unsigned int>(SQ_B2));
+constexpr BitBoard bb_c2 = (BitBoard(1) << static_cast<unsigned int>(SQ_C2));
+constexpr BitBoard bb_a3 = (BitBoard(1) << static_cast<unsigned int>(SQ_A3));
+constexpr BitBoard bb_b3 = (BitBoard(1) << static_cast<unsigned int>(SQ_B3));
+constexpr BitBoard bb_c3 = (BitBoard(1) << static_cast<unsigned int>(SQ_C3));
+constexpr BitBoard bb_a4 = (BitBoard(1) << static_cast<unsigned int>(SQ_A4));
+constexpr BitBoard bb_b4 = (BitBoard(1) << static_cast<unsigned int>(SQ_B4));
+constexpr BitBoard bb_c4 = (BitBoard(1) << static_cast<unsigned int>(SQ_C4));
 
-constexpr BitBoard rank_1_mask = BitBoard(0b000000000111);
-constexpr BitBoard rank_2_mask = BitBoard(0b000000111000);
-constexpr BitBoard rank_3_mask = BitBoard(0b000111000000);
-constexpr BitBoard rank_4_mask = BitBoard(0b111000000000);
-constexpr BitBoard rank_masks[]
-    = {rank_1_mask, rank_2_mask, rank_3_mask, rank_4_mask};
+constexpr BitBoard bb_rank1 = BitBoard(0b000000000111);
+constexpr BitBoard bb_rank2 = BitBoard(0b000000111000);
+constexpr BitBoard bb_rank3 = BitBoard(0b000111000000);
+constexpr BitBoard bb_rank4 = BitBoard(0b111000000000);
 
-constexpr BitBoard file_a_mask = BitBoard(0b001001001001);
-constexpr BitBoard file_b_mask = BitBoard(0b010010010010);
-constexpr BitBoard file_c_mask = BitBoard(0b100100100100);
-constexpr BitBoard file_masks[] = {file_a_mask, file_b_mask, file_c_mask};
-
-constexpr BitBoard bb_a1 = BitBoard::from_square(SQ_A1);
-constexpr BitBoard bb_b1 = BitBoard::from_square(SQ_B1);
-constexpr BitBoard bb_c1 = BitBoard::from_square(SQ_C1);
-constexpr BitBoard bb_a2 = BitBoard::from_square(SQ_A2);
-constexpr BitBoard bb_b2 = BitBoard::from_square(SQ_B2);
-constexpr BitBoard bb_c2 = BitBoard::from_square(SQ_C2);
-constexpr BitBoard bb_a3 = BitBoard::from_square(SQ_A3);
-constexpr BitBoard bb_b3 = BitBoard::from_square(SQ_B3);
-constexpr BitBoard bb_c3 = BitBoard::from_square(SQ_C3);
-constexpr BitBoard bb_a4 = BitBoard::from_square(SQ_A4);
-constexpr BitBoard bb_b4 = BitBoard::from_square(SQ_B4);
-constexpr BitBoard bb_c4 = BitBoard::from_square(SQ_C4);
-constexpr BitBoard square_masks[] = {
-    bb_a1,
-    bb_b1,
-    bb_c1,
-    bb_a2,
-    bb_b2,
-    bb_c2,
-    bb_a3,
-    bb_b3,
-    bb_c3,
-    bb_a4,
-    bb_b4,
-    bb_c4,
-};
-
-namespace internal
-{
-
-constexpr BitBoard el_attack_sqb3 = bb_a2 | bb_c2 | bb_a4 | bb_c4;
-constexpr BitBoard gi_attack_sqb3 = bb_a3 | bb_b2 | bb_c3 | bb_b4;
-constexpr BitBoard he_attack_sqb3[]
-    = {gi_attack_sqb3 | bb_a2 | bb_c2, gi_attack_sqb3 | bb_a4 | bb_c4};
-
-} // namespace internal
-
-constexpr BitBoard chick_attacks[Squares::num_squares][num_colors] = {
-    {bb_a1.shift<DIR_N>(), bb_a1.shift<DIR_S>()},
-    {bb_b1.shift<DIR_N>(), bb_b1.shift<DIR_S>()},
-    {bb_c1.shift<DIR_N>(), bb_c1.shift<DIR_S>()},
-    {bb_a2.shift<DIR_N>(), bb_a2.shift<DIR_S>()},
-    {bb_b2.shift<DIR_N>(), bb_b2.shift<DIR_S>()},
-    {bb_c2.shift<DIR_N>(), bb_c2.shift<DIR_S>()},
-    {bb_a3.shift<DIR_N>(), bb_a3.shift<DIR_S>()},
-    {bb_b3.shift<DIR_N>(), bb_b3.shift<DIR_S>()},
-    {bb_c3.shift<DIR_N>(), bb_c3.shift<DIR_S>()},
-    {bb_a4.shift<DIR_N>(), bb_a4.shift<DIR_S>()},
-    {bb_b4.shift<DIR_N>(), bb_b4.shift<DIR_S>()},
-    {bb_c4.shift<DIR_N>(), bb_c4.shift<DIR_S>()},
-};
-
-constexpr BitBoard elephant_attacks[Squares::num_squares] = {
-    internal::el_attack_sqb3.shift<DIR_N>().shift<DIR_N>().shift<DIR_W>(),
-    internal::el_attack_sqb3.shift<DIR_N>().shift<DIR_N>(),
-    internal::el_attack_sqb3.shift<DIR_N>().shift<DIR_N>().shift<DIR_E>(),
-    internal::el_attack_sqb3.shift<DIR_N>().shift<DIR_W>(),
-    internal::el_attack_sqb3.shift<DIR_N>(),
-    internal::el_attack_sqb3.shift<DIR_N>().shift<DIR_E>(),
-    internal::el_attack_sqb3.shift<DIR_W>(),
-    internal::el_attack_sqb3,
-    internal::el_attack_sqb3.shift<DIR_E>(),
-    internal::el_attack_sqb3.shift<DIR_S>().shift<DIR_W>(),
-    internal::el_attack_sqb3.shift<DIR_S>(),
-    internal::el_attack_sqb3.shift<DIR_S>().shift<DIR_E>(),
-};
-constexpr BitBoard giraffe_attacks[Squares::num_squares] = {
-    internal::gi_attack_sqb3.shift<DIR_N>().shift<DIR_N>().shift<DIR_W>(),
-    internal::gi_attack_sqb3.shift<DIR_N>().shift<DIR_N>(),
-    internal::gi_attack_sqb3.shift<DIR_N>().shift<DIR_N>().shift<DIR_E>(),
-    internal::gi_attack_sqb3.shift<DIR_N>().shift<DIR_W>(),
-    internal::gi_attack_sqb3.shift<DIR_N>(),
-    internal::gi_attack_sqb3.shift<DIR_N>().shift<DIR_E>(),
-    internal::gi_attack_sqb3.shift<DIR_W>(),
-    internal::gi_attack_sqb3,
-    internal::gi_attack_sqb3.shift<DIR_E>(),
-    internal::gi_attack_sqb3.shift<DIR_S>().shift<DIR_W>(),
-    internal::gi_attack_sqb3.shift<DIR_S>(),
-    internal::gi_attack_sqb3.shift<DIR_S>().shift<DIR_E>(),
-};
-constexpr BitBoard lion_attacks[Squares::num_squares] = {
-    elephant_attacks[SQ_A1] | giraffe_attacks[SQ_A1],
-    elephant_attacks[SQ_B1] | giraffe_attacks[SQ_B1],
-    elephant_attacks[SQ_C1] | giraffe_attacks[SQ_C1],
-    elephant_attacks[SQ_A2] | giraffe_attacks[SQ_A2],
-    elephant_attacks[SQ_B2] | giraffe_attacks[SQ_B2],
-    elephant_attacks[SQ_C2] | giraffe_attacks[SQ_C2],
-    elephant_attacks[SQ_A3] | giraffe_attacks[SQ_A3],
-    elephant_attacks[SQ_B3] | giraffe_attacks[SQ_B3],
-    elephant_attacks[SQ_C3] | giraffe_attacks[SQ_C3],
-    elephant_attacks[SQ_A4] | giraffe_attacks[SQ_A4],
-    elephant_attacks[SQ_B4] | giraffe_attacks[SQ_B4],
-    elephant_attacks[SQ_C4] | giraffe_attacks[SQ_C4],
-};
-constexpr BitBoard hen_attacks[Squares::num_squares][num_colors] = {
-    {internal::he_attack_sqb3[BLACK]
-         .shift<DIR_N>()
-         .shift<DIR_N>()
-         .shift<DIR_W>(),
-     internal::he_attack_sqb3[WHITE]
-         .shift<DIR_N>()
-         .shift<DIR_N>()
-         .shift<DIR_W>()},
-    {internal::he_attack_sqb3[BLACK].shift<DIR_N>().shift<DIR_N>(),
-     internal::he_attack_sqb3[WHITE].shift<DIR_N>().shift<DIR_N>()},
-    {internal::he_attack_sqb3[BLACK]
-         .shift<DIR_N>()
-         .shift<DIR_N>()
-         .shift<DIR_E>(),
-     internal::he_attack_sqb3[WHITE]
-         .shift<DIR_N>()
-         .shift<DIR_N>()
-         .shift<DIR_E>()},
-    {internal::he_attack_sqb3[BLACK].shift<DIR_N>().shift<DIR_W>(),
-     internal::he_attack_sqb3[WHITE].shift<DIR_N>().shift<DIR_W>()},
-    {internal::he_attack_sqb3[BLACK].shift<DIR_N>(),
-     internal::he_attack_sqb3[WHITE].shift<DIR_N>()},
-    {internal::he_attack_sqb3[BLACK].shift<DIR_N>().shift<DIR_E>(),
-     internal::he_attack_sqb3[WHITE].shift<DIR_N>().shift<DIR_E>()},
-    {internal::he_attack_sqb3[BLACK].shift<DIR_W>(),
-     internal::he_attack_sqb3[WHITE].shift<DIR_W>()},
-    {internal::he_attack_sqb3[BLACK], internal::he_attack_sqb3[WHITE]},
-    {internal::he_attack_sqb3[BLACK].shift<DIR_E>(),
-     internal::he_attack_sqb3[WHITE].shift<DIR_E>()},
-    {internal::he_attack_sqb3[BLACK].shift<DIR_S>().shift<DIR_W>(),
-     internal::he_attack_sqb3[WHITE].shift<DIR_S>().shift<DIR_W>()},
-    {internal::he_attack_sqb3[BLACK].shift<DIR_S>(),
-     internal::he_attack_sqb3[WHITE].shift<DIR_S>()},
-    {internal::he_attack_sqb3[BLACK].shift<DIR_S>().shift<DIR_E>(),
-     internal::he_attack_sqb3[WHITE].shift<DIR_S>().shift<DIR_E>()},
-};
-
-constexpr BitBoard BitBoard::get_attacks_by(
-    const Pieces::BoardPieceTypeEnum piece, const Squares::SquareEnum location)
-{
-    switch (piece) {
-    case B_CH:
-        return chick_attacks[location][BLACK];
-    case W_CH:
-        return chick_attacks[location][WHITE];
-    case B_EL: // fall-through
-    case W_EL:
-        return elephant_attacks[location];
-    case B_GI: // fall-through
-    case W_GI:
-        return giraffe_attacks[location];
-    case B_LI: // fall-through
-    case W_LI:
-        return lion_attacks[location];
-    case B_HE:
-        return hen_attacks[location][BLACK];
-    case W_HE:
-        return hen_attacks[location][WHITE];
-    default:
-        break;
-    }
-    return BitBoard();
-}
+constexpr BitBoard bb_filea = BitBoard(0b001001001001);
+constexpr BitBoard bb_fileb = BitBoard(0b010010010010);
+constexpr BitBoard bb_filec = BitBoard(0b100100100100);
 
 } // namespace vshogi::animal_shogi
+
+namespace vshogi
+{
+
+template <>
+inline const animal_shogi::BitBoard animal_shogi::BitBoard::
+    square_to_bitboard_array[animal_shogi::Squares::num_squares + 1]
+    = {
+        BitBoard(1) << static_cast<unsigned int>(0),
+        BitBoard(1) << static_cast<unsigned int>(1),
+        BitBoard(1) << static_cast<unsigned int>(2),
+        BitBoard(1) << static_cast<unsigned int>(3),
+        BitBoard(1) << static_cast<unsigned int>(4),
+        BitBoard(1) << static_cast<unsigned int>(5),
+        BitBoard(1) << static_cast<unsigned int>(6),
+        BitBoard(1) << static_cast<unsigned int>(7),
+        BitBoard(1) << static_cast<unsigned int>(8),
+        BitBoard(1) << static_cast<unsigned int>(9),
+        BitBoard(1) << static_cast<unsigned int>(10),
+        BitBoard(1) << static_cast<unsigned int>(11),
+        BitBoard(),
+};
+
+template <>
+inline animal_shogi::BitBoard
+    animal_shogi::BitBoard::attacks_table[animal_shogi::num_attack_types]
+                                         [animal_shogi::Squares::num_squares]
+    = {};
+
+template <>
+constexpr animal_shogi::BitBoard
+animal_shogi::BitBoard::get_promotion_zone(const ColorEnum& c)
+{
+    return (c == BLACK) ? animal_shogi::bb_rank1 : animal_shogi::bb_rank4;
+}
+
+template <>
+template <DirectionEnum Dir>
+constexpr animal_shogi::BitBoard animal_shogi::BitBoard::shift() const
+{
+    constexpr auto bb_fab = animal_shogi::bb_filea | animal_shogi::bb_fileb;
+    constexpr auto bb_fbc = animal_shogi::bb_fileb | animal_shogi::bb_filec;
+    constexpr BitBoard filemask[] = {
+        // clang-format off
+        bb_fbc, ~BitBoard(0), bb_fab,
+        bb_fbc,               bb_fab,
+        bb_fbc, ~BitBoard(0), bb_fab,
+        bb_fbc,               bb_fab,
+        bb_fbc,               bb_fab,
+        // clang-format on
+    };
+    constexpr auto delta = animal_shogi::Squares::direction_to_delta(Dir);
+    if constexpr (delta > 0)
+        return (*this & filemask[Dir]) << static_cast<unsigned int>(delta);
+    else
+        return (*this & filemask[Dir]) >> static_cast<unsigned int>(-delta);
+}
+
+template <>
+inline animal_shogi::BitBoard animal_shogi::BitBoard::get_attacks_by(
+    const animal_shogi::BoardPieceTypeEnum& p,
+    const animal_shogi::SquareEnum& sq)
+{
+    using namespace vshogi::animal_shogi;
+    switch (p) {
+    case B_CH:
+        return attacks_table[0][sq];
+    case B_HE:
+        return attacks_table[1][sq];
+    case W_CH:
+        return attacks_table[2][sq];
+    case W_HE:
+        return attacks_table[3][sq];
+    case B_EL:
+    case W_EL:
+        return attacks_table[4][sq];
+    case B_GI:
+    case W_GI:
+        return attacks_table[5][sq];
+    case B_LI:
+    case W_LI:
+        return attacks_table[6][sq];
+    default:
+        return BitBoard();
+    }
+}
+
+template <>
+inline void animal_shogi::BitBoard::init_tables()
+{
+    for (auto&& sq : animal_shogi::Squares::square_array) {
+        const auto b = from_square(sq);
+        // clang-format off
+        attacks_table[0][sq] = b.shift<DIR_N>(); // B_CH
+        attacks_table[1][sq] = b.shift<DIR_NW>() | b.shift<DIR_N>() | b.shift<DIR_NE>() | b.shift<DIR_W>() | b.shift<DIR_E>() | b.shift<DIR_S>(); // B_KI
+        attacks_table[2][sq] = b.shift<DIR_S>(); // W_CH
+        attacks_table[3][sq] = b.shift<DIR_N>() | b.shift<DIR_W>() | b.shift<DIR_E>() | b.shift<DIR_SW>() | b.shift<DIR_S>() | b.shift<DIR_SE>(); // W_KI
+        attacks_table[4][sq] = b.shift<DIR_NW>() | b.shift<DIR_NE>() | b.shift<DIR_SW>() | b.shift<DIR_SE>(); // EL
+        attacks_table[5][sq] = b.shift<DIR_N>() | b.shift<DIR_W>() | b.shift<DIR_E>() | b.shift<DIR_S>(); // GI
+        attacks_table[6][sq] = attacks_table[4][sq] | attacks_table[5][sq]; // LI
+        // clang-format on
+    }
+}
+
+} // namespace vshogi
 
 #endif // VSHOGI_ANIMAL_SHOGI_BITBOARD_HPP

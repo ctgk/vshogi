@@ -1,415 +1,19 @@
 #ifndef VSHOGI_SHOGI_BITBOARD_HPP
 #define VSHOGI_SHOGI_BITBOARD_HPP
 
+#include <algorithm>
 #include <cstdint>
 
+#include "vshogi/bitboard.hpp"
 #include "vshogi/shogi/piece.hpp"
 #include "vshogi/shogi/squares.hpp"
 
 namespace vshogi::shogi
 {
 
-template <int Mask64bitHigher>
-class UInt128
-{
-private:
-#ifdef __SIZEOF_INT128__
-    __uint128_t m_value;
-    static constexpr __uint128_t mask128
-        = (static_cast<__uint128_t>(Mask64bitHigher) << 64)
-          | 0xffffffffffffffff;
-#elif
-    std::uint64_t m_value[2];
-#endif
-
-#ifdef __SIZEOF_INT128__
-    constexpr UInt128(const __uint128_t& a) : m_value{a}
-    {
-    }
-#elif
-    constexpr UInt128(const std::uint64_t& higher, const std::uint64_t& lower)
-        : m_value{higher, lower}
-    {
-    }
-#endif
-
-public:
-    constexpr UInt128() : m_value{}
-    {
-    }
-#ifdef __SIZEOF_INT128__
-    constexpr UInt128(const std::uint64_t& a)
-        : m_value{static_cast<__uint128_t>(a)}
-    {
-    }
-#elif
-    constexpr UInt128(const std::uint64_t& a) : m_value{0UL, a}
-    {
-    }
-#endif
-
-    constexpr operator bool() const
-    {
-#ifdef __SIZEOF_INT128__
-        return static_cast<bool>(m_value & mask128);
-#elif
-        return static_cast<bool>(m_value[1] & Mask64bitHigher)
-               || static_cast<bool>(m_value[0]);
-#endif
-    }
-    constexpr operator std::uint64_t() const
-    {
-#ifdef __SIZEOF_INT128__
-        return static_cast<std::uint64_t>(m_value);
-#elif
-        return m_value[0];
-#endif
-    }
-
-    constexpr UInt128 operator~() const
-    {
-#ifdef __SIZEOF_INT128__
-        return UInt128(~m_value);
-#elif
-        return UInt128(~m_value[1], ~m_value[0]);
-#endif
-    }
-
-    constexpr UInt128 operator|(const UInt128& other) const
-    {
-#ifdef __SIZEOF_INT128__
-        return UInt128(m_value | other.m_value);
-#elif
-        return UInt128(
-            m_value[1] | other.m_value[1], m_value[0] | other.m_value[0]);
-#endif
-    }
-
-    constexpr UInt128 operator&(const UInt128& other) const
-    {
-#ifdef __SIZEOF_INT128__
-        return UInt128(m_value & other.m_value);
-#elif
-        return UInt128(
-            m_value[1] & other.m_value[1], m_value[0] & other.m_value[0]);
-#endif
-    }
-
-    constexpr UInt128 operator^(const UInt128& other) const
-    {
-#ifdef __SIZEOF_INT128__
-        return UInt128(m_value ^ other.m_value);
-#elif
-        return UInt128(
-            m_value[1] ^ other.m_value[1], m_value[0] ^ other.m_value[0]);
-#endif
-    }
-
-    constexpr UInt128 operator<<(const unsigned int shift_width) const
-    {
-#ifdef __SIZEOF_INT128__
-        return UInt128(m_value << shift_width);
-#elif
-        UInt128(lshift_higher(shift_width), lshift_lower(shift_width));
-#endif
-    }
-
-    constexpr UInt128 operator>>(const unsigned int shift_width) const
-    {
-#ifdef __SIZEOF_INT128__
-        return UInt128((m_value & mask128) >> shift_width);
-#elif
-        UInt128(
-            rshift_higher(shift_width) & Mask64bitHigher,
-            rshift_lower(shift_width));
-#endif
-    }
-
-    UInt128& operator|=(const UInt128& other)
-    {
-#ifdef __SIZEOF_INT128__
-        m_value |= other.m_value;
-#elif
-        m_value[0] |= other.m_value[0];
-        m_value[1] |= other.m_value[1];
-#endif
-        return *this;
-    }
-    UInt128& operator&=(const UInt128& other)
-    {
-#ifdef __SIZEOF_INT128__
-        m_value &= other.m_value;
-#elif
-        m_value[0] &= other.m_value[0];
-        m_value[1] &= other.m_value[1];
-#endif
-        return *this;
-    }
-    UInt128& operator^=(const UInt128& other)
-    {
-#ifdef __SIZEOF_INT128__
-        m_value ^= other.m_value;
-#elif
-        m_value[0] ^= other.m_value[0];
-        m_value[1] ^= other.m_value[1];
-#endif
-        return *this;
-    }
-
-#ifndef __SIZEOF_INT128__
-private:
-    constexpr std::uint64_t lshift_lower(const unsigned int shift_width) const
-    {
-        return (shift_width == 0)   ? m_value[0]
-               : (shift_width > 63) ? 0
-                                    : (m_value[0] << shift_width);
-    }
-    constexpr std::uint64_t lshift_carry(const unsigned int shift_width) const
-    {
-        return static_cast<std::uint64_t>(
-            (shift_width == 0)    ? 0
-            : (shift_width < 64)  ? (m_value[0] >> (64 - shift_width))
-            : (shift_width < 128) ? (m_value[0] << (shift_width - 64))
-                                  : 0);
-    }
-    constexpr std::uint64_t lshift_higher(const unsigned int shift_width) const
-    {
-        const auto c = lshift_carry(shift_width);
-        const auto v = (shift_width < 64) ? m_value[1] << shift_width : 0;
-        return v | c;
-    }
-    constexpr std::uint64_t rshift_lower(const unsigned int shift_width) const
-    {
-        const auto v = (shift_width == 0)   ? m_value[0]
-                       : (shift_width > 63) ? 0
-                                            : (m_value[0] >> shift_width);
-        const auto c = rshift_carry(shift_width);
-        return v | c;
-    }
-    constexpr std::uint64_t rshift_carry(const unsigned int shift_width) const
-    {
-        const auto v = static_cast<std::uint64_t>(m_value[1]);
-        return (shift_width == 0)     ? 0
-               : (shift_width <= 64)  ? (v << (64 - shift_width))
-               : (shift_width <= 128) ? (v >> (shift_width - 64))
-                                      : 0;
-    }
-    constexpr std::uint64_t rshift_higher(const unsigned int shift_width) const
-    {
-        return (shift_width <= 64) ? ((m_value[1]) >> shift_width) : 0;
-    }
-#endif
-};
-
-class BitBoard
-{
-private:
-    /**
-     * @brief 128-bit binary representing ON and OFF of squares from 9A to 1I.
-     * @details
-     *                  +------------------------------------------------------- SQ_1I (80)
-     *                  |                 +------------------------------------- SQ_8H (64)
-     *                  |                 | +----------------------------------- SQ_9H (63)
-     *                  |                 | |                  +---------------- SQ_9B
-     *                  |                 | |                  |+--------------- SQ_1A
-     *                  |                 | |                  ||       +------- SQ_8A
-     *                  |                 | |                  ||       |+------ SQ_9A (0)
-     *                  |                 | |                  ||       ||
-     *                  v                 v v                  vv       vv
-     * (MSB) ... xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx ... xxxxxxxx xxxxxxxx (LSB)
-     */
-    UInt128<0x01ffff> m_value;
-
-public:
-    constexpr BitBoard() : m_value{}
-    {
-    }
-    constexpr BitBoard(const std::uint64_t v) : m_value{v}
-    {
-    }
-    constexpr BitBoard(const UInt128<0x01ffff>& v) : m_value{v}
-    {
-    }
-    static void init_tables();
-    static BitBoard from_square(const SquareEnum sq);
-    static BitBoard
-    get_attacks_by(const BoardPieceTypeEnum piece, const SquareEnum location);
-    static BitBoard get_attacks_by(
-        const BoardPieceTypeEnum piece,
-        const SquareEnum location,
-        const BitBoard occupied);
-    static BitBoard get_promotion_zone(const ColorEnum& c);
-
-    /**
-     * @brief Get pointer to array of attacking squares by non ranging piece.
-     * @note Note that the array's length is 8.
-     *
-     * @param piece
-     * @param location
-     * @return const SquareEnum*
-     */
-    static const SquareEnum* get_attacks_by_non_ranging(
-        const BoardPieceTypeEnum& piece, const SquareEnum& location);
-
-    constexpr BitBoard operator|(const BitBoard other) const
-    {
-        return BitBoard(m_value | other.m_value);
-    }
-    BitBoard& operator|=(const BitBoard other)
-    {
-        m_value |= other.m_value;
-        return *this;
-    }
-    constexpr BitBoard operator&(const BitBoard other) const
-    {
-        return BitBoard(m_value & other.m_value);
-    }
-    BitBoard& operator&=(const BitBoard other)
-    {
-        m_value &= other.m_value;
-        return *this;
-    }
-    constexpr BitBoard operator~() const
-    {
-        return BitBoard(~m_value);
-    }
-    constexpr bool any() const
-    {
-        return static_cast<bool>(m_value);
-    }
-    constexpr BitBoard operator<<(const unsigned int shift_width) const
-    {
-        return BitBoard(m_value << shift_width);
-    }
-    constexpr BitBoard operator>>(const unsigned int shift_width) const
-    {
-        return BitBoard(m_value >> shift_width);
-    }
-    template <DirectionEnum D>
-    constexpr BitBoard shift() const
-    {
-        constexpr auto bb_f12345678
-            = ~((BitBoard(1) << static_cast<unsigned int>(SQ_9A))
-                | (BitBoard(1) << static_cast<unsigned int>(SQ_9B))
-                | (BitBoard(1) << static_cast<unsigned int>(SQ_9C))
-                | (BitBoard(1) << static_cast<unsigned int>(SQ_9D))
-                | (BitBoard(1) << static_cast<unsigned int>(SQ_9E))
-                | (BitBoard(1) << static_cast<unsigned int>(SQ_9F))
-                | (BitBoard(1) << static_cast<unsigned int>(SQ_9G))
-                | (BitBoard(1) << static_cast<unsigned int>(SQ_9H))
-                | (BitBoard(1) << static_cast<unsigned int>(SQ_9I)));
-        constexpr auto bb_f23456789
-            = ~((BitBoard(1) << static_cast<unsigned int>(SQ_1A))
-                | (BitBoard(1) << static_cast<unsigned int>(SQ_1B))
-                | (BitBoard(1) << static_cast<unsigned int>(SQ_1C))
-                | (BitBoard(1) << static_cast<unsigned int>(SQ_1D))
-                | (BitBoard(1) << static_cast<unsigned int>(SQ_1E))
-                | (BitBoard(1) << static_cast<unsigned int>(SQ_1F))
-                | (BitBoard(1) << static_cast<unsigned int>(SQ_1G))
-                | (BitBoard(1) << static_cast<unsigned int>(SQ_1H))
-                | (BitBoard(1) << static_cast<unsigned int>(SQ_1I)));
-        constexpr BitBoard mask[] = {
-            // clang-format off
-            bb_f12345678, ~BitBoard(0), bb_f23456789,
-            bb_f12345678,               bb_f23456789,
-            bb_f12345678, ~BitBoard(0), bb_f23456789,
-            bb_f12345678,               bb_f23456789,
-            bb_f12345678,               bb_f23456789,
-            // clang-format on
-        };
-        constexpr auto delta = Squares::direction_to_delta(D);
-        if constexpr (delta > 0)
-            return (*this & mask[D]) << static_cast<unsigned int>(delta);
-        else
-            return (*this & mask[D]) >> static_cast<unsigned int>(-delta);
-    }
-    constexpr BitBoard expand_adjacently() const
-    {
-        return *this | shift<DIR_N>() | shift<DIR_E>() | shift<DIR_S>()
-               | shift<DIR_W>();
-    }
-    constexpr BitBoard expand_diagonally() const
-    {
-        return *this | shift<DIR_NW>() | shift<DIR_NE>() | shift<DIR_SW>()
-               | shift<DIR_SE>();
-    }
-    constexpr BitBoard expand_neighbor() const
-    {
-        return expand_adjacently() | expand_diagonally();
-    }
-
-    /**
-     * @brief Get ranging attacks.
-     *
-     * @tparam D Direction of the ranging attack.
-     * @param sq Source of the ranging attack.
-     * @param occupied Bit-board representing occupation by other pieces.
-     * @return BitBoard Ranging attacks.
-     */
-    template <DirectionEnum D>
-    static BitBoard
-    ranging_attacks_to(const SquareEnum sq, const BitBoard occupied)
-    {
-        const auto base = BitBoard::from_square(sq);
-        auto attacks = base;
-        for (int i = 8; i--;) {
-            const auto expansion = attacks.shift<D>() & (~attacks);
-            if (!expansion.any())
-                break; // reached the end of the board.
-            else if ((expansion & occupied).any()) {
-                attacks |= expansion;
-                break; // reached a piece.
-            } else {
-                attacks |= expansion; // continue.
-            }
-        }
-        return attacks & (~base);
-    }
-    static BitBoard
-    ranging_attacks_to_diagonal(const SquareEnum sq, const BitBoard occupied)
-    {
-        return ranging_attacks_to<DIR_NW>(sq, occupied)
-               | ranging_attacks_to<DIR_NE>(sq, occupied)
-               | ranging_attacks_to<DIR_SW>(sq, occupied)
-               | ranging_attacks_to<DIR_SE>(sq, occupied);
-    }
-    static BitBoard
-    ranging_attacks_to_adjacent(const SquareEnum sq, const BitBoard occupied)
-    {
-        return ranging_attacks_to<DIR_N>(sq, occupied)
-               | ranging_attacks_to<DIR_E>(sq, occupied)
-               | ranging_attacks_to<DIR_W>(sq, occupied)
-               | ranging_attacks_to<DIR_S>(sq, occupied);
-    }
-    bool is_one(const SquareEnum sq) const
-    {
-        return static_cast<bool>(
-            (UInt128<0x01ffff>(1UL) << static_cast<unsigned int>(sq))
-            & m_value);
-    }
-    int hamming_weight() const
-    {
-        return hamming_weight_64bit(static_cast<std::uint64_t>(m_value))
-               + hamming_weight_64bit(
-                   static_cast<std::uint64_t>(m_value >> 64U));
-    }
-
-private:
-    static int hamming_weight_64bit(std::uint64_t x)
-    {
-        // https://en.wikipedia.org/wiki/Hamming_weight
-        constexpr std::uint64_t m1 = 0x5555555555555555; // 0101...
-        constexpr std::uint64_t m2 = 0x3333333333333333; // 00110011..
-        constexpr std::uint64_t m4 = 0x0f0f0f0f0f0f0f0f; // 0000111100001111..
-        x -= (x >> 1) & m1; //put count of each 2 bits into those 2 bits
-        x = (x & m2) + ((x >> 2) & m2); // each 4 bits into those 4 bits
-        x = (x + (x >> 4)) & m4; //put count of each 8 bits into those 8 bits
-        x += x >> 8; //put count of each 16 bits into their lowest 8 bits
-        x += x >> 16; //put count of each 32 bits into their lowest 8 bits
-        x += x >> 32; //put count of each 64 bits into their lowest 8 bits
-        return x & 0x7f;
-    }
-};
+constexpr unsigned int num_attack_types = 15;
+using BitBoard = vshogi::
+    BitBoard<__uint128_t, Squares, BoardPieceTypeEnum, num_attack_types>;
 
 // clang-format off
 constexpr BitBoard bb_1a = (BitBoard(1) << static_cast<unsigned int>(SQ_1A));
@@ -513,12 +117,281 @@ constexpr BitBoard bb_rankh = bb_1h | bb_2h | bb_3h | bb_4h | bb_5h | bb_6h | bb
 constexpr BitBoard bb_ranki = bb_1i | bb_2i | bb_3i | bb_4i | bb_5i | bb_6i | bb_7i | bb_8i | bb_9i;
 // clang-format on
 
-inline BitBoard BitBoard::get_promotion_zone(const ColorEnum& c)
+} // namespace vshogi::shogi
+
+namespace vshogi
 {
+
+template <>
+inline const shogi::BitBoard
+    shogi::BitBoard::square_to_bitboard_array[shogi::Squares::num_squares + 1]
+    = {
+        BitBoard(1) << static_cast<unsigned int>(0),
+        BitBoard(1) << static_cast<unsigned int>(1),
+        BitBoard(1) << static_cast<unsigned int>(2),
+        BitBoard(1) << static_cast<unsigned int>(3),
+        BitBoard(1) << static_cast<unsigned int>(4),
+        BitBoard(1) << static_cast<unsigned int>(5),
+        BitBoard(1) << static_cast<unsigned int>(6),
+        BitBoard(1) << static_cast<unsigned int>(7),
+        BitBoard(1) << static_cast<unsigned int>(8),
+        BitBoard(1) << static_cast<unsigned int>(9),
+        BitBoard(1) << static_cast<unsigned int>(10),
+        BitBoard(1) << static_cast<unsigned int>(11),
+        BitBoard(1) << static_cast<unsigned int>(12),
+        BitBoard(1) << static_cast<unsigned int>(13),
+        BitBoard(1) << static_cast<unsigned int>(14),
+        BitBoard(1) << static_cast<unsigned int>(15),
+        BitBoard(1) << static_cast<unsigned int>(16),
+        BitBoard(1) << static_cast<unsigned int>(17),
+        BitBoard(1) << static_cast<unsigned int>(18),
+        BitBoard(1) << static_cast<unsigned int>(19),
+        BitBoard(1) << static_cast<unsigned int>(20),
+        BitBoard(1) << static_cast<unsigned int>(21),
+        BitBoard(1) << static_cast<unsigned int>(22),
+        BitBoard(1) << static_cast<unsigned int>(23),
+        BitBoard(1) << static_cast<unsigned int>(24),
+        BitBoard(1) << static_cast<unsigned int>(25),
+        BitBoard(1) << static_cast<unsigned int>(26),
+        BitBoard(1) << static_cast<unsigned int>(27),
+        BitBoard(1) << static_cast<unsigned int>(28),
+        BitBoard(1) << static_cast<unsigned int>(29),
+        BitBoard(1) << static_cast<unsigned int>(30),
+        BitBoard(1) << static_cast<unsigned int>(31),
+        BitBoard(1) << static_cast<unsigned int>(32),
+        BitBoard(1) << static_cast<unsigned int>(33),
+        BitBoard(1) << static_cast<unsigned int>(34),
+        BitBoard(1) << static_cast<unsigned int>(35),
+        BitBoard(1) << static_cast<unsigned int>(36),
+        BitBoard(1) << static_cast<unsigned int>(37),
+        BitBoard(1) << static_cast<unsigned int>(38),
+        BitBoard(1) << static_cast<unsigned int>(39),
+        BitBoard(1) << static_cast<unsigned int>(40),
+        BitBoard(1) << static_cast<unsigned int>(41),
+        BitBoard(1) << static_cast<unsigned int>(42),
+        BitBoard(1) << static_cast<unsigned int>(43),
+        BitBoard(1) << static_cast<unsigned int>(44),
+        BitBoard(1) << static_cast<unsigned int>(45),
+        BitBoard(1) << static_cast<unsigned int>(46),
+        BitBoard(1) << static_cast<unsigned int>(47),
+        BitBoard(1) << static_cast<unsigned int>(48),
+        BitBoard(1) << static_cast<unsigned int>(49),
+        BitBoard(1) << static_cast<unsigned int>(50),
+        BitBoard(1) << static_cast<unsigned int>(51),
+        BitBoard(1) << static_cast<unsigned int>(52),
+        BitBoard(1) << static_cast<unsigned int>(53),
+        BitBoard(1) << static_cast<unsigned int>(54),
+        BitBoard(1) << static_cast<unsigned int>(55),
+        BitBoard(1) << static_cast<unsigned int>(56),
+        BitBoard(1) << static_cast<unsigned int>(57),
+        BitBoard(1) << static_cast<unsigned int>(58),
+        BitBoard(1) << static_cast<unsigned int>(59),
+        BitBoard(1) << static_cast<unsigned int>(60),
+        BitBoard(1) << static_cast<unsigned int>(61),
+        BitBoard(1) << static_cast<unsigned int>(62),
+        BitBoard(1) << static_cast<unsigned int>(63),
+        BitBoard(1) << static_cast<unsigned int>(64),
+        BitBoard(1) << static_cast<unsigned int>(65),
+        BitBoard(1) << static_cast<unsigned int>(66),
+        BitBoard(1) << static_cast<unsigned int>(67),
+        BitBoard(1) << static_cast<unsigned int>(68),
+        BitBoard(1) << static_cast<unsigned int>(69),
+        BitBoard(1) << static_cast<unsigned int>(70),
+        BitBoard(1) << static_cast<unsigned int>(71),
+        BitBoard(1) << static_cast<unsigned int>(72),
+        BitBoard(1) << static_cast<unsigned int>(73),
+        BitBoard(1) << static_cast<unsigned int>(74),
+        BitBoard(1) << static_cast<unsigned int>(75),
+        BitBoard(1) << static_cast<unsigned int>(76),
+        BitBoard(1) << static_cast<unsigned int>(77),
+        BitBoard(1) << static_cast<unsigned int>(78),
+        BitBoard(1) << static_cast<unsigned int>(79),
+        BitBoard(1) << static_cast<unsigned int>(80),
+        BitBoard(), // SQ_NA
+};
+
+template <>
+inline shogi::BitBoard
+    shogi::BitBoard::attacks_table[shogi::num_attack_types]
+                                  [shogi::Squares::num_squares]
+    = {};
+
+template <>
+inline int shogi::BitBoard::hamming_weight() const
+{
+    return hamming_weight_64bit(static_cast<std::uint64_t>(m_value))
+           + hamming_weight_64bit(static_cast<std::uint64_t>(m_value >> 64));
+}
+
+template <>
+constexpr shogi::BitBoard
+shogi::BitBoard::get_promotion_zone(const ColorEnum& c)
+{
+    using namespace vshogi::shogi;
     return (c == BLACK) ? (bb_ranka | bb_rankb | bb_rankc)
                         : (bb_rankg | bb_rankh | bb_ranki);
 }
 
-} // namespace vshogi::shogi
+template <>
+template <DirectionEnum Dir>
+constexpr shogi::BitBoard shogi::BitBoard::shift() const
+{
+    constexpr auto bb_f12345678 = ~shogi::bb_file9;
+    constexpr auto bb_f23456789 = ~shogi::bb_file1;
+    constexpr BitBoard filemask[] = {
+        // clang-format off
+        bb_f12345678, ~BitBoard(0), bb_f23456789,
+        bb_f12345678,               bb_f23456789,
+        bb_f12345678, ~BitBoard(0), bb_f23456789,
+        bb_f12345678,               bb_f23456789,
+        bb_f12345678,               bb_f23456789,
+        // clang-format on
+    };
+    constexpr auto delta = shogi::Squares::direction_to_delta(Dir);
+    if constexpr (delta > 0)
+        return (*this & filemask[Dir]) << static_cast<unsigned int>(delta);
+    else
+        return (*this & filemask[Dir]) >> static_cast<unsigned int>(-delta);
+}
+
+template <>
+inline shogi::BitBoard shogi::BitBoard::get_attacks_by(
+    const vshogi::shogi::BoardPieceTypeEnum& p,
+    const vshogi::shogi::SquareEnum& sq)
+{
+    using namespace vshogi::shogi;
+    switch (p) {
+    case B_FU:
+        return attacks_table[0][sq];
+    case B_KY:
+        return attacks_table[1][sq];
+    case B_KE:
+        return attacks_table[2][sq];
+    case B_GI:
+        return attacks_table[3][sq];
+    case B_KI:
+    case B_TO:
+    case B_NY:
+    case B_NK:
+    case B_NG:
+        return attacks_table[4][sq];
+    case W_FU:
+        return attacks_table[5][sq];
+    case W_KY:
+        return attacks_table[6][sq];
+    case W_KE:
+        return attacks_table[7][sq];
+    case W_GI:
+        return attacks_table[8][sq];
+    case W_KI:
+    case W_TO:
+    case W_NY:
+    case W_NK:
+    case W_NG:
+        return attacks_table[9][sq];
+    case B_KA:
+    case W_KA:
+        return attacks_table[10][sq];
+    case B_HI:
+    case W_HI:
+        return attacks_table[11][sq];
+    case B_UM:
+    case W_UM:
+        return attacks_table[12][sq];
+    case B_RY:
+    case W_RY:
+        return attacks_table[13][sq];
+    case B_OU:
+    case W_OU:
+        return attacks_table[14][sq];
+    default:
+        return BitBoard();
+    }
+}
+
+template <>
+inline shogi::BitBoard shogi::BitBoard::get_attacks_by(
+    const vshogi::shogi::BoardPieceTypeEnum& p,
+    const vshogi::shogi::SquareEnum& sq,
+    const vshogi::shogi::BitBoard& occupied)
+{
+    using namespace vshogi::shogi;
+    switch (p) {
+    case B_FU:
+        return attacks_table[0][sq];
+    case B_KY:
+        return BitBoard::ranging_attacks_to<DIR_N>(sq, occupied);
+    case B_KE:
+        return attacks_table[2][sq];
+    case B_GI:
+        return attacks_table[3][sq];
+    case B_KI:
+    case B_TO:
+    case B_NY:
+    case B_NK:
+    case B_NG:
+        return attacks_table[4][sq];
+    case W_FU:
+        return attacks_table[5][sq];
+    case W_KY:
+        return BitBoard::ranging_attacks_to<DIR_S>(sq, occupied);
+    case W_KE:
+        return attacks_table[7][sq];
+    case W_GI:
+        return attacks_table[8][sq];
+    case W_KI:
+    case W_TO:
+    case W_NY:
+    case W_NK:
+    case W_NG:
+        return attacks_table[9][sq];
+    case B_KA:
+    case W_KA:
+        return BitBoard::ranging_attacks_to_diagonal(sq, occupied);
+    case B_HI:
+    case W_HI:
+        return BitBoard::ranging_attacks_to_adjacent(sq, occupied);
+    case B_UM:
+    case W_UM:
+        return BitBoard::ranging_attacks_to_diagonal(sq, occupied)
+               | attacks_table[14][sq];
+    case B_RY:
+    case W_RY:
+        return BitBoard::ranging_attacks_to_adjacent(sq, occupied)
+               | attacks_table[14][sq];
+    case B_OU:
+    case W_OU:
+        return attacks_table[14][sq];
+    default:
+        return BitBoard();
+    }
+}
+
+template <>
+inline void shogi::BitBoard::init_tables()
+{
+    for (auto&& sq : shogi::Squares::square_array) {
+        const auto b = from_square(sq);
+        // clang-format off
+        attacks_table[0][sq] = b.shift<DIR_N>(); // B_FU
+        attacks_table[1][sq] = BitBoard::ranging_attacks_to<DIR_N>(sq); // B_KY
+        attacks_table[2][sq] = b.shift<DIR_NNW>() | b.shift<DIR_NNE>(); // B_KE
+        attacks_table[3][sq] = b.shift<DIR_NW>() | b.shift<DIR_N>() | b.shift<DIR_NE>() | b.shift<DIR_SW>() | b.shift<DIR_SE>(); // B_GI
+        attacks_table[4][sq] = b.shift<DIR_NW>() | b.shift<DIR_N>() | b.shift<DIR_NE>() | b.shift<DIR_W>() | b.shift<DIR_E>() | b.shift<DIR_S>(); // B_KI
+        attacks_table[5][sq] = b.shift<DIR_S>(); // W_FU
+        attacks_table[6][sq] = BitBoard::ranging_attacks_to<DIR_S>(sq); // W_KY
+        attacks_table[7][sq] = b.shift<DIR_SSW>() | b.shift<DIR_SSE>(); // W_KE
+        attacks_table[8][sq] = b.shift<DIR_NW>() | b.shift<DIR_NE>() | b.shift<DIR_SW>() | b.shift<DIR_S>() | b.shift<DIR_SE>(); // W_GI
+        attacks_table[9][sq] = b.shift<DIR_N>() | b.shift<DIR_W>() | b.shift<DIR_E>() | b.shift<DIR_SW>() | b.shift<DIR_S>() | b.shift<DIR_SE>(); // W_KI
+        attacks_table[10][sq] = BitBoard::ranging_attacks_to_diagonal(sq); // KA
+        attacks_table[11][sq] = BitBoard::ranging_attacks_to_adjacent(sq); // HI
+        attacks_table[12][sq] = attacks_table[10][sq] | attacks_table[4][sq]; // UM
+        attacks_table[13][sq] = attacks_table[11][sq] | attacks_table[3][sq]; // RY
+        attacks_table[14][sq] = attacks_table[3][sq] | attacks_table[4][sq]; // OU
+        // clang-format on
+    }
+}
+
+} // namespace vshogi
 
 #endif // VSHOGI_SHOGI_BITBOARD_HPP
