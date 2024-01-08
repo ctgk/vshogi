@@ -520,7 +520,7 @@ protected:
         const auto attacks = BitBoard::get_attacks_by(moving, src);
         const auto promotable_src = Squares::in_promotion_zone(src, turn);
         if (hidden_attacker_sq != Squares::SQ_NA) {
-            auto ptr_dst = BitBoard::get_squares_along(src_dir, king_sq);
+            auto ptr_dst = Squares::get_squares_along(src_dir, king_sq);
             for (;; ++ptr_dst) {
                 const auto dst = *ptr_dst;
                 if (attacks.is_one(dst)) {
@@ -567,7 +567,7 @@ protected:
 
         const auto& enemy_mask = m_occupied[~turn];
         for (auto& dir : Squares::direction_array) {
-            ptr_dst = BitBoard::get_squares_along(dir, src);
+            ptr_dst = Squares::get_squares_along(dir, src);
             for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
                 if (!dst_mask.is_one(*ptr_dst))
                     break;
@@ -616,7 +616,7 @@ protected:
         if (!is_neighbor(king_location, checker_location)) {
             const auto dir
                 = Squares::get_direction(checker_location, king_location);
-            auto ptr_dst = BitBoard::get_squares_along(dir, king_location);
+            auto ptr_dst = Squares::get_squares_along(dir, king_location);
             for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
                 if (*ptr_dst == checker_location)
                     break;
@@ -636,7 +636,7 @@ protected:
         const auto src_mask
             = m_occupied[turn] & (~BitBoard::from_square(king_location));
         for (auto dir : Squares::direction_array) {
-            auto ptr_src = BitBoard::get_squares_along(dir, dst);
+            auto ptr_src = Squares::get_squares_along(dir, dst);
             for (; *ptr_src != Squares::SQ_NA; ++ptr_src) {
                 const auto src = *ptr_src;
                 if (empty_mask.is_one(src))

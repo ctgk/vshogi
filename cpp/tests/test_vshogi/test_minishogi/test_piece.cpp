@@ -1,8 +1,8 @@
 #include "vshogi/minishogi/piece.hpp"
 
-#include <CppUTest/TestHarness.h>
-
 #include "test_vshogi/test_minishogi/test_minishogi.hpp"
+
+#include <CppUTest/TestHarness.h>
 
 namespace test_vshogi::test_minishogi
 {

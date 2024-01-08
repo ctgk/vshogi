@@ -1,8 +1,8 @@
 #include "vshogi/judkins_shogi/piece.hpp"
 
-#include <CppUTest/TestHarness.h>
-
 #include "test_vshogi/test_judkins_shogi/test_judkins_shogi.hpp"
+
+#include <CppUTest/TestHarness.h>
 
 namespace test_vshogi::test_judkins_shogi
 {

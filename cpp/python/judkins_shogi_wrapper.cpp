@@ -138,7 +138,6 @@ void export_judkins_shogi(py::module& m)
     js::Squares::init_tables();
     js::State::init_zobrist_table();
     js::init_non_ranging_attacks_table();
-    js::init_ranging_squares_table();
 
     export_square_enum(m);
     export_pieces(m);

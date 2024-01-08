@@ -83,7 +83,7 @@ public:
         const DirectionEnum& dir,
         const SquareEnum& skip = SQ_NA) const
     {
-        auto ptr_sq = BitBoard::get_squares_along(dir, attacked);
+        auto ptr_sq = Squares::get_squares_along(dir, attacked);
         if (ptr_sq == nullptr)
             return SQ_NA;
         for (; *ptr_sq != SQ_NA; ++ptr_sq) {

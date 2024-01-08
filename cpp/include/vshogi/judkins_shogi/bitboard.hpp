@@ -217,7 +217,6 @@ public:
 };
 
 void init_non_ranging_attacks_table();
-void init_ranging_squares_table();
 
 constexpr BitBoard bb_1a = BitBoard::from_square(SQ_1A);
 constexpr BitBoard bb_1b = BitBoard::from_square(SQ_1B);

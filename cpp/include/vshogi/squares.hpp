@@ -1,6 +1,7 @@
 #ifndef VSHOGI_SQUARES_HPP
 #define VSHOGI_SQUARES_HPP
 
+#include <algorithm>
 #include <cstddef>
 
 #include "vshogi/color.hpp"
@@ -42,9 +43,17 @@ struct Squares
             num_directions_dlshogi)];
     inline static Square file_to_square_array[static_cast<std::size_t>(
         num_files)][static_cast<std::size_t>(num_ranks)];
+
+private:
     inline static Square shift_table[static_cast<std::size_t>(num_squares)]
                                     [static_cast<std::size_t>(num_directions)];
+    inline static Square
+        ranging_squares_to[static_cast<std::size_t>(num_squares)]
+                          [static_cast<std::size_t>(num_directions)]
+                          [static_cast<std::size_t>(
+                              (NumFiles > NumRanks) ? NumFiles : NumRanks)];
 
+public:
     static constexpr File to_file(const Square& sq)
     {
         return static_cast<File>(num_files - 1 - sq % num_files);
@@ -97,6 +106,8 @@ struct Squares
                         = static_cast<Square>(sq + direction_to_delta(dir));
             }
         }
+
+        init_ranging_squares_table();
     }
 
     static bool in_promotion_zone(const Rank& r, const ColorEnum& c);
@@ -119,8 +130,6 @@ struct Squares
             return (src < dst) ? DIR_E : DIR_W;
         return get_direction_for_diagonal_or_knight(dst, src);
     }
-    static DirectionEnum
-    get_direction_for_diagonal_or_knight(const Square& dst, const Square& src);
     constexpr static int direction_to_delta(const DirectionEnum& d)
     {
         constexpr int table[12]
@@ -137,6 +146,36 @@ struct Squares
                -2 * num_files - 1,
                1 - 2 * num_files};
         return table[d];
+    }
+    static const Square*
+    get_squares_along(const DirectionEnum& direction, const Square& location)
+    {
+        if ((direction == DIR_NA) || (location == SQ_NA))
+            return nullptr;
+        return ranging_squares_to[location][direction];
+    }
+
+private:
+    static DirectionEnum
+    get_direction_for_diagonal_or_knight(const Square& dst, const Square& src);
+    static void init_ranging_squares_table()
+    {
+        constexpr int size
+            = sizeof(ranging_squares_to) / sizeof(ranging_squares_to[0][0][0]);
+        std::fill_n(&ranging_squares_to[0][0][0], size, SQ_NA);
+
+        for (auto& src : Squares::square_array) {
+            for (auto& dir : Squares::direction_array) {
+                auto dst = src;
+                int index = 0;
+                while (true) {
+                    dst = Squares::shift(dst, dir);
+                    if (dst == SQ_NA)
+                        break;
+                    ranging_squares_to[src][dir][index++] = dst;
+                }
+            }
+        }
     }
 };
 

@@ -1,8 +1,8 @@
 #include "vshogi/shogi/piece.hpp"
 
-#include <CppUTest/TestHarness.h>
-
 #include "test_vshogi/test_shogi/test_shogi.hpp"
+
+#include <CppUTest/TestHarness.h>
 
 namespace test_vshogi::test_shogi
 {
