@@ -60,6 +60,9 @@ inline void export_move(pybind11::module& m)
             py::init<const SquareEnum, const PieceTypeEnum>(),
             py::arg("dst"),
             py::arg("src"))
+        .def(
+            py::init([](const std::string& usi) { return Move(usi.c_str()); }),
+            py::arg("usi"))
         .def_property_readonly("destination", &Move::destination)
         .def_property_readonly("promote", &Move::promote)
         .def_property_readonly(
@@ -75,6 +78,13 @@ inline void export_move(pybind11::module& m)
         .def("_to_dlshogi_policy_index", &Move::to_dlshogi_policy_index)
         .def_static("_num_policy_per_square", &Move::num_policy_per_square)
         .def("__hash__", &Move::hash)
+        .def(
+            "to_usi",
+            [](const Move& self) {
+                std::string out((self.promote()) ? 5 : 4, '\0');
+                self.to_usi(out.data());
+                return out;
+            })
         .def("__eq__", &Move::operator==)
         .def("__ne__", &Move::operator!=)
         .def(py::pickle(

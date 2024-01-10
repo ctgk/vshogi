@@ -54,6 +54,24 @@ namespace vshogi
 {
 
 template <>
+constexpr animal_shogi::FileEnum animal_shogi::Squares::fe()
+{
+    return animal_shogi::FILE_C;
+}
+template <>
+constexpr animal_shogi::FileEnum animal_shogi::Squares::fw()
+{
+    return animal_shogi::FILE_A;
+}
+
+template <>
+constexpr vshogi::animal_shogi::FileEnum vshogi::animal_shogi::Squares::to_file(
+    const vshogi::animal_shogi::SquareEnum& sq)
+{
+    return static_cast<vshogi::animal_shogi::FileEnum>(sq % num_files);
+}
+
+template <>
 constexpr vshogi::animal_shogi::SquareEnum
 vshogi::animal_shogi::Squares::to_square(
     const vshogi::animal_shogi::FileEnum& f,
@@ -69,6 +87,14 @@ vshogi::animal_shogi::Squares::to_square(const char usi[2])
     return to_square(
         static_cast<vshogi::animal_shogi::FileEnum>(usi[0] - 'a'),
         static_cast<vshogi::animal_shogi::RankEnum>(usi[1] - '1'));
+}
+
+template <>
+inline void vshogi::animal_shogi::Squares::to_usi(
+    char usi[2], const vshogi::animal_shogi::SquareEnum& sq)
+{
+    usi[0] = static_cast<char>(static_cast<int>(to_file(sq)) + 'a');
+    usi[1] = static_cast<char>(static_cast<int>(to_rank(sq)) + '1');
 }
 
 template <>

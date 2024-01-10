@@ -68,6 +68,7 @@ public:
             return VOID;
         return static_cast<BoardPiece>((c << color_bit) | p);
     }
+    static char to_char(const PieceType& p);
 
     static constexpr bool is_promotable(const PieceType& p);
     static constexpr bool is_promotable(const BoardPiece& p)
@@ -104,7 +105,18 @@ public:
         return get_point(to_piece_type(p));
     }
 
-    static void append_sfen(const BoardPiece& p, std::string& out);
+    static void append_sfen(const BoardPiece& p, std::string& out)
+    {
+        const auto color = get_color(p);
+        const auto promotion = is_promoted(p);
+        const auto pt = demote(to_piece_type(p));
+        char c = to_char(pt);
+        if (color == BLACK)
+            c = static_cast<char>(std::toupper(static_cast<int>(c)));
+        if (promotion)
+            out += '+';
+        out += c;
+    }
 
     static constexpr BoardPiece B_OU = to_board_piece(BLACK, OU); // NOLINT
     static constexpr BoardPiece W_OU = to_board_piece(WHITE, OU); // NOLINT

@@ -9,6 +9,21 @@ using namespace vshogi::animal_shogi;
 
 TEST_GROUP(Move){};
 
+TEST(Move, usi)
+{
+    CHECK_TRUE(Move(SQ_B1, SQ_A1, true) == Move("a1b1+"));
+    {
+        char actual[6] = {'\0'};
+        Move(SQ_C3, CH).to_usi(actual);
+        STRCMP_EQUAL("C*c3", actual);
+    }
+    {
+        char actual[6] = {'\0'};
+        Move(SQ_B1, SQ_A1).to_usi(actual);
+        STRCMP_EQUAL("a1b1", actual);
+    }
+}
+
 TEST(Move, source)
 {
     CHECK_EQUAL(GI, Move(SQ_A1, GI).source_piece());

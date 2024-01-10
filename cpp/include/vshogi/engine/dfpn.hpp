@@ -48,7 +48,7 @@ private:
 public:
     Node(const Game& g)
         : m_game(std::make_unique<Game>(Game(g))), m_parent(nullptr),
-          m_sibling(nullptr), m_child(nullptr), m_action(0), m_pn(1), m_dn(1)
+          m_sibling(nullptr), m_child(nullptr), m_action(), m_pn(1), m_dn(1)
     {
     }
     Node(const Move& action)

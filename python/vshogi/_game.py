@@ -180,6 +180,8 @@ class Game(abc.ABC):
     @classmethod
     def _get_move(cls, move=None, *arg, **kwargs) -> Move:
         if not (arg or kwargs):
+            if isinstance(move, str):
+                return cls._get_move_class()(move)
             return move
         if move is None:
             return cls._get_move_class()(*arg, **kwargs)
@@ -210,7 +212,7 @@ class Game(abc.ABC):
         Game(sfen="rb1gk/3sp/5/P1B2/KGS1R b - 3")
         >>> game.apply(dst=shogi.D2, src=shogi.E3)
         Game(sfen="rb1gk/3sp/5/P1BS1/KG2R w - 4")
-        >>> game.apply(shogi.B3, shogi.A4).apply(shogi.D4, shogi.E4)
+        >>> game.apply('4a3b').apply('4e4d')
         Game(sfen="r2gk/2bsp/5/PGBS1/K3R w - 6")
         """
         move = self._get_move(move, *arg, **kwargs)
@@ -362,7 +364,7 @@ class Game(abc.ABC):
         ...     game.dump_records(
         ...         (
         ...             lambda g, i: g.get_sfen_at(i),
-        ...             lambda g, i: g.get_move_at(i),
+        ...             lambda g, i: g.get_move_at(i).to_usi(),
         ...             lambda g, i: g.result,
         ...         ),
         ...         names=('sfen', 'move', 'result'),
@@ -371,9 +373,9 @@ class Game(abc.ABC):
         ...     _ = f.seek(0)
         ...     print(f.read())  #doctest: +NORMALIZE_WHITESPACE
         sfen        move    result
-        gle/1c1/1C1/ELG b - 1       Move(dst=A3, src=B4)    Result.BLACK_WIN
-        gle/1c1/LC1/E1G w - 2       Move(dst=A2, src=B1)    Result.BLACK_WIN
-        g1e/lc1/LC1/E1G b - 3       Move(dst=A2, src=A3)    Result.BLACK_WIN
+        gle/1c1/1C1/ELG b - 1       b4a3    Result.BLACK_WIN
+        gle/1c1/LC1/E1G w - 2       b1a2    Result.BLACK_WIN
+        g1e/lc1/LC1/E1G b - 3       a3a2    Result.BLACK_WIN
         <BLANKLINE>
         """
         if names is not None:

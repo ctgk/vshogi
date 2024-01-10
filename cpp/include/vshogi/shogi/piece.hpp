@@ -136,6 +136,31 @@ vshogi::shogi::Pieces::to_piece_type(const char c)
 }
 
 template <>
+inline char shogi::Pieces::to_char(const shogi::PieceTypeEnum& p)
+{
+    switch (p) {
+    case shogi::FU:
+        return 'p';
+    case shogi::KY:
+        return 'l';
+    case shogi::KE:
+        return 'n';
+    case shogi::GI:
+        return 's';
+    case shogi::KA:
+        return 'b';
+    case shogi::HI:
+        return 'r';
+    case shogi::KI:
+        return 'g';
+    case shogi::OU:
+        return 'k';
+    default:
+        return '\0';
+    }
+}
+
+template <>
 inline constexpr bool
 vshogi::shogi::Pieces::is_promotable(const vshogi::shogi::PieceTypeEnum& p)
 {
@@ -173,51 +198,6 @@ vshogi::shogi::Pieces::get_point(const vshogi::shogi::PieceTypeEnum& p)
     default:
         return 1;
     }
-}
-
-template <>
-inline void vshogi::shogi::Pieces::append_sfen(
-    const vshogi::shogi::BoardPieceTypeEnum& p, std::string& out)
-{
-    using namespace vshogi::shogi;
-    const auto color = get_color(p);
-    const auto promotion = is_promoted(p);
-    const auto pt = demote(to_piece_type(p));
-    char c;
-    switch (pt) {
-    case FU:
-        c = 'p';
-        break;
-    case KY:
-        c = 'l';
-        break;
-    case KE:
-        c = 'n';
-        break;
-    case GI:
-        c = 's';
-        break;
-    case KA:
-        c = 'b';
-        break;
-    case HI:
-        c = 'r';
-        break;
-    case KI:
-        c = 'g';
-        break;
-    case OU:
-        c = 'k';
-        break;
-    default:
-        c = ' ';
-        break;
-    }
-    if (color == BLACK)
-        c = static_cast<char>(std::toupper(static_cast<int>(c)));
-    if (promotion)
-        out += '+';
-    out += c;
 }
 
 } // namespace vshogi

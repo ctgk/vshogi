@@ -56,6 +56,15 @@ private:
     inline static Square non_ranging_attacks_array[static_cast<std::size_t>(
         NumNonRangingBoardPiece)][static_cast<std::size_t>(num_squares)][9UL];
 
+    static constexpr File fe()
+    {
+        return static_cast<File>(0);
+    }
+    static constexpr File fw()
+    {
+        return static_cast<File>(NumFiles - 1);
+    }
+
 public:
     static constexpr File to_file(const Square& sq)
     {
@@ -74,11 +83,14 @@ public:
         return to_square(
             static_cast<File>(usi[0] - '1'), static_cast<Rank>(usi[1] - 'a'));
     }
+    static void to_usi(char usi[2], const Square& sq)
+    {
+        usi[0] = static_cast<char>(static_cast<int>(to_file(sq)) + '1');
+        usi[1] = static_cast<char>(static_cast<int>(to_rank(sq)) + 'a');
+    }
 
     static void init_tables()
     {
-        constexpr File f1 = static_cast<File>(0);
-        constexpr File fn = static_cast<File>(num_files - 1);
         constexpr Rank r1 = static_cast<Rank>(0);
         constexpr Rank r2 = static_cast<Rank>(1);
         constexpr Rank rm = static_cast<Rank>(num_ranks - 2);
@@ -89,14 +101,10 @@ public:
             square_array[ii] = sq;
             file_to_square_array[to_file(sq)][to_rank(sq)] = sq;
         }
-        for (int ii = num_files; ii--;)
-            file_array[ii] = static_cast<File>(ii);
-        for (int ii = num_ranks; ii--;)
-            rank_array[ii] = static_cast<Rank>(ii);
-        for (int ii = num_directions; ii--;)
-            direction_array[ii] = static_cast<DirectionEnum>(ii);
-        for (int ii = num_directions_dlshogi; ii--;)
-            direction_dlshogi_array[ii] = static_cast<DirectionEnum>(ii);
+        init_file_array();
+        init_rank_array();
+        init_direction_array();
+        init_direction_dlshogi_array();
 
         for (auto&& sq : square_array) {
             const auto r = to_rank(sq);
@@ -106,8 +114,8 @@ public:
                     || ((r == r2) && (dir == DIR_NNW || dir == DIR_NNE))
                     || ((r == rn) && has_dir_s(dir))
                     || ((r == rm) && (dir == DIR_SSW || dir == DIR_SSE))
-                    || ((f == f1) && has_dir_e(dir))
-                    || ((f == fn) && has_dir_w(dir)))
+                    || ((f == fe()) && has_dir_e(dir))
+                    || ((f == fw()) && has_dir_w(dir)))
                     shift_table[sq][dir] = SQ_NA;
                 else
                     shift_table[sq][dir]
@@ -170,6 +178,27 @@ public:
 private:
     static DirectionEnum
     get_direction_for_diagonal_or_knight(const Square& dst, const Square& src);
+
+    static void init_file_array()
+    {
+        for (int ii = num_files; ii--;)
+            file_array[ii] = static_cast<File>(ii);
+    }
+    static void init_rank_array()
+    {
+        for (int ii = num_ranks; ii--;)
+            rank_array[ii] = static_cast<Rank>(ii);
+    }
+    static void init_direction_array()
+    {
+        for (int ii = num_directions; ii--;)
+            direction_array[ii] = static_cast<DirectionEnum>(ii);
+    }
+    static void init_direction_dlshogi_array()
+    {
+        for (int ii = num_directions_dlshogi; ii--;)
+            direction_dlshogi_array[ii] = static_cast<DirectionEnum>(ii);
+    }
     static void init_ranging_squares_table()
     {
         constexpr int size

@@ -91,7 +91,7 @@ private:
 
 public:
     Node()
-        : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr), m_action(0),
+        : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr), m_action(),
           m_proba(0.f), m_visit_count(0), m_sqrt_visit_count(0.f), m_value(0.f),
           m_q_value(0.f), m_is_mate(false)
     {
@@ -262,7 +262,7 @@ public:
 
     Move get_best_action() const
     {
-        Move out = Move(0);
+        Move out = Move();
         int max_visit_count = -1;
 
         const NodeGM* ch = m_child.get();

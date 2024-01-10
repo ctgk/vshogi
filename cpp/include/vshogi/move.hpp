@@ -1,6 +1,8 @@
 #ifndef VSHOGI_MOVE_HPP
 #define VSHOGI_MOVE_HPP
 
+#include <cctype>
+
 #include "vshogi/direction.hpp"
 
 namespace vshogi
@@ -26,6 +28,9 @@ private:
     Int m_value;
 
 public:
+    Move() : m_value()
+    {
+    }
     Move(const Int value)
         : m_value(value & (source_mask() | promote_mask() | destination_mask()))
     {
@@ -41,9 +46,30 @@ public:
         : Move(dst, static_cast<int>(src) + num_squares)
     {
     }
+    explicit Move(const char usi[5])
+        : Move(
+            Squares::to_square(usi + 2),
+            (usi[1] == '*')
+                ? static_cast<int>(Pieces::to_piece_type(usi[0])) + num_squares
+                : static_cast<int>(Squares::to_square(usi)),
+            usi[4] == '+')
+    {
+    }
     Int hash() const
     {
         return m_value;
+    }
+    void to_usi(char usi[5]) const
+    {
+        if (is_drop()) {
+            usi[0] = static_cast<char>(
+                std::toupper(Pieces::to_char(source_piece())));
+            usi[1] = '*';
+        } else {
+            Squares::to_usi(usi, source_square());
+        }
+        Squares::to_usi(usi + 2, destination());
+        usi[4] = (promote()) ? '+' : '\0';
     }
     bool operator==(const Move& other) const
     {

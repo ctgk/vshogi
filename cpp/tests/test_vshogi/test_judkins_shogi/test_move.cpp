@@ -11,6 +11,26 @@ using namespace vshogi::judkins_shogi;
 
 TEST_GROUP(move){};
 
+TEST(move, usi)
+{
+    CHECK_TRUE(Move(SQ_1B, SQ_1A, true) == Move("1a1b+"));
+    {
+        char actual[6] = {'\0'};
+        Move(SQ_3C, FU).to_usi(actual);
+        STRCMP_EQUAL("P*3c", actual);
+    }
+    {
+        char actual[6] = {'\0'};
+        Move(SQ_1B, SQ_1A).to_usi(actual);
+        STRCMP_EQUAL("1a1b", actual);
+    }
+    {
+        char actual[6] = {'\0'};
+        Move(SQ_1B, SQ_1A, true).to_usi(actual);
+        STRCMP_EQUAL("1a1b+", actual);
+    }
+}
+
 TEST(move, destination)
 {
     CHECK_EQUAL(SQ_1A, Move(SQ_1A, SQ_1B, true).destination());

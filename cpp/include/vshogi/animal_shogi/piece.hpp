@@ -83,38 +83,58 @@ vshogi::animal_shogi::Pieces::to_piece_type(const char c)
 }
 
 template <>
-inline void vshogi::animal_shogi::Pieces::append_sfen(
-    const vshogi::animal_shogi::BoardPieceTypeEnum& p, std::string& out)
+inline char vshogi::animal_shogi::Pieces::to_char(
+    const vshogi::animal_shogi::PieceTypeEnum& p)
 {
     switch (p) {
-    case vshogi::animal_shogi::B_CH:
+    case vshogi::animal_shogi::CH:
+        return 'c';
+    case vshogi::animal_shogi::EL:
+        return 'e';
+    case vshogi::animal_shogi::GI:
+        return 'g';
+    case vshogi::animal_shogi::HE:
+        return 'h';
+    case vshogi::animal_shogi::LI:
+        return 'l';
+    default:
+        return '\0';
+    }
+}
+
+template <>
+inline void animal_shogi::Pieces::append_sfen(
+    const animal_shogi::BoardPieceTypeEnum& p, std::string& out)
+{
+    switch (p) {
+    case animal_shogi::B_CH:
         out += 'C';
         break;
-    case vshogi::animal_shogi::B_EL:
+    case animal_shogi::B_EL:
         out += 'E';
         break;
-    case vshogi::animal_shogi::B_GI:
+    case animal_shogi::B_GI:
         out += 'G';
         break;
-    case vshogi::animal_shogi::B_LI:
+    case animal_shogi::B_LI:
         out += 'L';
         break;
-    case vshogi::animal_shogi::B_HE:
+    case animal_shogi::B_HE:
         out += 'H';
         break;
-    case vshogi::animal_shogi::W_CH:
+    case animal_shogi::W_CH:
         out += 'c';
         break;
-    case vshogi::animal_shogi::W_EL:
+    case animal_shogi::W_EL:
         out += 'e';
         break;
-    case vshogi::animal_shogi::W_GI:
+    case animal_shogi::W_GI:
         out += 'g';
         break;
-    case vshogi::animal_shogi::W_LI:
+    case animal_shogi::W_LI:
         out += 'l';
         break;
-    case vshogi::animal_shogi::W_HE:
+    case animal_shogi::W_HE:
         out += 'h';
         break;
     default:

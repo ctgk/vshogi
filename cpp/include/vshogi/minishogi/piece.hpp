@@ -116,6 +116,29 @@ vshogi::minishogi::Pieces::to_piece_type(const char c)
 }
 
 template <>
+inline char
+vshogi::minishogi::Pieces::to_char(const vshogi::minishogi::PieceTypeEnum& p)
+{
+    using namespace vshogi::minishogi;
+    switch (p) {
+    case FU:
+        return 'p';
+    case GI:
+        return 's';
+    case KA:
+        return 'b';
+    case HI:
+        return 'r';
+    case KI:
+        return 'g';
+    case OU:
+        return 'k';
+    default:
+        return '\0';
+    }
+}
+
+template <>
 inline constexpr bool vshogi::minishogi::Pieces::is_promotable(
     const vshogi::minishogi::PieceTypeEnum& p)
 {
@@ -149,45 +172,6 @@ vshogi::minishogi::Pieces::get_point(const vshogi::minishogi::PieceTypeEnum& p)
     default:
         return 1;
     }
-}
-
-template <>
-inline void vshogi::minishogi::Pieces::append_sfen(
-    const vshogi::minishogi::BoardPieceTypeEnum& p, std::string& out)
-{
-    using namespace vshogi::minishogi;
-    const auto color = get_color(p);
-    const auto promotion = is_promoted(p);
-    const auto pt = demote(to_piece_type(p));
-    char c;
-    switch (pt) {
-    case FU:
-        c = 'p';
-        break;
-    case GI:
-        c = 's';
-        break;
-    case KA:
-        c = 'b';
-        break;
-    case HI:
-        c = 'r';
-        break;
-    case KI:
-        c = 'g';
-        break;
-    case OU:
-        c = 'k';
-        break;
-    default:
-        c = ' ';
-        break;
-    }
-    if (color == BLACK)
-        c = static_cast<char>(std::toupper(static_cast<int>(c)));
-    if (promotion)
-        out += '+';
-    out += c;
 }
 
 } // namespace vshogi

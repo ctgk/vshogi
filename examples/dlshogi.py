@@ -135,7 +135,7 @@ def dump_game_records(file_, game: vshogi.Game) -> None:
     game.dump_records(
         (
             lambda g, i: g.get_sfen_at(i, include_move_count=True),
-            lambda g, i: g.get_move_at(i),
+            lambda g, i: g.get_move_at(i).to_usi(),
             lambda g, _: g.result,
         ),
         names=('state', 'move', 'result'), file_=file_,
@@ -155,10 +155,7 @@ def _get_generator_from_df(df: pd.DataFrame):
     def _generator():
         for _, row in df.sample(n=len(df), replace=False).iterrows():
             game = args._shogi.Game(row['state'])
-            move = eval(
-                row['move'].replace('Move', f'vshogi.{args.shogi_variant}.Move',
-                    ).replace('dst=', f'dst=vshogi.{args.shogi_variant}.',
-                    ).replace('src=', f'src=vshogi.{args.shogi_variant}.'))
+            move = args._shogi.Move(row['move'])
             result = eval('vshogi.' + args.shogi_variant + '.' + row['result'])
             if np.random.uniform() > 0.5:
                 game = game.hflip()
