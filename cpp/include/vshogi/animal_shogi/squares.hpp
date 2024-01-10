@@ -54,6 +54,24 @@ namespace vshogi
 {
 
 template <>
+constexpr vshogi::animal_shogi::SquareEnum
+vshogi::animal_shogi::Squares::to_square(
+    const vshogi::animal_shogi::FileEnum& f,
+    const vshogi::animal_shogi::RankEnum& r)
+{
+    return static_cast<vshogi::animal_shogi::SquareEnum>(r * num_files + f);
+}
+
+template <>
+inline vshogi::animal_shogi::SquareEnum
+vshogi::animal_shogi::Squares::to_square(const char usi[2])
+{
+    return to_square(
+        static_cast<vshogi::animal_shogi::FileEnum>(usi[0] - 'a'),
+        static_cast<vshogi::animal_shogi::RankEnum>(usi[1] - '1'));
+}
+
+template <>
 inline bool vshogi::animal_shogi::Squares::in_promotion_zone(
     const vshogi::animal_shogi::RankEnum& r, const ColorEnum& c)
 {

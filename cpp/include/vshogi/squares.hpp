@@ -69,6 +69,11 @@ public:
     {
         return static_cast<Square>(r * num_files + num_files - 1 - f);
     }
+    static Square to_square(const char usi[2])
+    {
+        return to_square(
+            static_cast<File>(usi[0] - '1'), static_cast<Rank>(usi[1] - 'a'));
+    }
 
     static void init_tables()
     {

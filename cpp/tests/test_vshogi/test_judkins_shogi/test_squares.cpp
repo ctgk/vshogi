@@ -95,6 +95,46 @@ TEST(squares, to_file)
     CHECK_EQUAL(FILE5, to_file(SQ_5F));
 }
 
+TEST(squares, to_square)
+{
+    CHECK_EQUAL(SQ_1A, Squares::to_square("1a"));
+    CHECK_EQUAL(SQ_1B, Squares::to_square("1b"));
+    CHECK_EQUAL(SQ_1C, Squares::to_square("1c"));
+    CHECK_EQUAL(SQ_1D, Squares::to_square("1d"));
+    CHECK_EQUAL(SQ_1E, Squares::to_square("1e"));
+    CHECK_EQUAL(SQ_1F, Squares::to_square("1f"));
+    CHECK_EQUAL(SQ_2A, Squares::to_square("2a"));
+    CHECK_EQUAL(SQ_2B, Squares::to_square("2b"));
+    CHECK_EQUAL(SQ_2C, Squares::to_square("2c"));
+    CHECK_EQUAL(SQ_2D, Squares::to_square("2d"));
+    CHECK_EQUAL(SQ_2E, Squares::to_square("2e"));
+    CHECK_EQUAL(SQ_2F, Squares::to_square("2f"));
+    CHECK_EQUAL(SQ_3A, Squares::to_square("3a"));
+    CHECK_EQUAL(SQ_3B, Squares::to_square("3b"));
+    CHECK_EQUAL(SQ_3C, Squares::to_square("3c"));
+    CHECK_EQUAL(SQ_3D, Squares::to_square("3d"));
+    CHECK_EQUAL(SQ_3E, Squares::to_square("3e"));
+    CHECK_EQUAL(SQ_3F, Squares::to_square("3f"));
+    CHECK_EQUAL(SQ_4A, Squares::to_square("4a"));
+    CHECK_EQUAL(SQ_4B, Squares::to_square("4b"));
+    CHECK_EQUAL(SQ_4C, Squares::to_square("4c"));
+    CHECK_EQUAL(SQ_4D, Squares::to_square("4d"));
+    CHECK_EQUAL(SQ_4E, Squares::to_square("4e"));
+    CHECK_EQUAL(SQ_4F, Squares::to_square("4f"));
+    CHECK_EQUAL(SQ_5A, Squares::to_square("5a"));
+    CHECK_EQUAL(SQ_5B, Squares::to_square("5b"));
+    CHECK_EQUAL(SQ_5C, Squares::to_square("5c"));
+    CHECK_EQUAL(SQ_5D, Squares::to_square("5d"));
+    CHECK_EQUAL(SQ_5E, Squares::to_square("5e"));
+    CHECK_EQUAL(SQ_5F, Squares::to_square("5f"));
+    CHECK_EQUAL(SQ_6A, Squares::to_square("6a"));
+    CHECK_EQUAL(SQ_6B, Squares::to_square("6b"));
+    CHECK_EQUAL(SQ_6C, Squares::to_square("6c"));
+    CHECK_EQUAL(SQ_6D, Squares::to_square("6d"));
+    CHECK_EQUAL(SQ_6E, Squares::to_square("6e"));
+    CHECK_EQUAL(SQ_6F, Squares::to_square("6f"));
+}
+
 TEST(squares, square_array)
 {
     CHECK_EQUAL(
