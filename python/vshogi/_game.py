@@ -492,7 +492,8 @@ class Game(abc.ABC):
 
     def to_dlshogi_policy(
         self,
-        action: Move,
+        action: tp.Union[Move, tp.Dict[Move, int]],
+        *,
         max_value: float = 1.,
     ) -> np.ndarray:
         """Convert an action into DL-shogi policy array.
@@ -503,10 +504,12 @@ class Game(abc.ABC):
 
         Parameters
         ----------
-        action : Move
-            Action to turn into DL-shogi policy format.
+        action : tp.Union[Move, tp.Dict[Move, int]]
+            Action to turn into DL-shogi policy format, or dict of actions with
+            their visit counts.
         max_value : float, optional
-            Policy value for the action, by default 1.
+            Policy value for the action, by default 1. Valid only if `action`
+            is a `Move` object.
 
         Returns
         -------
@@ -518,6 +521,9 @@ class Game(abc.ABC):
         ValueError
             `max_value` is out-of-range.
         """
+        if isinstance(action, dict):
+            return self._game.to_dlshogi_policy(action)
+
         if ((max_value > 1) or (max_value <= 0)):
             raise ValueError(
                 f"`max_value` must be in range (0, 1], but was {max_value}.")

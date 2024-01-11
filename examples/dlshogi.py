@@ -137,8 +137,9 @@ def dump_game_records(file_, game: vshogi.Game) -> None:
             lambda g, i: g.get_sfen_at(i, include_move_count=True),
             lambda g, i: g.get_move_at(i).to_usi(),
             lambda g, _: g.result,
+            lambda g, i: g.visit_counts_record[i],
         ),
-        names=('state', 'move', 'result'), file_=file_,
+        names=('state', 'move', 'result', 'visit_counts'), file_=file_,
     )
 
 
@@ -155,14 +156,14 @@ def _get_generator_from_df(df: pd.DataFrame):
     def _generator():
         for _, row in df.sample(n=len(df), replace=False).iterrows():
             game = args._shogi.Game(row['state'])
-            move = args._shogi.Move(row['move'])
+            visit_counts = {args._shogi.Move(k): v for k, v in eval(row['visit_counts']).items()}
             result = eval('vshogi.' + args.shogi_variant + '.' + row['result'])
             if np.random.uniform() > 0.5:
                 game = game.hflip()
-                move = move.hflip()
+                visit_counts = {k.hflip(): v for k, v in visit_counts.items()}
 
             x = game.to_dlshogi_features()
-            policy = game.to_dlshogi_policy(move, args.nn_max_policy)
+            policy = game.to_dlshogi_policy(visit_counts)
             value = value_options[(result, game.turn)]
 
             yield np.squeeze(x), (policy, value)
@@ -229,6 +230,7 @@ def play_game(
     Game
         The game the two players played.
     """
+    game.visit_counts_record = []
     for _ in range(max_moves):
         if game.result != vshogi.Result.ONGOING:
             break
@@ -237,6 +239,7 @@ def play_game(
         if mate_moves is not None:
             for move in mate_moves:
                 game.apply(move)
+                game.visit_counts_record.append({move.to_usi(): 1})
             break
 
         player = player_black if game.turn == vshogi.Color.BLACK else player_white
@@ -245,12 +248,10 @@ def play_game(
             n=args.mcts_explorations - player.num_explored,
             num_dfpn_nodes=100, # approximately worth three-move mate
         )
-        move = player.select(
-            temperature=(
-                args.mcts_temperature(game) if callable(args.mcts_temperature) else args.mcts_temperature
-            ),
-        )
+        visit_counts = player.get_visit_counts()
+        move = player.select(temperature='max') # off-policy
         game.apply(move)
+        game.visit_counts_record.append({k.to_usi(): v for k, v in visit_counts.items()})
     return game
 
 

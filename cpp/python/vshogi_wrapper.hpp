@@ -161,6 +161,31 @@ inline void export_game(pybind11::module& m)
                 return out;
             })
         .def(
+            "to_dlshogi_policy",
+            [](const Game& self,
+               const py::dict& visit_counts) -> py::array_t<float> {
+                const auto turn = self.get_turn();
+                constexpr auto size = Game::num_dlshogi_policy();
+                auto out = py::array_t<float>(std::vector<py::ssize_t>({size}));
+                float* const data = out.mutable_data();
+                std::fill(data, data + size, 0.f);
+                float sum = 0.f;
+                for (auto it = visit_counts.begin(); it != visit_counts.end();
+                     ++it) {
+                    const auto move = it->first.cast<Move>();
+                    const auto index
+                        = (turn == vshogi::BLACK)
+                              ? move.to_dlshogi_policy_index()
+                              : move.rotate().to_dlshogi_policy_index();
+                    data[index] = it->second.cast<float>();
+                    sum += data[index];
+                }
+                for (float* ptr = data; ptr < data + size;) {
+                    *ptr++ /= sum;
+                }
+                return out;
+            })
+        .def(
             "get_mate_moves_if_any",
             [](const Game& self, const int num_dfpn_nodes) -> py::object {
                 if constexpr (std::is_same<Game, vshogi::animal_shogi::Game>::

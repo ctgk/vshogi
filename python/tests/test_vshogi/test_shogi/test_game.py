@@ -369,6 +369,16 @@ def test_array_white():
         shogi.Move(shogi.D8, shogi.C8),
         np.eye(2187)[1410],
     ),
+    (
+        shogi.Game(),
+        {shogi.Move('2g2f'): 1, shogi.Move('7g7f'): 1},
+        0.5 * (np.eye(2187)[1410] + np.eye(2187)[1275]),
+    ),
+    (
+        shogi.Game('9/9/9/9/9/9/9/9/9 w - 1'),
+        {shogi.Move('8c8d'): 1, shogi.Move('3c3d'): 1},
+        0.5 * (np.eye(2187)[1410] + np.eye(2187)[1275]),
+    ),
 ])
 def test_to_dlshogi_policy(game, move, expected):
     actual = game.to_dlshogi_policy(move)
