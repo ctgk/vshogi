@@ -302,7 +302,7 @@ def self_play_and_dump_records_in_parallel(index: int, n_jobs: int):
         for i in nth_game:
             _self_play_and_dump_record(player, index, i)
 
-    group_size = 10
+    group_size = 5
     with tqdm_joblib(tqdm(total=args.self_play // group_size, ncols=100)):
         Parallel(n_jobs=n_jobs)(
             delayed(_self_play_and_dump_record_n_times)(
@@ -330,6 +330,8 @@ def get_best_player_index(current: int, best: int):
     loss_threshold = num_play * (1 - args.win_ratio_threshold)
     pbar = tqdm(range(num_play), ncols=100)
     for n in pbar:
+        if (results['win'] > win_threshold) or (results['loss'] > loss_threshold):
+            break
         if n % 2 == 0:
             while True:
                 game = play_game(args._game_getter(), player_curr, player_best)
@@ -351,8 +353,6 @@ def get_best_player_index(current: int, best: int):
                 vshogi.DRAW: 'draw',
             }[game.result]] += 1
         pbar.set_description(f'{current} vs {best}: {results}')
-        if (results['win'] > win_threshold) or (results['loss'] > loss_threshold):
-            break
     return current if results['win'] > win_threshold else best
 
 
@@ -420,10 +420,8 @@ def parse_args():
         nn_epochs: int = config(type=int, default=20, help='# of epochs in NN training. By default 20.')
         nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
         nn_learning_rate: float = config(type=float, default=1e-3, help='Learning rate of NN weight update')
-        nn_max_policy: float = config(type=float, default=1.0, help='Maximum value of supervised signal of policy in NN training, default=1.0')
         mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000. Alpha Zero used 800 simulations.')
         mcts_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in MCTS, default=4.')
-        mcts_temperature: float = config(type=float, default=0.1, help='Temperature for selecting action in MCTS, default=0.1')
         self_play: int = config(type=int, default=200, help='# of self-play in one RL cycle, default=200')
         self_play_index_from: int = config(type=int, default=0, help='Index to start self-play from, default=0')
         win_ratio_threshold: float = config(type=float, default=0.55, help='Threshold of win ratio to adopt new model against previous one, default=0.55')
@@ -546,7 +544,6 @@ if __name__ == '__main__':
                 "--resume_rl_cycle_from", str(i),
                 "--mcts_explorations", str(args.mcts_explorations),
                 "--mcts_coeff_puct", str(args.mcts_coeff_puct),
-                "--mcts_temperature", str(args.mcts_temperature),
                 "--self_play", str(args.self_play),
                 "--self_play_index_from", str(self_play_index_from),
                 "--jobs", str(args.jobs),
@@ -561,7 +558,7 @@ if __name__ == '__main__':
                 break
             else:
                 self_play_index_from += args.self_play
-                learning_rate *= 0.5
+                learning_rate *= 0.9
 
         # Validate!
         subprocess.call([
@@ -569,7 +566,6 @@ if __name__ == '__main__':
             "--resume_rl_cycle_from", str(i),
             "--mcts_explorations", str(args.mcts_explorations),
             "--mcts_coeff_puct", str(args.mcts_coeff_puct),
-            "--mcts_temperature", str(args.mcts_temperature),
             "--validations", str(args.validations),
             "--jobs", str(args.jobs),
             "--output", args.output,
