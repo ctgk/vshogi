@@ -171,8 +171,7 @@ def _get_generator_from_df(df: pd.DataFrame):
     return _generator
 
 
-def get_dataset(tsv_list: tp.List[str]):
-    df = pd.concat([pd.read_csv(p, sep='\t') for p in tsv_list], ignore_index=True)
+def get_dataset(df: pd.DataFrame):
     dataset = tf.data.Dataset.from_generator(
         _get_generator_from_df(df),
         output_types=(tf.float32, (tf.float32, tf.float32)),
@@ -200,8 +199,20 @@ def train_network(
     return network
 
 
+def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
+    df = pd.read_csv(tsv_path, sep='\t')
+    if fraction is None:
+        return df
+    n = int(len(df) * fraction)
+    return df.tail(n)
+
+
 def load_data_and_train_network(network, index: int, learning_rate: float):
-    dataset = get_dataset(glob(f'datasets/dataset_{index:04d}/*.tsv'))
+    df = pd.concat([
+        pd.concat([read_kifu(p, f) for p in glob(f'datasets/dataset_{i:04d}/*.tsv')], ignore_index=True)
+        for i, f in zip(range(index, 0, -1), (args.nn_train_fraction ** i for i in range(index)))
+    ], ignore_index=True)
+    dataset = get_dataset(df)
     return train_network(network, dataset, learning_rate)
 
 
@@ -417,6 +428,7 @@ def parse_args():
         resume_rl_cycle_from: int = config(type=int, default=1, help='Resume Reinforcement Learning cycle if given. By default 0.')
         nn_channels: int = config(type=int, default=None, help='# of hidden channels in NN. Default value varies in shogi games.')
         nn_backbones: int = config(type=int, default=None, help='# of backbone layers in NN. Default value varies in shogi games.')
+        nn_train_fraction: float = config(type=float, default=0.5, help='Fraction of game record by former models to use to train current one. By default 0.5')
         nn_epochs: int = config(type=int, default=20, help='# of epochs in NN training. By default 20.')
         nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
         nn_learning_rate: float = config(type=float, default=1e-3, help='Learning rate of NN weight update')
