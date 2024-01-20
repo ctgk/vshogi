@@ -44,6 +44,11 @@ inline bool has_dir_e(const DirectionEnum& d)
         || (d == DIR_SE));
 }
 
+inline bool is_knight_direction(const DirectionEnum& d)
+{
+    return (d >= DIR_SSW);
+}
+
 } // namespace vshogi
 
 #endif // VSHOGI_DIRECTION_HPP

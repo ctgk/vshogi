@@ -214,6 +214,8 @@ private:
                     if (dst == SQ_NA)
                         break;
                     ranging_squares_to[src][dir][index++] = dst;
+                    if (is_knight_direction(dir))
+                        break;
                 }
             }
         }
