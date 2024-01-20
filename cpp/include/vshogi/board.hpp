@@ -98,6 +98,17 @@ public:
         }
         return SQ_NA;
     }
+    bool is_square_attacked(
+        const ColorEnum& attacker_color,
+        const SquareEnum& sq,
+        const SquareEnum& skip = SQ_NA) const
+    {
+        for (auto&& dir : Squares::direction_array) {
+            if (find_attacker(attacker_color, sq, dir, skip) != SQ_NA)
+                return true;
+        }
+        return false;
+    }
     Board hflip() const
     {
         Board out;

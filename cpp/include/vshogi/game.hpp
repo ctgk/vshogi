@@ -502,7 +502,7 @@ protected:
                 break;
             if (ally_mask.is_one(*ptr_dst))
                 continue;
-            if (is_square_attacked(board, *ptr_dst, ec, src))
+            if (board.is_square_attacked(ec, *ptr_dst, src))
                 continue;
             m_legal_moves.emplace_back(*ptr_dst, src, false);
         }
@@ -594,18 +594,6 @@ protected:
             m_legal_moves.emplace_back(dst, src, true);
         } else
             m_legal_moves.emplace_back(dst, src, false);
-    }
-    static bool is_square_attacked(
-        const Board& board,
-        const SquareEnum sq,
-        const ColorEnum enemy,
-        const SquareEnum skip = Squares::SQ_NA)
-    {
-        for (auto dir : Squares::direction_array) {
-            if (board.find_attacker(enemy, sq, dir, skip) != Squares::SQ_NA)
-                return true;
-        }
-        return false;
     }
     void append_legal_moves_to_defend_king()
     {
@@ -701,7 +689,7 @@ protected:
         const SquareEnum* sq_ptr = Squares::get_non_ranging_attacks_by(
             board[enemy_king_sq], enemy_king_sq);
         for (; *sq_ptr != Squares::SQ_NA; ++sq_ptr) {
-            if (is_square_attacked(board, *sq_ptr, turn, enemy_king_sq))
+            if (board.is_square_attacked(turn, *sq_ptr, enemy_king_sq))
                 continue;
             return false;
         }
