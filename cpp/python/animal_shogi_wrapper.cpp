@@ -1,4 +1,4 @@
-#include "vshogi/animal_shogi/game.hpp"
+#include "vshogi/variants/animal_shogi.hpp"
 
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>

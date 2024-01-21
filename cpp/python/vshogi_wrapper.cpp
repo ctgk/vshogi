@@ -1,5 +1,5 @@
-#include "vshogi/color.hpp"
-#include "vshogi/result.hpp"
+#include "vshogi/common/color.hpp"
+#include "vshogi/common/result.hpp"
 
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>

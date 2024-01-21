@@ -8,9 +8,9 @@
 #include <stdexcept>
 #include <vector>
 
-#include "vshogi/color.hpp"
+#include "vshogi/common/color.hpp"
+#include "vshogi/common/result.hpp"
 #include "vshogi/engine/dfpn.hpp"
-#include "vshogi/result.hpp"
 
 namespace vshogi::engine::mcts
 {

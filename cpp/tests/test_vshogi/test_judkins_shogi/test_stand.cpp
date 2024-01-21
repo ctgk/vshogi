@@ -1,6 +1,4 @@
-#include "vshogi/judkins_shogi/stand.hpp"
-
-#include "test_vshogi/test_judkins_shogi/test_judkins_shogi.hpp"
+#include "vshogi/variants/judkins_shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
 

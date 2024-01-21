@@ -1,8 +1,6 @@
-#include "vshogi/judkins_shogi/squares.hpp"
+#include "vshogi/variants/judkins_shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
-
-#include "test_vshogi/test_judkins_shogi/test_judkins_shogi.hpp"
 
 namespace test_vshogi::test_judkins_shogi
 {
@@ -13,86 +11,86 @@ TEST_GROUP(squares){};
 
 TEST(squares, shift)
 {
-    CHECK_EQUAL(SQ_4A, shift(SQ_3C, vshogi::DIR_NNW));
-    CHECK_EQUAL(SQ_2A, shift(SQ_3C, vshogi::DIR_NNE));
-    CHECK_EQUAL(SQ_4B, shift(SQ_3C, vshogi::DIR_NW));
-    CHECK_EQUAL(SQ_3B, shift(SQ_3C, vshogi::DIR_N));
-    CHECK_EQUAL(SQ_2B, shift(SQ_3C, vshogi::DIR_NE));
-    CHECK_EQUAL(SQ_4C, shift(SQ_3C, vshogi::DIR_W));
-    CHECK_EQUAL(SQ_2C, shift(SQ_3C, vshogi::DIR_E));
-    CHECK_EQUAL(SQ_4D, shift(SQ_3C, vshogi::DIR_SW));
-    CHECK_EQUAL(SQ_3D, shift(SQ_3C, vshogi::DIR_S));
-    CHECK_EQUAL(SQ_2D, shift(SQ_3C, vshogi::DIR_SE));
-    CHECK_EQUAL(SQ_4E, shift(SQ_3C, vshogi::DIR_SSW));
-    CHECK_EQUAL(SQ_2E, shift(SQ_3C, vshogi::DIR_SSE));
+    CHECK_EQUAL(SQ_4A, Squares::shift(SQ_3C, vshogi::DIR_NNW));
+    CHECK_EQUAL(SQ_2A, Squares::shift(SQ_3C, vshogi::DIR_NNE));
+    CHECK_EQUAL(SQ_4B, Squares::shift(SQ_3C, vshogi::DIR_NW));
+    CHECK_EQUAL(SQ_3B, Squares::shift(SQ_3C, vshogi::DIR_N));
+    CHECK_EQUAL(SQ_2B, Squares::shift(SQ_3C, vshogi::DIR_NE));
+    CHECK_EQUAL(SQ_4C, Squares::shift(SQ_3C, vshogi::DIR_W));
+    CHECK_EQUAL(SQ_2C, Squares::shift(SQ_3C, vshogi::DIR_E));
+    CHECK_EQUAL(SQ_4D, Squares::shift(SQ_3C, vshogi::DIR_SW));
+    CHECK_EQUAL(SQ_3D, Squares::shift(SQ_3C, vshogi::DIR_S));
+    CHECK_EQUAL(SQ_2D, Squares::shift(SQ_3C, vshogi::DIR_SE));
+    CHECK_EQUAL(SQ_4E, Squares::shift(SQ_3C, vshogi::DIR_SSW));
+    CHECK_EQUAL(SQ_2E, Squares::shift(SQ_3C, vshogi::DIR_SSE));
 }
 
 TEST(squares, to_rank)
 {
-    CHECK_EQUAL(RANK1, to_rank(SQ_1A));
-    CHECK_EQUAL(RANK2, to_rank(SQ_1B));
-    CHECK_EQUAL(RANK3, to_rank(SQ_1C));
-    CHECK_EQUAL(RANK4, to_rank(SQ_1D));
-    CHECK_EQUAL(RANK5, to_rank(SQ_1E));
-    CHECK_EQUAL(RANK6, to_rank(SQ_1F));
-    CHECK_EQUAL(RANK1, to_rank(SQ_2A));
-    CHECK_EQUAL(RANK2, to_rank(SQ_2B));
-    CHECK_EQUAL(RANK3, to_rank(SQ_2C));
-    CHECK_EQUAL(RANK4, to_rank(SQ_2D));
-    CHECK_EQUAL(RANK5, to_rank(SQ_2E));
-    CHECK_EQUAL(RANK6, to_rank(SQ_2F));
-    CHECK_EQUAL(RANK1, to_rank(SQ_3A));
-    CHECK_EQUAL(RANK2, to_rank(SQ_3B));
-    CHECK_EQUAL(RANK3, to_rank(SQ_3C));
-    CHECK_EQUAL(RANK4, to_rank(SQ_3D));
-    CHECK_EQUAL(RANK5, to_rank(SQ_3E));
-    CHECK_EQUAL(RANK6, to_rank(SQ_3F));
-    CHECK_EQUAL(RANK1, to_rank(SQ_4A));
-    CHECK_EQUAL(RANK2, to_rank(SQ_4B));
-    CHECK_EQUAL(RANK3, to_rank(SQ_4C));
-    CHECK_EQUAL(RANK4, to_rank(SQ_4D));
-    CHECK_EQUAL(RANK5, to_rank(SQ_4E));
-    CHECK_EQUAL(RANK6, to_rank(SQ_4F));
-    CHECK_EQUAL(RANK1, to_rank(SQ_5A));
-    CHECK_EQUAL(RANK2, to_rank(SQ_5B));
-    CHECK_EQUAL(RANK3, to_rank(SQ_5C));
-    CHECK_EQUAL(RANK4, to_rank(SQ_5D));
-    CHECK_EQUAL(RANK5, to_rank(SQ_5E));
-    CHECK_EQUAL(RANK6, to_rank(SQ_5F));
+    CHECK_EQUAL(RANK1, Squares::to_rank(SQ_1A));
+    CHECK_EQUAL(RANK2, Squares::to_rank(SQ_1B));
+    CHECK_EQUAL(RANK3, Squares::to_rank(SQ_1C));
+    CHECK_EQUAL(RANK4, Squares::to_rank(SQ_1D));
+    CHECK_EQUAL(RANK5, Squares::to_rank(SQ_1E));
+    CHECK_EQUAL(RANK6, Squares::to_rank(SQ_1F));
+    CHECK_EQUAL(RANK1, Squares::to_rank(SQ_2A));
+    CHECK_EQUAL(RANK2, Squares::to_rank(SQ_2B));
+    CHECK_EQUAL(RANK3, Squares::to_rank(SQ_2C));
+    CHECK_EQUAL(RANK4, Squares::to_rank(SQ_2D));
+    CHECK_EQUAL(RANK5, Squares::to_rank(SQ_2E));
+    CHECK_EQUAL(RANK6, Squares::to_rank(SQ_2F));
+    CHECK_EQUAL(RANK1, Squares::to_rank(SQ_3A));
+    CHECK_EQUAL(RANK2, Squares::to_rank(SQ_3B));
+    CHECK_EQUAL(RANK3, Squares::to_rank(SQ_3C));
+    CHECK_EQUAL(RANK4, Squares::to_rank(SQ_3D));
+    CHECK_EQUAL(RANK5, Squares::to_rank(SQ_3E));
+    CHECK_EQUAL(RANK6, Squares::to_rank(SQ_3F));
+    CHECK_EQUAL(RANK1, Squares::to_rank(SQ_4A));
+    CHECK_EQUAL(RANK2, Squares::to_rank(SQ_4B));
+    CHECK_EQUAL(RANK3, Squares::to_rank(SQ_4C));
+    CHECK_EQUAL(RANK4, Squares::to_rank(SQ_4D));
+    CHECK_EQUAL(RANK5, Squares::to_rank(SQ_4E));
+    CHECK_EQUAL(RANK6, Squares::to_rank(SQ_4F));
+    CHECK_EQUAL(RANK1, Squares::to_rank(SQ_5A));
+    CHECK_EQUAL(RANK2, Squares::to_rank(SQ_5B));
+    CHECK_EQUAL(RANK3, Squares::to_rank(SQ_5C));
+    CHECK_EQUAL(RANK4, Squares::to_rank(SQ_5D));
+    CHECK_EQUAL(RANK5, Squares::to_rank(SQ_5E));
+    CHECK_EQUAL(RANK6, Squares::to_rank(SQ_5F));
 }
 
 TEST(squares, to_file)
 {
-    CHECK_EQUAL(FILE1, to_file(SQ_1A));
-    CHECK_EQUAL(FILE1, to_file(SQ_1B));
-    CHECK_EQUAL(FILE1, to_file(SQ_1C));
-    CHECK_EQUAL(FILE1, to_file(SQ_1D));
-    CHECK_EQUAL(FILE1, to_file(SQ_1E));
-    CHECK_EQUAL(FILE1, to_file(SQ_1F));
-    CHECK_EQUAL(FILE2, to_file(SQ_2A));
-    CHECK_EQUAL(FILE2, to_file(SQ_2B));
-    CHECK_EQUAL(FILE2, to_file(SQ_2C));
-    CHECK_EQUAL(FILE2, to_file(SQ_2D));
-    CHECK_EQUAL(FILE2, to_file(SQ_2E));
-    CHECK_EQUAL(FILE2, to_file(SQ_2F));
-    CHECK_EQUAL(FILE3, to_file(SQ_3A));
-    CHECK_EQUAL(FILE3, to_file(SQ_3B));
-    CHECK_EQUAL(FILE3, to_file(SQ_3C));
-    CHECK_EQUAL(FILE3, to_file(SQ_3D));
-    CHECK_EQUAL(FILE3, to_file(SQ_3E));
-    CHECK_EQUAL(FILE3, to_file(SQ_3F));
-    CHECK_EQUAL(FILE4, to_file(SQ_4A));
-    CHECK_EQUAL(FILE4, to_file(SQ_4B));
-    CHECK_EQUAL(FILE4, to_file(SQ_4C));
-    CHECK_EQUAL(FILE4, to_file(SQ_4D));
-    CHECK_EQUAL(FILE4, to_file(SQ_4E));
-    CHECK_EQUAL(FILE4, to_file(SQ_4F));
-    CHECK_EQUAL(FILE5, to_file(SQ_5A));
-    CHECK_EQUAL(FILE5, to_file(SQ_5B));
-    CHECK_EQUAL(FILE5, to_file(SQ_5C));
-    CHECK_EQUAL(FILE5, to_file(SQ_5D));
-    CHECK_EQUAL(FILE5, to_file(SQ_5E));
-    CHECK_EQUAL(FILE5, to_file(SQ_5F));
+    CHECK_EQUAL(FILE1, Squares::to_file(SQ_1A));
+    CHECK_EQUAL(FILE1, Squares::to_file(SQ_1B));
+    CHECK_EQUAL(FILE1, Squares::to_file(SQ_1C));
+    CHECK_EQUAL(FILE1, Squares::to_file(SQ_1D));
+    CHECK_EQUAL(FILE1, Squares::to_file(SQ_1E));
+    CHECK_EQUAL(FILE1, Squares::to_file(SQ_1F));
+    CHECK_EQUAL(FILE2, Squares::to_file(SQ_2A));
+    CHECK_EQUAL(FILE2, Squares::to_file(SQ_2B));
+    CHECK_EQUAL(FILE2, Squares::to_file(SQ_2C));
+    CHECK_EQUAL(FILE2, Squares::to_file(SQ_2D));
+    CHECK_EQUAL(FILE2, Squares::to_file(SQ_2E));
+    CHECK_EQUAL(FILE2, Squares::to_file(SQ_2F));
+    CHECK_EQUAL(FILE3, Squares::to_file(SQ_3A));
+    CHECK_EQUAL(FILE3, Squares::to_file(SQ_3B));
+    CHECK_EQUAL(FILE3, Squares::to_file(SQ_3C));
+    CHECK_EQUAL(FILE3, Squares::to_file(SQ_3D));
+    CHECK_EQUAL(FILE3, Squares::to_file(SQ_3E));
+    CHECK_EQUAL(FILE3, Squares::to_file(SQ_3F));
+    CHECK_EQUAL(FILE4, Squares::to_file(SQ_4A));
+    CHECK_EQUAL(FILE4, Squares::to_file(SQ_4B));
+    CHECK_EQUAL(FILE4, Squares::to_file(SQ_4C));
+    CHECK_EQUAL(FILE4, Squares::to_file(SQ_4D));
+    CHECK_EQUAL(FILE4, Squares::to_file(SQ_4E));
+    CHECK_EQUAL(FILE4, Squares::to_file(SQ_4F));
+    CHECK_EQUAL(FILE5, Squares::to_file(SQ_5A));
+    CHECK_EQUAL(FILE5, Squares::to_file(SQ_5B));
+    CHECK_EQUAL(FILE5, Squares::to_file(SQ_5C));
+    CHECK_EQUAL(FILE5, Squares::to_file(SQ_5D));
+    CHECK_EQUAL(FILE5, Squares::to_file(SQ_5E));
+    CHECK_EQUAL(FILE5, Squares::to_file(SQ_5F));
 }
 
 TEST(squares, to_square)
@@ -138,25 +136,25 @@ TEST(squares, to_square)
 TEST(squares, square_array)
 {
     CHECK_EQUAL(
-        num_squares,
+        Squares::num_squares,
         sizeof(Squares::square_array) / sizeof(Squares::square_array[0]));
-    for (int i = num_squares; i--;) {
+    for (int i = Squares::num_squares; i--;) {
         CHECK_EQUAL(i, static_cast<int>(Squares::square_array[i]));
     }
 }
 
 TEST(squares, get_direction)
 {
-    CHECK_EQUAL(vshogi::DIR_NW, get_direction(SQ_2A, SQ_1B));
-    CHECK_EQUAL(vshogi::DIR_N, get_direction(SQ_6B, SQ_6F));
-    CHECK_EQUAL(vshogi::DIR_NE, get_direction(SQ_1A, SQ_6F));
-    CHECK_EQUAL(vshogi::DIR_W, get_direction(SQ_4D, SQ_1D));
-    CHECK_EQUAL(vshogi::DIR_E, get_direction(SQ_1D, SQ_3D));
-    CHECK_EQUAL(vshogi::DIR_SW, get_direction(SQ_4B, SQ_3A));
-    CHECK_EQUAL(vshogi::DIR_S, get_direction(SQ_1E, SQ_1A));
-    CHECK_EQUAL(vshogi::DIR_SE, get_direction(SQ_1F, SQ_6A));
-    CHECK_EQUAL(vshogi::DIR_SSW, get_direction(SQ_6C, SQ_5A));
-    CHECK_EQUAL(vshogi::DIR_SSE, get_direction(SQ_2D, SQ_3B));
+    CHECK_EQUAL(vshogi::DIR_NW, Squares::get_direction(SQ_2A, SQ_1B));
+    CHECK_EQUAL(vshogi::DIR_N, Squares::get_direction(SQ_6B, SQ_6F));
+    CHECK_EQUAL(vshogi::DIR_NE, Squares::get_direction(SQ_1A, SQ_6F));
+    CHECK_EQUAL(vshogi::DIR_W, Squares::get_direction(SQ_4D, SQ_1D));
+    CHECK_EQUAL(vshogi::DIR_E, Squares::get_direction(SQ_1D, SQ_3D));
+    CHECK_EQUAL(vshogi::DIR_SW, Squares::get_direction(SQ_4B, SQ_3A));
+    CHECK_EQUAL(vshogi::DIR_S, Squares::get_direction(SQ_1E, SQ_1A));
+    CHECK_EQUAL(vshogi::DIR_SE, Squares::get_direction(SQ_1F, SQ_6A));
+    CHECK_EQUAL(vshogi::DIR_SSW, Squares::get_direction(SQ_6C, SQ_5A));
+    CHECK_EQUAL(vshogi::DIR_SSE, Squares::get_direction(SQ_2D, SQ_3B));
 }
 
 TEST(squares, get_non_ranging_attacks_by)

@@ -1,4 +1,4 @@
-#include "vshogi/minishogi/board.hpp"
+#include "vshogi/variants/minishogi.hpp"
 
 #include <CppUTest/TestHarness.h>
 

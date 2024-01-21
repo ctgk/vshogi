@@ -1,6 +1,6 @@
 #include <algorithm>
 
-#include "vshogi/minishogi/state.hpp"
+#include "vshogi/variants/minishogi.hpp"
 
 #include <CppUTest/TestHarness.h>
 

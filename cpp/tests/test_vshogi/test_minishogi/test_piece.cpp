@@ -1,4 +1,4 @@
-#include "vshogi/minishogi/piece.hpp"
+#include "vshogi/variants/minishogi.hpp"
 
 #include "test_vshogi/test_minishogi/test_minishogi.hpp"
 

@@ -1,4 +1,4 @@
-#include "vshogi/judkins_shogi/game.hpp"
+#include "vshogi/variants/judkins_shogi.hpp"
 
 #include <pybind11/pybind11.h>
 

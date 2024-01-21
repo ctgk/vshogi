@@ -1,6 +1,6 @@
 #include "vshogi/engine/dfpn.hpp"
 #include "vshogi/engine/mcts.hpp"
-#include "vshogi/shogi/game.hpp"
+#include "vshogi/variants/shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
 

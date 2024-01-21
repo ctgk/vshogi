@@ -1,5 +1,4 @@
-#include "vshogi/animal_shogi/board.hpp"
-#include "vshogi/animal_shogi/state.hpp"
+#include "vshogi/variants/animal_shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
 

@@ -1,4 +1,4 @@
-#include "vshogi/minishogi/move.hpp"
+#include "vshogi/variants/minishogi.hpp"
 
 #include <CppUTest/TestHarness.h>
 

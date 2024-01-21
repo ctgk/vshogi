@@ -1,8 +1,6 @@
-#include "vshogi/shogi/bitboard.hpp"
+#include "vshogi/variants/shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
-
-#include "test_vshogi/test_shogi/test_shogi.hpp"
 
 namespace test_vshogi::test_shogi
 {

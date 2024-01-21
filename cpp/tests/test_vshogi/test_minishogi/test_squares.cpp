@@ -1,4 +1,4 @@
-#include "vshogi/minishogi/squares.hpp"
+#include "vshogi/variants/minishogi.hpp"
 
 #include <CppUTest/TestHarness.h>
 

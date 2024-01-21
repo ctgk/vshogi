@@ -1,4 +1,4 @@
-#include "vshogi/animal_shogi/squares.hpp"
+#include "vshogi/variants/animal_shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
 

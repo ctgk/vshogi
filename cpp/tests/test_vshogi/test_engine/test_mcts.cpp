@@ -1,8 +1,8 @@
-#include "vshogi/animal_shogi/game.hpp"
 #include "vshogi/engine/mcts.hpp"
-#include "vshogi/judkins_shogi/game.hpp"
-#include "vshogi/minishogi/game.hpp"
-#include "vshogi/shogi/game.hpp"
+#include "vshogi/variants/animal_shogi.hpp"
+#include "vshogi/variants/judkins_shogi.hpp"
+#include "vshogi/variants/minishogi.hpp"
+#include "vshogi/variants/shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
 

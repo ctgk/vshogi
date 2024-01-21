@@ -1,4 +1,4 @@
-#include "vshogi/minishogi/game.hpp"
+#include "vshogi/variants/minishogi.hpp"
 
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>

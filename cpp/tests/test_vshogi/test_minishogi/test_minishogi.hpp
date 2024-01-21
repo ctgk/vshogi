@@ -1,9 +1,7 @@
 #ifndef TEST_VSHOGI_TEST_MINISHOGI_TEST_MINISHOGI_HPP
 #define TEST_VSHOGI_TEST_MINISHOGI_TEST_MINISHOGI_HPP
 
-#include "vshogi/minishogi/move.hpp"
-#include "vshogi/minishogi/piece.hpp"
-#include "vshogi/minishogi/squares.hpp"
+#include "vshogi/variants/minishogi.hpp"
 
 namespace test_vshogi::test_minishogi
 {

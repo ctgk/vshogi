@@ -6,9 +6,9 @@
 #include <memory>
 #include <vector>
 
-#include "vshogi/animal_shogi/game.hpp"
-#include "vshogi/color.hpp"
-#include "vshogi/result.hpp"
+#include "vshogi/common/color.hpp"
+#include "vshogi/common/result.hpp"
+#include "vshogi/variants/animal_shogi.hpp"
 
 namespace vshogi::engine::dfpn
 {
