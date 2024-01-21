@@ -8,7 +8,13 @@
 namespace vshogi
 {
 
-template <class Squares, class Pieces, class Int>
+template <
+    class Int,
+    class Squares,
+    class Pieces,
+    unsigned int SourceMSB,
+    unsigned int PromotionMSB,
+    unsigned int DestinationMSB>
 class Move
 {
 public:
@@ -21,6 +27,15 @@ private:
     static constexpr auto num_squares = Squares::num_squares;
     static constexpr auto num_stand_piece_types = Pieces::num_stand_piece_types;
 
+    static constexpr unsigned int source_shift = PromotionMSB + 1;
+    static constexpr unsigned int promotion_shift = DestinationMSB + 1;
+    static constexpr Int destination_mask
+        = static_cast<Int>((1U << (DestinationMSB + 1U)) - 1U);
+    static constexpr Int promotion_mask
+        = static_cast<Int>((1U << (PromotionMSB + 1U)) - 1U - destination_mask);
+    static constexpr Int source_mask = static_cast<Int>(
+        (1U << (SourceMSB + 1U)) - 1U - destination_mask - promotion_mask);
+
 private:
     /**
      * @brief N-bit integer representing a move in a game.
@@ -32,7 +47,7 @@ public:
     {
     }
     Move(const Int value)
-        : m_value(value & (source_mask() | promote_mask() | destination_mask()))
+        : m_value(value & (source_mask | promotion_mask | destination_mask))
     {
     }
     Move(
@@ -81,24 +96,24 @@ public:
     }
     SquareEnum destination() const
     {
-        return static_cast<SquareEnum>(m_value & destination_mask());
+        return static_cast<SquareEnum>(m_value & destination_mask);
     }
     SquareEnum source_square() const
     {
-        return static_cast<SquareEnum>(m_value >> source_shift());
+        return static_cast<SquareEnum>(m_value >> source_shift);
     }
     PieceTypeEnum source_piece() const
     {
         return static_cast<PieceTypeEnum>(
-            (m_value >> source_shift()) - num_squares);
+            (m_value >> source_shift) - num_squares);
     }
     bool promote() const
     {
-        return static_cast<bool>(m_value & promote_mask());
+        return static_cast<bool>(m_value & promotion_mask);
     }
     bool is_drop() const
     {
-        return (m_value >> source_shift()) >= num_squares;
+        return (m_value >> source_shift) >= num_squares;
     }
     Move rotate() const
     {
@@ -130,14 +145,9 @@ public:
     }
 
 private:
-    static constexpr int source_shift();
-    static constexpr int promote_shift();
-    static constexpr Int destination_mask();
-    static constexpr Int source_mask();
-    static constexpr Int promote_mask();
     Move(const SquareEnum dst, const int src, const bool promote = false)
         : m_value(static_cast<Int>(
-            (src << source_shift()) | (promote << promote_shift()) | dst))
+            (src << source_shift) | (promote << promotion_shift) | dst))
     {
     }
     static constexpr SquareEnum rotate_square(const SquareEnum sq)

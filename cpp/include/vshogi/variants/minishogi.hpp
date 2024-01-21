@@ -161,11 +161,11 @@ using BlackWhiteStands = vshogi::BlackWhiteStands<Stand>;
  * @details
  *       ________ ___*****       destination square (25-possibility)
  *       ________ __*_____       Promotion flag (2-possibility)
- *       ___***** ________       source square (30-possibility = 25-square + 5-drop)
+ *       _____*** **______       source square (30-possibility = 25-square + 5-drop)
  * (MSB) xxxxxxxx xxxxxxxx (LSB)
  *
  */
-using Move = vshogi::Move<Squares, Pieces, std::uint16_t>;
+using Move = vshogi::Move<std::uint16_t, Squares, Pieces, 10, 5, 4>;
 
 using BitBoard = vshogi::
     BitBoard<std::uint32_t, Squares, BoardPieceTypeEnum, num_attack_types>;
@@ -490,32 +490,6 @@ inline const minishogi::PieceTypeEnum
 template <>
 inline const int minishogi::BlackWhiteStands::max_sfen_length
     = 11; // "2p2s2g2b2r "
-
-template <>
-constexpr int minishogi::Move::source_shift()
-{
-    return 8;
-}
-template <>
-constexpr int minishogi::Move::promote_shift()
-{
-    return 5;
-}
-template <>
-constexpr std::uint16_t minishogi::Move::destination_mask()
-{
-    return 0x001f;
-}
-template <>
-constexpr std::uint16_t minishogi::Move::promote_mask()
-{
-    return 0x0020;
-}
-template <>
-constexpr std::uint16_t minishogi::Move::source_mask()
-{
-    return 0x1f00;
-}
 
 template <>
 inline const minishogi::BitBoard minishogi::BitBoard::square_to_bitboard_array

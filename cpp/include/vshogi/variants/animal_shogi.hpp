@@ -130,7 +130,7 @@ using BlackWhiteStands = vshogi::BlackWhiteStands<Stand>;
  *       **** ____       source square (15 = 12 squares + 3 pieces to drop)
  * (MSB) xxxx xxxx (LSB)
  */
-using Move = vshogi::Move<Squares, Pieces, std::uint8_t>;
+using Move = vshogi::Move<std::uint8_t, Squares, Pieces, 7, 3, 3>;
 
 using BitBoard = vshogi::
     BitBoard<std::uint16_t, Squares, BoardPieceTypeEnum, num_attack_types>;
@@ -402,32 +402,6 @@ inline const animal_shogi::PieceTypeEnum
 template <>
 inline const int animal_shogi::BlackWhiteStands::max_sfen_length
     = 13; // "2C2E2G2c2e2g "
-
-template <>
-constexpr int animal_shogi::Move::source_shift()
-{
-    return 4;
-}
-template <>
-constexpr int animal_shogi::Move::promote_shift()
-{
-    return 8;
-}
-template <>
-constexpr std::uint8_t animal_shogi::Move::destination_mask()
-{
-    return 0x0f;
-}
-template <>
-constexpr std::uint8_t animal_shogi::Move::promote_mask()
-{
-    return 0x00;
-}
-template <>
-constexpr std::uint8_t animal_shogi::Move::source_mask()
-{
-    return 0xf0;
-}
 
 template <>
 inline int animal_shogi::Move::to_dlshogi_source_index() const

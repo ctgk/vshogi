@@ -209,7 +209,7 @@ using BlackWhiteStands = vshogi::BlackWhiteStands<Stand>;
  *       _******* ________       Source square or piece (88 possibilities = 81 + 7)
  * (MSB) xxxxxxxx xxxxxxxx (LSB)
  */
-using Move = vshogi::Move<Squares, Pieces, std::uint16_t>;
+using Move = vshogi::Move<std::uint16_t, Squares, Pieces, 14, 7, 6>;
 
 using BitBoard = vshogi::
     BitBoard<__uint128_t, Squares, BoardPieceTypeEnum, num_attack_types>;
@@ -654,32 +654,6 @@ inline const shogi::Pieces::PieceTypeEnum
 template <>
 inline const int shogi::BlackWhiteStands::max_sfen_length
     = 26; // "10p2l2n2sbr2g2P2L2N2SBR2G "
-
-template <>
-constexpr int shogi::Move::source_shift()
-{
-    return 8;
-}
-template <>
-constexpr int shogi::Move::promote_shift()
-{
-    return 7;
-}
-template <>
-constexpr std::uint16_t shogi::Move::destination_mask()
-{
-    return 0x007f;
-}
-template <>
-constexpr std::uint16_t shogi::Move::source_mask()
-{
-    return 0x7f00;
-}
-template <>
-constexpr std::uint16_t shogi::Move::promote_mask()
-{
-    return 0x0080;
-}
 
 template <>
 inline const shogi::BitBoard

@@ -181,10 +181,10 @@ using BlackWhiteStands = vshogi::BlackWhiteStands<Stand>;
  * @details
  *       ________ __******       Destination square (36 possibilities)
  *       ________ _*______       Promotion flag (2 possibilities)
- *       __****** ________       Source square or piece (42 possibilities = 36 + 6)
+ *       ___***** *_______       Source square or piece (42 possibilities = 36 + 6)
  * (MSB) xxxxxxxx xxxxxxxx (LSB)
  */
-using Move = vshogi::Move<Squares, Pieces, std::uint16_t>;
+using Move = vshogi::Move<std::uint16_t, Squares, Pieces, 12, 6, 5>;
 
 using BitBoard = vshogi::
     BitBoard<std::uint64_t, Squares, BoardPieceTypeEnum, num_attack_types>;
@@ -553,32 +553,6 @@ inline const judkins_shogi::PieceTypeEnum
 template <>
 inline const int judkins_shogi::BlackWhiteStands::max_sfen_length
     = 13; // "RBGSNPrbgsnp "
-
-template <>
-constexpr int judkins_shogi::Move::source_shift()
-{
-    return 8;
-}
-template <>
-constexpr int judkins_shogi::Move::promote_shift()
-{
-    return 6;
-}
-template <>
-constexpr std::uint16_t judkins_shogi::Move::destination_mask()
-{
-    return 0x003f;
-}
-template <>
-constexpr std::uint16_t judkins_shogi::Move::promote_mask()
-{
-    return 0x0040;
-}
-template <>
-constexpr std::uint16_t judkins_shogi::Move::source_mask()
-{
-    return 0x3f00;
-}
 
 template <>
 inline const judkins_shogi::BitBoard judkins_shogi::BitBoard::
