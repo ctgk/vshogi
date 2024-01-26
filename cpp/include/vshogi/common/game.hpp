@@ -408,15 +408,12 @@ protected:
     bool is_repetitions() const
     {
         uint num = 1u;
-        auto s = State(m_initial_sfen_without_ply);
-        const auto n = m_record.size();
-        for (std::size_t ii = 0; ii < n; ++ii) {
-            if (((n - ii) % 2 == 0) && (m_zobrist_hash == m_record[ii].first)) {
-                num += (m_current_state == s);
-                if (num > MaxAcceptableRepetition)
-                    return true;
-            }
-            s.apply(m_record[ii].second);
+        const int n = static_cast<int>(m_record.size());
+        for (int ii = n - 4; ii >= 0; ii -= 2) {
+            const uint index = static_cast<uint>(ii);
+            num += (m_zobrist_hash == m_record[index].first);
+            if (num > MaxAcceptableRepetition)
+                return true;
         }
         return false;
     }
