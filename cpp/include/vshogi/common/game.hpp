@@ -471,14 +471,12 @@ protected:
         m_legal_moves.reserve(128);
         append_legal_moves_by_king();
         if (m_checker_locations[0] == Squares::SQ_NA) {
+            append_legal_drop_moves();
             const auto turn = get_turn();
-            const auto ally_mask = m_occupied[turn];
-            const auto empty_mask = ~m_occupied[2];
+            const auto& ally_mask = m_occupied[turn];
             const auto& king_sq = m_king_locations[turn];
-            for (auto sq : Squares::square_array) {
-                if (empty_mask.is_one(sq))
-                    append_legal_moves_dropping_to(sq);
-                else if (ally_mask.is_one(sq) && (king_sq != sq))
+            for (auto&& sq : Squares::square_array) {
+                if (ally_mask.is_one(sq) && (king_sq != sq))
                     append_legal_moves_by_non_king_at(sq);
             }
         } else if (m_checker_locations[1] == Squares::SQ_NA) {
@@ -646,6 +644,28 @@ protected:
                                          || target_in_promotion_zone);
                 append_legal_move_or_moves(p, dst, src, promote);
                 break;
+            }
+        }
+    }
+    void append_legal_drop_moves()
+    {
+        const auto turn = get_turn();
+        const auto& stand = get_stand(turn);
+        const auto& occupied = m_occupied[2];
+        for (auto&& pt : Pieces::stand_piece_array) {
+            if (!stand.exist(pt))
+                continue;
+            for (auto&& sq : Squares::square_array) {
+                if (occupied.is_one(sq))
+                    continue;
+                if ((pt == Pieces::FU)
+                    && (has_pawn_in_file(Squares::to_file(sq))
+                        || is_drop_pawn_mate(sq)))
+                    continue;
+                if (BitBoard::get_attacks_by(
+                        Pieces::to_board_piece(turn, pt), sq)
+                        .any())
+                    m_legal_moves.emplace_back(Move(sq, pt));
             }
         }
     }
