@@ -5,11 +5,12 @@
 
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/direction.hpp"
+#include "vshogi/common/utils.hpp"
 
 namespace vshogi
 {
 
-template <class UInt, class Squares, class BoardPiece, int NumAttackTypes>
+template <class UInt, class Squares, class BoardPiece, uint NumAttackTypes>
 class BitBoard
 {
 public:
@@ -20,10 +21,8 @@ private:
 
     static constexpr UInt mask
         = (static_cast<UInt>(1) << Squares::num_squares) - static_cast<UInt>(1);
-    static const BitBoard square_to_bitboard_array[static_cast<std::size_t>(
-        Squares::num_squares + 1)];
-    static BitBoard attacks_table[static_cast<std::size_t>(
-        NumAttackTypes)][static_cast<std::size_t>(Squares::num_squares)];
+    static const BitBoard square_to_bitboard_array[Squares::num_squares + 1U];
+    static BitBoard attacks_table[NumAttackTypes][Squares::num_squares];
 
 public:
     constexpr BitBoard() : m_value()
@@ -55,11 +54,11 @@ public:
         m_value &= other.m_value;
         return *this;
     }
-    constexpr BitBoard operator<<(const unsigned int& shift_width) const
+    constexpr BitBoard operator<<(const uint& shift_width) const
     {
         return BitBoard(m_value << shift_width);
     }
-    constexpr BitBoard operator>>(const unsigned int& shift_width) const
+    constexpr BitBoard operator>>(const uint& shift_width) const
     {
         return BitBoard(m_value >> shift_width);
     }
@@ -75,7 +74,7 @@ public:
     {
         return static_cast<bool>(from_square(sq).m_value & m_value);
     }
-    int hamming_weight() const
+    uint hamming_weight() const
     {
         return hamming_weight_64bit(static_cast<std::uint64_t>(m_value));
     }
@@ -144,7 +143,7 @@ public:
     static void init_tables();
 
 private:
-    int hamming_weight_64bit(std::uint64_t x) const
+    uint hamming_weight_64bit(std::uint64_t x) const
     {
         constexpr std::uint64_t m1 = 0x5555555555555555; // 0101...
         constexpr std::uint64_t m2 = 0x3333333333333333; // 00110011..

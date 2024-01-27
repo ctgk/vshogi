@@ -56,7 +56,7 @@ const char*
 shogi::Board::set_sfen_rank(const char* const sfen_rank, const RankEnum rank)
 {
     constexpr int max_length = 19; // e.g. "+p+p+p+p+p+p+p+p+p/"
-    auto piece_ptr = m_pieces + num_files * static_cast<int>(rank);
+    auto piece_ptr = m_pieces + num_files * static_cast<uint>(rank);
     const char* sfen_ptr = sfen_rank;
     bool promotion_flag = false;
     for (; sfen_ptr < sfen_rank + max_length; ++sfen_ptr) {

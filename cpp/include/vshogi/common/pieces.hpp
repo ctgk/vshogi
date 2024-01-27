@@ -12,9 +12,9 @@ namespace vshogi
 template <
     class PieceType,
     class BoardPiece,
-    int NumPieceTypes,
-    int NumStandPieceTypes,
-    int PromotionBit>
+    uint NumPieceTypes,
+    uint NumStandPieceTypes,
+    uint PromotionBit>
 struct Pieces
 {
 public:
@@ -22,10 +22,10 @@ public:
     using BoardPieceTypeEnum = BoardPiece;
 
 private:
-    static constexpr int color_bit = PromotionBit + 1;
-    static constexpr int promotion_mask = (1 << PromotionBit);
-    static constexpr int color_mask = (1 << color_bit);
-    static constexpr int piece_type_mask = (color_mask - 1);
+    static constexpr uint color_bit = PromotionBit + 1;
+    static constexpr uint promotion_mask = (1 << PromotionBit);
+    static constexpr uint color_mask = (1 << color_bit);
+    static constexpr uint piece_type_mask = (color_mask - 1);
 
 public:
     static constexpr PieceType FU = static_cast<PieceType>(0); // NOLINT
@@ -37,13 +37,11 @@ public:
         = static_cast<BoardPiece>((color_mask << 1) - 1);
 
     Pieces() = delete;
-    static const int num_piece_types = NumPieceTypes;
-    static const int num_stand_piece_types = NumStandPieceTypes;
+    static const uint num_piece_types = NumPieceTypes;
+    static const uint num_stand_piece_types = NumStandPieceTypes;
 
-    static const PieceType
-        piece_array[static_cast<unsigned int>(NumPieceTypes)];
-    static const PieceType
-        stand_piece_array[static_cast<unsigned int>(NumStandPieceTypes)];
+    static const PieceType piece_array[NumPieceTypes];
+    static const PieceType stand_piece_array[NumStandPieceTypes];
 
     /**
      * @brief Get the color of a board piece.
@@ -95,12 +93,12 @@ public:
     template <class T>
     static constexpr T demote(const T& p)
     {
-        constexpr int demotion_mask = (~promotion_mask);
+        constexpr uint demotion_mask = (~promotion_mask);
         return static_cast<T>(p & demotion_mask);
     }
 
-    static int get_point(const PieceType& p);
-    static int get_point(const BoardPiece& p)
+    static uint get_point(const PieceType& p);
+    static uint get_point(const BoardPiece& p)
     {
         return get_point(to_piece_type(p));
     }

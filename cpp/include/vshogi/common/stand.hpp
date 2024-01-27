@@ -8,14 +8,14 @@
 namespace vshogi
 {
 
-template <class Pieces, class Int>
+template <class Int, class Pieces>
 class Stand
 {
 public:
     using PiecesType = Pieces;
 
 private:
-    static const int shift_bits[Pieces::num_stand_piece_types];
+    static const uint shift_bits[Pieces::num_stand_piece_types];
     static const Int masks[Pieces::num_stand_piece_types];
     static const Int deltas[Pieces::num_stand_piece_types];
     static const Int mask;
@@ -32,9 +32,9 @@ public:
     template <typename... Args>
     Stand(const int, const int, Args...);
 
-    int count(const typename Pieces::PieceTypeEnum& p) const
+    uint count(const typename Pieces::PieceTypeEnum& p) const
     {
-        return static_cast<int>((m_value & masks[p]) >> shift_bits[p]);
+        return static_cast<uint>((m_value & masks[p]) >> shift_bits[p]);
     }
     bool exist(const typename Pieces::PieceTypeEnum& p) const
     {

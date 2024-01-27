@@ -49,7 +49,7 @@ const char* judkins_shogi::Board::set_sfen_rank(
     const char* const sfen_rank, const RankEnum rank)
 {
     constexpr int max_length = 13; // e.g. "+r+b+s+n+p+P/"
-    auto piece_str = m_pieces + num_files * static_cast<int>(rank);
+    auto piece_str = m_pieces + num_files * static_cast<uint>(rank);
     const char* sfen_ptr = sfen_rank;
     bool promotion_flag = false;
     for (; sfen_ptr < sfen_rank + max_length; ++sfen_ptr) {

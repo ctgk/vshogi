@@ -12,7 +12,7 @@
 namespace vshogi
 {
 
-template <class Board, class Stands, class Move, int MaxStandPieceCount>
+template <class Board, class Stands, class Move, uint MaxStandPieceCount>
 class State
 {
     static_assert(std::is_same<
@@ -44,9 +44,9 @@ private:
     static std::uint64_t
         zobrist_board[Squares::num_squares]
                      [num_colors * Pieces::num_piece_types + 1];
-    static std::uint64_t
-        zobrist_stand[num_colors][Pieces::num_stand_piece_types]
-                     [static_cast<std::size_t>(MaxStandPieceCount + 1)];
+    static std::uint64_t zobrist_stand[num_colors]
+                                      [Pieces::num_stand_piece_types]
+                                      [MaxStandPieceCount + 1];
 
     Board m_board;
     Stands m_stands;
@@ -127,7 +127,7 @@ public:
         std::uniform_int_distribution<std::uint64_t> dist;
         for (auto& c : color_array) {
             for (auto& pt : Pieces::stand_piece_array) {
-                for (int num = 0; num < MaxStandPieceCount + 1; ++num) {
+                for (uint num = 0; num < MaxStandPieceCount + 1; ++num) {
                     zobrist_stand[c][pt][num] = dist(rng);
                 }
             }
@@ -209,11 +209,11 @@ private:
         }
         m_board[sq] = p;
     }
-    static int to_index(const typename Pieces::BoardPieceTypeEnum& p)
+    static uint to_index(const typename Pieces::BoardPieceTypeEnum& p)
     {
         if (p == Pieces::VOID)
-            return 2 * Pieces::num_piece_types;
-        int out = Pieces::demote(Pieces::to_piece_type(p));
+            return 2u * Pieces::num_piece_types;
+        uint out = Pieces::demote(Pieces::to_piece_type(p));
         out += (Pieces::get_color(p) == WHITE) * Pieces::num_piece_types;
         out += Pieces::is_promoted(p) * (Pieces::num_stand_piece_types + 1);
         return out;

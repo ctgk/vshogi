@@ -266,411 +266,89 @@ TEST(squares, to_square)
 
 TEST(squares, to_usi)
 {
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_1A);
-        STRCMP_EQUAL("1a", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_1B);
-        STRCMP_EQUAL("1b", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_1C);
-        STRCMP_EQUAL("1c", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_1D);
-        STRCMP_EQUAL("1d", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_1E);
-        STRCMP_EQUAL("1e", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_1F);
-        STRCMP_EQUAL("1f", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_1G);
-        STRCMP_EQUAL("1g", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_1H);
-        STRCMP_EQUAL("1h", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_1I);
-        STRCMP_EQUAL("1i", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_2A);
-        STRCMP_EQUAL("2a", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_2B);
-        STRCMP_EQUAL("2b", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_2C);
-        STRCMP_EQUAL("2c", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_2D);
-        STRCMP_EQUAL("2d", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_2E);
-        STRCMP_EQUAL("2e", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_2F);
-        STRCMP_EQUAL("2f", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_2G);
-        STRCMP_EQUAL("2g", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_2H);
-        STRCMP_EQUAL("2h", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_2I);
-        STRCMP_EQUAL("2i", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_3A);
-        STRCMP_EQUAL("3a", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_3B);
-        STRCMP_EQUAL("3b", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_3C);
-        STRCMP_EQUAL("3c", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_3D);
-        STRCMP_EQUAL("3d", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_3E);
-        STRCMP_EQUAL("3e", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_3F);
-        STRCMP_EQUAL("3f", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_3G);
-        STRCMP_EQUAL("3g", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_3H);
-        STRCMP_EQUAL("3h", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_3I);
-        STRCMP_EQUAL("3i", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_4A);
-        STRCMP_EQUAL("4a", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_4B);
-        STRCMP_EQUAL("4b", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_4C);
-        STRCMP_EQUAL("4c", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_4D);
-        STRCMP_EQUAL("4d", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_4E);
-        STRCMP_EQUAL("4e", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_4F);
-        STRCMP_EQUAL("4f", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_4G);
-        STRCMP_EQUAL("4g", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_4H);
-        STRCMP_EQUAL("4h", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_4I);
-        STRCMP_EQUAL("4i", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_5A);
-        STRCMP_EQUAL("5a", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_5B);
-        STRCMP_EQUAL("5b", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_5C);
-        STRCMP_EQUAL("5c", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_5D);
-        STRCMP_EQUAL("5d", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_5E);
-        STRCMP_EQUAL("5e", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_5F);
-        STRCMP_EQUAL("5f", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_5G);
-        STRCMP_EQUAL("5g", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_5H);
-        STRCMP_EQUAL("5h", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_5I);
-        STRCMP_EQUAL("5i", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_6A);
-        STRCMP_EQUAL("6a", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_6B);
-        STRCMP_EQUAL("6b", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_6C);
-        STRCMP_EQUAL("6c", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_6D);
-        STRCMP_EQUAL("6d", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_6E);
-        STRCMP_EQUAL("6e", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_6F);
-        STRCMP_EQUAL("6f", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_6G);
-        STRCMP_EQUAL("6g", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_6H);
-        STRCMP_EQUAL("6h", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_6I);
-        STRCMP_EQUAL("6i", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_7A);
-        STRCMP_EQUAL("7a", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_7B);
-        STRCMP_EQUAL("7b", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_7C);
-        STRCMP_EQUAL("7c", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_7D);
-        STRCMP_EQUAL("7d", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_7E);
-        STRCMP_EQUAL("7e", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_7F);
-        STRCMP_EQUAL("7f", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_7G);
-        STRCMP_EQUAL("7g", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_7H);
-        STRCMP_EQUAL("7h", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_7I);
-        STRCMP_EQUAL("7i", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_8A);
-        STRCMP_EQUAL("8a", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_8B);
-        STRCMP_EQUAL("8b", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_8C);
-        STRCMP_EQUAL("8c", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_8D);
-        STRCMP_EQUAL("8d", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_8E);
-        STRCMP_EQUAL("8e", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_8F);
-        STRCMP_EQUAL("8f", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_8G);
-        STRCMP_EQUAL("8g", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_8H);
-        STRCMP_EQUAL("8h", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_8I);
-        STRCMP_EQUAL("8i", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_9A);
-        STRCMP_EQUAL("9a", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_9B);
-        STRCMP_EQUAL("9b", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_9C);
-        STRCMP_EQUAL("9c", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_9D);
-        STRCMP_EQUAL("9d", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_9E);
-        STRCMP_EQUAL("9e", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_9F);
-        STRCMP_EQUAL("9f", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_9G);
-        STRCMP_EQUAL("9g", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_9H);
-        STRCMP_EQUAL("9h", actual);
-    }
-    {
-        char actual[2];
-        Squares::to_usi(actual, SQ_9I);
-        STRCMP_EQUAL("9i", actual);
-    }
+    // clang-format off
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_1A); STRCMP_EQUAL("1a", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_1B); STRCMP_EQUAL("1b", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_1C); STRCMP_EQUAL("1c", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_1D); STRCMP_EQUAL("1d", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_1E); STRCMP_EQUAL("1e", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_1F); STRCMP_EQUAL("1f", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_1G); STRCMP_EQUAL("1g", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_1H); STRCMP_EQUAL("1h", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_1I); STRCMP_EQUAL("1i", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_2A); STRCMP_EQUAL("2a", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_2B); STRCMP_EQUAL("2b", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_2C); STRCMP_EQUAL("2c", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_2D); STRCMP_EQUAL("2d", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_2E); STRCMP_EQUAL("2e", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_2F); STRCMP_EQUAL("2f", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_2G); STRCMP_EQUAL("2g", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_2H); STRCMP_EQUAL("2h", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_2I); STRCMP_EQUAL("2i", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_3A); STRCMP_EQUAL("3a", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_3B); STRCMP_EQUAL("3b", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_3C); STRCMP_EQUAL("3c", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_3D); STRCMP_EQUAL("3d", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_3E); STRCMP_EQUAL("3e", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_3F); STRCMP_EQUAL("3f", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_3G); STRCMP_EQUAL("3g", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_3H); STRCMP_EQUAL("3h", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_3I); STRCMP_EQUAL("3i", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_4A); STRCMP_EQUAL("4a", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_4B); STRCMP_EQUAL("4b", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_4C); STRCMP_EQUAL("4c", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_4D); STRCMP_EQUAL("4d", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_4E); STRCMP_EQUAL("4e", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_4F); STRCMP_EQUAL("4f", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_4G); STRCMP_EQUAL("4g", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_4H); STRCMP_EQUAL("4h", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_4I); STRCMP_EQUAL("4i", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_5A); STRCMP_EQUAL("5a", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_5B); STRCMP_EQUAL("5b", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_5C); STRCMP_EQUAL("5c", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_5D); STRCMP_EQUAL("5d", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_5E); STRCMP_EQUAL("5e", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_5F); STRCMP_EQUAL("5f", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_5G); STRCMP_EQUAL("5g", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_5H); STRCMP_EQUAL("5h", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_5I); STRCMP_EQUAL("5i", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_6A); STRCMP_EQUAL("6a", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_6B); STRCMP_EQUAL("6b", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_6C); STRCMP_EQUAL("6c", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_6D); STRCMP_EQUAL("6d", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_6E); STRCMP_EQUAL("6e", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_6F); STRCMP_EQUAL("6f", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_6G); STRCMP_EQUAL("6g", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_6H); STRCMP_EQUAL("6h", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_6I); STRCMP_EQUAL("6i", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_7A); STRCMP_EQUAL("7a", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_7B); STRCMP_EQUAL("7b", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_7C); STRCMP_EQUAL("7c", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_7D); STRCMP_EQUAL("7d", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_7E); STRCMP_EQUAL("7e", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_7F); STRCMP_EQUAL("7f", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_7G); STRCMP_EQUAL("7g", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_7H); STRCMP_EQUAL("7h", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_7I); STRCMP_EQUAL("7i", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_8A); STRCMP_EQUAL("8a", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_8B); STRCMP_EQUAL("8b", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_8C); STRCMP_EQUAL("8c", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_8D); STRCMP_EQUAL("8d", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_8E); STRCMP_EQUAL("8e", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_8F); STRCMP_EQUAL("8f", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_8G); STRCMP_EQUAL("8g", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_8H); STRCMP_EQUAL("8h", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_8I); STRCMP_EQUAL("8i", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_9A); STRCMP_EQUAL("9a", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_9B); STRCMP_EQUAL("9b", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_9C); STRCMP_EQUAL("9c", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_9D); STRCMP_EQUAL("9d", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_9E); STRCMP_EQUAL("9e", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_9F); STRCMP_EQUAL("9f", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_9G); STRCMP_EQUAL("9g", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_9H); STRCMP_EQUAL("9h", actual); }
+    { char actual[3] = {}; Squares::to_usi(actual, SQ_9I); STRCMP_EQUAL("9i", actual); }
+    // clang-format on
 }
 
 TEST(squares, shift)

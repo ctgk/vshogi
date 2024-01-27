@@ -11,14 +11,14 @@ namespace vshogi
 {
 
 template <
-    int NumFiles,
-    int NumRanks,
     class Square,
     class File,
     class Rank,
-    int NumDir,
-    int NumDirDL,
-    int NumNonRangingBoardPiece>
+    uint NumFiles,
+    uint NumRanks,
+    uint NumDir,
+    uint NumDirDL,
+    uint NumNonRangingBoardPiece>
 struct Squares
 {
     Squares() = delete;
@@ -26,35 +26,28 @@ struct Squares
     using FileEnum = File;
     using RankEnum = Rank;
 
-    static constexpr int num_squares = NumFiles * NumRanks;
-    static constexpr int num_files = NumFiles;
-    static constexpr int num_ranks = NumRanks;
-    static constexpr int num_directions = NumDir;
-    static constexpr int num_directions_dlshogi = NumDirDL;
+    static constexpr uint num_squares = NumFiles * NumRanks;
+    static constexpr uint num_files = NumFiles;
+    static constexpr uint num_ranks = NumRanks;
+    static constexpr uint num_directions = NumDir;
+    static constexpr uint num_directions_dlshogi = NumDirDL;
     static constexpr Rank RANK1 = static_cast<Rank>(0); // NOLINT
     static constexpr Square SQ_NA = static_cast<Square>(num_squares); // NOLINT
 
-    inline static Square square_array[static_cast<std::size_t>(num_squares)];
-    inline static File file_array[static_cast<std::size_t>(num_files)];
-    inline static Rank rank_array[static_cast<std::size_t>(num_ranks)];
-    inline static DirectionEnum
-        direction_array[static_cast<std::size_t>(num_directions)];
-    inline static DirectionEnum
-        direction_dlshogi_array[static_cast<std::size_t>(
-            num_directions_dlshogi)];
-    inline static Square file_to_square_array[static_cast<std::size_t>(
-        num_files)][static_cast<std::size_t>(num_ranks)];
+    inline static Square square_array[num_squares];
+    inline static File file_array[num_files];
+    inline static Rank rank_array[num_ranks];
+    inline static DirectionEnum direction_array[num_directions];
+    inline static DirectionEnum direction_dlshogi_array[num_directions_dlshogi];
+    inline static Square file_to_square_array[num_files][num_ranks];
 
 private:
-    inline static Square shift_table[static_cast<std::size_t>(num_squares)]
-                                    [static_cast<std::size_t>(num_directions)];
+    inline static Square shift_table[num_squares][num_directions];
     inline static Square
-        ranging_squares_to[static_cast<std::size_t>(num_squares)]
-                          [static_cast<std::size_t>(num_directions)]
-                          [static_cast<std::size_t>(
-                              (NumFiles > NumRanks) ? NumFiles : NumRanks)];
-    inline static Square non_ranging_attacks_array[static_cast<std::size_t>(
-        NumNonRangingBoardPiece)][static_cast<std::size_t>(num_squares)][9UL];
+        ranging_squares_to[num_squares][num_directions]
+                          [(NumFiles > NumRanks) ? NumFiles : NumRanks];
+    inline static Square non_ranging_attacks_array[NumNonRangingBoardPiece]
+                                                  [num_squares][9U];
 
     static constexpr File fe()
     {
@@ -88,6 +81,15 @@ public:
         usi[0] = static_cast<char>(static_cast<int>(to_file(sq)) + '1');
         usi[1] = static_cast<char>(static_cast<int>(to_rank(sq)) + 'a');
     }
+    static Square hflip(const Square& sq)
+    {
+        return to_square(hflip(to_file(sq)), to_rank(sq));
+    }
+    static File hflip(const File& f)
+    {
+        return static_cast<File>(
+            static_cast<int>(num_files) - 1 - static_cast<int>(f));
+    }
 
     static void init_tables()
     {
@@ -118,8 +120,8 @@ public:
                     || ((f == fw()) && has_dir_w(dir)))
                     shift_table[sq][dir] = SQ_NA;
                 else
-                    shift_table[sq][dir]
-                        = static_cast<Square>(sq + direction_to_delta(dir));
+                    shift_table[sq][dir] = static_cast<Square>(
+                        static_cast<int>(sq) + direction_to_delta(dir));
             }
         }
 
@@ -149,19 +151,20 @@ public:
     }
     constexpr static int direction_to_delta(const DirectionEnum& d)
     {
+        constexpr int nf = static_cast<int>(num_files);
         constexpr int table[12]
-            = {-num_files - 1,
-               -num_files,
-               1 - num_files,
+            = {-nf - 1,
+               -nf,
+               1 - nf,
                -1,
                1,
-               num_files - 1,
-               num_files,
-               num_files + 1,
-               2 * num_files - 1,
-               2 * num_files + 1,
-               -2 * num_files - 1,
-               1 - 2 * num_files};
+               nf - 1,
+               nf,
+               nf + 1,
+               2 * nf - 1,
+               2 * nf + 1,
+               -2 * nf - 1,
+               1 - 2 * nf};
         return table[d];
     }
     static const Square*

@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+#include "vshogi/common/utils.hpp"
+
 namespace vshogi
 {
 
@@ -15,7 +17,7 @@ enum ColorEnum : std::uint8_t
     BLACK = 0, //!< First player's color.
     WHITE = 1, //!< Second player's color.
 };
-constexpr int num_colors = 2;
+constexpr uint num_colors = 2;
 constexpr ColorEnum color_array[] = {BLACK, WHITE};
 
 /**

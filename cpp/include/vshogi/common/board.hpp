@@ -64,7 +64,7 @@ public:
     }
     const char* set_sfen(const char* sfen)
     {
-        for (int ir = 0; ir < num_ranks; ++ir) {
+        for (uint ir = 0U; ir < num_ranks; ++ir) {
             sfen = set_sfen_rank(sfen, static_cast<RankEnum>(ir));
         }
         return sfen;
@@ -72,7 +72,7 @@ public:
     void append_sfen(std::string& out) const
     {
         append_sfen_rank(static_cast<RankEnum>(0), out);
-        for (int ir = 1; ir < num_ranks; ++ir) {
+        for (uint ir = 1; ir < num_ranks; ++ir) {
             out += '/';
             append_sfen_rank(static_cast<RankEnum>(ir), out);
         }
@@ -113,11 +113,7 @@ public:
     {
         Board out;
         for (auto&& sq : Squares::square_array) {
-            const auto f = static_cast<int>(sq % num_files);
-            const auto r = static_cast<int>(sq / num_files);
-            const auto f_hflipped = (num_files - 1) - f;
-            const auto sq_hflipped
-                = static_cast<SquareEnum>(r * num_files + f_hflipped);
+            const auto sq_hflipped = Squares::hflip(sq);
             out.m_pieces[sq_hflipped] = m_pieces[sq];
         }
         return out;
@@ -127,7 +123,7 @@ private:
     const char* set_sfen_rank(const char* const sfen_rank, const RankEnum rank);
     void append_sfen_rank(const RankEnum rank, std::string& out) const
     {
-        auto ptr = m_pieces + num_files * static_cast<int>(rank);
+        auto ptr = m_pieces + num_files * static_cast<uint>(rank);
         const auto end = ptr + num_files;
         int num_void = 0;
         for (; ptr < end; ++ptr) {

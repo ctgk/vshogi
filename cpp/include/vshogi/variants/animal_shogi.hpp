@@ -17,17 +17,17 @@ namespace vshogi::animal_shogi
 {
 
 // clang-format off
-constexpr unsigned int num_piece_types = 5; // CH, EL, GI, LI, HE
-constexpr unsigned int num_stand_piece_types = 3; // CH, EL, GI
-constexpr unsigned int promotion_bit = 2; // ____ __*__
-constexpr unsigned int num_files = 3; // A, B, C
-constexpr unsigned int num_ranks = 4; // 1, 2, 3, 4
-constexpr unsigned int num_directions = 8; // NW, N, NE, W, E, SW, S, SE
-constexpr unsigned int num_directions_dlshogi = 8; // NW, N, NE, W, E, SW, S, SE
-constexpr unsigned int num_non_ranging_board_piece = 7; // B_CH, W_CH, EL, GI, LI, B_HE, W_HE
-constexpr unsigned int num_attack_types = 7; // B_CH, W_CH, EL, GI, LI, B_HE, W_HE
-constexpr unsigned int max_stand_piece_count = 2;
-constexpr unsigned int max_acceptable_repetition = 2;
+constexpr uint num_piece_types = 5; // CH, EL, GI, LI, HE
+constexpr uint num_stand_piece_types = 3; // CH, EL, GI
+constexpr uint promotion_bit = 2; // ____ __*__
+constexpr uint num_files = 3; // A, B, C
+constexpr uint num_ranks = 4; // 1, 2, 3, 4
+constexpr uint num_directions = 8; // NW, N, NE, W, E, SW, S, SE
+constexpr uint num_directions_dlshogi = 8; // NW, N, NE, W, E, SW, S, SE
+constexpr uint num_non_ranging_board_piece = 7; // B_CH, W_CH, EL, GI, LI, B_HE, W_HE
+constexpr uint num_attack_types = 7; // B_CH, W_CH, EL, GI, LI, B_HE, W_HE
+constexpr uint max_stand_piece_count = 2;
+constexpr uint max_acceptable_repetition = 2;
 // clang-format on
 
 enum PieceTypeEnum : std::uint8_t
@@ -71,7 +71,7 @@ enum BoardPieceTypeEnum : std::uint8_t
  * 4 | 9 | 10| 11|
  *   *---*---*---*
  */
-enum SquareEnum
+enum SquareEnum : uint
 {
     // clang-format off
     SQ_A1, SQ_B1, SQ_C1,
@@ -82,13 +82,13 @@ enum SquareEnum
     SQ_NA,
     NUM_SQ = 12,
 };
-enum FileEnum
+enum FileEnum : uint
 {
     FILE_A,
     FILE_B,
     FILE_C,
 };
-enum RankEnum
+enum RankEnum : uint
 {
     RANK1,
     RANK2,
@@ -104,11 +104,11 @@ using Pieces = vshogi::Pieces<
     promotion_bit>;
 
 using Squares = vshogi::Squares<
-    num_files,
-    num_ranks,
     SquareEnum,
     FileEnum,
     RankEnum,
+    num_files,
+    num_ranks,
     num_directions,
     num_directions_dlshogi,
     num_non_ranging_board_piece>;
@@ -120,7 +120,7 @@ using Squares = vshogi::Squares<
  * ___11___  Elephant (2 bits for 0, 1, or 2 pieces)
  * 11______  Giraffe (2 bits for 0, 1, or 2 pieces)
  */
-using Stand = vshogi::Stand<Pieces, std::uint8_t>;
+using Stand = vshogi::Stand<std::uint8_t, Pieces>;
 using BlackWhiteStands = vshogi::BlackWhiteStands<Stand>;
 
 /**
@@ -142,18 +142,18 @@ using State
 
 using Game = vshogi::Game<State, max_acceptable_repetition>;
 
-constexpr BitBoard bb_a1 = (BitBoard(1) << static_cast<unsigned int>(SQ_A1));
-constexpr BitBoard bb_b1 = (BitBoard(1) << static_cast<unsigned int>(SQ_B1));
-constexpr BitBoard bb_c1 = (BitBoard(1) << static_cast<unsigned int>(SQ_C1));
-constexpr BitBoard bb_a2 = (BitBoard(1) << static_cast<unsigned int>(SQ_A2));
-constexpr BitBoard bb_b2 = (BitBoard(1) << static_cast<unsigned int>(SQ_B2));
-constexpr BitBoard bb_c2 = (BitBoard(1) << static_cast<unsigned int>(SQ_C2));
-constexpr BitBoard bb_a3 = (BitBoard(1) << static_cast<unsigned int>(SQ_A3));
-constexpr BitBoard bb_b3 = (BitBoard(1) << static_cast<unsigned int>(SQ_B3));
-constexpr BitBoard bb_c3 = (BitBoard(1) << static_cast<unsigned int>(SQ_C3));
-constexpr BitBoard bb_a4 = (BitBoard(1) << static_cast<unsigned int>(SQ_A4));
-constexpr BitBoard bb_b4 = (BitBoard(1) << static_cast<unsigned int>(SQ_B4));
-constexpr BitBoard bb_c4 = (BitBoard(1) << static_cast<unsigned int>(SQ_C4));
+constexpr BitBoard bb_a1 = (BitBoard(1) << static_cast<uint>(SQ_A1));
+constexpr BitBoard bb_b1 = (BitBoard(1) << static_cast<uint>(SQ_B1));
+constexpr BitBoard bb_c1 = (BitBoard(1) << static_cast<uint>(SQ_C1));
+constexpr BitBoard bb_a2 = (BitBoard(1) << static_cast<uint>(SQ_A2));
+constexpr BitBoard bb_b2 = (BitBoard(1) << static_cast<uint>(SQ_B2));
+constexpr BitBoard bb_c2 = (BitBoard(1) << static_cast<uint>(SQ_C2));
+constexpr BitBoard bb_a3 = (BitBoard(1) << static_cast<uint>(SQ_A3));
+constexpr BitBoard bb_b3 = (BitBoard(1) << static_cast<uint>(SQ_B3));
+constexpr BitBoard bb_c3 = (BitBoard(1) << static_cast<uint>(SQ_C3));
+constexpr BitBoard bb_a4 = (BitBoard(1) << static_cast<uint>(SQ_A4));
+constexpr BitBoard bb_b4 = (BitBoard(1) << static_cast<uint>(SQ_B4));
+constexpr BitBoard bb_c4 = (BitBoard(1) << static_cast<uint>(SQ_C4));
 
 constexpr BitBoard bb_rank1 = BitBoard(0b000000000111);
 constexpr BitBoard bb_rank2 = BitBoard(0b000000111000);
@@ -363,10 +363,10 @@ inline void animal_shogi::Squares::init_non_ranging_attacks_array()
 }
 
 template <>
-inline const int animal_shogi::Stand::shift_bits[] = {
-    0, // CH
-    3, // EL
-    6, // GI
+inline const uint animal_shogi::Stand::shift_bits[] = {
+    0u, // CH
+    3u, // EL
+    6u, // GI
 };
 template <>
 inline const std::uint8_t animal_shogi::Stand::masks[] = {
@@ -404,18 +404,18 @@ inline const int animal_shogi::BlackWhiteStands::max_sfen_length
     = 13; // "2C2E2G2c2e2g "
 
 template <>
-inline int animal_shogi::Move::to_dlshogi_source_index() const
+inline uint animal_shogi::Move::to_dlshogi_source_index() const
 {
     if (is_drop())
-        return 8 + static_cast<int>(source_piece());
+        return 8 + static_cast<uint>(source_piece());
     constexpr int diff_plus_4_to_dir_index[] = {0, 1, 2, 3, -1, 4, 5, 6, 7};
-    return diff_plus_4_to_dir_index
-        [static_cast<int>(source_square()) - static_cast<int>(destination())
-         + 4];
+    return static_cast<uint>(diff_plus_4_to_dir_index
+                                 [static_cast<int>(source_square())
+                                  - static_cast<int>(destination()) + 4]);
 }
 
 template <>
-constexpr int animal_shogi::Move::num_policy_per_square()
+constexpr uint animal_shogi::Move::num_policy_per_square()
 {
     return 8 + num_stand_piece_types;
 }
@@ -424,18 +424,18 @@ template <>
 inline const animal_shogi::BitBoard animal_shogi::BitBoard::
     square_to_bitboard_array[animal_shogi::Squares::num_squares + 1]
     = {
-        BitBoard(1) << static_cast<unsigned int>(0),
-        BitBoard(1) << static_cast<unsigned int>(1),
-        BitBoard(1) << static_cast<unsigned int>(2),
-        BitBoard(1) << static_cast<unsigned int>(3),
-        BitBoard(1) << static_cast<unsigned int>(4),
-        BitBoard(1) << static_cast<unsigned int>(5),
-        BitBoard(1) << static_cast<unsigned int>(6),
-        BitBoard(1) << static_cast<unsigned int>(7),
-        BitBoard(1) << static_cast<unsigned int>(8),
-        BitBoard(1) << static_cast<unsigned int>(9),
-        BitBoard(1) << static_cast<unsigned int>(10),
-        BitBoard(1) << static_cast<unsigned int>(11),
+        BitBoard(1) << static_cast<uint>(0),
+        BitBoard(1) << static_cast<uint>(1),
+        BitBoard(1) << static_cast<uint>(2),
+        BitBoard(1) << static_cast<uint>(3),
+        BitBoard(1) << static_cast<uint>(4),
+        BitBoard(1) << static_cast<uint>(5),
+        BitBoard(1) << static_cast<uint>(6),
+        BitBoard(1) << static_cast<uint>(7),
+        BitBoard(1) << static_cast<uint>(8),
+        BitBoard(1) << static_cast<uint>(9),
+        BitBoard(1) << static_cast<uint>(10),
+        BitBoard(1) << static_cast<uint>(11),
         BitBoard(),
 };
 
@@ -469,9 +469,9 @@ constexpr animal_shogi::BitBoard animal_shogi::BitBoard::shift() const
     };
     constexpr auto delta = animal_shogi::Squares::direction_to_delta(Dir);
     if constexpr (delta > 0)
-        return (*this & filemask[Dir]) << static_cast<unsigned int>(delta);
+        return (*this & filemask[Dir]) << static_cast<uint>(delta);
     else
-        return (*this & filemask[Dir]) >> static_cast<unsigned int>(-delta);
+        return (*this & filemask[Dir]) >> static_cast<uint>(-delta);
 }
 
 template <>

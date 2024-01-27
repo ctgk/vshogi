@@ -16,19 +16,19 @@ namespace internal
 {
 
 template <class State>
-int num_pieces(const State& s, const ColorEnum& c)
+uint num_pieces(const State& s, const ColorEnum& c)
 {
     using Squares = typename State::SquaresType;
     using Pieces = typename State::PiecesType;
     const auto& board = s.get_board();
     const auto& stand = s.get_stand(c);
-    int out = 0;
+    uint out = 0u;
     for (auto& sq : Squares::square_array) {
         const auto p = board[sq];
         if (p == Pieces::VOID)
             continue;
         if (Pieces::get_color(p) == c)
-            out += 1;
+            out += 1U;
     }
     for (auto& pt : Pieces::stand_piece_array) {
         out += stand.count(pt);
@@ -37,11 +37,11 @@ int num_pieces(const State& s, const ColorEnum& c)
 }
 
 template <class State>
-int total_point(const State& s, const ColorEnum& c)
+uint total_point(const State& s, const ColorEnum& c)
 {
     using Squares = typename State::SquaresType;
     using Pieces = typename State::PiecesType;
-    int out = 0;
+    uint out = 0u;
     const auto& board = s.get_board();
     const auto& stand = s.get_stand(c);
     for (auto& sq : Squares::square_array) {
@@ -59,7 +59,7 @@ int total_point(const State& s, const ColorEnum& c)
 
 } // namespace internal
 
-template <class State, int MaxAcceptableRepetition = 3>
+template <class State, uint MaxAcceptableRepetition = 3>
 class Game
 {
 public:
@@ -82,8 +82,8 @@ private:
     ResultEnum m_result;
     std::uint64_t m_zobrist_hash;
     const std::string m_initial_sfen_without_ply;
-    const int m_half_num_pieces[2];
-    const int m_initial_points[2];
+    const uint m_half_num_pieces[2];
+    const uint m_initial_points[2];
     BitBoard m_occupied[num_colors + 1];
     SquareEnum m_king_locations[num_colors];
     SquareEnum m_checker_locations[2];
@@ -95,29 +95,29 @@ public:
     Game(const std::string& sfen) : Game(State(sfen))
     {
     }
-    static constexpr int ranks()
+    static constexpr uint ranks()
     {
         return Squares::num_ranks;
     }
-    static constexpr int files()
+    static constexpr uint files()
     {
         return Squares::num_files;
     }
-    static constexpr int board_piece_types()
+    static constexpr uint board_piece_types()
     {
         return sizeof(Pieces::piece_array) / sizeof(Pieces::piece_array[0]);
     }
-    static constexpr int stand_piece_types()
+    static constexpr uint stand_piece_types()
     {
         return sizeof(Pieces::stand_piece_array)
                / sizeof(Pieces::stand_piece_array[0]);
     }
-    static constexpr int feature_channels()
+    static constexpr uint feature_channels()
     {
         // 2-player * (board-piece-types + stand-piece-types)
         return 2 * (board_piece_types() + stand_piece_types());
     }
-    static constexpr int num_dlshogi_policy()
+    static constexpr uint num_dlshogi_policy()
     {
         return ranks() * files() * Move::num_policy_per_square();
     }
@@ -407,7 +407,7 @@ protected:
     }
     bool is_repetitions() const
     {
-        int num = 1;
+        uint num = 1u;
         auto s = State(m_initial_sfen_without_ply);
         const auto n = m_record.size();
         for (std::size_t ii = 0; ii < n; ++ii) {
@@ -434,7 +434,7 @@ protected:
 
         const auto promo_zone_mask = BitBoard::get_promotion_zone(turn);
         const auto piece_mask = (promo_zone_mask & m_occupied[turn]);
-        const int num_pieces_in_zone = piece_mask.hamming_weight();
+        const uint num_pieces_in_zone = piece_mask.hamming_weight();
 
         // (3) The declaring side has 10 or more pieces other than the King in
         // the third rank or beyond.
@@ -448,9 +448,9 @@ protected:
         else
             return count_point_in(turn, piece_mask) >= m_initial_points[turn];
     }
-    int count_point_in(const ColorEnum& c, const BitBoard& piece_mask) const
+    uint count_point_in(const ColorEnum& c, const BitBoard& piece_mask) const
     {
-        int out = 0;
+        uint out = 0;
         const auto& board = get_board();
         for (auto& sq : Squares::square_array) {
             if (piece_mask.is_one(sq)) {
