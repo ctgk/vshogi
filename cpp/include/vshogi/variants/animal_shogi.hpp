@@ -592,7 +592,7 @@ inline void animal_shogi::Game::update_internals()
 
 template <>
 inline animal_shogi::Game&
-animal_shogi::Game::apply(const animal_shogi::Move move)
+animal_shogi::Game::apply(const animal_shogi::Move& move, const bool&)
 {
     const auto illegal = !is_legal(move);
     m_record.emplace_back(std::make_pair(m_zobrist_hash, move));

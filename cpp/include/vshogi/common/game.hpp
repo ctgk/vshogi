@@ -178,11 +178,12 @@ public:
     {
         return Game(m_current_state.hflip());
     }
-    Game& apply(const Move move)
+    Game&
+    apply(const Move& move, const bool& update_legal_moves_and_result = true)
     {
         m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
         m_current_state.apply(move, &m_zobrist_hash);
-        update_internals(move);
+        update_internals(move, update_legal_moves_and_result);
         return *this;
     }
     bool is_legal(const Move move) const
@@ -293,16 +294,23 @@ protected:
         update_legal_moves();
         update_result();
     }
-    void update_internals(const Move& move)
+    void update_internals(
+        const Move& move, const bool& update_legal_moves_and_result)
     {
-        if (!is_legal(move)) {
+        if ((m_result == ONGOING) && (!is_legal(move))) {
             m_result = (get_turn() == BLACK) ? BLACK_WIN : WHITE_WIN;
             m_legal_moves.clear();
             return;
         }
+
         update_king_occupied_checkers(move);
-        update_legal_moves();
-        update_result();
+
+        if (update_legal_moves_and_result) {
+            update_legal_moves();
+            update_result();
+        } else {
+            m_result = UNKNOWN;
+        }
     }
 
 protected:
@@ -391,6 +399,7 @@ protected:
 protected:
     void update_result()
     {
+        m_result = ONGOING;
         const auto turn = get_turn();
         if (m_legal_moves.empty())
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
