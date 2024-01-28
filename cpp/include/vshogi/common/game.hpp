@@ -302,9 +302,9 @@ protected:
         const bool& update_legal_moves_and_result,
         const bool& restrict_legal_to_check)
     {
+        m_legal_moves.clear();
         if ((m_result == ONGOING) && (!is_legal(move))) {
             m_result = (get_turn() == BLACK) ? BLACK_WIN : WHITE_WIN;
-            m_legal_moves.clear();
             return;
         }
 
@@ -478,7 +478,6 @@ protected:
 protected:
     void update_legal_moves(const bool& restrict_legal_to_check)
     {
-        m_legal_moves.clear();
         m_legal_moves.reserve(128);
         if (restrict_legal_to_check) {
             if (m_checker_locations[1] != Squares::SQ_NA) {

@@ -249,4 +249,37 @@ TEST(minishogi_is_check_move, check_by_discovered_piece)
     CHECK_FALSE(game.is_check_move(Move(SQ_1D, SQ_1C)));
 }
 
+TEST_GROUP(minishogi_apply){};
+
+TEST(minishogi_apply, update_legal_moves_and_result)
+{
+    using namespace vshogi::minishogi;
+
+    {
+        auto g = Game("5/4k/5/5/K4 b -");
+        g.apply(Move(SQ_4E, SQ_5E), false);
+        CHECK_EQUAL(vshogi::UNKNOWN, g.get_result());
+        CHECK_EQUAL(0, g.get_legal_moves().size());
+
+        g.apply(Move(SQ_2C, SQ_1B));
+        CHECK_EQUAL(vshogi::ONGOING, g.get_result());
+        CHECK_EQUAL(4, g.get_legal_moves().size());
+    }
+    {
+        auto g = Game("5/2k2/5/2P2/K4 b 2G");
+
+        g.apply(Move(SQ_3C, KI), false);
+        CHECK_EQUAL(vshogi::UNKNOWN, g.get_result());
+        CHECK_EQUAL(0, g.get_legal_moves().size());
+
+        g.apply(Move(SQ_3A, SQ_3B), false);
+        CHECK_EQUAL(vshogi::UNKNOWN, g.get_result());
+        CHECK_EQUAL(0, g.get_legal_moves().size());
+
+        g.apply(Move(SQ_3B, KI));
+        CHECK_EQUAL(vshogi::BLACK_WIN, g.get_result());
+        CHECK_EQUAL(0, g.get_legal_moves().size());
+    }
+}
+
 } // namespace test_vshogi::test_game
