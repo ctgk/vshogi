@@ -76,6 +76,18 @@ public:
     {
         return m_dn;
     }
+    std::size_t get_num_child() const
+    {
+        const NodeEnemy* ch = m_child.get();
+        std::size_t out = 0UL;
+        while (true) {
+            if (ch == nullptr)
+                break;
+            ++out;
+            ch = ch->m_sibling.get();
+        }
+        return out;
+    }
     std::vector<Move> get_mate_moves() const
     {
         std::vector<Move> out;
@@ -121,7 +133,7 @@ public:
             child->m_parent = this;
             if (child->m_game == nullptr) {
                 child->m_game = std::make_unique<Game>(
-                    Game(*m_game).apply(child->m_action));
+                    Game(*m_game).apply(child->m_action, true, !Attacker));
             }
             child->select_simulate_expand_backprop();
         }
@@ -209,11 +221,26 @@ private:
         const std::vector<Move>& legal_moves = game.get_legal_moves();
         std::unique_ptr<NodeEnemy>* ch = &m_child;
         int num_child = 0;
-        for (auto&& m : legal_moves) {
-            if ((!Attacker) || game.template is_check_move<false>(m)) {
+        // for (auto&& m : legal_moves) {
+        //     if ((!Attacker) || game.template is_check_move<false>(m)) {
+        //         *ch = std::make_unique<NodeEnemy>(m);
+        //         ch = &ch->get()->m_sibling;
+        //         ++num_child;
+        //     }
+        // }
+        if (m_parent != nullptr) {
+            for (auto&& m : legal_moves) {
                 *ch = std::make_unique<NodeEnemy>(m);
                 ch = &ch->get()->m_sibling;
                 ++num_child;
+            }
+        } else {
+            for (auto&& m : legal_moves) {
+                if (game.template is_check_move<false>(m)) {
+                    *ch = std::make_unique<NodeEnemy>(m);
+                    ch = &ch->get()->m_sibling;
+                    ++num_child;
+                }
             }
         }
         if (m_child == nullptr)
@@ -322,6 +349,10 @@ public:
             m_root.select_simulate_expand_backprop();
         }
         return m_root.found_mate();
+    }
+    std::size_t get_num_child() const
+    {
+        return m_root.get_num_child();
     }
     bool found_mate() const
     {

@@ -178,12 +178,15 @@ public:
     {
         return Game(m_current_state.hflip());
     }
-    Game&
-    apply(const Move& move, const bool& update_legal_moves_and_result = true)
+    Game& apply(
+        const Move& move,
+        const bool& update_legal_moves_and_result = true,
+        const bool& restrict_legal_to_check = false)
     {
         m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
         m_current_state.apply(move, &m_zobrist_hash);
-        update_internals(move, update_legal_moves_and_result);
+        update_internals(
+            move, update_legal_moves_and_result, restrict_legal_to_check);
         return *this;
     }
     bool is_legal(const Move move) const
@@ -291,11 +294,13 @@ protected:
     void update_internals()
     {
         update_king_occupied_checkers();
-        update_legal_moves();
+        update_legal_moves(false);
         update_result();
     }
     void update_internals(
-        const Move& move, const bool& update_legal_moves_and_result)
+        const Move& move,
+        const bool& update_legal_moves_and_result,
+        const bool& restrict_legal_to_check)
     {
         if ((m_result == ONGOING) && (!is_legal(move))) {
             m_result = (get_turn() == BLACK) ? BLACK_WIN : WHITE_WIN;
@@ -306,7 +311,7 @@ protected:
         update_king_occupied_checkers(move);
 
         if (update_legal_moves_and_result) {
-            update_legal_moves();
+            update_legal_moves(restrict_legal_to_check);
             update_result();
         } else {
             m_result = UNKNOWN;
@@ -471,22 +476,42 @@ protected:
     }
 
 protected:
-    void update_legal_moves()
+    void update_legal_moves(const bool& restrict_legal_to_check)
     {
         m_legal_moves.clear();
         m_legal_moves.reserve(128);
-        append_legal_moves_by_king();
-        if (m_checker_locations[0] == Squares::SQ_NA) {
-            append_legal_drop_moves();
-            const auto turn = get_turn();
-            const auto& ally_mask = m_occupied[turn];
-            const auto& king_sq = m_king_locations[turn];
-            for (auto&& sq : Squares::square_array) {
-                if (ally_mask.is_one(sq) && (king_sq != sq))
-                    append_legal_moves_by_non_king_at(sq);
+        if (restrict_legal_to_check) {
+            if (m_checker_locations[1] != Squares::SQ_NA) {
+                // double check to turn player's king
+                // -> Must move the king which cannot be valid check.
+            } else if (m_checker_locations[0] != Squares::SQ_NA) {
+                // single check to turn player's king
+                append_legal_moves_to_defend_king(true);
+            } else {
+                // no check to turn player's king
+                append_legal_drop_moves(true);
+                const auto turn = get_turn();
+                const auto& ally_mask = m_occupied[turn];
+                const auto& king_sq = m_king_locations[turn];
+                for (auto&& sq : Squares::square_array) {
+                    if (ally_mask.is_one(sq) && (king_sq != sq))
+                        append_legal_moves_by_non_king_at(sq, true);
+                }
             }
-        } else if (m_checker_locations[1] == Squares::SQ_NA) {
-            append_legal_moves_to_defend_king();
+        } else {
+            append_legal_moves_by_king();
+            if (m_checker_locations[0] == Squares::SQ_NA) {
+                append_legal_drop_moves(false);
+                const auto turn = get_turn();
+                const auto& ally_mask = m_occupied[turn];
+                const auto& king_sq = m_king_locations[turn];
+                for (auto&& sq : Squares::square_array) {
+                    if (ally_mask.is_one(sq) && (king_sq != sq))
+                        append_legal_moves_by_non_king_at(sq, false);
+                }
+            } else if (m_checker_locations[1] == Squares::SQ_NA) {
+                append_legal_moves_to_defend_king(false);
+            }
         }
     }
     void append_legal_moves_by_king()
@@ -511,12 +536,13 @@ protected:
             m_legal_moves.emplace_back(*ptr_dst, src, false);
         }
     }
-    void append_legal_moves_by_non_king_at(const SquareEnum src)
+    void append_legal_moves_by_non_king_at(
+        const SquareEnum& src, const bool& restrict_legal_to_check)
     {
         const auto turn = get_turn();
         const auto& board = get_board();
-        const auto king_sq = m_king_locations[turn];
-        const auto moving = board[src];
+        const auto& king_sq = m_king_locations[turn];
+        const auto& moving = board[src];
         const auto promotable = Pieces::is_promotable(moving);
         const auto src_dir = Squares::get_direction(src, king_sq);
         const auto hidden_attacker_sq
@@ -532,7 +558,8 @@ protected:
                         = promotable
                           && (promotable_src
                               || Squares::in_promotion_zone(dst, turn));
-                    append_legal_move_or_moves(moving, dst, src, promote);
+                    append_legal_move_or_moves(
+                        moving, dst, src, promote, restrict_legal_to_check);
                 }
                 if (dst == hidden_attacker_sq)
                     break;
@@ -545,7 +572,8 @@ protected:
             src,
             promotable,
             promotable_src,
-            turn);
+            turn,
+            restrict_legal_to_check);
     }
     void append_legal_moves_by_non_king_ignoring_discovered_check(
         const typename Pieces::BoardPieceTypeEnum& p,
@@ -553,7 +581,8 @@ protected:
         const SquareEnum& src,
         const bool& promotable,
         const bool& src_promote,
-        const ColorEnum& turn)
+        const ColorEnum& turn,
+        const bool& restrict_legal_to_check)
     {
         auto ptr_dst = Squares::get_non_ranging_attacks_by(p, src);
         if (ptr_dst != nullptr) {
@@ -564,7 +593,8 @@ protected:
                     = promotable
                       && (src_promote
                           || Squares::in_promotion_zone(*ptr_dst, turn));
-                append_legal_move_or_moves(p, *ptr_dst, src, promote);
+                append_legal_move_or_moves(
+                    p, *ptr_dst, src, promote, restrict_legal_to_check);
             }
             return;
         }
@@ -579,7 +609,8 @@ protected:
                     = promotable
                       && (src_promote
                           || Squares::in_promotion_zone(*ptr_dst, turn));
-                append_legal_move_or_moves(p, *ptr_dst, src, promote);
+                append_legal_move_or_moves(
+                    p, *ptr_dst, src, promote, restrict_legal_to_check);
                 if (enemy_mask.is_one(*ptr_dst))
                     break;
             }
@@ -589,22 +620,39 @@ protected:
         const typename Pieces::BoardPieceTypeEnum& p,
         const SquareEnum& dst,
         const SquareEnum& src,
-        const bool& promotable)
+        const bool& promotable,
+        const bool& restrict_legal_to_check)
     {
-        if (!BitBoard::get_attacks_by(p, dst).any())
-            m_legal_moves.emplace_back(dst, src, true);
-        else if (promotable) {
-            m_legal_moves.emplace_back(dst, src, false);
-            m_legal_moves.emplace_back(dst, src, true);
-        } else
-            m_legal_moves.emplace_back(dst, src, false);
+        if (restrict_legal_to_check) {
+            const auto& occupied = m_occupied[2];
+            const auto& enemy_king_sq = m_king_locations[~get_turn()];
+            auto attacks = BitBoard::get_attacks_by(p, dst, occupied);
+            if (attacks.is_one(enemy_king_sq))
+                m_legal_moves.emplace_back(Move(dst, src, false));
+            if (promotable) {
+                attacks = BitBoard::get_attacks_by(
+                    Pieces::promote(p), dst, occupied);
+                if (attacks.is_one(enemy_king_sq))
+                    m_legal_moves.emplace_back(Move(dst, src, true));
+            }
+        } else {
+            const auto attacks = BitBoard::get_attacks_by(p, dst);
+            if (!attacks.any())
+                m_legal_moves.emplace_back(dst, src, true);
+            else if (promotable) {
+                m_legal_moves.emplace_back(dst, src, false);
+                m_legal_moves.emplace_back(dst, src, true);
+            } else
+                m_legal_moves.emplace_back(dst, src, false);
+        }
     }
-    void append_legal_moves_to_defend_king()
+    void append_legal_moves_to_defend_king(const bool& restrict_legal_to_check)
     {
         const auto turn = get_turn();
         const auto checker_location = m_checker_locations[0];
         const auto king_location = m_king_locations[turn];
-        append_legal_moves_by_non_king_moving_to(checker_location);
+        append_legal_moves_by_non_king_moving_to(
+            checker_location, restrict_legal_to_check);
         if (!is_neighbor(king_location, checker_location)) {
             const auto dir
                 = Squares::get_direction(checker_location, king_location);
@@ -612,16 +660,20 @@ protected:
             for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
                 if (*ptr_dst == checker_location)
                     break;
-                append_legal_moves_by_non_king_moving_to(*ptr_dst);
-                append_legal_moves_dropping_to(*ptr_dst);
+                append_legal_moves_by_non_king_moving_to(
+                    *ptr_dst, restrict_legal_to_check);
+                append_legal_moves_dropping_to(
+                    *ptr_dst, restrict_legal_to_check);
             }
         }
     }
-    void append_legal_moves_by_non_king_moving_to(const SquareEnum dst)
+    void append_legal_moves_by_non_king_moving_to(
+        const SquareEnum& dst, const bool& restrict_legal_to_check)
     {
         const auto turn = get_turn();
         const auto& board = get_board();
         const auto king_location = m_king_locations[turn];
+        const auto enemy_king_sq = m_king_locations[~turn];
         const auto target_in_promotion_zone
             = Squares::in_promotion_zone(dst, turn);
         const auto empty_mask = ~m_occupied[2];
@@ -638,6 +690,10 @@ protected:
                 const auto p = board[src];
                 if (!BitBoard::get_attacks_by(p, src).is_one(dst))
                     break;
+                if (restrict_legal_to_check
+                    && (!BitBoard::get_attacks_by(p, dst, m_occupied[2])
+                             .is_one(enemy_king_sq)))
+                    break;
                 const auto src_dir = Squares::get_direction(src, king_location);
                 if ((src_dir != DIR_NA)
                     && (src_dir != Squares::get_direction(dst, king_location))
@@ -648,12 +704,13 @@ protected:
                 const auto promote = Pieces::is_promotable(p)
                                      && (Squares::in_promotion_zone(src, turn)
                                          || target_in_promotion_zone);
-                append_legal_move_or_moves(p, dst, src, promote);
+                append_legal_move_or_moves(
+                    p, dst, src, promote, restrict_legal_to_check);
                 break;
             }
         }
     }
-    void append_legal_drop_moves()
+    void append_legal_drop_moves(const bool& restrict_legal_to_check)
     {
         const auto turn = get_turn();
         const auto& stand = get_stand(turn);
@@ -664,31 +721,44 @@ protected:
             for (auto&& sq : Squares::square_array) {
                 if (occupied.is_one(sq))
                     continue;
+                const auto p = Pieces::to_board_piece(turn, pt);
+                const auto attacks
+                    = (restrict_legal_to_check)
+                          ? BitBoard::get_attacks_by(p, sq, m_occupied[2])
+                          : BitBoard::get_attacks_by(p, sq);
+                if (!attacks.any())
+                    continue;
+                if (restrict_legal_to_check
+                    && (!attacks.is_one(m_king_locations[~turn])))
+                    continue;
                 if ((pt == Pieces::FU)
                     && (has_pawn_in_file(Squares::to_file(sq))
                         || is_drop_pawn_mate(sq)))
                     continue;
-                if (BitBoard::get_attacks_by(
-                        Pieces::to_board_piece(turn, pt), sq)
-                        .any())
-                    m_legal_moves.emplace_back(Move(sq, pt));
+                m_legal_moves.emplace_back(Move(sq, pt));
             }
         }
     }
-    void append_legal_moves_dropping_to(const SquareEnum dst)
+    void append_legal_moves_dropping_to(
+        const SquareEnum& dst, const bool& restrict_legal_to_check)
     {
         const auto turn = get_turn();
+        const auto& enemy_king_sq = m_king_locations[~turn];
         const auto& stand = get_stand(turn);
-        for (auto pt : Pieces::stand_piece_array) {
+        for (auto&& pt : Pieces::stand_piece_array) {
             if (!stand.exist(pt))
+                continue;
+            const auto attacks = BitBoard::get_attacks_by(
+                Pieces::to_board_piece(turn, pt), dst);
+            if (!attacks.any())
+                continue;
+            if (restrict_legal_to_check && (!attacks.is_one(enemy_king_sq)))
                 continue;
             if ((pt == Pieces::FU)
                 && (has_pawn_in_file(Squares::to_file(dst))
                     || is_drop_pawn_mate(dst)))
                 continue;
-            if (BitBoard::get_attacks_by(Pieces::to_board_piece(turn, pt), dst)
-                    .any())
-                m_legal_moves.emplace_back(Move(dst, pt));
+            m_legal_moves.emplace_back(Move(dst, pt));
         }
     }
     bool has_pawn_in_file(const typename Squares::FileEnum f) const
