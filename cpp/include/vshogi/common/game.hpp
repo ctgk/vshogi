@@ -489,7 +489,7 @@ protected:
                 append_legal_moves_to_defend_king(true);
             } else {
                 // no check to turn player's king
-                append_legal_drop_moves(true);
+                append_check_drop_moves();
                 const auto turn = get_turn();
                 const auto& ally_mask = m_occupied[turn];
                 const auto& king_sq = m_king_locations[turn];
@@ -501,7 +501,7 @@ protected:
         } else {
             append_legal_moves_by_king();
             if (m_checker_locations[0] == Squares::SQ_NA) {
-                append_legal_drop_moves(false);
+                append_legal_drop_moves();
                 const auto turn = get_turn();
                 const auto& ally_mask = m_occupied[turn];
                 const auto& king_sq = m_king_locations[turn];
@@ -710,7 +710,31 @@ protected:
             }
         }
     }
-    void append_legal_drop_moves(const bool& restrict_legal_to_check)
+    void append_check_drop_moves()
+    {
+        const auto turn = get_turn();
+        const auto& stand = get_stand(turn);
+        const auto& enemy_king_sq = m_king_locations[~turn];
+        const SquareEnum* sq_ptr = nullptr;
+        for (auto&& pt : Pieces::stand_piece_array) {
+            if (!stand.exist(pt))
+                continue;
+            const auto p = Pieces::to_board_piece(turn, pt);
+            for (auto&& dir : Squares::direction_array) {
+                sq_ptr = Squares::get_squares_along(dir, enemy_king_sq);
+                for (; *sq_ptr != Squares::SQ_NA;) {
+                    if (m_occupied[2].is_one(*sq_ptr))
+                        break;
+                    const auto attacks = BitBoard::get_attacks_by(p, *sq_ptr);
+                    if (attacks.is_one(enemy_king_sq))
+                        m_legal_moves.emplace_back(Move(*sq_ptr++, pt));
+                    else
+                        break;
+                }
+            }
+        }
+    }
+    void append_legal_drop_moves()
     {
         const auto turn = get_turn();
         const auto& stand = get_stand(turn);
@@ -722,14 +746,8 @@ protected:
                 if (occupied.is_one(sq))
                     continue;
                 const auto p = Pieces::to_board_piece(turn, pt);
-                const auto attacks
-                    = (restrict_legal_to_check)
-                          ? BitBoard::get_attacks_by(p, sq, m_occupied[2])
-                          : BitBoard::get_attacks_by(p, sq);
+                const auto attacks = BitBoard::get_attacks_by(p, sq);
                 if (!attacks.any())
-                    continue;
-                if (restrict_legal_to_check
-                    && (!attacks.is_one(m_king_locations[~turn])))
                     continue;
                 if ((pt == Pieces::FU)
                     && (has_pawn_in_file(Squares::to_file(sq))
