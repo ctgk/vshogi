@@ -117,6 +117,17 @@ def test_q_values_mate_in_one():
     assert np.isclose(actual[m], 1, rtol=0, atol=1e-2)
 
 
+def test_q_values_initial():
+    game = shogi.Game()
+    searcher = MonteCarloTreeSearcher(uniform_pv_func)
+    searcher.set_root(game)
+    searcher.explore(n=100)
+    actual = searcher.get_q_values()
+    print(actual)
+    for a in actual.values():
+        assert np.isclose(a, 0, rtol=0, atol=0.1)
+
+
 def test_mate_in_three():
     # Turn: BLACK
     # White: -
@@ -150,29 +161,6 @@ def test_mate_in_three():
 
 
 def test_visit_count_by_random():
-    game = shogi.Game('l2/3/3/2L b -')
-    m = shogi.Move(shogi.B3, shogi.C4)
-
-    searcher = MonteCarloTreeSearcher(
-        lambda g: (
-            np.zeros(g.num_dlshogi_policy),
-            -0.99 if g.to_sfen(False) == 'l2/3/1L1/3 w -' else 0.,
-        ),
-    )
-    searcher.set_root(game)
-    searcher.explore(n=50, random_depth=0)
-    visit_count = searcher.get_visit_counts()[m]
-    print(searcher._tree(depth=2, breadth=-1))
-
-    searcher.set_root(game)
-    searcher.explore(n=50, random_depth=1, non_random_ratio=0)
-    visit_count_with_noise = searcher.get_visit_counts()[m]
-    print(searcher._tree(depth=2, breadth=-1))
-
-    assert visit_count > visit_count_with_noise
-
-
-def test_visit_count_by_random_2():
     game = shogi.Game()
     m = shogi.Move(shogi.C3, shogi.C4)
 

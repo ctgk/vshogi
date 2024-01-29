@@ -1,6 +1,7 @@
 #include "vshogi/engine/dfpn.hpp"
 #include "vshogi/variants/judkins_shogi.hpp"
 #include "vshogi/variants/minishogi.hpp"
+#include "vshogi/variants/shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
 
@@ -39,6 +40,7 @@ TEST(dfpn, mate_in_one_black)
         root.select_simulate_expand_backprop();
     }
 
+    CHECK_TRUE(root.found_mate());
     const auto actual = root.get_mate_moves();
     CHECK_EQUAL(1, actual.size());
     CHECK_TRUE(Move(SQ_3B, SQ_3C) == actual[0]);
@@ -274,6 +276,40 @@ TEST(dfpn, king_entering_before_mate)
     CHECK_EQUAL(2, actual.size());
     CHECK_TRUE(actual[0] == Move(SQ_4E, SQ_3C, true));
     CHECK_TRUE(actual[1] == Move(SQ_6F, SQ_5F));
+}
+
+TEST(dfpn, tmp)
+{
+    using namespace vshogi::shogi;
+    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    // Turn: WHITE
+    // White: FUx3,KY,KE,GI
+    //     9   8   7   6   5   4   3   2   1
+    //   +---+---+---+---+---+---+---+---+---+
+    // A |-KY|   |   |   |   |   |-KI|   |-KY|
+    //   +---+---+---+---+---+---+---+---+---+
+    // B |   |   |   |   |   |   |-KI|-OU|   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // C |   |-FU|   |   |   |   |-KE|-FU|   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // D |   |   |   |+RY|   |-FU|-FU|   |-FU|
+    //   +---+---+---+---+---+---+---+---+---+
+    // E |   |   |-FU|   |-FU|   |   |+FU|   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // F |-FU|   |   |   |   |+KE|+FU|   |+FU|
+    //   +---+---+---+---+---+---+---+---+---+
+    // G |   |+FU|   |+GI|   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // H |+FU|+KI|   |+GI|+KA|   |-TO|   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // I |   |+KE|+OU|   |+KA|   |   |-RY|+KY|
+    //   +---+---+---+---+---+---+---+---+---+
+    // Black: FU,GI,KI
+    auto g = Game("l5g1l/6gk1/1p4np1/3+R1pp1p/2p1p2P1/p4NP1P/1P1S5/PG1SB1+p2/"
+                  "1NK1B2+rL w GSPsnl3p 134");
+    auto searcher = Searcher(g);
+    CHECK_FALSE(searcher.explore(10000));
+    CHECK_TRUE(searcher.found_no_mate());
 }
 
 } // namespace test_vshogi::test_engine

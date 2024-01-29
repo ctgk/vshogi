@@ -50,8 +50,10 @@ TEST(shogi_engine, mcts_with_dfpn)
         if (g.get_result() != vshogi::ONGOING)
             break;
 
-        auto dfpn = vshogi::engine::dfpn::Searcher<Game, Move>(g, 10000);
-        dfpn.explore();
+        {
+            auto dfpn = vshogi::engine::dfpn::Searcher<Game, Move>(g, 10000);
+            dfpn.explore();
+        }
 
         for (int jj = (100 - root.get_visit_count()); jj--;) {
             auto g_copy = Game(g);

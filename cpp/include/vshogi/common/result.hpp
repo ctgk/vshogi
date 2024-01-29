@@ -12,6 +12,7 @@ enum ResultEnum : std::uint8_t
     DRAW,
     BLACK_WIN,
     WHITE_WIN,
+    UNKNOWN,
 };
 
 } // namespace vshogi
