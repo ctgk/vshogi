@@ -24,8 +24,8 @@ constexpr uint num_files = 5; // 1, 2, 3, 4, 5
 constexpr uint num_ranks = 5; // A, B, C, D, E
 constexpr uint num_directions = 8; // NW, N, NE, W, E, SW, S, SE
 constexpr uint num_directions_dlshogi = 8; // NW, N, NE, W, E, SW, S, SE
-constexpr uint num_non_ranging_board_piece = 7; // B_FU, W_FU, B_GI, W_GI, B_KI, W_KI, OU
-constexpr uint num_attack_types = 11; // B_FU, W_FU, B_GI, W_GI, B_KI, W_KI, KA, HI, OU, UM, RY
+constexpr uint num_non_ranging_attacks = 7; // B_FU, W_FU, B_GI, W_GI, B_KI, W_KI, OU
+constexpr uint num_attacks = 11; // B_FU, W_FU, B_GI, W_GI, B_KI, W_KI, OU, KA, HI, UM, RY
 constexpr uint max_stand_piece_count = 2;
 constexpr uint max_acceptable_repetition = 3;
 // clang-format on
@@ -141,7 +141,7 @@ using Squares = vshogi::Squares<
     num_ranks,
     num_directions,
     num_directions_dlshogi,
-    num_non_ranging_board_piece>;
+    num_non_ranging_attacks>;
 
 /**
  * @brief 16-bit integer representing pieces on a stand.
@@ -167,8 +167,8 @@ using BlackWhiteStands = vshogi::BlackWhiteStands<Stand>;
  */
 using Move = vshogi::Move<std::uint16_t, Squares, Pieces, 10, 5, 4>;
 
-using BitBoard = vshogi::
-    BitBoard<std::uint32_t, Squares, BoardPieceTypeEnum, num_attack_types>;
+using BitBoard
+    = vshogi::BitBoard<std::uint32_t, Squares, BoardPieceTypeEnum, num_attacks>;
 
 using Board = vshogi::Board<Squares, Pieces, BitBoard>;
 
@@ -407,9 +407,8 @@ inline void vshogi::minishogi::Squares::init_non_ranging_attacks_array()
     std::fill_n(&non_ranging_attacks_array[0][0][0], size, SQ_NA);
 
     // B_FU, B_GI, B_KI, W_FU, W_GI, W_KI, OU
-    constexpr DirectionEnum piece_to_direction[num_non_ranging_board_piece][9]
-        = {
-            // clang-format off
+    constexpr DirectionEnum piece_to_direction[num_non_ranging_attacks][9] = {
+        // clang-format off
         {DIR_N, DIR_NA}, // B_FU
         {DIR_NW, DIR_N, DIR_NE, DIR_SW, DIR_SE, DIR_NA}, // B_GI
         {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S, DIR_NA}, // B_KI
@@ -417,9 +416,9 @@ inline void vshogi::minishogi::Squares::init_non_ranging_attacks_array()
         {DIR_NW, DIR_NE, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // W_GI
         {DIR_N, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // W_KI
         {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // OU
-            // clang-format on
-        };
-    for (uint i = 0U; i < num_non_ranging_board_piece; ++i) {
+        // clang-format on
+    };
+    for (uint i = 0U; i < num_non_ranging_attacks; ++i) {
         for (auto&& sq : square_array) {
             int index = 0;
             for (auto&& dir : piece_to_direction[i]) {
@@ -525,7 +524,7 @@ inline const minishogi::BitBoard minishogi::BitBoard::square_to_bitboard_array
 
 template <>
 inline minishogi::BitBoard
-    minishogi::BitBoard::attacks_table[minishogi::num_attack_types]
+    minishogi::BitBoard::attacks_table[minishogi::num_attacks]
                                       [minishogi::Squares::num_squares]
     = {};
 
@@ -597,20 +596,20 @@ inline minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
     case W_TO:
     case W_NG:
         return attacks_table[5][sq];
-    case B_KA:
-    case W_KA:
-        return attacks_table[6][sq];
-    case B_HI:
-    case W_HI:
-        return attacks_table[7][sq];
-    case B_UM:
-    case W_UM:
-        return attacks_table[8][sq];
-    case B_RY:
-    case W_RY:
-        return attacks_table[9][sq];
     case B_OU:
     case W_OU:
+        return attacks_table[6][sq];
+    case B_KA:
+    case W_KA:
+        return attacks_table[7][sq];
+    case B_HI:
+    case W_HI:
+        return attacks_table[8][sq];
+    case B_UM:
+    case W_UM:
+        return attacks_table[9][sq];
+    case B_RY:
+    case W_RY:
         return attacks_table[10][sq];
     default:
         return BitBoard();
@@ -641,6 +640,9 @@ inline minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
     case W_TO:
     case W_NG:
         return attacks_table[5][sq];
+    case B_OU:
+    case W_OU:
+        return attacks_table[6][sq];
     case B_KA:
     case W_KA:
         return BitBoard::ranging_attacks_to_diagonal(sq, occupied);
@@ -650,14 +652,11 @@ inline minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
     case B_UM:
     case W_UM:
         return BitBoard::ranging_attacks_to_diagonal(sq, occupied)
-               | attacks_table[10][sq];
+               | attacks_table[6][sq];
     case B_RY:
     case W_RY:
         return BitBoard::ranging_attacks_to_adjacent(sq, occupied)
-               | attacks_table[10][sq];
-    case B_OU:
-    case W_OU:
-        return attacks_table[10][sq];
+               | attacks_table[6][sq];
     default:
         return BitBoard();
     }
@@ -675,11 +674,11 @@ inline void minishogi::BitBoard::init_tables()
         attacks_table[3][sq] = b.shift<DIR_S>(); // W_FU
         attacks_table[4][sq] = b.shift<DIR_NW>() | b.shift<DIR_NE>() | b.shift<DIR_SW>() | b.shift<DIR_S>() | b.shift<DIR_SE>(); // W_GI
         attacks_table[5][sq] = b.shift<DIR_N>() | b.shift<DIR_W>() | b.shift<DIR_E>() | b.shift<DIR_SW>() | b.shift<DIR_S>() | b.shift<DIR_SE>(); // W_KI
-        attacks_table[6][sq] = BitBoard::ranging_attacks_to_diagonal(sq); // KA
-        attacks_table[7][sq] = BitBoard::ranging_attacks_to_adjacent(sq); // HI
-        attacks_table[8][sq] = attacks_table[6][sq] | attacks_table[2][sq]; // UM
-        attacks_table[9][sq] = attacks_table[7][sq] | attacks_table[1][sq]; // RY
-        attacks_table[10][sq] = attacks_table[1][sq] | attacks_table[2][sq]; // OU
+        attacks_table[6][sq] = attacks_table[1][sq] | attacks_table[2][sq]; // OU
+        attacks_table[7][sq] = BitBoard::ranging_attacks_to_diagonal(sq); // KA
+        attacks_table[8][sq] = BitBoard::ranging_attacks_to_adjacent(sq); // HI
+        attacks_table[9][sq] = attacks_table[7][sq] | attacks_table[6][sq]; // UM
+        attacks_table[10][sq] = attacks_table[8][sq] | attacks_table[6][sq]; // RY
         // clang-format on
     }
 }
