@@ -186,8 +186,8 @@ TEST(squares, get_non_ranging_attacks_by)
     }
     {
         const auto actual = Squares::get_non_ranging_attacks_by(W_KE, SQ_5B);
-        CHECK_EQUAL(SQ_6D, actual[0]);
-        CHECK_EQUAL(SQ_4D, actual[1]);
+        CHECK_EQUAL(SQ_4D, actual[0]);
+        CHECK_EQUAL(SQ_6D, actual[1]);
         CHECK_EQUAL(SQ_NA, actual[2]);
     }
     {
@@ -201,15 +201,15 @@ TEST(squares, get_non_ranging_attacks_by)
     }
     {
         const auto actual = Squares::get_non_ranging_attacks_by(W_GI, SQ_2F);
-        CHECK_EQUAL(SQ_3E, actual[0]);
-        CHECK_EQUAL(SQ_1E, actual[1]);
+        CHECK_EQUAL(SQ_1E, actual[0]);
+        CHECK_EQUAL(SQ_3E, actual[1]);
         CHECK_EQUAL(SQ_NA, actual[2]);
     }
     {
         const auto actual = Squares::get_non_ranging_attacks_by(W_GI, SQ_3A);
-        CHECK_EQUAL(SQ_4B, actual[0]);
+        CHECK_EQUAL(SQ_2B, actual[0]);
         CHECK_EQUAL(SQ_3B, actual[1]);
-        CHECK_EQUAL(SQ_2B, actual[2]);
+        CHECK_EQUAL(SQ_4B, actual[2]);
         CHECK_EQUAL(SQ_NA, actual[3]);
     }
     {
@@ -220,13 +220,11 @@ TEST(squares, get_non_ranging_attacks_by)
     }
     {
         const auto actual = Squares::get_non_ranging_attacks_by(W_KI, SQ_3C);
-        CHECK_EQUAL(SQ_3B, actual[0]);
-        CHECK_EQUAL(SQ_4C, actual[1]);
-        CHECK_EQUAL(SQ_2C, actual[2]);
-        CHECK_EQUAL(SQ_4D, actual[3]);
-        CHECK_EQUAL(SQ_3D, actual[4]);
-        CHECK_EQUAL(SQ_2D, actual[5]);
-        CHECK_EQUAL(SQ_NA, actual[6]);
+        constexpr SquareEnum expected[]
+            = {SQ_2D, SQ_3D, SQ_4D, SQ_2C, SQ_4C, SQ_3B, SQ_NA};
+        for (int ii = 0; ii < 7; ++ii) {
+            CHECK_EQUAL(expected[ii], actual[ii]);
+        }
     }
     {
         const auto actual = Squares::get_non_ranging_attacks_by(B_TO, SQ_6A);
@@ -236,13 +234,11 @@ TEST(squares, get_non_ranging_attacks_by)
     }
     {
         const auto actual = Squares::get_non_ranging_attacks_by(W_TO, SQ_3C);
-        CHECK_EQUAL(SQ_3B, actual[0]);
-        CHECK_EQUAL(SQ_4C, actual[1]);
-        CHECK_EQUAL(SQ_2C, actual[2]);
-        CHECK_EQUAL(SQ_4D, actual[3]);
-        CHECK_EQUAL(SQ_3D, actual[4]);
-        CHECK_EQUAL(SQ_2D, actual[5]);
-        CHECK_EQUAL(SQ_NA, actual[6]);
+        constexpr SquareEnum expected[]
+            = {SQ_2D, SQ_3D, SQ_4D, SQ_2C, SQ_4C, SQ_3B, SQ_NA};
+        for (int ii = 0; ii < 7; ++ii) {
+            CHECK_EQUAL(expected[ii], actual[ii]);
+        }
     }
     {
         const auto actual = Squares::get_non_ranging_attacks_by(B_NK, SQ_6A);
@@ -252,13 +248,11 @@ TEST(squares, get_non_ranging_attacks_by)
     }
     {
         const auto actual = Squares::get_non_ranging_attacks_by(W_NK, SQ_3C);
-        CHECK_EQUAL(SQ_3B, actual[0]);
-        CHECK_EQUAL(SQ_4C, actual[1]);
-        CHECK_EQUAL(SQ_2C, actual[2]);
-        CHECK_EQUAL(SQ_4D, actual[3]);
-        CHECK_EQUAL(SQ_3D, actual[4]);
-        CHECK_EQUAL(SQ_2D, actual[5]);
-        CHECK_EQUAL(SQ_NA, actual[6]);
+        constexpr SquareEnum expected[]
+            = {SQ_2D, SQ_3D, SQ_4D, SQ_2C, SQ_4C, SQ_3B, SQ_NA};
+        for (int ii = 0; ii < 7; ++ii) {
+            CHECK_EQUAL(expected[ii], actual[ii]);
+        }
     }
     {
         const auto actual = Squares::get_non_ranging_attacks_by(B_NG, SQ_6A);
@@ -268,13 +262,11 @@ TEST(squares, get_non_ranging_attacks_by)
     }
     {
         const auto actual = Squares::get_non_ranging_attacks_by(W_NG, SQ_3C);
-        CHECK_EQUAL(SQ_3B, actual[0]);
-        CHECK_EQUAL(SQ_4C, actual[1]);
-        CHECK_EQUAL(SQ_2C, actual[2]);
-        CHECK_EQUAL(SQ_4D, actual[3]);
-        CHECK_EQUAL(SQ_3D, actual[4]);
-        CHECK_EQUAL(SQ_2D, actual[5]);
-        CHECK_EQUAL(SQ_NA, actual[6]);
+        constexpr SquareEnum expected[]
+            = {SQ_2D, SQ_3D, SQ_4D, SQ_2C, SQ_4C, SQ_3B, SQ_NA};
+        for (int ii = 0; ii < 7; ++ii) {
+            CHECK_EQUAL(expected[ii], actual[ii]);
+        }
     }
     CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(B_KA, SQ_3C));
     CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(W_UM, SQ_3A));
@@ -293,9 +285,9 @@ TEST(squares, get_non_ranging_attacks_by)
     }
     {
         const auto actual = Squares::get_non_ranging_attacks_by(W_OU, SQ_6F);
-        CHECK_EQUAL(SQ_6E, actual[0]);
+        CHECK_EQUAL(SQ_5F, actual[0]);
         CHECK_EQUAL(SQ_5E, actual[1]);
-        CHECK_EQUAL(SQ_5F, actual[2]);
+        CHECK_EQUAL(SQ_6E, actual[2]);
         CHECK_EQUAL(SQ_NA, actual[3]);
     }
 }

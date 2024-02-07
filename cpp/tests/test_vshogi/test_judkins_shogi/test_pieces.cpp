@@ -7,9 +7,9 @@ namespace test_vshogi::test_judkins_shogi
 
 using namespace vshogi::judkins_shogi;
 
-TEST_GROUP(judkins_shogi_piece){};
+TEST_GROUP(judkins_shogi_pieces){};
 
-TEST(judkins_shogi_piece, is_promotable)
+TEST(judkins_shogi_pieces, is_promotable)
 {
     CHECK_TRUE(Pieces::is_promotable(FU));
     CHECK_TRUE(Pieces::is_promotable(KE));
@@ -54,7 +54,7 @@ TEST(judkins_shogi_piece, is_promotable)
     CHECK_FALSE(Pieces::is_promotable(VOID));
 }
 
-TEST(judkins_shogi_piece, is_promoted)
+TEST(judkins_shogi_pieces, is_promoted)
 {
     CHECK_FALSE(Pieces::is_promoted(FU));
     CHECK_FALSE(Pieces::is_promoted(KE));
@@ -97,7 +97,7 @@ TEST(judkins_shogi_piece, is_promoted)
     CHECK_TRUE(Pieces::is_promoted(W_RY));
 }
 
-TEST(judkins_shogi_piece, promote)
+TEST(judkins_shogi_pieces, promote)
 {
     CHECK_EQUAL(TO, Pieces::promote(FU));
     CHECK_EQUAL(NK, Pieces::promote(KE));
@@ -140,7 +140,7 @@ TEST(judkins_shogi_piece, promote)
     CHECK_EQUAL(W_RY, Pieces::promote(W_RY));
 }
 
-TEST(judkins_shogi_piece, demote)
+TEST(judkins_shogi_pieces, demote)
 {
     CHECK_EQUAL(FU, Pieces::demote(FU));
     CHECK_EQUAL(KE, Pieces::demote(KE));
@@ -182,7 +182,7 @@ TEST(judkins_shogi_piece, demote)
     CHECK_EQUAL(W_HI, Pieces::demote(W_RY));
 }
 
-TEST(judkins_shogi_piece, get_color)
+TEST(judkins_shogi_pieces, get_color)
 {
     CHECK_EQUAL(vshogi::BLACK, Pieces::get_color(B_FU));
     CHECK_EQUAL(vshogi::BLACK, Pieces::get_color(B_KE));
@@ -211,7 +211,7 @@ TEST(judkins_shogi_piece, get_color)
     CHECK_EQUAL(vshogi::WHITE, Pieces::get_color(W_RY));
 }
 
-TEST(judkins_shogi_piece, to_piece_type)
+TEST(judkins_shogi_pieces, to_piece_type)
 {
     CHECK_EQUAL(FU, Pieces::to_piece_type(B_FU));
     CHECK_EQUAL(KE, Pieces::to_piece_type(B_KE));
@@ -240,7 +240,7 @@ TEST(judkins_shogi_piece, to_piece_type)
     CHECK_EQUAL(RY, Pieces::to_piece_type(W_RY));
 }
 
-TEST(judkins_shogi_piece, to_board_piece)
+TEST(judkins_shogi_pieces, to_board_piece)
 {
     CHECK_EQUAL(B_FU, Pieces::to_board_piece(vshogi::BLACK, FU));
     CHECK_EQUAL(B_KE, Pieces::to_board_piece(vshogi::BLACK, KE));
@@ -272,127 +272,161 @@ TEST(judkins_shogi_piece, to_board_piece)
     CHECK_EQUAL(VOID, Pieces::to_board_piece(vshogi::WHITE, NA));
 }
 
-TEST(judkins_shogi_piece, append_sfen)
+TEST(judkins_shogi_pieces, append_sfen)
+{
+    // clang-format off
+    { auto actual = std::string(); Pieces::append_sfen(B_FU, actual); STRCMP_EQUAL("P", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(B_KE, actual); STRCMP_EQUAL("N", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(B_GI, actual); STRCMP_EQUAL("S", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(B_KA, actual); STRCMP_EQUAL("B", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(B_HI, actual); STRCMP_EQUAL("R", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(B_KI, actual); STRCMP_EQUAL("G", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(B_OU, actual); STRCMP_EQUAL("K", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(B_TO, actual); STRCMP_EQUAL("+P", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(B_NK, actual); STRCMP_EQUAL("+N", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(B_NG, actual); STRCMP_EQUAL("+S", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(B_UM, actual); STRCMP_EQUAL("+B", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(B_RY, actual); STRCMP_EQUAL("+R", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(W_FU, actual); STRCMP_EQUAL("p", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(W_KE, actual); STRCMP_EQUAL("n", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(W_GI, actual); STRCMP_EQUAL("s", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(W_KA, actual); STRCMP_EQUAL("b", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(W_HI, actual); STRCMP_EQUAL("r", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(W_KI, actual); STRCMP_EQUAL("g", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(W_OU, actual); STRCMP_EQUAL("k", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(W_TO, actual); STRCMP_EQUAL("+p", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(W_NK, actual); STRCMP_EQUAL("+n", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(W_NG, actual); STRCMP_EQUAL("+s", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(W_UM, actual); STRCMP_EQUAL("+b", actual.c_str()); }
+    { auto actual = std::string(); Pieces::append_sfen(W_RY, actual); STRCMP_EQUAL("+r", actual.c_str()); }
+    // clang-format on
+}
+
+TEST(judkins_shogi_pieces, get_attack_directions)
 {
     {
-        auto actual = std::string();
-        Pieces::append_sfen(B_FU, actual);
-        STRCMP_EQUAL("P", actual.c_str());
+        const auto actual = Pieces::get_attack_directions(B_FU);
+        CHECK_EQUAL(vshogi::DIR_N, actual[0]);
+        CHECK_EQUAL(vshogi::DIR_NA, actual[1]);
     }
     {
-        auto actual = std::string();
-        Pieces::append_sfen(B_KE, actual);
-        STRCMP_EQUAL("N", actual.c_str());
+        const auto actual = Pieces::get_attack_directions(B_KE);
+        CHECK_EQUAL(vshogi::DIR_NNW, actual[0]);
+        CHECK_EQUAL(vshogi::DIR_NNE, actual[1]);
+        CHECK_EQUAL(vshogi::DIR_NA, actual[2]);
     }
     {
-        auto actual = std::string();
-        Pieces::append_sfen(B_GI, actual);
-        STRCMP_EQUAL("S", actual.c_str());
+        const auto actual = Pieces::get_attack_directions(B_GI);
+        CHECK_EQUAL(vshogi::DIR_NW, actual[0]);
+        CHECK_EQUAL(vshogi::DIR_N, actual[1]);
+        CHECK_EQUAL(vshogi::DIR_NE, actual[2]);
+        CHECK_EQUAL(vshogi::DIR_SW, actual[3]);
+        CHECK_EQUAL(vshogi::DIR_SE, actual[4]);
+        CHECK_EQUAL(vshogi::DIR_NA, actual[5]);
     }
     {
-        auto actual = std::string();
-        Pieces::append_sfen(B_KA, actual);
-        STRCMP_EQUAL("B", actual.c_str());
+        const auto actual = Pieces::get_attack_directions(B_KA);
+        CHECK_EQUAL(vshogi::DIR_NW, actual[0]);
+        CHECK_EQUAL(vshogi::DIR_NE, actual[1]);
+        CHECK_EQUAL(vshogi::DIR_SW, actual[2]);
+        CHECK_EQUAL(vshogi::DIR_SE, actual[3]);
+        CHECK_EQUAL(vshogi::DIR_NA, actual[4]);
     }
     {
-        auto actual = std::string();
-        Pieces::append_sfen(B_HI, actual);
-        STRCMP_EQUAL("R", actual.c_str());
+        const auto actual = Pieces::get_attack_directions(B_HI);
+        CHECK_EQUAL(vshogi::DIR_N, actual[0]);
+        CHECK_EQUAL(vshogi::DIR_W, actual[1]);
+        CHECK_EQUAL(vshogi::DIR_E, actual[2]);
+        CHECK_EQUAL(vshogi::DIR_S, actual[3]);
+        CHECK_EQUAL(vshogi::DIR_NA, actual[4]);
     }
     {
-        auto actual = std::string();
-        Pieces::append_sfen(B_KI, actual);
-        STRCMP_EQUAL("G", actual.c_str());
+        for (auto&& p : {B_KI, B_TO, B_NK, B_NG}) {
+            const auto actual = Pieces::get_attack_directions(p);
+            CHECK_EQUAL(vshogi::DIR_NW, actual[0]);
+            CHECK_EQUAL(vshogi::DIR_N, actual[1]);
+            CHECK_EQUAL(vshogi::DIR_NE, actual[2]);
+            CHECK_EQUAL(vshogi::DIR_W, actual[3]);
+            CHECK_EQUAL(vshogi::DIR_E, actual[4]);
+            CHECK_EQUAL(vshogi::DIR_S, actual[5]);
+            CHECK_EQUAL(vshogi::DIR_NA, actual[6]);
+        }
     }
     {
-        auto actual = std::string();
-        Pieces::append_sfen(B_OU, actual);
-        STRCMP_EQUAL("K", actual.c_str());
+        for (auto&& p : {B_OU, B_UM, B_RY}) {
+            const auto actual = Pieces::get_attack_directions(p);
+            CHECK_EQUAL(vshogi::DIR_NW, actual[0]);
+            CHECK_EQUAL(vshogi::DIR_N, actual[1]);
+            CHECK_EQUAL(vshogi::DIR_NE, actual[2]);
+            CHECK_EQUAL(vshogi::DIR_W, actual[3]);
+            CHECK_EQUAL(vshogi::DIR_E, actual[4]);
+            CHECK_EQUAL(vshogi::DIR_SW, actual[5]);
+            CHECK_EQUAL(vshogi::DIR_S, actual[6]);
+            CHECK_EQUAL(vshogi::DIR_SE, actual[7]);
+            CHECK_EQUAL(vshogi::DIR_NA, actual[8]);
+        }
     }
     {
-        auto actual = std::string();
-        Pieces::append_sfen(B_TO, actual);
-        STRCMP_EQUAL("+P", actual.c_str());
+        const auto actual = Pieces::get_attack_directions(W_FU);
+        CHECK_EQUAL(vshogi::DIR_S, actual[0]);
+        CHECK_EQUAL(vshogi::DIR_NA, actual[1]);
     }
     {
-        auto actual = std::string();
-        Pieces::append_sfen(B_NK, actual);
-        STRCMP_EQUAL("+N", actual.c_str());
+        const auto actual = Pieces::get_attack_directions(W_KE);
+        CHECK_EQUAL(vshogi::DIR_SSE, actual[0]);
+        CHECK_EQUAL(vshogi::DIR_SSW, actual[1]);
+        CHECK_EQUAL(vshogi::DIR_NA, actual[2]);
     }
     {
-        auto actual = std::string();
-        Pieces::append_sfen(B_NG, actual);
-        STRCMP_EQUAL("+S", actual.c_str());
+        const auto actual = Pieces::get_attack_directions(W_GI);
+        CHECK_EQUAL(vshogi::DIR_SE, actual[0]);
+        CHECK_EQUAL(vshogi::DIR_S, actual[1]);
+        CHECK_EQUAL(vshogi::DIR_SW, actual[2]);
+        CHECK_EQUAL(vshogi::DIR_NE, actual[3]);
+        CHECK_EQUAL(vshogi::DIR_NW, actual[4]);
+        CHECK_EQUAL(vshogi::DIR_NA, actual[5]);
     }
     {
-        auto actual = std::string();
-        Pieces::append_sfen(B_UM, actual);
-        STRCMP_EQUAL("+B", actual.c_str());
+        const auto actual = Pieces::get_attack_directions(W_KA);
+        CHECK_EQUAL(vshogi::DIR_SE, actual[0]);
+        CHECK_EQUAL(vshogi::DIR_SW, actual[1]);
+        CHECK_EQUAL(vshogi::DIR_NE, actual[2]);
+        CHECK_EQUAL(vshogi::DIR_NW, actual[3]);
+        CHECK_EQUAL(vshogi::DIR_NA, actual[4]);
     }
     {
-        auto actual = std::string();
-        Pieces::append_sfen(B_RY, actual);
-        STRCMP_EQUAL("+R", actual.c_str());
+        const auto actual = Pieces::get_attack_directions(W_HI);
+        CHECK_EQUAL(vshogi::DIR_S, actual[0]);
+        CHECK_EQUAL(vshogi::DIR_E, actual[1]);
+        CHECK_EQUAL(vshogi::DIR_W, actual[2]);
+        CHECK_EQUAL(vshogi::DIR_N, actual[3]);
+        CHECK_EQUAL(vshogi::DIR_NA, actual[4]);
     }
     {
-        auto actual = std::string();
-        Pieces::append_sfen(W_FU, actual);
-        STRCMP_EQUAL("p", actual.c_str());
+        for (auto&& p : {W_KI, W_TO, W_NK, W_NG}) {
+            const auto actual = Pieces::get_attack_directions(p);
+            CHECK_EQUAL(vshogi::DIR_SE, actual[0]);
+            CHECK_EQUAL(vshogi::DIR_S, actual[1]);
+            CHECK_EQUAL(vshogi::DIR_SW, actual[2]);
+            CHECK_EQUAL(vshogi::DIR_E, actual[3]);
+            CHECK_EQUAL(vshogi::DIR_W, actual[4]);
+            CHECK_EQUAL(vshogi::DIR_N, actual[5]);
+            CHECK_EQUAL(vshogi::DIR_NA, actual[6]);
+        }
     }
     {
-        auto actual = std::string();
-        Pieces::append_sfen(W_KE, actual);
-        STRCMP_EQUAL("n", actual.c_str());
-    }
-    {
-        auto actual = std::string();
-        Pieces::append_sfen(W_GI, actual);
-        STRCMP_EQUAL("s", actual.c_str());
-    }
-    {
-        auto actual = std::string();
-        Pieces::append_sfen(W_KA, actual);
-        STRCMP_EQUAL("b", actual.c_str());
-    }
-    {
-        auto actual = std::string();
-        Pieces::append_sfen(W_HI, actual);
-        STRCMP_EQUAL("r", actual.c_str());
-    }
-    {
-        auto actual = std::string();
-        Pieces::append_sfen(W_KI, actual);
-        STRCMP_EQUAL("g", actual.c_str());
-    }
-    {
-        auto actual = std::string();
-        Pieces::append_sfen(W_OU, actual);
-        STRCMP_EQUAL("k", actual.c_str());
-    }
-    {
-        auto actual = std::string();
-        Pieces::append_sfen(W_TO, actual);
-        STRCMP_EQUAL("+p", actual.c_str());
-    }
-    {
-        auto actual = std::string();
-        Pieces::append_sfen(W_NK, actual);
-        STRCMP_EQUAL("+n", actual.c_str());
-    }
-    {
-        auto actual = std::string();
-        Pieces::append_sfen(W_NG, actual);
-        STRCMP_EQUAL("+s", actual.c_str());
-    }
-    {
-        auto actual = std::string();
-        Pieces::append_sfen(W_UM, actual);
-        STRCMP_EQUAL("+b", actual.c_str());
-    }
-    {
-        auto actual = std::string();
-        Pieces::append_sfen(W_RY, actual);
-        STRCMP_EQUAL("+r", actual.c_str());
+        for (auto&& p : {W_OU, W_UM, W_RY}) {
+            const auto actual = Pieces::get_attack_directions(p);
+            CHECK_EQUAL(vshogi::DIR_SE, actual[0]);
+            CHECK_EQUAL(vshogi::DIR_S, actual[1]);
+            CHECK_EQUAL(vshogi::DIR_SW, actual[2]);
+            CHECK_EQUAL(vshogi::DIR_E, actual[3]);
+            CHECK_EQUAL(vshogi::DIR_W, actual[4]);
+            CHECK_EQUAL(vshogi::DIR_NE, actual[5]);
+            CHECK_EQUAL(vshogi::DIR_N, actual[6]);
+            CHECK_EQUAL(vshogi::DIR_NW, actual[7]);
+            CHECK_EQUAL(vshogi::DIR_NA, actual[8]);
+        }
     }
 }
 

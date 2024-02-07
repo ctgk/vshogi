@@ -7,9 +7,9 @@ namespace test_vshogi::test_shogi
 
 using namespace vshogi::shogi;
 
-TEST_GROUP(shogi_piece){};
+TEST_GROUP(shogi_pieces){};
 
-TEST(shogi_piece, is_promotable)
+TEST(shogi_pieces, is_promotable)
 {
     CHECK_TRUE(Pieces::is_promotable(FU));
     CHECK_TRUE(Pieces::is_promotable(KY));
@@ -57,7 +57,7 @@ TEST(shogi_piece, is_promotable)
     CHECK_FALSE(Pieces::is_promotable(W_RY));
 }
 
-TEST(shogi_piece, is_promoted)
+TEST(shogi_pieces, is_promoted)
 {
     CHECK_FALSE(Pieces::is_promoted(FU));
     CHECK_FALSE(Pieces::is_promoted(KY));
@@ -105,7 +105,7 @@ TEST(shogi_piece, is_promoted)
     CHECK_TRUE(Pieces::is_promoted(W_RY));
 }
 
-TEST(shogi_piece, promote)
+TEST(shogi_pieces, promote)
 {
     CHECK_EQUAL(TO, Pieces::promote(FU));
     CHECK_EQUAL(NY, Pieces::promote(KY));
@@ -129,7 +129,7 @@ TEST(shogi_piece, promote)
     CHECK_EQUAL(W_RY, Pieces::promote(W_HI));
 }
 
-TEST(shogi_piece, demote)
+TEST(shogi_pieces, demote)
 {
     CHECK_EQUAL(FU, Pieces::demote(FU));
     CHECK_EQUAL(KY, Pieces::demote(KY));
@@ -177,7 +177,7 @@ TEST(shogi_piece, demote)
     CHECK_EQUAL(W_HI, Pieces::demote(W_RY));
 }
 
-TEST(shogi_piece, get_color)
+TEST(shogi_pieces, get_color)
 {
     CHECK_EQUAL(vshogi::BLACK, Pieces::get_color(B_FU));
     CHECK_EQUAL(vshogi::BLACK, Pieces::get_color(B_KY));
@@ -210,7 +210,7 @@ TEST(shogi_piece, get_color)
     CHECK_EQUAL(vshogi::WHITE, Pieces::get_color(W_RY));
 }
 
-TEST(shogi_piece, to_piece_type)
+TEST(shogi_pieces, to_piece_type)
 {
     CHECK_EQUAL(FU, Pieces::to_piece_type(B_FU));
     CHECK_EQUAL(KY, Pieces::to_piece_type(B_KY));
@@ -245,7 +245,7 @@ TEST(shogi_piece, to_piece_type)
     CHECK_EQUAL(NA, Pieces::to_piece_type(VOID));
 }
 
-TEST(shogi_piece, to_board_piece)
+TEST(shogi_pieces, to_board_piece)
 {
     CHECK_EQUAL(B_FU, Pieces::to_board_piece(vshogi::BLACK, FU));
     CHECK_EQUAL(B_KY, Pieces::to_board_piece(vshogi::BLACK, KY));
@@ -281,7 +281,7 @@ TEST(shogi_piece, to_board_piece)
     CHECK_EQUAL(VOID, Pieces::to_board_piece(vshogi::WHITE, NA));
 }
 
-TEST(shogi_piece, append_sfen)
+TEST(shogi_pieces, append_sfen)
 {
     // clang-format off
     {auto actual = std::string(); Pieces::append_sfen(B_FU, actual); STRCMP_EQUAL("P", actual.c_str());}
@@ -314,6 +314,46 @@ TEST(shogi_piece, append_sfen)
     {auto actual = std::string(); Pieces::append_sfen(W_UM, actual); STRCMP_EQUAL("+b", actual.c_str());}
     {auto actual = std::string(); Pieces::append_sfen(W_RY, actual); STRCMP_EQUAL("+r", actual.c_str());}
     // clang-format on
+}
+
+TEST(shogi_pieces, get_attack_directions)
+{
+    using namespace vshogi;
+    constexpr DirectionEnum expected[][9] = {
+        // clang-format off
+        {DIR_N, DIR_NA}, // B_FU
+        {DIR_N, DIR_NA}, // B_KY
+        {DIR_NNW, DIR_NNE, DIR_NA}, // B_KE
+        {DIR_NW, DIR_N, DIR_NE, DIR_SW, DIR_SE, DIR_NA}, // B_GI
+        {DIR_NW, DIR_NE, DIR_SW, DIR_SE, DIR_NA}, // B_KA
+        {DIR_N, DIR_W, DIR_E, DIR_S, DIR_NA}, // B_HI
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S, DIR_NA}, // B_KI
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_OU
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S, DIR_NA}, // B_TO
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S, DIR_NA}, // B_NY
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S, DIR_NA}, // B_NK
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S, DIR_NA}, // B_NG
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_UM
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_RY
+        // clang-format on
+    };
+    for (int ii = num_piece_types; ii--;) {
+        const PieceTypeEnum pt = vshogi::shogi::Pieces::piece_array[ii];
+        for (auto&& color : {BLACK, WHITE}) {
+            const BoardPieceTypeEnum p
+                = vshogi::shogi::Pieces::to_board_piece(color, pt);
+            const auto actual = vshogi::shogi::Pieces::get_attack_directions(p);
+            for (int jj = 0; jj < 9; ++jj) {
+                if (color == BLACK) {
+                    CHECK_EQUAL(expected[ii][jj], actual[jj]);
+                } else {
+                    CHECK_EQUAL(rotate(expected[ii][jj]), actual[jj]);
+                }
+                if (expected[ii][jj] == DIR_NA)
+                    break;
+            }
+        }
+    }
 }
 
 } // namespace test_vshogi::test_shogi

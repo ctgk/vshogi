@@ -110,6 +110,7 @@ void export_pieces(py::module& m)
 
 void export_minishogi(py::module& m)
 {
+    ms::Pieces::init_tables();
     ms::Squares::init_tables();
     ms::BitBoard::init_tables();
     ms::State::init_zobrist_table();

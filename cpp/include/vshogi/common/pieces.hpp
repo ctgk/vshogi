@@ -26,6 +26,7 @@ private:
     static constexpr uint promotion_mask = (1 << PromotionBit);
     static constexpr uint color_mask = (1 << color_bit);
     static constexpr uint piece_type_mask = (color_mask - 1);
+    static DirectionEnum attack_directions_table[2 * NumPieceTypes + 1][9];
 
 public:
     static constexpr PieceType FU = static_cast<PieceType>(0); // NOLINT
@@ -84,6 +85,11 @@ public:
         return is_promoted(to_piece_type(p));
     }
     static bool is_ranging_to(const BoardPiece& p, const DirectionEnum& d);
+    static bool is_ranging_piece(const PieceTypeEnum& pt);
+    static bool is_ranging_piece(const BoardPieceTypeEnum& p)
+    {
+        return is_ranging_piece(to_piece_type(p));
+    }
 
     template <class T>
     static constexpr T promote(const T& p)
@@ -115,6 +121,39 @@ public:
             out += '+';
         out += c;
     }
+    static uint get_index(const BoardPieceTypeEnum& p)
+    {
+        if (p == VOID)
+            return 2 * NumPieceTypes;
+        const PieceType pt = to_piece_type(p);
+        const uint color_offset
+            = static_cast<uint>(get_color(p) == WHITE) * NumPieceTypes;
+        const uint promo_offset
+            = static_cast<uint>(is_promoted(pt)) * (NumStandPieceTypes + 1);
+        const uint pt_index
+            = (pt == OU) ? NumStandPieceTypes : static_cast<uint>(demote(pt));
+        return color_offset + promo_offset + pt_index;
+    }
+    static const DirectionEnum* get_attack_directions(const BoardPiece& p)
+    {
+        return attack_directions_table[get_index(p)];
+    }
+    static void init_tables()
+    {
+        std::fill_n(
+            &attack_directions_table[0][0],
+            sizeof(attack_directions_table)
+                / sizeof(attack_directions_table[0][0]),
+            DIR_NA);
+        init_attack_directions_of_black();
+        for (uint ii = NumPieceTypes; ii--;) {
+            for (uint jj = 0; jj < 9; ++jj) {
+                attack_directions_table[ii + NumPieceTypes][jj]
+                    = rotate(attack_directions_table[ii][jj]);
+            }
+        }
+    }
+    static void init_attack_directions_of_black();
 
     static constexpr BoardPiece B_OU = to_board_piece(BLACK, OU); // NOLINT
     static constexpr BoardPiece W_OU = to_board_piece(WHITE, OU); // NOLINT

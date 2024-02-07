@@ -443,8 +443,8 @@ TEST(squares, get_attacks_by_ke)
     }
     {
         const auto actual = Squares::get_non_ranging_attacks_by(W_KE, SQ_5E);
-        CHECK_EQUAL(SQ_6G, actual[0]);
-        CHECK_EQUAL(SQ_4G, actual[1]);
+        CHECK_EQUAL(SQ_4G, actual[0]);
+        CHECK_EQUAL(SQ_6G, actual[1]);
         CHECK_EQUAL(SQ_NA, actual[2]);
     }
 }
@@ -465,8 +465,8 @@ TEST(squares, get_attacks_by_gi)
     }
     {
         const auto actual = Squares::get_non_ranging_attacks_by(W_GI, SQ_1A);
-        CHECK_EQUAL(SQ_2B, actual[0]);
-        CHECK_EQUAL(SQ_1B, actual[1]);
+        CHECK_EQUAL(SQ_1B, actual[0]);
+        CHECK_EQUAL(SQ_2B, actual[1]);
         CHECK_EQUAL(SQ_NA, actual[2]);
     }
 }
@@ -489,9 +489,9 @@ TEST(squares, get_attacks_by_ki)
     }
     {
         const auto actual = Squares::get_non_ranging_attacks_by(W_TO, SQ_1A);
-        CHECK_EQUAL(SQ_2A, actual[0]);
+        CHECK_EQUAL(SQ_1B, actual[0]);
         CHECK_EQUAL(SQ_2B, actual[1]);
-        CHECK_EQUAL(SQ_1B, actual[2]);
+        CHECK_EQUAL(SQ_2A, actual[2]);
         CHECK_EQUAL(SQ_NA, actual[3]);
     }
 }
@@ -531,22 +531,24 @@ TEST(squares, get_attacks_by_ou)
     }
     {
         const auto actual = Squares::get_non_ranging_attacks_by(W_OU, SQ_8H);
-        CHECK_EQUAL(SQ_9G, actual[0]);
-        CHECK_EQUAL(SQ_8G, actual[1]);
-        CHECK_EQUAL(SQ_7G, actual[2]);
-        CHECK_EQUAL(SQ_9H, actual[3]);
-        CHECK_EQUAL(SQ_7H, actual[4]);
-        CHECK_EQUAL(SQ_9I, actual[5]);
-        CHECK_EQUAL(SQ_8I, actual[6]);
-        CHECK_EQUAL(SQ_7I, actual[7]);
+        CHECK_EQUAL(SQ_7I, actual[0]);
+        CHECK_EQUAL(SQ_8I, actual[1]);
+        CHECK_EQUAL(SQ_9I, actual[2]);
+        CHECK_EQUAL(SQ_7H, actual[3]);
+        CHECK_EQUAL(SQ_9H, actual[4]);
+        CHECK_EQUAL(SQ_7G, actual[5]);
+        CHECK_EQUAL(SQ_8G, actual[6]);
+        CHECK_EQUAL(SQ_9G, actual[7]);
+        CHECK_EQUAL(SQ_NA, actual[8]);
     }
     {
         const auto actual = Squares::get_non_ranging_attacks_by(W_OU, SQ_1H);
-        CHECK_EQUAL(SQ_2G, actual[0]);
-        CHECK_EQUAL(SQ_1G, actual[1]);
+        CHECK_EQUAL(SQ_1I, actual[0]);
+        CHECK_EQUAL(SQ_2I, actual[1]);
         CHECK_EQUAL(SQ_2H, actual[2]);
-        CHECK_EQUAL(SQ_2I, actual[3]);
-        CHECK_EQUAL(SQ_1I, actual[4]);
+        CHECK_EQUAL(SQ_1G, actual[3]);
+        CHECK_EQUAL(SQ_2G, actual[4]);
+        CHECK_EQUAL(SQ_NA, actual[5]);
     }
 }
 

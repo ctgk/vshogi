@@ -107,11 +107,11 @@ using Squares = vshogi::Squares<
     SquareEnum,
     FileEnum,
     RankEnum,
+    Pieces,
     num_files,
     num_ranks,
     num_directions,
-    num_directions_dlshogi,
-    num_non_ranging_board_piece>;
+    num_directions_dlshogi>;
 
 /**
  * @brief 8bit integer representing what is on a piece stand.
@@ -215,6 +215,11 @@ namespace vshogi
 {
 
 template <>
+inline DirectionEnum
+    animal_shogi::Pieces::attack_directions_table[2 * num_piece_types + 1][9]
+    = {};
+
+template <>
 inline const animal_shogi::PieceTypeEnum animal_shogi::Pieces::piece_array[]
     = {animal_shogi::CH,
        animal_shogi::EL,
@@ -245,6 +250,34 @@ animal_shogi::Pieces::to_piece_type(const char c)
         return LI;
     default:
         return NA;
+    }
+}
+
+template <>
+inline bool
+animal_shogi::Pieces::is_ranging_piece(const animal_shogi::PieceTypeEnum&)
+{
+    return false;
+}
+
+template <>
+inline void animal_shogi::Pieces::init_attack_directions_of_black()
+{
+    constexpr DirectionEnum table[][9] = {
+        // clang-format off
+        {DIR_N,                                                      DIR_NA}, // B_CH
+        {DIR_NW, DIR_NE, DIR_SW, DIR_SE,                             DIR_NA}, // B_EL
+        {DIR_N, DIR_W, DIR_E, DIR_S,                                 DIR_NA}, // B_GI
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_LI
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_HE
+        // clang-format on
+    };
+    for (uint ii = num_piece_types; ii--;) {
+        for (uint jj = 0; jj < 9; ++jj) {
+            if (table[ii][jj] == DIR_NA)
+                break;
+            attack_directions_table[ii][jj] = table[ii][jj];
+        }
     }
 }
 
@@ -355,11 +388,6 @@ inline bool animal_shogi::Squares::in_promotion_zone(
 {
     return (c == BLACK) ? (r == animal_shogi::RANK1)
                         : (r == animal_shogi::RANK4);
-}
-
-template <>
-inline void animal_shogi::Squares::init_non_ranging_attacks_array()
-{
 }
 
 template <>
@@ -569,8 +597,8 @@ inline void animal_shogi::Game::update_internals()
         const auto p = board[src];
         if ((p == Pieces::VOID) || (Pieces::get_color(p) != turn))
             continue;
-        for (auto dir : Squares::direction_array) {
-            const auto dst = Squares::shift(src, dir);
+        for (auto dp = Pieces::get_attack_directions(p); *dp != DIR_NA;) {
+            const auto dst = Squares::shift(src, *dp++);
             if (dst == Squares::SQ_NA)
                 continue;
             const auto t = board[dst];

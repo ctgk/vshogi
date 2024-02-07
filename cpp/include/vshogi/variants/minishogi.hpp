@@ -137,11 +137,11 @@ using Squares = vshogi::Squares<
     SquareEnum,
     FileEnum,
     RankEnum,
+    Pieces,
     num_files,
     num_ranks,
     num_directions,
-    num_directions_dlshogi,
-    num_non_ranging_attacks>;
+    num_directions_dlshogi>;
 
 /**
  * @brief 16-bit integer representing pieces on a stand.
@@ -219,6 +219,11 @@ constexpr BitBoard bb_file5 = bb_5a | bb_5b | bb_5c | bb_5d | bb_5e;
 
 namespace vshogi
 {
+
+template <>
+inline DirectionEnum
+    minishogi::Pieces::attack_directions_table[2 * num_piece_types + 1][9]
+    = {};
 
 template <>
 inline const vshogi::minishogi::PieceTypeEnum
@@ -326,6 +331,40 @@ vshogi::minishogi::Pieces::get_point(const vshogi::minishogi::PieceTypeEnum& p)
 }
 
 template <>
+inline bool
+minishogi::Pieces::is_ranging_piece(const minishogi::PieceTypeEnum& pt)
+{
+    using namespace minishogi;
+    return ((pt == KA) || (pt == HI) || (pt == UM) || (pt == RY));
+}
+
+template <>
+inline void minishogi::Pieces::init_attack_directions_of_black()
+{
+    constexpr DirectionEnum table[][9] = {
+        // clang-format off
+        {DIR_N,                                                      DIR_NA}, // B_FU
+        {DIR_NW, DIR_N, DIR_NE, DIR_SW, DIR_SE,                      DIR_NA}, // B_GI
+        {DIR_NW, DIR_NE, DIR_SW, DIR_SE,                             DIR_NA}, // B_KA
+        {DIR_N, DIR_W, DIR_E, DIR_S,                                 DIR_NA}, // B_HI
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_KI
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_OU
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_TO
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_NG
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_UM
+        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_RY
+        // clang-format on
+    };
+    for (uint ii = num_piece_types; ii--;) {
+        for (uint jj = 0; jj < 9; ++jj) {
+            if (table[ii][jj] == DIR_NA)
+                break;
+            attack_directions_table[ii][jj] = table[ii][jj];
+        }
+    }
+}
+
+template <>
 inline bool vshogi::minishogi::Squares::in_promotion_zone(
     const vshogi::minishogi::RankEnum& r, const ColorEnum& c)
 {
@@ -362,74 +401,6 @@ vshogi::minishogi::Squares::get_direction_for_diagonal_or_knight(
         return (to_file(src) < vshogi::minishogi::FILE3) ? DIR_SW : DIR_SE;
     default:
         return DIR_NA;
-    }
-}
-
-template <>
-template <>
-inline const vshogi::minishogi::SquareEnum*
-vshogi::minishogi::Squares::get_non_ranging_attacks_by(
-    const vshogi::minishogi::BoardPieceTypeEnum& p,
-    const vshogi::minishogi::SquareEnum& location)
-{
-    switch (p) {
-    case vshogi::minishogi::B_FU:
-        return non_ranging_attacks_array[0][location];
-    case vshogi::minishogi::B_GI:
-        return non_ranging_attacks_array[1][location];
-    case vshogi::minishogi::B_KI:
-    case vshogi::minishogi::B_TO:
-    case vshogi::minishogi::B_NG:
-        return non_ranging_attacks_array[2][location];
-    case vshogi::minishogi::W_FU:
-        return non_ranging_attacks_array[3][location];
-    case vshogi::minishogi::W_GI:
-        return non_ranging_attacks_array[4][location];
-    case vshogi::minishogi::W_KI:
-    case vshogi::minishogi::W_TO:
-    case vshogi::minishogi::W_NG:
-        return non_ranging_attacks_array[5][location];
-    case vshogi::minishogi::B_OU:
-    case vshogi::minishogi::W_OU:
-        return non_ranging_attacks_array[6][location];
-    default:
-        return nullptr;
-    }
-}
-
-template <>
-inline void vshogi::minishogi::Squares::init_non_ranging_attacks_array()
-{
-    using namespace minishogi;
-
-    constexpr int size = sizeof(non_ranging_attacks_array)
-                         / sizeof(non_ranging_attacks_array[0][0][0]);
-    std::fill_n(&non_ranging_attacks_array[0][0][0], size, SQ_NA);
-
-    // B_FU, B_GI, B_KI, W_FU, W_GI, W_KI, OU
-    constexpr DirectionEnum piece_to_direction[num_non_ranging_attacks][9] = {
-        // clang-format off
-        {DIR_N, DIR_NA}, // B_FU
-        {DIR_NW, DIR_N, DIR_NE, DIR_SW, DIR_SE, DIR_NA}, // B_GI
-        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S, DIR_NA}, // B_KI
-        {DIR_S, DIR_NA}, // W_FU
-        {DIR_NW, DIR_NE, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // W_GI
-        {DIR_N, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // W_KI
-        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // OU
-        // clang-format on
-    };
-    for (uint i = 0U; i < num_non_ranging_attacks; ++i) {
-        for (auto&& sq : square_array) {
-            int index = 0;
-            for (auto&& dir : piece_to_direction[i]) {
-                if (dir == DIR_NA)
-                    break;
-                const auto dst = shift(sq, dir);
-                if (dst == SQ_NA)
-                    continue;
-                non_ranging_attacks_array[i][sq][index++] = dst;
-            }
-        }
     }
 }
 

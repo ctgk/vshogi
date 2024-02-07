@@ -600,8 +600,8 @@ protected:
         }
 
         const auto& enemy_mask = m_occupied[~turn];
-        for (auto& dir : Squares::direction_array) {
-            ptr_dst = Squares::get_squares_along(dir, src);
+        for (auto dp = Pieces::get_attack_directions(p); *dp != DIR_NA;) {
+            ptr_dst = Squares::get_squares_along(*dp++, src);
             for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
                 if (!dst_mask.is_one(*ptr_dst))
                     break;
@@ -720,8 +720,9 @@ protected:
             if (!stand.exist(pt))
                 continue;
             const auto p = Pieces::to_board_piece(turn, pt);
-            for (auto&& dir : Squares::direction_array) {
-                sq_ptr = Squares::get_squares_along(dir, enemy_king_sq);
+            for (auto dp = Pieces::get_attack_directions(p); *dp != DIR_NA;) {
+                sq_ptr
+                    = Squares::get_squares_along(rotate(*dp++), enemy_king_sq);
                 for (; *sq_ptr != Squares::SQ_NA;) {
                     if (m_occupied[2].is_one(*sq_ptr))
                         break;

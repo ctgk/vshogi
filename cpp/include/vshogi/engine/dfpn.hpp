@@ -221,13 +221,6 @@ private:
         const std::vector<Move>& legal_moves = game.get_legal_moves();
         std::unique_ptr<NodeEnemy>* ch = &m_child;
         int num_child = 0;
-        // for (auto&& m : legal_moves) {
-        //     if ((!Attacker) || game.template is_check_move<false>(m)) {
-        //         *ch = std::make_unique<NodeEnemy>(m);
-        //         ch = &ch->get()->m_sibling;
-        //         ++num_child;
-        //     }
-        // }
         if (m_parent != nullptr) {
             for (auto&& m : legal_moves) {
                 *ch = std::make_unique<NodeEnemy>(m);

@@ -14,11 +14,11 @@ template <
     class Square,
     class File,
     class Rank,
+    class Pieces,
     uint NumFiles,
     uint NumRanks,
     uint NumDir,
-    uint NumDirDL,
-    uint NumNonRangingBoardPiece>
+    uint NumDirDL>
 struct Squares
 {
     Squares() = delete;
@@ -42,11 +42,12 @@ struct Squares
     inline static Square file_to_square_array[num_files][num_ranks];
 
 private:
+    static constexpr uint num_piece_types = Pieces::num_piece_types;
     inline static Square shift_table[num_squares][num_directions];
     inline static Square
         ranging_squares_to[num_squares][num_directions]
                           [(NumFiles > NumRanks) ? NumFiles : NumRanks];
-    inline static Square non_ranging_attacks_array[NumNonRangingBoardPiece]
+    inline static Square non_ranging_attacks_array[2 * num_piece_types + 1]
                                                   [num_squares][9U];
 
     static constexpr File fe()
@@ -152,7 +153,7 @@ public:
     constexpr static int direction_to_delta(const DirectionEnum& d)
     {
         constexpr int nf = static_cast<int>(num_files);
-        constexpr int table[12]
+        constexpr int table[]
             = {-nf - 1,
                -nf,
                1 - nf,
@@ -174,9 +175,14 @@ public:
             return nullptr;
         return ranging_squares_to[location][direction];
     }
-    template <class BoardPiece>
-    static const Square*
-    get_non_ranging_attacks_by(const BoardPiece& p, const Square& location);
+    static const Square* get_non_ranging_attacks_by(
+        const typename Pieces::BoardPieceTypeEnum& p, const Square& location)
+    {
+        if (Pieces::is_ranging_piece(p))
+            return nullptr;
+        const uint index = Pieces::get_index(p);
+        return non_ranging_attacks_array[index][location];
+    }
 
 private:
     static DirectionEnum
@@ -223,7 +229,32 @@ private:
             }
         }
     }
-    static void init_non_ranging_attacks_array();
+    static void init_non_ranging_attacks_array()
+    {
+        std::fill_n(
+            &non_ranging_attacks_array[0][0][0],
+            sizeof(non_ranging_attacks_array)
+                / sizeof(non_ranging_attacks_array[0][0][0]),
+            SQ_NA);
+
+        for (uint ii = 0; ii < 2 * Pieces::num_piece_types; ++ii) {
+            const auto pt = Pieces::piece_array[ii % Pieces::num_piece_types];
+            if (Pieces::is_ranging_piece(pt))
+                continue;
+            const ColorEnum c = (ii < Pieces::num_piece_types) ? BLACK : WHITE;
+            const auto p = Pieces::to_board_piece(c, pt);
+            const auto dir_ptr_begin = Pieces::get_attack_directions(p);
+            for (auto&& sq : square_array) {
+                int index = 0;
+                for (auto dir_ptr = dir_ptr_begin; *dir_ptr != DIR_NA;) {
+                    const auto dst = shift(sq, *dir_ptr++);
+                    if (dst == SQ_NA)
+                        continue;
+                    non_ranging_attacks_array[ii][sq][index++] = dst;
+                }
+            }
+        }
+    }
 };
 
 } // namespace vshogi
