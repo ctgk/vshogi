@@ -132,8 +132,12 @@ public:
             NodeEnemy* child = select();
             child->m_parent = this;
             if (child->m_game == nullptr) {
-                child->m_game = std::make_unique<Game>(
-                    Game(*m_game).apply(child->m_action, true, !Attacker));
+                if (Attacker)
+                    child->m_game = std::make_unique<Game>(
+                        Game(*m_game).apply_nocheck(child->m_action));
+                else
+                    child->m_game = std::make_unique<Game>(
+                        Game(*m_game).apply_dfpn_defence(child->m_action));
             }
             child->select_simulate_expand_backprop();
         }

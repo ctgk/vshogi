@@ -251,13 +251,13 @@ TEST(minishogi_is_check_move, check_by_discovered_piece)
 
 TEST_GROUP(minishogi_apply){};
 
-TEST(minishogi_apply, update_legal_moves_and_result)
+TEST(minishogi_apply, mcts_internal_vertex)
 {
     using namespace vshogi::minishogi;
 
     {
         auto g = Game("5/4k/5/5/K4 b -");
-        g.apply(Move(SQ_4E, SQ_5E), false);
+        g.apply_mcts_internal_vertex(Move(SQ_4E, SQ_5E));
         CHECK_EQUAL(vshogi::UNKNOWN, g.get_result());
         CHECK_EQUAL(0, g.get_legal_moves().size());
 
@@ -268,21 +268,21 @@ TEST(minishogi_apply, update_legal_moves_and_result)
     {
         auto g = Game("5/2k2/5/2P2/K4 b 2G");
 
-        g.apply(Move(SQ_3C, KI), true);
+        g.apply(Move(SQ_3C, KI));
         CHECK_EQUAL(vshogi::ONGOING, g.get_result());
         CHECK_EQUAL(3, g.get_legal_moves().size());
 
-        g.apply(Move(SQ_3A, SQ_3B), false);
+        g.apply_mcts_internal_vertex(Move(SQ_3A, SQ_3B));
         CHECK_EQUAL(vshogi::UNKNOWN, g.get_result());
         CHECK_EQUAL(0, g.get_legal_moves().size());
 
-        g.apply(Move(SQ_3B, KI), true);
+        g.apply(Move(SQ_3B, KI));
         CHECK_EQUAL(vshogi::BLACK_WIN, g.get_result());
         CHECK_EQUAL(0, g.get_legal_moves().size());
     }
 }
 
-TEST(minishogi_apply, restrict_legal_to_check)
+TEST(minishogi_apply, dfpn_defence)
 {
     using namespace vshogi::minishogi;
 
@@ -303,14 +303,14 @@ TEST(minishogi_apply, restrict_legal_to_check)
         //   *---*---*---*---*---*
         // Black: KA
         auto g = Game("3k1/5/2P2/5/K4 w B");
-        g.apply(Move(SQ_1A, SQ_2A), true, true);
+        g.apply_dfpn_defence(Move(SQ_1A, SQ_2A));
         const auto& actual = g.get_legal_moves();
         CHECK_EQUAL(1, actual.size());
         CHECK_TRUE(actual[0] == Move(SQ_2B, KA));
     }
     {
         auto g = Game("3k1/5/2P2/5/K4 w B");
-        g.apply(Move(SQ_1A, SQ_2A), true, false);
+        g.apply_nocheck(Move(SQ_1A, SQ_2A));
         const auto& actual = g.get_legal_moves();
         CHECK_EQUAL(22 + 1 + 3, actual.size());
     }

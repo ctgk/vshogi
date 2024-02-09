@@ -254,6 +254,13 @@ animal_shogi::Pieces::to_piece_type(const char c)
 }
 
 template <>
+constexpr bool
+animal_shogi::Pieces::is_promotable(const animal_shogi::PieceTypeEnum& pt)
+{
+    return (pt == animal_shogi::CH);
+}
+
+template <>
 inline bool
 animal_shogi::Pieces::is_ranging_piece(const animal_shogi::PieceTypeEnum&)
 {
@@ -388,6 +395,16 @@ inline bool animal_shogi::Squares::in_promotion_zone(
 {
     return (c == BLACK) ? (r == animal_shogi::RANK1)
                         : (r == animal_shogi::RANK4);
+}
+
+template <>
+inline DirectionEnum animal_shogi::Squares::get_direction(
+    const animal_shogi::SquareEnum& dst, const animal_shogi::SquareEnum& src)
+{
+    constexpr DirectionEnum table[]
+        = {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_NA, DIR_E, DIR_SW, DIR_S, DIR_SE};
+    const auto diff = static_cast<int>(dst) - static_cast<int>(src);
+    return table[diff + 4];
 }
 
 template <>
@@ -532,6 +549,15 @@ inline animal_shogi::BitBoard animal_shogi::BitBoard::get_attacks_by(
 }
 
 template <>
+inline animal_shogi::BitBoard animal_shogi::BitBoard::get_attacks_by(
+    const animal_shogi::BoardPieceTypeEnum& p,
+    const animal_shogi::SquareEnum& sq,
+    const animal_shogi::BitBoard&)
+{
+    return get_attacks_by(p, sq);
+}
+
+template <>
 inline void animal_shogi::BitBoard::init_tables()
 {
     for (auto&& sq : animal_shogi::Squares::square_array) {
@@ -619,8 +645,8 @@ inline void animal_shogi::Game::update_internals()
 }
 
 template <>
-inline animal_shogi::Game& animal_shogi::Game::apply(
-    const animal_shogi::Move& move, const bool&, const bool&)
+inline animal_shogi::Game&
+animal_shogi::Game::apply(const animal_shogi::Move& move)
 {
     const auto illegal = !is_legal(move);
     m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
@@ -639,6 +665,32 @@ inline animal_shogi::Game& animal_shogi::Game::apply(
         m_legal_moves.clear();
     }
     return *this;
+}
+
+template <>
+inline animal_shogi::Game&
+animal_shogi::Game::apply_nocheck(const animal_shogi::Move& move)
+{
+    m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
+    if (!move.is_drop()) {
+        const auto moving = get_board()[move.source_square()];
+        const auto captured = get_board()[move.destination()];
+        m_result = animal_shogi::internal::move_result(move, moving, captured);
+    }
+    m_current_state.apply(move, &m_zobrist_hash);
+    if (m_result == ONGOING) {
+        update_internals();
+    } else {
+        m_legal_moves.clear();
+    }
+    return *this;
+}
+
+template <>
+inline animal_shogi::Game&
+animal_shogi::Game::apply_mcts_internal_vertex(const animal_shogi::Move& move)
+{
+    return apply_nocheck(move);
 }
 
 template <>

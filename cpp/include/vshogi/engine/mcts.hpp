@@ -343,7 +343,10 @@ private:
     {
         NodeGM* ch = select_child(coeff_puct, non_random_ratio, random_depth);
         ch->m_parent = this; // In order to cope with move operations.
-        game.apply(ch->m_action, ch->m_child == nullptr);
+        if (ch->m_child == nullptr)
+            game.apply_nocheck(ch->m_action);
+        else
+            game.apply_mcts_internal_vertex(ch->m_action);
         return ch;
     }
     NodeGM* select_child(

@@ -178,15 +178,35 @@ public:
     {
         return Game(m_current_state.hflip());
     }
-    Game& apply(
-        const Move& move,
-        const bool& update_legal_moves_and_result = true,
-        const bool& restrict_legal_to_check = false)
+    Game& apply(const Move& move)
+    {
+        if ((m_result == ONGOING) && (!is_legal(move))) {
+            m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
+            m_current_state.apply(move, &m_zobrist_hash);
+            m_result = (get_turn() == BLACK) ? BLACK_WIN : WHITE_WIN;
+            return *this;
+        }
+        return apply_nocheck(move);
+    }
+    Game& apply_nocheck(const Move& move)
     {
         m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
         m_current_state.apply(move, &m_zobrist_hash);
-        update_internals(
-            move, update_legal_moves_and_result, restrict_legal_to_check);
+        update_internals(move);
+        return *this;
+    }
+    Game& apply_mcts_internal_vertex(const Move& move)
+    {
+        m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
+        m_current_state.apply(move, &m_zobrist_hash);
+        update_internals_mcts_internal_vertex(move);
+        return *this;
+    }
+    Game& apply_dfpn_defence(const Move& move)
+    {
+        m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
+        m_current_state.apply(move, &m_zobrist_hash);
+        update_internals_dfpn_defence(move);
         return *this;
     }
     bool is_legal(const Move move) const
@@ -297,25 +317,23 @@ protected:
         update_legal_moves(false);
         update_result();
     }
-    void update_internals(
-        const Move& move,
-        const bool& update_legal_moves_and_result,
-        const bool& restrict_legal_to_check)
+    void update_internals(const Move& move)
     {
-        if ((m_result == ONGOING) && (!is_legal(move))) {
-            m_result = (get_turn() == BLACK) ? BLACK_WIN : WHITE_WIN;
-            return;
-        }
-
         update_king_occupied_checkers(move);
-
-        if (update_legal_moves_and_result) {
-            update_legal_moves(restrict_legal_to_check);
-            update_result();
-        } else {
-            m_legal_moves.clear();
-            m_result = UNKNOWN;
-        }
+        update_legal_moves(false);
+        update_result();
+    }
+    void update_internals_mcts_internal_vertex(const Move& move)
+    {
+        update_king_occupied_checkers(move);
+        m_legal_moves.clear();
+        m_result = UNKNOWN;
+    }
+    void update_internals_dfpn_defence(const Move& move)
+    {
+        update_king_occupied_checkers(move);
+        update_legal_moves(true);
+        update_result();
     }
 
 protected:
