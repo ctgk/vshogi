@@ -74,10 +74,8 @@ public:
 private:
     State m_current_state;
 
-    /**
-     * @brief Pairs of zobrist hash and the move.
-     */
-    std::vector<std::pair<std::uint64_t, Move>> m_record;
+    std::vector<std::uint64_t> m_zobrist_hash_list;
+    std::vector<Move> m_move_list;
     std::vector<Move> m_legal_moves;
     ResultEnum m_result;
     std::uint64_t m_zobrist_hash;
@@ -145,25 +143,24 @@ public:
     {
         if (include_move_count)
             return m_current_state.to_sfen() + " "
-                   + std::to_string(m_record.size() + 1);
+                   + std::to_string(m_move_list.size() + 1);
         else
             return m_current_state.to_sfen();
     }
     std::size_t record_length() const
     {
-        return m_record.size();
+        return m_move_list.size();
     }
     Move get_move_at(const std::size_t n) const
     {
-        return m_record[n].second;
+        return m_move_list[n];
     }
     std::string
     get_sfen_at(const std::size_t n, const bool include_move_count = true) const
     {
         auto s = State(m_initial_sfen_without_ply);
-        for (std::size_t ii = 0; ii < n; ++ii) {
-            s.apply(m_record[ii].second);
-        }
+        for (std::size_t ii = 0; ii < n; ++ii)
+            s.apply(m_move_list[ii]);
         if (include_move_count)
             return s.to_sfen() + ' ' + std::to_string(n + 1);
         return s.to_sfen();
@@ -181,8 +178,7 @@ public:
     Game& apply(const Move& move)
     {
         if ((m_result == ONGOING) && (!is_legal(move))) {
-            m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
-            m_current_state.apply(move, &m_zobrist_hash);
+            add_record_and_update_state(move);
             m_result = (get_turn() == BLACK) ? BLACK_WIN : WHITE_WIN;
             return *this;
         }
@@ -190,22 +186,19 @@ public:
     }
     Game& apply_nocheck(const Move& move)
     {
-        m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
-        m_current_state.apply(move, &m_zobrist_hash);
+        add_record_and_update_state(move);
         update_internals(move);
         return *this;
     }
     Game& apply_mcts_internal_vertex(const Move& move)
     {
-        m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
-        m_current_state.apply(move, &m_zobrist_hash);
+        add_record_and_update_state(move);
         update_internals_mcts_internal_vertex(move);
         return *this;
     }
     Game& apply_dfpn_defence(const Move& move)
     {
-        m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
-        m_current_state.apply(move, &m_zobrist_hash);
+        add_record_and_update_state(move);
         update_internals_dfpn_defence(move);
         return *this;
     }
@@ -298,7 +291,8 @@ public:
 
 protected:
     Game(const State& s)
-        : m_current_state(s), m_record(), m_legal_moves(), m_result(ONGOING),
+        : m_current_state(s), m_zobrist_hash_list(), m_move_list(),
+          m_legal_moves(), m_result(ONGOING),
           m_zobrist_hash(m_current_state.zobrist_hash()),
           m_initial_sfen_without_ply(m_current_state.to_sfen()),
           m_half_num_pieces{
@@ -308,8 +302,15 @@ protected:
               internal::total_point(m_current_state, BLACK),
               internal::total_point(m_current_state, WHITE)}
     {
-        m_record.reserve(128);
+        m_zobrist_hash_list.reserve(128);
+        m_move_list.reserve(128);
         update_internals();
+    }
+    void add_record_and_update_state(const Move& move)
+    {
+        m_zobrist_hash_list.emplace_back(m_zobrist_hash);
+        m_move_list.emplace_back(move);
+        m_current_state.apply(move, &m_zobrist_hash);
     }
     void update_internals()
     {
@@ -440,10 +441,10 @@ protected:
     bool is_repetitions() const
     {
         uint num = 1u;
-        const int n = static_cast<int>(m_record.size());
+        const int n = static_cast<int>(m_move_list.size());
         for (int ii = n - 4; ii >= 0; ii -= 2) {
             const uint index = static_cast<uint>(ii);
-            num += (m_zobrist_hash == m_record[index].first);
+            num += (m_zobrist_hash == m_zobrist_hash_list[index]);
             if (num > MaxAcceptableRepetition)
                 return true;
         }

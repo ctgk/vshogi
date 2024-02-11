@@ -649,7 +649,8 @@ inline animal_shogi::Game&
 animal_shogi::Game::apply(const animal_shogi::Move& move)
 {
     const auto illegal = !is_legal(move);
-    m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
+    m_zobrist_hash_list.emplace_back(m_zobrist_hash);
+    m_move_list.emplace_back(move);
     if (!move.is_drop()) {
         const auto moving = get_board()[move.source_square()];
         const auto captured = get_board()[move.destination()];
@@ -671,7 +672,8 @@ template <>
 inline animal_shogi::Game&
 animal_shogi::Game::apply_nocheck(const animal_shogi::Move& move)
 {
-    m_record.emplace_back(std::make_pair(m_zobrist_hash, move));
+    m_zobrist_hash_list.emplace_back(m_zobrist_hash);
+    m_move_list.emplace_back(move);
     if (!move.is_drop()) {
         const auto moving = get_board()[move.source_square()];
         const auto captured = get_board()[move.destination()];
@@ -737,12 +739,13 @@ inline void animal_shogi::Game::to_feature_map(float* const data) const
 
 template <>
 inline animal_shogi::Game::Game(const animal_shogi::State& s)
-    : m_current_state(s), m_record(), m_legal_moves(), m_result(ONGOING),
-      m_zobrist_hash(m_current_state.zobrist_hash()),
+    : m_current_state(s), m_zobrist_hash_list(), m_move_list(), m_legal_moves(),
+      m_result(ONGOING), m_zobrist_hash(m_current_state.zobrist_hash()),
       m_initial_sfen_without_ply(m_current_state.to_sfen()),
       m_half_num_pieces{0, 0}, m_initial_points{0, 0}
 {
-    m_record.reserve(128);
+    m_zobrist_hash_list.reserve(128);
+    m_move_list.reserve(128);
     update_internals();
 }
 
