@@ -131,6 +131,14 @@ public:
     {
         return m_current_state.get_stand(c);
     }
+    const SquareEnum& get_king_location(const ColorEnum& c) const
+    {
+        return m_king_locations[c];
+    }
+    const BitBoard& get_occupied(const ColorEnum& c) const
+    {
+        return m_occupied[c];
+    }
     const std::vector<Move>& get_legal_moves() const
     {
         return m_legal_moves;
