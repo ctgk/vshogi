@@ -109,6 +109,16 @@ public:
         }
         return false;
     }
+    bool has_pawn_in_file(
+        const ColorEnum& c, const typename Squares::FileEnum& f) const
+    {
+        const auto pawn = Pieces::to_board_piece(c, Pieces::FU);
+        for (auto&& sq : Squares::file_to_square_array[f]) {
+            if (pawn == m_pieces[sq])
+                return true;
+        }
+        return false;
+    }
     Board hflip() const
     {
         Board out;

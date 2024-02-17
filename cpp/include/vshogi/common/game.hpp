@@ -139,6 +139,10 @@ public:
     {
         return m_occupied[c];
     }
+    const BitBoard& get_occupied() const
+    {
+        return m_occupied[2];
+    }
     const std::vector<Move>& get_legal_moves() const
     {
         return m_legal_moves;
@@ -818,12 +822,23 @@ protected:
         }
         return false;
     }
-    bool is_drop_pawn_mate(const SquareEnum dst) const
+    static bool is_neighbor(const SquareEnum a, const SquareEnum b)
+    {
+        for (auto dir : Squares::direction_array) {
+            if (b == Squares::shift(a, dir))
+                return true;
+        }
+        return false;
+    }
+
+public:
+    bool is_drop_pawn_mate(const SquareEnum& dst) const
     {
         const auto turn = get_turn();
         const auto& board = get_board();
         const auto pawn = Pieces::to_board_piece(turn, Pieces::FU);
         const auto enemy_king_sq = m_king_locations[~turn];
+        const auto& enemy_mask = m_occupied[~turn];
         if (Squares::get_non_ranging_attacks_by(pawn, dst)[0] != enemy_king_sq)
             return false;
 
@@ -831,6 +846,8 @@ protected:
         const SquareEnum* sq_ptr = Squares::get_non_ranging_attacks_by(
             board[enemy_king_sq], enemy_king_sq);
         for (; *sq_ptr != Squares::SQ_NA; ++sq_ptr) {
+            if (enemy_mask.is_one(*sq_ptr))
+                continue;
             if (board.is_square_attacked(turn, *sq_ptr, enemy_king_sq))
                 continue;
             return false;
@@ -854,14 +871,6 @@ protected:
             }
         }
         return true;
-    }
-    static bool is_neighbor(const SquareEnum a, const SquareEnum b)
-    {
-        for (auto dir : Squares::direction_array) {
-            if (b == Squares::shift(a, dir))
-                return true;
-        }
-        return false;
     }
 };
 

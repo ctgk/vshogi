@@ -10,6 +10,7 @@ template <class Game>
 void append_legal_moves_by_king(
     std::vector<typename Game::Move>& out, const Game& game)
 {
+    using Move = typename Game::Move;
     using Squares = typename Game::Squares;
 
     const auto ac = game.get_turn(); //!< ally color
@@ -26,7 +27,39 @@ void append_legal_moves_by_king(
             continue;
         if (board.is_square_attacked(ec, *ptr_dst, src))
             continue;
-        out.emplace_back(*ptr_dst, src, false);
+        out.emplace_back(Move(*ptr_dst, src, false));
+    }
+}
+
+template <class Game>
+void append_legal_moves_by_drop(
+    std::vector<typename Game::Move>& out, const Game& game)
+{
+    using BitBoard = typename Game::BitBoard;
+    using Move = typename Game::Move;
+    using Pieces = typename Game::Pieces;
+    using Squares = typename Game::Squares;
+
+    const auto turn = game.get_turn();
+    const auto& stand = game.get_stand(turn);
+    const auto& occupied = game.get_occupied();
+    const auto& board = game.get_board();
+    for (auto&& pt : Pieces::stand_piece_array) {
+        if (!stand.exist(pt))
+            continue;
+        for (auto&& sq : Squares::square_array) {
+            if (occupied.is_one(sq))
+                continue;
+            const auto p = Pieces::to_board_piece(turn, pt);
+            const auto attacks = BitBoard::get_attacks_by(p, sq);
+            if (!attacks.any())
+                continue;
+            if ((pt == Pieces::FU)
+                && (board.has_pawn_in_file(turn, Squares::to_file(sq))
+                    || game.is_drop_pawn_mate(sq)))
+                continue;
+            out.emplace_back(Move(sq, pt));
+        }
     }
 }
 
@@ -48,4 +81,4 @@ std::vector<typename Game::Move> get_legal_moves(const Game& game)
 
 } // namespace vshogi
 
-#endif VSHOGI_COMMON_LEGALS_HPP
+#endif // VSHOGI_COMMON_LEGALS_HPP
