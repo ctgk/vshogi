@@ -543,6 +543,9 @@ if __name__ == '__main__':
     )
     if args.resume_rl_cycle_from == 1:
         PolicyValueFunction(network).save_model_as_tflite(f'models/model_{0:04d}.tflite')
+    else:
+        i = args.resume_rl_cycle_from
+        network.load_weights(f'models/checkpoint_{i-1:04d}/checkpoint_{i-1:04d}').expect_partial()
 
 
     for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
@@ -567,6 +570,7 @@ if __name__ == '__main__':
             PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
 
             if (i == 1) or (get_best_player_index(i, i - 1) == i):
+                network.save_weights(f'models/checkpoint_{i:04d}/checkpoint_{i:04d}')
                 break
             else:
                 self_play_index_from += args.self_play
