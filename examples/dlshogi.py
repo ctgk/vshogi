@@ -550,9 +550,10 @@ if __name__ == '__main__':
 
     for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
 
-        self_play_index_from = 0
         learning_rate = args.nn_learning_rate
         while True:
+            pattern = f'datasets/dataset_{i:04d}/*.tsv'
+            self_play_index_from = len([p for p in glob(pattern) if 'vs' not in p])
             # Self-play!
             subprocess.call([
                 sys.executable, "dlshogi.py", "self-play", args.shogi_variant,
