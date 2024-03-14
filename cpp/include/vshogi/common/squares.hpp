@@ -183,6 +183,14 @@ public:
         const uint index = Pieces::get_index(p);
         return non_ranging_attacks_array[index][location];
     }
+    static bool is_neighbor(const SquareEnum& a, const SquareEnum& b)
+    {
+        for (auto&& dir : direction_array) {
+            if (b == shift(a, dir))
+                return true;
+        }
+        return false;
+    }
 
 private:
     static DirectionEnum

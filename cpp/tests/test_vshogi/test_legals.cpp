@@ -190,4 +190,64 @@ TEST(minishogi_legals, append_legal_moves_by_non_king)
     }
 }
 
+TEST(minishogi_legals, append_legal_moves_by_non_king_moving_to)
+{
+    using namespace vshogi::minishogi;
+    {
+        auto game = Game("5/5/5/5/5 b -");
+        std::vector<Move> actual;
+        vshogi::append_legal_moves_by_non_king_moving_to(actual, game, SQ_1A);
+        CHECK_EQUAL(0, actual.size());
+    }
+    {
+        auto game = Game("5/5/4R/5/3K1 b -");
+        std::vector<Move> actual;
+        vshogi::append_legal_moves_by_non_king_moving_to(actual, game, SQ_1E);
+        CHECK_EQUAL(1, actual.size());
+    }
+}
+
+TEST(minishogi_legals, append_legal_moves_defending_king_dropping_to)
+{
+    using namespace vshogi::minishogi;
+    {
+        auto game = Game("5/5/5/5/5 b RBGSP");
+        std::vector<Move> actual;
+        vshogi::append_legal_moves_defending_king_dropping_to(
+            actual, game, SQ_1A);
+        CHECK_EQUAL(4, actual.size());
+    }
+    {
+        auto game = Game("5/5/5/5/5 b RBGSP");
+        std::vector<Move> actual;
+        vshogi::append_legal_moves_defending_king_dropping_to(
+            actual, game, SQ_1B);
+        CHECK_EQUAL(5, actual.size());
+    }
+}
+
+TEST(minishogi_legals, append_legal_moves_to_defend_king)
+{
+    using namespace vshogi::minishogi;
+    {
+        auto game = Game("5/5/5/R3p/4K b -");
+        std::vector<Move> actual;
+        vshogi::append_legal_moves_to_defend_king(actual, game);
+        CHECK_EQUAL(1, actual.size());
+    }
+    {
+        auto game = Game("b4/5/5/5/1P2K b P");
+        std::vector<Move> actual;
+        vshogi::append_legal_moves_to_defend_king(actual, game);
+        for (auto&& m : {
+                 Move(SQ_3C, FU),
+                 Move(SQ_2D, FU),
+             }) {
+            CHECK_TRUE(
+                std::find(actual.cbegin(), actual.cend(), m) != actual.cend());
+        }
+        CHECK_EQUAL(2, actual.size());
+    }
+}
+
 } // namespace test_vshogi::test_legals

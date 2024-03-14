@@ -232,6 +232,16 @@ public:
         return m_checker_locations[0] != Squares::SQ_NA;
     }
 
+    bool in_double_check() const
+    {
+        return m_checker_locations[1] != Squares::SQ_NA;
+    }
+
+    const SquareEnum& get_checker_location(const uint index) const
+    {
+        return m_checker_locations[index];
+    }
+
     template <bool CheckLegality = true>
     bool is_check_move(const Move& move) const
     {
