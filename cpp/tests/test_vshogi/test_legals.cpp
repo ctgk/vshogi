@@ -3,6 +3,7 @@
 #include "vshogi/common/legals.hpp"
 #include "vshogi/variants/judkins_shogi.hpp"
 #include "vshogi/variants/minishogi.hpp"
+#include "vshogi/variants/shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
 
@@ -11,6 +12,7 @@ namespace test_vshogi::test_legals
 
 TEST_GROUP(minishogi_legals){};
 TEST_GROUP(judkins_shogi_legals){};
+TEST_GROUP(shogi_legals){};
 
 TEST(minishogi_legals, append_legal_moves_by_king)
 {
@@ -247,6 +249,92 @@ TEST(minishogi_legals, append_legal_moves_to_defend_king)
                 std::find(actual.cbegin(), actual.cend(), m) != actual.cend());
         }
         CHECK_EQUAL(2, actual.size());
+    }
+}
+
+TEST(minishogi_legals, append_check_moves_moving_to)
+{
+    using namespace vshogi::minishogi;
+    auto game = Game("kB2r/4R/P4/5/4K b -");
+    std::vector<Move> actual;
+    vshogi::append_check_moves_moving_to(actual, game, SQ_5B);
+    for (auto&& m : {
+             Move(SQ_5B, SQ_4A, true), // forced promotion
+             Move(SQ_5B, SQ_5C),
+         }) {
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), m) != actual.cend());
+    }
+    CHECK_EQUAL(2, actual.size());
+
+    // pinned
+    CHECK_FALSE(
+        std::find(actual.cbegin(), actual.cend(), Move(SQ_5B, SQ_1B))
+        != actual.cend());
+}
+
+TEST(shogi_legals, append_check_moves_moving_to_force_no_promotion)
+{
+    using namespace vshogi::shogi;
+    auto game = Game("4k4/9/9/9/4N4/9/9/9/9 b -");
+    std::vector<Move> actual;
+    vshogi::append_check_moves_moving_to(actual, game, SQ_4C);
+    CHECK_EQUAL(1, actual.size());
+    CHECK_TRUE(Move(SQ_4C, SQ_5E, false) == actual[0]);
+}
+
+TEST(minishogi_legals, append_counter_check_moves_dropping_to)
+{
+    using namespace vshogi::minishogi;
+    auto game = Game("b4/5/k4/5/4K b RBGSP");
+    std::vector<Move> actual;
+    vshogi::append_counter_check_moves_dropping_to(actual, game, SQ_4B);
+    CHECK_EQUAL(2, actual.size());
+    for (auto&& m : {
+             Move(SQ_4B, KA),
+             Move(SQ_4B, GI),
+         }) {
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), m) != actual.cend());
+    }
+}
+
+TEST(minishogi_legals, get_counter_check_moves_non_ranging)
+{
+    using namespace vshogi::minishogi;
+    auto game = Game("2k2/5/4p/4K/2B2 b -");
+    const auto actual = vshogi::get_counter_check_moves(game);
+    CHECK_EQUAL(1, actual.size());
+    CHECK_TRUE(Move(SQ_1C, SQ_3E) == actual[0]);
+}
+
+TEST(minishogi_legals, get_counter_check_moves_ranging_check)
+{
+    using namespace vshogi::minishogi;
+    // Turn: BLACK
+    // White: -
+    //     5   4   3   2   1
+    //   *---*---*---*---*---*
+    // A |-KA|   |-OU|   |   |
+    //   *---*---*---*---*---*
+    // B |   |   |   |   |   |
+    //   *---*---*---*---*---*
+    // C |   |+HI|   |   |   |
+    //   *---*---*---*---*---*
+    // D |   |   |   |   |   |
+    //   *---*---*---*---*---*
+    // E |   |   |   |   |+OU|
+    //   *---*---*---*---*---*
+    // Black: KA
+    auto game = Game("b1k2/5/1R3/5/4K b B");
+    const auto actual = vshogi::get_counter_check_moves(game);
+    CHECK_EQUAL(2, actual.size());
+    for (auto&& m : {
+             Move(SQ_4B, KA), // drop move
+             Move(SQ_3C, SQ_4C), // board move
+         }) {
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), m) != actual.cend());
     }
 }
 

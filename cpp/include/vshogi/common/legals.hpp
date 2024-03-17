@@ -264,9 +264,7 @@ void append_legal_moves_to_defend_king(
 template <class Game>
 std::vector<typename Game::Move> get_legal_moves(const Game& game)
 {
-    using Move = typename Game::Move;
-    using Squares = typename Game::Squares;
-    std::vector<Move> out;
+    std::vector<typename Game::Move> out;
     append_legal_moves_by_king(out, game);
     if (!game.in_check()) {
         append_legal_moves_by_drop(out, game);
@@ -274,6 +272,121 @@ std::vector<typename Game::Move> get_legal_moves(const Game& game)
     } else if (!game.in_double_check()) {
         append_legal_moves_to_defend_king(out, game);
     }
+    return out;
+}
+
+template <class Game>
+void append_check_moves_moving_to(
+    std::vector<typename Game::Move>& out,
+    const Game& game,
+    const typename Game::SquareEnum& dst)
+{
+    using BitBoard = typename Game::BitBoard;
+    using Move = typename Game::Move;
+    using Pieces = typename Game::Pieces;
+    using Squares = typename Game::Squares;
+
+    const auto turn = game.get_turn();
+    const auto& board = game.get_board();
+    const auto& king_location = game.get_king_location(turn);
+    const auto& enemy_king_sq = game.get_king_location(~turn);
+    const auto& enemy_mask = game.get_occupied(~turn);
+    const auto& occupied = game.get_occupied();
+    const auto promotable_dst = Squares::in_promotion_zone(dst, turn);
+
+    for (auto&& dir : Squares::direction_array) {
+        auto ptr_src = Squares::get_squares_along(dir, dst);
+        for (; *ptr_src != Squares::SQ_NA; ++ptr_src) {
+            const auto& src = *ptr_src;
+            if (!occupied.is_one(src)) // vacant
+                continue;
+            if (enemy_mask.is_one(src) || (src == king_location))
+                break;
+            const auto& p = board[src];
+            if (!BitBoard::get_attacks_by(p, src).is_one(dst))
+                break;
+            const auto src_dir = Squares::get_direction(src, king_location);
+            if ((src_dir != DIR_NA)
+                && (src_dir != Squares::get_direction(dst, king_location))
+                && (board.find_attacker(~turn, king_location, src_dir, src)
+                    != Squares::SQ_NA))
+                break;
+            if (BitBoard::get_attacks_by(p, dst).is_one(enemy_king_sq))
+                out.emplace_back(Move(dst, src, false));
+            if (Pieces::is_promotable(p)
+                && (promotable_dst || Squares::in_promotion_zone(src, turn))
+                && BitBoard::get_attacks_by(Pieces::promote(p), dst)
+                       .is_one(enemy_king_sq))
+                out.emplace_back(Move(dst, src, true));
+            break;
+        }
+    }
+}
+
+template <class Game>
+void append_counter_check_moves_dropping_to(
+    std::vector<typename Game::Move>& out,
+    const Game& game,
+    const typename Game::SquareEnum& dst)
+{
+    using BitBoard = typename Game::BitBoard;
+    using Pieces = typename Game::Pieces;
+    using Move = typename Game::Move;
+    using Squares = typename Game::Squares;
+
+    const auto turn = game.get_turn();
+    const auto& board = game.get_board();
+    const auto& stand = game.get_stand(turn);
+    const auto& enemy_king_sq = game.get_king_location(~turn);
+    for (auto&& pt : Pieces::stand_piece_array) {
+        if (!stand.exist(pt))
+            continue;
+        const auto p = Pieces::to_board_piece(turn, pt);
+        const auto attacks = BitBoard::get_attacks_by(p, dst);
+        if (!attacks.is_one(enemy_king_sq))
+            continue;
+        if ((pt == Pieces::FU)
+            && board.has_pawn_in_file(turn, Squares::to_file(dst)))
+            continue;
+        out.emplace_back(Move(dst, pt));
+    }
+}
+
+template <class Game>
+std::vector<typename Game::Move> get_counter_check_moves(const Game& game)
+{
+    using Move = typename Game::Move;
+    using Squares = typename Game::Squares;
+    std::vector<Move> out;
+
+    const auto turn = game.get_turn();
+    const auto& king_sq = game.get_king_location(turn);
+    const auto& checker_sq = game.get_checker_location(0);
+
+    append_check_moves_moving_to(out, game, checker_sq);
+    if (Squares::is_neighbor(king_sq, checker_sq))
+        return out;
+
+    const auto dir = Squares::get_direction(checker_sq, king_sq);
+    auto ptr_dst = Squares::get_squares_along(dir, king_sq);
+    for (; *ptr_dst != checker_sq; ++ptr_dst) {
+        append_check_moves_moving_to(out, game, *ptr_dst);
+        append_counter_check_moves_dropping_to(out, game, *ptr_dst);
+    }
+    return out;
+}
+
+template <class Game>
+std::vector<typename Game::Move> get_check_moves(const Game& game)
+{
+    std::vector<typename Game::Move> out;
+    if (game.in_double_check())
+        return out;
+    if (game.in_check())
+        return get_counter_check_moves(game);
+
+    append_check_moves_by_drop(out, game);
+    append_check_moves_by_board(out, game);
     return out;
 }
 
