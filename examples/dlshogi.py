@@ -418,7 +418,7 @@ def parse_args():
 
     @classopt(default_long=True)
     class Args:
-        run: str = config(long=False, choices=['rl', 'self-play', 'validation'])
+        run: str = config(long=False, choices=['rl', 'self-play', 'train', 'validation'])
         shogi_variant: str = config(
             long=False,
             choices=['shogi', 'animal_shogi', 'judkins_shogi', 'minishogi'],
@@ -525,6 +525,22 @@ if __name__ == '__main__':
             os.makedirs(f'datasets/dataset_{i:04d}')
         self_play_and_dump_records(i)
         sys.exit(0)
+    elif args.run == 'train':
+        shogi = args._shogi
+        network = build_policy_value_network(
+            input_size=(shogi.Game.ranks, shogi.Game.files),
+            input_channels=shogi.Game.feature_channels,
+            num_policy_per_square=shogi.Move._num_policy_per_square(),
+            num_channels_in_hidden_layer=args.nn_channels,
+            num_backbone_layers=args.nn_backbones,
+        )
+        i = args.resume_rl_cycle_from
+        if i != 1:
+            network.load_weights(f'models/checkpoint_{i-1:04d}/checkpoint_{i-1:04d}').expect_partial()
+        load_data_and_train_network(network, i, args.nn_learning_rate)
+        PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
+        network.save_weights(f'models/checkpoint_{i:04d}/checkpoint_{i:04d}')
+        sys.exit(0)
     elif args.run == 'validation':
         i = args.resume_rl_cycle_from
         if not os.path.isdir(f'datasets/dataset_{i + 1:04d}'):
@@ -532,24 +548,18 @@ if __name__ == '__main__':
         play_against_past_players(i, dump_records=True)
         sys.exit(0)
 
-    shogi = args._shogi
-
-    network = build_policy_value_network(
-        input_size=(shogi.Game.ranks, shogi.Game.files),
-        input_channels=shogi.Game.feature_channels,
-        num_policy_per_square=shogi.Move._num_policy_per_square(),
-        num_channels_in_hidden_layer=args.nn_channels,
-        num_backbone_layers=args.nn_backbones,
-    )
     if args.resume_rl_cycle_from == 1:
+        shogi = args._shogi
+        network = build_policy_value_network(
+            input_size=(shogi.Game.ranks, shogi.Game.files),
+            input_channels=shogi.Game.feature_channels,
+            num_policy_per_square=shogi.Move._num_policy_per_square(),
+            num_channels_in_hidden_layer=args.nn_channels,
+            num_backbone_layers=args.nn_backbones,
+        )
         PolicyValueFunction(network).save_model_as_tflite(f'models/model_{0:04d}.tflite')
-    else:
-        i = args.resume_rl_cycle_from
-        network.load_weights(f'models/checkpoint_{i-1:04d}/checkpoint_{i-1:04d}').expect_partial()
-
 
     for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
-
         learning_rate = args.nn_learning_rate
         while True:
             pattern = f'datasets/dataset_{i:04d}/*.tsv'
@@ -567,11 +577,19 @@ if __name__ == '__main__':
             ])
 
             # Train NN!
-            load_data_and_train_network(network, i, learning_rate)
-            PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
+            subprocess.call([
+                sys.executable, "dlshogi.py", "train", args.shogi_variant,
+                "--resume_rl_cycle_from", str(i),
+                "--nn_channels", str(args.nn_channels),
+                "--nn_backbones", str(args.nn_backbones),
+                "--nn_train_fraction", str(args.nn_train_fraction),
+                "--nn_epochs", str(args.nn_epochs),
+                "--nn_minibatch", str(args.nn_minibatch),
+                "--nn_learning_rate", str(learning_rate),
+                "--output", args.output,
+            ])
 
             if (i == 1) or (get_best_player_index(i, i - 1) == i):
-                network.save_weights(f'models/checkpoint_{i:04d}/checkpoint_{i:04d}')
                 break
             else:
                 self_play_index_from += args.self_play
