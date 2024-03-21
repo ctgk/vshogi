@@ -377,6 +377,44 @@ std::vector<typename Game::Move> get_counter_check_moves(const Game& game)
 }
 
 template <class Game>
+void append_check_moves_by_drop(
+    std::vector<typename Game::Move>& out, const Game& game)
+{
+    using BitBoard = typename Game::BitBoard;
+    using Move = typename Game::Move;
+    using Pieces = typename Game::Pieces;
+    using Squares = typename Game::Squares;
+
+    const auto turn = game.get_turn();
+    const auto& stand = game.get_stand(turn);
+    const auto& occupied = game.get_occupied();
+    const auto& enemy_king_sq = game.get_king_location(~turn);
+    const auto& board = game.get_board();
+    for (auto&& pt : Pieces::stand_piece_array) {
+        if (!stand.exist(pt))
+            continue;
+        const auto p = Pieces::to_board_piece(turn, pt);
+        auto attack_dir_ptr = Pieces::get_attack_directions(p);
+        for (; *attack_dir_ptr != DIR_NA;) {
+            const auto dir_from_enemy_king = rotate(*attack_dir_ptr++);
+            auto dst_ptr = Squares::get_squares_along(
+                dir_from_enemy_king, enemy_king_sq);
+            for (; *dst_ptr != Squares::SQ_NA; ++dst_ptr) {
+                if (occupied.is_one(*dst_ptr)
+                    || (!BitBoard::get_attacks_by(p, *dst_ptr)
+                             .is_one(enemy_king_sq)))
+                    break;
+                if ((pt == Pieces::FU)
+                    && (board.has_pawn_in_file(turn, Squares::to_file(*dst_ptr))
+                        || game.is_drop_pawn_mate(*dst_ptr)))
+                    break;
+                out.emplace_back(Move(*dst_ptr, pt));
+            }
+        }
+    }
+}
+
+template <class Game>
 std::vector<typename Game::Move> get_check_moves(const Game& game)
 {
     std::vector<typename Game::Move> out;

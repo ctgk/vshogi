@@ -338,4 +338,54 @@ TEST(minishogi_legals, get_counter_check_moves_ranging_check)
     }
 }
 
+TEST(minishogi_legals, append_check_moves_by_drop_drop_pawn_mate)
+{
+    using namespace vshogi::minishogi;
+    auto game = Game("3rk/R4/5/5/5 b P");
+    std::vector<Move> actual;
+    vshogi::append_check_moves_by_drop(actual, game);
+    CHECK_EQUAL(0, actual.size());
+}
+
+TEST(minishogi_legals, append_check_moves_by_drop_two_pawn_in_a_file)
+{
+    using namespace vshogi::minishogi;
+    auto game = Game("4k/5/5/4P/5 b P");
+    std::vector<Move> actual;
+    vshogi::append_check_moves_by_drop(actual, game);
+    CHECK_EQUAL(0, actual.size());
+}
+
+TEST(minishogi_legals, append_check_moves_by_drop_ranging_piece)
+{
+    using namespace vshogi::minishogi;
+    auto game = Game("4k/5/5/4p/5 b R");
+    std::vector<Move> actual;
+    vshogi::append_check_moves_by_drop(actual, game);
+    CHECK_EQUAL(4 + 2, actual.size());
+    for (auto&& m : {
+             Move(SQ_5A, HI),
+             Move(SQ_1C, HI),
+         }) {
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), m) != actual.cend());
+    }
+    for (auto&& m : {
+             Move(SQ_1D, HI),
+             Move(SQ_1E, HI),
+         }) {
+        CHECK_FALSE(
+            std::find(actual.cbegin(), actual.cend(), m) != actual.cend());
+    }
+}
+
+TEST(minishogi_legals, append_check_moves_by_drop)
+{
+    using namespace vshogi::minishogi;
+    auto game = Game("5/5/2k2/5/5 b RBGSP");
+    std::vector<Move> actual;
+    vshogi::append_check_moves_by_drop(actual, game);
+    CHECK_EQUAL(8 + 8 + 6 + 5 + 1, actual.size());
+}
+
 } // namespace test_vshogi::test_legals
