@@ -159,4 +159,16 @@ TEST(bitboard, ou)
     }
 }
 
+TEST(bitboard, get_promotion_zone)
+{
+    {
+        const auto actual = BitBoard::get_promotion_zone(vshogi::BLACK);
+        CHECK_TRUE(bb_ranka == actual);
+    }
+    {
+        const auto actual = BitBoard::get_promotion_zone(vshogi::WHITE);
+        CHECK_TRUE(bb_ranke == actual);
+    }
+}
+
 } // namespace test_vshogi::test_minishogi

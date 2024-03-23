@@ -182,4 +182,16 @@ TEST(bitboard, ou)
     }
 }
 
+TEST(bitboard, get_promotion_zone)
+{
+    {
+        const auto actual = BitBoard::get_promotion_zone(vshogi::BLACK);
+        CHECK_TRUE((bb_ranka | bb_rankb) == actual);
+    }
+    {
+        const auto actual = BitBoard::get_promotion_zone(vshogi::WHITE);
+        CHECK_TRUE((bb_ranke | bb_rankf) == actual);
+    }
+}
+
 } // namespace test_vshogi::test_judkins_shogi

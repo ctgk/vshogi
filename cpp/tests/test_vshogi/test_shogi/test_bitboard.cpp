@@ -383,4 +383,16 @@ TEST(bitboard, get_attacks_by_ou)
     }
 }
 
+TEST(bitboard, get_promotion_zone)
+{
+    {
+        const auto actual = BitBoard::get_promotion_zone(vshogi::BLACK);
+        CHECK_TRUE((bb_ranka | bb_rankb | bb_rankc) == actual);
+    }
+    {
+        const auto actual = BitBoard::get_promotion_zone(vshogi::WHITE);
+        CHECK_TRUE((bb_rankg | bb_rankh | bb_ranki) == actual);
+    }
+}
+
 } // namespace test_vshogi::test_shogi

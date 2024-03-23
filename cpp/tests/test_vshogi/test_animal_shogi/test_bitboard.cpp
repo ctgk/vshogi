@@ -53,4 +53,16 @@ TEST(animal_shogi_bitboard, hen_attacks)
     CHECK_TRUE((bb_b4 | bb_c3) == BitBoard::get_attacks_by(W_HE, SQ_C4));
 }
 
+TEST(animal_shogi_bitboard, get_promotion_zone)
+{
+    {
+        const auto actual = BitBoard::get_promotion_zone(vshogi::BLACK);
+        CHECK_TRUE(bb_rank1 == actual);
+    }
+    {
+        const auto actual = BitBoard::get_promotion_zone(vshogi::WHITE);
+        CHECK_TRUE(bb_rank4 == actual);
+    }
+}
+
 } // namespace test_vshogi::test_animal_shogi
