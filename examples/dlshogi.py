@@ -344,24 +344,21 @@ def get_best_player_index(current: int, best: int):
         if (results['win'] > win_threshold) or (results['loss'] > loss_threshold):
             break
         if n % 2 == 0:
-            while True:
-                game = play_game(args._game_getter(), player_curr, player_best)
-                if game.result != vshogi.ONGOING:
-                    break
+            game_init = args._game_getter()
+            game = play_game(game_init.copy(), player_curr, player_best)
             results[{
                 vshogi.BLACK_WIN: 'win',
                 vshogi.WHITE_WIN: 'loss',
                 vshogi.DRAW: 'draw',
+                vshogi.ONGOING: 'draw',
             }[game.result]] += 1
         else:
-            while True:
-                game = play_game(args._game_getter(), player_best, player_curr)
-                if game.result != vshogi.ONGOING:
-                    break
+            game = play_game(game_init.copy(), player_best, player_curr)
             results[{
                 vshogi.BLACK_WIN: 'loss',
                 vshogi.WHITE_WIN: 'win',
                 vshogi.DRAW: 'draw',
+                vshogi.ONGOING: 'draw',
             }[game.result]] += 1
         pbar.set_description(f'{current} vs {best}: {results}')
     return current if results['win'] > win_threshold else best
@@ -382,14 +379,13 @@ def play_against_past_players(index: int, dump_records: bool = False):
         pbar = tqdm(range(args.validations), ncols=100)
         for n in pbar:
             if n % 2 == 0:
-                while True:
-                    game = play_game(args._game_getter(), player, player_prev)
-                    if game.result != vshogi.ONGOING:
-                        break
+                game_init = args._game_getter()
+                game = play_game(game_init.copy(), player, player_prev)
                 validation_results[{
                     vshogi.BLACK_WIN: 'win',
                     vshogi.WHITE_WIN: 'loss',
                     vshogi.DRAW: 'draw',
+                    vshogi.ONGOING: 'draw',
                 }[game.result]] += 1
                 if dump_records:
                     path = f'datasets/dataset_{index + 1:04d}/record_B{index:02d}vsW{i_prev:02d}_{n:04d}.tsv'
@@ -397,14 +393,12 @@ def play_against_past_players(index: int, dump_records: bool = False):
                         dump_game_records(f, game)
                     os.system(f'cat {path} | grep -e " b " -e "state" > tmp.tsv; mv tmp.tsv {path}')
             else:
-                while True:
-                    game = play_game(args._game_getter(), player_prev, player)
-                    if game.result != vshogi.ONGOING:
-                        break
+                game = play_game(game_init.copy(), player_prev, player)
                 validation_results[{
                     vshogi.BLACK_WIN: 'loss',
                     vshogi.WHITE_WIN: 'win',
                     vshogi.DRAW: 'draw',
+                    vshogi.ONGOING: 'draw',
                 }[game.result]] += 1
                 if dump_records:
                     path = f'datasets/dataset_{index + 1:04d}/record_B{i_prev:02d}vsW{index:02d}_{n:04d}.tsv'
