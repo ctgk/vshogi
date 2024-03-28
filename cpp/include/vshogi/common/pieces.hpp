@@ -67,6 +67,10 @@ public:
             return VOID;
         return static_cast<BoardPiece>((c << color_bit) | p);
     }
+    static constexpr BoardPiece rotate(const BoardPiece& p)
+    {
+        return to_board_piece(~get_color(p), to_piece_type(p));
+    }
     static char to_char(const PieceType& p);
 
     static constexpr bool is_promotable(const PieceType& p);
@@ -149,7 +153,7 @@ public:
         for (uint ii = NumPieceTypes; ii--;) {
             for (uint jj = 0; jj < 9; ++jj) {
                 attack_directions_table[ii + NumPieceTypes][jj]
-                    = rotate(attack_directions_table[ii][jj]);
+                    = vshogi::rotate(attack_directions_table[ii][jj]);
             }
         }
     }

@@ -361,9 +361,11 @@ std::vector<typename Game::Move> get_counter_check_moves(const Game& game)
 
     const auto turn = game.get_turn();
     const auto& king_sq = game.get_king_location(turn);
+    const auto& enemy_king_sq = game.get_king_location(~turn);
     const auto& checker_sq = game.get_checker_location(0);
 
-    append_check_moves_moving_to(out, game, checker_sq);
+    if (Squares::get_direction(checker_sq, enemy_king_sq) != DIR_NA)
+        append_check_moves_moving_to(out, game, checker_sq);
     if (Squares::is_neighbor(king_sq, checker_sq))
         return out;
 
@@ -409,6 +411,128 @@ void append_check_moves_by_drop(
                         || game.is_drop_pawn_mate(*dst_ptr)))
                     break;
                 out.emplace_back(Move(*dst_ptr, pt));
+            }
+        }
+    }
+}
+
+template <class Game>
+void append_check_moves_by_board(
+    std::vector<typename Game::Move>& out, const Game& game)
+{
+    using BitBoard = typename Game::BitBoard;
+    using Move = typename Game::Move;
+    using Pieces = typename Game::Pieces;
+    using Squares = typename Game::Squares;
+
+    const auto turn = game.get_turn();
+    const auto& board = game.get_board();
+    const auto& ally_mask = game.get_occupied(turn);
+    const auto& king_sq = game.get_king_location(turn);
+    const auto& enemy_king_sq = game.get_king_location(~turn);
+    const auto& occupied = game.get_occupied();
+    for (auto&& src : Squares::square_array) {
+        if ((!ally_mask.is_one(src)) || (src == king_sq))
+            continue;
+
+        const auto& p = board[src];
+        const auto src_dir_from_king = Squares::get_direction(src, king_sq);
+        const auto promotable_src = Squares::in_promotion_zone(src, turn);
+        const auto hidden_attacker_sq
+            = board.find_attacker(~turn, king_sq, src_dir_from_king, src);
+        if (hidden_attacker_sq != Squares::SQ_NA) {
+            const auto dst_begin
+                = Squares::get_squares_along(src_dir_from_king, king_sq);
+            if (Pieces::is_promotable(p)) {
+                const auto dst_mask = BitBoard::get_attacks_by(p, src)
+                                      & BitBoard::get_attacks_by(
+                                          Pieces::promote(Pieces::rotate(p)),
+                                          enemy_king_sq,
+                                          occupied)
+                                      & (~ally_mask);
+                for (auto dst = dst_begin; *dst != Squares::SQ_NA; ++dst) {
+                    if (!dst_mask.is_one(*dst))
+                        continue;
+                    if (promotable_src
+                        || Squares::in_promotion_zone(*dst, turn))
+                        out.emplace_back(Move(*dst, src, true));
+                }
+            }
+            const auto dst_mask
+                = BitBoard::get_attacks_by(p, src)
+                  & BitBoard::get_attacks_by(
+                      Pieces::rotate(p), enemy_king_sq, occupied)
+                  & (~ally_mask);
+            for (auto dst = dst_begin; *dst != Squares::SQ_NA; ++dst) {
+                if (!dst_mask.is_one(*dst))
+                    continue;
+                out.emplace_back(Move(*dst, src, false));
+            }
+        } else if (Pieces::is_ranging_piece(p)) {
+            if (Pieces::is_promotable(p)) {
+                const auto dst_mask = BitBoard::get_attacks_by(
+                                          Pieces::promote(Pieces::rotate(p)),
+                                          enemy_king_sq,
+                                          occupied)
+                                      & (~ally_mask);
+                const auto attack_mask = BitBoard::get_attacks_by(p, src);
+                for (auto dp = Pieces::get_attack_directions(p); *dp != DIR_NA;
+                     ++dp) {
+                    auto ptr_dst = Squares::get_squares_along(*dp, src);
+                    for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
+                        if (!attack_mask.is_one(*ptr_dst))
+                            break;
+                        if (dst_mask.is_one(*ptr_dst)
+                            && (promotable_src
+                                || Squares::in_promotion_zone(*ptr_dst, turn)))
+                            out.emplace_back(Move(*ptr_dst, src, true));
+                        if (occupied.is_one(*ptr_dst))
+                            break;
+                    }
+                }
+            }
+            const auto dst_mask
+                = BitBoard::get_attacks_by(
+                      Pieces::rotate(p), enemy_king_sq, occupied)
+                  & (~ally_mask);
+            const auto attack_mask = BitBoard::get_attacks_by(p, src);
+            for (auto dp = Pieces::get_attack_directions(p); *dp != DIR_NA;
+                 ++dp) {
+                auto ptr_dst = Squares::get_squares_along(*dp, src);
+                for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
+                    if (!attack_mask.is_one(*ptr_dst))
+                        break;
+                    if (dst_mask.is_one(*ptr_dst))
+                        out.emplace_back(Move(*ptr_dst, src, false));
+                    if (occupied.is_one(*ptr_dst))
+                        break;
+                }
+            }
+        } else {
+            if (Pieces::is_promotable(p)) {
+                const auto dst_mask
+                    = BitBoard::get_attacks_by(
+                          Pieces::rotate(Pieces::promote(p)), enemy_king_sq)
+                      & (~ally_mask);
+                auto ptr_dst = Squares::get_non_ranging_attacks_by(p, src);
+                for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
+                    if (!dst_mask.is_one(*ptr_dst))
+                        continue;
+                    if (promotable_src
+                        || Squares::in_promotion_zone(*ptr_dst, turn))
+                        out.emplace_back(Move(*ptr_dst, src, true));
+                }
+            }
+            { // no promotion
+                const auto dst_mask
+                    = BitBoard::get_attacks_by(Pieces::rotate(p), enemy_king_sq)
+                      & (~ally_mask);
+                auto ptr_dst = Squares::get_non_ranging_attacks_by(p, src);
+                for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
+                    if (!dst_mask.is_one(*ptr_dst))
+                        continue;
+                    out.emplace_back(Move(*ptr_dst, src, false));
+                }
             }
         }
     }
