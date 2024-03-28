@@ -139,7 +139,7 @@ inline void export_game(pybind11::module& m)
                const Move action,
                float max_value) -> py::array_t<float> {
                 const auto turn = self.get_turn();
-                const auto legal_moves = self.get_legal_moves();
+                const auto legal_moves = vshogi::get_legal_moves(game);
                 const auto num_legal_moves
                     = static_cast<float>(legal_moves.size());
                 const auto action_is_legal = has(legal_moves, action);

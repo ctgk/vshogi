@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "vshogi/common/color.hpp"
+#include "vshogi/common/legals.hpp"
 #include "vshogi/common/result.hpp"
 #include "vshogi/variants/animal_shogi.hpp"
 
@@ -222,7 +223,8 @@ private:
     }
     void expand(const Game& game)
     {
-        const std::vector<Move>& legal_moves = game.get_legal_moves();
+        const auto legal_moves
+            = (Attacker) ? get_check_moves(game) : get_legal_moves(game);
         std::unique_ptr<NodeEnemy>* ch = &m_child;
         int num_child = 0;
         if (m_parent != nullptr) {

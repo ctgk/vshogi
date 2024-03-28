@@ -1,9 +1,10 @@
 #ifndef VSHOGI_COMMON_LEGALS_HPP
 #define VSHOGI_COMMON_LEGALS_HPP
 
-#include "vshogi/common/direction.hpp"
-
+#include <cassert>
 #include <vector>
+
+#include "vshogi/common/direction.hpp"
 
 namespace vshogi
 {
@@ -15,14 +16,20 @@ void append_legal_moves_by_king(
     using Move = typename Game::Move;
     using Squares = typename Game::Squares;
 
+
     const auto ac = game.get_turn(); //!< ally color
     const auto ec = ~ac; //!< enemy color
     const auto src = game.get_king_location(ac);
+    assert(
+        (0 <= static_cast<int>(src))
+        && (static_cast<int>(src) <= (Game::ranks() * Game::files())));
     if (src == Squares::SQ_NA)
         return;
     const auto& board = game.get_board();
     const auto moving = board[src];
+    assert(Game::Pieces::to_piece_type(moving) == Game::Pieces::OU);
     auto ptr_dst = Squares::get_non_ranging_attacks_by(moving, src);
+    assert(ptr_dst != nullptr);
     const auto& ally_mask = game.get_occupied(ac);
     for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
         if (ally_mask.is_one(*ptr_dst))
@@ -98,9 +105,9 @@ void append_legal_moves_by_non_king(
             continue;
 
         const auto& moving = board[src];
-        const auto src_dir_from_king = Squares::get_direction(src, king_sq);
         const auto promotable_piece = Pieces::is_promotable(moving);
         const auto promotable_src = Squares::in_promotion_zone(src, turn);
+        const auto src_dir_from_king = Squares::get_direction(src, king_sq);
         const auto hidden_attacker_sq
             = board.find_attacker(~turn, king_sq, src_dir_from_king, src);
         if (hidden_attacker_sq != Squares::SQ_NA) {

@@ -398,13 +398,41 @@ inline bool animal_shogi::Squares::in_promotion_zone(
 }
 
 template <>
+inline DirectionEnum
+animal_shogi::Squares::get_direction_for_diagonal_or_knight(
+    const animal_shogi::SquareEnum& dst, const animal_shogi::SquareEnum& src)
+{
+    using namespace vshogi::animal_shogi;
+    switch (static_cast<int>(src - dst))
+    {
+    case 8:
+        return DIR_NW;
+    case 2:
+        return DIR_NE;
+    case 4:
+        return (Squares::to_file(src) == FILE_A) ? DIR_NE : DIR_NW;
+    case -2:
+        return DIR_SW;
+    case -8:
+        return DIR_SE;
+    case -4:
+        return (Squares::to_file(dst) == FILE_A) ? DIR_SW : DIR_SE;
+    default:
+        return DIR_NA;
+    }
+}
+
+template <>
 inline DirectionEnum animal_shogi::Squares::get_direction(
     const animal_shogi::SquareEnum& dst, const animal_shogi::SquareEnum& src)
 {
     constexpr DirectionEnum table[]
         = {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_NA, DIR_E, DIR_SW, DIR_S, DIR_SE};
     const auto diff = static_cast<int>(dst) - static_cast<int>(src);
-    return table[diff + 4];
+    const auto index = diff + 4;
+    if ((index < 0) || (index > 8))
+        return DIR_NA;
+    return table[index];
 }
 
 template <>
@@ -615,30 +643,33 @@ inline void animal_shogi::Game::update_result()
 template <>
 inline void animal_shogi::Game::update_internals()
 {
-    const auto turn = get_turn();
-    const auto& board = get_board();
-    const auto& stand = get_stand(turn);
-    m_legal_moves.clear();
-    for (auto src : Squares::square_array) {
-        const auto p = board[src];
-        if ((p == Pieces::VOID) || (Pieces::get_color(p) != turn))
-            continue;
-        for (auto dp = Pieces::get_attack_directions(p); *dp != DIR_NA;) {
-            const auto dst = Squares::shift(src, *dp++);
-            if (dst == Squares::SQ_NA)
+    update_king_occupied_checkers();
+    {
+        const auto turn = get_turn();
+        const auto& board = get_board();
+        const auto& stand = get_stand(turn);
+        m_legal_moves.clear();
+        for (auto src : Squares::square_array) {
+            const auto p = board[src];
+            if ((p == Pieces::VOID) || (Pieces::get_color(p) != turn))
                 continue;
-            const auto t = board[dst];
-            if (((t == Pieces::VOID) || (Pieces::get_color(t) == ~turn))
-                && BitBoard::get_attacks_by(p, src).is_one(dst))
-                m_legal_moves.emplace_back(dst, src);
+            for (auto dp = Pieces::get_attack_directions(p); *dp != DIR_NA;) {
+                const auto dst = Squares::shift(src, *dp++);
+                if (dst == Squares::SQ_NA)
+                    continue;
+                const auto t = board[dst];
+                if (((t == Pieces::VOID) || (Pieces::get_color(t) == ~turn))
+                    && BitBoard::get_attacks_by(p, src).is_one(dst))
+                    m_legal_moves.emplace_back(dst, src);
+            }
         }
-    }
-    for (auto dst : Squares::square_array) {
-        if (!board.is_empty(dst))
-            continue;
-        for (auto pt : Pieces::stand_piece_array) {
-            if (stand.exist(pt))
-                m_legal_moves.emplace_back(Move(dst, pt));
+        for (auto dst : Squares::square_array) {
+            if (!board.is_empty(dst))
+                continue;
+            for (auto pt : Pieces::stand_piece_array) {
+                if (stand.exist(pt))
+                    m_legal_moves.emplace_back(Move(dst, pt));
+            }
         }
     }
     update_result();

@@ -1,6 +1,6 @@
 #ifndef VSHOGI_ENGINE_MCTS_HPP
 #define VSHOGI_ENGINE_MCTS_HPP
-
+#include <cassert>
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "vshogi/common/color.hpp"
+#include "vshogi/common/legals.hpp"
 #include "vshogi/common/result.hpp"
 #include "vshogi/engine/dfpn.hpp"
 
@@ -468,7 +469,7 @@ private:
 private:
     void expand(const Game& game, const float* const policy_logits)
     {
-        const std::vector<Move>& moves = game.get_legal_moves();
+        const auto moves = get_legal_moves(game);
         const auto num = moves.size();
         if (num == 0)
             return;
