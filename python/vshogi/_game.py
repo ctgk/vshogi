@@ -219,6 +219,17 @@ class Game(abc.ABC):
         self._game.apply(move)
         return self
 
+    def resign(self) -> 'Game':
+        """Resign game by current turn player.
+
+        Returns
+        -------
+        Game
+            Game after resignation.
+        """
+        self._game.resign()
+        return self
+
     def is_legal(self, move=None, *arg, **kwargs) -> bool:
         """Return true if the move is legal at the current state.
 

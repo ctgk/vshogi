@@ -385,5 +385,14 @@ def test_to_dlshogi_policy(game, move, expected):
     assert np.allclose(actual, expected, rtol=0, atol=1e-2)
 
 
+@pytest.mark.parametrize("game, expected", [
+    (shogi.Game(), shogi.WHITE_WIN),
+    (shogi.Game().apply('2f2g'), shogi.BLACK_WIN),
+])
+def test_resign(game, expected):
+    game.resign()
+    assert game.result == expected
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

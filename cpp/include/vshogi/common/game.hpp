@@ -175,6 +175,11 @@ public:
     {
         return Game(m_current_state.hflip());
     }
+    Game& resign()
+    {
+        m_result = (get_turn() == BLACK) ? WHITE_WIN : BLACK_WIN;
+        return *this;
+    }
     Game& apply(const Move& move)
     {
         if ((m_result == ONGOING) && (!is_legal(move))) {

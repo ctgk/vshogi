@@ -316,4 +316,29 @@ TEST(minishogi_apply, dfpn_defence)
     }
 }
 
+TEST_GROUP(minishogi_resign){};
+
+TEST(minishogi_resign, black_resign)
+{
+    using namespace vshogi::minishogi;
+    auto g = Game();
+    CHECK_EQUAL(vshogi::ONGOING, g.get_result());
+    CHECK_EQUAL(vshogi::BLACK, g.get_turn());
+
+    g.resign();
+    CHECK_EQUAL(vshogi::WHITE_WIN, g.get_result());
+}
+
+TEST(minishogi_resign, white_resign)
+{
+    using namespace vshogi::minishogi;
+    auto g = Game();
+    g.apply(Move(SQ_5C, SQ_5D));
+    CHECK_EQUAL(vshogi::ONGOING, g.get_result());
+    CHECK_EQUAL(vshogi::WHITE, g.get_turn());
+
+    g.resign();
+    CHECK_EQUAL(vshogi::BLACK_WIN, g.get_result());
+}
+
 } // namespace test_vshogi::test_game
