@@ -26,7 +26,8 @@ private:
     static constexpr uint promotion_mask = (1 << PromotionBit);
     static constexpr uint color_mask = (1 << color_bit);
     static constexpr uint piece_type_mask = (color_mask - 1);
-    static DirectionEnum attack_directions_table[2 * NumPieceTypes + 1][9];
+    static const DirectionEnum attack_directions_table[2 * NumPieceTypes + 1]
+                                                      [9];
 
 public:
     static constexpr PieceType FU = static_cast<PieceType>(0); // NOLINT
@@ -140,20 +141,7 @@ public:
     }
     static void init_tables()
     {
-        std::fill_n(
-            &attack_directions_table[0][0],
-            sizeof(attack_directions_table)
-                / sizeof(attack_directions_table[0][0]),
-            DIR_NA);
-        init_attack_directions_of_black();
-        for (uint ii = NumPieceTypes; ii--;) {
-            for (uint jj = 0; jj < 9; ++jj) {
-                attack_directions_table[ii + NumPieceTypes][jj]
-                    = rotate(attack_directions_table[ii][jj]);
-            }
-        }
     }
-    static void init_attack_directions_of_black();
 
     static constexpr BoardPiece B_OU = to_board_piece(BLACK, OU); // NOLINT
     static constexpr BoardPiece W_OU = to_board_piece(WHITE, OU); // NOLINT

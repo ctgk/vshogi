@@ -221,9 +221,32 @@ namespace vshogi
 {
 
 template <>
-inline DirectionEnum
+inline const DirectionEnum
     minishogi::Pieces::attack_directions_table[2 * num_piece_types + 1][9]
-    = {};
+    = {
+        // clang-format off
+{DIR_N,                                                      DIR_NA}, // B_FU
+{DIR_NW, DIR_N, DIR_NE, DIR_SW, DIR_SE,                      DIR_NA}, // B_GI
+{DIR_NW, DIR_NE, DIR_SW, DIR_SE,                             DIR_NA}, // B_KA
+{DIR_N, DIR_W, DIR_E, DIR_S,                                 DIR_NA}, // B_HI
+{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_KI
+{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_OU
+{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_TO
+{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_NG
+{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_UM
+{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_RY
+{DIR_S,                                                      DIR_NA}, // W_FU
+{DIR_SE, DIR_S, DIR_SW, DIR_NE, DIR_NW,                      DIR_NA}, // W_GI
+{DIR_SE, DIR_SW, DIR_NE, DIR_NW,                             DIR_NA}, // W_KA
+{DIR_S, DIR_E, DIR_W, DIR_N,                                 DIR_NA}, // W_HI
+{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_KI
+{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_OU
+{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_TO
+{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_NG
+{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_UM
+{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_RY
+        // clang-format on
+};
 
 template <>
 inline const vshogi::minishogi::PieceTypeEnum
@@ -336,32 +359,6 @@ minishogi::Pieces::is_ranging_piece(const minishogi::PieceTypeEnum& pt)
 {
     using namespace minishogi;
     return ((pt == KA) || (pt == HI) || (pt == UM) || (pt == RY));
-}
-
-template <>
-inline void minishogi::Pieces::init_attack_directions_of_black()
-{
-    constexpr DirectionEnum table[][9] = {
-        // clang-format off
-        {DIR_N,                                                      DIR_NA}, // B_FU
-        {DIR_NW, DIR_N, DIR_NE, DIR_SW, DIR_SE,                      DIR_NA}, // B_GI
-        {DIR_NW, DIR_NE, DIR_SW, DIR_SE,                             DIR_NA}, // B_KA
-        {DIR_N, DIR_W, DIR_E, DIR_S,                                 DIR_NA}, // B_HI
-        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_KI
-        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_OU
-        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_TO
-        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_NG
-        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_UM
-        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_RY
-        // clang-format on
-    };
-    for (uint ii = num_piece_types; ii--;) {
-        for (uint jj = 0; jj < 9; ++jj) {
-            if (table[ii][jj] == DIR_NA)
-                break;
-            attack_directions_table[ii][jj] = table[ii][jj];
-        }
-    }
 }
 
 template <>

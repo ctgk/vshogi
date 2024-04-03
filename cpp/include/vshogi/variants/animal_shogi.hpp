@@ -215,9 +215,22 @@ namespace vshogi
 {
 
 template <>
-inline DirectionEnum
+inline const DirectionEnum
     animal_shogi::Pieces::attack_directions_table[2 * num_piece_types + 1][9]
-    = {};
+    = {
+        // clang-format off
+{DIR_N,                                                      DIR_NA}, // B_CH
+{DIR_NW, DIR_NE, DIR_SW, DIR_SE,                             DIR_NA}, // B_EL
+{DIR_N, DIR_W, DIR_E, DIR_S,                                 DIR_NA}, // B_GI
+{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_LI
+{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_HE
+{DIR_S,                                                      DIR_NA}, // W_CH
+{DIR_SE, DIR_SW, DIR_NE, DIR_NW,                             DIR_NA}, // W_EL
+{DIR_S, DIR_E, DIR_W, DIR_N,                                 DIR_NA}, // W_GI
+{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_LI
+{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_HE
+        // clang-format on
+};
 
 template <>
 inline const animal_shogi::PieceTypeEnum animal_shogi::Pieces::piece_array[]
@@ -265,27 +278,6 @@ inline bool
 animal_shogi::Pieces::is_ranging_piece(const animal_shogi::PieceTypeEnum&)
 {
     return false;
-}
-
-template <>
-inline void animal_shogi::Pieces::init_attack_directions_of_black()
-{
-    constexpr DirectionEnum table[][9] = {
-        // clang-format off
-        {DIR_N,                                                      DIR_NA}, // B_CH
-        {DIR_NW, DIR_NE, DIR_SW, DIR_SE,                             DIR_NA}, // B_EL
-        {DIR_N, DIR_W, DIR_E, DIR_S,                                 DIR_NA}, // B_GI
-        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_LI
-        {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_HE
-        // clang-format on
-    };
-    for (uint ii = num_piece_types; ii--;) {
-        for (uint jj = 0; jj < 9; ++jj) {
-            if (table[ii][jj] == DIR_NA)
-                break;
-            attack_directions_table[ii][jj] = table[ii][jj];
-        }
-    }
 }
 
 template <>
