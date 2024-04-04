@@ -303,8 +303,9 @@ inline void animal_shogi::Pieces::append_sfen(
     static_assert(3 == animal_shogi::LI);
     static_assert(4 == animal_shogi::HE);
     if (p != VOID)
-        out += (get_color(p) == BLACK) ? std::toupper(table[p])
-                                       : table[to_piece_type(p)];
+        out += (get_color(p) == BLACK)
+                   ? static_cast<char>(std::toupper(static_cast<int>(table[p])))
+                   : table[to_piece_type(p)];
 }
 
 template <>
