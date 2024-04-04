@@ -38,7 +38,7 @@ enum PieceTypeEnum : std::uint8_t
     KA = 0b0011, //!< Kaku (Bishop)
     HI = 0b0100, //!< Hisha (Rook)
     KI = 0b0101, //!< Kin (Gold)
-    OU = 0b0111, //!< Ou, Gyoku (King)
+    OU = 0b0110, //!< Ou, Gyoku (King)
 
     TO = 0b1000 + FU, //!< Tokin (Promoted Pawn)
     NK = 0b1000 + KE, //!< Nari-Kei (Promoted Knight)
@@ -338,25 +338,15 @@ template <>
 inline char vshogi::judkins_shogi::Pieces::to_char(
     const vshogi::judkins_shogi::PieceTypeEnum& p)
 {
-    using namespace vshogi::judkins_shogi;
-    switch (p) {
-    case FU:
-        return 'p';
-    case KE:
-        return 'n';
-    case GI:
-        return 's';
-    case KA:
-        return 'b';
-    case HI:
-        return 'r';
-    case KI:
-        return 'g';
-    case OU:
-        return 'k';
-    default:
-        return '\0';
-    }
+    constexpr char table[] = {'p', 'n', 's', 'b', 'r', 'g', 'k'};
+    static_assert(0 == vshogi::judkins_shogi::FU);
+    static_assert(1 == vshogi::judkins_shogi::KE);
+    static_assert(2 == vshogi::judkins_shogi::GI);
+    static_assert(3 == vshogi::judkins_shogi::KA);
+    static_assert(4 == vshogi::judkins_shogi::HI);
+    static_assert(5 == vshogi::judkins_shogi::KI);
+    static_assert(6 == vshogi::judkins_shogi::OU);
+    return table[p];
 }
 
 template <>

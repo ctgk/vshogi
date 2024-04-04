@@ -32,7 +32,7 @@ private:
 public:
     static constexpr PieceType FU = static_cast<PieceType>(0); // NOLINT
     static constexpr PieceType OU // NOLINT
-        = static_cast<PieceType>(promotion_mask - 1);
+        = static_cast<PieceType>(NumStandPieceTypes);
     static constexpr PieceType NA // NOLINT
         = static_cast<PieceType>(color_mask - 1);
     static constexpr BoardPiece VOID // NOLINT

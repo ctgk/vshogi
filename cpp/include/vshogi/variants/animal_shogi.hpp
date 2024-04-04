@@ -283,60 +283,28 @@ animal_shogi::Pieces::is_ranging_piece(const animal_shogi::PieceTypeEnum&)
 template <>
 inline char animal_shogi::Pieces::to_char(const animal_shogi::PieceTypeEnum& p)
 {
-    switch (p) {
-    case animal_shogi::CH:
-        return 'c';
-    case animal_shogi::EL:
-        return 'e';
-    case animal_shogi::GI:
-        return 'g';
-    case animal_shogi::HE:
-        return 'h';
-    case animal_shogi::LI:
-        return 'l';
-    default:
-        return '\0';
-    }
+    constexpr char table[] = {'c', 'e', 'g', 'l', 'h'};
+    static_assert(0 == animal_shogi::CH);
+    static_assert(1 == animal_shogi::EL);
+    static_assert(2 == animal_shogi::GI);
+    static_assert(3 == animal_shogi::LI);
+    static_assert(4 == animal_shogi::HE);
+    return table[p];
 }
 
 template <>
 inline void animal_shogi::Pieces::append_sfen(
     const animal_shogi::BoardPieceTypeEnum& p, std::string& out)
 {
-    switch (p) {
-    case animal_shogi::B_CH:
-        out += 'C';
-        break;
-    case animal_shogi::B_EL:
-        out += 'E';
-        break;
-    case animal_shogi::B_GI:
-        out += 'G';
-        break;
-    case animal_shogi::B_LI:
-        out += 'L';
-        break;
-    case animal_shogi::B_HE:
-        out += 'H';
-        break;
-    case animal_shogi::W_CH:
-        out += 'c';
-        break;
-    case animal_shogi::W_EL:
-        out += 'e';
-        break;
-    case animal_shogi::W_GI:
-        out += 'g';
-        break;
-    case animal_shogi::W_LI:
-        out += 'l';
-        break;
-    case animal_shogi::W_HE:
-        out += 'h';
-        break;
-    default:
-        break;
-    }
+    constexpr char table[] = {'c', 'e', 'g', 'l', 'h'};
+    static_assert(0 == animal_shogi::CH);
+    static_assert(1 == animal_shogi::EL);
+    static_assert(2 == animal_shogi::GI);
+    static_assert(3 == animal_shogi::LI);
+    static_assert(4 == animal_shogi::HE);
+    if (p != VOID)
+        out += (get_color(p) == BLACK) ? std::toupper(table[p])
+                                       : table[to_piece_type(p)];
 }
 
 template <>

@@ -548,26 +548,16 @@ vshogi::shogi::Pieces::to_piece_type(const char c)
 template <>
 inline char shogi::Pieces::to_char(const shogi::PieceTypeEnum& p)
 {
-    switch (p) {
-    case shogi::FU:
-        return 'p';
-    case shogi::KY:
-        return 'l';
-    case shogi::KE:
-        return 'n';
-    case shogi::GI:
-        return 's';
-    case shogi::KA:
-        return 'b';
-    case shogi::HI:
-        return 'r';
-    case shogi::KI:
-        return 'g';
-    case shogi::OU:
-        return 'k';
-    default:
-        return '\0';
-    }
+    constexpr char table[] = {'p', 'l', 'n', 's', 'b', 'r', 'g', 'k'};
+    static_assert(0 == shogi::FU);
+    static_assert(1 == shogi::KY);
+    static_assert(2 == shogi::KE);
+    static_assert(3 == shogi::GI);
+    static_assert(4 == shogi::KA);
+    static_assert(5 == shogi::HI);
+    static_assert(6 == shogi::KI);
+    static_assert(7 == shogi::OU);
+    return table[p];
 }
 
 template <>

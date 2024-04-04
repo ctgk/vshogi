@@ -38,7 +38,7 @@ enum PieceTypeEnum : std::uint8_t
     HI = 0b0011, //!< Hisha (Rook)
 
     KI = 0b0100, //!< Kin (Gold)
-    OU = 0b0111, //!< Ou, Gyoku (King)
+    OU = 0b0101, //!< Ou, Gyoku (King)
 
     TO = 0b1000, //!< Tokin (Promoted Pawn)
     NG = 0b1001, //!< Nari-Gin (Promoted Silver)
@@ -298,23 +298,14 @@ template <>
 inline char
 vshogi::minishogi::Pieces::to_char(const vshogi::minishogi::PieceTypeEnum& p)
 {
-    using namespace vshogi::minishogi;
-    switch (p) {
-    case FU:
-        return 'p';
-    case GI:
-        return 's';
-    case KA:
-        return 'b';
-    case HI:
-        return 'r';
-    case KI:
-        return 'g';
-    case OU:
-        return 'k';
-    default:
-        return '\0';
-    }
+    constexpr char table[] = {'p', 's', 'b', 'r', 'g', 'k'};
+    static_assert(0 == vshogi::minishogi::FU);
+    static_assert(1 == vshogi::minishogi::GI);
+    static_assert(2 == vshogi::minishogi::KA);
+    static_assert(3 == vshogi::minishogi::HI);
+    static_assert(4 == vshogi::minishogi::KI);
+    static_assert(5 == vshogi::minishogi::OU);
+    return table[p];
 }
 
 template <>
