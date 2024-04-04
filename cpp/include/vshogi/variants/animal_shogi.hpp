@@ -472,28 +472,6 @@ animal_shogi::BitBoard::get_promotion_zone(const ColorEnum& c)
 }
 
 template <>
-template <DirectionEnum Dir>
-constexpr animal_shogi::BitBoard animal_shogi::BitBoard::shift() const
-{
-    constexpr auto bb_fab = animal_shogi::bb_filea | animal_shogi::bb_fileb;
-    constexpr auto bb_fbc = animal_shogi::bb_fileb | animal_shogi::bb_filec;
-    constexpr BitBoard filemask[] = {
-        // clang-format off
-        bb_fbc, ~BitBoard(0), bb_fab,
-        bb_fbc,               bb_fab,
-        bb_fbc, ~BitBoard(0), bb_fab,
-        bb_fbc,               bb_fab,
-        bb_fbc,               bb_fab,
-        // clang-format on
-    };
-    constexpr auto delta = animal_shogi::Squares::direction_to_delta(Dir);
-    if constexpr (delta > 0)
-        return (*this & filemask[Dir]) << static_cast<uint>(delta);
-    else
-        return (*this & filemask[Dir]) >> static_cast<uint>(-delta);
-}
-
-template <>
 inline animal_shogi::BitBoard animal_shogi::BitBoard::get_attacks_by(
     const animal_shogi::BoardPieceTypeEnum& p,
     const animal_shogi::SquareEnum& sq)

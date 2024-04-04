@@ -511,28 +511,6 @@ minishogi::BitBoard::get_promotion_zone(const ColorEnum& c)
 }
 
 template <>
-template <DirectionEnum Dir>
-constexpr minishogi::BitBoard minishogi::BitBoard::shift() const
-{
-    constexpr auto bb_f1234 = ~minishogi::bb_file5;
-    constexpr auto bb_f2345 = ~minishogi::bb_file1;
-    constexpr BitBoard filemask[] = {
-        // clang-format off
-        bb_f1234, ~BitBoard(0), bb_f2345,
-        bb_f1234,               bb_f2345,
-        bb_f1234, ~BitBoard(0), bb_f2345,
-        bb_f1234,               bb_f2345,
-        bb_f1234,               bb_f2345,
-        // clang-format on
-    };
-    constexpr auto delta = minishogi::Squares::direction_to_delta(Dir);
-    if constexpr (delta > 0)
-        return (*this & filemask[Dir]) << static_cast<uint>(delta);
-    else
-        return (*this & filemask[Dir]) >> static_cast<uint>(-delta);
-}
-
-template <>
 inline minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
     const vshogi::minishogi::BoardPieceTypeEnum& p,
     const vshogi::minishogi::SquareEnum& sq)

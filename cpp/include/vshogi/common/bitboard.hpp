@@ -86,7 +86,26 @@ public:
     static constexpr BitBoard get_promotion_zone(const ColorEnum& c);
 
     template <DirectionEnum Dir>
-    constexpr BitBoard shift() const;
+    constexpr BitBoard shift() const
+    {
+        constexpr auto bb_all = ~BitBoard(0);
+        constexpr auto bb_all_but_lmost = ~file_mask_leftmost();
+        constexpr auto bb_all_but_rmost = ~file_mask_rightmost();
+        constexpr auto delta = Squares::direction_to_delta(Dir);
+        constexpr BitBoard filemask[] = {
+            // clang-format off
+            bb_all_but_lmost, bb_all, bb_all_but_rmost,
+            bb_all_but_lmost,         bb_all_but_rmost,
+            bb_all_but_lmost, bb_all, bb_all_but_rmost,
+            bb_all_but_lmost,         bb_all_but_rmost,
+            bb_all_but_lmost,         bb_all_but_rmost,
+            // clang-format on
+        };
+        if constexpr (delta > 0)
+            return (*this & filemask[Dir]) << static_cast<uint>(delta);
+        else
+            return (*this & filemask[Dir]) >> static_cast<uint>(-delta);
+    }
     constexpr BitBoard expand_adjacently() const
     {
         return *this | shift<DIR_N>() | shift<DIR_E>() | shift<DIR_S>()
@@ -155,6 +174,26 @@ private:
         x += x >> 16; //put count of each 32 bits into their lowest 8 bits
         x += x >> 32; //put count of each 64 bits into their lowest 8 bits
         return x & 0x7f;
+    }
+    template <uint NumSquaresFromTop = Squares::num_ranks>
+    static constexpr BitBoard file_mask_leftmost()
+    {
+        if constexpr (NumSquaresFromTop == 0u)
+            return BitBoard(0);
+        else
+            return (file_mask_leftmost<NumSquaresFromTop - 1>()
+                    << Squares::num_files)
+                   | BitBoard(1);
+    }
+    template <uint NumSquaresFromTop = Squares::num_ranks>
+    static constexpr BitBoard file_mask_rightmost()
+    {
+        if constexpr (NumSquaresFromTop == 0u)
+            return BitBoard(0);
+        else
+            return (BitBoard(1) << (Squares::num_files - 1))
+                   | (file_mask_rightmost<NumSquaresFromTop - 1>()
+                      << Squares::num_files);
     }
 };
 
