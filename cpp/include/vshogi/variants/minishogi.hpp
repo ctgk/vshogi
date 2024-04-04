@@ -167,8 +167,8 @@ using BlackWhiteStands = vshogi::BlackWhiteStands<Stand>;
  */
 using Move = vshogi::Move<std::uint16_t, Squares, Pieces, 10, 5, 4>;
 
-using BitBoard
-    = vshogi::BitBoard<std::uint32_t, Squares, BoardPieceTypeEnum, num_attacks>;
+using BitBoard = vshogi::
+    BitBoard<std::uint32_t, Squares, BoardPieceTypeEnum, num_attacks, 1>;
 
 using Board = vshogi::Board<Squares, Pieces, BitBoard>;
 
@@ -501,13 +501,6 @@ inline uint minishogi::BitBoard::hamming_weight() const
     x += x >> 8;
     x += x >> 16;
     return x & 0x7f;
-}
-
-template <>
-constexpr minishogi::BitBoard
-minishogi::BitBoard::get_promotion_zone(const ColorEnum& c)
-{
-    return (c == BLACK) ? minishogi::bb_ranka : minishogi::bb_ranke;
 }
 
 template <>

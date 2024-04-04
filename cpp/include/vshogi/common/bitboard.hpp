@@ -10,7 +10,12 @@
 namespace vshogi
 {
 
-template <class UInt, class Squares, class BoardPiece, uint NumAttackTypes>
+template <
+    class UInt,
+    class Squares,
+    class BoardPiece,
+    uint NumAttackTypes,
+    uint NumPromotionRanks>
 class BitBoard
 {
 public:
@@ -83,7 +88,13 @@ public:
     {
         return square_to_bitboard_array[sq];
     }
-    static constexpr BitBoard get_promotion_zone(const ColorEnum& c);
+    static constexpr BitBoard get_promotion_zone(const ColorEnum& c)
+    {
+        constexpr uint s
+            = Squares::num_squares - NumPromotionRanks * Squares::num_files;
+        return (c == BLACK) ? ((~BitBoard(0)) << s) >> s
+                            : ((~BitBoard(0)) >> s) << s;
+    }
 
     template <DirectionEnum Dir>
     constexpr BitBoard shift() const

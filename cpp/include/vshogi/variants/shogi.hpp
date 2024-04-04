@@ -212,8 +212,8 @@ using BlackWhiteStands = vshogi::BlackWhiteStands<Stand>;
 using Move = vshogi::Move<std::uint16_t, Squares, Pieces, 14, 7, 6>;
 
 #ifdef __SIZEOF_INT128__
-using BitBoard
-    = vshogi::BitBoard<__uint128_t, Squares, BoardPieceTypeEnum, num_attacks>;
+using BitBoard = vshogi::
+    BitBoard<__uint128_t, Squares, BoardPieceTypeEnum, num_attacks, 3>;
 #else
 class UInt128
 {
@@ -338,7 +338,7 @@ private:
 };
 
 using BitBoard
-    = vshogi::BitBoard<UInt128, Squares, BoardPieceTypeEnum, num_attacks>;
+    = vshogi::BitBoard<UInt128, Squares, BoardPieceTypeEnum, num_attacks, 3>;
 #endif
 
 using Board = vshogi::Board<Squares, Pieces, BitBoard>;
@@ -837,15 +837,6 @@ inline uint shogi::BitBoard::hamming_weight() const
 {
     return hamming_weight_64bit(static_cast<std::uint64_t>(m_value))
            + hamming_weight_64bit(static_cast<std::uint64_t>(m_value >> 64));
-}
-
-template <>
-constexpr shogi::BitBoard
-shogi::BitBoard::get_promotion_zone(const ColorEnum& c)
-{
-    using namespace vshogi::shogi;
-    return (c == BLACK) ? (bb_ranka | bb_rankb | bb_rankc)
-                        : (bb_rankg | bb_rankh | bb_ranki);
 }
 
 template <>

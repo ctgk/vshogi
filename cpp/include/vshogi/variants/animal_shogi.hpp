@@ -133,7 +133,7 @@ using BlackWhiteStands = vshogi::BlackWhiteStands<Stand>;
 using Move = vshogi::Move<std::uint8_t, Squares, Pieces, 7, 3, 3>;
 
 using BitBoard = vshogi::
-    BitBoard<std::uint16_t, Squares, BoardPieceTypeEnum, num_attack_types>;
+    BitBoard<std::uint16_t, Squares, BoardPieceTypeEnum, num_attack_types, 1>;
 
 using Board = vshogi::Board<Squares, Pieces, BitBoard>;
 
@@ -463,13 +463,6 @@ inline animal_shogi::BitBoard
     animal_shogi::BitBoard::attacks_table[animal_shogi::num_attack_types]
                                          [animal_shogi::Squares::num_squares]
     = {};
-
-template <>
-constexpr animal_shogi::BitBoard
-animal_shogi::BitBoard::get_promotion_zone(const ColorEnum& c)
-{
-    return (c == BLACK) ? animal_shogi::bb_rank1 : animal_shogi::bb_rank4;
-}
 
 template <>
 inline animal_shogi::BitBoard animal_shogi::BitBoard::get_attacks_by(
