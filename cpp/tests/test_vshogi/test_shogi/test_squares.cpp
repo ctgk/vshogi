@@ -405,6 +405,8 @@ TEST(squares, get_direction)
     CHECK_EQUAL(vshogi::DIR_SE, Squares::get_direction(SQ_1I, SQ_9A));
     CHECK_EQUAL(vshogi::DIR_SSW, Squares::get_direction(SQ_8I, SQ_7G));
     CHECK_EQUAL(vshogi::DIR_SSE, Squares::get_direction(SQ_2I, SQ_3G));
+    CHECK_EQUAL(vshogi::DIR_NA, Squares::get_direction(SQ_9A, SQ_2B));
+    CHECK_EQUAL(vshogi::DIR_NA, Squares::get_direction(SQ_5C, SQ_1A));
 }
 
 TEST(squares, get_attacks_by_fu)

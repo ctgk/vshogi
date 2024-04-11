@@ -66,6 +66,12 @@ TEST(shogi_engine, mcts_with_dfpn)
         const auto m = Move(kifu[ii]);
         g.apply(m);
         root.apply(m);
+
+        if (ii == 166) {
+            CHECK_TRUE(g.get_result() == vshogi::BLACK_WIN);
+        } else {
+            CHECK_TRUE(g.get_result() == vshogi::ONGOING);
+        }
     }
 }
 

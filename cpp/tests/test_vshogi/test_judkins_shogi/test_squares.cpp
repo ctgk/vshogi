@@ -155,6 +155,7 @@ TEST(squares, get_direction)
     CHECK_EQUAL(vshogi::DIR_SE, Squares::get_direction(SQ_1F, SQ_6A));
     CHECK_EQUAL(vshogi::DIR_SSW, Squares::get_direction(SQ_6C, SQ_5A));
     CHECK_EQUAL(vshogi::DIR_SSE, Squares::get_direction(SQ_2D, SQ_3B));
+    CHECK_EQUAL(vshogi::DIR_NA, Squares::get_direction(SQ_6A, SQ_1B));
 }
 
 TEST(squares, get_non_ranging_attacks_by)
