@@ -34,6 +34,10 @@ private:
 
 public:
     Board();
+    Board(const char* const sfen)
+    {
+        set_sfen(sfen);
+    }
     bool operator==(const Board& other) const
     {
         for (auto& sq : Squares::square_array) {
@@ -87,14 +91,43 @@ public:
         if (ptr_sq == nullptr)
             return SQ_NA;
         for (; *ptr_sq != SQ_NA; ++ptr_sq) {
-            const auto sq = *ptr_sq;
-            const auto p = m_pieces[sq];
+            const auto& sq = *ptr_sq;
+            const auto& p = m_pieces[sq];
             if ((p == VOID) || (sq == skip))
                 continue;
             if ((Pieces::get_color(p) == attacker_color)
                 && BitBoard::get_attacks_by(p, sq).is_one(attacked))
                 return sq;
             return SQ_NA;
+        }
+        return SQ_NA;
+    }
+    SquareEnum find_pinned(
+        const ColorEnum& attacker_color,
+        const SquareEnum& attacked,
+        const DirectionEnum& dir) const
+    {
+        const auto dir_rotated = vshogi::rotate(dir);
+        SquareEnum out = SQ_NA;
+        auto ptr_sq = Squares::get_squares_along(dir, attacked);
+        if (ptr_sq == nullptr)
+            return SQ_NA;
+        for (; *ptr_sq != SQ_NA; ++ptr_sq) {
+            const auto& sq = *ptr_sq;
+            const auto& p = m_pieces[sq];
+            if (p == VOID)
+                continue;
+            if (Pieces::get_color(p) != attacker_color) {
+                if (out == SQ_NA)
+                    out = sq;
+                else
+                    return SQ_NA;
+            } else {
+                if (Pieces::is_ranging_to(p, dir_rotated))
+                    return out;
+                else
+                    return SQ_NA;
+            }
         }
         return SQ_NA;
     }
