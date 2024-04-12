@@ -207,6 +207,48 @@ public:
         update_internals_dfpn_defence(move);
         return *this;
     }
+    Game copy_and_apply_nocheck(const Move& move)
+    {
+        auto out = Game(
+            m_current_state,
+            m_zobrist_hash_list,
+            m_move_list,
+            m_result,
+            m_zobrist_hash,
+            m_initial_sfen_without_ply,
+            m_half_num_pieces[BLACK],
+            m_half_num_pieces[WHITE],
+            m_initial_points[BLACK],
+            m_initial_points[WHITE],
+            m_occupied[BLACK],
+            m_occupied[WHITE],
+            m_occupied[2],
+            m_king_locations[BLACK],
+            m_king_locations[WHITE]);
+        out.apply_nocheck(move);
+        return out;
+    }
+    Game copy_and_apply_dfpn_defence(const Move& move)
+    {
+        auto out = Game(
+            m_current_state,
+            m_zobrist_hash_list,
+            m_move_list,
+            m_result,
+            m_zobrist_hash,
+            m_initial_sfen_without_ply,
+            m_half_num_pieces[BLACK],
+            m_half_num_pieces[WHITE],
+            m_initial_points[BLACK],
+            m_initial_points[WHITE],
+            m_occupied[BLACK],
+            m_occupied[WHITE],
+            m_occupied[2],
+            m_king_locations[BLACK],
+            m_king_locations[WHITE]);
+        out.apply_dfpn_defence(move);
+        return out;
+    }
     bool is_legal(const Move move) const
     {
         return (
@@ -310,6 +352,33 @@ protected:
         m_zobrist_hash_list.reserve(128);
         m_move_list.reserve(128);
         update_internals();
+    }
+    Game(
+        const State& s,
+        const std::vector<uint64_t>& zobrist_hash_list,
+        const std::vector<Move>& move_list,
+        const ResultEnum& result,
+        const uint64_t& zobrist_hash,
+        const std::string& initial_sfen_without_ply,
+        const uint& half_num_pieces_black,
+        const uint& half_num_pieces_white,
+        const uint& initial_points_black,
+        const uint& initial_points_white,
+        const BitBoard& occupied_black,
+        const BitBoard& occupied_white,
+        const BitBoard& occupied_both,
+        const SquareEnum& king_location_black,
+        const SquareEnum& king_location_white)
+        : m_current_state(s), m_zobrist_hash_list(zobrist_hash_list),
+          m_move_list(move_list), m_legal_moves(), m_result(result),
+          m_zobrist_hash(zobrist_hash),
+          m_initial_sfen_without_ply(initial_sfen_without_ply),
+          m_half_num_pieces{half_num_pieces_black, half_num_pieces_white},
+          m_initial_points{initial_points_black, initial_points_white},
+          m_occupied{occupied_black, occupied_white, occupied_both},
+          m_king_locations{king_location_black, king_location_white},
+          m_checker_locations{}
+    {
     }
     void add_record_and_update_state(const Move& move)
     {

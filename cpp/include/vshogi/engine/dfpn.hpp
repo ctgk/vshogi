@@ -134,10 +134,10 @@ public:
             if (child->m_game == nullptr) {
                 if (Attacker)
                     child->m_game = std::make_unique<Game>(
-                        Game(*m_game).apply_nocheck(child->m_action));
+                        m_game->copy_and_apply_nocheck(child->m_action));
                 else
                     child->m_game = std::make_unique<Game>(
-                        Game(*m_game).apply_dfpn_defence(child->m_action));
+                        m_game->copy_and_apply_dfpn_defence(child->m_action));
             }
             child->select_simulate_expand_backprop();
         }
