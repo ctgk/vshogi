@@ -147,6 +147,8 @@ def _get_generator_from_df(df: pd.DataFrame):
     value_options = {
         (vshogi.DRAW, vshogi.BLACK): 0.,
         (vshogi.DRAW, vshogi.WHITE): 0.,
+        (vshogi.ONGOING, vshogi.BLACK): 0.,
+        (vshogi.ONGOING, vshogi.WHITE): 0.,
         (vshogi.BLACK_WIN, vshogi.BLACK): 1.,
         (vshogi.BLACK_WIN, vshogi.WHITE): -1.,
         (vshogi.WHITE_WIN, vshogi.BLACK): -1.,
@@ -529,11 +531,12 @@ if __name__ == '__main__':
             num_backbone_layers=args.nn_backbones,
         )
         i = args.resume_rl_cycle_from
-        if i != 1:
+        if i > 1:
             network.load_weights(f'models/checkpoint_{i-1:04d}/checkpoint_{i-1:04d}').expect_partial()
-        load_data_and_train_network(network, i, args.nn_learning_rate)
+        if i > 0:
+            load_data_and_train_network(network, i, args.nn_learning_rate)
+            network.save_weights(f'models/checkpoint_{i:04d}/checkpoint_{i:04d}')
         PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
-        network.save_weights(f'models/checkpoint_{i:04d}/checkpoint_{i:04d}')
         sys.exit(0)
     elif args.run == 'validation':
         i = args.resume_rl_cycle_from
@@ -544,14 +547,13 @@ if __name__ == '__main__':
 
     if args.resume_rl_cycle_from == 1:
         shogi = args._shogi
-        network = build_policy_value_network(
-            input_size=(shogi.Game.ranks, shogi.Game.files),
-            input_channels=shogi.Game.feature_channels,
-            num_policy_per_square=shogi.Move._num_policy_per_square(),
-            num_channels_in_hidden_layer=args.nn_channels,
-            num_backbone_layers=args.nn_backbones,
-        )
-        PolicyValueFunction(network).save_model_as_tflite(f'models/model_{0:04d}.tflite')
+        subprocess.call([
+            sys.executable, "dlshogi.py", "train", args.shogi_variant,
+            "--resume_rl_cycle_from", str(0),
+            "--nn_channels", str(args.nn_channels),
+            "--nn_backbones", str(args.nn_backbones),
+            "--output", args.output,
+        ])
 
     for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
         learning_rate = args.nn_learning_rate
@@ -587,7 +589,6 @@ if __name__ == '__main__':
                 break
             else:
                 self_play_index_from += args.self_play
-                learning_rate *= 0.9
 
         # Validate!
         subprocess.call([
