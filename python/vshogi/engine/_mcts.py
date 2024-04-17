@@ -119,6 +119,7 @@ class MonteCarloTreeSearcher:
     def clear(self) -> None:
         """Clear explorations done so far."""
         self._root = None
+        self._game = None
 
     def apply(self, move: Move):
         """Apply a move to the current root node.
@@ -128,10 +129,9 @@ class MonteCarloTreeSearcher:
         move : Move
             Move to apply to the current root node.
         """
-        raise NotImplementedError("Something wrong with `apply()`")
-        # if self.is_ready():
-        #     self._root.apply(move)
-        #     self._game.apply(move)
+        if self.is_ready():
+            self._root.apply(move)
+            self._game.apply(move)
 
     @property
     def num_explored(self) -> int:

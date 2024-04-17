@@ -256,15 +256,22 @@ def play_game(
             break
 
         player = player_black if game.turn == vshogi.Color.BLACK else player_white
-        player.set_root(game)
+        if not player.is_ready():
+            player.set_root(game)
         player.explore(
             n=args.mcts_explorations - player.num_explored,
             num_dfpn_nodes=100, # approximately worth three-move mate
         )
+        assert len(player._root.get_actions()) > 0, (player.num_explored, game.to_sfen(), player._game.to_sfen())
         visit_counts = player.get_visit_counts()
         move = player.select(temperature='max') # off-policy
         game.apply(move)
+        player_black.apply(move)
+        if player_white is not player_black:
+            player_white.apply(move)
         game.visit_counts_record.append({k.to_usi(): v for k, v in visit_counts.items()})
+    player_black.clear()
+    player_white.clear()
     return game
 
 
