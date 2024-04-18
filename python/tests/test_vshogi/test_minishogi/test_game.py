@@ -160,9 +160,11 @@ def test_to_dlshogi_policy():
     # Black: -
     game = shogi.Game("1bsgk/4p/5/P4/KGSBR w - 1")
     a = shogi.Move(shogi.C1, shogi.B1)
-    actual = game.to_dlshogi_policy(a, max_value=0.5)
+    actual = game.to_dlshogi_policy({
+        m: 0.5 if m == a else 0.05 for m in game.get_legal_moves()
+    }, default_value=-1.)
 
-    expected = np.zeros(5 * 5 * (2 * 8 + 5))
+    expected = np.zeros(5 * 5 * (2 * 8 + 5)) - 1
     expected[a.rotate()._to_dlshogi_policy_index()] = 0.5
     for m in game.get_legal_moves():
         if m == a:

@@ -165,7 +165,7 @@ def _get_generator_from_df(df: pd.DataFrame):
                 visit_counts = {k.hflip(): v for k, v in visit_counts.items()}
 
             x = game.to_dlshogi_features()
-            policy = game.to_dlshogi_policy(visit_counts)
+            policy = game.to_dlshogi_policy(visit_counts, default_value=np.nan)
             value = value_options[(result, game.turn)]
 
             yield np.squeeze(x), (policy, value)
@@ -187,9 +187,20 @@ def train_network(
     dataset: tf.data.Dataset,
     learning_rate: float,
 ) -> tf.keras.Model:
+
+    def masked_softmax_cross_entropy(y_true, y_pred):
+        mask = tf.math.is_finite(y_true)
+        y_true_masked = tf.where(mask, y_true, 0)
+        y_pred = y_pred - tf.reduce_max(y_pred, axis=1, keepdims=True)
+        logsumexp = tf.math.log(tf.reduce_sum(
+            tf.where(mask, tf.math.exp(y_pred), 0), axis=1, keepdims=True))
+        y_pred = y_pred - logsumexp
+        return -tf.reduce_sum(y_true_masked * y_pred, axis=1)
+
     network.compile(
         loss=[
-            tf.keras.losses.CategoricalCrossentropy(from_logits=True),
+            # tf.keras.losses.CategoricalCrossentropy(from_logits=True),
+            masked_softmax_cross_entropy,
             tf.keras.losses.MeanSquaredError(),
         ],
         optimizer=tf.keras.optimizers.Adam(learning_rate),
@@ -262,7 +273,6 @@ def play_game(
             n=args.mcts_explorations - player.num_explored,
             num_dfpn_nodes=100, # approximately worth three-move mate
         )
-        assert len(player._root.get_actions()) > 0, (player.num_explored, game.to_sfen(), player._game.to_sfen())
         visit_counts = player.get_visit_counts()
         move = player.select(temperature='max') # off-policy
         game.apply(move)

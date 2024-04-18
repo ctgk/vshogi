@@ -503,9 +503,9 @@ class Game(abc.ABC):
 
     def to_dlshogi_policy(
         self,
-        action: tp.Union[Move, tp.Dict[Move, int]],
+        action_proba: tp.Union[Move, tp.Dict[Move, int]],
         *,
-        max_value: float = 1.,
+        default_value: float = 0.,
     ) -> np.ndarray:
         """Convert an action into DL-shogi policy array.
 
@@ -515,12 +515,12 @@ class Game(abc.ABC):
 
         Parameters
         ----------
-        action : tp.Union[Move, tp.Dict[Move, int]]
-            Action to turn into DL-shogi policy format, or dict of actions with
-            their visit counts.
-        max_value : float, optional
-            Policy value for the action, by default 1. Valid only if `action`
-            is a `Move` object.
+        action_proba : tp.Union[Move, tp.Dict[Move, int]]
+            One-hot action to turn into DL-shogi policy format,
+            or dict of actions with their probabilities.
+            If the probabilities do not sum up to 1, they will be normalized.
+        default_value: float, optional
+
 
         Returns
         -------
@@ -532,13 +532,18 @@ class Game(abc.ABC):
         ValueError
             `max_value` is out-of-range.
         """
-        if isinstance(action, dict):
-            return self._game.to_dlshogi_policy(action)
-
-        if ((max_value > 1) or (max_value <= 0)):
-            raise ValueError(
-                f"`max_value` must be in range (0, 1], but was {max_value}.")
-        return self._game.to_dlshogi_policy(action, max_value)
+        if isinstance(action_proba, dict):
+            s = sum(action_proba.values())
+            action_proba = {k: v / s for k, v in action_proba.items()}
+        elif isinstance(action_proba, self._get_move_class()):
+            action_proba = {
+                k: 1. if k == action_proba else 0.
+                for k in self.get_legal_moves()
+            }
+        else:
+            raise TypeError(
+                f'Unsupported type for `action_proba`: {type(action_proba)}')
+        return self._game.to_dlshogi_policy(action_proba, default_value)
 
     def get_mate_moves_if_any(
         self,

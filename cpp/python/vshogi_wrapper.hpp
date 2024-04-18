@@ -137,41 +137,14 @@ inline void export_game(pybind11::module& m)
         .def(
             "to_dlshogi_policy",
             [](const Game& self,
-               const Move action,
-               float max_value) -> py::array_t<float> {
-                const auto turn = self.get_turn();
-                const auto legal_moves = self.get_legal_moves();
-                const auto num_legal_moves
-                    = static_cast<float>(legal_moves.size());
-                const auto action_is_legal = has(legal_moves, action);
-                const auto eps = (1.f - max_value)
-                                 / (action_is_legal ? (num_legal_moves - 1.f)
-                                                    : num_legal_moves);
-
-                const auto size = Game::num_dlshogi_policy();
-                auto out = py::array_t<float>(std::vector<py::ssize_t>({size}));
-                float* const data = out.mutable_data();
-                std::fill(data, data + size, 0.f);
-                for (auto&& move : legal_moves) {
-                    const auto index
-                        = (turn == vshogi::BLACK)
-                              ? move.to_dlshogi_policy_index()
-                              : move.rotate().to_dlshogi_policy_index();
-                    data[index] = (action == move) ? max_value : eps;
-                }
-                return out;
-            })
-        .def(
-            "to_dlshogi_policy",
-            [](const Game& self,
-               const py::dict& visit_counts) -> py::array_t<float> {
+               const py::dict& visit_proba,
+               const float default_value) -> py::array_t<float> {
                 const auto turn = self.get_turn();
                 constexpr auto size = Game::num_dlshogi_policy();
                 auto out = py::array_t<float>(std::vector<py::ssize_t>({size}));
                 float* const data = out.mutable_data();
-                std::fill(data, data + size, 0.f);
-                float sum = 0.f;
-                for (auto it = visit_counts.begin(); it != visit_counts.end();
+                std::fill(data, data + size, default_value);
+                for (auto it = visit_proba.begin(); it != visit_proba.end();
                      ++it) {
                     const auto move = it->first.cast<Move>();
                     const auto index
@@ -179,10 +152,6 @@ inline void export_game(pybind11::module& m)
                               ? move.to_dlshogi_policy_index()
                               : move.rotate().to_dlshogi_policy_index();
                     data[index] = it->second.cast<float>();
-                    sum += data[index];
-                }
-                for (float* ptr = data; ptr < data + size;) {
-                    *ptr++ /= sum;
                 }
                 return out;
             })

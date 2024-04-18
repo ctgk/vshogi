@@ -122,7 +122,9 @@ def test_array():
 def test_to_dlshogi_policy():
     game = shogi.Game()
     a = shogi.Move(shogi.B2, shogi.B3)
-    actual = game.to_dlshogi_policy(a, max_value=0.7)
+    actual = game.to_dlshogi_policy({
+        m: 0.7 if m == a else 0.1 for m in game.get_legal_moves()
+    })
 
     expected = np.zeros(12 * 11)
     expected[a._to_dlshogi_policy_index()] = 0.7
