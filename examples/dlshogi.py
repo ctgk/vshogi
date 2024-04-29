@@ -262,8 +262,10 @@ def play_game(
         mate_moves = game.get_mate_moves_if_any(num_dfpn_nodes=10000)
         if mate_moves is not None:
             for move in mate_moves:
+                game.visit_counts_record.append({
+                    m.to_usi(): int(m == move) for m in game.get_legal_moves()
+                })
                 game.apply(move)
-                game.visit_counts_record.append({move.to_usi(): 1})
             break
 
         player = player_black if game.turn == vshogi.Color.BLACK else player_white
