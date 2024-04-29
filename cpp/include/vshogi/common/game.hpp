@@ -820,10 +820,13 @@ protected:
                     if (m_occupied[2].is_one(*sq_ptr))
                         break;
                     const auto attacks = BitBoard::get_attacks_by(p, *sq_ptr);
-                    if (attacks.is_one(enemy_king_sq))
-                        m_legal_moves.emplace_back(Move(*sq_ptr++, pt));
-                    else
+                    if (!attacks.is_one(enemy_king_sq))
                         break;
+                    if ((pt == Pieces::FU)
+                        && (has_pawn_in_file(Squares::to_file(*sq_ptr))
+                            || is_drop_pawn_mate(*sq_ptr)))
+                        break;
+                    m_legal_moves.emplace_back(Move(*sq_ptr++, pt));
                 }
             }
         }

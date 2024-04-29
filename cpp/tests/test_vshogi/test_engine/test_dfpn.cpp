@@ -312,4 +312,42 @@ TEST(dfpn, tmp)
     CHECK_TRUE(searcher.found_no_mate());
 }
 
+TEST(dfpn, debug)
+{
+    using namespace vshogi::shogi;
+    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    // Turn: BLACK
+    // White: FUx3,KI
+    //     9   8   7   6   5   4   3   2   1
+    //   +---+---+---+---+---+---+---+---+---+
+    // A |   |-KA|   |-KE|   |   |   |   |-OU|
+    //   +---+---+---+---+---+---+---+---+---+
+    // B |-KY|   |-GI|   |   |   |-FU|   |-GI|
+    //   +---+---+---+---+---+---+---+---+---+
+    // C |-FU|-HI|-FU|   |   |-FU|-KE|   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // D |   |-FU|   |+UM|-FU|   |   |   |+HI|
+    //   +---+---+---+---+---+---+---+---+---+
+    // E |   |   |   |   |+FU|   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // F |   |   |   |   |   |   |+KI|-FU|   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // G |+FU|+FU|+FU|+FU|   |+FU|+KE|   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // H |   |   |   |   |+OU|+KI|+GI|   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // I |+KY|+KE|+GI|   |   |+KI|   |   |+KY|
+    //   +---+---+---+---+---+---+---+---+---+
+    // Black: FUx2,KY
+    auto g = Game("1b1n4k/l1s3p1s/prp2pn2/1p1+Bp3R/4P4/6Gp1/PPPP1PN2/4KGS2/"
+                  "LNS2G2L b L2Pg3p");
+    auto searcher = Searcher(g);
+    searcher.explore(1000);
+    const auto actual = searcher.get_mate_moves();
+    for (auto&& m : actual) {
+        g.apply(m);
+    }
+    CHECK_TRUE(g.get_result() == vshogi::BLACK_WIN);
+}
+
 } // namespace test_vshogi::test_engine
