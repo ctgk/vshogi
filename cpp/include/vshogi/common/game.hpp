@@ -733,8 +733,8 @@ protected:
             if (!attacks.any())
                 m_legal_moves.emplace_back(dst, src, true);
             else if (promotable) {
-                m_legal_moves.emplace_back(dst, src, false);
                 m_legal_moves.emplace_back(dst, src, true);
+                m_legal_moves.emplace_back(dst, src, false);
             } else
                 m_legal_moves.emplace_back(dst, src, false);
         }
