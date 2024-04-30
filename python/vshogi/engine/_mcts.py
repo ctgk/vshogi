@@ -100,7 +100,6 @@ class MonteCarloTreeSearcher:
         game : Game
             Game to set at root node.
         """
-        game = game.copy()
         policy_logits, value = self._policy_value_func(game)
         self._root = game._get_mcts_node_class()(
             game._game, value, policy_logits)
@@ -131,7 +130,6 @@ class MonteCarloTreeSearcher:
         """
         if self.is_ready():
             self._root.apply(move)
-            self._game.apply(move)
 
     @property
     def num_explored(self) -> int:
