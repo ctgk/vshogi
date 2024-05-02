@@ -9,24 +9,32 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.11']
-        command: [
-          "pip install .[dlshogi]; python examples/dlshogi.py rl animal_shogi --rl_cycle 5 --mcts_explorations 100 --self_play 200 --win_ratio_threshold 0.1",
-          "pip install .[dlshogi]; python examples/dlshogi.py rl minishogi --rl_cycle 4 --mcts_explorations 100 --self_play 100 --win_ratio_threshold 0.1",
-          "pip install .[dlshogi]; python examples/dlshogi.py rl judkins_shogi --rl_cycle 3 --mcts_explorations 100 --self_play 100 --win_ratio_threshold 0.1",
-          "pip install .[dlshogi]; python examples/dlshogi.py rl shogi --rl_cycle 1 --nn_backbones 2 --mcts_explorations 100 --self_play 100 --win_ratio_threshold 0.1",
+        game: [
+          {name: animal_shogi, rl_cycle: 5, nn_backbones: 3},
+          {name: minishogi, rl_cycle: 4, nn_backbones: 3},
+          {name: judkins_shogi, rl_cycle: 3, nn_backbones: 3},
+          {name: shogi, rl_cycle: 1, nn_backbones: 2},
         ]
       fail-fast: false
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.11
       uses: actions/setup-python@v2
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: 3.11
     - name: Upgrade pip
       run: python -m pip install --upgrade pip
+    - name: Install dependencies
+      run: pip install .[dlshogi]
     - name: Run command
       env:
-        CMD: ${{ matrix.command }}
-      run: bash -c "$CMD"
+        NAME: ${{ matrix.game.name }}
+        CYCLE: ${{ matrix.game.rl_cycle }}
+        BACKBONES: ${{ matrix.game.nn_backbones }}
+      run: python examples/dlshogi.py rl $NAME --rl_cycle $CYCLE --nn_backbones $BACKBONES --mcts_explorations 100 --self_play 100 --win_ratio_threshold 0.1
+    - name: Evaluate model
+      env:
+        NAME: ${{ matrix.game.name }}
+        CYCLE: ${{ matrix.game.rl_cycle }}
+      run: python -m vshogi $NAME $NAME/models/model_0000.tflite $NAME/models/model_$(printf %04d $CYCLE).tflite
