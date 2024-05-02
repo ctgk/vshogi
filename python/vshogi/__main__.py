@@ -8,18 +8,21 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from classopt import classopt, config
 import numpy as np
 import tensorflow as tf
+from tqdm import tqdm
 
 import vshogi
 
 
 MESSAGE_TEMPLATE = '''\
-+---------+-------+-------+-------+
-|  #ofWin | total | black | white |
-+---------+-------+-------+-------+
-| player1 | {:5d} | {:5d} | {:5d} |
-+---------+-------+-------+-------+
-| player2 | {:5d} | {:5d} | {:5d} |
-+---------+-------+-------+-------+
++---------+-----------------------+-----------------------+-----------------------+
+|  Result |          #Win         |         #Draw         |         #Loss         |
++---------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+|   Turn  | total | black | white | total | black | white | total | black | white |
++---------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+| player1 | {:5d} | {:5d} | {:5d} | {:5d} | {:5d} | {:5d} | {:5d} | {:5d} | {:5d} |
++---------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
+| player2 | {:5d} | {:5d} | {:5d} | {:5d} | {:5d} | {:5d} | {:5d} | {:5d} | {:5d} |
++---------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
 '''
 
 class PolicyValueFunction:
@@ -80,6 +83,9 @@ class Args:
         type=float, default=4.,
         help='Coefficient to compute PUCT score in MCTS, default=4',
     )
+    show_pbar: bool = config(
+        action='store_true', help='Print progress bar if passed',
+    )
 
 
 
@@ -98,24 +104,62 @@ if __name__ == "__main__":
         coeff_puct=args.mcts_coeff_puct,
     )
 
-    results = [
-        vshogi.play_game(shogi.Game(), player1, player2).result
-        for _ in range(args.num_games_each)
-    ] + [
-        vshogi.play_game(shogi.Game(), player2, player1).result
-        for _ in range(args.num_games_each)
-    ]
+    print(f'player1: {args.player1}')
+    print(f'player2: {args.player2}')
 
-    num_black_win_1st_half = np.sum([
-        r == vshogi.BLACK_WIN for r in results[:args.num_games_each]])
-    num_black_win_2nd_half = np.sum([
-        r == vshogi.BLACK_WIN for r in results[args.num_games_each:]])
+    results_of_p1 = {
+        'bwin': 0,
+        'bdraw': 0,
+        'bloss': 0,
+        'wwin': 0,
+        'wdraw': 0,
+        'wloss': 0,
+    }
+    iterator = range(args.num_games_each * 2)
+    if args.show_pbar:
+        iterator = tqdm(iterator, ncols=80)
+        iterator.set_description(str({'p1': 0, 'draw': 0, 'p2': 0}))
+    for i in iterator:
+        if i % 2 == 0:
+            result = vshogi.play_game(shogi.Game(), player1, player2).result
+            if result == vshogi.BLACK_WIN:
+                results_of_p1['bwin'] += 1
+            elif result == vshogi.WHITE_WIN:
+                results_of_p1['bloss'] += 1
+            else:
+                results_of_p1['bdraw'] += 1
+        else:
+            result = vshogi.play_game(shogi.Game(), player2, player1).result
+            if result == vshogi.BLACK_WIN:
+                results_of_p1['wloss'] += 1
+            elif result == vshogi.WHITE_WIN:
+                results_of_p1['wwin'] += 1
+            else:
+                results_of_p1['wdraw'] += 1
+        if args.show_pbar:
+            iterator.set_description(str({
+                'p1': results_of_p1['bwin'] + results_of_p1['wwin'],
+                'draw': results_of_p1['bdraw'] + results_of_p1['wdraw'],
+                'p2': results_of_p1['bloss'] + results_of_p1['wloss'],
+            }))
 
     print(MESSAGE_TEMPLATE.format(
-        num_black_win_1st_half + args.num_games_each - num_black_win_2nd_half,
-        num_black_win_1st_half,
-        args.num_games_each - num_black_win_2nd_half,
-        args.num_games_each - num_black_win_1st_half + num_black_win_2nd_half,
-        args.num_games_each - num_black_win_1st_half,
-        num_black_win_2nd_half,
+        results_of_p1['bwin'] + results_of_p1['wwin'],
+        results_of_p1['bwin'],
+        results_of_p1['wwin'],
+        results_of_p1['bdraw'] + results_of_p1['wdraw'],
+        results_of_p1['bdraw'],
+        results_of_p1['wdraw'],
+        results_of_p1['bloss'] + results_of_p1['wloss'],
+        results_of_p1['bloss'],
+        results_of_p1['wloss'],
+        results_of_p1['bloss'] + results_of_p1['wloss'],
+        results_of_p1['wloss'],
+        results_of_p1['bloss'],
+        results_of_p1['bdraw'] + results_of_p1['wdraw'],
+        results_of_p1['wdraw'],
+        results_of_p1['bdraw'],
+        results_of_p1['bwin'] + results_of_p1['wwin'],
+        results_of_p1['wwin'],
+        results_of_p1['bwin'],
     ))
