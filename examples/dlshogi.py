@@ -11,6 +11,7 @@
 import contextlib
 from glob import glob
 import os
+import subprocess
 import sys
 import typing as tp
 
@@ -148,89 +149,6 @@ def dump_game_records(file_, game: vshogi.Game) -> None:
     )
 
 
-def _get_generator_from_df(df: pd.DataFrame):
-
-    def _generator():
-        for _, row in df.sample(n=len(df), replace=False).iterrows():
-            game = args._shogi.Game(row['state'])
-            visit_counts = {
-                args._shogi.Move(k): v
-                for k, v in eval(row['visit_counts']).items()
-            }
-            if np.random.uniform() > 0.5:
-                game = game.hflip()
-                visit_counts = {k.hflip(): v for k, v in visit_counts.items()}
-
-            x = game.to_dlshogi_features()
-            policy = game.to_dlshogi_policy(visit_counts, default_value=np.nan)
-            value = float(row['q_value'])
-
-            yield np.squeeze(x), (policy, value)
-
-    return _generator
-
-
-def get_dataset(df: pd.DataFrame):
-    dataset = tf.data.Dataset.from_generator(
-        _get_generator_from_df(df),
-        output_types=(tf.float32, (tf.float32, tf.float32)),
-    )
-    dataset = dataset.batch(args.nn_minibatch)
-    return dataset
-
-
-def train_network(
-    network: tf.keras.Model,
-    dataset: tf.data.Dataset,
-    learning_rate: float,
-) -> tf.keras.Model:
-
-    def masked_softmax_cross_entropy(y_true, y_pred):
-        mask = tf.math.is_finite(y_true)
-        y_true_masked = tf.where(mask, y_true, 0)
-        y_pred = y_pred - tf.reduce_max(y_pred, axis=1, keepdims=True)
-        logsumexp = tf.math.log(tf.reduce_sum(
-            tf.where(mask, tf.math.exp(y_pred), 0), axis=1, keepdims=True))
-        y_pred = y_pred - logsumexp
-        return -tf.reduce_sum(y_true_masked * y_pred, axis=1)
-
-    network.compile(
-        loss=[
-            masked_softmax_cross_entropy,
-            tf.keras.losses.MeanSquaredError(),
-        ],
-        optimizer=tf.keras.optimizers.Adam(learning_rate),
-    )
-    network.fit(
-        dataset,
-        epochs=args.nn_epochs,
-    )
-    return network
-
-
-def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
-    df = pd.read_csv(
-        tsv_path, sep='\t',
-        dtype={
-            'state': str, 'move': str, 'result': str,
-            'q_value': float, 'visit_counts': str,
-        },
-    )
-    if fraction is None:
-        return df
-    n = int(len(df) * fraction)
-    return df.tail(n)
-
-
-def load_data_and_train_network(network, index: int, learning_rate: float):
-    df = pd.concat([
-        pd.concat([read_kifu(p, f) for p in glob(f'datasets/dataset_{i:04d}/*.tsv')], ignore_index=True)
-        for i, f in zip(range(index, 0, -1), (args.nn_train_fraction ** i for i in range(index)))
-    ], ignore_index=True)
-    dataset = get_dataset(df)
-    return train_network(network, dataset, learning_rate)
-
-
 def play_game(
     game: vshogi.Game,
     player_black: vshogi.engine.MonteCarloTreeSearcher,
@@ -305,133 +223,306 @@ def load_player_of(index_path_or_network, num_threads=1) -> vshogi.engine.MonteC
     )
 
 
-def _self_play_and_dump_record(player, index, nth_game: int) -> vshogi.Game:
-    while True:
-        game = play_game(args._game_getter(), player, player)
-        if game.result != vshogi.ONGOING:
-            break
-    with open(f'datasets/dataset_{index:04d}/record_{nth_game:05d}.tsv', mode='w') as f:
-        dump_game_records(f, game)
+def run_self_play(args):
+
+    def _self_play_and_dump_record(player, index, nth_game: int) -> vshogi.Game:
+        while True:
+            game = play_game(args._game_getter(), player, player)
+            if game.result != vshogi.ONGOING:
+                break
+        with open(f'datasets/dataset_{index:04d}/record_{nth_game:05d}.tsv', mode='w') as f:
+            dump_game_records(f, game)
 
 
-def self_play_and_dump_records_in_parallel(index: int, n_jobs: int):
-    import joblib
-    from joblib.parallel import Parallel, delayed
+    def self_play_and_dump_records_in_parallel(index: int, n_jobs: int):
+        import joblib
+        from joblib.parallel import Parallel, delayed
 
-    @contextlib.contextmanager
-    def tqdm_joblib(tqdm_object):
-        """Context manager to patch joblib to report into tqdm progress bar given as argument"""
-        class TqdmBatchCompletionCallback(joblib.parallel.BatchCompletionCallBack):
-            def __call__(self, *args, **kwargs):
-                tqdm_object.update(n=self.batch_size)
-                return super().__call__(*args, **kwargs)
+        @contextlib.contextmanager
+        def tqdm_joblib(tqdm_object):
+            """Context manager to patch joblib to report into tqdm progress bar given as argument"""
+            class TqdmBatchCompletionCallback(joblib.parallel.BatchCompletionCallBack):
+                def __call__(self, *args, **kwargs):
+                    tqdm_object.update(n=self.batch_size)
+                    return super().__call__(*args, **kwargs)
 
-        old_batch_callback = joblib.parallel.BatchCompletionCallBack
-        joblib.parallel.BatchCompletionCallBack = TqdmBatchCompletionCallback
-        try:
-            yield tqdm_object
-        finally:
-            joblib.parallel.BatchCompletionCallBack = old_batch_callback
-            tqdm_object.close()
+            old_batch_callback = joblib.parallel.BatchCompletionCallBack
+            joblib.parallel.BatchCompletionCallBack = TqdmBatchCompletionCallback
+            try:
+                yield tqdm_object
+            finally:
+                joblib.parallel.BatchCompletionCallBack = old_batch_callback
+                tqdm_object.close()
 
-    def _self_play_and_dump_record_n_times(index, nth_game: list):
-        player = load_player_of(index - 1)
-        for i in nth_game:
-            _self_play_and_dump_record(player, index, i)
+        def _self_play_and_dump_record_n_times(index, nth_game: list):
+            player = load_player_of(index - 1)
+            for i in nth_game:
+                _self_play_and_dump_record(player, index, i)
 
-    group_size = 5
-    with tqdm_joblib(tqdm(total=args.self_play // group_size, ncols=100)):
-        Parallel(n_jobs=n_jobs)(
-            delayed(_self_play_and_dump_record_n_times)(
-                index, list(range(i, i + group_size)),
+        group_size = 5
+        with tqdm_joblib(tqdm(total=args.self_play // group_size, ncols=100)):
+            Parallel(n_jobs=n_jobs)(
+                delayed(_self_play_and_dump_record_n_times)(
+                    index, list(range(i, i + group_size)),
+                )
+                for i in range(args.self_play_index_from, args.self_play_index_from + args.self_play, group_size)
             )
-            for i in range(args.self_play_index_from, args.self_play_index_from + args.self_play, group_size)
-        )
 
 
-def self_play_and_dump_records(index: int):
-    if args.jobs == 1:
-        player = load_player_of(index - 1)
-        for i in tqdm(range(args.self_play_index_from, args.self_play_index_from + args.self_play), ncols=100):
-            _self_play_and_dump_record(player, index, i)
-    else:
-        self_play_and_dump_records_in_parallel(index, args.jobs)
-
-
-def get_best_player_index(current: int, best: int):
-    results = {'win': 0, 'loss': 0, 'draw': 0}
-    player_curr = load_player_of(current, args.jobs)
-    player_best = load_player_of(best, args.jobs)
-    num_play = 40
-    win_threshold = num_play * args.win_ratio_threshold
-    loss_threshold = num_play * (1 - args.win_ratio_threshold)
-    pbar = tqdm(range(num_play), ncols=100)
-    for n in pbar:
-        if (results['win'] > win_threshold) or (results['loss'] > loss_threshold):
-            break
-        if n % 2 == 0:
-            game_init = args._game_getter()
-            game = play_game(game_init.copy(), player_curr, player_best)
-            results[{
-                vshogi.BLACK_WIN: 'win',
-                vshogi.WHITE_WIN: 'loss',
-                vshogi.DRAW: 'draw',
-                vshogi.ONGOING: 'draw',
-            }[game.result]] += 1
+    def self_play_and_dump_records(index: int):
+        if args.jobs == 1:
+            player = load_player_of(index - 1)
+            for i in tqdm(range(args.self_play_index_from, args.self_play_index_from + args.self_play), ncols=100):
+                _self_play_and_dump_record(player, index, i)
         else:
-            game = play_game(game_init.copy(), player_best, player_curr)
-            results[{
-                vshogi.BLACK_WIN: 'loss',
-                vshogi.WHITE_WIN: 'win',
-                vshogi.DRAW: 'draw',
-                vshogi.ONGOING: 'draw',
-            }[game.result]] += 1
-        pbar.set_description(f'{current} vs {best}: {results}')
-    return current if results['win'] > win_threshold else best
+            self_play_and_dump_records_in_parallel(index, args.jobs)
+
+    i = args.resume_rl_cycle_from
+    if not os.path.isdir(f'datasets/dataset_{i:04d}'):
+        os.makedirs(f'datasets/dataset_{i:04d}')
+    self_play_and_dump_records(i)
 
 
-def play_against_past_players(index: int, dump_records: bool = False):
-    player = load_player_of(index, args.jobs)
-    indices_prev = list(range(index - 1, -1, -1))
-    n = 10
-    if len(indices_prev) > n:
-        p = np.array(indices_prev) + 1
-        p = p / np.sum(p)
-        indices_prev = np.random.choice(indices_prev, size=n, replace=False, p=p)
-        indices_prev = np.sort(indices_prev)[::-1]
-    for i_prev in indices_prev:
-        player_prev = load_player_of(int(i_prev), args.jobs)
-        validation_results = {'win': 0, 'loss': 0, 'draw': 0}
-        pbar = tqdm(range(args.validations), ncols=100)
+def run_train(args):
+
+    def _get_generator_from_df(df: pd.DataFrame):
+
+        def _generator():
+            for _, row in df.sample(n=len(df), replace=False).iterrows():
+                game = args._shogi.Game(row['state'])
+                visit_counts = {
+                    args._shogi.Move(k): v
+                    for k, v in eval(row['visit_counts']).items()
+                }
+                if np.random.uniform() > 0.5:
+                    game = game.hflip()
+                    visit_counts = {k.hflip(): v for k, v in visit_counts.items()}
+
+                x = game.to_dlshogi_features()
+                policy = game.to_dlshogi_policy(visit_counts, default_value=np.nan)
+                value = float(row['q_value'])
+
+                yield np.squeeze(x), (policy, value)
+
+        return _generator
+
+
+    def get_dataset(df: pd.DataFrame):
+        dataset = tf.data.Dataset.from_generator(
+            _get_generator_from_df(df),
+            output_types=(tf.float32, (tf.float32, tf.float32)),
+        )
+        dataset = dataset.batch(args.nn_minibatch)
+        return dataset
+
+    def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
+        df = pd.read_csv(
+            tsv_path, sep='\t',
+            dtype={
+                'state': str, 'move': str, 'result': str,
+                'q_value': float, 'visit_counts': str,
+            },
+        )
+        if fraction is None:
+            return df
+        n = int(len(df) * fraction)
+        return df.tail(n)
+
+    def train_network(
+        network: tf.keras.Model,
+        dataset: tf.data.Dataset,
+        learning_rate: float,
+    ) -> tf.keras.Model:
+
+        def masked_softmax_cross_entropy(y_true, y_pred):
+            mask = tf.math.is_finite(y_true)
+            y_true_masked = tf.where(mask, y_true, 0)
+            y_pred = y_pred - tf.reduce_max(y_pred, axis=1, keepdims=True)
+            logsumexp = tf.math.log(tf.reduce_sum(
+                tf.where(mask, tf.math.exp(y_pred), 0), axis=1, keepdims=True))
+            y_pred = y_pred - logsumexp
+            return -tf.reduce_sum(y_true_masked * y_pred, axis=1)
+
+        network.compile(
+            loss=[
+                masked_softmax_cross_entropy,
+                tf.keras.losses.MeanSquaredError(),
+            ],
+            optimizer=tf.keras.optimizers.Adam(learning_rate),
+        )
+        network.fit(
+            dataset,
+            epochs=args.nn_epochs,
+        )
+        return network
+
+    def load_data_and_train_network(network, index: int, learning_rate: float):
+        df = pd.concat([
+            pd.concat([read_kifu(p, f) for p in glob(f'datasets/dataset_{i:04d}/*.tsv')], ignore_index=True)
+            for i, f in zip(range(index, 0, -1), (args.nn_train_fraction ** i for i in range(index)))
+        ], ignore_index=True)
+        dataset = get_dataset(df)
+        return train_network(network, dataset, learning_rate)
+
+    shogi = args._shogi
+    network = build_policy_value_network(
+        input_size=(shogi.Game.ranks, shogi.Game.files),
+        input_channels=shogi.Game.feature_channels,
+        num_policy_per_square=shogi.Move._num_policy_per_square(),
+        num_channels_in_hidden_layer=args.nn_channels,
+        num_backbone_layers=args.nn_backbones,
+    )
+    i = args.resume_rl_cycle_from
+    if i > 1:
+        network.load_weights(f'models/checkpoint_{i-1:04d}/checkpoint_{i-1:04d}').expect_partial()
+    if i > 0:
+        load_data_and_train_network(network, i, args.nn_learning_rate)
+        network.save_weights(f'models/checkpoint_{i:04d}/checkpoint_{i:04d}')
+    PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
+
+
+def run_validation(args):
+
+    def play_against_past_players(index: int, dump_records: bool = False):
+        player = load_player_of(index, args.jobs)
+        indices_prev = list(range(index - 1, -1, -1))
+        n = 10
+        if len(indices_prev) > n:
+            p = np.array(indices_prev) + 1
+            p = p / np.sum(p)
+            indices_prev = np.random.choice(indices_prev, size=n, replace=False, p=p)
+            indices_prev = np.sort(indices_prev)[::-1]
+        for i_prev in indices_prev:
+            player_prev = load_player_of(int(i_prev), args.jobs)
+            validation_results = {'win': 0, 'loss': 0, 'draw': 0}
+            pbar = tqdm(range(args.validations), ncols=100)
+            for n in pbar:
+                if n % 2 == 0:
+                    game_init = args._game_getter()
+                    game = play_game(game_init.copy(), player, player_prev)
+                    validation_results[{
+                        vshogi.BLACK_WIN: 'win',
+                        vshogi.WHITE_WIN: 'loss',
+                        vshogi.DRAW: 'draw',
+                        vshogi.ONGOING: 'draw',
+                    }[game.result]] += 1
+                    if dump_records:
+                        path = f'datasets/dataset_{index + 1:04d}/record_B{index:02d}vsW{i_prev:02d}_{n:04d}.tsv'
+                        with open(path, mode='w') as f:
+                            dump_game_records(f, game)
+                        os.system(f'cat {path} | grep -e " b " -e "state" > tmp.tsv; mv tmp.tsv {path}')
+                else:
+                    game = play_game(game_init.copy(), player_prev, player)
+                    validation_results[{
+                        vshogi.BLACK_WIN: 'loss',
+                        vshogi.WHITE_WIN: 'win',
+                        vshogi.DRAW: 'draw',
+                        vshogi.ONGOING: 'draw',
+                    }[game.result]] += 1
+                    if dump_records:
+                        path = f'datasets/dataset_{index + 1:04d}/record_B{i_prev:02d}vsW{index:02d}_{n:04d}.tsv'
+                        with open(path, mode='w') as f:
+                            dump_game_records(f, game)
+                        os.system(f'cat {path} | grep -e " w " -e "state" > tmp.tsv; mv tmp.tsv {path}')
+                pbar.set_description(f'{index} vs {i_prev}: {validation_results}')
+
+    i = args.resume_rl_cycle_from
+    if not os.path.isdir(f'datasets/dataset_{i + 1:04d}'):
+        os.makedirs(f'datasets/dataset_{i + 1:04d}')
+    play_against_past_players(i, dump_records=True)
+
+
+def run_rl_cycle(args):
+
+    def get_best_player_index(current: int, best: int):
+        results = {'win': 0, 'loss': 0, 'draw': 0}
+        player_curr = load_player_of(current, args.jobs)
+        player_best = load_player_of(best, args.jobs)
+        num_play = 40
+        win_threshold = num_play * args.win_ratio_threshold
+        loss_threshold = num_play * (1 - args.win_ratio_threshold)
+        pbar = tqdm(range(num_play), ncols=100)
         for n in pbar:
+            if (results['win'] > win_threshold) or (results['loss'] > loss_threshold):
+                break
             if n % 2 == 0:
                 game_init = args._game_getter()
-                game = play_game(game_init.copy(), player, player_prev)
-                validation_results[{
+                game = play_game(game_init.copy(), player_curr, player_best)
+                results[{
                     vshogi.BLACK_WIN: 'win',
                     vshogi.WHITE_WIN: 'loss',
                     vshogi.DRAW: 'draw',
                     vshogi.ONGOING: 'draw',
                 }[game.result]] += 1
-                if dump_records:
-                    path = f'datasets/dataset_{index + 1:04d}/record_B{index:02d}vsW{i_prev:02d}_{n:04d}.tsv'
-                    with open(path, mode='w') as f:
-                        dump_game_records(f, game)
-                    os.system(f'cat {path} | grep -e " b " -e "state" > tmp.tsv; mv tmp.tsv {path}')
             else:
-                game = play_game(game_init.copy(), player_prev, player)
-                validation_results[{
+                game = play_game(game_init.copy(), player_best, player_curr)
+                results[{
                     vshogi.BLACK_WIN: 'loss',
                     vshogi.WHITE_WIN: 'win',
                     vshogi.DRAW: 'draw',
                     vshogi.ONGOING: 'draw',
                 }[game.result]] += 1
-                if dump_records:
-                    path = f'datasets/dataset_{index + 1:04d}/record_B{i_prev:02d}vsW{index:02d}_{n:04d}.tsv'
-                    with open(path, mode='w') as f:
-                        dump_game_records(f, game)
-                    os.system(f'cat {path} | grep -e " w " -e "state" > tmp.tsv; mv tmp.tsv {path}')
-            pbar.set_description(f'{index} vs {i_prev}: {validation_results}')
+            pbar.set_description(f'{current} vs {best}: {results}')
+        return current if results['win'] > win_threshold else best
+
+    with open('command.txt', 'w') as f:
+        f.write(f'python {" ".join(sys.argv)}')
+    os.system(f"cp {__file__} ./")
+
+    if args.resume_rl_cycle_from == 1:
+        subprocess.call([
+            sys.executable, "dlshogi.py", "train", args.shogi_variant,
+            "--resume_rl_cycle_from", str(0),
+            "--nn_channels", str(args.nn_channels),
+            "--nn_backbones", str(args.nn_backbones),
+            "--output", args.output,
+        ])
+
+    for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
+        learning_rate = args.nn_learning_rate
+        while True:
+            pattern = f'datasets/dataset_{i:04d}/*.tsv'
+            self_play_index_from = len([p for p in glob(pattern) if 'vs' not in p])
+            # Self-play!
+            subprocess.call([
+                sys.executable, "dlshogi.py", "self-play", args.shogi_variant,
+                "--resume_rl_cycle_from", str(i),
+                "--mcts_explorations", str(args.mcts_explorations),
+                "--mcts_coeff_puct", str(args.mcts_coeff_puct),
+                "--self_play", str(args.self_play),
+                "--self_play_index_from", str(self_play_index_from),
+                "--jobs", str(args.jobs),
+                "--output", args.output,
+            ])
+
+            # Train NN!
+            subprocess.call([
+                sys.executable, "dlshogi.py", "train", args.shogi_variant,
+                "--resume_rl_cycle_from", str(i),
+                "--nn_channels", str(args.nn_channels),
+                "--nn_backbones", str(args.nn_backbones),
+                "--nn_train_fraction", str(args.nn_train_fraction),
+                "--nn_epochs", str(args.nn_epochs),
+                "--nn_minibatch", str(args.nn_minibatch),
+                "--nn_learning_rate", str(learning_rate),
+                "--output", args.output,
+            ])
+
+            if (i == 1) or (get_best_player_index(i, i - 1) == i):
+                break
+            else:
+                self_play_index_from += args.self_play
+
+        # Validate!
+        subprocess.call([
+            sys.executable, "dlshogi.py", "validation", args.shogi_variant,
+            "--resume_rl_cycle_from", str(i),
+            "--mcts_explorations", str(args.mcts_explorations),
+            "--mcts_coeff_puct", str(args.mcts_coeff_puct),
+            "--validations", str(args.validations),
+            "--jobs", str(args.jobs),
+            "--output", args.output,
+        ])
 
 
 def parse_args():
@@ -520,9 +611,6 @@ def parse_args():
 
 
 if __name__ == '__main__':
-    import subprocess
-    import sys
-
     args = parse_args()
 
     if os.path.basename(os.getcwd()) != args.output:
@@ -535,92 +623,10 @@ if __name__ == '__main__':
         os.makedirs('datasets')
 
     if args.run == 'rl':
-        with open('command.txt', 'w') as f:
-            f.write(f'python {" ".join(sys.argv)}')
-        os.system(f"cp {__file__} ./")
-
-    if args.run == 'self-play':
-        i = args.resume_rl_cycle_from
-        if not os.path.isdir(f'datasets/dataset_{i:04d}'):
-            os.makedirs(f'datasets/dataset_{i:04d}')
-        self_play_and_dump_records(i)
-        sys.exit(0)
+        run_rl_cycle(args)
+    elif args.run == 'self-play':
+        run_self_play(args)
     elif args.run == 'train':
-        shogi = args._shogi
-        network = build_policy_value_network(
-            input_size=(shogi.Game.ranks, shogi.Game.files),
-            input_channels=shogi.Game.feature_channels,
-            num_policy_per_square=shogi.Move._num_policy_per_square(),
-            num_channels_in_hidden_layer=args.nn_channels,
-            num_backbone_layers=args.nn_backbones,
-        )
-        i = args.resume_rl_cycle_from
-        if i > 1:
-            network.load_weights(f'models/checkpoint_{i-1:04d}/checkpoint_{i-1:04d}').expect_partial()
-        if i > 0:
-            load_data_and_train_network(network, i, args.nn_learning_rate)
-            network.save_weights(f'models/checkpoint_{i:04d}/checkpoint_{i:04d}')
-        PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
-        sys.exit(0)
+        run_train(args)
     elif args.run == 'validation':
-        i = args.resume_rl_cycle_from
-        if not os.path.isdir(f'datasets/dataset_{i + 1:04d}'):
-            os.makedirs(f'datasets/dataset_{i + 1:04d}')
-        play_against_past_players(i, dump_records=True)
-        sys.exit(0)
-
-    if args.resume_rl_cycle_from == 1:
-        shogi = args._shogi
-        subprocess.call([
-            sys.executable, "dlshogi.py", "train", args.shogi_variant,
-            "--resume_rl_cycle_from", str(0),
-            "--nn_channels", str(args.nn_channels),
-            "--nn_backbones", str(args.nn_backbones),
-            "--output", args.output,
-        ])
-
-    for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
-        learning_rate = args.nn_learning_rate
-        while True:
-            pattern = f'datasets/dataset_{i:04d}/*.tsv'
-            self_play_index_from = len([p for p in glob(pattern) if 'vs' not in p])
-            # Self-play!
-            subprocess.call([
-                sys.executable, "dlshogi.py", "self-play", args.shogi_variant,
-                "--resume_rl_cycle_from", str(i),
-                "--mcts_explorations", str(args.mcts_explorations),
-                "--mcts_coeff_puct", str(args.mcts_coeff_puct),
-                "--self_play", str(args.self_play),
-                "--self_play_index_from", str(self_play_index_from),
-                "--jobs", str(args.jobs),
-                "--output", args.output,
-            ])
-
-            # Train NN!
-            subprocess.call([
-                sys.executable, "dlshogi.py", "train", args.shogi_variant,
-                "--resume_rl_cycle_from", str(i),
-                "--nn_channels", str(args.nn_channels),
-                "--nn_backbones", str(args.nn_backbones),
-                "--nn_train_fraction", str(args.nn_train_fraction),
-                "--nn_epochs", str(args.nn_epochs),
-                "--nn_minibatch", str(args.nn_minibatch),
-                "--nn_learning_rate", str(learning_rate),
-                "--output", args.output,
-            ])
-
-            if (i == 1) or (get_best_player_index(i, i - 1) == i):
-                break
-            else:
-                self_play_index_from += args.self_play
-
-        # Validate!
-        subprocess.call([
-            sys.executable, "dlshogi.py", "validation", args.shogi_variant,
-            "--resume_rl_cycle_from", str(i),
-            "--mcts_explorations", str(args.mcts_explorations),
-            "--mcts_coeff_puct", str(args.mcts_coeff_puct),
-            "--validations", str(args.validations),
-            "--jobs", str(args.jobs),
-            "--output", args.output,
-        ])
+        run_validation(args)
