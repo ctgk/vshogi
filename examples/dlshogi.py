@@ -105,8 +105,11 @@ class PolicyValueFunction:
             self._model_content = None
             self._interpreter = tf.lite.Interpreter(model_path=model, num_threads=num_threads)
         else:
-            self._model_content = tf.lite.TFLiteConverter.from_keras_model(model).convert()
-            self._interpreter = tf.lite.Interpreter(model_content=self._model_content, num_threads=num_threads)
+            converter = tf.lite.TFLiteConverter.from_keras_model(model)
+            converter.optimizations = [tf.lite.Optimize.DEFAULT]
+            self._model_content = converter.convert()
+            self._interpreter = tf.lite.Interpreter(
+                model_content=self._model_content, num_threads=num_threads)
 
         self._interpreter.allocate_tensors()
         input_details = self._interpreter.get_input_details()[0]
