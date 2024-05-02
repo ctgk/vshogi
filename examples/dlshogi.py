@@ -140,36 +140,30 @@ def dump_game_records(file_, game: vshogi.Game) -> None:
             lambda g, i: g.get_sfen_at(i, include_move_count=True),
             lambda g, i: g.get_move_at(i).to_usi(),
             lambda g, _: g.result,
+            lambda g, i: g.q_value_record[i],
             lambda g, i: g.visit_counts_record[i],
         ),
-        names=('state', 'move', 'result', 'visit_counts'), file_=file_,
+        names=('state', 'move', 'result', 'q_value', 'visit_counts'),
+        file_=file_,
     )
 
 
 def _get_generator_from_df(df: pd.DataFrame):
-    value_options = {
-        (vshogi.DRAW, vshogi.BLACK): 0.,
-        (vshogi.DRAW, vshogi.WHITE): 0.,
-        (vshogi.ONGOING, vshogi.BLACK): 0.,
-        (vshogi.ONGOING, vshogi.WHITE): 0.,
-        (vshogi.BLACK_WIN, vshogi.BLACK): 1.,
-        (vshogi.BLACK_WIN, vshogi.WHITE): -1.,
-        (vshogi.WHITE_WIN, vshogi.BLACK): -1.,
-        (vshogi.WHITE_WIN, vshogi.WHITE): 1.,
-    }
 
     def _generator():
         for _, row in df.sample(n=len(df), replace=False).iterrows():
             game = args._shogi.Game(row['state'])
-            visit_counts = {args._shogi.Move(k): v for k, v in eval(row['visit_counts']).items()}
-            result = eval('vshogi.' + args.shogi_variant + '.' + row['result'])
+            visit_counts = {
+                args._shogi.Move(k): v
+                for k, v in eval(row['visit_counts']).items()
+            }
             if np.random.uniform() > 0.5:
                 game = game.hflip()
                 visit_counts = {k.hflip(): v for k, v in visit_counts.items()}
 
             x = game.to_dlshogi_features()
             policy = game.to_dlshogi_policy(visit_counts, default_value=np.nan)
-            value = value_options[(result, game.turn)]
+            value = float(row['q_value'])
 
             yield np.squeeze(x), (policy, value)
 
@@ -202,7 +196,6 @@ def train_network(
 
     network.compile(
         loss=[
-            # tf.keras.losses.CategoricalCrossentropy(from_logits=True),
             masked_softmax_cross_entropy,
             tf.keras.losses.MeanSquaredError(),
         ],
@@ -216,7 +209,13 @@ def train_network(
 
 
 def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
-    df = pd.read_csv(tsv_path, sep='\t')
+    df = pd.read_csv(
+        tsv_path, sep='\t',
+        dtype={
+            'state': str, 'move': str, 'result': str,
+            'q_value': float, 'visit_counts': str,
+        },
+    )
     if fraction is None:
         return df
     n = int(len(df) * fraction)
@@ -258,16 +257,18 @@ def play_game(
         The game the two players played.
     """
     game.visit_counts_record = []
+    game.q_value_record = []
     for _ in range(max_moves):
         if game.result != vshogi.Result.ONGOING:
             break
 
         mate_moves = game.get_mate_moves_if_any(num_dfpn_nodes=10000)
         if mate_moves is not None:
-            for move in mate_moves:
+            for i, move in enumerate(mate_moves):
                 game.visit_counts_record.append({
                     m.to_usi(): int(m == move) for m in game.get_legal_moves()
                 })
+                game.q_value_record.append(int(i % 2 == 0) * 2 - 1)
                 game.apply(move)
             break
 
@@ -281,6 +282,7 @@ def play_game(
         visit_counts = player.get_visit_counts()
         move = player.select(temperature='max') # off-policy
         game.apply(move)
+        game.q_value_record.append(player.get_q_values()[move])
         player_black.apply(move)
         if player_white is not player_black:
             player_white.apply(move)
