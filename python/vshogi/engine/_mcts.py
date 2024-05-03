@@ -190,6 +190,21 @@ class MonteCarloTreeSearcher:
             policy_logits, value = self._policy_value_func(game)
             node.simulate_expand_and_backprop(game._game, value, policy_logits)
 
+    def get_probas(self) -> tp.Dict[Move, float]:
+        """Return raw probabilities of selecting actions.
+
+        Returns
+        -------
+        tp.Dict[Move, float]
+            Raw probabilities of selecting actions by `policy_value_func`.
+        """
+        move_proba_pair_list = [
+            (m, self._root.get_child(m).get_proba())
+            for m in self._root.get_actions()
+        ]
+        move_proba_pair_list.sort(key=lambda t: t[1], reverse=True)
+        return {m: p for m, p in move_proba_pair_list}
+
     def get_q_values(self) -> tp.Dict[Move, float]:
         """Return Q value of each action.
 

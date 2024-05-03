@@ -142,17 +142,28 @@ def dump_game_records(file_, game: vshogi.Game) -> None:
             lambda g, i: g.get_move_at(i).to_usi(),
             lambda g, _: g.result,
             lambda g, i: g.q_value_record[i],
-            lambda g, i: g.visit_counts_record[i],
+            lambda g, i: g.proximal_probas_record[i],
         ),
-        names=('state', 'move', 'result', 'q_value', 'visit_counts'),
+        names=('state', 'move', 'result', 'q_value', 'proximal_probas'),
         file_=file_,
     )
+
+
+def _get_proximal_probas(prior: dict, posterior: dict, prior_rate: float):
+    s = sum(posterior.values())
+    posterior = {m: v / s for m, v in posterior.items()}
+    proximal_probas = {
+        m: prior_rate * prior[m] + (1 - prior_rate) * posterior[m]
+        for m in prior.keys()
+    }
+    return proximal_probas
 
 
 def play_game(
     game: vshogi.Game,
     player_black: vshogi.engine.MonteCarloTreeSearcher,
     player_white: vshogi.engine.MonteCarloTreeSearcher,
+    args,
     max_moves: int = 400,
 ) -> vshogi.Game:
     """Make two players play the game until an end.
@@ -174,37 +185,51 @@ def play_game(
     Game
         The game the two players played.
     """
-    game.visit_counts_record = []
     game.q_value_record = []
+    game.proximal_probas_record = []
     for _ in range(max_moves):
         if game.result != vshogi.Result.ONGOING:
-            break
-
-        mate_moves = game.get_mate_moves_if_any(num_dfpn_nodes=10000)
-        if mate_moves is not None:
-            for i, move in enumerate(mate_moves):
-                game.visit_counts_record.append({
-                    m.to_usi(): int(m == move) for m in game.get_legal_moves()
-                })
-                game.q_value_record.append(int(i % 2 == 0) * 2 - 1)
-                game.apply(move)
             break
 
         player = player_black if game.turn == vshogi.Color.BLACK else player_white
         if not player.is_ready():
             player.set_root(game)
+
+        mate_moves = game.get_mate_moves_if_any(num_dfpn_nodes=10000)
+        if mate_moves is not None:
+            for i, move in enumerate(mate_moves):
+                player.explore(n=1)
+                proximal_probas = _get_proximal_probas(
+                    prior={m.to_usi(): p for m, p in player.get_probas().items()},
+                    posterior={m.to_usi(): int(m == move) for m in game.get_legal_moves()},
+                    prior_rate=args.nn_proximal_rate,
+                )
+                game.q_value_record.append(int(i % 2 == 0) * 2 - 1)
+                game.proximal_probas_record.append(proximal_probas)
+                game.apply(move)
+                player.apply(move)
+            break
+
         player.explore(
             n=args.mcts_explorations - player.num_explored,
             num_dfpn_nodes=100, # approximately worth three-move mate
         )
-        visit_counts = player.get_visit_counts()
         move = player.select(temperature='max') # off-policy
-        game.apply(move)
+
+        proximal_probas = _get_proximal_probas(
+            prior={m.to_usi(): p for m, p in player.get_probas().items()},
+            posterior={m.to_usi(): v for m, v in player.get_visit_counts().items()},
+            prior_rate=args.nn_proximal_rate,
+        )
+
         game.q_value_record.append(player.get_q_values()[move])
+        game.proximal_probas_record.append(proximal_probas)
+
+        game.apply(move)
         player_black.apply(move)
         if player_white is not player_black:
             player_white.apply(move)
-        game.visit_counts_record.append({k.to_usi(): v for k, v in visit_counts.items()})
+
     player_black.clear()
     player_white.clear()
     return game
@@ -227,7 +252,7 @@ def run_self_play(args):
 
     def _self_play_and_dump_record(player, index, nth_game: int) -> vshogi.Game:
         while True:
-            game = play_game(args._game_getter(), player, player)
+            game = play_game(args._game_getter(), player, player, args)
             if game.result != vshogi.ONGOING:
                 break
         with open(f'datasets/dataset_{index:04d}/record_{nth_game:05d}.tsv', mode='w') as f:
@@ -240,7 +265,7 @@ def run_self_play(args):
 
         @contextlib.contextmanager
         def tqdm_joblib(tqdm_object):
-            """Context manager to patch joblib to report into tqdm progress bar given as argument"""
+            """Context manager to patch joblib to report into tqdm progress, args bar given as argument"""
             class TqdmBatchCompletionCallback(joblib.parallel.BatchCompletionCallBack):
                 def __call__(self, *args, **kwargs):
                     tqdm_object.update(n=self.batch_size)
@@ -290,16 +315,16 @@ def run_train(args):
         def _generator():
             for _, row in df.sample(n=len(df), replace=False).iterrows():
                 game = args._shogi.Game(row['state'])
-                visit_counts = {
+                proximal_probas = {
                     args._shogi.Move(k): v
-                    for k, v in eval(row['visit_counts']).items()
+                    for k, v in eval(row['proximal_probas']).items()
                 }
                 if np.random.uniform() > 0.5:
                     game = game.hflip()
-                    visit_counts = {k.hflip(): v for k, v in visit_counts.items()}
+                    proximal_probas = {k.hflip(): v for k, v in proximal_probas.items()}
 
                 x = game.to_dlshogi_features()
-                policy = game.to_dlshogi_policy(visit_counts, default_value=np.nan)
+                policy = game.to_dlshogi_policy(proximal_probas, default_value=np.nan)
                 value = float(row['q_value'])
 
                 yield np.squeeze(x), (policy, value)
@@ -399,7 +424,7 @@ def run_validation(args):
             for n in pbar:
                 if n % 2 == 0:
                     game_init = args._game_getter()
-                    game = play_game(game_init.copy(), player, player_prev)
+                    game = play_game(game_init.copy(), player, player_prev, args)
                     validation_results[{
                         vshogi.BLACK_WIN: 'win',
                         vshogi.WHITE_WIN: 'loss',
@@ -412,7 +437,7 @@ def run_validation(args):
                             dump_game_records(f, game)
                         os.system(f'cat {path} | grep -e " b " -e "state" > tmp.tsv; mv tmp.tsv {path}')
                 else:
-                    game = play_game(game_init.copy(), player_prev, player)
+                    game = play_game(game_init.copy(), player_prev, player, args)
                     validation_results[{
                         vshogi.BLACK_WIN: 'loss',
                         vshogi.WHITE_WIN: 'win',
@@ -447,7 +472,7 @@ def run_rl_cycle(args):
                 break
             if n % 2 == 0:
                 game_init = args._game_getter()
-                game = play_game(game_init.copy(), player_curr, player_best)
+                game = play_game(game_init.copy(), player_curr, player_best, args)
                 results[{
                     vshogi.BLACK_WIN: 'win',
                     vshogi.WHITE_WIN: 'loss',
@@ -455,7 +480,7 @@ def run_rl_cycle(args):
                     vshogi.ONGOING: 'draw',
                 }[game.result]] += 1
             else:
-                game = play_game(game_init.copy(), player_best, player_curr)
+                game = play_game(game_init.copy(), player_best, player_curr, args)
                 results[{
                     vshogi.BLACK_WIN: 'loss',
                     vshogi.WHITE_WIN: 'win',
@@ -543,6 +568,15 @@ def parse_args():
         nn_epochs: int = config(type=int, default=20, help='# of epochs in NN training. By default 20.')
         nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
         nn_learning_rate: float = config(type=float, default=1e-3, help='Learning rate of NN weight update')
+        nn_proximal_rate: float = config(
+            type=float, default=0.5,
+            help=(
+                'Rate (0 - 1) to mix action probability output from prior network with MCTS visit counts. '
+                'The resulting value is a supervisory signal of action probability to train a new network. '
+                'For example, the new network is trained purely on MCTS visit counts when the value is 0. '
+                'By default 0.5'
+            ),
+        )
         mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000. Alpha Zero used 800 simulations.')
         mcts_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in MCTS, default=4.')
         self_play: int = config(type=int, default=200, help='# of self-play in one RL cycle, default=200')
