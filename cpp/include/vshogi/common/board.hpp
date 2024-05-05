@@ -54,15 +54,15 @@ public:
         }
         return false;
     }
-    BoardPieceTypeEnum operator[](const SquareEnum sq) const
+    BoardPieceTypeEnum operator[](const SquareEnum& sq) const
     {
         return m_pieces[sq];
     }
-    BoardPieceTypeEnum& operator[](const SquareEnum sq)
+    BoardPieceTypeEnum& operator[](const SquareEnum& sq)
     {
         return m_pieces[sq];
     }
-    bool is_empty(const SquareEnum sq) const
+    bool is_empty(const SquareEnum& sq) const
     {
         return (m_pieces[sq] == VOID);
     }

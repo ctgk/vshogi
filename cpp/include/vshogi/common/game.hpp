@@ -304,9 +304,9 @@ public:
         constexpr int ch = feature_channels();
 
         const auto turn = get_turn();
-        const auto stand_curr = get_stand(turn);
-        const auto stand_next = get_stand(~turn);
-        const auto board = get_board();
+        const auto& stand_curr = get_stand(turn);
+        const auto& stand_next = get_stand(~turn);
+        const auto& board = get_board();
 
         for (int k = sp_types; k--;) {
             const auto p = Pieces::stand_piece_array[k];
@@ -900,6 +900,8 @@ protected:
         const SquareEnum* sq_ptr = Squares::get_non_ranging_attacks_by(
             board[enemy_king_sq], enemy_king_sq);
         for (; *sq_ptr != Squares::SQ_NA; ++sq_ptr) {
+            if (!board.is_empty(*sq_ptr))
+                continue;
             if (board.is_square_attacked(turn, *sq_ptr, enemy_king_sq))
                 continue;
             return false;
