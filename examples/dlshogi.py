@@ -35,43 +35,48 @@ def build_policy_value_network(
 ):
     r = tf.keras.regularizers.L2(0.001)
 
-    def pointwise_conv2d(x, ch):
+    def pointwise_conv2d(x, ch, use_bias=True):
         return tf.keras.layers.Conv2D(
-            ch, 1, use_bias=False, kernel_regularizer=r)(x)
+            ch, 1, use_bias=use_bias, kernel_regularizer=r)(x)
+
+    def depthwise_conv2d(x, dilation=1):
+        return tf.keras.layers.DepthwiseConv2D(
+            3, dilation_rate=dilation, padding='same',
+            use_bias=True, kernel_regularizer=r)(x)
 
     def bn(x):
         return tf.keras.layers.BatchNormalization(center=False, scale=False)(x)
 
-    def depthwise_multidilation_conv2d(x, dilations: tp.Iterable[int]):
-        return tf.keras.layers.Concatenate()([
-            tf.keras.layers.DepthwiseConv2D(
-                3, dilation_rate=d, padding='same',
-                use_bias=False, kernel_regularizer=r)(x)
-            for d in dilations
+    def relu_pconv(x, ch):
+        return tf.nn.relu6(pointwise_conv2d(x, ch))
+
+    def multidilation_resblock(x):
+        h = tf.keras.layers.Concatenate()([
+            depthwise_conv2d(relu_pconv(x, 32), d)
+            for d in range(1, max(input_size))
         ])
-
-    def bottleneck(x):
-        h = pointwise_conv2d(x, num_channels_in_hidden_layer // 4)
-        h = bn(h)
         h = tf.nn.relu6(h)
-
-        h = depthwise_multidilation_conv2d(h, range(1, min(input_size)))
-        h = bn(h)
-        h = tf.nn.relu6(h)
-
         h = pointwise_conv2d(h, num_channels_in_hidden_layer)
-        h = bn(h)
-        return h
+        h = tf.keras.layers.Add()([x, h])
+        return tf.nn.relu6(h)
 
     def resblock(x):
-        h = bottleneck(x)
+        h = relu_pconv(x, 32)
+        h = tf.nn.relu6(depthwise_conv2d(h))
+        h = pointwise_conv2d(h, num_channels_in_hidden_layer)
         h = tf.keras.layers.Add()([x, h])
         return tf.nn.relu6(h)
 
     def backbone_network(x):
-        h = tf.nn.relu6(bottleneck(x))
-        for _ in range(num_backbone_layers - 1):
-            h = resblock(h)
+        h = tf.keras.layers.SeparableConv2D(
+            num_channels_in_hidden_layer, 3, padding='same', use_bias=False)(x)
+        h = tf.nn.relu6(bn(h))
+
+        for i in range(num_backbone_layers):
+            if i % 2 == 0:
+                h = bn(multidilation_resblock(h))
+            else:
+                h = bn(resblock(h))
         return h
 
     def policy_network(x):
@@ -79,10 +84,7 @@ def build_policy_value_network(
         return tf.keras.layers.Flatten(name='policy_logits')(h)
 
     def value_network(x):
-        h = pointwise_conv2d(x, num_channels_in_hidden_layer // 4)
-        h = bn(h)
-        h = tf.nn.relu6(h)
-
+        h = relu_pconv(x, num_channels_in_hidden_layer // 4)
         h = tf.keras.layers.Flatten()(h)
         return tf.keras.layers.Dense(
             1, activation='tanh', name='value', kernel_regularizer=r)(h)
@@ -107,7 +109,6 @@ class PolicyValueFunction:
             self._interpreter = tf.lite.Interpreter(model_path=model, num_threads=num_threads)
         else:
             converter = tf.lite.TFLiteConverter.from_keras_model(model)
-            converter.optimizations = [tf.lite.Optimize.DEFAULT]
             self._model_content = converter.convert()
             self._interpreter = tf.lite.Interpreter(
                 model_content=self._model_content, num_threads=num_threads)
@@ -500,11 +501,15 @@ def run_rl_cycle(args):
             "--resume_rl_cycle_from", str(0),
             "--nn_channels", str(args.nn_channels),
             "--nn_backbones", str(args.nn_backbones),
+            "--nn_train_fraction", str(args.nn_train_fraction),
+            "--nn_epochs", str(args.nn_epochs),
+            "--nn_minibatch", str(args.nn_minibatch),
+            "--nn_learning_rate", str(args.nn_learning_rate),
+            "--nn_proximal_rate", str(args.nn_proximal_rate),
             "--output", args.output,
         ])
 
     for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
-        learning_rate = args.nn_learning_rate
         while True:
             pattern = f'datasets/dataset_{i:04d}/*.tsv'
             self_play_index_from = len([p for p in glob(pattern) if 'vs' not in p])
@@ -512,6 +517,7 @@ def run_rl_cycle(args):
             subprocess.call([
                 sys.executable, "dlshogi.py", "self-play", args.shogi_variant,
                 "--resume_rl_cycle_from", str(i),
+                "--nn_proximal_rate", str(args.nn_proximal_rate),
                 "--mcts_explorations", str(args.mcts_explorations),
                 "--mcts_coeff_puct", str(args.mcts_coeff_puct),
                 "--self_play", str(args.self_play),
@@ -529,7 +535,7 @@ def run_rl_cycle(args):
                 "--nn_train_fraction", str(args.nn_train_fraction),
                 "--nn_epochs", str(args.nn_epochs),
                 "--nn_minibatch", str(args.nn_minibatch),
-                "--nn_learning_rate", str(learning_rate),
+                "--nn_learning_rate", str(args.nn_learning_rate),
                 "--output", args.output,
             ])
 
@@ -542,6 +548,7 @@ def run_rl_cycle(args):
         subprocess.call([
             sys.executable, "dlshogi.py", "validation", args.shogi_variant,
             "--resume_rl_cycle_from", str(i),
+            "--nn_proximal_rate", str(args.nn_proximal_rate),
             "--mcts_explorations", str(args.mcts_explorations),
             "--mcts_coeff_puct", str(args.mcts_coeff_puct),
             "--validations", str(args.validations),
