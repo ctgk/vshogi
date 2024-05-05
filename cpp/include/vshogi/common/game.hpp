@@ -308,30 +308,30 @@ public:
         const auto& stand_next = get_stand(~turn);
         const auto& board = get_board();
 
+        float num_pieces_curr[static_cast<uint>(sp_types)] = {};
+        float num_pieces_next[static_cast<uint>(sp_types)] = {};
         for (int k = sp_types; k--;) {
             const auto p = Pieces::stand_piece_array[k];
-            const auto num_curr = static_cast<float>(stand_curr.count(p));
-            const auto num_next = static_cast<float>(stand_next.count(p));
-            for (int i = num_squares; i--;) {
-                data[i * ch + k] = num_curr;
-                data[i * ch + k + ch_half] = num_next;
-            }
+            num_pieces_curr[k] = static_cast<float>(stand_curr.count(p));
+            num_pieces_next[k] = static_cast<float>(stand_next.count(p));
         }
+        std::fill_n(data, num_squares * ch, 0.f);
         for (int i = num_squares; i--;) {
+            for (int k = sp_types; k--;)
+                data[i * ch + k + ch_half] = num_pieces_next[k];
+
+            for (int k = sp_types; k--;)
+                data[i * ch + k] = num_pieces_curr[k];
+
             const auto sq = static_cast<typename Squares::SquareEnum>(
                 (turn == BLACK) ? i : (num_squares - 1 - i));
-            const auto board_piece = board[sq];
-            for (int k = bp_types; k--;) {
-                data[i * ch + k + sp_types] = 0.f;
-                data[i * ch + k + sp_types + ch_half] = 0.f;
-            }
             if (board.is_empty(sq))
                 continue;
-            const auto color = Pieces::get_color(board_piece);
+            const auto board_piece = board[sq];
             const auto piece_type = Pieces::to_piece_type(board_piece);
             auto k = static_cast<int>(Pieces::demote(piece_type));
-            k += (Pieces::is_promoted(piece_type)) ? unpromoted_piece_types : 0;
-            k += (turn == color) ? 0 : ch_half;
+            k += (Pieces::is_promoted(piece_type)) * unpromoted_piece_types;
+            k += (turn != Pieces::get_color(board_piece)) * ch_half;
             data[i * ch + k + sp_types] = 1.f;
         }
     }
