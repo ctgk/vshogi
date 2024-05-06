@@ -148,10 +148,10 @@ public:
     {
         return m_action;
     }
-    std::size_t get_num_child() const
+    uint get_num_child() const
     {
         const NodeGM* ch = m_child.get();
-        std::size_t out = 0UL;
+        uint out = 0u;
         while (true) {
             if (ch == nullptr)
                 break;
@@ -160,7 +160,7 @@ public:
         }
         return out;
     }
-    const Node<Game, Move>* get_child(std::size_t index = 0UL) const
+    const Node<Game, Move>* get_child(uint index = 0U) const
     {
         const Node<Game, Move>* node = m_child.get();
         for (; index--;) {
@@ -209,7 +209,7 @@ public:
         const float coeff_puct,
         const int non_random_ratio,
         int random_depth,
-        const std::size_t num_dfpn_nodes = 0)
+        const uint& num_dfpn_nodes = 0u)
     {
         NodeGM* node = this;
         while (true) {
@@ -280,7 +280,7 @@ public:
 
         std::vector<float> probas(get_num_child());
         const NodeGM* ch = m_child.get();
-        for (std::size_t ii = 0; ch != nullptr; ch = ch->m_sibling.get()) {
+        for (uint ii = 0u; ch != nullptr; ch = ch->m_sibling.get()) {
             const auto v = static_cast<float>(ch->m_visit_count);
             probas[ii++] = std::log((v + eps) / temperature);
         }
@@ -289,7 +289,7 @@ public:
         float s = dist(engine);
         Move out = Move(0);
         ch = m_child.get();
-        for (std::size_t ii = 0; ch != nullptr; ch = ch->m_sibling.get()) {
+        for (uint ii = 0u; ch != nullptr; ch = ch->m_sibling.get()) {
             const auto p = probas[ii++];
             if (s < p)
                 return ch->m_action;
@@ -300,7 +300,7 @@ public:
     }
 
 private:
-    NodeGM* select_at_leaf(const Game& game, const std::size_t num_dfpn_nodes)
+    NodeGM* select_at_leaf(const Game& game, const uint& num_dfpn_nodes)
     {
         if (game.get_result() == ResultEnum::ONGOING) {
             if constexpr (!std::is_same<Game, animal_shogi::Game>::value) {

@@ -32,8 +32,8 @@ TEST(dfpn, mate_in_one_black)
     // Black: -
     auto root = Node(Game("2k2/5/2GB1/5/2K2 b -"));
     root.select_simulate_expand_backprop();
-    CHECK_EQUAL(1, root.get_pn());
-    CHECK_EQUAL(4, root.get_dn());
+    CHECK_EQUAL(Node::unit, root.get_pn());
+    CHECK_EQUAL(Node::unit * 4, root.get_dn());
     for (int ii = 10; ii--;) {
         if (root.found_mate())
             break;
@@ -99,22 +99,22 @@ TEST(dfpn, mate_in_three_straight_forward)
         CHECK_FALSE(root.found_mate());
         root.select_simulate_expand_backprop();
         // root
-        CHECK_EQUAL(1, root.get_pn());
-        CHECK_EQUAL(1, root.get_dn());
+        CHECK_EQUAL(Node::unit + Node::cent, root.get_pn());
+        CHECK_EQUAL(Node::unit, root.get_dn());
     }
     {
         CHECK_FALSE(root.found_mate());
         root.select_simulate_expand_backprop();
         // root -> Move(B1, C1)
-        CHECK_EQUAL(1, root.get_pn());
-        CHECK_EQUAL(1, root.get_dn());
+        CHECK_EQUAL(Node::unit, root.get_pn());
+        CHECK_EQUAL(Node::unit, root.get_dn());
     }
     {
         CHECK_FALSE(root.found_mate());
         root.select_simulate_expand_backprop();
         // root -> Move(B1, C1) -> Move(B1, A2)
-        CHECK_EQUAL(1, root.get_pn());
-        CHECK_EQUAL(1, root.get_dn());
+        CHECK_EQUAL(Node::unit, root.get_pn());
+        CHECK_EQUAL(Node::unit, root.get_dn());
     }
     {
         CHECK_FALSE(root.found_mate());
@@ -348,6 +348,42 @@ TEST(dfpn, debug)
         g.apply(m);
     }
     CHECK_TRUE(g.get_result() == vshogi::BLACK_WIN);
+}
+
+TEST(dfpn, mate_moves_without_waste_moves)
+{
+    using namespace vshogi::shogi;
+    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    // Turn: BLACK
+    // White: -
+    //     9   8   7   6   5   4   3   2   1
+    //   +---+---+---+---+---+---+---+---+---+
+    // A |   |   |   |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // B |   |   |   |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // C |   |   |   |   |   |   |-KE|-FU|   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // D |   |   |   |   |   |   |-FU|   |-FU|
+    //   +---+---+---+---+---+---+---+---+---+
+    // E |   |   |   |   |   |   |   |-OU|   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // F |   |   |   |   |   |   |+FU|   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // G |   |   |   |   |   |   |   |+FU|+FU|
+    //   +---+---+---+---+---+---+---+---+---+
+    // H |   |   |   |   |   |   |+HI|   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // I |   |   |   |   |   |+OU|   |   |+KY|
+    //   +---+---+---+---+---+---+---+---+---+
+    // Black: KY,KA
+    auto g = Game("9/9/6np1/6p1p/7k1/6P2/7PP/6R2/5K2L b BL");
+    auto searcher = Searcher(g);
+    searcher.explore(10);
+    // Mate moves with waste moves: ['L*2f', '2e1e', 'B*2d', '2c2d', '1g1f']
+    // Mate moves w/o waste moves: ['L*2f', '2e1e', '1g1f']
+    const auto actual = searcher.get_mate_moves();
+    CHECK_EQUAL(3, actual.size());
 }
 
 } // namespace test_vshogi::test_engine

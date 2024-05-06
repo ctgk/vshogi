@@ -101,6 +101,10 @@ public:
     {
         return Squares::num_files;
     }
+    static constexpr uint num_squares()
+    {
+        return Squares::num_squares;
+    }
     static constexpr uint board_piece_types()
     {
         return sizeof(Pieces::piece_array) / sizeof(Pieces::piece_array[0]);
@@ -134,6 +138,10 @@ public:
     const std::vector<Move>& get_legal_moves() const
     {
         return m_legal_moves;
+    }
+    const SquareEnum& get_king_location(const ColorEnum& c) const
+    {
+        return m_king_locations[c];
     }
     ResultEnum get_result() const
     {
