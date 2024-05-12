@@ -52,11 +52,19 @@ class Args:
         ),
     )
     mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000. Alpha Zero used 800 simulations.')
+    mcts_random_rate: float = config(
+        type=float, default=0.25,
+        help=(
+            'Select action by random sample from distribution by MCTS '
+            'for first `r * average_moves_until_game_end` moves. '
+            'The rest of the actions are obtained by selecting the mode of the distribution.'
+        ),
+    )
     mcts_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in MCTS, default=4.')
     self_play: int = config(type=int, default=200, help='# of self-play in one RL cycle, default=200')
     self_play_index_from: int = config(type=int, default=0, help='Index to start self-play from, default=0')
-    win_ratio_threshold: float = config(type=float, default=0.55, help='Threshold of win ratio to adopt new model against previous one, default=0.55')
     validations: int = config(type=int, default=10, help='# of validation plays per model, default=10')
+    win_ratio_threshold: float = config(type=float, default=0.55, help='Threshold of win ratio to adopt new model against previous one, default=0.55')
     jobs: int = config(short=False, type=int, default=1, help='# of jobs to run self-play in parallel, default=1')
     output: str = config(short=True, type=str, help='Output path of self-play datasets and trained NN models, default=`shogi`')
 
@@ -196,7 +204,6 @@ def _get_proximal_probas(prior: dict, posterior: dict, prior_rate: float):
 
 
 def play_game(
-    game: vshogi.Game,
     player_black: vshogi.engine.MonteCarloTreeSearcher,
     player_white: vshogi.engine.MonteCarloTreeSearcher,
     args,
@@ -206,8 +213,6 @@ def play_game(
 
     Parameters
     ----------
-    game : Game
-        Game to make two players play
     player_black : MonteCarloTreeSearcher
         First player
     player_white : MonteCarloTreeSearcher
@@ -221,6 +226,7 @@ def play_game(
     Game
         The game the two players played.
     """
+    game = args._shogi.Game()
     game.q_value_record = []
     game.proximal_probas_record = []
     for _ in range(max_moves):
@@ -250,7 +256,10 @@ def play_game(
             n=args.mcts_explorations - player.num_explored,
             num_dfpn_nodes=100, # approximately worth three-move mate
         )
-        move = player.select(temperature='max') # off-policy
+        if game.record_length < args._num_random_moves:
+            move = player.select(temperature=1.)
+        else:
+            move = player.select(temperature='max') # off-policy
 
         proximal_probas = _get_proximal_probas(
             prior={m.to_usi(): p for m, p in player.get_probas().items()},
@@ -288,7 +297,7 @@ def run_self_play(args: Args):
 
     def _self_play_and_dump_record(player, index, nth_game: int) -> vshogi.Game:
         while True:
-            game = play_game(args._game_getter(), player, player, args)
+            game = play_game(player, player, args)
             if game.result != vshogi.ONGOING:
                 break
         with open(f'datasets/dataset_{index:04d}/record_{nth_game:05d}.tsv', mode='w') as f:
@@ -341,6 +350,7 @@ def run_self_play(args: Args):
     i = args.resume_rl_cycle_from
     if not os.path.isdir(f'datasets/dataset_{i:04d}'):
         os.makedirs(f'datasets/dataset_{i:04d}')
+
     self_play_and_dump_records(i)
 
 
@@ -459,8 +469,7 @@ def run_validation(args: Args):
             pbar = tqdm(range(args.validations), ncols=100)
             for n in pbar:
                 if n % 2 == 0:
-                    game_init = args._game_getter()
-                    game = play_game(game_init.copy(), player, player_prev, args)
+                    game = play_game(player, player_prev, args)
                     validation_results[{
                         vshogi.BLACK_WIN: 'win',
                         vshogi.WHITE_WIN: 'loss',
@@ -473,7 +482,7 @@ def run_validation(args: Args):
                             dump_game_records(f, game)
                         os.system(f'cat {path} | grep -e " b " -e "state" > tmp.tsv; mv tmp.tsv {path}')
                 else:
-                    game = play_game(game_init.copy(), player_prev, player, args)
+                    game = play_game(player_prev, player, args)
                     validation_results[{
                         vshogi.BLACK_WIN: 'loss',
                         vshogi.WHITE_WIN: 'win',
@@ -490,6 +499,7 @@ def run_validation(args: Args):
     i = args.resume_rl_cycle_from
     if not os.path.isdir(f'datasets/dataset_{i + 1:04d}'):
         os.makedirs(f'datasets/dataset_{i + 1:04d}')
+
     play_against_past_players(i, dump_records=True)
 
 
@@ -507,8 +517,7 @@ def run_rl_cycle(args: Args):
             if (results['win'] > win_threshold) or (results['loss'] > loss_threshold):
                 break
             if n % 2 == 0:
-                game_init = args._game_getter()
-                game = play_game(game_init.copy(), player_curr, player_best, args)
+                game = play_game(player_curr, player_best, args)
                 results[{
                     vshogi.BLACK_WIN: 'win',
                     vshogi.WHITE_WIN: 'loss',
@@ -516,7 +525,7 @@ def run_rl_cycle(args: Args):
                     vshogi.ONGOING: 'draw',
                 }[game.result]] += 1
             else:
-                game = play_game(game_init.copy(), player_best, player_curr, args)
+                game = play_game(player_best, player_curr, args)
                 results[{
                     vshogi.BLACK_WIN: 'loss',
                     vshogi.WHITE_WIN: 'win',
@@ -540,6 +549,18 @@ def run_rl_cycle(args: Args):
         ]).split())
 
     for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
+        if i == 1:
+            args._num_random_moves = np.inf
+        else:
+            line_length_list = []
+            for path in glob(f'datasets/dataset_{i-1:04d}/record_*.tsv'):
+                if 'vs' in path:
+                    continue
+                with open(path, 'rb') as f:
+                    line_length_list.append(sum(1 for _ in f) - 1)
+            n = np.mean(line_length_list) * args.mcts_random_rate
+            args._num_random_moves = int(np.ceil(n / 2)) * 2
+
         while True:
             pattern = f'datasets/dataset_{i:04d}/*.tsv'
             self_play_index_from = len([p for p in glob(pattern) if 'vs' not in p])
@@ -582,45 +603,7 @@ def run_rl_cycle(args: Args):
 
 def parse_args() -> Args:
 
-    def shogi_game_getter():
-        g = vshogi.shogi.Game()
-        first_moves = g.get_legal_moves()
-        g.apply(first_moves[0])
-        second_moves = g.get_legal_moves()
-
-        def get_random_game():
-            if np.random.uniform() < 0.1:
-                return vshogi.shogi.Game()
-            m1 = np.random.choice(first_moves)
-            m2 = np.random.choice(second_moves)
-            sfen = vshogi.shogi.Game().apply(m1).apply(m2).to_sfen(include_move_count=False)
-            return vshogi.shogi.Game(sfen=sfen)
-
-        return get_random_game
-
-
     args = Args.from_args()
-    args._game_getter = {
-        'animal_shogi': lambda: vshogi.animal_shogi.Game(
-            '{}l{}/1{}1/1{}1/{}L{} b - 1'.format(
-                *np.random.choice(list('ceg'), 3, replace=False),
-                *np.random.choice(list('CEG'), 3, replace=False),
-            ),
-        ),
-        'minishogi': lambda: vshogi.minishogi.Game(
-            '{}{}{}{}k/4{}/5/{}4/K{}{}{}{} b - 1'.format(
-                *np.random.choice(list('rbsgp'), 5, replace=False),
-                *np.random.choice(list('RBSGP'), 5, replace=False),
-            ),
-        ),
-        'judkins_shogi': lambda: vshogi.judkins_shogi.Game(
-            '{}{}{}{}{}k/5{}/6/6/{}5/K{}{}{}{}{} b - 1'.format(
-                *np.random.choice(list('rbnsgp'), 6, replace=False),
-                *np.random.choice(list('RBNSGP'), 6, replace=False),
-            ),
-        ),
-        'shogi': shogi_game_getter(),
-    }[args.shogi_variant]
     args._shogi = getattr(vshogi, args.shogi_variant)
     default_configs = {
         'animal_shogi':  {'nn_channels':  32, 'nn_backbones': 3},
@@ -635,7 +618,21 @@ def parse_args() -> Args:
     if args.output is None:
         args.output = args.shogi_variant
 
+    i = args.resume_rl_cycle_from
+    if i in (0, 1):
+        args._num_random_moves = np.inf
+    else:
+        line_length_list = []
+        for path in glob(f'datasets/dataset_{i-1:04d}/record_*.tsv'):
+            if 'vs' in path:
+                continue
+            with open(path, 'rb') as f:
+                line_length_list.append(sum(1 for _ in f) - 1)
+        n = np.mean(line_length_list) * args.mcts_random_rate
+        args._num_random_moves = int(np.ceil(n / 2)) * 2
+
     print(args)
+    print(f"#random_moves={args._num_random_moves}")
     return args
 
 
