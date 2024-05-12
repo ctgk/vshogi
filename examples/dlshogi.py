@@ -26,6 +26,41 @@ from tqdm import tqdm
 import vshogi
 
 
+@classopt(default_long=True)
+class Args:
+    run: str = config(long=False, choices=['rl', 'self-play', 'train', 'validation'])
+    shogi_variant: str = config(
+        long=False,
+        choices=['shogi', 'animal_shogi', 'judkins_shogi', 'minishogi'],
+        help='Choose a variant of shogi to train!',
+    )
+    rl_cycle: int = config(type=int, default=10, help='# of Reinforcement Learning cycle. By default 10.')
+    resume_rl_cycle_from: int = config(type=int, default=1, help='Resume Reinforcement Learning cycle if given. By default 0.')
+    nn_channels: int = config(type=int, default=None, help='# of hidden channels in NN. Default value varies in shogi games.')
+    nn_backbones: int = config(type=int, default=None, help='# of backbone layers in NN. Default value varies in shogi games.')
+    nn_train_fraction: float = config(type=float, default=0.5, help='Fraction of game record by former models to use to train current one. By default 0.5')
+    nn_epochs: int = config(type=int, default=20, help='# of epochs in NN training. By default 20.')
+    nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
+    nn_learning_rate: float = config(type=float, default=1e-3, help='Learning rate of NN weight update')
+    nn_proximal_rate: float = config(
+        type=float, default=0.5,
+        help=(
+            'Rate (0 - 1) to mix action probability output from prior network with MCTS visit counts. '
+            'The resulting value is a supervisory signal of action probability to train a new network. '
+            'For example, the new network is trained purely on MCTS visit counts when the value is 0. '
+            'By default 0.5'
+        ),
+    )
+    mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000. Alpha Zero used 800 simulations.')
+    mcts_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in MCTS, default=4.')
+    self_play: int = config(type=int, default=200, help='# of self-play in one RL cycle, default=200')
+    self_play_index_from: int = config(type=int, default=0, help='Index to start self-play from, default=0')
+    win_ratio_threshold: float = config(type=float, default=0.55, help='Threshold of win ratio to adopt new model against previous one, default=0.55')
+    validations: int = config(type=int, default=10, help='# of validation plays per model, default=10')
+    jobs: int = config(short=False, type=int, default=1, help='# of jobs to run self-play in parallel, default=1')
+    output: str = config(short=True, type=str, help='Output path of self-play datasets and trained NN models, default=`shogi`')
+
+
 def build_policy_value_network(
     input_size: tp.Tuple[int, int],  # (H, W)
     input_channels: int,
@@ -249,7 +284,7 @@ def load_player_of(index_path_or_network, num_threads=1) -> vshogi.engine.MonteC
     )
 
 
-def run_self_play(args):
+def run_self_play(args: Args):
 
     def _self_play_and_dump_record(player, index, nth_game: int) -> vshogi.Game:
         while True:
@@ -309,7 +344,7 @@ def run_self_play(args):
     self_play_and_dump_records(i)
 
 
-def run_train(args):
+def run_train(args: Args):
 
     def _get_generator_from_df(df: pd.DataFrame):
 
@@ -407,7 +442,7 @@ def run_train(args):
     PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
 
 
-def run_validation(args):
+def run_validation(args: Args):
 
     def play_against_past_players(index: int, dump_records: bool = False):
         player = load_player_of(index, args.jobs)
@@ -458,7 +493,7 @@ def run_validation(args):
     play_against_past_players(i, dump_records=True)
 
 
-def run_rl_cycle(args):
+def run_rl_cycle(args: Args):
 
     def get_best_player_index(current: int, best: int):
         results = {'win': 0, 'loss': 0, 'draw': 0}
@@ -499,15 +534,10 @@ def run_rl_cycle(args):
         subprocess.call([
             sys.executable, "dlshogi.py", "train", args.shogi_variant,
             "--resume_rl_cycle_from", str(0),
-            "--nn_channels", str(args.nn_channels),
-            "--nn_backbones", str(args.nn_backbones),
-            "--nn_train_fraction", str(args.nn_train_fraction),
-            "--nn_epochs", str(args.nn_epochs),
-            "--nn_minibatch", str(args.nn_minibatch),
-            "--nn_learning_rate", str(args.nn_learning_rate),
-            "--nn_proximal_rate", str(args.nn_proximal_rate),
-            "--output", args.output,
-        ])
+        ] + ' '.join([
+            f'--{k} {v}' for k, v in args.to_dict().items()
+            if k not in ('run', 'shogi_variant', 'resume_rl_cycle_from')
+        ]).split())
 
     for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
         while True:
@@ -517,27 +547,23 @@ def run_rl_cycle(args):
             subprocess.call([
                 sys.executable, "dlshogi.py", "self-play", args.shogi_variant,
                 "--resume_rl_cycle_from", str(i),
-                "--nn_proximal_rate", str(args.nn_proximal_rate),
-                "--mcts_explorations", str(args.mcts_explorations),
-                "--mcts_coeff_puct", str(args.mcts_coeff_puct),
-                "--self_play", str(args.self_play),
                 "--self_play_index_from", str(self_play_index_from),
-                "--jobs", str(args.jobs),
-                "--output", args.output,
-            ])
+            ] + ' '.join([
+                f'--{k} {v}' for k, v in args.to_dict().items()
+                if k not in (
+                    'run', 'shogi_variant',
+                    'resume_rl_cycle_from', 'self_play_index_from',
+                )
+            ]).split())
 
             # Train NN!
             subprocess.call([
                 sys.executable, "dlshogi.py", "train", args.shogi_variant,
                 "--resume_rl_cycle_from", str(i),
-                "--nn_channels", str(args.nn_channels),
-                "--nn_backbones", str(args.nn_backbones),
-                "--nn_train_fraction", str(args.nn_train_fraction),
-                "--nn_epochs", str(args.nn_epochs),
-                "--nn_minibatch", str(args.nn_minibatch),
-                "--nn_learning_rate", str(args.nn_learning_rate),
-                "--output", args.output,
-            ])
+            ] + ' '.join([
+                f'--{k} {v}' for k, v in args.to_dict().items()
+                if k not in ('run', 'shogi_variant', 'resume_rl_cycle_from')
+            ]).split())
 
             if (i == 1) or (get_best_player_index(i, i - 1) == i):
                 break
@@ -548,51 +574,13 @@ def run_rl_cycle(args):
         subprocess.call([
             sys.executable, "dlshogi.py", "validation", args.shogi_variant,
             "--resume_rl_cycle_from", str(i),
-            "--nn_proximal_rate", str(args.nn_proximal_rate),
-            "--mcts_explorations", str(args.mcts_explorations),
-            "--mcts_coeff_puct", str(args.mcts_coeff_puct),
-            "--validations", str(args.validations),
-            "--jobs", str(args.jobs),
-            "--output", args.output,
-        ])
+        ]  + ' '.join([
+            f'--{k} {v}' for k, v in args.to_dict().items()
+            if k not in ('run', 'shogi_variant', 'resume_rl_cycle_from')
+        ]).split())
 
 
-def parse_args():
-
-    @classopt(default_long=True)
-    class Args:
-        run: str = config(long=False, choices=['rl', 'self-play', 'train', 'validation'])
-        shogi_variant: str = config(
-            long=False,
-            choices=['shogi', 'animal_shogi', 'judkins_shogi', 'minishogi'],
-            help='Choose a variant of shogi to train!',
-        )
-        rl_cycle: int = config(type=int, default=10, help='# of Reinforcement Learning cycle. By default 10.')
-        resume_rl_cycle_from: int = config(type=int, default=1, help='Resume Reinforcement Learning cycle if given. By default 0.')
-        nn_channels: int = config(type=int, default=None, help='# of hidden channels in NN. Default value varies in shogi games.')
-        nn_backbones: int = config(type=int, default=None, help='# of backbone layers in NN. Default value varies in shogi games.')
-        nn_train_fraction: float = config(type=float, default=0.5, help='Fraction of game record by former models to use to train current one. By default 0.5')
-        nn_epochs: int = config(type=int, default=20, help='# of epochs in NN training. By default 20.')
-        nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
-        nn_learning_rate: float = config(type=float, default=1e-3, help='Learning rate of NN weight update')
-        nn_proximal_rate: float = config(
-            type=float, default=0.5,
-            help=(
-                'Rate (0 - 1) to mix action probability output from prior network with MCTS visit counts. '
-                'The resulting value is a supervisory signal of action probability to train a new network. '
-                'For example, the new network is trained purely on MCTS visit counts when the value is 0. '
-                'By default 0.5'
-            ),
-        )
-        mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000. Alpha Zero used 800 simulations.')
-        mcts_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in MCTS, default=4.')
-        self_play: int = config(type=int, default=200, help='# of self-play in one RL cycle, default=200')
-        self_play_index_from: int = config(type=int, default=0, help='Index to start self-play from, default=0')
-        win_ratio_threshold: float = config(type=float, default=0.55, help='Threshold of win ratio to adopt new model against previous one, default=0.55')
-        validations: int = config(type=int, default=10, help='# of validation plays per model, default=10')
-        jobs: int = config(short=False, type=int, default=1, help='# of jobs to run self-play in parallel, default=1')
-        output: str = config(short=True, type=str, help='Output path of self-play datasets and trained NN models, default=`shogi`')
-
+def parse_args() -> Args:
 
     def shogi_game_getter():
         g = vshogi.shogi.Game()
