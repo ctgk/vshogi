@@ -260,7 +260,7 @@ public:
         return *this;
     }
 
-    Move get_best_action() const
+    Move get_action_by_visit_max() const
     {
         Move out = Move();
         int max_visit_count = -1;
@@ -274,7 +274,7 @@ public:
         }
         return out;
     }
-    Move get_best_move(const float temperature) const
+    Move get_action_by_visit_distribution(const float temperature) const
     {
         constexpr float eps = 1e-3f;
 
@@ -287,7 +287,7 @@ public:
         softmax(probas);
 
         float s = dist(engine);
-        Move out = Move(0);
+        Move out = Move{};
         ch = m_child.get();
         for (uint ii = 0u; ch != nullptr; ch = ch->m_sibling.get()) {
             const auto p = probas[ii++];

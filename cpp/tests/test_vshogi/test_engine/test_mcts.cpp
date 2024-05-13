@@ -263,7 +263,7 @@ TEST(animal_shogi_node, explore_until_game_end)
                 n->simulate_expand_and_backprop(g_copy, 0.f, zeros);
         }
 
-        const auto action = root.get_best_action();
+        const auto action = root.get_action_by_visit_max();
         g.apply(action);
         root.apply(action);
     }
@@ -294,7 +294,7 @@ TEST(minishogi_node, explore_until_game_end)
                 n->simulate_expand_and_backprop(g_copy, 0.f, zeros);
         }
 
-        const auto action = root.get_best_action();
+        const auto action = root.get_action_by_visit_max();
         g.apply(action);
         root.apply(action);
     }
@@ -325,7 +325,7 @@ TEST(judkins_shogi_node, explore_until_game_end)
                 n->simulate_expand_and_backprop(g_copy, 0.f, zeros);
         }
 
-        const auto action = root.get_best_action();
+        const auto action = root.get_action_by_visit_max();
         g.apply(action);
         root.apply(action);
     }
@@ -390,7 +390,7 @@ TEST(shogi_node, explore_until_game_end)
                 n->simulate_expand_and_backprop(g_copy, 0.f, zeros);
         }
 
-        const auto action = root.get_best_action();
+        const auto action = root.get_action_by_visit_max();
         g.apply(action);
         root.apply(action);
     }

@@ -224,7 +224,7 @@ inline void export_mcts_node(pybind11::module& m)
                 self.simulate_expand_and_backprop(game, value, data);
             })
         .def(
-            "select",
+            "_select_node_to_explore",
             [](Node& node,
                Game& game,
                const float coeff_puct,
@@ -241,6 +241,25 @@ inline void export_mcts_node(pybind11::module& m)
                     return py::none();
                 return py::cast(*out, py::return_value_policy::reference);
             })
+        .def(
+            "get_action_by_proba_max",
+            [](const Node& self) {
+                Move out{};
+                float max_proba = -1.f;
+                for (const Node* ch = self.get_child(); ch != nullptr;
+                     ch = ch->get_sibling()) {
+                    const auto p = ch->get_proba();
+                    if (p > max_proba) {
+                        max_proba = p;
+                        out = ch->get_action();
+                    }
+                }
+                return out;
+            })
+        .def("get_action_by_visit_max", &Node::get_action_by_visit_max)
+        .def(
+            "get_action_by_visit_distribution",
+            &Node::get_action_by_visit_distribution)
         .def("apply", &Node::apply);
 }
 

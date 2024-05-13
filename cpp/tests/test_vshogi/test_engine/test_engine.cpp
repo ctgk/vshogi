@@ -62,7 +62,7 @@ TEST(shogi_engine, mcts_with_dfpn)
                 n->simulate_expand_and_backprop(g_copy, 0.f, zeros);
         }
 
-        root.get_best_action();
+        root.get_action_by_visit_max();
         const auto m = Move(kifu[ii]);
         g.apply(m);
         root.apply(m);

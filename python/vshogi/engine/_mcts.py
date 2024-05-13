@@ -181,7 +181,7 @@ class MonteCarloTreeSearcher:
 
         for _ in range(n):
             game = self._game.copy()
-            node = self._root.select(
+            node = self._root._select_node_to_explore(
                 game._game, c_puct, non_random_ratio, random_depth,
                 num_dfpn_nodes,
             )
@@ -259,6 +259,12 @@ class MonteCarloTreeSearcher:
             by = self._select_move_by
         if temperature is None:
             temperature = self._temperature_for_move_selection
+
+        if by == 'visit_counts':
+            if temperature == 'max':
+                return self._root.get_action_by_visit_max()
+            else:
+                return self._root.get_action_by_visit_distribution(temperature)
 
         d = getattr(self, f'get_{by}')()
         moves = list(d.keys())
