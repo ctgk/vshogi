@@ -60,6 +60,34 @@ public:
     {
         set_sfen(sfen);
     }
+    static constexpr uint ranks()
+    {
+        return Squares::num_ranks;
+    }
+    static constexpr uint files()
+    {
+        return Squares::num_files;
+    }
+    static constexpr uint num_squares()
+    {
+        return Squares::num_squares;
+    }
+    static constexpr uint board_piece_types()
+    {
+        return Pieces::num_piece_types;
+    }
+    static constexpr uint stand_piece_types()
+    {
+        return Pieces::num_stand_piece_types;
+    }
+    static constexpr uint feature_channels()
+    {
+        return 2 * (board_piece_types() + stand_piece_types());
+    }
+    static constexpr uint num_dlshogi_policy()
+    {
+        return num_squares() * Move::num_policy_per_square();
+    }
     bool operator==(const State& other) const
     {
         return (m_board == other.m_board) && (m_stands == other.m_stands)
@@ -119,6 +147,44 @@ public:
         place_piece_at(dst, moving, hash);
         m_turn = ~m_turn;
         return *this;
+    }
+    void to_feature_map(float* const data) const
+    {
+        constexpr uint sp_types = stand_piece_types();
+        constexpr uint unpromoted_piece_types = sp_types + 1; // + OU
+        constexpr uint ch_half = sp_types + board_piece_types();
+        constexpr uint ch = ch_half * 2;
+
+        const auto& stand_curr = m_stands[m_turn];
+        const auto& stand_next = m_stands[~m_turn];
+
+        float num_pieces_curr[sp_types] = {};
+        float num_pieces_next[sp_types] = {};
+        for (uint k = sp_types; k--;) {
+            const auto p = Pieces::stand_piece_array[k];
+            num_pieces_curr[k] = static_cast<float>(stand_curr.count(p));
+            num_pieces_next[k] = static_cast<float>(stand_next.count(p));
+        }
+
+        std::fill_n(data, Squares::num_squares * ch, 0.f);
+        for (uint i = Squares::num_squares; i--;) {
+            float* const data_ch = data + i * ch;
+            for (uint k = sp_types; k--;)
+                data_ch[k + ch_half] = num_pieces_next[k];
+            for (uint k = sp_types; k--;)
+                data_ch[k] = num_pieces_curr[k];
+
+            const auto sq = static_cast<SquareEnum>(
+                (m_turn == BLACK) ? i : (Squares::num_squares - 1 - i));
+            if (m_board.is_empty(sq))
+                continue;
+            const auto& p = m_board[sq];
+            const auto pt = Pieces::to_piece_type(p);
+            const auto k = static_cast<uint>(Pieces::demote(pt))
+                           + Pieces::is_promoted(pt) * unpromoted_piece_types
+                           + (m_turn != Pieces::get_color(p)) * ch_half;
+            data_ch[k + sp_types] = 1.f;
+        }
     }
     static void init_zobrist_table()
     {

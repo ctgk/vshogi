@@ -92,6 +92,52 @@ inline void export_move(pybind11::module& m)
             [](py::tuple t) { return Move(t[0].cast<std::size_t>()); }));
 }
 
+template <class State>
+inline void export_state(pybind11::module& m)
+{
+    namespace py = pybind11;
+    using Move = typename State::MoveType;
+
+    py::class_<State>(m, "State")
+        .def(py::init<const std::string&>())
+        .def("hflip", &State::hflip)
+        .def(
+            "to_dlshogi_features",
+            [](const State& self) {
+                const auto shape = std::vector<py::ssize_t>(
+                    {1,
+                     State::ranks(),
+                     State::files(),
+                     State::feature_channels()});
+                auto out = py::array_t<float>(shape);
+                self.to_feature_map(out.mutable_data());
+                return out;
+            })
+        .def(
+            "to_dlshogi_policy",
+            [](const State& self,
+               const py::dict& action_proba,
+               const float default_value) -> py::array_t<float> {
+                const auto turn = self.get_turn();
+                constexpr auto size = State::num_dlshogi_policy();
+                auto out = py::array_t<float>(std::vector<py::ssize_t>({size}));
+                float* const data = out.mutable_data();
+                std::fill(data, data + size, default_value);
+                for (auto it = action_proba.begin(); it != action_proba.end();
+                     ++it) {
+                    const auto move = it->first.cast<Move>();
+                    const auto index
+                        = (turn == vshogi::BLACK)
+                              ? move.to_dlshogi_policy_index()
+                              : move.rotate().to_dlshogi_policy_index();
+                    data[index] = it->second.cast<float>();
+                }
+                return out;
+            },
+            py::arg("action_proba"),
+            py::arg("default_value"));
+}
+
 template <class Game>
 inline void export_game(pybind11::module& m)
 {
@@ -271,10 +317,12 @@ void export_classes(pybind11::module& m)
     using Pieces = typename Game::Pieces;
     using SquareEnum = typename Game::SquareEnum;
     using Stand = typename Game::Stand;
+    using State = typename Game::StateType;
 
     export_board<Board, SquareEnum>(m);
     export_piece_stand<Stand, Pieces>(m);
     export_move<Move>(m);
+    export_state<State>(m);
     export_game<Game>(m);
     export_mcts_node<Game, Move>(m);
 }

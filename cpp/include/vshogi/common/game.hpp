@@ -70,6 +70,7 @@ public:
     using Squares = typename State::SquaresType;
     using SquareEnum = typename Squares::SquareEnum;
     using Pieces = typename State::PiecesType;
+    using StateType = State;
 
 private:
     State m_current_state;
@@ -304,44 +305,7 @@ public:
     }
     void to_feature_map(float* const data) const
     {
-        constexpr int num_squares = ranks() * files();
-        constexpr int sp_types = stand_piece_types();
-        constexpr int bp_types = board_piece_types();
-        constexpr int unpromoted_piece_types = sp_types + 1; // + OU
-        constexpr int ch_half = sp_types + bp_types;
-        constexpr int ch = feature_channels();
-
-        const auto turn = get_turn();
-        const auto& stand_curr = get_stand(turn);
-        const auto& stand_next = get_stand(~turn);
-        const auto& board = get_board();
-
-        float num_pieces_curr[static_cast<uint>(sp_types)] = {};
-        float num_pieces_next[static_cast<uint>(sp_types)] = {};
-        for (int k = sp_types; k--;) {
-            const auto p = Pieces::stand_piece_array[k];
-            num_pieces_curr[k] = static_cast<float>(stand_curr.count(p));
-            num_pieces_next[k] = static_cast<float>(stand_next.count(p));
-        }
-        std::fill_n(data, num_squares * ch, 0.f);
-        for (int i = num_squares; i--;) {
-            for (int k = sp_types; k--;)
-                data[i * ch + k + ch_half] = num_pieces_next[k];
-
-            for (int k = sp_types; k--;)
-                data[i * ch + k] = num_pieces_curr[k];
-
-            const auto sq = static_cast<typename Squares::SquareEnum>(
-                (turn == BLACK) ? i : (num_squares - 1 - i));
-            if (board.is_empty(sq))
-                continue;
-            const auto board_piece = board[sq];
-            const auto piece_type = Pieces::to_piece_type(board_piece);
-            auto k = static_cast<int>(Pieces::demote(piece_type));
-            k += (Pieces::is_promoted(piece_type)) * unpromoted_piece_types;
-            k += (turn != Pieces::get_color(board_piece)) * ch_half;
-            data[i * ch + k + sp_types] = 1.f;
-        }
+        m_current_state.to_feature_map(data);
     }
 
 protected:

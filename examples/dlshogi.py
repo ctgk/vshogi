@@ -360,17 +360,17 @@ def run_train(args: Args):
 
         def _generator():
             for _, row in df.sample(n=len(df), replace=False).iterrows():
-                game = args._shogi.Game(row['state'])
+                state = args._shogi.State(row['state'])
                 proximal_probas = {
                     args._shogi.Move(k): v
                     for k, v in eval(row['proximal_probas']).items()
                 }
                 if np.random.uniform() > 0.5:
-                    game = game.hflip()
+                    state = state.hflip()
                     proximal_probas = {k.hflip(): v for k, v in proximal_probas.items()}
 
-                x = game.to_dlshogi_features()
-                policy = game.to_dlshogi_policy(proximal_probas, default_value=np.nan)
+                x = state.to_dlshogi_features()
+                policy = state.to_dlshogi_policy(proximal_probas, default_value=np.nan)
                 value = float(row['q_value'])
 
                 yield np.squeeze(x), (policy, value)

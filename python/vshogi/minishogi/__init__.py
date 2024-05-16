@@ -55,7 +55,7 @@ import numpy as np
 from vshogi._repr import _repr_enum, _repr_move, _repr_square, _repr_stand
 from vshogi._vshogi import Color, Result
 from vshogi._vshogi.minishogi import (
-    Board, BoardPiece, Move, Piece, Square, Stand,
+    Board, BoardPiece, Move, Piece, Square, Stand, State,
 )
 from vshogi.minishogi._game import Game
 
@@ -95,7 +95,7 @@ Piece.__repr__ = _repr_enum
 Stand.__str__ = _repr_stand
 Square.__repr__ = _repr_square
 
-_classes = [Board, BoardPiece, Move, Piece, Square, Stand, Game]
+_classes = [Board, BoardPiece, Move, Piece, Square, Stand, State, Game]
 _enums = [BoardPiece, Color, Piece, Result, Square]
 
 for _cls in _classes:
