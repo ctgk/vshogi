@@ -139,16 +139,7 @@ public:
             // pn and dn should not be infinity when there are no children.
             simulate_expand_backprop();
         } else {
-            NodeEnemy* child = select();
-            child->m_parent = this;
-            if (child->m_game == nullptr) {
-                if (Attacker)
-                    child->m_game = std::make_unique<Game>(
-                        m_game->copy_and_apply_nocheck(child->m_action));
-                else
-                    child->m_game = std::make_unique<Game>(
-                        m_game->copy_and_apply_dfpn_defence(child->m_action));
-            }
+            NodeEnemy* const child = select();
             child->select_simulate_expand_backprop();
         }
     }
@@ -156,27 +147,35 @@ public:
 private:
     NodeEnemy* select()
     {
+        NodeEnemy* out = m_child.get();
         if (Attacker) {
             uint min_pn = max_number;
-            NodeEnemy* out = m_child.get();
             for (NodeEnemy* ch = out; ch != nullptr; ch = ch->m_sibling.get()) {
                 if (min_pn > ch->m_pn) {
                     min_pn = ch->m_pn;
                     out = ch;
                 }
             }
-            return out;
         } else {
             uint min_dn = max_number;
-            NodeEnemy* out = m_child.get();
             for (NodeEnemy* ch = out; ch != nullptr; ch = ch->m_sibling.get()) {
                 if (min_dn > ch->m_dn) {
                     min_dn = ch->m_dn;
                     out = ch;
                 }
             }
-            return out;
         }
+
+        out->m_parent = this;
+        if (out->m_game == nullptr) {
+            if (Attacker)
+                out->m_game = std::make_unique<Game>(
+                    m_game->copy_and_apply_nocheck(out->m_action));
+            else
+                out->m_game = std::make_unique<Game>(
+                    m_game->copy_and_apply_dfpn_defence(out->m_action));
+        }
+        return out;
     }
     const NodeEnemy* select() const
     {
