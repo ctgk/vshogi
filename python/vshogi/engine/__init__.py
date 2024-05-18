@@ -1,9 +1,11 @@
 """Module for Shogi engine."""
 
+from vshogi.engine._dfpn import DfpnSearcher
 from vshogi.engine._mcts import MonteCarloTreeSearcher
 
 
 _classes = [
+    DfpnSearcher,
     MonteCarloTreeSearcher,
 ]
 

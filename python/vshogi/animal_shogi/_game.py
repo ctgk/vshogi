@@ -85,6 +85,11 @@ class Game(BaseGame):
     def _get_mcts_node_class(cls) -> type:
         return MctsNode
 
+    @classmethod
+    def _get_dfpn_searcher_class(cls) -> type:
+        raise NotImplementedError(
+            "`DfpnSearcher` does not support Animal Shogi")
+
     def get_mate_moves_if_any(
         self,
         num_dfpn_nodes: int = 10000,

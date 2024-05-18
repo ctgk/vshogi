@@ -37,6 +37,11 @@ class Game(abc.ABC):
     def _get_mcts_node_class(cls) -> type:
         pass
 
+    @classmethod
+    @abc.abstractmethod
+    def _get_dfpn_searcher_class(cls) -> type:
+        pass
+
     def __init__(self, sfen: tp.Optional[str] = None) -> None:
         """Initialize shogi game.
 

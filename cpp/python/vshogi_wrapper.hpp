@@ -310,6 +310,22 @@ inline void export_mcts_node(pybind11::module& m)
         .def("apply", &Node::apply);
 }
 
+template <class Game, class Move>
+inline void export_dfpn_searcher(pybind11::module& m)
+{
+    namespace py = pybind11;
+    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+
+    py::class_<Searcher>(m, "DfpnSearcher")
+        .def(py::init<const Game&, const uint&>())
+        .def("explore", py::overload_cast<>(&Searcher::explore))
+        .def("explore", py::overload_cast<uint>(&Searcher::explore))
+        .def("found_mate", &Searcher::found_mate)
+        .def("found_no_mate", &Searcher::found_no_mate)
+        .def("found_conclusion", &Searcher::found_conclusion)
+        .def("get_mate_moves", &Searcher::get_mate_moves);
+}
+
 template <class Game>
 void export_classes(pybind11::module& m)
 {
@@ -326,6 +342,9 @@ void export_classes(pybind11::module& m)
     export_state<State>(m);
     export_game<Game>(m);
     export_mcts_node<Game, Move>(m);
+
+    if constexpr (!std::is_same<Game, vshogi::animal_shogi::Game>::value)
+        export_dfpn_searcher<Game, Move>(m);
 }
 
 } // namespace pyvshogi
