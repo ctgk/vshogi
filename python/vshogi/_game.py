@@ -177,6 +177,22 @@ class Game(abc.ABC):
         """
         return self._game.record_length()
 
+    @property
+    def zobrist_hash(self) -> int:
+        """Return zobrist hash of the current game position.
+
+        Note
+        ----
+        - The hash value changes every time you import `vshogi` library.
+        - Hash values can be the same even when the game positions differ.
+
+        Returns
+        -------
+        int
+            Zobrist hash of the current game position.
+        """
+        return self._game.get_zobrist_hash()
+
     @classmethod
     def _get_move(cls, move=None, *arg, **kwargs) -> Move:
         if not (arg or kwargs):

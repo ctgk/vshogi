@@ -148,6 +148,10 @@ public:
     {
         return m_result;
     }
+    std::uint64_t get_zobrist_hash() const
+    {
+        return m_zobrist_hash;
+    }
     std::string to_sfen(const bool include_move_count = true) const
     {
         if (include_move_count)
