@@ -618,6 +618,15 @@ def parse_args() -> Args:
     if args.output is None:
         args.output = args.shogi_variant
 
+    if os.path.basename(os.getcwd()) != args.output:
+        if not os.path.isdir(args.output):
+            os.makedirs(args.output)
+        os.chdir(args.output)
+    if not os.path.isdir('models'):
+        os.makedirs('models')
+    if not os.path.isdir('datasets'):
+        os.makedirs('datasets')
+
     i = args.resume_rl_cycle_from
     if i in (0, 1):
         args._num_random_moves = np.inf
@@ -638,15 +647,6 @@ def parse_args() -> Args:
 
 if __name__ == '__main__':
     args = parse_args()
-
-    if os.path.basename(os.getcwd()) != args.output:
-        if not os.path.isdir(args.output):
-            os.makedirs(args.output)
-        os.chdir(args.output)
-    if not os.path.isdir('models'):
-        os.makedirs('models')
-    if not os.path.isdir('datasets'):
-        os.makedirs('datasets')
 
     if args.run == 'rl':
         run_rl_cycle(args)
