@@ -56,6 +56,7 @@ public:
           m_sibling(nullptr), m_child(nullptr), m_action(), m_pn(unit),
           m_dn(unit)
     {
+        simulate_expand_backprop();
     }
     Node(const Move& action, const bool& is_dst_attacked_by_non_king = false)
         : m_game(nullptr), m_parent(nullptr), m_sibling(nullptr),

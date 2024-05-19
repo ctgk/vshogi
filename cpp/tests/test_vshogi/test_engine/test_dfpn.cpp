@@ -98,13 +98,6 @@ TEST(dfpn, mate_in_three_straight_forward)
     {
         CHECK_FALSE(root.found_mate());
         root.select_simulate_expand_backprop();
-        // root
-        CHECK_EQUAL(Node::unit + Node::cent, root.get_pn());
-        CHECK_EQUAL(Node::unit, root.get_dn());
-    }
-    {
-        CHECK_FALSE(root.found_mate());
-        root.select_simulate_expand_backprop();
         // root -> Move(B1, C1)
         CHECK_EQUAL(Node::unit, root.get_pn());
         CHECK_EQUAL(Node::unit, root.get_dn());
@@ -163,6 +156,45 @@ TEST(dfpn, mate_in_three)
         CHECK_TRUE(Move(SQ_1B, SQ_2A) == actual[1]);
         CHECK_TRUE(Move(SQ_2A, HI) == actual[2]);
     }
+}
+
+TEST(dfpn, mate_in_five_straight_forward)
+{
+    using namespace vshogi::minishogi;
+    using Node = vshogi::engine::dfpn::Node<Game, Move>;
+
+    // Turn: BLACK
+    // White: -
+    //     5   4   3   2   1
+    //   *---*---*---*---*---*
+    // A |   |   |-HI|-KA|-OU|
+    //   *---*---*---*---*---*
+    // B |   |   |-FU|   |-FU|
+    //   *---*---*---*---*---*
+    // C |   |   |+FU|   |+FU|
+    //   *---*---*---*---*---*
+    // D |   |   |   |+KI|   |
+    //   *---*---*---*---*---*
+    // E |   |   |   |+HI|   |
+    //   *---*---*---*---*---*
+    // Black: KA
+    auto root = Node(Game("2rbk/2p1p/2P1P/3G1/3R1 b B"));
+    for (int ii = 4; ii--;) {
+        if (root.found_mate())
+            break;
+        root.select_simulate_expand_backprop();
+    }
+    CHECK_FALSE(root.found_conclusion());
+    root.select_simulate_expand_backprop();
+    CHECK_TRUE(root.found_conclusion());
+    CHECK_TRUE(root.found_mate());
+    const auto actual = root.get_mate_moves();
+    CHECK_EQUAL(5, actual.size());
+    CHECK_TRUE(Move(SQ_2B, KA) == actual[0]);
+    CHECK_TRUE(Move(SQ_2B, SQ_1A) == actual[1]);
+    CHECK_TRUE(Move(SQ_2C, SQ_2D) == actual[2]);
+    CHECK_TRUE(Move(SQ_1A, SQ_2B) == actual[3]);
+    CHECK_TRUE(Move(SQ_2B, SQ_2C) == actual[4]);
 }
 
 TEST(dfpn, mate_in_five)

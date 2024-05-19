@@ -38,7 +38,7 @@ class DfpnSearcher:
     False
     >>>
     >>> # Finds mates by restarting from the searches of the previous call!
-    >>> searcher.search(n=4)
+    >>> searcher.search(n=1) # Note that numbers of searches add up to 5.
     True
     >>> [m.to_usi() for m in searcher.get_mate_moves()]
     ['B*2b', '1a2b', '2d2c', '2b1a', '2c2b']
