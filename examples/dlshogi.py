@@ -243,7 +243,10 @@ def play_game(
                 player.explore(n=1)
                 proximal_probas = _get_proximal_probas(
                     prior={m.to_usi(): p for m, p in player.get_probas().items()},
-                    posterior={m.to_usi(): int(m == move) for m in game.get_legal_moves()},
+                    posterior={
+                        m.to_usi(): int((m == move) or (i % 2 == 1))
+                        for m in game.get_legal_moves()
+                    },
                     prior_rate=args.nn_proximal_rate,
                 )
                 game.q_value_record.append(int(i % 2 == 0) * 2 - 1)
@@ -267,7 +270,7 @@ def play_game(
             prior_rate=args.nn_proximal_rate,
         )
 
-        game.q_value_record.append(player.get_q_values()[move])
+        game.q_value_record.append(max(player.get_q_values().values()))
         game.proximal_probas_record.append(proximal_probas)
 
         game.apply(move)
