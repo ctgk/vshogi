@@ -60,6 +60,7 @@ class Args:
             'The rest of the actions are obtained by selecting the mode of the distribution.'
         ),
     )
+    mcts_temperature: float = config(type=float, default=1., help='Temperature parameter when selecting action by random.')
     mcts_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in MCTS, default=4.')
     self_play: int = config(type=int, default=200, help='# of self-play in one RL cycle, default=200')
     self_play_index_from: int = config(type=int, default=0, help='Index to start self-play from, default=0')
@@ -260,7 +261,7 @@ def play_game(
             num_dfpn_nodes=100, # approximately worth three-move mate
         )
         if game.record_length < args._num_random_moves:
-            move = player.select(temperature=1.)
+            move = player.select(temperature=args.mcts_temperature)
         else:
             move = player.select(temperature='max') # off-policy
 
