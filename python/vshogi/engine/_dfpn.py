@@ -1,12 +1,13 @@
 import typing as tp
 
 from vshogi._game import Game
+from vshogi.engine._engine import Engine
 
 
 Move = tp.TypeVar('Move')
 
 
-class DfpnSearcher:
+class DfpnSearcher(Engine):
     """Mate-moves searcher using DFPN algorithm.
 
     Examples
@@ -31,7 +32,7 @@ class DfpnSearcher:
     >>> # Black: KA
     >>> game = shogi.Game("2rbk/2p1p/2P1P/3G1/3R1 b B")
     >>> searcher = DfpnSearcher()
-    >>> searcher.set_root(game)
+    >>> searcher.set_game(game)
     >>> searcher.search(n=4)
     False
     >>> searcher.found_conclusion()
@@ -44,49 +45,33 @@ class DfpnSearcher:
     ['B*2b', '1a2b', '2d2c', '2b1a', '2c2b']
     """
 
-    def __init__(self, num_nodes: int = 1000) -> None:
-        """Initialize DFPN mate-moves searcher object.
-
-        Parameters
-        ----------
-        num_nodes : int, optional
-            Number of nodes to explore unless another value is given at
-            `explore()`, by default 1000
-        """
-        self._num_nodes = num_nodes
+    def __init__(self) -> None:
+        """Initialize DFPN mate-moves searcher object."""
         self._searcher = None
 
-    def set_root(self, game: Game):
-        """Set root game position to explore from.
+    def _set_game(self, game: Game):
+        if self._searcher is None:
+            try:
+                self._searcher = game._get_dfpn_searcher_class()()
+            except:
+                return
+        self._searcher.set_game(game._game)
 
-        Parameters
-        ----------
-        game : Game
-            Game position to explore.
-        """
-        self._searcher = game._get_dfpn_searcher_class()(
-            game._game, self._num_nodes)
+    def _is_ready(self) -> bool:
+        return (self._searcher is not None) and (self._searcher.is_ready())
 
-    def is_ready(self) -> bool:
-        """Return true if the object is ready to search for mate moves.
-
-        Returns
-        -------
-        bool
-            True if the object is ready to search for mate moves,
-            otherwise false.
-        """
-        return self._searcher is not None
-
-    def clear(self) -> None:
-        """Clear explorations done so far."""
+    def _clear(self) -> None:
         self._searcher = None
 
-    def apply(self, _: Move):
+    def _apply(self, _: Move):
+        raise NotImplementedError
+
+    @property
+    def num_searched(self) -> int:
         # flake8: noqa
         raise NotImplementedError
 
-    def search(self, n: tp.Optional[int] = None) -> bool:
+    def search(self, n: int = 100) -> bool:
         """Search for mate-moves.
 
         If you call this method multiple times, the following calls does not
@@ -95,8 +80,8 @@ class DfpnSearcher:
 
         Parameters
         ----------
-        n : tp.Optional[int], optional
-            Number of nodes to search for, by default None
+        n : int, optional
+            Number of nodes to search for, by default 100
 
         Returns
         -------
@@ -109,11 +94,19 @@ class DfpnSearcher:
         - There is no ways to checkmate opponent king
         - It is not certain that there is a checkmate or no checkmates.
         """
-        self._raise_error_if_not_ready()
-        if n is None:
-            return self._searcher.explore()
-        else:
-            return self._searcher.explore(n)
+        if self._searcher is None:
+            return False
+        return self._searcher.explore(n)
+
+    def select(self) -> Move:
+        """Get first action to mate.
+
+        Returns
+        -------
+        Move
+            First action to mate.
+        """
+        return self._searcher.get_mate_moves()[0]
 
     def found_conclusion(self) -> bool:
         """Return true if there is a mate or no-mate for sure.
@@ -134,6 +127,7 @@ class DfpnSearcher:
         bool
             True if there is a mate.
         """
+        return self._searcher
         self._raise_error_if_not_ready()
         return self._searcher.found_mate()
 
@@ -158,8 +152,3 @@ class DfpnSearcher:
         """
         self._raise_error_if_not_ready()
         return self._searcher.get_mate_moves()
-
-    def _raise_error_if_not_ready(self):
-        method = f'{self.__class__.__name__}.set_root()'
-        if not self.is_ready():
-            raise ValueError(f"Please call `{method}` beforehand.")

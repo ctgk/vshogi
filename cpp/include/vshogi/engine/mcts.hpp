@@ -234,6 +234,13 @@ public:
         expand(game, policy_logits);
         backprop_leaf();
     }
+    void simulate_mate_and_backprop()
+    {
+        m_value = 1.f;
+        m_q_value = 1.f;
+        m_is_mate = true;
+        backprop_leaf(); // Increment `m_visit_count`.
+    }
     Node<Game, Move>& apply(const Move& action)
     {
         NodeGM* ch = m_child.get();
@@ -306,9 +313,9 @@ private:
             if constexpr (!std::is_same<Game, animal_shogi::Game>::value) {
                 if ((num_dfpn_nodes > 0)
                     && (!std::is_same<Game, animal_shogi::Game>::value)) {
-                    auto searcher
-                        = dfpn::Searcher<Game, Move>(game, num_dfpn_nodes);
-                    if (searcher.explore()) {
+                    auto searcher = dfpn::Searcher<Game, Move>();
+                    searcher.set_game(game);
+                    if (searcher.explore(num_dfpn_nodes)) {
                         m_value = 1.f;
                         m_q_value = 1.f;
                         m_is_mate = true;

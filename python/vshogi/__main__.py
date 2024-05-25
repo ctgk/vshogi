@@ -83,6 +83,8 @@ class Args:
         type=float, default=4.,
         help='Coefficient to compute PUCT score in MCTS, default=4',
     )
+    dfpn_search_root: int = config(type=int, default=10000)
+    dfpn_search_vertex: int = config(type=int, default=100)
     show_pbar: bool = config(
         action='store_true', help='Print progress bar if passed',
     )
@@ -93,15 +95,19 @@ if __name__ == "__main__":
     args = Args.from_args()
     shogi = getattr(vshogi, args.shogi_variant)
 
-    player1 = vshogi.engine.MonteCarloTreeSearcher(
-        PolicyValueFunction(args.player1),
-        num_explorations=args.mcts_explorations,
-        coeff_puct=args.mcts_coeff_puct,
+    player1 = vshogi.engine.DfpnMcts(
+        vshogi.engine.DfpnSearcher(),
+        vshogi.engine.MonteCarloTreeSearcher(
+            PolicyValueFunction(args.player1),
+            coeff_puct=args.mcts_coeff_puct,
+        ),
     )
-    player2 = vshogi.engine.MonteCarloTreeSearcher(
-        PolicyValueFunction(args.player2),
-        num_explorations=args.mcts_explorations,
-        coeff_puct=args.mcts_coeff_puct,
+    player2 = vshogi.engine.DfpnMcts(
+        vshogi.engine.DfpnSearcher(),
+        vshogi.engine.MonteCarloTreeSearcher(
+            PolicyValueFunction(args.player2),
+            coeff_puct=args.mcts_coeff_puct,
+        ),
     )
 
     print(f'player1: {args.player1}')
@@ -121,7 +127,10 @@ if __name__ == "__main__":
         iterator.set_description(str({'p1': 0, 'draw': 0, 'p2': 0}))
     for i in iterator:
         if i % 2 == 0:
-            result = vshogi.play_game(shogi.Game(), player1, player2).result
+            result = vshogi.play_game(
+                shogi.Game(), player1, player2,
+                search_args={'mcts_searches': args.mcts_explorations},
+            ).result
             if result == vshogi.BLACK_WIN:
                 results_of_p1['bwin'] += 1
             elif result == vshogi.WHITE_WIN:
@@ -129,7 +138,10 @@ if __name__ == "__main__":
             else:
                 results_of_p1['bdraw'] += 1
         else:
-            result = vshogi.play_game(shogi.Game(), player2, player1).result
+            result = vshogi.play_game(
+                shogi.Game(), player2, player1,
+                search_args={'mcts_searches': args.mcts_explorations},
+            ).result
             if result == vshogi.BLACK_WIN:
                 results_of_p1['wloss'] += 1
             elif result == vshogi.WHITE_WIN:

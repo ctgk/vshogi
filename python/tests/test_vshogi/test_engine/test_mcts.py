@@ -27,11 +27,11 @@ def test_is_ready():
 
     searcher = MonteCarloTreeSearcher(uniform_pv_func)
     assert searcher.is_ready() is False
-    searcher.set_root(game)
+    searcher.set_game(game)
     assert searcher.is_ready()
 
 
-def test_num_explored():
+def test_num_searched():
     # Turn: BLACK
     # White: -
     #     A  B  C
@@ -48,16 +48,16 @@ def test_num_explored():
     game = shogi.Game('g1e/1cl/1CL/E1G b -')
 
     searcher = MonteCarloTreeSearcher(uniform_pv_func)
-    searcher.set_root(game)
-    searcher.explore(n=100)
-    assert searcher.num_explored == 100 + 1
+    searcher.set_game(game)
+    searcher.search(n=100)
+    assert searcher.num_searched == 100 + 1
 
 
 # def test_apply():
 #     game = shogi.Game()
 #     searcher = MonteCarloTreeSearcher(uniform_pv_func)
-#     searcher.set_root(game)
-#     searcher.explore(n=1000)
+#     searcher.set_game(game)
+#     searcher.search(n=1000)
 #     m = shogi.Move(shogi.B2, shogi.B3)
 #     assert searcher.num_explored == 1000 + 1
 
@@ -85,11 +85,11 @@ def test_clear():
     game = shogi.Game('g1e/1cl/1CL/E1G b -')
 
     searcher = MonteCarloTreeSearcher(uniform_pv_func)
-    searcher.set_root(game)
-    searcher.explore(n=100)
+    searcher.set_game(game)
+    searcher.search(n=100)
     searcher.clear()
     assert searcher.is_ready() is False
-    assert searcher.num_explored == 0
+    assert searcher.num_searched == 0
 
 
 def test_q_values_mate_in_one():
@@ -109,9 +109,9 @@ def test_q_values_mate_in_one():
     game = shogi.Game('g1e/1cl/1CL/E1G b -')
     m = shogi.Move(shogi.C2, shogi.C3)
 
-    searcher = MonteCarloTreeSearcher(uniform_pv_func)
-    searcher.set_root(game)
-    searcher.explore(n=100, random_depth=0)
+    searcher = MonteCarloTreeSearcher(uniform_pv_func, random_depth=0)
+    searcher.set_game(game)
+    searcher.search(n=100)
     actual = searcher.get_q_values()
     print(actual)
     assert np.isclose(actual[m], 1, rtol=0, atol=1e-2)
@@ -120,8 +120,8 @@ def test_q_values_mate_in_one():
 def test_q_values_initial():
     game = shogi.Game()
     searcher = MonteCarloTreeSearcher(uniform_pv_func)
-    searcher.set_root(game)
-    searcher.explore(n=100)
+    searcher.set_game(game)
+    searcher.search(n=100)
     actual = searcher.get_q_values()
     print(actual)
     for a in actual.values():
@@ -145,9 +145,9 @@ def test_mate_in_three():
     game = shogi.Game('l1e/gc1/1CL/E1G b -')
     m = shogi.Move(shogi.C2, shogi.C3)
 
-    searcher = MonteCarloTreeSearcher(uniform_pv_func)
-    searcher.set_root(game)
-    searcher.explore(n=100, random_depth=0)
+    searcher = MonteCarloTreeSearcher(uniform_pv_func, random_depth=0)
+    searcher.set_game(game)
+    searcher.search(n=100)
 
     actual = searcher.get_q_values()
     print(actual)
@@ -155,7 +155,7 @@ def test_mate_in_three():
     assert np.isclose(actual[m], 1, rtol=0, atol=1e-2)
 
     visit_count = searcher.get_visit_counts()[m]
-    searcher.explore(n=100, random_depth=0)
+    searcher.search(n=100)
     # If there is a mate, all explorations go through the mate.
     assert searcher.get_visit_counts()[m] == visit_count + 100
 
@@ -165,14 +165,17 @@ def test_visit_count_by_random():
     m = shogi.Move(shogi.C3, shogi.C4)
 
     searcher = MonteCarloTreeSearcher(
-        lambda g: (np.arange(g.num_dlshogi_policy), 0.))
-    searcher.set_root(game)
-    searcher.explore(n=100, random_depth=0)
+        lambda g: (np.arange(g.num_dlshogi_policy), 0.), random_depth=0)
+    searcher.set_game(game)
+    searcher.search(n=100)
     visit_count = searcher.get_visit_counts()[m]
     print(searcher._tree(depth=2, breadth=-1))
 
-    searcher.set_root(game)
-    searcher.explore(n=100, random_depth=1, non_random_ratio=0)
+    searcher = MonteCarloTreeSearcher(
+        lambda g: (np.arange(g.num_dlshogi_policy), 0.),
+        random_depth=1, non_random_ratio=0)
+    searcher.set_game(game)
+    searcher.search(n=100)
     visit_count_with_noise = searcher.get_visit_counts()[m]
     print(searcher._tree(depth=2, breadth=-1))
     assert visit_count > visit_count_with_noise + 10
@@ -181,8 +184,8 @@ def test_visit_count_by_random():
 def test_tree():
     game = shogi.Game()
     searcher = MonteCarloTreeSearcher(uniform_pv_func)
-    searcher.set_root(game)
-    searcher.explore(n=100)
+    searcher.set_game(game)
+    searcher.search(n=100)
 
     searcher._tree(depth=2, breadth=3)
     searcher._tree(depth=2, breadth=5)

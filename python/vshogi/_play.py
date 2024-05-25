@@ -7,7 +7,9 @@ def play_game(
     game: Game,
     player_black: MonteCarloTreeSearcher,
     player_white: MonteCarloTreeSearcher,
+    *,
     max_moves: int = 400,
+    search_args: dict = {},
 ) -> Game:
     """Make two players play the game until an end.
 
@@ -22,6 +24,8 @@ def play_game(
     max_moves : int
         Maximum number of moves to apply to the game.
         If it reaches the value, return the game even if it is ongoing.
+    search_args : dict
+        Arguments to pass to players' `search` method.
 
     Returns
     -------
@@ -32,8 +36,8 @@ def play_game(
         if game.result != Result.ONGOING:
             break
         player = player_black if game.turn == Color.BLACK else player_white
-        player.set_root(game)
-        player.explore()
+        player.set_game(game)
+        player.search(**search_args)
         move = player.select()
         game.apply(move)
     return game

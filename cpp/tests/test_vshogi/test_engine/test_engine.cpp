@@ -51,8 +51,9 @@ TEST(shogi_engine, mcts_with_dfpn)
             break;
 
         {
-            auto dfpn = vshogi::engine::dfpn::Searcher<Game, Move>(g, 10000);
-            dfpn.explore();
+            auto dfpn = vshogi::engine::dfpn::Searcher<Game, Move>();
+            dfpn.set_game(g);
+            dfpn.explore(10000);
         }
 
         for (int jj = (100 - root.get_visit_count()); jj--;) {

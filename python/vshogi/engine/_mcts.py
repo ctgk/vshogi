@@ -1,9 +1,7 @@
 import typing as tp
 
-import numpy as np
-import scipy.special as sp
-
 from vshogi._game import Game
+from vshogi.engine._engine import Engine
 
 
 Move = tp.TypeVar('Move')
@@ -41,22 +39,15 @@ def _tree(
     return out
 
 
-class MonteCarloTreeSearcher:
-    """Monte Carlo Tree Searcher."""
+class MonteCarloTreeSearcher(Engine):
+    """Monte Carlo Tree Searcher engine."""
 
     def __init__(
         self,
-        policy_value_func: tp.Callable[['Game'], tp.Tuple[Policy, Value]],
-        num_explorations: int = 100,
+        policy_value_func: tp.Callable[[Game], tp.Tuple[Policy, Value]],
         coeff_puct: float = 1.,
         non_random_ratio: int = 3,
         random_depth: int = 1,
-        select_move_by: tp.Literal[
-            'visit_counts', 'q_values',
-        ] = 'visit_counts',
-        temperature_for_move_selection: tp.Union[
-            float, tp.Literal['max'],
-        ] = 'max',
     ) -> None:
         """Initialize MCT searcher.
 
@@ -64,8 +55,6 @@ class MonteCarloTreeSearcher:
         ----------
         policy_value_func : tp.Callable[[Game], tp.Tuple[Policy, Value]]
             Function to return policy and value given a game.
-        num_explorations : int, optional
-            Default number of times to explore, by default 100
         coeff_puct : float, optional
             Default coefficient used to compute PUCT score. Higher the value
             is, the more weight on action policy than state value.
@@ -75,115 +64,64 @@ class MonteCarloTreeSearcher:
         random_depth : int, optional
             Default depth of explorations to select action in a random manner,
             by default 1.
-        select_move_by : tp.Literal['visit_counts', 'q_values']
-            Default strategy to select best move by. Default is 'visit_counts'.
-        temperature_for_move_selection : tp.Union[float, tp.Literal['max']]
-            Temperature parameter for the random selection, by default 'max'
-            which returns a move with maximum index determined at
-            `select_move_by`.
         """
         self._policy_value_func = policy_value_func
         self._root = None
 
-        self._num_explorations = num_explorations
         self._coeff_puct = coeff_puct
         self._non_random_ratio = non_random_ratio
         self._random_depth = random_depth
-        self._select_move_by = select_move_by
-        self._temperature_for_move_selection = temperature_for_move_selection
 
-    def set_root(self, game: Game):
-        """Set root node.
-
-        Parameters
-        ----------
-        game : Game
-            Game to set at root node.
-        """
+    def _set_game(self, game: Game):
         policy_logits, value = self._policy_value_func(game)
         self._root = game._get_mcts_node_class()(
             game._game, value, policy_logits)
         self._game = game
 
-    def is_ready(self) -> bool:
-        """Return true if it is ready to explore otherwise false.
-
-        Returns
-        -------
-        bool
-            True if it is ready to start exploration otherwise false.
-        """
+    def _is_ready(self) -> bool:
         return self._root is not None
 
-    def clear(self) -> None:
-        """Clear explorations done so far."""
+    def _clear(self) -> None:
         self._root = None
         self._game = None
 
     def apply(self, move: Move):
-        """Apply a move to the current root node.
+        """Apply a move on the game.
 
         Parameters
         ----------
         move : Move
-            Move to apply to the current root node.
+            Move to apply
         """
-        if self.is_ready():
+        if self._is_ready():
             self._root.apply(move)
 
     @property
-    def num_explored(self) -> int:
-        """Return number of times explored so far.
+    def num_searched(self) -> int:
+        """Return number of game positions searched so far.
 
         Returns
         -------
         int
-            Number of times explored so far.
+            Number of game positions searched so far.
         """
         if self._root is None:
             return 0
         return self._root.get_visit_count()
 
-    def explore(
-        self,
-        n: tp.Optional[int] = None,
-        c_puct: tp.Optional[float] = None,
-        non_random_ratio: tp.Optional[int] = None,
-        random_depth: tp.Optional[int] = None,
-        num_dfpn_nodes: tp.Optional[int] = 0,
-    ):
+    def search(self, n: int = 100):
         """Explore from root node for n times.
 
         Parameters
         ----------
         n : int, optional
-            Number of times to explore, by default None
-        c_puct : float, optional
-            Coefficient used to compute PUCT score. Higher the value is,
-            the more weight on action policy than state value.
-        non_random_ratio : int, optional
-            Ratio of selecting actions in non-random manner,
-            by default None
-        random_depth : int, optional
-            Depth to select action in a random manner, by default None
-        num_dfpn_nodes : int, optional
-            Number of nodes to look for mate moves at leaf node using DFPN
-            algorithm, by default 0.
+            Number of game positions to search, by default 100
         """
-        if n is None:
-            n = self._num_explorations
-        if c_puct is None:
-            c_puct = self._coeff_puct
-        if non_random_ratio is None:
-            non_random_ratio = self._non_random_ratio
-        if random_depth is None:
-            random_depth = self._random_depth
-
         for _ in range(n):
             game = self._game.copy()
             node = self._root._select_node_to_explore(
-                game._game, c_puct, non_random_ratio, random_depth,
-                num_dfpn_nodes,
+                game._game, self._coeff_puct, self._non_random_ratio,
+                self._random_depth,
             )
             if node is None:
                 continue
@@ -235,46 +173,24 @@ class MonteCarloTreeSearcher:
         move_visit_count_pair_list.sort(key=lambda a: a[1], reverse=True)
         return {m: v for m, v in move_visit_count_pair_list}
 
-    def select(
-        self,
-        by: tp.Optional[tp.Literal['visit_counts', 'q_values']] = None,
-        temperature: tp.Union[float, tp.Literal['max'], None] = None,
-    ) -> Move:
+    def select(self, temperature: tp.Optional[float] = None) -> Move:
         """Return selected action based on visit counts.
 
         Parameters
         ----------
-        by : tp.Optional[tp.Literal['visit_counts', 'q_values']]
-            Strategy to select a best move by. Default is None, which refers to
-            default strategy set at initialization of the object.
-        temperature : tp.Union[float, tp.Literal['max'], None], optional
-            Temperature parameter for the random selection, by default None
+        temperature : tp.Optional[float], optional
+            Temperature parameter for action selection, by default None.
+            If `None`, then select the most searched action.
 
         Returns
         -------
         Move
             Selected action.
         """
-        if by is None:
-            by = self._select_move_by
         if temperature is None:
-            temperature = self._temperature_for_move_selection
-
-        if by == 'visit_counts':
-            if temperature == 'max':
-                return self._root.get_action_by_visit_max()
-            else:
-                return self._root.get_action_by_visit_distribution(temperature)
-
-        d = getattr(self, f'get_{by}')()
-        moves = list(d.keys())
-        v = np.array(list(d.values()))
-
-        if temperature == 'max':
-            return moves[np.argmax(v)]
+            return self._root.get_action_by_visit_max()
         else:
-            probas = sp.softmax(np.log(v + 1e-3) / temperature)
-            return np.random.choice(moves, p=probas)
+            return self._root.get_action_by_visit_distribution(temperature)
 
     def _tree(
         self,

@@ -66,7 +66,8 @@ TEST(dfpn, mate_in_three_white)
     // E |   |   |   |   |   |
     //   *---*---*---*---*---*
     // Black: -
-    auto searcher = Searcher(Game("5/2p2/5/2K2/5 w 2g"));
+    auto searcher = Searcher();
+    searcher.set_game(Game("5/2p2/5/2K2/5 w 2g"));
     CHECK_TRUE(searcher.explore(100));
     CHECK_TRUE(searcher.found_mate());
     const auto actual = searcher.get_mate_moves();
@@ -274,7 +275,8 @@ TEST(dfpn, no_mate_1)
     // E |   |   |   |   |   |
     //   *---*---*---*---*---*
     // Black: GIx2
-    auto searcher = Searcher(Game("2k2/5/1+P3/5/5 b 2S"));
+    auto searcher = Searcher();
+    searcher.set_game(Game("2k2/5/1+P3/5/5 b 2S"));
     CHECK_FALSE(searcher.explore(10000));
     CHECK_FALSE(searcher.found_mate());
     CHECK_TRUE(searcher.found_no_mate());
@@ -301,7 +303,8 @@ TEST(dfpn, king_entering_before_mate)
     // F |   |+OU|   |   |   |-OU|
     //   +---+---+---+---+---+---+
     // Black: -
-    auto searcher = Searcher(Game("6/6/3n2/6/P4+r/1K3k w -"));
+    auto searcher = Searcher();
+    searcher.set_game(Game("6/6/3n2/6/P4+r/1K3k w -"));
     CHECK_TRUE(searcher.explore(100));
     CHECK_TRUE(searcher.found_mate());
     const auto actual = searcher.get_mate_moves();
@@ -339,7 +342,8 @@ TEST(dfpn, tmp)
     // Black: FU,GI,KI
     auto g = Game("l5g1l/6gk1/1p4np1/3+R1pp1p/2p1p2P1/p4NP1P/1P1S5/PG1SB1+p2/"
                   "1NK1B2+rL w GSPsnl3p 134");
-    auto searcher = Searcher(g);
+    auto searcher = Searcher();
+    searcher.set_game(g);
     CHECK_FALSE(searcher.explore(10000));
     CHECK_TRUE(searcher.found_no_mate());
 }
@@ -373,7 +377,8 @@ TEST(dfpn, debug)
     // Black: FUx2,KY
     auto g = Game("1b1n4k/l1s3p1s/prp2pn2/1p1+Bp3R/4P4/6Gp1/PPPP1PN2/4KGS2/"
                   "LNS2G2L b L2Pg3p");
-    auto searcher = Searcher(g);
+    auto searcher = Searcher();
+    searcher.set_game(g);
     searcher.explore(1000);
     const auto actual = searcher.get_mate_moves();
     for (auto&& m : actual) {
@@ -410,12 +415,63 @@ TEST(dfpn, mate_moves_without_waste_moves)
     //   +---+---+---+---+---+---+---+---+---+
     // Black: KY,KA
     auto g = Game("9/9/6np1/6p1p/7k1/6P2/7PP/6R2/5K2L b BL");
-    auto searcher = Searcher(g);
+    auto searcher = Searcher();
+    searcher.set_game(g);
     searcher.explore(10);
     // Mate moves with waste moves: ['L*2f', '2e1e', 'B*2d', '2c2d', '1g1f']
     // Mate moves w/o waste moves: ['L*2f', '2e1e', '1g1f']
     const auto actual = searcher.get_mate_moves();
     CHECK_EQUAL(3, actual.size());
+}
+
+TEST(dfpn, cache)
+{
+    using namespace vshogi::minishogi;
+    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+
+    // Turn: White
+    // White: KIx2
+    //     5   4   3   2   1
+    //   *---*---*---*---*---*
+    // A |   |   |   |   |   |
+    //   *---*---*---*---*---*
+    // B |   |   |-FU|   |   |
+    //   *---*---*---*---*---*
+    // C |   |   |   |   |   |
+    //   *---*---*---*---*---*
+    // D |   |   |+OU|   |   |
+    //   *---*---*---*---*---*
+    // E |   |   |   |   |   |
+    //   *---*---*---*---*---*
+    // Black: -
+    auto searcher = Searcher();
+    searcher.set_game(Game("5/2p2/5/2K2/5 w 2g"));
+    searcher.explore(21);
+    CHECK_FALSE(searcher.found_mate());
+    searcher.explore(100);
+    CHECK_TRUE(searcher.found_mate());
+
+    /**
+     * @brief It should only take 7 searches to prove checkmate.
+     *
+     * - W: G*3c
+     *      - B: 3d4e
+     *          - W: G*4d
+     *      - B: 3d3e
+     *          - W: G*3d
+     *      - B: 3d2e
+     *          - W: G*2d
+     */
+    searcher.set_game(Game("5/2p2/5/2K2/5 w 2g"));
+    CHECK_FALSE(searcher.found_mate());
+    searcher.explore(6);
+    CHECK_FALSE(searcher.found_mate());
+    searcher.explore(1);
+    CHECK_TRUE(searcher.found_mate());
+
+    const auto actual = searcher.get_mate_moves();
+    CHECK_EQUAL(3, actual.size());
+    CHECK_TRUE(Move(SQ_3C, KI) == actual[0]);
 }
 
 } // namespace test_vshogi::test_engine

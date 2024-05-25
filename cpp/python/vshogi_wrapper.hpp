@@ -209,9 +209,9 @@ inline void export_game(pybind11::module& m)
                                   value) {
                     return py::none();
                 } else {
-                    auto dfpn = vshogi::engine::dfpn::Searcher<Game, Move>(
-                        self, num_dfpn_nodes);
-                    if (dfpn.explore()) {
+                    auto dfpn = vshogi::engine::dfpn::Searcher<Game, Move>();
+                    dfpn.set_game(self);
+                    if (dfpn.explore(num_dfpn_nodes)) {
                         return py::cast(dfpn.get_mate_moves());
                     } else {
                         return py::none();
@@ -270,20 +270,16 @@ inline void export_mcts_node(pybind11::module& m)
                 const auto data = policy_logits.data();
                 self.simulate_expand_and_backprop(game, value, data);
             })
+        .def("simulate_mate_and_backprop", &Node::simulate_mate_and_backprop)
         .def(
             "_select_node_to_explore",
             [](Node& node,
                Game& game,
                const float coeff_puct,
                const int non_random_ratio,
-               const int random_depth,
-               const std::size_t num_dfpn_nodes) -> py::object {
+               const int random_depth) -> py::object {
                 const auto out = node.select(
-                    game,
-                    coeff_puct,
-                    non_random_ratio,
-                    random_depth,
-                    num_dfpn_nodes);
+                    game, coeff_puct, non_random_ratio, random_depth);
                 if (out == nullptr)
                     return py::none();
                 return py::cast(*out, py::return_value_policy::reference);
@@ -317,9 +313,10 @@ inline void export_dfpn_searcher(pybind11::module& m)
     using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
 
     py::class_<Searcher>(m, "DfpnSearcher")
-        .def(py::init<const Game&, const uint&>())
-        .def("explore", py::overload_cast<>(&Searcher::explore))
-        .def("explore", py::overload_cast<uint>(&Searcher::explore))
+        .def(py::init<>())
+        .def("is_ready", &Searcher::is_ready)
+        .def("set_game", &Searcher::set_game)
+        .def("explore", &Searcher::explore)
         .def("found_mate", &Searcher::found_mate)
         .def("found_no_mate", &Searcher::found_no_mate)
         .def("found_conclusion", &Searcher::found_conclusion)

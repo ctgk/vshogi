@@ -205,8 +205,8 @@ def _get_proximal_probas(prior: dict, posterior: dict, prior_rate: float):
 
 
 def play_game(
-    player_black: vshogi.engine.MonteCarloTreeSearcher,
-    player_white: vshogi.engine.MonteCarloTreeSearcher,
+    player_black: vshogi.engine.DfpnMcts,
+    player_white: vshogi.engine.DfpnMcts,
     args,
     max_moves: int = 400,
 ) -> vshogi.Game:
@@ -236,12 +236,17 @@ def play_game(
 
         player = player_black if game.turn == vshogi.Color.BLACK else player_white
         if not player.is_ready():
-            player.set_root(game)
+            player.set_game(game)
 
-        mate_moves = game.get_mate_moves_if_any(num_dfpn_nodes=10000)
-        if mate_moves is not None:
+        player.search(
+            dfpn_searches_at_root=10000,
+            mcts_searches=args.mcts_explorations - player.mcts_num_searched,
+            dfpn_searches_at_vertex=100,  # approximately worth three-move mate
+        )
+        if player.dfpn_found_mate:
+            mate_moves = player.get_mate_moves()
             for i, move in enumerate(mate_moves):
-                player.explore(n=1)
+                player.search(dfpn_searches_at_root=0, mcts_searches=1, dfpn_searches_at_vertex=0)
                 proximal_probas = _get_proximal_probas(
                     prior={m.to_usi(): p for m, p in player.get_probas().items()},
                     posterior={
@@ -256,14 +261,10 @@ def play_game(
                 player.apply(move)
             break
 
-        player.explore(
-            n=args.mcts_explorations - player.num_explored,
-            num_dfpn_nodes=100, # approximately worth three-move mate
-        )
         if game.record_length < args._num_random_moves:
             move = player.select(temperature=args.mcts_temperature)
         else:
-            move = player.select(temperature='max') # off-policy
+            move = player.select() # off-policy
 
         proximal_probas = _get_proximal_probas(
             prior={m.to_usi(): p for m, p in player.get_probas().items()},
@@ -284,17 +285,19 @@ def play_game(
     return game
 
 
-def load_player_of(index_path_or_network, num_threads=1) -> vshogi.engine.MonteCarloTreeSearcher:
+def load_player_of(index_path_or_network, num_threads=1) -> vshogi.engine.DfpnMcts:
     if isinstance(index_path_or_network, int):
         i = index_path_or_network
-        return vshogi.engine.MonteCarloTreeSearcher(
+        mcts = vshogi.engine.MonteCarloTreeSearcher(
             PolicyValueFunction(f'models/model_{i:04d}.tflite', num_threads),
             coeff_puct=args.mcts_coeff_puct,
         )
-    return vshogi.engine.MonteCarloTreeSearcher(
-        PolicyValueFunction(index_path_or_network, num_threads),
-        coeff_puct=args.mcts_coeff_puct,
-    )
+    else:
+        mcts = vshogi.engine.MonteCarloTreeSearcher(
+            PolicyValueFunction(index_path_or_network, num_threads),
+            coeff_puct=args.mcts_coeff_puct,
+        )
+    return vshogi.engine.DfpnMcts(vshogi.engine.DfpnSearcher(), mcts)
 
 
 def run_self_play(args: Args):
