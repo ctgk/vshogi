@@ -36,7 +36,9 @@ class Args:
     )
     rl_cycle: int = config(type=int, default=10, help='# of Reinforcement Learning cycle. By default 10.')
     resume_rl_cycle_from: int = config(type=int, default=1, help='Resume Reinforcement Learning cycle if given. By default 0.')
-    nn_channels: int = config(type=int, default=None, help='# of hidden channels in NN. Default value varies in shogi games.')
+    nn_hidden_channels: int = config(type=int, default=None, help='# of hidden channels in NN. Default value varies in shogi games.')
+    nn_single_bottleneck_channels: int = config(type=int, default=None, help='# of single-bottleneck channels in NN. Default value varies in shogi games.')
+    nn_multi_bottleneck_channels: int = config(type=int, default=None, help='# of multi-bottleneck channels in NN. Default value varies in shogi games.')
     nn_backbones: int = config(type=int, default=None, help='# of backbone layers in NN. Default value varies in shogi games.')
     nn_train_fraction: float = config(type=float, default=0.5, help='Fraction of game record by former models to use to train current one. By default 0.5')
     nn_epochs: int = config(type=int, default=20, help='# of epochs in NN training. By default 20.')
@@ -75,6 +77,8 @@ def build_policy_value_network(
     input_channels: int,
     num_policy_per_square: int,
     num_channels_in_hidden_layer: int,
+    num_channels_in_single_bottleneck: int,
+    num_channels_in_multi_bottleneck: int,
     num_backbone_layers: int,
 ):
     r = tf.keras.regularizers.L2(0.001)
@@ -95,9 +99,9 @@ def build_policy_value_network(
         return tf.nn.relu6(pointwise_conv2d(x, ch))
 
     def multidilation_resblock(x):
+        h = relu_pconv(x, num_channels_in_multi_bottleneck)
         h = tf.keras.layers.Concatenate()([
-            depthwise_conv2d(relu_pconv(x, 32), d)
-            for d in range(1, max(input_size))
+            depthwise_conv2d(h, d) for d in range(1, max(input_size))
         ])
         h = tf.nn.relu6(h)
         h = pointwise_conv2d(h, num_channels_in_hidden_layer)
@@ -105,7 +109,7 @@ def build_policy_value_network(
         return tf.nn.relu6(h)
 
     def resblock(x):
-        h = relu_pconv(x, 32)
+        h = relu_pconv(x, num_channels_in_single_bottleneck)
         h = tf.nn.relu6(depthwise_conv2d(h))
         h = pointwise_conv2d(h, num_channels_in_hidden_layer)
         h = tf.keras.layers.Add()([x, h])
@@ -447,7 +451,9 @@ def run_train(args: Args):
         input_size=(shogi.Game.ranks, shogi.Game.files),
         input_channels=shogi.Game.feature_channels,
         num_policy_per_square=shogi.Move._num_policy_per_square(),
-        num_channels_in_hidden_layer=args.nn_channels,
+        num_channels_in_hidden_layer=args.nn_hidden_channels,
+        num_channels_in_single_bottleneck=args.nn_single_bottleneck_channels,
+        num_channels_in_multi_bottleneck=args.nn_multi_bottleneck_channels,
         num_backbone_layers=args.nn_backbones,
     )
     i = args.resume_rl_cycle_from
@@ -613,10 +619,16 @@ def parse_args() -> Args:
     args = Args.from_args()
     args._shogi = getattr(vshogi, args.shogi_variant)
     default_configs = {
-        'animal_shogi':  {'nn_channels':  32, 'nn_backbones': 3},
-        'minishogi':     {'nn_channels':  64, 'nn_backbones': 3},
-        'judkins_shogi': {'nn_channels':  64, 'nn_backbones': 3},
-        'shogi':         {'nn_channels': 128, 'nn_backbones': 4},
+        'animal_shogi':  {'nn_hidden_channels':  32, 'nn_single_bottleneck_channels':  8, 'nn_multi_bottleneck_channels':  2, 'nn_backbones': 3},
+
+        # 16 ranging attacks: HI*4, RY*4, KA*4, UM*4
+        'minishogi':     {'nn_hidden_channels':  64, 'nn_single_bottleneck_channels': 16, 'nn_multi_bottleneck_channels': 16, 'nn_backbones': 3},
+
+        # 16 ranging attacks: HI*4, RY*4, KA*4, UM*4
+        'judkins_shogi': {'nn_hidden_channels':  64, 'nn_single_bottleneck_channels': 16, 'nn_multi_bottleneck_channels': 16, 'nn_backbones': 3},
+
+        # 18 ranging attacks: B_KY, W_KY, HI*4, RY*4, KA*4, UM*4
+        'shogi':         {'nn_hidden_channels': 128, 'nn_single_bottleneck_channels': 32, 'nn_multi_bottleneck_channels': 18, 'nn_backbones': 4},
     }
     if args.shogi_variant in default_configs:
         for key, value in default_configs[args.shogi_variant].items():
