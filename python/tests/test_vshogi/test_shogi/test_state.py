@@ -23,6 +23,13 @@ def test_to_dlshogi_features_white():
     state = shogi.State(sfen)
     assert np.allclose(game.to_dlshogi_features(), state.to_dlshogi_features())
 
+    a = np.empty(
+        (2, shogi.Game.ranks, shogi.Game.files, shogi.Game.feature_channels),
+        dtype=np.float32,
+    )
+    state.to_dlshogi_features(a[1])
+    assert np.allclose(game.to_dlshogi_features(), a[1])
+
 
 def test_hflip():
     sfen = (
@@ -86,6 +93,11 @@ def test_to_dlshogi_policy():
 
     assert np.sum(np.isnan(state.to_dlshogi_policy(
         visit_probas, default_value=np.nan))) > 0
+
+    a = np.empty((2, shogi.Game.num_dlshogi_policy), dtype=np.float32)
+    state.to_dlshogi_policy(visit_probas, default_value=-1., out=a[1])
+    assert np.allclose(
+        game.to_dlshogi_policy(visit_probas, default_value=-1.), a[1])
 
 
 if __name__ == '__main__':

@@ -114,6 +114,11 @@ inline void export_state(pybind11::module& m)
                 return out;
             })
         .def(
+            "to_dlshogi_features",
+            [](const State& self, py::array_t<float>& out) {
+                self.to_feature_map(out.mutable_data());
+            })
+        .def(
             "to_dlshogi_policy",
             [](const State& self,
                const py::dict& action_proba,
@@ -135,7 +140,30 @@ inline void export_state(pybind11::module& m)
                 return out;
             },
             py::arg("action_proba"),
-            py::arg("default_value"));
+            py::arg("default_value"))
+        .def(
+            "to_dlshogi_policy",
+            [](const State& self,
+               const py::dict& action_proba,
+               const float default_value,
+               py::array_t<float>& out) {
+                const auto turn = self.get_turn();
+                constexpr auto size = State::num_dlshogi_policy();
+                float* const data = out.mutable_data();
+                std::fill(data, data + size, default_value);
+                for (auto it = action_proba.begin(); it != action_proba.end();
+                     ++it) {
+                    const auto move = it->first.cast<Move>();
+                    const auto index
+                        = (turn == vshogi::BLACK)
+                              ? move.to_dlshogi_policy_index()
+                              : move.rotate().to_dlshogi_policy_index();
+                    data[index] = it->second.cast<float>();
+                }
+            },
+            py::arg("action_proba"),
+            py::arg("default_value"),
+            py::arg("out"));
 }
 
 template <class Game>
