@@ -83,6 +83,24 @@ def build_policy_value_network(
 ):
     r = tf.keras.regularizers.L2(0.001)
 
+    class KernelSharingDepthwiseConv33(tf.keras.layers.Layer):
+
+        def __init__(self, dilation_rates: tp.Iterable[int]):
+            super().__init__()
+            self._dilation_rates = dilation_rates
+
+        def build(self, input_shape):
+            k_shape = (3, 3, input_shape[-1], 1)
+            self.kernel = self.add_weight("kernel", k_shape, regularizer=r)
+
+        def call(self, x):
+            feature_maps = [
+                tf.nn.depthwise_conv2d(
+                    x, self.kernel, (1, 1, 1, 1), 'SAME', dilations=(d, d))
+                for d in self._dilation_rates
+            ]
+            return tf.concat(feature_maps, -1)
+
     def pointwise_conv2d(x, ch, use_bias=True):
         return tf.keras.layers.Conv2D(
             ch, 1, use_bias=use_bias, kernel_regularizer=r)(x)
@@ -100,9 +118,7 @@ def build_policy_value_network(
 
     def multidilation_resblock(x):
         h = relu_pconv(x, num_channels_in_multi_bottleneck)
-        h = tf.keras.layers.Concatenate()([
-            depthwise_conv2d(h, d) for d in range(1, max(input_size))
-        ])
+        h = KernelSharingDepthwiseConv33(list(range(1, max(input_size))))(h)
         h = tf.nn.relu6(h)
         h = pointwise_conv2d(h, num_channels_in_hidden_layer)
         h = tf.keras.layers.Add()([x, h])
