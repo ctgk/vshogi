@@ -145,6 +145,16 @@ class DfpnMcts(Engine):
             return self._dfpn.get_mate_moves()
         return []
 
+    def get_value(self) -> float:
+        """Return raw value estimate of the current game position.
+
+        Returns
+        -------
+        float
+            Raw value estimate of the current game position.
+        """
+        return self._mcts.get_value()
+
     def get_probas(self) -> tp.Dict[Move, float]:
         """Return raw probabilities of selecting actions.
 

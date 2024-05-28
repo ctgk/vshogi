@@ -41,16 +41,16 @@ class Args:
     nn_multi_bottleneck_channels: int = config(type=int, default=None, help='# of multi-bottleneck channels in NN. Default value varies in shogi games.')
     nn_backbones: int = config(type=int, default=None, help='# of backbone layers in NN. Default value varies in shogi games.')
     nn_train_fraction: float = config(type=float, default=0.5, help='Fraction of game record by former models to use to train current one. By default 0.5')
-    nn_epochs: int = config(type=int, default=20, help='# of epochs in NN training. By default 20.')
+    nn_epochs: int = config(type=int, default=10, help='# of epochs in NN training. By default 10.')
     nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
     nn_learning_rate: float = config(type=float, default=1e-3, help='Learning rate of NN weight update')
     nn_proximal_rate: float = config(
-        type=float, default=0.5,
+        type=float, default=0.3,
         help=(
             'Rate (0 - 1) to mix action probability output from prior network with MCTS visit counts. '
             'The resulting value is a supervisory signal of action probability to train a new network. '
             'For example, the new network is trained purely on MCTS visit counts when the value is 0. '
-            'By default 0.5'
+            'By default 0.3'
         ),
     )
     mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000. Alpha Zero used 800 simulations.')
@@ -90,8 +90,100 @@ def build_policy_value_network(
             self._dilation_rates = dilation_rates
 
         def build(self, input_shape):
-            k_shape = (3, 3, input_shape[-1], 1)
-            self.kernel = self.add_weight("kernel", k_shape, regularizer=r)
+            k = np.array([
+                [
+                    [0, 1, 0],
+                    [0, 0, 0],
+                    [0, 0, 0],
+                ],  # HI DIR_N
+                [
+                    [0, 0, 0],
+                    [1, 0, 0],
+                    [0, 0, 0],
+                ],  # HI DIR_W
+                [
+                    [0, 0, 0],
+                    [0, 0, 1],
+                    [0, 0, 0],
+                ],  # HI DIR_E
+                [
+                    [0, 0, 0],
+                    [0, 0, 0],
+                    [0, 1, 0],
+                ],  # HI DIR_S
+                [
+                    [0, 1, 0],
+                    [0, 0, 0],
+                    [0, 0, 0],
+                ],  # RY DIR_N
+                [
+                    [0, 0, 0],
+                    [1, 0, 0],
+                    [0, 0, 0],
+                ],  # RY DIR_W
+                [
+                    [0, 0, 0],
+                    [0, 0, 1],
+                    [0, 0, 0],
+                ],  # RY DIR_E
+                [
+                    [0, 0, 0],
+                    [0, 0, 0],
+                    [0, 1, 0],
+                ],  # RY DIR_S
+                [
+                    [1, 0, 0],
+                    [0, 0, 0],
+                    [0, 0, 0],
+                ],  # KA DIR_NW
+                [
+                    [0, 0, 1],
+                    [0, 0, 0],
+                    [0, 0, 0],
+                ],  # KA DIR_NE
+                [
+                    [0, 0, 0],
+                    [0, 0, 0],
+                    [1, 0, 0],
+                ],  # KA DIR_SW
+                [
+                    [0, 0, 0],
+                    [0, 0, 0],
+                    [0, 0, 1],
+                ],  # KA DIR_SE
+                [
+                    [1, 0, 0],
+                    [0, 0, 0],
+                    [0, 0, 0],
+                ],  # UM DIR_NW
+                [
+                    [0, 0, 1],
+                    [0, 0, 0],
+                    [0, 0, 0],
+                ],  # UM DIR_NE
+                [
+                    [0, 0, 0],
+                    [0, 0, 0],
+                    [1, 0, 0],
+                ],  # UM DIR_SW
+                [
+                    [0, 0, 0],
+                    [0, 0, 0],
+                    [0, 0, 1],
+                ],  # UM DIR_SE
+                [
+                    [0, 1, 0],
+                    [0, 0, 0],
+                    [0, 0, 0],
+                ],  # B_KY DIR_N
+                [
+                    [0, 0, 0],
+                    [0, 0, 0],
+                    [0, 1, 0],
+                ],  # W_KY DIR_S
+            ], dtype=np.float32)[:int(input_shape[-1])]
+            k = np.moveaxis(k, 0, -1)[..., None]
+            self.kernel = tf.constant(k, dtype=tf.float32)
 
         def call(self, x):
             feature_maps = [
@@ -117,11 +209,16 @@ def build_policy_value_network(
         return tf.nn.relu6(pointwise_conv2d(x, ch))
 
     def multidilation_resblock(x):
-        h = relu_pconv(x, num_channels_in_multi_bottleneck)
-        h = KernelSharingDepthwiseConv33(list(range(1, max(input_size))))(h)
-        h = tf.nn.relu6(h)
-        h = pointwise_conv2d(h, num_channels_in_hidden_layer)
-        h = tf.keras.layers.Add()([x, h])
+        h1 = relu_pconv(x, num_channels_in_single_bottleneck)
+        h1 = tf.nn.relu6(depthwise_conv2d(h1))
+        h1 = pointwise_conv2d(h1, num_channels_in_hidden_layer)
+
+        h2 = relu_pconv(x, num_channels_in_multi_bottleneck)
+        h2 = tf.nn.relu6(KernelSharingDepthwiseConv33(list(range(1, max(input_size))))(h2))
+        h2 = pointwise_conv2d(h2, num_channels_in_hidden_layer)
+
+        h = tf.keras.layers.Add()([x, h1, h2])
+        h = bn(h)
         return tf.nn.relu6(h)
 
     def resblock(x):
@@ -129,6 +226,7 @@ def build_policy_value_network(
         h = tf.nn.relu6(depthwise_conv2d(h))
         h = pointwise_conv2d(h, num_channels_in_hidden_layer)
         h = tf.keras.layers.Add()([x, h])
+        h = bn(h)
         return tf.nn.relu6(h)
 
     def backbone_network(x):
@@ -137,10 +235,10 @@ def build_policy_value_network(
         h = tf.nn.relu6(bn(h))
 
         for i in range(num_backbone_layers):
-            if i % 2 == 0:
-                h = bn(multidilation_resblock(h))
+            if (i % 2 == 0) and (num_channels_in_multi_bottleneck != 0):
+                h = multidilation_resblock(h)
             else:
-                h = bn(resblock(h))
+                h = resblock(h)
         return h
 
     def policy_network(x):
@@ -148,7 +246,7 @@ def build_policy_value_network(
         return tf.keras.layers.Flatten(name='policy_logits')(h)
 
     def value_network(x):
-        h = relu_pconv(x, num_channels_in_hidden_layer // 4)
+        h = relu_pconv(x, 4)
         h = tf.keras.layers.Flatten()(h)
         return tf.keras.layers.Dense(
             1, activation='tanh', name='value', kernel_regularizer=r)(h)
@@ -207,9 +305,15 @@ def dump_game_records(file_, game: vshogi.Game) -> None:
             lambda g, i: g.get_move_at(i).to_usi(),
             lambda g, _: g.result,
             lambda g, i: g.q_value_record[i],
+            lambda g, i: g.proximal_q_value_record[i],
+            lambda g, i: g.visit_count_record[i],
             lambda g, i: g.proximal_probas_record[i],
         ),
-        names=('state', 'move', 'result', 'q_value', 'proximal_probas'),
+        names=(
+            'state', 'move', 'result',
+            'q_value', 'proximal_q_value',
+            'visit_count', 'proximal_probas',
+        ),
         file_=file_,
     )
 
@@ -249,6 +353,8 @@ def play_game(
     """
     game = args._shogi.Game()
     game.q_value_record = []
+    game.proximal_q_value_record = []
+    game.visit_count_record = []
     game.proximal_probas_record = []
     for _ in range(max_moves):
         if game.result != vshogi.Result.ONGOING:
@@ -275,7 +381,14 @@ def play_game(
                     },
                     prior_rate=args.nn_proximal_rate,
                 )
-                game.q_value_record.append(int(i % 2 == 0) * 2 - 1)
+                q_value = int(i % 2 == 0) * 2 - 1
+                game.q_value_record.append(q_value)
+                # https://arxiv.org/abs/2005.12729 1. Value function clipping
+                game.proximal_q_value_record.append(
+                    q_value * (1 - args.nn_proximal_rate)
+                    + player.get_value() * args.nn_proximal_rate
+                )
+                game.visit_count_record.append({move.to_usi(): 1})
                 game.proximal_probas_record.append(proximal_probas)
                 game.apply(move)
                 player.apply(move)
@@ -286,13 +399,22 @@ def play_game(
         else:
             move = player.select() # off-policy
 
+        prior = {m.to_usi(): p for m, p in player.get_probas().items()}
+        visit_count = {m.to_usi(): v for m, v in player.get_visit_counts().items()}
         proximal_probas = _get_proximal_probas(
-            prior={m.to_usi(): p for m, p in player.get_probas().items()},
-            posterior={m.to_usi(): v for m, v in player.get_visit_counts().items()},
+            prior=prior, posterior=visit_count,
             prior_rate=args.nn_proximal_rate,
         )
 
-        game.q_value_record.append(max(player.get_q_values().values()))
+        q_value = max(player.get_q_values().values())
+        game.q_value_record.append(q_value)
+
+        # https://arxiv.org/abs/2005.12729 1. Value function clipping
+        game.proximal_q_value_record.append(
+            q_value * (1 - args.nn_proximal_rate)
+            + player.get_value() * args.nn_proximal_rate
+        )
+        game.visit_count_record.append(visit_count)
         game.proximal_probas_record.append(proximal_probas)
 
         game.apply(move)
@@ -416,10 +538,11 @@ def run_train(args: Args):
                     state.to_dlshogi_features(x_placeholder[im])
                     state.to_dlshogi_policy(
                         proximal_probas,
-                        default_value=np.nan,
+                        default_value=-np.inf,
                         out=policy_placeholder[im],
                     )
-                    value_placeholder[im] = float(row['q_value'])
+                    # https://arxiv.org/abs/2005.12729 1. Value function clipping
+                    value_placeholder[im] = float(row['proximal_q_value'])
 
                 yield x_placeholder, (policy_placeholder, value_placeholder)
 
@@ -439,7 +562,8 @@ def run_train(args: Args):
             tsv_path, sep='\t',
             dtype={
                 'state': str, 'move': str, 'result': str,
-                'q_value': float, 'visit_counts': str,
+                'q_value': float, 'proximal_q_value': float,
+                'visit_count': str, 'proximal_probas': str,
             },
         )
         if fraction is None:
@@ -453,14 +577,34 @@ def run_train(args: Args):
         learning_rate: float,
     ) -> tf.keras.Model:
 
-        def masked_softmax_cross_entropy(y_true, y_pred):
-            mask = tf.math.is_finite(y_true)
-            y_true_masked = tf.where(mask, y_true, 0)
-            y_pred = y_pred - tf.reduce_max(y_pred, axis=1, keepdims=True)
-            logsumexp = tf.math.log(tf.reduce_sum(
-                tf.where(mask, tf.math.exp(y_pred), 0), axis=1, keepdims=True))
-            y_pred = y_pred - logsumexp
-            return -tf.reduce_sum(y_true_masked * y_pred, axis=1)
+        # def masked_softmax_cross_entropy(y_true, y_pred):
+        #     mask = tf.math.is_finite(y_true)
+        #     y_true_masked = tf.where(mask, y_true, 0)
+        #     y_pred = y_pred - tf.reduce_max(y_pred, axis=1, keepdims=True)
+        #     logsumexp = tf.math.log(tf.reduce_sum(
+        #         tf.where(mask, tf.math.exp(y_pred), 0), axis=1, keepdims=True))
+        #     y_pred = y_pred - logsumexp
+        #     return -tf.reduce_sum(y_true_masked * y_pred, axis=1)
+
+        def masked_softmax_cross_entropy(y_true, logit):
+            # https://github.com/tensorflow/tensorflow/issues/24476
+            # In order to make this function work in CPU,
+            # the following consists without using `tf.where()`
+
+            y_true_masked = tf.clip_by_value(y_true, 0., 1.)
+            logit_masked = logit + tf.clip_by_value(y_true, -np.inf, 0.)  # masked out values should be -inf here.
+
+            logit_max = tf.stop_gradient(tf.reduce_max(logit_masked, axis=1, keepdims=True))
+            # tf.debugging.assert_all_finite(logit_max, message="max(logit) should be finite")
+            logit_subtracted = logit_masked - logit_max  # masked out values should be -inf here.
+            # tf.debugging.assert_near(tf.reduce_max(logit_subtracted, axis=1), 0., rtol=0., atol=0.1, message="`max(logit - max(logit))` should be near 0")
+            exps = tf.math.exp(logit_subtracted)
+            # tf.debugging.assert_all_finite(exps, "`exponents` should be finite")
+            # tf.debugging.assert_near(tf.reduce_max(exps, axis=1), 1., rtol=0., atol=0.1, message="max(exponents) should be near 1.")
+            logsumexp = tf.math.log(tf.reduce_sum(exps, axis=1, keepdims=True))
+            # tf.debugging.assert_less_equal(tf.reduce_max(logit_subtracted - logsumexp, axis=1), 0., message="max(log(softmax)) <= 0.")
+            log_softmax = tf.clip_by_value(logit_subtracted - logsumexp, -100000., 0.)  # in order to avoid `-inf * 0 = nan`.
+            return -tf.reduce_sum(y_true_masked * log_softmax, axis=1)
 
         network.compile(
             loss=[
@@ -656,7 +800,7 @@ def parse_args() -> Args:
     args = Args.from_args()
     args._shogi = getattr(vshogi, args.shogi_variant)
     default_configs = {
-        'animal_shogi':  {'nn_hidden_channels':  32, 'nn_single_bottleneck_channels':  8, 'nn_multi_bottleneck_channels':  2, 'nn_backbones': 3},
+        'animal_shogi':  {'nn_hidden_channels':  32, 'nn_single_bottleneck_channels':  8, 'nn_multi_bottleneck_channels':  0, 'nn_backbones': 3},
 
         # 16 ranging attacks: HI*4, RY*4, KA*4, UM*4
         'minishogi':     {'nn_hidden_channels':  64, 'nn_single_bottleneck_channels': 16, 'nn_multi_bottleneck_channels': 16, 'nn_backbones': 3},

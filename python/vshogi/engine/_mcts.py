@@ -128,6 +128,16 @@ class MonteCarloTreeSearcher(Engine):
             policy_logits, value = self._policy_value_func(game)
             node.simulate_expand_and_backprop(game._game, value, policy_logits)
 
+    def get_value(self) -> float:
+        """Return raw value estimate of the current game position.
+
+        Returns
+        -------
+        float
+            Raw value estimate of the current game position.
+        """
+        return self._root.get_value()
+
     def get_probas(self) -> tp.Dict[Move, float]:
         """Return raw probabilities of selecting actions.
 
