@@ -211,11 +211,11 @@ def build_policy_value_network(
     def multidilation_resblock(x):
         h1 = relu_pconv(x, num_channels_in_single_bottleneck)
         h1 = tf.nn.relu6(depthwise_conv2d(h1))
-        h1 = pointwise_conv2d(h1, num_channels_in_hidden_layer)
+        h1 = pointwise_conv2d(h1, num_channels_in_hidden_layer, use_bias=False)
 
         h2 = relu_pconv(x, num_channels_in_multi_bottleneck)
         h2 = tf.nn.relu6(KernelSharingDepthwiseConv33(list(range(1, max(input_size))))(h2))
-        h2 = pointwise_conv2d(h2, num_channels_in_hidden_layer)
+        h2 = pointwise_conv2d(h2, num_channels_in_hidden_layer, use_bias=False)
 
         h = tf.keras.layers.Add()([x, h1, h2])
         h = bn(h)
@@ -224,7 +224,7 @@ def build_policy_value_network(
     def resblock(x):
         h = relu_pconv(x, num_channels_in_single_bottleneck)
         h = tf.nn.relu6(depthwise_conv2d(h))
-        h = pointwise_conv2d(h, num_channels_in_hidden_layer)
+        h = pointwise_conv2d(h, num_channels_in_hidden_layer, use_bias=False)
         h = tf.keras.layers.Add()([x, h])
         h = bn(h)
         return tf.nn.relu6(h)
