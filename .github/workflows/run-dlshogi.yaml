@@ -2,7 +2,7 @@ name: Run DL-Shogi Training
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, tmp ]
 
 jobs:
   build:
