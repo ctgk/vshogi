@@ -513,9 +513,6 @@ def run_train(args: Args):
                 row = df.iloc[index]
                 state = args._shogi.State(row['state'])
                 proximal_probas = row['proximal_probas_dict']
-                if np.random.uniform() > 0.5:
-                    state = state.hflip()
-                    proximal_probas = {k.hflip(): v for k, v in proximal_probas.items()}
 
                 x = state.to_dlshogi_features().squeeze()
                 policy = state.to_dlshogi_policy(proximal_probas, default_value=-np.inf)
@@ -528,6 +525,10 @@ def run_train(args: Args):
 
     def get_dataset(df: pd.DataFrame):
         df['proximal_probas_dict'] = df['proximal_probas'].apply(lambda s: {args._shogi.Move(k): v for k, v in eval(s).items()})
+        df_hflip = df.copy()
+        df_hflip['state'] = df['state'].apply(lambda s: args._shogi.State(s).hflip().to_sfen())
+        df_hflip['proximal_probas_dict'] = df['proximal_probas_dict'].apply(lambda dict_: {m.hflip(): v for m, v in dict_.items()})
+        df = pd.concat((df, df_hflip), ignore_index=True)
         dataset = tf.data.Dataset.from_generator(
             _get_generator_from_df(df),
             output_types=(tf.float32, (tf.float32, tf.float32)),

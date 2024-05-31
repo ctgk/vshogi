@@ -101,6 +101,7 @@ inline void export_state(pybind11::module& m)
     py::class_<State>(m, "State")
         .def(py::init<const std::string&>())
         .def("hflip", &State::hflip)
+        .def("to_sfen", &State::to_sfen)
         .def(
             "to_dlshogi_features",
             [](const State& self) {
