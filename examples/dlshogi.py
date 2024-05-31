@@ -507,44 +507,21 @@ def run_train(args: Args):
 
     def _get_generator_from_df(df: pd.DataFrame):
 
-        x_placeholder = np.empty(
-            (
-                args.nn_minibatch,
-                args._shogi.Game.ranks,
-                args._shogi.Game.files,
-                args._shogi.Game.feature_channels,
-            ),
-            dtype=np.float32,
-        )
-        policy_placeholder = np.empty(
-            (args.nn_minibatch, args._shogi.Game.num_dlshogi_policy),
-            dtype=np.float32,
-        )
-        value_placeholder = np.empty(args.nn_minibatch, dtype=np.float32)
-
         def _generator():
             indices = np.random.permutation(len(df))
-            indices = indices[:(len(df) // args.nn_minibatch)*args.nn_minibatch]
-            indices = indices.reshape(-1, args.nn_minibatch)
-            for indices_minibatch in indices:
-                for im, id_ in enumerate(indices_minibatch):
-                    row = df.iloc[id_]
-                    state = args._shogi.State(row['state'])
-                    proximal_probas = row['proximal_probas_dict']
-                    if np.random.uniform() > 0.5:
-                        state = state.hflip()
-                        proximal_probas = {k.hflip(): v for k, v in proximal_probas.items()}
+            for index in indices:
+                row = df.iloc[index]
+                state = args._shogi.State(row['state'])
+                proximal_probas = row['proximal_probas_dict']
+                if np.random.uniform() > 0.5:
+                    state = state.hflip()
+                    proximal_probas = {k.hflip(): v for k, v in proximal_probas.items()}
 
-                    state.to_dlshogi_features(x_placeholder[im])
-                    state.to_dlshogi_policy(
-                        proximal_probas,
-                        default_value=-np.inf,
-                        out=policy_placeholder[im],
-                    )
-                    # https://arxiv.org/abs/2005.12729 1. Value function clipping
-                    value_placeholder[im] = float(row['proximal_q_value'])
+                x = state.to_dlshogi_features().squeeze()
+                policy = state.to_dlshogi_policy(proximal_probas, default_value=-np.inf)
+                value = float(row['proximal_q_value'])  # https://arxiv.org/abs/2005.12729 1. Value function clipping
 
-                yield x_placeholder, (policy_placeholder, value_placeholder)
+                yield x, (policy, value)
 
         return _generator
 
@@ -554,7 +531,7 @@ def run_train(args: Args):
         dataset = tf.data.Dataset.from_generator(
             _get_generator_from_df(df),
             output_types=(tf.float32, (tf.float32, tf.float32)),
-        )
+        ).batch(args.nn_minibatch)
         return dataset
 
     def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
