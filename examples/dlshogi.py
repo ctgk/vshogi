@@ -554,15 +554,6 @@ def run_train(args: Args):
         learning_rate: float,
     ) -> tf.keras.Model:
 
-        # def masked_softmax_cross_entropy(y_true, y_pred):
-        #     mask = tf.math.is_finite(y_true)
-        #     y_true_masked = tf.where(mask, y_true, 0)
-        #     y_pred = y_pred - tf.reduce_max(y_pred, axis=1, keepdims=True)
-        #     logsumexp = tf.math.log(tf.reduce_sum(
-        #         tf.where(mask, tf.math.exp(y_pred), 0), axis=1, keepdims=True))
-        #     y_pred = y_pred - logsumexp
-        #     return -tf.reduce_sum(y_true_masked * y_pred, axis=1)
-
         def masked_softmax_cross_entropy(y_true, logit):
             # https://github.com/tensorflow/tensorflow/issues/24476
             # In order to make this function work in CPU,
@@ -575,11 +566,7 @@ def run_train(args: Args):
             # tf.debugging.assert_all_finite(logit_max, message="max(logit) should be finite")
             logit_subtracted = logit_masked - logit_max  # masked out values should be -inf here.
             # tf.debugging.assert_near(tf.reduce_max(logit_subtracted, axis=1), 0., rtol=0., atol=0.1, message="`max(logit - max(logit))` should be near 0")
-            exps = tf.math.exp(logit_subtracted)
-            # tf.debugging.assert_all_finite(exps, "`exponents` should be finite")
-            # tf.debugging.assert_near(tf.reduce_max(exps, axis=1), 1., rtol=0., atol=0.1, message="max(exponents) should be near 1.")
-            logsumexp = tf.math.log(tf.reduce_sum(exps, axis=1, keepdims=True))
-            # tf.debugging.assert_less_equal(tf.reduce_max(logit_subtracted - logsumexp, axis=1), 0., message="max(log(softmax)) <= 0.")
+            logsumexp = tf.reduce_logsumexp(logit_subtracted, axis=1, keepdims=True)
             log_softmax = tf.clip_by_value(logit_subtracted - logsumexp, -100000., 0.)  # in order to avoid `-inf * 0 = nan`.
             return -tf.reduce_sum(y_true_masked * log_softmax, axis=1)
 
