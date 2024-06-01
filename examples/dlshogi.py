@@ -37,9 +37,8 @@ class Args:
     rl_cycle: int = config(type=int, default=10, help='# of Reinforcement Learning cycle. By default 10.')
     resume_rl_cycle_from: int = config(type=int, default=1, help='Resume Reinforcement Learning cycle if given. By default 0.')
     nn_hidden_channels: int = config(type=int, default=None, help='# of hidden channels in NN. Default value varies in shogi games.')
-    nn_single_bottleneck_channels: int = config(type=int, default=None, help='# of single-bottleneck channels in NN. Default value varies in shogi games.')
-    nn_multi_bottleneck_channels: int = config(type=int, default=None, help='# of multi-bottleneck channels in NN. Default value varies in shogi games.')
-    nn_backbones: int = config(type=int, default=None, help='# of backbone layers in NN. Default value varies in shogi games.')
+    nn_bottleneck_channels: int = config(type=int, default=None, help='# of bottleneck channels in NN. Default value varies in shogi games.')
+    nn_backbone_blocks: int = config(type=int, default=None, help='# of backbone res-blocks in NN. Default value varies in shogi games.')
     nn_train_fraction: float = config(type=float, default=0.5, help='Fraction of game record by former models to use to train current one. By default 0.5')
     nn_epochs: int = config(type=int, default=10, help='# of epochs in NN training. By default 10.')
     nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
@@ -77,130 +76,39 @@ def build_policy_value_network(
     input_channels: int,
     num_policy_per_square: int,
     num_channels_in_hidden_layer: int,
-    num_channels_in_single_bottleneck: int,
-    num_channels_in_multi_bottleneck: int,
-    num_backbone_layers: int,
+    num_channels_in_bottleneck: int,
+    use_long_range_concat: bool,
+    num_backbone_blocks: int,
 ):
     r = tf.keras.regularizers.L2(0.001)
 
-    class KernelSharingDepthwiseConv33(tf.keras.layers.Layer):
+    class Concat8Directions(tf.keras.layers.Layer):
 
-        def __init__(self, dilation_rates: tp.Iterable[int]):
+        def __init__(self, max_dilation_rate: int):
             super().__init__()
-            self._dilation_rates = dilation_rates
+            self._max_dilation_rate = max_dilation_rate
 
         def build(self, input_shape):
-            k = np.array([
-                [
-                    [0, 1, 0],
-                    [0, 0, 0],
-                    [0, 0, 0],
-                ],  # HI DIR_N
-                [
-                    [0, 0, 0],
-                    [1, 0, 0],
-                    [0, 0, 0],
-                ],  # HI DIR_W
-                [
-                    [0, 0, 0],
-                    [0, 0, 1],
-                    [0, 0, 0],
-                ],  # HI DIR_E
-                [
-                    [0, 0, 0],
-                    [0, 0, 0],
-                    [0, 1, 0],
-                ],  # HI DIR_S
-                [
-                    [0, 1, 0],
-                    [0, 0, 0],
-                    [0, 0, 0],
-                ],  # RY DIR_N
-                [
-                    [0, 0, 0],
-                    [1, 0, 0],
-                    [0, 0, 0],
-                ],  # RY DIR_W
-                [
-                    [0, 0, 0],
-                    [0, 0, 1],
-                    [0, 0, 0],
-                ],  # RY DIR_E
-                [
-                    [0, 0, 0],
-                    [0, 0, 0],
-                    [0, 1, 0],
-                ],  # RY DIR_S
-                [
-                    [1, 0, 0],
-                    [0, 0, 0],
-                    [0, 0, 0],
-                ],  # KA DIR_NW
-                [
-                    [0, 0, 1],
-                    [0, 0, 0],
-                    [0, 0, 0],
-                ],  # KA DIR_NE
-                [
-                    [0, 0, 0],
-                    [0, 0, 0],
-                    [1, 0, 0],
-                ],  # KA DIR_SW
-                [
-                    [0, 0, 0],
-                    [0, 0, 0],
-                    [0, 0, 1],
-                ],  # KA DIR_SE
-                [
-                    [1, 0, 0],
-                    [0, 0, 0],
-                    [0, 0, 0],
-                ],  # UM DIR_NW
-                [
-                    [0, 0, 1],
-                    [0, 0, 0],
-                    [0, 0, 0],
-                ],  # UM DIR_NE
-                [
-                    [0, 0, 0],
-                    [0, 0, 0],
-                    [1, 0, 0],
-                ],  # UM DIR_SW
-                [
-                    [0, 0, 0],
-                    [0, 0, 0],
-                    [0, 0, 1],
-                ],  # UM DIR_SE
-                [
-                    [0, 1, 0],
-                    [0, 0, 0],
-                    [0, 0, 0],
-                ],  # B_KY DIR_N
-                [
-                    [0, 0, 0],
-                    [0, 0, 0],
-                    [0, 1, 0],
-                ],  # W_KY DIR_S
-            ], dtype=np.float32)[:int(input_shape[-1])]
-            k = np.moveaxis(k, 0, -1)[..., None]
+            assert input_shape[-1] == 8, input_shape[-1]
+            k = np.concatenate((np.eye(9, 4), np.eye(9, 4, k=-5)), axis=-1).reshape(3, 3, 8, 1)
             self.kernel = tf.constant(k, dtype=tf.float32)
 
         def call(self, x):
             feature_maps = [
                 tf.nn.depthwise_conv2d(
                     x, self.kernel, (1, 1, 1, 1), 'SAME', dilations=(d, d))
-                for d in self._dilation_rates
+                for d in range(1, self._max_dilation_rate + 1)
             ]
-            return tf.concat(feature_maps, -1)
+            return tf.concat([x] + feature_maps, -1)
 
     def pointwise_conv2d(x, ch, use_bias=True):
         return tf.keras.layers.Conv2D(
             ch, 1, use_bias=use_bias, kernel_regularizer=r)(x)
 
-    def depthwise_conv2d(x, dilation=1):
+    def depthwise_conv2d(x, dilation=1, use_bias=True):
         return tf.keras.layers.DepthwiseConv2D(
             3, dilation_rate=dilation, padding='same',
-            use_bias=True, kernel_regularizer=r)(x)
+            use_bias=use_bias, kernel_regularizer=r)(x)
 
     def bn(x):
         return tf.keras.layers.BatchNormalization(center=False, scale=False)(x)
@@ -209,33 +117,22 @@ def build_policy_value_network(
         return tf.nn.relu6(pointwise_conv2d(x, ch))
 
     def multidilation_resblock(x):
-        h1 = relu_pconv(x, num_channels_in_single_bottleneck)
-        h1 = tf.nn.relu6(depthwise_conv2d(h1))
-        h1 = pointwise_conv2d(h1, num_channels_in_hidden_layer, use_bias=False)
-
-        h2 = relu_pconv(x, num_channels_in_multi_bottleneck)
-        h2 = tf.nn.relu6(KernelSharingDepthwiseConv33(list(range(1, max(input_size))))(h2))
-        h2 = pointwise_conv2d(h2, num_channels_in_hidden_layer, use_bias=False)
-
-        h = tf.keras.layers.Add()([x, h1, h2])
-        h = bn(h)
-        return tf.nn.relu6(h)
+        h = Concat8Directions(max(input_size) - 1)(relu_pconv(x, 8))
+        h = pointwise_conv2d(h, num_channels_in_hidden_layer, use_bias=False)
+        return tf.nn.relu6(bn(x + h))
 
     def resblock(x):
-        h = relu_pconv(x, num_channels_in_single_bottleneck)
+        h = relu_pconv(x, num_channels_in_bottleneck)
         h = tf.nn.relu6(depthwise_conv2d(h))
         h = pointwise_conv2d(h, num_channels_in_hidden_layer, use_bias=False)
-        h = tf.keras.layers.Add()([x, h])
-        h = bn(h)
-        return tf.nn.relu6(h)
+        return tf.nn.relu6(bn(x + h))
 
     def backbone_network(x):
-        h = tf.keras.layers.SeparableConv2D(
-            num_channels_in_hidden_layer, 3, padding='same', use_bias=False)(x)
-        h = tf.nn.relu6(bn(h))
+        h = relu_pconv(x, num_channels_in_hidden_layer)
+        h = tf.nn.relu6(bn(depthwise_conv2d(h, use_bias=False)))
 
-        for i in range(num_backbone_layers):
-            if (i % 2 == 0) and (num_channels_in_multi_bottleneck != 0):
+        for _ in range(num_backbone_blocks):
+            if use_long_range_concat:
                 h = multidilation_resblock(h)
             else:
                 h = resblock(h)
@@ -246,7 +143,7 @@ def build_policy_value_network(
         return tf.keras.layers.Flatten(name='policy_logits')(h)
 
     def value_network(x):
-        h = relu_pconv(x, 4)
+        h = relu_pconv(x, 1)
         h = tf.keras.layers.Flatten()(h)
         return tf.keras.layers.Dense(
             1, activation='tanh', name='value', kernel_regularizer=r)(h)
@@ -598,9 +495,9 @@ def run_train(args: Args):
         input_channels=shogi.Game.feature_channels,
         num_policy_per_square=shogi.Move._num_policy_per_square(),
         num_channels_in_hidden_layer=args.nn_hidden_channels,
-        num_channels_in_single_bottleneck=args.nn_single_bottleneck_channels,
-        num_channels_in_multi_bottleneck=args.nn_multi_bottleneck_channels,
-        num_backbone_layers=args.nn_backbones,
+        num_channels_in_bottleneck=args.nn_bottleneck_channels,
+        use_long_range_concat=(args.shogi_variant != "animal_shogi"),
+        num_backbone_blocks=args.nn_backbone_blocks,
     )
     i = args.resume_rl_cycle_from
     if i > 1:
@@ -765,16 +662,10 @@ def parse_args() -> Args:
     args = Args.from_args()
     args._shogi = getattr(vshogi, args.shogi_variant)
     default_configs = {
-        'animal_shogi':  {'nn_hidden_channels':  32, 'nn_single_bottleneck_channels':  8, 'nn_multi_bottleneck_channels':  0, 'nn_backbones': 3},
-
-        # 16 ranging attacks: HI*4, RY*4, KA*4, UM*4
-        'minishogi':     {'nn_hidden_channels':  64, 'nn_single_bottleneck_channels': 16, 'nn_multi_bottleneck_channels': 16, 'nn_backbones': 3},
-
-        # 16 ranging attacks: HI*4, RY*4, KA*4, UM*4
-        'judkins_shogi': {'nn_hidden_channels':  64, 'nn_single_bottleneck_channels': 16, 'nn_multi_bottleneck_channels': 16, 'nn_backbones': 3},
-
-        # 18 ranging attacks: B_KY, W_KY, HI*4, RY*4, KA*4, UM*4
-        'shogi':         {'nn_hidden_channels': 128, 'nn_single_bottleneck_channels': 32, 'nn_multi_bottleneck_channels': 18, 'nn_backbones': 4},
+        'animal_shogi':  {'nn_hidden_channels':  32, 'nn_bottleneck_channels':  8, 'nn_backbone_blocks': 3},
+        'minishogi':     {'nn_hidden_channels':  64, 'nn_bottleneck_channels': 16, 'nn_backbone_blocks': 3},
+        'judkins_shogi': {'nn_hidden_channels':  64, 'nn_bottleneck_channels': 16, 'nn_backbone_blocks': 4},
+        'shogi':         {'nn_hidden_channels': 128, 'nn_bottleneck_channels': 32, 'nn_backbone_blocks': 6},
     }
     if args.shogi_variant in default_configs:
         for key, value in default_configs[args.shogi_variant].items():
