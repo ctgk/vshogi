@@ -229,6 +229,62 @@ TEST(dfpn, mate_in_five)
     CHECK_TRUE(Move(SQ_2B, GI) == actual[0]);
 }
 
+TEST(dfpn, checkmate_by_king_move)
+{
+    using namespace vshogi::judkins_shogi;
+    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    // Turn: BLACK
+    // White: FU
+    //     6   5   4   3   2   1
+    //   +---+---+---+---+---+---+
+    // A |   |   |   |+HI|-KE|-HI|
+    //   +---+---+---+---+---+---+
+    // B |   |   |   |   |   |-OU|
+    //   +---+---+---+---+---+---+
+    // C |   |-UM|   |   |   |-FU|
+    //   +---+---+---+---+---+---+
+    // D |   |   |   |+OU|   |   |
+    //   +---+---+---+---+---+---+
+    // E |   |   |+KA|   |   |-KI|
+    //   +---+---+---+---+---+---+
+    // F |   |   |   |-KI|   |   |
+    //   +---+---+---+---+---+---+
+    // Black: -
+    auto searcher = Searcher();
+    searcher.set_game(Game("3Rnr/5k/1+b3p/3K2/2B2g/3g2 b p"));
+    searcher.explore(1000);
+    CHECK_TRUE(searcher.found_conclusion());
+    CHECK_TRUE(searcher.found_mate());
+}
+
+TEST(dfpn, checkmate_that_involves_counter_check)
+{
+    using namespace vshogi::judkins_shogi;
+    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    {
+        // Turn: BLACK
+        // White: KE
+        //     6   5   4   3   2   1
+        //   +---+---+---+---+---+---+
+        // A |   |   |   |+HI|-KE|-HI|
+        //   +---+---+---+---+---+---+
+        // B |   |   |   |   |   |-OU|
+        //   +---+---+---+---+---+---+
+        // C |   |-UM|   |   |   |-FU|
+        //   +---+---+---+---+---+---+
+        // D |   |   |   |+OU|   |   |
+        //   +---+---+---+---+---+---+
+        // E |   |   |+KA|   |   |   |
+        //   +---+---+---+---+---+---+
+        // F |   |   |   |   |   |   |
+        //   +---+---+---+---+---+---+
+        // Black: -
+        auto searcher = Searcher();
+        searcher.set_game(Game("3Rnr/5k/1+b3p/3K2/2B3/6 b n"));
+        CHECK_TRUE(searcher.explore(10000));
+    }
+}
+
 TEST(dfpn, no_mate_no_check)
 {
     using namespace vshogi::minishogi;

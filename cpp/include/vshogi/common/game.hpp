@@ -550,11 +550,9 @@ protected:
         m_legal_moves.clear();
         m_legal_moves.reserve(128);
         if (restrict_legal_to_check) {
+            append_check_moves_by_king(); // discovered check
             if (m_checker_locations[1] != Squares::SQ_NA) {
-                // double check to turn player's king
-                // -> Must move the king which cannot be valid check.
             } else if (m_checker_locations[0] != Squares::SQ_NA) {
-                // single check to turn player's king
                 append_legal_moves_to_defend_king(true);
             } else {
                 // no check to turn player's king
@@ -587,11 +585,11 @@ protected:
     {
         const auto ac = get_turn(); //!< ally color
         const auto ec = ~ac; //!< enemy color
-        const auto src = m_king_locations[ac];
+        const auto& src = m_king_locations[ac];
         if (src == Squares::SQ_NA)
             return;
         const auto& board = get_board();
-        const auto moving = board[src];
+        const auto& moving = board[src];
         auto ptr_dst = Squares::get_non_ranging_attacks_by(moving, src);
         const auto end = ptr_dst + 8;
         const auto& ally_mask = m_occupied[ac];
@@ -599,6 +597,37 @@ protected:
             if (ptr_dst >= end)
                 break;
             if (ally_mask.is_one(*ptr_dst))
+                continue;
+            if (board.is_square_attacked(ec, *ptr_dst, src))
+                continue;
+            m_legal_moves.emplace_back(*ptr_dst, src, false);
+        }
+    }
+    void append_check_moves_by_king()
+    {
+        const auto ac = get_turn();
+        const auto ec = ~ac;
+        const auto& src = m_king_locations[ac];
+        const auto& enemy_king_sq = m_king_locations[ec];
+        if ((src == Squares::SQ_NA) || (enemy_king_sq == Squares::SQ_NA))
+            return;
+        const auto src_dir = Squares::get_direction(src, enemy_king_sq);
+        if (src_dir == DIR_NA)
+            return;
+        const auto& board = get_board();
+        const auto hidden_attacker_sq
+            = board.find_attacker(ac, enemy_king_sq, src_dir, src);
+        if (hidden_attacker_sq == Squares::SQ_NA)
+            return;
+        auto ptr_dst = Squares::get_non_ranging_attacks_by(board[src], src);
+        const auto end = ptr_dst + 8;
+        const auto& ally_mask = m_occupied[ac];
+        for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
+            if (ptr_dst >= end)
+                break;
+            if (ally_mask.is_one(*ptr_dst))
+                continue;
+            if (Squares::get_direction(*ptr_dst, enemy_king_sq) == src_dir)
                 continue;
             if (board.is_square_attacked(ec, *ptr_dst, src))
                 continue;
