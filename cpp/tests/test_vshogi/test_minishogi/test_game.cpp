@@ -35,6 +35,27 @@ TEST(minishogi_game, apply)
     }
 }
 
+TEST(minishogi_game, is_legal)
+{
+    // Turn: WHITE
+    // White: FU
+    //     5   4   3   2   1
+    //   *---*---*---*---*---*
+    // A |   |   |   |   |   |
+    //   *---*---*---*---*---*
+    // B |   |-OU|   |   |   |
+    //   *---*---*---*---*---*
+    // C |   |   |-HI|   |   |
+    //   *---*---*---*---*---*
+    // D |   |+OU|   |   |   |
+    //   *---*---*---*---*---*
+    // E |-KI|   |   |   |   |
+    //   *---*---*---*---*---*
+    // Black: -
+    auto g = Game("5/1k3/2r2/1K3/g4 w p");
+    CHECK_TRUE(g.is_legal(Move(SQ_4C, FU)));
+}
+
 TEST(minishogi_game, get_legal_moves)
 {
     {

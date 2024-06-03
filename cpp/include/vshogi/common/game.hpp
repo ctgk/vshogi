@@ -873,10 +873,11 @@ protected:
             return false;
 
         // if opponent king can move away from the attack, then return false.
+        const auto& enemy_mask = m_occupied[~turn];
         const SquareEnum* sq_ptr = Squares::get_non_ranging_attacks_by(
             board[enemy_king_sq], enemy_king_sq);
         for (; *sq_ptr != Squares::SQ_NA; ++sq_ptr) {
-            if (!board.is_empty(*sq_ptr))
+            if (enemy_mask.is_one(*sq_ptr))
                 continue;
             if (board.is_square_attacked(turn, *sq_ptr, enemy_king_sq))
                 continue;
