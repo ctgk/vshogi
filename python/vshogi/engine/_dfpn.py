@@ -12,25 +12,27 @@ class DfpnSearcher(Engine):
 
     Examples
     --------
-    >>> import vshogi.minishogi as shogi
+    >>> import vshogi.judkins_shogi as shogi
     >>> from vshogi.engine import DfpnSearcher
     >>>
     >>> # Turn: BLACK
     >>> # White: -
-    >>> #     5   4   3   2   1
-    >>> #   *---*---*---*---*---*
-    >>> # A |   |   |-HI|-KA|-OU|
-    >>> #   *---*---*---*---*---*
-    >>> # B |   |   |-FU|   |-FU|
-    >>> #   *---*---*---*---*---*
-    >>> # C |   |   |+FU|   |+FU|
-    >>> #   *---*---*---*---*---*
-    >>> # D |   |   |   |+KI|   |
-    >>> #   *---*---*---*---*---*
-    >>> # E |   |   |   |+HI|   |
-    >>> #   *---*---*---*---*---*
+    >>> #     6   5   4   3   2   1
+    >>> #   +---+---+---+---+---+---+
+    >>> # A |   |   |   |   |-FU|-FU|
+    >>> #   +---+---+---+---+---+---+
+    >>> # B |   |   |   |-FU|-KA|-OU|
+    >>> #   +---+---+---+---+---+---+
+    >>> # C |   |   |   |-KE|   |+KE|
+    >>> #   +---+---+---+---+---+---+
+    >>> # D |   |   |   |+FU|   |+FU|
+    >>> #   +---+---+---+---+---+---+
+    >>> # E |   |   |+GI|   |+GI|+HI|
+    >>> #   +---+---+---+---+---+---+
+    >>> # F |   |   |   |+KI|+HI|+KI|
+    >>> #   +---+---+---+---+---+---+
     >>> # Black: KA
-    >>> game = shogi.Game("2rbk/2p1p/2P1P/3G1/3R1 b B")
+    >>> game = shogi.Game("4pp/3pbk/3n1N/3P1P/2S1SR/3GRG b B")
     >>> searcher = DfpnSearcher()
     >>> searcher.set_game(game)
     >>> searcher.search(n=4)
@@ -42,7 +44,7 @@ class DfpnSearcher(Engine):
     >>> searcher.search(n=1) # Note that numbers of searches add up to 5.
     True
     >>> [m.to_usi() for m in searcher.get_mate_moves()]
-    ['B*2b', '1a2b', '2d2c', '2b1a', '2c2b']
+    ['B*2c', '1b2c', '2e2d', '2c1b', '2d2c']
     """
 
     def __init__(self) -> None:
