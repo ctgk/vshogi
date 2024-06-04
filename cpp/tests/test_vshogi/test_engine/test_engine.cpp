@@ -46,20 +46,26 @@ TEST(shogi_engine, mcts_with_dfpn)
 
     auto g = Game();
     auto root = Node(g, 0.f, zeros);
+    auto dfpn = vshogi::engine::dfpn::Searcher<Game, Move>();
     for (int ii = 0; ii < 167; ++ii) {
         if (g.get_result() != vshogi::ONGOING)
             break;
 
         {
-            auto dfpn = vshogi::engine::dfpn::Searcher<Game, Move>();
             dfpn.set_game(g);
             dfpn.explore(10000);
         }
 
         for (int jj = (100 - root.get_visit_count()); jj--;) {
             auto g_copy = Game(g);
-            const auto n = root.select(g_copy, 4.f, 3, 1, 100);
-            if (n != nullptr)
+            const auto n = root.select(g_copy, 4.f, 3, 1);
+            if (n == nullptr)
+                continue;
+
+            dfpn.set_game(g_copy);
+            if (dfpn.explore(100))
+                n->simulate_mate_and_backprop();
+            else
                 n->simulate_expand_and_backprop(g_copy, 0.f, zeros);
         }
 
