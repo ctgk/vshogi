@@ -214,13 +214,19 @@ public:
         update_internals_mcts_internal_vertex(move);
         return *this;
     }
+    Game& apply_dfpn_offence(const Move& move)
+    {
+        add_record_and_update_state(move);
+        update_internals_dfpn_offence(move);
+        return *this;
+    }
     Game& apply_dfpn_defence(const Move& move)
     {
         add_record_and_update_state(move);
         update_internals_dfpn_defence(move);
         return *this;
     }
-    Game copy_and_apply_nocheck(const Move& move)
+    Game copy_and_apply_dfpn_offence(const Move& move)
     {
         auto out = Game(
             m_current_state,
@@ -238,7 +244,7 @@ public:
             m_occupied[2],
             m_king_locations[BLACK],
             m_king_locations[WHITE]);
-        out.apply_nocheck(move);
+        out.apply_dfpn_offence(move);
         return out;
     }
     Game copy_and_apply_dfpn_defence(const Move& move)
@@ -306,6 +312,11 @@ public:
         }
         return BitBoard::get_attacks_by(piece, dst, occupied_after_move)
             .is_one(enemy_king_sq);
+    }
+    void clear_records()
+    {
+        m_zobrist_hash_list.clear();
+        m_move_list.clear();
     }
     void to_feature_map(float* const data) const
     {
@@ -380,11 +391,17 @@ protected:
         m_legal_moves.clear();
         m_result = UNKNOWN;
     }
+    void update_internals_dfpn_offence(const Move& move)
+    {
+        update_king_occupied_checkers(move);
+        update_legal_moves(false);
+        update_result_for_dfpn();
+    }
     void update_internals_dfpn_defence(const Move& move)
     {
         update_king_occupied_checkers(move);
         update_legal_moves(true);
-        update_result();
+        update_result_for_dfpn();
     }
 
 protected:
@@ -488,6 +505,19 @@ protected:
         if (m_result != ONGOING)
             m_legal_moves.clear();
     }
+    void update_result_for_dfpn()
+    {
+        m_result = ONGOING;
+        const auto turn = get_turn();
+        if (m_legal_moves.empty())
+            m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
+        if (is_duplicate_at_least_once())
+            m_result = DRAW;
+        if (can_declare_win_by_king_enter())
+            m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
+        if (m_result != ONGOING)
+            m_legal_moves.clear();
+    }
     bool is_repetitions() const
     {
         uint num = 1u;
@@ -496,6 +526,16 @@ protected:
             const uint index = static_cast<uint>(ii);
             num += (m_zobrist_hash == m_zobrist_hash_list[index]);
             if (num > MaxAcceptableRepetition)
+                return true;
+        }
+        return false;
+    }
+    bool is_duplicate_at_least_once() const
+    {
+        const int n = static_cast<int>(m_move_list.size());
+        for (int ii = n - 4; ii >= 0; ii -= 2) {
+            const uint index = static_cast<uint>(ii);
+            if (m_zobrist_hash == m_zobrist_hash_list[index])
                 return true;
         }
         return false;

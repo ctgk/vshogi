@@ -85,6 +85,7 @@ public:
           m_sibling(nullptr), m_child(nullptr), m_action(), m_pn(unit),
           m_dn(unit)
     {
+        m_game->clear_records();
         simulate_expand_backprop();
     }
     Node(const Game& g, std::unordered_map<std::uint64_t, bool>& mate_cache)
@@ -92,6 +93,7 @@ public:
           m_sibling(nullptr), m_child(nullptr), m_action(), m_pn(unit),
           m_dn(unit)
     {
+        m_game->clear_records();
         simulate_expand_backprop(mate_cache);
     }
     Node(const Move& action)
@@ -249,7 +251,7 @@ private:
         if (out->m_game == nullptr) {
             if (Attacker)
                 out->m_game = std::make_unique<Game>(
-                    m_game->copy_and_apply_nocheck(out->m_action));
+                    m_game->copy_and_apply_dfpn_offence(out->m_action));
             else
                 out->m_game = std::make_unique<Game>(
                     m_game->copy_and_apply_dfpn_defence(out->m_action));
