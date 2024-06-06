@@ -375,6 +375,13 @@ private:
             }
         }
     }
+    void modify_pndn_if_parent_is_almost_mate(NodeEnemy* const ch)
+    {
+        if (m_dn > (1000 * unit)) { // if the self node is almost-mate
+            ch->m_pn = cent;
+            ch->m_dn = 10000 * unit;
+        }
+    }
 
     void expand(
         const Game& game, std::unordered_map<std::uint64_t, bool>& mate_cache)
@@ -399,7 +406,7 @@ private:
         } else {
             for (auto&& m : legal_moves) {
                 *ch = std::make_unique<NodeEnemy>(m);
-                modify_pndn_by_mate(ch->get(), game, m, mate_cache);
+                modify_pndn_if_parent_is_almost_mate(ch->get());
                 ch = &ch->get()->m_sibling;
             }
         }
@@ -481,7 +488,7 @@ private:
             }
         }
         if (found_conclusion()) {
-            if (m_parent != nullptr) {
+            if ((!Attacker) && (m_parent != nullptr)) { // m_parent is attacker
                 const std::uint64_t hash
                     = m_parent->m_game->get_zobrist_hash()
                       ^ static_cast<std::uint64_t>(m_action.hash());
