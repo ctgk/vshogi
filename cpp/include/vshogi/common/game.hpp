@@ -144,6 +144,10 @@ public:
     {
         return m_king_locations[c];
     }
+    const SquareEnum& get_checker_location(const uint index = 0u) const
+    {
+        return m_checker_locations[index];
+    }
     ResultEnum get_result() const
     {
         return m_result;

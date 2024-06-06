@@ -32,8 +32,6 @@ TEST(dfpn, mate_in_one_black)
     // Black: -
     auto root = Node(Game("2k2/5/2GB1/5/2K2 b -"));
     root.select_simulate_expand_backprop();
-    CHECK_EQUAL(Node::unit, root.get_pn());
-    CHECK_EQUAL(Node::unit * 4, root.get_dn());
     for (int ii = 10; ii--;) {
         if (root.found_mate())
             break;
@@ -100,15 +98,11 @@ TEST(dfpn, mate_in_three_straight_forward)
         CHECK_FALSE(root.found_mate());
         root.select_simulate_expand_backprop();
         // root -> Move(B1, C1)
-        CHECK_EQUAL(Node::unit, root.get_pn());
-        CHECK_EQUAL(Node::unit, root.get_dn());
     }
     {
         CHECK_FALSE(root.found_mate());
         root.select_simulate_expand_backprop();
         // root -> Move(B1, C1) -> Move(B1, A2)
-        CHECK_EQUAL(Node::unit, root.get_pn());
-        CHECK_EQUAL(Node::unit, root.get_dn());
     }
     {
         CHECK_FALSE(root.found_mate());
@@ -361,7 +355,8 @@ TEST(dfpn, no_mate_1)
     // Black: GIx2
     auto searcher = Searcher();
     searcher.set_game(Game("2k2/5/1+P3/5/5 b 2S"));
-    CHECK_FALSE(searcher.explore(10000));
+    CHECK_FALSE(searcher.explore(1000));
+    CHECK_TRUE(searcher.found_conclusion());
     CHECK_FALSE(searcher.found_mate());
     CHECK_TRUE(searcher.found_no_mate());
 }

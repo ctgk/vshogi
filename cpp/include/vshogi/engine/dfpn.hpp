@@ -336,6 +336,7 @@ private:
         } else {
             for (auto&& m : legal_moves) {
                 *ch = std::make_unique<NodeEnemy>(m);
+                modify_pndn_by_defence(ch->get(), game, m);
                 ch = &ch->get()->m_sibling;
             }
         }
@@ -355,6 +356,13 @@ private:
             is_attacked_cache[dst] = static_cast<uint>(is_attacked) + 1u;
         }
         ch->m_pn += cent * (is_attacked_cache[dst] - 1);
+    }
+    void
+    modify_pndn_by_defence(NodeEnemy* const ch, const Game& g, const Move& m)
+    {
+        const auto& checker_sq = g.get_checker_location();
+        if (m.destination() == checker_sq)
+            ch->m_dn -= cent; // defence prefers capturing checker piece.
     }
     void modify_pndn_by_mate(
         NodeEnemy* const ch,
@@ -406,6 +414,7 @@ private:
         } else {
             for (auto&& m : legal_moves) {
                 *ch = std::make_unique<NodeEnemy>(m);
+                modify_pndn_by_defence(ch->get(), game, m);
                 modify_pndn_if_parent_is_almost_mate(ch->get());
                 ch = &ch->get()->m_sibling;
             }
