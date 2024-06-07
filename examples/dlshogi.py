@@ -405,11 +405,15 @@ def run_train(args: Args):
     def _get_generator_from_df(df: pd.DataFrame):
 
         def _generator():
-            indices = np.random.permutation(len(df))
+            indices = np.random.permutation(2 * len(df))
             for index in indices:
-                row = df.iloc[index]
+                row = df.iloc[index // 2]
                 state = args._shogi.State(row['state'])
                 proximal_probas = row['proximal_probas_dict']
+
+                if (index % 2) == 1:
+                    state = state.hflip()
+                    proximal_probas = {m.hflip(): v for m, v in proximal_probas.items()}
 
                 x = state.to_dlshogi_features().squeeze()
                 policy = state.to_dlshogi_policy(proximal_probas, default_value=-np.inf)
@@ -422,10 +426,6 @@ def run_train(args: Args):
 
     def get_dataset(df: pd.DataFrame):
         df['proximal_probas_dict'] = df['proximal_probas'].apply(lambda s: {args._shogi.Move(k): v for k, v in eval(s).items()})
-        df_hflip = df.copy()
-        df_hflip['state'] = df['state'].apply(lambda s: args._shogi.State(s).hflip().to_sfen())
-        df_hflip['proximal_probas_dict'] = df['proximal_probas_dict'].apply(lambda dict_: {m.hflip(): v for m, v in dict_.items()})
-        df = pd.concat((df, df_hflip), ignore_index=True)
         dataset = tf.data.Dataset.from_generator(
             _get_generator_from_df(df),
             output_types=(tf.float32, (tf.float32, tf.float32)),
@@ -435,11 +435,8 @@ def run_train(args: Args):
     def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
         df = pd.read_csv(
             tsv_path, sep='\t',
-            dtype={
-                'state': str, 'move': str, 'result': str,
-                'q_value': float, 'proximal_q_value': float,
-                'visit_count': str, 'proximal_probas': str,
-            },
+            usecols=['state', 'proximal_q_value', 'proximal_probas'],
+            dtype={'state': str, 'proximal_q_value': float, 'proximal_probas': str},
         )
         if fraction is None:
             return df
