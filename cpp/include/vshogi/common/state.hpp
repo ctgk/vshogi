@@ -205,6 +205,14 @@ public:
             }
         }
     }
+    std::uint64_t zobrist_hash_board() const
+    {
+        std::uint64_t out = static_cast<std::uint64_t>(0);
+        for (auto&& sq : Squares::square_array) {
+            out ^= zobrist_board[sq][to_index(m_board[sq])];
+        }
+        return out;
+    }
     std::uint64_t zobrist_hash() const
     {
         std::uint64_t out = static_cast<std::uint64_t>(0);
@@ -214,9 +222,7 @@ public:
                 out ^= zobrist_stand[c][pt][num];
             }
         }
-        for (auto& sq : Squares::square_array) {
-            out ^= zobrist_board[sq][to_index(m_board[sq])];
-        }
+        out ^= zobrist_hash_board();
         return out;
     }
 

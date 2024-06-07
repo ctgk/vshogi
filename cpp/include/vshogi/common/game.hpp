@@ -220,13 +220,13 @@ public:
     }
     Game& apply_dfpn_offence(const Move& move)
     {
-        add_record_and_update_state(move);
+        add_record_and_update_state_for_dfpn(move);
         update_internals_dfpn_offence(move);
         return *this;
     }
     Game& apply_dfpn_defence(const Move& move)
     {
-        add_record_and_update_state(move);
+        add_record_and_update_state_for_dfpn(move);
         update_internals_dfpn_defence(move);
         return *this;
     }
@@ -317,10 +317,11 @@ public:
         return BitBoard::get_attacks_by(piece, dst, occupied_after_move)
             .is_one(enemy_king_sq);
     }
-    void clear_records()
+    void clear_records_for_dfpn()
     {
         m_zobrist_hash_list.clear();
         m_move_list.clear();
+        m_zobrist_hash_list.emplace_back(m_current_state.zobrist_hash_board());
     }
     void to_feature_map(float* const data) const
     {
@@ -376,6 +377,12 @@ protected:
         m_zobrist_hash_list.emplace_back(m_zobrist_hash);
         m_move_list.emplace_back(move);
         m_current_state.apply(move, &m_zobrist_hash);
+    }
+    void add_record_and_update_state_for_dfpn(const Move& move)
+    {
+        m_move_list.emplace_back(move);
+        m_current_state.apply(move, &m_zobrist_hash);
+        m_zobrist_hash_list.emplace_back(m_current_state.zobrist_hash_board());
     }
     void update_internals()
     {
@@ -539,7 +546,8 @@ protected:
         const int n = static_cast<int>(m_move_list.size());
         for (int ii = n - 4; ii >= 0; ii -= 2) {
             const uint index = static_cast<uint>(ii);
-            if (m_zobrist_hash == m_zobrist_hash_list[index])
+            if (m_zobrist_hash_list[static_cast<uint>(n)]
+                == m_zobrist_hash_list[index])
                 return true;
         }
         return false;

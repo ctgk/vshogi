@@ -85,7 +85,7 @@ public:
           m_sibling(nullptr), m_child(nullptr), m_action(), m_pn(unit),
           m_dn(unit)
     {
-        m_game->clear_records();
+        m_game->clear_records_for_dfpn();
         simulate_expand_backprop();
     }
     Node(const Game& g, std::unordered_map<std::uint64_t, bool>& mate_cache)
@@ -93,7 +93,7 @@ public:
           m_sibling(nullptr), m_child(nullptr), m_action(), m_pn(unit),
           m_dn(unit)
     {
-        m_game->clear_records();
+        m_game->clear_records_for_dfpn();
         simulate_expand_backprop(mate_cache);
     }
     Node(const Move& action)
