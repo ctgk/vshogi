@@ -33,32 +33,41 @@
 namespace vshogi::engine::dfpn
 {
 
-template <class Game, class Move, bool Attacker = true>
+template <class Game, class Move>
 class Node
 {
     static_assert(!std::is_same<Game, animal_shogi::Game>::value);
 
 private:
-    using NodeAlly = Node<Game, Move, Attacker>;
-    using NodeEnemy = Node<Game, Move, !Attacker>;
+    /**
+     * @brief If true, `m_action` = defence move, turn of `m_game` = attacker.
+     */
+    const bool m_attacker;
+    Node* const m_parent;
 
+    /**
+     * @brief If `m_attacker` is true, this should be a defence move.
+     * If `m_attacker` is false, this should be a check move.
+     */
+    const Move m_action;
+
+    /**
+     * @brief If `m_attacker` is true, turn of the game is attacker.
+     * If `m_attacker` is false, turn of the game is defence side.
+     */
     std::unique_ptr<Game> m_game;
-
-    NodeEnemy* m_parent;
 
     /**
      * @brief Pointer to sibling node.
      * @ref https://blog.mozilla.org/nnethercote/2012/03/07/n-ary-trees-in-c/
      */
-    std::unique_ptr<NodeAlly> m_sibling;
+    std::unique_ptr<Node> m_sibling;
 
     /**
      * @brief Pointer to first child node.
      * @ref https://blog.mozilla.org/nnethercote/2012/03/07/n-ary-trees-in-c/
      */
-    std::unique_ptr<NodeEnemy> m_child;
-
-    Move m_action;
+    std::unique_ptr<Node> m_child;
 
     /**
      * @brief Number of searches required to prove there is a mate.
@@ -72,8 +81,6 @@ private:
      */
     uint m_dn;
 
-    friend class Node<Game, Move, !Attacker>;
-
 public:
     static constexpr uint zero = 0u;
     static constexpr uint unit = 100u;
@@ -81,37 +88,34 @@ public:
     static constexpr uint max_number = std::numeric_limits<uint>::max();
 
     Node(const Game& g)
-        : m_game(std::make_unique<Game>(Game(g))), m_parent(nullptr),
-          m_sibling(nullptr), m_child(nullptr), m_action(), m_pn(unit),
-          m_dn(unit)
+        : m_attacker(true), m_parent(nullptr), m_action(),
+          m_game(std::make_unique<Game>(Game(g))), m_sibling(nullptr),
+          m_child(nullptr), m_pn(unit), m_dn(unit)
     {
         m_game->clear_records_for_dfpn();
         simulate_expand_backprop();
     }
     Node(const Game& g, std::unordered_map<std::uint64_t, bool>& mate_cache)
-        : m_game(std::make_unique<Game>(Game(g))), m_parent(nullptr),
-          m_sibling(nullptr), m_child(nullptr), m_action(), m_pn(unit),
-          m_dn(unit)
+        : m_attacker(true), m_parent(nullptr), m_action(),
+          m_game(std::make_unique<Game>(Game(g))), m_sibling(nullptr),
+          m_child(nullptr), m_pn(unit), m_dn(unit)
     {
         m_game->clear_records_for_dfpn();
         simulate_expand_backprop(mate_cache);
     }
-    Node(const Move& action)
-        : m_game(nullptr), m_parent(nullptr), m_sibling(nullptr),
-          m_child(nullptr), m_action(action), m_pn(unit), m_dn(unit)
+    Node(const bool attacker, Node* const parent, const Move& action)
+        : m_attacker(attacker), m_parent(parent), m_action(action),
+          m_game(nullptr), m_sibling(nullptr), m_child(nullptr), m_pn(unit),
+          m_dn(unit)
     {
     }
 
     // Rules of 5
     ~Node() = default; // 1/5 destructor
-    Node(const Node<Game, Move, Attacker>& other)
-        = default; // 2/5 copy constructor
-    Node<Game, Move, Attacker>&
-    operator=(const Node<Game, Move, Attacker>& other)
-        = default; // 3/5 copy assignment
-    Node(Node<Game, Move, Attacker>&& other) = default; // 4/5 move constructor
-    Node<Game, Move, Attacker>& operator=(Node<Game, Move, Attacker>&& other)
-        = default; // 5/5 move assignment
+    Node(const Node& other) = default; // 2/5 copy constructor
+    Node& operator=(const Node& other) = default; // 3/5 copy assignment
+    Node(Node&& other) = default; // 4/5 move constructor
+    Node& operator=(Node&& other) = default; // 5/5 move assignment
 
     ColorEnum get_turn() const
     {
@@ -127,7 +131,7 @@ public:
     }
     uint get_num_child() const
     {
-        const NodeEnemy* ch = m_child.get();
+        const Node* ch = m_child.get();
         uint out = 0U;
         while (true) {
             if (ch == nullptr)
@@ -143,14 +147,14 @@ public:
         if (!found_mate())
             return out;
 
-        const NodeAlly* node = this;
+        const Node* node = this;
         while (true) {
             if (node->m_child == nullptr) {
                 // Length of mate moves can be even number
                 // by king entering declaration.
                 return out;
             }
-            const NodeEnemy* node_enemy = node->select();
+            const Node* node_enemy = node->select();
             out.emplace_back(node_enemy->m_action); // Attack move
             if (node_enemy->m_child == nullptr) {
                 return out;
@@ -174,23 +178,18 @@ public:
 
     void select_simulate_expand_backprop()
     {
-        if (m_child == nullptr) {
-            // pn and dn should not be infinity when there are no children.
-            simulate_expand_backprop();
-        } else {
-            NodeEnemy* const child = select();
-            child->select_simulate_expand_backprop();
-        }
+        Node* n = this;
+        while (n->m_child != nullptr)
+            n = n->select();
+        n->simulate_expand_backprop();
     }
     void select_simulate_expand_backprop(
         std::unordered_map<std::uint64_t, bool>& mate_cache)
     {
-        if (m_child == nullptr) {
-            simulate_expand_backprop(mate_cache);
-        } else {
-            NodeEnemy* const child = select();
-            child->select_simulate_expand_backprop(mate_cache);
-        }
+        Node* n = this;
+        while (n->m_child != nullptr)
+            n = n->select();
+        n->simulate_expand_backprop(mate_cache);
     }
 
 private:
@@ -224,14 +223,14 @@ private:
      * - Attacker: select a node with smallest proof number.
      * - Defence: select a node with smallest dis-proof number.
      *
-     * @return NodeEnemy*
+     * @return Node*
      */
-    NodeEnemy* select()
+    Node* select()
     {
-        NodeEnemy* out = m_child.get();
-        if (Attacker) {
+        Node* out = m_child.get();
+        if (m_attacker) {
             uint min_pn = max_number;
-            for (NodeEnemy* ch = out; ch != nullptr; ch = ch->m_sibling.get()) {
+            for (Node* ch = out; ch != nullptr; ch = ch->m_sibling.get()) {
                 if (min_pn > ch->m_pn) {
                     min_pn = ch->m_pn;
                     out = ch;
@@ -239,7 +238,7 @@ private:
             }
         } else {
             uint min_dn = max_number;
-            for (NodeEnemy* ch = out; ch != nullptr; ch = ch->m_sibling.get()) {
+            for (Node* ch = out; ch != nullptr; ch = ch->m_sibling.get()) {
                 if (min_dn > ch->m_dn) {
                     min_dn = ch->m_dn;
                     out = ch;
@@ -247,9 +246,8 @@ private:
             }
         }
 
-        out->m_parent = this;
         if (out->m_game == nullptr) {
-            if (Attacker)
+            if (m_attacker)
                 out->m_game = std::make_unique<Game>(
                     m_game->copy_and_apply_dfpn_offence(out->m_action));
             else
@@ -258,11 +256,11 @@ private:
         }
         return out;
     }
-    const NodeEnemy* select() const
+    const Node* select() const
     {
-        if (Attacker) {
+        if (m_attacker) {
             uint min_pn = max_number;
-            const NodeEnemy* out = m_child.get();
+            const Node* out = m_child.get();
             for (auto ch = out; ch != nullptr; ch = ch->m_sibling.get()) {
                 if (min_pn > ch->m_pn) {
                     min_pn = ch->m_pn;
@@ -272,7 +270,7 @@ private:
             return out;
         } else {
             uint min_dn = max_number;
-            const NodeEnemy* out = m_child.get();
+            const Node* out = m_child.get();
             for (auto ch = out; ch != nullptr; ch = ch->m_sibling.get()) {
                 if (min_dn > ch->m_dn) {
                     min_dn = ch->m_dn;
@@ -300,7 +298,7 @@ private:
         } else {
             const auto winner = (r == BLACK_WIN) ? BLACK : WHITE;
             const auto turn = game.get_turn();
-            if ((winner == turn) == Attacker)
+            if ((winner == turn) == m_attacker)
                 set_pndn_mate();
             else
                 set_pndn_no_mate();
@@ -318,8 +316,8 @@ private:
     void expand(const Game& game)
     {
         const std::vector<Move>& legal_moves = game.get_legal_moves();
-        std::unique_ptr<NodeEnemy>* ch = &m_child;
-        if constexpr (Attacker) {
+        std::unique_ptr<Node>* ch = &m_child;
+        if (m_attacker) {
             /**
              * @brief 0:?, 1:false, 2:true
              */
@@ -329,20 +327,20 @@ private:
                 if ((m_parent == nullptr)
                     && (!game.template is_check_move<false>(m)))
                     continue;
-                *ch = std::make_unique<NodeEnemy>(m);
+                *ch = std::make_unique<Node>(!m_attacker, this, m);
                 modify_pndn_by_attacks(ch->get(), game, m, is_attacked_cache);
                 ch = &ch->get()->m_sibling;
             }
         } else {
             for (auto&& m : legal_moves) {
-                *ch = std::make_unique<NodeEnemy>(m);
+                *ch = std::make_unique<Node>(!m_attacker, this, m);
                 modify_pndn_by_defence(ch->get(), game, m);
                 ch = &ch->get()->m_sibling;
             }
         }
     }
     void modify_pndn_by_attacks(
-        NodeEnemy* const ch,
+        Node* const ch,
         const Game& g,
         const Move m,
         uint* const is_attacked_cache)
@@ -357,15 +355,14 @@ private:
         }
         ch->m_pn += cent * (is_attacked_cache[dst] - 1);
     }
-    void
-    modify_pndn_by_defence(NodeEnemy* const ch, const Game& g, const Move& m)
+    void modify_pndn_by_defence(Node* const ch, const Game& g, const Move& m)
     {
         const auto& checker_sq = g.get_checker_location();
         if (m.destination() == checker_sq)
             ch->m_dn -= cent; // defence prefers capturing checker piece.
     }
     void modify_pndn_by_mate(
-        NodeEnemy* const ch,
+        Node* const ch,
         const Game& g,
         const Move m,
         std::unordered_map<std::uint64_t, bool>& mate_cache)
@@ -383,7 +380,7 @@ private:
             }
         }
     }
-    void modify_pndn_if_parent_is_almost_mate(NodeEnemy* const ch)
+    void modify_pndn_if_parent_is_almost_mate(Node* const ch)
     {
         if (m_dn > (1000 * unit)) { // if the self node is almost-mate
             ch->m_pn = cent;
@@ -395,8 +392,8 @@ private:
         const Game& game, std::unordered_map<std::uint64_t, bool>& mate_cache)
     {
         const std::vector<Move>& legal_moves = game.get_legal_moves();
-        std::unique_ptr<NodeEnemy>* ch = &m_child;
-        if constexpr (Attacker) {
+        std::unique_ptr<Node>* ch = &m_child;
+        if (m_attacker) {
             /**
              * @brief 0:?, 1:false, 2:true
              */
@@ -406,14 +403,14 @@ private:
                 if ((m_parent == nullptr)
                     && (!game.template is_check_move<false>(m)))
                     continue;
-                *ch = std::make_unique<NodeEnemy>(m);
+                *ch = std::make_unique<Node>(!m_attacker, this, m);
                 modify_pndn_by_attacks(ch->get(), game, m, is_attacked_cache);
                 modify_pndn_by_mate(ch->get(), game, m, mate_cache);
                 ch = &ch->get()->m_sibling;
             }
         } else {
             for (auto&& m : legal_moves) {
-                *ch = std::make_unique<NodeEnemy>(m);
+                *ch = std::make_unique<Node>(!m_attacker, this, m);
                 modify_pndn_by_defence(ch->get(), game, m);
                 modify_pndn_if_parent_is_almost_mate(ch->get());
                 ch = &ch->get()->m_sibling;
@@ -431,10 +428,10 @@ private:
     void backprop()
     {
         if (!found_conclusion()) {
-            if (Attacker) {
+            if (m_attacker) {
                 m_pn = max_number;
                 m_dn = zero;
-                const NodeEnemy* ch = m_child.get();
+                const Node* ch = m_child.get();
                 for (; ch != nullptr; ch = ch->m_sibling.get()) {
                     if (m_pn > ch->m_pn)
                         m_pn = ch->m_pn;
@@ -447,7 +444,7 @@ private:
             } else {
                 m_dn = max_number;
                 m_pn = zero;
-                const NodeEnemy* ch = m_child.get();
+                const Node* ch = m_child.get();
                 for (; ch != nullptr; ch = ch->m_sibling.get()) {
                     if (m_dn > ch->m_dn)
                         m_dn = ch->m_dn;
@@ -468,10 +465,10 @@ private:
     void backprop(std::unordered_map<std::uint64_t, bool>& mate_cache)
     {
         if (!found_conclusion()) {
-            if (Attacker) {
+            if (m_attacker) {
                 m_pn = max_number;
                 m_dn = zero;
-                const NodeEnemy* ch = m_child.get();
+                const Node* ch = m_child.get();
                 for (; ch != nullptr; ch = ch->m_sibling.get()) {
                     if (m_pn > ch->m_pn)
                         m_pn = ch->m_pn;
@@ -484,7 +481,7 @@ private:
             } else {
                 m_dn = max_number;
                 m_pn = zero;
-                const NodeEnemy* ch = m_child.get();
+                const Node* ch = m_child.get();
                 for (; ch != nullptr; ch = ch->m_sibling.get()) {
                     if (m_dn > ch->m_dn)
                         m_dn = ch->m_dn;
@@ -497,7 +494,8 @@ private:
             }
         }
         if (found_conclusion()) {
-            if ((!Attacker) && (m_parent != nullptr)) { // m_parent is attacker
+            if ((!m_attacker)
+                && (m_parent != nullptr)) { // m_parent is attacker
                 const std::uint64_t hash
                     = m_parent->m_game->get_zobrist_hash()
                       ^ static_cast<std::uint64_t>(m_action.hash());
@@ -525,7 +523,7 @@ template <class Game, class Move>
 class Searcher
 {
 private:
-    std::unique_ptr<Node<Game, Move, true>> m_root;
+    std::unique_ptr<Node<Game, Move>> m_root;
 
     /**
      * @brief True if there is a mate, false if there is no mate for sure.
@@ -553,7 +551,7 @@ public:
     {
         auto& cache = (g.get_turn() == vshogi::BLACK) ? m_mate_cache_for_black
                                                       : m_mate_cache_for_white;
-        m_root = std::make_unique<Node<Game, Move, true>>(g, cache);
+        m_root = std::make_unique<Node<Game, Move>>(g, cache);
     }
 
     /**
@@ -565,7 +563,7 @@ public:
      */
     bool explore(uint n)
     {
-        Node<Game, Move, true>* const root = m_root.get();
+        Node<Game, Move>* const root = m_root.get();
         auto& cache = (root->get_turn() == vshogi::BLACK)
                           ? m_mate_cache_for_black
                           : m_mate_cache_for_white;
