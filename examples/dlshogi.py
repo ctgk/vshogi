@@ -465,6 +465,11 @@ def run_train(args: Args):
             log_softmax = tf.clip_by_value(logit_subtracted - logsumexp, -100000., 0.)  # in order to avoid `-inf * 0 = nan`.
             return -tf.reduce_sum(y_true_masked * log_softmax, axis=1)
 
+        def lr_scheduler(epoch):
+            # relative learning schedule from 1.0 to 0.1
+            schedule = np.cos(np.linspace(0, np.pi, args.nn_epochs)) * 0.45 + 0.55
+            return args.nn_learning_rate * schedule[epoch]
+
         network.compile(
             loss=[
                 masked_softmax_cross_entropy,
@@ -475,6 +480,7 @@ def run_train(args: Args):
         network.fit(
             dataset,
             epochs=args.nn_epochs,
+            callbacks=[tf.keras.callbacks.LearningRateScheduler(lr_scheduler)],
         )
         return network
 
