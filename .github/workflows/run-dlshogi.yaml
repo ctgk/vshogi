@@ -32,7 +32,7 @@ jobs:
         NAME: ${{ matrix.game.name }}
         CYCLE: ${{ matrix.game.rl_cycle }}
         BACKBONES: ${{ matrix.game.nn_backbone_blocks }}
-      run: python examples/dlshogi.py rl $NAME --rl_cycle $CYCLE --nn_backbone_blocks $BACKBONES --mcts_explorations 100 --self_play 100 --win_ratio_threshold 0.1
+      run: python examples/dlshogi.py rl $NAME --rl_cycle $CYCLE --nn_backbone_blocks $BACKBONES --mcts_explorations 200 --self_play 100 --win_ratio_threshold 0.1
     - name: Evaluate model
       env:
         NAME: ${{ matrix.game.name }}

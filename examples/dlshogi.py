@@ -52,6 +52,7 @@ class Args:
             'By default 0.3'
         ),
     )
+    mcts_kldgain_threshold: float = config(type=float, default=1e-4, help='KL divergence threshold to stop MCT-search')
     mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000. Alpha Zero used 800 simulations.')
     mcts_random_rate: float = config(
         type=float, default=0.25,
@@ -228,7 +229,7 @@ def _get_proximal_probas(prior: dict, posterior: dict, prior_rate: float):
 def play_game(
     player_black: vshogi.engine.DfpnMcts,
     player_white: vshogi.engine.DfpnMcts,
-    args,
+    args: Args,
     max_moves: int = 400,
 ) -> vshogi.Game:
     """Make two players play the game until an end.
@@ -265,6 +266,7 @@ def play_game(
             dfpn_searches_at_root=10000,
             mcts_searches=args.mcts_explorations - player.mcts_num_searched,
             dfpn_searches_at_vertex=100,  # approximately worth three-move mate
+            kldgain_threshold=args.mcts_kldgain_threshold,
         )
         if player.dfpn_found_mate:
             mate_moves = player.get_mate_moves()
@@ -604,7 +606,7 @@ def run_rl_cycle(args: Args):
             "--resume_rl_cycle_from", str(0),
         ] + ' '.join([
             f'--{k} {v}' for k, v in args.to_dict().items()
-            if k not in ('run', 'shogi_variant', 'resume_rl_cycle_from')
+            if ((k not in ('run', 'shogi_variant', 'resume_rl_cycle_from')) and (v is not None))
         ]).split())
 
     for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
@@ -630,10 +632,10 @@ def run_rl_cycle(args: Args):
                 "--self_play_index_from", str(self_play_index_from),
             ] + ' '.join([
                 f'--{k} {v}' for k, v in args.to_dict().items()
-                if k not in (
+                if (k not in (
                     'run', 'shogi_variant',
                     'resume_rl_cycle_from', 'self_play_index_from',
-                )
+                ) and (v is not None))
             ]).split())
 
             # Train NN!
@@ -642,7 +644,7 @@ def run_rl_cycle(args: Args):
                 "--resume_rl_cycle_from", str(i),
             ] + ' '.join([
                 f'--{k} {v}' for k, v in args.to_dict().items()
-                if k not in ('run', 'shogi_variant', 'resume_rl_cycle_from')
+                if ((k not in ('run', 'shogi_variant', 'resume_rl_cycle_from')) and (v is not None))
             ]).split())
 
             if (i == 1) or (get_best_player_index(i, i - 1) == i):
@@ -656,7 +658,7 @@ def run_rl_cycle(args: Args):
             "--resume_rl_cycle_from", str(i),
         ]  + ' '.join([
             f'--{k} {v}' for k, v in args.to_dict().items()
-            if k not in ('run', 'shogi_variant', 'resume_rl_cycle_from')
+            if ((k not in ('run', 'shogi_variant', 'resume_rl_cycle_from')) and (v is not None))
         ]).split())
 
 

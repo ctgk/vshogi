@@ -75,6 +75,10 @@ class Args:
             ', default=10'
         ),
     )
+    mcts_kldgain_threshold: float = config(
+        type=float, default=None,
+        help='KL divergence threshold to stop MCT-search',
+    )
     mcts_explorations: int = config(
         type=int, default=100,
         help='# of explorations by players at each game status, default=100',
@@ -129,7 +133,12 @@ if __name__ == "__main__":
         if i % 2 == 0:
             result = vshogi.play_game(
                 shogi.Game(), player1, player2,
-                search_args={'mcts_searches': args.mcts_explorations},
+                search_args={
+                    'dfpn_searches_at_root': args.dfpn_search_root,
+                    'mcts_searches': args.mcts_explorations,
+                    'dfpn_searches_at_vertex': args.dfpn_search_vertex,
+                    'kldgain_threshold': args.mcts_kldgain_threshold,
+                },
             ).result
             if result == vshogi.BLACK_WIN:
                 results_of_p1['bwin'] += 1
@@ -140,7 +149,12 @@ if __name__ == "__main__":
         else:
             result = vshogi.play_game(
                 shogi.Game(), player2, player1,
-                search_args={'mcts_searches': args.mcts_explorations},
+                search_args={
+                    'dfpn_searches_at_root': args.dfpn_search_root,
+                    'mcts_searches': args.mcts_explorations,
+                    'dfpn_searches_at_vertex': args.dfpn_search_vertex,
+                    'kldgain_threshold': args.mcts_kldgain_threshold,
+                },
             ).result
             if result == vshogi.BLACK_WIN:
                 results_of_p1['wloss'] += 1

@@ -1,5 +1,7 @@
 import typing as tp
 
+import numpy as np
+
 from vshogi._game import Game
 from vshogi.engine._dfpn import DfpnSearcher
 from vshogi.engine._engine import Engine
@@ -81,6 +83,7 @@ class DfpnMcts(Engine):
         dfpn_searches_at_root: int = 10000,
         mcts_searches: int = 100,
         dfpn_searches_at_vertex: int = 100,
+        kldgain_threshold: float = None,
     ):
         """Search for subsequent game positions.
 
@@ -92,13 +95,24 @@ class DfpnMcts(Engine):
             Number of searches by MCTS, by default 100
         dfpn_searches_at_vertex : int, optional
             Number of searches by DFPN at every vertex of MCTS, by default 100
+        kldgain_threshold : float, optional
+            KL divergence threshold to stop MCT-search, by default None.
         """
         self._dfpn.set_game(self._mcts._game)
         if self._dfpn.search(dfpn_searches_at_root):
             self._found_mate = True
             return
 
-        for _ in range(mcts_searches):
+        prev_visits = None
+        kldgain_steps = 100
+        for ii in range(mcts_searches):
+            if ((ii % kldgain_steps == 0) and (kldgain_threshold is not None)):
+                if prev_visits is None:
+                    prev_visits = self._mcts.get_visit_counts()
+                else:
+                    kldgain = self._kldgain(prev_visits)
+                    if kldgain < kldgain_threshold * kldgain_steps:
+                        break
             game = self._mcts._game.copy()
             node = self._mcts._root._select_node_to_explore(
                 game._game, self._mcts._coeff_puct,
@@ -113,6 +127,28 @@ class DfpnMcts(Engine):
             else:
                 policy, value = self._mcts._policy_value_func(game)
                 node.simulate_expand_and_backprop(game._game, value, policy)
+
+    def _kldgain(self, prev_visits: tp.Dict[Move, int]) -> float:
+        prev_visits_added = {m: v + 1 for m, v in prev_visits.items()}
+        prev_visits_sum = sum(prev_visits_added.values())
+        prev_probas = {
+            m: prev_visits_added[m] / prev_visits_sum
+            for m in prev_visits_added.keys()
+        }
+        curr_visits = self._mcts.get_visit_counts()
+        curr_visits_added = {m: v + 1 for m, v in curr_visits.items()}
+        curr_visits_sum = sum(curr_visits_added.values())
+        curr_probas = {
+            m: curr_visits_added[m] / curr_visits_sum
+            for m in curr_visits_added.keys()
+        }
+        kldgain = sum(
+            prev_probas[m] * np.log(prev_probas[m] / curr_probas[m])
+            for m in prev_probas.keys()
+        )
+        for m in prev_visits.keys():
+            prev_visits[m] = curr_visits[m]
+        return kldgain
 
     def select(self, temperature: tp.Optional[float] = None) -> Move:
         """Select action based on MCTS or DFPN.
