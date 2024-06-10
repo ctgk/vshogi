@@ -43,15 +43,6 @@ class Args:
     nn_epochs: int = config(type=int, default=10, help='# of epochs in NN training. By default 10.')
     nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
     nn_learning_rate: float = config(type=float, default=1e-3, help='Learning rate of NN weight update')
-    nn_proximal_rate: float = config(
-        type=float, default=0.3,
-        help=(
-            'Rate (0 - 1) to mix action probability output from prior network with MCTS visit counts. '
-            'The resulting value is a supervisory signal of action probability to train a new network. '
-            'For example, the new network is trained purely on MCTS visit counts when the value is 0. '
-            'By default 0.3'
-        ),
-    )
     mcts_kldgain_threshold: float = config(type=float, default=1e-4, help='KL divergence threshold to stop MCT-search')
     mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000. Alpha Zero used 800 simulations.')
     mcts_random_rate: float = config(
@@ -202,28 +193,13 @@ def dump_game_records(file_, game: vshogi.Game) -> None:
             lambda g, i: g.get_sfen_at(i, include_move_count=True),
             lambda g, i: g.get_move_at(i).to_usi(),
             lambda g, _: g.result,
+            lambda g, i: g.v_value_record[i],
             lambda g, i: g.q_value_record[i],
-            lambda g, i: g.proximal_q_value_record[i],
             lambda g, i: g.visit_count_record[i],
-            lambda g, i: g.proximal_probas_record[i],
         ),
-        names=(
-            'state', 'move', 'result',
-            'q_value', 'proximal_q_value',
-            'visit_count', 'proximal_probas',
-        ),
+        names=('state', 'move', 'result', 'v_value', 'q_value', 'visit_count'),
         file_=file_,
     )
-
-
-def _get_proximal_probas(prior: dict, posterior: dict, prior_rate: float):
-    s = sum(posterior.values())
-    posterior = {m: v / s for m, v in posterior.items()}
-    proximal_probas = {
-        m: prior_rate * prior[m] + (1 - prior_rate) * posterior[m]
-        for m in prior.keys()
-    }
-    return proximal_probas
 
 
 def play_game(
@@ -250,10 +226,9 @@ def play_game(
         The game the two players played.
     """
     game = args._shogi.Game()
+    game.v_value_record = []
     game.q_value_record = []
-    game.proximal_q_value_record = []
     game.visit_count_record = []
-    game.proximal_probas_record = []
     for _ in range(max_moves):
         if game.result != vshogi.Result.ONGOING:
             break
@@ -272,23 +247,10 @@ def play_game(
             mate_moves = player.get_mate_moves()
             for i, move in enumerate(mate_moves):
                 player.search(dfpn_searches_at_root=0, mcts_searches=1, dfpn_searches_at_vertex=0)
-                proximal_probas = _get_proximal_probas(
-                    prior={m.to_usi(): p for m, p in player.get_probas().items()},
-                    posterior={
-                        m.to_usi(): int((m == move) or (i % 2 == 1))
-                        for m in game.get_legal_moves()
-                    },
-                    prior_rate=args.nn_proximal_rate,
-                )
+                game.v_value_record.append(player.get_value())
                 q_value = int(i % 2 == 0) * 2 - 1
                 game.q_value_record.append(q_value)
-                # https://arxiv.org/abs/2005.12729 1. Value function clipping
-                game.proximal_q_value_record.append(
-                    q_value * (1 - args.nn_proximal_rate)
-                    + player.get_value() * args.nn_proximal_rate
-                )
                 game.visit_count_record.append({move.to_usi(): 1})
-                game.proximal_probas_record.append(proximal_probas)
                 game.apply(move)
                 player.apply(move)
             break
@@ -298,23 +260,10 @@ def play_game(
         else:
             move = player.select() # off-policy
 
-        prior = {m.to_usi(): p for m, p in player.get_probas().items()}
         visit_count = {m.to_usi(): v for m, v in player.get_visit_counts().items()}
-        proximal_probas = _get_proximal_probas(
-            prior=prior, posterior=visit_count,
-            prior_rate=args.nn_proximal_rate,
-        )
-
-        q_value = max(player.get_q_values().values())
-        game.q_value_record.append(q_value)
-
-        # https://arxiv.org/abs/2005.12729 1. Value function clipping
-        game.proximal_q_value_record.append(
-            q_value * (1 - args.nn_proximal_rate)
-            + player.get_value() * args.nn_proximal_rate
-        )
+        game.v_value_record.append(player.get_value())
+        game.q_value_record.append(max(player.get_q_values().values()))
         game.visit_count_record.append(visit_count)
-        game.proximal_probas_record.append(proximal_probas)
 
         game.apply(move)
         player_black.apply(move)
@@ -411,15 +360,15 @@ def run_train(args: Args):
             for index in indices:
                 row = df.iloc[index // 2]
                 state = args._shogi.State(row['state'])
-                proximal_probas = row['proximal_probas_dict']
+                policy = row['policy']
 
                 if (index % 2) == 1:
                     state = state.hflip()
-                    proximal_probas = {m.hflip(): v for m, v in proximal_probas.items()}
+                    policy = {m.hflip(): v for m, v in policy.items()}
 
                 x = state.to_dlshogi_features().squeeze()
-                policy = state.to_dlshogi_policy(proximal_probas, default_value=-np.inf)
-                value = float(row['proximal_q_value'])  # https://arxiv.org/abs/2005.12729 1. Value function clipping
+                policy = state.to_dlshogi_policy(policy, default_value=-np.inf)
+                value = float(row['mean_qz'])
 
                 yield x, (policy, value)
 
@@ -427,7 +376,13 @@ def run_train(args: Args):
 
 
     def get_dataset(df: pd.DataFrame):
-        df['proximal_probas_dict'] = df['proximal_probas'].apply(lambda s: {args._shogi.Move(k): v for k, v in eval(s).items()})
+        df['visit_count'] = df['visit_count'].apply(lambda s: {args._shogi.Move(k): v for k, v in eval(s).items()})
+        df['policy'] = df['visit_count'].apply(lambda d: {k: v / sum(d.values()) for k, v in d.items()})
+        df['z_value'] = df.apply(
+            lambda row: 0 if ('DRAW' in row.result) else 2 * int(('BLACK' in row.result) == (' b ' in row.state)) - 1, axis=1)
+        df['mean_qz'] = df.apply(lambda row: 0.5 * (row.q_value + row.z_value), axis=1)
+        print(df.head())
+        df.drop(['visit_count', 'result', 'z_value'], inplace=True, axis=1)
         dataset = tf.data.Dataset.from_generator(
             _get_generator_from_df(df),
             output_types=(tf.float32, (tf.float32, tf.float32)),
@@ -437,8 +392,8 @@ def run_train(args: Args):
     def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
         df = pd.read_csv(
             tsv_path, sep='\t',
-            usecols=['state', 'proximal_q_value', 'proximal_probas'],
-            dtype={'state': str, 'proximal_q_value': float, 'proximal_probas': str},
+            usecols=['state', 'result', 'q_value', 'visit_count'],
+            dtype={'state': str, 'result': str, 'q_value': float, 'visit_count': str},
         )
         if fraction is None:
             return df
@@ -488,8 +443,14 @@ def run_train(args: Args):
 
     def load_data_and_train_network(network, index: int, learning_rate: float):
         df = pd.concat([
-            pd.concat([read_kifu(p, f) for p in glob(f'datasets/dataset_{i:04d}/*.tsv')], ignore_index=True)
-            for i, f in zip(range(index, 0, -1), (args.nn_train_fraction ** i for i in range(index)))
+            pd.concat([
+                read_kifu(p, f) for p in
+                sorted(glob(f'datasets/dataset_{i:04d}/*.tsv'))
+            ], ignore_index=True)
+            for i, f in zip(
+                range(index, 0, -1),
+                (args.nn_train_fraction ** i for i in range(index)),
+            )
         ], ignore_index=True)
         dataset = get_dataset(df)
         return train_network(network, dataset, learning_rate)
