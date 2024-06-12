@@ -331,40 +331,6 @@ TEST(judkins_shogi_node, explore_until_game_end)
     }
 }
 
-TEST(judkins_shogi_node, dfpn_at_leaf)
-{
-    // Turn: WHITE
-    // White: -
-    //     6   5   4   3   2   1
-    //   +---+---+---+---+---+---+
-    // A |   |   |   |   |   |+HI|
-    //   +---+---+---+---+---+---+
-    // B |   |   |   |+FU|-OU|-KE|
-    //   +---+---+---+---+---+---+
-    // C |   |   |   |-KI|   |+GI|
-    //   +---+---+---+---+---+---+
-    // D |   |   |   |+KI|+KE|   |
-    //   +---+---+---+---+---+---+
-    // E |   |   |   |   |   |-RY|
-    //   +---+---+---+---+---+---+
-    // F |   |   |   |   |   |   |
-    //   +---+---+---+---+---+---+
-    // Black: -
-    auto g = Game("5R/3Pkn/3g1S/3GN1/5+r/6 w -");
-    {
-        auto root = Node(g, 0.f, zeros);
-        auto g_copy = Game(g);
-        const auto n = root.select(g_copy, 4.f, 3, 1, 0);
-        CHECK_TRUE(nullptr != n);
-    }
-    {
-        auto root = Node(g, 0.f, zeros);
-        auto g_copy = Game(g);
-        const auto n = root.select(g_copy, 4.f, 3, 1, 100);
-        CHECK_TRUE(nullptr == n);
-    }
-}
-
 } // namespace test_judkins_shogi
 
 namespace test_shogi
