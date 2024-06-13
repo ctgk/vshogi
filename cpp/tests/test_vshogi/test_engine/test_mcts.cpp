@@ -21,7 +21,6 @@ TEST_GROUP(animal_shogi_node){};
 TEST(animal_shogi_node, init_default)
 {
     auto root = Node();
-    CHECK_FALSE(root.is_valid());
     CHECK_EQUAL(0, root.get_visit_count());
     DOUBLES_EQUAL(0.f, root.get_value(), 1e-2f);
     DOUBLES_EQUAL(0.f, root.get_q_value(), 1e-2f);
@@ -31,7 +30,6 @@ TEST(animal_shogi_node, init_with_args)
 {
     auto game = Game("3/3/3/3 b -");
     auto root = Node(game, 1.f, zeros);
-    CHECK_TRUE(root.is_valid());
     CHECK_EQUAL(1, root.get_visit_count());
     DOUBLES_EQUAL(1.f, root.get_value(), 1e-2f);
     DOUBLES_EQUAL(1.f, root.get_q_value(), 1e-2f);
@@ -68,13 +66,12 @@ TEST(animal_shogi_node, explore_one_action)
     {
         STRCMP_EQUAL("1l1/1C1/3/3 w - 2", g.to_sfen().c_str());
 
-        CHECK_EQUAL(1, root.get_visit_count());
+        CHECK_EQUAL(2, root.get_visit_count());
         DOUBLES_EQUAL(0.1f, root.get_value(), 1e-2f);
         DOUBLES_EQUAL(0.1f, root.get_q_value(), 1e-2f);
 
         CHECK_TRUE(actual != nullptr);
         CHECK_TRUE(actual != &root);
-        CHECK_FALSE(actual->is_valid());
     }
     actual->simulate_expand_and_backprop(g, -0.8f, zeros);
     {
@@ -82,7 +79,6 @@ TEST(animal_shogi_node, explore_one_action)
         DOUBLES_EQUAL(0.1f, root.get_value(), 1e-2f);
         DOUBLES_EQUAL((0.1f + 0.8f) / 2.f, root.get_q_value(), 1e-2f);
 
-        CHECK_TRUE(actual->is_valid());
         CHECK_EQUAL(1, actual->get_visit_count());
         DOUBLES_EQUAL(-0.8f, actual->get_value(), 1e-2f);
         DOUBLES_EQUAL(-0.8f, actual->get_q_value(), 1e-2f);

@@ -168,8 +168,16 @@ class MonteCarloTreeSearcher(Engine):
         move_q_pair_list.sort(key=lambda a: a[1], reverse=True)
         return {m: q for m, q in move_q_pair_list}
 
-    def get_visit_counts(self) -> tp.Dict[Move, int]:
+    def get_visit_counts(
+        self,
+        include_random: bool = True,
+    ) -> tp.Dict[Move, int]:
         """Return visit counts of each action.
+
+        Parameters
+        ----------
+        include_random : bool, optional
+            Include visit counts by random selection if true, by default true.
 
         Returns
         -------
@@ -177,7 +185,12 @@ class MonteCarloTreeSearcher(Engine):
             Visit counts of each action.
         """
         move_visit_count_pair_list = [
-            (m, self._root.get_child(m).get_visit_count())
+            (
+                m,
+                self._root.get_child(m).get_visit_count()
+                if include_random else
+                self._root.get_child(m).get_visit_count_excluding_random(),
+            )
             for m in self._root.get_actions()
         ]
         move_visit_count_pair_list.sort(key=lambda a: a[1], reverse=True)

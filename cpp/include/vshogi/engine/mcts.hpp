@@ -61,6 +61,8 @@ private:
      */
     int m_visit_count;
 
+    int m_visit_count_excluding_random;
+
     /**
      * @brief result of `std::sqrt(static_cast<float>(m_visit_count))`.
      * @details Computing this value beforehand to reduce the computation time
@@ -92,20 +94,23 @@ private:
 public:
     Node()
         : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr), m_action(),
-          m_proba(0.f), m_visit_count(0), m_sqrt_visit_count(0.f), m_value(0.f),
-          m_q_value(0.f), m_is_mate(false)
+          m_proba(0.f), m_visit_count(0), m_visit_count_excluding_random(0),
+          m_sqrt_visit_count(0.f), m_value(0.f), m_q_value(0.f),
+          m_is_mate(false)
     {
     }
     Node(const Game& game, const float value, const float* const policy_logits)
         : Node()
     {
+        m_visit_count = 1;
+        m_visit_count_excluding_random = 1;
         simulate_expand_and_backprop(game, value, policy_logits);
     }
     Node(const Move action, const float proba) noexcept
         : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr),
           m_action(action), m_proba(proba), m_visit_count(0),
-          m_sqrt_visit_count(0.f), m_value(0.f), m_q_value(0.f),
-          m_is_mate(false)
+          m_visit_count_excluding_random(0), m_sqrt_visit_count(0.f),
+          m_value(0.f), m_q_value(0.f), m_is_mate(false)
     {
     }
 
@@ -118,19 +123,13 @@ public:
     Node<Game, Move>& operator=(Node<Game, Move>&& other)
         = default; // 5/5 move assignment
 
-    /**
-     * @brief Return true if the node has valid value and action probas.
-     *
-     * @return true The node has valid value and action probas.
-     * @return false The node has invalid value and action probas.
-     */
-    bool is_valid() const
-    {
-        return m_visit_count > 0;
-    }
     int get_visit_count() const
     {
         return m_visit_count;
+    }
+    int get_visit_count_excluding_random() const
+    {
+        return m_visit_count_excluding_random;
     }
     float get_value() const
     {
@@ -208,6 +207,8 @@ public:
         const int non_random_ratio,
         int random_depth)
     {
+        m_visit_count += 1;
+        m_visit_count_excluding_random += 1;
         NodeGM* node = this;
         while (true) {
             if (node->m_child == nullptr)
@@ -246,6 +247,8 @@ public:
                 m_action = ch->m_action;
                 m_proba = ch->m_proba;
                 m_visit_count = ch->m_visit_count;
+                m_visit_count_excluding_random
+                    = ch->m_visit_count_excluding_random;
                 m_sqrt_visit_count = ch->m_sqrt_visit_count;
                 m_value = ch->m_value;
                 m_q_value = ch->m_q_value;
@@ -257,6 +260,7 @@ public:
 
         m_child = nullptr;
         m_visit_count = 0;
+        m_visit_count_excluding_random = 0;
         m_sqrt_visit_count = 0.f;
         m_value = 0.f;
         m_q_value = 0.f;
@@ -271,9 +275,9 @@ public:
 
         const NodeGM* ch = m_child.get();
         for (; ch != nullptr; ch = ch->m_sibling.get()) {
-            if (ch->m_visit_count > max_visit_count) {
+            if (ch->m_visit_count_excluding_random > max_visit_count) {
                 out = ch->m_action;
-                max_visit_count = ch->m_visit_count;
+                max_visit_count = ch->m_visit_count_excluding_random;
             }
         }
         return out;
@@ -285,7 +289,8 @@ public:
         std::vector<float> probas(get_num_child());
         const NodeGM* ch = m_child.get();
         for (uint ii = 0u; ch != nullptr; ch = ch->m_sibling.get()) {
-            const auto v = static_cast<float>(ch->m_visit_count);
+            const auto v
+                = static_cast<float>(ch->m_visit_count_excluding_random);
             probas[ii++] = std::log((v + eps) / temperature);
         }
         softmax(probas);
@@ -306,9 +311,10 @@ public:
 private:
     NodeGM* select_at_leaf(const Game& game)
     {
-        if (game.get_result() == ResultEnum::ONGOING)
+        if (game.get_result() == ResultEnum::ONGOING) {
             return this;
-        if (m_visit_count == 0)
+        }
+        if (m_visit_count == 1)
             simulate_end_game(game);
         backprop_leaf();
         return nullptr;
@@ -342,9 +348,17 @@ private:
         const int non_random_ratio,
         const int random_depth)
     {
-        if (use_random(non_random_ratio, random_depth))
-            return select_random();
-        return select_max_puct(coeff_puct);
+        NodeGM* ch = nullptr;
+        if (use_random(non_random_ratio, random_depth)) {
+            ch = select_random();
+            ch->m_visit_count += 1;
+            return ch;
+        } else {
+            ch = select_max_puct(coeff_puct);
+            ch->m_visit_count += 1;
+            ch->m_visit_count_excluding_random += 1;
+            return ch;
+        }
     }
     bool use_random(const int non_random_ratio, const int random_depth) const
     {
@@ -482,8 +496,7 @@ private:
 private:
     void backprop_at_internal_vertex(const float v)
     {
-        const auto count_before = static_cast<float>(m_visit_count);
-        m_visit_count += 1;
+        const auto count_before = static_cast<float>(m_visit_count - 1);
         const auto count_after = static_cast<float>(m_visit_count);
         m_sqrt_visit_count = std::sqrt(count_after);
 
@@ -495,8 +508,7 @@ private:
     }
     void backprop_mate_at_internal_vertex(const float v)
     {
-        const auto count_before = static_cast<float>(m_visit_count);
-        m_visit_count += 1;
+        const auto count_before = static_cast<float>(m_visit_count - 1);
         const auto count_after = static_cast<float>(m_visit_count);
         m_sqrt_visit_count = std::sqrt(count_after);
 
@@ -525,7 +537,6 @@ private:
     void backprop_leaf()
     {
         // skip updating `m_q_value` because there should be no value change.
-        m_visit_count += 1;
         m_sqrt_visit_count = std::sqrt(static_cast<float>(m_visit_count));
         if (m_parent != nullptr) {
             if (m_is_mate)

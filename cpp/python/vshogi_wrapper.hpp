@@ -268,6 +268,9 @@ inline void export_mcts_node(pybind11::module& m)
             py::arg("value"),
             py::arg("policy_logits"))
         .def("get_visit_count", &Node::get_visit_count)
+        .def(
+            "get_visit_count_excluding_random",
+            &Node::get_visit_count_excluding_random)
         .def("get_value", &Node::get_value)
         .def("get_q_value", &Node::get_q_value)
         .def(

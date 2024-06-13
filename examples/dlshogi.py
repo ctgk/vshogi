@@ -260,7 +260,10 @@ def play_game(
         else:
             move = player.select() # off-policy
 
-        visit_count = {m.to_usi(): v for m, v in player.get_visit_counts().items()}
+        visit_count = {
+            m.to_usi(): v for m, v
+            in player.get_visit_counts(include_random=False).items()
+        }
         game.v_value_record.append(player.get_value())
         game.q_value_record.append(max(player.get_q_values().values()))
         game.visit_count_record.append(visit_count)
