@@ -143,7 +143,7 @@ class DfpnMcts(Engine):
             for m in curr_visits_added.keys()
         }
         kldgain = sum(
-            prev_probas[m] * np.log(prev_probas[m] / curr_probas[m])
+            curr_probas[m] * np.log(curr_probas[m] / prev_probas[m])
             for m in prev_probas.keys()
         )
         for m in prev_visits.keys():
