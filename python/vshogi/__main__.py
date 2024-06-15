@@ -87,6 +87,10 @@ class Args:
         type=float, default=4.,
         help='Coefficient to compute PUCT score in MCTS, default=4',
     )
+    mcts_temperature: float = config(
+        type=float, default=None,
+        help='Temperature parameter to select action to take, default=None',
+    )
     dfpn_search_root: int = config(type=int, default=10000)
     dfpn_search_vertex: int = config(type=int, default=100)
     show_pbar: bool = config(
@@ -139,6 +143,9 @@ if __name__ == "__main__":
                     'dfpn_searches_at_vertex': args.dfpn_search_vertex,
                     'kldgain_threshold': args.mcts_kldgain_threshold,
                 },
+                select_args={
+                    'temperature': args.mcts_temperature,
+                },
             ).result
             if result == vshogi.BLACK_WIN:
                 results_of_p1['bwin'] += 1
@@ -154,6 +161,9 @@ if __name__ == "__main__":
                     'mcts_searches': args.mcts_explorations,
                     'dfpn_searches_at_vertex': args.dfpn_search_vertex,
                     'kldgain_threshold': args.mcts_kldgain_threshold,
+                },
+                select_args={
+                    'temperature': args.mcts_temperature,
                 },
             ).result
             if result == vshogi.BLACK_WIN:
