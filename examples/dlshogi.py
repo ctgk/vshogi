@@ -389,7 +389,7 @@ def run_train(args: Args):
         dataset = tf.data.Dataset.from_generator(
             _get_generator_from_df(df),
             output_types=(tf.float32, (tf.float32, tf.float32)),
-        ).batch(args.nn_minibatch)
+        ).batch(args.nn_minibatch).prefetch(2)
         return dataset
 
     def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
