@@ -1,11 +1,11 @@
 """Script to run DL-shogi training.
 
-| index |        Self-play       |          Train NN         |        Validation       |
-|-------|------------------------|---------------------------|-------------------------|
-|   0   |          (skip)        | NN0 = Initialized         |          (skip)         |
-|   1   | DATASET1  = NN0 vs NN0 | NN1 = Trained by DATASET1 | DATASET2 = NN1 vs NN0   |
-|   2   | DATASET2 += NN1 vs NN1 | NN2 = Trained by DATASET2 | DATASET3 = NN2 vs NN1,0 |
-|  ...  |          ...           |             ...           |           ...           |
+| index |        Self-play       |          Train NN         |
+|-------|------------------------|---------------------------|
+|   0   |          (skip)        | NN0 = Initialized         |
+|   1   | DATASET1  = NN0 vs NN0 | NN1 = Trained by DATASET1 |
+|   2   | DATASET2 += NN1 vs NN1 | NN2 = Trained by DATASET2 |
+|  ...  |          ...           |             ...           |
 """
 
 import contextlib
@@ -28,7 +28,7 @@ import vshogi
 
 @classopt(default_long=True)
 class Args:
-    run: str = config(long=False, choices=['rl', 'self-play', 'train', 'validation'])
+    run: str = config(long=False, choices=['rl', 'self-play', 'train'])
     shogi_variant: str = config(
         long=False,
         choices=['shogi', 'animal_shogi', 'judkins_shogi', 'minishogi'],
@@ -57,6 +57,7 @@ class Args:
     mcts_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in MCTS, default=4.')
     self_play: int = config(type=int, default=200, help='# of self-play in one RL cycle, default=200')
     self_play_index_from: int = config(type=int, default=0, help='Index to start self-play from, default=0')
+    another_player: list = config(type=int, nargs='*', default=[])
     validations: int = config(type=int, default=10, help='# of validation plays per model, default=10')
     win_ratio_threshold: float = config(type=float, default=0.55, help='Threshold of win ratio to adopt new model against previous one, default=0.55')
     jobs: int = config(short=False, type=int, default=1, help='# of jobs to run self-play in parallel, default=1')
@@ -187,7 +188,7 @@ class PolicyValueFunction:
             f.write(self._model_content)
 
 
-def dump_game_records(file_, game: vshogi.Game) -> None:
+def dump_game_records(file_, game: vshogi.Game, color_filter: vshogi.Color = None) -> None:
     game.dump_records(
         (
             lambda g, i: g.get_sfen_at(i, include_move_count=True),
@@ -199,6 +200,7 @@ def dump_game_records(file_, game: vshogi.Game) -> None:
         ),
         names=('state', 'move', 'result', 'v_value', 'q_value', 'visit_count'),
         file_=file_,
+        color_filter=color_filter,
     )
 
 
@@ -293,18 +295,37 @@ def load_player_of(index_path_or_network, num_threads=1) -> vshogi.engine.DfpnMc
     return vshogi.engine.DfpnMcts(vshogi.engine.DfpnSearcher(), mcts)
 
 
+def play_game_and_dump_record(
+    black,
+    white,
+    args: Args,
+    index: int,
+    suffix: str,
+    color_filter: vshogi.Color = None,
+) -> vshogi.Result:
+    while True:
+        game = play_game(black, white, args)
+        if game.result != vshogi.ONGOING:
+            break
+    if (index is not None) and (suffix is not None):
+        path = f'datasets/dataset_{index:04d}/record_{suffix}.tsv'
+        with open(path, mode='w') as f:
+            dump_game_records(f, game, color_filter)
+    return game.result
+
+
 def run_self_play(args: Args):
 
-    def _self_play_and_dump_record(player, index, nth_game: int) -> vshogi.Game:
-        while True:
-            game = play_game(player, player, args)
-            if game.result != vshogi.ONGOING:
-                break
-        with open(f'datasets/dataset_{index:04d}/record_{nth_game:05d}.tsv', mode='w') as f:
-            dump_game_records(f, game)
+    def _self_play_and_dump_record(player, index, nth_game: int):
+        play_game_and_dump_record(player, player, args, index, f'{nth_game:05d}')
 
+    def _play_game_and_dump_record(player, player_another, index, index_another, nth_game: int):
+        if (nth_game // 10) % 2 == 0:
+            play_game_and_dump_record(player, player_another, args, index, f'{nth_game:05d}_B{index-1:02d}vsW{index_another:02d}', vshogi.BLACK)
+        else:
+            play_game_and_dump_record(player_another, player, args, index, f'{nth_game:05d}_B{index_another:02d}vsW{index-1:02d}', vshogi.WHITE)
 
-    def self_play_and_dump_records_in_parallel(index: int, n_jobs: int):
+    def self_play_and_dump_records_in_parallel(index: int, index_another: int, n_jobs: int):
         import joblib
         from joblib.parallel import Parallel, delayed
 
@@ -324,34 +345,45 @@ def run_self_play(args: Args):
                 joblib.parallel.BatchCompletionCallBack = old_batch_callback
                 tqdm_object.close()
 
-        def _self_play_and_dump_record_n_times(index, nth_game: list):
+        def _self_play_and_dump_record_n_times(index, index_another, nth_game: list):
             player = load_player_of(index - 1)
             for i in nth_game:
-                _self_play_and_dump_record(player, index, i)
+                if index_another[i % len(index_another)] is not None:
+                    player_another = load_player_of(index_another[i % len(index_another)])
+                    _play_game_and_dump_record(player, player_another, index, index_another[i % len(index_another)], i)
+                else:
+                    _self_play_and_dump_record(player, index, i)
 
         group_size = 5
         with tqdm_joblib(tqdm(total=args.self_play // group_size, ncols=100)):
             Parallel(n_jobs=n_jobs)(
                 delayed(_self_play_and_dump_record_n_times)(
-                    index, list(range(i, i + group_size)),
+                    index, index_another, list(range(i, i + group_size)),
                 )
                 for i in range(args.self_play_index_from, args.self_play_index_from + args.self_play, group_size)
             )
 
 
-    def self_play_and_dump_records(index: int):
+    def self_play_and_dump_records(index: int, index_another: tp.List[int]):
         if args.jobs == 1:
             player = load_player_of(index - 1)
+            player_another = [None if i is None else load_player_of(i) for i in index_another]
             for i in tqdm(range(args.self_play_index_from, args.self_play_index_from + args.self_play), ncols=100):
-                _self_play_and_dump_record(player, index, i)
+                if index_another[i % len(index_another)] is not None:
+                    _play_game_and_dump_record(
+                        player, player_another[i % len(index_another)],
+                        index, index_another[i % len(index_another)], i)
+                else:
+                    _self_play_and_dump_record(player, index, i)
         else:
-            self_play_and_dump_records_in_parallel(index, args.jobs)
+            self_play_and_dump_records_in_parallel(index, index_another, args.jobs)
 
     i = args.resume_rl_cycle_from
     if not os.path.isdir(f'datasets/dataset_{i:04d}'):
         os.makedirs(f'datasets/dataset_{i:04d}')
 
-    self_play_and_dump_records(i)
+    args.another_player = [None] * (10 - len(args.another_player)) + args.another_player
+    self_play_and_dump_records(i, args.another_player)
 
 
 def run_train(args: Args):
@@ -477,9 +509,9 @@ def run_train(args: Args):
     PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
 
 
-def run_validation(args: Args):
+def run_rl_cycle(args: Args):
 
-    def play_against_past_players(index: int, dump_records: bool = False):
+    def get_best_past_player_against_latest(args: Args, index: int):
         player = load_player_of(index, args.jobs)
         indices_prev = list(range(index - 1, -1, -1))
         n = 10
@@ -488,47 +520,39 @@ def run_validation(args: Args):
             p = p / np.sum(p)
             indices_prev = np.random.choice(indices_prev, size=n, replace=False, p=p)
             indices_prev = np.sort(indices_prev)[::-1]
+        validation_result_list = []
         for i_prev in indices_prev:
             player_prev = load_player_of(int(i_prev), args.jobs)
             validation_results = {'win': 0, 'loss': 0, 'draw': 0}
             pbar = tqdm(range(args.validations), ncols=100)
             for n in pbar:
                 if n % 2 == 0:
-                    game = play_game(player, player_prev, args)
+                    result = play_game_and_dump_record(player, player_prev, args, None, None)
                     validation_results[{
                         vshogi.BLACK_WIN: 'win',
                         vshogi.WHITE_WIN: 'loss',
                         vshogi.DRAW: 'draw',
                         vshogi.ONGOING: 'draw',
-                    }[game.result]] += 1
-                    if dump_records:
-                        path = f'datasets/dataset_{index + 1:04d}/record_B{index:02d}vsW{i_prev:02d}_{n:04d}.tsv'
-                        with open(path, mode='w') as f:
-                            dump_game_records(f, game)
-                        os.system(f'cat {path} | grep -e " b " -e "state" > tmp.tsv; mv tmp.tsv {path}')
+                    }[result]] += 1
                 else:
-                    game = play_game(player_prev, player, args)
+                    result = play_game_and_dump_record(player_prev, player, args, None, None)
                     validation_results[{
                         vshogi.BLACK_WIN: 'loss',
                         vshogi.WHITE_WIN: 'win',
                         vshogi.DRAW: 'draw',
                         vshogi.ONGOING: 'draw',
-                    }[game.result]] += 1
-                    if dump_records:
-                        path = f'datasets/dataset_{index + 1:04d}/record_B{i_prev:02d}vsW{index:02d}_{n:04d}.tsv'
-                        with open(path, mode='w') as f:
-                            dump_game_records(f, game)
-                        os.system(f'cat {path} | grep -e " w " -e "state" > tmp.tsv; mv tmp.tsv {path}')
+                    }[result]] += 1
                 pbar.set_description(f'{index} vs {i_prev}: {validation_results}')
-
-    i = args.resume_rl_cycle_from
-    if not os.path.isdir(f'datasets/dataset_{i + 1:04d}'):
-        os.makedirs(f'datasets/dataset_{i + 1:04d}')
-
-    play_against_past_players(i, dump_records=True)
-
-
-def run_rl_cycle(args: Args):
+            validation_result_list.append(validation_results)
+        win_point_list = [r['win'] - r['loss'] for r in validation_result_list]
+        indices_for_sort = np.argsort(win_point_list)
+        indices_prev = np.asarray(indices_prev)[indices_for_sort]
+        win_point_list = np.asarray(win_point_list)[indices_for_sort]
+        print(f'Players in weak to strong order: {indices_prev}')
+        return (
+            indices_prev[:2].tolist()
+            + indices_prev[2:][win_point_list[2:] <= 0].tolist()[:3]
+        )
 
     def get_best_player_index(current: int, best: int):
         results = {'win': 0, 'loss': 0, 'draw': 0}
@@ -570,7 +594,10 @@ def run_rl_cycle(args: Args):
             "--resume_rl_cycle_from", str(0),
         ] + ' '.join([
             f'--{k} {v}' for k, v in args.to_dict().items()
-            if ((k not in ('run', 'shogi_variant', 'resume_rl_cycle_from')) and (v is not None))
+            if (
+                (k not in ('run', 'shogi_variant', 'resume_rl_cycle_from', 'another_player'))
+                and (v is not None)
+            )
         ]).split())
 
     for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
@@ -586,6 +613,14 @@ def run_rl_cycle(args: Args):
             n = np.mean(line_length_list) * args.mcts_random_rate
             args._num_random_moves = int(np.ceil(n / 2)) * 2
 
+        if i >= 3:
+            best_past_players = get_best_past_player_against_latest(args, i - 1)
+        elif i == 2:
+            best_past_players = [0]
+        else:
+            best_past_players = []
+        print(f"Players to generate training data: {best_past_players}")
+
         while True:
             pattern = f'datasets/dataset_{i:04d}/*.tsv'
             self_play_index_from = len([p for p in glob(pattern) if 'vs' not in p])
@@ -594,10 +629,11 @@ def run_rl_cycle(args: Args):
                 sys.executable, "dlshogi.py", "self-play", args.shogi_variant,
                 "--resume_rl_cycle_from", str(i),
                 "--self_play_index_from", str(self_play_index_from),
+                "--another_player", *[str(a) for a in best_past_players],
             ] + ' '.join([
                 f'--{k} {v}' for k, v in args.to_dict().items()
                 if (k not in (
-                    'run', 'shogi_variant',
+                    'run', 'shogi_variant', "another_player",
                     'resume_rl_cycle_from', 'self_play_index_from',
                 ) and (v is not None))
             ]).split())
@@ -608,22 +644,16 @@ def run_rl_cycle(args: Args):
                 "--resume_rl_cycle_from", str(i),
             ] + ' '.join([
                 f'--{k} {v}' for k, v in args.to_dict().items()
-                if ((k not in ('run', 'shogi_variant', 'resume_rl_cycle_from')) and (v is not None))
+                if (
+                    (k not in ('run', 'shogi_variant', 'resume_rl_cycle_from', 'another_player'))
+                    and (v is not None)
+                )
             ]).split())
 
             if (i == 1) or (get_best_player_index(i, i - 1) == i):
                 break
             else:
                 self_play_index_from += args.self_play
-
-        # Validate!
-        subprocess.call([
-            sys.executable, "dlshogi.py", "validation", args.shogi_variant,
-            "--resume_rl_cycle_from", str(i),
-        ]  + ' '.join([
-            f'--{k} {v}' for k, v in args.to_dict().items()
-            if ((k not in ('run', 'shogi_variant', 'resume_rl_cycle_from')) and (v is not None))
-        ]).split())
 
 
 def parse_args() -> Args:
@@ -679,5 +709,3 @@ if __name__ == '__main__':
         run_self_play(args)
     elif args.run == 'train':
         run_train(args)
-    elif args.run == 'validation':
-        run_validation(args)

@@ -365,6 +365,7 @@ class Game(abc.ABC):
         names: tp.Optional[tp.Iterable[str]] = None,
         sep: str = '\t',
         file_: tp.TextIO = sys.stdout,
+        color_filter: tp.Optional[Color] = None,
     ) -> None:
         r"""Dump game records.
 
@@ -378,6 +379,8 @@ class Game(abc.ABC):
             Separator of column names and values, by default '\t'
         file_ : tp.TextIO, optional
             Location to dump to, by default sys.stdout.
+        color_filter : tp.Optional[Color], optional
+            Dump only BLACK or WHITE turn records if given.
 
         Examples
         --------
@@ -401,12 +404,12 @@ class Game(abc.ABC):
         ...         ),
         ...         names=('sfen', 'move', 'result'),
         ...         file_=f,
+        ...         color_filter=shogi.BLACK,
         ...     )
         ...     _ = f.seek(0)
         ...     print(f.read())  #doctest: +NORMALIZE_WHITESPACE
         sfen        move    result
         gle/1c1/1C1/ELG b - 1       b4a3    Result.BLACK_WIN
-        gle/1c1/LC1/E1G w - 2       b1a2    Result.BLACK_WIN
         g1e/lc1/LC1/E1G b - 3       a3a2    Result.BLACK_WIN
         <BLANKLINE>
         """
@@ -415,6 +418,10 @@ class Game(abc.ABC):
         if callable(getters):
             getters = (getters,)
         for i in range(self.record_length):
+            if (color_filter == Color.WHITE) and (i % 2 == 0):
+                continue
+            elif (color_filter == Color.BLACK) and (i % 2 == 1):
+                continue
             print(
                 *(getter(self, i) for getter in getters),
                 sep='\t', file=file_,
