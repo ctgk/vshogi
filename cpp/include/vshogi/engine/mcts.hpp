@@ -284,14 +284,14 @@ public:
     }
     Move get_action_by_visit_distribution(const float temperature) const
     {
-        constexpr float eps = 1e-3f;
+        constexpr float eps = 1.f;
 
         std::vector<float> probas(get_num_child());
         const NodeGM* ch = m_child.get();
         for (uint ii = 0u; ch != nullptr; ch = ch->m_sibling.get()) {
             const auto v
                 = static_cast<float>(ch->m_visit_count_excluding_random);
-            probas[ii++] = std::log((v + eps) / temperature);
+            probas[ii++] = std::log((v + eps)) / temperature;
         }
         softmax(probas);
 
