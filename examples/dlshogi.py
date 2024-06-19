@@ -551,7 +551,7 @@ def run_rl_cycle(args: Args):
         print(f'Players in weak to strong order: {indices_prev}')
         return (
             indices_prev[:2].tolist()
-            + indices_prev[2:][win_point_list[2:] <= 0].tolist()[:3]
+            + indices_prev[2:][win_point_list[2:] <= 3].tolist()[:3]
         )
 
     def get_best_player_index(current: int, best: int):
