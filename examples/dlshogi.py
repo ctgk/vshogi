@@ -623,7 +623,7 @@ def run_rl_cycle(args: Args):
 
         while True:
             pattern = f'datasets/dataset_{i:04d}/*.tsv'
-            self_play_index_from = len([p for p in glob(pattern) if 'vs' not in p])
+            self_play_index_from = len(glob(pattern))
             # Self-play!
             subprocess.call([
                 sys.executable, "dlshogi.py", "self-play", args.shogi_variant,
@@ -652,8 +652,6 @@ def run_rl_cycle(args: Args):
 
             if (i == 1) or (get_best_player_index(i, i - 1) == i):
                 break
-            else:
-                self_play_index_from += args.self_play
 
 
 def parse_args() -> Args:
