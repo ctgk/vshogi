@@ -11,13 +11,17 @@
 import contextlib
 from glob import glob
 import os
+import random
 import subprocess
 import sys
 import typing as tp
 
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
+os.environ['TF_USE_LEGACY_KERAS']='1'
 
 from classopt import classopt, config
+import joblib
+from joblib.parallel import Parallel, delayed
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -101,28 +105,31 @@ def build_policy_value_network(
     def depthwise_conv2d(x, dilation=1, use_bias=True):
         return tf.keras.layers.DepthwiseConv2D(
             3, dilation_rate=dilation, padding='same',
-            use_bias=use_bias, kernel_regularizer=r)(x)
+            use_bias=use_bias, depthwise_regularizer=r)(x)
 
     def bn(x):
         return tf.keras.layers.BatchNormalization(center=False, scale=False)(x)
 
+    def relu6(x):
+        return tf.keras.layers.ReLU(max_value=6)(x)
+
     def relu_pconv(x, ch):
-        return tf.nn.relu6(pointwise_conv2d(x, ch))
+        return relu6(pointwise_conv2d(x, ch))
 
     def multidilation_resblock(x):
         h = Concat8Directions(max(input_size) - 1)(relu_pconv(x, 8))
         h = pointwise_conv2d(h, num_channels_in_hidden_layer, use_bias=False)
-        return tf.nn.relu6(bn(x + h))
+        return relu6(bn(x + h))
 
     def resblock(x):
         h = relu_pconv(x, num_channels_in_bottleneck)
-        h = tf.nn.relu6(depthwise_conv2d(h))
+        h = relu6(depthwise_conv2d(h))
         h = pointwise_conv2d(h, num_channels_in_hidden_layer, use_bias=False)
-        return tf.nn.relu6(bn(x + h))
+        return relu6(bn(x + h))
 
     def backbone_network(x):
         h = relu_pconv(x, num_channels_in_hidden_layer)
-        h = tf.nn.relu6(bn(depthwise_conv2d(h, use_bias=False)))
+        h = relu6(bn(depthwise_conv2d(h, use_bias=False)))
 
         for _ in range(num_backbone_blocks):
             if use_long_range_concat:
@@ -202,6 +209,17 @@ def dump_game_records(file_, game: vshogi.Game, color_filter: vshogi.Color = Non
         file_=file_,
         color_filter=color_filter,
     )
+
+
+def dump_game_records_and_convert_to_tfrecord(
+    kifu_path: str,
+    game: vshogi.Game,
+    args: Args,
+    color_filter: vshogi.Color = None,
+) -> None:
+    with open(kifu_path, 'w') as f:
+        dump_game_records(f, game, color_filter)
+    kifu_to_tfrecord(kifu_path.replace('.tsv', '.tfrecord'), kifu_path, args)
 
 
 def play_game(
@@ -309,9 +327,75 @@ def play_game_and_dump_record(
             break
     if (index is not None) and (suffix is not None):
         path = f'datasets/dataset_{index:04d}/record_{suffix}.tsv'
-        with open(path, mode='w') as f:
-            dump_game_records(f, game, color_filter)
+        dump_game_records_and_convert_to_tfrecord(path, game, args, color_filter)
     return game.result
+
+
+def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
+    df = pd.read_csv(
+        tsv_path, sep='\t',
+        usecols=['state', 'result', 'q_value', 'visit_count'],
+        dtype={'state': str, 'result': str, 'q_value': float, 'visit_count': str},
+    )
+    if fraction is None:
+        return df
+    n = int(len(df) * fraction)
+    return df.tail(n)
+
+
+def kifu_to_tfrecord(
+    tfrecord_path: str,
+    kifu_path: str,
+    args: Args,
+    fraction: float = None,
+):
+    with tf.io.TFRecordWriter(tfrecord_path) as writer:
+        df = read_kifu(kifu_path, fraction=fraction)
+        for i in range(len(df)):
+            row = df.iloc[i]
+            state = args._shogi.State(row.state)
+            visit_count = {args._shogi.Move(k): v for k, v in eval(row.visit_count).items()}
+            s = sum(visit_count.values())
+            visit_proba = {m: v / s for m, v in visit_count.items()}
+            z_value = 0 if ('DRAW' in row.result) else 2 * int(('BLACK' in row.result) == (' b ' in row.state)) - 1
+            value = 0.5 * (z_value + row.q_value)
+
+            x = state.to_dlshogi_features()
+            policy = state.to_dlshogi_policy(visit_proba, default_value=-100000.)
+            record_bytes = tf.train.Example(features=tf.train.Features(feature={
+                'x': tf.train.Feature(float_list=tf.train.FloatList(value=x.ravel())),
+                'policy': tf.train.Feature(float_list=tf.train.FloatList(value=policy.ravel())),
+                'value': tf.train.Feature(float_list=tf.train.FloatList(value=[value])),
+            })).SerializeToString()
+            writer.write(record_bytes)
+
+            state = state.hflip()
+            visit_proba = {m.hflip(): p for m, p in visit_proba.items()}
+            x = state.to_dlshogi_features()
+            policy = state.to_dlshogi_policy(visit_proba, default_value=-100000.)
+            record_bytes = tf.train.Example(features=tf.train.Features(feature={
+                'x': tf.train.Feature(float_list=tf.train.FloatList(value=x.ravel())),
+                'policy': tf.train.Feature(float_list=tf.train.FloatList(value=policy.ravel())),
+                'value': tf.train.Feature(float_list=tf.train.FloatList(value=[value])),
+            })).SerializeToString()
+            writer.write(record_bytes)
+
+
+@contextlib.contextmanager
+def tqdm_joblib(tqdm_object):
+    """Context manager to patch joblib to report into tqdm progress, args bar given as argument"""
+    class TqdmBatchCompletionCallback(joblib.parallel.BatchCompletionCallBack):
+        def __call__(self, *args, **kwargs):
+            tqdm_object.update(n=self.batch_size)
+            return super().__call__(*args, **kwargs)
+
+    old_batch_callback = joblib.parallel.BatchCompletionCallBack
+    joblib.parallel.BatchCompletionCallBack = TqdmBatchCompletionCallback
+    try:
+        yield tqdm_object
+    finally:
+        joblib.parallel.BatchCompletionCallBack = old_batch_callback
+        tqdm_object.close()
 
 
 def run_self_play(args: Args):
@@ -326,24 +410,6 @@ def run_self_play(args: Args):
             play_game_and_dump_record(player_another, player, args, index, f'{nth_game:05d}_B{index_another:02d}vsW{index-1:02d}', vshogi.WHITE)
 
     def self_play_and_dump_records_in_parallel(index: int, index_another: int, n_jobs: int):
-        import joblib
-        from joblib.parallel import Parallel, delayed
-
-        @contextlib.contextmanager
-        def tqdm_joblib(tqdm_object):
-            """Context manager to patch joblib to report into tqdm progress, args bar given as argument"""
-            class TqdmBatchCompletionCallback(joblib.parallel.BatchCompletionCallBack):
-                def __call__(self, *args, **kwargs):
-                    tqdm_object.update(n=self.batch_size)
-                    return super().__call__(*args, **kwargs)
-
-            old_batch_callback = joblib.parallel.BatchCompletionCallBack
-            joblib.parallel.BatchCompletionCallBack = TqdmBatchCompletionCallback
-            try:
-                yield tqdm_object
-            finally:
-                joblib.parallel.BatchCompletionCallBack = old_batch_callback
-                tqdm_object.close()
 
         def _self_play_and_dump_record_n_times(index, index_another, nth_game: list):
             player = load_player_of(index - 1)
@@ -388,52 +454,27 @@ def run_self_play(args: Args):
 
 def run_train(args: Args):
 
-    def _get_generator_from_df(df: pd.DataFrame):
+    def get_dataset_from_tfrecord(path_list: tp.List[str]):
 
-        def _generator():
-            indices = np.random.permutation(2 * len(df))
-            for index in indices:
-                row = df.iloc[index // 2]
-                state = args._shogi.State(row['state'])
-                policy = row['policy']
+        def parse_example(example):
+            x_shape = [args._shogi.Game.ranks, args._shogi.Game.files, args._shogi.Game.feature_channels]
+            p_shape = [args._shogi.Game.num_dlshogi_policy]
+            features = tf.io.parse_example(example, {
+                'x': tf.io.FixedLenFeature(x_shape, dtype=tf.float32),
+                'policy': tf.io.FixedLenFeature(p_shape, dtype=tf.float32),
+                'value': tf.io.FixedLenFeature([1], dtype=tf.float32),
+            })
+            return features['x'], (features['policy'], features['value'])
 
-                if (index % 2) == 1:
-                    state = state.hflip()
-                    policy = {m.hflip(): v for m, v in policy.items()}
-
-                x = state.to_dlshogi_features().squeeze()
-                policy = state.to_dlshogi_policy(policy, default_value=-np.inf)
-                value = float(row['mean_qz'])
-
-                yield x, (policy, value)
-
-        return _generator
-
-
-    def get_dataset(df: pd.DataFrame):
-        df['visit_count'] = df['visit_count'].apply(lambda s: {args._shogi.Move(k): v for k, v in eval(s).items()})
-        df['policy'] = df['visit_count'].apply(lambda d: {k: v / sum(d.values()) for k, v in d.items()})
-        df['z_value'] = df.apply(
-            lambda row: 0 if ('DRAW' in row.result) else 2 * int(('BLACK' in row.result) == (' b ' in row.state)) - 1, axis=1)
-        df['mean_qz'] = df.apply(lambda row: 0.5 * (row.q_value + row.z_value), axis=1)
-        print(df.head())
-        df.drop(['visit_count', 'result', 'z_value'], inplace=True, axis=1)
-        dataset = tf.data.Dataset.from_generator(
-            _get_generator_from_df(df),
-            output_types=(tf.float32, (tf.float32, tf.float32)),
-        ).batch(args.nn_minibatch).prefetch(2)
-        return dataset
-
-    def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
-        df = pd.read_csv(
-            tsv_path, sep='\t',
-            usecols=['state', 'result', 'q_value', 'visit_count'],
-            dtype={'state': str, 'result': str, 'q_value': float, 'visit_count': str},
+        dataset = tf.data.TFRecordDataset(filenames=path_list)
+        dataset = dataset.shuffle(
+            buffer_size=1000000,
+            reshuffle_each_iteration=True,
         )
-        if fraction is None:
-            return df
-        n = int(len(df) * fraction)
-        return df.tail(n)
+        dataset = dataset.batch(args.nn_minibatch)
+        dataset = dataset.map(parse_example)
+        dataset = dataset.prefetch(2)
+        return dataset
 
     def train_network(
         network: tf.keras.Model,
@@ -447,14 +488,14 @@ def run_train(args: Args):
             # the following consists without using `tf.where()`
 
             y_true_masked = tf.clip_by_value(y_true, 0., 1.)
-            logit_masked = logit + tf.clip_by_value(y_true, -np.inf, 0.)  # masked out values should be -inf here.
+            logit_masked = logit + tf.clip_by_value(y_true, -100000., 0.)  # masked out values should be -100000 here.
 
             logit_max = tf.stop_gradient(tf.reduce_max(logit_masked, axis=1, keepdims=True))
             # tf.debugging.assert_all_finite(logit_max, message="max(logit) should be finite")
-            logit_subtracted = logit_masked - logit_max  # masked out values should be -inf here.
+            logit_subtracted = logit_masked - logit_max  # masked out values should be -100000 here.
             # tf.debugging.assert_near(tf.reduce_max(logit_subtracted, axis=1), 0., rtol=0., atol=0.1, message="`max(logit - max(logit))` should be near 0")
             logsumexp = tf.reduce_logsumexp(logit_subtracted, axis=1, keepdims=True)
-            log_softmax = tf.clip_by_value(logit_subtracted - logsumexp, -100000., 0.)  # in order to avoid `-inf * 0 = nan`.
+            log_softmax = logit_subtracted - logsumexp
             return -tf.reduce_sum(y_true_masked * log_softmax, axis=1)
 
         def lr_scheduler(epoch):
@@ -477,17 +518,16 @@ def run_train(args: Args):
         return network
 
     def load_data_and_train_network(network, index: int, learning_rate: float):
-        df = pd.concat([
-            pd.concat([
-                read_kifu(p, f) for p in
-                sorted(glob(f'datasets/dataset_{i:04d}/*.tsv'))
-            ], ignore_index=True)
-            for i, f in zip(
-                range(index, 0, -1),
-                (args.nn_train_fraction ** i for i in range(index)),
-            )
-        ], ignore_index=True)
-        dataset = get_dataset(df)
+        tfrecord_list = []
+        for i in range(index, 0, -1):
+            list_ = [p for p in glob(f'datasets/dataset_{i:04d}/*.tfrecord') if os.path.getsize(p) != 0]
+            random.shuffle(list_)
+            tfrecord_list.extend(list_)
+            if len(tfrecord_list) > 10000:
+                break
+        if len(tfrecord_list) > 10000:
+            tfrecord_list = tfrecord_list[:10000]
+        dataset = get_dataset_from_tfrecord(tfrecord_list)
         return train_network(network, dataset, learning_rate)
 
     shogi = args._shogi
@@ -584,6 +624,21 @@ def run_rl_cycle(args: Args):
             pbar.set_description(f'{current} vs {best}: {results}')
         return current if results['win'] > win_threshold else best
 
+    def keep_only_end_games_in_previous_tfrecord(index: int, args: Args):
+        for i, f in zip(range(index, 0, -1), (args.nn_train_fraction ** i for i in range(index))):
+            if i == index:
+                continue
+            kifu_list = glob(f'datasets/dataset_{i:04d}/*.tsv')
+            if args.jobs == 1:
+                for kifu_path in tqdm(kifu_list, desc=f'Dataset_{i:04d}', ncols=100):
+                    kifu_to_tfrecord(kifu_path.replace('.tsv', '.tfrecord'), kifu_path, args, f)
+            else:
+                with tqdm_joblib(tqdm(total=len(kifu_list), desc=f'Dataset_{i:04d}', ncols=100)):
+                    Parallel(n_jobs=args.jobs)(
+                        delayed(kifu_to_tfrecord)(p.replace('.tsv', '.tfrecord'), p, args, f)
+                        for p in kifu_list
+                    )
+
     with open('command.txt', 'w') as f:
         f.write(f'python {" ".join(sys.argv)}')
     os.system(f"cp {__file__} ./")
@@ -612,6 +667,9 @@ def run_rl_cycle(args: Args):
                     line_length_list.append(sum(1 for _ in f) - 1)
             n = np.mean(line_length_list) * args.mcts_random_rate
             args._num_random_moves = int(np.ceil(n / 2)) * 2
+
+        if i > 1:
+            keep_only_end_games_in_previous_tfrecord(i, args)
 
         if i >= 3:
             best_past_players = get_best_past_player_against_latest(args, i - 1)
