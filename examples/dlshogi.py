@@ -466,9 +466,13 @@ def run_train(args: Args):
             })
             return features['x'], (features['policy'], features['value'])
 
-        dataset = tf.data.TFRecordDataset(filenames=path_list)
+        dataset = tf.data.Dataset.from_tensor_slices(path_list).shuffle(
+            buffer_size=10000,
+            reshuffle_each_iteration=True,
+        )
+        dataset = dataset.interleave(lambda filename: tf.data.TFRecordDataset(filename))
         dataset = dataset.shuffle(
-            buffer_size=1000000,
+            buffer_size=10000,
             reshuffle_each_iteration=True,
         )
         dataset = dataset.batch(args.nn_minibatch)
