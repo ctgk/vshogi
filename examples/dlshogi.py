@@ -436,7 +436,7 @@ def run_self_play(args: Args):
                     _self_play_and_dump_record(player, index, i)
 
         group_size = 5
-        with tqdm_joblib(tqdm(total=args.self_play // group_size, ncols=100)):
+        with tqdm_joblib(tqdm(total=args.self_play // group_size, ncols=100, desc=f'Self-play {index}')):
             Parallel(n_jobs=n_jobs)(
                 delayed(_self_play_and_dump_record_n_times)(
                     index, index_another, list(range(i, i + group_size)),
@@ -449,7 +449,10 @@ def run_self_play(args: Args):
         if args.jobs == 1:
             player = load_player_of(index - 1)
             player_another = [None if i is None else load_player_of(i) for i in index_another]
-            for i in tqdm(range(args.self_play_index_from, args.self_play_index_from + args.self_play), ncols=100):
+            for i in tqdm(
+                range(args.self_play_index_from, args.self_play_index_from + args.self_play),
+                ncols=100, desc=f'Self-play {index}',
+            ):
                 if index_another[i % len(index_another)] is not None:
                     _play_game_and_dump_record(
                         player, player_another[i % len(index_another)],
