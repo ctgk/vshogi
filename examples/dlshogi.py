@@ -96,7 +96,7 @@ def build_policy_value_network(
                     x, self.kernel, (1, 1, 1, 1), 'SAME', dilations=(d, d))
                 for d in range(1, self._max_dilation_rate + 1)
             ]
-            return tf.concat([x] + feature_maps, -1)
+            return tf.concat(feature_maps, -1)
 
     def pointwise_conv2d(x, ch, use_bias=True):
         return tf.keras.layers.Conv2D(
@@ -117,7 +117,13 @@ def build_policy_value_network(
         return relu6(pointwise_conv2d(x, ch))
 
     def multidilation_resblock(x):
-        h = Concat8Directions(max(input_size) - 1)(relu_pconv(x, 8))
+        h1 = relu_pconv(x, num_channels_in_bottleneck)
+        h1 = relu6(depthwise_conv2d(h1))
+
+        h2 = relu_pconv(x, 8)
+        h2 = Concat8Directions(max(input_size) - 1)(h2)
+
+        h = tf.keras.layers.Concatenate()([h1, h2])
         h = pointwise_conv2d(h, num_channels_in_hidden_layer, use_bias=False)
         return relu6(bn(x + h))
 
