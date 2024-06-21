@@ -541,6 +541,8 @@ def run_train(args: Args):
                 break
         if len(tfrecord_list) > num_tfrecord_max:
             tfrecord_list = tfrecord_list[:num_tfrecord_max]
+        random.shuffle(tfrecord_list)
+        print(f'#tfrecord = {len(tfrecord_list):,}')
         dataset = get_dataset_from_tfrecord(tfrecord_list)
         return train_network(network, dataset, learning_rate)
 
@@ -556,7 +558,12 @@ def run_train(args: Args):
     )
     i = args.resume_rl_cycle_from
     if i > 1:
-        network.load_weights(f'models/checkpoint_{i-1:04d}/checkpoint_{i-1:04d}').expect_partial()
+        if os.path.exists(f'models/checkpoint_{i:04d}'):
+            print(f"Loading checkpoint_{i:04d}")
+            network.load_weights(f'models/checkpoint_{i:04d}/checkpoint_{i:04d}').expect_partial()
+        else:
+            print(f"Loading checkpoint_{i-1:04d}")
+            network.load_weights(f'models/checkpoint_{i-1:04d}/checkpoint_{i-1:04d}').expect_partial()
     if i > 0:
         load_data_and_train_network(network, i, args.nn_learning_rate)
         network.save_weights(f'models/checkpoint_{i:04d}/checkpoint_{i:04d}')
