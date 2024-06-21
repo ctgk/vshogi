@@ -270,7 +270,16 @@ def play_game(
                 game.v_value_record.append(player.get_value())
                 q_value = int(i % 2 == 0) * 2 - 1
                 game.q_value_record.append(q_value)
-                game.visit_count_record.append({move.to_usi(): 1})
+                legal_moves = game.get_legal_moves()
+                if i % 2 == 0:
+                    game.visit_count_record.append({
+                        m.to_usi(): 10 * len(legal_moves) if m == move else 1
+                        for m in legal_moves
+                    })
+                else:
+                    game.visit_count_record.append({
+                        m.to_usi(): 1 for m in legal_moves
+                    })
                 game.apply(move)
                 player.apply(move)
             break
@@ -278,11 +287,11 @@ def play_game(
         if game.record_length < args._num_random_moves:
             move = player.select(temperature=args.mcts_temperature)
         else:
-            move = player.select() # off-policy
+            move = player.select()
 
         visit_count = {
-            m.to_usi(): v for m, v
-            in player.get_visit_counts(include_random=False).items()
+            m.to_usi(): v + 1  # +1 for smoothing
+            for m, v in player.get_visit_counts(include_random=False).items()
         }
         game.v_value_record.append(player.get_value())
         game.q_value_record.append(max(player.get_q_values().values()))
