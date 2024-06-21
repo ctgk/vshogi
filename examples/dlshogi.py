@@ -522,15 +522,16 @@ def run_train(args: Args):
         return network
 
     def load_data_and_train_network(network, index: int, learning_rate: float):
+        num_tfrecord_max = 100000
         tfrecord_list = []
         for i in range(index, 0, -1):
             list_ = [p for p in glob(f'datasets/dataset_{i:04d}/*.tfrecord') if os.path.getsize(p) != 0]
             random.shuffle(list_)
             tfrecord_list.extend(list_)
-            if len(tfrecord_list) > 10000:
+            if len(tfrecord_list) > num_tfrecord_max:
                 break
-        if len(tfrecord_list) > 10000:
-            tfrecord_list = tfrecord_list[:10000]
+        if len(tfrecord_list) > num_tfrecord_max:
+            tfrecord_list = tfrecord_list[:num_tfrecord_max]
         dataset = get_dataset_from_tfrecord(tfrecord_list)
         return train_network(network, dataset, learning_rate)
 
