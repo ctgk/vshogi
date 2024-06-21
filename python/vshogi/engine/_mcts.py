@@ -1,5 +1,7 @@
 import typing as tp
 
+import numpy as np
+
 from vshogi._game import Game
 from vshogi.engine._engine import Engine
 
@@ -210,7 +212,7 @@ class MonteCarloTreeSearcher(Engine):
         Move
             Selected action.
         """
-        if temperature is None:
+        if (temperature is None) or np.isclose(temperature, 0):
             return self._root.get_action_by_visit_max()
         else:
             return self._root.get_action_by_visit_distribution(temperature)

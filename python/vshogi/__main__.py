@@ -88,8 +88,8 @@ class Args:
         help='Coefficient to compute PUCT score in MCTS, default=4',
     )
     mcts_temperature: float = config(
-        type=float, default=None,
-        help='Temperature parameter to select action to take, default=None',
+        type=float, default=0.,
+        help='Temperature parameter to select action to take, default=0.',
     )
     dfpn_search_root: int = config(type=int, default=10000)
     dfpn_search_vertex: int = config(type=int, default=100)
