@@ -99,12 +99,16 @@ public:
           m_is_mate(false)
     {
     }
-    Node(const Game& game, const float value, const float* const policy_logits)
+    Node(
+        const std::vector<Move>& actions,
+        const ColorEnum& turn,
+        const float value,
+        const float* const policy_logits)
         : Node()
     {
         m_visit_count = 1;
         m_visit_count_excluding_random = 1;
-        simulate_expand_and_backprop(game, value, policy_logits);
+        simulate_expand_and_backprop(actions, turn, value, policy_logits);
     }
     Node(const Move action, const float proba) noexcept
         : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr),
@@ -116,12 +120,10 @@ public:
 
     // Rules of 5
     ~Node() = default; // 1/5 destructor
-    Node(const Node<Game, Move>& other) = default; // 2/5 copy constructor
-    Node<Game, Move>& operator=(const Node<Game, Move>& other)
-        = default; // 3/5 copy assignment
-    Node(Node<Game, Move>&& other) = default; // 4/5 move constructor
-    Node<Game, Move>& operator=(Node<Game, Move>&& other)
-        = default; // 5/5 move assignment
+    Node(const Node& other) = default; // 2/5 copy constructor
+    Node& operator=(const Node& other) = default; // 3/5 copy assignment
+    Node(Node&& other) = default; // 4/5 move constructor
+    Node& operator=(Node&& other) = default; // 5/5 move assignment
 
     int get_visit_count() const
     {
@@ -221,15 +223,19 @@ public:
     /**
      * @note https://en.wikipedia.org/wiki/Monte_Carlo_tree_search#Principle_of_operation
      *
-     * @param game
+     * @param actions
+     * @param turn
      * @param value
      * @param policy_logits
      */
     void simulate_expand_and_backprop(
-        const Game& game, const float value, const float* const policy_logits)
+        const std::vector<Move>& actions,
+        const ColorEnum& turn,
+        const float value,
+        const float* const policy_logits)
     {
         simulate_ongoing_game(value);
-        expand(game, policy_logits);
+        expand(actions, turn, policy_logits);
         backprop_leaf();
     }
     void simulate_mate_and_backprop()
@@ -468,27 +474,30 @@ private:
     }
 
 private:
-    void expand(const Game& game, const float* const policy_logits)
+    void expand(
+        const std::vector<Move>& actions,
+        const ColorEnum& turn,
+        const float* const policy_logits)
     {
-        const std::vector<Move>& moves = game.get_legal_moves();
-        const auto num = moves.size();
+        const auto num = actions.size();
         if (num == 0)
             return;
         auto probas = std::vector<float>(num);
-        const auto is_black_turn = (game.get_turn() == ColorEnum::BLACK);
+        const auto is_black_turn = (turn == ColorEnum::BLACK);
         for (std::size_t ii = num; ii--;) {
             const auto index
                 = (is_black_turn)
-                      ? moves[ii].to_dlshogi_policy_index()
-                      : moves[ii].rotate().to_dlshogi_policy_index();
+                      ? actions[ii].to_dlshogi_policy_index()
+                      : actions[ii].rotate().to_dlshogi_policy_index();
             probas[ii] = policy_logits[index];
         }
         softmax(probas);
 
-        m_child = std::make_unique<NodeGM>(moves[0], probas[0]);
+        m_child = std::make_unique<NodeGM>(actions[0], probas[0]);
         NodeGM* child = m_child.get();
         for (std::size_t ii = 1; ii < num; ++ii) {
-            child->m_sibling = std::make_unique<NodeGM>(moves[ii], probas[ii]);
+            child->m_sibling
+                = std::make_unique<NodeGM>(actions[ii], probas[ii]);
             child = child->m_sibling.get();
         }
     }

@@ -28,17 +28,16 @@ TEST(animal_shogi_node, init_default)
 
 TEST(animal_shogi_node, init_with_args)
 {
-    auto game = Game("3/3/3/3 b -");
-    auto root = Node(game, 1.f, zeros);
+    auto root = Node({}, vshogi::BLACK, -1.f, zeros);
     CHECK_EQUAL(1, root.get_visit_count());
-    DOUBLES_EQUAL(1.f, root.get_value(), 1e-2f);
-    DOUBLES_EQUAL(1.f, root.get_q_value(), 1e-2f);
+    DOUBLES_EQUAL(-1.f, root.get_value(), 1e-2f);
+    DOUBLES_EQUAL(-1.f, root.get_q_value(), 1e-2f);
 }
 
 TEST(animal_shogi_node, explore_no_child)
 {
     auto g = Game("3/3/3/3 b -");
-    auto root = Node(g, 1.f, zeros);
+    auto root = Node(g.get_legal_moves(), g.get_turn(), 1.f, zeros);
 
     const auto actual = root.select(g, 1.f, 1, 1);
 
@@ -49,7 +48,7 @@ TEST(animal_shogi_node, explore_no_child)
 TEST(animal_shogi_node, explore_game_end)
 {
     auto g = Game("3/1l1/1C1/3 b -");
-    auto root = Node(g, 0.f, zeros);
+    auto root = Node(g.get_legal_moves(), g.get_turn(), 0.f, zeros);
     DOUBLES_EQUAL(0.f, root.get_q_value(), 1e-2f);
     const auto actual = root.select(g, 1.f, 0.f, 0);
     CHECK_TRUE(nullptr == actual);
@@ -60,7 +59,7 @@ TEST(animal_shogi_node, explore_game_end)
 TEST(animal_shogi_node, explore_one_action)
 {
     auto g = Game("1l1/3/1C1/3 b -");
-    auto root = Node(g, 0.1f, zeros);
+    auto root = Node(g.get_legal_moves(), g.get_turn(), 0.1f, zeros);
 
     const auto actual = root.select(g, 1.f, 0.f, 0);
     {
@@ -73,7 +72,8 @@ TEST(animal_shogi_node, explore_one_action)
         CHECK_TRUE(actual != nullptr);
         CHECK_TRUE(actual != &root);
     }
-    actual->simulate_expand_and_backprop(g, -0.8f, zeros);
+    actual->simulate_expand_and_backprop(
+        g.get_legal_moves(), g.get_turn(), -0.8f, zeros);
     {
         CHECK_EQUAL(2, root.get_visit_count());
         DOUBLES_EQUAL(0.1f, root.get_value(), 1e-2f);
@@ -126,12 +126,14 @@ TEST(animal_shogi_node, explore_two_action)
     logits[Move(SQ_A3, SQ_A4).to_dlshogi_policy_index()] = 0.693f;
     logits[Move(SQ_B4, SQ_A4).to_dlshogi_policy_index()] = -0.693f;
     auto g = Game("1l1/3/3/G2 b -");
-    auto root = Node(g, 0.f, logits);
+    auto root = Node(
+        {Move(SQ_A3, SQ_A4), Move(SQ_B4, SQ_A4)}, vshogi::BLACK, 0.f, logits);
 
     for (std::size_t ii = 0; ii < 2; ++ii) {
         auto g_copy = Game(g);
         const auto actual = root.select(g_copy, 1.f, -1, 0);
-        actual->simulate_expand_and_backprop(g_copy, input_value[ii], zeros);
+        actual->simulate_expand_and_backprop(
+            {}, vshogi::WHITE, input_value[ii], zeros);
 
         CHECK_EQUAL(root.get_child(moves[ii]), actual);
         DOUBLES_EQUAL(expected_q_value[ii], root.get_q_value(), 1e-3f);
@@ -178,7 +180,8 @@ TEST(animal_shogi_node, explore_two_layer)
     logits[Move(SQ_A3, SQ_A4).to_dlshogi_policy_index()] = 1.099f;
     logits[Move(SQ_B4, SQ_A4).to_dlshogi_policy_index()] = -1.099f;
     auto g = Game("2g/3/3/G2 b -");
-    auto root = Node(g, 0.f, logits);
+    auto root = Node(
+        {Move(SQ_A3, SQ_A4), Move(SQ_B4, SQ_A4)}, vshogi::BLACK, 0.f, logits);
 
     {
         auto g_copy = Game("2g/3/3/G2 b -");
@@ -188,7 +191,11 @@ TEST(animal_shogi_node, explore_two_layer)
         float policy[Game::num_dlshogi_policy()] = {0.f};
         policy[Move(SQ_C2, SQ_C1).rotate().to_dlshogi_policy_index()] = 1.099f;
         policy[Move(SQ_B1, SQ_C1).rotate().to_dlshogi_policy_index()] = -1.099f;
-        actual->simulate_expand_and_backprop(g_copy, -0.9f, policy);
+        actual->simulate_expand_and_backprop(
+            {Move(SQ_C2, SQ_C1), Move(SQ_B1, SQ_C1)},
+            vshogi::WHITE,
+            -0.9f,
+            policy);
         DOUBLES_EQUAL((0.f + 0.9f) / 2.f, root.get_q_value(), 1e-3f);
     }
     {
@@ -199,11 +206,7 @@ TEST(animal_shogi_node, explore_two_layer)
             actual);
         STRCMP_EQUAL("3/2g/G2/3 b - 3", g_copy.to_sfen().c_str());
         actual->simulate_expand_and_backprop(
-            Game("2g/3/3/G2 b -")
-                .apply(Move(SQ_A3, SQ_A4))
-                .apply(Move(SQ_C2, SQ_C1)),
-            -0.5f,
-            zeros);
+            g_copy.get_legal_moves(), g_copy.get_turn(), -0.5f, zeros);
         DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(), 1e-3f);
     }
     {
@@ -224,12 +227,13 @@ TEST(animal_shogi_node, explore_two_layer)
 TEST(animal_shogi_node, explore_after_apply)
 {
     auto g = Game();
-    auto root = Node(g, 0.f, zeros);
+    auto root = Node(g.get_legal_moves(), g.get_turn(), 0.f, zeros);
     for (int ii = 100; ii--;) {
         auto g_copy = Game(g);
         const auto n = root.select(g_copy, 4.f, 3, 1);
         if (n != nullptr)
-            n->simulate_expand_and_backprop(g_copy, 0.f, zeros);
+            n->simulate_expand_and_backprop(
+                g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
     }
 
     const auto move = Move(SQ_B2, SQ_B3);
@@ -240,7 +244,8 @@ TEST(animal_shogi_node, explore_after_apply)
         auto g_copy = Game(g);
         const auto n = root.select(g_copy, 4.f, 3, 1);
         if (n != nullptr)
-            n->simulate_expand_and_backprop(g_copy, 0.f, zeros);
+            n->simulate_expand_and_backprop(
+                g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
     }
     CHECK_EQUAL(current_visit_count + 100, root.get_visit_count());
 }
@@ -248,7 +253,7 @@ TEST(animal_shogi_node, explore_after_apply)
 TEST(animal_shogi_node, explore_until_game_end)
 {
     auto g = Game();
-    auto root = Node(g, 0.f, zeros);
+    auto root = Node(g.get_legal_moves(), g.get_turn(), 0.f, zeros);
     while (true) {
         if (g.get_result() != vshogi::ONGOING)
             break;
@@ -256,7 +261,8 @@ TEST(animal_shogi_node, explore_until_game_end)
             auto g_copy = Game(g);
             const auto n = root.select(g_copy, 4.f, 3, 1);
             if (n != nullptr)
-                n->simulate_expand_and_backprop(g_copy, 0.f, zeros);
+                n->simulate_expand_and_backprop(
+                    g_copy.get_legal_moves(), g.get_turn(), 0.f, zeros);
         }
 
         const auto action = root.get_action_by_visit_max();
@@ -279,7 +285,7 @@ TEST_GROUP(minishogi_node){};
 TEST(minishogi_node, explore_until_game_end)
 {
     auto g = Game();
-    auto root = Node(g, 0.f, zeros);
+    auto root = Node(g.get_legal_moves(), g.get_turn(), 0.f, zeros);
     while (true) {
         if (g.get_result() != vshogi::ONGOING)
             break;
@@ -287,7 +293,8 @@ TEST(minishogi_node, explore_until_game_end)
             auto g_copy = Game(g);
             const auto n = root.select(g_copy, 4.f, 3, 1);
             if (n != nullptr)
-                n->simulate_expand_and_backprop(g_copy, 0.f, zeros);
+                n->simulate_expand_and_backprop(
+                    g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
         }
 
         const auto action = root.get_action_by_visit_max();
@@ -310,7 +317,7 @@ TEST_GROUP(judkins_shogi_node){};
 TEST(judkins_shogi_node, explore_until_game_end)
 {
     auto g = Game();
-    auto root = Node(g, 0.f, zeros);
+    auto root = Node(g.get_legal_moves(), g.get_turn(), 0.f, zeros);
     while (true) {
         if (g.get_result() != vshogi::ONGOING)
             break;
@@ -318,7 +325,8 @@ TEST(judkins_shogi_node, explore_until_game_end)
             auto g_copy = Game(g);
             const auto n = root.select(g_copy, 4.f, 3, 1);
             if (n != nullptr)
-                n->simulate_expand_and_backprop(g_copy, 0.f, zeros);
+                n->simulate_expand_and_backprop(
+                    g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
         }
 
         const auto action = root.get_action_by_visit_max();
@@ -341,7 +349,7 @@ TEST_GROUP(shogi_node){};
 TEST(shogi_node, explore_until_game_end)
 {
     auto g = Game();
-    auto root = Node(g, 0.f, zeros);
+    auto root = Node(g.get_legal_moves(), g.get_turn(), 0.f, zeros);
     while (true) {
         if (g.get_result() != vshogi::ONGOING)
             break;
@@ -349,7 +357,8 @@ TEST(shogi_node, explore_until_game_end)
             auto g_copy = Game(g);
             const auto n = root.select(g_copy, 4.f, 3, 1);
             if (n != nullptr)
-                n->simulate_expand_and_backprop(g_copy, 0.f, zeros);
+                n->simulate_expand_and_backprop(
+                    g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
         }
 
         const auto action = root.get_action_by_visit_max();
