@@ -98,7 +98,7 @@ TEST(animal_shogi_node, explore_two_action)
      *                    p=0.8     p=0.2
      *                     /           \
      *                    /             \
-     *             Node(v=-0.3)     Node(v=0.2)
+     *             Node(v=-0.3)     Node(v=0.8)
      *
      * PUCT scores (Q + U * c)
      * - step1
@@ -107,19 +107,26 @@ TEST(animal_shogi_node, explore_two_action)
      * - step2
      *     - Move(SQ_A3, SQ_A4): -0.3 + (0.8 * sqrt(2) / 2) * 1 = 0.266
      *     - Move(SQ_B4, SQ_A4): 0 + (0.2 * sqrt(2) / 1) * 1 = 0.282 <-
+     * - step3
+     *     - Move(SQ_A3, SQ_A4): -0.3 + (0.8 * sqrt(3) / 2) * 1 = 0.392
+     *     - Move(SQ_B4, SQ_A4): 0.8 + (0.2 * sqrt(3) / 2) * 1 = 0.973 <-
      */
 
-    std::vector<float> input_value = {0.3f, -0.2f};
+    std::vector<float> input_value = {0.3f, -0.8f, -0.8f};
     const float atanh0p3 = std::atanh(0.3f);
     const float atanh0p2 = std::atanh(0.2f);
+    const Move moves[]
+        = {Move(SQ_A3, SQ_A4), Move(SQ_B4, SQ_A4), Move(SQ_B4, SQ_A4)};
     std::vector<float> expected_q_value = {
         // At first, Move(SQ_A3, SQ_A4) is selected due to higher probability
         // clang-format off
-        (0.f + -0.3f) / 2.f,        // Move(SQ_A3, SQ_A4) selected
-        (0.f + -0.3f + 0.2f) / 3.f, // Move(SQ_B4, SQ_A4) selected
+        (0.f + -0.3f) / 2.f,                // Move(SQ_A3, SQ_A4) selected
+        (0.f + -0.3f + 0.8f) / 3.f,         // Move(SQ_B4, SQ_A4) selected
+        (0.f + -0.3f + 0.8f + 0.8f) / 4.f,  // Move(SQ_B4, SQ_A4) selected
         // clang-format on
     };
-    const Move moves[] = {Move(SQ_A3, SQ_A4), Move(SQ_B4, SQ_A4)};
+    std::vector<Move> expected_most_selected_moves
+        = {Move(SQ_A3, SQ_A4), Move(SQ_A3, SQ_A4), Move(SQ_B4, SQ_A4)};
 
     // softmax([-0.693, 0.693]) -> [0.2000471, 0.7999529]
     float logits[Game::num_dlshogi_policy()] = {0.f};
@@ -129,7 +136,7 @@ TEST(animal_shogi_node, explore_two_action)
     auto root = Node(
         {Move(SQ_A3, SQ_A4), Move(SQ_B4, SQ_A4)}, vshogi::BLACK, 0.f, logits);
 
-    for (std::size_t ii = 0; ii < 2; ++ii) {
+    for (std::size_t ii = 0; ii < 3; ++ii) {
         auto g_copy = Game(g);
         const auto actual = root.select(g_copy, 1.f, -1, 0);
         actual->simulate_expand_and_backprop(
@@ -137,6 +144,8 @@ TEST(animal_shogi_node, explore_two_action)
 
         CHECK_EQUAL(root.get_child(moves[ii]), actual);
         DOUBLES_EQUAL(expected_q_value[ii], root.get_q_value(), 1e-3f);
+        CHECK_TRUE(
+            root.get_action_by_visit_max() == expected_most_selected_moves[ii]);
     }
 }
 
@@ -184,7 +193,7 @@ TEST(animal_shogi_node, explore_two_layer)
         {Move(SQ_A3, SQ_A4), Move(SQ_B4, SQ_A4)}, vshogi::BLACK, 0.f, logits);
 
     {
-        auto g_copy = Game("2g/3/3/G2 b -");
+        auto g_copy = Game(g);
         const auto actual = root.select(g_copy, 1.f, -1, 0);
         CHECK_EQUAL(root.get_child(Move(SQ_A3, SQ_A4)), actual);
         STRCMP_EQUAL("2g/3/G2/3 w - 2", g_copy.to_sfen().c_str());
@@ -208,6 +217,7 @@ TEST(animal_shogi_node, explore_two_layer)
         actual->simulate_expand_and_backprop(
             g_copy.get_legal_moves(), g_copy.get_turn(), -0.5f, zeros);
         DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(), 1e-3f);
+        CHECK_TRUE(root.get_action_by_visit_max() == Move(SQ_A3, SQ_A4));
     }
     {
         CHECK_EQUAL(3, root.get_visit_count());
@@ -221,6 +231,7 @@ TEST(animal_shogi_node, explore_two_layer)
         DOUBLES_EQUAL(
             0.1f, root.get_child(Move(SQ_B1, SQ_C1))->get_proba(), 1e-2f);
         DOUBLES_EQUAL((-0.9f + 0.5f) / 2.f, root.get_q_value(), 1e-3f);
+        CHECK_TRUE(root.get_action_by_visit_max() == Move(SQ_C2, SQ_C1));
     }
 }
 

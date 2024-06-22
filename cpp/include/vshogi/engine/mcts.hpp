@@ -91,12 +91,14 @@ private:
      */
     bool m_is_mate;
 
+    NodeGM* m_most_visited_child;
+
 public:
     Node()
         : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr), m_action(),
           m_proba(0.f), m_visit_count(0), m_visit_count_excluding_random(0),
           m_sqrt_visit_count(0.f), m_value(0.f), m_q_value(0.f),
-          m_is_mate(false)
+          m_is_mate(false), m_most_visited_child(nullptr)
     {
     }
     Node(
@@ -114,7 +116,8 @@ public:
         : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr),
           m_action(action), m_proba(proba), m_visit_count(0),
           m_visit_count_excluding_random(0), m_sqrt_visit_count(0.f),
-          m_value(0.f), m_q_value(0.f), m_is_mate(false)
+          m_value(0.f), m_q_value(0.f), m_is_mate(false),
+          m_most_visited_child(nullptr)
     {
     }
 
@@ -209,8 +212,8 @@ public:
         const int non_random_ratio,
         int random_depth)
     {
-        m_visit_count += 1;
-        m_visit_count_excluding_random += 1;
+        ++m_visit_count;
+        ++m_visit_count_excluding_random;
         NodeGM* node = this;
         while (true) {
             if (node->m_child == nullptr)
@@ -259,6 +262,7 @@ public:
                 m_value = ch->m_value;
                 m_q_value = ch->m_q_value;
                 m_is_mate = ch->m_is_mate;
+                m_most_visited_child = ch->m_most_visited_child;
                 m_child = std::move(ch->m_child);
                 return *this;
             }
@@ -271,22 +275,16 @@ public:
         m_value = 0.f;
         m_q_value = 0.f;
         m_is_mate = false;
+        m_most_visited_child = nullptr;
         return *this;
     }
 
     Move get_action_by_visit_max() const
     {
-        Move out = Move();
-        int max_visit_count = -1;
-
-        const NodeGM* ch = m_child.get();
-        for (; ch != nullptr; ch = ch->m_sibling.get()) {
-            if (ch->m_visit_count_excluding_random > max_visit_count) {
-                out = ch->m_action;
-                max_visit_count = ch->m_visit_count_excluding_random;
-            }
-        }
-        return out;
+        if (m_most_visited_child == nullptr)
+            return Move();
+        else
+            return m_most_visited_child->m_action;
     }
     Move get_action_by_visit_distribution(const float temperature) const
     {
@@ -357,14 +355,15 @@ private:
         NodeGM* ch = nullptr;
         if (use_random(non_random_ratio, random_depth)) {
             ch = select_random();
-            ch->m_visit_count += 1;
-            return ch;
         } else {
             ch = select_max_puct(coeff_puct);
-            ch->m_visit_count += 1;
-            ch->m_visit_count_excluding_random += 1;
-            return ch;
+            ++(ch->m_visit_count_excluding_random);
         }
+        ++(ch->m_visit_count);
+        if ((m_most_visited_child == nullptr)
+            || (ch->m_visit_count > m_most_visited_child->m_visit_count))
+            m_most_visited_child = ch;
+        return ch;
     }
     bool use_random(const int non_random_ratio, const int random_depth) const
     {
