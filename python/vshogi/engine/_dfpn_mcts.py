@@ -191,6 +191,22 @@ class DfpnMcts(Engine):
         """
         return self._mcts.get_value()
 
+    def get_q_value(self, greedy_depth: int = 0) -> float:
+        """Return Q-value estimate of the current game position.
+
+        Parameters
+        ----------
+        greedy_depth : int, optional
+            Number of depth to select nodes greedily instead of averaging,
+            by default 0.
+
+        Returns
+        -------
+        float
+            Q-value estimate of the current game position.
+        """
+        return self._mcts.get_q_value(greedy_depth)
+
     def get_probas(self) -> tp.Dict[Move, float]:
         """Return raw probabilities of selecting actions.
 
@@ -206,8 +222,14 @@ class DfpnMcts(Engine):
         move_proba_pair_list.sort(key=lambda t: t[1], reverse=True)
         return {m: p for m, p in move_proba_pair_list}
 
-    def get_q_values(self) -> tp.Dict[Move, float]:
+    def get_q_values(self, greedy_depth: int = 0) -> tp.Dict[Move, float]:
         """Return Q value of each action.
+
+        Parameters
+        ----------
+        greedy_depth : int, optional
+            Number of depth to select nodes greedily instead of averaging,
+            by default 0.
 
         Returns
         -------
@@ -215,7 +237,7 @@ class DfpnMcts(Engine):
             Q value of each action.
         """
         move_q_pair_list = [
-            (m, -self._mcts._root.get_child(m).get_q_value())
+            (m, -self._mcts._root.get_child(m).get_q_value(greedy_depth))
             for m in self._mcts._root.get_actions()
         ]
         move_q_pair_list.sort(key=lambda a: a[1], reverse=True)
@@ -243,6 +265,14 @@ class DfpnMcts(Engine):
         self,
         depth: int = 1,
         breadth: int = 3,
+        *,
         sort_key: callable = lambda n: -n.get_visit_count(),
+        greedy_depth: int = 0,
     ) -> str:
-        return _tree(self._mcts._root, depth, breadth, sort_key)
+        return _tree(
+            self._mcts._root,
+            depth,
+            breadth,
+            sort_key=sort_key,
+            greedy_depth=greedy_depth,
+        )

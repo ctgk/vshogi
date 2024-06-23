@@ -140,9 +140,12 @@ public:
     {
         return m_value;
     }
-    float get_q_value() const
+    float get_q_value(const uint greedy_depth = 0u) const
     {
-        return m_q_value;
+        if ((m_most_visited_child == nullptr) || (greedy_depth == 0u))
+            return m_q_value;
+        else
+            return -m_most_visited_child->get_q_value(greedy_depth - 1u);
     }
     float get_proba() const
     {
@@ -511,8 +514,10 @@ private:
         m_q_value *= count_before / count_after;
         m_q_value += v / count_after;
 
-        if (m_parent != nullptr)
+        if (m_parent != nullptr) {
+            m_parent->update_most_visited_child(this);
             m_parent->backprop_at_internal_vertex(-v);
+        }
     }
     void backprop_mate_at_internal_vertex(const float v)
     {
@@ -524,13 +529,17 @@ private:
             m_is_mate = false;
             m_q_value *= count_before / count_after;
             m_q_value += v / count_after;
-            if (m_parent != nullptr)
+            if (m_parent != nullptr) {
+                m_parent->update_most_visited_child(this);
                 m_parent->backprop_at_internal_vertex(-v);
+            }
         } else {
             m_is_mate = true;
             m_q_value = v;
-            if (m_parent != nullptr)
+            if (m_parent != nullptr) {
+                m_parent->update_most_visited_child(this);
                 m_parent->backprop_mate_at_internal_vertex(-v);
+            }
         }
     }
     bool has_non_mate_child() const
@@ -547,11 +556,23 @@ private:
         // skip updating `m_q_value` because there should be no value change.
         m_sqrt_visit_count = std::sqrt(static_cast<float>(m_visit_count));
         if (m_parent != nullptr) {
+            m_parent->update_most_visited_child(this);
             if (m_is_mate)
                 m_parent->backprop_mate_at_internal_vertex(-m_q_value);
             else
                 m_parent->backprop_at_internal_vertex(-m_q_value);
         }
+    }
+    void update_most_visited_child(NodeGM* const candidate)
+    {
+        if (m_most_visited_child == nullptr)
+            m_most_visited_child = candidate;
+        else if (candidate->m_visit_count > m_most_visited_child->m_visit_count)
+            m_most_visited_child = candidate;
+        else if (
+            (candidate->m_visit_count == m_most_visited_child->m_visit_count)
+            && (candidate->m_q_value < m_most_visited_child->m_q_value))
+            m_most_visited_child = candidate;
     }
 
 private:

@@ -59,6 +59,7 @@ class Args:
     )
     mcts_temperature: float = config(type=float, default=1., help='Temperature parameter when selecting action by random.')
     mcts_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in MCTS, default=4.')
+    mcts_q_greedy_depth: int = config(type=int, default=3, help='Number of depth to select node greedily when computing Q-value of a node, by default=3')
     self_play: int = config(type=int, default=200, help='# of self-play in one RL cycle, default=200')
     self_play_index_from: int = config(type=int, default=0, help='Index to start self-play from, default=0')
     another_player: list = config(type=int, nargs='*', default=[])
@@ -300,7 +301,7 @@ def play_game(
             for m, v in player.get_visit_counts(include_random=False).items()
         }
         game.v_value_record.append(player.get_value())
-        game.q_value_record.append(max(player.get_q_values().values()))
+        game.q_value_record.append(player.get_q_value(greedy_depth=args.mcts_q_greedy_depth))
         game.visit_count_record.append(visit_count)
 
         game.apply(move)

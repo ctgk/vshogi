@@ -60,6 +60,7 @@ TEST(animal_shogi_node, explore_one_action)
 {
     auto g = Game("1l1/3/1C1/3 b -");
     auto root = Node(g.get_legal_moves(), g.get_turn(), 0.1f, zeros);
+    DOUBLES_EQUAL(0.1f, root.get_q_value(100), 1e-2f);
 
     const auto actual = root.select(g, 1.f, 0.f, 0);
     {
@@ -86,6 +87,7 @@ TEST(animal_shogi_node, explore_one_action)
         const auto ch = root.get_child(Move(SQ_B2, SQ_B3));
         CHECK_TRUE(actual == ch);
     }
+    DOUBLES_EQUAL(0.8f, root.get_q_value(100), 1e-2f);
 }
 
 TEST(animal_shogi_node, explore_two_action)
@@ -126,7 +128,8 @@ TEST(animal_shogi_node, explore_two_action)
         // clang-format on
     };
     std::vector<Move> expected_most_selected_moves
-        = {Move(SQ_A3, SQ_A4), Move(SQ_A3, SQ_A4), Move(SQ_B4, SQ_A4)};
+        = {Move(SQ_A3, SQ_A4), Move(SQ_B4, SQ_A4), Move(SQ_B4, SQ_A4)};
+    const float expected_greedy_q_values[] = {-0.3f, 0.8f, 0.8f};
 
     // softmax([-0.693, 0.693]) -> [0.2000471, 0.7999529]
     float logits[Game::num_dlshogi_policy()] = {0.f};
@@ -146,6 +149,8 @@ TEST(animal_shogi_node, explore_two_action)
         DOUBLES_EQUAL(expected_q_value[ii], root.get_q_value(), 1e-3f);
         CHECK_TRUE(
             root.get_action_by_visit_max() == expected_most_selected_moves[ii]);
+        DOUBLES_EQUAL(
+            expected_greedy_q_values[ii], root.get_q_value(100), 1e-2f);
     }
 }
 
@@ -206,6 +211,7 @@ TEST(animal_shogi_node, explore_two_layer)
             -0.9f,
             policy);
         DOUBLES_EQUAL((0.f + 0.9f) / 2.f, root.get_q_value(), 1e-3f);
+        DOUBLES_EQUAL(0.9f, root.get_q_value(100), 1e-2f);
     }
     {
         auto g_copy = Game("2g/3/3/G2 b -");
@@ -218,6 +224,10 @@ TEST(animal_shogi_node, explore_two_layer)
             g_copy.get_legal_moves(), g_copy.get_turn(), -0.5f, zeros);
         DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(), 1e-3f);
         CHECK_TRUE(root.get_action_by_visit_max() == Move(SQ_A3, SQ_A4));
+        DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(0), 1e-2f);
+        DOUBLES_EQUAL((0.9f + -0.5f) / 2.f, root.get_q_value(1), 1e-2f);
+        DOUBLES_EQUAL(-0.5f, root.get_q_value(2), 1e-2f);
+        DOUBLES_EQUAL(-0.5f, root.get_q_value(100), 1e-2f);
     }
     {
         CHECK_EQUAL(3, root.get_visit_count());
@@ -232,6 +242,9 @@ TEST(animal_shogi_node, explore_two_layer)
             0.1f, root.get_child(Move(SQ_B1, SQ_C1))->get_proba(), 1e-2f);
         DOUBLES_EQUAL((-0.9f + 0.5f) / 2.f, root.get_q_value(), 1e-3f);
         CHECK_TRUE(root.get_action_by_visit_max() == Move(SQ_C2, SQ_C1));
+        DOUBLES_EQUAL((-0.9f + 0.5f) / 2.f, root.get_q_value(0), 1e-2f);
+        DOUBLES_EQUAL(0.5f, root.get_q_value(1), 1e-2f);
+        DOUBLES_EQUAL(0.5f, root.get_q_value(100), 1e-2f);
     }
 }
 

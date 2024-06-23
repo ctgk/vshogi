@@ -181,11 +181,21 @@ def test_visit_count_by_random():
     assert visit_count > visit_count_with_noise + 10
 
 
-def test_tree():
+def test_greedy_q_value():
     game = shogi.Game()
     searcher = MonteCarloTreeSearcher(uniform_pv_func)
     searcher.set_game(game)
     searcher.search(n=100)
+    action = searcher.select()
+
+    assert np.isclose(
+        searcher.get_q_value(greedy_depth=1),
+        searcher.get_q_values()[action],
+    )
+    assert np.isclose(
+        searcher.get_q_value(greedy_depth=2),
+        searcher.get_q_values(greedy_depth=1)[action],
+    )
 
     searcher._tree(depth=2, breadth=3)
     searcher._tree(depth=2, breadth=5)
