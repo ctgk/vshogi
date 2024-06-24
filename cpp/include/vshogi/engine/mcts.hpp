@@ -426,13 +426,13 @@ private:
     {
         NodeGM* ch = m_child.get();
         NodeGM* out = ch;
-        float max_puct_score
-            = ch->puct_score_from_parent_view(coeff_puct, m_sqrt_visit_count);
+        float max_puct_score = ch->puct_score_from_parent_view(
+            coeff_puct, m_sqrt_visit_count, m_q_value);
 
         ch = ch->m_sibling.get();
         for (; ch != nullptr;) {
             const float score = ch->puct_score_from_parent_view(
-                coeff_puct, m_sqrt_visit_count);
+                coeff_puct, m_sqrt_visit_count, m_q_value);
             if (score > max_puct_score) {
                 max_puct_score = score;
                 out = ch;
@@ -442,9 +442,11 @@ private:
         return out;
     }
     float puct_score_from_parent_view(
-        const float coeff_puct, const float sqrt_visit_count_of_parent) const
+        const float coeff_puct,
+        const float sqrt_visit_count_of_parent,
+        const float q_of_parent) const
     {
-        const float q = -m_q_value;
+        const float q = (m_visit_count == 0) ? q_of_parent : -m_q_value;
         if (is_mate_to_lose()) {
             const float p_plus_1 = m_proba + 1.f;
             return (q + 2.f)

@@ -97,26 +97,24 @@ TEST(animal_shogi_node, explore_two_action)
      *                        Node(v=0)
      *                        /     \
      *                       /       \
-     *                    p=0.8     p=0.2
+     *                    p=0.6     p=0.4
      *                     /           \
      *                    /             \
      *             Node(v=-0.3)     Node(v=0.8)
      *
      * PUCT scores (Q + U * c)
      * - step1
-     *     - Move(SQ_A3, SQ_A4): 0 + 0.8 * 1 = 0.8 <-
-     *     - Move(SQ_B4, SQ_A4): 0 + 0.2 * 1 = 0.2
+     *     - Move(SQ_A3, SQ_A4): 0 + 0.6 * 1 = 0.6 <-
+     *     - Move(SQ_B4, SQ_A4): 0 + 0.4 * 1 = 0.4
      * - step2
-     *     - Move(SQ_A3, SQ_A4): -0.3 + (0.8 * sqrt(2) / 2) * 1 = 0.266
-     *     - Move(SQ_B4, SQ_A4): 0 + (0.2 * sqrt(2) / 1) * 1 = 0.282 <-
+     *     - Move(SQ_A3, SQ_A4): -0.3 + (0.6 * sqrt(2) / 2) * 1 = 0.124
+     *     - Move(SQ_B4, SQ_A4): -0.15 + (0.4 * sqrt(2) / 1) * 1 = 0.416 <-
      * - step3
-     *     - Move(SQ_A3, SQ_A4): -0.3 + (0.8 * sqrt(3) / 2) * 1 = 0.392
-     *     - Move(SQ_B4, SQ_A4): 0.8 + (0.2 * sqrt(3) / 2) * 1 = 0.973 <-
+     *     - Move(SQ_A3, SQ_A4): -0.3 + (0.6 * sqrt(3) / 2) * 1 = 0.220
+     *     - Move(SQ_B4, SQ_A4): 0.8 + (0.4 * sqrt(3) / 2) * 1 = 1.15 <-
      */
 
     std::vector<float> input_value = {0.3f, -0.8f, -0.8f};
-    const float atanh0p3 = std::atanh(0.3f);
-    const float atanh0p2 = std::atanh(0.2f);
     const Move moves[]
         = {Move(SQ_A3, SQ_A4), Move(SQ_B4, SQ_A4), Move(SQ_B4, SQ_A4)};
     std::vector<float> expected_q_value = {
@@ -131,10 +129,10 @@ TEST(animal_shogi_node, explore_two_action)
         = {Move(SQ_A3, SQ_A4), Move(SQ_B4, SQ_A4), Move(SQ_B4, SQ_A4)};
     const float expected_greedy_q_values[] = {-0.3f, 0.8f, 0.8f};
 
-    // softmax([-0.693, 0.693]) -> [0.2000471, 0.7999529]
+    // softmax([-0.202, 0.202]) -> [0.5996, 0.4003]
     float logits[Game::num_dlshogi_policy()] = {0.f};
-    logits[Move(SQ_A3, SQ_A4).to_dlshogi_policy_index()] = 0.693f;
-    logits[Move(SQ_B4, SQ_A4).to_dlshogi_policy_index()] = -0.693f;
+    logits[Move(SQ_A3, SQ_A4).to_dlshogi_policy_index()] = 0.202f;
+    logits[Move(SQ_B4, SQ_A4).to_dlshogi_policy_index()] = -0.202f;
     auto g = Game("1l1/3/3/G2 b -");
     auto root = Node(
         {Move(SQ_A3, SQ_A4), Move(SQ_B4, SQ_A4)}, vshogi::BLACK, 0.f, logits);
