@@ -10,6 +10,7 @@
 
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/result.hpp"
+#include "vshogi/common/utils.hpp"
 #include "vshogi/engine/dfpn.hpp"
 
 namespace vshogi::engine::mcts
@@ -575,23 +576,6 @@ private:
             (candidate->m_visit_count == m_most_visited_child->m_visit_count)
             && (candidate->m_q_value < m_most_visited_child->m_q_value))
             m_most_visited_child = candidate;
-    }
-
-private:
-    static void softmax(std::vector<float>& v)
-    {
-        if (v.empty())
-            return;
-        const float maximum_value = *std::max_element(v.cbegin(), v.cend());
-        float sum = 0.f;
-        for (auto&& e : v) {
-            e -= maximum_value;
-            e = std::exp(e);
-            sum += e;
-        }
-        for (auto&& e : v) {
-            e /= sum;
-        }
     }
 };
 

@@ -573,6 +573,29 @@ class Game(abc.ABC):
                 f'Unsupported type for `action_proba`: {type(action_proba)}')
         return self._game.to_dlshogi_policy(action_proba, default_value)
 
+    def masked_softmax(self, logits: np.ndarray) -> tp.Dict[Move, float]:
+        """Return masked softmax given logits.
+
+        Parameters
+        ----------
+        logits : np.ndarray
+            Logit values including values corresponding to invalid actions.
+
+        Returns
+        -------
+        tp.Dict[Move, float]
+            Probability of each action.
+
+        Examples
+        --------
+        >>> import vshogi.animal_shogi as shogi
+        >>> g = shogi.Game()
+        >>> logits = np.zeros(g.num_dlshogi_policy)
+        >>> g.masked_softmax(logits)  # doctest: +ELLIPSIS
+        {Move(dst=C3, src=C4): 0.25, Move(dst=C3, src=B4): 0.25, ...}
+        """
+        return self._game.masked_softmax(logits)
+
     def get_mate_moves_if_any(
         self,
         num_dfpn_nodes: int = 10000,

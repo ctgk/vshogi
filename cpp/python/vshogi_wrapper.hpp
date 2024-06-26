@@ -232,6 +232,27 @@ inline void export_game(pybind11::module& m)
                 return out;
             })
         .def(
+            "masked_softmax",
+            [](const Game& self, const py::array_t<float>& logits) -> py::dict {
+                py::dict out;
+                const auto is_black_turn = (self.get_turn() == vshogi::BLACK);
+                const auto& actions = self.get_legal_moves();
+                auto proba = std::vector<float>(actions.size());
+                const auto data = logits.data();
+                for (std::size_t ii = actions.size(); ii--;) {
+                    const auto index
+                        = (is_black_turn)
+                              ? actions[ii].to_dlshogi_policy_index()
+                              : actions[ii].rotate().to_dlshogi_policy_index();
+                    proba[ii] = data[index];
+                }
+                vshogi::softmax(proba);
+                for (std::size_t ii = actions.size(); ii--;) {
+                    out[py::cast(actions[ii])] = proba[ii];
+                }
+                return out;
+            })
+        .def(
             "get_mate_moves_if_any",
             [](const Game& self, const int num_dfpn_nodes) -> py::object {
                 if constexpr (std::is_same<Game, vshogi::animal_shogi::Game>::
