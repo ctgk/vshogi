@@ -37,4 +37,4 @@ jobs:
       env:
         NAME: ${{ matrix.game.name }}
         CYCLE: ${{ matrix.game.rl_cycle }}
-      run: python -m vshogi $NAME $NAME/models/model_0000.tflite $NAME/models/model_$(printf %04d $CYCLE).tflite
+      run: python -m vshogi $NAME --player1 $NAME/models/model_0000.tflite --player2 $NAME/models/model_$(printf %04d $CYCLE).tflite

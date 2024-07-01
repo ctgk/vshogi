@@ -1,5 +1,6 @@
 """Command Line Interface to make two models play against each other."""
 
+import itertools
 import os
 import typing as tp
 
@@ -61,11 +62,13 @@ class Args:
         help='Choose a variant of shogi to play',
     )
     player1: str = config(
-        long=False,
+        nargs='*',
+        required=True,
         help='Path to tflite model of first player',
     )
     player2: str = config(
-        long=False,
+        nargs='*',
+        required=True,
         help='Path to tflite model of second player',
     )
     num_games_each: int = config(
@@ -98,29 +101,31 @@ class Args:
     )
 
 
-
-if __name__ == "__main__":
-    args = Args.from_args()
-    shogi = getattr(vshogi, args.shogi_variant)
-
+def _get_results_of_single_pair(
+    shogi_variant: str,
+    player1: str,
+    player2: str,
+    num_games_each: int,
+    show_pbar: bool,
+    mcts_init_args: dict,
+    search_args: dict,
+    select_args: dict,
+) -> dict:
+    shogi = getattr(vshogi, shogi_variant)
     player1 = vshogi.engine.DfpnMcts(
         vshogi.engine.DfpnSearcher(),
         vshogi.engine.MonteCarloTreeSearcher(
-            PolicyValueFunction(args.player1),
-            coeff_puct=args.mcts_coeff_puct,
+            PolicyValueFunction(player1),
+            **mcts_init_args,
         ),
     )
     player2 = vshogi.engine.DfpnMcts(
         vshogi.engine.DfpnSearcher(),
         vshogi.engine.MonteCarloTreeSearcher(
-            PolicyValueFunction(args.player2),
-            coeff_puct=args.mcts_coeff_puct,
+            PolicyValueFunction(player2),
+            **mcts_init_args,
         ),
     )
-
-    print(f'player1: {args.player1}')
-    print(f'player2: {args.player2}')
-
     results_of_p1 = {
         'bwin': 0,
         'bdraw': 0,
@@ -129,23 +134,16 @@ if __name__ == "__main__":
         'wdraw': 0,
         'wloss': 0,
     }
-    iterator = range(args.num_games_each * 2)
-    if args.show_pbar:
+    iterator = range(num_games_each * 2)
+    if show_pbar:
         iterator = tqdm(iterator, ncols=80)
         iterator.set_description(str({'p1': 0, 'draw': 0, 'p2': 0}))
     for i in iterator:
         if i % 2 == 0:
             result = vshogi.play_game(
                 shogi.Game(), player1, player2,
-                search_args={
-                    'dfpn_searches_at_root': args.dfpn_search_root,
-                    'mcts_searches': args.mcts_explorations,
-                    'dfpn_searches_at_vertex': args.dfpn_search_vertex,
-                    'kldgain_threshold': args.mcts_kldgain_threshold,
-                },
-                select_args={
-                    'temperature': args.mcts_temperature,
-                },
+                search_args=search_args,
+                select_args=select_args,
             ).result
             if result == vshogi.BLACK_WIN:
                 results_of_p1['bwin'] += 1
@@ -156,15 +154,8 @@ if __name__ == "__main__":
         else:
             result = vshogi.play_game(
                 shogi.Game(), player2, player1,
-                search_args={
-                    'dfpn_searches_at_root': args.dfpn_search_root,
-                    'mcts_searches': args.mcts_explorations,
-                    'dfpn_searches_at_vertex': args.dfpn_search_vertex,
-                    'kldgain_threshold': args.mcts_kldgain_threshold,
-                },
-                select_args={
-                    'temperature': args.mcts_temperature,
-                },
+                search_args=search_args,
+                select_args=select_args,
             ).result
             if result == vshogi.BLACK_WIN:
                 results_of_p1['wloss'] += 1
@@ -178,24 +169,66 @@ if __name__ == "__main__":
                 'draw': results_of_p1['bdraw'] + results_of_p1['wdraw'],
                 'p2': results_of_p1['bloss'] + results_of_p1['wloss'],
             }))
+    return results_of_p1
 
+
+def _print_results(results: dict):
     print(MESSAGE_TEMPLATE.format(
-        results_of_p1['bwin'] + results_of_p1['wwin'],
-        results_of_p1['bwin'],
-        results_of_p1['wwin'],
-        results_of_p1['bdraw'] + results_of_p1['wdraw'],
-        results_of_p1['bdraw'],
-        results_of_p1['wdraw'],
-        results_of_p1['bloss'] + results_of_p1['wloss'],
-        results_of_p1['bloss'],
-        results_of_p1['wloss'],
-        results_of_p1['bloss'] + results_of_p1['wloss'],
-        results_of_p1['wloss'],
-        results_of_p1['bloss'],
-        results_of_p1['bdraw'] + results_of_p1['wdraw'],
-        results_of_p1['wdraw'],
-        results_of_p1['bdraw'],
-        results_of_p1['bwin'] + results_of_p1['wwin'],
-        results_of_p1['wwin'],
-        results_of_p1['bwin'],
+        results['bwin'] + results['wwin'],
+        results['bwin'],
+        results['wwin'],
+        results['bdraw'] + results['wdraw'],
+        results['bdraw'],
+        results['wdraw'],
+        results['bloss'] + results['wloss'],
+        results['bloss'],
+        results['wloss'],
+        results['bloss'] + results['wloss'],
+        results['wloss'],
+        results['bloss'],
+        results['bdraw'] + results['wdraw'],
+        results['wdraw'],
+        results['bdraw'],
+        results['bwin'] + results['wwin'],
+        results['wwin'],
+        results['bwin'],
     ))
+
+
+if __name__ == "__main__":
+    args = Args.from_args()
+
+    results_of_p1_accumulated = {}
+    for p1, p2 in itertools.product(args.player1, args.player2):
+        if args.show_pbar:
+            print(f'player1: {p1}')
+            print(f'player2: {p2}')
+        results_of_p1 = _get_results_of_single_pair(
+            args.shogi_variant,
+            p1, p2, args.num_games_each, args.show_pbar,
+            mcts_init_args = {
+                'coeff_puct': args.mcts_coeff_puct,
+            },
+            search_args={
+                'dfpn_searches_at_root': args.dfpn_search_root,
+                'mcts_searches': args.mcts_explorations,
+                'dfpn_searches_at_vertex': args.dfpn_search_vertex,
+                'kldgain_threshold': args.mcts_kldgain_threshold,
+            },
+            select_args={
+                'temperature': args.mcts_temperature,
+            },
+        )
+        for key, value in results_of_p1.items():
+            if key not in results_of_p1_accumulated:
+                results_of_p1_accumulated[key] = value
+            else:
+                results_of_p1_accumulated[key] += value
+
+        if args.show_pbar:
+            _print_results(results_of_p1)
+
+    if (not args.show_pbar) or (len(args.player1) > 1) or (len(args.player2) > 1):
+        print(f'player1: {args.player1}')
+        print(f'player2: {args.player2}')
+        _print_results(results_of_p1_accumulated)
