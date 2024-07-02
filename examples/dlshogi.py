@@ -211,9 +211,9 @@ def dump_game_records(file_, game: vshogi.Game, color_filter: vshogi.Color = Non
             lambda g, i: g.v_value_record[i],
             lambda g, i: g.q_value_record[i],
             lambda g, i: g.visit_count_record[i],
-            lambda g, i: g.is_random_record[i],
+            lambda g, i: g.z_weight_record[i],
         ),
-        names=('state', 'move', 'result', 'v_value', 'q_value', 'visit_count', 'is_random'),
+        names=('state', 'move', 'result', 'v_value', 'q_value', 'visit_count', 'z_weight'),
         file_=file_,
         color_filter=color_filter,
     )
@@ -234,7 +234,7 @@ def play_game(
     player_black: vshogi.engine.DfpnMcts,
     player_white: vshogi.engine.DfpnMcts,
     args: Args,
-    max_moves: int = 400,
+    max_moves: int = 320,
 ) -> vshogi.Game:
     """Make two players play the game until an end.
 
@@ -257,7 +257,7 @@ def play_game(
     game.v_value_record = []
     game.q_value_record = []
     game.visit_count_record = []
-    game.is_random_record = []
+    game.z_weight_record = []
     for _ in range(max_moves):
         if game.result != vshogi.Result.ONGOING:
             break
@@ -289,17 +289,17 @@ def play_game(
                     game.visit_count_record.append({
                         m.to_usi(): 1 for m in legal_moves
                     })
-                game.is_random_record.append(False)
+                game.z_weight_record.append(1.)
                 game.apply(move)
                 player.apply(move)
             break
 
         if game.record_length < args._num_random_moves:
             move = player.select(temperature=args.mcts_temperature)
-            game.is_random_record.append(True)
+            game.z_weight_record.append(0.)
         else:
             move = player.select()
-            game.is_random_record.append(False)
+            game.z_weight_record.append(0.5)
 
         visit_count = {
             m.to_usi(): v + 1  # +1 for smoothing
@@ -355,8 +355,8 @@ def play_game_and_dump_record(
 def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
     df = pd.read_csv(
         tsv_path, sep='\t',
-        usecols=['state', 'result', 'q_value', 'visit_count', 'is_random'],
-        dtype={'state': str, 'result': str, 'q_value': float, 'visit_count': str, 'is_random': bool},
+        usecols=['state', 'result', 'q_value', 'visit_count', 'z_weight'],
+        dtype={'state': str, 'result': str, 'q_value': float, 'visit_count': str, 'z_weight': float},
     )
     if fraction is None:
         return df
@@ -379,10 +379,7 @@ def kifu_to_tfrecord(
             s = sum(visit_count.values())
             visit_proba = {m: v / s for m, v in visit_count.items()}
             z_value = 0 if ('DRAW' in row.result) else 2 * int(('BLACK' in row.result) == (' b ' in row.state)) - 1
-            if row.is_random:
-                value = row.q_value
-            else:
-                value = 0.5 * (z_value + row.q_value)
+            value = row.z_weight * z_value + (1 - row.z_weight) * row.q_value
 
             x = state.to_dlshogi_features()
             policy = state.to_dlshogi_policy(visit_proba, default_value=-100000.)
