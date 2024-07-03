@@ -358,6 +358,7 @@ def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
         usecols=['state', 'result', 'q_value', 'visit_count', 'z_weight'],
         dtype={'state': str, 'result': str, 'q_value': float, 'visit_count': str, 'z_weight': float},
     )
+    df = df[df['z_weight'] < 0.9]
     if fraction is None:
         return df
     n = int(len(df) * fraction)
