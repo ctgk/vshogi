@@ -277,18 +277,8 @@ def play_game(
             for i, move in enumerate(mate_moves):
                 player.search(dfpn_searches_at_root=0, mcts_searches=1, dfpn_searches_at_vertex=0)
                 game.v_value_record.append(player.get_value())
-                q_value = int(i % 2 == 0) * 2 - 1
-                game.q_value_record.append(q_value)
-                legal_moves = game.get_legal_moves()
-                if i % 2 == 0:
-                    game.visit_count_record.append({
-                        m.to_usi(): 10 * len(legal_moves) if m == move else 1
-                        for m in legal_moves
-                    })
-                else:
-                    game.visit_count_record.append({
-                        m.to_usi(): 1 for m in legal_moves
-                    })
+                game.q_value_record.append(int(i % 2 == 0) * 2 - 1)
+                game.visit_count_record.append({})
                 game.z_weight_record.append(1.)
                 game.apply(move)
                 player.apply(move)
@@ -358,7 +348,6 @@ def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
         usecols=['state', 'result', 'q_value', 'visit_count', 'z_weight'],
         dtype={'state': str, 'result': str, 'q_value': float, 'visit_count': str, 'z_weight': float},
     )
-    df = df[df['z_weight'] < 0.9]
     if fraction is None:
         return df
     n = int(len(df) * fraction)
