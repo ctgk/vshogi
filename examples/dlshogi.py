@@ -258,6 +258,10 @@ def play_game(
     game.q_value_record = []
     game.visit_count_record = []
     game.z_weight_record = []
+    num_random_moves = (
+        np.random.choice(args._num_random_moves + 1)
+        if np.isfinite(args._num_random_moves) else args._num_random_moves
+    )
     for _ in range(max_moves):
         if game.result != vshogi.Result.ONGOING:
             break
@@ -284,7 +288,7 @@ def play_game(
                 player.apply(move)
             break
 
-        if game.record_length < args._num_random_moves:
+        if game.record_length < num_random_moves:
             move = player.select(temperature=args.mcts_temperature)
             game.z_weight_record.append(0.)
         else:
