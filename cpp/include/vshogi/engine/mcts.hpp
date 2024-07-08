@@ -365,7 +365,8 @@ private:
         }
         ++(ch->m_visit_count);
         if ((m_most_visited_child == nullptr)
-            || (ch->m_visit_count > m_most_visited_child->m_visit_count))
+            || (ch->m_visit_count_excluding_random
+                > m_most_visited_child->m_visit_count_excluding_random))
             m_most_visited_child = ch;
         return ch;
     }
@@ -570,10 +571,13 @@ private:
     {
         if (m_most_visited_child == nullptr)
             m_most_visited_child = candidate;
-        else if (candidate->m_visit_count > m_most_visited_child->m_visit_count)
+        else if (
+            candidate->m_visit_count_excluding_random
+            > m_most_visited_child->m_visit_count_excluding_random)
             m_most_visited_child = candidate;
         else if (
-            (candidate->m_visit_count == m_most_visited_child->m_visit_count)
+            (candidate->m_visit_count_excluding_random
+             == m_most_visited_child->m_visit_count_excluding_random)
             && (candidate->m_q_value < m_most_visited_child->m_q_value))
             m_most_visited_child = candidate;
     }
