@@ -571,7 +571,7 @@ def run_train(args: Args):
         if os.path.exists(f'models/checkpoint_{i:04d}'):
             print(f"Loading checkpoint_{i:04d}")
             network.load_weights(f'models/checkpoint_{i:04d}/checkpoint_{i:04d}').expect_partial()
-        else:
+        elif os.path.exists(f'models/checkpoint_{i-1:04d}'):
             print(f"Loading checkpoint_{i-1:04d}")
             network.load_weights(f'models/checkpoint_{i-1:04d}/checkpoint_{i-1:04d}').expect_partial()
     if i > 0:
