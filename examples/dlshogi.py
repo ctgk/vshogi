@@ -150,7 +150,8 @@ def build_policy_value_network(
         return tf.keras.layers.Flatten(name='policy_logits')(h)
 
     def value_network(x):
-        h = relu_pconv(x, 1)
+        h = bn(pointwise_conv2d(x, 1))
+        h = tf.keras.layers.LeakyReLU()(h)
         h = tf.keras.layers.Flatten()(h)
         return tf.keras.layers.Dense(
             1, activation='tanh', name='value', kernel_regularizer=r)(h)
