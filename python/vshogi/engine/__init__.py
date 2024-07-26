@@ -2,12 +2,14 @@
 
 from vshogi.engine._dfpn import DfpnSearcher
 from vshogi.engine._dfpn_mcts import DfpnMcts
+from vshogi.engine._engine import Engine
 from vshogi.engine._mcts import Mcts
 
 
 _classes = [
     DfpnMcts,
     DfpnSearcher,
+    Engine,
     Mcts,
 ]
 
