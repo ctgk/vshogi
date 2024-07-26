@@ -3,34 +3,33 @@
 
 #include <string>
 
+#include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/direction.hpp"
+#include "vshogi/common/pieces.hpp"
+#include "vshogi/common/squares.hpp"
 
 namespace vshogi
 {
 
-template <class Squares, class Pieces, class BitBoard>
+template <class Config>
 class Board
 {
-public:
-    using SquaresType = Squares;
-    using PiecesType = Pieces;
-    using BitBoardType = BitBoard;
-    using BoardPieceTypeEnum = typename Pieces::BoardPieceTypeEnum;
-    using SquareEnum = typename Squares::SquareEnum;
-    using RankEnum = typename Squares::RankEnum;
+private:
+    using SHelper = Squares<Config>;
+    using PHelper = Pieces<Config>;
+    using BitBoardType = BitBoard<Config>;
+    using BoardPieceType = typename Config::BoardPieceType;
+    using Square = typename Config::Square;
+    using Rank = typename Config::Rank;
+    static constexpr auto num_files = Config::num_files;
+    static constexpr auto num_ranks = Config::num_ranks;
+    static constexpr auto num_squares = Config::num_squares;
+    static constexpr auto VOID = PHelper::VOID; // NOLINT
+    static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
 private:
-    static constexpr auto get_color = Pieces::get_color;
-    static constexpr auto to_board_piece = Pieces::to_board_piece;
-    static constexpr auto VOID = Pieces::VOID; // NOLINT
-    static constexpr auto num_files = Squares::num_files;
-    static constexpr auto num_ranks = Squares::num_ranks;
-    static constexpr auto num_squares = Squares::num_squares;
-    static constexpr auto SQ_NA = Squares::SQ_NA; // NOLINT
-
-private:
-    BoardPieceTypeEnum m_pieces[num_squares];
+    BoardPieceType m_pieces[num_squares];
 
 public:
     Board();
@@ -40,7 +39,7 @@ public:
     }
     bool operator==(const Board& other) const
     {
-        for (auto& sq : Squares::square_array) {
+        for (auto& sq : SHelper::square_array) {
             if (m_pieces[sq] != other.m_pieces[sq])
                 return false;
         }
@@ -48,46 +47,46 @@ public:
     }
     bool operator!=(const Board& other) const
     {
-        for (auto& sq : Squares::square_array) {
+        for (auto& sq : SHelper::square_array) {
             if (m_pieces[sq] != other.m_pieces[sq])
                 return true;
         }
         return false;
     }
-    BoardPieceTypeEnum operator[](const SquareEnum& sq) const
+    BoardPieceType operator[](const Square& sq) const
     {
         return m_pieces[sq];
     }
-    BoardPieceTypeEnum& operator[](const SquareEnum& sq)
+    BoardPieceType& operator[](const Square& sq)
     {
         return m_pieces[sq];
     }
-    bool is_empty(const SquareEnum& sq) const
+    bool is_empty(const Square& sq) const
     {
         return (m_pieces[sq] == VOID);
     }
     const char* set_sfen(const char* sfen)
     {
         for (uint ir = 0U; ir < num_ranks; ++ir) {
-            sfen = set_sfen_rank(sfen, static_cast<RankEnum>(ir));
+            sfen = set_sfen_rank(sfen, static_cast<Rank>(ir));
         }
         return sfen;
     }
     void append_sfen(std::string& out) const
     {
-        append_sfen_rank(static_cast<RankEnum>(0), out);
+        append_sfen_rank(static_cast<Rank>(0), out);
         for (uint ir = 1; ir < num_ranks; ++ir) {
             out += '/';
-            append_sfen_rank(static_cast<RankEnum>(ir), out);
+            append_sfen_rank(static_cast<Rank>(ir), out);
         }
     }
-    SquareEnum find_attacker(
+    Square find_attacker(
         const ColorEnum& attacker_color,
-        const SquareEnum& attacked,
+        const Square& attacked,
         const DirectionEnum& dir,
-        const SquareEnum& skip = SQ_NA) const
+        const Square& skip = SQ_NA) const
     {
-        auto ptr_sq = Squares::get_squares_along(dir, attacked);
+        auto ptr_sq = SHelper::get_squares_along(dir, attacked);
         if (ptr_sq == nullptr)
             return SQ_NA;
         for (; *ptr_sq != SQ_NA; ++ptr_sq) {
@@ -95,21 +94,21 @@ public:
             const auto& p = m_pieces[sq];
             if ((p == VOID) || (sq == skip))
                 continue;
-            if ((Pieces::get_color(p) == attacker_color)
-                && BitBoard::get_attacks_by(p, sq).is_one(attacked))
+            if ((PHelper::get_color(p) == attacker_color)
+                && BitBoardType::get_attacks_by(p, sq).is_one(attacked))
                 return sq;
             return SQ_NA;
         }
         return SQ_NA;
     }
-    SquareEnum find_pinned(
+    Square find_pinned(
         const ColorEnum& attacker_color,
-        const SquareEnum& attacked,
+        const Square& attacked,
         const DirectionEnum& dir) const
     {
         const auto dir_rotated = vshogi::rotate(dir);
-        SquareEnum out = SQ_NA;
-        auto ptr_sq = Squares::get_squares_along(dir, attacked);
+        Square out = SQ_NA;
+        auto ptr_sq = SHelper::get_squares_along(dir, attacked);
         if (ptr_sq == nullptr)
             return SQ_NA;
         for (; *ptr_sq != SQ_NA; ++ptr_sq) {
@@ -117,13 +116,13 @@ public:
             const auto& p = m_pieces[sq];
             if (p == VOID)
                 continue;
-            if (Pieces::get_color(p) != attacker_color) {
+            if (PHelper::get_color(p) != attacker_color) {
                 if (out == SQ_NA)
                     out = sq;
                 else
                     return SQ_NA;
             } else {
-                if (Pieces::is_ranging_to(p, dir_rotated))
+                if (PHelper::is_ranging_to(p, dir_rotated))
                     return out;
                 else
                     return SQ_NA;
@@ -133,10 +132,10 @@ public:
     }
     bool is_square_attacked(
         const ColorEnum& attacker_color,
-        const SquareEnum& sq,
-        const SquareEnum& skip = SQ_NA) const
+        const Square& sq,
+        const Square& skip = SQ_NA) const
     {
-        for (auto&& dir : Squares::direction_array) {
+        for (auto&& dir : Config::dir_array) {
             if (find_attacker(attacker_color, sq, dir, skip) != SQ_NA)
                 return true;
         }
@@ -145,16 +144,16 @@ public:
     Board hflip() const
     {
         Board out;
-        for (auto&& sq : Squares::square_array) {
-            const auto sq_hflipped = Squares::hflip(sq);
+        for (auto&& sq : SHelper::square_array) {
+            const auto sq_hflipped = SHelper::hflip(sq);
             out.m_pieces[sq_hflipped] = m_pieces[sq];
         }
         return out;
     }
 
 private:
-    const char* set_sfen_rank(const char* const sfen_rank, const RankEnum rank);
-    void append_sfen_rank(const RankEnum rank, std::string& out) const
+    const char* set_sfen_rank(const char* const sfen_rank, const Rank rank);
+    void append_sfen_rank(const Rank rank, std::string& out) const
     {
         auto ptr = m_pieces + num_files * static_cast<uint>(rank);
         const auto end = ptr + num_files;
@@ -168,7 +167,7 @@ private:
                 out += static_cast<char>('0' + num_void);
                 num_void = 0;
             }
-            Pieces::append_sfen(*ptr, out);
+            PHelper::append_sfen(*ptr, out);
         }
         if (num_void > 0)
             out += static_cast<char>('0' + num_void);

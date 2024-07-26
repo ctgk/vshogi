@@ -5,9 +5,16 @@
 #include <string>
 #include <vector>
 
+#include "vshogi/common/bitboard.hpp"
+#include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/direction.hpp"
+#include "vshogi/common/move.hpp"
+#include "vshogi/common/pieces.hpp"
 #include "vshogi/common/result.hpp"
+#include "vshogi/common/squares.hpp"
+#include "vshogi/common/stand.hpp"
+#include "vshogi/common/state.hpp"
 
 namespace vshogi
 {
@@ -15,105 +22,113 @@ namespace vshogi
 namespace internal
 {
 
-template <class State>
-uint num_pieces(const State& s, const ColorEnum& c)
+template <class Config>
+uint num_pieces(const State<Config>& s, const ColorEnum& c)
 {
-    using Squares = typename State::SquaresType;
-    using Pieces = typename State::PiecesType;
+    using SHelper = Squares<Config>;
+    using PHelper = Pieces<Config>;
     const auto& board = s.get_board();
     const auto& stand = s.get_stand(c);
     uint out = 0u;
-    for (auto& sq : Squares::square_array) {
+    for (auto& sq : SHelper::square_array) {
         const auto p = board[sq];
-        if (p == Pieces::VOID)
+        if (p == PHelper::VOID)
             continue;
-        if (Pieces::get_color(p) == c)
+        if (PHelper::get_color(p) == c)
             out += 1U;
     }
-    for (auto& pt : Pieces::stand_piece_array) {
+    for (auto& pt : PHelper::stand_piece_array) {
         out += stand.count(pt);
     }
     return out;
 }
 
-template <class State>
-uint total_point(const State& s, const ColorEnum& c)
+template <class Config>
+uint total_point(const State<Config>& s, const ColorEnum& c)
 {
-    using Squares = typename State::SquaresType;
-    using Pieces = typename State::PiecesType;
+    using SHelper = Squares<Config>;
+    using PHelper = Pieces<Config>;
     uint out = 0u;
     const auto& board = s.get_board();
     const auto& stand = s.get_stand(c);
-    for (auto& sq : Squares::square_array) {
+    for (auto& sq : SHelper::square_array) {
         const auto p = board[sq];
-        if (p == Pieces::VOID)
+        if (p == PHelper::VOID)
             continue;
-        if (Pieces::get_color(p) == c)
-            out += Pieces::get_point(p);
+        if (PHelper::get_color(p) == c)
+            out += PHelper::get_point(p);
     }
-    for (auto& pt : Pieces::stand_piece_array) {
-        out += stand.count(pt) * Pieces::get_point(pt);
+    for (auto& pt : PHelper::stand_piece_array) {
+        out += stand.count(pt) * PHelper::get_point(pt);
     }
     return out;
 }
 
 } // namespace internal
 
-template <class State, uint MaxAcceptableRepetition = 3>
+template <class Config>
 class Game
 {
-public:
-    using Board = typename State::BoardType;
-    using BitBoard = typename State::BitBoardType;
-    using Stand = typename State::StandType;
-    using Move = typename State::MoveType;
-    using Squares = typename State::SquaresType;
-    using SquareEnum = typename Squares::SquareEnum;
-    using Pieces = typename State::PiecesType;
-    using StateType = State;
+private:
+    using Square = typename Config::Square;
+    using File = typename Config::File;
+    using BoardPieceType = typename Config::BoardPieceType;
+    using PHelper = Pieces<Config>;
+    using SHelper = Squares<Config>;
+    using BitBoardType = BitBoard<Config>;
+    using BoardType = Board<Config>;
+    using MoveType = Move<Config>;
+    using StandType = Stand<Config>;
+    using StateType = State<Config>;
+
+    static constexpr uint num_ranks = Config::num_ranks;
+    static constexpr uint num_files = Config::num_files;
+    static constexpr uint num_squares = Config::num_squares;
+    static constexpr uint max_acceptable_repetitions
+        = Config::max_acceptable_repetitions;
 
 private:
-    State m_current_state;
+    StateType m_current_state;
 
     std::vector<std::uint64_t> m_zobrist_hash_list;
-    std::vector<Move> m_move_list;
-    std::vector<Move> m_legal_moves;
+    std::vector<MoveType> m_move_list;
+    std::vector<MoveType> m_legal_moves;
     ResultEnum m_result;
     std::uint64_t m_zobrist_hash;
     const std::string m_initial_sfen_without_ply;
     const uint m_half_num_pieces[2];
     const uint m_initial_points[2];
-    BitBoard m_occupied[num_colors + 1];
-    SquareEnum m_king_locations[num_colors];
-    SquareEnum m_checker_locations[2];
+    BitBoardType m_occupied[num_colors + 1];
+    Square m_king_locations[num_colors];
+    Square m_checker_locations[2];
 
 public:
-    Game() : Game(State())
+    Game() : Game(StateType())
     {
     }
-    Game(const std::string& sfen) : Game(State(sfen))
+    Game(const std::string& sfen) : Game(StateType(sfen))
     {
     }
     static constexpr uint ranks()
     {
-        return Squares::num_ranks;
+        return num_ranks;
     }
     static constexpr uint files()
     {
-        return Squares::num_files;
+        return num_files;
     }
-    static constexpr uint num_squares()
+    static constexpr uint squares()
     {
-        return Squares::num_squares;
+        return num_squares;
     }
     static constexpr uint board_piece_types()
     {
-        return sizeof(Pieces::piece_array) / sizeof(Pieces::piece_array[0]);
+        return sizeof(PHelper::piece_array) / sizeof(PHelper::piece_array[0]);
     }
     static constexpr uint stand_piece_types()
     {
-        return sizeof(Pieces::stand_piece_array)
-               / sizeof(Pieces::stand_piece_array[0]);
+        return sizeof(PHelper::stand_piece_array)
+               / sizeof(PHelper::stand_piece_array[0]);
     }
     static constexpr uint feature_channels()
     {
@@ -122,29 +137,29 @@ public:
     }
     static constexpr uint num_dlshogi_policy()
     {
-        return ranks() * files() * Move::num_policy_per_square();
+        return ranks() * files() * MoveType::num_policy_per_square();
     }
     ColorEnum get_turn() const
     {
         return m_current_state.get_turn();
     }
-    const Board& get_board() const
+    const BoardType& get_board() const
     {
         return m_current_state.get_board();
     }
-    const Stand& get_stand(const ColorEnum c) const
+    const StandType& get_stand(const ColorEnum c) const
     {
         return m_current_state.get_stand(c);
     }
-    const std::vector<Move>& get_legal_moves() const
+    const std::vector<MoveType>& get_legal_moves() const
     {
         return m_legal_moves;
     }
-    const SquareEnum& get_king_location(const ColorEnum& c) const
+    const Square& get_king_location(const ColorEnum& c) const
     {
         return m_king_locations[c];
     }
-    const SquareEnum& get_checker_location(const uint index = 0u) const
+    const Square& get_checker_location(const uint index = 0u) const
     {
         return m_checker_locations[index];
     }
@@ -168,14 +183,14 @@ public:
     {
         return m_move_list.size();
     }
-    Move get_move_at(const std::size_t n) const
+    MoveType get_move_at(const std::size_t n) const
     {
         return m_move_list[n];
     }
     std::string
     get_sfen_at(const std::size_t n, const bool include_move_count = true) const
     {
-        auto s = State(m_initial_sfen_without_ply);
+        auto s = StateType(m_initial_sfen_without_ply);
         for (std::size_t ii = 0; ii < n; ++ii)
             s.apply(m_move_list[ii]);
         if (include_move_count)
@@ -197,7 +212,7 @@ public:
         m_result = (get_turn() == BLACK) ? WHITE_WIN : BLACK_WIN;
         return *this;
     }
-    Game& apply(const Move& move)
+    Game& apply(const MoveType& move)
     {
         if ((m_result == ONGOING) && (!is_legal(move))) {
             add_record_and_update_state(move);
@@ -206,31 +221,31 @@ public:
         }
         return apply_nocheck(move);
     }
-    Game& apply_nocheck(const Move& move)
+    Game& apply_nocheck(const MoveType& move)
     {
         add_record_and_update_state(move);
         update_internals(move);
         return *this;
     }
-    Game& apply_mcts_internal_vertex(const Move& move)
+    Game& apply_mcts_internal_vertex(const MoveType& move)
     {
         add_record_and_update_state(move);
         update_internals_mcts_internal_vertex(move);
         return *this;
     }
-    Game& apply_dfpn_offence(const Move& move)
+    Game& apply_dfpn_offence(const MoveType& move)
     {
         add_record_and_update_state_for_dfpn(move);
         update_internals_dfpn_offence(move);
         return *this;
     }
-    Game& apply_dfpn_defence(const Move& move)
+    Game& apply_dfpn_defence(const MoveType& move)
     {
         add_record_and_update_state_for_dfpn(move);
         update_internals_dfpn_defence(move);
         return *this;
     }
-    Game copy_and_apply_dfpn_offence(const Move& move)
+    Game copy_and_apply_dfpn_offence(const MoveType& move)
     {
         auto out = Game(
             m_current_state,
@@ -251,7 +266,7 @@ public:
         out.apply_dfpn_offence(move);
         return out;
     }
-    Game copy_and_apply_dfpn_defence(const Move& move)
+    Game copy_and_apply_dfpn_defence(const MoveType& move)
     {
         auto out = Game(
             m_current_state,
@@ -272,7 +287,7 @@ public:
         out.apply_dfpn_defence(move);
         return out;
     }
-    bool is_legal(const Move move) const
+    bool is_legal(const MoveType move) const
     {
         return (
             std::find(m_legal_moves.cbegin(), m_legal_moves.cend(), move)
@@ -287,34 +302,34 @@ public:
      */
     bool in_check() const
     {
-        return m_checker_locations[0] != Squares::SQ_NA;
+        return m_checker_locations[0] != SHelper::SQ_NA;
     }
 
     template <bool CheckLegality = true>
-    bool is_check_move(const Move& move) const
+    bool is_check_move(const MoveType& move) const
     {
         if (CheckLegality && (!is_legal(move)))
             return false;
         const auto turn = get_turn();
         const auto dst = move.destination();
         const auto board_after_move
-            = State(m_current_state).apply(move).get_board();
+            = StateType(m_current_state).apply(move).get_board();
         const auto piece = board_after_move[dst];
         const auto enemy_king_sq = m_king_locations[~get_turn()];
 
         BitBoard occupied_after_move
-            = m_occupied[2] | BitBoard::from_square(dst);
+            = m_occupied[2] | BitBoardType::from_square(dst);
         if (!move.is_drop()) {
             const auto src = move.source_square();
-            const auto dir = Squares::get_direction(src, enemy_king_sq);
+            const auto dir = SHelper::get_direction(src, enemy_king_sq);
             if ((dir != DIR_NA)
-                && (dir != Squares::get_direction(dst, enemy_king_sq))
+                && (dir != SHelper::get_direction(dst, enemy_king_sq))
                 && (board_after_move.find_attacker(turn, enemy_king_sq, dir)
-                    != Squares::SQ_NA))
+                    != SHelper::SQ_NA))
                 return true; // discovered check
-            occupied_after_move &= (~BitBoard::from_square(src));
+            occupied_after_move &= (~BitBoardType::from_square(src));
         }
-        return BitBoard::get_attacks_by(piece, dst, occupied_after_move)
+        return BitBoardType::get_attacks_by(piece, dst, occupied_after_move)
             .is_one(enemy_king_sq);
     }
     void clear_records_for_dfpn()
@@ -329,7 +344,7 @@ public:
     }
 
 protected:
-    Game(const State& s)
+    Game(const StateType& s)
         : m_current_state(s), m_zobrist_hash_list(), m_move_list(),
           m_legal_moves(), m_result(ONGOING),
           m_zobrist_hash(m_current_state.zobrist_hash()),
@@ -346,9 +361,9 @@ protected:
         update_internals();
     }
     Game(
-        const State& s,
+        const StateType& s,
         const std::vector<uint64_t>& zobrist_hash_list,
-        const std::vector<Move>& move_list,
+        const std::vector<MoveType>& move_list,
         const ResultEnum& result,
         const uint64_t& zobrist_hash,
         const std::string& initial_sfen_without_ply,
@@ -356,11 +371,11 @@ protected:
         const uint& half_num_pieces_white,
         const uint& initial_points_black,
         const uint& initial_points_white,
-        const BitBoard& occupied_black,
-        const BitBoard& occupied_white,
-        const BitBoard& occupied_both,
-        const SquareEnum& king_location_black,
-        const SquareEnum& king_location_white)
+        const BitBoardType& occupied_black,
+        const BitBoardType& occupied_white,
+        const BitBoardType& occupied_both,
+        const Square& king_location_black,
+        const Square& king_location_white)
         : m_current_state(s), m_zobrist_hash_list(zobrist_hash_list),
           m_move_list(move_list), m_legal_moves(), m_result(result),
           m_zobrist_hash(zobrist_hash),
@@ -372,13 +387,13 @@ protected:
           m_checker_locations{}
     {
     }
-    void add_record_and_update_state(const Move& move)
+    void add_record_and_update_state(const MoveType& move)
     {
         m_zobrist_hash_list.emplace_back(m_zobrist_hash);
         m_move_list.emplace_back(move);
         m_current_state.apply(move, &m_zobrist_hash);
     }
-    void add_record_and_update_state_for_dfpn(const Move& move)
+    void add_record_and_update_state_for_dfpn(const MoveType& move)
     {
         m_move_list.emplace_back(move);
         m_current_state.apply(move, &m_zobrist_hash);
@@ -390,25 +405,25 @@ protected:
         update_legal_moves(false);
         update_result();
     }
-    void update_internals(const Move& move)
+    void update_internals(const MoveType& move)
     {
         update_king_occupied_checkers(move);
         update_legal_moves(false);
         update_result();
     }
-    void update_internals_mcts_internal_vertex(const Move& move)
+    void update_internals_mcts_internal_vertex(const MoveType& move)
     {
         update_king_occupied_checkers(move);
         m_legal_moves.clear();
         m_result = UNKNOWN;
     }
-    void update_internals_dfpn_offence(const Move& move)
+    void update_internals_dfpn_offence(const MoveType& move)
     {
         update_king_occupied_checkers(move);
         update_legal_moves(false);
         update_result_for_dfpn();
     }
-    void update_internals_dfpn_defence(const Move& move)
+    void update_internals_dfpn_defence(const MoveType& move)
     {
         update_king_occupied_checkers(move);
         update_legal_moves(true);
@@ -418,83 +433,83 @@ protected:
 protected:
     void update_king_occupied_checkers()
     {
-        m_king_locations[BLACK] = Squares::SQ_NA;
-        m_king_locations[WHITE] = Squares::SQ_NA;
-        m_occupied[BLACK] = BitBoard();
-        m_occupied[WHITE] = BitBoard();
+        m_king_locations[BLACK] = SHelper::SQ_NA;
+        m_king_locations[WHITE] = SHelper::SQ_NA;
+        m_occupied[BLACK] = BitBoardType();
+        m_occupied[WHITE] = BitBoardType();
         const auto turn = get_turn();
         const auto& board = get_board();
-        for (auto sq : Squares::square_array) {
+        for (auto sq : SHelper::square_array) {
             const auto p = board[sq];
-            if (p == Pieces::VOID)
+            if (p == PHelper::VOID)
                 continue;
-            const auto c = Pieces::get_color(p);
+            const auto c = PHelper::get_color(p);
             if (c == BLACK)
-                m_occupied[BLACK] |= BitBoard::from_square(sq);
+                m_occupied[BLACK] |= BitBoardType::from_square(sq);
             else if (c == WHITE)
-                m_occupied[WHITE] |= BitBoard::from_square(sq);
-            if (p == Pieces::B_OU)
+                m_occupied[WHITE] |= BitBoardType::from_square(sq);
+            if (p == PHelper::B_OU)
                 m_king_locations[BLACK] = sq;
-            else if (p == Pieces::W_OU)
+            else if (p == PHelper::W_OU)
                 m_king_locations[WHITE] = sq;
         }
         m_occupied[2] = m_occupied[BLACK] | m_occupied[WHITE];
-        m_checker_locations[0] = Squares::SQ_NA;
-        m_checker_locations[1] = Squares::SQ_NA;
+        m_checker_locations[0] = SHelper::SQ_NA;
+        m_checker_locations[1] = SHelper::SQ_NA;
         int index = 0;
-        for (auto dir : Squares::direction_array) {
+        for (auto&& dir : Config::dir_array) {
             const auto checker_sq
                 = board.find_attacker(~turn, m_king_locations[turn], dir);
-            if (checker_sq != Squares::SQ_NA) {
+            if (checker_sq != SHelper::SQ_NA) {
                 m_checker_locations[index++] = checker_sq;
                 if (index > 1)
                     break;
             }
         }
     }
-    void update_king_occupied_checkers(const Move& move)
+    void update_king_occupied_checkers(const MoveType& move)
     {
         const auto turn = get_turn();
         const auto& board = get_board();
         const auto dst = move.destination();
         const auto moved = board[dst];
         const auto king_sq = m_king_locations[turn];
-        auto discovered_checker_location = Squares::SQ_NA;
-        const auto addition = BitBoard::from_square(dst);
+        auto discovered_checker_location = SHelper::SQ_NA;
+        const auto addition = BitBoardType::from_square(dst);
         m_occupied[turn] &= (~addition);
         m_occupied[~turn] |= addition;
         m_occupied[2] |= addition;
         if (!move.is_drop()) {
             const auto src = move.source_square();
-            const auto dir = Squares::get_direction(src, king_sq);
-            const auto deletion = ~BitBoard::from_square(src);
+            const auto dir = SHelper::get_direction(src, king_sq);
+            const auto deletion = ~BitBoardType::from_square(src);
             m_occupied[~turn] &= deletion;
             m_occupied[2] &= deletion;
             if ((dir != DIR_NA)
-                && (dir != Squares::get_direction(dst, king_sq)))
+                && (dir != SHelper::get_direction(dst, king_sq)))
                 discovered_checker_location
                     = board.find_attacker(~turn, king_sq, dir);
-            if (Pieces::OU == Pieces::to_piece_type(moved))
+            if (PHelper::OU == PHelper::to_piece_type(moved))
                 m_king_locations[~turn] = dst;
         }
 
         const bool check_by_moved
-            = BitBoard::get_attacks_by(moved, dst, m_occupied[2])
+            = BitBoardType::get_attacks_by(moved, dst, m_occupied[2])
                   .is_one(m_king_locations[turn]);
         const bool check_by_discovered
-            = (discovered_checker_location != Squares::SQ_NA);
+            = (discovered_checker_location != SHelper::SQ_NA);
         if (check_by_moved && check_by_discovered) {
             m_checker_locations[0] = dst;
             m_checker_locations[1] = discovered_checker_location;
         } else if (check_by_moved) {
             m_checker_locations[0] = dst;
-            m_checker_locations[1] = Squares::SQ_NA;
+            m_checker_locations[1] = SHelper::SQ_NA;
         } else if (check_by_discovered) {
             m_checker_locations[0] = discovered_checker_location;
-            m_checker_locations[1] = Squares::SQ_NA;
+            m_checker_locations[1] = SHelper::SQ_NA;
         } else {
-            m_checker_locations[0] = Squares::SQ_NA;
-            m_checker_locations[1] = Squares::SQ_NA;
+            m_checker_locations[0] = SHelper::SQ_NA;
+            m_checker_locations[1] = SHelper::SQ_NA;
         }
     }
 
@@ -506,7 +521,7 @@ protected:
         if (m_legal_moves.empty())
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
         if (is_repetitions()) {
-            if (m_checker_locations[0] != Squares::SQ_NA)
+            if (m_checker_locations[0] != SHelper::SQ_NA)
                 m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
             else
                 m_result = DRAW;
@@ -536,7 +551,7 @@ protected:
         for (int ii = n - 4; ii >= 0; ii -= 2) {
             const uint index = static_cast<uint>(ii);
             num += (m_zobrist_hash == m_zobrist_hash_list[index]);
-            if (num > MaxAcceptableRepetition)
+            if (num > max_acceptable_repetitions)
                 return true;
         }
         return false;
@@ -557,14 +572,14 @@ protected:
         const auto turn = get_turn();
         // http://www2.computer-shogi.org/wcsc17/rule_e.html
         // (1) The King of the declaring side is in the third rank or beyond.
-        if (!Squares::in_promotion_zone(m_king_locations[turn], turn))
+        if (!SHelper::in_promotion_zone(m_king_locations[turn], turn))
             return false;
 
         // (4) There is no check on the King of the declaring side.
-        if (m_checker_locations[0] != Squares::SQ_NA)
+        if (m_checker_locations[0] != SHelper::SQ_NA)
             return false;
 
-        const auto promo_zone_mask = BitBoard::get_promotion_zone(turn);
+        const auto promo_zone_mask = BitBoardType::get_promotion_zone(turn);
         const auto piece_mask = (promo_zone_mask & m_occupied[turn]);
         const uint num_pieces_in_zone = piece_mask.hamming_weight();
 
@@ -576,22 +591,21 @@ protected:
         // (2) The declaring side has 28 (the first player (sente, black)) or
         // 27 (the second player (gote, white)) piece points or more.
         if (turn == BLACK)
-            return count_point_in(turn, piece_mask) > m_initial_points[turn];
+            return count_point_of(turn, piece_mask) > m_initial_points[turn];
         else
-            return count_point_in(turn, piece_mask) >= m_initial_points[turn];
+            return count_point_of(turn, piece_mask) >= m_initial_points[turn];
     }
-    uint count_point_in(const ColorEnum& c, const BitBoard& piece_mask) const
+    uint count_point_of(const ColorEnum& c, const BitBoardType& mask) const
     {
         uint out = 0;
-        const auto& board = get_board();
-        for (auto& sq : Squares::square_array) {
-            if (piece_mask.is_one(sq)) {
-                out += Pieces::get_point(board[sq]);
-            }
+        const BoardType& board = get_board();
+        for (auto& sq : SHelper::square_array) {
+            if (mask.is_one(sq))
+                out += PHelper::get_point(board[sq]);
         }
         const auto& stand = get_stand(c);
-        for (auto& pt : Pieces::stand_piece_array) {
-            out += stand.count(pt) * Pieces::get_point(pt);
+        for (auto& pt : PHelper::stand_piece_array) {
+            out += stand.count(pt) * PHelper::get_point(pt);
         }
         return out;
     }
@@ -603,8 +617,8 @@ protected:
         m_legal_moves.reserve(128);
         if (restrict_legal_to_check) {
             append_check_moves_by_king(); // discovered check
-            if (m_checker_locations[1] != Squares::SQ_NA) {
-            } else if (m_checker_locations[0] != Squares::SQ_NA) {
+            if (m_checker_locations[1] != SHelper::SQ_NA) {
+            } else if (m_checker_locations[0] != SHelper::SQ_NA) {
                 append_legal_moves_to_defend_king(true);
             } else {
                 // no check to turn player's king
@@ -612,23 +626,23 @@ protected:
                 const auto turn = get_turn();
                 const auto& ally_mask = m_occupied[turn];
                 const auto& king_sq = m_king_locations[turn];
-                for (auto&& sq : Squares::square_array) {
+                for (auto&& sq : SHelper::square_array) {
                     if (ally_mask.is_one(sq) && (king_sq != sq))
                         append_check_moves_by_non_king_at(sq);
                 }
             }
         } else {
             append_legal_moves_by_king();
-            if (m_checker_locations[0] == Squares::SQ_NA) {
+            if (m_checker_locations[0] == SHelper::SQ_NA) {
                 append_legal_drop_moves();
                 const auto turn = get_turn();
                 const auto& ally_mask = m_occupied[turn];
                 const auto& king_sq = m_king_locations[turn];
-                for (auto&& sq : Squares::square_array) {
+                for (auto&& sq : SHelper::square_array) {
                     if (ally_mask.is_one(sq) && (king_sq != sq))
                         append_legal_moves_by_non_king_at(sq);
                 }
-            } else if (m_checker_locations[1] == Squares::SQ_NA) {
+            } else if (m_checker_locations[1] == SHelper::SQ_NA) {
                 append_legal_moves_to_defend_king(false);
             }
         }
@@ -638,14 +652,14 @@ protected:
         const auto ac = get_turn(); //!< ally color
         const auto ec = ~ac; //!< enemy color
         const auto& src = m_king_locations[ac];
-        if (src == Squares::SQ_NA)
+        if (src == SHelper::SQ_NA)
             return;
         const auto& board = get_board();
         const auto& moving = board[src];
-        auto ptr_dst = Squares::get_non_ranging_attacks_by(moving, src);
+        auto ptr_dst = SHelper::get_non_ranging_attacks_by(moving, src);
         const auto end = ptr_dst + 8;
         const auto& ally_mask = m_occupied[ac];
-        for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
+        for (; *ptr_dst != SHelper::SQ_NA; ++ptr_dst) {
             if (ptr_dst >= end)
                 break;
             if (ally_mask.is_one(*ptr_dst))
@@ -661,52 +675,52 @@ protected:
         const auto ec = ~ac;
         const auto& src = m_king_locations[ac];
         const auto& enemy_king_sq = m_king_locations[ec];
-        if ((src == Squares::SQ_NA) || (enemy_king_sq == Squares::SQ_NA))
+        if ((src == SHelper::SQ_NA) || (enemy_king_sq == SHelper::SQ_NA))
             return;
-        const auto src_dir = Squares::get_direction(src, enemy_king_sq);
+        const auto src_dir = SHelper::get_direction(src, enemy_king_sq);
         if (src_dir == DIR_NA)
             return;
         const auto& board = get_board();
         const auto hidden_attacker_sq
             = board.find_attacker(ac, enemy_king_sq, src_dir, src);
-        if (hidden_attacker_sq == Squares::SQ_NA)
+        if (hidden_attacker_sq == SHelper::SQ_NA)
             return;
-        auto ptr_dst = Squares::get_non_ranging_attacks_by(board[src], src);
+        auto ptr_dst = SHelper::get_non_ranging_attacks_by(board[src], src);
         const auto end = ptr_dst + 8;
         const auto& ally_mask = m_occupied[ac];
-        for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
+        for (; *ptr_dst != SHelper::SQ_NA; ++ptr_dst) {
             if (ptr_dst >= end)
                 break;
             if (ally_mask.is_one(*ptr_dst))
                 continue;
-            if (Squares::get_direction(*ptr_dst, enemy_king_sq) == src_dir)
+            if (SHelper::get_direction(*ptr_dst, enemy_king_sq) == src_dir)
                 continue;
             if (board.is_square_attacked(ec, *ptr_dst, src))
                 continue;
             m_legal_moves.emplace_back(*ptr_dst, src, false);
         }
     }
-    void append_legal_moves_by_non_king_at(const SquareEnum& src)
+    void append_legal_moves_by_non_king_at(const Square& src)
     {
         const auto turn = get_turn();
         const auto& board = get_board();
         const auto& king_sq = m_king_locations[turn];
         const auto& moving = board[src];
-        const auto promotable = Pieces::is_promotable(moving);
-        const auto src_dir = Squares::get_direction(src, king_sq);
+        const auto promotable = PHelper::is_promotable(moving);
+        const auto src_dir = SHelper::get_direction(src, king_sq);
         const auto hidden_attacker_sq
             = board.find_attacker(~turn, king_sq, src_dir, src);
-        const auto attacks = BitBoard::get_attacks_by(moving, src);
-        const auto promotable_src = Squares::in_promotion_zone(src, turn);
-        if (hidden_attacker_sq != Squares::SQ_NA) {
-            auto ptr_dst = Squares::get_squares_along(src_dir, king_sq);
+        const auto attacks = BitBoardType::get_attacks_by(moving, src);
+        const auto promotable_src = SHelper::in_promotion_zone(src, turn);
+        if (hidden_attacker_sq != SHelper::SQ_NA) {
+            auto ptr_dst = SHelper::get_squares_along(src_dir, king_sq);
             for (;; ++ptr_dst) {
                 const auto dst = *ptr_dst;
                 if (attacks.is_one(dst)) {
                     const bool promote
                         = promotable
                           && (promotable_src
-                              || Squares::in_promotion_zone(dst, turn));
+                              || SHelper::in_promotion_zone(dst, turn));
                     append_legal_move_or_moves(
                         moving, dst, src, promote, false);
                 }
@@ -724,34 +738,34 @@ protected:
             turn,
             false);
     }
-    void append_check_moves_by_non_king_at(const SquareEnum& src)
+    void append_check_moves_by_non_king_at(const Square& src)
     {
         const auto turn = get_turn();
         const auto& board = get_board();
         const auto& king_sq = m_king_locations[turn];
         const auto& enemy_king_sq = m_king_locations[~turn];
         const auto& moving = board[src];
-        const auto promotable = Pieces::is_promotable(moving);
-        const auto src_dir_from_my_king = Squares::get_direction(src, king_sq);
+        const auto promotable = PHelper::is_promotable(moving);
+        const auto src_dir_from_my_king = SHelper::get_direction(src, king_sq);
         const auto src_dir_from_enemy_king
-            = Squares::get_direction(src, enemy_king_sq);
+            = SHelper::get_direction(src, enemy_king_sq);
         const auto counter_attacker_sq
             = board.find_attacker(~turn, king_sq, src_dir_from_my_king, src);
         const auto discovered_checker_sq = board.find_attacker(
             turn, enemy_king_sq, src_dir_from_enemy_king, src);
-        const auto attacks = BitBoard::get_attacks_by(moving, src);
-        const auto promotable_src = Squares::in_promotion_zone(src, turn);
-        if (counter_attacker_sq != Squares::SQ_NA) {
+        const auto attacks = BitBoardType::get_attacks_by(moving, src);
+        const auto promotable_src = SHelper::in_promotion_zone(src, turn);
+        if (counter_attacker_sq != SHelper::SQ_NA) {
             // Needs avoiding counter attack
             for (auto pd
-                 = Squares::get_squares_along(src_dir_from_my_king, king_sq);
+                 = SHelper::get_squares_along(src_dir_from_my_king, king_sq);
                  ;) {
                 if (attacks.is_one(*pd)) {
                     const bool promote
                         = promotable
                           && (promotable_src
-                              || Squares::in_promotion_zone(*pd, turn));
-                    if (discovered_checker_sq != Squares::SQ_NA)
+                              || SHelper::in_promotion_zone(*pd, turn));
+                    if (discovered_checker_sq != SHelper::SQ_NA)
                         append_legal_move_or_moves(
                             moving, *pd, src, promote, false);
                     else
@@ -762,15 +776,15 @@ protected:
                     break;
             }
         } else {
-            if (discovered_checker_sq != Squares::SQ_NA) {
-                auto check_way = BitBoard();
+            if (discovered_checker_sq != SHelper::SQ_NA) {
+                auto check_way = BitBoardType();
                 {
                     for (auto sq = enemy_king_sq;;) {
-                        sq = Squares::shift(sq, src_dir_from_enemy_king);
+                        sq = SHelper::shift(sq, src_dir_from_enemy_king);
                         if (sq == discovered_checker_sq)
                             break;
                         else
-                            check_way |= BitBoard::from_square(sq);
+                            check_way |= BitBoardType::from_square(sq);
                     }
                 }
                 append_legal_moves_by_non_king_ignoring_discovered_check(
@@ -781,7 +795,7 @@ protected:
                     promotable_src,
                     turn,
                     false);
-                for (auto pd = Squares::get_squares_along(
+                for (auto pd = SHelper::get_squares_along(
                          src_dir_from_enemy_king, enemy_king_sq);
                      *pd != discovered_checker_sq;) {
                     const auto dst = *pd++;
@@ -789,7 +803,7 @@ protected:
                         const bool promote
                             = promotable
                               && (promotable_src
-                                  || Squares::in_promotion_zone(dst, turn));
+                                  || SHelper::in_promotion_zone(dst, turn));
                         append_legal_move_or_moves(
                             moving, dst, src, promote, true);
                     }
@@ -806,23 +820,23 @@ protected:
         }
     }
     void append_legal_moves_by_non_king_ignoring_discovered_check(
-        const typename Pieces::BoardPieceTypeEnum& p,
-        const BitBoard& dst_mask,
-        const SquareEnum& src,
+        const BoardPieceType& p,
+        const BitBoardType& dst_mask,
+        const Square& src,
         const bool& promotable,
         const bool& src_promote,
         const ColorEnum& turn,
         const bool& restrict_legal_to_check)
     {
-        auto ptr_dst = Squares::get_non_ranging_attacks_by(p, src);
+        auto ptr_dst = SHelper::get_non_ranging_attacks_by(p, src);
         if (ptr_dst != nullptr) {
-            for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
+            for (; *ptr_dst != SHelper::SQ_NA; ++ptr_dst) {
                 if (!dst_mask.is_one(*ptr_dst))
                     continue;
                 const bool promote
                     = promotable
                       && (src_promote
-                          || Squares::in_promotion_zone(*ptr_dst, turn));
+                          || SHelper::in_promotion_zone(*ptr_dst, turn));
                 append_legal_move_or_moves(
                     p, *ptr_dst, src, promote, restrict_legal_to_check);
             }
@@ -830,15 +844,15 @@ protected:
         }
 
         const auto& enemy_mask = m_occupied[~turn];
-        for (auto dp = Pieces::get_attack_directions(p); *dp != DIR_NA;) {
-            ptr_dst = Squares::get_squares_along(*dp++, src);
-            for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
+        for (auto dp = PHelper::get_attack_directions(p); *dp != DIR_NA;) {
+            ptr_dst = SHelper::get_squares_along(*dp++, src);
+            for (; *ptr_dst != SHelper::SQ_NA; ++ptr_dst) {
                 if (!dst_mask.is_one(*ptr_dst))
                     break;
                 bool promote
                     = promotable
                       && (src_promote
-                          || Squares::in_promotion_zone(*ptr_dst, turn));
+                          || SHelper::in_promotion_zone(*ptr_dst, turn));
                 append_legal_move_or_moves(
                     p, *ptr_dst, src, promote, restrict_legal_to_check);
                 if (enemy_mask.is_one(*ptr_dst))
@@ -847,26 +861,26 @@ protected:
         }
     }
     void append_legal_move_or_moves(
-        const typename Pieces::BoardPieceTypeEnum& p,
-        const SquareEnum& dst,
-        const SquareEnum& src,
+        const BoardPieceType& p,
+        const Square& dst,
+        const Square& src,
         const bool& promotable,
         const bool& restrict_legal_to_check)
     {
         if (restrict_legal_to_check) {
             const auto& occupied = m_occupied[2];
             const auto& enemy_king_sq = m_king_locations[~get_turn()];
-            auto attacks = BitBoard::get_attacks_by(p, dst, occupied);
+            auto attacks = BitBoardType::get_attacks_by(p, dst, occupied);
             if (attacks.is_one(enemy_king_sq))
-                m_legal_moves.emplace_back(Move(dst, src, false));
+                m_legal_moves.emplace_back(dst, src, false);
             if (promotable) {
-                attacks = BitBoard::get_attacks_by(
-                    Pieces::promote(p), dst, occupied);
+                attacks = BitBoardType::get_attacks_by(
+                    PHelper::promote(p), dst, occupied);
                 if (attacks.is_one(enemy_king_sq))
-                    m_legal_moves.emplace_back(Move(dst, src, true));
+                    m_legal_moves.emplace_back(dst, src, true);
             }
         } else {
-            const auto attacks = BitBoard::get_attacks_by(p, dst);
+            const auto attacks = BitBoardType::get_attacks_by(p, dst);
             if (!attacks.any())
                 m_legal_moves.emplace_back(dst, src, true);
             else if (promotable) {
@@ -885,9 +899,9 @@ protected:
             checker_location, restrict_legal_to_check);
         if (!is_neighbor(king_location, checker_location)) {
             const auto dir
-                = Squares::get_direction(checker_location, king_location);
-            auto ptr_dst = Squares::get_squares_along(dir, king_location);
-            for (; *ptr_dst != Squares::SQ_NA; ++ptr_dst) {
+                = SHelper::get_direction(checker_location, king_location);
+            auto ptr_dst = SHelper::get_squares_along(dir, king_location);
+            for (; *ptr_dst != SHelper::SQ_NA; ++ptr_dst) {
                 if (*ptr_dst == checker_location)
                     break;
                 append_legal_moves_by_non_king_moving_to(
@@ -898,41 +912,41 @@ protected:
         }
     }
     void append_legal_moves_by_non_king_moving_to(
-        const SquareEnum& dst, const bool& restrict_legal_to_check)
+        const Square& dst, const bool& restrict_legal_to_check)
     {
         const auto turn = get_turn();
         const auto& board = get_board();
         const auto king_location = m_king_locations[turn];
         const auto enemy_king_sq = m_king_locations[~turn];
         const auto target_in_promotion_zone
-            = Squares::in_promotion_zone(dst, turn);
+            = SHelper::in_promotion_zone(dst, turn);
         const auto empty_mask = ~m_occupied[2];
         const auto src_mask
-            = m_occupied[turn] & (~BitBoard::from_square(king_location));
-        for (auto dir : Squares::direction_array) {
-            auto ptr_src = Squares::get_squares_along(dir, dst);
-            for (; *ptr_src != Squares::SQ_NA; ++ptr_src) {
+            = m_occupied[turn] & (~BitBoardType::from_square(king_location));
+        for (auto dir : Config::dir_array) {
+            auto ptr_src = SHelper::get_squares_along(dir, dst);
+            for (; *ptr_src != SHelper::SQ_NA; ++ptr_src) {
                 const auto src = *ptr_src;
                 if (empty_mask.is_one(src))
                     continue;
                 if (!src_mask.is_one(src))
                     break;
                 const auto p = board[src];
-                if (!BitBoard::get_attacks_by(p, src).is_one(dst))
+                if (!BitBoardType::get_attacks_by(p, src).is_one(dst))
                     break;
                 if (restrict_legal_to_check
-                    && (!BitBoard::get_attacks_by(p, dst, m_occupied[2])
+                    && (!BitBoardType::get_attacks_by(p, dst, m_occupied[2])
                              .is_one(enemy_king_sq)))
                     break;
-                const auto src_dir = Squares::get_direction(src, king_location);
+                const auto src_dir = SHelper::get_direction(src, king_location);
                 if ((src_dir != DIR_NA)
-                    && (src_dir != Squares::get_direction(dst, king_location))
+                    && (src_dir != SHelper::get_direction(dst, king_location))
                     && (board.find_attacker(~turn, king_location, src_dir, src)
-                        != Squares::SQ_NA))
+                        != SHelper::SQ_NA))
                     break;
 
-                const auto promote = Pieces::is_promotable(p)
-                                     && (Squares::in_promotion_zone(src, turn)
+                const auto promote = PHelper::is_promotable(p)
+                                     && (SHelper::in_promotion_zone(src, turn)
                                          || target_in_promotion_zone);
                 append_legal_move_or_moves(
                     p, dst, src, promote, restrict_legal_to_check);
@@ -945,25 +959,26 @@ protected:
         const auto turn = get_turn();
         const auto& stand = get_stand(turn);
         const auto& enemy_king_sq = m_king_locations[~turn];
-        const SquareEnum* sq_ptr = nullptr;
-        for (auto&& pt : Pieces::stand_piece_array) {
+        const Square* sq_ptr = nullptr;
+        for (auto&& pt : PHelper::stand_piece_array) {
             if (!stand.exist(pt))
                 continue;
-            const auto p = Pieces::to_board_piece(turn, pt);
-            for (auto dp = Pieces::get_attack_directions(p); *dp != DIR_NA;) {
+            const auto p = PHelper::to_board_piece(turn, pt);
+            for (auto dp = PHelper::get_attack_directions(p); *dp != DIR_NA;) {
                 sq_ptr
-                    = Squares::get_squares_along(rotate(*dp++), enemy_king_sq);
-                for (; *sq_ptr != Squares::SQ_NA;) {
+                    = SHelper::get_squares_along(rotate(*dp++), enemy_king_sq);
+                for (; *sq_ptr != SHelper::SQ_NA;) {
                     if (m_occupied[2].is_one(*sq_ptr))
                         break;
-                    const auto attacks = BitBoard::get_attacks_by(p, *sq_ptr);
+                    const auto attacks
+                        = BitBoardType::get_attacks_by(p, *sq_ptr);
                     if (!attacks.is_one(enemy_king_sq))
                         break;
-                    if ((pt == Pieces::FU)
-                        && (has_pawn_in_file(Squares::to_file(*sq_ptr))
+                    if ((pt == PHelper::FU)
+                        && (has_pawn_in_file(SHelper::to_file(*sq_ptr))
                             || is_drop_pawn_mate(*sq_ptr)))
                         break;
-                    m_legal_moves.emplace_back(Move(*sq_ptr++, pt));
+                    m_legal_moves.emplace_back(MoveType(*sq_ptr++, pt));
                 }
             }
         }
@@ -973,71 +988,71 @@ protected:
         const auto turn = get_turn();
         const auto& stand = get_stand(turn);
         const auto& occupied = m_occupied[2];
-        for (auto&& pt : Pieces::stand_piece_array) {
+        for (auto&& pt : PHelper::stand_piece_array) {
             if (!stand.exist(pt))
                 continue;
-            for (auto&& sq : Squares::square_array) {
+            for (auto&& sq : SHelper::square_array) {
                 if (occupied.is_one(sq))
                     continue;
-                const auto p = Pieces::to_board_piece(turn, pt);
-                const auto attacks = BitBoard::get_attacks_by(p, sq);
+                const auto p = PHelper::to_board_piece(turn, pt);
+                const auto attacks = BitBoardType::get_attacks_by(p, sq);
                 if (!attacks.any())
                     continue;
-                if ((pt == Pieces::FU)
-                    && (has_pawn_in_file(Squares::to_file(sq))
+                if ((pt == PHelper::FU)
+                    && (has_pawn_in_file(SHelper::to_file(sq))
                         || is_drop_pawn_mate(sq)))
                     continue;
-                m_legal_moves.emplace_back(Move(sq, pt));
+                m_legal_moves.emplace_back(MoveType(sq, pt));
             }
         }
     }
     void append_legal_moves_dropping_to(
-        const SquareEnum& dst, const bool& restrict_legal_to_check)
+        const Square& dst, const bool& restrict_legal_to_check)
     {
         const auto turn = get_turn();
         const auto& enemy_king_sq = m_king_locations[~turn];
         const auto& stand = get_stand(turn);
-        for (auto&& pt : Pieces::stand_piece_array) {
+        for (auto&& pt : PHelper::stand_piece_array) {
             if (!stand.exist(pt))
                 continue;
-            const auto attacks = BitBoard::get_attacks_by(
-                Pieces::to_board_piece(turn, pt), dst);
+            const auto attacks = BitBoardType::get_attacks_by(
+                PHelper::to_board_piece(turn, pt), dst);
             if (!attacks.any())
                 continue;
             if (restrict_legal_to_check && (!attacks.is_one(enemy_king_sq)))
                 continue;
-            if ((pt == Pieces::FU)
-                && (has_pawn_in_file(Squares::to_file(dst))
+            if ((pt == PHelper::FU)
+                && (has_pawn_in_file(SHelper::to_file(dst))
                     || is_drop_pawn_mate(dst)))
                 continue;
-            m_legal_moves.emplace_back(Move(dst, pt));
+            m_legal_moves.emplace_back(MoveType(dst, pt));
         }
     }
-    bool has_pawn_in_file(const typename Squares::FileEnum f) const
+    bool has_pawn_in_file(const File f) const
     {
         const auto turn = get_turn();
         const auto& board = get_board();
-        const auto pawn = Pieces::to_board_piece(turn, Pieces::FU);
-        for (auto sq : Squares::file_to_square_array[f]) {
+        const auto pawn = PHelper::to_board_piece(turn, PHelper::FU);
+        for (auto sq : SHelper::file_to_square_array[f]) {
             if (pawn == board[sq])
                 return true;
         }
         return false;
     }
-    bool is_drop_pawn_mate(const SquareEnum dst) const
+    bool is_drop_pawn_mate(const Square dst) const
     {
         const auto turn = get_turn();
-        const auto& board = get_board();
-        const auto pawn = Pieces::to_board_piece(turn, Pieces::FU);
+        const BoardType& board = get_board();
+        const auto pawn = PHelper::to_board_piece(turn, PHelper::FU);
         const auto enemy_king_sq = m_king_locations[~turn];
-        if (Squares::get_non_ranging_attacks_by(pawn, dst)[0] != enemy_king_sq)
+        if (SHelper::get_non_ranging_attacks_by(pawn, dst)[0] != enemy_king_sq)
             return false;
 
         // if opponent king can move away from the attack, then return false.
         const auto& enemy_mask = m_occupied[~turn];
-        const SquareEnum* sq_ptr = Squares::get_non_ranging_attacks_by(
+        const Square* sq_ptr = SHelper::get_non_ranging_attacks_by(
             board[enemy_king_sq], enemy_king_sq);
-        for (; *sq_ptr != Squares::SQ_NA; ++sq_ptr) {
+        for (; *sq_ptr != SHelper::SQ_NA; ++sq_ptr) {
             if (enemy_mask.is_one(*sq_ptr))
                 continue;
             if (board.is_square_attacked(turn, *sq_ptr, enemy_king_sq))
@@ -1047,27 +1062,27 @@ protected:
 
         // if opponent can capture the dropped pawn, then return false.
         const auto enemy_king_direction = (turn == BLACK) ? DIR_N : DIR_S;
-        for (auto dir : Squares::direction_array) {
+        for (auto dir : Config::dir_array) {
             if (dir == enemy_king_direction)
                 continue;
             const auto src_next = board.find_attacker(~turn, dst, dir);
-            const auto attacking_the_pawn = (src_next != Squares::SQ_NA);
+            const auto attacking_the_pawn = (src_next != SHelper::SQ_NA);
             if (attacking_the_pawn) {
                 const auto discovered_dir
-                    = Squares::get_direction(src_next, enemy_king_sq);
+                    = SHelper::get_direction(src_next, enemy_king_sq);
                 const auto discovered_attacker_sq = board.find_attacker(
                     turn, enemy_king_sq, discovered_dir, src_next);
-                const auto pinned = (discovered_attacker_sq != Squares::SQ_NA);
+                const auto pinned = (discovered_attacker_sq != SHelper::SQ_NA);
                 if (!pinned)
                     return false;
             }
         }
         return true;
     }
-    static bool is_neighbor(const SquareEnum a, const SquareEnum b)
+    static bool is_neighbor(const Square a, const Square b)
     {
-        for (auto dir : Squares::direction_array) {
-            if (b == Squares::shift(a, dir))
+        for (auto dir : Config::dir_array) {
+            if (b == SHelper::shift(a, dir))
                 return true;
         }
         return false;

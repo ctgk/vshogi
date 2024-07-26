@@ -53,7 +53,7 @@ shogi::Board::Board()
 
 template <>
 const char*
-shogi::Board::set_sfen_rank(const char* const sfen_rank, const RankEnum rank)
+shogi::Board::set_sfen_rank(const char* const sfen_rank, const Rank rank)
 {
     constexpr int max_length = 19; // e.g. "+p+p+p+p+p+p+p+p+p/"
     auto piece_ptr = m_pieces + num_files * static_cast<uint>(rank);

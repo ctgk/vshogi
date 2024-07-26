@@ -46,7 +46,7 @@ judkins_shogi::Board::Board()
 
 template <>
 const char* judkins_shogi::Board::set_sfen_rank(
-    const char* const sfen_rank, const RankEnum rank)
+    const char* const sfen_rank, const Rank rank)
 {
     constexpr int max_length = 13; // e.g. "+r+b+s+n+p+P/"
     auto piece_str = m_pieces + num_files * static_cast<uint>(rank);

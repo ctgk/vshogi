@@ -16,20 +16,6 @@
 namespace vshogi::judkins_shogi
 {
 
-// clang-format off
-constexpr uint num_piece_types = 12; // FU, KE, GI, KI, KA, HI, OU, TO, NK, NG, UM, RY
-constexpr uint num_stand_piece_types = 6; // FU, KE, GI, KI, KA, HI
-constexpr uint promotion_bit = 3; // ____ _*___
-constexpr uint num_files = 6; // 1, 2, 3, 4, 5, 6
-constexpr uint num_ranks = 6; // A, B, C, D, E, F
-constexpr uint num_directions = 12; // NNW, NNE, NW, N, NE, W, E, SW, S, SE, SSW, SSE
-constexpr uint num_directions_dlshogi = 10; // NW, N, NE, W, E, SW, S, SE, SSW, SSE
-constexpr uint num_non_ranging_attacks = 9; // B_FU, W_FU, B_KE, W_KE, B_GI, W_GI, B_KI, W_KI, OU
-constexpr uint num_attacks = 13; // B_FU, W_FU, B_KE, W_KE, B_GI, W_GI, B_KI, W_KI, OU, KA, HI, UM, RY
-constexpr uint max_stand_piece_count = 2;
-constexpr uint max_acceptable_repetition = 3;
-// clang-format on
-
 enum PieceTypeEnum : std::uint8_t
 {
     FU = 0b0000, //!< Fu (Pawn)
@@ -79,19 +65,6 @@ enum BoardPieceTypeEnum : std::uint8_t
 
     VOID = 0b11111, //!< Empty Square
 };
-
-using Pieces = vshogi::Pieces<
-    PieceTypeEnum,
-    BoardPieceTypeEnum,
-    num_piece_types,
-    num_stand_piece_types,
-    promotion_bit>;
-static_assert(FU == Pieces::FU);
-static_assert(OU == Pieces::OU);
-static_assert(NA == Pieces::NA);
-static_assert(B_OU == Pieces::B_OU);
-static_assert(W_OU == Pieces::W_OU);
-static_assert(VOID == Pieces::VOID);
 
 /**
 * @brief Enumeration of board squares following SFEN.
@@ -152,49 +125,64 @@ enum FileEnum : uint
     FILE6,
 };
 
-using Squares = vshogi::Squares<
-    SquareEnum,
-    FileEnum,
-    RankEnum,
-    Pieces,
-    num_files,
-    num_ranks,
-    num_directions,
-    num_directions_dlshogi>;
+struct Config
+{
+    // clang-format off
+    static constexpr uint num_piece_types = 12; // FU, KE, GI, KI, KA, HI, OU, TO, NK, NG, UM, RY
+    static constexpr uint num_stand_piece_types = 6; // FU, KE, GI, KI, KA, HI
+    static constexpr uint promotion_bit = 3; // ____ _*___
+    static constexpr uint num_files = 6; // 1, 2, 3, 4, 5, 6
+    static constexpr uint num_ranks = 6; // A, B, C, D, E, F
+    static constexpr uint num_promotion_ranks = 2;
+    static constexpr DirectionEnum dir_array[] = {DIR_NNW, DIR_NNE, DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_SSW, DIR_SSE};
+    static constexpr DirectionEnum dir_dl_array[] = {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_SSW, DIR_SSE};
+    static constexpr uint num_non_ranging_attacks = 9; // B_FU, W_FU, B_KE, W_KE, B_GI, W_GI, B_KI, W_KI, OU
+    static constexpr uint num_attacks = 13; // B_FU, W_FU, B_KE, W_KE, B_GI, W_GI, B_KI, W_KI, OU, KA, HI, UM, RY
+    static constexpr uint max_stand_piece_count = 2;
+    static constexpr uint max_acceptable_repetitions = 3;
+    using BaseTypeBitBoard = std::uint64_t;
+    // clang-format on
 
-/**
- * @brief 16-bit integer representing pieces on a stand.
- * @details
- * ________ ______**  FU (2 pieces)
- * ________ ____**__  KE (2 pieces)
- * ________ __**____  GI (2 pieces)
- * ________ **______  KA (2 pieces)
- * ______** ________  HI (2 pieces)
- * ____**__ ________  KI (2 pieces)
- */
-using Stand = vshogi::Stand<std::uint16_t, Pieces>;
+    /**
+     * @brief 16-bit integer representing pieces on a stand.
+     * @details
+     * ________ ______**  FU (2 pieces)
+     * ________ ____**__  KE (2 pieces)
+     * ________ __**____  GI (2 pieces)
+     * ________ **______  KA (2 pieces)
+     * ______** ________  HI (2 pieces)
+     * ____**__ ________  KI (2 pieces)
+     */
+    using BaseTypeStand = std::uint16_t;
 
-using BlackWhiteStands = vshogi::BlackWhiteStands<Stand>;
+    Config() = delete;
+    using PieceType = PieceTypeEnum;
+    using BoardPieceType = BoardPieceTypeEnum;
+    using Square = SquareEnum;
+    using File = FileEnum;
+    using Rank = RankEnum;
+    static constexpr uint num_dir
+        = static_cast<uint>(sizeof(dir_array) / sizeof(dir_array[0]));
+    static constexpr uint num_dir_dl
+        = static_cast<uint>(sizeof(dir_dl_array) / sizeof(dir_dl_array[0]));
+    static constexpr uint num_squares = num_files * num_ranks;
+};
 
-/**
- * @brief 16-bit integer representing a move in Judkins-Shogi game.
- * @details
- *       ________ __******       Destination square (36 possibilities)
- *       ________ _*______       Promotion flag (2 possibilities)
- *       ___***** *_______       Source square or piece (42 possibilities = 36 + 6)
- * (MSB) xxxxxxxx xxxxxxxx (LSB)
- */
-using Move = vshogi::Move<std::uint16_t, Squares, Pieces, 12, 6, 5>;
-
-using BitBoard = vshogi::
-    BitBoard<std::uint64_t, Squares, BoardPieceTypeEnum, num_attacks, 2>;
-
-using Board = vshogi::Board<Squares, Pieces, BitBoard>;
-
-using State
-    = vshogi::State<Board, BlackWhiteStands, Move, max_stand_piece_count>;
-
-using Game = vshogi::Game<State, max_acceptable_repetition>;
+using Pieces = vshogi::Pieces<Config>;
+using Squares = vshogi::Squares<Config>;
+using Move = vshogi::Move<Config>;
+using BitBoard = vshogi::BitBoard<Config>;
+using Board = vshogi::Board<Config>;
+using Stand = vshogi::Stand<Config>;
+using BlackWhiteStands = vshogi::BlackWhiteStands<Config>;
+using State = vshogi::State<Config>;
+using Game = vshogi::Game<Config>;
+static_assert(FU == Pieces::FU);
+static_assert(OU == Pieces::OU);
+static_assert(NA == Pieces::NA);
+static_assert(B_OU == Pieces::B_OU);
+static_assert(W_OU == Pieces::W_OU);
+static_assert(VOID == Pieces::VOID);
 
 constexpr BitBoard bb_1a = (BitBoard(1) << static_cast<uint>(SQ_1A));
 constexpr BitBoard bb_1b = (BitBoard(1) << static_cast<uint>(SQ_1B));
@@ -395,7 +383,7 @@ inline uint vshogi::judkins_shogi::Pieces::get_point(
 
 template <>
 inline bool vshogi::judkins_shogi::Squares::in_promotion_zone(
-    const vshogi::judkins_shogi::RankEnum& r, const ColorEnum& c)
+    const Rank& r, const ColorEnum& c)
 {
     return (c == BLACK) ? (r <= vshogi::judkins_shogi::RANK2)
                         : (r >= vshogi::judkins_shogi::RANK5);
@@ -404,7 +392,7 @@ inline bool vshogi::judkins_shogi::Squares::in_promotion_zone(
 template <>
 inline DirectionEnum
 vshogi::judkins_shogi::Squares::get_direction_for_diagonal_or_knight(
-    const SquareEnum& dst, const SquareEnum& src)
+    const Square& dst, const Square& src)
 {
     using namespace vshogi::judkins_shogi;
     switch (static_cast<int>(src - dst)) {
@@ -526,7 +514,7 @@ inline const int judkins_shogi::BlackWhiteStands::max_sfen_length
 
 template <>
 inline const judkins_shogi::BitBoard judkins_shogi::BitBoard::
-    square_to_bitboard_array[judkins_shogi::Squares::num_squares + 1]
+    square_to_bitboard_array[judkins_shogi::Config::num_squares + 1]
     = {
         BitBoard(1) << static_cast<uint>(0),
         BitBoard(1) << static_cast<uint>(1),
@@ -569,8 +557,8 @@ inline const judkins_shogi::BitBoard judkins_shogi::BitBoard::
 
 template <>
 inline judkins_shogi::BitBoard
-    judkins_shogi::BitBoard::attacks_table[judkins_shogi::num_attacks]
-                                          [judkins_shogi::Squares::num_squares]
+    judkins_shogi::BitBoard::attacks_table[judkins_shogi::Config::num_attacks]
+                                          [judkins_shogi::Config::num_squares]
     = {};
 
 template <>
@@ -580,42 +568,42 @@ inline judkins_shogi::BitBoard judkins_shogi::BitBoard::get_attacks_by(
 {
     using namespace vshogi::judkins_shogi;
     switch (p) {
-    case B_FU:
+    case vshogi::judkins_shogi::B_FU:
         return attacks_table[0][sq];
-    case B_KE:
+    case vshogi::judkins_shogi::B_KE:
         return attacks_table[1][sq];
-    case B_GI:
+    case vshogi::judkins_shogi::B_GI:
         return attacks_table[2][sq];
-    case B_KI:
-    case B_TO:
-    case B_NK:
-    case B_NG:
+    case vshogi::judkins_shogi::B_KI:
+    case vshogi::judkins_shogi::B_TO:
+    case vshogi::judkins_shogi::B_NK:
+    case vshogi::judkins_shogi::B_NG:
         return attacks_table[3][sq];
-    case W_FU:
+    case vshogi::judkins_shogi::W_FU:
         return attacks_table[4][sq];
-    case W_KE:
+    case vshogi::judkins_shogi::W_KE:
         return attacks_table[5][sq];
-    case W_GI:
+    case vshogi::judkins_shogi::W_GI:
         return attacks_table[6][sq];
-    case W_KI:
-    case W_TO:
-    case W_NK:
-    case W_NG:
+    case vshogi::judkins_shogi::W_KI:
+    case vshogi::judkins_shogi::W_TO:
+    case vshogi::judkins_shogi::W_NK:
+    case vshogi::judkins_shogi::W_NG:
         return attacks_table[7][sq];
-    case B_OU:
-    case W_OU:
+    case vshogi::judkins_shogi::B_OU:
+    case vshogi::judkins_shogi::W_OU:
         return attacks_table[8][sq];
-    case B_KA:
-    case W_KA:
+    case vshogi::judkins_shogi::B_KA:
+    case vshogi::judkins_shogi::W_KA:
         return attacks_table[9][sq];
-    case B_HI:
-    case W_HI:
+    case vshogi::judkins_shogi::B_HI:
+    case vshogi::judkins_shogi::W_HI:
         return attacks_table[10][sq];
-    case B_UM:
-    case W_UM:
+    case vshogi::judkins_shogi::B_UM:
+    case vshogi::judkins_shogi::W_UM:
         return attacks_table[11][sq];
-    case B_RY:
-    case W_RY:
+    case vshogi::judkins_shogi::B_RY:
+    case vshogi::judkins_shogi::W_RY:
         return attacks_table[12][sq];
     default:
         return BitBoard();
@@ -630,43 +618,43 @@ inline judkins_shogi::BitBoard judkins_shogi::BitBoard::get_attacks_by(
 {
     using namespace vshogi::judkins_shogi;
     switch (p) {
-    case B_FU:
+    case vshogi::judkins_shogi::B_FU:
         return attacks_table[0][sq];
-    case B_KE:
+    case vshogi::judkins_shogi::B_KE:
         return attacks_table[1][sq];
-    case B_GI:
+    case vshogi::judkins_shogi::B_GI:
         return attacks_table[2][sq];
-    case B_KI:
-    case B_TO:
-    case B_NK:
-    case B_NG:
+    case vshogi::judkins_shogi::B_KI:
+    case vshogi::judkins_shogi::B_TO:
+    case vshogi::judkins_shogi::B_NK:
+    case vshogi::judkins_shogi::B_NG:
         return attacks_table[3][sq];
-    case W_FU:
+    case vshogi::judkins_shogi::W_FU:
         return attacks_table[4][sq];
-    case W_KE:
+    case vshogi::judkins_shogi::W_KE:
         return attacks_table[5][sq];
-    case W_GI:
+    case vshogi::judkins_shogi::W_GI:
         return attacks_table[6][sq];
-    case W_KI:
-    case W_TO:
-    case W_NK:
-    case W_NG:
+    case vshogi::judkins_shogi::W_KI:
+    case vshogi::judkins_shogi::W_TO:
+    case vshogi::judkins_shogi::W_NK:
+    case vshogi::judkins_shogi::W_NG:
         return attacks_table[7][sq];
-    case B_OU:
-    case W_OU:
+    case vshogi::judkins_shogi::B_OU:
+    case vshogi::judkins_shogi::W_OU:
         return attacks_table[8][sq];
-    case B_KA:
-    case W_KA:
+    case vshogi::judkins_shogi::B_KA:
+    case vshogi::judkins_shogi::W_KA:
         return BitBoard::ranging_attacks_to_diagonal(sq, occupied);
-    case B_HI:
-    case W_HI:
+    case vshogi::judkins_shogi::B_HI:
+    case vshogi::judkins_shogi::W_HI:
         return BitBoard::ranging_attacks_to_adjacent(sq, occupied);
-    case B_UM:
-    case W_UM:
+    case vshogi::judkins_shogi::B_UM:
+    case vshogi::judkins_shogi::W_UM:
         return BitBoard::ranging_attacks_to_diagonal(sq, occupied)
                | attacks_table[8][sq];
-    case B_RY:
-    case W_RY:
+    case vshogi::judkins_shogi::B_RY:
+    case vshogi::judkins_shogi::W_RY:
         return BitBoard::ranging_attacks_to_adjacent(sq, occupied)
                | attacks_table[8][sq];
     default:
@@ -699,13 +687,13 @@ inline void judkins_shogi::BitBoard::init_tables()
 
 template <>
 inline std::uint64_t judkins_shogi::State::zobrist_board
-    [judkins_shogi::Squares::num_squares]
-    [num_colors * judkins_shogi::Pieces::num_piece_types + 1]
+    [judkins_shogi::Config::num_squares]
+    [num_colors * judkins_shogi::Config::num_piece_types + 1]
     = {};
 
 template <>
 inline std::uint64_t judkins_shogi::State::zobrist_stand
-    [num_colors][judkins_shogi::Pieces::num_stand_piece_types][3]
+    [num_colors][judkins_shogi::Config::num_stand_piece_types][3]
     = {};
 
 } // namespace vshogi

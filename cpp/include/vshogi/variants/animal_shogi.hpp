@@ -16,20 +16,6 @@
 namespace vshogi::animal_shogi
 {
 
-// clang-format off
-constexpr uint num_piece_types = 5; // CH, EL, GI, LI, HE
-constexpr uint num_stand_piece_types = 3; // CH, EL, GI
-constexpr uint promotion_bit = 2; // ____ __*__
-constexpr uint num_files = 3; // A, B, C
-constexpr uint num_ranks = 4; // 1, 2, 3, 4
-constexpr uint num_directions = 8; // NW, N, NE, W, E, SW, S, SE
-constexpr uint num_directions_dlshogi = 8; // NW, N, NE, W, E, SW, S, SE
-constexpr uint num_non_ranging_board_piece = 7; // B_CH, W_CH, EL, GI, LI, B_HE, W_HE
-constexpr uint num_attack_types = 7; // B_CH, W_CH, EL, GI, LI, B_HE, W_HE
-constexpr uint max_stand_piece_count = 2;
-constexpr uint max_acceptable_repetition = 2;
-// clang-format on
-
 enum PieceTypeEnum : std::uint8_t
 {
     CH = 0b0000, //!< Chick (Pawn)
@@ -96,51 +82,55 @@ enum RankEnum : uint
     RANK4,
 };
 
-using Pieces = vshogi::Pieces<
-    PieceTypeEnum,
-    BoardPieceTypeEnum,
-    num_piece_types,
-    num_stand_piece_types,
-    promotion_bit>;
+struct Config
+{
+    // clang-format off
+    static constexpr uint num_piece_types = 5; //!< CH, EL, GI, LI, HE
+    static constexpr uint num_stand_piece_types = 3; //!< CH, EL, GI
+    static constexpr uint promotion_bit = 2; //!< ____ __*__
+    static constexpr uint num_files = 3; //!< A, B, C
+    static constexpr uint num_ranks = 4; //!< 1, 2, 3, 4
+    static constexpr uint num_promotion_ranks = 1;
+    static constexpr DirectionEnum dir_array[] = {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE};
+    static constexpr DirectionEnum dir_dl_array[] = {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE};
+    static constexpr uint num_non_ranging_board_piece = 7; //!< B_CH, W_CH, EL, GI, LI, B_HE, W_HE
+    static constexpr uint num_attacks = 7; //!< B_CH, W_CH, EL, GI, LI, B_HE, W_HE
+    static constexpr uint max_stand_piece_count = 2;
+    static constexpr uint max_acceptable_repetitions = 2;
+    using BaseTypeBitBoard = std::uint16_t;
+    // clang-format on
 
-using Squares = vshogi::Squares<
-    SquareEnum,
-    FileEnum,
-    RankEnum,
-    Pieces,
-    num_files,
-    num_ranks,
-    num_directions,
-    num_directions_dlshogi>;
+    /**
+     * @brief 8bit integer representing what is on a piece stand.
+     * @details
+     * ______11  Chick (2bits for 0, 1, or 2 pieces)
+     * ___11___  Elephant (2 bits for 0, 1, or 2 pieces)
+     * 11______  Giraffe (2 bits for 0, 1, or 2 pieces)
+     */
+    using BaseTypeStand = std::uint8_t;
 
-/**
- * @brief 8bit integer representing what is on a piece stand.
- * @details
- * ______11  Chick (2bits for 0, 1, or 2 pieces)
- * ___11___  Elephant (2 bits for 0, 1, or 2 pieces)
- * 11______  Giraffe (2 bits for 0, 1, or 2 pieces)
- */
-using Stand = vshogi::Stand<std::uint8_t, Pieces>;
-using BlackWhiteStands = vshogi::BlackWhiteStands<Stand>;
+    Config() = delete;
+    using PieceType = PieceTypeEnum;
+    using BoardPieceType = BoardPieceTypeEnum;
+    using Square = SquareEnum;
+    using File = FileEnum;
+    using Rank = RankEnum;
+    static constexpr uint num_dir
+        = static_cast<uint>(sizeof(dir_array) / sizeof(dir_array[0]));
+    static constexpr uint num_dir_dl
+        = static_cast<uint>(sizeof(dir_dl_array) / sizeof(dir_dl_array[0]));
+    static constexpr uint num_squares = num_files * num_ranks;
+};
 
-/**
- * @brief 8bit integer representing an Animal Shogi move.
- * @details
- *       ____ ****       destination square (12 squares)
- *       **** ____       source square (15 = 12 squares + 3 pieces to drop)
- * (MSB) xxxx xxxx (LSB)
- */
-using Move = vshogi::Move<std::uint8_t, Squares, Pieces, 7, 3, 3>;
-
-using BitBoard = vshogi::
-    BitBoard<std::uint16_t, Squares, BoardPieceTypeEnum, num_attack_types, 1>;
-
-using Board = vshogi::Board<Squares, Pieces, BitBoard>;
-
-using State
-    = vshogi::State<Board, BlackWhiteStands, Move, max_stand_piece_count>;
-
-using Game = vshogi::Game<State, max_acceptable_repetition>;
+using Pieces = vshogi::Pieces<Config>;
+using Squares = vshogi::Squares<Config>;
+using Move = vshogi::Move<Config>;
+using BitBoard = vshogi::BitBoard<Config>;
+using Board = vshogi::Board<Config>;
+using Stand = vshogi::Stand<Config>;
+using BlackWhiteStands = vshogi::BlackWhiteStands<Config>;
+using State = vshogi::State<Config>;
+using Game = vshogi::Game<Config>;
 
 constexpr BitBoard bb_a1 = (BitBoard(1) << static_cast<uint>(SQ_A1));
 constexpr BitBoard bb_b1 = (BitBoard(1) << static_cast<uint>(SQ_B1));
@@ -167,8 +157,8 @@ constexpr BitBoard bb_filec = BitBoard(0b100100100100);
 namespace internal
 {
 
-inline Pieces::BoardPieceTypeEnum
-promote_if_possible(const Pieces::BoardPieceTypeEnum p, const Move move)
+inline BoardPieceTypeEnum
+promote_if_possible(const BoardPieceTypeEnum p, const Move move)
 {
     if (move.is_drop())
         return p;
@@ -309,12 +299,12 @@ inline void animal_shogi::Pieces::append_sfen(
 }
 
 template <>
-constexpr animal_shogi::FileEnum animal_shogi::Squares::fe()
+constexpr animal_shogi::FileEnum animal_shogi::Squares::file_right_most()
 {
     return animal_shogi::FILE_C;
 }
 template <>
-constexpr animal_shogi::FileEnum animal_shogi::Squares::fw()
+constexpr animal_shogi::FileEnum animal_shogi::Squares::file_left_most()
 {
     return animal_shogi::FILE_A;
 }
@@ -442,7 +432,7 @@ constexpr uint animal_shogi::Move::num_policy_per_square()
 
 template <>
 inline const animal_shogi::BitBoard animal_shogi::BitBoard::
-    square_to_bitboard_array[animal_shogi::Squares::num_squares + 1]
+    square_to_bitboard_array[animal_shogi::Config::num_squares + 1]
     = {
         BitBoard(1) << static_cast<uint>(0),
         BitBoard(1) << static_cast<uint>(1),
@@ -461,8 +451,8 @@ inline const animal_shogi::BitBoard animal_shogi::BitBoard::
 
 template <>
 inline animal_shogi::BitBoard
-    animal_shogi::BitBoard::attacks_table[animal_shogi::num_attack_types]
-                                         [animal_shogi::Squares::num_squares]
+    animal_shogi::BitBoard::attacks_table[animal_shogi::Config::num_attacks]
+                                         [animal_shogi::Config::num_squares]
     = {};
 
 template <>
@@ -472,22 +462,22 @@ inline animal_shogi::BitBoard animal_shogi::BitBoard::get_attacks_by(
 {
     using namespace animal_shogi;
     switch (p) {
-    case B_CH:
+    case vshogi::animal_shogi::B_CH:
         return attacks_table[0][sq];
-    case B_HE:
+    case vshogi::animal_shogi::B_HE:
         return attacks_table[1][sq];
-    case W_CH:
+    case vshogi::animal_shogi::W_CH:
         return attacks_table[2][sq];
-    case W_HE:
+    case vshogi::animal_shogi::W_HE:
         return attacks_table[3][sq];
-    case B_EL:
-    case W_EL:
+    case vshogi::animal_shogi::B_EL:
+    case vshogi::animal_shogi::W_EL:
         return attacks_table[4][sq];
-    case B_GI:
-    case W_GI:
+    case vshogi::animal_shogi::B_GI:
+    case vshogi::animal_shogi::W_GI:
         return attacks_table[5][sq];
-    case B_LI:
-    case W_LI:
+    case vshogi::animal_shogi::B_LI:
+    case vshogi::animal_shogi::W_LI:
         return attacks_table[6][sq];
     default:
         return BitBoard();
@@ -522,13 +512,13 @@ inline void animal_shogi::BitBoard::init_tables()
 
 template <>
 inline std::uint64_t animal_shogi::State::zobrist_board
-    [animal_shogi::Squares::num_squares]
-    [num_colors * animal_shogi::Pieces::num_piece_types + 1]
+    [animal_shogi::Config::num_squares]
+    [num_colors * animal_shogi::Config::num_piece_types + 1]
     = {};
 
 template <>
 inline std::uint64_t animal_shogi::State::zobrist_stand
-    [num_colors][animal_shogi::Pieces::num_stand_piece_types][3]
+    [num_colors][animal_shogi::Config::num_stand_piece_types][3]
     = {};
 
 template <>
@@ -537,9 +527,9 @@ inline animal_shogi::State& animal_shogi::State::apply(
 {
     const auto dst = move.destination();
     auto moving = pop_piece_from_stand_or_board(move, hash);
-    const auto captured = Pieces::to_piece_type(m_board[dst]);
-    if ((captured != Pieces::NA) && (captured != animal_shogi::LI))
-        add_captured_to_stand(Pieces::demote(captured), hash);
+    const auto captured = PHelper::to_piece_type(m_board[dst]);
+    if ((captured != PHelper::NA) && (captured != animal_shogi::LI))
+        add_captured_to_stand(PHelper::demote(captured), hash);
     moving = animal_shogi::internal::promote_if_possible(moving, move);
     place_piece_at(dst, moving, hash);
     m_turn = ~m_turn;
@@ -567,26 +557,26 @@ inline void animal_shogi::Game::update_internals()
         const auto& board = get_board();
         const auto& stand = get_stand(turn);
         m_legal_moves.clear();
-        for (auto src : Squares::square_array) {
+        for (auto src : SHelper::square_array) {
             const auto p = board[src];
-            if ((p == Pieces::VOID) || (Pieces::get_color(p) != turn))
+            if ((p == PHelper::VOID) || (PHelper::get_color(p) != turn))
                 continue;
-            for (auto dp = Pieces::get_attack_directions(p); *dp != DIR_NA;) {
-                const auto dst = Squares::shift(src, *dp++);
-                if (dst == Squares::SQ_NA)
+            for (auto dp = PHelper::get_attack_directions(p); *dp != DIR_NA;) {
+                const auto dst = SHelper::shift(src, *dp++);
+                if (dst == SHelper::SQ_NA)
                     continue;
                 const auto t = board[dst];
-                if (((t == Pieces::VOID) || (Pieces::get_color(t) == ~turn))
-                    && BitBoard::get_attacks_by(p, src).is_one(dst))
+                if (((t == PHelper::VOID) || (PHelper::get_color(t) == ~turn))
+                    && BitBoardType::get_attacks_by(p, src).is_one(dst))
                     m_legal_moves.emplace_back(dst, src);
             }
         }
-        for (auto dst : Squares::square_array) {
+        for (auto dst : SHelper::square_array) {
             if (!board.is_empty(dst))
                 continue;
-            for (auto pt : Pieces::stand_piece_array) {
+            for (auto pt : PHelper::stand_piece_array) {
                 if (stand.exist(pt))
-                    m_legal_moves.emplace_back(Move(dst, pt));
+                    m_legal_moves.emplace_back(MoveType(dst, pt));
             }
         }
     }

@@ -6,7 +6,8 @@
 namespace test_vshogi::test_minishogi
 {
 
-using PieceTypeEnum = vshogi::minishogi::Pieces::PieceTypeEnum;
+using PieceTypeEnum = vshogi::minishogi::PieceTypeEnum;
+
 template <class T>
 static auto is_promotable(const T p)
 {
@@ -37,11 +38,11 @@ static constexpr auto to_board_piece
     = vshogi::minishogi::Pieces::to_board_piece;
 static constexpr auto append_sfen = vshogi::minishogi::Pieces::append_sfen;
 
-using SquareEnum = vshogi::minishogi::Squares::SquareEnum;
+using SquareEnum = vshogi::minishogi::Config::Square;
 static constexpr auto to_rank = vshogi::minishogi::Squares::to_rank;
 static constexpr auto to_file = vshogi::minishogi::Squares::to_file;
 static constexpr auto shift = vshogi::minishogi::Squares::shift;
-static constexpr auto num_squares = vshogi::minishogi::Squares::num_squares;
+static constexpr auto num_squares = vshogi::minishogi::Config::num_squares;
 
 } // namespace test_vshogi::test_minishogi
 

@@ -5,29 +5,32 @@
 
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/direction.hpp"
+#include "vshogi/common/squares.hpp"
 #include "vshogi/common/utils.hpp"
 
 namespace vshogi
 {
 
-template <
-    class UInt,
-    class Squares,
-    class BoardPiece,
-    uint NumAttackTypes,
-    uint NumPromotionRanks>
+template <class Config>
 class BitBoard
 {
-public:
-    using SquareEnum = typename Squares::SquareEnum;
-
 private:
+    using BoardPiece = typename Config::BoardPieceType;
+    using Square = typename Config::Square;
+    using UInt = typename Config::BaseTypeBitBoard;
+    static constexpr uint num_squares = Config::num_squares;
+    static constexpr uint num_files = Config::num_files;
+    static constexpr uint num_ranks = Config::num_ranks;
+    static constexpr uint num_promotion_ranks = Config::num_promotion_ranks;
+    static constexpr uint num_attacks = Config::num_attacks;
+    using SquaresHelper = Squares<Config>;
+
     UInt m_value;
 
     static constexpr UInt mask
-        = (static_cast<UInt>(1) << Squares::num_squares) - static_cast<UInt>(1);
-    static const BitBoard square_to_bitboard_array[Squares::num_squares + 1U];
-    static BitBoard attacks_table[NumAttackTypes][Squares::num_squares];
+        = (static_cast<UInt>(1) << num_squares) - static_cast<UInt>(1);
+    static const BitBoard square_to_bitboard_array[num_squares + 1U];
+    static BitBoard attacks_table[num_attacks][num_squares];
 
 public:
     constexpr BitBoard() : m_value()
@@ -75,7 +78,7 @@ public:
     {
         return static_cast<bool>(m_value);
     }
-    bool is_one(const SquareEnum& sq) const
+    bool is_one(const Square& sq) const
     {
         return static_cast<bool>(from_square(sq).m_value & m_value);
     }
@@ -84,14 +87,13 @@ public:
         return hamming_weight_64bit(static_cast<std::uint64_t>(m_value));
     }
 
-    static BitBoard from_square(const SquareEnum& sq)
+    static BitBoard from_square(const Square& sq)
     {
         return square_to_bitboard_array[sq];
     }
     static constexpr BitBoard get_promotion_zone(const ColorEnum& c)
     {
-        constexpr uint s
-            = Squares::num_squares - NumPromotionRanks * Squares::num_files;
+        constexpr uint s = num_squares - num_promotion_ranks * num_files;
         return (c == BLACK) ? ((~BitBoard(0)) << s) >> s
                             : ((~BitBoard(0)) >> s) << s;
     }
@@ -102,7 +104,7 @@ public:
         constexpr auto bb_all = ~BitBoard(0);
         constexpr auto bb_all_but_lmost = ~file_mask_leftmost();
         constexpr auto bb_all_but_rmost = ~file_mask_rightmost();
-        constexpr auto delta = Squares::direction_to_delta(Dir);
+        constexpr auto delta = SquaresHelper::direction_to_delta(Dir);
         constexpr BitBoard filemask[] = {
             // clang-format off
             bb_all_but_lmost, bb_all, bb_all_but_rmost,
@@ -134,12 +136,12 @@ public:
 
     template <DirectionEnum Dir>
     static BitBoard
-    ranging_attacks_to(SquareEnum sq, const BitBoard& occupied = BitBoard())
+    ranging_attacks_to(Square sq, const BitBoard& occupied = BitBoard())
     {
         BitBoard out{};
         while (true) {
-            sq = Squares::shift(sq, Dir);
-            if (sq == Squares::SQ_NA)
+            sq = SquaresHelper::shift(sq, Dir);
+            if (sq == SquaresHelper::SQ_NA)
                 break; // reached the end of the board
             else if (occupied.is_one(sq)) {
                 out |= BitBoard::from_square(sq);
@@ -151,7 +153,7 @@ public:
         return out;
     }
     static BitBoard ranging_attacks_to_adjacent(
-        const SquareEnum& sq, const BitBoard& occupied = BitBoard())
+        const Square& sq, const BitBoard& occupied = BitBoard())
     {
         return ranging_attacks_to<DIR_N>(sq, occupied)
                | ranging_attacks_to<DIR_E>(sq, occupied)
@@ -159,7 +161,7 @@ public:
                | ranging_attacks_to<DIR_S>(sq, occupied);
     }
     static BitBoard ranging_attacks_to_diagonal(
-        const SquareEnum& sq, const BitBoard& occupied = BitBoard())
+        const Square& sq, const BitBoard& occupied = BitBoard())
     {
         return ranging_attacks_to<DIR_NW>(sq, occupied)
                | ranging_attacks_to<DIR_NE>(sq, occupied)
@@ -167,9 +169,9 @@ public:
                | ranging_attacks_to<DIR_SE>(sq, occupied);
     }
 
-    static BitBoard get_attacks_by(const BoardPiece& p, const SquareEnum& sq);
+    static BitBoard get_attacks_by(const BoardPiece& p, const Square& sq);
     static BitBoard get_attacks_by(
-        const BoardPiece& p, const SquareEnum& sq, const BitBoard& occupied);
+        const BoardPiece& p, const Square& sq, const BitBoard& occupied);
     static void init_tables();
 
 private:
@@ -186,25 +188,24 @@ private:
         x += x >> 32; //put count of each 64 bits into their lowest 8 bits
         return x & 0x7f;
     }
-    template <uint NumSquaresFromTop = Squares::num_ranks>
+    template <uint NumSquaresFromTop = num_ranks>
     static constexpr BitBoard file_mask_leftmost()
     {
         if constexpr (NumSquaresFromTop == 0u)
             return BitBoard(0);
         else
-            return (file_mask_leftmost<NumSquaresFromTop - 1>()
-                    << Squares::num_files)
+            return (file_mask_leftmost<NumSquaresFromTop - 1>() << num_files)
                    | BitBoard(1);
     }
-    template <uint NumSquaresFromTop = Squares::num_ranks>
+    template <uint NumSquaresFromTop = num_ranks>
     static constexpr BitBoard file_mask_rightmost()
     {
         if constexpr (NumSquaresFromTop == 0u)
             return BitBoard(0);
         else
-            return (BitBoard(1) << (Squares::num_files - 1))
+            return (BitBoard(1) << (num_files - 1))
                    | (file_mask_rightmost<NumSquaresFromTop - 1>()
-                      << Squares::num_files);
+                      << num_files);
     }
 };
 

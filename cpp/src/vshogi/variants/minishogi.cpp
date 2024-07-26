@@ -40,8 +40,8 @@ minishogi::Board::Board()
 }
 
 template <>
-const char* minishogi::Board::set_sfen_rank(
-    const char* const sfen_rank, const RankEnum rank)
+const char*
+minishogi::Board::set_sfen_rank(const char* const sfen_rank, const Rank rank)
 {
     constexpr int max_length = 11; // e.g. "+r+b+s+p+P/"
     auto piece_str = m_pieces + num_files * static_cast<uint>(rank);

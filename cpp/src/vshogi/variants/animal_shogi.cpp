@@ -29,8 +29,8 @@ animal_shogi::Board::Board()
 }
 
 template <>
-const char* animal_shogi::Board::set_sfen_rank(
-    const char* const sfen_rank, const RankEnum rank)
+const char*
+animal_shogi::Board::set_sfen_rank(const char* const sfen_rank, const Rank rank)
 {
     static_assert(static_cast<int>(vshogi::animal_shogi::RANK1) == 0);
     constexpr int max_length = 4; // "ELG ", "1c1/", ...

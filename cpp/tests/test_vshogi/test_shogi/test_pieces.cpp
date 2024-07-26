@@ -337,7 +337,7 @@ TEST(shogi_pieces, get_attack_directions)
         {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_RY
         // clang-format on
     };
-    for (int ii = num_piece_types; ii--;) {
+    for (int ii = Config::num_piece_types; ii--;) {
         const PieceTypeEnum pt = vshogi::shogi::Pieces::piece_array[ii];
         for (auto&& color : {BLACK, WHITE}) {
             const BoardPieceTypeEnum p

@@ -4,20 +4,22 @@
 #include <string>
 
 #include "vshogi/common/color.hpp"
+#include "vshogi/common/pieces.hpp"
 
 namespace vshogi
 {
 
-template <class Int, class Pieces>
+template <class Config>
 class Stand
 {
-public:
-    using PiecesType = Pieces;
-
 private:
-    static const uint shift_bits[Pieces::num_stand_piece_types];
-    static const Int masks[Pieces::num_stand_piece_types];
-    static const Int deltas[Pieces::num_stand_piece_types];
+    using Int = typename Config::BaseTypeStand;
+    using PieceType = typename Config::PieceType;
+    using PHelper = Pieces<Config>;
+
+    static const uint shift_bits[Config::num_stand_piece_types];
+    static const Int masks[Config::num_stand_piece_types];
+    static const Int deltas[Config::num_stand_piece_types];
     static const Int mask;
 
     Int m_value;
@@ -32,11 +34,11 @@ public:
     template <typename... Args>
     Stand(const int, const int, Args...);
 
-    uint count(const typename Pieces::PieceTypeEnum& p) const
+    uint count(const PieceType& p) const
     {
         return static_cast<uint>((m_value & masks[p]) >> shift_bits[p]);
     }
-    bool exist(const typename Pieces::PieceTypeEnum& p) const
+    bool exist(const PieceType& p) const
     {
         return (m_value & masks[p]) > 0;
     }
@@ -44,16 +46,16 @@ public:
     {
         return m_value > 0;
     }
-    Stand& add(const typename Pieces::PieceTypeEnum& p, const int num = 1)
+    Stand& add(const PieceType& p, const int num = 1)
     {
         for (int ii = num; ii--;) {
-            m_value = static_cast<Int>(m_value + deltas[Pieces::demote(p)]);
+            m_value = static_cast<Int>(m_value + deltas[PHelper::demote(p)]);
         }
         return *this;
     }
-    Stand& subtract(const typename Pieces::PieceTypeEnum& p)
+    Stand& subtract(const PieceType& p)
     {
-        m_value = static_cast<Int>(m_value - deltas[Pieces::demote(p)]);
+        m_value = static_cast<Int>(m_value - deltas[PHelper::demote(p)]);
         return *this;
     }
     bool operator==(const Stand& other) const
@@ -66,21 +68,24 @@ public:
     }
 };
 
-template <class Stand>
+template <class Config>
 class BlackWhiteStands
 {
-private:
-    using Pieces = typename Stand::PiecesType;
+public:
+    using StandType = Stand<Config>;
 
-    static const typename Pieces::PieceTypeEnum
-        stand_pieces_in_sfen_order[Pieces::num_stand_piece_types];
+private:
+    using PHelper = Pieces<Config>;
+    using PieceType = typename Config::PieceType;
+    static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
+
+    static const PieceType stand_pieces_in_sfen_order[num_stand_piece_types];
     static const int max_sfen_length;
 
-    Stand m_black;
-    Stand m_white;
+    StandType m_black;
+    StandType m_white;
 
 public:
-    using StandType = Stand;
     BlackWhiteStands() : m_black(), m_white()
     {
     }
@@ -92,19 +97,19 @@ public:
     {
         return (m_black != other.m_black) || (m_white != other.m_white);
     }
-    const Stand& black() const
+    const StandType& black() const
     {
         return m_black;
     }
-    const Stand& white() const
+    const StandType& white() const
     {
         return m_white;
     }
-    Stand& operator[](const ColorEnum& c)
+    StandType& operator[](const ColorEnum& c)
     {
         return (c == BLACK) ? m_black : m_white;
     }
-    const Stand& operator[](const ColorEnum& c) const
+    const StandType& operator[](const ColorEnum& c) const
     {
         return (c == BLACK) ? m_black : m_white;
     }
@@ -130,9 +135,9 @@ public:
             }
 
             if (('A' <= *ptr) && (*ptr <= 'Z'))
-                m_black.add(Pieces::to_piece_type(*ptr), num ? num : 1);
+                m_black.add(PHelper::to_piece_type(*ptr), num ? num : 1);
             else if (('a' <= *ptr) && (*ptr <= 'z'))
-                m_white.add(Pieces::to_piece_type(*ptr), num ? num : 1);
+                m_white.add(PHelper::to_piece_type(*ptr), num ? num : 1);
             num = 0;
         }
     END:
@@ -153,7 +158,7 @@ public:
                     out += '1';
                 if (num > 1)
                     out += static_cast<char>('0' + num % 10);
-                Pieces::append_sfen(Pieces::to_board_piece(c, p), out);
+                PHelper::append_sfen(PHelper::to_board_piece(c, p), out);
             }
         }
     }

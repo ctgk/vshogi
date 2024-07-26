@@ -142,5 +142,5 @@ void export_judkins_shogi(py::module& m)
 
     export_square_enum(m);
     export_pieces(m);
-    pyvshogi::export_classes<js::Game>(m);
+    pyvshogi::export_classes<js::Config>(m);
 }

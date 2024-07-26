@@ -44,20 +44,21 @@ inline void export_piece_stand(pybind11::module& m)
         });
 }
 
-template <class Move>
+template <class Config>
 inline void export_move(pybind11::module& m)
 {
     namespace py = pybind11;
-    using SquareEnum = typename Move::SquareEnum;
-    using PieceTypeEnum = typename Move::PieceTypeEnum;
+    using Move = vshogi::Move<Config>;
+    using Square = typename Config::Square;
+    using PieceType = typename Config::PieceType;
     py::class_<Move>(m, "Move")
         .def(
-            py::init<const SquareEnum, const SquareEnum, const bool>(),
+            py::init<const Square, const Square, const bool>(),
             py::arg("dst"),
             py::arg("src"),
             py::arg("promote") = false)
         .def(
-            py::init<const SquareEnum, const PieceTypeEnum>(),
+            py::init<const Square, const PieceType>(),
             py::arg("dst"),
             py::arg("src"))
         .def(
@@ -92,11 +93,12 @@ inline void export_move(pybind11::module& m)
             [](py::tuple t) { return Move(t[0].cast<std::size_t>()); }));
 }
 
-template <class State>
+template <class Config>
 inline void export_state(pybind11::module& m)
 {
     namespace py = pybind11;
-    using Move = typename State::MoveType;
+    using State = vshogi::State<Config>;
+    using Move = vshogi::Move<Config>;
 
     py::class_<State>(m, "State")
         .def(py::init<const std::string&>())
@@ -167,11 +169,12 @@ inline void export_state(pybind11::module& m)
             py::arg("out"));
 }
 
-template <class Game>
+template <class Config>
 inline void export_game(pybind11::module& m)
 {
     namespace py = pybind11;
-    using Move = typename Game::Move;
+    using Game = vshogi::Game<Config>;
+    using Move = vshogi::Move<Config>;
     py::class_<Game>(m, "_Game")
         .def(py::init<>())
         .def(py::init<const std::string&>())
@@ -378,25 +381,20 @@ inline void export_dfpn_searcher(pybind11::module& m)
         .def("get_mate_moves", &Searcher::get_mate_moves);
 }
 
-template <class Game>
+template <class Config>
 void export_classes(pybind11::module& m)
 {
-    using Board = typename Game::Board;
-    using Move = typename Game::Move;
-    using Pieces = typename Game::Pieces;
-    using SquareEnum = typename Game::SquareEnum;
-    using Stand = typename Game::Stand;
-    using State = typename Game::StateType;
+    using GameType = vshogi::Game<Config>;
 
-    export_board<Board, SquareEnum>(m);
-    export_piece_stand<Stand, Pieces>(m);
-    export_move<Move>(m);
-    export_state<State>(m);
-    export_game<Game>(m);
-    export_mcts_node<Game, Move>(m);
+    export_board<vshogi::Board<Config>, typename Config::Square>(m);
+    export_piece_stand<vshogi::Stand<Config>, vshogi::Pieces<Config>>(m);
+    export_move<Config>(m);
+    export_state<Config>(m);
+    export_game<Config>(m);
+    export_mcts_node<GameType, vshogi::Move<Config>>(m);
 
-    if constexpr (!std::is_same<Game, vshogi::animal_shogi::Game>::value)
-        export_dfpn_searcher<Game, Move>(m);
+    if constexpr (!std::is_same<GameType, vshogi::animal_shogi::Game>::value)
+        export_dfpn_searcher<GameType, vshogi::Move<Config>>(m);
 }
 
 } // namespace pyvshogi

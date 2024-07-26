@@ -64,5 +64,5 @@ void export_animal_shogi(py::module& m)
     export_pieces(m);
     export_square_enum(m);
 
-    pyvshogi::export_classes<as::Game>(m);
+    pyvshogi::export_classes<as::Config>(m);
 }

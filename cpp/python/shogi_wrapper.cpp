@@ -12,7 +12,7 @@ namespace
 
 void export_square_enum(py::module& m)
 {
-    py::enum_<sg::Squares::SquareEnum>(m, "Square")
+    py::enum_<sg::SquareEnum>(m, "Square")
         .value("SQ_9A", sg::SQ_9A)
         .value("SQ_8A", sg::SQ_8A)
         .value("SQ_7A", sg::SQ_7A)
@@ -240,5 +240,5 @@ void export_shogi(py::module& m)
     export_square_enum(m);
     export_pieces(m);
 
-    pyvshogi::export_classes<sg::Game>(m);
+    pyvshogi::export_classes<sg::Config>(m);
 }

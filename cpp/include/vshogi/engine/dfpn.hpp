@@ -321,7 +321,7 @@ private:
             /**
              * @brief 0:?, 1:false, 2:true
              */
-            uint is_attacked_cache[Game::num_squares()] = {0};
+            uint is_attacked_cache[Game::squares()] = {0};
 
             for (auto&& m : legal_moves) {
                 if ((m_parent == nullptr)
@@ -397,7 +397,7 @@ private:
             /**
              * @brief 0:?, 1:false, 2:true
              */
-            uint is_attacked_cache[Game::num_squares()] = {0};
+            uint is_attacked_cache[Game::squares()] = {0};
 
             for (auto&& m : legal_moves) {
                 if ((m_parent == nullptr)

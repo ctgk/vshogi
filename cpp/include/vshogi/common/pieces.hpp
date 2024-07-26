@@ -9,41 +9,36 @@
 namespace vshogi
 {
 
-template <
-    class PieceType,
-    class BoardPiece,
-    uint NumPieceTypes,
-    uint NumStandPieceTypes,
-    uint PromotionBit>
+template <class Config>
 struct Pieces
 {
-public:
-    using PieceTypeEnum = PieceType;
-    using BoardPieceTypeEnum = BoardPiece;
-
 private:
-    static constexpr uint color_bit = PromotionBit + 1;
-    static constexpr uint promotion_mask = (1 << PromotionBit);
+    static constexpr uint num_piece_types = Config::num_piece_types;
+    static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
+    static constexpr uint promotion_bit = Config::promotion_bit;
+    using PieceType = typename Config::PieceType;
+    using BoardPieceType = typename Config::BoardPieceType;
+
+    static constexpr uint color_bit = promotion_bit + 1u;
+    static constexpr uint promotion_mask = (1 << promotion_bit);
     static constexpr uint color_mask = (1 << color_bit);
     static constexpr uint piece_type_mask = (color_mask - 1);
-    static const DirectionEnum attack_directions_table[2 * NumPieceTypes + 1]
+    static const DirectionEnum attack_directions_table[2 * num_piece_types + 1]
                                                       [9];
 
 public:
     static constexpr PieceType FU = static_cast<PieceType>(0); // NOLINT
     static constexpr PieceType OU // NOLINT
-        = static_cast<PieceType>(NumStandPieceTypes);
+        = static_cast<PieceType>(num_stand_piece_types);
     static constexpr PieceType NA // NOLINT
         = static_cast<PieceType>(color_mask - 1);
-    static constexpr BoardPiece VOID // NOLINT
-        = static_cast<BoardPiece>((color_mask << 1) - 1);
+    static constexpr BoardPieceType VOID // NOLINT
+        = static_cast<BoardPieceType>((color_mask << 1) - 1);
 
     Pieces() = delete;
-    static const uint num_piece_types = NumPieceTypes;
-    static const uint num_stand_piece_types = NumStandPieceTypes;
 
-    static const PieceType piece_array[NumPieceTypes];
-    static const PieceType stand_piece_array[NumStandPieceTypes];
+    static const PieceType piece_array[num_piece_types];
+    static const PieceType stand_piece_array[num_stand_piece_types];
 
     /**
      * @brief Get the color of a board piece.
@@ -52,26 +47,26 @@ public:
      * @param p Board piece.
      * @return constexpr ColorEnum Color of the board piece.
      */
-    static constexpr ColorEnum get_color(const BoardPiece& p)
+    static constexpr ColorEnum get_color(const BoardPieceType& p)
     {
         return static_cast<ColorEnum>(p >> color_bit);
     }
-    static constexpr PieceType to_piece_type(const BoardPiece& p)
+    static constexpr PieceType to_piece_type(const BoardPieceType& p)
     {
         return static_cast<PieceType>(p & piece_type_mask);
     }
     static PieceType to_piece_type(const char c);
-    static constexpr BoardPiece
+    static constexpr BoardPieceType
     to_board_piece(const ColorEnum& c, const PieceType& p)
     {
         if (p == NA)
             return VOID;
-        return static_cast<BoardPiece>((c << color_bit) | p);
+        return static_cast<BoardPieceType>((c << color_bit) | p);
     }
     static char to_char(const PieceType& p);
 
     static constexpr bool is_promotable(const PieceType& p);
-    static constexpr bool is_promotable(const BoardPiece& p)
+    static constexpr bool is_promotable(const BoardPieceType& p)
     {
         return is_promotable(to_piece_type(p));
     }
@@ -81,13 +76,13 @@ public:
     {
         return static_cast<bool>(p & promotion_mask);
     }
-    static constexpr bool is_promoted(const BoardPiece& p)
+    static constexpr bool is_promoted(const BoardPieceType& p)
     {
         return is_promoted(to_piece_type(p));
     }
-    static bool is_ranging_to(const BoardPiece& p, const DirectionEnum& d);
-    static bool is_ranging_piece(const PieceTypeEnum& pt);
-    static bool is_ranging_piece(const BoardPieceTypeEnum& p)
+    static bool is_ranging_to(const BoardPieceType& p, const DirectionEnum& d);
+    static bool is_ranging_piece(const PieceType& pt);
+    static bool is_ranging_piece(const BoardPieceType& p)
     {
         return is_ranging_piece(to_piece_type(p));
     }
@@ -105,12 +100,12 @@ public:
     }
 
     static uint get_point(const PieceType& p);
-    static uint get_point(const BoardPiece& p)
+    static uint get_point(const BoardPieceType& p)
     {
         return get_point(to_piece_type(p));
     }
 
-    static void append_sfen(const BoardPiece& p, std::string& out)
+    static void append_sfen(const BoardPieceType& p, std::string& out)
     {
         const auto color = get_color(p);
         const auto promotion = is_promoted(p);
@@ -122,20 +117,20 @@ public:
             out += '+';
         out += c;
     }
-    static uint get_index(const BoardPieceTypeEnum& p)
+    static uint get_index(const BoardPieceType& p)
     {
         if (p == VOID)
-            return 2 * NumPieceTypes;
+            return 2 * num_piece_types;
         const PieceType pt = to_piece_type(p);
         const uint color_offset
-            = static_cast<uint>(get_color(p) == WHITE) * NumPieceTypes;
+            = static_cast<uint>(get_color(p) == WHITE) * num_piece_types;
         const uint promo_offset
-            = static_cast<uint>(is_promoted(pt)) * (NumStandPieceTypes + 1);
-        const uint pt_index
-            = (pt == OU) ? NumStandPieceTypes : static_cast<uint>(demote(pt));
+            = static_cast<uint>(is_promoted(pt)) * (num_stand_piece_types + 1);
+        const uint pt_index = (pt == OU) ? num_stand_piece_types
+                                         : static_cast<uint>(demote(pt));
         return color_offset + promo_offset + pt_index;
     }
-    static const DirectionEnum* get_attack_directions(const BoardPiece& p)
+    static const DirectionEnum* get_attack_directions(const BoardPieceType& p)
     {
         return attack_directions_table[get_index(p)];
     }
@@ -143,8 +138,8 @@ public:
     {
     }
 
-    static constexpr BoardPiece B_OU = to_board_piece(BLACK, OU); // NOLINT
-    static constexpr BoardPiece W_OU = to_board_piece(WHITE, OU); // NOLINT
+    static constexpr BoardPieceType B_OU = to_board_piece(BLACK, OU); // NOLINT
+    static constexpr BoardPieceType W_OU = to_board_piece(WHITE, OU); // NOLINT
 };
 
 } // namespace vshogi

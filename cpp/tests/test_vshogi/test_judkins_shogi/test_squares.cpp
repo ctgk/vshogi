@@ -136,9 +136,9 @@ TEST(squares, to_square)
 TEST(squares, square_array)
 {
     CHECK_EQUAL(
-        Squares::num_squares,
+        Config::num_squares,
         sizeof(Squares::square_array) / sizeof(Squares::square_array[0]));
-    for (int i = Squares::num_squares; i--;) {
+    for (int i = Config::num_squares; i--;) {
         CHECK_EQUAL(i, static_cast<int>(Squares::square_array[i]));
     }
 }

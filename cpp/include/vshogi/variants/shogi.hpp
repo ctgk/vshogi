@@ -16,20 +16,6 @@
 namespace vshogi::shogi
 {
 
-// clang-format off
-constexpr uint num_piece_types = 14; // FU, KY, KE, GI, KI, KA, HI, OU, TO, NY, NK, NG, UM, RY
-constexpr uint num_stand_piece_types = 7; // FU, KY, KE, GI, KI, KA, HI
-constexpr uint promotion_bit = 3; // ____ _*___
-constexpr uint num_files = 9; // 1, 2, 3, 4, 5, 6, 7, 8, 9
-constexpr uint num_ranks = 9; // A, B, C, D, E, F, G, H, I
-constexpr uint num_directions = 12; // NNW, NNE, NW, N, NE, W, E, SW, S, SE, SSW, SSE
-constexpr uint num_directions_dlshogi = 10; // NW, N, NE, W, E, SW, S, SE, SSW, SSE
-constexpr uint num_non_ranging_attacks = 9; // B_FU, W_FU, B_KE, W_KE, B_GI, W_GI, B_KI, W_KI, OU
-constexpr uint num_attacks = 15; // B_FU, W_FU, B_KE, W_KE, B_GI, W_GI, B_KI, W_KI, OU, B_KY, W_KY, KA, HI, UM, RY
-constexpr uint max_stand_piece_count = 18;
-constexpr uint max_acceptable_repetition = 3;
-// clang-format on
-
 enum PieceTypeEnum : std::uint8_t
 {
     FU = 0b0000, //!< Fu (Pawn)
@@ -163,190 +149,65 @@ enum FileEnum : uint
     FILE9,
 };
 
-using Pieces = vshogi::Pieces<
-    PieceTypeEnum,
-    BoardPieceTypeEnum,
-    num_piece_types,
-    num_stand_piece_types,
-    promotion_bit>;
+struct Config
+{
+    // clang-format off
+    static constexpr uint num_piece_types = 14; // FU, KY, KE, GI, KI, KA, HI, OU, TO, NY, NK, NG, UM, RY
+    static constexpr uint num_stand_piece_types = 7; // FU, KY, KE, GI, KI, KA, HI
+    static constexpr uint promotion_bit = 3; // ____ _*___
+    static constexpr uint num_files = 9; // 1, 2, 3, 4, 5, 6, 7, 8, 9
+    static constexpr uint num_ranks = 9; // A, B, C, D, E, F, G, H, I
+    static constexpr uint num_promotion_ranks = 3;
+    static constexpr DirectionEnum dir_array[] = {DIR_NNW, DIR_NNE, DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_SSW, DIR_SSE};
+    static constexpr DirectionEnum dir_dl_array[] = {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_SSW, DIR_SSE};
+    static constexpr uint num_non_ranging_attacks = 9; // B_FU, W_FU, B_KE, W_KE, B_GI, W_GI, B_KI, W_KI, OU
+    static constexpr uint num_attacks = 15; // B_FU, W_FU, B_KE, W_KE, B_GI, W_GI, B_KI, W_KI, OU, B_KY, W_KY, KA, HI, UM, RY
+    static constexpr uint max_stand_piece_count = 18;
+    static constexpr uint max_acceptable_repetitions = 3;
+    using BaseTypeBitBoard = uint128;
+    // clang-format on
+
+    /**
+     * @brief 32-bit integer representing pieces on a stand.
+     * @details
+     * ________ ________ ________ ___*****  FU (18 pieces)
+     * ________ ________ _______* **______  KY (4 pieces)
+     * ________ ________ ___***__ ________  KE (4 pieces)
+     * ________ _______* **______ ________  GI (4 pieces)
+     * ________ ____**__ ________ ________  KA (2 pieces)
+     * ________ _**_____ ________ ________  HI (2 pieces)
+     * _____*** ________ ________ ________  KI (4 pieces)
+     */
+    using BaseTypeStand = std::uint32_t;
+
+    Config() = delete;
+    using PieceType = PieceTypeEnum;
+    using BoardPieceType = BoardPieceTypeEnum;
+    using Square = SquareEnum;
+    using File = FileEnum;
+    using Rank = RankEnum;
+    static constexpr uint num_dir
+        = static_cast<uint>(sizeof(dir_array) / sizeof(dir_array[0]));
+    static constexpr uint num_dir_dl
+        = static_cast<uint>(sizeof(dir_dl_array) / sizeof(dir_dl_array[0]));
+    static constexpr uint num_squares = num_files * num_ranks;
+};
+
+using Pieces = vshogi::Pieces<Config>;
+using Squares = vshogi::Squares<Config>;
+using Move = vshogi::Move<Config>;
+using BitBoard = vshogi::BitBoard<Config>;
+using Board = vshogi::Board<Config>;
+using Stand = vshogi::Stand<Config>;
+using BlackWhiteStands = vshogi::BlackWhiteStands<Config>;
+using State = vshogi::State<Config>;
+using Game = vshogi::Game<Config>;
 static_assert(FU == Pieces::FU);
 static_assert(OU == Pieces::OU);
 static_assert(NA == Pieces::NA);
 static_assert(B_OU == Pieces::B_OU);
 static_assert(W_OU == Pieces::W_OU);
 static_assert(VOID == Pieces::VOID);
-
-using Squares = vshogi::Squares<
-    SquareEnum,
-    FileEnum,
-    RankEnum,
-    Pieces,
-    num_files,
-    num_ranks,
-    num_directions,
-    num_directions_dlshogi>;
-
-/**
- * @brief 32-bit integer representing pieces on a stand.
- * @details
- * ________ ________ ________ ___*****  FU (18 pieces)
- * ________ ________ _______* **______  KY (4 pieces)
- * ________ ________ ___***__ ________  KE (4 pieces)
- * ________ _______* **______ ________  GI (4 pieces)
- * ________ ____**__ ________ ________  KA (2 pieces)
- * ________ _**_____ ________ ________  HI (2 pieces)
- * _____*** ________ ________ ________  KI (4 pieces)
- */
-using Stand = vshogi::Stand<std::uint32_t, Pieces>;
-
-using BlackWhiteStands = vshogi::BlackWhiteStands<Stand>;
-
-/**
- * @brief 16-bit integer representing a move in shogi game.
- * @details
- *       ________ _*******       Destination square (81 possibilities)
- *       ________ *_______       Promotion flag (2 possibilities)
- *       _******* ________       Source square or piece (88 possibilities = 81 + 7)
- * (MSB) xxxxxxxx xxxxxxxx (LSB)
- */
-using Move = vshogi::Move<std::uint16_t, Squares, Pieces, 14, 7, 6>;
-
-#ifdef __SIZEOF_INT128__
-using BitBoard = vshogi::
-    BitBoard<__uint128_t, Squares, BoardPieceTypeEnum, num_attacks, 3>;
-#else
-class UInt128
-{
-private:
-    std::uint64_t m_value[2];
-
-    constexpr UInt128(const std::uint64_t& higher, const std::uint64_t& lower)
-        : m_value{higher, lower}
-    {
-    }
-
-public:
-    constexpr UInt128() : m_value{}
-    {
-    }
-    constexpr UInt128(const std::uint64_t& a) : m_value{0UL, a}
-    {
-    }
-
-    constexpr operator bool() const
-    {
-        return static_cast<bool>(m_value[1]) || static_cast<bool>(m_value[0]);
-    }
-    constexpr operator std::uint64_t() const
-    {
-        return m_value[0];
-    }
-
-    constexpr UInt128 operator~() const
-    {
-        return UInt128(~m_value[1], ~m_value[0]);
-    }
-
-    constexpr UInt128 operator|(const UInt128& other) const
-    {
-        return UInt128(
-            m_value[1] | other.m_value[1], m_value[0] | other.m_value[0]);
-    }
-
-    constexpr UInt128 operator&(const UInt128& other) const
-    {
-        return UInt128(
-            m_value[1] & other.m_value[1], m_value[0] & other.m_value[0]);
-    }
-
-    constexpr UInt128 operator^(const UInt128& other) const
-    {
-        return UInt128(
-            m_value[1] ^ other.m_value[1], m_value[0] ^ other.m_value[0]);
-    }
-
-    constexpr UInt128 operator<<(const uint shift_width) const
-    {
-        UInt128(lshift_higher(shift_width), lshift_lower(shift_width));
-    }
-
-    constexpr UInt128 operator>>(const uint shift_width) const
-    {
-        UInt128(rshift_higher(shift_width), rshift_lower(shift_width));
-    }
-
-    UInt128& operator|=(const UInt128& other)
-    {
-        m_value[0] |= other.m_value[0];
-        m_value[1] |= other.m_value[1];
-        return *this;
-    }
-    UInt128& operator&=(const UInt128& other)
-    {
-        m_value[0] &= other.m_value[0];
-        m_value[1] &= other.m_value[1];
-        return *this;
-    }
-    UInt128& operator^=(const UInt128& other)
-    {
-        m_value[0] ^= other.m_value[0];
-        m_value[1] ^= other.m_value[1];
-        return *this;
-    }
-
-private:
-    constexpr std::uint64_t lshift_lower(const uint shift_width) const
-    {
-        return (shift_width == 0)   ? m_value[0]
-               : (shift_width > 63) ? 0
-                                    : (m_value[0] << shift_width);
-    }
-    constexpr std::uint64_t lshift_carry(const uint shift_width) const
-    {
-        return static_cast<std::uint64_t>(
-            (shift_width == 0)    ? 0
-            : (shift_width < 64)  ? (m_value[0] >> (64 - shift_width))
-            : (shift_width < 128) ? (m_value[0] << (shift_width - 64))
-                                  : 0);
-    }
-    constexpr std::uint64_t lshift_higher(const uint shift_width) const
-    {
-        const auto c = lshift_carry(shift_width);
-        const auto v = (shift_width < 64) ? m_value[1] << shift_width : 0;
-        return v | c;
-    }
-    constexpr std::uint64_t rshift_lower(const uint shift_width) const
-    {
-        const auto v = (shift_width == 0)   ? m_value[0]
-                       : (shift_width > 63) ? 0
-                                            : (m_value[0] >> shift_width);
-        const auto c = rshift_carry(shift_width);
-        return v | c;
-    }
-    constexpr std::uint64_t rshift_carry(const uint shift_width) const
-    {
-        const auto v = static_cast<std::uint64_t>(m_value[1]);
-        return (shift_width == 0)     ? 0
-               : (shift_width <= 64)  ? (v << (64 - shift_width))
-               : (shift_width <= 128) ? (v >> (shift_width - 64))
-                                      : 0;
-    }
-    constexpr std::uint64_t rshift_higher(const uint shift_width) const
-    {
-        return (shift_width <= 64) ? ((m_value[1]) >> shift_width) : 0;
-    }
-};
-
-using BitBoard
-    = vshogi::BitBoard<UInt128, Squares, BoardPieceTypeEnum, num_attacks, 3>;
-#endif
-
-using Board = vshogi::Board<Squares, Pieces, BitBoard>;
-
-using State
-    = vshogi::State<Board, BlackWhiteStands, Move, max_stand_piece_count>;
-
-using Game = vshogi::Game<State, max_acceptable_repetition>;
 
 // clang-format off
 constexpr BitBoard bb_1a = (BitBoard(1) << static_cast<uint>(SQ_1A));
@@ -572,14 +433,14 @@ inline bool vshogi::shogi::Pieces::is_ranging_to(
     const vshogi::shogi::BoardPieceTypeEnum& p, const DirectionEnum& d)
 {
     using namespace vshogi::shogi;
-    if (p == B_KY)
+    if (p == vshogi::shogi::B_KY)
         return (d == DIR_N);
-    if (p == W_KY)
+    if (p == vshogi::shogi::W_KY)
         return (d == DIR_S);
     const auto base = demote(to_piece_type(p));
-    if (base == HI)
+    if (base == vshogi::shogi::HI)
         return (d == DIR_N) || (d == DIR_W) || (d == DIR_E) || (d == DIR_S);
-    if (base == KA)
+    if (base == vshogi::shogi::KA)
         return (d == DIR_NW) || (d == DIR_NE) || (d == DIR_SW) || (d == DIR_SE);
     return false;
 }
@@ -750,7 +611,7 @@ inline shogi::Stand::Stand(
 }
 
 template <>
-inline const shogi::Pieces::PieceTypeEnum
+inline const shogi::PieceTypeEnum
     shogi::BlackWhiteStands::stand_pieces_in_sfen_order[]
     = {shogi::HI,
        shogi::KA,
@@ -765,7 +626,7 @@ inline const int shogi::BlackWhiteStands::max_sfen_length
 
 template <>
 inline const shogi::BitBoard
-    shogi::BitBoard::square_to_bitboard_array[shogi::Squares::num_squares + 1]
+    shogi::BitBoard::square_to_bitboard_array[shogi::Config::num_squares + 1]
     = {
         BitBoard(1) << static_cast<uint>(0),
         BitBoard(1) << static_cast<uint>(1),
@@ -853,8 +714,8 @@ inline const shogi::BitBoard
 
 template <>
 inline shogi::BitBoard
-    shogi::BitBoard::attacks_table[shogi::num_attacks]
-                                  [shogi::Squares::num_squares]
+    shogi::BitBoard::attacks_table[shogi::Config::num_attacks]
+                                  [shogi::Config::num_squares]
     = {};
 
 template <>
@@ -869,50 +730,49 @@ inline shogi::BitBoard shogi::BitBoard::get_attacks_by(
     const vshogi::shogi::BoardPieceTypeEnum& p,
     const vshogi::shogi::SquareEnum& sq)
 {
-    using namespace vshogi::shogi;
     switch (p) {
-    case B_FU:
+    case vshogi::shogi::B_FU:
         return attacks_table[0][sq];
-    case B_KE:
+    case vshogi::shogi::B_KE:
         return attacks_table[1][sq];
-    case B_GI:
+    case vshogi::shogi::B_GI:
         return attacks_table[2][sq];
-    case B_KI:
-    case B_TO:
-    case B_NY:
-    case B_NK:
-    case B_NG:
+    case vshogi::shogi::B_KI:
+    case vshogi::shogi::B_TO:
+    case vshogi::shogi::B_NY:
+    case vshogi::shogi::B_NK:
+    case vshogi::shogi::B_NG:
         return attacks_table[3][sq];
-    case W_FU:
+    case vshogi::shogi::W_FU:
         return attacks_table[4][sq];
-    case W_KE:
+    case vshogi::shogi::W_KE:
         return attacks_table[5][sq];
-    case W_GI:
+    case vshogi::shogi::W_GI:
         return attacks_table[6][sq];
-    case W_KI:
-    case W_TO:
-    case W_NY:
-    case W_NK:
-    case W_NG:
+    case vshogi::shogi::W_KI:
+    case vshogi::shogi::W_TO:
+    case vshogi::shogi::W_NY:
+    case vshogi::shogi::W_NK:
+    case vshogi::shogi::W_NG:
         return attacks_table[7][sq];
-    case B_OU:
-    case W_OU:
+    case vshogi::shogi::B_OU:
+    case vshogi::shogi::W_OU:
         return attacks_table[8][sq];
-    case B_KY:
+    case vshogi::shogi::B_KY:
         return attacks_table[9][sq];
-    case W_KY:
+    case vshogi::shogi::W_KY:
         return attacks_table[10][sq];
-    case B_KA:
-    case W_KA:
+    case vshogi::shogi::B_KA:
+    case vshogi::shogi::W_KA:
         return attacks_table[11][sq];
-    case B_HI:
-    case W_HI:
+    case vshogi::shogi::B_HI:
+    case vshogi::shogi::W_HI:
         return attacks_table[12][sq];
-    case B_UM:
-    case W_UM:
+    case vshogi::shogi::B_UM:
+    case vshogi::shogi::W_UM:
         return attacks_table[13][sq];
-    case B_RY:
-    case W_RY:
+    case vshogi::shogi::B_RY:
+    case vshogi::shogi::W_RY:
         return attacks_table[14][sq];
     default:
         return BitBoard();
@@ -925,51 +785,50 @@ inline shogi::BitBoard shogi::BitBoard::get_attacks_by(
     const vshogi::shogi::SquareEnum& sq,
     const vshogi::shogi::BitBoard& occupied)
 {
-    using namespace vshogi::shogi;
     switch (p) {
-    case B_FU:
+    case vshogi::shogi::B_FU:
         return attacks_table[0][sq];
-    case B_KE:
+    case vshogi::shogi::B_KE:
         return attacks_table[1][sq];
-    case B_GI:
+    case vshogi::shogi::B_GI:
         return attacks_table[2][sq];
-    case B_KI:
-    case B_TO:
-    case B_NY:
-    case B_NK:
-    case B_NG:
+    case vshogi::shogi::B_KI:
+    case vshogi::shogi::B_TO:
+    case vshogi::shogi::B_NY:
+    case vshogi::shogi::B_NK:
+    case vshogi::shogi::B_NG:
         return attacks_table[3][sq];
-    case W_FU:
+    case vshogi::shogi::W_FU:
         return attacks_table[4][sq];
-    case W_KE:
+    case vshogi::shogi::W_KE:
         return attacks_table[5][sq];
-    case W_GI:
+    case vshogi::shogi::W_GI:
         return attacks_table[6][sq];
-    case W_KI:
-    case W_TO:
-    case W_NY:
-    case W_NK:
-    case W_NG:
+    case vshogi::shogi::W_KI:
+    case vshogi::shogi::W_TO:
+    case vshogi::shogi::W_NY:
+    case vshogi::shogi::W_NK:
+    case vshogi::shogi::W_NG:
         return attacks_table[7][sq];
-    case B_OU:
-    case W_OU:
+    case vshogi::shogi::B_OU:
+    case vshogi::shogi::W_OU:
         return attacks_table[8][sq];
-    case B_KY:
+    case vshogi::shogi::B_KY:
         return BitBoard::ranging_attacks_to<DIR_N>(sq, occupied);
-    case W_KY:
+    case vshogi::shogi::W_KY:
         return BitBoard::ranging_attacks_to<DIR_S>(sq, occupied);
-    case B_KA:
-    case W_KA:
+    case vshogi::shogi::B_KA:
+    case vshogi::shogi::W_KA:
         return BitBoard::ranging_attacks_to_diagonal(sq, occupied);
-    case B_HI:
-    case W_HI:
+    case vshogi::shogi::B_HI:
+    case vshogi::shogi::W_HI:
         return BitBoard::ranging_attacks_to_adjacent(sq, occupied);
-    case B_UM:
-    case W_UM:
+    case vshogi::shogi::B_UM:
+    case vshogi::shogi::W_UM:
         return BitBoard::ranging_attacks_to_diagonal(sq, occupied)
                | attacks_table[8][sq];
-    case B_RY:
-    case W_RY:
+    case vshogi::shogi::B_RY:
+    case vshogi::shogi::W_RY:
         return BitBoard::ranging_attacks_to_adjacent(sq, occupied)
                | attacks_table[8][sq];
     default:
@@ -1004,13 +863,13 @@ inline void shogi::BitBoard::init_tables()
 
 template <>
 inline std::uint64_t vshogi::shogi::State::zobrist_board
-    [shogi::Squares::num_squares]
-    [num_colors * shogi::Pieces::num_piece_types + 1]
+    [shogi::Config::num_squares]
+    [num_colors * shogi::Config::num_piece_types + 1]
     = {};
 
 template <>
 inline std::uint64_t vshogi::shogi::State::zobrist_stand
-    [num_colors][shogi::Pieces::num_stand_piece_types][19]
+    [num_colors][shogi::Config::num_stand_piece_types][19]
     = {};
 
 } // namespace vshogi
