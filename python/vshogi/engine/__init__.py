@@ -2,13 +2,13 @@
 
 from vshogi.engine._dfpn import DfpnSearcher
 from vshogi.engine._dfpn_mcts import DfpnMcts
-from vshogi.engine._mcts import MonteCarloTreeSearcher
+from vshogi.engine._mcts import Mcts
 
 
 _classes = [
     DfpnMcts,
     DfpnSearcher,
-    MonteCarloTreeSearcher,
+    Mcts,
 ]
 
 

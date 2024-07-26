@@ -114,14 +114,14 @@ def _get_results_of_single_pair(
     shogi = getattr(vshogi, shogi_variant)
     player1 = vshogi.engine.DfpnMcts(
         vshogi.engine.DfpnSearcher(),
-        vshogi.engine.MonteCarloTreeSearcher(
+        vshogi.engine.Mcts(
             PolicyValueFunction(player1),
             **mcts_init_args,
         ),
     )
     player2 = vshogi.engine.DfpnMcts(
         vshogi.engine.DfpnSearcher(),
-        vshogi.engine.MonteCarloTreeSearcher(
+        vshogi.engine.Mcts(
             PolicyValueFunction(player2),
             **mcts_init_args,
         ),

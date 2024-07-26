@@ -241,9 +241,9 @@ def play_game(
 
     Parameters
     ----------
-    player_black : MonteCarloTreeSearcher
+    player_black : vshogi.engine.DfpnMcts
         First player
-    player_white : MonteCarloTreeSearcher
+    player_white : vshogi.engine.DfpnMcts
         Second player
     max_moves : int
         Maximum number of moves to apply to the game.
@@ -317,12 +317,12 @@ def play_game(
 def load_player_of(index_path_or_network, num_threads=1) -> vshogi.engine.DfpnMcts:
     if isinstance(index_path_or_network, int):
         i = index_path_or_network
-        mcts = vshogi.engine.MonteCarloTreeSearcher(
+        mcts = vshogi.engine.Mcts(
             PolicyValueFunction(f'models/model_{i:04d}.tflite', num_threads),
             coeff_puct=args.mcts_coeff_puct,
         )
     else:
-        mcts = vshogi.engine.MonteCarloTreeSearcher(
+        mcts = vshogi.engine.Mcts(
             PolicyValueFunction(index_path_or_network, num_threads),
             coeff_puct=args.mcts_coeff_puct,
         )

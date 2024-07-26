@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 import vshogi.animal_shogi as shogi
-from vshogi.engine import MonteCarloTreeSearcher
+from vshogi.engine import Mcts
 
 
 def uniform_pv_func(game):
@@ -25,7 +25,7 @@ def test_is_ready():
     # Black: -
     game = shogi.Game('g1e/1cl/1CL/E1G b -')
 
-    searcher = MonteCarloTreeSearcher(uniform_pv_func)
+    searcher = Mcts(uniform_pv_func)
     assert searcher.is_ready() is False
     searcher.set_game(game)
     assert searcher.is_ready()
@@ -47,7 +47,7 @@ def test_num_searched():
     # Black: -
     game = shogi.Game('g1e/1cl/1CL/E1G b -')
 
-    searcher = MonteCarloTreeSearcher(uniform_pv_func)
+    searcher = Mcts(uniform_pv_func)
     searcher.set_game(game)
     searcher.search(n=100)
     assert searcher.num_searched == 100 + 1
@@ -55,7 +55,7 @@ def test_num_searched():
 
 # def test_apply():
 #     game = shogi.Game()
-#     searcher = MonteCarloTreeSearcher(uniform_pv_func)
+#     searcher = Mcts(uniform_pv_func)
 #     searcher.set_game(game)
 #     searcher.search(n=1000)
 #     m = shogi.Move(shogi.B2, shogi.B3)
@@ -84,7 +84,7 @@ def test_clear():
     # Black: -
     game = shogi.Game('g1e/1cl/1CL/E1G b -')
 
-    searcher = MonteCarloTreeSearcher(uniform_pv_func)
+    searcher = Mcts(uniform_pv_func)
     searcher.set_game(game)
     searcher.search(n=100)
     searcher.clear()
@@ -109,7 +109,7 @@ def test_q_values_mate_in_one():
     game = shogi.Game('g1e/1cl/1CL/E1G b -')
     m = shogi.Move(shogi.C2, shogi.C3)
 
-    searcher = MonteCarloTreeSearcher(uniform_pv_func, random_depth=0)
+    searcher = Mcts(uniform_pv_func, random_depth=0)
     searcher.set_game(game)
     searcher.search(n=100)
     actual = searcher.get_q_values()
@@ -119,7 +119,7 @@ def test_q_values_mate_in_one():
 
 def test_q_values_initial():
     game = shogi.Game()
-    searcher = MonteCarloTreeSearcher(uniform_pv_func)
+    searcher = Mcts(uniform_pv_func)
     searcher.set_game(game)
     searcher.search(n=100)
     actual = searcher.get_q_values()
@@ -145,7 +145,7 @@ def test_mate_in_three():
     game = shogi.Game('l1e/gc1/1CL/E1G b -')
     m = shogi.Move(shogi.C2, shogi.C3)
 
-    searcher = MonteCarloTreeSearcher(uniform_pv_func, random_depth=0)
+    searcher = Mcts(uniform_pv_func, random_depth=0)
     searcher.set_game(game)
     searcher.search(n=100)
 
@@ -164,14 +164,14 @@ def test_visit_count_by_random():
     game = shogi.Game()
     m = shogi.Move(shogi.C3, shogi.C4)
 
-    searcher = MonteCarloTreeSearcher(
+    searcher = Mcts(
         lambda g: (np.arange(g.num_dlshogi_policy), 0.), random_depth=0)
     searcher.set_game(game)
     searcher.search(n=100)
     visit_count = searcher.get_visit_counts()[m]
     print(searcher._tree(depth=2, breadth=-1))
 
-    searcher = MonteCarloTreeSearcher(
+    searcher = Mcts(
         lambda g: (np.arange(g.num_dlshogi_policy), 0.),
         random_depth=1, non_random_ratio=0)
     searcher.set_game(game)
@@ -183,7 +183,7 @@ def test_visit_count_by_random():
 
 def test_greedy_q_value():
     game = shogi.Game()
-    searcher = MonteCarloTreeSearcher(uniform_pv_func)
+    searcher = Mcts(uniform_pv_func)
     searcher.set_game(game)
     searcher.search(n=100)
     action = searcher.select()

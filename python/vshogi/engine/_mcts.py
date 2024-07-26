@@ -50,7 +50,7 @@ def _tree(
     return out
 
 
-class MonteCarloTreeSearcher(Engine):
+class Mcts(Engine):
     """Monte Carlo Tree Searcher engine."""
 
     def __init__(

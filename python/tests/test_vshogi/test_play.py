@@ -3,7 +3,7 @@ import pytest
 
 import vshogi.minishogi as shogi
 from vshogi import play_game
-from vshogi.engine import MonteCarloTreeSearcher
+from vshogi.engine import Mcts
 
 
 def test_play_game():
@@ -13,8 +13,8 @@ def test_play_game():
     game = shogi.Game()
     play_game(
         game,
-        MonteCarloTreeSearcher(uniform_policy_zero_value_func),
-        MonteCarloTreeSearcher(uniform_policy_zero_value_func),
+        Mcts(uniform_policy_zero_value_func),
+        Mcts(uniform_policy_zero_value_func),
     )
     assert game.result != shogi.ONGOING
 

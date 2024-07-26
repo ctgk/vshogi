@@ -5,7 +5,7 @@ import numpy as np
 from vshogi._game import Game
 from vshogi.engine._dfpn import DfpnSearcher
 from vshogi.engine._engine import Engine
-from vshogi.engine._mcts import MonteCarloTreeSearcher, _tree
+from vshogi.engine._mcts import Mcts, _tree
 
 
 Move = tp.TypeVar('Move')
@@ -17,7 +17,7 @@ class DfpnMcts(Engine):
     def __init__(
         self,
         dfpn: DfpnSearcher,
-        mcts: MonteCarloTreeSearcher,
+        mcts: Mcts,
     ) -> None:
         """Initialize DFPN+MCTS search engine.
 
@@ -25,7 +25,7 @@ class DfpnMcts(Engine):
         ----------
         dfpn : DfpnSearcher
             Searcher based on DFPN algorithm.
-        mcts : MonteCarloTreeSearcher
+        mcts : Mcts
             Monte-Carlo tree searcher.
         """
         self._dfpn = dfpn

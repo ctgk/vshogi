@@ -1,12 +1,12 @@
 import pytest
 
 import vshogi.minishogi as shogi
-from vshogi.engine import DfpnMcts, DfpnSearcher, MonteCarloTreeSearcher
+from vshogi.engine import DfpnMcts, DfpnSearcher, Mcts
 
 
 def test_dfpn_root():
     dfpn = DfpnSearcher()
-    mcts = MonteCarloTreeSearcher(
+    mcts = Mcts(
         lambda g: (g.to_dlshogi_policy({}), 0.), random_depth=0)
     engine = DfpnMcts(dfpn, mcts)
 
@@ -37,7 +37,7 @@ def test_dfpn_root():
 
 def test_dfpn_vertex():
     dfpn = DfpnSearcher()
-    mcts = MonteCarloTreeSearcher(
+    mcts = Mcts(
         lambda g: (g.to_dlshogi_policy({}), 0.), random_depth=0)
     engine = DfpnMcts(dfpn, mcts)
 
