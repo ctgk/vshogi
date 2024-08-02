@@ -522,8 +522,8 @@ def run_train(args: Args):
             return -tf.reduce_sum(y_true_masked * log_softmax, axis=1)
 
         def lr_scheduler(epoch):
-            # relative learning schedule from 1.0 to 0.1
-            schedule = np.cos(np.linspace(0, np.pi, args.nn_epochs)) * 0.45 + 0.55
+            # relative learning schedule from 1.0 to 0.5
+            schedule = np.cos(np.linspace(0, np.pi, args.nn_epochs)) * 0.25 + 0.75
             return args.nn_learning_rate * schedule[epoch]
 
         network.compile(
