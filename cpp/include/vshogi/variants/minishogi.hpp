@@ -18,20 +18,17 @@ namespace vshogi::minishogi
 
 enum PieceTypeEnum : std::uint8_t
 {
-    FU = 0b0000, //!< Fu (Pawn)
-    GI = 0b0001, //!< Gin (Silver)
-    KA = 0b0010, //!< Kaku (Bishop)
-    HI = 0b0011, //!< Hisha (Rook)
-
-    KI = 0b0100, //!< Kin (Gold)
-    OU = 0b0101, //!< Ou, Gyoku (King)
-
-    TO = 0b1000, //!< Tokin (Promoted Pawn)
-    NG = 0b1001, //!< Nari-Gin (Promoted Silver)
-    UM = 0b1010, //!< Uma (Promoted Bishop)
-    RY = 0b1011, //!< Ryu (Promoted Rook)
-
-    NA = 0b1111, //!< Not available
+    FU, //!< Fu (Pawn)
+    GI, //!< Gin (Silver)
+    KA, //!< Kaku (Bishop)
+    HI, //!< Hisha (Rook)
+    KI, //!< Kin (Gold)
+    OU, //!< Ou, Gyoku (King)
+    TO, //!< Tokin (Promoted Pawn)
+    NG, //!< Nari-Gin (Promoted Silver)
+    UM, //!< Uma (Promoted Bishop)
+    RY, //!< Ryu (Promoted Rook)
+    NA = 0b01111, //!< Not available
 };
 
 enum BoardPieceTypeEnum : std::uint8_t
@@ -47,16 +44,16 @@ enum BoardPieceTypeEnum : std::uint8_t
     B_UM = UM, //!< Black Uma (Promoted Bishop)
     B_RY = RY, //!< Black Ryu (Promoted Rook)
 
-    W_FU = 0b10000 + B_FU, //!< White Fu (Pawn)
-    W_GI = 0b10000 + B_GI, //!< White Gin (Silver)
-    W_KA = 0b10000 + B_KA, //!< White Kaku (Bishop)
-    W_HI = 0b10000 + B_HI, //!< White Hisha (Rook)
-    W_KI = 0b10000 + B_KI, //!< White Kin (Gold)
-    W_OU = 0b10000 + B_OU, //!< White Ou, Gyoku (King)
-    W_TO = 0b10000 + B_TO, //!< White Tokin (Promoted Pawn)
-    W_NG = 0b10000 + B_NG, //!< White Nari-Gin (Promoted Silver)
-    W_UM = 0b10000 + B_UM, //!< White Uma (Promoted Bishop)
-    W_RY = 0b10000 + B_RY, //!< White Ryu (Promoted Rook)
+    W_FU = 0b10000 + FU, //!< White Fu (Pawn)
+    W_GI = 0b10000 + GI, //!< White Gin (Silver)
+    W_KA = 0b10000 + KA, //!< White Kaku (Bishop)
+    W_HI = 0b10000 + HI, //!< White Hisha (Rook)
+    W_KI = 0b10000 + KI, //!< White Kin (Gold)
+    W_OU = 0b10000 + OU, //!< White Ou, Gyoku (King)
+    W_TO = 0b10000 + TO, //!< White Tokin (Promoted Pawn)
+    W_NG = 0b10000 + NG, //!< White Nari-Gin (Promoted Silver)
+    W_UM = 0b10000 + UM, //!< White Uma (Promoted Bishop)
+    W_RY = 0b10000 + RY, //!< White Ryu (Promoted Rook)
 
     VOID = 0b11111, //!< Empty Square
 };
@@ -111,7 +108,7 @@ struct Config
     // clang-format off
     static constexpr uint num_piece_types = 10; // FU, GI, KI, KA, HI, OU, TO, NG, UM, RY
     static constexpr uint num_stand_piece_types = 5; // FU, GI, KI, KA, HI
-    static constexpr uint promotion_bit = 3; // ____ _*___
+    static constexpr uint color_bit = 4; // ___* ____
     static constexpr uint num_files = 5; // 1, 2, 3, 4, 5
     static constexpr uint num_ranks = 5; // A, B, C, D, E
     static constexpr uint num_promotion_ranks = 1;

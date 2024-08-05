@@ -18,11 +18,11 @@ namespace vshogi::animal_shogi
 
 enum PieceTypeEnum : std::uint8_t
 {
-    CH = 0b0000, //!< Chick (Pawn)
-    EL = 0b0001, //!< Elephant (Limited Bishop)
-    GI = 0b0010, //!< Giraffe (Limited Rook)
-    LI = 0b0011, //!< Lion (King)
-    HE = 0b0100, //!< Hen (Promoted Pawn)
+    CH, //!< Chick (Pawn)
+    EL, //!< Elephant (Limited Bishop)
+    GI, //!< Giraffe (Limited Rook)
+    LI, //!< Lion (King)
+    HE, //!< Hen (Promoted Pawn)
     NA = 0b0111, // Not available.
 
     OU = LI,
@@ -30,16 +30,16 @@ enum PieceTypeEnum : std::uint8_t
 
 enum BoardPieceTypeEnum : std::uint8_t
 {
-    B_CH = 0b0000, //!< Black Chick (Pawn)
-    B_EL = 0b0001, //!< Black Elephant (Limited Bishop)
-    B_GI = 0b0010, //!< Black Giraffe (Limited Rook)
-    B_LI = 0b0011, //!< Black Lion (King)
-    B_HE = 0b0100, //!< Black Hen (Promoted Pawn)
-    W_CH = 0b1000, //!< White Chick (Pawn)
-    W_EL = 0b1001, //!< White Elephant (Limited Bishop)
-    W_GI = 0b1010, //!< White Giraffe (Limited Rook)
-    W_LI = 0b1011, //!< White Lion (King)
-    W_HE = 0b1100, //!< White Hen (Promoted Pawn)
+    B_CH = CH, //!< Black Chick (Pawn)
+    B_EL = EL, //!< Black Elephant (Limited Bishop)
+    B_GI = GI, //!< Black Giraffe (Limited Rook)
+    B_LI = LI, //!< Black Lion (King)
+    B_HE = HE, //!< Black Hen (Promoted Pawn)
+    W_CH = 0b1000 + CH, //!< White Chick (Pawn)
+    W_EL = 0b1000 + EL, //!< White Elephant (Limited Bishop)
+    W_GI = 0b1000 + GI, //!< White Giraffe (Limited Rook)
+    W_LI = 0b1000 + LI, //!< White Lion (King)
+    W_HE = 0b1000 + HE, //!< White Hen (Promoted Pawn)
     VOID = 0b1111, //!< Empty square.
 };
 
@@ -87,7 +87,7 @@ struct Config
     // clang-format off
     static constexpr uint num_piece_types = 5; //!< CH, EL, GI, LI, HE
     static constexpr uint num_stand_piece_types = 3; //!< CH, EL, GI
-    static constexpr uint promotion_bit = 2; //!< ____ __*__
+    static constexpr uint color_bit = 3; //!< ____ *___
     static constexpr uint num_files = 3; //!< A, B, C
     static constexpr uint num_ranks = 4; //!< 1, 2, 3, 4
     static constexpr uint num_promotion_ranks = 1;

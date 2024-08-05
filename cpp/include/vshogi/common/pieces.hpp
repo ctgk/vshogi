@@ -15,12 +15,10 @@ struct Pieces
 private:
     static constexpr uint num_piece_types = Config::num_piece_types;
     static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
-    static constexpr uint promotion_bit = Config::promotion_bit;
     using PieceType = typename Config::PieceType;
     using BoardPieceType = typename Config::BoardPieceType;
 
-    static constexpr uint color_bit = promotion_bit + 1u;
-    static constexpr uint promotion_mask = (1 << promotion_bit);
+    static constexpr uint color_bit = Config::color_bit;
     static constexpr uint color_mask = (1 << color_bit);
     static constexpr uint piece_type_mask = (color_mask - 1);
     static const DirectionEnum attack_directions_table[2 * num_piece_types + 1]
@@ -71,10 +69,9 @@ public:
         return is_promotable(to_piece_type(p));
     }
 
-    template <class T>
-    static constexpr bool is_promoted(const T& p)
+    static constexpr bool is_promoted(const PieceType& pt)
     {
-        return static_cast<bool>(p & promotion_mask);
+        return pt > num_stand_piece_types;
     }
     static constexpr bool is_promoted(const BoardPieceType& p)
     {
@@ -90,13 +87,26 @@ public:
     template <class T>
     static constexpr T promote(const T& p)
     {
-        return static_cast<T>(p | promotion_mask);
+        if (is_promotable(p))
+            return promote_nocheck(p);
+        return p;
+    }
+    template <class T>
+    static constexpr T promote_nocheck(const T& p)
+    {
+        return static_cast<T>(p + num_stand_piece_types + 1);
     }
     template <class T>
     static constexpr T demote(const T& p)
     {
-        constexpr uint demotion_mask = (~promotion_mask);
-        return static_cast<T>(p & demotion_mask);
+        if (is_promoted(p))
+            return demote_nocheck(p);
+        return p;
+    }
+    template <class T>
+    static constexpr T demote_nocheck(const T& p)
+    {
+        return static_cast<T>(p - num_stand_piece_types - 1);
     }
 
     static uint get_point(const PieceType& p);

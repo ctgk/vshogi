@@ -18,56 +18,54 @@ namespace vshogi::shogi
 
 enum PieceTypeEnum : std::uint8_t
 {
-    FU = 0b0000, //!< Fu (Pawn)
-    KY = 0b0001, //!< Kyo (Lance)
-    KE = 0b0010, //!< Kei (Knight)
-    GI = 0b0011, //!< Gin (Silver)
-    KA = 0b0100, //!< Kaku (Bishop)
-    HI = 0b0101, //!< Hisha (Rook)
-    KI = 0b0110, //!< Kin (Gold)
-    OU = 0b0111, //!< Ou, Gyoku (King)
-
-    TO = 0b1000, //!< Tokin (Promoted Pawn)
-    NY = 0b1001, //!< Nari-Kyo (Promoted Lance)
-    NK = 0b1010, //!< Nari-Kei (Promoted Knight)
-    NG = 0b1011, //!< Nari-Gin (Promoted Silver)
-    UM = 0b1100, //!< Uma (Promoted Bishop)
-    RY = 0b1101, //!< Ryu (Promoted Rook)
-
-    NA = 0b1111, //!< NA
+    FU, //!< Fu (Pawn)
+    KY, //!< Kyo (Lance)
+    KE, //!< Kei (Knight)
+    GI, //!< Gin (Silver)
+    KA, //!< Kaku (Bishop)
+    HI, //!< Hisha (Rook)
+    KI, //!< Kin (Gold)
+    OU, //!< Ou, Gyoku (King)
+    TO, //!< Tokin (Promoted Pawn)
+    NY, //!< Nari-Kyo (Promoted Lance)
+    NK, //!< Nari-Kei (Promoted Knight)
+    NG, //!< Nari-Gin (Promoted Silver)
+    UM, //!< Uma (Promoted Bishop)
+    RY, //!< Ryu (Promoted Rook)
+    NA = 0b01111, //!< NA
 };
 
 enum BoardPieceTypeEnum : std::uint8_t
 {
-    B_FU = 0b00000, //!< Black Fu (Pawn)
-    B_KY = 0b00001, //!< Black Kyo (Lance)
-    B_KE = 0b00010, //!< Black Kei (Knight)
-    B_GI = 0b00011, //!< Black Gin (Silver)
-    B_KA = 0b00100, //!< Black Kaku (Bishop)
-    B_HI = 0b00101, //!< Black Hisha (Rook)
-    B_KI = 0b00110, //!< Black Kin (Gold)
-    B_OU = 0b00111, //!< Black Ou, Gyoku (King)
-    B_TO = 0b01000, //!< Black Tokin (Promoted Pawn)
-    B_NY = 0b01001, //!< Black Nari-Kyo (Promoted Lance)
-    B_NK = 0b01010, //!< Black Nari-Kei (Promoted Knight)
-    B_NG = 0b01011, //!< Black Nari-Gin (Promoted Silver)
-    B_UM = 0b01100, //!< Black Uma (Promoted Bishop)
-    B_RY = 0b01101, //!< Black Ryu (Promoted Rook)
+    B_FU = FU, //!< Black Fu (Pawn)
+    B_KY = KY, //!< Black Kyo (Lance)
+    B_KE = KE, //!< Black Kei (Knight)
+    B_GI = GI, //!< Black Gin (Silver)
+    B_KA = KA, //!< Black Kaku (Bishop)
+    B_HI = HI, //!< Black Hisha (Rook)
+    B_KI = KI, //!< Black Kin (Gold)
+    B_OU = OU, //!< Black Ou, Gyoku (King)
+    B_TO = TO, //!< Black Tokin (Promoted Pawn)
+    B_NY = NY, //!< Black Nari-Kyo (Promoted Lance)
+    B_NK = NK, //!< Black Nari-Kei (Promoted Knight)
+    B_NG = NG, //!< Black Nari-Gin (Promoted Silver)
+    B_UM = UM, //!< Black Uma (Promoted Bishop)
+    B_RY = RY, //!< Black Ryu (Promoted Rook)
 
-    W_FU = 0b10000, //!< White Fu (Pawn)
-    W_KY = 0b10001, //!< White Kyo (Lance)
-    W_KE = 0b10010, //!< White Kei (Knight)
-    W_GI = 0b10011, //!< White Gin (Silver)
-    W_KA = 0b10100, //!< White Kaku (Bishop)
-    W_HI = 0b10101, //!< White Hisha (Rook)
-    W_KI = 0b10110, //!< White Kin (Gold)
-    W_OU = 0b10111, //!< White Ou, Gyoku (King)
-    W_TO = 0b11000, //!< White Tokin (Promoted Pawn)
-    W_NY = 0b11001, //!< White Nari-Kyo (Promoted Lance)
-    W_NK = 0b11010, //!< White Nari-Kei (Promoted Knight)
-    W_NG = 0b11011, //!< White Nari-Gin (Promoted Silver)
-    W_UM = 0b11100, //!< White Uma (Promoted Bishop)
-    W_RY = 0b11101, //!< White Ryu (Promoted Rook)
+    W_FU = 0b10000 + FU, //!< White Fu (Pawn)
+    W_KY = 0b10000 + KY, //!< White Kyo (Lance)
+    W_KE = 0b10000 + KE, //!< White Kei (Knight)
+    W_GI = 0b10000 + GI, //!< White Gin (Silver)
+    W_KA = 0b10000 + KA, //!< White Kaku (Bishop)
+    W_HI = 0b10000 + HI, //!< White Hisha (Rook)
+    W_KI = 0b10000 + KI, //!< White Kin (Gold)
+    W_OU = 0b10000 + OU, //!< White Ou, Gyoku (King)
+    W_TO = 0b10000 + TO, //!< White Tokin (Promoted Pawn)
+    W_NY = 0b10000 + NY, //!< White Nari-Kyo (Promoted Lance)
+    W_NK = 0b10000 + NK, //!< White Nari-Kei (Promoted Knight)
+    W_NG = 0b10000 + NG, //!< White Nari-Gin (Promoted Silver)
+    W_UM = 0b10000 + UM, //!< White Uma (Promoted Bishop)
+    W_RY = 0b10000 + RY, //!< White Ryu (Promoted Rook)
 
     VOID = 0b11111, //!< Empty Square
 };
@@ -154,7 +152,7 @@ struct Config
     // clang-format off
     static constexpr uint num_piece_types = 14; // FU, KY, KE, GI, KI, KA, HI, OU, TO, NY, NK, NG, UM, RY
     static constexpr uint num_stand_piece_types = 7; // FU, KY, KE, GI, KI, KA, HI
-    static constexpr uint promotion_bit = 3; // ____ _*___
+    static constexpr uint color_bit = 4; // ___* ____
     static constexpr uint num_files = 9; // 1, 2, 3, 4, 5, 6, 7, 8, 9
     static constexpr uint num_ranks = 9; // A, B, C, D, E, F, G, H, I
     static constexpr uint num_promotion_ranks = 3;
