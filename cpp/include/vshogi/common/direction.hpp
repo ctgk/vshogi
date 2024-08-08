@@ -18,6 +18,13 @@ enum DirectionEnum : uint
     DIR_NA = 12,
 };
 
+inline DirectionEnum operator--(DirectionEnum& self, int)
+{
+    const auto out = self;
+    self = static_cast<DirectionEnum>(static_cast<int>(self) - 1);
+    return out;
+}
+
 inline DirectionEnum rotate(const DirectionEnum& d)
 {
     constexpr DirectionEnum table[] = {

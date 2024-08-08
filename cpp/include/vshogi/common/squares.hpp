@@ -104,7 +104,7 @@ public:
         for (auto&& sq : square_array) {
             const auto r = to_rank(sq);
             const auto f = to_file(sq);
-            for (auto&& dir : Config::dir_array) {
+            for (auto dir = static_cast<DirectionEnum>(num_dir); dir--;) {
                 if (((r == r1) && has_dir_n(dir))
                     || ((r == r2) && (dir == DIR_NNW || dir == DIR_NNE))
                     || ((r == rn) && has_dir_s(dir))
@@ -197,7 +197,7 @@ private:
         std::fill_n(&ranging_squares_to[0][0][0], size, SQ_NA);
 
         for (auto& src : Squares::square_array) {
-            for (auto& dir : Config::dir_array) {
+            for (auto dir = static_cast<DirectionEnum>(num_dir); dir--;) {
                 auto dst = src;
                 int index = 0;
                 while (true) {

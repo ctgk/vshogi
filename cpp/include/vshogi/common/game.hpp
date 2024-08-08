@@ -81,6 +81,7 @@ private:
     using StandType = Stand<Config>;
     using StateType = State<Config>;
 
+    static constexpr uint num_dir = Config::num_dir;
     static constexpr uint num_ranks = Config::num_ranks;
     static constexpr uint num_files = Config::num_files;
     static constexpr uint num_squares = Config::num_squares;
@@ -457,7 +458,7 @@ protected:
         m_checker_locations[0] = SHelper::SQ_NA;
         m_checker_locations[1] = SHelper::SQ_NA;
         int index = 0;
-        for (auto&& dir : Config::dir_array) {
+        for (auto dir = static_cast<DirectionEnum>(num_dir); dir--;) {
             const auto checker_sq
                 = board.find_attacker(~turn, m_king_locations[turn], dir);
             if (checker_sq != SHelper::SQ_NA) {
@@ -923,7 +924,7 @@ protected:
         const auto empty_mask = ~m_occupied[2];
         const auto src_mask
             = m_occupied[turn] & (~BitBoardType::from_square(king_location));
-        for (auto dir : Config::dir_array) {
+        for (auto dir = static_cast<DirectionEnum>(num_dir); dir--;) {
             auto ptr_src = SHelper::get_squares_along(dir, dst);
             for (; *ptr_src != SHelper::SQ_NA; ++ptr_src) {
                 const auto src = *ptr_src;
@@ -1062,7 +1063,7 @@ protected:
 
         // if opponent can capture the dropped pawn, then return false.
         const auto enemy_king_direction = (turn == BLACK) ? DIR_N : DIR_S;
-        for (auto dir : Config::dir_array) {
+        for (auto dir = static_cast<DirectionEnum>(num_dir); dir--;) {
             if (dir == enemy_king_direction)
                 continue;
             const auto src_next = board.find_attacker(~turn, dst, dir);
@@ -1081,7 +1082,7 @@ protected:
     }
     static bool is_neighbor(const Square a, const Square b)
     {
-        for (auto dir : Config::dir_array) {
+        for (auto dir = static_cast<DirectionEnum>(num_dir); dir--;) {
             if (b == SHelper::shift(a, dir))
                 return true;
         }

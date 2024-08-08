@@ -22,6 +22,7 @@ private:
     using BoardPieceType = typename Config::BoardPieceType;
     using Square = typename Config::Square;
     using Rank = typename Config::Rank;
+    static constexpr auto num_dir = Config::num_dir;
     static constexpr auto num_files = Config::num_files;
     static constexpr auto num_ranks = Config::num_ranks;
     static constexpr auto num_squares = Config::num_squares;
@@ -135,7 +136,7 @@ public:
         const Square& sq,
         const Square& skip = SQ_NA) const
     {
-        for (auto&& dir : Config::dir_array) {
+        for (auto dir = static_cast<DirectionEnum>(num_dir); dir--;) {
             if (find_attacker(attacker_color, sq, dir, skip) != SQ_NA)
                 return true;
         }

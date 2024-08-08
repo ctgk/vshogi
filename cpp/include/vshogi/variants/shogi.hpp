@@ -156,8 +156,8 @@ struct Config
     static constexpr uint num_files = 9; // 1, 2, 3, 4, 5, 6, 7, 8, 9
     static constexpr uint num_ranks = 9; // A, B, C, D, E, F, G, H, I
     static constexpr uint num_promotion_ranks = 3;
-    static constexpr DirectionEnum dir_array[] = {DIR_NNW, DIR_NNE, DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_SSW, DIR_SSE};
-    static constexpr DirectionEnum dir_dl_array[] = {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_SSW, DIR_SSE};
+    static constexpr uint num_dir = 12; //!< NW, N, NE, W, E, SW, S, SE, SSW, SSE, NNW, NNE
+    static constexpr uint num_dir_dl = 10; //!< NW, N, NE, W, E, SW, S, SE, SSW, SSE
     static constexpr uint num_non_ranging_attacks = 9; // B_FU, W_FU, B_KE, W_KE, B_GI, W_GI, B_KI, W_KI, OU
     static constexpr uint num_attacks = 15; // B_FU, W_FU, B_KE, W_KE, B_GI, W_GI, B_KI, W_KI, OU, B_KY, W_KY, KA, HI, UM, RY
     static constexpr uint max_stand_piece_count = 18;
@@ -184,10 +184,6 @@ struct Config
     using Square = SquareEnum;
     using File = FileEnum;
     using Rank = RankEnum;
-    static constexpr uint num_dir
-        = static_cast<uint>(sizeof(dir_array) / sizeof(dir_array[0]));
-    static constexpr uint num_dir_dl
-        = static_cast<uint>(sizeof(dir_dl_array) / sizeof(dir_dl_array[0]));
     static constexpr uint num_squares = num_files * num_ranks;
 };
 

@@ -91,8 +91,8 @@ struct Config
     static constexpr uint num_files = 3; //!< A, B, C
     static constexpr uint num_ranks = 4; //!< 1, 2, 3, 4
     static constexpr uint num_promotion_ranks = 1;
-    static constexpr DirectionEnum dir_array[] = {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE};
-    static constexpr DirectionEnum dir_dl_array[] = {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE};
+    static constexpr uint num_dir = 8; //!< NW, N, NE, W, E, SW, S, SE
+    static constexpr uint num_dir_dl = 8; //!< NW, N, NE, W, E, SW, S, SE
     static constexpr uint num_non_ranging_board_piece = 7; //!< B_CH, W_CH, EL, GI, LI, B_HE, W_HE
     static constexpr uint num_attacks = 7; //!< B_CH, W_CH, EL, GI, LI, B_HE, W_HE
     static constexpr uint max_stand_piece_count = 2;
@@ -115,10 +115,6 @@ struct Config
     using Square = SquareEnum;
     using File = FileEnum;
     using Rank = RankEnum;
-    static constexpr uint num_dir
-        = static_cast<uint>(sizeof(dir_array) / sizeof(dir_array[0]));
-    static constexpr uint num_dir_dl
-        = static_cast<uint>(sizeof(dir_dl_array) / sizeof(dir_dl_array[0]));
     static constexpr uint num_squares = num_files * num_ranks;
 };
 
