@@ -116,8 +116,6 @@ struct Config
     static constexpr uint num_promotion_ranks = 1;
     static constexpr uint num_dir = 8; //!< NW, N, NE, W, E, SW, S, SE
     static constexpr uint num_dir_dl = 8; //!< NW, N, NE, W, E, SW, S, SE
-    static constexpr uint num_non_ranging_attacks = 7; // B_FU, W_FU, B_GI, W_GI, B_KI, W_KI, OU
-    static constexpr uint num_attacks = 11; // B_FU, W_FU, B_GI, W_GI, B_KI, W_KI, OU, KA, HI, UM, RY
     static constexpr uint max_stand_piece_count = 2;
     static constexpr uint max_stand_sfen_length = 11; // "2p2s2g2b2r "
     static constexpr uint max_acceptable_repetitions = 3;
@@ -352,53 +350,9 @@ inline const minishogi::BitBoard minishogi::BitBoard::square_to_bitboard_array
 };
 
 template <>
-inline minishogi::BitBoard
-    minishogi::BitBoard::attacks_table[minishogi::Config::num_attacks]
-                                      [minishogi::Config::num_squares]
+inline minishogi::BitBoard minishogi::BitBoard::attacks_table
+    [minishogi::Config::num_colored_piece_types][minishogi::Config::num_squares]
     = {};
-
-template <>
-inline minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
-    const vshogi::minishogi::ColoredPieceEnum& p,
-    const vshogi::minishogi::SquareEnum& sq)
-{
-    using namespace vshogi::minishogi;
-    switch (p) {
-    case vshogi::minishogi::B_FU:
-        return attacks_table[0][sq];
-    case vshogi::minishogi::B_GI:
-        return attacks_table[1][sq];
-    case vshogi::minishogi::B_KI:
-    case vshogi::minishogi::B_TO:
-    case vshogi::minishogi::B_NG:
-        return attacks_table[2][sq];
-    case vshogi::minishogi::W_FU:
-        return attacks_table[3][sq];
-    case vshogi::minishogi::W_GI:
-        return attacks_table[4][sq];
-    case vshogi::minishogi::W_KI:
-    case vshogi::minishogi::W_TO:
-    case vshogi::minishogi::W_NG:
-        return attacks_table[5][sq];
-    case vshogi::minishogi::B_OU:
-    case vshogi::minishogi::W_OU:
-        return attacks_table[6][sq];
-    case vshogi::minishogi::B_KA:
-    case vshogi::minishogi::W_KA:
-        return attacks_table[7][sq];
-    case vshogi::minishogi::B_HI:
-    case vshogi::minishogi::W_HI:
-        return attacks_table[8][sq];
-    case vshogi::minishogi::B_UM:
-    case vshogi::minishogi::W_UM:
-        return attacks_table[9][sq];
-    case vshogi::minishogi::B_RY:
-    case vshogi::minishogi::W_RY:
-        return attacks_table[10][sq];
-    default:
-        return BitBoard();
-    }
-}
 
 template <>
 inline minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
@@ -406,64 +360,23 @@ inline minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
     const vshogi::minishogi::SquareEnum& sq,
     const vshogi::minishogi::BitBoard& occupied)
 {
-    using namespace vshogi::minishogi;
     switch (p) {
-    case vshogi::minishogi::B_FU:
-        return attacks_table[0][sq];
-    case vshogi::minishogi::B_GI:
-        return attacks_table[1][sq];
-    case vshogi::minishogi::B_KI:
-    case vshogi::minishogi::B_TO:
-    case vshogi::minishogi::B_NG:
-        return attacks_table[2][sq];
-    case vshogi::minishogi::W_FU:
-        return attacks_table[3][sq];
-    case vshogi::minishogi::W_GI:
-        return attacks_table[4][sq];
-    case vshogi::minishogi::W_KI:
-    case vshogi::minishogi::W_TO:
-    case vshogi::minishogi::W_NG:
-        return attacks_table[5][sq];
-    case vshogi::minishogi::B_OU:
-    case vshogi::minishogi::W_OU:
-        return attacks_table[6][sq];
-    case vshogi::minishogi::B_KA:
-    case vshogi::minishogi::W_KA:
+    case minishogi::B_KA:
+    case minishogi::W_KA:
         return BitBoard::ranging_attacks_to_diagonal(sq, occupied);
-    case vshogi::minishogi::B_HI:
-    case vshogi::minishogi::W_HI:
+    case minishogi::B_HI:
+    case minishogi::W_HI:
         return BitBoard::ranging_attacks_to_adjacent(sq, occupied);
-    case vshogi::minishogi::B_UM:
-    case vshogi::minishogi::W_UM:
+    case minishogi::B_UM:
+    case minishogi::W_UM:
         return BitBoard::ranging_attacks_to_diagonal(sq, occupied)
-               | attacks_table[6][sq];
-    case vshogi::minishogi::B_RY:
-    case vshogi::minishogi::W_RY:
+               | attacks_table[minishogi::B_OU][sq];
+    case minishogi::B_RY:
+    case minishogi::W_RY:
         return BitBoard::ranging_attacks_to_adjacent(sq, occupied)
-               | attacks_table[6][sq];
+               | attacks_table[minishogi::B_OU][sq];
     default:
-        return BitBoard();
-    }
-}
-
-template <>
-inline void minishogi::BitBoard::init_tables()
-{
-    for (auto sq : EnumIterator<Square, num_squares>()) {
-        const auto b = from_square(sq);
-        // clang-format off
-        attacks_table[0][sq] = b.shift(DIR_N); // B_FU
-        attacks_table[1][sq] = b.shift(DIR_NW) | b.shift(DIR_N) | b.shift(DIR_NE) | b.shift(DIR_SW) | b.shift(DIR_SE); // B_GI
-        attacks_table[2][sq] = b.shift(DIR_NW) | b.shift(DIR_N) | b.shift(DIR_NE) | b.shift(DIR_W) | b.shift(DIR_E) | b.shift(DIR_S); // B_KI
-        attacks_table[3][sq] = b.shift(DIR_S); // W_FU
-        attacks_table[4][sq] = b.shift(DIR_NW) | b.shift(DIR_NE) | b.shift(DIR_SW) | b.shift(DIR_S) | b.shift(DIR_SE); // W_GI
-        attacks_table[5][sq] = b.shift(DIR_N) | b.shift(DIR_W) | b.shift(DIR_E) | b.shift(DIR_SW) | b.shift(DIR_S) | b.shift(DIR_SE); // W_KI
-        attacks_table[6][sq] = attacks_table[1][sq] | attacks_table[2][sq]; // OU
-        attacks_table[7][sq] = BitBoard::ranging_attacks_to_diagonal(sq); // KA
-        attacks_table[8][sq] = BitBoard::ranging_attacks_to_adjacent(sq); // HI
-        attacks_table[9][sq] = attacks_table[7][sq] | attacks_table[6][sq]; // UM
-        attacks_table[10][sq] = attacks_table[8][sq] | attacks_table[6][sq]; // RY
-        // clang-format on
+        return get_attacks_by(p, sq);
     }
 }
 

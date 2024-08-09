@@ -15,22 +15,25 @@ template <class Config>
 class BitBoard
 {
 private:
-    using BoardPiece = typename Config::ColoredPiece;
+    using ColoredPiece = typename Config::ColoredPiece;
     using Square = typename Config::Square;
     using UInt = typename Config::BaseTypeBitBoard;
     static constexpr uint num_squares = Config::num_squares;
     static constexpr uint num_files = Config::num_files;
     static constexpr uint num_ranks = Config::num_ranks;
+    static constexpr uint num_dir = Config::num_dir;
     static constexpr uint num_promotion_ranks = Config::num_promotion_ranks;
-    static constexpr uint num_attacks = Config::num_attacks;
-    using SquaresHelper = Squares<Config>;
+    static constexpr uint num_colored_piece_types
+        = Config::num_colored_piece_types;
+    using SHelper = Squares<Config>;
+    using PHelper = Pieces<Config>;
 
     UInt m_value;
 
     static constexpr UInt mask
         = (static_cast<UInt>(1) << num_squares) - static_cast<UInt>(1);
     static const BitBoard square_to_bitboard_array[num_squares + 1U];
-    static BitBoard attacks_table[num_attacks][num_squares];
+    static BitBoard attacks_table[num_colored_piece_types][num_squares];
 
 public:
     constexpr BitBoard() : m_value()
@@ -112,7 +115,7 @@ public:
         constexpr auto bb_all = ~BitBoard(0);
         constexpr auto bb_all_but_lmost = ~file_mask_leftmost();
         constexpr auto bb_all_but_rmost = ~file_mask_rightmost();
-        const auto delta = SquaresHelper::direction_to_delta(dir);
+        const auto delta = SHelper::direction_to_delta(dir);
         constexpr BitBoard filemask[] = {
             // clang-format off
             bb_all_but_lmost, bb_all, bb_all_but_rmost,
@@ -128,14 +131,15 @@ public:
             return (*this & filemask[dir]) >> static_cast<uint>(-delta);
     }
 
-    template <DirectionEnum Dir>
-    static BitBoard
-    ranging_attacks_to(Square sq, const BitBoard& occupied = BitBoard())
+    static BitBoard ranging_attacks_to(
+        Square sq,
+        const DirectionEnum dir,
+        const BitBoard& occupied = BitBoard())
     {
         BitBoard out{};
         while (true) {
-            sq = SquaresHelper::shift(sq, Dir);
-            if (sq == SquaresHelper::SQ_NA)
+            sq = SHelper::shift(sq, dir);
+            if (sq == SHelper::SQ_NA)
                 break; // reached the end of the board
             else if (occupied.is_one(sq)) {
                 out |= BitBoard::from_square(sq);
@@ -149,24 +153,36 @@ public:
     static BitBoard ranging_attacks_to_adjacent(
         const Square& sq, const BitBoard& occupied = BitBoard())
     {
-        return ranging_attacks_to<DIR_N>(sq, occupied)
-               | ranging_attacks_to<DIR_E>(sq, occupied)
-               | ranging_attacks_to<DIR_W>(sq, occupied)
-               | ranging_attacks_to<DIR_S>(sq, occupied);
+        return ranging_attacks_to(sq, DIR_N, occupied)
+               | ranging_attacks_to(sq, DIR_E, occupied)
+               | ranging_attacks_to(sq, DIR_W, occupied)
+               | ranging_attacks_to(sq, DIR_S, occupied);
     }
     static BitBoard ranging_attacks_to_diagonal(
         const Square& sq, const BitBoard& occupied = BitBoard())
     {
-        return ranging_attacks_to<DIR_NW>(sq, occupied)
-               | ranging_attacks_to<DIR_NE>(sq, occupied)
-               | ranging_attacks_to<DIR_SW>(sq, occupied)
-               | ranging_attacks_to<DIR_SE>(sq, occupied);
+        return ranging_attacks_to(sq, DIR_NW, occupied)
+               | ranging_attacks_to(sq, DIR_NE, occupied)
+               | ranging_attacks_to(sq, DIR_SW, occupied)
+               | ranging_attacks_to(sq, DIR_SE, occupied);
     }
 
-    static BitBoard get_attacks_by(const BoardPiece& p, const Square& sq);
+    static BitBoard get_attacks_by(const ColoredPiece& p, const Square& sq)
+    {
+        if (p == PHelper::VOID)
+            return BitBoard();
+        return attacks_table[p][sq];
+    }
     static BitBoard get_attacks_by(
-        const BoardPiece& p, const Square& sq, const BitBoard& occupied);
-    static void init_tables();
+        const ColoredPiece& p, const Square& sq, const BitBoard& occupied);
+    static void init_tables()
+    {
+        for (auto p : EnumIterator<ColoredPiece, num_colored_piece_types>()) {
+            for (auto sq : EnumIterator<Square, num_squares>()) {
+                attacks_table[p][sq] = compute_attack_by(p, sq);
+            }
+        }
+    }
 
 private:
     template <uint NumSquaresFromTop = num_ranks>
@@ -187,6 +203,21 @@ private:
             return (BitBoard(1) << (num_files - 1))
                    | (file_mask_rightmost<NumSquaresFromTop - 1>()
                       << num_files);
+    }
+    static BitBoard compute_attack_by(const ColoredPiece& p, const Square& sq)
+    {
+        auto a = BitBoard();
+        if (PHelper::is_ranging_piece(p)) {
+            for (auto pd = PHelper::get_attack_directions(p); *pd != DIR_NA;
+                 ++pd) {
+                if (PHelper::is_ranging_to(p, *pd))
+                    a |= ranging_attacks_to(sq, *pd);
+            }
+        }
+        for (auto pd = PHelper::get_attack_directions(p); *pd != DIR_NA;) {
+            a |= from_square(sq).shift(*pd++);
+        }
+        return a;
     }
 };
 

@@ -97,8 +97,6 @@ struct Config
     static constexpr uint num_promotion_ranks = 1;
     static constexpr uint num_dir = 8; //!< NW, N, NE, W, E, SW, S, SE
     static constexpr uint num_dir_dl = 8; //!< NW, N, NE, W, E, SW, S, SE
-    static constexpr uint num_non_ranging_board_piece = 7; //!< B_CH, W_CH, EL, GI, LI, B_HE, W_HE
-    static constexpr uint num_attacks = 7; //!< B_CH, W_CH, EL, GI, LI, B_HE, W_HE
     static constexpr uint max_stand_piece_count = 2;
     static constexpr uint max_stand_sfen_length = 7; // "2C2E2G "
     static constexpr uint max_acceptable_repetitions = 2;
@@ -206,6 +204,13 @@ constexpr bool
 animal_shogi::Pieces::is_promotable(const animal_shogi::PieceTypeEnum& pt)
 {
     return (pt == animal_shogi::CH);
+}
+
+template <>
+inline bool animal_shogi::Pieces::is_ranging_to(
+    const animal_shogi::ColoredPieceEnum&, const DirectionEnum&)
+{
+    return false;
 }
 
 template <>
@@ -324,38 +329,10 @@ inline const animal_shogi::BitBoard animal_shogi::BitBoard::
 };
 
 template <>
-inline animal_shogi::BitBoard
-    animal_shogi::BitBoard::attacks_table[animal_shogi::Config::num_attacks]
-                                         [animal_shogi::Config::num_squares]
+inline animal_shogi::BitBoard animal_shogi::BitBoard::attacks_table
+    [animal_shogi::Config::num_colored_piece_types]
+    [animal_shogi::Config::num_squares]
     = {};
-
-template <>
-inline animal_shogi::BitBoard animal_shogi::BitBoard::get_attacks_by(
-    const animal_shogi::ColoredPieceEnum& p, const animal_shogi::SquareEnum& sq)
-{
-    using namespace animal_shogi;
-    switch (p) {
-    case vshogi::animal_shogi::B_CH:
-        return attacks_table[0][sq];
-    case vshogi::animal_shogi::B_HE:
-        return attacks_table[1][sq];
-    case vshogi::animal_shogi::W_CH:
-        return attacks_table[2][sq];
-    case vshogi::animal_shogi::W_HE:
-        return attacks_table[3][sq];
-    case vshogi::animal_shogi::B_EL:
-    case vshogi::animal_shogi::W_EL:
-        return attacks_table[4][sq];
-    case vshogi::animal_shogi::B_GI:
-    case vshogi::animal_shogi::W_GI:
-        return attacks_table[5][sq];
-    case vshogi::animal_shogi::B_LI:
-    case vshogi::animal_shogi::W_LI:
-        return attacks_table[6][sq];
-    default:
-        return BitBoard();
-    }
-}
 
 template <>
 inline animal_shogi::BitBoard animal_shogi::BitBoard::get_attacks_by(
@@ -364,23 +341,6 @@ inline animal_shogi::BitBoard animal_shogi::BitBoard::get_attacks_by(
     const animal_shogi::BitBoard&)
 {
     return get_attacks_by(p, sq);
-}
-
-template <>
-inline void animal_shogi::BitBoard::init_tables()
-{
-    for (auto sq = num_squares; sq--;) {
-        const auto b = from_square(static_cast<Square>(sq));
-        // clang-format off
-        attacks_table[0][sq] = b.shift(DIR_N); // B_CH
-        attacks_table[1][sq] = b.shift(DIR_NW) | b.shift(DIR_N) | b.shift(DIR_NE) | b.shift(DIR_W) | b.shift(DIR_E) | b.shift(DIR_S); // B_KI
-        attacks_table[2][sq] = b.shift(DIR_S); // W_CH
-        attacks_table[3][sq] = b.shift(DIR_N) | b.shift(DIR_W) | b.shift(DIR_E) | b.shift(DIR_SW) | b.shift(DIR_S) | b.shift(DIR_SE); // W_KI
-        attacks_table[4][sq] = b.shift(DIR_NW) | b.shift(DIR_NE) | b.shift(DIR_SW) | b.shift(DIR_SE); // EL
-        attacks_table[5][sq] = b.shift(DIR_N) | b.shift(DIR_W) | b.shift(DIR_E) | b.shift(DIR_S); // GI
-        attacks_table[6][sq] = attacks_table[4][sq] | attacks_table[5][sq]; // LI
-        // clang-format on
-    }
 }
 
 template <>
