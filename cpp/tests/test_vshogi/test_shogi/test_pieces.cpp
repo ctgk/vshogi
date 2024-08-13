@@ -105,28 +105,28 @@ TEST(shogi_pieces, is_promoted)
     CHECK_TRUE(Pieces::is_promoted(W_RY));
 }
 
-TEST(shogi_pieces, promote)
+TEST(shogi_pieces, promote_nocheck)
 {
-    CHECK_EQUAL(TO, Pieces::promote(FU));
-    CHECK_EQUAL(NY, Pieces::promote(KY));
-    CHECK_EQUAL(NK, Pieces::promote(KE));
-    CHECK_EQUAL(NG, Pieces::promote(GI));
-    CHECK_EQUAL(UM, Pieces::promote(KA));
-    CHECK_EQUAL(RY, Pieces::promote(HI));
+    CHECK_EQUAL(TO, Pieces::promote_nocheck(FU));
+    CHECK_EQUAL(NY, Pieces::promote_nocheck(KY));
+    CHECK_EQUAL(NK, Pieces::promote_nocheck(KE));
+    CHECK_EQUAL(NG, Pieces::promote_nocheck(GI));
+    CHECK_EQUAL(UM, Pieces::promote_nocheck(KA));
+    CHECK_EQUAL(RY, Pieces::promote_nocheck(HI));
 
-    CHECK_EQUAL(B_TO, Pieces::promote(B_FU));
-    CHECK_EQUAL(B_NY, Pieces::promote(B_KY));
-    CHECK_EQUAL(B_NK, Pieces::promote(B_KE));
-    CHECK_EQUAL(B_NG, Pieces::promote(B_GI));
-    CHECK_EQUAL(B_UM, Pieces::promote(B_KA));
-    CHECK_EQUAL(B_RY, Pieces::promote(B_HI));
+    CHECK_EQUAL(B_TO, Pieces::promote_nocheck(B_FU));
+    CHECK_EQUAL(B_NY, Pieces::promote_nocheck(B_KY));
+    CHECK_EQUAL(B_NK, Pieces::promote_nocheck(B_KE));
+    CHECK_EQUAL(B_NG, Pieces::promote_nocheck(B_GI));
+    CHECK_EQUAL(B_UM, Pieces::promote_nocheck(B_KA));
+    CHECK_EQUAL(B_RY, Pieces::promote_nocheck(B_HI));
 
-    CHECK_EQUAL(W_TO, Pieces::promote(W_FU));
-    CHECK_EQUAL(W_NY, Pieces::promote(W_KY));
-    CHECK_EQUAL(W_NK, Pieces::promote(W_KE));
-    CHECK_EQUAL(W_NG, Pieces::promote(W_GI));
-    CHECK_EQUAL(W_UM, Pieces::promote(W_KA));
-    CHECK_EQUAL(W_RY, Pieces::promote(W_HI));
+    CHECK_EQUAL(W_TO, Pieces::promote_nocheck(W_FU));
+    CHECK_EQUAL(W_NY, Pieces::promote_nocheck(W_KY));
+    CHECK_EQUAL(W_NK, Pieces::promote_nocheck(W_KE));
+    CHECK_EQUAL(W_NG, Pieces::promote_nocheck(W_GI));
+    CHECK_EQUAL(W_UM, Pieces::promote_nocheck(W_KA));
+    CHECK_EQUAL(W_RY, Pieces::promote_nocheck(W_HI));
 }
 
 TEST(shogi_pieces, demote)

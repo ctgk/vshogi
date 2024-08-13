@@ -84,18 +84,20 @@ public:
         return is_ranging_piece(to_piece_type(p));
     }
 
-    template <class T>
-    static constexpr T promote(const T& p)
-    {
-        if (is_promotable(p))
-            return promote_nocheck(p);
-        return p;
-    }
+    /**
+     * @brief Promote a promotable piece.
+     * @note If the piece is not promotable, the return may not be safe.
+     *
+     * @tparam T
+     * @param p Piece to promote. Should be promotable.
+     * @return constexpr T Promoted piece.
+     */
     template <class T>
     static constexpr T promote_nocheck(const T& p)
     {
         return static_cast<T>(p + num_stand_piece_types + 1);
     }
+
     template <class T>
     static constexpr T demote(const T& p)
     {

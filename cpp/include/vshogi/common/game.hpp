@@ -876,7 +876,7 @@ protected:
                 m_legal_moves.emplace_back(dst, src, false);
             if (promotable) {
                 attacks = BitBoardType::get_attacks_by(
-                    PHelper::promote(p), dst, occupied);
+                    PHelper::promote_nocheck(p), dst, occupied);
                 if (attacks.is_one(enemy_king_sq))
                     m_legal_moves.emplace_back(dst, src, true);
             }

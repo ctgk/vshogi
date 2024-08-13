@@ -99,45 +99,45 @@ TEST(judkins_shogi_pieces, is_promoted)
 
 TEST(judkins_shogi_pieces, promote)
 {
-    CHECK_EQUAL(TO, Pieces::promote(FU));
-    CHECK_EQUAL(NK, Pieces::promote(KE));
-    CHECK_EQUAL(NG, Pieces::promote(GI));
-    CHECK_EQUAL(UM, Pieces::promote(KA));
-    CHECK_EQUAL(RY, Pieces::promote(HI));
-    // CHECK_EQUAL(KI, Pieces::promote(KI));
-    // CHECK_EQUAL(OU, Pieces::promote(OU));
-    CHECK_EQUAL(TO, Pieces::promote(TO));
-    CHECK_EQUAL(NK, Pieces::promote(NK));
-    CHECK_EQUAL(NG, Pieces::promote(NG));
-    CHECK_EQUAL(UM, Pieces::promote(UM));
-    CHECK_EQUAL(RY, Pieces::promote(RY));
-    CHECK_EQUAL(NA, Pieces::promote(NA));
+    CHECK_EQUAL(TO, Pieces::promote_nocheck(FU));
+    CHECK_EQUAL(NK, Pieces::promote_nocheck(KE));
+    CHECK_EQUAL(NG, Pieces::promote_nocheck(GI));
+    CHECK_EQUAL(UM, Pieces::promote_nocheck(KA));
+    CHECK_EQUAL(RY, Pieces::promote_nocheck(HI));
+    // CHECK_EQUAL(KI, Pieces::promote_nocheck(KI));
+    // CHECK_EQUAL(OU, Pieces::promote_nocheck(OU));
+    // CHECK_EQUAL(TO, Pieces::promote_nocheck(TO));
+    // CHECK_EQUAL(NK, Pieces::promote_nocheck(NK));
+    // CHECK_EQUAL(NG, Pieces::promote_nocheck(NG));
+    // CHECK_EQUAL(UM, Pieces::promote_nocheck(UM));
+    // CHECK_EQUAL(RY, Pieces::promote_nocheck(RY));
+    // CHECK_EQUAL(NA, Pieces::promote_nocheck(NA));
 
-    CHECK_EQUAL(B_TO, Pieces::promote(B_FU));
-    CHECK_EQUAL(B_NK, Pieces::promote(B_KE));
-    CHECK_EQUAL(B_NG, Pieces::promote(B_GI));
-    CHECK_EQUAL(B_UM, Pieces::promote(B_KA));
-    CHECK_EQUAL(B_RY, Pieces::promote(B_HI));
-    // CHECK_EQUAL(B_KI, Pieces::promote(B_KI));
-    // CHECK_EQUAL(B_OU, Pieces::promote(B_OU));
-    CHECK_EQUAL(B_TO, Pieces::promote(B_TO));
-    CHECK_EQUAL(B_NK, Pieces::promote(B_NK));
-    CHECK_EQUAL(B_NG, Pieces::promote(B_NG));
-    CHECK_EQUAL(B_UM, Pieces::promote(B_UM));
-    CHECK_EQUAL(B_RY, Pieces::promote(B_RY));
+    CHECK_EQUAL(B_TO, Pieces::promote_nocheck(B_FU));
+    CHECK_EQUAL(B_NK, Pieces::promote_nocheck(B_KE));
+    CHECK_EQUAL(B_NG, Pieces::promote_nocheck(B_GI));
+    CHECK_EQUAL(B_UM, Pieces::promote_nocheck(B_KA));
+    CHECK_EQUAL(B_RY, Pieces::promote_nocheck(B_HI));
+    // CHECK_EQUAL(B_KI, Pieces::promote_nocheck(B_KI));
+    // CHECK_EQUAL(B_OU, Pieces::promote_nocheck(B_OU));
+    // CHECK_EQUAL(B_TO, Pieces::promote_nocheck(B_TO));
+    // CHECK_EQUAL(B_NK, Pieces::promote_nocheck(B_NK));
+    // CHECK_EQUAL(B_NG, Pieces::promote_nocheck(B_NG));
+    // CHECK_EQUAL(B_UM, Pieces::promote_nocheck(B_UM));
+    // CHECK_EQUAL(B_RY, Pieces::promote_nocheck(B_RY));
 
-    CHECK_EQUAL(W_TO, Pieces::promote(W_FU));
-    CHECK_EQUAL(W_NK, Pieces::promote(W_KE));
-    CHECK_EQUAL(W_NG, Pieces::promote(W_GI));
-    CHECK_EQUAL(W_UM, Pieces::promote(W_KA));
-    CHECK_EQUAL(W_RY, Pieces::promote(W_HI));
-    // CHECK_EQUAL(W_KI, Pieces::promote(W_KI));
-    // CHECK_EQUAL(W_OU, Pieces::promote(W_OU));
-    CHECK_EQUAL(W_TO, Pieces::promote(W_TO));
-    CHECK_EQUAL(W_NK, Pieces::promote(W_NK));
-    CHECK_EQUAL(W_NG, Pieces::promote(W_NG));
-    CHECK_EQUAL(W_UM, Pieces::promote(W_UM));
-    CHECK_EQUAL(W_RY, Pieces::promote(W_RY));
+    CHECK_EQUAL(W_TO, Pieces::promote_nocheck(W_FU));
+    CHECK_EQUAL(W_NK, Pieces::promote_nocheck(W_KE));
+    CHECK_EQUAL(W_NG, Pieces::promote_nocheck(W_GI));
+    CHECK_EQUAL(W_UM, Pieces::promote_nocheck(W_KA));
+    CHECK_EQUAL(W_RY, Pieces::promote_nocheck(W_HI));
+    // CHECK_EQUAL(W_KI, Pieces::promote_nocheck(W_KI));
+    // CHECK_EQUAL(W_OU, Pieces::promote_nocheck(W_OU));
+    // CHECK_EQUAL(W_TO, Pieces::promote_nocheck(W_TO));
+    // CHECK_EQUAL(W_NK, Pieces::promote_nocheck(W_NK));
+    // CHECK_EQUAL(W_NG, Pieces::promote_nocheck(W_NG));
+    // CHECK_EQUAL(W_UM, Pieces::promote_nocheck(W_UM));
+    // CHECK_EQUAL(W_RY, Pieces::promote_nocheck(W_RY));
 }
 
 TEST(judkins_shogi_pieces, demote)

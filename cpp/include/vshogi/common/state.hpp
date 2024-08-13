@@ -142,7 +142,7 @@ public:
         if (captured != PHelper::NA)
             add_captured_to_stand(PHelper::demote(captured), hash);
         if (move.promote())
-            moving = PHelper::promote(moving);
+            moving = PHelper::promote_nocheck(moving);
         place_piece_at(dst, moving, hash);
         m_turn = ~m_turn;
         return *this;
