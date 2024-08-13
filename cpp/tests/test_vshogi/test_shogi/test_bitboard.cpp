@@ -51,20 +51,29 @@ TEST(shogi_bitboard, shift)
 {
     {
         const auto bb = BitBoard::from_square(SQ_9A);
-        const auto actual = bb.shift<vshogi::DIR_E>();
+        const auto actual = bb.shift(vshogi::DIR_E);
         CHECK_EQUAL(1, actual.hamming_weight());
         CHECK_TRUE(actual.is_one(SQ_8A));
     }
     {
         const auto bb = BitBoard::from_square(SQ_9A);
-        const auto actual = bb.shift<vshogi::DIR_SSE>();
+        const auto actual = bb.shift(vshogi::DIR_SSE);
         CHECK_EQUAL(1, actual.hamming_weight());
         CHECK_TRUE(actual.is_one(SQ_8C));
     }
     {
         const auto bb = BitBoard::from_square(SQ_1A);
-        const auto actual = bb.shift<vshogi::DIR_E>();
+        const auto actual = bb.shift(vshogi::DIR_E);
         CHECK_FALSE(actual.any());
+    }
+
+    for (uint dd = Config::num_dir; dd--;) {
+        const auto dir = static_cast<vshogi::DirectionEnum>(dd);
+        for (auto&& sq : Squares::square_array) {
+            CHECK_TRUE(
+                BitBoard::from_square(Squares::shift(sq, dir))
+                == BitBoard::from_square(sq).shift(dir));
+        }
     }
 }
 

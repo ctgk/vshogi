@@ -107,13 +107,12 @@ public:
                             : ((~BitBoard(0)) >> s) << s;
     }
 
-    template <DirectionEnum Dir>
-    constexpr BitBoard shift() const
+    constexpr BitBoard shift(const DirectionEnum& dir) const
     {
         constexpr auto bb_all = ~BitBoard(0);
         constexpr auto bb_all_but_lmost = ~file_mask_leftmost();
         constexpr auto bb_all_but_rmost = ~file_mask_rightmost();
-        constexpr auto delta = SquaresHelper::direction_to_delta(Dir);
+        const auto delta = SquaresHelper::direction_to_delta(dir);
         constexpr BitBoard filemask[] = {
             // clang-format off
             bb_all_but_lmost, bb_all, bb_all_but_rmost,
@@ -123,20 +122,20 @@ public:
             bb_all_but_lmost,         bb_all_but_rmost,
             // clang-format on
         };
-        if constexpr (delta > 0)
-            return (*this & filemask[Dir]) << static_cast<uint>(delta);
+        if (delta > 0)
+            return (*this & filemask[dir]) << static_cast<uint>(delta);
         else
-            return (*this & filemask[Dir]) >> static_cast<uint>(-delta);
+            return (*this & filemask[dir]) >> static_cast<uint>(-delta);
     }
     constexpr BitBoard expand_adjacently() const
     {
-        return *this | shift<DIR_N>() | shift<DIR_E>() | shift<DIR_S>()
-               | shift<DIR_W>();
+        return *this | shift(DIR_N) | shift(DIR_E) | shift(DIR_S)
+               | shift(DIR_W);
     }
     constexpr BitBoard expand_diagonally() const
     {
-        return *this | shift<DIR_NW>() | shift<DIR_NE>() | shift<DIR_SW>()
-               | shift<DIR_SE>();
+        return *this | shift(DIR_NW) | shift(DIR_NE) | shift(DIR_SW)
+               | shift(DIR_SE);
     }
     constexpr BitBoard expand_neighbor() const
     {

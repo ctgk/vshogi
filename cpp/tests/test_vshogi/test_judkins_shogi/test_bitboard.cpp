@@ -24,6 +24,18 @@ TEST(judkins_shogi_bitboard, xor_operator)
     }
 }
 
+TEST(judkins_shogi_bitboard, shift)
+{
+    for (uint dd = Config::num_dir; dd--;) {
+        const auto dir = static_cast<vshogi::DirectionEnum>(dd);
+        for (auto&& sq : Squares::square_array) {
+            CHECK_TRUE(
+                BitBoard::from_square(Squares::shift(sq, dir))
+                == BitBoard::from_square(sq).shift(dir));
+        }
+    }
+}
+
 TEST(judkins_shogi_bitboard, fu)
 {
     {

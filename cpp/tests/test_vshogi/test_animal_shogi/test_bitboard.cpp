@@ -27,14 +27,27 @@ TEST(animal_shogi_bitboard, xor_operator)
 TEST(animal_shogi_bitboard, shift)
 {
     {
-        CHECK_TRUE(bb_fileb == bb_filea.shift<vshogi::DIR_E>());
-        CHECK_TRUE(bb_filec == bb_fileb.shift<vshogi::DIR_E>());
-        CHECK_TRUE(BitBoard(0) == bb_filec.shift<vshogi::DIR_E>());
+        CHECK_FALSE(bb_b1.shift(vshogi::DIR_N).any());
+        CHECK_TRUE(bb_b1 == bb_b2.shift(vshogi::DIR_N));
     }
     {
-        CHECK_TRUE(BitBoard(0) == bb_filea.shift<vshogi::DIR_W>());
-        CHECK_TRUE(bb_filea == bb_fileb.shift<vshogi::DIR_W>());
-        CHECK_TRUE(bb_fileb == bb_filec.shift<vshogi::DIR_W>());
+        CHECK_TRUE(bb_fileb == bb_filea.shift(vshogi::DIR_E));
+        CHECK_TRUE(bb_filec == bb_fileb.shift(vshogi::DIR_E));
+        CHECK_TRUE(BitBoard(0) == bb_filec.shift(vshogi::DIR_E));
+    }
+    {
+        CHECK_TRUE(BitBoard(0) == bb_filea.shift(vshogi::DIR_W));
+        CHECK_TRUE(bb_filea == bb_fileb.shift(vshogi::DIR_W));
+        CHECK_TRUE(bb_fileb == bb_filec.shift(vshogi::DIR_W));
+    }
+
+    for (uint dd = Config::num_dir; dd--;) {
+        const auto dir = static_cast<vshogi::DirectionEnum>(dd);
+        for (auto&& sq : Squares::square_array) {
+            CHECK_TRUE(
+                BitBoard::from_square(Squares::shift(sq, dir))
+                == BitBoard::from_square(sq).shift(dir));
+        }
     }
 }
 

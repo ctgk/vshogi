@@ -26,6 +26,18 @@ TEST(minishogi_bitboard, xor_operator)
     }
 }
 
+TEST(minishogi_bitboard, shift)
+{
+    for (uint dd = Config::num_dir; dd--;) {
+        const auto dir = static_cast<vshogi::DirectionEnum>(dd);
+        for (auto&& sq : Squares::square_array) {
+            CHECK_TRUE(
+                BitBoard::from_square(Squares::shift(sq, dir))
+                == BitBoard::from_square(sq).shift(dir));
+        }
+    }
+}
+
 TEST(minishogi_bitboard, is_one)
 {
     CHECK_FALSE(bb_1a.is_one(SQ_NA));

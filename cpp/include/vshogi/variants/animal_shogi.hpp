@@ -495,12 +495,12 @@ inline void animal_shogi::BitBoard::init_tables()
     for (auto&& sq : animal_shogi::Squares::square_array) {
         const auto b = from_square(sq);
         // clang-format off
-        attacks_table[0][sq] = b.shift<DIR_N>(); // B_CH
-        attacks_table[1][sq] = b.shift<DIR_NW>() | b.shift<DIR_N>() | b.shift<DIR_NE>() | b.shift<DIR_W>() | b.shift<DIR_E>() | b.shift<DIR_S>(); // B_KI
-        attacks_table[2][sq] = b.shift<DIR_S>(); // W_CH
-        attacks_table[3][sq] = b.shift<DIR_N>() | b.shift<DIR_W>() | b.shift<DIR_E>() | b.shift<DIR_SW>() | b.shift<DIR_S>() | b.shift<DIR_SE>(); // W_KI
-        attacks_table[4][sq] = b.shift<DIR_NW>() | b.shift<DIR_NE>() | b.shift<DIR_SW>() | b.shift<DIR_SE>(); // EL
-        attacks_table[5][sq] = b.shift<DIR_N>() | b.shift<DIR_W>() | b.shift<DIR_E>() | b.shift<DIR_S>(); // GI
+        attacks_table[0][sq] = b.shift(DIR_N); // B_CH
+        attacks_table[1][sq] = b.shift(DIR_NW) | b.shift(DIR_N) | b.shift(DIR_NE) | b.shift(DIR_W) | b.shift(DIR_E) | b.shift(DIR_S); // B_KI
+        attacks_table[2][sq] = b.shift(DIR_S); // W_CH
+        attacks_table[3][sq] = b.shift(DIR_N) | b.shift(DIR_W) | b.shift(DIR_E) | b.shift(DIR_SW) | b.shift(DIR_S) | b.shift(DIR_SE); // W_KI
+        attacks_table[4][sq] = b.shift(DIR_NW) | b.shift(DIR_NE) | b.shift(DIR_SW) | b.shift(DIR_SE); // EL
+        attacks_table[5][sq] = b.shift(DIR_N) | b.shift(DIR_W) | b.shift(DIR_E) | b.shift(DIR_S); // GI
         attacks_table[6][sq] = attacks_table[4][sq] | attacks_table[5][sq]; // LI
         // clang-format on
     }
