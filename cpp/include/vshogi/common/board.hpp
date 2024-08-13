@@ -122,7 +122,7 @@ public:
     Board hflip() const
     {
         Board out;
-        for (auto&& sq : SHelper::square_array) {
+        for (auto sq = static_cast<Square>(num_squares); sq--;) {
             const auto sq_hflipped = SHelper::hflip(sq);
             out.m_pieces[sq_hflipped] = m_pieces[sq];
         }
@@ -161,7 +161,7 @@ private:
     {
         m_king_locations[BLACK] = SQ_NA;
         m_king_locations[WHITE] = SQ_NA;
-        for (auto&& sq : SHelper::square_array) {
+        for (auto sq = static_cast<Square>(num_squares); sq--;) {
             const auto& p = m_pieces[sq];
             if (PHelper::to_piece_type(p) == PHelper::OU)
                 m_king_locations[PHelper::get_color(p)] = sq;

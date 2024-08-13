@@ -27,10 +27,11 @@ uint num_pieces(const State<Config>& s, const ColorEnum& c)
 {
     using SHelper = Squares<Config>;
     using PHelper = Pieces<Config>;
+    using Square = typename Config::Square;
     const auto& board = s.get_board();
     const auto& stand = s.get_stand(c);
     uint out = 0u;
-    for (auto& sq : SHelper::square_array) {
+    for (auto sq = static_cast<Square>(Config::num_squares); sq--;) {
         const auto p = board[sq];
         if (p == PHelper::VOID)
             continue;
@@ -48,10 +49,11 @@ uint total_point(const State<Config>& s, const ColorEnum& c)
 {
     using SHelper = Squares<Config>;
     using PHelper = Pieces<Config>;
+    using Square = typename Config::Square;
     uint out = 0u;
     const auto& board = s.get_board();
     const auto& stand = s.get_stand(c);
-    for (auto& sq : SHelper::square_array) {
+    for (auto sq = static_cast<Square>(Config::num_squares); sq--;) {
         const auto p = board[sq];
         if (p == PHelper::VOID)
             continue;
@@ -440,7 +442,7 @@ protected:
         m_occupied[WHITE] = BitBoardType();
         const auto turn = get_turn();
         const auto& board = get_board();
-        for (auto sq : SHelper::square_array) {
+        for (auto sq = static_cast<Square>(num_squares); sq--;) {
             const auto p = board[sq];
             if (p == PHelper::VOID)
                 continue;
@@ -600,7 +602,7 @@ protected:
     {
         uint out = 0;
         const BoardType& board = get_board();
-        for (auto& sq : SHelper::square_array) {
+        for (auto sq = static_cast<Square>(num_squares); sq--;) {
             if (mask.is_one(sq))
                 out += PHelper::get_point(board[sq]);
         }
@@ -627,7 +629,7 @@ protected:
                 const auto turn = get_turn();
                 const auto& ally_mask = m_occupied[turn];
                 const auto& king_sq = m_king_locations[turn];
-                for (auto&& sq : SHelper::square_array) {
+                for (auto sq = static_cast<Square>(num_squares); sq--;) {
                     if (ally_mask.is_one(sq) && (king_sq != sq))
                         append_check_moves_by_non_king_at(sq);
                 }
@@ -639,7 +641,7 @@ protected:
                 const auto turn = get_turn();
                 const auto& ally_mask = m_occupied[turn];
                 const auto& king_sq = m_king_locations[turn];
-                for (auto&& sq : SHelper::square_array) {
+                for (auto sq = static_cast<Square>(num_squares); sq--;) {
                     if (ally_mask.is_one(sq) && (king_sq != sq))
                         append_legal_moves_by_non_king_at(sq);
                 }
@@ -992,7 +994,7 @@ protected:
         for (auto&& pt : PHelper::stand_piece_array) {
             if (!stand.exist(pt))
                 continue;
-            for (auto&& sq : SHelper::square_array) {
+            for (auto sq = static_cast<Square>(num_squares); sq--;) {
                 if (occupied.is_one(sq))
                     continue;
                 const auto p = PHelper::to_board_piece(turn, pt);

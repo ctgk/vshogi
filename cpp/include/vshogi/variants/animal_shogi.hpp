@@ -150,6 +150,13 @@ constexpr BitBoard bb_filea = BitBoard(0b001001001001);
 constexpr BitBoard bb_fileb = BitBoard(0b010010010010);
 constexpr BitBoard bb_filec = BitBoard(0b100100100100);
 
+inline SquareEnum operator--(SquareEnum& self, int)
+{
+    const auto out = self;
+    self = static_cast<SquareEnum>(static_cast<int>(self) - 1);
+    return out;
+}
+
 namespace internal
 {
 
@@ -492,7 +499,7 @@ inline animal_shogi::BitBoard animal_shogi::BitBoard::get_attacks_by(
 template <>
 inline void animal_shogi::BitBoard::init_tables()
 {
-    for (auto&& sq : animal_shogi::Squares::square_array) {
+    for (auto sq = static_cast<Square>(num_squares); sq--;) {
         const auto b = from_square(sq);
         // clang-format off
         attacks_table[0][sq] = b.shift(DIR_N); // B_CH
@@ -553,7 +560,7 @@ inline void animal_shogi::Game::update_internals()
         const auto& board = get_board();
         const auto& stand = get_stand(turn);
         m_legal_moves.clear();
-        for (auto src : SHelper::square_array) {
+        for (auto src = static_cast<Square>(num_squares); src--;) {
             const auto p = board[src];
             if ((p == PHelper::VOID) || (PHelper::get_color(p) != turn))
                 continue;
@@ -567,7 +574,7 @@ inline void animal_shogi::Game::update_internals()
                     m_legal_moves.emplace_back(dst, src);
             }
         }
-        for (auto dst : SHelper::square_array) {
+        for (auto dst = static_cast<Square>(num_squares); dst--;) {
             if (!board.is_empty(dst))
                 continue;
             for (auto pt : PHelper::stand_piece_array) {

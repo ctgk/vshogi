@@ -67,9 +67,9 @@ TEST(shogi_bitboard, shift)
         CHECK_FALSE(actual.any());
     }
 
-    for (uint dd = Config::num_dir; dd--;) {
-        const auto dir = static_cast<vshogi::DirectionEnum>(dd);
-        for (auto&& sq : Squares::square_array) {
+    for (auto dir = static_cast<vshogi::DirectionEnum>(Config::num_dir);
+         dir--;) {
+        for (auto sq = static_cast<SquareEnum>(Config::num_squares); sq--;) {
             CHECK_TRUE(
                 BitBoard::from_square(Squares::shift(sq, dir))
                 == BitBoard::from_square(sq).shift(dir));

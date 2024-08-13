@@ -102,16 +102,6 @@ TEST(squares, to_square)
     CHECK_EQUAL(SQ_5E, Squares::to_square("5e"));
 }
 
-TEST(squares, square_array)
-{
-    CHECK_EQUAL(
-        Config::num_squares,
-        sizeof(Squares::square_array) / sizeof(Squares::square_array[0]));
-    for (int i = Config::num_squares; i--;) {
-        CHECK_EQUAL(i, static_cast<int>(Squares::square_array[i]));
-    }
-}
-
 TEST(squares, get_non_ranging_attacks_by)
 {
     {

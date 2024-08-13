@@ -39,8 +39,11 @@ class Game(BaseGame):
     4 |+E|+L|+G|
       *--*--*--*
     Black: -
-    >>> game.get_legal_moves()
-    [Move(dst=B2, src=B3), Move(dst=A3, src=B4), ...
+    >>> moves = game.get_legal_moves()
+    >>> Move("b3b2") in moves
+    True
+    >>> Move("a4a3") in moves
+    False
     >>> game.is_legal(Move(B2, B3))
     True
     >>> game.is_legal(Move(A3, A4))

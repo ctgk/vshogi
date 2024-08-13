@@ -49,7 +49,6 @@ public:
     static constexpr Rank RANK1 = static_cast<Rank>(0); // NOLINT
     static constexpr Square SQ_NA = static_cast<Square>(num_squares); // NOLINT
 
-    inline static Square square_array[num_squares];
     inline static File file_array[num_files];
     inline static Rank rank_array[num_ranks];
     inline static Square file_to_square_array[num_files][num_ranks];
@@ -93,15 +92,12 @@ public:
         constexpr Rank rm = static_cast<Rank>(num_ranks - 2);
         constexpr Rank rn = static_cast<Rank>(num_ranks - 1);
 
-        for (int ii = num_squares; ii--;) {
-            const auto sq = static_cast<Square>(ii);
-            square_array[ii] = sq;
+        for (auto sq = static_cast<Square>(num_squares); sq--;)
             file_to_square_array[to_file(sq)][to_rank(sq)] = sq;
-        }
         init_file_array();
         init_rank_array();
 
-        for (auto&& sq : square_array) {
+        for (auto sq = static_cast<Square>(num_squares); sq--;) {
             const auto r = to_rank(sq);
             const auto f = to_file(sq);
             for (auto dir = static_cast<DirectionEnum>(num_dir); dir--;) {
@@ -196,7 +192,7 @@ private:
             = sizeof(ranging_squares_to) / sizeof(ranging_squares_to[0][0][0]);
         std::fill_n(&ranging_squares_to[0][0][0], size, SQ_NA);
 
-        for (auto& src : Squares::square_array) {
+        for (auto src = static_cast<Square>(num_squares); src--;) {
             for (auto dir = static_cast<DirectionEnum>(num_dir); dir--;) {
                 auto dst = src;
                 int index = 0;
@@ -226,7 +222,7 @@ private:
             const ColorEnum c = (ii < num_piece_types) ? BLACK : WHITE;
             const auto p = PHelper::to_board_piece(c, pt);
             const auto dir_ptr_begin = PHelper::get_attack_directions(p);
-            for (auto&& sq : square_array) {
+            for (auto sq = static_cast<Square>(num_squares); sq--;) {
                 int index = 0;
                 for (auto dir_ptr = dir_ptr_begin; *dir_ptr != DIR_NA;) {
                     const auto dst = shift(sq, *dir_ptr++);

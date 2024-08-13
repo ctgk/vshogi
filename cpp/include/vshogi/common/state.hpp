@@ -198,7 +198,7 @@ public:
             }
         }
         constexpr int num_pieces = num_colors * num_piece_types + 1;
-        for (auto& sq : SHelper::square_array) {
+        for (auto sq = static_cast<Square>(num_squares); sq--;) {
             for (int ii = 0; ii < num_pieces; ++ii) {
                 zobrist_board[sq][ii] = dist(rng);
             }
@@ -207,7 +207,7 @@ public:
     std::uint64_t zobrist_hash_board() const
     {
         std::uint64_t out = static_cast<std::uint64_t>(0);
-        for (auto&& sq : SHelper::square_array) {
+        for (auto sq = static_cast<Square>(num_squares); sq--;) {
             out ^= zobrist_board[sq][to_index(m_board[sq])];
         }
         return out;

@@ -133,16 +133,6 @@ TEST(squares, to_square)
     CHECK_EQUAL(SQ_6F, Squares::to_square("6f"));
 }
 
-TEST(squares, square_array)
-{
-    CHECK_EQUAL(
-        Config::num_squares,
-        sizeof(Squares::square_array) / sizeof(Squares::square_array[0]));
-    for (int i = Config::num_squares; i--;) {
-        CHECK_EQUAL(i, static_cast<int>(Squares::square_array[i]));
-    }
-}
-
 TEST(squares, get_direction)
 {
     CHECK_EQUAL(vshogi::DIR_NW, Squares::get_direction(SQ_2A, SQ_1B));

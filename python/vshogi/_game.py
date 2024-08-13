@@ -591,8 +591,11 @@ class Game(abc.ABC):
         >>> import vshogi.animal_shogi as shogi
         >>> g = shogi.Game()
         >>> logits = np.zeros(g.num_dlshogi_policy)
-        >>> g.masked_softmax(logits)  # doctest: +ELLIPSIS
-        {Move(dst=C3, src=C4): 0.25, Move(dst=C3, src=B4): 0.25, ...}
+        >>> proba = g.masked_softmax(logits)
+        >>> proba[shogi.Move("c4c3")]
+        0.25
+        >>> proba[shogi.Move("b4c3")]
+        0.25
         """
         return self._game.masked_softmax(logits)
 
