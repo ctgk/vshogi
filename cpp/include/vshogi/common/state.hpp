@@ -280,9 +280,8 @@ private:
     {
         if (p == PHelper::VOID)
             return 2u * num_piece_types;
-        uint out = PHelper::demote(PHelper::to_piece_type(p));
+        uint out = PHelper::to_piece_type(p);
         out += (PHelper::get_color(p) == WHITE) * num_piece_types;
-        out += PHelper::is_promoted(p) * (num_stand_piece_types + 1);
         return out;
     }
 };

@@ -84,4 +84,18 @@ TEST(animal_shogi_state, to_sfen)
     }
 }
 
+TEST(animal_shogi_state, zobrist_hash)
+{
+    auto s = State();
+    auto hash = s.zobrist_hash();
+    s.apply(Move(SQ_B2, SQ_B3), &hash);
+    s.apply(Move(SQ_A2, SQ_B1), &hash);
+    s.apply(Move(SQ_B1, SQ_B2), &hash); // promote
+
+    const auto expect = State("gHe/l2/3/ELG b C").zobrist_hash();
+    const auto another = State("gCe/l2/3/ELG b C").zobrist_hash();
+    CHECK_EQUAL(expect, hash);
+    CHECK_TRUE(another != hash);
+}
+
 } // namespace test_vshogi::test_animal_shogi
