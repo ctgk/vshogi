@@ -127,20 +127,6 @@ public:
         else
             return (*this & filemask[dir]) >> static_cast<uint>(-delta);
     }
-    constexpr BitBoard expand_adjacently() const
-    {
-        return *this | shift(DIR_N) | shift(DIR_E) | shift(DIR_S)
-               | shift(DIR_W);
-    }
-    constexpr BitBoard expand_diagonally() const
-    {
-        return *this | shift(DIR_NW) | shift(DIR_NE) | shift(DIR_SW)
-               | shift(DIR_SE);
-    }
-    constexpr BitBoard expand_neighbor() const
-    {
-        return expand_adjacently() | expand_diagonally();
-    }
 
     template <DirectionEnum Dir>
     static BitBoard
