@@ -249,8 +249,7 @@ private:
             return PHelper::to_board_piece(m_turn, src);
         } else {
             const auto src = move.source_square();
-            const auto out = m_board[src];
-            m_board[src] = PHelper::VOID;
+            const auto out = m_board.apply(src, PHelper::VOID);
             if (hash != nullptr) {
                 *hash ^= zobrist_board[src][to_index(out)];
                 *hash ^= zobrist_board[src][to_index(PHelper::VOID)];
@@ -275,7 +274,7 @@ private:
             *hash ^= zobrist_board[sq][to_index(m_board[sq])];
             *hash ^= zobrist_board[sq][to_index(p)];
         }
-        m_board[sq] = p;
+        m_board.apply(sq, p);
     }
     static uint to_index(const BoardPieceType& p)
     {

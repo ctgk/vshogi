@@ -47,7 +47,7 @@ shogi::Board::Board()
         VOID, B_KA, VOID, VOID, VOID, VOID, VOID, B_HI, VOID,
         B_KY, B_KE, B_GI, B_KI, B_OU, B_KI, B_GI, B_KE, B_KY,
         // clang-format on
-    }
+    }, m_king_locations{shogi::SQ_5I, shogi::SQ_5A}
 {
 }
 

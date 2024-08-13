@@ -24,7 +24,7 @@ animal_shogi::Board::Board()
         VOID, B_CH, VOID,
         B_EL, B_LI, B_GI,
         // clang-format on
-    }
+    }, m_king_locations{animal_shogi::SQ_B4, animal_shogi::SQ_B1}
 {
 }
 

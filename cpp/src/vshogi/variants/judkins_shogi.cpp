@@ -40,7 +40,7 @@ judkins_shogi::Board::Board()
         B_FU, VOID, VOID, VOID, VOID, VOID,
         B_OU, B_KI, B_GI, B_KE, B_KA, B_HI,
         // clang-format on
-    }
+    }, m_king_locations{judkins_shogi::SQ_6F, judkins_shogi::SQ_1A}
 {
 }
 

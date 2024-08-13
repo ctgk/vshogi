@@ -20,7 +20,7 @@ TEST(minishogi_board, get)
 TEST(minishogi_board, set)
 {
     auto b = Board();
-    b[SQ_2D] = W_GI;
+    b.apply(SQ_2D, W_GI);
     CHECK_EQUAL(W_GI, b[SQ_2D]);
     CHECK_EQUAL(W_HI, b[SQ_5A]);
     CHECK_EQUAL(B_GI, b[SQ_3E]);

@@ -21,7 +21,7 @@ TEST(judkins_shogi_board, set)
 {
     auto b = Board();
     CHECK_EQUAL(VOID, b[SQ_2D]);
-    b[SQ_2D] = W_GI;
+    b.apply(SQ_2D, W_GI);
     CHECK_EQUAL(W_GI, b[SQ_2D]);
 }
 

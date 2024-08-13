@@ -35,7 +35,7 @@ minishogi::Board::Board()
         B_FU, VOID, VOID, VOID, VOID,
         B_OU, B_KI, B_GI, B_KA, B_HI,
         // clang-format on
-    }
+    }, m_king_locations{minishogi::SQ_5E, minishogi::SQ_1A}
 {
 }
 

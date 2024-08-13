@@ -6,6 +6,7 @@
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/direction.hpp"
+#include "vshogi/common/move.hpp"
 #include "vshogi/common/pieces.hpp"
 #include "vshogi/common/squares.hpp"
 
@@ -19,6 +20,8 @@ private:
     using SHelper = Squares<Config>;
     using PHelper = Pieces<Config>;
     using BitBoardType = BitBoard<Config>;
+    using MoveType = Move<Config>;
+    using PieceType = typename Config::PieceType;
     using BoardPieceType = typename Config::BoardPieceType;
     using Square = typename Config::Square;
     using Rank = typename Config::Rank;
@@ -31,6 +34,7 @@ private:
 
 private:
     BoardPieceType m_pieces[num_squares];
+    Square m_king_locations[num_colors];
 
 public:
     Board();
@@ -38,27 +42,7 @@ public:
     {
         set_sfen(sfen);
     }
-    bool operator==(const Board& other) const
-    {
-        for (auto& sq : SHelper::square_array) {
-            if (m_pieces[sq] != other.m_pieces[sq])
-                return false;
-        }
-        return true;
-    }
-    bool operator!=(const Board& other) const
-    {
-        for (auto& sq : SHelper::square_array) {
-            if (m_pieces[sq] != other.m_pieces[sq])
-                return true;
-        }
-        return false;
-    }
     BoardPieceType operator[](const Square& sq) const
-    {
-        return m_pieces[sq];
-    }
-    BoardPieceType& operator[](const Square& sq)
     {
         return m_pieces[sq];
     }
@@ -66,12 +50,9 @@ public:
     {
         return (m_pieces[sq] == VOID);
     }
-    const char* set_sfen(const char* sfen)
+    Square get_king_location(const ColorEnum& c) const
     {
-        for (uint ir = 0U; ir < num_ranks; ++ir) {
-            sfen = set_sfen_rank(sfen, static_cast<Rank>(ir));
-        }
-        return sfen;
+        return m_king_locations[c];
     }
     void append_sfen(std::string& out) const
     {
@@ -80,6 +61,31 @@ public:
             out += '/';
             append_sfen_rank(static_cast<Rank>(ir), out);
         }
+    }
+    BoardPieceType apply(const Square& dst, const BoardPieceType& p)
+    {
+        if (PHelper::to_piece_type(p) == PHelper::OU)
+            m_king_locations[PHelper::get_color(p)] = dst;
+        const BoardPieceType popped = place_piece_on(dst, p);
+        if (PHelper::to_piece_type(popped) == PHelper::OU)
+            m_king_locations[PHelper::get_color(popped)] = SQ_NA;
+        return popped;
+    }
+    BoardPieceType
+    apply(const Square& dst, const Square& src, const bool& promote = false)
+    {
+        BoardPieceType moving_piece = place_piece_on(src, VOID);
+        if (promote)
+            moving_piece = PHelper::promote_nocheck(moving_piece);
+        return apply(dst, moving_piece);
+    }
+    const char* set_sfen(const char* sfen)
+    {
+        for (uint ir = 0U; ir < num_ranks; ++ir) {
+            sfen = set_sfen_rank(sfen, static_cast<Rank>(ir));
+        }
+        update_king_position_based_on_pieces();
+        return sfen;
     }
     Square find_attacker(
         const ColorEnum& attacker_color,
@@ -120,6 +126,7 @@ public:
             const auto sq_hflipped = SHelper::hflip(sq);
             out.m_pieces[sq_hflipped] = m_pieces[sq];
         }
+        out.update_king_position_based_on_pieces();
         return out;
     }
 
@@ -143,6 +150,22 @@ private:
         }
         if (num_void > 0)
             out += static_cast<char>('0' + num_void);
+    }
+    BoardPieceType place_piece_on(const Square& sq, const BoardPieceType& p)
+    {
+        const auto out = m_pieces[sq];
+        m_pieces[sq] = p;
+        return out;
+    }
+    void update_king_position_based_on_pieces()
+    {
+        m_king_locations[BLACK] = SQ_NA;
+        m_king_locations[WHITE] = SQ_NA;
+        for (auto&& sq : SHelper::square_array) {
+            const auto& p = m_pieces[sq];
+            if (PHelper::to_piece_type(p) == PHelper::OU)
+                m_king_locations[PHelper::get_color(p)] = sq;
+        }
     }
 };
 
