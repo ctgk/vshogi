@@ -102,35 +102,6 @@ public:
         }
         return SQ_NA;
     }
-    Square find_pinned(
-        const ColorEnum& attacker_color,
-        const Square& attacked,
-        const DirectionEnum& dir) const
-    {
-        const auto dir_rotated = vshogi::rotate(dir);
-        Square out = SQ_NA;
-        auto ptr_sq = SHelper::get_squares_along(dir, attacked);
-        if (ptr_sq == nullptr)
-            return SQ_NA;
-        for (; *ptr_sq != SQ_NA; ++ptr_sq) {
-            const auto& sq = *ptr_sq;
-            const auto& p = m_pieces[sq];
-            if (p == VOID)
-                continue;
-            if (PHelper::get_color(p) != attacker_color) {
-                if (out == SQ_NA)
-                    out = sq;
-                else
-                    return SQ_NA;
-            } else {
-                if (PHelper::is_ranging_to(p, dir_rotated))
-                    return out;
-                else
-                    return SQ_NA;
-            }
-        }
-        return SQ_NA;
-    }
     bool is_square_attacked(
         const ColorEnum& attacker_color,
         const Square& sq,

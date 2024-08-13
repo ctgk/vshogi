@@ -117,34 +117,4 @@ TEST(minishogi_board, append_sfen)
     STRCMP_EQUAL(expected, actual.c_str());
 }
 
-TEST(minishogi_board, find_pinned_none)
-{
-    const auto b = Board("5/5/5/5/5 b -");
-    CHECK_TRUE(SQ_NA == b.find_pinned(vshogi::WHITE, SQ_3C, vshogi::DIR_N));
-}
-
-TEST(minishogi_board, find_pinned_bishop)
-{
-    const auto b = Board("4b/5/2P2/5/5 b -");
-    CHECK_TRUE(SQ_3C == b.find_pinned(vshogi::WHITE, SQ_5E, vshogi::DIR_NE));
-}
-
-TEST(minishogi_board, find_pinned_rook)
-{
-    const auto b = Board("2r2/5/5/2P2/5 b -");
-    CHECK_TRUE(SQ_3D == b.find_pinned(vshogi::WHITE, SQ_3E, vshogi::DIR_N));
-}
-
-TEST(minishogi_board, find_pinned_none_because_two_allies)
-{
-    const auto b = Board("2r2/5/2P2/2G2/5 b -");
-    CHECK_TRUE(SQ_NA == b.find_pinned(vshogi::WHITE, SQ_3E, vshogi::DIR_N));
-}
-
-TEST(minishogi_board, find_pinned_intervened)
-{
-    const auto b = Board("4b/3p1/2P2/5/5 b -");
-    CHECK_TRUE(SQ_NA == b.find_pinned(vshogi::WHITE, SQ_5E, vshogi::DIR_NE));
-}
-
 } // namespace test_vshogi::test_minishogi
