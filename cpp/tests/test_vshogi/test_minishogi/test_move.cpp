@@ -2,8 +2,6 @@
 
 #include <CppUTest/TestHarness.h>
 
-#include "test_vshogi/test_minishogi/test_minishogi.hpp"
-
 namespace test_vshogi::test_minishogi
 {
 
