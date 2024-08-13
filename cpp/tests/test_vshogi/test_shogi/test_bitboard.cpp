@@ -7,9 +7,24 @@ namespace test_vshogi::test_shogi
 
 using namespace vshogi::shogi;
 
-TEST_GROUP(bitboard){};
+TEST_GROUP(shogi_bitboard){};
 
-TEST(bitboard, from_square)
+TEST(shogi_bitboard, xor_operator)
+{
+    {
+        const auto actual = (bb_1a | bb_2a) ^ (bb_2a | bb_3a);
+        const auto expect = (bb_1a | bb_3a);
+        CHECK_TRUE(expect == actual);
+    }
+    {
+        auto actual = (bb_1a | bb_2a);
+        actual ^= (bb_2a | bb_3a);
+        const auto expect = (bb_1a | bb_3a);
+        CHECK_TRUE(expect == actual);
+    }
+}
+
+TEST(shogi_bitboard, from_square)
 {
     {
         const auto bb = BitBoard::from_square(SQ_9H);
@@ -23,7 +38,7 @@ TEST(bitboard, from_square)
     }
 }
 
-TEST(bitboard, bitshift)
+TEST(shogi_bitboard, bitshift)
 {
     {
         const auto bb = BitBoard::from_square(SQ_9H) << 1;
@@ -32,7 +47,7 @@ TEST(bitboard, bitshift)
     }
 }
 
-TEST(bitboard, shift)
+TEST(shogi_bitboard, shift)
 {
     {
         const auto bb = BitBoard::from_square(SQ_9A);
@@ -53,7 +68,7 @@ TEST(bitboard, shift)
     }
 }
 
-TEST(bitboard, get_attacks_by_fu)
+TEST(shogi_bitboard, get_attacks_by_fu)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_FU, SQ_2G);
@@ -67,7 +82,7 @@ TEST(bitboard, get_attacks_by_fu)
     }
 }
 
-TEST(bitboard, get_attacks_by_ky)
+TEST(shogi_bitboard, get_attacks_by_ky)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_KY, SQ_1I);
@@ -114,7 +129,7 @@ TEST(bitboard, get_attacks_by_ky)
     }
 }
 
-TEST(bitboard, get_attacks_by_ke)
+TEST(shogi_bitboard, get_attacks_by_ke)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_KE, SQ_5E);
@@ -135,7 +150,7 @@ TEST(bitboard, get_attacks_by_ke)
     }
 }
 
-TEST(bitboard, get_attacks_by_gi)
+TEST(shogi_bitboard, get_attacks_by_gi)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_GI, SQ_9D);
@@ -157,7 +172,7 @@ TEST(bitboard, get_attacks_by_gi)
     }
 }
 
-TEST(bitboard, get_attacks_by_ki)
+TEST(shogi_bitboard, get_attacks_by_ki)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_KI, SQ_9D);
@@ -182,7 +197,7 @@ TEST(bitboard, get_attacks_by_ki)
     }
 }
 
-TEST(bitboard, get_attacks_by_ka)
+TEST(shogi_bitboard, get_attacks_by_ka)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_KA, SQ_5E);
@@ -215,7 +230,7 @@ TEST(bitboard, get_attacks_by_ka)
     }
 }
 
-TEST(bitboard, get_attacks_by_hi)
+TEST(shogi_bitboard, get_attacks_by_hi)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_HI, SQ_5E);
@@ -258,7 +273,7 @@ TEST(bitboard, get_attacks_by_hi)
     }
 }
 
-TEST(bitboard, get_attacks_by_um)
+TEST(shogi_bitboard, get_attacks_by_um)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_UM, SQ_5E);
@@ -298,7 +313,7 @@ TEST(bitboard, get_attacks_by_um)
     }
 }
 
-TEST(bitboard, get_attacks_by_ry)
+TEST(shogi_bitboard, get_attacks_by_ry)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_RY, SQ_5E);
@@ -349,7 +364,7 @@ TEST(bitboard, get_attacks_by_ry)
     }
 }
 
-TEST(bitboard, get_attacks_by_ou)
+TEST(shogi_bitboard, get_attacks_by_ou)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_OU, SQ_5A);
@@ -383,7 +398,7 @@ TEST(bitboard, get_attacks_by_ou)
     }
 }
 
-TEST(bitboard, get_promotion_zone)
+TEST(shogi_bitboard, get_promotion_zone)
 {
     {
         const auto actual = BitBoard::get_promotion_zone(vshogi::BLACK);

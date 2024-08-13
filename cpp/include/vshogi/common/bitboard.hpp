@@ -62,6 +62,15 @@ public:
         m_value &= other.m_value;
         return *this;
     }
+    constexpr BitBoard operator^(const BitBoard& other) const
+    {
+        return BitBoard(m_value ^ other.m_value);
+    }
+    BitBoard& operator^=(const BitBoard& other)
+    {
+        m_value ^= other.m_value;
+        return *this;
+    }
     constexpr BitBoard operator<<(const uint& shift_width) const
     {
         return BitBoard(m_value << shift_width);

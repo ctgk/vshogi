@@ -9,6 +9,21 @@ using namespace vshogi::animal_shogi;
 
 TEST_GROUP(animal_shogi_bitboard){};
 
+TEST(animal_shogi_bitboard, xor_operator)
+{
+    {
+        const auto actual = (bb_a1 | bb_a2) ^ (bb_a2 | bb_a3);
+        const auto expect = (bb_a1 | bb_a3);
+        CHECK_TRUE(expect == actual);
+    }
+    {
+        auto actual = (bb_a1 | bb_a2);
+        actual ^= (bb_a2 | bb_a3);
+        const auto expect = (bb_a1 | bb_a3);
+        CHECK_TRUE(expect == actual);
+    }
+}
+
 TEST(animal_shogi_bitboard, shift)
 {
     {
