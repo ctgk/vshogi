@@ -9,6 +9,11 @@ using namespace vshogi::shogi;
 
 TEST_GROUP(shogi_game){};
 
+TEST(shogi_game, feature_channels)
+{
+    CHECK_EQUAL(2 * (14 + 7), Game::feature_channels());
+}
+
 TEST(shogi_game, num_dlshogi_policy)
 {
     CHECK_EQUAL(9 * 9 * (2 * 10 + 7), Game::num_dlshogi_policy());

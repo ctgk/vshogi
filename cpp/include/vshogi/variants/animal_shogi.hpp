@@ -160,29 +160,6 @@ inline SquareEnum operator--(SquareEnum& self, int)
 namespace internal
 {
 
-inline BoardPieceTypeEnum
-promote_if_possible(const BoardPieceTypeEnum p, const Move move)
-{
-    if (move.is_drop())
-        return p;
-    if (Pieces::to_piece_type(p) != CH)
-        return p;
-    const auto r_src = Squares::to_rank(move.source_square());
-    const auto r_dst = Squares::to_rank(move.destination());
-    const auto c = Pieces::get_color(p);
-    if (c == vshogi::BLACK) {
-        if ((r_src == RANK2) && (r_dst == RANK1))
-            return Pieces::to_board_piece(c, HE);
-        else
-            return p;
-    } else {
-        if ((r_src == RANK3) && (r_dst == RANK4))
-            return Pieces::to_board_piece(c, HE);
-        else
-            return p;
-    }
-}
-
 inline ResultEnum move_result(
     const Move move,
     const BoardPieceTypeEnum moving,

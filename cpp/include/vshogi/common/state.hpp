@@ -68,17 +68,9 @@ public:
     {
         return num_squares;
     }
-    static constexpr uint board_piece_types()
-    {
-        return num_piece_types;
-    }
-    static constexpr uint stand_piece_types()
-    {
-        return num_stand_piece_types;
-    }
     static constexpr uint feature_channels()
     {
-        return 2 * (board_piece_types() + stand_piece_types());
+        return 2 * (num_piece_types + num_stand_piece_types);
     }
     static constexpr uint num_dlshogi_policy()
     {
@@ -147,9 +139,9 @@ public:
     }
     void to_feature_map(float* const data) const
     {
-        constexpr uint sp_types = stand_piece_types();
+        constexpr uint sp_types = num_stand_piece_types;
         constexpr uint unpromoted_piece_types = sp_types + 1; // + OU
-        constexpr uint ch_half = sp_types + board_piece_types();
+        constexpr uint ch_half = sp_types + num_piece_types;
         constexpr uint ch = ch_half * 2;
 
         const auto& stand_curr = m_stands[m_turn];

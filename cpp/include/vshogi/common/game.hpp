@@ -83,6 +83,8 @@ private:
     using StandType = Stand<Config>;
     using StateType = State<Config>;
 
+    static constexpr uint num_piece_types = Config::num_piece_types;
+    static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
     static constexpr uint num_dir = Config::num_dir;
     static constexpr uint num_ranks = Config::num_ranks;
     static constexpr uint num_files = Config::num_files;
@@ -124,19 +126,10 @@ public:
     {
         return num_squares;
     }
-    static constexpr uint board_piece_types()
-    {
-        return sizeof(PHelper::piece_array) / sizeof(PHelper::piece_array[0]);
-    }
-    static constexpr uint stand_piece_types()
-    {
-        return sizeof(PHelper::stand_piece_array)
-               / sizeof(PHelper::stand_piece_array[0]);
-    }
     static constexpr uint feature_channels()
     {
-        // 2-player * (board-piece-types + stand-piece-types)
-        return 2 * (board_piece_types() + stand_piece_types());
+        // 2-player * (piece-types + stand-piece-types)
+        return 2 * (num_piece_types + num_stand_piece_types);
     }
     static constexpr uint num_dlshogi_policy()
     {
