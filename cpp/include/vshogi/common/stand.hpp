@@ -79,6 +79,7 @@ public:
 private:
     using PHelper = Pieces<Config>;
     using PieceType = typename Config::PieceType;
+    using BoardPieceType = typename Config::BoardPieceType;
     static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
     static constexpr uint max_stand_piece_count = Config::max_stand_piece_count;
 
@@ -172,7 +173,7 @@ public:
             }
         }
     }
-    void subtract_piece_from(
+    BoardPieceType pop_piece_from(
         const ColorEnum& c, const PieceType& pt, std::uint64_t* const hash)
     {
         m_stands[c].subtract(pt);
@@ -182,12 +183,28 @@ public:
             *hash ^= zobrist_table[c][pt][num_before];
             *hash ^= zobrist_table[c][pt][num_after];
         }
+        return PHelper::to_board_piece(c, pt);
     }
-    void add_piece_to(
-        const ColorEnum& c,
-        const PieceType& pt_demoted,
-        std::uint64_t* const hash)
+
+    /**
+     * @brief Add captured piece on a stand with opposite color of the piece.
+     * @note Note the following:
+     * - If the piece is promoted, add demoted piece on the stand.
+     * - If the piece is `VOID` or king, do nothing.
+     *
+     * @param captured Captured piece.
+     * @param hash Pointer to zobrist hash value.
+     */
+    void add_captured_piece(
+        const BoardPieceType& captured, std::uint64_t* const hash = nullptr)
     {
+        if ((captured == PHelper::VOID)
+            || (PHelper::to_piece_type(captured) == PHelper::OU))
+            return;
+
+        const auto c = ~PHelper::get_color(captured);
+        const auto pt_demoted
+            = PHelper::demote(PHelper::to_piece_type(captured));
         m_stands[c].add(pt_demoted);
         if (hash != nullptr) {
             const auto num_after = m_stands[c].count(pt_demoted);

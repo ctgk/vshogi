@@ -134,18 +134,13 @@ public:
     State& apply(const MoveType& move, std::uint64_t* const hash = nullptr)
     {
         if (move.is_drop()) {
-            const auto pt = move.source_piece();
-            m_stands.subtract_piece_from(m_turn, pt, hash);
-            m_board.apply(
-                move.destination(), PHelper::to_board_piece(m_turn, pt), hash);
+            const BoardPieceType p
+                = m_stands.pop_piece_from(m_turn, move.source_piece(), hash);
+            m_board.apply(move.destination(), p, hash);
         } else {
             const auto captured = m_board.apply(
                 move.destination(), move.source_square(), move.promote(), hash);
-            if (captured != PHelper::VOID)
-                m_stands.add_piece_to(
-                    m_turn,
-                    PHelper::demote(PHelper::to_piece_type(captured)),
-                    hash);
+            m_stands.add_captured_piece(captured, hash);
         }
         m_turn = ~m_turn;
         return *this;

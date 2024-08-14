@@ -31,6 +31,26 @@ TEST(animal_shogi_board, apply)
     }
 }
 
+TEST(animal_shogi_board, apply_forced_promotion)
+{
+    {
+        auto b = Board();
+        b.apply(SQ_B2, SQ_B3);
+        b.apply(SQ_A2, SQ_B1);
+
+        CHECK_EQUAL(B_CH, b[SQ_B2]);
+        b.apply(SQ_B1, SQ_B2);
+        CHECK_EQUAL(B_HE, b[SQ_B1]);
+    }
+    {
+        auto b = Board();
+        b.apply(SQ_B3, SQ_B2);
+        CHECK_EQUAL(W_CH, b[SQ_B3]);
+        b.apply(SQ_B4, SQ_B3);
+        CHECK_EQUAL(W_HE, b[SQ_B4]);
+    }
+}
+
 TEST(animal_shogi_board, hflip)
 {
     auto b = Board();

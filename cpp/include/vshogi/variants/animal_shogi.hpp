@@ -423,12 +423,6 @@ inline std::uint64_t animal_shogi::BlackWhiteStands::zobrist_table
     = {};
 
 template <>
-inline std::uint64_t animal_shogi::Board::zobrist_table
-    [animal_shogi::Config::num_squares]
-    [num_colors * animal_shogi::Config::num_piece_types + 1]
-    = {};
-
-template <>
 inline uint animal_shogi::Move::to_dlshogi_source_index() const
 {
     if (is_drop())
@@ -526,18 +520,26 @@ inline void animal_shogi::BitBoard::init_tables()
 }
 
 template <>
-inline animal_shogi::State& animal_shogi::State::apply(
-    const animal_shogi::Move& move, std::uint64_t* const hash)
+inline std::uint64_t animal_shogi::Board::zobrist_table
+    [animal_shogi::Config::num_squares]
+    [num_colors * animal_shogi::Config::num_piece_types + 1]
+    = {};
+
+template <>
+inline animal_shogi::BoardPieceTypeEnum animal_shogi::Board::apply(
+    const animal_shogi::SquareEnum& dst,
+    const animal_shogi::SquareEnum& src,
+    const bool&,
+    std::uint64_t* const hash)
 {
-    const auto dst = move.destination();
-    auto moving = pop_piece_from_stand_or_board(move, hash);
-    const auto captured = PHelper::to_piece_type(m_board[dst]);
-    if ((captured != PHelper::NA) && (captured != animal_shogi::LI))
-        m_stands.add_piece_to(m_turn, PHelper::demote(captured), hash);
-    moving = animal_shogi::internal::promote_if_possible(moving, move);
-    m_board.apply(dst, moving, hash);
-    m_turn = ~m_turn;
-    return *this;
+    BoardPieceType moving_piece = place_piece_on(src, VOID);
+    if (hash != nullptr) {
+        *hash ^= zobrist_table[src][to_index(VOID)];
+        *hash ^= zobrist_table[src][to_index(moving_piece)];
+    }
+    if (!BitBoardType::get_attacks_by(moving_piece, dst).any())
+        moving_piece = PHelper::promote_nocheck(moving_piece);
+    return apply(dst, moving_piece, hash);
 }
 
 template <>

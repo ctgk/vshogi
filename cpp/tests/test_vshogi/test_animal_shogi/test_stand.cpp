@@ -167,10 +167,10 @@ TEST(animal_shogi_black_white_stands, zobrist_hash)
 {
     auto s = BlackWhiteStands();
     auto hash = s.zobrist_hash();
-    s.add_piece_to(vshogi::BLACK, CH, &hash);
-    s.add_piece_to(vshogi::BLACK, CH, &hash);
-    s.add_piece_to(vshogi::WHITE, EL, &hash);
-    s.subtract_piece_from(vshogi::BLACK, CH, &hash);
+    s.add_captured_piece(W_CH, &hash);
+    s.add_captured_piece(W_HE, &hash);
+    s.add_captured_piece(B_EL, &hash);
+    s.pop_piece_from(vshogi::BLACK, CH, &hash);
     const auto expect = BlackWhiteStands("Ce").zobrist_hash();
     CHECK_EQUAL(expect, hash);
     CHECK_TRUE(BlackWhiteStands("").zobrist_hash() != hash);

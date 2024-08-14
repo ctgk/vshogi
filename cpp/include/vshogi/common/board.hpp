@@ -154,7 +154,7 @@ public:
         std::mt19937_64 rng(dev());
         std::uniform_int_distribution<std::uint64_t> dist;
         for (auto sq = static_cast<Square>(num_squares); sq--;) {
-            for (int ii = 0; ii < num_square_states; ++ii) {
+            for (uint ii = 0u; ii < num_square_states; ++ii) {
                 zobrist_table[sq][ii] = dist(rng);
             }
         }
