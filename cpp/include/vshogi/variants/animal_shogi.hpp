@@ -520,11 +520,6 @@ inline std::uint64_t animal_shogi::State::zobrist_board
     = {};
 
 template <>
-inline std::uint64_t animal_shogi::State::zobrist_stand
-    [num_colors][animal_shogi::Config::num_stand_piece_types][3]
-    = {};
-
-template <>
 inline animal_shogi::State& animal_shogi::State::apply(
     const animal_shogi::Move& move, std::uint64_t* const hash)
 {
@@ -532,7 +527,7 @@ inline animal_shogi::State& animal_shogi::State::apply(
     auto moving = pop_piece_from_stand_or_board(move, hash);
     const auto captured = PHelper::to_piece_type(m_board[dst]);
     if ((captured != PHelper::NA) && (captured != animal_shogi::LI))
-        add_captured_to_stand(PHelper::demote(captured), hash);
+        m_stands.add_piece_to(m_turn, PHelper::demote(captured), hash);
     moving = animal_shogi::internal::promote_if_possible(moving, move);
     place_piece_at(dst, moving, hash);
     m_turn = ~m_turn;

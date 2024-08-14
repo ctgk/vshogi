@@ -44,8 +44,6 @@ private:
 private:
     static std::uint64_t zobrist_board[num_squares]
                                       [num_colors * num_piece_types + 1];
-    static std::uint64_t zobrist_stand[num_colors][num_stand_piece_types]
-                                      [max_stand_piece_count + 1];
 
     BoardType m_board;
     Stands m_stands;
@@ -140,7 +138,7 @@ public:
         auto moving = pop_piece_from_stand_or_board(move, hash);
         const auto captured = PHelper::to_piece_type(m_board[dst]);
         if (captured != PHelper::NA)
-            add_captured_to_stand(PHelper::demote(captured), hash);
+            m_stands.add_piece_to(m_turn, PHelper::demote(captured), hash);
         if (move.promote())
             moving = PHelper::promote_nocheck(moving);
         place_piece_at(dst, moving, hash);
@@ -190,13 +188,6 @@ public:
         std::random_device dev;
         std::mt19937_64 rng(dev());
         std::uniform_int_distribution<std::uint64_t> dist;
-        for (auto& c : color_array) {
-            for (auto& pt : PHelper::stand_piece_array) {
-                for (uint num = 0; num < max_stand_piece_count + 1; ++num) {
-                    zobrist_stand[c][pt][num] = dist(rng);
-                }
-            }
-        }
         constexpr int num_pieces = num_colors * num_piece_types + 1;
         for (auto sq = static_cast<Square>(num_squares); sq--;) {
             for (int ii = 0; ii < num_pieces; ++ii) {
@@ -214,13 +205,7 @@ public:
     }
     std::uint64_t zobrist_hash() const
     {
-        std::uint64_t out = static_cast<std::uint64_t>(0);
-        for (auto& c : color_array) {
-            for (auto& pt : PHelper::stand_piece_array) {
-                const auto num = m_stands[c].count(pt);
-                out ^= zobrist_stand[c][pt][num];
-            }
-        }
+        std::uint64_t out = m_stands.zobrist_hash();
         out ^= zobrist_hash_board();
         return out;
     }
@@ -239,13 +224,7 @@ private:
     {
         if (move.is_drop()) {
             const auto src = move.source_piece();
-            m_stands[m_turn].subtract(src);
-            if (hash != nullptr) {
-                const auto num_after = m_stands[m_turn].count(src);
-                const auto num_before = num_after + 1;
-                *hash ^= zobrist_stand[m_turn][src][num_before];
-                *hash ^= zobrist_stand[m_turn][src][num_after];
-            }
+            m_stands.subtract_piece_from(m_turn, src, hash);
             return PHelper::to_board_piece(m_turn, src);
         } else {
             const auto src = move.source_square();
@@ -255,16 +234,6 @@ private:
                 *hash ^= zobrist_board[src][to_index(PHelper::VOID)];
             }
             return out;
-        }
-    }
-    void add_captured_to_stand(const PieceType& p, std::uint64_t* const hash)
-    {
-        m_stands[m_turn].add(p);
-        if (hash != nullptr) {
-            const auto num_after = m_stands[m_turn].count(p);
-            const auto num_before = num_after - 1;
-            *hash ^= zobrist_stand[m_turn][p][num_before];
-            *hash ^= zobrist_stand[m_turn][p][num_after];
         }
     }
     void place_piece_at(

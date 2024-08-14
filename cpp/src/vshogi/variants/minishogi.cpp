@@ -113,4 +113,10 @@ OUT_OF_LOOP:
     return sfen_ptr;
 }
 
+template <>
+std::uint64_t minishogi::BlackWhiteStands::zobrist_table
+    [num_colors][minishogi::Config::num_stand_piece_types]
+    [minishogi::Config::max_stand_piece_count + 1]
+    = {};
+
 } // namespace vshogi

@@ -137,6 +137,7 @@ void export_judkins_shogi(py::module& m)
 {
     js::Pieces::init_tables();
     js::Squares::init_tables();
+    js::BlackWhiteStands::init_tables();
     js::BitBoard::init_tables();
     js::State::init_zobrist_table();
 

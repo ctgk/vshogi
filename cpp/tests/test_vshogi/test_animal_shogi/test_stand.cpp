@@ -163,4 +163,21 @@ TEST(animal_shogi_black_white_stands, append_sfen)
     }
 }
 
+TEST(animal_shogi_black_white_stands, zobrist_hash)
+{
+    auto s = BlackWhiteStands();
+    auto hash = s.zobrist_hash();
+    s.add_piece_to(vshogi::BLACK, CH, &hash);
+    s.add_piece_to(vshogi::BLACK, CH, &hash);
+    s.add_piece_to(vshogi::WHITE, EL, &hash);
+    s.subtract_piece_from(vshogi::BLACK, CH, &hash);
+    const auto expect = BlackWhiteStands("Ce").zobrist_hash();
+    CHECK_EQUAL(expect, hash);
+    CHECK_TRUE(BlackWhiteStands("").zobrist_hash() != hash);
+    CHECK_TRUE(BlackWhiteStands("CE").zobrist_hash() != hash);
+    CHECK_TRUE(BlackWhiteStands("Ec").zobrist_hash() != hash);
+    CHECK_TRUE(BlackWhiteStands("C").zobrist_hash() != hash);
+    CHECK_TRUE(BlackWhiteStands("e").zobrist_hash() != hash);
+}
+
 } // namespace test_vshogi::test_animal_shogi

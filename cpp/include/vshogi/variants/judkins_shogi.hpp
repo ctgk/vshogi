@@ -692,11 +692,6 @@ inline std::uint64_t judkins_shogi::State::zobrist_board
     [num_colors * judkins_shogi::Config::num_piece_types + 1]
     = {};
 
-template <>
-inline std::uint64_t judkins_shogi::State::zobrist_stand
-    [num_colors][judkins_shogi::Config::num_stand_piece_types][3]
-    = {};
-
 } // namespace vshogi
 
 #endif // VSHOGI_VARIANTS_JUDKINS_SHOGI_HPP

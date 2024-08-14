@@ -1,6 +1,7 @@
 #ifndef VSHOGI_STAND_HPP
 #define VSHOGI_STAND_HPP
 
+#include <random>
 #include <string>
 
 #include "vshogi/common/color.hpp"
@@ -16,10 +17,11 @@ private:
     using Int = typename Config::BaseTypeStand;
     using PieceType = typename Config::PieceType;
     using PHelper = Pieces<Config>;
+    static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
 
-    static const uint shift_bits[Config::num_stand_piece_types];
-    static const Int masks[Config::num_stand_piece_types];
-    static const Int deltas[Config::num_stand_piece_types];
+    static const uint shift_bits[num_stand_piece_types];
+    static const Int masks[num_stand_piece_types];
+    static const Int deltas[num_stand_piece_types];
     static const Int mask;
 
     Int m_value;
@@ -78,40 +80,46 @@ private:
     using PHelper = Pieces<Config>;
     using PieceType = typename Config::PieceType;
     static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
+    static constexpr uint max_stand_piece_count = Config::max_stand_piece_count;
 
     static const PieceType stand_pieces_in_sfen_order[num_stand_piece_types];
     static const int max_sfen_length;
+    static std::uint64_t zobrist_table[num_colors][num_stand_piece_types]
+                                      [max_stand_piece_count + 1];
 
-    StandType m_black;
-    StandType m_white;
+    StandType m_stands[num_colors];
 
 public:
-    BlackWhiteStands() : m_black(), m_white()
+    BlackWhiteStands() : m_stands{}
     {
+    }
+    BlackWhiteStands(const std::string& sfen) : m_stands{}
+    {
+        set_sfen(sfen.c_str());
     }
     bool operator==(const BlackWhiteStands& other) const
     {
-        return (m_black == other.m_black) && (m_white == other.m_white);
+        return (
+            (m_stands[BLACK] == other.m_stands[BLACK])
+            && (m_stands[WHITE] == other.m_stands[WHITE]));
     }
     bool operator!=(const BlackWhiteStands& other) const
     {
-        return (m_black != other.m_black) || (m_white != other.m_white);
+        return (
+            (m_stands[BLACK] != other.m_stands[BLACK])
+            || (m_stands[WHITE] != other.m_stands[WHITE]));
     }
     const StandType& black() const
     {
-        return m_black;
+        return m_stands[BLACK];
     }
     const StandType& white() const
     {
-        return m_white;
-    }
-    StandType& operator[](const ColorEnum& c)
-    {
-        return (c == BLACK) ? m_black : m_white;
+        return m_stands[WHITE];
     }
     const StandType& operator[](const ColorEnum& c) const
     {
-        return (c == BLACK) ? m_black : m_white;
+        return (c == BLACK) ? m_stands[BLACK] : m_stands[WHITE];
     }
     const char* set_sfen(const char* const sfen)
     {
@@ -135,9 +143,11 @@ public:
             }
 
             if (('A' <= *ptr) && (*ptr <= 'Z'))
-                m_black.add(PHelper::to_piece_type(*ptr), num ? num : 1);
+                m_stands[BLACK].add(
+                    PHelper::to_piece_type(*ptr), num ? num : 1);
             else if (('a' <= *ptr) && (*ptr <= 'z'))
-                m_white.add(PHelper::to_piece_type(*ptr), num ? num : 1);
+                m_stands[WHITE].add(
+                    PHelper::to_piece_type(*ptr), num ? num : 1);
             num = 0;
         }
     END:
@@ -145,7 +155,7 @@ public:
     }
     void append_sfen(std::string& out) const
     {
-        if (!(m_black.any() || m_white.any())) {
+        if (!(m_stands[BLACK].any() || m_stands[WHITE].any())) {
             out += '-';
             return;
         }
@@ -159,6 +169,56 @@ public:
                 if (num > 1)
                     out += static_cast<char>('0' + num % 10);
                 PHelper::append_sfen(PHelper::to_board_piece(c, p), out);
+            }
+        }
+    }
+    void subtract_piece_from(
+        const ColorEnum& c, const PieceType& pt, std::uint64_t* const hash)
+    {
+        m_stands[c].subtract(pt);
+        if (hash != nullptr) {
+            const auto num_after = m_stands[c].count(pt);
+            const auto num_before = num_after + 1;
+            *hash ^= zobrist_table[c][pt][num_before];
+            *hash ^= zobrist_table[c][pt][num_after];
+        }
+    }
+    void add_piece_to(
+        const ColorEnum& c,
+        const PieceType& pt_demoted,
+        std::uint64_t* const hash)
+    {
+        m_stands[c].add(pt_demoted);
+        if (hash != nullptr) {
+            const auto num_after = m_stands[c].count(pt_demoted);
+            const auto num_before = num_after - 1;
+            *hash ^= zobrist_table[c][pt_demoted][num_before];
+            *hash ^= zobrist_table[c][pt_demoted][num_after];
+        }
+    }
+
+    std::uint64_t zobrist_hash() const
+    {
+        std::uint64_t out = static_cast<std::uint64_t>(0);
+        for (auto& c : color_array) {
+            for (auto& pt : PHelper::stand_piece_array) {
+                const auto num = m_stands[c].count(pt);
+                out ^= zobrist_table[c][pt][num];
+            }
+        }
+        return out;
+    }
+
+    static void init_tables()
+    {
+        std::random_device dev;
+        std::mt19937_64 rng(dev());
+        std::uniform_int_distribution<std::uint64_t> dist;
+        for (auto&& c : color_array) {
+            for (auto&& pt : PHelper::stand_piece_array) {
+                for (uint num = 0; num < max_stand_piece_count + 1; ++num) {
+                    zobrist_table[c][pt][num] = dist(rng);
+                }
             }
         }
     }

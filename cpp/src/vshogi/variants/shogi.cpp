@@ -145,4 +145,10 @@ OUT_OF_LOOP:
     return sfen_ptr;
 }
 
+template <>
+std::uint64_t shogi::BlackWhiteStands::zobrist_table
+    [num_colors][shogi::Config::num_stand_piece_types]
+    [shogi::Config::max_stand_piece_count + 1]
+    = {};
+
 } // namespace vshogi

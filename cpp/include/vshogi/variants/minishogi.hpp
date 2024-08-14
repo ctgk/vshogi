@@ -617,12 +617,6 @@ inline std::uint64_t minishogi::State::zobrist_board
     [num_colors * minishogi::Config::num_piece_types + 1]
     = {};
 
-template <>
-inline std::uint64_t
-    minishogi::State::zobrist_stand[num_colors]
-                                   [minishogi::Config::num_stand_piece_types][3]
-    = {};
-
 } // namespace vshogi
 
 #endif // VSHOGI_VARIANTS_MINISHOGI_HPP
