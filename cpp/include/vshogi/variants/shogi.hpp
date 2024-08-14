@@ -626,6 +626,18 @@ inline const int shogi::BlackWhiteStands::max_sfen_length
     = 26; // "10p2l2n2sbr2g2P2L2N2SBR2G "
 
 template <>
+inline std::uint64_t shogi::BlackWhiteStands::zobrist_table
+    [num_colors][shogi::Config::num_stand_piece_types]
+    [shogi::Config::max_stand_piece_count + 1]
+    = {};
+
+template <>
+inline std::uint64_t vshogi::shogi::Board::zobrist_table
+    [shogi::Config::num_squares]
+    [num_colors * shogi::Config::num_piece_types + 1]
+    = {};
+
+template <>
 inline const shogi::BitBoard
     shogi::BitBoard::square_to_bitboard_array[shogi::Config::num_squares + 1]
     = {
@@ -861,12 +873,6 @@ inline void shogi::BitBoard::init_tables()
         // clang-format on
     }
 }
-
-template <>
-inline std::uint64_t vshogi::shogi::State::zobrist_board
-    [shogi::Config::num_squares]
-    [num_colors * shogi::Config::num_piece_types + 1]
-    = {};
 
 } // namespace vshogi
 

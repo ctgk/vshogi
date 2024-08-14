@@ -339,7 +339,8 @@ public:
     {
         m_zobrist_hash_list.clear();
         m_move_list.clear();
-        m_zobrist_hash_list.emplace_back(m_current_state.zobrist_hash_board());
+        m_zobrist_hash_list.emplace_back(
+            m_current_state.get_board().zobrist_hash());
     }
     void to_feature_map(float* const data) const
     {
@@ -400,7 +401,8 @@ protected:
     {
         m_move_list.emplace_back(move);
         m_current_state.apply(move, &m_zobrist_hash);
-        m_zobrist_hash_list.emplace_back(m_current_state.zobrist_hash_board());
+        m_zobrist_hash_list.emplace_back(
+            m_current_state.get_board().zobrist_hash());
     }
     void update_internals()
     {

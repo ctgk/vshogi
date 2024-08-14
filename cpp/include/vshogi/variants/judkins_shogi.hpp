@@ -514,6 +514,18 @@ inline const int judkins_shogi::BlackWhiteStands::max_sfen_length
     = 13; // "RBGSNPrbgsnp "
 
 template <>
+inline std::uint64_t judkins_shogi::BlackWhiteStands::zobrist_table
+    [num_colors][judkins_shogi::Config::num_stand_piece_types]
+    [judkins_shogi::Config::max_stand_piece_count + 1]
+    = {};
+
+template <>
+inline std::uint64_t judkins_shogi::Board::zobrist_table
+    [judkins_shogi::Config::num_squares]
+    [num_colors * judkins_shogi::Config::num_piece_types + 1]
+    = {};
+
+template <>
 inline const judkins_shogi::BitBoard judkins_shogi::BitBoard::
     square_to_bitboard_array[judkins_shogi::Config::num_squares + 1]
     = {
@@ -685,12 +697,6 @@ inline void judkins_shogi::BitBoard::init_tables()
         // clang-format on
     }
 }
-
-template <>
-inline std::uint64_t judkins_shogi::State::zobrist_board
-    [judkins_shogi::Config::num_squares]
-    [num_colors * judkins_shogi::Config::num_piece_types + 1]
-    = {};
 
 } // namespace vshogi
 

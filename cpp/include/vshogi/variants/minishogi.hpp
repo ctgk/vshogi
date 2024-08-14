@@ -448,6 +448,18 @@ inline const int minishogi::BlackWhiteStands::max_sfen_length
     = 11; // "2p2s2g2b2r "
 
 template <>
+inline std::uint64_t minishogi::BlackWhiteStands::zobrist_table
+    [num_colors][minishogi::Config::num_stand_piece_types]
+    [minishogi::Config::max_stand_piece_count + 1]
+    = {};
+
+template <>
+inline std::uint64_t minishogi::Board::zobrist_table
+    [minishogi::Config::num_squares]
+    [num_colors * minishogi::Config::num_piece_types + 1]
+    = {};
+
+template <>
 inline const minishogi::BitBoard minishogi::BitBoard::square_to_bitboard_array
     [minishogi::Config::num_squares + 1]
     = {
@@ -610,12 +622,6 @@ inline void minishogi::BitBoard::init_tables()
         // clang-format on
     }
 }
-
-template <>
-inline std::uint64_t minishogi::State::zobrist_board
-    [minishogi::Config::num_squares]
-    [num_colors * minishogi::Config::num_piece_types + 1]
-    = {};
 
 } // namespace vshogi
 

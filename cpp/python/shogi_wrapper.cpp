@@ -235,7 +235,7 @@ void export_shogi(py::module& m)
     sg::Pieces::init_tables();
     sg::Squares::init_tables();
     sg::BlackWhiteStands::init_tables();
-    sg::State::init_zobrist_table();
+    sg::Board::init_tables();
     sg::BitBoard::init_tables();
 
     export_square_enum(m);

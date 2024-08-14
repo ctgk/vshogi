@@ -65,4 +65,13 @@ TEST(animal_shogi_board, append_sfen)
     }
 }
 
+TEST(animal_shogi_board, zobrist_hash)
+{
+    auto b = Board();
+    auto hash = b.zobrist_hash();
+    b.apply(SQ_B2, SQ_B3, false, &hash);
+    CHECK_EQUAL(Board("gle/1C1/3/ELG").zobrist_hash(), hash);
+    CHECK_TRUE(Board("gle/1c1/3/ELG").zobrist_hash() != hash);
+}
+
 } // namespace test_vshogi::test_animal_shogi

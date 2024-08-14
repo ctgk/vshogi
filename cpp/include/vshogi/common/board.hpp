@@ -1,6 +1,7 @@
 #ifndef VSHOGI_BOARD_HPP
 #define VSHOGI_BOARD_HPP
 
+#include <random>
 #include <string>
 
 #include "vshogi/common/bitboard.hpp"
@@ -29,8 +30,12 @@ private:
     static constexpr auto num_files = Config::num_files;
     static constexpr auto num_ranks = Config::num_ranks;
     static constexpr auto num_squares = Config::num_squares;
+    static constexpr auto num_piece_types = Config::num_piece_types;
+    static constexpr auto num_square_states = num_colors * num_piece_types + 1;
     static constexpr auto VOID = PHelper::VOID; // NOLINT
     static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
+
+    static std::uint64_t zobrist_table[num_squares][num_square_states];
 
 private:
     BoardPieceType m_pieces[num_squares];
@@ -62,22 +67,36 @@ public:
             append_sfen_rank(static_cast<Rank>(ir), out);
         }
     }
-    BoardPieceType apply(const Square& dst, const BoardPieceType& p)
+    BoardPieceType apply(
+        const Square& dst,
+        const BoardPieceType& p,
+        std::uint64_t* const hash = nullptr)
     {
         if (PHelper::to_piece_type(p) == PHelper::OU)
             m_king_locations[PHelper::get_color(p)] = dst;
         const BoardPieceType popped = place_piece_on(dst, p);
         if (PHelper::to_piece_type(popped) == PHelper::OU)
             m_king_locations[PHelper::get_color(popped)] = SQ_NA;
+        if (hash != nullptr) {
+            *hash ^= zobrist_table[dst][to_index(popped)];
+            *hash ^= zobrist_table[dst][to_index(p)];
+        }
         return popped;
     }
-    BoardPieceType
-    apply(const Square& dst, const Square& src, const bool& promote = false)
+    BoardPieceType apply(
+        const Square& dst,
+        const Square& src,
+        const bool& promote = false,
+        std::uint64_t* const hash = nullptr)
     {
         BoardPieceType moving_piece = place_piece_on(src, VOID);
+        if (hash != nullptr) {
+            *hash ^= zobrist_table[src][to_index(VOID)];
+            *hash ^= zobrist_table[src][to_index(moving_piece)];
+        }
         if (promote)
             moving_piece = PHelper::promote_nocheck(moving_piece);
-        return apply(dst, moving_piece);
+        return apply(dst, moving_piece, hash);
     }
     const char* set_sfen(const char* sfen)
     {
@@ -129,6 +148,25 @@ public:
         out.update_king_position_based_on_pieces();
         return out;
     }
+    static void init_tables()
+    {
+        std::random_device dev;
+        std::mt19937_64 rng(dev());
+        std::uniform_int_distribution<std::uint64_t> dist;
+        for (auto sq = static_cast<Square>(num_squares); sq--;) {
+            for (int ii = 0; ii < num_square_states; ++ii) {
+                zobrist_table[sq][ii] = dist(rng);
+            }
+        }
+    }
+    std::uint64_t zobrist_hash() const
+    {
+        std::uint64_t out = static_cast<std::uint64_t>(0);
+        for (auto sq = static_cast<Square>(num_squares); sq--;) {
+            out ^= zobrist_table[sq][to_index(m_pieces[sq])];
+        }
+        return out;
+    }
 
 private:
     const char* set_sfen_rank(const char* const sfen_rank, const Rank rank);
@@ -166,6 +204,14 @@ private:
             if (PHelper::to_piece_type(p) == PHelper::OU)
                 m_king_locations[PHelper::get_color(p)] = sq;
         }
+    }
+    static uint to_index(const BoardPieceType& p)
+    {
+        if (p == PHelper::VOID)
+            return 2u * num_piece_types;
+        uint out = PHelper::to_piece_type(p);
+        out += (PHelper::get_color(p) == WHITE) * num_piece_types;
+        return out;
     }
 };
 

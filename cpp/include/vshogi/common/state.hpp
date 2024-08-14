@@ -3,7 +3,6 @@
 
 #include <random>
 #include <string>
-#include <type_traits>
 #include <vector>
 
 #include "vshogi/common/bitboard.hpp"
@@ -134,14 +133,20 @@ public:
     }
     State& apply(const MoveType& move, std::uint64_t* const hash = nullptr)
     {
-        const auto dst = move.destination();
-        auto moving = pop_piece_from_stand_or_board(move, hash);
-        const auto captured = PHelper::to_piece_type(m_board[dst]);
-        if (captured != PHelper::NA)
-            m_stands.add_piece_to(m_turn, PHelper::demote(captured), hash);
-        if (move.promote())
-            moving = PHelper::promote_nocheck(moving);
-        place_piece_at(dst, moving, hash);
+        if (move.is_drop()) {
+            const auto pt = move.source_piece();
+            m_stands.subtract_piece_from(m_turn, pt, hash);
+            m_board.apply(
+                move.destination(), PHelper::to_board_piece(m_turn, pt), hash);
+        } else {
+            const auto captured = m_board.apply(
+                move.destination(), move.source_square(), move.promote(), hash);
+            if (captured != PHelper::VOID)
+                m_stands.add_piece_to(
+                    m_turn,
+                    PHelper::demote(PHelper::to_piece_type(captured)),
+                    hash);
+        }
         m_turn = ~m_turn;
         return *this;
     }
@@ -183,31 +188,9 @@ public:
             data_ch[k + sp_types] = 1.f;
         }
     }
-    static void init_zobrist_table()
-    {
-        std::random_device dev;
-        std::mt19937_64 rng(dev());
-        std::uniform_int_distribution<std::uint64_t> dist;
-        constexpr int num_pieces = num_colors * num_piece_types + 1;
-        for (auto sq = static_cast<Square>(num_squares); sq--;) {
-            for (int ii = 0; ii < num_pieces; ++ii) {
-                zobrist_board[sq][ii] = dist(rng);
-            }
-        }
-    }
-    std::uint64_t zobrist_hash_board() const
-    {
-        std::uint64_t out = static_cast<std::uint64_t>(0);
-        for (auto sq = static_cast<Square>(num_squares); sq--;) {
-            out ^= zobrist_board[sq][to_index(m_board[sq])];
-        }
-        return out;
-    }
     std::uint64_t zobrist_hash() const
     {
-        std::uint64_t out = m_stands.zobrist_hash();
-        out ^= zobrist_hash_board();
-        return out;
+        return m_stands.zobrist_hash() ^ m_board.zobrist_hash();
     }
 
 private:
@@ -228,30 +211,9 @@ private:
             return PHelper::to_board_piece(m_turn, src);
         } else {
             const auto src = move.source_square();
-            const auto out = m_board.apply(src, PHelper::VOID);
-            if (hash != nullptr) {
-                *hash ^= zobrist_board[src][to_index(out)];
-                *hash ^= zobrist_board[src][to_index(PHelper::VOID)];
-            }
+            const auto out = m_board.apply(src, PHelper::VOID, hash);
             return out;
         }
-    }
-    void place_piece_at(
-        const Square& sq, const BoardPieceType& p, std::uint64_t* const hash)
-    {
-        if (hash != nullptr) {
-            *hash ^= zobrist_board[sq][to_index(m_board[sq])];
-            *hash ^= zobrist_board[sq][to_index(p)];
-        }
-        m_board.apply(sq, p);
-    }
-    static uint to_index(const BoardPieceType& p)
-    {
-        if (p == PHelper::VOID)
-            return 2u * num_piece_types;
-        uint out = PHelper::to_piece_type(p);
-        out += (PHelper::get_color(p) == WHITE) * num_piece_types;
-        return out;
     }
 };
 

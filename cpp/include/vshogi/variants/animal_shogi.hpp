@@ -417,6 +417,18 @@ inline const int animal_shogi::BlackWhiteStands::max_sfen_length
     = 13; // "2C2E2G2c2e2g "
 
 template <>
+inline std::uint64_t animal_shogi::BlackWhiteStands::zobrist_table
+    [num_colors][animal_shogi::Config::num_stand_piece_types]
+    [animal_shogi::Config::max_stand_piece_count + 1]
+    = {};
+
+template <>
+inline std::uint64_t animal_shogi::Board::zobrist_table
+    [animal_shogi::Config::num_squares]
+    [num_colors * animal_shogi::Config::num_piece_types + 1]
+    = {};
+
+template <>
 inline uint animal_shogi::Move::to_dlshogi_source_index() const
 {
     if (is_drop())
@@ -514,12 +526,6 @@ inline void animal_shogi::BitBoard::init_tables()
 }
 
 template <>
-inline std::uint64_t animal_shogi::State::zobrist_board
-    [animal_shogi::Config::num_squares]
-    [num_colors * animal_shogi::Config::num_piece_types + 1]
-    = {};
-
-template <>
 inline animal_shogi::State& animal_shogi::State::apply(
     const animal_shogi::Move& move, std::uint64_t* const hash)
 {
@@ -529,7 +535,7 @@ inline animal_shogi::State& animal_shogi::State::apply(
     if ((captured != PHelper::NA) && (captured != animal_shogi::LI))
         m_stands.add_piece_to(m_turn, PHelper::demote(captured), hash);
     moving = animal_shogi::internal::promote_if_possible(moving, move);
-    place_piece_at(dst, moving, hash);
+    m_board.apply(dst, moving, hash);
     m_turn = ~m_turn;
     return *this;
 }
