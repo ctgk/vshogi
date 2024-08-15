@@ -39,11 +39,11 @@ private:
 
     static constexpr File file_right_most()
     {
-        return static_cast<File>(0);
+        return static_cast<File>(num_files - 1);
     }
     static constexpr File file_left_most()
     {
-        return static_cast<File>(num_files - 1);
+        return static_cast<File>(0);
     }
 
 public:
@@ -54,7 +54,7 @@ public:
 
     static constexpr File to_file(const Square& sq)
     {
-        return static_cast<File>(num_files - 1 - sq % num_files);
+        return static_cast<File>(sq % num_files);
     }
     static constexpr Rank to_rank(const Square& sq)
     {
@@ -62,16 +62,18 @@ public:
     }
     static constexpr Square to_square(const File& f, const Rank& r)
     {
-        return static_cast<Square>(r * num_files + num_files - 1 - f);
+        return static_cast<Square>(r * num_files + f);
     }
     static Square to_square(const char usi[2])
     {
         return to_square(
-            static_cast<File>(usi[0] - '1'), static_cast<Rank>(usi[1] - 'a'));
+            hflip(static_cast<File>(usi[0] - '1')),
+            static_cast<Rank>(usi[1] - 'a'));
     }
     static void to_usi(char usi[2], const Square& sq)
     {
-        usi[0] = static_cast<char>(static_cast<int>(to_file(sq)) + '1');
+        usi[0] = static_cast<char>(
+            static_cast<int>(num_files - 1 - to_file(sq)) + '1');
         usi[1] = static_cast<char>(static_cast<int>(to_rank(sq)) + 'a');
     }
     static Square hflip(const Square& sq)

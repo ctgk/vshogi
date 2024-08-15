@@ -7,9 +7,9 @@ namespace test_vshogi::test_judkins_shogi
 
 using namespace vshogi::judkins_shogi;
 
-TEST_GROUP(squares){};
+TEST_GROUP(judkins_shogi_squares){};
 
-TEST(squares, shift)
+TEST(judkins_shogi_squares, shift)
 {
     CHECK_EQUAL(SQ_4A, Squares::shift(SQ_3C, vshogi::DIR_NNW));
     CHECK_EQUAL(SQ_2A, Squares::shift(SQ_3C, vshogi::DIR_NNE));
@@ -25,7 +25,7 @@ TEST(squares, shift)
     CHECK_EQUAL(SQ_2E, Squares::shift(SQ_3C, vshogi::DIR_SSE));
 }
 
-TEST(squares, to_rank)
+TEST(judkins_shogi_squares, to_rank)
 {
     CHECK_EQUAL(RANK1, Squares::to_rank(SQ_1A));
     CHECK_EQUAL(RANK2, Squares::to_rank(SQ_1B));
@@ -59,7 +59,7 @@ TEST(squares, to_rank)
     CHECK_EQUAL(RANK6, Squares::to_rank(SQ_5F));
 }
 
-TEST(squares, to_file)
+TEST(judkins_shogi_squares, to_file)
 {
     CHECK_EQUAL(FILE1, Squares::to_file(SQ_1A));
     CHECK_EQUAL(FILE1, Squares::to_file(SQ_1B));
@@ -93,7 +93,7 @@ TEST(squares, to_file)
     CHECK_EQUAL(FILE5, Squares::to_file(SQ_5F));
 }
 
-TEST(squares, to_square)
+TEST(judkins_shogi_squares, to_square)
 {
     CHECK_EQUAL(SQ_1A, Squares::to_square("1a"));
     CHECK_EQUAL(SQ_1B, Squares::to_square("1b"));
@@ -133,7 +133,7 @@ TEST(squares, to_square)
     CHECK_EQUAL(SQ_6F, Squares::to_square("6f"));
 }
 
-TEST(squares, get_direction)
+TEST(judkins_shogi_squares, get_direction)
 {
     CHECK_EQUAL(vshogi::DIR_NW, Squares::get_direction(SQ_2A, SQ_1B));
     CHECK_EQUAL(vshogi::DIR_N, Squares::get_direction(SQ_6B, SQ_6F));
@@ -148,7 +148,7 @@ TEST(squares, get_direction)
     CHECK_EQUAL(vshogi::DIR_NA, Squares::get_direction(SQ_6A, SQ_1B));
 }
 
-TEST(squares, get_non_ranging_attacks_by)
+TEST(judkins_shogi_squares, get_non_ranging_attacks_by)
 {
     {
         const auto actual = Squares::get_non_ranging_attacks_by(B_FU, SQ_3A);

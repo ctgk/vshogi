@@ -76,23 +76,23 @@ enum ColoredPieceEnum : std::uint8_t
  * @details
  *   9   8   7   6   5   4   3   2   1
  * +---+---+---+---+---+---+---+---+---+
- * | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | a
+ * | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | a (1)
  * +---+---+---+---+---+---+---+---+---+
- * | 9 | 10| 11| 12| 13| 14| 15| 16| 17| b
+ * | 9 | 10| 11| 12| 13| 14| 15| 16| 17| b (2)
  * +---+---+---+---+---+---+---+---+---+
- * | 18| 19| 20| 21| 22| 23| 24| 25| 26| c
+ * | 18| 19| 20| 21| 22| 23| 24| 25| 26| c (3)
  * +---+---+---+---+---+---+---+---+---+
- * | 27| 28| 29| 30| 31| 32| 33| 34| 35| d
+ * | 27| 28| 29| 30| 31| 32| 33| 34| 35| d (4)
  * +---+---+---+---+---+---+---+---+---+
- * | 36| 37| 38| 39| 40| 41| 42| 43| 44| e
+ * | 36| 37| 38| 39| 40| 41| 42| 43| 44| e (5)
  * +---+---+---+---+---+---+---+---+---+
- * | 45| 46| 47| 48| 49| 50| 51| 52| 53| f
+ * | 45| 46| 47| 48| 49| 50| 51| 52| 53| f (6)
  * +---+---+---+---+---+---+---+---+---+
- * | 54| 55| 56| 57| 58| 59| 60| 61| 62| g
+ * | 54| 55| 56| 57| 58| 59| 60| 61| 62| g (7)
  * +---+---+---+---+---+---+---+---+---+
- * | 63| 64| 65| 66| 67| 68| 69| 70| 71| h
+ * | 63| 64| 65| 66| 67| 68| 69| 70| 71| h (8)
  * +---+---+---+---+---+---+---+---+---+
- * | 72| 73| 74| 75| 76| 77| 78| 79| 80| i
+ * | 72| 73| 74| 75| 76| 77| 78| 79| 80| i (9)
  * +---+---+---+---+---+---+---+---+---+
  */
 enum SquareEnum : uint
@@ -125,7 +125,7 @@ enum SquareEnum : uint
 };
 enum RankEnum : uint
 {
-    RANK1,
+    RANK1 = 0,
     RANK2,
     RANK3,
     RANK4,
@@ -137,15 +137,15 @@ enum RankEnum : uint
 };
 enum FileEnum : uint
 {
-    FILE1,
-    FILE2,
-    FILE3,
-    FILE4,
-    FILE5,
-    FILE6,
-    FILE7,
+    FILE9 = 0,
     FILE8,
-    FILE9,
+    FILE7,
+    FILE6,
+    FILE5,
+    FILE4,
+    FILE3,
+    FILE2,
+    FILE1,
 };
 
 struct Config
@@ -451,37 +451,37 @@ vshogi::shogi::Squares::get_direction_for_diagonal_or_knight(
 {
     switch (static_cast<int>(src - dst)) {
     case 10:
-        return (to_file(src) > vshogi::shogi::FILE8) ? DIR_NA : DIR_NW;
+        return (to_file(src) < vshogi::shogi::FILE8) ? DIR_NA : DIR_NW;
     case 20:
-        return (to_file(src) > vshogi::shogi::FILE7) ? DIR_NA : DIR_NW;
+        return (to_file(src) < vshogi::shogi::FILE7) ? DIR_NA : DIR_NW;
     case 30:
-        return (to_file(src) > vshogi::shogi::FILE6) ? DIR_NA : DIR_NW;
+        return (to_file(src) < vshogi::shogi::FILE6) ? DIR_NA : DIR_NW;
     // case 40:
     case 50:
-        return (to_file(src) > vshogi::shogi::FILE4) ? DIR_NA : DIR_NW;
+        return (to_file(src) < vshogi::shogi::FILE4) ? DIR_NA : DIR_NW;
     case 60:
-        return (to_file(src) > vshogi::shogi::FILE3) ? DIR_NA : DIR_NW;
+        return (to_file(src) < vshogi::shogi::FILE3) ? DIR_NA : DIR_NW;
     case 70:
-        return (to_file(src) > vshogi::shogi::FILE2) ? DIR_NA : DIR_NW;
+        return (to_file(src) < vshogi::shogi::FILE2) ? DIR_NA : DIR_NW;
     case 80:
         return DIR_NW;
     case 8:
         return DIR_NE;
     case 16:
-        return (to_file(src) < vshogi::shogi::FILE3) ? DIR_NA : DIR_NE;
+        return (to_file(src) > vshogi::shogi::FILE3) ? DIR_NA : DIR_NE;
     case 24:
-        return (to_file(src) < vshogi::shogi::FILE4) ? DIR_NA : DIR_NE;
+        return (to_file(src) > vshogi::shogi::FILE4) ? DIR_NA : DIR_NE;
     case 32:
-        return (to_file(src) < vshogi::shogi::FILE5) ? DIR_NA : DIR_NE;
+        return (to_file(src) > vshogi::shogi::FILE5) ? DIR_NA : DIR_NE;
     // case 40:
     case 48:
-        return (to_file(src) < vshogi::shogi::FILE7) ? DIR_NA : DIR_NE;
+        return (to_file(src) > vshogi::shogi::FILE7) ? DIR_NA : DIR_NE;
     case 56:
-        return (to_file(src) < vshogi::shogi::FILE8) ? DIR_NA : DIR_NE;
+        return (to_file(src) > vshogi::shogi::FILE8) ? DIR_NA : DIR_NE;
     case 64:
-        return (to_file(src) < vshogi::shogi::FILE9) ? DIR_NA : DIR_NE;
+        return (to_file(src) > vshogi::shogi::FILE9) ? DIR_NA : DIR_NE;
     case 40:
-        return (to_file(src) < vshogi::shogi::FILE6) ? DIR_NW : DIR_NE;
+        return (to_file(src) > vshogi::shogi::FILE6) ? DIR_NW : DIR_NE;
     case 17:
         return (to_file(src) == vshogi::shogi::FILE1) ? DIR_NA : DIR_NNE;
     case 19:
@@ -489,36 +489,36 @@ vshogi::shogi::Squares::get_direction_for_diagonal_or_knight(
     case -8:
         return DIR_SW;
     case -16:
-        return (to_file(dst) < vshogi::shogi::FILE3) ? DIR_NA : DIR_SW;
+        return (to_file(dst) > vshogi::shogi::FILE3) ? DIR_NA : DIR_SW;
     case -24:
-        return (to_file(dst) < vshogi::shogi::FILE4) ? DIR_NA : DIR_SW;
+        return (to_file(dst) > vshogi::shogi::FILE4) ? DIR_NA : DIR_SW;
     case -32:
-        return (to_file(dst) < vshogi::shogi::FILE5) ? DIR_NA : DIR_SW;
+        return (to_file(dst) > vshogi::shogi::FILE5) ? DIR_NA : DIR_SW;
     // case -40:
     case -48:
-        return (to_file(dst) < vshogi::shogi::FILE7) ? DIR_NA : DIR_SW;
+        return (to_file(dst) > vshogi::shogi::FILE7) ? DIR_NA : DIR_SW;
     case -56:
-        return (to_file(dst) < vshogi::shogi::FILE8) ? DIR_NA : DIR_SW;
+        return (to_file(dst) > vshogi::shogi::FILE8) ? DIR_NA : DIR_SW;
     case -64:
-        return (to_file(dst) < vshogi::shogi::FILE9) ? DIR_NA : DIR_SW;
+        return (to_file(dst) > vshogi::shogi::FILE9) ? DIR_NA : DIR_SW;
         return DIR_SW;
     case -10:
-        return (to_file(dst) > vshogi::shogi::FILE8) ? DIR_NA : DIR_SE;
+        return (to_file(dst) < vshogi::shogi::FILE8) ? DIR_NA : DIR_SE;
     case -20:
-        return (to_file(dst) > vshogi::shogi::FILE7) ? DIR_NA : DIR_SE;
+        return (to_file(dst) < vshogi::shogi::FILE7) ? DIR_NA : DIR_SE;
     case -30:
-        return (to_file(dst) > vshogi::shogi::FILE6) ? DIR_NA : DIR_SE;
+        return (to_file(dst) < vshogi::shogi::FILE6) ? DIR_NA : DIR_SE;
     // case -40:
     case -50:
-        return (to_file(dst) > vshogi::shogi::FILE4) ? DIR_NA : DIR_SE;
+        return (to_file(dst) < vshogi::shogi::FILE4) ? DIR_NA : DIR_SE;
     case -60:
-        return (to_file(dst) > vshogi::shogi::FILE3) ? DIR_NA : DIR_SE;
+        return (to_file(dst) < vshogi::shogi::FILE3) ? DIR_NA : DIR_SE;
     case -70:
-        return (to_file(dst) > vshogi::shogi::FILE2) ? DIR_NA : DIR_SE;
+        return (to_file(dst) < vshogi::shogi::FILE2) ? DIR_NA : DIR_SE;
     case -80:
         return DIR_SE;
     case -40:
-        return (to_file(src) < vshogi::shogi::FILE5) ? DIR_SW : DIR_SE;
+        return (to_file(src) > vshogi::shogi::FILE5) ? DIR_SW : DIR_SE;
     case -17:
         return (to_file(src) == vshogi::shogi::FILE9) ? DIR_NA : DIR_SSW;
     case -19:

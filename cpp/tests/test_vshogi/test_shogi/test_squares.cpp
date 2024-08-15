@@ -7,9 +7,9 @@ namespace test_vshogi::test_shogi
 
 using namespace vshogi::shogi;
 
-TEST_GROUP(squares){};
+TEST_GROUP(shogi_squares){};
 
-TEST(squares, to_rank)
+TEST(shogi_squares, to_rank)
 {
     CHECK_EQUAL(RANK1, Squares::to_rank(SQ_1A));
     CHECK_EQUAL(RANK1, Squares::to_rank(SQ_2A));
@@ -94,7 +94,7 @@ TEST(squares, to_rank)
     CHECK_EQUAL(RANK9, Squares::to_rank(SQ_9I));
 }
 
-TEST(squares, to_file)
+TEST(shogi_squares, to_file)
 {
     CHECK_EQUAL(FILE1, Squares::to_file(SQ_1A));
     CHECK_EQUAL(FILE2, Squares::to_file(SQ_2A));
@@ -179,7 +179,7 @@ TEST(squares, to_file)
     CHECK_EQUAL(FILE9, Squares::to_file(SQ_9I));
 }
 
-TEST(squares, to_square)
+TEST(shogi_squares, to_square)
 {
     CHECK_EQUAL(SQ_1A, Squares::to_square("1a"));
     CHECK_EQUAL(SQ_1B, Squares::to_square("1b"));
@@ -264,7 +264,7 @@ TEST(squares, to_square)
     CHECK_EQUAL(SQ_9I, Squares::to_square("9i"));
 }
 
-TEST(squares, to_usi)
+TEST(shogi_squares, to_usi)
 {
     // clang-format off
     { char actual[3] = {}; Squares::to_usi(actual, SQ_1A); STRCMP_EQUAL("1a", actual); }
@@ -351,7 +351,7 @@ TEST(squares, to_usi)
     // clang-format on
 }
 
-TEST(squares, shift)
+TEST(shogi_squares, shift)
 {
     CHECK_EQUAL(SQ_NA, Squares::shift(SQ_1A, vshogi::DIR_NNW));
     CHECK_EQUAL(SQ_NA, Squares::shift(SQ_1A, vshogi::DIR_NNE));
@@ -393,7 +393,7 @@ TEST(squares, shift)
     CHECK_EQUAL(SQ_NA, Squares::shift(SQ_9I, vshogi::DIR_SSE));
 }
 
-TEST(squares, get_direction)
+TEST(shogi_squares, get_direction)
 {
     CHECK_EQUAL(vshogi::DIR_NW, Squares::get_direction(SQ_2A, SQ_1B));
     CHECK_EQUAL(vshogi::DIR_N, Squares::get_direction(SQ_8B, SQ_8F));
@@ -409,7 +409,7 @@ TEST(squares, get_direction)
     CHECK_EQUAL(vshogi::DIR_NA, Squares::get_direction(SQ_5C, SQ_1A));
 }
 
-TEST(squares, get_attacks_by_fu)
+TEST(shogi_squares, get_attacks_by_fu)
 {
     {
         const auto actual = Squares::get_non_ranging_attacks_by(B_FU, SQ_2G);
@@ -423,14 +423,14 @@ TEST(squares, get_attacks_by_fu)
     }
 }
 
-TEST(squares, get_attacks_by_ky)
+TEST(shogi_squares, get_attacks_by_ky)
 {
     {
         CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(B_KY, SQ_1I));
     }
 }
 
-TEST(squares, get_attacks_by_ke)
+TEST(shogi_squares, get_attacks_by_ke)
 {
     {
         const auto actual = Squares::get_non_ranging_attacks_by(B_KE, SQ_5E);
@@ -451,7 +451,7 @@ TEST(squares, get_attacks_by_ke)
     }
 }
 
-TEST(squares, get_attacks_by_gi)
+TEST(shogi_squares, get_attacks_by_gi)
 {
     {
         const auto actual = Squares::get_non_ranging_attacks_by(B_GI, SQ_9D);
@@ -473,7 +473,7 @@ TEST(squares, get_attacks_by_gi)
     }
 }
 
-TEST(squares, get_attacks_by_ki)
+TEST(shogi_squares, get_attacks_by_ki)
 {
     {
         const auto actual = Squares::get_non_ranging_attacks_by(B_KI, SQ_9D);
@@ -498,29 +498,29 @@ TEST(squares, get_attacks_by_ki)
     }
 }
 
-TEST(squares, get_attacks_by_ka)
+TEST(shogi_squares, get_attacks_by_ka)
 {
     CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(W_KA, SQ_1B));
 }
 
-TEST(squares, get_attacks_by_hi)
+TEST(shogi_squares, get_attacks_by_hi)
 {
     CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(B_HI, SQ_5E));
     CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(W_HI, SQ_5E));
 }
 
-TEST(squares, get_attacks_by_um)
+TEST(shogi_squares, get_attacks_by_um)
 {
     CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(B_UM, SQ_5E));
     CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(W_UM, SQ_1B));
 }
 
-TEST(squares, get_attacks_by_ry)
+TEST(shogi_squares, get_attacks_by_ry)
 {
     CHECK_TRUE(nullptr == Squares::get_non_ranging_attacks_by(W_RY, SQ_5E));
 }
 
-TEST(squares, get_attacks_by_ou)
+TEST(shogi_squares, get_attacks_by_ou)
 {
     {
         const auto actual = Squares::get_non_ranging_attacks_by(B_OU, SQ_5A);

@@ -48,6 +48,7 @@ enum ColoredPieceEnum : std::uint8_t
 /**
  * @brief Enumeration of board squares.
  * @details
+ *    (1) (2) (3)
  *     A   B   C
  *   *---*---*---*
  * 1 | 0 | 1 | 2 |
@@ -72,13 +73,13 @@ enum SquareEnum : uint
 };
 enum FileEnum : uint
 {
-    FILE_A,
-    FILE_B,
-    FILE_C,
+    FILE1 = 0,
+    FILE2,
+    FILE3,
 };
 enum RankEnum : uint
 {
-    RANK1,
+    RANK1 = 0,
     RANK2,
     RANK3,
     RANK4,
@@ -262,31 +263,6 @@ inline void animal_shogi::Pieces::append_sfen(
 }
 
 template <>
-constexpr animal_shogi::FileEnum animal_shogi::Squares::file_right_most()
-{
-    return animal_shogi::FILE_C;
-}
-template <>
-constexpr animal_shogi::FileEnum animal_shogi::Squares::file_left_most()
-{
-    return animal_shogi::FILE_A;
-}
-
-template <>
-constexpr animal_shogi::FileEnum
-animal_shogi::Squares::to_file(const animal_shogi::SquareEnum& sq)
-{
-    return static_cast<animal_shogi::FileEnum>(sq % num_files);
-}
-
-template <>
-constexpr animal_shogi::SquareEnum animal_shogi::Squares::to_square(
-    const animal_shogi::FileEnum& f, const animal_shogi::RankEnum& r)
-{
-    return static_cast<animal_shogi::SquareEnum>(r * num_files + f);
-}
-
-template <>
 inline animal_shogi::SquareEnum
 animal_shogi::Squares::to_square(const char usi[2])
 {
@@ -323,13 +299,13 @@ animal_shogi::Squares::get_direction_for_diagonal_or_knight(
     case 2:
         return DIR_NE;
     case 4:
-        return (Squares::to_file(src) == FILE_A) ? DIR_NE : DIR_NW;
+        return (Squares::to_file(src) == FILE1) ? DIR_NE : DIR_NW;
     case -2:
         return DIR_SW;
     case -8:
         return DIR_SE;
     case -4:
-        return (Squares::to_file(dst) == FILE_A) ? DIR_SW : DIR_SE;
+        return (Squares::to_file(dst) == FILE1) ? DIR_SW : DIR_SE;
     default:
         return DIR_NA;
     }

@@ -70,17 +70,17 @@ enum ColoredPieceEnum : std::uint8_t
 * @details
 *   6   5   4   3   2   1
 * +---+---+---+---+---+---+
-* | 0 | 1 | 2 | 3 | 4 | 5 | a
+* | 0 | 1 | 2 | 3 | 4 | 5 | a (1)
 * +---+---+---+---+---+---+
-* | 6 | 7 | 8 | 9 | 10| 11| b
+* | 6 | 7 | 8 | 9 | 10| 11| b (2)
 * +---+---+---+---+---+---+
-* | 12| 13| 14| 15| 16| 17| c
+* | 12| 13| 14| 15| 16| 17| c (3)
 * +---+---+---+---+---+---+
-* | 18| 19| 20| 21| 22| 23| d
+* | 18| 19| 20| 21| 22| 23| d (4)
 * +---+---+---+---+---+---+
-* | 24| 25| 26| 27| 28| 29| e
+* | 24| 25| 26| 27| 28| 29| e (5)
 * +---+---+---+---+---+---+
-* | 30| 31| 32| 33| 34| 35| f
+* | 30| 31| 32| 33| 34| 35| f (6)
 * +---+---+---+---+---+---+
 */
 enum SquareEnum : uint
@@ -107,7 +107,7 @@ enum SquareEnum : uint
 };
 enum RankEnum : uint
 {
-    RANK1,
+    RANK1 = 0,
     RANK2,
     RANK3,
     RANK4,
@@ -116,12 +116,12 @@ enum RankEnum : uint
 };
 enum FileEnum : uint
 {
-    FILE1,
-    FILE2,
-    FILE3,
-    FILE4,
+    FILE6 = 0,
     FILE5,
-    FILE6,
+    FILE4,
+    FILE3,
+    FILE2,
+    FILE1,
 };
 
 struct Config
@@ -367,25 +367,25 @@ vshogi::judkins_shogi::Squares::get_direction_for_diagonal_or_knight(
     using namespace vshogi::judkins_shogi;
     switch (static_cast<int>(src - dst)) {
     case 7:
-        return (to_file(src) > FILE5) ? DIR_NA : DIR_NW;
+        return (to_file(src) < FILE5) ? DIR_NA : DIR_NW;
     case 14:
-        return (to_file(src) > FILE4) ? DIR_NA : DIR_NW;
+        return (to_file(src) < FILE4) ? DIR_NA : DIR_NW;
     case 21:
-        return (to_file(src) > FILE3) ? DIR_NA : DIR_NW;
+        return (to_file(src) < FILE3) ? DIR_NA : DIR_NW;
     case 28:
-        return (to_file(src) > FILE2) ? DIR_NA : DIR_NW;
+        return (to_file(src) < FILE2) ? DIR_NA : DIR_NW;
     case 35:
         return DIR_NW;
     case 5:
         return DIR_NE;
     case 10:
-        return (to_file(src) < FILE3) ? DIR_NA : DIR_NE;
+        return (to_file(src) > FILE3) ? DIR_NA : DIR_NE;
     case 15:
-        return (to_file(src) < FILE4) ? DIR_NA : DIR_NE;
+        return (to_file(src) > FILE4) ? DIR_NA : DIR_NE;
     case 20:
-        return (to_file(src) < FILE5) ? DIR_NA : DIR_NE;
+        return (to_file(src) > FILE5) ? DIR_NA : DIR_NE;
     case 25:
-        return (to_file(src) < FILE6) ? DIR_NA : DIR_NE;
+        return (to_file(src) > FILE6) ? DIR_NA : DIR_NE;
     case 11:
         return (to_file(src) == FILE1) ? DIR_NA : DIR_NNE;
     case 13:
@@ -393,21 +393,21 @@ vshogi::judkins_shogi::Squares::get_direction_for_diagonal_or_knight(
     case -5:
         return DIR_SW;
     case -10:
-        return (to_file(dst) < FILE3) ? DIR_NA : DIR_SW;
+        return (to_file(dst) > FILE3) ? DIR_NA : DIR_SW;
     case -15:
-        return (to_file(dst) < FILE4) ? DIR_NA : DIR_SW;
+        return (to_file(dst) > FILE4) ? DIR_NA : DIR_SW;
     case -20:
-        return (to_file(dst) < FILE5) ? DIR_NA : DIR_SW;
+        return (to_file(dst) > FILE5) ? DIR_NA : DIR_SW;
     case -25:
-        return (to_file(dst) < FILE6) ? DIR_NA : DIR_SW;
+        return (to_file(dst) > FILE6) ? DIR_NA : DIR_SW;
     case -7:
-        return (to_file(dst) > FILE5) ? DIR_NA : DIR_SE;
+        return (to_file(dst) < FILE5) ? DIR_NA : DIR_SE;
     case -14:
-        return (to_file(dst) > FILE4) ? DIR_NA : DIR_SE;
+        return (to_file(dst) < FILE4) ? DIR_NA : DIR_SE;
     case -21:
-        return (to_file(dst) > FILE3) ? DIR_NA : DIR_SE;
+        return (to_file(dst) < FILE3) ? DIR_NA : DIR_SE;
     case -28:
-        return (to_file(dst) > FILE2) ? DIR_NA : DIR_SE;
+        return (to_file(dst) < FILE2) ? DIR_NA : DIR_SE;
     case -35:
         return DIR_SE;
     case -11:

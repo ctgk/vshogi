@@ -7,15 +7,15 @@ namespace test_vshogi::test_minishogi
 
 using namespace vshogi::minishogi;
 
-TEST_GROUP(squares){};
+TEST_GROUP(minishogi_squares){};
 
-TEST(squares, shift)
+TEST(minishogi_squares, shift)
 {
     CHECK_EQUAL(SQ_1A, Squares::shift(SQ_1B, vshogi::DIR_N));
     CHECK_EQUAL(SQ_1C, Squares::shift(SQ_1B, vshogi::DIR_S));
 }
 
-TEST(squares, to_rank)
+TEST(minishogi_squares, to_rank)
 {
     CHECK_EQUAL(RANK1, Squares::to_rank(SQ_1A));
     CHECK_EQUAL(RANK2, Squares::to_rank(SQ_1B));
@@ -44,7 +44,7 @@ TEST(squares, to_rank)
     CHECK_EQUAL(RANK5, Squares::to_rank(SQ_5E));
 }
 
-TEST(squares, to_file)
+TEST(minishogi_squares, to_file)
 {
     CHECK_EQUAL(FILE1, Squares::to_file(SQ_1A));
     CHECK_EQUAL(FILE1, Squares::to_file(SQ_1B));
@@ -73,7 +73,7 @@ TEST(squares, to_file)
     CHECK_EQUAL(FILE5, Squares::to_file(SQ_5E));
 }
 
-TEST(squares, to_square)
+TEST(minishogi_squares, to_square)
 {
     CHECK_EQUAL(SQ_1A, Squares::to_square("1a"));
     CHECK_EQUAL(SQ_1B, Squares::to_square("1b"));
@@ -102,7 +102,12 @@ TEST(squares, to_square)
     CHECK_EQUAL(SQ_5E, Squares::to_square("5e"));
 }
 
-TEST(squares, get_non_ranging_attacks_by)
+TEST(minishogi_squares, get_direction)
+{
+    CHECK_EQUAL(vshogi::DIR_NW, Squares::get_direction(SQ_5A, SQ_3C));
+}
+
+TEST(minishogi_squares, get_non_ranging_attacks_by)
 {
     {
         const auto actual = Squares::get_non_ranging_attacks_by(B_FU, SQ_3A);

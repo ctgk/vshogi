@@ -11,7 +11,7 @@ TEST_GROUP(animal_shogi_squares){};
 
 TEST(animal_shogi_squares, to_square)
 {
-    CHECK_EQUAL(SQ_A1, Squares::to_square(FILE_A, RANK1));
+    CHECK_EQUAL(SQ_A1, Squares::to_square(FILE1, RANK1));
 
     CHECK_EQUAL(SQ_A1, Squares::to_square("a1"));
     CHECK_EQUAL(SQ_A2, Squares::to_square("a2"));
