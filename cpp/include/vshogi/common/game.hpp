@@ -33,7 +33,7 @@ uint num_pieces(const State<Config>& s, const ColorEnum& c)
     const auto& board = s.get_board();
     const auto& stand = s.get_stand(c);
     uint out = 0u;
-    for (auto sq = static_cast<Square>(Config::num_squares); sq--;) {
+    for (auto sq : EnumIterator<Square, Config::num_squares>()) {
         const auto p = board[sq];
         if (p == PHelper::VOID)
             continue;
@@ -41,7 +41,7 @@ uint num_pieces(const State<Config>& s, const ColorEnum& c)
             out += 1U;
     }
 
-    for (auto pt = static_cast<PieceType>(num_sp_types); pt--;)
+    for (auto pt : EnumIterator<PieceType, num_sp_types>())
         out += stand.count(pt);
     return out;
 }
@@ -57,14 +57,14 @@ uint total_point(const State<Config>& s, const ColorEnum& c)
     uint out = 0u;
     const auto& board = s.get_board();
     const auto& stand = s.get_stand(c);
-    for (auto sq = static_cast<Square>(Config::num_squares); sq--;) {
+    for (auto sq : EnumIterator<Square, Config::num_squares>()) {
         const auto p = board[sq];
         if (p == PHelper::VOID)
             continue;
         if (PHelper::get_color(p) == c)
             out += PHelper::get_point(p);
     }
-    for (auto pt = static_cast<PieceType>(num_sp_types); pt--;) {
+    for (auto pt : EnumIterator<PieceType, num_sp_types>()) {
         out += stand.count(pt) * PHelper::get_point(pt);
     }
     return out;
@@ -428,7 +428,7 @@ protected:
         m_occupied[WHITE] = BitBoardType();
         const auto turn = get_turn();
         const BoardType& board = get_board();
-        for (auto sq = static_cast<Square>(num_squares); sq--;) {
+        for (auto sq : EnumIterator<Square, num_squares>()) {
             const auto p = board[sq];
             if (p == PHelper::VOID)
                 continue;
@@ -442,7 +442,7 @@ protected:
         m_checker_locations[0] = SHelper::SQ_NA;
         m_checker_locations[1] = SHelper::SQ_NA;
         int index = 0;
-        for (auto dir = static_cast<DirectionEnum>(num_dir); dir--;) {
+        for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
             const auto checker_sq = board.find_attacker(
                 ~turn, board.get_king_location(turn), dir);
             if (checker_sq != SHelper::SQ_NA) {
@@ -583,12 +583,12 @@ protected:
     {
         uint out = 0;
         const BoardType& board = get_board();
-        for (auto sq = static_cast<Square>(num_squares); sq--;) {
+        for (auto sq : EnumIterator<Square, num_squares>()) {
             if (mask.is_one(sq))
                 out += PHelper::get_point(board[sq]);
         }
         const auto& stand = get_stand(c);
-        for (auto pt = static_cast<PieceType>(num_stand_piece_types); pt--;) {
+        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>()) {
             out += stand.count(pt) * PHelper::get_point(pt);
         }
         return out;
@@ -611,7 +611,7 @@ protected:
                 const BoardType& board = get_board();
                 const auto& ally_mask = m_occupied[turn];
                 const auto king_sq = board.get_king_location(turn);
-                for (auto sq = static_cast<Square>(num_squares); sq--;) {
+                for (auto sq : EnumIterator<Square, num_squares>()) {
                     if (ally_mask.is_one(sq) && (king_sq != sq))
                         append_check_moves_by_non_king_at(sq);
                 }
@@ -624,7 +624,7 @@ protected:
                 const BoardType& board = get_board();
                 const auto& ally_mask = m_occupied[turn];
                 const auto king_sq = board.get_king_location(turn);
-                for (auto sq = static_cast<Square>(num_squares); sq--;) {
+                for (auto sq : EnumIterator<Square, num_squares>()) {
                     if (ally_mask.is_one(sq) && (king_sq != sq))
                         append_legal_moves_by_non_king_at(sq);
                 }
@@ -911,7 +911,7 @@ protected:
         const auto empty_mask = ~m_occupied[2];
         const auto src_mask
             = m_occupied[turn] & (~BitBoardType::from_square(king_location));
-        for (auto dir = static_cast<DirectionEnum>(num_dir); dir--;) {
+        for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
             auto ptr_src = SHelper::get_squares_along(dir, dst);
             for (; *ptr_src != SHelper::SQ_NA; ++ptr_src) {
                 const auto src = *ptr_src;
@@ -949,7 +949,7 @@ protected:
         const auto& stand = get_stand(turn);
         const auto enemy_king_sq = board.get_king_location(~turn);
         const Square* sq_ptr = nullptr;
-        for (auto pt = static_cast<PieceType>(num_stand_piece_types); pt--;) {
+        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>()) {
             if (!stand.exist(pt))
                 continue;
             const auto p = PHelper::to_board_piece(turn, pt);
@@ -977,10 +977,10 @@ protected:
         const auto turn = get_turn();
         const auto& stand = get_stand(turn);
         const auto& occupied = m_occupied[2];
-        for (auto pt = static_cast<PieceType>(num_stand_piece_types); pt--;) {
+        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>()) {
             if (!stand.exist(pt))
                 continue;
-            for (auto sq = static_cast<Square>(num_squares); sq--;) {
+            for (auto sq : EnumIterator<Square, num_squares>()) {
                 if (occupied.is_one(sq))
                     continue;
                 const auto p = PHelper::to_board_piece(turn, pt);
@@ -1001,7 +1001,7 @@ protected:
         const auto turn = get_turn();
         const auto enemy_king_sq = get_board().get_king_location(~turn);
         const auto& stand = get_stand(turn);
-        for (auto pt = static_cast<PieceType>(num_stand_piece_types); pt--;) {
+        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>()) {
             if (!stand.exist(pt))
                 continue;
             const auto attacks = BitBoardType::get_attacks_by(
@@ -1051,7 +1051,7 @@ protected:
 
         // if opponent can capture the dropped pawn, then return false.
         const auto enemy_king_direction = (turn == BLACK) ? DIR_N : DIR_S;
-        for (auto dir = static_cast<DirectionEnum>(num_dir); dir--;) {
+        for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
             if (dir == enemy_king_direction)
                 continue;
             const auto src_next = board.find_attacker(~turn, dst, dir);
@@ -1070,8 +1070,8 @@ protected:
     }
     static bool is_neighbor(const Square a, const Square b)
     {
-        for (auto dir = static_cast<DirectionEnum>(num_dir); dir--;) {
-            if (b == SHelper::shift(a, dir))
+        for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
+            if (b == SHelper::shift(a, static_cast<DirectionEnum>(dir)))
                 return true;
         }
         return false;

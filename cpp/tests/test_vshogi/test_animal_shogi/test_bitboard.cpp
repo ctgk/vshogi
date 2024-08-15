@@ -42,9 +42,10 @@ TEST(animal_shogi_bitboard, shift)
         CHECK_TRUE(bb_fileb == bb_filec.shift(vshogi::DIR_W));
     }
 
-    for (uint dd = Config::num_dir; dd--;) {
-        const auto dir = static_cast<vshogi::DirectionEnum>(dd);
-        for (auto sq = static_cast<SquareEnum>(Config::num_squares); sq--;) {
+    for (auto dir :
+         vshogi::EnumIterator<vshogi::DirectionEnum, Config::num_dir>()) {
+        for (auto sq :
+             vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
             CHECK_TRUE(
                 BitBoard::from_square(Squares::shift(sq, dir))
                 == BitBoard::from_square(sq).shift(dir));

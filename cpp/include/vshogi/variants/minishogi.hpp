@@ -197,15 +197,6 @@ constexpr BitBoard bb_file3 = bb_3a | bb_3b | bb_3c | bb_3d | bb_3e;
 constexpr BitBoard bb_file4 = bb_4a | bb_4b | bb_4c | bb_4d | bb_4e;
 constexpr BitBoard bb_file5 = bb_5a | bb_5b | bb_5c | bb_5d | bb_5e;
 
-template <class E>
-inline typename std::enable_if<std::is_enum<E>::value, E>::type
-operator--(E& self, int)
-{
-    const auto out = self;
-    self = static_cast<E>(static_cast<int>(self) - 1);
-    return out;
-}
-
 } // namespace vshogi::minishogi
 
 namespace vshogi
@@ -582,7 +573,7 @@ inline minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
 template <>
 inline void minishogi::BitBoard::init_tables()
 {
-    for (auto sq = static_cast<Square>(num_squares); sq--;) {
+    for (auto sq : EnumIterator<Square, num_squares>()) {
         const auto b = from_square(sq);
         // clang-format off
         attacks_table[0][sq] = b.shift(DIR_N); // B_FU

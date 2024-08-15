@@ -307,15 +307,6 @@ constexpr BitBoard bb_rankh = bb_1h | bb_2h | bb_3h | bb_4h | bb_5h | bb_6h | bb
 constexpr BitBoard bb_ranki = bb_1i | bb_2i | bb_3i | bb_4i | bb_5i | bb_6i | bb_7i | bb_8i | bb_9i;
 // clang-format on
 
-template <class E>
-inline typename std::enable_if<std::is_enum<E>::value, E>::type
-operator--(E& self, int)
-{
-    const auto out = self;
-    self = static_cast<E>(static_cast<int>(self) - 1);
-    return out;
-}
-
 } // namespace vshogi::shogi
 
 namespace vshogi
@@ -825,7 +816,7 @@ inline shogi::BitBoard shogi::BitBoard::get_attacks_by(
 template <>
 inline void shogi::BitBoard::init_tables()
 {
-    for (auto sq = static_cast<Square>(num_squares); sq--;) {
+    for (auto sq : EnumIterator<Square, num_squares>()) {
         const auto b = from_square(sq);
         // clang-format off
         attacks_table[0][sq] = b.shift(DIR_N); // B_FU

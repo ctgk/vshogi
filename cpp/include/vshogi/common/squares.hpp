@@ -93,15 +93,16 @@ public:
         constexpr Rank rm = static_cast<Rank>(num_ranks - 2);
         constexpr Rank rn = static_cast<Rank>(num_ranks - 1);
 
-        for (auto sq = static_cast<Square>(num_squares); sq--;)
+        for (auto sq : EnumIterator<Square, num_squares>()) {
             file_to_square_array[to_file(sq)][to_rank(sq)] = sq;
+        }
         init_file_array();
         init_rank_array();
 
-        for (auto sq = static_cast<Square>(num_squares); sq--;) {
+        for (auto sq : EnumIterator<Square, num_squares>()) {
             const auto r = to_rank(sq);
             const auto f = to_file(sq);
-            for (auto dir = static_cast<DirectionEnum>(num_dir); dir--;) {
+            for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
                 if (((r == r1) && has_dir_n(dir))
                     || ((r == r2) && (dir == DIR_NNW || dir == DIR_NNE))
                     || ((r == rn) && has_dir_s(dir))
@@ -193,8 +194,8 @@ private:
             = sizeof(ranging_squares_to) / sizeof(ranging_squares_to[0][0][0]);
         std::fill_n(&ranging_squares_to[0][0][0], size, SQ_NA);
 
-        for (auto src = static_cast<Square>(num_squares); src--;) {
-            for (auto dir = static_cast<DirectionEnum>(num_dir); dir--;) {
+        for (auto src : EnumIterator<Square, num_squares>()) {
+            for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
                 auto dst = src;
                 int index = 0;
                 while (true) {
@@ -223,7 +224,7 @@ private:
             const ColorEnum c = (ii < num_piece_types) ? BLACK : WHITE;
             const auto p = PHelper::to_board_piece(c, pt);
             const auto dir_ptr_begin = PHelper::get_attack_directions(p);
-            for (auto sq = static_cast<Square>(num_squares); sq--;) {
+            for (auto sq : EnumIterator<Square, num_squares>()) {
                 int index = 0;
                 for (auto dir_ptr = dir_ptr_begin; *dir_ptr != DIR_NA;) {
                     const auto dst = shift(sq, *dir_ptr++);

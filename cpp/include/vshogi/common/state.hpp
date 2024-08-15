@@ -149,10 +149,9 @@ public:
 
         float num_pieces_curr[sp_types] = {};
         float num_pieces_next[sp_types] = {};
-        for (uint k = sp_types; k--;) {
-            const auto p = static_cast<PieceType>(k);
-            num_pieces_curr[k] = static_cast<float>(stand_curr.count(p));
-            num_pieces_next[k] = static_cast<float>(stand_next.count(p));
+        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>()) {
+            num_pieces_curr[pt] = static_cast<float>(stand_curr.count(pt));
+            num_pieces_next[pt] = static_cast<float>(stand_next.count(pt));
         }
 
         std::fill_n(data, num_squares * ch, 0.f);

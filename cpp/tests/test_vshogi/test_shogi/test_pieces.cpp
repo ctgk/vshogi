@@ -337,19 +337,18 @@ TEST(shogi_pieces, get_attack_directions)
         {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_RY
         // clang-format on
     };
-    for (int ii = Config::num_piece_types; ii--;) {
-        const PieceTypeEnum pt = static_cast<PieceTypeEnum>(ii);
+    for (auto pt : EnumIterator<PieceTypeEnum, Config::num_piece_types>()) {
         for (auto&& color : {BLACK, WHITE}) {
             const BoardPieceTypeEnum p
                 = vshogi::shogi::Pieces::to_board_piece(color, pt);
             const auto actual = vshogi::shogi::Pieces::get_attack_directions(p);
             for (int jj = 0; jj < 9; ++jj) {
                 if (color == BLACK) {
-                    CHECK_EQUAL(expected[ii][jj], actual[jj]);
+                    CHECK_EQUAL(expected[pt][jj], actual[jj]);
                 } else {
-                    CHECK_EQUAL(rotate(expected[ii][jj]), actual[jj]);
+                    CHECK_EQUAL(rotate(expected[pt][jj]), actual[jj]);
                 }
-                if (expected[ii][jj] == DIR_NA)
+                if (expected[pt][jj] == DIR_NA)
                     break;
             }
         }

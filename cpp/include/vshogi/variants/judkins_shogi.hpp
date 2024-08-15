@@ -230,15 +230,6 @@ constexpr BitBoard bb_rankd = bb_1d | bb_2d | bb_3d | bb_4d | bb_5d | bb_6d;
 constexpr BitBoard bb_ranke = bb_1e | bb_2e | bb_3e | bb_4e | bb_5e | bb_6e;
 constexpr BitBoard bb_rankf = bb_1f | bb_2f | bb_3f | bb_4f | bb_5f | bb_6f;
 
-template <class E>
-inline typename std::enable_if<std::is_enum<E>::value, E>::type
-operator--(E& self, int)
-{
-    const auto out = self;
-    self = static_cast<E>(static_cast<int>(self) - 1);
-    return out;
-}
-
 } // namespace vshogi::judkins_shogi
 
 namespace vshogi
@@ -652,7 +643,7 @@ inline judkins_shogi::BitBoard judkins_shogi::BitBoard::get_attacks_by(
 template <>
 inline void judkins_shogi::BitBoard::init_tables()
 {
-    for (auto sq = static_cast<Square>(num_squares); sq--;) {
+    for (auto sq : EnumIterator<Square, num_squares>()) {
         const auto b = from_square(sq);
         // clang-format off
         attacks_table[0][sq] = b.shift(DIR_N); // B_FU

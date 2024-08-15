@@ -153,15 +153,6 @@ constexpr BitBoard bb_filea = BitBoard(0b001001001001);
 constexpr BitBoard bb_fileb = BitBoard(0b010010010010);
 constexpr BitBoard bb_filec = BitBoard(0b100100100100);
 
-template <class E>
-inline typename std::enable_if<std::is_enum<E>::value, E>::type
-operator--(E& self, int)
-{
-    const auto out = self;
-    self = static_cast<E>(static_cast<int>(self) - 1);
-    return out;
-}
-
 namespace internal
 {
 
@@ -470,8 +461,8 @@ inline animal_shogi::BitBoard animal_shogi::BitBoard::get_attacks_by(
 template <>
 inline void animal_shogi::BitBoard::init_tables()
 {
-    for (auto sq = static_cast<Square>(num_squares); sq--;) {
-        const auto b = from_square(sq);
+    for (auto sq = num_squares; sq--;) {
+        const auto b = from_square(static_cast<Square>(sq));
         // clang-format off
         attacks_table[0][sq] = b.shift(DIR_N); // B_CH
         attacks_table[1][sq] = b.shift(DIR_NW) | b.shift(DIR_N) | b.shift(DIR_NE) | b.shift(DIR_W) | b.shift(DIR_E) | b.shift(DIR_S); // B_KI
@@ -528,7 +519,7 @@ inline void animal_shogi::Game::update_internals()
         const auto& board = get_board();
         const auto& stand = get_stand(turn);
         m_legal_moves.clear();
-        for (auto src = static_cast<Square>(num_squares); src--;) {
+        for (auto src : EnumIterator<Square, num_squares>()) {
             const auto p = board[src];
             if ((p == PHelper::VOID) || (PHelper::get_color(p) != turn))
                 continue;
@@ -542,11 +533,11 @@ inline void animal_shogi::Game::update_internals()
                     m_legal_moves.emplace_back(dst, src);
             }
         }
-        for (auto dst = static_cast<Square>(num_squares); dst--;) {
+        for (auto dst : EnumIterator<Square, num_squares>()) {
             if (!board.is_empty(dst))
                 continue;
-            for (auto pt = static_cast<PieceType>(num_stand_piece_types);
-                 pt--;) {
+            for (auto ip = num_stand_piece_types; ip--;) {
+                const auto pt = static_cast<PieceType>(ip);
                 if (stand.exist(pt))
                     m_legal_moves.emplace_back(MoveType(dst, pt));
             }

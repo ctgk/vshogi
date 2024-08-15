@@ -11,6 +11,51 @@ namespace vshogi
 
 using uint = unsigned int;
 
+/**
+ * @brief Iterator for Enum.
+ *
+ * @tparam ContiguousEnum Type of Enum.
+ * @tparam End Non-inclusive end value of the iterator.
+ */
+template <class ContiguousEnum, uint End>
+class EnumIterator
+{
+private:
+    uint m_curr;
+
+public:
+    EnumIterator() : m_curr(0u)
+    {
+    }
+    EnumIterator& operator++()
+    {
+        ++m_curr;
+        return *this;
+    }
+    ContiguousEnum operator*() const
+    {
+        return static_cast<ContiguousEnum>(m_curr);
+    }
+    EnumIterator begin()
+    {
+        return *this;
+    }
+    EnumIterator end()
+    {
+        static const auto end_iter = EnumIterator(End);
+        return end_iter;
+    }
+    bool operator!=(const EnumIterator& other)
+    {
+        return m_curr != other.m_curr;
+    }
+
+private:
+    EnumIterator(const uint v) : m_curr(v)
+    {
+    }
+};
+
 inline void softmax(std::vector<float>& logits)
 {
     if (logits.empty())

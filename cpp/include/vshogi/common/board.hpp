@@ -132,7 +132,7 @@ public:
         const Square& sq,
         const Square& skip = SQ_NA) const
     {
-        for (auto dir = static_cast<DirectionEnum>(num_dir); dir--;) {
+        for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
             if (find_attacker(attacker_color, sq, dir, skip) != SQ_NA)
                 return true;
         }
@@ -141,7 +141,7 @@ public:
     Board hflip() const
     {
         Board out;
-        for (auto sq = static_cast<Square>(num_squares); sq--;) {
+        for (auto sq : EnumIterator<Square, num_squares>()) {
             const auto sq_hflipped = SHelper::hflip(sq);
             out.m_pieces[sq_hflipped] = m_pieces[sq];
         }
@@ -153,7 +153,7 @@ public:
         std::random_device dev;
         std::mt19937_64 rng(dev());
         std::uniform_int_distribution<std::uint64_t> dist;
-        for (auto sq = static_cast<Square>(num_squares); sq--;) {
+        for (auto sq : EnumIterator<Square, num_squares>()) {
             for (uint ii = 0u; ii < num_square_states; ++ii) {
                 zobrist_table[sq][ii] = dist(rng);
             }
@@ -162,7 +162,7 @@ public:
     std::uint64_t zobrist_hash() const
     {
         std::uint64_t out = static_cast<std::uint64_t>(0);
-        for (auto sq = static_cast<Square>(num_squares); sq--;) {
+        for (auto sq = num_squares; sq--;) {
             out ^= zobrist_table[sq][to_index(m_pieces[sq])];
         }
         return out;
@@ -199,7 +199,7 @@ private:
     {
         m_king_locations[BLACK] = SQ_NA;
         m_king_locations[WHITE] = SQ_NA;
-        for (auto sq = static_cast<Square>(num_squares); sq--;) {
+        for (auto sq : EnumIterator<Square, num_squares>()) {
             const auto& p = m_pieces[sq];
             if (PHelper::to_piece_type(p) == PHelper::OU)
                 m_king_locations[PHelper::get_color(p)] = sq;
