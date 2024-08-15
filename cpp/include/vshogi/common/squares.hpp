@@ -50,8 +50,6 @@ public:
     static constexpr Rank RANK1 = static_cast<Rank>(0); // NOLINT
     static constexpr Square SQ_NA = static_cast<Square>(num_squares); // NOLINT
 
-    inline static File file_array[num_files];
-    inline static Rank rank_array[num_ranks];
     inline static Square file_to_square_array[num_files][num_ranks];
 
     static constexpr File to_file(const Square& sq)
@@ -96,8 +94,6 @@ public:
         for (auto sq : EnumIterator<Square, num_squares>()) {
             file_to_square_array[to_file(sq)][to_rank(sq)] = sq;
         }
-        init_file_array();
-        init_rank_array();
 
         for (auto sq : EnumIterator<Square, num_squares>()) {
             const auto r = to_rank(sq);
@@ -178,16 +174,6 @@ private:
     static DirectionEnum
     get_direction_for_diagonal_or_knight(const Square& dst, const Square& src);
 
-    static void init_file_array()
-    {
-        for (int ii = num_files; ii--;)
-            file_array[ii] = static_cast<File>(ii);
-    }
-    static void init_rank_array()
-    {
-        for (int ii = num_ranks; ii--;)
-            rank_array[ii] = static_cast<Rank>(ii);
-    }
     static void init_ranging_squares_table()
     {
         constexpr int size
