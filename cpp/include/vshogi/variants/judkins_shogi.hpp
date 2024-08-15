@@ -269,13 +269,6 @@ inline const DirectionEnum
 };
 
 template <>
-inline constexpr bool vshogi::judkins_shogi::Pieces::is_promotable(
-    const vshogi::judkins_shogi::PieceTypeEnum& p)
-{
-    return (p < vshogi::judkins_shogi::KI);
-}
-
-template <>
 inline bool vshogi::judkins_shogi::Pieces::is_ranging_to(
     const vshogi::judkins_shogi::ColoredPieceEnum& p, const DirectionEnum& d)
 {

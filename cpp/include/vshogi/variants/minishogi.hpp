@@ -232,13 +232,6 @@ inline const DirectionEnum
 };
 
 template <>
-inline constexpr bool vshogi::minishogi::Pieces::is_promotable(
-    const vshogi::minishogi::PieceTypeEnum& p)
-{
-    return (p < vshogi::minishogi::KI);
-}
-
-template <>
 inline bool vshogi::minishogi::Pieces::is_ranging_to(
     const vshogi::minishogi::ColoredPieceEnum& p, const DirectionEnum& d)
 {

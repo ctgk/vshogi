@@ -73,7 +73,10 @@ public:
         return Config::piece_type_to_char[pt_demoted];
     }
 
-    static constexpr bool is_promotable(const PieceType& p);
+    static constexpr bool is_promotable(const PieceType& p)
+    {
+        return (p + 1 < num_stand_piece_types);
+    }
     static constexpr bool is_promotable(const ColoredPiece& p)
     {
         return is_promotable(to_piece_type(p));

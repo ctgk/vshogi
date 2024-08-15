@@ -9,6 +9,16 @@ using namespace vshogi::animal_shogi;
 
 TEST_GROUP(animal_shogi_pieces){};
 
+TEST(animal_shogi_pieces, is_promotable)
+{
+    CHECK_TRUE(Pieces::is_promotable(CH));
+    CHECK_FALSE(Pieces::is_promotable(EL));
+    CHECK_FALSE(Pieces::is_promotable(GI));
+    CHECK_FALSE(Pieces::is_promotable(LI));
+    CHECK_FALSE(Pieces::is_promotable(HE));
+    CHECK_FALSE(Pieces::is_promotable(NA));
+}
+
 TEST(animal_shogi_pieces, to_piece_type)
 {
     CHECK_EQUAL(CH, Pieces::to_piece_type('c'));
