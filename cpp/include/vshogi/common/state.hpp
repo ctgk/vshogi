@@ -41,9 +41,6 @@ private:
     static constexpr uint num_files = Config::num_files;
 
 private:
-    static std::uint64_t zobrist_board[num_squares]
-                                      [num_colors * num_piece_types + 1];
-
     BoardType m_board;
     Stands m_stands;
     ColorEnum m_turn; //!< Player to make a move in the current state.
