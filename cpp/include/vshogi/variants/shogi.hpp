@@ -162,6 +162,7 @@ struct Config
     static constexpr uint num_non_ranging_attacks = 9; // B_FU, W_FU, B_KE, W_KE, B_GI, W_GI, B_KI, W_KI, OU
     static constexpr uint num_attacks = 15; // B_FU, W_FU, B_KE, W_KE, B_GI, W_GI, B_KI, W_KI, OU, B_KY, W_KY, KA, HI, UM, RY
     static constexpr uint max_stand_piece_count = 18;
+    static constexpr uint max_stand_sfen_length = 26; // "10p2l2n2sbr2g2P2L2N2SBR2G "
     static constexpr uint max_acceptable_repetitions = 3;
     using BaseTypeBitBoard = uint128;
     // clang-format on
@@ -596,9 +597,6 @@ inline const shogi::PieceTypeEnum
        shogi::KE,
        shogi::KY,
        shogi::FU};
-template <>
-inline const int shogi::BlackWhiteStands::max_sfen_length
-    = 26; // "10p2l2n2sbr2g2P2L2N2SBR2G "
 
 template <>
 inline std::uint64_t shogi::BlackWhiteStands::zobrist_table

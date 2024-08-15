@@ -98,6 +98,7 @@ struct Config
     static constexpr uint num_non_ranging_board_piece = 7; //!< B_CH, W_CH, EL, GI, LI, B_HE, W_HE
     static constexpr uint num_attacks = 7; //!< B_CH, W_CH, EL, GI, LI, B_HE, W_HE
     static constexpr uint max_stand_piece_count = 2;
+    static constexpr uint max_stand_sfen_length = 7; // "2C2E2G "
     static constexpr uint max_acceptable_repetitions = 2;
     using BaseTypeBitBoard = std::uint16_t;
     // clang-format on
@@ -379,10 +380,6 @@ template <>
 inline const animal_shogi::PieceTypeEnum
     animal_shogi::BlackWhiteStands::stand_pieces_in_sfen_order[]
     = {animal_shogi::GI, animal_shogi::EL, animal_shogi::CH};
-
-template <>
-inline const int animal_shogi::BlackWhiteStands::max_sfen_length
-    = 13; // "2C2E2G2c2e2g "
 
 template <>
 inline std::uint64_t animal_shogi::BlackWhiteStands::zobrist_table

@@ -118,6 +118,7 @@ struct Config
     static constexpr uint num_non_ranging_attacks = 7; // B_FU, W_FU, B_GI, W_GI, B_KI, W_KI, OU
     static constexpr uint num_attacks = 11; // B_FU, W_FU, B_GI, W_GI, B_KI, W_KI, OU, KA, HI, UM, RY
     static constexpr uint max_stand_piece_count = 2;
+    static constexpr uint max_stand_sfen_length = 11; // "2p2s2g2b2r "
     static constexpr uint max_acceptable_repetitions = 3;
     using BaseTypeBitBoard = std::uint32_t;
     // clang-format on
@@ -422,9 +423,6 @@ inline const minishogi::PieceTypeEnum
        minishogi::KI,
        minishogi::GI,
        minishogi::FU};
-template <>
-inline const int minishogi::BlackWhiteStands::max_sfen_length
-    = 11; // "2p2s2g2b2r "
 
 template <>
 inline std::uint64_t minishogi::BlackWhiteStands::zobrist_table

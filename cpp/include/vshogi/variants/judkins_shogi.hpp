@@ -138,6 +138,7 @@ struct Config
     static constexpr uint num_non_ranging_attacks = 9; // B_FU, W_FU, B_KE, W_KE, B_GI, W_GI, B_KI, W_KI, OU
     static constexpr uint num_attacks = 13; // B_FU, W_FU, B_KE, W_KE, B_GI, W_GI, B_KI, W_KI, OU, KA, HI, UM, RY
     static constexpr uint max_stand_piece_count = 2;
+    static constexpr uint max_stand_sfen_length = 13; // "RBGSNPrbgsnp "
     static constexpr uint max_acceptable_repetitions = 3;
     using BaseTypeBitBoard = std::uint64_t;
     // clang-format on
@@ -485,10 +486,6 @@ inline const judkins_shogi::PieceTypeEnum
        judkins_shogi::GI,
        judkins_shogi::KE,
        judkins_shogi::FU};
-
-template <>
-inline const int judkins_shogi::BlackWhiteStands::max_sfen_length
-    = 13; // "RBGSNPrbgsnp "
 
 template <>
 inline std::uint64_t judkins_shogi::BlackWhiteStands::zobrist_table

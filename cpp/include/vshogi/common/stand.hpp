@@ -82,9 +82,9 @@ private:
     using BoardPieceType = typename Config::BoardPieceType;
     static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
     static constexpr uint max_stand_piece_count = Config::max_stand_piece_count;
+    static constexpr uint max_sfen_length = Config::max_stand_sfen_length;
 
     static const PieceType stand_pieces_in_sfen_order[num_stand_piece_types];
-    static const int max_sfen_length;
     static std::uint64_t zobrist_table[num_colors][num_stand_piece_types]
                                       [max_stand_piece_count + 1];
 

@@ -123,16 +123,16 @@ TEST(animal_shogi_black_white_stands, set_sfen)
         CHECK_EQUAL('1', *actual);
     }
     {
-        const auto s = "2C2E2G2c2e2g 7";
+        const auto s = "2C2E2g 7";
         auto stands = BlackWhiteStands();
 
         const auto actual = stands.set_sfen(s);
 
         CHECK_EQUAL(2, stands.black().count(CH));
         CHECK_EQUAL(2, stands.black().count(EL));
-        CHECK_EQUAL(2, stands.black().count(GI));
-        CHECK_EQUAL(2, stands.white().count(CH));
-        CHECK_EQUAL(2, stands.white().count(EL));
+        CHECK_EQUAL(0, stands.black().count(GI));
+        CHECK_EQUAL(0, stands.white().count(CH));
+        CHECK_EQUAL(0, stands.white().count(EL));
         CHECK_EQUAL(2, stands.white().count(GI));
         CHECK_EQUAL('7', *actual);
     }
