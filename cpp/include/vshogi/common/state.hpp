@@ -22,7 +22,7 @@ class State
 {
 private:
     using PieceType = typename Config::PieceType;
-    using BoardPieceType = typename Config::BoardPieceType;
+    using ColoredPiece = typename Config::ColoredPiece;
     using Rank = typename Config::Rank;
     using Square = typename Config::Square;
     using PHelper = Pieces<Config>;
@@ -123,7 +123,7 @@ public:
     State& apply(const MoveType& move, std::uint64_t* const hash = nullptr)
     {
         if (move.is_drop()) {
-            const BoardPieceType p
+            const ColoredPiece p
                 = m_stands.pop_piece_from(m_turn, move.source_piece(), hash);
             m_board.apply(move.destination(), p, hash);
         } else {
@@ -165,8 +165,7 @@ public:
                 continue;
             const auto& p = m_board[sq];
             const auto pt = PHelper::to_piece_type(p);
-            const auto k = static_cast<uint>(PHelper::demote(pt))
-                           + PHelper::is_promoted(pt) * unpromoted_piece_types
+            const auto k = static_cast<uint>(pt)
                            + (m_turn != PHelper::get_color(p)) * ch_half;
             data_ch[k + sp_types] = 1.f;
         }
@@ -184,19 +183,6 @@ private:
     void append_sfen_turn(std::string& out) const
     {
         out += ((m_turn == BLACK) ? 'b' : 'w');
-    }
-    BoardPieceType pop_piece_from_stand_or_board(
-        const MoveType& move, std::uint64_t* const hash)
-    {
-        if (move.is_drop()) {
-            const auto src = move.source_piece();
-            m_stands.subtract_piece_from(m_turn, src, hash);
-            return PHelper::to_board_piece(m_turn, src);
-        } else {
-            const auto src = move.source_square();
-            const auto out = m_board.apply(src, PHelper::VOID, hash);
-            return out;
-        }
     }
 };
 

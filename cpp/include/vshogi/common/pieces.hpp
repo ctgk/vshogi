@@ -14,13 +14,12 @@ struct Pieces
 {
 private:
     static constexpr uint num_piece_types = Config::num_piece_types;
+    static constexpr uint num_colored_piece_types
+        = Config::num_colored_piece_types;
     static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
     using PieceType = typename Config::PieceType;
-    using BoardPieceType = typename Config::BoardPieceType;
+    using ColoredPiece = typename Config::ColoredPiece;
 
-    static constexpr uint color_bit = Config::color_bit;
-    static constexpr uint color_mask = (1 << color_bit);
-    static constexpr uint piece_type_mask = (color_mask - 1);
     static const DirectionEnum attack_directions_table[2 * num_piece_types + 1]
                                                       [9];
 
@@ -29,9 +28,9 @@ public:
     static constexpr PieceType OU // NOLINT
         = static_cast<PieceType>(num_stand_piece_types);
     static constexpr PieceType NA // NOLINT
-        = static_cast<PieceType>(color_mask - 1);
-    static constexpr BoardPieceType VOID // NOLINT
-        = static_cast<BoardPieceType>((color_mask << 1) - 1);
+        = static_cast<PieceType>(num_piece_types);
+    static constexpr ColoredPiece VOID // NOLINT
+        = static_cast<ColoredPiece>(num_colored_piece_types);
 
     Pieces() = delete;
 
@@ -42,26 +41,28 @@ public:
      * @param p Board piece.
      * @return constexpr ColorEnum Color of the board piece.
      */
-    static constexpr ColorEnum get_color(const BoardPieceType& p)
+    static constexpr ColorEnum get_color(const ColoredPiece& p)
     {
-        return static_cast<ColorEnum>(p >> color_bit);
+        return static_cast<ColorEnum>(p >= num_piece_types);
     }
-    static constexpr PieceType to_piece_type(const BoardPieceType& p)
+    static constexpr PieceType to_piece_type(const ColoredPiece& p)
     {
-        return static_cast<PieceType>(p & piece_type_mask);
+        return (p < num_piece_types)
+                   ? static_cast<PieceType>(p)
+                   : static_cast<PieceType>(p - num_piece_types);
     }
     static PieceType to_piece_type(const char c);
-    static constexpr BoardPieceType
+    static constexpr ColoredPiece
     to_board_piece(const ColorEnum& c, const PieceType& p)
     {
         if (p == NA)
             return VOID;
-        return static_cast<BoardPieceType>((c << color_bit) | p);
+        return static_cast<ColoredPiece>(c * num_piece_types + p);
     }
     static char to_char(const PieceType& p);
 
     static constexpr bool is_promotable(const PieceType& p);
-    static constexpr bool is_promotable(const BoardPieceType& p)
+    static constexpr bool is_promotable(const ColoredPiece& p)
     {
         return is_promotable(to_piece_type(p));
     }
@@ -70,13 +71,13 @@ public:
     {
         return pt > num_stand_piece_types;
     }
-    static constexpr bool is_promoted(const BoardPieceType& p)
+    static constexpr bool is_promoted(const ColoredPiece& p)
     {
         return is_promoted(to_piece_type(p));
     }
-    static bool is_ranging_to(const BoardPieceType& p, const DirectionEnum& d);
+    static bool is_ranging_to(const ColoredPiece& p, const DirectionEnum& d);
     static bool is_ranging_piece(const PieceType& pt);
-    static bool is_ranging_piece(const BoardPieceType& p)
+    static bool is_ranging_piece(const ColoredPiece& p)
     {
         return is_ranging_piece(to_piece_type(p));
     }
@@ -109,12 +110,12 @@ public:
     }
 
     static uint get_point(const PieceType& p);
-    static uint get_point(const BoardPieceType& p)
+    static uint get_point(const ColoredPiece& p)
     {
         return get_point(to_piece_type(p));
     }
 
-    static void append_sfen(const BoardPieceType& p, std::string& out)
+    static void append_sfen(const ColoredPiece& p, std::string& out)
     {
         const auto color = get_color(p);
         const auto promotion = is_promoted(p);
@@ -126,7 +127,7 @@ public:
             out += '+';
         out += c;
     }
-    static uint get_index(const BoardPieceType& p)
+    static uint get_index(const ColoredPiece& p)
     {
         if (p == VOID)
             return 2 * num_piece_types;
@@ -139,7 +140,7 @@ public:
                                          : static_cast<uint>(demote(pt));
         return color_offset + promo_offset + pt_index;
     }
-    static const DirectionEnum* get_attack_directions(const BoardPieceType& p)
+    static const DirectionEnum* get_attack_directions(const ColoredPiece& p)
     {
         return attack_directions_table[get_index(p)];
     }
@@ -147,8 +148,8 @@ public:
     {
     }
 
-    static constexpr BoardPieceType B_OU = to_board_piece(BLACK, OU); // NOLINT
-    static constexpr BoardPieceType W_OU = to_board_piece(WHITE, OU); // NOLINT
+    static constexpr ColoredPiece B_OU = to_board_piece(BLACK, OU); // NOLINT
+    static constexpr ColoredPiece W_OU = to_board_piece(WHITE, OU); // NOLINT
 };
 
 } // namespace vshogi

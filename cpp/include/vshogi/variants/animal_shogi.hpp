@@ -25,24 +25,24 @@ enum PieceTypeEnum : std::uint8_t
     GI, //!< Giraffe (Limited Rook)
     LI, //!< Lion (King)
     HE, //!< Hen (Promoted Pawn)
-    NA = 0b0111, // Not available.
+    NA, // Not available.
 
     OU = LI,
 };
 
-enum BoardPieceTypeEnum : std::uint8_t
+enum ColoredPieceEnum : std::uint8_t
 {
-    B_CH = CH, //!< Black Chick (Pawn)
-    B_EL = EL, //!< Black Elephant (Limited Bishop)
-    B_GI = GI, //!< Black Giraffe (Limited Rook)
-    B_LI = LI, //!< Black Lion (King)
-    B_HE = HE, //!< Black Hen (Promoted Pawn)
-    W_CH = 0b1000 + CH, //!< White Chick (Pawn)
-    W_EL = 0b1000 + EL, //!< White Elephant (Limited Bishop)
-    W_GI = 0b1000 + GI, //!< White Giraffe (Limited Rook)
-    W_LI = 0b1000 + LI, //!< White Lion (King)
-    W_HE = 0b1000 + HE, //!< White Hen (Promoted Pawn)
-    VOID = 0b1111, //!< Empty square.
+    B_CH, //!< Black Chick (Pawn)
+    B_EL, //!< Black Elephant (Limited Bishop)
+    B_GI, //!< Black Giraffe (Limited Rook)
+    B_LI, //!< Black Lion (King)
+    B_HE, //!< Black Hen (Promoted Pawn)
+    W_CH, //!< White Chick (Pawn)
+    W_EL, //!< White Elephant (Limited Bishop)
+    W_GI, //!< White Giraffe (Limited Rook)
+    W_LI, //!< White Lion (King)
+    W_HE, //!< White Hen (Promoted Pawn)
+    VOID, //!< Empty square.
 };
 
 /**
@@ -89,7 +89,6 @@ struct Config
     // clang-format off
     static constexpr uint num_piece_types = 5; //!< CH, EL, GI, LI, HE
     static constexpr uint num_stand_piece_types = 3; //!< CH, EL, GI
-    static constexpr uint color_bit = 3; //!< ____ *___
     static constexpr uint num_files = 3; //!< A, B, C
     static constexpr uint num_ranks = 4; //!< 1, 2, 3, 4
     static constexpr uint num_promotion_ranks = 1;
@@ -114,11 +113,12 @@ struct Config
 
     Config() = delete;
     using PieceType = PieceTypeEnum;
-    using BoardPieceType = BoardPieceTypeEnum;
+    using ColoredPiece = ColoredPieceEnum;
     using Square = SquareEnum;
     using File = FileEnum;
     using Rank = RankEnum;
     static constexpr uint num_squares = num_files * num_ranks;
+    static constexpr uint num_colored_piece_types = 2 * num_piece_types;
 };
 
 using Pieces = vshogi::Pieces<Config>;
@@ -158,8 +158,8 @@ namespace internal
 
 inline ResultEnum move_result(
     const Move move,
-    const BoardPieceTypeEnum moving,
-    const BoardPieceTypeEnum captured)
+    const ColoredPieceEnum moving,
+    const ColoredPieceEnum captured)
 {
     if (captured == B_LI)
         return WHITE_WIN;
@@ -247,7 +247,7 @@ inline char animal_shogi::Pieces::to_char(const animal_shogi::PieceTypeEnum& p)
 
 template <>
 inline void animal_shogi::Pieces::append_sfen(
-    const animal_shogi::BoardPieceTypeEnum& p, std::string& out)
+    const animal_shogi::ColoredPieceEnum& p, std::string& out)
 {
     constexpr char table[] = {'c', 'e', 'g', 'l', 'h'};
     static_assert(0 == animal_shogi::CH);
@@ -422,8 +422,7 @@ inline animal_shogi::BitBoard
 
 template <>
 inline animal_shogi::BitBoard animal_shogi::BitBoard::get_attacks_by(
-    const animal_shogi::BoardPieceTypeEnum& p,
-    const animal_shogi::SquareEnum& sq)
+    const animal_shogi::ColoredPieceEnum& p, const animal_shogi::SquareEnum& sq)
 {
     using namespace animal_shogi;
     switch (p) {
@@ -451,7 +450,7 @@ inline animal_shogi::BitBoard animal_shogi::BitBoard::get_attacks_by(
 
 template <>
 inline animal_shogi::BitBoard animal_shogi::BitBoard::get_attacks_by(
-    const animal_shogi::BoardPieceTypeEnum& p,
+    const animal_shogi::ColoredPieceEnum& p,
     const animal_shogi::SquareEnum& sq,
     const animal_shogi::BitBoard&)
 {
@@ -482,16 +481,16 @@ inline std::uint64_t animal_shogi::Board::zobrist_table
     = {};
 
 template <>
-inline animal_shogi::BoardPieceTypeEnum animal_shogi::Board::apply(
+inline animal_shogi::ColoredPieceEnum animal_shogi::Board::apply(
     const animal_shogi::SquareEnum& dst,
     const animal_shogi::SquareEnum& src,
     const bool&,
     std::uint64_t* const hash)
 {
-    BoardPieceType moving_piece = place_piece_on(src, VOID);
+    ColoredPiece moving_piece = place_piece_on(src, VOID);
     if (hash != nullptr) {
-        *hash ^= zobrist_table[src][to_index(VOID)];
-        *hash ^= zobrist_table[src][to_index(moving_piece)];
+        *hash ^= zobrist_table[src][VOID];
+        *hash ^= zobrist_table[src][moving_piece];
     }
     if (!BitBoardType::get_attacks_by(moving_piece, dst).any())
         moving_piece = PHelper::promote_nocheck(moving_piece);

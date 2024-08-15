@@ -103,7 +103,7 @@ void export_pieces(py::module& m)
         .value("UM", js::UM)
         .value("RY", js::RY)
         .value("NA", js::NA);
-    py::enum_<js::BoardPieceTypeEnum>(m, "BoardPiece")
+    py::enum_<js::ColoredPieceEnum>(m, "BoardPiece")
         .value("B_FU", js::B_FU)
         .value("B_KE", js::B_KE)
         .value("B_GI", js::B_GI)

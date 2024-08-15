@@ -196,7 +196,7 @@ void export_pieces(py::module& m)
         .value("RY", sg::RY)
         .value("NA", sg::NA);
 
-    py::enum_<sg::BoardPieceTypeEnum>(m, "BoardPiece")
+    py::enum_<sg::ColoredPieceEnum>(m, "BoardPiece")
         .value("B_FU", sg::B_FU)
         .value("B_KY", sg::B_KY)
         .value("B_KE", sg::B_KE)

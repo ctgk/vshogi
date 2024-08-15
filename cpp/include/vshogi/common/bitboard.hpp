@@ -15,7 +15,7 @@ template <class Config>
 class BitBoard
 {
 private:
-    using BoardPiece = typename Config::BoardPieceType;
+    using BoardPiece = typename Config::ColoredPiece;
     using Square = typename Config::Square;
     using UInt = typename Config::BaseTypeBitBoard;
     static constexpr uint num_squares = Config::num_squares;

@@ -31,38 +31,38 @@ enum PieceTypeEnum : std::uint8_t
     NG, //!< Nari-Gin (Promoted Silver)
     UM, //!< Uma (Promoted Bishop)
     RY, //!< Ryu (Promoted Rook)
-    NA = 0b01111, //!< NA
+    NA, //!< NA
 };
 
-enum BoardPieceTypeEnum : std::uint8_t
+enum ColoredPieceEnum : std::uint8_t
 {
-    B_FU = FU, //!< Black Fu (Pawn)
-    B_KE = KE, //!< Black Kei (Knight)
-    B_GI = GI, //!< Black Gin (Silver)
-    B_KA = KA, //!< Black Kaku (Bishop)
-    B_HI = HI, //!< Black Hisha (Rook)
-    B_KI = KI, //!< Black Kin (Gold)
-    B_OU = OU, //!< Black Ou, Gyoku (King)
-    B_TO = TO, //!< Black Tokin (Promoted Pawn)
-    B_NK = NK, //!< Black Nari-Kei (Promoted Knight)
-    B_NG = NG, //!< Black Nari-Gin (Promoted Silver)
-    B_UM = UM, //!< Black Uma (Promoted Bishop)
-    B_RY = RY, //!< Black Ryu (Promoted Rook)
+    B_FU, //!< Black Fu (Pawn)
+    B_KE, //!< Black Kei (Knight)
+    B_GI, //!< Black Gin (Silver)
+    B_KA, //!< Black Kaku (Bishop)
+    B_HI, //!< Black Hisha (Rook)
+    B_KI, //!< Black Kin (Gold)
+    B_OU, //!< Black Ou, Gyoku (King)
+    B_TO, //!< Black Tokin (Promoted Pawn)
+    B_NK, //!< Black Nari-Kei (Promoted Knight)
+    B_NG, //!< Black Nari-Gin (Promoted Silver)
+    B_UM, //!< Black Uma (Promoted Bishop)
+    B_RY, //!< Black Ryu (Promoted Rook)
 
-    W_FU = 0b10000 + FU, //!< White Fu (Pawn)
-    W_KE = 0b10000 + KE, //!< White Kei (Knight)
-    W_GI = 0b10000 + GI, //!< White Gin (Silver)
-    W_KA = 0b10000 + KA, //!< White Kaku (Bishop)
-    W_HI = 0b10000 + HI, //!< White Hisha (Rook)
-    W_KI = 0b10000 + KI, //!< White Kin (Gold)
-    W_OU = 0b10000 + OU, //!< White Ou, Gyoku (King)
-    W_TO = 0b10000 + TO, //!< White Tokin (Promoted Pawn)
-    W_NK = 0b10000 + NK, //!< White Nari-Kei (Promoted Knight)
-    W_NG = 0b10000 + NG, //!< White Nari-Gin (Promoted Silver)
-    W_UM = 0b10000 + UM, //!< White Uma (Promoted Bishop)
-    W_RY = 0b10000 + RY, //!< White Ryu (Promoted Rook)
+    W_FU, //!< White Fu (Pawn)
+    W_KE, //!< White Kei (Knight)
+    W_GI, //!< White Gin (Silver)
+    W_KA, //!< White Kaku (Bishop)
+    W_HI, //!< White Hisha (Rook)
+    W_KI, //!< White Kin (Gold)
+    W_OU, //!< White Ou, Gyoku (King)
+    W_TO, //!< White Tokin (Promoted Pawn)
+    W_NK, //!< White Nari-Kei (Promoted Knight)
+    W_NG, //!< White Nari-Gin (Promoted Silver)
+    W_UM, //!< White Uma (Promoted Bishop)
+    W_RY, //!< White Ryu (Promoted Rook)
 
-    VOID = 0b11111, //!< Empty Square
+    VOID, //!< Empty Square
 };
 
 /**
@@ -129,7 +129,6 @@ struct Config
     // clang-format off
     static constexpr uint num_piece_types = 12; // FU, KE, GI, KI, KA, HI, OU, TO, NK, NG, UM, RY
     static constexpr uint num_stand_piece_types = 6; // FU, KE, GI, KI, KA, HI
-    static constexpr uint color_bit = 4; // ___* ____
     static constexpr uint num_files = 6; // 1, 2, 3, 4, 5, 6
     static constexpr uint num_ranks = 6; // A, B, C, D, E, F
     static constexpr uint num_promotion_ranks = 2;
@@ -157,11 +156,12 @@ struct Config
 
     Config() = delete;
     using PieceType = PieceTypeEnum;
-    using BoardPieceType = BoardPieceTypeEnum;
+    using ColoredPiece = ColoredPieceEnum;
     using Square = SquareEnum;
     using File = FileEnum;
     using Rank = RankEnum;
     static constexpr uint num_squares = num_files * num_ranks;
+    static constexpr uint num_colored_piece_types = 2 * num_piece_types;
 };
 
 using Pieces = vshogi::Pieces<Config>;
@@ -316,7 +316,7 @@ inline constexpr bool vshogi::judkins_shogi::Pieces::is_promotable(
 
 template <>
 inline bool vshogi::judkins_shogi::Pieces::is_ranging_to(
-    const vshogi::judkins_shogi::BoardPieceTypeEnum& p, const DirectionEnum& d)
+    const vshogi::judkins_shogi::ColoredPieceEnum& p, const DirectionEnum& d)
 {
     using namespace vshogi::judkins_shogi;
     const auto base = demote(to_piece_type(p));
@@ -541,7 +541,7 @@ inline judkins_shogi::BitBoard
 
 template <>
 inline judkins_shogi::BitBoard judkins_shogi::BitBoard::get_attacks_by(
-    const vshogi::judkins_shogi::BoardPieceTypeEnum& p,
+    const vshogi::judkins_shogi::ColoredPieceEnum& p,
     const vshogi::judkins_shogi::SquareEnum& sq)
 {
     using namespace vshogi::judkins_shogi;
@@ -590,7 +590,7 @@ inline judkins_shogi::BitBoard judkins_shogi::BitBoard::get_attacks_by(
 
 template <>
 inline judkins_shogi::BitBoard judkins_shogi::BitBoard::get_attacks_by(
-    const vshogi::judkins_shogi::BoardPieceTypeEnum& p,
+    const vshogi::judkins_shogi::ColoredPieceEnum& p,
     const vshogi::judkins_shogi::SquareEnum& sq,
     const vshogi::judkins_shogi::BitBoard& occupied)
 {

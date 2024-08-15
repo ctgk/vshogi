@@ -79,7 +79,7 @@ private:
     using Square = typename Config::Square;
     using File = typename Config::File;
     using PieceType = typename Config::PieceType;
-    using BoardPieceType = typename Config::BoardPieceType;
+    using ColoredPiece = typename Config::ColoredPiece;
     using PHelper = Pieces<Config>;
     using SHelper = Squares<Config>;
     using BitBoardType = BitBoard<Config>;
@@ -806,7 +806,7 @@ protected:
         }
     }
     void append_legal_moves_by_non_king_ignoring_discovered_check(
-        const BoardPieceType& p,
+        const ColoredPiece& p,
         const BitBoardType& dst_mask,
         const Square& src,
         const bool& promotable,
@@ -847,7 +847,7 @@ protected:
         }
     }
     void append_legal_move_or_moves(
-        const BoardPieceType& p,
+        const ColoredPiece& p,
         const Square& dst,
         const Square& src,
         const bool& promotable,

@@ -82,7 +82,7 @@ void export_pieces(py::module& m)
         .value("RY", ms::RY)
         .value("NA", ms::NA);
 
-    py::enum_<ms::BoardPieceTypeEnum>(m, "BoardPiece")
+    py::enum_<ms::ColoredPieceEnum>(m, "BoardPiece")
         .value("B_FU", ms::B_FU)
         .value("B_GI", ms::B_GI)
         .value("B_KA", ms::B_KA)

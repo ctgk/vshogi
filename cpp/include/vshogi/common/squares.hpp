@@ -18,7 +18,7 @@ struct Squares
 
 private:
     using PieceType = typename Config::PieceType;
-    using BoardPieceType = typename Config::BoardPieceType;
+    using ColoredPiece = typename Config::ColoredPiece;
     using Square = typename Config::Square;
     using File = typename Config::File;
     using Rank = typename Config::Rank;
@@ -162,7 +162,7 @@ public:
         return ranging_squares_to[location][direction];
     }
     static const Square*
-    get_non_ranging_attacks_by(const BoardPieceType& p, const Square& location)
+    get_non_ranging_attacks_by(const ColoredPiece& p, const Square& location)
     {
         if (PHelper::is_ranging_piece(p))
             return nullptr;

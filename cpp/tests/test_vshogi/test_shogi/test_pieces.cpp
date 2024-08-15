@@ -339,7 +339,7 @@ TEST(shogi_pieces, get_attack_directions)
     };
     for (auto pt : EnumIterator<PieceTypeEnum, Config::num_piece_types>()) {
         for (auto&& color : {BLACK, WHITE}) {
-            const BoardPieceTypeEnum p
+            const ColoredPieceEnum p
                 = vshogi::shogi::Pieces::to_board_piece(color, pt);
             const auto actual = vshogi::shogi::Pieces::get_attack_directions(p);
             for (int jj = 0; jj < 9; ++jj) {

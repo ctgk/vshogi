@@ -23,7 +23,7 @@ private:
     using BitBoardType = BitBoard<Config>;
     using MoveType = Move<Config>;
     using PieceType = typename Config::PieceType;
-    using BoardPieceType = typename Config::BoardPieceType;
+    using ColoredPiece = typename Config::ColoredPiece;
     using Square = typename Config::Square;
     using Rank = typename Config::Rank;
     static constexpr auto num_dir = Config::num_dir;
@@ -38,7 +38,7 @@ private:
     static std::uint64_t zobrist_table[num_squares][num_square_states];
 
 private:
-    BoardPieceType m_pieces[num_squares];
+    ColoredPiece m_pieces[num_squares];
     Square m_king_locations[num_colors];
 
 public:
@@ -47,7 +47,7 @@ public:
     {
         set_sfen(sfen);
     }
-    BoardPieceType operator[](const Square& sq) const
+    ColoredPiece operator[](const Square& sq) const
     {
         return m_pieces[sq];
     }
@@ -67,32 +67,32 @@ public:
             append_sfen_rank(static_cast<Rank>(ir), out);
         }
     }
-    BoardPieceType apply(
+    ColoredPiece apply(
         const Square& dst,
-        const BoardPieceType& p,
+        const ColoredPiece& p,
         std::uint64_t* const hash = nullptr)
     {
         if (PHelper::to_piece_type(p) == PHelper::OU)
             m_king_locations[PHelper::get_color(p)] = dst;
-        const BoardPieceType popped = place_piece_on(dst, p);
+        const ColoredPiece popped = place_piece_on(dst, p);
         if (PHelper::to_piece_type(popped) == PHelper::OU)
             m_king_locations[PHelper::get_color(popped)] = SQ_NA;
         if (hash != nullptr) {
-            *hash ^= zobrist_table[dst][to_index(popped)];
-            *hash ^= zobrist_table[dst][to_index(p)];
+            *hash ^= zobrist_table[dst][popped];
+            *hash ^= zobrist_table[dst][p];
         }
         return popped;
     }
-    BoardPieceType apply(
+    ColoredPiece apply(
         const Square& dst,
         const Square& src,
         const bool& promote = false,
         std::uint64_t* const hash = nullptr)
     {
-        BoardPieceType moving_piece = place_piece_on(src, VOID);
+        ColoredPiece moving_piece = place_piece_on(src, VOID);
         if (hash != nullptr) {
-            *hash ^= zobrist_table[src][to_index(VOID)];
-            *hash ^= zobrist_table[src][to_index(moving_piece)];
+            *hash ^= zobrist_table[src][VOID];
+            *hash ^= zobrist_table[src][moving_piece];
         }
         if (promote)
             moving_piece = PHelper::promote_nocheck(moving_piece);
@@ -163,7 +163,7 @@ public:
     {
         std::uint64_t out = static_cast<std::uint64_t>(0);
         for (auto sq = num_squares; sq--;) {
-            out ^= zobrist_table[sq][to_index(m_pieces[sq])];
+            out ^= zobrist_table[sq][m_pieces[sq]];
         }
         return out;
     }
@@ -189,7 +189,7 @@ private:
         if (num_void > 0)
             out += static_cast<char>('0' + num_void);
     }
-    BoardPieceType place_piece_on(const Square& sq, const BoardPieceType& p)
+    ColoredPiece place_piece_on(const Square& sq, const ColoredPiece& p)
     {
         const auto out = m_pieces[sq];
         m_pieces[sq] = p;
@@ -204,14 +204,6 @@ private:
             if (PHelper::to_piece_type(p) == PHelper::OU)
                 m_king_locations[PHelper::get_color(p)] = sq;
         }
-    }
-    static uint to_index(const BoardPieceType& p)
-    {
-        if (p == PHelper::VOID)
-            return 2u * num_piece_types;
-        uint out = PHelper::to_piece_type(p);
-        out += (PHelper::get_color(p) == WHITE) * num_piece_types;
-        return out;
     }
 };
 

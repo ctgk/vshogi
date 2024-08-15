@@ -39,7 +39,7 @@ void export_pieces(py::module& m)
         .value("HE", as::HE)
         .value("NA", as::NA);
 
-    py::enum_<as::BoardPieceTypeEnum>(m, "BoardPiece")
+    py::enum_<as::ColoredPieceEnum>(m, "BoardPiece")
         .value("B_CH", as::B_CH)
         .value("B_EL", as::B_EL)
         .value("B_GI", as::B_GI)

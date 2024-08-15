@@ -79,7 +79,7 @@ public:
 private:
     using PHelper = Pieces<Config>;
     using PieceType = typename Config::PieceType;
-    using BoardPieceType = typename Config::BoardPieceType;
+    using ColoredPiece = typename Config::ColoredPiece;
     static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
     static constexpr uint max_stand_piece_count = Config::max_stand_piece_count;
     static constexpr uint max_sfen_length = Config::max_stand_sfen_length;
@@ -173,7 +173,7 @@ public:
             }
         }
     }
-    BoardPieceType pop_piece_from(
+    ColoredPiece pop_piece_from(
         const ColorEnum& c, const PieceType& pt, std::uint64_t* const hash)
     {
         m_stands[c].subtract(pt);
@@ -196,7 +196,7 @@ public:
      * @param hash Pointer to zobrist hash value.
      */
     void add_captured_piece(
-        const BoardPieceType& captured, std::uint64_t* const hash = nullptr)
+        const ColoredPiece& captured, std::uint64_t* const hash = nullptr)
     {
         if ((captured == PHelper::VOID)
             || (PHelper::to_piece_type(captured) == PHelper::OU))
