@@ -107,6 +107,7 @@ enum RankEnum : uint
 struct Config
 {
     // clang-format off
+    static constexpr char piece_type_to_char[] = "psbrgk";
     static constexpr uint num_piece_types = 10; // FU, GI, KI, KA, HI, OU, TO, NG, UM, RY
     static constexpr uint num_stand_piece_types = 5; // FU, GI, KI, KA, HI
     static constexpr uint num_files = 5; // 1, 2, 3, 4, 5
@@ -229,43 +230,6 @@ inline const DirectionEnum
 {DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_RY
         // clang-format on
 };
-
-template <>
-inline vshogi::minishogi::PieceTypeEnum
-vshogi::minishogi::Pieces::to_piece_type(const char c)
-{
-    using namespace vshogi::minishogi;
-    switch (std::tolower(c)) {
-    case 'p':
-        return FU;
-    case 's':
-        return GI;
-    case 'b':
-        return KA;
-    case 'r':
-        return HI;
-    case 'g':
-        return KI;
-    case 'k':
-        return OU;
-    default:
-        return NA;
-    }
-}
-
-template <>
-inline char
-vshogi::minishogi::Pieces::to_char(const vshogi::minishogi::PieceTypeEnum& p)
-{
-    constexpr char table[] = {'p', 's', 'b', 'r', 'g', 'k'};
-    static_assert(0 == vshogi::minishogi::FU);
-    static_assert(1 == vshogi::minishogi::GI);
-    static_assert(2 == vshogi::minishogi::KA);
-    static_assert(3 == vshogi::minishogi::HI);
-    static_assert(4 == vshogi::minishogi::KI);
-    static_assert(5 == vshogi::minishogi::OU);
-    return table[p];
-}
 
 template <>
 inline constexpr bool vshogi::minishogi::Pieces::is_promotable(

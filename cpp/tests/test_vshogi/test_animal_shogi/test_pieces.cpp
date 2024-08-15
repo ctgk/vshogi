@@ -9,6 +9,32 @@ using namespace vshogi::animal_shogi;
 
 TEST_GROUP(animal_shogi_pieces){};
 
+TEST(animal_shogi_pieces, to_piece_type)
+{
+    CHECK_EQUAL(CH, Pieces::to_piece_type('c'));
+    CHECK_EQUAL(EL, Pieces::to_piece_type('e'));
+    CHECK_EQUAL(GI, Pieces::to_piece_type('g'));
+    CHECK_EQUAL(LI, Pieces::to_piece_type('l'));
+    CHECK_EQUAL(HE, Pieces::to_piece_type('h'));
+    CHECK_EQUAL(NA, Pieces::to_piece_type('a'));
+
+    CHECK_EQUAL(CH, Pieces::to_piece_type('C'));
+    CHECK_EQUAL(EL, Pieces::to_piece_type('E'));
+    CHECK_EQUAL(GI, Pieces::to_piece_type('G'));
+    CHECK_EQUAL(LI, Pieces::to_piece_type('L'));
+    CHECK_EQUAL(HE, Pieces::to_piece_type('H'));
+    CHECK_EQUAL(NA, Pieces::to_piece_type('A'));
+}
+
+TEST(animal_shogi_pieces, to_char)
+{
+    CHECK_EQUAL('c', Pieces::to_char(CH));
+    CHECK_EQUAL('e', Pieces::to_char(EL));
+    CHECK_EQUAL('g', Pieces::to_char(GI));
+    CHECK_EQUAL('l', Pieces::to_char(LI));
+    CHECK_EQUAL('h', Pieces::to_char(HE));
+}
+
 TEST(animal_shogi_pieces, get_attack_directions)
 {
     {

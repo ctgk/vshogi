@@ -151,6 +151,7 @@ enum FileEnum : uint
 struct Config
 {
     // clang-format off
+    static constexpr char piece_type_to_char[] = "plnsbrgk";
     static constexpr uint num_piece_types = 14; // FU, KY, KE, GI, KI, KA, HI, OU, TO, NY, NK, NG, UM, RY
     static constexpr uint num_stand_piece_types = 7; // FU, KY, KE, GI, KI, KA, HI
     static constexpr uint num_files = 9; // 1, 2, 3, 4, 5, 6, 7, 8, 9
@@ -347,47 +348,6 @@ inline const DirectionEnum
 {DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_RY
         // clang-format on
 };
-
-template <>
-inline vshogi::shogi::PieceTypeEnum
-vshogi::shogi::Pieces::to_piece_type(const char c)
-{
-    switch (std::tolower(c)) {
-    case 'p':
-        return vshogi::shogi::FU;
-    case 'l':
-        return vshogi::shogi::KY;
-    case 'n':
-        return vshogi::shogi::KE;
-    case 's':
-        return vshogi::shogi::GI;
-    case 'b':
-        return vshogi::shogi::KA;
-    case 'r':
-        return vshogi::shogi::HI;
-    case 'g':
-        return vshogi::shogi::KI;
-    case 'k':
-        return vshogi::shogi::OU;
-    default:
-        return vshogi::shogi::NA;
-    }
-}
-
-template <>
-inline char shogi::Pieces::to_char(const shogi::PieceTypeEnum& p)
-{
-    constexpr char table[] = {'p', 'l', 'n', 's', 'b', 'r', 'g', 'k'};
-    static_assert(0 == shogi::FU);
-    static_assert(1 == shogi::KY);
-    static_assert(2 == shogi::KE);
-    static_assert(3 == shogi::GI);
-    static_assert(4 == shogi::KA);
-    static_assert(5 == shogi::HI);
-    static_assert(6 == shogi::KI);
-    static_assert(7 == shogi::OU);
-    return table[p];
-}
 
 template <>
 inline constexpr bool

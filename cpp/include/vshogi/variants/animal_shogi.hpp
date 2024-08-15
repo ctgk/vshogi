@@ -88,6 +88,7 @@ enum RankEnum : uint
 struct Config
 {
     // clang-format off
+    static constexpr char piece_type_to_char[] = "ceglh";
     static constexpr uint num_piece_types = 5; //!< CH, EL, GI, LI, HE
     static constexpr uint num_stand_piece_types = 3; //!< CH, EL, GI
     static constexpr uint num_files = 3; //!< A, B, C
@@ -200,27 +201,6 @@ inline const DirectionEnum
 };
 
 template <>
-inline animal_shogi::PieceTypeEnum
-animal_shogi::Pieces::to_piece_type(const char c)
-{
-    using namespace animal_shogi;
-    switch (std::tolower(c)) {
-    case 'c':
-        return CH;
-    case 'e':
-        return EL;
-    case 'g':
-        return GI;
-    case 'h':
-        return HE;
-    case 'l':
-        return LI;
-    default:
-        return NA;
-    }
-}
-
-template <>
 constexpr bool
 animal_shogi::Pieces::is_promotable(const animal_shogi::PieceTypeEnum& pt)
 {
@@ -235,31 +215,15 @@ animal_shogi::Pieces::is_ranging_piece(const animal_shogi::PieceTypeEnum&)
 }
 
 template <>
-inline char animal_shogi::Pieces::to_char(const animal_shogi::PieceTypeEnum& p)
-{
-    constexpr char table[] = {'c', 'e', 'g', 'l', 'h'};
-    static_assert(0 == animal_shogi::CH);
-    static_assert(1 == animal_shogi::EL);
-    static_assert(2 == animal_shogi::GI);
-    static_assert(3 == animal_shogi::LI);
-    static_assert(4 == animal_shogi::HE);
-    return table[p];
-}
-
-template <>
 inline void animal_shogi::Pieces::append_sfen(
     const animal_shogi::ColoredPieceEnum& p, std::string& out)
 {
-    constexpr char table[] = {'c', 'e', 'g', 'l', 'h'};
-    static_assert(0 == animal_shogi::CH);
-    static_assert(1 == animal_shogi::EL);
-    static_assert(2 == animal_shogi::GI);
-    static_assert(3 == animal_shogi::LI);
-    static_assert(4 == animal_shogi::HE);
-    if (p != VOID)
-        out += (get_color(p) == BLACK)
-                   ? static_cast<char>(std::toupper(static_cast<int>(table[p])))
-                   : table[to_piece_type(p)];
+    const auto color = get_color(p);
+    const auto pt = to_piece_type(p);
+    char c = to_char(pt);
+    if (color == BLACK)
+        c = static_cast<char>(std::toupper(static_cast<int>(c)));
+    out += c;
 }
 
 template <>

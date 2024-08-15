@@ -127,6 +127,7 @@ enum FileEnum : uint
 struct Config
 {
     // clang-format off
+    static constexpr char piece_type_to_char[] = "pnsbrgk";
     static constexpr uint num_piece_types = 12; // FU, KE, GI, KI, KA, HI, OU, TO, NK, NG, UM, RY
     static constexpr uint num_stand_piece_types = 6; // FU, KE, GI, KI, KA, HI
     static constexpr uint num_files = 6; // 1, 2, 3, 4, 5, 6
@@ -266,46 +267,6 @@ inline const DirectionEnum
 {DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_RY
         // clang-format on
 };
-
-template <>
-inline vshogi::judkins_shogi::PieceTypeEnum
-vshogi::judkins_shogi::Pieces::to_piece_type(const char c)
-{
-    using namespace vshogi::judkins_shogi;
-    switch (std::tolower(c)) {
-    case 'p':
-        return FU;
-    case 'n':
-        return KE;
-    case 's':
-        return GI;
-    case 'b':
-        return KA;
-    case 'r':
-        return HI;
-    case 'g':
-        return KI;
-    case 'k':
-        return OU;
-    default:
-        return NA;
-    }
-}
-
-template <>
-inline char vshogi::judkins_shogi::Pieces::to_char(
-    const vshogi::judkins_shogi::PieceTypeEnum& p)
-{
-    constexpr char table[] = {'p', 'n', 's', 'b', 'r', 'g', 'k'};
-    static_assert(0 == vshogi::judkins_shogi::FU);
-    static_assert(1 == vshogi::judkins_shogi::KE);
-    static_assert(2 == vshogi::judkins_shogi::GI);
-    static_assert(3 == vshogi::judkins_shogi::KA);
-    static_assert(4 == vshogi::judkins_shogi::HI);
-    static_assert(5 == vshogi::judkins_shogi::KI);
-    static_assert(6 == vshogi::judkins_shogi::OU);
-    return table[p];
-}
 
 template <>
 inline constexpr bool vshogi::judkins_shogi::Pieces::is_promotable(

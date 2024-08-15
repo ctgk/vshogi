@@ -51,7 +51,16 @@ public:
                    ? static_cast<PieceType>(p)
                    : static_cast<PieceType>(p - num_piece_types);
     }
-    static PieceType to_piece_type(const char c);
+    static PieceType to_piece_type(char c)
+    {
+        c = static_cast<char>(std::tolower(static_cast<int>(c)));
+        const char* p = Config::piece_type_to_char;
+        for (; *p != '\0'; ++p) {
+            if (*p == c)
+                return static_cast<PieceType>(p - Config::piece_type_to_char);
+        }
+        return NA;
+    }
     static constexpr ColoredPiece
     to_board_piece(const ColorEnum& c, const PieceType& p)
     {
@@ -59,7 +68,10 @@ public:
             return VOID;
         return static_cast<ColoredPiece>(c * num_piece_types + p);
     }
-    static char to_char(const PieceType& p);
+    static constexpr char to_char(const PieceType& pt_demoted)
+    {
+        return Config::piece_type_to_char[pt_demoted];
+    }
 
     static constexpr bool is_promotable(const PieceType& p);
     static constexpr bool is_promotable(const ColoredPiece& p)

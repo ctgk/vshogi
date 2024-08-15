@@ -243,6 +243,26 @@ TEST(shogi_pieces, to_piece_type)
     CHECK_EQUAL(RY, Pieces::to_piece_type(W_RY));
 
     CHECK_EQUAL(NA, Pieces::to_piece_type(VOID));
+
+    CHECK_EQUAL(FU, Pieces::to_piece_type('p'));
+    CHECK_EQUAL(KY, Pieces::to_piece_type('l'));
+    CHECK_EQUAL(KE, Pieces::to_piece_type('n'));
+    CHECK_EQUAL(GI, Pieces::to_piece_type('s'));
+    CHECK_EQUAL(KA, Pieces::to_piece_type('b'));
+    CHECK_EQUAL(HI, Pieces::to_piece_type('r'));
+    CHECK_EQUAL(KI, Pieces::to_piece_type('g'));
+    CHECK_EQUAL(OU, Pieces::to_piece_type('k'));
+    CHECK_EQUAL(NA, Pieces::to_piece_type('a'));
+
+    CHECK_EQUAL(FU, Pieces::to_piece_type('P'));
+    CHECK_EQUAL(KY, Pieces::to_piece_type('L'));
+    CHECK_EQUAL(KE, Pieces::to_piece_type('N'));
+    CHECK_EQUAL(GI, Pieces::to_piece_type('S'));
+    CHECK_EQUAL(KA, Pieces::to_piece_type('B'));
+    CHECK_EQUAL(HI, Pieces::to_piece_type('R'));
+    CHECK_EQUAL(KI, Pieces::to_piece_type('G'));
+    CHECK_EQUAL(OU, Pieces::to_piece_type('K'));
+    CHECK_EQUAL(NA, Pieces::to_piece_type('A'));
 }
 
 TEST(shogi_pieces, to_board_piece)
@@ -279,6 +299,18 @@ TEST(shogi_pieces, to_board_piece)
 
     CHECK_EQUAL(VOID, Pieces::to_board_piece(vshogi::BLACK, NA));
     CHECK_EQUAL(VOID, Pieces::to_board_piece(vshogi::WHITE, NA));
+}
+
+TEST(shogi_pieces, to_char)
+{
+    CHECK_EQUAL('p', Pieces::to_char(FU));
+    CHECK_EQUAL('l', Pieces::to_char(KY));
+    CHECK_EQUAL('n', Pieces::to_char(KE));
+    CHECK_EQUAL('s', Pieces::to_char(GI));
+    CHECK_EQUAL('b', Pieces::to_char(KA));
+    CHECK_EQUAL('r', Pieces::to_char(HI));
+    CHECK_EQUAL('g', Pieces::to_char(KI));
+    CHECK_EQUAL('k', Pieces::to_char(OU));
 }
 
 TEST(shogi_pieces, append_sfen)
