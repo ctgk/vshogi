@@ -28,6 +28,8 @@ uint num_pieces(const State<Config>& s, const ColorEnum& c)
     using SHelper = Squares<Config>;
     using PHelper = Pieces<Config>;
     using Square = typename Config::Square;
+    using PieceType = typename Config::PieceType;
+    constexpr auto num_sp_types = Config::num_stand_piece_types;
     const auto& board = s.get_board();
     const auto& stand = s.get_stand(c);
     uint out = 0u;
@@ -38,9 +40,9 @@ uint num_pieces(const State<Config>& s, const ColorEnum& c)
         if (PHelper::get_color(p) == c)
             out += 1U;
     }
-    for (auto& pt : PHelper::stand_piece_array) {
+
+    for (auto pt = static_cast<PieceType>(num_sp_types); pt--;)
         out += stand.count(pt);
-    }
     return out;
 }
 
@@ -50,6 +52,8 @@ uint total_point(const State<Config>& s, const ColorEnum& c)
     using SHelper = Squares<Config>;
     using PHelper = Pieces<Config>;
     using Square = typename Config::Square;
+    using PieceType = typename Config::PieceType;
+    constexpr auto num_sp_types = Config::num_stand_piece_types;
     uint out = 0u;
     const auto& board = s.get_board();
     const auto& stand = s.get_stand(c);
@@ -60,7 +64,7 @@ uint total_point(const State<Config>& s, const ColorEnum& c)
         if (PHelper::get_color(p) == c)
             out += PHelper::get_point(p);
     }
-    for (auto& pt : PHelper::stand_piece_array) {
+    for (auto pt = static_cast<PieceType>(num_sp_types); pt--;) {
         out += stand.count(pt) * PHelper::get_point(pt);
     }
     return out;
@@ -74,6 +78,7 @@ class Game
 private:
     using Square = typename Config::Square;
     using File = typename Config::File;
+    using PieceType = typename Config::PieceType;
     using BoardPieceType = typename Config::BoardPieceType;
     using PHelper = Pieces<Config>;
     using SHelper = Squares<Config>;
@@ -583,7 +588,7 @@ protected:
                 out += PHelper::get_point(board[sq]);
         }
         const auto& stand = get_stand(c);
-        for (auto& pt : PHelper::stand_piece_array) {
+        for (auto pt = static_cast<PieceType>(num_stand_piece_types); pt--;) {
             out += stand.count(pt) * PHelper::get_point(pt);
         }
         return out;
@@ -944,7 +949,7 @@ protected:
         const auto& stand = get_stand(turn);
         const auto enemy_king_sq = board.get_king_location(~turn);
         const Square* sq_ptr = nullptr;
-        for (auto&& pt : PHelper::stand_piece_array) {
+        for (auto pt = static_cast<PieceType>(num_stand_piece_types); pt--;) {
             if (!stand.exist(pt))
                 continue;
             const auto p = PHelper::to_board_piece(turn, pt);
@@ -972,7 +977,7 @@ protected:
         const auto turn = get_turn();
         const auto& stand = get_stand(turn);
         const auto& occupied = m_occupied[2];
-        for (auto&& pt : PHelper::stand_piece_array) {
+        for (auto pt = static_cast<PieceType>(num_stand_piece_types); pt--;) {
             if (!stand.exist(pt))
                 continue;
             for (auto sq = static_cast<Square>(num_squares); sq--;) {
@@ -996,7 +1001,7 @@ protected:
         const auto turn = get_turn();
         const auto enemy_king_sq = get_board().get_king_location(~turn);
         const auto& stand = get_stand(turn);
-        for (auto&& pt : PHelper::stand_piece_array) {
+        for (auto pt = static_cast<PieceType>(num_stand_piece_types); pt--;) {
             if (!stand.exist(pt))
                 continue;
             const auto attacks = BitBoardType::get_attacks_by(

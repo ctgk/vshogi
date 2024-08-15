@@ -30,16 +30,21 @@ inline void export_board(pybind11::module& m)
                 &Board::operator[], pybind11::const_));
 }
 
-template <class Stand, class Pieces>
+template <class Config>
 inline void export_piece_stand(pybind11::module& m)
 {
+    using Stand = vshogi::Stand<Config>;
+    using Pieces = vshogi::Pieces<Config>;
+    using PieceType = typename Config::PieceType;
     pybind11::class_<Stand>(m, "Stand")
         .def("count", &Stand::count)
         .def("any", &Stand::any)
         .def("to_dict", [](const Stand& self) -> pybind11::dict {
             pybind11::dict out;
-            for (auto p : Pieces::stand_piece_array)
+            for (uint ii = 0; ii < Config::num_stand_piece_types; ++ii) {
+                const auto p = static_cast<PieceType>(ii);
                 out[pybind11::cast(p)] = self.count(p);
+            }
             return out;
         });
 }
@@ -387,7 +392,7 @@ void export_classes(pybind11::module& m)
     using GameType = vshogi::Game<Config>;
 
     export_board<vshogi::Board<Config>, typename Config::Square>(m);
-    export_piece_stand<vshogi::Stand<Config>, vshogi::Pieces<Config>>(m);
+    export_piece_stand<Config>(m);
     export_move<Config>(m);
     export_state<Config>(m);
     export_game<Config>(m);

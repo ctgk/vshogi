@@ -150,7 +150,7 @@ public:
         float num_pieces_curr[sp_types] = {};
         float num_pieces_next[sp_types] = {};
         for (uint k = sp_types; k--;) {
-            const auto p = PHelper::stand_piece_array[k];
+            const auto p = static_cast<PieceType>(k);
             num_pieces_curr[k] = static_cast<float>(stand_curr.count(p));
             num_pieces_next[k] = static_cast<float>(stand_next.count(p));
         }

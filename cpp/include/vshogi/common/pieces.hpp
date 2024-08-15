@@ -35,9 +35,6 @@ public:
 
     Pieces() = delete;
 
-    static const PieceType piece_array[num_piece_types];
-    static const PieceType stand_piece_array[num_stand_piece_types];
-
     /**
      * @brief Get the color of a board piece.
      * @note Passing VOID returns WHITE.

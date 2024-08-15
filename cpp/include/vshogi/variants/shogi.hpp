@@ -2,6 +2,7 @@
 #define VSHOGI_VARIANTS_SHOGI_HPP
 
 #include <cstdint>
+#include <type_traits>
 
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/board.hpp"
@@ -305,10 +306,12 @@ constexpr BitBoard bb_rankh = bb_1h | bb_2h | bb_3h | bb_4h | bb_5h | bb_6h | bb
 constexpr BitBoard bb_ranki = bb_1i | bb_2i | bb_3i | bb_4i | bb_5i | bb_6i | bb_7i | bb_8i | bb_9i;
 // clang-format on
 
-inline SquareEnum operator--(SquareEnum& self, int)
+template <class E>
+inline typename std::enable_if<std::is_enum<E>::value, E>::type
+operator--(E& self, int)
 {
     const auto out = self;
-    self = static_cast<SquareEnum>(static_cast<int>(self) - 1);
+    self = static_cast<E>(static_cast<int>(self) - 1);
     return out;
 }
 
@@ -352,34 +355,6 @@ inline const DirectionEnum
 {DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_RY
         // clang-format on
 };
-
-template <>
-inline const vshogi::shogi::PieceTypeEnum vshogi::shogi::Pieces::piece_array[]
-    = {vshogi::shogi::FU,
-       vshogi::shogi::KY,
-       vshogi::shogi::KE,
-       vshogi::shogi::GI,
-       vshogi::shogi::KA,
-       vshogi::shogi::HI,
-       vshogi::shogi::KI,
-       vshogi::shogi::OU,
-       vshogi::shogi::TO,
-       vshogi::shogi::NY,
-       vshogi::shogi::NK,
-       vshogi::shogi::NG,
-       vshogi::shogi::UM,
-       vshogi::shogi::RY};
-
-template <>
-inline const vshogi::shogi::PieceTypeEnum
-    vshogi::shogi::Pieces::stand_piece_array[]
-    = {vshogi::shogi::FU,
-       vshogi::shogi::KY,
-       vshogi::shogi::KE,
-       vshogi::shogi::GI,
-       vshogi::shogi::KA,
-       vshogi::shogi::HI,
-       vshogi::shogi::KI};
 
 template <>
 inline vshogi::shogi::PieceTypeEnum

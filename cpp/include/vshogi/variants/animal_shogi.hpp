@@ -2,6 +2,7 @@
 #define VSHOGI_VARIANTS_ANIMAL_SHOGI_HPP
 
 #include <cstdint>
+#include <type_traits>
 
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/board.hpp"
@@ -12,6 +13,7 @@
 #include "vshogi/common/squares.hpp"
 #include "vshogi/common/stand.hpp"
 #include "vshogi/common/state.hpp"
+#include "vshogi/common/utils.hpp"
 
 namespace vshogi::animal_shogi
 {
@@ -150,10 +152,12 @@ constexpr BitBoard bb_filea = BitBoard(0b001001001001);
 constexpr BitBoard bb_fileb = BitBoard(0b010010010010);
 constexpr BitBoard bb_filec = BitBoard(0b100100100100);
 
-inline SquareEnum operator--(SquareEnum& self, int)
+template <class E>
+inline typename std::enable_if<std::is_enum<E>::value, E>::type
+operator--(E& self, int)
 {
     const auto out = self;
-    self = static_cast<SquareEnum>(static_cast<int>(self) - 1);
+    self = static_cast<E>(static_cast<int>(self) - 1);
     return out;
 }
 
@@ -201,19 +205,6 @@ inline const DirectionEnum
 {DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_HE
         // clang-format on
 };
-
-template <>
-inline const animal_shogi::PieceTypeEnum animal_shogi::Pieces::piece_array[]
-    = {animal_shogi::CH,
-       animal_shogi::EL,
-       animal_shogi::GI,
-       animal_shogi::LI,
-       animal_shogi::HE};
-
-template <>
-inline const animal_shogi::PieceTypeEnum
-    animal_shogi::Pieces::stand_piece_array[]
-    = {animal_shogi::CH, animal_shogi::EL, animal_shogi::GI};
 
 template <>
 inline animal_shogi::PieceTypeEnum
@@ -557,7 +548,8 @@ inline void animal_shogi::Game::update_internals()
         for (auto dst = static_cast<Square>(num_squares); dst--;) {
             if (!board.is_empty(dst))
                 continue;
-            for (auto pt : PHelper::stand_piece_array) {
+            for (auto pt = static_cast<PieceType>(num_stand_piece_types);
+                 pt--;) {
                 if (stand.exist(pt))
                     m_legal_moves.emplace_back(MoveType(dst, pt));
             }

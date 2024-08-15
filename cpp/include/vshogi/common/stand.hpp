@@ -218,7 +218,8 @@ public:
     {
         std::uint64_t out = static_cast<std::uint64_t>(0);
         for (auto& c : color_array) {
-            for (auto& pt : PHelper::stand_piece_array) {
+            for (auto pt = static_cast<PieceType>(num_stand_piece_types);
+                 pt--;) {
                 const auto num = m_stands[c].count(pt);
                 out ^= zobrist_table[c][pt][num];
             }
@@ -232,7 +233,8 @@ public:
         std::mt19937_64 rng(dev());
         std::uniform_int_distribution<std::uint64_t> dist;
         for (auto&& c : color_array) {
-            for (auto&& pt : PHelper::stand_piece_array) {
+            for (auto pt = static_cast<PieceType>(num_stand_piece_types);
+                 pt--;) {
                 for (uint num = 0; num < max_stand_piece_count + 1; ++num) {
                     zobrist_table[c][pt][num] = dist(rng);
                 }

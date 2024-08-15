@@ -1,8 +1,8 @@
 #ifndef VSHOGI_VARIANTS_MINISHOGI_HPP
 #define VSHOGI_VARIANTS_MINISHOGI_HPP
 
-#include <array>
 #include <cstdint>
+#include <type_traits>
 
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/board.hpp"
@@ -196,10 +196,12 @@ constexpr BitBoard bb_file3 = bb_3a | bb_3b | bb_3c | bb_3d | bb_3e;
 constexpr BitBoard bb_file4 = bb_4a | bb_4b | bb_4c | bb_4d | bb_4e;
 constexpr BitBoard bb_file5 = bb_5a | bb_5b | bb_5c | bb_5d | bb_5e;
 
-inline SquareEnum operator--(SquareEnum& self, int)
+template <class E>
+inline typename std::enable_if<std::is_enum<E>::value, E>::type
+operator--(E& self, int)
 {
     const auto out = self;
-    self = static_cast<SquareEnum>(static_cast<int>(self) - 1);
+    self = static_cast<E>(static_cast<int>(self) - 1);
     return out;
 }
 
@@ -235,29 +237,6 @@ inline const DirectionEnum
 {DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_RY
         // clang-format on
 };
-
-template <>
-inline const vshogi::minishogi::PieceTypeEnum
-    vshogi::minishogi::Pieces::piece_array[]
-    = {vshogi::minishogi::FU,
-       vshogi::minishogi::GI,
-       vshogi::minishogi::KA,
-       vshogi::minishogi::HI,
-       vshogi::minishogi::KI,
-       vshogi::minishogi::OU,
-       vshogi::minishogi::TO,
-       vshogi::minishogi::NG,
-       vshogi::minishogi::UM,
-       vshogi::minishogi::RY};
-
-template <>
-inline const vshogi::minishogi::PieceTypeEnum
-    vshogi::minishogi::Pieces::stand_piece_array[]
-    = {vshogi::minishogi::FU,
-       vshogi::minishogi::GI,
-       vshogi::minishogi::KA,
-       vshogi::minishogi::HI,
-       vshogi::minishogi::KI};
 
 template <>
 inline vshogi::minishogi::PieceTypeEnum

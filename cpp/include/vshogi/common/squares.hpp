@@ -17,6 +17,7 @@ struct Squares
     Squares() = delete;
 
 private:
+    using PieceType = typename Config::PieceType;
     using BoardPieceType = typename Config::BoardPieceType;
     using Square = typename Config::Square;
     using File = typename Config::File;
@@ -216,7 +217,7 @@ private:
             SQ_NA);
 
         for (uint ii = 0; ii < 2 * num_piece_types; ++ii) {
-            const auto pt = PHelper::piece_array[ii % num_piece_types];
+            const auto pt = static_cast<PieceType>(ii % num_piece_types);
             if (PHelper::is_ranging_piece(pt))
                 continue;
             const ColorEnum c = (ii < num_piece_types) ? BLACK : WHITE;

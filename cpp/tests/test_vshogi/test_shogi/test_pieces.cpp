@@ -338,7 +338,7 @@ TEST(shogi_pieces, get_attack_directions)
         // clang-format on
     };
     for (int ii = Config::num_piece_types; ii--;) {
-        const PieceTypeEnum pt = vshogi::shogi::Pieces::piece_array[ii];
+        const PieceTypeEnum pt = static_cast<PieceTypeEnum>(ii);
         for (auto&& color : {BLACK, WHITE}) {
             const BoardPieceTypeEnum p
                 = vshogi::shogi::Pieces::to_board_piece(color, pt);
