@@ -347,26 +347,60 @@ inline void export_mcts_node(pybind11::module& m)
                     return py::none();
                 return py::cast(*out, py::return_value_policy::reference);
             })
-        .def(
-            "get_action_by_proba_max",
-            [](const Node& self) {
-                Move out{};
-                float max_proba = -1.f;
-                for (const Node* ch = self.get_child(); ch != nullptr;
-                     ch = ch->get_sibling()) {
-                    const auto p = ch->get_proba();
-                    if (p > max_proba) {
-                        max_proba = p;
-                        out = ch->get_action();
-                    }
+        .def("get_action_by_proba_max", [](const Node& self) {
+            Move out{};
+            float max_proba = -1.f;
+            for (const Node* ch = self.get_child(); ch != nullptr;
+                 ch = ch->get_sibling()) {
+                const auto p = ch->get_proba();
+                if (p > max_proba) {
+                    max_proba = p;
+                    out = ch->get_action();
                 }
-                return out;
+            }
+            return out;
+        });
+}
+
+template <class Game, class Move>
+inline void export_mcts_searcher(pybind11::module& m)
+{
+    namespace py = pybind11;
+    using Node = vshogi::engine::mcts::Node<Game, Move>;
+    using Searcher = vshogi::engine::mcts::Searcher<Game, Move>;
+
+    py::class_<Searcher>(m, "MCTS")
+        .def(py::init<const float, const int, const int>())
+        .def(
+            "set_game",
+            [](Searcher& self,
+               const Game& g,
+               const float v,
+               const py::array_t<float>& logits) {
+                self.set_game(g, v, logits.data());
             })
-        .def("get_action_by_visit_max", &Node::get_action_by_visit_max)
+        .def(
+            "select",
+            [](Searcher& self, Game& game) -> py::object {
+                const auto out = self.select(game);
+                if (out == nullptr)
+                    return py::none();
+                return py::cast(*out, py::return_value_policy::reference);
+            })
+        .def("apply", &Searcher::apply)
+        .def(
+            "get_root",
+            [](Searcher& self) -> py::object {
+                const auto out = self.get_root();
+                if (out == nullptr)
+                    return py::none();
+                return py::cast(*out, py::return_value_policy::reference);
+            })
+        .def("get_visit_count", &Searcher::get_visit_count)
+        .def("get_action_by_visit_max", &Searcher::get_action_by_visit_max)
         .def(
             "get_action_by_visit_distribution",
-            &Node::get_action_by_visit_distribution)
-        .def("apply", &Node::apply);
+            &Searcher::get_action_by_visit_distribution);
 }
 
 template <class Game, class Move>
@@ -396,6 +430,7 @@ void export_classes(pybind11::module& m)
     export_move<Config>(m);
     export_state<Config>(m);
     export_game<Config>(m);
+    export_mcts_searcher<GameType, vshogi::Move<Config>>(m);
     export_mcts_node<GameType, vshogi::Move<Config>>(m);
 
     if constexpr (!std::is_same<GameType, vshogi::animal_shogi::Game>::value)

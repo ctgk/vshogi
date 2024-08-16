@@ -59,7 +59,7 @@ def test_dfpn_vertex():
     g = shogi.Game("2k2/5/2gp1/5/2K2 b -")
     engine.set_game(g)
     engine.search(
-        dfpn_searches_at_root=10000,
+        dfpn_searches_at_root=0,
         mcts_searches=2,
         dfpn_searches_at_vertex=100,
     )

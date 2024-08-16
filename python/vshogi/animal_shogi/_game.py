@@ -1,7 +1,7 @@
 import warnings
 
 from vshogi._game import Game as BaseGame
-from vshogi._vshogi.animal_shogi import MctsNode, Move
+from vshogi._vshogi.animal_shogi import MCTS, MctsNode, Move
 from vshogi._vshogi.animal_shogi import Stand
 from vshogi._vshogi.animal_shogi import _Game as _AnimalshogiGame
 
@@ -87,6 +87,10 @@ class Game(BaseGame):
     @classmethod
     def _get_mcts_node_class(cls) -> type:
         return MctsNode
+
+    @classmethod
+    def _get_mcts_searcher_class(cls) -> type:
+        return MCTS
 
     @classmethod
     def _get_dfpn_searcher_class(cls) -> type:

@@ -14,6 +14,7 @@ namespace test_animal_shogi
 
 using namespace vshogi::animal_shogi;
 using Node = vshogi::engine::mcts::Node<Game, Move>;
+using Searcher = vshogi::engine::mcts::Searcher<Game, Move>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
 TEST_GROUP(animal_shogi_node){};
@@ -146,7 +147,8 @@ TEST(animal_shogi_node, explore_two_action)
         CHECK_EQUAL(root.get_child(moves[ii]), actual);
         DOUBLES_EQUAL(expected_q_value[ii], root.get_q_value(), 1e-3f);
         CHECK_TRUE(
-            root.get_action_by_visit_max() == expected_most_selected_moves[ii]);
+            root.get_most_visited_child()->get_action()
+            == expected_most_selected_moves[ii]);
         DOUBLES_EQUAL(
             expected_greedy_q_values[ii], root.get_q_value(100), 1e-2f);
     }
@@ -221,7 +223,8 @@ TEST(animal_shogi_node, explore_two_layer)
         actual->simulate_expand_and_backprop(
             g_copy.get_legal_moves(), g_copy.get_turn(), -0.5f, zeros);
         DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(), 1e-3f);
-        CHECK_TRUE(root.get_action_by_visit_max() == Move(SQ_A3, SQ_A4));
+        CHECK_TRUE(
+            root.get_most_visited_child()->get_action() == Move(SQ_A3, SQ_A4));
         DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(0), 1e-2f);
         DOUBLES_EQUAL((0.9f + -0.5f) / 2.f, root.get_q_value(1), 1e-2f);
         DOUBLES_EQUAL(-0.5f, root.get_q_value(2), 1e-2f);
@@ -239,7 +242,8 @@ TEST(animal_shogi_node, explore_two_layer)
         DOUBLES_EQUAL(
             0.1f, root.get_child(Move(SQ_B1, SQ_C1))->get_proba(), 1e-2f);
         DOUBLES_EQUAL((-0.9f + 0.5f) / 2.f, root.get_q_value(), 1e-3f);
-        CHECK_TRUE(root.get_action_by_visit_max() == Move(SQ_C2, SQ_C1));
+        CHECK_TRUE(
+            root.get_most_visited_child()->get_action() == Move(SQ_C2, SQ_C1));
         DOUBLES_EQUAL((-0.9f + 0.5f) / 2.f, root.get_q_value(0), 1e-2f);
         DOUBLES_EQUAL(0.5f, root.get_q_value(1), 1e-2f);
         DOUBLES_EQUAL(0.5f, root.get_q_value(100), 1e-2f);
@@ -249,47 +253,50 @@ TEST(animal_shogi_node, explore_two_layer)
 TEST(animal_shogi_node, explore_after_apply)
 {
     auto g = Game();
-    auto root = Node(g.get_legal_moves(), g.get_turn(), 0.f, zeros);
+    auto mcts = Searcher(4.f, 3, 1);
+    mcts.set_game(g, 0.f, zeros);
     for (int ii = 100; ii--;) {
         auto g_copy = Game(g);
-        const auto n = root.select(g_copy, 4.f, 3, 1);
+        const auto n = mcts.select(g_copy);
         if (n != nullptr)
             n->simulate_expand_and_backprop(
                 g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
     }
 
     const auto move = Move(SQ_B2, SQ_B3);
-    root.apply(move);
+    mcts.apply(move);
     g.apply(move);
-    const auto current_visit_count = root.get_visit_count();
+    const auto current_visit_count = mcts.get_visit_count();
+    CHECK_TRUE(current_visit_count > 0);
     for (int ii = 100; ii--;) {
         auto g_copy = Game(g);
-        const auto n = root.select(g_copy, 4.f, 3, 1);
+        const auto n = mcts.select(g_copy);
         if (n != nullptr)
             n->simulate_expand_and_backprop(
                 g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
     }
-    CHECK_EQUAL(current_visit_count + 100, root.get_visit_count());
+    CHECK_EQUAL(current_visit_count + 100, mcts.get_visit_count());
 }
 
 TEST(animal_shogi_node, explore_until_game_end)
 {
     auto g = Game();
-    auto root = Node(g.get_legal_moves(), g.get_turn(), 0.f, zeros);
+    auto mcts = Searcher(4.f, 3, 1);
+    mcts.set_game(g, 0.f, zeros);
     while (true) {
         if (g.get_result() != vshogi::ONGOING)
             break;
-        for (int ii = (100 - root.get_visit_count()); ii--;) {
+        for (int ii = (100 - mcts.get_visit_count()); ii--;) {
             auto g_copy = Game(g);
-            const auto n = root.select(g_copy, 4.f, 3, 1);
+            const auto n = mcts.select(g_copy);
             if (n != nullptr)
                 n->simulate_expand_and_backprop(
                     g_copy.get_legal_moves(), g.get_turn(), 0.f, zeros);
         }
 
-        const auto action = root.get_action_by_visit_max();
+        const auto action = mcts.get_action_by_visit_max();
         g.apply(action);
-        root.apply(action);
+        mcts.apply(action);
     }
 }
 
@@ -300,6 +307,7 @@ namespace test_minishogi
 
 using namespace vshogi::minishogi;
 using Node = vshogi::engine::mcts::Node<Game, Move>;
+using Searcher = vshogi::engine::mcts::Searcher<Game, Move>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
 TEST_GROUP(minishogi_node){};
@@ -307,21 +315,22 @@ TEST_GROUP(minishogi_node){};
 TEST(minishogi_node, explore_until_game_end)
 {
     auto g = Game();
-    auto root = Node(g.get_legal_moves(), g.get_turn(), 0.f, zeros);
+    auto mcts = Searcher(4.f, 3, 1);
+    mcts.set_game(g, 0.f, zeros);
     while (true) {
         if (g.get_result() != vshogi::ONGOING)
             break;
-        for (int ii = (100 - root.get_visit_count()); ii--;) {
+        for (int ii = (100 - mcts.get_visit_count()); ii--;) {
             auto g_copy = Game(g);
-            const auto n = root.select(g_copy, 4.f, 3, 1);
+            const auto n = mcts.select(g_copy);
             if (n != nullptr)
                 n->simulate_expand_and_backprop(
                     g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
         }
 
-        const auto action = root.get_action_by_visit_max();
+        const auto action = mcts.get_action_by_visit_max();
         g.apply(action);
-        root.apply(action);
+        mcts.apply(action);
     }
 }
 
@@ -332,6 +341,7 @@ namespace test_judkins_shogi
 
 using namespace vshogi::judkins_shogi;
 using Node = vshogi::engine::mcts::Node<Game, Move>;
+using Searcher = vshogi::engine::mcts::Searcher<Game, Move>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
 TEST_GROUP(judkins_shogi_node){};
@@ -339,21 +349,22 @@ TEST_GROUP(judkins_shogi_node){};
 TEST(judkins_shogi_node, explore_until_game_end)
 {
     auto g = Game();
-    auto root = Node(g.get_legal_moves(), g.get_turn(), 0.f, zeros);
+    auto mcts = Searcher(4.f, 3, 1);
+    mcts.set_game(g, 0.f, zeros);
     while (true) {
         if (g.get_result() != vshogi::ONGOING)
             break;
-        for (int ii = (100 - root.get_visit_count()); ii--;) {
+        for (int ii = (100 - mcts.get_visit_count()); ii--;) {
             auto g_copy = Game(g);
-            const auto n = root.select(g_copy, 4.f, 3, 1);
+            const auto n = mcts.select(g_copy);
             if (n != nullptr)
                 n->simulate_expand_and_backprop(
                     g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
         }
 
-        const auto action = root.get_action_by_visit_max();
+        const auto action = mcts.get_action_by_visit_max();
         g.apply(action);
-        root.apply(action);
+        mcts.apply(action);
     }
 }
 
@@ -364,6 +375,7 @@ namespace test_shogi
 
 using namespace vshogi::shogi;
 using Node = vshogi::engine::mcts::Node<Game, Move>;
+using Searcher = vshogi::engine::mcts::Searcher<Game, Move>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
 TEST_GROUP(shogi_node){};
@@ -371,21 +383,22 @@ TEST_GROUP(shogi_node){};
 TEST(shogi_node, explore_until_game_end)
 {
     auto g = Game();
-    auto root = Node(g.get_legal_moves(), g.get_turn(), 0.f, zeros);
+    auto mcts = Searcher(4.f, 3, 1);
+    mcts.set_game(g, 0.f, zeros);
     while (true) {
         if (g.get_result() != vshogi::ONGOING)
             break;
-        for (int ii = (100 - root.get_visit_count()); ii--;) {
+        for (int ii = (100 - mcts.get_visit_count()); ii--;) {
             auto g_copy = Game(g);
-            const auto n = root.select(g_copy, 4.f, 3, 1);
+            const auto n = mcts.select(g_copy);
             if (n != nullptr)
                 n->simulate_expand_and_backprop(
                     g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
         }
 
-        const auto action = root.get_action_by_visit_max();
+        const auto action = mcts.get_action_by_visit_max();
         g.apply(action);
-        root.apply(action);
+        mcts.apply(action);
     }
 }
 

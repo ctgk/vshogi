@@ -21,6 +21,9 @@ static std::default_random_engine engine(seed_gen());
 static std::uniform_real_distribution<float> dist(0.f, 1.f);
 
 template <class Game, class Move>
+class Searcher;
+
+template <class Game, class Move>
 class Node
 {
 private:
@@ -93,6 +96,8 @@ private:
     bool m_is_mate;
 
     NodeGM* m_most_visited_child;
+
+    friend class Searcher<Game, Move>;
 
 public:
     Node()
@@ -191,6 +196,10 @@ public:
     {
         return m_sibling.get();
     }
+    const Node<Game, Move>* get_most_visited_child() const
+    {
+        return m_most_visited_child;
+    }
 
     /**
      * @brief Select a leaf node using PUCT algorithm.
@@ -281,39 +290,6 @@ public:
         m_is_mate = false;
         m_most_visited_child = nullptr;
         return *this;
-    }
-
-    Move get_action_by_visit_max() const
-    {
-        if (m_most_visited_child == nullptr)
-            return Move();
-        else
-            return m_most_visited_child->m_action;
-    }
-    Move get_action_by_visit_distribution(const float temperature) const
-    {
-        constexpr float eps = 1.f;
-
-        std::vector<float> probas(get_num_child());
-        const NodeGM* ch = m_child.get();
-        for (uint ii = 0u; ch != nullptr; ch = ch->m_sibling.get()) {
-            const auto v
-                = static_cast<float>(ch->m_visit_count_excluding_random);
-            probas[ii++] = std::log((v + eps)) / temperature;
-        }
-        softmax(probas);
-
-        float s = dist(engine);
-        Move out = Move{};
-        ch = m_child.get();
-        for (uint ii = 0u; ch != nullptr; ch = ch->m_sibling.get()) {
-            const auto p = probas[ii++];
-            if (s < p)
-                return ch->m_action;
-            s -= p;
-            out = ch->m_action; // For numerical instability.
-        }
-        return out;
     }
 
 private:
@@ -580,6 +556,81 @@ private:
              == m_most_visited_child->m_visit_count_excluding_random)
             && (candidate->m_q_value < m_most_visited_child->m_q_value))
             m_most_visited_child = candidate;
+    }
+};
+
+template <class Game, class Move>
+class Searcher
+{
+private:
+    std::unique_ptr<Node<Game, Move>> m_root;
+    const float m_coeff_puct;
+    const int m_non_random_ratio;
+    const int m_random_depth;
+
+public:
+    Searcher(
+        const float coeff_puct,
+        const int non_random_ratio,
+        const int random_depth)
+        : m_root{}, m_coeff_puct(coeff_puct),
+          m_non_random_ratio(non_random_ratio), m_random_depth(random_depth)
+    {
+    }
+    void
+    set_game(const Game& g, const float value, const float* const policy_logits)
+    {
+        m_root = std::make_unique<Node<Game, Move>>(
+            g.get_legal_moves(), g.get_turn(), value, policy_logits);
+    }
+    int get_visit_count() const
+    {
+        return m_root->get_visit_count();
+    }
+    Node<Game, Move>* select(Game& game)
+    {
+        return m_root->select(
+            game, m_coeff_puct, m_non_random_ratio, m_random_depth);
+    }
+    Searcher<Game, Move>& apply(const Move& action)
+    {
+        m_root->apply(action);
+        return *this;
+    }
+    const Node<Game, Move>* get_root() const
+    {
+        return m_root.get();
+    }
+    Move get_action_by_visit_max() const
+    {
+        const Node<Game, Move>* const root = m_root.get();
+        if (root->m_most_visited_child == nullptr)
+            return Move();
+        else
+            return root->m_most_visited_child->m_action;
+    }
+    Move get_action_by_visit_distribution(const float temperature) const
+    {
+        constexpr float eps = 1.f;
+
+        std::vector<float> probas(m_root->get_num_child());
+        const Node<Game, Move>* ch = m_root->get_child();
+        for (uint ii = 0u; ch != nullptr; ch = ch->m_sibling.get()) {
+            const auto v
+                = static_cast<float>(ch->m_visit_count_excluding_random);
+            probas[ii++] = std::log((v + eps)) / temperature;
+        }
+        softmax(probas);
+
+        float s = dist(engine);
+        ch = m_root->get_child();
+        for (uint ii = 0u; ch != nullptr; ch = ch->m_sibling.get()) {
+            const auto p = probas[ii++];
+            if (s < p)
+                return ch->m_action;
+            s -= p;
+        }
+        return ch->m_action; // For numerical instability.
     }
 };
 

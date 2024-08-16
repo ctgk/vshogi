@@ -45,7 +45,8 @@ TEST(shogi_engine, mcts_with_dfpn)
     };
 
     auto g = Game();
-    auto root = Node(g.get_legal_moves(), g.get_turn(), 0.f, zeros);
+    auto mcts = vshogi::engine::mcts::Searcher<Game, Move>(4.f, 3, 1);
+    mcts.set_game(g, 0.f, zeros);
     auto dfpn = vshogi::engine::dfpn::Searcher<Game, Move>();
     for (int ii = 0; ii < 167; ++ii) {
         if (g.get_result() != vshogi::ONGOING)
@@ -56,9 +57,9 @@ TEST(shogi_engine, mcts_with_dfpn)
             dfpn.explore(10000);
         }
 
-        for (int jj = (100 - root.get_visit_count()); jj--;) {
+        for (int jj = (100 - mcts.get_visit_count()); jj--;) {
             auto g_copy = Game(g);
-            const auto n = root.select(g_copy, 4.f, 3, 1);
+            const auto n = mcts.select(g_copy);
             if (n == nullptr)
                 continue;
 
@@ -70,10 +71,10 @@ TEST(shogi_engine, mcts_with_dfpn)
                     g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
         }
 
-        root.get_action_by_visit_max();
+        mcts.get_action_by_visit_max();
         const auto m = Move(kifu[ii]);
         g.apply(m);
-        root.apply(m);
+        mcts.apply(m);
 
         if (ii == 166) {
             CHECK_TRUE(g.get_result() == vshogi::BLACK_WIN);

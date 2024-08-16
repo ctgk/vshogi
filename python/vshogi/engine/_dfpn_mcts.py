@@ -114,10 +114,7 @@ class DfpnMcts(Engine):
                     if kldgain < kldgain_threshold * kldgain_steps:
                         break
             game = self._mcts._game.copy()
-            node = self._mcts._root._select_node_to_explore(
-                game._game, self._mcts._coeff_puct,
-                self._mcts._non_random_ratio, self._mcts._random_depth,
-            )
+            node = self._mcts._searcher.select(game._game)
             if node is None:
                 continue
 
@@ -270,7 +267,7 @@ class DfpnMcts(Engine):
         greedy_depth: int = 0,
     ) -> str:
         return _tree(
-            self._mcts._root,
+            self._mcts._searcher.get_root(),
             depth,
             breadth,
             sort_key=sort_key,

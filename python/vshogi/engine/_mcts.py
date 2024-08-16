@@ -77,7 +77,7 @@ class Mcts(Engine):
             by default 1.
         """
         self._policy_value_func = policy_value_func
-        self._root = None
+        self._searcher = None
 
         self._coeff_puct = coeff_puct
         self._non_random_ratio = non_random_ratio
@@ -85,15 +85,16 @@ class Mcts(Engine):
 
     def _set_game(self, game: Game):
         policy_logits, value = self._policy_value_func(game)
-        self._root = game._get_mcts_node_class()(
-            game._game, value, policy_logits)
+        self._searcher = game._get_mcts_searcher_class()(
+            self._coeff_puct, self._non_random_ratio, self._random_depth)
+        self._searcher.set_game(game._game, value, policy_logits)
         self._game = game
 
     def _is_ready(self) -> bool:
-        return self._root is not None
+        return self._searcher is not None
 
     def _clear(self) -> None:
-        self._root = None
+        self._searcher = None
         self._game = None
 
     def apply(self, move: Move):
@@ -105,7 +106,7 @@ class Mcts(Engine):
             Move to apply
         """
         if self._is_ready():
-            self._root.apply(move)
+            self._searcher.apply(move)
 
     @property
     def num_searched(self) -> int:
@@ -116,9 +117,9 @@ class Mcts(Engine):
         int
             Number of game positions searched so far.
         """
-        if self._root is None:
+        if self._searcher is None:
             return 0
-        return self._root.get_visit_count()
+        return self._searcher.get_visit_count()
 
     def search(self, n: int = 100):
         """Explore from root node for n times.
@@ -130,10 +131,7 @@ class Mcts(Engine):
         """
         for _ in range(n):
             game = self._game.copy()
-            node = self._root._select_node_to_explore(
-                game._game, self._coeff_puct, self._non_random_ratio,
-                self._random_depth,
-            )
+            node = self._searcher.select(game._game)
             if node is None:
                 continue
             policy_logits, value = self._policy_value_func(game)
@@ -147,7 +145,7 @@ class Mcts(Engine):
         float
             Raw value estimate of the current game position.
         """
-        return self._root.get_value()
+        return self._searcher.get_root().get_value()
 
     def get_q_value(self, greedy_depth: int = 0) -> float:
         """Return Q-value estimate of the current game position.
@@ -163,7 +161,7 @@ class Mcts(Engine):
         float
             Q-value estimate of the current game position.
         """
-        return self._root.get_q_value(greedy_depth)
+        return self._searcher.get_root().get_q_value(greedy_depth)
 
     def get_probas(self) -> tp.Dict[Move, float]:
         """Return raw probabilities of selecting actions.
@@ -173,9 +171,10 @@ class Mcts(Engine):
         tp.Dict[Move, float]
             Raw probabilities of selecting actions by `policy_value_func`.
         """
+        root = self._searcher.get_root()
         move_proba_pair_list = [
-            (m, self._root.get_child(m).get_proba())
-            for m in self._root.get_actions()
+            (m, root.get_child(m).get_proba())
+            for m in root.get_actions()
         ]
         move_proba_pair_list.sort(key=lambda t: t[1], reverse=True)
         return {m: p for m, p in move_proba_pair_list}
@@ -194,9 +193,10 @@ class Mcts(Engine):
         tp.Dict[Move, float]
             Q value of each action.
         """
+        root = self._searcher.get_root()
         move_q_pair_list = [
-            (m, -self._root.get_child(m).get_q_value(greedy_depth))
-            for m in self._root.get_actions()
+            (m, -root.get_child(m).get_q_value(greedy_depth))
+            for m in root.get_actions()
         ]
         move_q_pair_list.sort(key=lambda a: a[1], reverse=True)
         return {m: q for m, q in move_q_pair_list}
@@ -217,14 +217,15 @@ class Mcts(Engine):
         tp.Dict[Move, int]
             Visit counts of each action.
         """
+        root = self._searcher.get_root()
         move_visit_count_pair_list = [
             (
                 m,
-                self._root.get_child(m).get_visit_count()
+                root.get_child(m).get_visit_count()
                 if include_random else
-                self._root.get_child(m).get_visit_count_excluding_random(),
+                root.get_child(m).get_visit_count_excluding_random(),
             )
-            for m in self._root.get_actions()
+            for m in root.get_actions()
         ]
         move_visit_count_pair_list.sort(key=lambda a: a[1], reverse=True)
         return {m: v for m, v in move_visit_count_pair_list}
@@ -244,9 +245,9 @@ class Mcts(Engine):
             Selected action.
         """
         if (temperature is None) or np.isclose(temperature, 0):
-            return self._root.get_action_by_visit_max()
+            return self._searcher.get_action_by_visit_max()
         else:
-            return self._root.get_action_by_visit_distribution(temperature)
+            return self._searcher.get_action_by_visit_distribution(temperature)
 
     def _tree(
         self,
@@ -257,7 +258,7 @@ class Mcts(Engine):
         greedy_depth: int = 0,
     ) -> str:
         return _tree(
-            self._root,
+            self._searcher.get_root(),
             depth,
             breadth,
             sort_key=sort_key,
