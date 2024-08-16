@@ -253,30 +253,6 @@ inline bool animal_shogi::Squares::in_promotion_zone(
 }
 
 template <>
-inline DirectionEnum
-animal_shogi::Squares::get_direction_for_diagonal_or_knight(
-    const animal_shogi::SquareEnum& dst, const animal_shogi::SquareEnum& src)
-{
-    using namespace vshogi::animal_shogi;
-    switch (static_cast<int>(src - dst)) {
-    case 8:
-        return DIR_NW;
-    case 2:
-        return DIR_NE;
-    case 4:
-        return (Squares::to_file(src) == FILE1) ? DIR_NE : DIR_NW;
-    case -2:
-        return DIR_SW;
-    case -8:
-        return DIR_SE;
-    case -4:
-        return (Squares::to_file(dst) == FILE1) ? DIR_SW : DIR_SE;
-    default:
-        return DIR_NA;
-    }
-}
-
-template <>
 inline const uint animal_shogi::Stand::shift_bits[] = {
     0u, // CH
     3u, // EL

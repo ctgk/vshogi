@@ -27,4 +27,21 @@ TEST(animal_shogi_squares, to_square)
     CHECK_EQUAL(SQ_C4, Squares::to_square("c4"));
 }
 
+TEST(animal_shogi_squares, get_direction)
+{
+    CHECK_EQUAL(vshogi::DIR_NW, Squares::get_direction(SQ_A1, SQ_B2));
+    CHECK_EQUAL(vshogi::DIR_N, Squares::get_direction(SQ_B1, SQ_B2));
+    CHECK_EQUAL(vshogi::DIR_NE, Squares::get_direction(SQ_C1, SQ_B2));
+    CHECK_EQUAL(vshogi::DIR_W, Squares::get_direction(SQ_A2, SQ_B2));
+    CHECK_EQUAL(vshogi::DIR_E, Squares::get_direction(SQ_C2, SQ_B2));
+    CHECK_EQUAL(vshogi::DIR_SW, Squares::get_direction(SQ_A3, SQ_B2));
+    CHECK_EQUAL(vshogi::DIR_S, Squares::get_direction(SQ_B3, SQ_B2));
+    CHECK_EQUAL(vshogi::DIR_SE, Squares::get_direction(SQ_C3, SQ_B2));
+    CHECK_EQUAL(vshogi::DIR_S, Squares::get_direction(SQ_B4, SQ_B2));
+
+    CHECK_EQUAL(vshogi::DIR_NA, Squares::get_direction(SQ_C4, SQ_B2));
+    CHECK_EQUAL(vshogi::DIR_NA, Squares::get_direction(SQ_A4, SQ_B1));
+    CHECK_EQUAL(vshogi::DIR_NA, Squares::get_direction(SQ_A1, SQ_C2));
+}
+
 } // namespace test_vshogi::test_animal_shogi

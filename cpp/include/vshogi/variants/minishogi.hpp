@@ -262,48 +262,6 @@ inline bool vshogi::minishogi::Squares::in_promotion_zone(
 }
 
 template <>
-inline DirectionEnum
-vshogi::minishogi::Squares::get_direction_for_diagonal_or_knight(
-    const vshogi::minishogi::SquareEnum& dst,
-    const vshogi::minishogi::SquareEnum& src)
-{
-    using namespace vshogi::minishogi;
-    switch (static_cast<int>(src - dst)) {
-    case 6:
-        return (to_file(src) < FILE4) ? DIR_NA : DIR_NW;
-    // case 12:
-    case 18:
-        return (to_file(src) < FILE2) ? DIR_NA : DIR_NW;
-    case 24:
-        return DIR_NW;
-    case 4:
-        return DIR_NE;
-    case 8:
-        return (to_file(src) > FILE3) ? DIR_NA : DIR_NE;
-    case 16:
-        return (to_file(src) > FILE4) ? DIR_NA : DIR_NE;
-    case 12:
-        return (to_file(src) > FILE4) ? DIR_NW : DIR_NE;
-    case -4:
-        return DIR_SW;
-    case -8:
-        return (to_file(dst) > FILE3) ? DIR_NA : DIR_SW;
-    case -16:
-        return (to_file(dst) > FILE4) ? DIR_NA : DIR_SW;
-    case -6:
-        return (to_file(dst) < FILE4) ? DIR_NA : DIR_SE;
-    case -18:
-        return (to_file(dst) < FILE2) ? DIR_NA : DIR_SE;
-    case -24:
-        return DIR_SE;
-    case -12:
-        return (to_file(src) > FILE3) ? DIR_SW : DIR_SE;
-    default:
-        return DIR_NA;
-    }
-}
-
-template <>
 inline const uint minishogi::Stand::shift_bits[] = {0, 3, 6, 9, 12};
 
 template <>

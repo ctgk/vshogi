@@ -299,66 +299,6 @@ inline bool vshogi::judkins_shogi::Squares::in_promotion_zone(
 }
 
 template <>
-inline DirectionEnum
-vshogi::judkins_shogi::Squares::get_direction_for_diagonal_or_knight(
-    const Square& dst, const Square& src)
-{
-    using namespace vshogi::judkins_shogi;
-    switch (static_cast<int>(src - dst)) {
-    case 7:
-        return (to_file(src) < FILE5) ? DIR_NA : DIR_NW;
-    case 14:
-        return (to_file(src) < FILE4) ? DIR_NA : DIR_NW;
-    case 21:
-        return (to_file(src) < FILE3) ? DIR_NA : DIR_NW;
-    case 28:
-        return (to_file(src) < FILE2) ? DIR_NA : DIR_NW;
-    case 35:
-        return DIR_NW;
-    case 5:
-        return DIR_NE;
-    case 10:
-        return (to_file(src) > FILE3) ? DIR_NA : DIR_NE;
-    case 15:
-        return (to_file(src) > FILE4) ? DIR_NA : DIR_NE;
-    case 20:
-        return (to_file(src) > FILE5) ? DIR_NA : DIR_NE;
-    case 25:
-        return (to_file(src) > FILE6) ? DIR_NA : DIR_NE;
-    case 11:
-        return (to_file(src) == FILE1) ? DIR_NA : DIR_NNE;
-    case 13:
-        return (to_file(src) == FILE6) ? DIR_NA : DIR_NNW;
-    case -5:
-        return DIR_SW;
-    case -10:
-        return (to_file(dst) > FILE3) ? DIR_NA : DIR_SW;
-    case -15:
-        return (to_file(dst) > FILE4) ? DIR_NA : DIR_SW;
-    case -20:
-        return (to_file(dst) > FILE5) ? DIR_NA : DIR_SW;
-    case -25:
-        return (to_file(dst) > FILE6) ? DIR_NA : DIR_SW;
-    case -7:
-        return (to_file(dst) < FILE5) ? DIR_NA : DIR_SE;
-    case -14:
-        return (to_file(dst) < FILE4) ? DIR_NA : DIR_SE;
-    case -21:
-        return (to_file(dst) < FILE3) ? DIR_NA : DIR_SE;
-    case -28:
-        return (to_file(dst) < FILE2) ? DIR_NA : DIR_SE;
-    case -35:
-        return DIR_SE;
-    case -11:
-        return (to_file(dst) == FILE1) ? DIR_NA : DIR_SSW;
-    case -13:
-        return (to_file(dst) == FILE6) ? DIR_NA : DIR_SSE;
-    default:
-        return DIR_NA;
-    }
-}
-
-template <>
 inline const uint judkins_shogi::Stand::shift_bits[] = {0, 2, 4, 6, 8, 10};
 
 template <>

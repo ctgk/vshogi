@@ -135,6 +135,9 @@ TEST(judkins_shogi_squares, to_square)
 
 TEST(judkins_shogi_squares, get_direction)
 {
+    // Note that result will be different in Minishogi.
+    CHECK_EQUAL(vshogi::DIR_NNW, Squares::get_direction(SQ_5A, SQ_4C));
+
     CHECK_EQUAL(vshogi::DIR_NW, Squares::get_direction(SQ_2A, SQ_1B));
     CHECK_EQUAL(vshogi::DIR_N, Squares::get_direction(SQ_6B, SQ_6F));
     CHECK_EQUAL(vshogi::DIR_NE, Squares::get_direction(SQ_1A, SQ_6F));

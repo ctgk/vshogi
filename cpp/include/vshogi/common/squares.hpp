@@ -31,6 +31,8 @@ private:
     static constexpr uint num_dir = Config::num_dir;
     static constexpr uint num_dir_dl = Config::num_dir_dl;
     inline static Square shift_table[num_squares][num_dir];
+    inline static DirectionEnum direction_src_dst_table[num_squares]
+                                                       [num_squares];
     inline static Square
         ranging_squares_to[num_squares][num_dir]
                           [(num_files > num_ranks) ? num_files : num_ranks];
@@ -88,34 +90,15 @@ public:
 
     static void init_tables()
     {
-        constexpr Rank r1 = static_cast<Rank>(0);
-        constexpr Rank r2 = static_cast<Rank>(1);
-        constexpr Rank rm = static_cast<Rank>(num_ranks - 2);
-        constexpr Rank rn = static_cast<Rank>(num_ranks - 1);
-
         for (auto sq : EnumIterator<Square, num_squares>()) {
             file_to_square_array[to_file(sq)][to_rank(sq)] = sq;
         }
+        init_shift_table();
 
-        for (auto sq : EnumIterator<Square, num_squares>()) {
-            const auto r = to_rank(sq);
-            const auto f = to_file(sq);
-            for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
-                if (((r == r1) && has_dir_n(dir))
-                    || ((r == r2) && (dir == DIR_NNW || dir == DIR_NNE))
-                    || ((r == rn) && has_dir_s(dir))
-                    || ((r == rm) && (dir == DIR_SSW || dir == DIR_SSE))
-                    || ((f == file_right_most()) && has_dir_e(dir))
-                    || ((f == file_left_most()) && has_dir_w(dir)))
-                    shift_table[sq][dir] = SQ_NA;
-                else
-                    shift_table[sq][dir] = static_cast<Square>(
-                        static_cast<int>(sq) + direction_to_delta(dir));
-            }
-        }
-
+        // `shift_table` must be initialized, when calling the following.
         init_ranging_squares_table();
         init_non_ranging_attacks_array();
+        init_direction_src_dst_table();
     }
 
     static bool in_promotion_zone(const Rank& r, const ColorEnum& c);
@@ -132,11 +115,7 @@ public:
     {
         if ((dst == SQ_NA) || (src == SQ_NA))
             return DIR_NA;
-        if (to_file(dst) == to_file(src))
-            return (src < dst) ? DIR_S : DIR_N;
-        if (to_rank(dst) == to_rank(src))
-            return (src < dst) ? DIR_E : DIR_W;
-        return get_direction_for_diagonal_or_knight(dst, src);
+        return direction_src_dst_table[src][dst];
     }
     constexpr static int direction_to_delta(const DirectionEnum& d)
     {
@@ -172,9 +151,29 @@ public:
     }
 
 private:
-    static DirectionEnum
-    get_direction_for_diagonal_or_knight(const Square& dst, const Square& src);
-
+    static void init_shift_table()
+    {
+        constexpr Rank r1 = static_cast<Rank>(0);
+        constexpr Rank r2 = static_cast<Rank>(1);
+        constexpr Rank rm = static_cast<Rank>(num_ranks - 2);
+        constexpr Rank rn = static_cast<Rank>(num_ranks - 1);
+        for (auto sq : EnumIterator<Square, num_squares>()) {
+            const auto r = to_rank(sq);
+            const auto f = to_file(sq);
+            for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
+                if (((r == r1) && has_dir_n(dir))
+                    || ((r == r2) && (dir == DIR_NNW || dir == DIR_NNE))
+                    || ((r == rn) && has_dir_s(dir))
+                    || ((r == rm) && (dir == DIR_SSW || dir == DIR_SSE))
+                    || ((f == file_right_most()) && has_dir_e(dir))
+                    || ((f == file_left_most()) && has_dir_w(dir)))
+                    shift_table[sq][dir] = SQ_NA;
+                else
+                    shift_table[sq][dir] = static_cast<Square>(
+                        static_cast<int>(sq) + direction_to_delta(dir));
+            }
+        }
+    }
     static void init_ranging_squares_table()
     {
         constexpr int size
@@ -219,6 +218,21 @@ private:
                         continue;
                     non_ranging_attacks_array[ii][sq][index++] = dst;
                 }
+            }
+        }
+    }
+    static void init_direction_src_dst_table()
+    {
+        std::fill_n(
+            &direction_src_dst_table[0][0],
+            sizeof(direction_src_dst_table)
+                / sizeof(direction_src_dst_table[0][0]),
+            DIR_NA);
+        for (auto src : EnumIterator<Square, num_squares>()) {
+            for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
+                for (auto dst = shift(src, dir); dst != SQ_NA;
+                     dst = shift(dst, dir))
+                    direction_src_dst_table[src][dst] = dir;
             }
         }
     }
