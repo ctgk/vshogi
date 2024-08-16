@@ -254,14 +254,6 @@ minishogi::Pieces::is_ranging_piece(const minishogi::PieceTypeEnum& pt)
 }
 
 template <>
-inline bool vshogi::minishogi::Squares::in_promotion_zone(
-    const vshogi::minishogi::RankEnum& r, const ColorEnum& c)
-{
-    return (c == BLACK) ? (r == vshogi::minishogi::RANK1)
-                        : (r == vshogi::minishogi::RANK5);
-}
-
-template <>
 inline const uint minishogi::Stand::shift_bits[] = {0, 3, 6, 9, 12};
 
 template <>

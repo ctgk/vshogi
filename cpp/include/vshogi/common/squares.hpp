@@ -101,7 +101,11 @@ public:
         init_direction_src_dst_table();
     }
 
-    static bool in_promotion_zone(const Rank& r, const ColorEnum& c);
+    static bool in_promotion_zone(const Rank& r, const ColorEnum& c)
+    {
+        return (c == BLACK) ? (r < Config::num_promotion_ranks)
+                            : (r > num_ranks - 1 - Config::num_promotion_ranks);
+    }
     static bool in_promotion_zone(const Square& sq, const ColorEnum& c)
     {
         return in_promotion_zone(to_rank(sq), c);

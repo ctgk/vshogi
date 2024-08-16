@@ -375,14 +375,6 @@ inline bool shogi::Pieces::is_ranging_piece(const shogi::PieceTypeEnum& pt)
 }
 
 template <>
-inline bool vshogi::shogi::Squares::in_promotion_zone(
-    const vshogi::shogi::RankEnum& r, const ColorEnum& c)
-{
-    return (c == BLACK) ? (r <= vshogi::shogi::RANK3)
-                        : (r >= vshogi::shogi::RANK7);
-}
-
-template <>
 inline const uint shogi::Stand::shift_bits[] = {0, 6, 10, 14, 18, 21, 24};
 
 template <>

@@ -27,6 +27,19 @@ TEST(animal_shogi_squares, to_square)
     CHECK_EQUAL(SQ_C4, Squares::to_square("c4"));
 }
 
+TEST(animal_shogi_squares, in_promotion_zone)
+{
+    CHECK_TRUE(Squares::in_promotion_zone(RANK1, vshogi::BLACK));
+    CHECK_FALSE(Squares::in_promotion_zone(RANK2, vshogi::BLACK));
+    CHECK_FALSE(Squares::in_promotion_zone(RANK3, vshogi::BLACK));
+    CHECK_FALSE(Squares::in_promotion_zone(RANK4, vshogi::BLACK));
+
+    CHECK_FALSE(Squares::in_promotion_zone(RANK1, vshogi::WHITE));
+    CHECK_FALSE(Squares::in_promotion_zone(RANK2, vshogi::WHITE));
+    CHECK_FALSE(Squares::in_promotion_zone(RANK3, vshogi::WHITE));
+    CHECK_TRUE(Squares::in_promotion_zone(RANK4, vshogi::WHITE));
+}
+
 TEST(animal_shogi_squares, get_direction)
 {
     CHECK_EQUAL(vshogi::DIR_NW, Squares::get_direction(SQ_A1, SQ_B2));

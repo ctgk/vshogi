@@ -102,6 +102,33 @@ TEST(minishogi_squares, to_square)
     CHECK_EQUAL(SQ_5E, Squares::to_square("5e"));
 }
 
+TEST(minishogi_squares, in_promotion_zone)
+{
+    CHECK_TRUE(Squares::in_promotion_zone(SQ_5A, vshogi::BLACK));
+    CHECK_FALSE(Squares::in_promotion_zone(SQ_4B, vshogi::BLACK));
+    CHECK_FALSE(Squares::in_promotion_zone(SQ_3C, vshogi::BLACK));
+    CHECK_FALSE(Squares::in_promotion_zone(SQ_2D, vshogi::BLACK));
+    CHECK_FALSE(Squares::in_promotion_zone(SQ_1E, vshogi::BLACK));
+
+    CHECK_FALSE(Squares::in_promotion_zone(SQ_1A, vshogi::WHITE));
+    CHECK_FALSE(Squares::in_promotion_zone(SQ_2B, vshogi::WHITE));
+    CHECK_FALSE(Squares::in_promotion_zone(SQ_3C, vshogi::WHITE));
+    CHECK_FALSE(Squares::in_promotion_zone(SQ_4D, vshogi::WHITE));
+    CHECK_TRUE(Squares::in_promotion_zone(SQ_5E, vshogi::WHITE));
+
+    CHECK_TRUE(Squares::in_promotion_zone(RANK1, vshogi::BLACK));
+    CHECK_FALSE(Squares::in_promotion_zone(RANK2, vshogi::BLACK));
+    CHECK_FALSE(Squares::in_promotion_zone(RANK3, vshogi::BLACK));
+    CHECK_FALSE(Squares::in_promotion_zone(RANK4, vshogi::BLACK));
+    CHECK_FALSE(Squares::in_promotion_zone(RANK5, vshogi::BLACK));
+
+    CHECK_FALSE(Squares::in_promotion_zone(RANK1, vshogi::WHITE));
+    CHECK_FALSE(Squares::in_promotion_zone(RANK2, vshogi::WHITE));
+    CHECK_FALSE(Squares::in_promotion_zone(RANK3, vshogi::WHITE));
+    CHECK_FALSE(Squares::in_promotion_zone(RANK4, vshogi::WHITE));
+    CHECK_TRUE(Squares::in_promotion_zone(RANK5, vshogi::WHITE));
+}
+
 TEST(minishogi_squares, get_direction)
 {
     CHECK_EQUAL(vshogi::DIR_NW, Squares::get_direction(SQ_5A, SQ_3C));

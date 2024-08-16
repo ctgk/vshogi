@@ -245,14 +245,6 @@ animal_shogi::Squares::to_usi(char usi[2], const animal_shogi::SquareEnum& sq)
 }
 
 template <>
-inline bool animal_shogi::Squares::in_promotion_zone(
-    const animal_shogi::RankEnum& r, const ColorEnum& c)
-{
-    return (c == BLACK) ? (r == animal_shogi::RANK1)
-                        : (r == animal_shogi::RANK4);
-}
-
-template <>
 inline const uint animal_shogi::Stand::shift_bits[] = {
     0u, // CH
     3u, // EL
