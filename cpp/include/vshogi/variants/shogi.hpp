@@ -542,13 +542,6 @@ inline shogi::BitBoard
     = {};
 
 template <>
-inline uint shogi::BitBoard::hamming_weight() const
-{
-    return hamming_weight_64bit(static_cast<std::uint64_t>(m_value))
-           + hamming_weight_64bit(static_cast<std::uint64_t>(m_value >> 64));
-}
-
-template <>
 inline shogi::BitBoard shogi::BitBoard::get_attacks_by(
     const vshogi::shogi::ColoredPieceEnum& p,
     const vshogi::shogi::SquareEnum& sq)

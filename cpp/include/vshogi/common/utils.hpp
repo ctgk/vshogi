@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <type_traits>
 #include <vector>
 
@@ -236,6 +237,52 @@ private:
 };
 using uint128 = UInt128;
 #endif
+
+template <class UInt>
+inline uint hamming_weight(UInt x);
+
+template <>
+inline uint hamming_weight(std::uint32_t x)
+{
+    // https://en.wikipedia.org/wiki/Hamming_weight
+    constexpr std::uint32_t m1 = 0x55555555;
+    constexpr std::uint32_t m2 = 0x33333333;
+    constexpr std::uint32_t m4 = 0x0f0f0f0f;
+    x -= (x >> 1U) & m1;
+    x = (x & m2) + ((x >> 2) & m2);
+    x = (x + (x >> 4)) & m4;
+    x += x >> 8;
+    x += x >> 16;
+    return x & 0x7f;
+}
+
+template <>
+inline uint hamming_weight(std::uint16_t x)
+{
+    return hamming_weight(static_cast<std::uint32_t>(x));
+}
+
+template <>
+inline uint hamming_weight(std::uint64_t x)
+{
+    constexpr std::uint64_t m1 = 0x5555555555555555; // 0101...
+    constexpr std::uint64_t m2 = 0x3333333333333333; // 00110011..
+    constexpr std::uint64_t m4 = 0x0f0f0f0f0f0f0f0f; // 0000111100001111..
+    x -= (x >> 1) & m1; //put count of each 2 bits into those 2 bits
+    x = (x & m2) + ((x >> 2) & m2); // each 4 bits into those 4 bits
+    x = (x + (x >> 4)) & m4; //put count of each 8 bits into those 8 bits
+    x += x >> 8; //put count of each 16 bits into their lowest 8 bits
+    x += x >> 16; //put count of each 32 bits into their lowest 8 bits
+    x += x >> 32; //put count of each 64 bits into their lowest 8 bits
+    return x & 0x7f;
+}
+
+template <>
+inline uint hamming_weight(uint128 x)
+{
+    return hamming_weight(static_cast<std::uint64_t>(x))
+           + hamming_weight(static_cast<std::uint64_t>(x >> 64));
+}
 
 } // namespace vshogi
 

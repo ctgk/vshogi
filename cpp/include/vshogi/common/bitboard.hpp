@@ -93,7 +93,7 @@ public:
     }
     uint hamming_weight() const
     {
-        return hamming_weight_64bit(static_cast<std::uint64_t>(m_value));
+        return vshogi::hamming_weight(m_value);
     }
 
     static BitBoard from_square(const Square& sq)
@@ -169,19 +169,6 @@ public:
     static void init_tables();
 
 private:
-    uint hamming_weight_64bit(std::uint64_t x) const
-    {
-        constexpr std::uint64_t m1 = 0x5555555555555555; // 0101...
-        constexpr std::uint64_t m2 = 0x3333333333333333; // 00110011..
-        constexpr std::uint64_t m4 = 0x0f0f0f0f0f0f0f0f; // 0000111100001111..
-        x -= (x >> 1) & m1; //put count of each 2 bits into those 2 bits
-        x = (x & m2) + ((x >> 2) & m2); // each 4 bits into those 4 bits
-        x = (x + (x >> 4)) & m4; //put count of each 8 bits into those 8 bits
-        x += x >> 8; //put count of each 16 bits into their lowest 8 bits
-        x += x >> 16; //put count of each 32 bits into their lowest 8 bits
-        x += x >> 32; //put count of each 64 bits into their lowest 8 bits
-        return x & 0x7f;
-    }
     template <uint NumSquaresFromTop = num_ranks>
     static constexpr BitBoard file_mask_leftmost()
     {

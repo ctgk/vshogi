@@ -358,22 +358,6 @@ inline minishogi::BitBoard
     = {};
 
 template <>
-inline uint minishogi::BitBoard::hamming_weight() const
-{
-    // https://en.wikipedia.org/wiki/Hamming_weight
-    constexpr std::uint32_t m1 = 0x55555555;
-    constexpr std::uint32_t m2 = 0x33333333;
-    constexpr std::uint32_t m4 = 0x0f0f0f0f;
-    auto x = m_value;
-    x -= (x >> 1U) & m1;
-    x = (x & m2) + ((x >> 2) & m2);
-    x = (x + (x >> 4)) & m4;
-    x += x >> 8;
-    x += x >> 16;
-    return x & 0x7f;
-}
-
-template <>
 inline minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
     const vshogi::minishogi::ColoredPieceEnum& p,
     const vshogi::minishogi::SquareEnum& sq)
