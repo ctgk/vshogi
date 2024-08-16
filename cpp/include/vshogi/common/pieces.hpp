@@ -75,7 +75,7 @@ public:
 
     static constexpr bool is_promotable(const PieceType& p)
     {
-        return (p + 1 < num_stand_piece_types);
+        return (p + 1u < num_stand_piece_types);
     }
     static constexpr bool is_promotable(const ColoredPiece& p)
     {
@@ -142,22 +142,9 @@ public:
             out += '+';
         out += c;
     }
-    static uint get_index(const ColoredPiece& p)
-    {
-        if (p == VOID)
-            return 2 * num_piece_types;
-        const PieceType pt = to_piece_type(p);
-        const uint color_offset
-            = static_cast<uint>(get_color(p) == WHITE) * num_piece_types;
-        const uint promo_offset
-            = static_cast<uint>(is_promoted(pt)) * (num_stand_piece_types + 1);
-        const uint pt_index = (pt == OU) ? num_stand_piece_types
-                                         : static_cast<uint>(demote(pt));
-        return color_offset + promo_offset + pt_index;
-    }
     static const DirectionEnum* get_attack_directions(const ColoredPiece& p)
     {
-        return attack_directions_table[get_index(p)];
+        return attack_directions_table[p];
     }
     static void init_tables()
     {

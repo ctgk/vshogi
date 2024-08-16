@@ -168,8 +168,7 @@ public:
     {
         if (PHelper::is_ranging_piece(p))
             return nullptr;
-        const uint index = PHelper::get_index(p);
-        return non_ranging_attacks_array[index][location];
+        return non_ranging_attacks_array[p][location];
     }
 
 private:
