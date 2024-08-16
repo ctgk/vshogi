@@ -108,8 +108,9 @@ struct Config
 {
     // clang-format off
     static constexpr char piece_type_to_char[] = "psbrgk";
-    static constexpr uint num_piece_types = 10; // FU, GI, KI, KA, HI, OU, TO, NG, UM, RY
-    static constexpr uint num_stand_piece_types = 5; // FU, GI, KI, KA, HI
+    static constexpr uint num_piece_types = 10; // FU, GI, KA, HI, KI, OU, TO, NG, UM, RY
+    static constexpr uint num_stand_piece_types = 5; // FU, GI, KA, HI, KI
+    static constexpr uint piece_type_to_point[] = {1, 1, 5, 5, 1, 0, 1, 1, 5, 5, 0};
     static constexpr uint num_files = 5; // 1, 2, 3, 4, 5
     static constexpr uint num_ranks = 5; // A, B, C, D, E
     static constexpr uint num_promotion_ranks = 1;
@@ -242,22 +243,6 @@ inline bool vshogi::minishogi::Pieces::is_ranging_to(
     if (base == KA)
         return (d == DIR_NW) || (d == DIR_NE) || (d == DIR_SW) || (d == DIR_SE);
     return false;
-}
-
-template <>
-inline uint
-vshogi::minishogi::Pieces::get_point(const vshogi::minishogi::PieceTypeEnum& p)
-{
-    using namespace vshogi::minishogi;
-    switch (demote(p)) {
-    case OU:
-        return 0;
-    case KA:
-    case HI:
-        return 5;
-    default:
-        return 1;
-    }
 }
 
 template <>

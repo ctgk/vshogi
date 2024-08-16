@@ -152,8 +152,9 @@ struct Config
 {
     // clang-format off
     static constexpr char piece_type_to_char[] = "plnsbrgk";
-    static constexpr uint num_piece_types = 14; // FU, KY, KE, GI, KI, KA, HI, OU, TO, NY, NK, NG, UM, RY
-    static constexpr uint num_stand_piece_types = 7; // FU, KY, KE, GI, KI, KA, HI
+    static constexpr uint num_piece_types = 14; // FU, KY, KE, GI, KA, HI, KI, OU, TO, NY, NK, NG, UM, RY
+    static constexpr uint num_stand_piece_types = 7; // FU, KY, KE, GI, KA, HI, KI
+    static constexpr uint piece_type_to_point[] = {1, 1, 1, 1, 5, 5, 1, 0, 1, 1, 1, 1, 5, 5, 0};
     static constexpr uint num_files = 9; // 1, 2, 3, 4, 5, 6, 7, 8, 9
     static constexpr uint num_ranks = 9; // A, B, C, D, E, F, G, H, I
     static constexpr uint num_promotion_ranks = 3;
@@ -371,22 +372,6 @@ inline bool shogi::Pieces::is_ranging_piece(const shogi::PieceTypeEnum& pt)
 {
     using namespace shogi;
     return ((pt == KY) || (pt == KA) || (pt == HI) || (pt == UM) || (pt == RY));
-}
-
-template <>
-inline uint
-vshogi::shogi::Pieces::get_point(const vshogi::shogi::PieceTypeEnum& p)
-{
-    using namespace vshogi::shogi;
-    switch (demote(p)) {
-    case OU:
-        return 0;
-    case KA:
-    case HI:
-        return 5;
-    default:
-        return 1;
-    }
 }
 
 template <>

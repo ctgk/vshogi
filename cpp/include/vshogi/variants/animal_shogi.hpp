@@ -91,6 +91,7 @@ struct Config
     static constexpr char piece_type_to_char[] = "ceglh";
     static constexpr uint num_piece_types = 5; //!< CH, EL, GI, LI, HE
     static constexpr uint num_stand_piece_types = 3; //!< CH, EL, GI
+    static constexpr uint piece_type_to_point[] = {0, 0, 0, 0, 0, 0};
     static constexpr uint num_files = 3; //!< A, B, C
     static constexpr uint num_ranks = 4; //!< 1, 2, 3, 4
     static constexpr uint num_promotion_ranks = 1;

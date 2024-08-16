@@ -59,8 +59,6 @@ uint total_point(const State<Config>& s, const ColorEnum& c)
     const auto& stand = s.get_stand(c);
     for (auto sq : EnumIterator<Square, Config::num_squares>()) {
         const auto p = board[sq];
-        if (p == PHelper::VOID)
-            continue;
         if (PHelper::get_color(p) == c)
             out += PHelper::get_point(p);
     }

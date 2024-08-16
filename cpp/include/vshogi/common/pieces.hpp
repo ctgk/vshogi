@@ -13,6 +13,10 @@ template <class Config>
 struct Pieces
 {
 private:
+    static_assert(
+        (Config::num_piece_types + 1) // num_piece_types +  NA
+        == sizeof(Config::piece_type_to_point)
+               / sizeof(Config::piece_type_to_point[0]));
     static constexpr uint num_piece_types = Config::num_piece_types;
     static constexpr uint num_colored_piece_types
         = Config::num_colored_piece_types;
@@ -124,7 +128,10 @@ public:
         return static_cast<T>(p - num_stand_piece_types - 1);
     }
 
-    static uint get_point(const PieceType& p);
+    static uint get_point(const PieceType& p)
+    {
+        return Config::piece_type_to_point[p];
+    }
     static uint get_point(const ColoredPiece& p)
     {
         return get_point(to_piece_type(p));

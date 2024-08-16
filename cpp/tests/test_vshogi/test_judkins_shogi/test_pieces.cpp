@@ -331,6 +331,51 @@ TEST(judkins_shogi_pieces, append_sfen)
     // clang-format on
 }
 
+TEST(judkins_shogi_pieces, get_point)
+{
+    CHECK_EQUAL(1, Pieces::get_point(FU));
+    CHECK_EQUAL(1, Pieces::get_point(KE));
+    CHECK_EQUAL(1, Pieces::get_point(GI));
+    CHECK_EQUAL(5, Pieces::get_point(KA));
+    CHECK_EQUAL(5, Pieces::get_point(HI));
+    CHECK_EQUAL(1, Pieces::get_point(KI));
+    CHECK_EQUAL(0, Pieces::get_point(OU));
+    CHECK_EQUAL(1, Pieces::get_point(TO));
+    CHECK_EQUAL(1, Pieces::get_point(NK));
+    CHECK_EQUAL(1, Pieces::get_point(NG));
+    CHECK_EQUAL(5, Pieces::get_point(UM));
+    CHECK_EQUAL(5, Pieces::get_point(RY));
+    CHECK_EQUAL(0, Pieces::get_point(NA));
+
+    CHECK_EQUAL(1, Pieces::get_point(B_FU));
+    CHECK_EQUAL(1, Pieces::get_point(B_KE));
+    CHECK_EQUAL(1, Pieces::get_point(B_GI));
+    CHECK_EQUAL(5, Pieces::get_point(B_KA));
+    CHECK_EQUAL(5, Pieces::get_point(B_HI));
+    CHECK_EQUAL(1, Pieces::get_point(B_KI));
+    CHECK_EQUAL(0, Pieces::get_point(B_OU));
+    CHECK_EQUAL(1, Pieces::get_point(B_TO));
+    CHECK_EQUAL(1, Pieces::get_point(B_NK));
+    CHECK_EQUAL(1, Pieces::get_point(B_NG));
+    CHECK_EQUAL(5, Pieces::get_point(B_UM));
+    CHECK_EQUAL(5, Pieces::get_point(B_RY));
+
+    CHECK_EQUAL(1, Pieces::get_point(W_FU));
+    CHECK_EQUAL(1, Pieces::get_point(W_KE));
+    CHECK_EQUAL(1, Pieces::get_point(W_GI));
+    CHECK_EQUAL(5, Pieces::get_point(W_KA));
+    CHECK_EQUAL(5, Pieces::get_point(W_HI));
+    CHECK_EQUAL(1, Pieces::get_point(W_KI));
+    CHECK_EQUAL(0, Pieces::get_point(W_OU));
+    CHECK_EQUAL(1, Pieces::get_point(W_TO));
+    CHECK_EQUAL(1, Pieces::get_point(W_NK));
+    CHECK_EQUAL(1, Pieces::get_point(W_NG));
+    CHECK_EQUAL(5, Pieces::get_point(W_UM));
+    CHECK_EQUAL(5, Pieces::get_point(W_RY));
+
+    CHECK_EQUAL(0, Pieces::get_point(VOID));
+}
+
 TEST(judkins_shogi_pieces, get_attack_directions)
 {
     {
