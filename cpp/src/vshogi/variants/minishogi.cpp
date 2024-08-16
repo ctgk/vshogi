@@ -35,8 +35,9 @@ minishogi::Board::Board()
         B_FU, VOID, VOID, VOID, VOID,
         B_OU, B_KI, B_GI, B_KA, B_HI,
         // clang-format on
-    }, m_king_locations{minishogi::SQ_5E, minishogi::SQ_1A}
+    }, m_king_locations{}, m_bb_color{}
 {
+    update_internals_based_on_pieces();
 }
 
 template <>

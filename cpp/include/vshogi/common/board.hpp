@@ -40,6 +40,7 @@ private:
 private:
     ColoredPiece m_pieces[num_squares];
     Square m_king_locations[num_colors];
+    BitBoardType m_bb_color[num_colors];
 
 public:
     Board();
@@ -59,6 +60,14 @@ public:
     {
         return m_king_locations[c];
     }
+    BitBoardType get_occupied() const
+    {
+        return m_bb_color[BLACK] ^ m_bb_color[WHITE];
+    }
+    BitBoardType get_occupied(const ColorEnum& c) const
+    {
+        return m_bb_color[c];
+    }
     void append_sfen(std::string& out) const
     {
         append_sfen_rank(static_cast<Rank>(0), out);
@@ -72,11 +81,21 @@ public:
         const ColoredPiece& p,
         std::uint64_t* const hash = nullptr)
     {
-        if (PHelper::to_piece_type(p) == PHelper::OU)
-            m_king_locations[PHelper::get_color(p)] = dst;
         const ColoredPiece popped = place_piece_on(dst, p);
+
+        const auto c_in = PHelper::get_color(p);
+        const auto c_out = PHelper::get_color(popped);
+
+        if (PHelper::to_piece_type(p) == PHelper::OU)
+            m_king_locations[c_in] = dst;
         if (PHelper::to_piece_type(popped) == PHelper::OU)
-            m_king_locations[PHelper::get_color(popped)] = SQ_NA;
+            m_king_locations[c_out] = SQ_NA;
+
+        if (popped != VOID)
+            m_bb_color[c_out] ^= BitBoardType::from_square(dst);
+        if (p != VOID)
+            m_bb_color[c_in] ^= BitBoardType::from_square(dst);
+
         if (hash != nullptr) {
             *hash ^= zobrist_table[dst][popped];
             *hash ^= zobrist_table[dst][p];
@@ -90,10 +109,17 @@ public:
         std::uint64_t* const hash = nullptr)
     {
         ColoredPiece moving_piece = place_piece_on(src, VOID);
+
+        if (moving_piece != VOID) {
+            m_bb_color[PHelper::get_color(moving_piece)]
+                ^= BitBoardType::from_square(src);
+        }
+
         if (hash != nullptr) {
             *hash ^= zobrist_table[src][VOID];
             *hash ^= zobrist_table[src][moving_piece];
         }
+
         if (promote)
             moving_piece = PHelper::promote_nocheck(moving_piece);
         return apply(dst, moving_piece, hash);
@@ -103,7 +129,7 @@ public:
         for (uint ir = 0U; ir < num_ranks; ++ir) {
             sfen = set_sfen_rank(sfen, static_cast<Rank>(ir));
         }
-        update_king_position_based_on_pieces();
+        update_internals_based_on_pieces();
         return sfen;
     }
     Square find_attacker(
@@ -145,7 +171,7 @@ public:
             const auto sq_hflipped = SHelper::hflip(sq);
             out.m_pieces[sq_hflipped] = m_pieces[sq];
         }
-        out.update_king_position_based_on_pieces();
+        out.update_internals_based_on_pieces();
         return out;
     }
     static void init_tables()
@@ -195,14 +221,19 @@ private:
         m_pieces[sq] = p;
         return out;
     }
-    void update_king_position_based_on_pieces()
+    void update_internals_based_on_pieces()
     {
         m_king_locations[BLACK] = SQ_NA;
         m_king_locations[WHITE] = SQ_NA;
+        m_bb_color[BLACK] = BitBoardType();
+        m_bb_color[WHITE] = BitBoardType();
         for (auto sq : EnumIterator<Square, num_squares>()) {
             const auto& p = m_pieces[sq];
+            const auto c = PHelper::get_color(p);
             if (PHelper::to_piece_type(p) == PHelper::OU)
-                m_king_locations[PHelper::get_color(p)] = sq;
+                m_king_locations[c] = sq;
+            if (p != VOID)
+                m_bb_color[c] ^= BitBoardType::from_square(sq);
         }
     }
 };

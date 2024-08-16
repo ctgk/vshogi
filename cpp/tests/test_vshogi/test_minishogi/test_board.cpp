@@ -117,4 +117,22 @@ TEST(minishogi_board, append_sfen)
     STRCMP_EQUAL(expected, actual.c_str());
 }
 
+TEST(minishogi_board, apply)
+{
+    {
+        auto b = Board();
+        b.apply(SQ_5D, VOID);
+        CHECK_EQUAL(
+            (bb_5e | bb_4e | bb_3e | bb_2e | bb_1e).value(),
+            b.get_occupied(vshogi::BLACK).value());
+    }
+    {
+        auto b = Board();
+        b.apply(SQ_5D, SQ_5A);
+        CHECK_EQUAL(
+            (bb_4a | bb_3a | bb_2a | bb_1a | bb_1b | bb_5d).value(),
+            b.get_occupied(vshogi::WHITE).value());
+    }
+}
+
 } // namespace test_vshogi::test_minishogi

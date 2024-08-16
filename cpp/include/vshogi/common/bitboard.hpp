@@ -43,6 +43,10 @@ public:
     constexpr BitBoard(const Int& v) : m_value(UInt(v) & mask)
     {
     }
+    constexpr UInt value() const
+    {
+        return m_value;
+    }
     constexpr BitBoard operator~() const
     {
         return BitBoard(~m_value);

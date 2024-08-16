@@ -14,20 +14,62 @@ TEST(animal_shogi_board, apply)
     {
         auto b = Board();
         CHECK_EQUAL(SQ_B4, b.get_king_location(vshogi::BLACK));
+        CHECK_EQUAL(
+            (bb_a1 | bb_b1 | bb_c1 | bb_b2 | bb_b3 | bb_a4 | bb_b4 | bb_c4)
+                .value(),
+            b.get_occupied().value());
+        CHECK_EQUAL(
+            (bb_b3 | bb_a4 | bb_b4 | bb_c4).value(),
+            b.get_occupied(vshogi::BLACK).value());
+        CHECK_EQUAL(
+            (bb_a1 | bb_b1 | bb_c1 | bb_b2).value(),
+            b.get_occupied(vshogi::WHITE).value());
+
         b.apply(SQ_B4, VOID);
         CHECK_EQUAL(SQ_NA, b.get_king_location(vshogi::BLACK));
+        CHECK_EQUAL(
+            (bb_a1 | bb_b1 | bb_c1 | bb_b2 | bb_b3 | bb_a4 | bb_c4).value(),
+            b.get_occupied().value());
+        CHECK_EQUAL(
+            (bb_b3 | bb_a4 | bb_c4).value(),
+            b.get_occupied(vshogi::BLACK).value());
+        CHECK_EQUAL(
+            (bb_a1 | bb_b1 | bb_c1 | bb_b2).value(),
+            b.get_occupied(vshogi::WHITE).value());
+
         b.apply(SQ_C3, B_LI);
         CHECK_EQUAL(SQ_C3, b.get_king_location(vshogi::BLACK));
         CHECK_EQUAL(B_LI, b[SQ_C3]);
         CHECK_EQUAL(VOID, b[SQ_B4]);
+        CHECK_EQUAL(
+            (bb_a1 | bb_b1 | bb_c1 | bb_b2 | bb_b3 | bb_c3 | bb_a4 | bb_c4)
+                .value(),
+            b.get_occupied().value());
+        CHECK_EQUAL(
+            (bb_b3 | bb_c3 | bb_a4 | bb_c4).value(),
+            b.get_occupied(vshogi::BLACK).value());
+        CHECK_EQUAL(
+            (bb_a1 | bb_b1 | bb_c1 | bb_b2).value(),
+            b.get_occupied(vshogi::WHITE).value());
     }
     {
         auto b = Board();
         CHECK_EQUAL(SQ_B4, b.get_king_location(vshogi::BLACK));
+
         b.apply(SQ_C3, SQ_B4);
         CHECK_EQUAL(SQ_C3, b.get_king_location(vshogi::BLACK));
         CHECK_EQUAL(B_LI, b[SQ_C3]);
         CHECK_EQUAL(VOID, b[SQ_B4]);
+        CHECK_EQUAL(
+            (bb_a1 | bb_b1 | bb_c1 | bb_b2 | bb_b3 | bb_c3 | bb_a4 | bb_c4)
+                .value(),
+            b.get_occupied().value());
+        CHECK_EQUAL(
+            (bb_b3 | bb_c3 | bb_a4 | bb_c4).value(),
+            b.get_occupied(vshogi::BLACK).value());
+        CHECK_EQUAL(
+            (bb_a1 | bb_b1 | bb_c1 | bb_b2).value(),
+            b.get_occupied(vshogi::WHITE).value());
     }
 }
 
