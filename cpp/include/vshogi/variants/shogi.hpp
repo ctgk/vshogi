@@ -163,6 +163,8 @@ struct Config
     static constexpr uint max_stand_piece_count = 18;
     static constexpr uint max_stand_sfen_length = 26; // "10p2l2n2sbr2g2P2L2N2SBR2G "
     static constexpr uint max_acceptable_repetitions = 3;
+    static constexpr uint half_num_initial_pieces = 10;
+    static constexpr uint initial_points = 27;
     using BaseTypeBitBoard = uint128;
     // clang-format on
 

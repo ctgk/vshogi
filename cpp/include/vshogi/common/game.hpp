@@ -53,8 +53,6 @@ private:
     ResultEnum m_result;
     std::uint64_t m_zobrist_hash;
     const std::string m_initial_sfen_without_ply;
-    const uint m_half_num_pieces[2];
-    const uint m_initial_points[2];
 
 public:
     Game() : Game(StateType())
@@ -194,11 +192,7 @@ public:
             m_move_list,
             m_result,
             m_zobrist_hash,
-            m_initial_sfen_without_ply,
-            m_half_num_pieces[BLACK],
-            m_half_num_pieces[WHITE],
-            m_initial_points[BLACK],
-            m_initial_points[WHITE]);
+            m_initial_sfen_without_ply);
         out.apply_dfpn_offence(move);
         return out;
     }
@@ -210,11 +204,7 @@ public:
             m_move_list,
             m_result,
             m_zobrist_hash,
-            m_initial_sfen_without_ply,
-            m_half_num_pieces[BLACK],
-            m_half_num_pieces[WHITE],
-            m_initial_points[BLACK],
-            m_initial_points[WHITE]);
+            m_initial_sfen_without_ply);
         out.apply_dfpn_defence(move);
         return out;
     }
@@ -280,13 +270,7 @@ protected:
         : m_current_state(s), m_zobrist_hash_list(), m_move_list(),
           m_legal_moves(), m_result(ONGOING),
           m_zobrist_hash(m_current_state.zobrist_hash()),
-          m_initial_sfen_without_ply(m_current_state.to_sfen()),
-          m_half_num_pieces{
-              num_pieces(m_current_state, BLACK) / 2,
-              num_pieces(m_current_state, WHITE) / 2},
-          m_initial_points{
-              total_point(m_current_state, BLACK),
-              total_point(m_current_state, WHITE)}
+          m_initial_sfen_without_ply(m_current_state.to_sfen())
     {
         m_zobrist_hash_list.reserve(128);
         m_move_list.reserve(128);
@@ -298,17 +282,11 @@ protected:
         const std::vector<MoveType>& move_list,
         const ResultEnum& result,
         const uint64_t& zobrist_hash,
-        const std::string& initial_sfen_without_ply,
-        const uint& half_num_pieces_black,
-        const uint& half_num_pieces_white,
-        const uint& initial_points_black,
-        const uint& initial_points_white)
+        const std::string& initial_sfen_without_ply)
         : m_current_state(s), m_zobrist_hash_list(zobrist_hash_list),
           m_move_list(move_list), m_legal_moves(), m_result(result),
           m_zobrist_hash(zobrist_hash),
-          m_initial_sfen_without_ply(initial_sfen_without_ply),
-          m_half_num_pieces{half_num_pieces_black, half_num_pieces_white},
-          m_initial_points{initial_points_black, initial_points_white}
+          m_initial_sfen_without_ply(initial_sfen_without_ply)
     {
     }
     static uint num_pieces(const StateType& s, const ColorEnum& c)
@@ -451,15 +429,15 @@ protected:
 
         // (3) The declaring side has 10 or more pieces other than the King in
         // the third rank or beyond.
-        if (num_pieces_in_zone <= m_half_num_pieces[turn])
+        if (num_pieces_in_zone <= Config::half_num_initial_pieces)
             return false;
 
         // (2) The declaring side has 28 (the first player (sente, black)) or
         // 27 (the second player (gote, white)) piece points or more.
         if (turn == BLACK)
-            return count_point_of(turn, piece_mask) > m_initial_points[turn];
+            return count_point_of(turn, piece_mask) > Config::initial_points;
         else
-            return count_point_of(turn, piece_mask) >= m_initial_points[turn];
+            return count_point_of(turn, piece_mask) >= Config::initial_points;
     }
     uint count_point_of(const ColorEnum& c, const BitBoardType& mask) const
     {

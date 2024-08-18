@@ -100,6 +100,8 @@ struct Config
     static constexpr uint max_stand_piece_count = 2;
     static constexpr uint max_stand_sfen_length = 7; // "2C2E2G "
     static constexpr uint max_acceptable_repetitions = 2;
+    static constexpr uint half_num_initial_pieces = 2;
+    static constexpr uint initial_points = 3;
     using BaseTypeBitBoard = std::uint16_t;
     // clang-format on
 
@@ -472,8 +474,7 @@ template <>
 inline animal_shogi::Game::Game(const animal_shogi::State& s)
     : m_current_state(s), m_zobrist_hash_list(), m_move_list(), m_legal_moves(),
       m_result(ONGOING), m_zobrist_hash(m_current_state.zobrist_hash()),
-      m_initial_sfen_without_ply(m_current_state.to_sfen()),
-      m_half_num_pieces{0, 0}, m_initial_points{0, 0}
+      m_initial_sfen_without_ply(m_current_state.to_sfen())
 {
     m_zobrist_hash_list.reserve(128);
     m_move_list.reserve(128);

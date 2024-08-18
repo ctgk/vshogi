@@ -366,7 +366,7 @@ TEST(dfpn, king_entering_before_mate)
     using namespace vshogi::judkins_shogi;
     using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
     // Turn: WHITE
-    // White: -
+    // White: GI
     //     6   5   4   3   2   1
     //   +---+---+---+---+---+---+
     // A |   |   |   |   |   |   |
@@ -379,11 +379,11 @@ TEST(dfpn, king_entering_before_mate)
     //   +---+---+---+---+---+---+
     // E |+FU|   |   |   |-KI|-RY|
     //   +---+---+---+---+---+---+
-    // F |   |+OU|   |-OU|   |   |
+    // F |   |+OU|   |-OU|-TO|-UM|
     //   +---+---+---+---+---+---+
     // Black: -
     auto searcher = Searcher();
-    searcher.set_game(Game("6/6/3n2/6/P3g+r/1K1k2 w -"));
+    searcher.set_game(Game("6/6/3n2/6/P3g+r/1K1k+p+b w s"));
     CHECK_TRUE(searcher.explore(100));
     CHECK_TRUE(searcher.found_mate());
     const auto actual = searcher.get_mate_moves();
