@@ -19,57 +19,6 @@
 namespace vshogi
 {
 
-namespace internal
-{
-
-template <class Config>
-uint num_pieces(const State<Config>& s, const ColorEnum& c)
-{
-    using SHelper = Squares<Config>;
-    using PHelper = Pieces<Config>;
-    using Square = typename Config::Square;
-    using PieceType = typename Config::PieceType;
-    constexpr auto num_sp_types = Config::num_stand_piece_types;
-    const auto& board = s.get_board();
-    const auto& stand = s.get_stand(c);
-    uint out = 0u;
-    for (auto sq : EnumIterator<Square, Config::num_squares>()) {
-        const auto p = board[sq];
-        if (p == PHelper::VOID)
-            continue;
-        if (PHelper::get_color(p) == c)
-            out += 1U;
-    }
-
-    for (auto pt : EnumIterator<PieceType, num_sp_types>())
-        out += stand.count(pt);
-    return out;
-}
-
-template <class Config>
-uint total_point(const State<Config>& s, const ColorEnum& c)
-{
-    using SHelper = Squares<Config>;
-    using PHelper = Pieces<Config>;
-    using Square = typename Config::Square;
-    using PieceType = typename Config::PieceType;
-    constexpr auto num_sp_types = Config::num_stand_piece_types;
-    uint out = 0u;
-    const auto& board = s.get_board();
-    const auto& stand = s.get_stand(c);
-    for (auto sq : EnumIterator<Square, Config::num_squares>()) {
-        const auto p = board[sq];
-        if (PHelper::get_color(p) == c)
-            out += PHelper::get_point(p);
-    }
-    for (auto pt : EnumIterator<PieceType, num_sp_types>()) {
-        out += stand.count(pt) * PHelper::get_point(pt);
-    }
-    return out;
-}
-
-} // namespace internal
-
 template <class Config>
 class Game
 {
@@ -333,11 +282,11 @@ protected:
           m_zobrist_hash(m_current_state.zobrist_hash()),
           m_initial_sfen_without_ply(m_current_state.to_sfen()),
           m_half_num_pieces{
-              internal::num_pieces(m_current_state, BLACK) / 2,
-              internal::num_pieces(m_current_state, WHITE) / 2},
+              num_pieces(m_current_state, BLACK) / 2,
+              num_pieces(m_current_state, WHITE) / 2},
           m_initial_points{
-              internal::total_point(m_current_state, BLACK),
-              internal::total_point(m_current_state, WHITE)}
+              total_point(m_current_state, BLACK),
+              total_point(m_current_state, WHITE)}
     {
         m_zobrist_hash_list.reserve(128);
         m_move_list.reserve(128);
@@ -362,6 +311,39 @@ protected:
           m_initial_points{initial_points_black, initial_points_white}
     {
     }
+    static uint num_pieces(const StateType& s, const ColorEnum& c)
+    {
+        const auto& board = s.get_board();
+        const auto& stand = s.get_stand(c);
+        uint out = 0u;
+        for (auto sq : EnumIterator<Square, num_squares>()) {
+            const auto p = board[sq];
+            if (p == PHelper::VOID)
+                continue;
+            if (PHelper::get_color(p) == c)
+                out += 1u;
+        }
+        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>())
+            out += stand.count(pt);
+        return out;
+    }
+    static uint total_point(const StateType& s, const ColorEnum& c)
+    {
+        uint out = 0u;
+        const auto& board = s.get_board();
+        const auto& stand = s.get_stand(c);
+        for (auto sq : EnumIterator<Square, num_squares>()) {
+            const auto p = board[sq];
+            if (PHelper::get_color(p) == c)
+                out += PHelper::get_point(p);
+        }
+        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>()) {
+            out += stand.count(pt) * PHelper::get_point(pt);
+        }
+        return out;
+    }
+
+protected:
     void add_record_and_update_state(const MoveType& move)
     {
         m_zobrist_hash_list.emplace_back(m_zobrist_hash);
