@@ -411,6 +411,12 @@ inline judkins_shogi::BitBoard judkins_shogi::BitBoard::attacks_table
     = {};
 
 template <>
+inline judkins_shogi::BitBoard
+    judkins_shogi::BitBoard::ray_table[judkins_shogi::Config::num_squares]
+                                      [judkins_shogi::Config::num_dir]
+    = {};
+
+template <>
 inline judkins_shogi::BitBoard judkins_shogi::BitBoard::get_attacks_by(
     const judkins_shogi::ColoredPieceEnum& p,
     const judkins_shogi::SquareEnum& sq,
@@ -419,17 +425,17 @@ inline judkins_shogi::BitBoard judkins_shogi::BitBoard::get_attacks_by(
     switch (p) {
     case judkins_shogi::B_KA:
     case judkins_shogi::W_KA:
-        return BitBoard::ranging_attacks_to_diagonal(sq, occupied);
+        return BitBoard::compute_ray_to_diagonal(sq, occupied);
     case judkins_shogi::B_HI:
     case judkins_shogi::W_HI:
-        return BitBoard::ranging_attacks_to_adjacent(sq, occupied);
+        return BitBoard::compute_ray_to_adjacent(sq, occupied);
     case judkins_shogi::B_UM:
     case judkins_shogi::W_UM:
-        return BitBoard::ranging_attacks_to_diagonal(sq, occupied)
+        return BitBoard::compute_ray_to_diagonal(sq, occupied)
                | attacks_table[judkins_shogi::B_OU][sq];
     case judkins_shogi::B_RY:
     case judkins_shogi::W_RY:
-        return BitBoard::ranging_attacks_to_adjacent(sq, occupied)
+        return BitBoard::compute_ray_to_adjacent(sq, occupied)
                | attacks_table[judkins_shogi::B_OU][sq];
     default:
         return get_attacks_by(p, sq);

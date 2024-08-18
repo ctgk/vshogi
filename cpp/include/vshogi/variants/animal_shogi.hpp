@@ -337,6 +337,12 @@ inline animal_shogi::BitBoard animal_shogi::BitBoard::attacks_table
     = {};
 
 template <>
+inline animal_shogi::BitBoard
+    animal_shogi::BitBoard::ray_table[animal_shogi::Config::num_squares]
+                                     [animal_shogi::Config::num_dir]
+    = {};
+
+template <>
 inline animal_shogi::BitBoard animal_shogi::BitBoard::get_attacks_by(
     const animal_shogi::ColoredPieceEnum& p,
     const animal_shogi::SquareEnum& sq,

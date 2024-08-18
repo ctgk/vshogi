@@ -355,6 +355,11 @@ template <>
 inline minishogi::BitBoard minishogi::BitBoard::attacks_table
     [minishogi::Config::num_colored_piece_types][minishogi::Config::num_squares]
     = {};
+template <>
+inline minishogi::BitBoard
+    minishogi::BitBoard::ray_table[minishogi::Config::num_squares]
+                                  [minishogi::Config::num_dir]
+    = {};
 
 template <>
 inline minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
@@ -365,17 +370,17 @@ inline minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
     switch (p) {
     case minishogi::B_KA:
     case minishogi::W_KA:
-        return BitBoard::ranging_attacks_to_diagonal(sq, occupied);
+        return BitBoard::compute_ray_to_diagonal(sq, occupied);
     case minishogi::B_HI:
     case minishogi::W_HI:
-        return BitBoard::ranging_attacks_to_adjacent(sq, occupied);
+        return BitBoard::compute_ray_to_adjacent(sq, occupied);
     case minishogi::B_UM:
     case minishogi::W_UM:
-        return BitBoard::ranging_attacks_to_diagonal(sq, occupied)
+        return BitBoard::compute_ray_to_diagonal(sq, occupied)
                | attacks_table[minishogi::B_OU][sq];
     case minishogi::B_RY:
     case minishogi::W_RY:
-        return BitBoard::ranging_attacks_to_adjacent(sq, occupied)
+        return BitBoard::compute_ray_to_adjacent(sq, occupied)
                | attacks_table[minishogi::B_OU][sq];
     default:
         return get_attacks_by(p, sq);

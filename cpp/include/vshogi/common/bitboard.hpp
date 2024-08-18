@@ -34,6 +34,7 @@ private:
         = (static_cast<UInt>(1) << num_squares) - static_cast<UInt>(1);
     static const BitBoard square_to_bitboard_array[num_squares + 1U];
     static BitBoard attacks_table[num_colored_piece_types][num_squares];
+    static BitBoard ray_table[num_squares][num_dir];
 
 public:
     constexpr BitBoard() : m_value()
@@ -135,7 +136,7 @@ public:
             return (*this & filemask[dir]) >> static_cast<uint>(-delta);
     }
 
-    static BitBoard ranging_attacks_to(
+    static BitBoard compute_ray_to(
         Square sq,
         const DirectionEnum dir,
         const BitBoard& occupied = BitBoard())
@@ -154,21 +155,21 @@ public:
         }
         return out;
     }
-    static BitBoard ranging_attacks_to_adjacent(
+    static BitBoard compute_ray_to_adjacent(
         const Square& sq, const BitBoard& occupied = BitBoard())
     {
-        return ranging_attacks_to(sq, DIR_N, occupied)
-               | ranging_attacks_to(sq, DIR_E, occupied)
-               | ranging_attacks_to(sq, DIR_W, occupied)
-               | ranging_attacks_to(sq, DIR_S, occupied);
+        return compute_ray_to(sq, DIR_N, occupied)
+               | compute_ray_to(sq, DIR_E, occupied)
+               | compute_ray_to(sq, DIR_W, occupied)
+               | compute_ray_to(sq, DIR_S, occupied);
     }
-    static BitBoard ranging_attacks_to_diagonal(
+    static BitBoard compute_ray_to_diagonal(
         const Square& sq, const BitBoard& occupied = BitBoard())
     {
-        return ranging_attacks_to(sq, DIR_NW, occupied)
-               | ranging_attacks_to(sq, DIR_NE, occupied)
-               | ranging_attacks_to(sq, DIR_SW, occupied)
-               | ranging_attacks_to(sq, DIR_SE, occupied);
+        return compute_ray_to(sq, DIR_NW, occupied)
+               | compute_ray_to(sq, DIR_NE, occupied)
+               | compute_ray_to(sq, DIR_SW, occupied)
+               | compute_ray_to(sq, DIR_SE, occupied);
     }
 
     static BitBoard get_attacks_by(const ColoredPiece& p, const Square& sq)
@@ -179,11 +180,21 @@ public:
     }
     static BitBoard get_attacks_by(
         const ColoredPiece& p, const Square& sq, const BitBoard& occupied);
+    static BitBoard get_ray_to(const Square& sq, const DirectionEnum& dir)
+    {
+        return ray_table[sq][dir];
+    }
     static void init_tables()
     {
         for (auto p : EnumIterator<ColoredPiece, num_colored_piece_types>()) {
             for (auto sq : EnumIterator<Square, num_squares>()) {
                 attacks_table[p][sq] = compute_attack_by(p, sq);
+            }
+        }
+
+        for (auto sq : EnumIterator<Square, num_squares>()) {
+            for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
+                ray_table[sq][dir] = compute_ray_to(sq, dir);
             }
         }
     }
@@ -215,7 +226,7 @@ private:
             for (auto pd = PHelper::get_attack_directions(p); *pd != DIR_NA;
                  ++pd) {
                 if (PHelper::is_ranging_to(p, *pd))
-                    a |= ranging_attacks_to(sq, *pd);
+                    a |= compute_ray_to(sq, *pd);
             }
         }
         for (auto pd = PHelper::get_attack_directions(p); *pd != DIR_NA;) {

@@ -141,13 +141,31 @@ public:
         auto ptr_sq = SHelper::get_squares_along(dir, attacked);
         if (ptr_sq == nullptr)
             return SQ_NA;
+        if (!(BitBoardType::get_ray_to(attacked, dir)
+              & m_bb_color[attacker_color])
+                 .any())
+            return SQ_NA;
+        {
+            const ColoredPiece& p = m_pieces[*ptr_sq];
+            if ((p != VOID) && (*ptr_sq != skip)) {
+                if ((PHelper::get_color(p) == attacker_color)
+                    && BitBoardType::get_attacks_by(p, *ptr_sq)
+                           .is_one(attacked))
+                    return *ptr_sq;
+                else
+                    return SQ_NA;
+            }
+        }
+
+        const auto dir_rotated = rotate(dir);
+        ++ptr_sq;
         for (; *ptr_sq != SQ_NA; ++ptr_sq) {
             const auto& sq = *ptr_sq;
             const auto& p = m_pieces[sq];
             if ((p == VOID) || (sq == skip))
                 continue;
             if ((PHelper::get_color(p) == attacker_color)
-                && BitBoardType::get_attacks_by(p, sq).is_one(attacked))
+                && PHelper::is_ranging_to(p, dir_rotated))
                 return sq;
             return SQ_NA;
         }

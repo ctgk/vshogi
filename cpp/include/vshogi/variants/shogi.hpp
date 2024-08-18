@@ -542,6 +542,11 @@ inline shogi::BitBoard
     = {};
 
 template <>
+inline shogi::BitBoard shogi::BitBoard::ray_table[shogi::Config::num_squares]
+                                                 [shogi::Config::num_dir]
+    = {};
+
+template <>
 inline shogi::BitBoard shogi::BitBoard::get_attacks_by(
     const shogi::ColoredPieceEnum& p,
     const shogi::SquareEnum& sq,
@@ -549,22 +554,22 @@ inline shogi::BitBoard shogi::BitBoard::get_attacks_by(
 {
     switch (p) {
     case shogi::B_KY:
-        return BitBoard::ranging_attacks_to(sq, DIR_N, occupied);
+        return BitBoard::compute_ray_to(sq, DIR_N, occupied);
     case shogi::W_KY:
-        return BitBoard::ranging_attacks_to(sq, DIR_S, occupied);
+        return BitBoard::compute_ray_to(sq, DIR_S, occupied);
     case shogi::B_KA:
     case shogi::W_KA:
-        return BitBoard::ranging_attacks_to_diagonal(sq, occupied);
+        return BitBoard::compute_ray_to_diagonal(sq, occupied);
     case shogi::B_HI:
     case shogi::W_HI:
-        return BitBoard::ranging_attacks_to_adjacent(sq, occupied);
+        return BitBoard::compute_ray_to_adjacent(sq, occupied);
     case shogi::B_UM:
     case shogi::W_UM:
-        return BitBoard::ranging_attacks_to_diagonal(sq, occupied)
+        return BitBoard::compute_ray_to_diagonal(sq, occupied)
                | attacks_table[shogi::B_OU][sq];
     case shogi::B_RY:
     case shogi::W_RY:
-        return BitBoard::ranging_attacks_to_adjacent(sq, occupied)
+        return BitBoard::compute_ray_to_adjacent(sq, occupied)
                | attacks_table[shogi::B_OU][sq];
     default:
         return get_attacks_by(p, sq);
