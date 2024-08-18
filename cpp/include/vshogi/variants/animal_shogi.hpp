@@ -385,7 +385,6 @@ inline void animal_shogi::Game::update_result()
 template <>
 inline void animal_shogi::Game::update_internals()
 {
-    update_king_occupied_checkers();
     {
         const auto turn = get_turn();
         const auto& board = get_board();

@@ -39,19 +39,25 @@ private:
     static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
     static constexpr uint num_ranks = Config::num_ranks;
     static constexpr uint num_files = Config::num_files;
+    static constexpr uint num_dir = Config::num_dir;
+    static constexpr Square SQ_NA = SHelper::SQ_NA; // NOLINT
 
 private:
     BoardType m_board;
     Stands m_stands;
     ColorEnum m_turn; //!< Player to make a move in the current state.
+    Square m_checker_locations[2]; //!< Checkers attacking turn player's king.
 
 public:
-    State() : m_board(), m_stands(), m_turn(BLACK)
+    State()
+        : m_board(), m_stands(),
+          m_turn(BLACK), m_checker_locations{SQ_NA, SQ_NA}
     {
     }
     State(const std::string& sfen) : m_board(), m_stands(), m_turn()
     {
         set_sfen(sfen);
+        update_checkers();
     }
     static constexpr uint ranks()
     {
@@ -95,6 +101,18 @@ public:
     {
         return m_turn;
     }
+    Square get_checker_location(const uint i = 0u) const
+    {
+        return m_checker_locations[i];
+    }
+    bool in_check() const
+    {
+        return m_checker_locations[0] != SQ_NA;
+    }
+    bool in_double_check() const
+    {
+        return m_checker_locations[1] != SQ_NA;
+    }
     void set_sfen(const std::string& sfen)
     {
         auto s = sfen.c_str();
@@ -123,13 +141,17 @@ public:
     State& apply(const MoveType& move, std::uint64_t* const hash = nullptr)
     {
         if (move.is_drop()) {
-            const ColoredPiece p
-                = m_stands.pop_piece_from(m_turn, move.source_piece(), hash);
-            m_board.apply(move.destination(), p, hash);
+            const PieceType src = move.source_piece();
+            const Square dst = move.destination();
+            const ColoredPiece p = m_stands.pop_piece_from(m_turn, src, hash);
+            m_board.apply(dst, p, hash);
+            update_checkers_before_turn_update(dst);
         } else {
-            const auto captured = m_board.apply(
-                move.destination(), move.source_square(), move.promote(), hash);
+            const Square src = move.source_square();
+            const Square dst = move.destination();
+            const auto captured = m_board.apply(dst, src, move.promote(), hash);
             m_stands.add_captured_piece(captured, hash);
+            update_checkers_before_turn_update(dst, src);
         }
         m_turn = ~m_turn;
         return *this;
@@ -179,10 +201,77 @@ private:
     State(const BoardType& b, const Stands& s, const ColorEnum& turn)
         : m_board(b), m_stands(s), m_turn(turn)
     {
+        update_checkers();
     }
     void append_sfen_turn(std::string& out) const
     {
         out += ((m_turn == BLACK) ? 'b' : 'w');
+    }
+    void update_checkers()
+    {
+        std::fill_n(m_checker_locations, 2, SQ_NA);
+        uint index = 0u;
+        const auto king_sq = m_board.get_king_location(m_turn);
+        for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
+            const auto sq = m_board.find_attacker(~m_turn, king_sq, dir);
+            if (sq != SQ_NA) {
+                m_checker_locations[index++] = sq;
+                if (index > 1)
+                    break;
+            }
+        }
+    }
+    void update_checkers_before_turn_update(const Square& dst)
+    {
+        const auto enemy_king_sq = m_board.get_king_location(~m_turn);
+        const auto dst_dir = SHelper::get_direction(dst, enemy_king_sq);
+        const bool check_by_moved
+            = is_check_by_moved(enemy_king_sq, dst, dst_dir);
+
+        m_checker_locations[0] = (check_by_moved) ? dst : SQ_NA;
+        m_checker_locations[1] = SQ_NA;
+    }
+    void
+    update_checkers_before_turn_update(const Square& dst, const Square& src)
+    {
+        const auto enemy_king_sq = m_board.get_king_location(~m_turn);
+        const auto dst_dir = SHelper::get_direction(dst, enemy_king_sq);
+        const auto discovered_checker_sq = find_discovered_checker_location(
+            enemy_king_sq, dst_dir, SHelper::get_direction(src, enemy_king_sq));
+
+        const bool check_by_discovered = (discovered_checker_sq != SQ_NA);
+        const bool check_by_moved
+            = is_check_by_moved(enemy_king_sq, dst, dst_dir);
+
+        if (check_by_moved && check_by_discovered) {
+            m_checker_locations[0] = dst;
+            m_checker_locations[1] = discovered_checker_sq;
+        } else if (check_by_moved) {
+            m_checker_locations[0] = dst;
+            m_checker_locations[1] = SQ_NA;
+        } else if (check_by_discovered) {
+            m_checker_locations[0] = discovered_checker_sq;
+            m_checker_locations[1] = SQ_NA;
+        } else {
+            m_checker_locations[0] = SQ_NA;
+            m_checker_locations[1] = SQ_NA;
+        }
+    }
+    Square find_discovered_checker_location(
+        const Square& enemy_king_sq,
+        const DirectionEnum& dst_dir,
+        const DirectionEnum& src_dir)
+    {
+        if ((src_dir == DIR_NA) || (src_dir == dst_dir))
+            return SQ_NA;
+        return m_board.find_attacker(m_turn, enemy_king_sq, src_dir);
+    }
+    bool is_check_by_moved(
+        const Square& enemy_king_sq,
+        const Square& dst,
+        const DirectionEnum& dst_dir)
+    {
+        return (m_board.find_attacker(m_turn, enemy_king_sq, dst_dir) == dst);
     }
 };
 

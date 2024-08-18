@@ -106,7 +106,6 @@ private:
     const std::string m_initial_sfen_without_ply;
     const uint m_half_num_pieces[2];
     const uint m_initial_points[2];
-    Square m_checker_locations[2];
 
 public:
     Game() : Game(StateType())
@@ -152,9 +151,9 @@ public:
     {
         return m_legal_moves;
     }
-    const Square& get_checker_location(const uint index = 0u) const
+    Square get_checker_location(const uint index = 0u) const
     {
-        return m_checker_locations[index];
+        return m_current_state.get_checker_location(index);
     }
     ResultEnum get_result() const
     {
@@ -217,25 +216,25 @@ public:
     Game& apply_nocheck(const MoveType& move)
     {
         add_record_and_update_state(move);
-        update_internals(move);
+        update_internals();
         return *this;
     }
     Game& apply_mcts_internal_vertex(const MoveType& move)
     {
         add_record_and_update_state(move);
-        update_internals_mcts_internal_vertex(move);
+        update_internals_mcts_internal_vertex();
         return *this;
     }
     Game& apply_dfpn_offence(const MoveType& move)
     {
         add_record_and_update_state_for_dfpn(move);
-        update_internals_dfpn_offence(move);
+        update_internals_dfpn_offence();
         return *this;
     }
     Game& apply_dfpn_defence(const MoveType& move)
     {
         add_record_and_update_state_for_dfpn(move);
-        update_internals_dfpn_defence(move);
+        update_internals_dfpn_defence();
         return *this;
     }
     Game copy_and_apply_dfpn_offence(const MoveType& move)
@@ -285,7 +284,7 @@ public:
      */
     bool in_check() const
     {
-        return m_checker_locations[0] != SHelper::SQ_NA;
+        return m_current_state.in_check();
     }
 
     template <bool CheckLegality = true>
@@ -360,8 +359,7 @@ protected:
           m_zobrist_hash(zobrist_hash),
           m_initial_sfen_without_ply(initial_sfen_without_ply),
           m_half_num_pieces{half_num_pieces_black, half_num_pieces_white},
-          m_initial_points{initial_points_black, initial_points_white},
-          m_checker_locations{}
+          m_initial_points{initial_points_black, initial_points_white}
     {
     }
     void add_record_and_update_state(const MoveType& move)
@@ -379,88 +377,23 @@ protected:
     }
     void update_internals()
     {
-        update_king_occupied_checkers();
         update_legal_moves(false);
         update_result();
     }
-    void update_internals(const MoveType& move)
+    void update_internals_mcts_internal_vertex()
     {
-        update_king_occupied_checkers(move);
-        update_legal_moves(false);
-        update_result();
-    }
-    void update_internals_mcts_internal_vertex(const MoveType& move)
-    {
-        update_king_occupied_checkers(move);
         m_legal_moves.clear();
         m_result = UNKNOWN;
     }
-    void update_internals_dfpn_offence(const MoveType& move)
+    void update_internals_dfpn_offence()
     {
-        update_king_occupied_checkers(move);
         update_legal_moves(false);
         update_result_for_dfpn();
     }
-    void update_internals_dfpn_defence(const MoveType& move)
+    void update_internals_dfpn_defence()
     {
-        update_king_occupied_checkers(move);
         update_legal_moves(true);
         update_result_for_dfpn();
-    }
-
-protected:
-    void update_king_occupied_checkers()
-    {
-        const auto turn = get_turn();
-        const BoardType& board = get_board();
-        m_checker_locations[0] = SHelper::SQ_NA;
-        m_checker_locations[1] = SHelper::SQ_NA;
-        int index = 0;
-        for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
-            const auto checker_sq = board.find_attacker(
-                ~turn, board.get_king_location(turn), dir);
-            if (checker_sq != SHelper::SQ_NA) {
-                m_checker_locations[index++] = checker_sq;
-                if (index > 1)
-                    break;
-            }
-        }
-    }
-    void update_king_occupied_checkers(const MoveType& move)
-    {
-        const auto turn = get_turn();
-        const BoardType& board = get_board();
-        const auto dst = move.destination();
-        const auto moved = board[dst];
-        const auto king_sq = board.get_king_location(turn);
-        auto discovered_checker_location = SHelper::SQ_NA;
-        if (!move.is_drop()) {
-            const auto src = move.source_square();
-            const auto dir = SHelper::get_direction(src, king_sq);
-            if ((dir != DIR_NA)
-                && (dir != SHelper::get_direction(dst, king_sq)))
-                discovered_checker_location
-                    = board.find_attacker(~turn, king_sq, dir);
-        }
-
-        const bool check_by_moved
-            = BitBoardType::get_attacks_by(moved, dst, board.get_occupied())
-                  .is_one(king_sq);
-        const bool check_by_discovered
-            = (discovered_checker_location != SHelper::SQ_NA);
-        if (check_by_moved && check_by_discovered) {
-            m_checker_locations[0] = dst;
-            m_checker_locations[1] = discovered_checker_location;
-        } else if (check_by_moved) {
-            m_checker_locations[0] = dst;
-            m_checker_locations[1] = SHelper::SQ_NA;
-        } else if (check_by_discovered) {
-            m_checker_locations[0] = discovered_checker_location;
-            m_checker_locations[1] = SHelper::SQ_NA;
-        } else {
-            m_checker_locations[0] = SHelper::SQ_NA;
-            m_checker_locations[1] = SHelper::SQ_NA;
-        }
     }
 
 protected:
@@ -471,7 +404,7 @@ protected:
         if (m_legal_moves.empty())
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
         if (is_repetitions()) {
-            if (m_checker_locations[0] != SHelper::SQ_NA)
+            if (m_current_state.in_check())
                 m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
             else
                 m_result = DRAW;
@@ -519,15 +452,15 @@ protected:
     }
     bool can_declare_win_by_king_enter() const
     {
-        const auto turn = get_turn();
-        const BoardType& board = get_board();
         // http://www2.computer-shogi.org/wcsc17/rule_e.html
-        // (1) The King of the declaring side is in the third rank or beyond.
-        if (!SHelper::in_promotion_zone(board.get_king_location(turn), turn))
+        // (4) There is no check on the King of the declaring side.
+        if (m_current_state.in_check())
             return false;
 
-        // (4) There is no check on the King of the declaring side.
-        if (m_checker_locations[0] != SHelper::SQ_NA)
+        const auto turn = get_turn();
+        const BoardType& board = get_board();
+        // (1) The King of the declaring side is in the third rank or beyond.
+        if (!SHelper::in_promotion_zone(board.get_king_location(turn), turn))
             return false;
 
         const auto promo_zone_mask = BitBoardType::get_promotion_zone(turn);
@@ -568,8 +501,8 @@ protected:
         m_legal_moves.reserve(128);
         if (restrict_legal_to_check) {
             append_check_moves_by_king(); // discovered check
-            if (m_checker_locations[1] != SHelper::SQ_NA) {
-            } else if (m_checker_locations[0] != SHelper::SQ_NA) {
+            if (m_current_state.in_double_check()) {
+            } else if (m_current_state.in_check()) {
                 append_legal_moves_to_defend_king(true);
             } else {
                 // no check to turn player's king
@@ -585,7 +518,7 @@ protected:
             }
         } else {
             append_legal_moves_by_king();
-            if (m_checker_locations[0] == SHelper::SQ_NA) {
+            if (!m_current_state.in_check()) {
                 append_legal_drop_moves();
                 const auto turn = get_turn();
                 const BoardType& board = get_board();
@@ -595,7 +528,7 @@ protected:
                     if (ally_mask.is_one(sq) && (king_sq != sq))
                         append_legal_moves_by_non_king_at(sq);
                 }
-            } else if (m_checker_locations[1] == SHelper::SQ_NA) {
+            } else if (!m_current_state.in_double_check()) {
                 append_legal_moves_to_defend_king(false);
             }
         }
@@ -848,7 +781,7 @@ protected:
     {
         const auto turn = get_turn();
         const BoardType& board = get_board();
-        const auto checker_location = m_checker_locations[0];
+        const auto checker_location = m_current_state.get_checker_location();
         const auto king_location = board.get_king_location(turn);
         append_legal_moves_by_non_king_moving_to(
             checker_location, restrict_legal_to_check);

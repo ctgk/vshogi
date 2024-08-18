@@ -68,4 +68,38 @@ TEST(state, apply)
     }
 }
 
+TEST(state, check)
+{
+    {
+        auto s = State();
+        CHECK_FALSE(s.in_check());
+        CHECK_FALSE(s.in_double_check());
+    }
+    {
+        auto s = State("4k/3B1/5/5/K3R w -");
+        CHECK_TRUE(s.in_check());
+        CHECK_TRUE(s.in_double_check());
+    }
+    {
+        auto s = State("4k/5/4B/5/K3R b -");
+        CHECK_FALSE(s.in_check());
+        CHECK_FALSE(s.in_double_check());
+        s.apply(Move(SQ_2B, SQ_1C));
+        CHECK_TRUE(s.in_check());
+        CHECK_TRUE(s.in_double_check());
+        CHECK_EQUAL(SQ_2B, s.get_checker_location());
+        CHECK_EQUAL(SQ_1E, s.get_checker_location(1));
+    }
+    {
+        auto s = State("4k/5/5/5/K4 b R");
+        CHECK_FALSE(s.in_check());
+        CHECK_FALSE(s.in_double_check());
+        s.apply(Move(SQ_1B, HI));
+        CHECK_TRUE(s.in_check());
+        CHECK_FALSE(s.in_double_check());
+        CHECK_EQUAL(SQ_1B, s.get_checker_location());
+        CHECK_EQUAL(SQ_NA, s.get_checker_location(1));
+    }
+}
+
 } // namespace test_vshogi::test_minishogi
