@@ -1,8 +1,8 @@
-#include "vshogi/animal_shogi/state.hpp"
+#include <algorithm>
+
+#include "vshogi/variants/animal_shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
-
-#include "test_vshogi/test_animal_shogi/test_animal_shogi.hpp"
 
 namespace test_vshogi::test_animal_shogi
 {
@@ -69,24 +69,6 @@ TEST(animal_shogi_state, apply)
     }
 }
 
-TEST(animal_shogi_state, is_legal)
-{
-    {
-        CHECK_TRUE(State().is_legal(Move(SQ_B2, SQ_B3)));
-        CHECK_FALSE(State().is_legal(Move(SQ_B3, SQ_B2)));
-    }
-}
-
-TEST(animal_shogi_state, get_legal_moves)
-{
-    auto s = State();
-    const auto move_list = s.get_legal_moves();
-    CHECK_EQUAL(4, move_list.size());
-
-    s.apply(Move(SQ_B2, SQ_B3));
-    CHECK_EQUAL(5, s.get_legal_moves().size());
-}
-
 TEST(animal_shogi_state, to_sfen)
 {
     {
@@ -100,6 +82,20 @@ TEST(animal_shogi_state, to_sfen)
         const auto actual = s.to_sfen();
         STRCMP_EQUAL("g1e/1l1/3/ELG b Cc", actual.c_str());
     }
+}
+
+TEST(animal_shogi_state, zobrist_hash)
+{
+    auto s = State();
+    auto hash = s.zobrist_hash();
+    s.apply(Move(SQ_B2, SQ_B3), &hash);
+    s.apply(Move(SQ_A2, SQ_B1), &hash);
+    s.apply(Move(SQ_B1, SQ_B2), &hash); // promote
+
+    const auto expect = State("gHe/l2/3/ELG w C").zobrist_hash();
+    const auto another = State("gCe/l2/3/ELG w C").zobrist_hash();
+    CHECK_EQUAL(expect, hash);
+    CHECK_TRUE(another != hash);
 }
 
 } // namespace test_vshogi::test_animal_shogi

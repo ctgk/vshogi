@@ -1,8 +1,8 @@
-#include "vshogi/minishogi/state.hpp"
+#include <algorithm>
+
+#include "vshogi/variants/minishogi.hpp"
 
 #include <CppUTest/TestHarness.h>
-
-#include "test_vshogi/test_minishogi/test_minishogi.hpp"
 
 namespace test_vshogi::test_minishogi
 {
@@ -68,242 +68,54 @@ TEST(state, apply)
     }
 }
 
-TEST(state, is_legal)
+TEST(state, check)
 {
     {
         auto s = State();
-        CHECK_TRUE(s.is_legal(Move(SQ_5C, SQ_5D)));
-        CHECK_FALSE(s.is_legal(Move(SQ_5C, SQ_5D, true)));
-        CHECK_FALSE(s.is_legal(Move(SQ_5B, SQ_5D)));
+        CHECK_FALSE(s.in_check());
+        CHECK_FALSE(s.in_double_check());
     }
     {
-        auto s = State();
-        // W: -KAx2
-        // +---+---+---+---+---+
-        // |   |-HI|+NG|   |-OU|
-        // +---+---+---+---+---+
-        // |   |+HI|   |   |   |
-        // +---+---+---+---+---+
-        // |   |+OU|   |   |   |
-        // +---+---+---+---+---+
-        // |   |   |   |   |   |
-        // +---+---+---+---+---+
-        // |   |   |   |   |   |
-        // +---+---+---+---+---+
-        // B: +FUx2 +KIx2 +GI
-        s.set_sfen("1r+S1k/1R3/1K3/5/5 b 2b2P2GS 1");
-
-        CHECK_TRUE(s.is_legal(Move(SQ_1C, FU)));
-        CHECK_FALSE(s.is_legal(Move(SQ_5A, FU))); // Unmovable
-        CHECK_FALSE(s.is_legal(Move(SQ_1B, FU))); // drop pawn mate
-
-        CHECK_TRUE(s.is_legal(Move(SQ_4A, SQ_4B)));
-        CHECK_TRUE(s.is_legal(Move(SQ_4A, SQ_4B, true)));
-        CHECK_FALSE(s.is_legal(Move(SQ_5A, SQ_4B)));
-        CHECK_FALSE(s.is_legal(Move(SQ_5B, SQ_4B))); // discovered check
+        auto s = State("4k/3B1/5/5/K3R w -");
+        CHECK_TRUE(s.in_check());
+        CHECK_TRUE(s.in_double_check());
     }
     {
-        // Turn: BLACK
-        // White: -
-        //     5   4   3   2   1
-        //   *---*---*---*---*---*
-        // A |-HI|-KA|-GI|+KA|-OU|
-        //   *---*---*---*---*---*
-        // B |   |   |   |   |   |
-        //   *---*---*---*---*---*
-        // C |   |   |   |   |   |
-        //   *---*---*---*---*---*
-        // D |+FU|   |   |   |-FU|
-        //   *---*---*---*---*---*
-        // E |+OU|+KI|+GI|   |+HI|
-        //   *---*---*---*---*---*
-        // Black: KI
-        auto s = State();
-        s.set_sfen("rbsBk/5/5/P3p/KGS1R b G 5");
-        CHECK_TRUE(s.is_legal(Move(SQ_1B, SQ_2A, true)));
-        CHECK_FALSE(s.is_legal(Move(SQ_1D, SQ_1E, true)));
+        auto s = State("4k/5/4B/5/K3R b -");
+        CHECK_FALSE(s.in_check());
+        CHECK_FALSE(s.in_double_check());
+        s.apply(Move(SQ_2B, SQ_1C));
+        CHECK_TRUE(s.in_check());
+        CHECK_TRUE(s.in_double_check());
+        CHECK_EQUAL(SQ_2B, s.get_checker_location());
+        CHECK_EQUAL(SQ_1E, s.get_checker_location(1));
     }
     {
-        auto s = State();
-        // Turn: WHITE
-        // White: -
-        //     5   4   3   2   1
-        //   *---*---*---*---*---*
-        // A |+UM|   |-GI|   |   |
-        //   *---*---*---*---*---*
-        // B |+KA|   |-KI|   |-FU|
-        //   *---*---*---*---*---*
-        // C |   |   |   |-OU|   |
-        //   *---*---*---*---*---*
-        // D |+FU|+GI|   |+HI|   |
-        //   *---*---*---*---*---*
-        // E |+OU|+KI|   |   |+HI|
-        //   *---*---*---*---*---*
-        // Black: -
-        s.set_sfen("+B1s2/B1g1p/3k1/PS1R1/KG2R w - 10");
-        CHECK_FALSE(s.is_legal(Move(SQ_2D, SQ_3A)));
-    }
-    {
-        auto s = State();
-        // Turn: BLACK
-        // White: GI
-        //     5   4   3   2   1
-        //   *---*---*---*---*---*
-        // A |+TO|   |   |-KI|-OU|
-        //   *---*---*---*---*---*
-        // B |   |+FU|-KA|-GI|   |
-        //   *---*---*---*---*---*
-        // C |   |   |-KA|   |   |
-        //   *---*---*---*---*---*
-        // D |   |+HI|   |   |   |
-        //   *---*---*---*---*---*
-        // E |+OU|+KI|   |   |-RY|
-        //   *---*---*---*---*---*
-        // Black: -
-        s.set_sfen("+P2gk/1Pbs1/2b2/1R3/KG2+r b s 2");
-        CHECK_FALSE(s.is_legal(Move(SQ_4A, SQ_4B)));
-        CHECK_TRUE(s.is_legal(Move(SQ_4A, SQ_4B, true)));
-    }
-    {
-        auto s = State();
-        // Turn: BLACK
-        // White: -
-        //     5   4   3   2   1
-        //   *---*---*---*---*---*
-        // A |+HI|   |   |-KI|-OU|
-        //   *---*---*---*---*---*
-        // B |   |   |   |   |   |
-        //   *---*---*---*---*---*
-        // C |   |   |   |   |+KI|
-        //   *---*---*---*---*---*
-        // D |   |   |   |   |   |
-        //   *---*---*---*---*---*
-        // E |+OU|   |   |   |   |
-        //   *---*---*---*---*---*
-        // Black: FU
-        s.set_sfen("R2gk/5/4G/5/K4 b P");
-        CHECK_FALSE(s.is_legal(Move(SQ_1B, FU))); // drop pawn mate
+        auto s = State("4k/5/5/5/K4 b R");
+        CHECK_FALSE(s.in_check());
+        CHECK_FALSE(s.in_double_check());
+        s.apply(Move(SQ_1B, HI));
+        CHECK_TRUE(s.in_check());
+        CHECK_FALSE(s.in_double_check());
+        CHECK_EQUAL(SQ_1B, s.get_checker_location());
+        CHECK_EQUAL(SQ_NA, s.get_checker_location(1));
     }
 }
 
-TEST(state, get_legal_moves)
+TEST(state, zobrist_hash)
 {
     {
-        auto s = State();
-        // W:
-        // +---+---+---+---+---+
-        // |+KA|   |   |   |-OU|
-        // +---+---+---+---+---+
-        // |   |+KI|   |-FU|-HI|
-        // +---+---+---+---+---+
-        // |+GI|   |   |   |-GI|
-        // +---+---+---+---+---+
-        // |+HI|+FU|   |-KI|   |
-        // +---+---+---+---+---+
-        // |+OU|   |   |   |-KA|
-        // +---+---+---+---+---+
-        // B:
-        s.set_sfen("B3k/1G1pr/S3s/RP1g1/K3b b - 1");
-
-        const auto actual = s.get_legal_moves();
-        CHECK_EQUAL(8, actual.size());
+        const auto s1 = State("4k/5/P4/5/K4 b -");
+        const auto s2 = State("4k/5/5/5/K4 w -");
+        CHECK_TRUE(s1.zobrist_hash() != s2.zobrist_hash());
     }
     {
-        auto s = State();
-        // W: -FU
-        // +---+---+---+---+---+
-        // |+KA|   |   |   |-KA|
-        // +---+---+---+---+---+
-        // |+HI|+KI|   |-OU|   |
-        // +---+---+---+---+---+
-        // |+GI|+FU|   |   |-GI|
-        // +---+---+---+---+---+
-        // |   |   |   |   |-HI|
-        // +---+---+---+---+---+
-        // |+OU|   |-KI|   |   |
-        // +---+---+---+---+---+
-        // B:
-        s.set_sfen("B3b/RG1k1/SP2s/4r/K1g2 w p 1");
-
-        const auto actual = s.get_legal_moves();
-        CHECK_EQUAL(
-            // clang-format off
-            4 // -OU (SQ_2A, SQ_1B, SQ_3C, SQ_2C)
-            + 1 // -GI (SQ_2D)
-            + 6 // -HI (SQ_5D, SQ_4D, SQ_3D, SQ_2D, SQ_1E, SQ_1E+)
-            + 3 // -KI (SQ_3D, SQ_4E, SQ_2E)
-            + 10, // -FU (41, 31, 21, 32, 12, 33, 23, 44, 34, 24)
-            // clang-format on
-            actual.size());
-    }
-    {
-        auto s = State();
-        // Turn: BLACK
-        // White: -
-        //     5   4   3   2   1
-        //   *---*---*---*---*---*
-        // A |   |   |   |   |-OU|
-        //   *---*---*---*---*---*
-        // B |+OU|   |   |   |   |
-        //   *---*---*---*---*---*
-        // C |   |+KA|   |   |   |
-        //   *---*---*---*---*---*
-        // D |   |   |   |   |   |
-        //   *---*---*---*---*---*
-        // E |   |   |   |   |   |
-        //   *---*---*---*---*---*
-        // Black: -
-        s.set_sfen("4k/K4/1B3/5/5 b - 1");
-
-        const auto actual = s.get_legal_moves();
-        CHECK_EQUAL(
-            // clang-format off
-            6 // +KA (SQ_2A, SQ_2A+, SQ_3B, SQ_5D, SQ_3D, SQ_2E)
-            + 4, // +OU (SQ_5A, 4A, 4B, 5C)
-            // clang-format on
-            actual.size());
-    }
-    {
-        auto s = State();
-        // Turn: WHITE
-        // White: -
-        //     5   4   3   2   1
-        //   *---*---*---*---*---*
-        // A |+UM|   |-GI|   |   |
-        //   *---*---*---*---*---*
-        // B |+KA|   |-KI|   |-FU|
-        //   *---*---*---*---*---*
-        // C |   |   |   |-OU|   |
-        //   *---*---*---*---*---*
-        // D |+FU|+GI|   |+HI|   |
-        //   *---*---*---*---*---*
-        // E |+OU|+KI|   |   |+HI|
-        //   *---*---*---*---*---*
-        // Black: -
-        s.set_sfen("+B1s2/B1g1p/3k1/PS1R1/KG2R w - 10");
-        const auto actual = s.get_legal_moves();
-        CHECK_EQUAL(0, actual.size());
-    }
-    {
-        auto s = State();
-        // Turn: BLACK
-        // White: -
-        //     5   4   3   2   1
-        //   *---*---*---*---*---*
-        // A |+GI|   |   |   |   |
-        //   *---*---*---*---*---*
-        // B |   |   |   |   |   |
-        //   *---*---*---*---*---*
-        // C |   |   |   |   |   |
-        //   *---*---*---*---*---*
-        // D |   |   |   |   |   |
-        //   *---*---*---*---*---*
-        // E |+OU|   |   |   |-OU|
-        //   *---*---*---*---*---*
-        // Black: -
-        s.set_sfen("S4/5/5/5/K3k b -");
-        const auto actual = s.get_legal_moves();
-        CHECK_EQUAL(2 + 3, actual.size());
+        const auto s1 = State("4k/5/P4/5/K4 b -");
+        auto s2 = State("3k1/5/P4/5/K4 w -");
+        auto hash_s2 = s2.zobrist_hash();
+        CHECK_TRUE(s1.zobrist_hash() != hash_s2);
+        s2.apply(Move(SQ_1A, SQ_2A), &hash_s2);
+        CHECK_EQUAL(s1.zobrist_hash(), hash_s2);
     }
 }
 

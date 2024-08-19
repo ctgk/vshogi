@@ -1,8 +1,6 @@
-#include "vshogi/minishogi/move.hpp"
+#include "vshogi/variants/minishogi.hpp"
 
 #include <CppUTest/TestHarness.h>
-
-#include "test_vshogi/test_minishogi/test_minishogi.hpp"
 
 namespace test_vshogi::test_minishogi
 {
@@ -10,6 +8,26 @@ namespace test_vshogi::test_minishogi
 using namespace vshogi::minishogi;
 
 TEST_GROUP(move){};
+
+TEST(move, usi)
+{
+    CHECK_TRUE(Move(SQ_1B, SQ_1A, true) == Move("1a1b+"));
+    {
+        char actual[6] = {'\0'};
+        Move(SQ_3C, FU).to_usi(actual);
+        STRCMP_EQUAL("P*3c", actual);
+    }
+    {
+        char actual[6] = {'\0'};
+        Move(SQ_1B, SQ_1A).to_usi(actual);
+        STRCMP_EQUAL("1a1b", actual);
+    }
+    {
+        char actual[6] = {'\0'};
+        Move(SQ_1B, SQ_1A, true).to_usi(actual);
+        STRCMP_EQUAL("1a1b+", actual);
+    }
+}
 
 TEST(move, destination)
 {
@@ -19,8 +37,8 @@ TEST(move, destination)
 
 TEST(move, source)
 {
-    CHECK_EQUAL(SQ_1B, Move(SQ_1A, SQ_1B, true).source<SquareEnum>());
-    CHECK_EQUAL(GI, Move(SQ_3E, GI).source<PieceTypeEnum>());
+    CHECK_EQUAL(SQ_1B, Move(SQ_1A, SQ_1B, true).source_square());
+    CHECK_EQUAL(GI, Move(SQ_3E, GI).source_piece());
 }
 
 TEST(move, promote)
@@ -46,6 +64,12 @@ TEST(move, rotate)
 {
     CHECK_TRUE(Move(SQ_5E, SQ_5D, true) == Move(SQ_1A, SQ_1B, true).rotate());
     CHECK_TRUE(Move(SQ_3A, GI) == Move(SQ_3E, GI).rotate());
+}
+
+TEST(move, hflip)
+{
+    CHECK_TRUE(Move(SQ_5A, SQ_5B, true) == Move(SQ_1A, SQ_1B, true).hflip());
+    CHECK_TRUE(Move(SQ_3E, GI) == Move(SQ_3E, GI).hflip());
 }
 
 TEST(move, to_dlshogi_policy_index)

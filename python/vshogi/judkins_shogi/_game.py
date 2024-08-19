@@ -1,5 +1,11 @@
 from vshogi._game import Game as BaseGame
-from vshogi._vshogi.judkins_shogi import Move, Node, _Game as _ShogiGame
+from vshogi._vshogi.judkins_shogi import (
+    DfpnSearcher,
+    MCTS,
+    MctsNode,
+    Move,
+    _Game as _ShogiGame,
+)
 
 
 class Game(BaseGame):
@@ -46,5 +52,13 @@ class Game(BaseGame):
         return Move
 
     @classmethod
-    def _get_node_class(cls) -> type:
-        return Node
+    def _get_mcts_searcher_class(cls) -> type:
+        return MCTS
+
+    @classmethod
+    def _get_mcts_node_class(cls) -> type:
+        return MctsNode
+
+    @classmethod
+    def _get_dfpn_searcher_class(cls) -> type:
+        return DfpnSearcher

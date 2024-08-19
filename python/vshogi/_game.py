@@ -34,7 +34,17 @@ class Game(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def _get_node_class(cls) -> type:
+    def _get_mcts_node_class(cls) -> type:
+        pass
+
+    @classmethod
+    @abc.abstractmethod
+    def _get_mcts_searcher_class(cls) -> type:
+        pass
+
+    @classmethod
+    @abc.abstractmethod
+    def _get_dfpn_searcher_class(cls) -> type:
         pass
 
     def __init__(self, sfen: tp.Optional[str] = None) -> None:
@@ -46,17 +56,12 @@ class Game(abc.ABC):
             Initial game status in SFEN, by default None
         """
         cls_ = self._get_backend_game_class()
-        self._game = cls_() if sfen is None else cls_(sfen)
-
-    def __array__(self) -> np.ndarray:
-        """Return numpy array of DL-shogi input format.
-
-        Returns
-        -------
-        np.ndarray
-            DL-shogi input.
-        """
-        return np.asarray(self._game)
+        if sfen is None:
+            self._game = cls_()
+        elif isinstance(sfen, cls_):
+            self._game = sfen
+        else:
+            self._game = cls_(sfen)
 
     @_ClassProperty
     def ranks(self) -> int:
@@ -182,9 +187,27 @@ class Game(abc.ABC):
         """
         return self._game.record_length()
 
+    @property
+    def zobrist_hash(self) -> int:
+        """Return zobrist hash of the current game position.
+
+        Note
+        ----
+        - The hash value changes every time you import `vshogi` library.
+        - Hash values can be the same even when the game positions differ.
+
+        Returns
+        -------
+        int
+            Zobrist hash of the current game position.
+        """
+        return self._game.get_zobrist_hash()
+
     @classmethod
     def _get_move(cls, move=None, *arg, **kwargs) -> Move:
         if not (arg or kwargs):
+            if isinstance(move, str):
+                return cls._get_move_class()(move)
             return move
         if move is None:
             return cls._get_move_class()(*arg, **kwargs)
@@ -215,11 +238,22 @@ class Game(abc.ABC):
         Game(sfen="rb1gk/3sp/5/P1B2/KGS1R b - 3")
         >>> game.apply(dst=shogi.D2, src=shogi.E3)
         Game(sfen="rb1gk/3sp/5/P1BS1/KG2R w - 4")
-        >>> game.apply(shogi.B3, shogi.A4).apply(shogi.D4, shogi.E4)
+        >>> game.apply('4a3b').apply('4e4d')
         Game(sfen="r2gk/2bsp/5/PGBS1/K3R w - 6")
         """
         move = self._get_move(move, *arg, **kwargs)
         self._game.apply(move)
+        return self
+
+    def resign(self) -> 'Game':
+        """Resign game by current turn player.
+
+        Returns
+        -------
+        Game
+            Game after resignation.
+        """
+        self._game.resign()
         return self
 
     def is_legal(self, move=None, *arg, **kwargs) -> bool:
@@ -336,6 +370,7 @@ class Game(abc.ABC):
         names: tp.Optional[tp.Iterable[str]] = None,
         sep: str = '\t',
         file_: tp.TextIO = sys.stdout,
+        color_filter: tp.Optional[Color] = None,
     ) -> None:
         r"""Dump game records.
 
@@ -349,6 +384,8 @@ class Game(abc.ABC):
             Separator of column names and values, by default '\t'
         file_ : tp.TextIO, optional
             Location to dump to, by default sys.stdout.
+        color_filter : tp.Optional[Color], optional
+            Dump only BLACK or WHITE turn records if given.
 
         Examples
         --------
@@ -367,18 +404,18 @@ class Game(abc.ABC):
         ...     game.dump_records(
         ...         (
         ...             lambda g, i: g.get_sfen_at(i),
-        ...             lambda g, i: g.get_move_at(i),
+        ...             lambda g, i: g.get_move_at(i).to_usi(),
         ...             lambda g, i: g.result,
         ...         ),
         ...         names=('sfen', 'move', 'result'),
         ...         file_=f,
+        ...         color_filter=shogi.BLACK,
         ...     )
         ...     _ = f.seek(0)
         ...     print(f.read())  #doctest: +NORMALIZE_WHITESPACE
         sfen        move    result
-        gle/1c1/1C1/ELG b - 1       Move(dst=A3, src=B4)    Result.BLACK_WIN
-        gle/1c1/LC1/E1G w - 2       Move(dst=A2, src=B1)    Result.BLACK_WIN
-        g1e/lc1/LC1/E1G b - 3       Move(dst=A2, src=A3)    Result.BLACK_WIN
+        gle/1c1/1C1/ELG b - 1       b4a3    Result.BLACK_WIN
+        g1e/lc1/LC1/E1G b - 3       a3a2    Result.BLACK_WIN
         <BLANKLINE>
         """
         if names is not None:
@@ -386,49 +423,122 @@ class Game(abc.ABC):
         if callable(getters):
             getters = (getters,)
         for i in range(self.record_length):
+            if (color_filter == Color.WHITE) and (i % 2 == 0):
+                continue
+            elif (color_filter == Color.BLACK) and (i % 2 == 1):
+                continue
             print(
                 *(getter(self, i) for getter in getters),
                 sep='\t', file=file_,
             )
 
-    def to_policy_probas(
-        self,
-        dlshogi_logits: np.ndarray,
-    ) -> tp.Dict[Move, float]:
-        """Return dict of probabilities of legal actions.
-
-        Parameters
-        ----------
-        dlshogi_logits : np.ndarray
-            Array of DL-shogi format policy logits.
-            Note that the logits are in view from the turn player. Please see
-            the examples.
+    def hflip(self) -> 'Game':
+        """Return new game with horizontally flipped current positions.
 
         Returns
         -------
-        tp.Dict[Move, float]
-            Dictionary of probabilities of legal actions.
+        Game
+            New game with horizontally flipped current positions.
 
         Examples
         --------
-        >>> import numpy as np; import vshogi.animal_shogi as shogi
-        >>> onehot = lambda index: np.eye(12 * 11, dtype=np.float32)[index]
-        >>> # Note that `Move(dst=B2, src=B3)._to_dlshogi_policy_index() == 50`
-        >>> shogi.Game('gle/1c1/1C1/ELG b -').to_policy_probas(
-        ...     onehot(50) * 10)[shogi.Move(dst=shogi.B2, src=shogi.B3)]
-        ...     #doctest: +ELLIPSIS
-        0.999...
-        >>> shogi.Game('gle/1c1/1C1/ELG w -').to_policy_probas(
-        ...     onehot(50) * 10)[shogi.Move(dst=shogi.B3, src=shogi.B2)]
-        ...     #doctest: +ELLIPSIS
-        0.999...
+        >>> import vshogi.animal_shogi as shogi
+        >>> g = shogi.Game()
+        >>> print(g.apply(shogi.C3, shogi.C4))
+        Turn: WHITE
+        White: -
+            A  B  C
+          *--*--*--*
+        1 |-G|-L|-E|
+          *--*--*--*
+        2 |  |-C|  |
+          *--*--*--*
+        3 |  |+C|+G|
+          *--*--*--*
+        4 |+E|+L|  |
+          *--*--*--*
+        Black: -
+        >>> g_hflip = g.hflip()
+        >>> print(g_hflip)
+        Turn: WHITE
+        White: -
+            A  B  C
+          *--*--*--*
+        1 |-E|-L|-G|
+          *--*--*--*
+        2 |  |-C|  |
+          *--*--*--*
+        3 |+G|+C|  |
+          *--*--*--*
+        4 |  |+L|+E|
+          *--*--*--*
+        Black: -
+        >>> g.record_length
+        1
+        >>> g_hflip.record_length
+        0
         """
-        return self._game._policy_logits_to_policy_dict_probas(dlshogi_logits)
+        return self.__class__(self._game.hflip())
+
+    def to_dlshogi_features(self, *, out: np.ndarray = None) -> np.ndarray:
+        """Return DL-shogi features.
+
+        Parameters
+        ----------
+        out : np.ndarray, optional
+            Dump DL-shogi features into `out` if given.
+
+        Returns
+        -------
+        np.ndarray
+            Return DL-shogi feature array if `out` is not None.
+
+        Examples
+        --------
+        >>> import vshogi.animal_shogi as shogi
+        >>> x = shogi.Game("3/elg/1C1/ELG b C").to_dlshogi_features()
+        >>> print(x[0, ..., 0]) # Black's CH on stand
+        [[1. 1. 1.]
+         [1. 1. 1.]
+         [1. 1. 1.]
+         [1. 1. 1.]]
+        >>> print(x[0, ..., 6]) # Black's LI on board
+        [[0. 0. 0.]
+         [0. 0. 0.]
+         [0. 0. 0.]
+         [0. 1. 0.]]
+        >>> print(x[0, ..., 8]) # White's CH on stand
+        [[0. 0. 0.]
+         [0. 0. 0.]
+         [0. 0. 0.]
+         [0. 0. 0.]]
+        >>> print(x[0, ..., 14]) # White's LI on board
+        [[0. 0. 0.]
+         [0. 1. 0.]
+         [0. 0. 0.]
+         [0. 0. 0.]]
+        >>> shogi.Game("3/elg/1C1/ELG C w").to_dlshogi_features(out=x)
+        >>> print(x[0, ..., 6]) # White's LI on board from white's view
+        [[0. 0. 0.]
+         [0. 0. 0.]
+         [0. 1. 0.]
+         [0. 0. 0.]]
+        >>> print(x[0, ..., 14]) # Black's LI on board from white's view
+        [[0. 1. 0.]
+         [0. 0. 0.]
+         [0. 0. 0.]
+         [0. 0. 0.]]
+        """
+        if out is None:
+            return self._game.to_dlshogi_features()
+        else:
+            return self._game.to_dlshogi_features(out)
 
     def to_dlshogi_policy(
         self,
-        action: Move,
-        max_value: float = 1.,
+        action_proba: tp.Union[Move, tp.Dict[Move, int]],
+        *,
+        default_value: float = 0.,
     ) -> np.ndarray:
         """Convert an action into DL-shogi policy array.
 
@@ -438,10 +548,12 @@ class Game(abc.ABC):
 
         Parameters
         ----------
-        action : Move
-            Action to turn into DL-shogi policy format.
-        max_value : float, optional
-            Policy value for the action, by default 1.
+        action_proba : tp.Union[Move, tp.Dict[Move, int]]
+            One-hot action to turn into DL-shogi policy format,
+            or dict of actions with their probabilities.
+            If the probabilities do not sum up to 1, they will be normalized.
+        default_value: float, optional
+
 
         Returns
         -------
@@ -453,10 +565,70 @@ class Game(abc.ABC):
         ValueError
             `max_value` is out-of-range.
         """
-        if ((max_value > 1) or (max_value <= 0)):
-            raise ValueError(
-                f"`max_value` must be in range (0, 1], but was {max_value}.")
-        return self._game.to_dlshogi_policy(action, max_value)
+        if isinstance(action_proba, dict):
+            s = sum(action_proba.values())
+            action_proba = {k: v / s for k, v in action_proba.items()}
+        elif isinstance(action_proba, self._get_move_class()):
+            action_proba = {
+                k: 1. if k == action_proba else 0.
+                for k in self.get_legal_moves()
+            }
+        else:
+            raise TypeError(
+                f'Unsupported type for `action_proba`: {type(action_proba)}')
+        return self._game.to_dlshogi_policy(action_proba, default_value)
+
+    def masked_softmax(self, logits: np.ndarray) -> tp.Dict[Move, float]:
+        """Return masked softmax given logits.
+
+        Parameters
+        ----------
+        logits : np.ndarray
+            Logit values including values corresponding to invalid actions.
+
+        Returns
+        -------
+        tp.Dict[Move, float]
+            Probability of each action.
+
+        Examples
+        --------
+        >>> import vshogi.animal_shogi as shogi
+        >>> g = shogi.Game()
+        >>> logits = np.zeros(g.num_dlshogi_policy)
+        >>> proba = g.masked_softmax(logits)
+        >>> proba[shogi.Move("c4c3")]
+        0.25
+        >>> proba[shogi.Move("b4c3")]
+        0.25
+        """
+        return self._game.masked_softmax(logits)
+
+    def get_mate_moves_if_any(
+        self,
+        num_dfpn_nodes: int = 10000,
+    ) -> tp.Union[tp.List[Move], None]:
+        """Return a sequence of moves leading to checkmate if there is any.
+
+        Parameters
+        ----------
+        num_dfpn_nodes : int, optional
+            Number of nodes to explore using Depth First Proof Number
+            algorithm, by default 1000.
+
+        Returns
+        -------
+        tp.Union[tp.List[Move], None]
+            A sequence of moves to check mate if any otherwise `None`.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> g = shogi.Game("5/2k2/5/2P2/2K2 b 2G")
+        >>> g.get_mate_moves_if_any() # doctest: +ELLIPSIS
+        [Move(dst=SQ_3C, src=KI), ...]
+        """
+        return self._game.get_mate_moves_if_any(num_dfpn_nodes)
 
     def __repr__(self) -> str:
         """Return representation of the object for debugging.
@@ -492,6 +664,4 @@ class Game(abc.ABC):
         Game
             Copy of the game object.
         """
-        g = self.__class__()
-        g._game = self._game.copy()
-        return g
+        return self.__class__(self._game.copy())

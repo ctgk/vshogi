@@ -1,17 +1,15 @@
-#include "vshogi/minishogi/board.hpp"
+#include "vshogi/variants/minishogi.hpp"
 
 #include <CppUTest/TestHarness.h>
-
-#include "test_vshogi/test_minishogi/test_minishogi.hpp"
 
 namespace test_vshogi::test_minishogi
 {
 
 using namespace vshogi::minishogi;
 
-TEST_GROUP(board){};
+TEST_GROUP(minishogi_board){};
 
-TEST(board, get)
+TEST(minishogi_board, get)
 {
     auto b = Board();
     CHECK_EQUAL(W_HI, b[SQ_5A]);
@@ -19,63 +17,27 @@ TEST(board, get)
     CHECK_EQUAL(VOID, b[SQ_1D]);
 }
 
-TEST(board, set)
+TEST(minishogi_board, set)
 {
     auto b = Board();
-    b[SQ_2D] = W_GI;
+    b.apply(SQ_2D, W_GI);
     CHECK_EQUAL(W_GI, b[SQ_2D]);
     CHECK_EQUAL(W_HI, b[SQ_5A]);
     CHECK_EQUAL(B_GI, b[SQ_3E]);
     CHECK_EQUAL(VOID, b[SQ_1D]);
 }
 
-TEST(board, to_piece_mask)
+TEST(minishogi_board, hflip)
 {
-    auto b = Board();
-    CHECK_TRUE(
-        (bb_5a | bb_4a | bb_3a | bb_2a | bb_1a | bb_1b | bb_5d | bb_5e | bb_4e
-         | bb_3e | bb_2e | bb_1e)
-        == b.to_piece_mask());
-    CHECK_TRUE(
-        (bb_5a | bb_4a | bb_3a | bb_2a | bb_1a | bb_1b)
-        == b.to_piece_mask(vshogi::WHITE));
-    CHECK_TRUE(
-        (bb_5d | bb_5e | bb_4e | bb_3e | bb_2e | bb_1e)
-        == b.to_piece_mask(vshogi::BLACK));
+    const auto b = Board();
+    const auto actual = b.hflip();
+    CHECK_EQUAL(W_OU, actual[SQ_5A]);
+    CHECK_EQUAL(VOID, actual[SQ_1B]);
+    CHECK_EQUAL(B_FU, actual[SQ_1D]);
+    CHECK_EQUAL(B_HI, actual[SQ_5E]);
 }
 
-TEST(board, to_attack_mask)
-{
-    auto b = Board();
-    CHECK_TRUE(
-        (bb_5b | bb_1b | bb_5c | bb_4c | bb_1c | bb_5d | bb_4d | bb_3d | bb_2d
-         | bb_1d | bb_5e | bb_4e | bb_3e | bb_2e)
-        == b.to_attack_mask(vshogi::BLACK));
-}
-
-TEST(board, king_location)
-{
-    auto b = Board();
-    CHECK_EQUAL(SQ_5E, b.king_location(vshogi::BLACK));
-    CHECK_EQUAL(SQ_1A, b.king_location(vshogi::WHITE));
-    b[SQ_5E] = VOID;
-    b[SQ_1A] = VOID;
-    CHECK_EQUAL(SQ_NA, b.king_location(vshogi::BLACK));
-    CHECK_EQUAL(SQ_NA, b.king_location(vshogi::WHITE));
-}
-
-TEST(board, in_check)
-{
-    auto b = Board();
-    CHECK_FALSE(b.in_check(vshogi::BLACK));
-    CHECK_FALSE(b.in_check(vshogi::WHITE));
-    b[SQ_1B] = B_FU;
-    b[SQ_5D] = W_FU;
-    CHECK_TRUE(b.in_check(vshogi::BLACK));
-    CHECK_TRUE(b.in_check(vshogi::WHITE));
-}
-
-TEST(board, set_sfen)
+TEST(minishogi_board, set_sfen)
 {
     {
         const char sfen[] = "2+S1k/1r2+P/2K2/5/5 b 2bP2GSR 1";
@@ -143,14 +105,34 @@ TEST(board, set_sfen)
     }
 }
 
-TEST(board, to_sfen)
+TEST(minishogi_board, append_sfen)
 {
     const char sfen[] = "2+S1k/1r2+P/2K2/5/5 b 2bP2GSR 1";
     auto b = Board();
     b.set_sfen(sfen);
 
     const char expected[] = "2+S1k/1r2+P/2K2/5/5";
-    STRCMP_EQUAL(expected, b.to_sfen().c_str());
+    auto actual = std::string();
+    b.append_sfen(actual);
+    STRCMP_EQUAL(expected, actual.c_str());
+}
+
+TEST(minishogi_board, apply)
+{
+    {
+        auto b = Board();
+        b.apply(SQ_5D, VOID);
+        CHECK_EQUAL(
+            (bb_5e | bb_4e | bb_3e | bb_2e | bb_1e).value(),
+            b.get_occupied(vshogi::BLACK).value());
+    }
+    {
+        auto b = Board();
+        b.apply(SQ_5D, SQ_5A);
+        CHECK_EQUAL(
+            (bb_4a | bb_3a | bb_2a | bb_1a | bb_1b | bb_5d).value(),
+            b.get_occupied(vshogi::WHITE).value());
+    }
 }
 
 } // namespace test_vshogi::test_minishogi

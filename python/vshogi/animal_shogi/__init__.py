@@ -8,7 +8,7 @@ import numpy as np
 from vshogi._repr import _repr_enum, _repr_move
 from vshogi._vshogi import Color, Result
 from vshogi._vshogi.animal_shogi import (
-    Board, BoardPiece, Move, Piece, Square,
+    Board, BoardPiece, Move, Piece, Square, State,
 )
 from vshogi.animal_shogi._game import Game
 
@@ -61,7 +61,7 @@ Square.__repr__ = _repr_enum
 
 
 _classes = [
-    Board, BoardPiece, Game, Move, Piece, Square,
+    Board, BoardPiece, Game, Move, Piece, Square, State,
 ]
 _enums = [BoardPiece, Color, Piece, Square, Result]
 

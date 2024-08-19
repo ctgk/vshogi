@@ -1,4 +1,4 @@
-#include "vshogi/color.hpp"
+#include "vshogi/common/color.hpp"
 
 #include <CppUTest/TestHarness.h>
 

@@ -139,7 +139,7 @@ def test_array_black():
     game = shogi.Game(
         '1nkg3+R1/2s1g3l/Ppppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/1NG1G3+b '
         'b BP2l4p')
-    actual = np.asarray(game)
+    actual = game.to_dlshogi_features()
     assert actual.dtype == np.float32
     assert actual.shape == (1, 9, 9, 2 * (7 + 14))
     assert np.allclose(actual[0, ..., 0], 1)  # black's captured pawn
@@ -258,7 +258,7 @@ def test_array_white():
     game = shogi.Game(
         'l8/1k2g4/1pn1p4/2Nps1p1p/9/2S4PP/PP1PP2+b1/2K1+p4/1NG6 w '
         'RG2S2L2Prbgnl4p')
-    actual = np.asarray(game)
+    actual = game.to_dlshogi_features()
     assert np.allclose(actual[0, ..., 0], 4)  # White's captured pawn
     assert np.allclose(actual[0, ..., 1], 1)  # White's captured lance
     assert np.allclose(actual[0, ..., 2], 1)  # White's captured knight
@@ -369,10 +369,29 @@ def test_array_white():
         shogi.Move(shogi.D8, shogi.C8),
         np.eye(2187)[1410],
     ),
+    (
+        shogi.Game(),
+        {shogi.Move('2g2f'): 1, shogi.Move('7g7f'): 1},
+        0.5 * (np.eye(2187)[1410] + np.eye(2187)[1275]),
+    ),
+    (
+        shogi.Game('9/9/9/9/9/9/9/9/9 w - 1'),
+        {shogi.Move('8c8d'): 1, shogi.Move('3c3d'): 1},
+        0.5 * (np.eye(2187)[1410] + np.eye(2187)[1275]),
+    ),
 ])
 def test_to_dlshogi_policy(game, move, expected):
     actual = game.to_dlshogi_policy(move)
     assert np.allclose(actual, expected, rtol=0, atol=1e-2)
+
+
+@pytest.mark.parametrize("game, expected", [
+    (shogi.Game(), shogi.WHITE_WIN),
+    (shogi.Game().apply('2f2g'), shogi.BLACK_WIN),
+])
+def test_resign(game, expected):
+    game.resign()
+    assert game.result == expected
 
 
 if __name__ == '__main__':

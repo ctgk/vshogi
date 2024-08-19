@@ -1,5 +1,7 @@
+import warnings
+
 from vshogi._game import Game as BaseGame
-from vshogi._vshogi.animal_shogi import Move, Node
+from vshogi._vshogi.animal_shogi import MCTS, MctsNode, Move
 from vshogi._vshogi.animal_shogi import Stand
 from vshogi._vshogi.animal_shogi import _Game as _AnimalshogiGame
 
@@ -37,8 +39,11 @@ class Game(BaseGame):
     4 |+E|+L|+G|
       *--*--*--*
     Black: -
-    >>> game.get_legal_moves()
-    [Move(dst=B2, src=B3), Move(dst=A3, src=B4), ...
+    >>> moves = game.get_legal_moves()
+    >>> Move("b3b2") in moves
+    True
+    >>> Move("a4a3") in moves
+    False
     >>> game.is_legal(Move(B2, B3))
     True
     >>> game.is_legal(Move(A3, A4))
@@ -80,5 +85,24 @@ class Game(BaseGame):
         return Move
 
     @classmethod
-    def _get_node_class(cls) -> type:
-        return Node
+    def _get_mcts_node_class(cls) -> type:
+        return MctsNode
+
+    @classmethod
+    def _get_mcts_searcher_class(cls) -> type:
+        return MCTS
+
+    @classmethod
+    def _get_dfpn_searcher_class(cls) -> type:
+        raise NotImplementedError(
+            "`DfpnSearcher` does not support Animal Shogi")
+
+    def get_mate_moves_if_any(
+        self,
+        num_dfpn_nodes: int = 10000,
+    ) -> None:
+        """Not implemented yet for animal shogi."""
+        warnings.warn(
+            "`vshogi.animal_shogi.Game.get_mate_moves_if_any()` "
+            "is not supported yet.")
+        return None

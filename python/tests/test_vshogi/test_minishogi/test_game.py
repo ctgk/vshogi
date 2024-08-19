@@ -43,7 +43,7 @@ def test_array_black():
     game = shogi.Game().apply(shogi.C4, shogi.E2).apply(shogi.B5, shogi.A5)
     game.apply(shogi.A2, shogi.C4, True).apply(shogi.A2, shogi.A1)
 
-    actual = np.asarray(game)
+    actual = game.to_dlshogi_features()
     assert np.allclose(actual[0, ..., 0], 0)  # white's captured pawn
     assert np.allclose(actual[0, ..., 1], 0)  # white's captured silver
     assert np.allclose(actual[0, ..., 2], 0)  # white's captured bishop
@@ -70,7 +70,7 @@ def test_array_white():
     #   *---*---*---*---*---*
     # Black: FU
 
-    actual = np.asarray(game)
+    actual = game.to_dlshogi_features()
     assert actual.dtype == np.float32
     assert actual.shape == (1, 5, 5, 30)
     assert np.allclose(actual[0, ..., 0], 0)  # white's captured pawn
@@ -160,9 +160,11 @@ def test_to_dlshogi_policy():
     # Black: -
     game = shogi.Game("1bsgk/4p/5/P4/KGSBR w - 1")
     a = shogi.Move(shogi.C1, shogi.B1)
-    actual = game.to_dlshogi_policy(a, 0.5)
+    actual = game.to_dlshogi_policy({
+        m: 0.5 if m == a else 0.05 for m in game.get_legal_moves()
+    }, default_value=-1.)
 
-    expected = np.zeros(5 * 5 * (2 * 8 + 5))
+    expected = np.zeros(5 * 5 * (2 * 8 + 5)) - 1
     expected[a.rotate()._to_dlshogi_policy_index()] = 0.5
     for m in game.get_legal_moves():
         if m == a:

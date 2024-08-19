@@ -1,4 +1,4 @@
-from copy import copy, deepcopy
+from copy import copy
 
 import numpy as np
 import pytest
@@ -27,13 +27,6 @@ def test_init():
     shogi.Game()
 
 
-def test_copy():
-    g1 = shogi.Game()
-    g2 = g1.copy()
-    g1.apply(shogi.Move(shogi.B2, shogi.B3))
-    assert g1.board[shogi.B2] != g2.board[shogi.B2]
-
-
 def test_shallow_copy():
     g1 = shogi.Game()
     g2 = copy(g1)
@@ -41,9 +34,9 @@ def test_shallow_copy():
     assert g1.board[shogi.B2] == g2.board[shogi.B2]
 
 
-def test_deepcopy():
+def test_copy():
     g1 = shogi.Game()
-    g2 = deepcopy(g1)
+    g2 = g1.copy()
     g1.apply(shogi.Move(shogi.B2, shogi.B3))
     assert g1.board[shogi.B2] != g2.board[shogi.B2]
 
@@ -117,7 +110,7 @@ def test_get_legal_moves():
 def test_array():
     game = shogi.Game()
     game.apply(shogi.Move(shogi.B2, shogi.B3))
-    actual = np.asarray(game)
+    actual = game.to_dlshogi_features()
     assert actual.dtype == np.float32
     assert actual.shape == (1, 4, 3, 16)
     assert np.allclose(actual[0, ..., 0], 0)
@@ -126,68 +119,12 @@ def test_array():
     assert np.allclose(actual[0, 2, 1, 11], 1)
 
 
-@pytest.mark.parametrize('game, logits, expected', [
-    (
-        # Turn: BLACK
-        # White: -
-        #     A  B  C
-        #   *--*--*--*
-        # 1 |-G|-L|-E|
-        #   *--*--*--*
-        # 2 |  |-C|  |
-        #   *--*--*--*
-        # 3 |  |+C|  |
-        #   *--*--*--*
-        # 4 |+E|+L|+G|
-        #   *--*--*--*
-        # Black: -
-        shogi.Game('gle/1c1/1C1/ELG b -'),
-        np.eye(12 * 11, dtype=np.float32)[50],
-        {
-            shogi.Move(shogi.B2, shogi.B3): 0.4753,
-            shogi.Move(shogi.A3, shogi.B4): 0.1748,
-            shogi.Move(shogi.C3, shogi.B4): 0.1748,
-            shogi.Move(shogi.C3, shogi.C4): 0.1748,
-        },
-        # cf. Move(dst=B2, src=B3)._to_dlshogi_policy_index() == 50
-    ),
-    (
-        # Turn: WHITE
-        # White: -
-        #     A  B  C
-        #   *--*--*--*
-        # 1 |-G|-L|-E|
-        #   *--*--*--*
-        # 2 |  |-C|  |
-        #   *--*--*--*
-        # 3 |  |+C|  |
-        #   *--*--*--*
-        # 4 |+E|+L|+G|
-        #   *--*--*--*
-        # Black: -
-        shogi.Game('gle/1c1/1C1/ELG w -'),
-        np.eye(12 * 11, dtype=np.float32)[50] * 2,
-        {
-            shogi.Move(shogi.B3, shogi.B2): 0.7112,
-            shogi.Move(shogi.C2, shogi.B1): 0.0963,
-            shogi.Move(shogi.A2, shogi.B1): 0.0963,
-            shogi.Move(shogi.A2, shogi.A1): 0.0963,
-        },
-        # cf. Move(dst=B2, src=B3)._to_dlshogi_policy_index() == 50
-    ),
-])
-def test_to_policy_probas(game: shogi.Game, logits, expected):
-    actual = game.to_policy_probas(logits)
-    assert len(actual) == len(expected)
-    for action, expected_proba in expected.items():
-        assert action in actual
-        assert np.isclose(actual[action], expected_proba, 0, 1e-2)
-
-
 def test_to_dlshogi_policy():
     game = shogi.Game()
     a = shogi.Move(shogi.B2, shogi.B3)
-    actual = game.to_dlshogi_policy(a, 0.7)
+    actual = game.to_dlshogi_policy({
+        m: 0.7 if m == a else 0.1 for m in game.get_legal_moves()
+    })
 
     expected = np.zeros(12 * 11)
     expected[a._to_dlshogi_policy_index()] = 0.7

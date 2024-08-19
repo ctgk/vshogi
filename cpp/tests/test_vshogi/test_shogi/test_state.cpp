@@ -1,8 +1,8 @@
-#include "vshogi/shogi/state.hpp"
+#include <algorithm>
+
+#include "vshogi/variants/shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
-
-#include "test_vshogi/test_shogi/test_shogi.hpp"
 
 namespace test_vshogi::test_shogi
 {
@@ -51,27 +51,6 @@ TEST(state, apply)
         CHECK_EQUAL(VOID, s.get_board()[SQ_1B]);
         CHECK_EQUAL(W_KI, s.get_board()[SQ_1A]);
         CHECK_EQUAL(vshogi::BLACK, s.get_turn());
-    }
-}
-
-TEST(state, is_legal)
-{
-    {
-        auto s = State();
-        s.set_sfen("8+L/8g/9/9/4k4/9/9/2K6/9 w 2br10PR");
-        CHECK_TRUE(s.is_legal(Move(SQ_1A, SQ_1B)));
-        CHECK_TRUE(s.is_legal(Move(SQ_2A, KA)));
-        CHECK_FALSE(s.is_legal(Move(SQ_1A, KA)));
-    }
-}
-
-TEST(state, get_legal_moves)
-{
-    {
-        auto s = State();
-        s.set_sfen("9/9/9/9/4k4/9/9/2K6/9 b -");
-        const auto actual = s.get_legal_moves();
-        CHECK_EQUAL(8, actual.size());
     }
 }
 

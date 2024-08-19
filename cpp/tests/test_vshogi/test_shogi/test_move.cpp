@@ -1,8 +1,6 @@
-#include "vshogi/shogi/move.hpp"
+#include "vshogi/variants/shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
-
-#include "test_vshogi/test_shogi/test_shogi.hpp"
 
 namespace test_vshogi::test_shogi
 {
@@ -10,6 +8,26 @@ namespace test_vshogi::test_shogi
 using namespace vshogi::shogi;
 
 TEST_GROUP(move){};
+
+TEST(move, usi)
+{
+    CHECK_TRUE(Move(SQ_1B, SQ_1A, true) == Move("1a1b+"));
+    {
+        char actual[6] = {'\0'};
+        Move(SQ_3G, FU).to_usi(actual);
+        STRCMP_EQUAL("P*3g", actual);
+    }
+    {
+        char actual[6] = {'\0'};
+        Move(SQ_1B, SQ_1A).to_usi(actual);
+        STRCMP_EQUAL("1a1b", actual);
+    }
+    {
+        char actual[6] = {'\0'};
+        Move(SQ_1B, SQ_1A, true).to_usi(actual);
+        STRCMP_EQUAL("1a1b+", actual);
+    }
+}
 
 TEST(move, destination)
 {
@@ -19,8 +37,8 @@ TEST(move, destination)
 
 TEST(move, source)
 {
-    CHECK_EQUAL(SQ_1B, Move(SQ_1A, SQ_1B, false).source<SquareEnum>());
-    CHECK_EQUAL(KE, Move(SQ_3I, KE).source<PieceTypeEnum>());
+    CHECK_EQUAL(SQ_1B, Move(SQ_1A, SQ_1B, false).source_square());
+    CHECK_EQUAL(KE, Move(SQ_3I, KE).source_piece());
 }
 
 TEST(move, promote)

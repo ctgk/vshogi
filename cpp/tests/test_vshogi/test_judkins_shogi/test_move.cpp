@@ -1,8 +1,6 @@
-#include "vshogi/judkins_shogi/move.hpp"
+#include "vshogi/variants/judkins_shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
-
-#include "test_vshogi/test_judkins_shogi/test_judkins_shogi.hpp"
 
 namespace test_vshogi::test_judkins_shogi
 {
@@ -10,6 +8,26 @@ namespace test_vshogi::test_judkins_shogi
 using namespace vshogi::judkins_shogi;
 
 TEST_GROUP(move){};
+
+TEST(move, usi)
+{
+    CHECK_TRUE(Move(SQ_1B, SQ_1A, true) == Move("1a1b+"));
+    {
+        char actual[6] = {'\0'};
+        Move(SQ_3C, FU).to_usi(actual);
+        STRCMP_EQUAL("P*3c", actual);
+    }
+    {
+        char actual[6] = {'\0'};
+        Move(SQ_1B, SQ_1A).to_usi(actual);
+        STRCMP_EQUAL("1a1b", actual);
+    }
+    {
+        char actual[6] = {'\0'};
+        Move(SQ_1B, SQ_1A, true).to_usi(actual);
+        STRCMP_EQUAL("1a1b+", actual);
+    }
+}
 
 TEST(move, destination)
 {
