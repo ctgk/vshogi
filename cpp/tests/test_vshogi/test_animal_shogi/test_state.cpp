@@ -92,8 +92,8 @@ TEST(animal_shogi_state, zobrist_hash)
     s.apply(Move(SQ_A2, SQ_B1), &hash);
     s.apply(Move(SQ_B1, SQ_B2), &hash); // promote
 
-    const auto expect = State("gHe/l2/3/ELG b C").zobrist_hash();
-    const auto another = State("gCe/l2/3/ELG b C").zobrist_hash();
+    const auto expect = State("gHe/l2/3/ELG w C").zobrist_hash();
+    const auto another = State("gCe/l2/3/ELG w C").zobrist_hash();
     CHECK_EQUAL(expect, hash);
     CHECK_TRUE(another != hash);
 }

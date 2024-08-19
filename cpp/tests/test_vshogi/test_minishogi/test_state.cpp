@@ -102,4 +102,21 @@ TEST(state, check)
     }
 }
 
+TEST(state, zobrist_hash)
+{
+    {
+        const auto s1 = State("4k/5/P4/5/K4 b -");
+        const auto s2 = State("4k/5/5/5/K4 w -");
+        CHECK_TRUE(s1.zobrist_hash() != s2.zobrist_hash());
+    }
+    {
+        const auto s1 = State("4k/5/P4/5/K4 b -");
+        auto s2 = State("3k1/5/P4/5/K4 w -");
+        auto hash_s2 = s2.zobrist_hash();
+        CHECK_TRUE(s1.zobrist_hash() != hash_s2);
+        s2.apply(Move(SQ_1A, SQ_2A), &hash_s2);
+        CHECK_EQUAL(s1.zobrist_hash(), hash_s2);
+    }
+}
+
 } // namespace test_vshogi::test_minishogi

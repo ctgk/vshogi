@@ -42,6 +42,8 @@ private:
     static constexpr uint num_dir = Config::num_dir;
     static constexpr Square SQ_NA = SHelper::SQ_NA; // NOLINT
 
+    static constexpr std::uint64_t zobrist_hash_for_turn = 0xaaaaaaaaaaaaaaaau;
+
 private:
     BoardType m_board;
     Stands m_stands;
@@ -154,6 +156,8 @@ public:
             update_checkers_before_turn_update(dst, src);
         }
         m_turn = ~m_turn;
+        if (hash != nullptr)
+            *hash ^= zobrist_hash_for_turn;
         return *this;
     }
     void to_feature_map(float* const data) const
@@ -194,7 +198,10 @@ public:
     }
     std::uint64_t zobrist_hash() const
     {
-        return m_stands.zobrist_hash() ^ m_board.zobrist_hash();
+        auto out = m_stands.zobrist_hash() ^ m_board.zobrist_hash();
+        if (m_turn == WHITE)
+            out ^= zobrist_hash_for_turn;
+        return out;
     }
 
 private:
