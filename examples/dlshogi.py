@@ -78,8 +78,6 @@ def build_policy_value_network(
     use_long_range_concat: bool,
     num_backbone_blocks: int,
 ):
-    r = tf.keras.regularizers.L2(0.001)
-
     class Concat8Directions(tf.keras.layers.Layer):
 
         def __init__(self, max_dilation_rate: int):
@@ -100,13 +98,11 @@ def build_policy_value_network(
             return tf.concat(feature_maps, -1)
 
     def pointwise_conv2d(x, ch, use_bias=True):
-        return tf.keras.layers.Conv2D(
-            ch, 1, use_bias=use_bias, kernel_regularizer=r)(x)
+        return tf.keras.layers.Conv2D(ch, 1, use_bias=use_bias)(x)
 
     def depthwise_conv2d(x, dilation=1, use_bias=True):
         return tf.keras.layers.DepthwiseConv2D(
-            3, dilation_rate=dilation, padding='same',
-            use_bias=use_bias, depthwise_regularizer=r)(x)
+            3, dilation_rate=dilation, padding='same', use_bias=use_bias)(x)
 
     def bn(x):
         return tf.keras.layers.BatchNormalization(center=False, scale=False)(x)
@@ -154,7 +150,7 @@ def build_policy_value_network(
         h = tf.keras.layers.LeakyReLU()(h)
         h = tf.keras.layers.Flatten()(h)
         return tf.keras.layers.Dense(
-            1, activation='tanh', name='value', kernel_regularizer=r)(h)
+            1, activation='tanh', name='value')(h)
 
     x = tf.keras.Input(shape=(*input_size, input_channels))
     backbone_feature = backbone_network(x)
@@ -519,7 +515,10 @@ def run_train(args: Args):
             # tf.debugging.assert_near(tf.reduce_max(logit_subtracted, axis=1), 0., rtol=0., atol=0.1, message="`max(logit - max(logit))` should be near 0")
             logsumexp = tf.reduce_logsumexp(logit_subtracted, axis=1, keepdims=True)
             log_softmax = logit_subtracted - logsumexp
-            return -tf.reduce_sum(y_true_masked * log_softmax, axis=1)
+            return (
+                tf.reduce_sum(-y_true_masked * log_softmax, axis=1)
+                + 0.001 * tf.reduce_sum(-tf.math.exp(log_softmax) * log_softmax, axis=1)
+            )
 
         def lr_scheduler(epoch):
             # relative learning schedule from 1.0 to 0.5
