@@ -161,6 +161,10 @@ public:
     {
         return m_action;
     }
+    bool has_child() const
+    {
+        return static_cast<bool>(m_child);
+    }
     uint get_num_child() const
     {
         const NodeGM* ch = m_child.get();
@@ -228,12 +232,11 @@ public:
         ++m_visit_count;
         ++m_visit_count_excluding_random;
         NodeGM* node = this;
-        while (true) {
-            if (node->m_child == nullptr)
-                return node->select_at_leaf(game);
+        while (node->has_child()) {
             node = node->select_at_internal_vertex(
                 game, coeff_puct, non_random_ratio, random_depth--);
         }
+        return node->select_at_leaf(game);
     }
 
     /**
@@ -321,10 +324,10 @@ private:
     {
         NodeGM* ch = select_child(coeff_puct, non_random_ratio, random_depth);
         ch->m_parent = this; // In order to cope with move operations.
-        if (ch->m_child == nullptr)
-            game.apply_nocheck(ch->m_action);
-        else
+        if (ch->has_child())
             game.apply_mcts_internal_vertex(ch->m_action);
+        else
+            game.apply_nocheck(ch->m_action);
         return ch;
     }
     NodeGM* select_child(
@@ -589,8 +592,15 @@ public:
     }
     Node<Game, Move>* select(Game& game)
     {
-        return m_root->select(
-            game, m_coeff_puct, m_non_random_ratio, m_random_depth);
+        Node<Game, Move>* node = m_root.get();
+        int random_depth = m_random_depth;
+        ++(node->m_visit_count);
+        ++(node->m_visit_count_excluding_random);
+        while (node->has_child()) {
+            node = node->select_at_internal_vertex(
+                game, m_coeff_puct, m_non_random_ratio, random_depth--);
+        }
+        return node->select_at_leaf(game);
     }
     Searcher<Game, Move>& apply(const Move& action)
     {
