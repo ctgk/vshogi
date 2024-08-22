@@ -343,10 +343,6 @@ private:
             ++(ch->m_visit_count_excluding_random);
         }
         ++(ch->m_visit_count);
-        if ((m_most_visited_child == nullptr)
-            || (ch->m_visit_count_excluding_random
-                > m_most_visited_child->m_visit_count_excluding_random))
-            m_most_visited_child = ch;
         return ch;
     }
     bool use_random(const int non_random_ratio, const int random_depth) const
