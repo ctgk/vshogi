@@ -129,7 +129,6 @@ class DfpnSearcher(Engine):
         bool
             True if there is a mate.
         """
-        return self._searcher
         self._raise_error_if_not_ready()
         return self._searcher.found_mate()
 
