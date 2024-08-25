@@ -92,9 +92,9 @@ public:
             m_king_locations[c_out] = SQ_NA;
 
         if (popped != VOID)
-            m_bb_color[c_out] ^= BitBoardType::from_square(dst);
+            m_bb_color[c_out].toggle(dst);
         if (p != VOID)
-            m_bb_color[c_in] ^= BitBoardType::from_square(dst);
+            m_bb_color[c_in].toggle(dst);
 
         if (hash != nullptr) {
             *hash ^= zobrist_table[dst][popped];
@@ -111,8 +111,7 @@ public:
         ColoredPiece moving_piece = place_piece_on(src, VOID);
 
         if (moving_piece != VOID) {
-            m_bb_color[PHelper::get_color(moving_piece)]
-                ^= BitBoardType::from_square(src);
+            m_bb_color[PHelper::get_color(moving_piece)].toggle(src);
         }
 
         if (hash != nullptr) {
@@ -251,7 +250,7 @@ private:
             if (PHelper::to_piece_type(p) == PHelper::OU)
                 m_king_locations[c] = sq;
             if (p != VOID)
-                m_bb_color[c] ^= BitBoardType::from_square(sq);
+                m_bb_color[c].toggle(sq);
         }
     }
 };

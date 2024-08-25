@@ -238,8 +238,7 @@ public:
         const auto piece = board_after_move[dst];
         const auto enemy_king_sq = get_board().get_king_location(~turn);
 
-        BitBoard occupied_after_move
-            = get_board().get_occupied() | BitBoardType::from_square(dst);
+        BitBoard occupied_after_move = get_board().get_occupied().set(dst);
         if (!move.is_drop()) {
             const auto src = move.source_square();
             const auto dir = SHelper::get_direction(src, enemy_king_sq);
@@ -248,7 +247,7 @@ public:
                 && (board_after_move.find_attacker(turn, enemy_king_sq, dir)
                     != SHelper::SQ_NA))
                 return true; // discovered check
-            occupied_after_move &= (~BitBoardType::from_square(src));
+            occupied_after_move.clear(src);
         }
         return BitBoardType::get_attacks_by(piece, dst, occupied_after_move)
             .is_one(enemy_king_sq);
@@ -630,7 +629,7 @@ protected:
                         if (sq == discovered_checker_sq)
                             break;
                         else
-                            check_way |= BitBoardType::from_square(sq);
+                            check_way.set(sq);
                     }
                 }
                 append_legal_moves_by_non_king_ignoring_discovered_check(
@@ -769,8 +768,7 @@ protected:
         const auto target_in_promotion_zone
             = SHelper::in_promotion_zone(dst, turn);
         const auto empty_mask = ~board.get_occupied();
-        const auto src_mask = board.get_occupied(turn)
-                              & (~BitBoardType::from_square(king_location));
+        const auto src_mask = board.get_occupied(turn).clear(king_location);
         for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
             auto ptr_src = SHelper::get_squares_along(dir, dst);
             for (; *ptr_src != SHelper::SQ_NA; ++ptr_src) {

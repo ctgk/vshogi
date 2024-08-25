@@ -97,8 +97,43 @@ public:
     }
     bool is_one(const Square& sq) const
     {
-        return static_cast<bool>(from_square(sq).m_value & m_value);
+        return static_cast<bool>((m_value >> sq) & static_cast<UInt>(1));
     }
+
+    /**
+     * @brief Set a bit corresponding to the given square.
+     *
+     * @param sq Corresponding square bit to set. Do not pass `SQ_NA`.
+     * @return BitBoard& Set bitboard.
+     */
+    BitBoard& set(const Square& sq)
+    {
+        m_value |= static_cast<UInt>(static_cast<UInt>(1) << sq);
+        return *this;
+    }
+    /**
+     * @brief Toggle a bit corresponding to the given square.
+     *
+     * @param sq Corresponding square bit to toggle. Do not pass `SQ_NA`.
+     * @return BitBoard& Toggled bitboard.
+     */
+    BitBoard& toggle(const Square& sq)
+    {
+        m_value ^= static_cast<UInt>(static_cast<UInt>(1) << sq);
+        return *this;
+    }
+    /**
+     * @brief Clear a bit corresponding to the given square.
+     *
+     * @param sq Corresponding square bit to clear. Do not pass `SQ_NA`.
+     * @return BitBoard& Cleared bitboard.
+     */
+    BitBoard& clear(const Square& sq)
+    {
+        m_value &= static_cast<UInt>(~(static_cast<UInt>(1) << sq));
+        return *this;
+    }
+
     uint hamming_weight() const
     {
         return vshogi::hamming_weight(m_value);
@@ -147,10 +182,10 @@ public:
             if (sq == SHelper::SQ_NA)
                 break; // reached the end of the board
             else if (occupied.is_one(sq)) {
-                out |= BitBoard::from_square(sq);
+                out.set(sq);
                 break; // reached a piece
             } else {
-                out |= BitBoard::from_square(sq); // continue
+                out.set(sq); // continue
             }
         }
         return out;

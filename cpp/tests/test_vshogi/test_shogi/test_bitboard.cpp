@@ -78,6 +78,14 @@ TEST(shogi_bitboard, shift)
     }
 }
 
+TEST(shogi_bitboard, set)
+{
+    auto actual = BitBoard();
+    actual.set(SQ_1I);
+    CHECK_EQUAL(1, actual.hamming_weight());
+    CHECK_TRUE(actual.is_one(SQ_1I));
+}
+
 TEST(shogi_bitboard, get_attacks_by_fu)
 {
     {

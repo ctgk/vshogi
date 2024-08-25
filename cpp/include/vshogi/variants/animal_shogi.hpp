@@ -366,8 +366,7 @@ inline animal_shogi::ColoredPieceEnum animal_shogi::Board::apply(
 {
     ColoredPiece moving_piece = place_piece_on(src, VOID);
     if (moving_piece != VOID) {
-        m_bb_color[PHelper::get_color(moving_piece)]
-            ^= BitBoardType::from_square(src);
+        m_bb_color[PHelper::get_color(moving_piece)].toggle(src);
     }
     if (hash != nullptr) {
         *hash ^= zobrist_table[src][VOID];
