@@ -48,6 +48,10 @@ public:
     {
         set_sfen(sfen);
     }
+    ColoredPiece get(const Square& sq) const
+    {
+        return m_pieces[sq];
+    }
     ColoredPiece operator[](const Square& sq) const
     {
         return m_pieces[sq];

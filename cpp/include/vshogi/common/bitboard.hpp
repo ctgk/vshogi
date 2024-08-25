@@ -209,7 +209,7 @@ public:
 
     static BitBoard get_attacks_by(const ColoredPiece& p, const Square& sq)
     {
-        if (p == PHelper::VOID)
+        if ((p == PHelper::VOID) || (sq == SHelper::SQ_NA))
             return BitBoard();
         return attacks_table[p][sq];
     }
@@ -275,6 +275,10 @@ public:
         bool operator!=(const SquareIterator& other) const
         {
             return m_curr != other.m_curr;
+        }
+        bool is_end() const
+        {
+            return m_curr >= num_squares;
         }
 
     private:

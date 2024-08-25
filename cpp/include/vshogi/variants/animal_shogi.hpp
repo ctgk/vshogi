@@ -8,6 +8,7 @@
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/game.hpp"
+#include "vshogi/common/generator.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/pieces.hpp"
 #include "vshogi/common/squares.hpp"
@@ -132,6 +133,7 @@ using Board = vshogi::Board<Config>;
 using Stand = vshogi::Stand<Config>;
 using BlackWhiteStands = vshogi::BlackWhiteStands<Config>;
 using State = vshogi::State<Config>;
+using KingMoveGenerator = vshogi::KingMoveGenerator<Config>;
 using Game = vshogi::Game<Config>;
 
 constexpr BitBoard bb_a1 = (BitBoard(1) << static_cast<uint>(SQ_A1));
@@ -375,6 +377,12 @@ inline animal_shogi::ColoredPieceEnum animal_shogi::Board::apply(
     if (!BitBoardType::get_attacks_by(moving_piece, dst).any())
         moving_piece = PHelper::promote_nocheck(moving_piece);
     return apply(dst, moving_piece, hash);
+}
+
+template <>
+inline void
+animal_shogi::KingMoveGenerator::increment_iterator_while_square_is_attacked()
+{
 }
 
 template <>

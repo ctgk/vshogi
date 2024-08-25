@@ -8,6 +8,7 @@
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/game.hpp"
+#include "vshogi/common/generator.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/pieces.hpp"
 #include "vshogi/common/squares.hpp"
@@ -174,6 +175,7 @@ using Board = vshogi::Board<Config>;
 using Stand = vshogi::Stand<Config>;
 using BlackWhiteStands = vshogi::BlackWhiteStands<Config>;
 using State = vshogi::State<Config>;
+using KingMoveGenerator = vshogi::KingMoveGenerator<Config>;
 using Game = vshogi::Game<Config>;
 static_assert(FU == Pieces::FU);
 static_assert(OU == Pieces::OU);

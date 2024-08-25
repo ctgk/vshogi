@@ -9,6 +9,7 @@
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/direction.hpp"
+#include "vshogi/common/generator.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/pieces.hpp"
 #include "vshogi/common/result.hpp"
@@ -488,24 +489,8 @@ protected:
     }
     void append_legal_moves_by_king()
     {
-        const auto ac = get_turn(); //!< ally color
-        const auto ec = ~ac; //!< enemy color
-        const BoardType& board = get_board();
-        const auto src = board.get_king_location(ac);
-        if (src == SHelper::SQ_NA)
-            return;
-        const auto& moving = board[src];
-        auto ptr_dst = SHelper::get_non_ranging_attacks_by(moving, src);
-        const auto end = ptr_dst + 8;
-        const auto& ally_mask = board.get_occupied(ac);
-        for (; *ptr_dst != SHelper::SQ_NA; ++ptr_dst) {
-            if (ptr_dst >= end)
-                break;
-            if (ally_mask.is_one(*ptr_dst))
-                continue;
-            if (board.is_square_attacked(ec, *ptr_dst, src))
-                continue;
-            m_legal_moves.emplace_back(*ptr_dst, src, false);
+        for (auto m : KingMoveGenerator<Config>(&m_current_state)) {
+            m_legal_moves.emplace_back(m);
         }
     }
     void append_check_moves_by_king()
