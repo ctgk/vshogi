@@ -545,6 +545,11 @@ template <>
 inline shogi::BitBoard shogi::BitBoard::ray_table[shogi::Config::num_squares]
                                                  [shogi::Config::num_dir]
     = {};
+template <>
+inline shogi::BitBoard
+    shogi::BitBoard::line_segment_table[shogi::Config::num_squares]
+                                       [shogi::Config::num_squares]
+    = {};
 
 template <>
 inline shogi::BitBoard shogi::BitBoard::get_attacks_by(

@@ -341,6 +341,10 @@ inline animal_shogi::BitBoard
     animal_shogi::BitBoard::ray_table[animal_shogi::Config::num_squares]
                                      [animal_shogi::Config::num_dir]
     = {};
+template <>
+inline animal_shogi::BitBoard animal_shogi::BitBoard::line_segment_table
+    [animal_shogi::Config::num_squares][animal_shogi::Config::num_squares]
+    = {};
 
 template <>
 inline animal_shogi::BitBoard animal_shogi::BitBoard::get_attacks_by(

@@ -360,6 +360,11 @@ inline minishogi::BitBoard
     minishogi::BitBoard::ray_table[minishogi::Config::num_squares]
                                   [minishogi::Config::num_dir]
     = {};
+template <>
+inline minishogi::BitBoard
+    minishogi::BitBoard::line_segment_table[minishogi::Config::num_squares]
+                                           [minishogi::Config::num_squares]
+    = {};
 
 template <>
 inline minishogi::BitBoard minishogi::BitBoard::get_attacks_by(

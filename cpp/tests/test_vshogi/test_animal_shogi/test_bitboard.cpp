@@ -53,6 +53,17 @@ TEST(animal_shogi_bitboard, shift)
     }
 }
 
+TEST(animal_shogi_bitboard, get_line_segment)
+{
+    CHECK_EQUAL(
+        (bb_a2 | bb_a3).value(),
+        BitBoard::get_line_segment(SQ_A1, SQ_A4).value());
+    CHECK_EQUAL(
+        bb_b1.value(), BitBoard::get_line_segment(SQ_A1, SQ_C1).value());
+    CHECK_EQUAL(
+        bb_b2.value(), BitBoard::get_line_segment(SQ_A3, SQ_C1).value());
+}
+
 TEST(animal_shogi_bitboard, square_iterator)
 {
     auto actual = BitBoard();
