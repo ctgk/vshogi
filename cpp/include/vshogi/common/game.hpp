@@ -890,13 +890,12 @@ protected:
             return false;
 
         // if opponent king can move away from the attack, then return false.
-        const auto& enemy_mask = board.get_occupied(~turn);
-        const Square* sq_ptr = SHelper::get_non_ranging_attacks_by(
-            board[enemy_king_sq], enemy_king_sq);
-        for (; *sq_ptr != SHelper::SQ_NA; ++sq_ptr) {
-            if (enemy_mask.is_one(*sq_ptr))
-                continue;
-            if (board.is_square_attacked(turn, *sq_ptr, enemy_king_sq))
+        const auto enemy_mask = board.get_occupied(~turn);
+        const auto enemy_king_movable
+            = BitBoardType::get_attacks_by(board[enemy_king_sq], enemy_king_sq)
+              & (~enemy_mask);
+        for (auto sq : enemy_king_movable.square_iterator()) {
+            if (board.is_square_attacked(turn, sq, enemy_king_sq))
                 continue;
             return false;
         }
