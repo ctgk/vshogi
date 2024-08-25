@@ -234,6 +234,64 @@ public:
         }
     }
 
+public:
+    class SquareIterator
+    {
+    private:
+        UInt m_mask;
+        uint m_curr;
+
+    public:
+        SquareIterator(const UInt& bb_value) : m_mask(bb_value), m_curr()
+        {
+            while (mask_lsb_is_0() && (m_curr < num_squares)) {
+                ++m_curr;
+                m_mask = static_cast<UInt>(m_mask >> 1u);
+            }
+        }
+        SquareIterator& operator++()
+        {
+            do {
+                ++m_curr;
+                m_mask = static_cast<UInt>(m_mask >> 1u);
+            }
+            while (mask_lsb_is_0() && (m_curr < num_squares));
+            return *this;
+        }
+        Square operator*() const
+        {
+            return static_cast<Square>(m_curr);
+        }
+        SquareIterator begin()
+        {
+            return *this;
+        }
+        SquareIterator end() const
+        {
+            static const auto end_iter
+                = SquareIterator(static_cast<UInt>(0), num_squares);
+            return end_iter;
+        }
+        bool operator!=(const SquareIterator& other) const
+        {
+            return m_curr != other.m_curr;
+        }
+
+    private:
+        SquareIterator(const UInt& bb_value, const uint& v)
+            : m_mask(bb_value), m_curr(v)
+        {
+        }
+        bool mask_lsb_is_0() const
+        {
+            return !static_cast<bool>(m_mask & static_cast<UInt>(1));
+        }
+    };
+    SquareIterator square_iterator() const
+    {
+        return SquareIterator(m_value);
+    }
+
 private:
     template <uint NumSquaresFromTop = num_ranks>
     static constexpr BitBoard file_mask_leftmost()

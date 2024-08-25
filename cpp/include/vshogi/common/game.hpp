@@ -442,10 +442,8 @@ protected:
     {
         uint out = 0;
         const BoardType& board = get_board();
-        for (auto sq : EnumIterator<Square, num_squares>()) {
-            if (mask.is_one(sq))
-                out += PHelper::get_point(board[sq]);
-        }
+        for (auto sq : mask.square_iterator())
+            out += PHelper::get_point(board[sq]);
         const auto& stand = get_stand(c);
         for (auto pt : EnumIterator<PieceType, num_stand_piece_types>()) {
             out += stand.count(pt) * PHelper::get_point(pt);
@@ -468,12 +466,10 @@ protected:
                 append_check_drop_moves();
                 const auto turn = get_turn();
                 const BoardType& board = get_board();
-                const auto& ally_mask = board.get_occupied(turn);
+                BitBoardType ally_mask = board.get_occupied(turn);
                 const auto king_sq = board.get_king_location(turn);
-                for (auto sq : EnumIterator<Square, num_squares>()) {
-                    if (ally_mask.is_one(sq) && (king_sq != sq))
-                        append_check_moves_by_non_king_at(sq);
-                }
+                for (auto sq : ally_mask.clear(king_sq).square_iterator())
+                    append_check_moves_by_non_king_at(sq);
             }
         } else {
             append_legal_moves_by_king();
@@ -481,12 +477,10 @@ protected:
                 append_legal_drop_moves();
                 const auto turn = get_turn();
                 const BoardType& board = get_board();
-                const auto& ally_mask = board.get_occupied(turn);
+                BitBoardType ally_mask = board.get_occupied(turn);
                 const auto king_sq = board.get_king_location(turn);
-                for (auto sq : EnumIterator<Square, num_squares>()) {
-                    if (ally_mask.is_one(sq) && (king_sq != sq))
-                        append_legal_moves_by_non_king_at(sq);
-                }
+                for (auto sq : ally_mask.clear(king_sq).square_iterator())
+                    append_legal_moves_by_non_king_at(sq);
             } else if (!m_current_state.in_double_check()) {
                 append_legal_moves_to_defend_king(false);
             }

@@ -53,6 +53,15 @@ TEST(animal_shogi_bitboard, shift)
     }
 }
 
+TEST(animal_shogi_bitboard, square_iterator)
+{
+    auto actual = BitBoard();
+    for (auto sq : bb_fileb.square_iterator()) {
+        actual.set(sq);
+    }
+    CHECK_EQUAL(bb_fileb.value(), actual.value());
+}
+
 TEST(animal_shogi_bitboard, chick_attacks)
 {
     CHECK_TRUE(bb_a1 == BitBoard::get_attacks_by(B_CH, SQ_A2));
