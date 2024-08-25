@@ -417,6 +417,10 @@ inline judkins_shogi::BitBoard
     judkins_shogi::BitBoard::ray_table[judkins_shogi::Config::num_squares]
                                       [judkins_shogi::Config::num_dir]
     = {};
+template <>
+inline judkins_shogi::BitBoard judkins_shogi::BitBoard::line_segment_table
+    [judkins_shogi::Config::num_squares][judkins_shogi::Config::num_squares]
+    = {};
 
 template <>
 inline judkins_shogi::BitBoard judkins_shogi::BitBoard::get_attacks_by(

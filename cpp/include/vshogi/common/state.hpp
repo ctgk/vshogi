@@ -278,7 +278,15 @@ private:
         const Square& dst,
         const DirectionEnum& dst_dir)
     {
-        return (m_board.find_attacker(m_turn, enemy_king_sq, dst_dir) == dst);
+        const BitBoardType attacks
+            = BitBoardType::get_attacks_by(m_board[dst], dst);
+        if (!attacks.is_one(enemy_king_sq))
+            return false;
+        if (!PHelper::is_ranging_piece(m_board[dst]))
+            return true;
+        return !(BitBoardType::get_line_segment(dst, enemy_king_sq)
+                 & m_board.get_occupied())
+                    .any();
     }
 };
 

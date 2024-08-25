@@ -35,6 +35,7 @@ private:
     static const BitBoard square_to_bitboard_array[num_squares + 1U];
     static BitBoard attacks_table[num_colored_piece_types][num_squares];
     static BitBoard ray_table[num_squares][num_dir];
+    static BitBoard line_segment_table[num_squares][num_squares];
 
 public:
     constexpr BitBoard() : m_value()
@@ -171,42 +172,6 @@ public:
             return (*this & filemask[dir]) >> static_cast<uint>(-delta);
     }
 
-    static BitBoard compute_ray_to(
-        Square sq,
-        const DirectionEnum dir,
-        const BitBoard& occupied = BitBoard())
-    {
-        BitBoard out{};
-        while (true) {
-            sq = SHelper::shift(sq, dir);
-            if (sq == SHelper::SQ_NA)
-                break; // reached the end of the board
-            else if (occupied.is_one(sq)) {
-                out.set(sq);
-                break; // reached a piece
-            } else {
-                out.set(sq); // continue
-            }
-        }
-        return out;
-    }
-    static BitBoard compute_ray_to_adjacent(
-        const Square& sq, const BitBoard& occupied = BitBoard())
-    {
-        return compute_ray_to(sq, DIR_N, occupied)
-               | compute_ray_to(sq, DIR_E, occupied)
-               | compute_ray_to(sq, DIR_W, occupied)
-               | compute_ray_to(sq, DIR_S, occupied);
-    }
-    static BitBoard compute_ray_to_diagonal(
-        const Square& sq, const BitBoard& occupied = BitBoard())
-    {
-        return compute_ray_to(sq, DIR_NW, occupied)
-               | compute_ray_to(sq, DIR_NE, occupied)
-               | compute_ray_to(sq, DIR_SW, occupied)
-               | compute_ray_to(sq, DIR_SE, occupied);
-    }
-
     static BitBoard get_attacks_by(const ColoredPiece& p, const Square& sq)
     {
         if ((p == PHelper::VOID) || (sq == SHelper::SQ_NA))
@@ -219,6 +184,19 @@ public:
     {
         return ray_table[sq][dir];
     }
+
+    /**
+     * @brief Get the line segment mask that lies in between given squares.
+     *
+     * @param a First square (non-inclusive)
+     * @param b Second square (non-inclusive)
+     * @return BitBoard Line segment mask that lines in between given squares.
+     */
+    static BitBoard get_line_segment(const Square& a, const Square& b)
+    {
+        return line_segment_table[a][b];
+    }
+
     static void init_tables()
     {
         for (auto p : EnumIterator<ColoredPiece, num_colored_piece_types>()) {
@@ -230,6 +208,12 @@ public:
         for (auto sq : EnumIterator<Square, num_squares>()) {
             for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
                 ray_table[sq][dir] = compute_ray_to(sq, dir);
+            }
+        }
+
+        for (auto sq1 : EnumIterator<Square, num_squares>()) {
+            for (auto sq2 : EnumIterator<Square, num_squares>()) {
+                line_segment_table[sq1][sq2] = compute_line_segment(sq1, sq2);
             }
         }
     }
@@ -294,6 +278,59 @@ public:
     SquareIterator square_iterator() const
     {
         return SquareIterator(m_value);
+    }
+
+private:
+    static BitBoard compute_ray_to(
+        Square sq,
+        const DirectionEnum dir,
+        const BitBoard& occupied = BitBoard())
+    {
+        BitBoard out{};
+        while (true) {
+            sq = SHelper::shift(sq, dir);
+            if (sq == SHelper::SQ_NA)
+                break; // reached the end of the board
+            else if (occupied.is_one(sq)) {
+                out.set(sq);
+                break; // reached a piece
+            } else {
+                out.set(sq); // continue
+            }
+        }
+        return out;
+    }
+    static BitBoard compute_ray_to_adjacent(
+        const Square& sq, const BitBoard& occupied = BitBoard())
+    {
+        return compute_ray_to(sq, DIR_N, occupied)
+               | compute_ray_to(sq, DIR_E, occupied)
+               | compute_ray_to(sq, DIR_W, occupied)
+               | compute_ray_to(sq, DIR_S, occupied);
+    }
+    static BitBoard compute_ray_to_diagonal(
+        const Square& sq, const BitBoard& occupied = BitBoard())
+    {
+        return compute_ray_to(sq, DIR_NW, occupied)
+               | compute_ray_to(sq, DIR_NE, occupied)
+               | compute_ray_to(sq, DIR_SW, occupied)
+               | compute_ray_to(sq, DIR_SE, occupied);
+    }
+
+private:
+    static BitBoard compute_line_segment(Square a, const Square b)
+    {
+        const auto dir_to_b = SHelper::get_direction(b, a);
+        if (dir_to_b == DIR_NA)
+            return BitBoard();
+        BitBoard out{};
+        while (true) {
+            a = SHelper::shift(a, dir_to_b);
+            if (a == b)
+                break;
+            out.set(a);
+        }
+        return out;
     }
 
 private:
