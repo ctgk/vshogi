@@ -133,6 +133,7 @@ using Board = vshogi::Board<Config>;
 using Stand = vshogi::Stand<Config>;
 using BlackWhiteStands = vshogi::BlackWhiteStands<Config>;
 using State = vshogi::State<Config>;
+using DropMoveGenerator = vshogi::DropMoveGenerator<Config>;
 using KingMoveGenerator = vshogi::KingMoveGenerator<Config>;
 using Game = vshogi::Game<Config>;
 
@@ -387,6 +388,43 @@ template <>
 inline void
 animal_shogi::KingMoveGenerator::increment_iterator_while_square_is_attacked()
 {
+}
+
+template <>
+inline void animal_shogi::DropMoveGenerator::init_sq_iter()
+{
+    m_sq_iter = (~m_board.get_occupied()).square_iterator();
+}
+
+template <>
+inline void animal_shogi::DropMoveGenerator::increment_square()
+{
+    while (!m_sq_iter.is_end()) {
+        if (m_board.is_empty(*m_sq_iter))
+            break;
+        ++m_sq_iter;
+    }
+}
+
+template <>
+inline void animal_shogi::DropMoveGenerator::increment_iterators_unless_legal()
+{
+    while (m_pt_iter < num_stand_piece_types) {
+        increment_piece_type_unless_in_stand();
+        if (m_pt_iter == num_stand_piece_types) {
+            m_sq_iter = BitBoardType().square_iterator();
+            break;
+        }
+        increment_square();
+        if (m_sq_iter.is_end()) {
+            m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
+            if (m_pt_iter == num_stand_piece_types)
+                break;
+            init_sq_iter();
+        } else {
+            break;
+        }
+    }
 }
 
 template <>

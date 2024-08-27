@@ -489,7 +489,7 @@ protected:
     }
     void append_legal_moves_by_king()
     {
-        for (auto m : KingMoveGenerator<Config>(&m_current_state)) {
+        for (auto m : KingMoveGenerator<Config>(m_current_state)) {
             m_legal_moves.emplace_back(m);
         }
     }
@@ -812,24 +812,8 @@ protected:
     }
     void append_legal_drop_moves()
     {
-        const auto turn = get_turn();
-        const auto& stand = get_stand(turn);
-        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>()) {
-            if (!stand.exist(pt))
-                continue;
-            for (auto sq : EnumIterator<Square, num_squares>()) {
-                if (!get_board().is_empty(sq))
-                    continue;
-                const auto p = PHelper::to_board_piece(turn, pt);
-                const auto attacks = BitBoardType::get_attacks_by(p, sq);
-                if (!attacks.any())
-                    continue;
-                if ((pt == PHelper::FU)
-                    && (has_pawn_in_file(SHelper::to_file(sq))
-                        || is_drop_pawn_mate(sq)))
-                    continue;
-                m_legal_moves.emplace_back(MoveType(sq, pt));
-            }
+        for (auto m : DropMoveGenerator<Config>(m_current_state)) {
+            m_legal_moves.emplace_back(m);
         }
     }
     void append_legal_moves_dropping_to(

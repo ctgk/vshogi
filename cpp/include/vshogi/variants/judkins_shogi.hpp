@@ -175,6 +175,7 @@ using Board = vshogi::Board<Config>;
 using Stand = vshogi::Stand<Config>;
 using BlackWhiteStands = vshogi::BlackWhiteStands<Config>;
 using State = vshogi::State<Config>;
+using DropMoveGenerator = vshogi::DropMoveGenerator<Config>;
 using KingMoveGenerator = vshogi::KingMoveGenerator<Config>;
 using Game = vshogi::Game<Config>;
 static_assert(FU == Pieces::FU);

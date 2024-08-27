@@ -231,9 +231,7 @@ private:
     void update_checkers_before_turn_update(const Square& dst)
     {
         const auto enemy_king_sq = m_board.get_king_location(~m_turn);
-        const auto dst_dir = SHelper::get_direction(dst, enemy_king_sq);
-        const bool check_by_moved
-            = is_check_by_moved(enemy_king_sq, dst, dst_dir);
+        const bool check_by_moved = is_check_by_moved(enemy_king_sq, dst);
 
         m_checker_locations[0] = (check_by_moved) ? dst : SQ_NA;
         m_checker_locations[1] = SQ_NA;
@@ -247,8 +245,7 @@ private:
             enemy_king_sq, dst_dir, SHelper::get_direction(src, enemy_king_sq));
 
         const bool check_by_discovered = (discovered_checker_sq != SQ_NA);
-        const bool check_by_moved
-            = is_check_by_moved(enemy_king_sq, dst, dst_dir);
+        const bool check_by_moved = is_check_by_moved(enemy_king_sq, dst);
 
         if (check_by_moved && check_by_discovered) {
             m_checker_locations[0] = dst;
@@ -273,10 +270,7 @@ private:
             return SQ_NA;
         return m_board.find_attacker(m_turn, enemy_king_sq, src_dir);
     }
-    bool is_check_by_moved(
-        const Square& enemy_king_sq,
-        const Square& dst,
-        const DirectionEnum& dst_dir)
+    bool is_check_by_moved(const Square& enemy_king_sq, const Square& dst)
     {
         const BitBoardType attacks
             = BitBoardType::get_attacks_by(m_board[dst], dst);

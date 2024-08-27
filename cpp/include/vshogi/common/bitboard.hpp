@@ -226,6 +226,9 @@ public:
         uint m_curr;
 
     public:
+        SquareIterator() : m_mask(), m_curr(num_squares)
+        {
+        }
         SquareIterator(const UInt& bb_value) : m_mask(bb_value), m_curr()
         {
             while (mask_lsb_is_0() && (m_curr < num_squares)) {
@@ -252,8 +255,7 @@ public:
         }
         SquareIterator end() const
         {
-            static const auto end_iter
-                = SquareIterator(static_cast<UInt>(0), num_squares);
+            static const auto end_iter = SquareIterator();
             return end_iter;
         }
         bool operator!=(const SquareIterator& other) const
@@ -266,10 +268,6 @@ public:
         }
 
     private:
-        SquareIterator(const UInt& bb_value, const uint& v)
-            : m_mask(bb_value), m_curr(v)
-        {
-        }
         bool mask_lsb_is_0() const
         {
             return !static_cast<bool>(m_mask & static_cast<UInt>(1));
