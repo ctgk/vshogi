@@ -495,33 +495,8 @@ protected:
     }
     void append_check_moves_by_king()
     {
-        const auto ac = get_turn();
-        const auto ec = ~ac;
-        const BoardType& board = get_board();
-        const auto src = board.get_king_location(ac);
-        const auto enemy_king_sq = board.get_king_location(ec);
-        if ((src == SHelper::SQ_NA) || (enemy_king_sq == SHelper::SQ_NA))
-            return;
-        const auto src_dir = SHelper::get_direction(src, enemy_king_sq);
-        if (src_dir == DIR_NA)
-            return;
-        const auto hidden_attacker_sq
-            = board.find_attacker(ac, enemy_king_sq, src_dir, src);
-        if (hidden_attacker_sq == SHelper::SQ_NA)
-            return;
-        auto ptr_dst = SHelper::get_non_ranging_attacks_by(board[src], src);
-        const auto end = ptr_dst + 8;
-        const auto& ally_mask = board.get_occupied(ac);
-        for (; *ptr_dst != SHelper::SQ_NA; ++ptr_dst) {
-            if (ptr_dst >= end)
-                break;
-            if (ally_mask.is_one(*ptr_dst))
-                continue;
-            if (SHelper::get_direction(*ptr_dst, enemy_king_sq) == src_dir)
-                continue;
-            if (board.is_square_attacked(ec, *ptr_dst, src))
-                continue;
-            m_legal_moves.emplace_back(*ptr_dst, src, false);
+        for (auto m : CheckKingMoveGenerator<Config>(m_current_state)) {
+            m_legal_moves.emplace_back(m);
         }
     }
     void append_legal_moves_by_non_king_at(const Square& src)

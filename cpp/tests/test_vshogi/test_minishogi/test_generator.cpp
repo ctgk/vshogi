@@ -33,6 +33,32 @@ TEST(minishogi_generator, king_move_generator)
     }
 }
 
+TEST(minishogi_generator, check_king_move_generator)
+{
+    {
+        const auto s = State("4k/5/2K2/5/5 b -");
+        auto iter = CheckKingMoveGenerator(s);
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        const auto s = State("4k/5/2K2/5/B4 b -");
+        auto iter = CheckKingMoveGenerator(s);
+        CHECK_TRUE(Move(SQ_4B, SQ_3C) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_3B, SQ_3C) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_4C, SQ_3C) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_2C, SQ_3C) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_3D, SQ_3C) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_2D, SQ_3C) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+}
+
 TEST(minishogi_generator, drop_move_generator)
 {
     {

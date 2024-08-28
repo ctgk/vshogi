@@ -135,6 +135,7 @@ using BlackWhiteStands = vshogi::BlackWhiteStands<Config>;
 using State = vshogi::State<Config>;
 using DropMoveGenerator = vshogi::DropMoveGenerator<Config>;
 using KingMoveGenerator = vshogi::KingMoveGenerator<Config>;
+using CheckKingMoveGenerator = vshogi::CheckKingMoveGenerator<Config>;
 using Game = vshogi::Game<Config>;
 
 constexpr BitBoard bb_a1 = (BitBoard(1) << static_cast<uint>(SQ_A1));

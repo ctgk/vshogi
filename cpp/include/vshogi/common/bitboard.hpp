@@ -194,6 +194,8 @@ public:
      */
     static BitBoard get_line_segment(const Square& a, const Square& b)
     {
+        if ((a == SHelper::SQ_NA) || (b == SHelper::SQ_NA))
+            return BitBoard();
         return line_segment_table[a][b];
     }
 
