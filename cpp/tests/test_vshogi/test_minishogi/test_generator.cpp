@@ -114,4 +114,31 @@ TEST(minishogi_generator, drop_move_generator)
     }
 }
 
+TEST(minishogi_generator, check_drop_move_generator)
+{
+    {
+        const auto s = State("5/5/5/5/5 b -");
+        auto iter = CheckDropMoveGenerator(s);
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        const auto s = State("4k/5/5/5/5 b P");
+        auto iter = CheckDropMoveGenerator(s);
+        CHECK_TRUE(Move(SQ_1B, FU) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        const auto s = State("4k/5/5/1P3/5 b BP");
+        auto iter = CheckDropMoveGenerator(s);
+        CHECK_TRUE(Move(SQ_1B, FU) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_2B, KA) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_3C, KA) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+}
+
 } // namespace test_vshogi::test_minishogi

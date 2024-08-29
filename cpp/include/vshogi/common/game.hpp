@@ -757,32 +757,8 @@ protected:
     }
     void append_check_drop_moves()
     {
-        const auto turn = get_turn();
-        const BoardType& board = get_board();
-        const auto& stand = get_stand(turn);
-        const auto enemy_king_sq = board.get_king_location(~turn);
-        const Square* sq_ptr = nullptr;
-        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>()) {
-            if (!stand.exist(pt))
-                continue;
-            const auto p = PHelper::to_board_piece(turn, pt);
-            for (auto dp = PHelper::get_attack_directions(p); *dp != DIR_NA;) {
-                sq_ptr
-                    = SHelper::get_squares_along(rotate(*dp++), enemy_king_sq);
-                for (; *sq_ptr != SHelper::SQ_NA;) {
-                    if (!board.is_empty(*sq_ptr))
-                        break;
-                    const auto attacks
-                        = BitBoardType::get_attacks_by(p, *sq_ptr);
-                    if (!attacks.is_one(enemy_king_sq))
-                        break;
-                    if ((pt == PHelper::FU)
-                        && (has_pawn_in_file(SHelper::to_file(*sq_ptr))
-                            || is_drop_pawn_mate(*sq_ptr)))
-                        break;
-                    m_legal_moves.emplace_back(MoveType(*sq_ptr++, pt));
-                }
-            }
+        for (auto m : CheckDropMoveGenerator<Config>(m_current_state)) {
+            m_legal_moves.emplace_back(m);
         }
     }
     void append_legal_drop_moves()
