@@ -135,6 +135,7 @@ using BlackWhiteStands = vshogi::BlackWhiteStands<Config>;
 using State = vshogi::State<Config>;
 using DropMoveGenerator = vshogi::DropMoveGenerator<Config>;
 using CheckDropMoveGenerator = vshogi::CheckDropMoveGenerator<Config>;
+using NonKingBoardMoveGenerator = vshogi::NonKingBoardMoveGenerator<Config>;
 using KingMoveGenerator = vshogi::KingMoveGenerator<Config>;
 using CheckKingMoveGenerator = vshogi::CheckKingMoveGenerator<Config>;
 using Game = vshogi::Game<Config>;

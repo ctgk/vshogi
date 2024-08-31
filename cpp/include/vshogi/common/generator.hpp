@@ -554,6 +554,150 @@ private:
     }
 };
 
+template <class Config>
+class NonKingBoardMoveGenerator
+{
+private:
+    using BitBoardType = BitBoard<Config>;
+    using BoardType = Board<Config>;
+    using MoveType = Move<Config>;
+    using StateType = State<Config>;
+    using Square = typename Config::Square;
+    using PHelper = Pieces<Config>;
+    using SHelper = Squares<Config>;
+    static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
+
+private:
+    const StateType& m_state;
+    const ColorEnum m_turn;
+    const BoardType& m_board;
+    typename BitBoardType::SquareIterator m_src_iter;
+    typename BitBoardType::SquareIterator m_dst_iter;
+    bool m_promote;
+
+public:
+    NonKingBoardMoveGenerator(const StateType& state)
+        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
+          m_src_iter(), m_dst_iter(), m_promote(true)
+    {
+        if (m_state.in_double_check())
+            return;
+        init_src_iter();
+        while (!m_src_iter.is_end()) {
+            init_dst_iter();
+            if (m_dst_iter.is_end())
+                ++m_src_iter;
+            else
+                break;
+        }
+        init_promote();
+    }
+    NonKingBoardMoveGenerator& operator++()
+    {
+        if (!m_promote) {
+            const auto src = *m_src_iter;
+            const auto dst = *m_dst_iter;
+            const auto p = m_board[src];
+            if (PHelper::is_promotable(p)
+                && (SHelper::in_promotion_zone(src, m_turn)
+                    || SHelper::in_promotion_zone(dst, m_turn))) {
+                m_promote = true;
+                return *this;
+            }
+        }
+
+        m_promote = false;
+        ++m_dst_iter;
+        if (!m_dst_iter.is_end()) {
+            init_promote();
+            return *this;
+        }
+
+        ++m_src_iter;
+        while (!m_src_iter.is_end()) {
+            init_dst_iter();
+            if (m_dst_iter.is_end())
+                ++m_src_iter;
+            else {
+                init_promote();
+                return *this;
+            }
+        }
+
+        m_promote = true;
+        return *this;
+    }
+    MoveType operator*() const
+    {
+        return MoveType(*m_dst_iter, *m_src_iter, m_promote);
+    }
+    NonKingBoardMoveGenerator begin()
+    {
+        return *this;
+    }
+    NonKingBoardMoveGenerator end()
+    {
+        static const auto end_iter = NonKingBoardMoveGenerator(m_state, true);
+        return end_iter;
+    }
+    bool operator!=(const NonKingBoardMoveGenerator& other) const
+    {
+        return (m_src_iter != other.m_src_iter)
+               || (m_dst_iter != other.m_dst_iter)
+               || (m_promote != other.m_promote);
+    }
+
+private:
+    NonKingBoardMoveGenerator(const StateType& state, const bool promote)
+        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
+          m_src_iter(), m_dst_iter(), m_promote(promote)
+    {
+    }
+    void init_src_iter()
+    {
+        const auto king_sq = m_board.get_king_location(m_turn);
+        const auto src_mask = m_board.get_occupied(m_turn).clear(king_sq);
+        m_src_iter = src_mask.square_iterator();
+    }
+    void init_dst_iter()
+    {
+        const auto src = *m_src_iter;
+        const auto p = m_board[src];
+        auto movable
+            = BitBoardType::get_attacks_by(p, src, m_board.get_occupied());
+        movable &= ~m_board.get_occupied(m_turn);
+        const auto king_sq = m_board.get_king_location(m_turn);
+        if (m_state.in_check()) {
+            const auto checker_sq = m_state.get_checker_location();
+            movable &= BitBoardType::get_line_segment(checker_sq, king_sq)
+                           .set(checker_sq);
+        }
+        const auto src_dir_from_king = SHelper::get_direction(src, king_sq);
+        const auto hidden_attacker_sq
+            = m_board.find_attacker(~m_turn, king_sq, src_dir_from_king, src);
+        if (hidden_attacker_sq != SHelper::SQ_NA) {
+            movable
+                &= BitBoardType::get_line_segment(hidden_attacker_sq, king_sq)
+                       .set(hidden_attacker_sq);
+        }
+        m_dst_iter = movable.square_iterator();
+    }
+    void init_promote()
+    {
+        if (m_src_iter.is_end() || m_dst_iter.is_end()) {
+            m_promote = true;
+            return;
+        }
+
+        m_promote = false;
+        const auto src = *m_src_iter;
+        const auto p = m_board[src];
+        if (BitBoardType::get_attacks_by(p, *m_dst_iter).any())
+            return;
+        m_promote = true;
+    }
+};
+
 } // namespace vshogi
 
 #endif // VSHOGI_COMMON_GENERATOR_HPP

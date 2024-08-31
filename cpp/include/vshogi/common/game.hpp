@@ -461,7 +461,7 @@ protected:
             append_check_moves_by_king(); // discovered check
             if (m_current_state.in_double_check()) {
             } else if (m_current_state.in_check()) {
-                append_legal_moves_to_defend_king(true);
+                append_check_moves_to_defend_king();
             } else {
                 // no check to turn player's king
                 append_check_drop_moves();
@@ -473,24 +473,15 @@ protected:
                     append_check_moves_by_non_king_at(sq);
             }
         } else {
-            append_legal_moves_by_king();
-            if (!m_current_state.in_check()) {
-                append_legal_drop_moves();
-                const auto turn = get_turn();
-                const BoardType& board = get_board();
-                BitBoardType ally_mask = board.get_occupied(turn);
-                const auto king_sq = board.get_king_location(turn);
-                for (auto sq : ally_mask.clear(king_sq).square_iterator())
-                    append_legal_moves_by_non_king_at(sq);
-            } else if (!m_current_state.in_double_check()) {
-                append_legal_moves_to_defend_king(false);
+            for (auto m : KingMoveGenerator<Config>(m_current_state)) {
+                m_legal_moves.emplace_back(m);
             }
-        }
-    }
-    void append_legal_moves_by_king()
-    {
-        for (auto m : KingMoveGenerator<Config>(m_current_state)) {
-            m_legal_moves.emplace_back(m);
+            for (auto m : NonKingBoardMoveGenerator<Config>(m_current_state)) {
+                m_legal_moves.emplace_back(m);
+            }
+            for (auto m : DropMoveGenerator<Config>(m_current_state)) {
+                m_legal_moves.emplace_back(m);
+            }
         }
     }
     void append_check_moves_by_king()
@@ -690,14 +681,13 @@ protected:
                 m_legal_moves.emplace_back(dst, src, false);
         }
     }
-    void append_legal_moves_to_defend_king(const bool& restrict_legal_to_check)
+    void append_check_moves_to_defend_king()
     {
         const auto turn = get_turn();
         const BoardType& board = get_board();
         const auto checker_location = m_current_state.get_checker_location();
         const auto king_location = board.get_king_location(turn);
-        append_legal_moves_by_non_king_moving_to(
-            checker_location, restrict_legal_to_check);
+        append_check_moves_by_non_king_moving_to(checker_location);
         if (!is_neighbor(king_location, checker_location)) {
             const auto dir
                 = SHelper::get_direction(checker_location, king_location);
@@ -705,15 +695,12 @@ protected:
             for (; *ptr_dst != SHelper::SQ_NA; ++ptr_dst) {
                 if (*ptr_dst == checker_location)
                     break;
-                append_legal_moves_by_non_king_moving_to(
-                    *ptr_dst, restrict_legal_to_check);
-                append_legal_moves_dropping_to(
-                    *ptr_dst, restrict_legal_to_check);
+                append_check_moves_by_non_king_moving_to(*ptr_dst);
+                append_check_moves_dropping_to(*ptr_dst);
             }
         }
     }
-    void append_legal_moves_by_non_king_moving_to(
-        const Square& dst, const bool& restrict_legal_to_check)
+    void append_check_moves_by_non_king_moving_to(const Square& dst)
     {
         const auto turn = get_turn();
         const BoardType& board = get_board();
@@ -734,10 +721,8 @@ protected:
                 const auto p = board[src];
                 if (!BitBoardType::get_attacks_by(p, src).is_one(dst))
                     break;
-                if (restrict_legal_to_check
-                    && (!BitBoardType::get_attacks_by(
-                             p, dst, board.get_occupied())
-                             .is_one(enemy_king_sq)))
+                if (!BitBoardType::get_attacks_by(p, dst, board.get_occupied())
+                         .is_one(enemy_king_sq))
                     break;
                 const auto src_dir = SHelper::get_direction(src, king_location);
                 if ((src_dir != DIR_NA)
@@ -749,8 +734,7 @@ protected:
                 const auto promote = PHelper::is_promotable(p)
                                      && (SHelper::in_promotion_zone(src, turn)
                                          || target_in_promotion_zone);
-                append_legal_move_or_moves(
-                    p, dst, src, promote, restrict_legal_to_check);
+                append_legal_move_or_moves(p, dst, src, promote, true);
                 break;
             }
         }
@@ -761,14 +745,7 @@ protected:
             m_legal_moves.emplace_back(m);
         }
     }
-    void append_legal_drop_moves()
-    {
-        for (auto m : DropMoveGenerator<Config>(m_current_state)) {
-            m_legal_moves.emplace_back(m);
-        }
-    }
-    void append_legal_moves_dropping_to(
-        const Square& dst, const bool& restrict_legal_to_check)
+    void append_check_moves_dropping_to(const Square& dst)
     {
         const auto turn = get_turn();
         const auto enemy_king_sq = get_board().get_king_location(~turn);
@@ -778,9 +755,7 @@ protected:
                 continue;
             const auto attacks = BitBoardType::get_attacks_by(
                 PHelper::to_board_piece(turn, pt), dst);
-            if (!attacks.any())
-                continue;
-            if (restrict_legal_to_check && (!attacks.is_one(enemy_king_sq)))
+            if (!attacks.is_one(enemy_king_sq))
                 continue;
             if ((pt == PHelper::FU)
                 && (has_pawn_in_file(SHelper::to_file(dst))

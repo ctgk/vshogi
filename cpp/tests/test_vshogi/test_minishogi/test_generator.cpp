@@ -141,4 +141,65 @@ TEST(minishogi_generator, check_drop_move_generator)
     }
 }
 
+TEST(minishogi_generator, non_king_board_move_generator)
+{
+    {
+        // no piece to move
+        const auto s = State("4k/5/5/5/K4 b -");
+        auto iter = NonKingBoardMoveGenerator(s);
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        // in double check
+        const auto s = State("4k/5/2P2/s4/K3r b -");
+        auto iter = NonKingBoardMoveGenerator(s);
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        // in check
+        const auto s = State("4k/5/5/3S1/K3r b -");
+        auto iter = NonKingBoardMoveGenerator(s);
+        CHECK_TRUE(Move(SQ_3E, SQ_2D) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_1E, SQ_2D) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        // in check
+        const auto s = State("4k/P2bp/5/G4/K3P b -");
+        auto iter = NonKingBoardMoveGenerator(s);
+        CHECK_TRUE(Move(SQ_4D, SQ_5D) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        const auto s = State("4k/5/2P2/5/K4 b -");
+        auto iter = NonKingBoardMoveGenerator(s);
+        CHECK_TRUE(Move(SQ_3B, SQ_3C) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        const auto s = State("B3k/1p3/5/5/K4 b -");
+        auto iter = NonKingBoardMoveGenerator(s);
+        CHECK_TRUE(Move(SQ_4B, SQ_5A, false) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_4B, SQ_5A, true) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        const auto s = State("B3k/1pP2/5/5/K4 b -");
+        auto iter = NonKingBoardMoveGenerator(s);
+        CHECK_TRUE(Move(SQ_4B, SQ_5A, false) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_4B, SQ_5A, true) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_3A, SQ_3B, true) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+}
+
 } // namespace test_vshogi::test_minishogi
