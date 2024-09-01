@@ -233,18 +233,19 @@ public:
         }
         SquareIterator(const UInt& bb_value) : m_mask(bb_value), m_curr()
         {
-            while (mask_lsb_is_0() && (m_curr < num_squares)) {
-                ++m_curr;
-                m_mask = static_cast<UInt>(m_mask >> 1u);
-            }
+            const auto shift = count_trailing_zeros();
+            m_curr = std::min(shift, num_squares);
+            m_mask = static_cast<UInt>(m_mask >> shift);
         }
         SquareIterator& operator++()
         {
-            do {
-                ++m_curr;
-                m_mask = static_cast<UInt>(m_mask >> 1u);
-            }
-            while (mask_lsb_is_0() && (m_curr < num_squares));
+
+            ++m_curr;
+            m_mask = static_cast<UInt>(m_mask >> 1u);
+            const auto shift = count_trailing_zeros();
+            m_curr += shift;
+            m_curr = std::min(m_curr, num_squares);
+            m_mask = static_cast<UInt>(m_mask >> shift);
             return *this;
         }
         Square operator*() const
@@ -270,9 +271,17 @@ public:
         }
 
     private:
-        bool mask_lsb_is_0() const
+        uint count_trailing_zeros() const
         {
-            return !static_cast<bool>(m_mask & static_cast<UInt>(1));
+            if constexpr (sizeof(m_mask) <= sizeof(std::uint64_t))
+                return ntz(static_cast<std::uint64_t>(m_mask));
+            else {
+                auto x = static_cast<std::uint64_t>(m_mask);
+                if (static_cast<bool>(x))
+                    return ntz(x);
+                x = static_cast<std::uint64_t>(m_mask >> 64);
+                return ntz(x) + 64u;
+            }
         }
     };
     SquareIterator square_iterator() const

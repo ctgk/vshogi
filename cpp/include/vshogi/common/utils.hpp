@@ -74,41 +74,52 @@ inline void softmax(std::vector<float>& logits)
     }
 }
 
-constexpr uint get_msb(uint x)
+constexpr uint ntz(const std::uint64_t x)
 {
-#ifdef __GNUC__
-    return static_cast<uint>(
-        static_cast<int>(sizeof(uint)) * 8 - 1 - __builtin_clz(x));
-#else
-    uint out = 0u;
+    // https://stackoverflow.com/questions/45221914/how-do-you-efficiently-count-the-trailing-zero-bits-in-a-number
 
-    {
-        constexpr bool flag = static_cast<bool>(x & 0xffff0000);
-        out += 16u * flag;
-        x >>= 16u * flag;
-    }
-    {
-        constexpr bool flag = static_cast<bool>(x & 0x0000ff00);
-        out += 8u * flag;
-        x >>= 8u * flag;
-    }
-    {
-        constexpr bool flag = static_cast<bool>(x & 0x000000f0);
-        out += 4u * flag;
-        x >>= 4u * flag;
-    }
-    {
-        constexpr bool flag = static_cast<bool>(x & 0x0000000c);
-        out += 2u * flag;
-        x >>= 2u * flag;
-    }
-    {
-        constexpr bool flag = static_cast<bool>(x & 0x00000002);
-        out += 1u * flag;
-        x >>= 1u * flag;
-    }
-    return out;
-#endif
+    // We return the number of trailing zeros in
+    // the binary representation of x.
+    //
+    // We have that 0 <= x < 2^64.
+    //
+    // We begin by applying a function sensitive only
+    // to the least significant bit (lsb) of x:
+    //
+    //   x -> x^(x-1)  e.g. 0b11001000 -> 0b00001111
+    //
+    // Observe that x^(x-1) == 2^(ntz(x)+1) - 1.
+
+    const std::uint64_t y = x ^ (x - 1);
+
+    // Next, we multiply by 0x03f79d71b4cb0a89,
+    // and then roll off the first 58 bits.
+
+    constexpr std::uint64_t debruijn = 0x03f79d71b4cb0a89;
+
+    const std::uint8_t z = static_cast<std::uint8_t>((debruijn * y) >> 58);
+
+    // What? Don't look at me like that.
+    //
+    // With 58 bits rolled off, only 6 bits remain,
+    // so we must have one of 0, 1, 2, ..., 63.
+    //
+    // It turns out this number was judiciously
+    // chosen to make it so each of the possible
+    // values for y were mapped into distinct slots.
+    //
+    // So we just use a look-up table of all 64
+    // possible answers, which have been precomputed in
+    // advance by the the sort of people who write
+    // chess engines in their spare time:
+
+    constexpr uint lookup[]
+        = {0,  47, 1,  56, 48, 27, 2,  60, 57, 49, 41, 37, 28, 16, 3,  61,
+           54, 58, 35, 52, 50, 42, 21, 44, 38, 32, 29, 23, 17, 11, 4,  62,
+           46, 55, 26, 59, 40, 36, 15, 53, 34, 51, 20, 43, 31, 22, 10, 45,
+           25, 39, 14, 33, 19, 30, 9,  24, 13, 18, 8,  12, 7,  6,  5,  63};
+
+    return lookup[z];
 }
 
 #ifdef __SIZEOF_INT128__
@@ -196,15 +207,15 @@ public:
 private:
     constexpr std::uint64_t lshift_lower(const uint shift_width) const
     {
-        return (shift_width == 0) ? m_value[0]
+        return (shift_width == 0)   ? m_value[0]
                : (shift_width > 63) ? 0
                                     : (m_value[0] << shift_width);
     }
     constexpr std::uint64_t lshift_carry(const uint shift_width) const
     {
         return static_cast<std::uint64_t>(
-            (shift_width == 0) ? 0
-            : (shift_width < 64) ? (m_value[0] >> (64 - shift_width))
+            (shift_width == 0)    ? 0
+            : (shift_width < 64)  ? (m_value[0] >> (64 - shift_width))
             : (shift_width < 128) ? (m_value[0] << (shift_width - 64))
                                   : 0);
     }
@@ -216,7 +227,7 @@ private:
     }
     constexpr std::uint64_t rshift_lower(const uint shift_width) const
     {
-        const auto v = (shift_width == 0) ? m_value[0]
+        const auto v = (shift_width == 0)   ? m_value[0]
                        : (shift_width > 63) ? 0
                                             : (m_value[0] >> shift_width);
         const auto c = rshift_carry(shift_width);
@@ -225,8 +236,8 @@ private:
     constexpr std::uint64_t rshift_carry(const uint shift_width) const
     {
         const auto v = static_cast<std::uint64_t>(m_value[1]);
-        return (shift_width == 0) ? 0
-               : (shift_width <= 64) ? (v << (64 - shift_width))
+        return (shift_width == 0)     ? 0
+               : (shift_width <= 64)  ? (v << (64 - shift_width))
                : (shift_width <= 128) ? (v >> (shift_width - 64))
                                       : 0;
     }
