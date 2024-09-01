@@ -64,6 +64,10 @@ public:
     {
         return m_iter != other.m_iter;
     }
+    bool is_end() const
+    {
+        return m_iter.is_end();
+    }
 
 private:
     KingMoveGenerator(const StateType& state, const bool)
@@ -145,6 +149,10 @@ public:
     {
         return m_iter != other.m_iter;
     }
+    bool is_end() const
+    {
+        return m_iter.is_end();
+    }
 
 private:
     CheckKingMoveGenerator(const StateType& state, const bool)
@@ -222,6 +230,10 @@ public:
     bool operator!=(const DropMoveGenerator& other) const
     {
         return (m_sq_iter != other.m_sq_iter) || (m_pt_iter != other.m_pt_iter);
+    }
+    bool is_end() const
+    {
+        return m_sq_iter.is_end() && (m_pt_iter == num_stand_piece_types);
     }
 
 private:
@@ -411,6 +423,10 @@ public:
     bool operator!=(const CheckDropMoveGenerator& other) const
     {
         return (m_sq_iter != other.m_sq_iter) || (m_pt_iter != other.m_pt_iter);
+    }
+    bool is_end() const
+    {
+        return m_sq_iter.is_end() && (m_pt_iter == num_stand_piece_types);
     }
 
 private:
@@ -644,6 +660,10 @@ public:
                || (m_dst_iter != other.m_dst_iter)
                || (m_promote != other.m_promote);
     }
+    bool is_end() const
+    {
+        return m_src_iter.is_end() && m_dst_iter.is_end();
+    }
 
 private:
     NonKingBoardMoveGenerator(const StateType& state, const bool promote)
@@ -795,6 +815,10 @@ public:
                || (m_dst_iter != other.m_dst_iter)
                || (m_promote != other.m_promote);
     }
+    bool is_end() const
+    {
+        return m_src_iter.is_end() && m_dst_iter.is_end();
+    }
 
 private:
     CheckNonKingBoardMoveGenerator(const StateType& state, const bool promote)
@@ -878,6 +902,218 @@ private:
     void init_promote()
     {
         m_promote = false;
+    }
+};
+
+template <class Config>
+class LegalMoveGenerator
+{
+private:
+    using MoveType = Move<Config>;
+    using StateType = State<Config>;
+
+private:
+    KingMoveGenerator<Config> m_king_iter;
+    NonKingBoardMoveGenerator<Config> m_board_iter;
+    DropMoveGenerator<Config> m_drop_iter;
+    uint m_index; //!< 0: king, 1: board, 2: drop, 3: end
+
+public:
+    LegalMoveGenerator(const StateType& s)
+        : m_king_iter(s), m_board_iter(s), m_drop_iter(s), m_index(0u)
+    {
+        if (m_king_iter.is_end()) {
+            ++m_index;
+            if (m_board_iter.is_end()) {
+                ++m_index;
+                if (m_drop_iter.is_end())
+                    ++m_index;
+            }
+        }
+    }
+    LegalMoveGenerator& operator++()
+    {
+        switch (m_index) {
+        case 0u:
+            ++m_king_iter;
+            if (m_king_iter.is_end()) {
+                ++m_index;
+                if (m_board_iter.is_end()) {
+                    ++m_index;
+                    if (m_drop_iter.is_end())
+                        ++m_index;
+                }
+            }
+            break;
+        case 1u:
+            ++m_board_iter;
+            if (m_board_iter.is_end()) {
+                ++m_index;
+                if (m_drop_iter.is_end())
+                    ++m_index;
+            }
+            break;
+        case 2u:
+            ++m_drop_iter;
+            if (m_drop_iter.is_end())
+                ++m_index;
+            break;
+        default:
+            break;
+        }
+        return *this;
+    }
+    MoveType operator*() const
+    {
+        switch (m_index) {
+        case 0u:
+            return *m_king_iter;
+        case 1u:
+            return *m_board_iter;
+        case 2u:
+            return *m_drop_iter;
+        default:
+            break;
+        }
+        return MoveType();
+    }
+    LegalMoveGenerator begin()
+    {
+        return *this;
+    }
+    LegalMoveGenerator end()
+    {
+        static const auto end_iter = LegalMoveGenerator(
+            m_king_iter.end(), m_board_iter.end(), m_drop_iter.end(), 3u);
+        return end_iter;
+    }
+    bool operator!=(const LegalMoveGenerator& other) const
+    {
+        return (m_king_iter != other.m_king_iter)
+               || (m_board_iter != other.m_board_iter)
+               || (m_drop_iter != other.m_drop_iter)
+               || (m_index != other.m_index);
+    }
+    bool is_end() const
+    {
+        return (m_index == 3u);
+    }
+
+private:
+    LegalMoveGenerator(
+        const KingMoveGenerator<Config>& king_iter,
+        const NonKingBoardMoveGenerator<Config>& board_iter,
+        const DropMoveGenerator<Config>& drop_iter,
+        const uint index)
+        : m_king_iter(king_iter), m_board_iter(board_iter),
+          m_drop_iter(drop_iter), m_index(index)
+    {
+    }
+};
+
+template <class Config>
+class CheckMoveGenerator
+{
+private:
+    using MoveType = Move<Config>;
+    using StateType = State<Config>;
+
+private:
+    CheckKingMoveGenerator<Config> m_king_iter;
+    CheckNonKingBoardMoveGenerator<Config> m_board_iter;
+    CheckDropMoveGenerator<Config> m_drop_iter;
+    uint m_index; //!< 0: king, 1: board, 2: drop, 3: end
+
+public:
+    CheckMoveGenerator(const StateType& s)
+        : m_king_iter(s), m_board_iter(s), m_drop_iter(s), m_index(0u)
+    {
+        if (m_king_iter.is_end()) {
+            ++m_index;
+            if (m_board_iter.is_end()) {
+                ++m_index;
+                if (m_drop_iter.is_end())
+                    ++m_index;
+            }
+        }
+    }
+    CheckMoveGenerator& operator++()
+    {
+        switch (m_index) {
+        case 0u:
+            ++m_king_iter;
+            if (m_king_iter.is_end()) {
+                ++m_index;
+                if (m_board_iter.is_end()) {
+                    ++m_index;
+                    if (m_drop_iter.is_end())
+                        ++m_index;
+                }
+            }
+            break;
+        case 1u:
+            ++m_board_iter;
+            if (m_board_iter.is_end()) {
+                ++m_index;
+                if (m_drop_iter.is_end())
+                    ++m_index;
+            }
+            break;
+        case 2u:
+            ++m_drop_iter;
+            if (m_drop_iter.is_end())
+                ++m_index;
+            break;
+        default:
+            break;
+        }
+        return *this;
+    }
+    MoveType operator*() const
+    {
+        switch (m_index) {
+        case 0u:
+            return *m_king_iter;
+        case 1u:
+            return *m_board_iter;
+        case 2u:
+            return *m_drop_iter;
+        default:
+            break;
+        }
+        return MoveType();
+    }
+    CheckMoveGenerator begin()
+    {
+        return *this;
+    }
+    CheckMoveGenerator end()
+    {
+        static const auto end_iter = CheckMoveGenerator(
+            m_king_iter.end(), m_board_iter.end(), m_drop_iter.end(), 3u);
+        return end_iter;
+    }
+    bool operator!=(const CheckMoveGenerator& other) const
+    {
+        return (m_king_iter != other.m_king_iter)
+               || (m_board_iter != other.m_board_iter)
+               || (m_drop_iter != other.m_drop_iter)
+               || (m_index != other.m_index);
+    }
+    bool is_end() const
+    {
+        return (m_index == 3u);
+    }
+
+private:
+    CheckMoveGenerator(
+        const CheckKingMoveGenerator<Config>& king_iter,
+        const CheckNonKingBoardMoveGenerator<Config>& board_iter,
+        const CheckDropMoveGenerator<Config>& drop_iter,
+        const uint index)
+        : m_king_iter(king_iter), m_board_iter(board_iter),
+          m_drop_iter(drop_iter), m_index(index)
+    {
     }
 };
 

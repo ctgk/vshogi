@@ -458,26 +458,11 @@ protected:
         m_legal_moves.clear();
         m_legal_moves.reserve(128);
         if (restrict_legal_to_check) {
-            for (auto m : CheckKingMoveGenerator<Config>(m_current_state)) {
-                m_legal_moves.emplace_back(m); // discovered check
-            }
-            for (auto m :
-                 CheckNonKingBoardMoveGenerator<Config>(m_current_state)) {
+            for (auto m : CheckMoveGenerator<Config>(m_current_state))
                 m_legal_moves.emplace_back(m);
-            }
-            for (auto m : CheckDropMoveGenerator<Config>(m_current_state)) {
-                m_legal_moves.emplace_back(m);
-            }
         } else {
-            for (auto m : KingMoveGenerator<Config>(m_current_state)) {
+            for (auto m : LegalMoveGenerator<Config>(m_current_state))
                 m_legal_moves.emplace_back(m);
-            }
-            for (auto m : NonKingBoardMoveGenerator<Config>(m_current_state)) {
-                m_legal_moves.emplace_back(m);
-            }
-            for (auto m : DropMoveGenerator<Config>(m_current_state)) {
-                m_legal_moves.emplace_back(m);
-            }
         }
     }
 };
