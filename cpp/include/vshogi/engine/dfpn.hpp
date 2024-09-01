@@ -33,10 +33,14 @@
 namespace vshogi::engine::dfpn
 {
 
-template <class Game, class Move>
+template <class Config>
 class Node
 {
-    static_assert(!std::is_same<Game, animal_shogi::Game>::value);
+    static_assert(!std::is_same<Config, animal_shogi::Config>::value);
+
+private:
+    using GameType = Game<Config>;
+    using MoveType = Move<Config>;
 
 private:
     /**
@@ -49,13 +53,13 @@ private:
      * @brief If `m_attacker` is true, this should be a defence move.
      * If `m_attacker` is false, this should be a check move.
      */
-    const Move m_action;
+    const MoveType m_action;
 
     /**
      * @brief If `m_attacker` is true, turn of the game is attacker.
      * If `m_attacker` is false, turn of the game is defence side.
      */
-    std::unique_ptr<Game> m_game;
+    std::unique_ptr<GameType> m_game;
 
     /**
      * @brief Pointer to sibling node.
@@ -87,23 +91,23 @@ public:
     static constexpr uint cent = 1u;
     static constexpr uint max_number = std::numeric_limits<uint>::max();
 
-    Node(const Game& g)
+    Node(const GameType& g)
         : m_attacker(true), m_parent(nullptr), m_action(),
-          m_game(std::make_unique<Game>(Game(g))), m_sibling(nullptr),
+          m_game(std::make_unique<GameType>(GameType(g))), m_sibling(nullptr),
           m_child(nullptr), m_pn(unit), m_dn(unit)
     {
         m_game->clear_records_for_dfpn();
         simulate_expand_backprop();
     }
-    Node(const Game& g, std::unordered_map<std::uint64_t, bool>& mate_cache)
+    Node(const GameType& g, std::unordered_map<std::uint64_t, bool>& mate_cache)
         : m_attacker(true), m_parent(nullptr), m_action(),
-          m_game(std::make_unique<Game>(Game(g))), m_sibling(nullptr),
+          m_game(std::make_unique<GameType>(GameType(g))), m_sibling(nullptr),
           m_child(nullptr), m_pn(unit), m_dn(unit)
     {
         m_game->clear_records_for_dfpn();
         simulate_expand_backprop(mate_cache);
     }
-    Node(const bool attacker, Node* const parent, const Move& action)
+    Node(const bool attacker, Node* const parent, const MoveType& action)
         : m_attacker(attacker), m_parent(parent), m_action(action),
           m_game(nullptr), m_sibling(nullptr), m_child(nullptr), m_pn(unit),
           m_dn(unit)
@@ -141,9 +145,9 @@ public:
         }
         return out;
     }
-    std::vector<Move> get_mate_moves() const
+    std::vector<MoveType> get_mate_moves() const
     {
-        std::vector<Move> out;
+        std::vector<MoveType> out;
         if (!found_mate())
             return out;
 
@@ -195,7 +199,7 @@ public:
 private:
     void simulate_expand_backprop()
     {
-        const Game& game = *m_game;
+        const GameType& game = *m_game;
         const auto r = game.get_result();
         if (r == ONGOING) {
             expand(game);
@@ -207,7 +211,7 @@ private:
     void simulate_expand_backprop(
         std::unordered_map<std::uint64_t, bool>& mate_cache)
     {
-        const Game& game = *m_game;
+        const GameType& game = *m_game;
         const auto r = game.get_result();
         if (r == ONGOING) {
             expand(game, mate_cache);
@@ -248,10 +252,10 @@ private:
 
         if (out->m_game == nullptr) {
             if (m_attacker)
-                out->m_game = std::make_unique<Game>(
+                out->m_game = std::make_unique<GameType>(
                     m_game->copy_and_apply_dfpn_offence(out->m_action));
             else
-                out->m_game = std::make_unique<Game>(
+                out->m_game = std::make_unique<GameType>(
                     m_game->copy_and_apply_dfpn_defence(out->m_action));
         }
         return out;
@@ -290,7 +294,7 @@ private:
      *
      * @param game
      */
-    void simulate(const Game& game)
+    void simulate(const GameType& game)
     {
         const auto r = game.get_result();
         if (r == DRAW) {
@@ -313,15 +317,15 @@ private:
      *
      * @param game
      */
-    void expand(const Game& game)
+    void expand(const GameType& game)
     {
-        const std::vector<Move>& legal_moves = game.get_legal_moves();
+        const std::vector<MoveType>& legal_moves = game.get_legal_moves();
         std::unique_ptr<Node>* ch = &m_child;
         if (m_attacker) {
             /**
              * @brief 0:?, 1:false, 2:true
              */
-            uint is_attacked_cache[Game::squares()] = {0};
+            uint is_attacked_cache[GameType::squares()] = {0};
 
             for (auto&& m : legal_moves) {
                 if ((m_parent == nullptr)
@@ -341,8 +345,8 @@ private:
     }
     void modify_pndn_by_attacks(
         Node* const ch,
-        const Game& g,
-        const Move m,
+        const GameType& g,
+        const MoveType m,
         uint* const is_attacked_cache)
     {
         const auto dst = m.destination();
@@ -356,7 +360,8 @@ private:
         }
         ch->m_pn += cent * (is_attacked_cache[dst] - 1);
     }
-    void modify_pndn_by_defence(Node* const ch, const Game& g, const Move& m)
+    void
+    modify_pndn_by_defence(Node* const ch, const GameType& g, const MoveType& m)
     {
         const auto& checker_sq = g.get_checker_location();
         if (m.destination() == checker_sq)
@@ -364,8 +369,8 @@ private:
     }
     void modify_pndn_by_mate(
         Node* const ch,
-        const Game& g,
-        const Move m,
+        const GameType& g,
+        const MoveType m,
         std::unordered_map<std::uint64_t, bool>& mate_cache)
     {
         const std::uint64_t zobrist_hash = g.get_zobrist_hash();
@@ -390,15 +395,16 @@ private:
     }
 
     void expand(
-        const Game& game, std::unordered_map<std::uint64_t, bool>& mate_cache)
+        const GameType& game,
+        std::unordered_map<std::uint64_t, bool>& mate_cache)
     {
-        const std::vector<Move>& legal_moves = game.get_legal_moves();
+        const std::vector<MoveType>& legal_moves = game.get_legal_moves();
         std::unique_ptr<Node>* ch = &m_child;
         if (m_attacker) {
             /**
              * @brief 0:?, 1:false, 2:true
              */
-            uint is_attacked_cache[Game::squares()] = {0};
+            uint is_attacked_cache[GameType::squares()] = {0};
 
             for (auto&& m : legal_moves) {
                 if ((m_parent == nullptr)
@@ -520,11 +526,15 @@ private:
     }
 };
 
-template <class Game, class Move>
+template <class Config>
 class Searcher
 {
 private:
-    std::unique_ptr<Node<Game, Move>> m_root;
+    using GameType = Game<Config>;
+    using MoveType = Move<Config>;
+
+private:
+    std::unique_ptr<Node<Config>> m_root;
 
     /**
      * @brief True if there is a mate, false if there is no mate for sure.
@@ -548,11 +558,11 @@ public:
     {
         return (m_root != nullptr);
     }
-    void set_game(const Game& g)
+    void set_game(const GameType& g)
     {
         auto& cache = (g.get_turn() == vshogi::BLACK) ? m_mate_cache_for_black
                                                       : m_mate_cache_for_white;
-        m_root = std::make_unique<Node<Game, Move>>(g, cache);
+        m_root = std::make_unique<Node<Config>>(g, cache);
     }
 
     /**
@@ -564,7 +574,7 @@ public:
      */
     bool explore(uint n)
     {
-        Node<Game, Move>* const root = m_root.get();
+        Node<Config>* const root = m_root.get();
         auto& cache = (root->get_turn() == vshogi::BLACK)
                           ? m_mate_cache_for_black
                           : m_mate_cache_for_white;
@@ -591,7 +601,7 @@ public:
     {
         return m_root->found_conclusion();
     }
-    std::vector<Move> get_mate_moves()
+    std::vector<MoveType> get_mate_moves()
     {
         return m_root->get_mate_moves();
     }

@@ -13,7 +13,7 @@ TEST_GROUP(dfpn){};
 TEST(dfpn, mate_in_one_black)
 {
     using namespace vshogi::minishogi;
-    using Node = vshogi::engine::dfpn::Node<Game, Move>;
+    using Node = vshogi::engine::dfpn::Node<Config>;
 
     // Turn: BLACK
     // White: -
@@ -47,7 +47,7 @@ TEST(dfpn, mate_in_one_black)
 TEST(dfpn, mate_in_three_white)
 {
     using namespace vshogi::minishogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
 
     // Turn: White
     // White: KIx2
@@ -76,7 +76,7 @@ TEST(dfpn, mate_in_three_white)
 TEST(dfpn, mate_in_three_straight_forward)
 {
     using namespace vshogi::minishogi;
-    using Node = vshogi::engine::dfpn::Node<Game, Move>;
+    using Node = vshogi::engine::dfpn::Node<Config>;
 
     // Turn: BLACK
     // White: -
@@ -119,7 +119,7 @@ TEST(dfpn, mate_in_three_straight_forward)
 TEST(dfpn, mate_in_three)
 {
     using namespace vshogi::minishogi;
-    using Node = vshogi::engine::dfpn::Node<Game, Move>;
+    using Node = vshogi::engine::dfpn::Node<Config>;
 
     // Turn: BLACK
     // White: -
@@ -156,7 +156,7 @@ TEST(dfpn, mate_in_three)
 TEST(dfpn, mate_in_five_straight_forward)
 {
     using namespace vshogi::judkins_shogi;
-    using Node = vshogi::engine::dfpn::Node<Game, Move>;
+    using Node = vshogi::engine::dfpn::Node<Config>;
 
     // Turn: BLACK
     // White: -
@@ -197,7 +197,7 @@ TEST(dfpn, mate_in_five_straight_forward)
 TEST(dfpn, mate_in_five)
 {
     using namespace vshogi::minishogi;
-    using Node = vshogi::engine::dfpn::Node<Game, Move>;
+    using Node = vshogi::engine::dfpn::Node<Config>;
 
     // Turn: BLACK
     // White: FU
@@ -228,7 +228,7 @@ TEST(dfpn, mate_in_five)
 TEST(dfpn, checkmate_by_discovered_attack)
 {
     using namespace vshogi::minishogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
     // Turn: BLACK
     // White: -
     //     5   4   3   2   1
@@ -254,7 +254,7 @@ TEST(dfpn, checkmate_by_discovered_attack)
 TEST(dfpn, checkmate_by_king_move)
 {
     using namespace vshogi::judkins_shogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
     // Turn: BLACK
     // White: FU
     //     6   5   4   3   2   1
@@ -282,7 +282,7 @@ TEST(dfpn, checkmate_by_king_move)
 TEST(dfpn, checkmate_that_involves_counter_check)
 {
     using namespace vshogi::judkins_shogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
     {
         // Turn: BLACK
         // White: KE
@@ -310,7 +310,7 @@ TEST(dfpn, checkmate_that_involves_counter_check)
 TEST(dfpn, no_mate_no_check)
 {
     using namespace vshogi::minishogi;
-    using Node = vshogi::engine::dfpn::Node<Game, Move>;
+    using Node = vshogi::engine::dfpn::Node<Config>;
 
     // Turn: BLACK
     // White: -
@@ -336,7 +336,7 @@ TEST(dfpn, no_mate_no_check)
 TEST(dfpn, no_mate_1)
 {
     using namespace vshogi::minishogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
 
     // Turn: BLACK
     // White: -
@@ -364,7 +364,7 @@ TEST(dfpn, no_mate_1)
 TEST(dfpn, king_entering_before_mate)
 {
     using namespace vshogi::judkins_shogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
     // Turn: WHITE
     // White: GI
     //     6   5   4   3   2   1
@@ -395,7 +395,7 @@ TEST(dfpn, king_entering_before_mate)
 TEST(dfpn, tmp)
 {
     using namespace vshogi::shogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
     // Turn: WHITE
     // White: FUx3,KY,KE,GI
     //     9   8   7   6   5   4   3   2   1
@@ -430,7 +430,7 @@ TEST(dfpn, tmp)
 TEST(dfpn, debug)
 {
     using namespace vshogi::shogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
     // Turn: BLACK
     // White: FUx3,KI
     //     9   8   7   6   5   4   3   2   1
@@ -469,7 +469,7 @@ TEST(dfpn, debug)
 TEST(dfpn, debug2)
 {
     using namespace vshogi::shogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
     auto g = Game("ln5nl/3rgkgs1/1pp1pp1pp/p3s1p2/3P3Pb/P1P1P4/1PBSSPP1P/"
                   "2G1G2R1/LN2K2NL b P 29");
     auto searcher = Searcher();
@@ -480,7 +480,7 @@ TEST(dfpn, debug2)
 TEST(dfpn, mate_moves_without_waste_moves)
 {
     using namespace vshogi::shogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
     // Turn: BLACK
     // White: -
     //     9   8   7   6   5   4   3   2   1
@@ -517,7 +517,7 @@ TEST(dfpn, mate_moves_without_waste_moves)
 TEST(dfpn, cache)
 {
     using namespace vshogi::minishogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Game, Move>;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
 
     // Turn: White
     // White: KIx2
