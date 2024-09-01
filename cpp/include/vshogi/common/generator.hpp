@@ -1,8 +1,6 @@
 #ifndef VSHOGI_COMMON_GENERATOR_HPP
 #define VSHOGI_COMMON_GENERATOR_HPP
 
-#include <iostream>
-
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
@@ -438,7 +436,7 @@ private:
                          & dst_mask)
                             .square_iterator();
         else
-            m_sq_iter = (~m_board.get_occupied() & dst_mask).square_iterator();
+            m_sq_iter = dst_mask.square_iterator();
     }
     void increment_iterators_unless_legal()
     {

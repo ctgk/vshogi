@@ -7,9 +7,9 @@ namespace test_vshogi::test_minishogi
 
 using namespace vshogi::minishogi;
 
-TEST_GROUP(minishogi_generator){};
+TEST_GROUP(test_minishogi_generator){};
 
-TEST(minishogi_generator, king_move_generator)
+TEST(test_minishogi_generator, king_move_generator)
 {
     {
         const auto s = State("5/5/5/5/5 b -");
@@ -33,7 +33,7 @@ TEST(minishogi_generator, king_move_generator)
     }
 }
 
-TEST(minishogi_generator, check_king_move_generator)
+TEST(test_minishogi_generator, check_king_move_generator)
 {
     {
         const auto s = State("4k/5/2K2/5/5 b -");
@@ -59,7 +59,7 @@ TEST(minishogi_generator, check_king_move_generator)
     }
 }
 
-TEST(minishogi_generator, drop_move_generator)
+TEST(test_minishogi_generator, drop_move_generator)
 {
     {
         const auto s = State("5/5/5/5/5 b -");
@@ -114,7 +114,7 @@ TEST(minishogi_generator, drop_move_generator)
     }
 }
 
-TEST(minishogi_generator, check_drop_move_generator)
+TEST(test_minishogi_generator, test_check_drop_move_generator)
 {
     {
         const auto s = State("5/5/5/5/5 b -");
@@ -139,9 +139,14 @@ TEST(minishogi_generator, check_drop_move_generator)
         ++iter;
         CHECK_FALSE(iter != iter.end());
     }
+    {
+        const auto s = State("4k/5/3g1/5/2PKP w p");
+        auto iter = CheckDropMoveGenerator(s);
+        CHECK_FALSE(iter != iter.end());
+    }
 }
 
-TEST(minishogi_generator, non_king_board_move_generator)
+TEST(test_minishogi_generator, non_king_board_move_generator)
 {
     {
         // no piece to move
@@ -202,7 +207,7 @@ TEST(minishogi_generator, non_king_board_move_generator)
     }
 }
 
-TEST(minishogi_generator, check_non_king_board_move_generator)
+TEST(test_minishogi_generator, check_non_king_board_move_generator)
 {
     {
         const auto s = State("4k/5/5/5/K4 b -");

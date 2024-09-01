@@ -74,10 +74,12 @@ inline void softmax(std::vector<float>& logits)
     }
 }
 
-constexpr uint ntz(const std::uint64_t x)
+template <class T>
+constexpr uint ntz(const T x)
 {
     // https://stackoverflow.com/questions/45221914/how-do-you-efficiently-count-the-trailing-zero-bits-in-a-number
 
+    const std::uint64_t x64 = static_cast<std::uint64_t>(x);
     // We return the number of trailing zeros in
     // the binary representation of x.
     //
@@ -90,7 +92,7 @@ constexpr uint ntz(const std::uint64_t x)
     //
     // Observe that x^(x-1) == 2^(ntz(x)+1) - 1.
 
-    const std::uint64_t y = x ^ (x - 1);
+    const std::uint64_t y = x64 ^ (x64 - 1);
 
     // Next, we multiply by 0x03f79d71b4cb0a89,
     // and then roll off the first 58 bits.
@@ -248,6 +250,16 @@ private:
 };
 using uint128 = UInt128;
 #endif
+
+template <>
+constexpr uint ntz(const uint128 x)
+{
+    std::uint64_t x64 = static_cast<std::uint64_t>(x);
+    if (static_cast<bool>(x64))
+        return ntz(x64);
+    x64 = static_cast<std::uint64_t>(x >> 64);
+    return ntz(x64) + 64u;
+}
 
 template <class UInt>
 inline uint hamming_weight(UInt x);
