@@ -202,4 +202,69 @@ TEST(minishogi_generator, non_king_board_move_generator)
     }
 }
 
+TEST(minishogi_generator, check_non_king_board_move_generator)
+{
+    {
+        const auto s = State("4k/5/5/5/K4 b -");
+        auto iter = CheckNonKingBoardMoveGenerator(s);
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        const auto s = State("4k/5/2P2/5/K4 b -");
+        auto iter = CheckNonKingBoardMoveGenerator(s);
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        const auto s = State("2B1k/5/5/5/K4 b -");
+        auto iter = CheckNonKingBoardMoveGenerator(s);
+        CHECK_TRUE(Move(SQ_2B, SQ_3A, false) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_2B, SQ_3A, true) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        const auto s = State("B4/5/5/4k/K4 b -");
+        auto iter = CheckNonKingBoardMoveGenerator(s);
+        CHECK_TRUE(Move(SQ_2D, SQ_5A, true) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_1E, SQ_5A, true) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        const auto s = State("B1S1k/5/5/5/K4 b -");
+        auto iter = CheckNonKingBoardMoveGenerator(s);
+        CHECK_TRUE(Move(SQ_3C, SQ_5A, false) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_3C, SQ_5A, true) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_2B, SQ_3A, false) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_2B, SQ_3A, true) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        auto s = State("3b1/2r1k/3pB/3gR/5 b G");
+        s.apply(Move(SQ_2B, KI)).apply(Move(SQ_2B, SQ_3B));
+        auto iter = CheckNonKingBoardMoveGenerator(s);
+        // discovered checks
+        CHECK_TRUE(Move(SQ_2B, SQ_1C) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_2D, SQ_1C) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        auto s = State("5/4k/3P1/3R+B/K3R b -");
+        auto iter = CheckNonKingBoardMoveGenerator(s);
+        CHECK_TRUE(Move(SQ_1C, SQ_1D) == *iter); // moved piece check
+        ++iter;
+        CHECK_TRUE(Move(SQ_2E, SQ_1D) == *iter); // discovered check
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+}
+
 } // namespace test_vshogi::test_minishogi
