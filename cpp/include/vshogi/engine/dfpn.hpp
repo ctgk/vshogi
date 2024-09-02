@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "vshogi/common/color.hpp"
+#include "vshogi/common/generator.hpp"
 #include "vshogi/common/result.hpp"
 #include "vshogi/common/utils.hpp"
 #include "vshogi/variants/animal_shogi.hpp"
@@ -133,6 +134,10 @@ public:
     {
         return m_dn;
     }
+    bool has_child() const
+    {
+        return static_cast<bool>(m_child);
+    }
     uint get_num_child() const
     {
         const Node* ch = m_child.get();
@@ -199,25 +204,17 @@ public:
 private:
     void simulate_expand_backprop()
     {
-        const GameType& game = *m_game;
-        const auto r = game.get_result();
-        if (r == ONGOING) {
-            expand(game);
-        } else {
-            simulate(game);
-        }
+        GameType& game = *m_game;
+        expand(game);
+        simulate(game);
         backprop();
     }
     void simulate_expand_backprop(
         std::unordered_map<std::uint64_t, bool>& mate_cache)
     {
-        const GameType& game = *m_game;
-        const auto r = game.get_result();
-        if (r == ONGOING) {
-            expand(game, mate_cache);
-        } else {
-            simulate(game);
-        }
+        GameType& game = *m_game;
+        expand(game, mate_cache);
+        simulate(game);
         backprop(mate_cache);
     }
 
@@ -294,9 +291,13 @@ private:
      *
      * @param game
      */
-    void simulate(const GameType& game)
+    void simulate(GameType& game)
     {
+        game.update_result_for_dfpn(has_child());
         const auto r = game.get_result();
+        if (r == ONGOING)
+            return;
+
         if (r == DRAW) {
             set_pndn_no_mate();
         } else {
@@ -307,6 +308,8 @@ private:
             else
                 set_pndn_no_mate();
         }
+        if (has_child())
+            m_child.reset();
     }
 
     /**
@@ -319,7 +322,6 @@ private:
      */
     void expand(const GameType& game)
     {
-        const std::vector<MoveType>& legal_moves = game.get_legal_moves();
         std::unique_ptr<Node>* ch = &m_child;
         if (m_attacker) {
             /**
@@ -327,16 +329,13 @@ private:
              */
             uint is_attacked_cache[GameType::squares()] = {0};
 
-            for (auto&& m : legal_moves) {
-                if ((m_parent == nullptr)
-                    && (!game.template is_check_move<false>(m)))
-                    continue;
+            for (auto m : CheckMoveGenerator<Config>(game.get_state())) {
                 *ch = std::make_unique<Node>(!m_attacker, this, m);
                 modify_pndn_by_attacks(ch->get(), game, m, is_attacked_cache);
                 ch = &ch->get()->m_sibling;
             }
         } else {
-            for (auto&& m : legal_moves) {
+            for (auto m : LegalMoveGenerator<Config>(game.get_state())) {
                 *ch = std::make_unique<Node>(!m_attacker, this, m);
                 modify_pndn_by_defence(ch->get(), game, m);
                 ch = &ch->get()->m_sibling;
@@ -398,7 +397,6 @@ private:
         const GameType& game,
         std::unordered_map<std::uint64_t, bool>& mate_cache)
     {
-        const std::vector<MoveType>& legal_moves = game.get_legal_moves();
         std::unique_ptr<Node>* ch = &m_child;
         if (m_attacker) {
             /**
@@ -406,17 +404,14 @@ private:
              */
             uint is_attacked_cache[GameType::squares()] = {0};
 
-            for (auto&& m : legal_moves) {
-                if ((m_parent == nullptr)
-                    && (!game.template is_check_move<false>(m)))
-                    continue;
+            for (auto m : CheckMoveGenerator<Config>(game.get_state())) {
                 *ch = std::make_unique<Node>(!m_attacker, this, m);
                 modify_pndn_by_attacks(ch->get(), game, m, is_attacked_cache);
                 modify_pndn_by_mate(ch->get(), game, m, mate_cache);
                 ch = &ch->get()->m_sibling;
             }
         } else {
-            for (auto&& m : legal_moves) {
+            for (auto m : LegalMoveGenerator<Config>(game.get_state())) {
                 *ch = std::make_unique<Node>(!m_attacker, this, m);
                 modify_pndn_by_defence(ch->get(), game, m);
                 modify_pndn_if_parent_is_almost_mate(ch->get());

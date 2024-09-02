@@ -282,40 +282,6 @@ TEST(minishogi_apply, mcts_internal_vertex)
     }
 }
 
-TEST(minishogi_apply, dfpn_defence)
-{
-    using namespace vshogi::minishogi;
-
-    {
-        // Turn: WHITE
-        // White: -
-        //     5   4   3   2   1
-        //   *---*---*---*---*---*
-        // A |   |   |   |-OU|   |
-        //   *---*---*---*---*---*
-        // B |   |   |   |   |   |
-        //   *---*---*---*---*---*
-        // C |   |   |+FU|   |   |
-        //   *---*---*---*---*---*
-        // D |   |   |   |   |   |
-        //   *---*---*---*---*---*
-        // E |+OU|   |   |   |   |
-        //   *---*---*---*---*---*
-        // Black: KA
-        auto g = Game("3k1/5/2P2/5/K4 w B");
-        g.apply_dfpn_defence(Move(SQ_1A, SQ_2A));
-        const auto& actual = g.get_legal_moves();
-        CHECK_EQUAL(1, actual.size());
-        CHECK_TRUE(actual[0] == Move(SQ_2B, KA));
-    }
-    {
-        auto g = Game("3k1/5/2P2/5/K4 w B");
-        g.apply_nocheck(Move(SQ_1A, SQ_2A));
-        const auto& actual = g.get_legal_moves();
-        CHECK_EQUAL(22 + 1 + 3, actual.size());
-    }
-}
-
 TEST_GROUP(minishogi_resign){};
 
 TEST(minishogi_resign, black_resign)

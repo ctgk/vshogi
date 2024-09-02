@@ -87,6 +87,10 @@ public:
     {
         return m_current_state.get_turn();
     }
+    const StateType& get_state() const
+    {
+        return m_current_state;
+    }
     const BoardType& get_board() const
     {
         return m_current_state.get_board();
@@ -170,19 +174,19 @@ public:
     Game& apply_mcts_internal_vertex(const MoveType& move)
     {
         add_record_and_update_state(move);
-        update_internals_mcts_internal_vertex();
+        clear_moves_and_set_unknown_result();
         return *this;
     }
     Game& apply_dfpn_offence(const MoveType& move)
     {
         add_record_and_update_state_for_dfpn(move);
-        update_internals_dfpn_offence();
+        clear_moves_and_set_unknown_result();
         return *this;
     }
     Game& apply_dfpn_defence(const MoveType& move)
     {
         add_record_and_update_state_for_dfpn(move);
-        update_internals_dfpn_defence();
+        clear_moves_and_set_unknown_result();
         return *this;
     }
     Game copy_and_apply_dfpn_offence(const MoveType& move)
@@ -264,6 +268,19 @@ public:
     {
         m_current_state.to_feature_map(data);
     }
+    void update_result_for_dfpn(const bool has_at_least_one_legal_move)
+    {
+        m_result = ONGOING;
+        const auto turn = get_turn();
+        if (!has_at_least_one_legal_move)
+            m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
+        if (is_duplicate_at_least_once())
+            m_result = DRAW;
+        if (can_declare_win_by_king_enter())
+            m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
+        if (m_result != ONGOING)
+            m_legal_moves.clear();
+    }
 
 protected:
     Game(const StateType& s)
@@ -340,20 +357,10 @@ protected:
         update_legal_moves(false);
         update_result();
     }
-    void update_internals_mcts_internal_vertex()
+    void clear_moves_and_set_unknown_result()
     {
         m_legal_moves.clear();
         m_result = UNKNOWN;
-    }
-    void update_internals_dfpn_offence()
-    {
-        update_legal_moves(false);
-        update_result_for_dfpn();
-    }
-    void update_internals_dfpn_defence()
-    {
-        update_legal_moves(true);
-        update_result_for_dfpn();
     }
 
 protected:
@@ -369,19 +376,6 @@ protected:
             else
                 m_result = DRAW;
         }
-        if (can_declare_win_by_king_enter())
-            m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
-        if (m_result != ONGOING)
-            m_legal_moves.clear();
-    }
-    void update_result_for_dfpn()
-    {
-        m_result = ONGOING;
-        const auto turn = get_turn();
-        if (m_legal_moves.empty())
-            m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
-        if (is_duplicate_at_least_once())
-            m_result = DRAW;
         if (can_declare_win_by_king_enter())
             m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
         if (m_result != ONGOING)
