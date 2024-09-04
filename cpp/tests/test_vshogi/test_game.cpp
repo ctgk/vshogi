@@ -201,56 +201,6 @@ TEST(minishogi_king_entering, ongoing_because_of_point)
     CHECK_EQUAL(vshogi::ONGOING, game.get_result());
 }
 
-TEST_GROUP(minishogi_is_check_move){};
-
-TEST(minishogi_is_check_move, check_by_moving_piece)
-{
-    using namespace vshogi::minishogi;
-    // Turn: BLACK
-    // White: -
-    //     5   4   3   2   1
-    //   *---*---*---*---*---*
-    // A |-HI|-KA|-GI|-KI|-OU|
-    //   *---*---*---*---*---*
-    // B |   |   |   |   |-FU|
-    //   *---*---*---*---*---*
-    // C |   |   |   |   |   |
-    //   *---*---*---*---*---*
-    // D |+FU|   |   |   |   |
-    //   *---*---*---*---*---*
-    // E |+OU|+KI|+GI|+KA|+HI|
-    //   *---*---*---*---*---*
-    // Black: -
-    auto game = Game();
-    CHECK_TRUE(game.is_check_move(Move(SQ_1B, SQ_1E)));
-    CHECK_FALSE(game.is_check_move(Move(SQ_1C, SQ_1E)));
-}
-
-TEST(minishogi_is_check_move, check_by_discovered_piece)
-{
-    using namespace vshogi::minishogi;
-    // Turn: WHITE
-    // White: -
-    //     5   4   3   2   1
-    //   *---*---*---*---*---*
-    // A |   |   |   |   |-OU|
-    //   *---*---*---*---*---*
-    // B |   |   |   |   |   |
-    //   *---*---*---*---*---*
-    // C |   |   |   |   |+KI|
-    //   *---*---*---*---*---*
-    // D |   |   |   |   |   |
-    //   *---*---*---*---*---*
-    // E |+OU|   |   |   |+HI|
-    //   *---*---*---*---*---*
-    // Black: -
-    auto game = Game("4k/5/4G/5/K3R b -");
-    CHECK_TRUE(game.is_check_move(Move(SQ_2C, SQ_1C)));
-    CHECK_FALSE(game.is_check_move(Move(SQ_1D, SQ_1C)));
-}
-
-TEST_GROUP(minishogi_apply){};
-
 TEST_GROUP(minishogi_resign){};
 
 TEST(minishogi_resign, black_resign)

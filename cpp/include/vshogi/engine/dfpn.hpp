@@ -204,17 +204,23 @@ public:
 private:
     void simulate_expand_backprop()
     {
-        GameType& game = *m_game;
-        expand(game);
-        simulate(game);
+        const GameType& game = *m_game;
+        const ResultEnum r = game.get_result();
+        if (r == ONGOING)
+            expand(game);
+        else
+            simulate(game);
         backprop();
     }
     void simulate_expand_backprop(
         std::unordered_map<std::uint64_t, bool>& mate_cache)
     {
-        GameType& game = *m_game;
-        expand(game, mate_cache);
-        simulate(game);
+        const GameType& game = *m_game;
+        const ResultEnum r = game.get_result();
+        if (r == ONGOING)
+            expand(game, mate_cache);
+        else
+            simulate(game);
         backprop(mate_cache);
     }
 
@@ -287,13 +293,9 @@ private:
      *
      * @param game
      */
-    void simulate(GameType& game)
+    void simulate(const GameType& game)
     {
-        game.update_result_for_dfpn(has_child());
         const auto r = game.get_result();
-        if (r == ONGOING)
-            return;
-
         if (r == DRAW) {
             set_pndn_no_mate();
         } else {
@@ -304,8 +306,6 @@ private:
             else
                 set_pndn_no_mate();
         }
-        if (has_child())
-            m_child.reset();
     }
 
     /**

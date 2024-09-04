@@ -178,7 +178,7 @@ public:
     Game& apply_dfpn(const MoveType& move)
     {
         add_record_and_update_state_for_dfpn(move);
-        update_result();
+        update_result_for_dfpn();
         return *this;
     }
     Game copy_and_apply_dfpn(const MoveType& move)
@@ -225,33 +225,6 @@ public:
     {
         return m_current_state.in_check();
     }
-
-    template <bool CheckLegality = true>
-    bool is_check_move(const MoveType& move) const
-    {
-        if (CheckLegality && (!is_legal(move)))
-            return false;
-        const auto turn = get_turn();
-        const auto dst = move.destination();
-        const auto board_after_move
-            = StateType(m_current_state).apply(move).get_board();
-        const auto piece = board_after_move[dst];
-        const auto enemy_king_sq = get_board().get_king_location(~turn);
-
-        BitBoard occupied_after_move = get_board().get_occupied().set(dst);
-        if (!move.is_drop()) {
-            const auto src = move.source_square();
-            const auto dir = SHelper::get_direction(src, enemy_king_sq);
-            if ((dir != DIR_NA)
-                && (dir != SHelper::get_direction(dst, enemy_king_sq))
-                && (board_after_move.find_attacker(turn, enemy_king_sq, dir)
-                    != SHelper::SQ_NA))
-                return true; // discovered check
-            occupied_after_move.clear(src);
-        }
-        return BitBoardType::get_attacks_by(piece, dst, occupied_after_move)
-            .is_one(enemy_king_sq);
-    }
     void clear_records_for_dfpn()
     {
         m_zobrist_hash_list.clear();
@@ -262,17 +235,6 @@ public:
     void to_feature_map(float* const data) const
     {
         m_current_state.to_feature_map(data);
-    }
-    void update_result_for_dfpn(const bool has_at_least_one_legal_move)
-    {
-        m_result = ONGOING;
-        const auto turn = get_turn();
-        if (!has_at_least_one_legal_move)
-            m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
-        if (is_duplicate_at_least_once())
-            m_result = DRAW;
-        if (can_declare_win_by_king_enter())
-            m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
     }
 
 protected:
@@ -358,6 +320,17 @@ protected:
             else
                 m_result = DRAW;
         }
+        if (can_declare_win_by_king_enter())
+            m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
+    }
+    void update_result_for_dfpn()
+    {
+        m_result = ONGOING;
+        const auto turn = get_turn();
+        if (LegalMoveGenerator<Config>(m_current_state).is_end())
+            m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
+        if (is_duplicate_at_least_once())
+            m_result = DRAW;
         if (can_declare_win_by_king_enter())
             m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
     }
