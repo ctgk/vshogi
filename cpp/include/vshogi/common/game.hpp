@@ -50,7 +50,6 @@ private:
 
     std::vector<std::uint64_t> m_zobrist_hash_list;
     std::vector<MoveType> m_move_list;
-    std::vector<MoveType> m_legal_moves;
     ResultEnum m_result;
     std::uint64_t m_zobrist_hash;
     const std::string m_initial_sfen_without_ply;
@@ -99,9 +98,14 @@ public:
     {
         return m_current_state.get_stand(c);
     }
-    const std::vector<MoveType>& get_legal_moves() const
+    std::vector<MoveType> get_legal_moves() const
     {
-        return m_legal_moves;
+        std::vector<MoveType> out{};
+        if (m_result != ONGOING)
+            return out;
+        for (auto m : LegalMoveGenerator<Config>(m_current_state))
+            out.emplace_back(m);
+        return out;
     }
     Square get_checker_location(const uint index = 0u) const
     {
@@ -168,28 +172,16 @@ public:
     Game& apply_nocheck(const MoveType& move)
     {
         add_record_and_update_state(move);
-        update_internals();
+        update_result();
         return *this;
     }
-    Game& apply_mcts_internal_vertex(const MoveType& move)
-    {
-        add_record_and_update_state(move);
-        clear_moves_and_set_unknown_result();
-        return *this;
-    }
-    Game& apply_dfpn_offence(const MoveType& move)
+    Game& apply_dfpn(const MoveType& move)
     {
         add_record_and_update_state_for_dfpn(move);
-        clear_moves_and_set_unknown_result();
+        update_result();
         return *this;
     }
-    Game& apply_dfpn_defence(const MoveType& move)
-    {
-        add_record_and_update_state_for_dfpn(move);
-        clear_moves_and_set_unknown_result();
-        return *this;
-    }
-    Game copy_and_apply_dfpn_offence(const MoveType& move)
+    Game copy_and_apply_dfpn(const MoveType& move)
     {
         auto out = Game(
             m_current_state,
@@ -198,26 +190,29 @@ public:
             m_result,
             m_zobrist_hash,
             m_initial_sfen_without_ply);
-        out.apply_dfpn_offence(move);
-        return out;
-    }
-    Game copy_and_apply_dfpn_defence(const MoveType& move)
-    {
-        auto out = Game(
-            m_current_state,
-            m_zobrist_hash_list,
-            m_move_list,
-            m_result,
-            m_zobrist_hash,
-            m_initial_sfen_without_ply);
-        out.apply_dfpn_defence(move);
+        out.apply_dfpn(move);
         return out;
     }
     bool is_legal(const MoveType move) const
     {
-        return (
-            std::find(m_legal_moves.cbegin(), m_legal_moves.cend(), move)
-            != m_legal_moves.cend());
+        if (move.is_drop()) {
+            for (auto m : DropMoveGenerator<Config>(m_current_state)) {
+                if (m == move)
+                    return true;
+            }
+        } else if (
+            move.source_square() == get_board().get_king_location(get_turn())) {
+            for (auto m : KingMoveGenerator<Config>(m_current_state)) {
+                if (m == move)
+                    return true;
+            }
+        } else {
+            for (auto m : NonKingBoardMoveGenerator<Config>(m_current_state)) {
+                if (m == move)
+                    return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -278,20 +273,17 @@ public:
             m_result = DRAW;
         if (can_declare_win_by_king_enter())
             m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
-        if (m_result != ONGOING)
-            m_legal_moves.clear();
     }
 
 protected:
     Game(const StateType& s)
         : m_current_state(s), m_zobrist_hash_list(), m_move_list(),
-          m_legal_moves(), m_result(ONGOING),
-          m_zobrist_hash(m_current_state.zobrist_hash()),
+          m_result(ONGOING), m_zobrist_hash(m_current_state.zobrist_hash()),
           m_initial_sfen_without_ply(m_current_state.to_sfen())
     {
         m_zobrist_hash_list.reserve(128);
         m_move_list.reserve(128);
-        update_internals();
+        update_result();
     }
     Game(
         const StateType& s,
@@ -301,7 +293,7 @@ protected:
         const uint64_t& zobrist_hash,
         const std::string& initial_sfen_without_ply)
         : m_current_state(s), m_zobrist_hash_list(zobrist_hash_list),
-          m_move_list(move_list), m_legal_moves(), m_result(result),
+          m_move_list(move_list), m_result(result),
           m_zobrist_hash(zobrist_hash),
           m_initial_sfen_without_ply(initial_sfen_without_ply)
     {
@@ -352,23 +344,13 @@ protected:
         m_zobrist_hash_list.emplace_back(
             m_current_state.get_board().zobrist_hash());
     }
-    void update_internals()
-    {
-        update_legal_moves(false);
-        update_result();
-    }
-    void clear_moves_and_set_unknown_result()
-    {
-        m_legal_moves.clear();
-        m_result = UNKNOWN;
-    }
 
 protected:
     void update_result()
     {
         m_result = ONGOING;
         const auto turn = get_turn();
-        if (m_legal_moves.empty())
+        if (LegalMoveGenerator<Config>(m_current_state).is_end())
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
         if (is_repetitions()) {
             if (m_current_state.in_check())
@@ -378,8 +360,6 @@ protected:
         }
         if (can_declare_win_by_king_enter())
             m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
-        if (m_result != ONGOING)
-            m_legal_moves.clear();
     }
     bool is_repetitions() const
     {
@@ -444,20 +424,6 @@ protected:
             out += stand.count(pt) * PHelper::get_point(pt);
         }
         return out;
-    }
-
-protected:
-    void update_legal_moves(const bool& restrict_legal_to_check)
-    {
-        m_legal_moves.clear();
-        m_legal_moves.reserve(128);
-        if (restrict_legal_to_check) {
-            for (auto m : CheckMoveGenerator<Config>(m_current_state))
-                m_legal_moves.emplace_back(m);
-        } else {
-            for (auto m : LegalMoveGenerator<Config>(m_current_state))
-                m_legal_moves.emplace_back(m);
-        }
     }
 };
 

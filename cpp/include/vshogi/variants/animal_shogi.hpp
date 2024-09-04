@@ -433,50 +433,74 @@ inline void animal_shogi::DropMoveGenerator::increment_iterators_unless_legal()
 }
 
 template <>
-inline void animal_shogi::Game::update_result()
+inline void animal_shogi::NonKingBoardMoveGenerator::init_dst_iter()
 {
-    const auto turn = get_turn();
-    if (m_legal_moves.empty())
-        m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
-    if (is_repetitions())
-        m_result = DRAW;
-    if (m_result != ONGOING)
-        m_legal_moves.clear();
+    const auto src = *m_src_iter;
+    const auto p = m_board[src];
+    auto movable = BitBoardType::get_attacks_by(p, src);
+    movable &= ~m_board.get_occupied(m_turn);
+    m_dst_iter = movable.square_iterator();
 }
 
 template <>
-inline void animal_shogi::Game::update_internals()
+inline animal_shogi::NonKingBoardMoveGenerator::NonKingBoardMoveGenerator(
+    const animal_shogi::State& state)
+    : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
+      m_src_iter(), m_dst_iter(), m_promote(false)
 {
-    {
-        const auto turn = get_turn();
-        const auto& board = get_board();
-        const auto& stand = get_stand(turn);
-        m_legal_moves.clear();
-        for (auto src : EnumIterator<Square, num_squares>()) {
-            const auto p = board[src];
-            if ((p == PHelper::VOID) || (PHelper::get_color(p) != turn))
-                continue;
-            for (auto dp = PHelper::get_attack_directions(p); *dp != DIR_NA;) {
-                const auto dst = SHelper::shift(src, *dp++);
-                if (dst == SHelper::SQ_NA)
-                    continue;
-                const auto t = board[dst];
-                if (((t == PHelper::VOID) || (PHelper::get_color(t) == ~turn))
-                    && BitBoardType::get_attacks_by(p, src).is_one(dst))
-                    m_legal_moves.emplace_back(dst, src);
-            }
-        }
-        for (auto dst : EnumIterator<Square, num_squares>()) {
-            if (!board.is_empty(dst))
-                continue;
-            for (auto ip = num_stand_piece_types; ip--;) {
-                const auto pt = static_cast<PieceType>(ip);
-                if (stand.exist(pt))
-                    m_legal_moves.emplace_back(MoveType(dst, pt));
-            }
-        }
+    init_src_iter();
+    while (!m_src_iter.is_end()) {
+        init_dst_iter();
+        if (m_dst_iter.is_end())
+            ++m_src_iter;
+        else
+            break;
     }
-    update_result();
+}
+
+template <>
+inline animal_shogi::NonKingBoardMoveGenerator&
+animal_shogi::NonKingBoardMoveGenerator::operator++()
+{
+    ++m_dst_iter;
+    if (!m_dst_iter.is_end())
+        return *this;
+
+    ++m_src_iter;
+    while (!m_src_iter.is_end()) {
+        init_dst_iter();
+        if (m_dst_iter.is_end())
+            ++m_src_iter;
+        else
+            return *this;
+    }
+    m_promote = true;
+    return *this;
+}
+
+template <>
+inline animal_shogi::Move
+animal_shogi::NonKingBoardMoveGenerator::operator*() const
+{
+    return animal_shogi::Move(*m_dst_iter, *m_src_iter);
+}
+
+template <>
+inline bool animal_shogi::NonKingBoardMoveGenerator::operator!=(
+    const NonKingBoardMoveGenerator& other) const
+{
+
+    return (m_src_iter != other.m_src_iter) || (m_dst_iter != other.m_dst_iter);
+}
+
+template <>
+inline void animal_shogi::Game::update_result()
+{
+    const auto turn = get_turn();
+    if (LegalMoveGenerator<animal_shogi::Config>(m_current_state).is_end())
+        m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
+    if (is_repetitions())
+        m_result = DRAW;
 }
 
 template <>
@@ -492,14 +516,10 @@ animal_shogi::Game::apply(const animal_shogi::Move& move)
         m_result = animal_shogi::internal::move_result(move, moving, captured);
     }
     m_current_state.apply(move, &m_zobrist_hash);
-    if (illegal) {
+    if (illegal)
         m_result = (get_turn() == BLACK) ? BLACK_WIN : WHITE_WIN;
-        m_legal_moves.clear();
-    } else if (m_result == ONGOING) {
-        update_internals();
-    } else {
-        m_legal_moves.clear();
-    }
+    else if (m_result == ONGOING)
+        update_result();
     return *this;
 }
 
@@ -516,29 +536,20 @@ animal_shogi::Game::apply_nocheck(const animal_shogi::Move& move)
     }
     m_current_state.apply(move, &m_zobrist_hash);
     if (m_result == ONGOING) {
-        update_internals();
-    } else {
-        m_legal_moves.clear();
+        update_result();
     }
     return *this;
 }
 
 template <>
-inline animal_shogi::Game&
-animal_shogi::Game::apply_mcts_internal_vertex(const animal_shogi::Move& move)
-{
-    return apply_nocheck(move);
-}
-
-template <>
 inline animal_shogi::Game::Game(const animal_shogi::State& s)
-    : m_current_state(s), m_zobrist_hash_list(), m_move_list(), m_legal_moves(),
+    : m_current_state(s), m_zobrist_hash_list(), m_move_list(),
       m_result(ONGOING), m_zobrist_hash(m_current_state.zobrist_hash()),
       m_initial_sfen_without_ply(m_current_state.to_sfen())
 {
     m_zobrist_hash_list.reserve(128);
     m_move_list.reserve(128);
-    update_internals();
+    update_result();
 }
 
 } // namespace vshogi

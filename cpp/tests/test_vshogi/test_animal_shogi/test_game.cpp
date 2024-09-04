@@ -78,7 +78,9 @@ TEST(animal_shogi_game, result)
 {
     {
         auto game = Game();
-        game.apply(Move(SQ_B2, SQ_B3)).apply(Move(SQ_A2, SQ_A1));
+        game.apply(Move(SQ_B2, SQ_B3));
+        CHECK_EQUAL(vshogi::ONGOING, game.get_result());
+        game.apply(Move(SQ_A2, SQ_A1));
         CHECK_EQUAL(vshogi::ONGOING, game.get_result());
         game.apply(Move(SQ_B1, SQ_B2));
         CHECK_EQUAL(vshogi::BLACK_WIN, game.get_result());

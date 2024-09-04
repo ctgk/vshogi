@@ -7,9 +7,9 @@ namespace test_vshogi::test_minishogi
 
 using namespace vshogi::animal_shogi;
 
-TEST_GROUP(animal_shogi_generator){};
+TEST_GROUP(test_animal_shogi_generator){};
 
-TEST(animal_shogi_generator, king_move_generator)
+TEST(test_animal_shogi_generator, king_move_generator)
 {
     {
         const auto s = State("1l1/3/1L1/3 b -");
@@ -34,7 +34,7 @@ TEST(animal_shogi_generator, king_move_generator)
     }
 }
 
-TEST(animal_shogi_generator, drop_move_generator)
+TEST(test_animal_shogi_generator, drop_move_generator)
 {
     {
         const auto s = State("glg/3/1L1/3 b C");
@@ -56,6 +56,39 @@ TEST(animal_shogi_generator, drop_move_generator)
         CHECK_TRUE(Move(SQ_C4, CH) == *iter);
         ++iter;
         CHECK_FALSE(iter != iter.end());
+    }
+}
+
+TEST(test_animal_shogi_generator, non_king_board_move_generator)
+{
+    {
+        const auto s = State("gl1/1c1/eCe/ELG b -");
+        auto iter = NonKingBoardMoveGenerator(s);
+        CHECK_TRUE(Move(SQ_B2, SQ_B3) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_C3, SQ_C4) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+}
+
+TEST(test_animal_shogi_generator, test_legal_move_generator)
+{
+    {
+        const auto s = State("1l1/1C1/3/3 w -");
+        auto iter = vshogi::LegalMoveGenerator<Config>(s);
+        CHECK_TRUE(Move(SQ_A1, SQ_B1) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_C1, SQ_B1) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_A2, SQ_B1) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_B2, SQ_B1) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_C2, SQ_B1) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+        CHECK_TRUE(iter.is_end());
     }
 }
 

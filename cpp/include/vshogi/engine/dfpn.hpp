@@ -248,12 +248,8 @@ private:
         }
 
         if (out->m_game == nullptr) {
-            if (m_attacker)
-                out->m_game = std::make_unique<GameType>(
-                    m_game->copy_and_apply_dfpn_offence(out->m_action));
-            else
-                out->m_game = std::make_unique<GameType>(
-                    m_game->copy_and_apply_dfpn_defence(out->m_action));
+            out->m_game = std::make_unique<GameType>(
+                m_game->copy_and_apply_dfpn(out->m_action));
         }
         return out;
     }

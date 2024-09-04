@@ -251,37 +251,6 @@ TEST(minishogi_is_check_move, check_by_discovered_piece)
 
 TEST_GROUP(minishogi_apply){};
 
-TEST(minishogi_apply, mcts_internal_vertex)
-{
-    using namespace vshogi::minishogi;
-
-    {
-        auto g = Game("5/4k/5/5/K4 b -");
-        g.apply_mcts_internal_vertex(Move(SQ_4E, SQ_5E));
-        CHECK_EQUAL(vshogi::UNKNOWN, g.get_result());
-        CHECK_EQUAL(0, g.get_legal_moves().size());
-
-        g.apply(Move(SQ_2C, SQ_1B));
-        CHECK_EQUAL(vshogi::ONGOING, g.get_result());
-        CHECK_EQUAL(4, g.get_legal_moves().size());
-    }
-    {
-        auto g = Game("5/2k2/5/2P2/K4 b 2G");
-
-        g.apply(Move(SQ_3C, KI));
-        CHECK_EQUAL(vshogi::ONGOING, g.get_result());
-        CHECK_EQUAL(3, g.get_legal_moves().size());
-
-        g.apply_mcts_internal_vertex(Move(SQ_3A, SQ_3B));
-        CHECK_EQUAL(vshogi::UNKNOWN, g.get_result());
-        CHECK_EQUAL(0, g.get_legal_moves().size());
-
-        g.apply(Move(SQ_3B, KI));
-        CHECK_EQUAL(vshogi::BLACK_WIN, g.get_result());
-        CHECK_EQUAL(0, g.get_legal_moves().size());
-    }
-}
-
 TEST_GROUP(minishogi_resign){};
 
 TEST(minishogi_resign, black_resign)
