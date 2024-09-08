@@ -80,15 +80,17 @@ def build_policy_value_network(
     use_long_range_concat: bool,
     num_backbone_blocks: int,
 ):
-    class Concat8Directions(tf.keras.layers.Layer):
+    class ConcatDiagonalDirections(tf.keras.layers.Layer):
 
         def __init__(self, max_dilation_rate: int):
             super().__init__()
             self._max_dilation_rate = max_dilation_rate
 
         def build(self, input_shape):
-            assert input_shape[-1] == 8, input_shape[-1]
-            k = np.concatenate((np.eye(9, 4), np.eye(9, 4, k=-5)), axis=-1).reshape(3, 3, 8, 1)
+            assert input_shape[-1] == 4, input_shape[-1]
+            k = np.concatenate(
+                (np.eye(9, 4)[:, :-1:2], np.eye(9, 4, k=-5)[:, 1::2]), axis=-1
+            ).reshape(3, 3, 4, 1)
             self.kernel = tf.constant(k, dtype=tf.float32)
 
         def call(self, x):
@@ -119,10 +121,17 @@ def build_policy_value_network(
         h1 = relu_pconv(x, num_channels_in_bottleneck)
         h1 = relu6(depthwise_conv2d(h1))
 
-        h2 = relu_pconv(x, 8)
-        h2 = Concat8Directions(max(input_size) - 1)(h2)
+        h2 = relu_pconv(x, 4)
+        h2 = ConcatDiagonalDirections(max(input_size) - 1)(h2)
+        h2 = relu_pconv(h2, 4)
 
-        h = tf.keras.layers.Concatenate()([h1, h2])
+        h = relu_pconv(x, 4)
+        h3 = tf.keras.layers.DepthwiseConv2D(
+            (1, x.shape[2]), padding='valid', use_bias=False)(h)
+        h4 = tf.keras.layers.DepthwiseConv2D(
+            (x.shape[1], 1), padding='valid', use_bias=False)(h)
+
+        h = tf.keras.layers.Concatenate()([h1, h2, relu6(h3 + h4)])
         h = pointwise_conv2d(h, num_channels_in_hidden_layer, use_bias=False)
         return relu6(bn(x + h))
 
