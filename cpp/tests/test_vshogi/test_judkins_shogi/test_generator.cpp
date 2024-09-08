@@ -22,4 +22,31 @@ TEST(judkins_shogi_generator, non_king_board_move_generator)
     }
 }
 
+TEST(judkins_shogi_generator, check_non_king_board_move_generator)
+{
+    {
+        // Turn: BLACK
+        // White: -
+        //     6   5   4   3   2   1
+        //   +---+---+---+---+---+---+
+        // A |   |   |   |   |-FU|-FU|
+        //   +---+---+---+---+---+---+
+        // B |   |   |   |-FU|-KA|-OU|
+        //   +---+---+---+---+---+---+
+        // C |   |   |   |-KE|   |+KE|
+        //   +---+---+---+---+---+---+
+        // D |   |   |   |+FU|   |+FU|
+        //   +---+---+---+---+---+---+
+        // E |   |   |+GI|   |+GI|+HI|
+        //   +---+---+---+---+---+---+
+        // F |   |   |   |+KI|+HI|+KI|
+        //   +---+---+---+---+---+---+
+        // Black: -
+        const auto s = State("4pp/3pbk/3n1N/3P1P/2S1SR/3GRG b -");
+        auto iter = CheckNonKingBoardMoveGenerator(s);
+        CHECK_FALSE(iter != iter.end());
+        CHECK_TRUE(iter.is_end());
+    }
+}
+
 } // namespace test_vshogi::test_judkins_shogi

@@ -174,6 +174,38 @@ public:
         }
         return SQ_NA;
     }
+    Square find_attack_blocker(
+        const ColorEnum attacker_blocker_color,
+        const Square attacked,
+        const DirectionEnum dir) const
+    {
+        auto ptr_sq = SHelper::get_squares_along(dir, attacked);
+        if (ptr_sq == nullptr)
+            return SQ_NA;
+        if (!(BitBoardType::get_ray_to(attacked, dir)
+              & m_bb_color[attacker_blocker_color])
+                 .any())
+            return SQ_NA;
+
+        const auto dir_rotated = rotate(dir);
+        Square blocker = SQ_NA;
+        for (; *ptr_sq != SQ_NA; ++ptr_sq) {
+            const auto sq = *ptr_sq;
+            if (is_empty(sq))
+                continue;
+            const auto p = m_pieces[sq];
+            if (PHelper::get_color(p) != attacker_blocker_color)
+                return SQ_NA;
+
+            if (blocker == SQ_NA)
+                blocker = sq;
+            else if (PHelper::is_ranging_to(p, dir_rotated))
+                return blocker;
+            else
+                return SQ_NA;
+        }
+        return SQ_NA;
+    }
     bool is_square_attacked(
         const ColorEnum& attacker_color,
         const Square& sq,

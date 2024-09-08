@@ -127,4 +127,15 @@ TEST(judkins_shogi_board, append_sfen)
     STRCMP_EQUAL(expected, actual.c_str());
 }
 
+TEST(judkins_shogi_board, find_attack_blocker)
+{
+    {
+        auto b = Board();
+        b.set_sfen("4pp/3pbk/3n1N/3P1P/2S1SR/3GRG b -");
+        const auto actual
+            = b.find_attack_blocker(vshogi::BLACK, SQ_1B, vshogi::DIR_S);
+        CHECK_EQUAL(SQ_NA, actual);
+    }
+}
+
 } // namespace test_vshogi::test_judkins_shogi

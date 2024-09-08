@@ -729,6 +729,7 @@ private:
     using PHelper = Pieces<Config>;
     using SHelper = Squares<Config>;
     static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
+    static constexpr auto num_dir = Config::num_dir;
 
 private:
     const StateType& m_state;
@@ -737,11 +738,12 @@ private:
     typename BitBoardType::SquareIterator m_src_iter;
     bool m_promote;
     typename BitBoardType::SquareIterator m_dst_iter;
+    Square m_check_blocker_cache[num_dir];
 
 public:
     CheckNonKingBoardMoveGenerator(const StateType& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_src_iter(), m_promote(true), m_dst_iter()
+          m_src_iter(), m_promote(true), m_dst_iter(), m_check_blocker_cache{}
     {
         if (m_state.in_double_check())
             return;
@@ -749,6 +751,8 @@ public:
         if (m_src_iter.is_end())
             return;
 
+        std::fill_n(
+            m_check_blocker_cache, num_dir, m_board.get_king_location(~m_turn));
         init_promote();
         while (!m_src_iter.is_end()) {
             init_dst_iter();
@@ -824,7 +828,8 @@ public:
 private:
     CheckNonKingBoardMoveGenerator(const StateType& state, const bool promote)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_src_iter(), m_promote(promote), m_dst_iter()
+          m_src_iter(), m_promote(promote),
+          m_dst_iter(), m_check_blocker_cache{}
     {
     }
     void init_src_iter()
@@ -903,25 +908,34 @@ private:
         auto pt = PHelper::to_piece_type(p);
         if (m_promote)
             pt = PHelper::promote_nocheck(pt);
-        const auto discovered_checker_sq = m_board.find_attacker(
-            m_turn,
+        const auto src_dir_from_enemy_king
+            = SHelper::get_direction(src, enemy_king_sq);
+        const auto blocker_sq
+            = find_attack_blocker(enemy_king_sq, src_dir_from_enemy_king);
+        const auto attackable = BitBoardType::get_attacks_by(
+            PHelper::to_board_piece(~m_turn, pt),
             enemy_king_sq,
-            SHelper::get_direction(src, enemy_king_sq),
-            src);
-        if (discovered_checker_sq == SQ_NA) // check by moving piece.
-            mask &= BitBoardType::get_attacks_by(
-                PHelper::to_board_piece(~m_turn, pt),
-                enemy_king_sq,
-                m_board.get_occupied());
+            m_board.get_occupied());
+        if (blocker_sq != src) // check by moving piece.
+            mask &= attackable;
         else { // check by moving piece or a discovered piece.
             mask
-                &= (BitBoardType::get_attacks_by(
-                        PHelper::to_board_piece(~m_turn, pt),
-                        enemy_king_sq,
-                        m_board.get_occupied())
-                    | (~BitBoardType::get_line_segment(
-                        discovered_checker_sq, enemy_king_sq)));
+                &= (attackable
+                    | (~BitBoardType::get_ray_to(
+                        enemy_king_sq, src_dir_from_enemy_king)));
         }
+    }
+    Square
+    find_attack_blocker(const Square enemy_king_sq, const DirectionEnum dir)
+    {
+        if (dir == DIR_NA)
+            return SQ_NA;
+        if (m_check_blocker_cache[dir] != enemy_king_sq)
+            return m_check_blocker_cache[dir];
+        const auto blocker_sq
+            = m_board.find_attack_blocker(m_turn, enemy_king_sq, dir);
+        m_check_blocker_cache[dir] = blocker_sq;
+        return blocker_sq;
     }
     void init_promote()
     {

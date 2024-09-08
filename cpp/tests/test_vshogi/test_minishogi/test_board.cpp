@@ -135,4 +135,29 @@ TEST(minishogi_board, apply)
     }
 }
 
+TEST(minishogi_board, find_attack_blocker)
+{
+    {
+        auto b = Board();
+        b.set_sfen("4k/5/4P/5/4R b -");
+        const auto actual
+            = b.find_attack_blocker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
+        CHECK_EQUAL(SQ_1C, actual);
+    }
+    {
+        auto b = Board();
+        b.set_sfen("4k/5/4P/5/5 b -");
+        const auto actual
+            = b.find_attack_blocker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
+        CHECK_EQUAL(SQ_NA, actual);
+    }
+    {
+        auto b = Board();
+        b.set_sfen("B4/5/5/4k/K4 b -");
+        const auto actual
+            = b.find_attack_blocker(vshogi::BLACK, SQ_1D, vshogi::DIR_NA);
+        CHECK_EQUAL(SQ_NA, actual);
+    }
+}
+
 } // namespace test_vshogi::test_minishogi
