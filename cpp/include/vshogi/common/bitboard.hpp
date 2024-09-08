@@ -144,11 +144,12 @@ public:
     {
         return square_to_bitboard_array[sq];
     }
-    static constexpr BitBoard get_promotion_zone(const ColorEnum& c)
+    static BitBoard get_promotion_zone(const ColorEnum& c)
     {
         constexpr uint s = num_squares - num_promotion_ranks * num_files;
-        return (c == BLACK) ? ((~BitBoard(0)) << s) >> s
-                            : ((~BitBoard(0)) >> s) << s;
+        static const BitBoard promotion_zone_array[2]
+            = {((~BitBoard(0)) << s) >> s, ((~BitBoard(0)) >> s) << s};
+        return promotion_zone_array[c];
     }
 
     constexpr BitBoard shift(const DirectionEnum& dir) const

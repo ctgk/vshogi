@@ -724,6 +724,7 @@ private:
     using BoardType = Board<Config>;
     using MoveType = Move<Config>;
     using StateType = State<Config>;
+    using ColoredPiece = typename Config::ColoredPiece;
     using Square = typename Config::Square;
     using PHelper = Pieces<Config>;
     using SHelper = Squares<Config>;
@@ -834,44 +835,70 @@ private:
     }
     void init_dst_iter()
     {
-        m_dst_iter = BitBoardType().square_iterator();
         const auto src = *m_src_iter;
         const auto p = m_board[src];
-        if (m_promote && (!PHelper::is_promotable(p)))
-            return;
+        auto movable = BitBoardType();
+        const auto king_sq = m_board.get_king_location(m_turn);
 
-        auto movable
-            = BitBoardType::get_attacks_by(p, src, m_board.get_occupied());
+        if (m_promote && (!PHelper::is_promotable(p)))
+            goto ExitLabel;
+
+        movable |= BitBoardType::get_attacks_by(p, src, m_board.get_occupied());
         movable &= ~m_board.get_occupied(m_turn);
         if (!movable.any())
-            return;
+            goto ExitLabel;
 
-        if (m_promote && !SHelper::in_promotion_zone(src, m_turn)) {
-            movable &= BitBoardType::get_promotion_zone(m_turn);
+        if (update_mask_by_promotion(movable, src)) {
             if (!movable.any())
-                return;
+                goto ExitLabel;
         }
+        if (update_mask_by_current_check(movable, king_sq)) {
+            if (!movable.any())
+                goto ExitLabel;
+        }
+        if (update_mask_by_counter_check(movable, src, king_sq)) {
+            if (!movable.any())
+                goto ExitLabel;
+        }
+        update_mask_by_forcing_check(movable, p, src);
 
-        const auto king_sq = m_board.get_king_location(m_turn);
+    ExitLabel:
+        m_dst_iter = movable.square_iterator();
+    }
+    bool update_mask_by_promotion(BitBoardType& mask, const Square src)
+    {
+        if (m_promote && !SHelper::in_promotion_zone(src, m_turn)) {
+            mask &= BitBoardType::get_promotion_zone(m_turn);
+            return true;
+        }
+        return false;
+    }
+    bool update_mask_by_current_check(BitBoardType& mask, const Square king_sq)
+    {
         if (m_state.in_check()) {
             const auto checker_sq = m_state.get_checker_location();
-            movable &= BitBoardType::get_line_segment(checker_sq, king_sq)
-                           .set(checker_sq);
-            if (!movable.any())
-                return;
+            mask &= BitBoardType::get_line_segment(checker_sq, king_sq)
+                        .set(checker_sq);
+            return true;
         }
-
+        return false;
+    }
+    bool update_mask_by_counter_check(
+        BitBoardType& mask, const Square src, const Square king_sq)
+    {
         const auto src_dir_from_king = SHelper::get_direction(src, king_sq);
         const auto hidden_attacker_sq
             = m_board.find_attacker(~m_turn, king_sq, src_dir_from_king, src);
         if (hidden_attacker_sq != SHelper::SQ_NA) {
-            movable
-                &= BitBoardType::get_line_segment(hidden_attacker_sq, king_sq)
-                       .set(hidden_attacker_sq);
-            if (!movable.any())
-                return;
+            mask &= BitBoardType::get_line_segment(hidden_attacker_sq, king_sq)
+                        .set(hidden_attacker_sq);
+            return true;
         }
-
+        return false;
+    }
+    void update_mask_by_forcing_check(
+        BitBoardType& mask, const ColoredPiece p, const Square src)
+    {
         const auto enemy_king_sq = m_board.get_king_location(~m_turn);
         auto pt = PHelper::to_piece_type(p);
         if (m_promote)
@@ -882,12 +909,12 @@ private:
             SHelper::get_direction(src, enemy_king_sq),
             src);
         if (discovered_checker_sq == SQ_NA) // check by moving piece.
-            movable &= BitBoardType::get_attacks_by(
+            mask &= BitBoardType::get_attacks_by(
                 PHelper::to_board_piece(~m_turn, pt),
                 enemy_king_sq,
                 m_board.get_occupied());
         else { // check by moving piece or a discovered piece.
-            movable
+            mask
                 &= (BitBoardType::get_attacks_by(
                         PHelper::to_board_piece(~m_turn, pt),
                         enemy_king_sq,
@@ -895,9 +922,6 @@ private:
                     | (~BitBoardType::get_line_segment(
                         discovered_checker_sq, enemy_king_sq)));
         }
-        if (!movable.any())
-            return;
-        m_dst_iter = movable.square_iterator();
     }
     void init_promote()
     {
