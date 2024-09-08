@@ -69,6 +69,7 @@ ForEachMacros:
   - foreach
   - Q_FOREACH
   - BOOST_FOREACH
+  - TEST_GROUP
 IncludeBlocks:   Preserve
 IncludeCategories:
   - Regex:           '^"(llvm|llvm-c|clang|clang-c)/'

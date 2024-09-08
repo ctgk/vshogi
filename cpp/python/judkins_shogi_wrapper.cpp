@@ -140,6 +140,7 @@ void export_judkins_shogi(py::module& m)
     js::BlackWhiteStands::init_tables();
     js::BitBoard::init_tables();
     js::Board::init_tables();
+    js::Magic::init_tables();
 
     export_square_enum(m);
     export_pieces(m);
