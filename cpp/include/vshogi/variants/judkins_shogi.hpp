@@ -9,6 +9,7 @@
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/game.hpp"
 #include "vshogi/common/generator.hpp"
+#include "vshogi/common/magic.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/pieces.hpp"
 #include "vshogi/common/squares.hpp"
@@ -137,6 +138,7 @@ struct Config
     static constexpr uint num_promotion_ranks = 2;
     static constexpr uint num_dir = 12; //!< NW, N, NE, W, E, SW, S, SE, SSW, SSE, NNW, NNE
     static constexpr uint num_dir_dl = 10; //!< NW, N, NE, W, E, SW, S, SE, SSW, SSE
+    static constexpr uint log2_magic_table_size = 4;
     static constexpr uint max_stand_piece_count = 2;
     static constexpr uint max_stand_sfen_length = 13; // "RBGSNPrbgsnp "
     static constexpr uint max_acceptable_repetitions = 3;
@@ -165,12 +167,14 @@ struct Config
     using Rank = RankEnum;
     static constexpr uint num_squares = num_files * num_ranks;
     static constexpr uint num_colored_piece_types = 2 * num_piece_types;
+    static constexpr uint magic_table_size = 1u << log2_magic_table_size;
 };
 
 using Pieces = vshogi::Pieces<Config>;
 using Squares = vshogi::Squares<Config>;
 using Move = vshogi::Move<Config>;
 using BitBoard = vshogi::BitBoard<Config>;
+using Magic = vshogi::Magic<Config>;
 using Board = vshogi::Board<Config>;
 using Stand = vshogi::Stand<Config>;
 using BlackWhiteStands = vshogi::BlackWhiteStands<Config>;
@@ -437,22 +441,139 @@ inline judkins_shogi::BitBoard judkins_shogi::BitBoard::get_attacks_by(
     switch (p) {
     case judkins_shogi::B_KA:
     case judkins_shogi::W_KA:
-        return BitBoard::compute_ray_to_diagonal(sq, occupied);
+        return judkins_shogi::Magic::get_diagonal_attack(sq, occupied);
     case judkins_shogi::B_HI:
     case judkins_shogi::W_HI:
-        return BitBoard::compute_ray_to_adjacent(sq, occupied);
+        return judkins_shogi::Magic::get_adjacent_attack(sq, occupied);
     case judkins_shogi::B_UM:
     case judkins_shogi::W_UM:
-        return BitBoard::compute_ray_to_diagonal(sq, occupied)
+        return judkins_shogi::Magic::get_diagonal_attack(sq, occupied)
                | attacks_table[judkins_shogi::B_OU][sq];
     case judkins_shogi::B_RY:
     case judkins_shogi::W_RY:
-        return BitBoard::compute_ray_to_adjacent(sq, occupied)
+        return judkins_shogi::Magic::get_adjacent_attack(sq, occupied)
                | attacks_table[judkins_shogi::B_OU][sq];
     default:
         return get_attacks_by(p, sq);
     }
 }
+
+template <>
+inline const judkins_shogi::BitBoard
+    judkins_shogi::Magic::premask_vertical[judkins_shogi::Config::num_squares]
+    = {
+        // clang-format off
+        0x0000000001041040, 0x0000000002082080, 0x0000000004104100, 0x0000000008208200, 0x0000000010410400, 0x0000000020820800,
+        0x0000000001041000, 0x0000000002082000, 0x0000000004104000, 0x0000000008208000, 0x0000000010410000, 0x0000000020820000,
+        0x0000000001040040, 0x0000000002080080, 0x0000000004100100, 0x0000000008200200, 0x0000000010400400, 0x0000000020800800,
+        0x0000000001001040, 0x0000000002002080, 0x0000000004004100, 0x0000000008008200, 0x0000000010010400, 0x0000000020020800,
+        0x0000000000041040, 0x0000000000082080, 0x0000000000104100, 0x0000000000208200, 0x0000000000410400, 0x0000000000820800,
+        0x0000000001041040, 0x0000000002082080, 0x0000000004104100, 0x0000000008208200, 0x0000000010410400, 0x0000000020820800,
+        // clang-format on
+};
+template <>
+inline const judkins_shogi::BitBoard
+    judkins_shogi::Magic::premask_horizontal[judkins_shogi::Config::num_squares]
+    = {
+        // clang-format off
+        0x000000000000001e, 0x000000000000001c, 0x000000000000001a, 0x0000000000000016, 0x000000000000000e, 0x000000000000001e,
+        0x0000000000000780, 0x0000000000000700, 0x0000000000000680, 0x0000000000000580, 0x0000000000000380, 0x0000000000000780,
+        0x000000000001e000, 0x000000000001c000, 0x000000000001a000, 0x0000000000016000, 0x000000000000e000, 0x000000000001e000,
+        0x0000000000780000, 0x0000000000700000, 0x0000000000680000, 0x0000000000580000, 0x0000000000380000, 0x0000000000780000,
+        0x000000001e000000, 0x000000001c000000, 0x000000001a000000, 0x0000000016000000, 0x000000000e000000, 0x000000001e000000,
+        0x0000000780000000, 0x0000000700000000, 0x0000000680000000, 0x0000000580000000, 0x0000000380000000, 0x0000000780000000,
+        // clang-format on
+};
+template <>
+inline const judkins_shogi::BitBoard
+    judkins_shogi::Magic::premask_nw_se[judkins_shogi::Config::num_squares]
+    = {
+        // clang-format off
+        0x0000000010204080, 0x0000000000408100, 0x0000000000010200, 0x0000000000000400, 0x0000000000000000, 0x0000000000000000,
+        0x0000000008102000, 0x0000000010204000, 0x0000000000408000, 0x0000000000010000, 0x0000000000000000, 0x0000000000000000,
+        0x0000000004080000, 0x0000000008100000, 0x0000000010200080, 0x0000000000400100, 0x0000000000000200, 0x0000000000000400,
+        0x0000000002000000, 0x0000000004000000, 0x0000000008002000, 0x0000000010004080, 0x0000000000008100, 0x0000000000010200,
+        0x0000000000000000, 0x0000000000000000, 0x0000000000080000, 0x0000000000102000, 0x0000000000204080, 0x0000000000408100,
+        0x0000000000000000, 0x0000000000000000, 0x0000000002000000, 0x0000000004080000, 0x0000000008102000, 0x0000000010204080,
+        // clang-format on
+};
+template <>
+inline const judkins_shogi::BitBoard
+    judkins_shogi::Magic::premask_sw_ne[judkins_shogi::Config::num_squares]
+    = {
+        // clang-format off
+        0x0000000000000000, 0x0000000000000000, 0x0000000000000080, 0x0000000000002100, 0x0000000000084200, 0x0000000002108400,
+        0x0000000000000000, 0x0000000000000000, 0x0000000000002000, 0x0000000000084000, 0x0000000002108000, 0x0000000004210000,
+        0x0000000000000080, 0x0000000000000100, 0x0000000000080200, 0x0000000002100400, 0x0000000004200000, 0x0000000008400000,
+        0x0000000000002100, 0x0000000000004200, 0x0000000002008400, 0x0000000004010000, 0x0000000008000000, 0x0000000010000000,
+        0x0000000000084200, 0x0000000000108400, 0x0000000000210000, 0x0000000000400000, 0x0000000000000000, 0x0000000000000000,
+        0x0000000002108400, 0x0000000004210000, 0x0000000008400000, 0x0000000010000000, 0x0000000000000000, 0x0000000000000000,
+        // clang-format on
+};
+template <>
+inline const std::uint32_t judkins_shogi::Magic::magic_number_vertical
+    [judkins_shogi::Config::num_squares]
+    = {
+        0x04883090, 0x00911008, 0x88221404, 0x22404222, 0x21844202, 0x00122105,
+        0x80821850, 0x8c010220, 0x0000a810, 0x04022190, 0x81514201, 0x00000a54,
+        0x21004570, 0x41020210, 0x48200824, 0xa2200102, 0x0008c101, 0x04100029,
+        0x82810041, 0x18ac0431, 0x2380400c, 0x00988104, 0x10105086, 0x01040824,
+        0x829508a0, 0x8940c840, 0x00204400, 0x10c288d0, 0x222010c2, 0x00906050,
+        0x01012020, 0x05a21010, 0x0020c812, 0x00a44402, 0x01088164, 0x2604a364,
+};
+template <>
+inline const std::uint32_t judkins_shogi::Magic::magic_number_horizontal
+    [judkins_shogi::Config::num_squares]
+    = {
+        0x11108500, 0xf4044400, 0x44024000, 0x08800000, 0x08008888, 0x22120002,
+        0x10204600, 0x1010d801, 0x20515001, 0x08a40000, 0x40200818, 0x0c200904,
+        0x00088060, 0x04004000, 0x10008454, 0x0080a000, 0x40808140, 0x57011000,
+        0x00200214, 0x01000102, 0x00202215, 0x11008282, 0x08900200, 0x00240610,
+        0x09000008, 0x0001000a, 0x15905008, 0x00200221, 0x0040020c, 0x42000011,
+        0x11020101, 0x11000100, 0xa80064a1, 0x64000481, 0x24040021, 0x10000201,
+};
+template <>
+inline const std::uint32_t
+    judkins_shogi::Magic::magic_number_nw_se[judkins_shogi::Config::num_squares]
+    = {
+        0x09138084, 0x00808894, 0x81104204, 0x00040420, 0xffffffff, 0xffffffff,
+        0x00410806, 0x00006302, 0x00843200, 0x02e43801, 0xffffffff, 0xffffffff,
+        0x06100404, 0x02000108, 0x85140a05, 0x10208460, 0x64a20010, 0x04040005,
+        0x21014008, 0x04080120, 0x20020010, 0x80208127, 0xc0808c40, 0x01108108,
+        0xffffffff, 0xffffffff, 0x200a8400, 0x04188500, 0x40c84100, 0x70130490,
+        0xffffffff, 0xffffffff, 0x450200a2, 0x00401019, 0x04020802, 0x00826108,
+};
+template <>
+inline const std::uint32_t
+    judkins_shogi::Magic::magic_number_sw_ne[judkins_shogi::Config::num_squares]
+    = {
+        0xffffffff, 0xffffffff, 0x8c220201, 0x04244a00, 0x00121880, 0x04248640,
+        0xffffffff, 0xffffffff, 0x22040219, 0x1000a310, 0x28049340, 0x824340a0,
+        0x09200c02, 0x18240040, 0x00210a44, 0x010c092c, 0x00000521, 0x00001203,
+        0x00c40400, 0x08204000, 0x01122044, 0x12028013, 0xc0410089, 0x48008004,
+        0x2e448800, 0x90204400, 0x20014102, 0x105e88a0, 0xffffffff, 0xffffffff,
+        0x11090120, 0x21088588, 0x44121570, 0x0110c008, 0xffffffff, 0xffffffff,
+};
+template <>
+inline judkins_shogi::BitBoard judkins_shogi::Magic::attack_table_vertical
+    [judkins_shogi::Config::num_squares]
+    [judkins_shogi::Config::magic_table_size]
+    = {};
+template <>
+inline judkins_shogi::BitBoard judkins_shogi::Magic::attack_table_horizontal
+    [judkins_shogi::Config::num_squares]
+    [judkins_shogi::Config::magic_table_size]
+    = {};
+template <>
+inline judkins_shogi::BitBoard judkins_shogi::Magic::attack_table_nw_se
+    [judkins_shogi::Config::num_squares]
+    [judkins_shogi::Config::magic_table_size]
+    = {};
+template <>
+inline judkins_shogi::BitBoard judkins_shogi::Magic::attack_table_sw_ne
+    [judkins_shogi::Config::num_squares]
+    [judkins_shogi::Config::magic_table_size]
+    = {};
 
 } // namespace vshogi
 

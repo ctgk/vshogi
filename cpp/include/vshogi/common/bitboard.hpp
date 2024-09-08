@@ -88,9 +88,18 @@ public:
     {
         return BitBoard(m_value >> shift_width);
     }
+    BitBoard& operator>>=(const uint& shift_width)
+    {
+        m_value >>= shift_width;
+        return *this;
+    }
     constexpr bool operator==(const BitBoard& other) const
     {
         return m_value == other.m_value;
+    }
+    constexpr bool operator!=(const BitBoard& other) const
+    {
+        return m_value != other.m_value;
     }
     constexpr bool any() const
     {
@@ -199,6 +208,25 @@ public:
             return BitBoard();
         return line_segment_table[a][b];
     }
+    static BitBoard compute_ray_to(
+        Square sq,
+        const DirectionEnum dir,
+        const BitBoard& occupied = BitBoard())
+    {
+        BitBoard out{};
+        while (true) {
+            sq = SHelper::shift(sq, dir);
+            if (sq == SHelper::SQ_NA)
+                break; // reached the end of the board
+            else if (occupied.is_one(sq)) {
+                out.set(sq);
+                break; // reached a piece
+            } else {
+                out.set(sq); // continue
+            }
+        }
+        return out;
+    }
 
     static void init_tables()
     {
@@ -284,25 +312,6 @@ public:
     }
 
 private:
-    static BitBoard compute_ray_to(
-        Square sq,
-        const DirectionEnum dir,
-        const BitBoard& occupied = BitBoard())
-    {
-        BitBoard out{};
-        while (true) {
-            sq = SHelper::shift(sq, dir);
-            if (sq == SHelper::SQ_NA)
-                break; // reached the end of the board
-            else if (occupied.is_one(sq)) {
-                out.set(sq);
-                break; // reached a piece
-            } else {
-                out.set(sq); // continue
-            }
-        }
-        return out;
-    }
     static BitBoard compute_ray_to_adjacent(
         const Square& sq, const BitBoard& occupied = BitBoard())
     {

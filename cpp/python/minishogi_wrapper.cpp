@@ -115,6 +115,7 @@ void export_minishogi(py::module& m)
     ms::BlackWhiteStands::init_tables();
     ms::BitBoard::init_tables();
     ms::Board::init_tables();
+    ms::Magic::init_tables();
 
     export_square_enum(m);
     export_pieces(m);

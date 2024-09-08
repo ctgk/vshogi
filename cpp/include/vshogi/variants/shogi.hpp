@@ -9,6 +9,7 @@
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/game.hpp"
 #include "vshogi/common/generator.hpp"
+#include "vshogi/common/magic.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/pieces.hpp"
 #include "vshogi/common/squares.hpp"
@@ -161,6 +162,7 @@ struct Config
     static constexpr uint num_promotion_ranks = 3;
     static constexpr uint num_dir = 12; //!< NW, N, NE, W, E, SW, S, SE, SSW, SSE, NNW, NNE
     static constexpr uint num_dir_dl = 10; //!< NW, N, NE, W, E, SW, S, SE, SSW, SSE
+    static constexpr uint log2_magic_table_size = 7;
     static constexpr uint max_stand_piece_count = 18;
     static constexpr uint max_stand_sfen_length = 26; // "10p2l2n2sbr2g2P2L2N2SBR2G "
     static constexpr uint max_acceptable_repetitions = 3;
@@ -190,12 +192,14 @@ struct Config
     using Rank = RankEnum;
     static constexpr uint num_squares = num_files * num_ranks;
     static constexpr uint num_colored_piece_types = 2 * num_piece_types;
+    static constexpr uint magic_table_size = 1u << log2_magic_table_size;
 };
 
 using Pieces = vshogi::Pieces<Config>;
 using Squares = vshogi::Squares<Config>;
 using Move = vshogi::Move<Config>;
 using BitBoard = vshogi::BitBoard<Config>;
+using Magic = vshogi::Magic<Config>;
 using Board = vshogi::Board<Config>;
 using Stand = vshogi::Stand<Config>;
 using BlackWhiteStands = vshogi::BlackWhiteStands<Config>;
@@ -572,22 +576,171 @@ inline shogi::BitBoard shogi::BitBoard::get_attacks_by(
         return BitBoard::compute_ray_to(sq, DIR_S, occupied);
     case shogi::B_KA:
     case shogi::W_KA:
-        return BitBoard::compute_ray_to_diagonal(sq, occupied);
+        return shogi::Magic::get_diagonal_attack(sq, occupied);
     case shogi::B_HI:
     case shogi::W_HI:
-        return BitBoard::compute_ray_to_adjacent(sq, occupied);
+        return shogi::Magic::get_adjacent_attack(sq, occupied);
     case shogi::B_UM:
     case shogi::W_UM:
-        return BitBoard::compute_ray_to_diagonal(sq, occupied)
+        return shogi::Magic::get_diagonal_attack(sq, occupied)
                | attacks_table[shogi::B_OU][sq];
     case shogi::B_RY:
     case shogi::W_RY:
-        return BitBoard::compute_ray_to_adjacent(sq, occupied)
+        return shogi::Magic::get_adjacent_attack(sq, occupied)
                | attacks_table[shogi::B_OU][sq];
     default:
         return get_attacks_by(p, sq);
     }
 }
+
+template <>
+inline const shogi::BitBoard
+    shogi::Magic::premask_vertical[shogi::Config::num_squares]
+    = {
+        // clang-format off
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x8040201008040200), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0080402010080400), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0100804020100800), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0201008040201000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0402010080402000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0804020100804000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x1008040201008000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x2010080402010000), (static_cast<uint128>(0x00080) << 64) | static_cast<uint128>(0x4020100804020000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x8040201008040000), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0080402010080000), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0100804020100000), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0201008040200000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0402010080400000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0804020100800000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x1008040201000000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x2010080402000000), (static_cast<uint128>(0x00080) << 64) | static_cast<uint128>(0x4020100804000000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x8040201008000200), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0080402010000400), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0100804020000800), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0201008040001000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0402010080002000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0804020100004000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x1008040200008000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x2010080400010000), (static_cast<uint128>(0x00080) << 64) | static_cast<uint128>(0x4020100800020000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x8040201000040200), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0080402000080400), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0100804000100800), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0201008000201000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0402010000402000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0804020000804000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x1008040001008000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x2010080002010000), (static_cast<uint128>(0x00080) << 64) | static_cast<uint128>(0x4020100004020000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x8040200008040200), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0080400010080400), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0100800020100800), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0201000040201000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0402000080402000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0804000100804000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x1008000201008000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x2010000402010000), (static_cast<uint128>(0x00080) << 64) | static_cast<uint128>(0x4020000804020000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x8040001008040200), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0080002010080400), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0100004020100800), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0200008040201000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0400010080402000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0800020100804000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x1000040201008000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x2000080402010000), (static_cast<uint128>(0x00080) << 64) | static_cast<uint128>(0x4000100804020000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x8000201008040200), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0000402010080400), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0000804020100800), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0001008040201000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0002010080402000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0004020100804000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x0008040201008000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x0010080402010000), (static_cast<uint128>(0x00080) << 64) | static_cast<uint128>(0x0020100804020000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0040201008040200), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0080402010080400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0100804020100800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0201008040201000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0402010080402000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0804020100804000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x1008040201008000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x2010080402010000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x4020100804020000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x8040201008040200), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0080402010080400), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0100804020100800), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0201008040201000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0402010080402000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0804020100804000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x1008040201008000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x2010080402010000), (static_cast<uint128>(0x00080) << 64) | static_cast<uint128>(0x4020100804020000),
+        // clang-format on
+};
+template <>
+inline const shogi::BitBoard
+    shogi::Magic::premask_horizontal[shogi::Config::num_squares]
+    = {
+        // clang-format off
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000fe), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000fc), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000fa), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000f6), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000ee), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000de), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000be), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000000007e), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000fe),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001fc00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001f800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001f400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001ec00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001dc00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001bc00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000017c00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000000fc00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001fc00),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000003f80000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000003f00000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000003e80000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000003d80000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000003b80000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000003780000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000002f80000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000001f80000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000003f80000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000007f0000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000007e0000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000007d0000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000007b0000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000770000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000006f0000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000005f0000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000003f0000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000007f0000000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000fe000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000fc000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000fa000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000f6000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000ee000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000de000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000be000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000007e000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000fe000000000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x001fc00000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x001f800000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x001f400000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x001ec00000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x001dc00000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x001bc00000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0017c00000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000fc00000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x001fc00000000000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x3f80000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x3f00000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x3e80000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x3d80000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x3b80000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x3780000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x2f80000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x1f80000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x3f80000000000000),
+(static_cast<uint128>(0x0007f) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0007e) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0007d) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0007b) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00077) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0006f) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0005f) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0003f) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0007f) << 64) | static_cast<uint128>(0x0000000000000000),
+(static_cast<uint128>(0x0fe00) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0fc00) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0fa00) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0f600) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0ee00) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0de00) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0be00) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x07e00) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0fe00) << 64) | static_cast<uint128>(0x0000000000000000),
+        // clang-format on
+};
+template <>
+inline const shogi::BitBoard
+    shogi::Magic::premask_nw_se[shogi::Config::num_squares]
+    = {
+        // clang-format off
+(static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x1004010040100400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x2008020080200800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0010040100401000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000080200802000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000401004000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000002008000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000010000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000),
+(static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x0802008020080000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x1004010040100000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x2008020080200000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0010040100400000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000080200800000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000401000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000002000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000),
+(static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0401004010000000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x0802008020000000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x1004010040000400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x2008020080000800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0010040100001000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000080200002000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000400004000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000008000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000010000),
+(static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0200802000000000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0401004000000000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x0802008000080000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x1004010000100400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x2008020000200800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0010040000401000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000080000802000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000001004000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000002008000),
+(static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0100400000000000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0200800000000000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0401000010000000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x0802000020080000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x1004000040100400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x2008000080200800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0010000100401000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000200802000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000401004000),
+(static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0080000000000000), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0100000000000000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0200002000000000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0400004010000000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x0800008020080000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x1000010040100400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x2000020080200800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000040100401000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000080200802000),
+(static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0000400000000000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0000802000000000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0001004010000000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x0002008020080000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x0004010040100400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0008020080200800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0010040100401000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0080000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0100400000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0200802000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0401004010000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0802008020080000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x1004010040100400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x2008020080200800),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0080000000000000), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0100400000000000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0200802000000000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0401004010000000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x0802008020080000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x1004010040100400),
+        // clang-format on
+};
+template <>
+inline const shogi::BitBoard
+    shogi::Magic::premask_sw_ne[shogi::Config::num_squares]
+    = {
+        // clang-format off
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000080800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000010101000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000002020202000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000404040404000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0080808080808000), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0101010101010000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000080000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000010100000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000002020200000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000404040400000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0080808080800000), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0101010101000000), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0202020202000000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000010001000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000002020002000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000404040004000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0080808080008000), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0101010100010000), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0202020200000000), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0404040400000000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000080800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000101000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000002000202000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000404000404000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0080808000808000), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0101010001010000), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0202020002000000), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0404040000000000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0808080000000000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000010101000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000020202000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000400040404000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0080800080808000), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0101000101010000), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0202000202000000), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0404000400000000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0808000000000000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x1010000000000000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000002020202000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000004040404000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0080008080808000), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0100010101010000), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0200020202000000), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0400040400000000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0800080000000000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x1000000000000000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x2000000000000000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000404040404000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000808080808000), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0001010101010000), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0002020202000000), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0004040400000000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0008080000000000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0010000000000000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x0000000000000000),
+(static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0080808080808000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0101010101010000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0202020202000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0404040400000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0808080000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x1010000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x2000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000),
+(static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0101010101010000), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0202020202000000), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0404040400000000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0808080000000000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x1010000000000000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x2000000000000000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000),
+        // clang-format on
+};
+template <>
+inline const std::uint32_t
+    shogi::Magic::magic_number_vertical[shogi::Config::num_squares]
+    = {
+        // clang-format off
+0x42100c10, 0xc2841044, 0x84206045, 0x59402366, 0xc5101431, 0x8b08610a, 0x26042404, 0x9a248025, 0x22288113,
+0x4c002085, 0x544940c8, 0x17041512, 0xc0200302, 0x00838111, 0x496402a4, 0x01020032, 0x12259a02, 0x04410524,
+0x79204170, 0xa2040aac, 0x005022b2, 0x06931021, 0xc8c03886, 0x4010590f, 0xd2480c87, 0x0650c901, 0x04c8818d,
+0x0a05a284, 0x42948084, 0x01041408, 0x7c08e30c, 0x412440a1, 0x8902094a, 0x12040cd6, 0xd0988a06, 0xc404d232,
+0x20214123, 0x35a11232, 0x1385c184, 0xb8026483, 0x05831130, 0x894a810c, 0x90f004a4, 0x45948401, 0x06042a08,
+0x140440a8, 0x08140268, 0x467095a3, 0x480b8185, 0x15401028, 0x0501303e, 0x110162a6, 0x900a0289, 0x140423c1,
+0x24099006, 0x03151461, 0x0040950c, 0x89902422, 0xe0416230, 0x04308a90, 0x008914d9, 0x0c4408d0, 0x04c02268,
+0xb8411230, 0x08e85184, 0x50501c05, 0xe02c2982, 0x20048090, 0x722420c5, 0x6404802d, 0x1488a081, 0x54545060,
+0x0e9010b0, 0x08c0f006, 0x64226405, 0x09204405, 0x50109130, 0x982050c1, 0xbe144802, 0xa6d08409, 0x04401064,
+        // clang-format on
+};
+template <>
+inline const std::uint32_t
+    shogi::Magic::magic_number_horizontal[shogi::Config::num_squares]
+    = {
+        // clang-format off
+0x090180c4, 0x80901010, 0x909b6124, 0x22600780, 0x30131a90, 0x0b013478, 0x10808809, 0x02025470, 0x0500041b,
+0x64868088, 0x9a4a9324, 0x92010814, 0xf8310800, 0x45088012, 0x21648008, 0x40381005, 0x0400b200, 0x46418005,
+0x59e31081, 0x00a40042, 0x22244040, 0x2041d144, 0x2d88a58e, 0x18290049, 0x0ac12081, 0xa0b00902, 0x002b0204,
+0x24410142, 0x71c82241, 0x4e120401, 0x5082d991, 0x508ce001, 0x28e02802, 0x011a380d, 0xc9229449, 0x320700a6,
+0x0808100a, 0x55f4401b, 0x03280068, 0xe4081247, 0x01810132, 0x17104021, 0x60089208, 0x20c29840, 0x02040540,
+0x00868100, 0x04620224, 0x98605e00, 0x00c51810, 0x01004088, 0x04829c02, 0x20090219, 0x8080205b, 0x84017c00,
+0xa002c0d2, 0x8c41a441, 0x10a50133, 0x13040096, 0x0820c029, 0x04b00002, 0xc0242436, 0x90c3402a, 0x4684c54a,
+0x0480003b, 0xa0992048, 0xc4130810, 0x4c882688, 0x48100226, 0x408c2200, 0x62020200, 0xaa054222, 0x08814a2c,
+0x0a61c010, 0x008b5016, 0x20c04020, 0x003a0406, 0x00012024, 0xa20a401c, 0x18a04000, 0x40902345, 0x48c81020,
+        // clang-format on
+};
+template <>
+inline const std::uint32_t
+    shogi::Magic::magic_number_nw_se[shogi::Config::num_squares]
+    = {
+        // clang-format off
+0x0b2a8081, 0x3003011e, 0x018a4c10, 0x5a894262, 0xa2572805, 0x04953002, 0x84004064, 0xffffffff, 0xffffffff,
+0xc8331506, 0x6b620241, 0x0c4b8acd, 0xc616d101, 0x34808020, 0x1000489e, 0xa1ebd4a6, 0xffffffff, 0xffffffff,
+0xa2908608, 0x808a1181, 0x0b0622f2, 0xd2098219, 0xa4089310, 0x0800a078, 0x42d203e0, 0x01a08cb8, 0x18064362,
+0xda330f22, 0x000a2069, 0xe0c21303, 0x0c08a04b, 0x30e51033, 0x00204204, 0xc0884021, 0x06e61508, 0x50a44415,
+0x722288d0, 0x0a2c0420, 0x42402928, 0x02080a36, 0x24489e06, 0x21908222, 0x12090020, 0xa140e006, 0x0168228e,
+0x8a0e2405, 0x430980eb, 0x24a048d2, 0xca188571, 0xc80da20c, 0x600398c3, 0xc6820016, 0x08105880, 0x4f32a091,
+0x26900809, 0xe2041322, 0x01502022, 0x820832a0, 0x9041fcbe, 0xc645ef8b, 0x01a89ea1, 0x88940222, 0xc8006162,
+0xffffffff, 0xffffffff, 0xc842790c, 0x702886c0, 0x1a340482, 0x11448588, 0x2425c881, 0x40040059, 0x06044029,
+0xffffffff, 0xffffffff, 0x20424800, 0x44248819, 0xa17aa081, 0x06604002, 0x20840a01, 0x80240204, 0x6a823e4a,
+        // clang-format on
+};
+template <>
+inline const std::uint32_t
+    shogi::Magic::magic_number_sw_ne[shogi::Config::num_squares]
+    = {
+        // clang-format off
+0xffffffff, 0xffffffff, 0x81170204, 0x80018280, 0x30011a02, 0x401081d3, 0x18a30786, 0x00841231, 0x8d144010,
+0xffffffff, 0xffffffff, 0x010c4480, 0x81004442, 0x50a08082, 0x91182489, 0x90ca2884, 0x32200490, 0x040908e0,
+0x14bc1002, 0x00044908, 0x02808094, 0x0230b081, 0x4a824402, 0x81209830, 0x04866038, 0x3ba01a11, 0x2c661401,
+0xb26521c9, 0xe7450108, 0x30211880, 0x202702c8, 0xd0423004, 0x15156081, 0x06882411, 0x06346041, 0x83790444,
+0xc0c18354, 0x2b201157, 0xdaa0a08b, 0x53042088, 0x46a80840, 0x60b51e20, 0x08020502, 0x14480188, 0x286b010c,
+0x52106e09, 0x41a032cd, 0x05300428, 0x8220428d, 0x0ac10059, 0x62901c92, 0x16845341, 0x2490a41a, 0x0c048212,
+0x33214ea2, 0x46881d14, 0xa2564880, 0x22241120, 0x00850912, 0x42cc2020, 0x40803c11, 0x23380401, 0x2002a004,
+0x12048058, 0x5c09a5e3, 0x100a5082, 0x087a008c, 0x40884047, 0x2546890a, 0x8701200a, 0xffffffff, 0xffffffff,
+0x47886006, 0x029a280d, 0x0110014c, 0x22099078, 0x12223012, 0x0b400802, 0x08195601, 0xffffffff, 0xffffffff,
+        // clang-format on
+};
+template <>
+inline shogi::BitBoard
+    shogi::Magic::attack_table_vertical[shogi::Config::num_squares]
+                                       [shogi::Config::magic_table_size]
+    = {};
+template <>
+inline shogi::BitBoard
+    shogi::Magic::attack_table_horizontal[shogi::Config::num_squares]
+                                         [shogi::Config::magic_table_size]
+    = {};
+template <>
+inline shogi::BitBoard
+    shogi::Magic::attack_table_nw_se[shogi::Config::num_squares]
+                                    [shogi::Config::magic_table_size]
+    = {};
+template <>
+inline shogi::BitBoard
+    shogi::Magic::attack_table_sw_ne[shogi::Config::num_squares]
+                                    [shogi::Config::magic_table_size]
+    = {};
 
 } // namespace vshogi
 
