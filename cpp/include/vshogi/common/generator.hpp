@@ -328,7 +328,7 @@ private:
     bool is_drop_pawn_mate(const Square dst, const ColoredPiece pawn) const
     {
         const auto enemy_king_sq = m_board.get_king_location(~m_turn);
-        if (SHelper::get_non_ranging_attacks_by(pawn, dst)[0] != enemy_king_sq)
+        if (!BitBoardType::get_attacks_by(pawn, dst).is_one(enemy_king_sq))
             return false;
 
         // if enemy king can move away from the attack, then return false.
@@ -531,7 +531,7 @@ private:
     bool is_drop_pawn_mate(const Square dst, const ColoredPiece pawn) const
     {
         const auto enemy_king_sq = m_board.get_king_location(~m_turn);
-        if (SHelper::get_non_ranging_attacks_by(pawn, dst)[0] != enemy_king_sq)
+        if (!BitBoardType::get_attacks_by(pawn, dst).is_one(enemy_king_sq))
             return false;
 
         // if enemy king can move away from the attack, then return false.

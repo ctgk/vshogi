@@ -36,8 +36,6 @@ private:
     inline static Square
         ranging_squares_to[num_squares][num_dir]
                           [(num_files > num_ranks) ? num_files : num_ranks];
-    inline static Square non_ranging_attacks_array[2 * num_piece_types + 1]
-                                                  [num_squares][9U];
 
     static constexpr File file_right_most()
     {
@@ -97,7 +95,6 @@ public:
 
         // `shift_table` must be initialized, when calling the following.
         init_ranging_squares_table();
-        init_non_ranging_attacks_array();
         init_direction_src_dst_table();
     }
 
@@ -146,13 +143,6 @@ public:
             return nullptr;
         return ranging_squares_to[location][direction];
     }
-    static const Square*
-    get_non_ranging_attacks_by(const ColoredPiece& p, const Square& location)
-    {
-        if (PHelper::is_ranging_piece(p))
-            return nullptr;
-        return non_ranging_attacks_array[p][location];
-    }
 
 private:
     static void init_shift_table()
@@ -195,32 +185,6 @@ private:
                     ranging_squares_to[src][dir][index++] = dst;
                     if (is_knight_direction(dir))
                         break;
-                }
-            }
-        }
-    }
-    static void init_non_ranging_attacks_array()
-    {
-        std::fill_n(
-            &non_ranging_attacks_array[0][0][0],
-            sizeof(non_ranging_attacks_array)
-                / sizeof(non_ranging_attacks_array[0][0][0]),
-            SQ_NA);
-
-        for (uint ii = 0; ii < 2 * num_piece_types; ++ii) {
-            const auto pt = static_cast<PieceType>(ii % num_piece_types);
-            if (PHelper::is_ranging_piece(pt))
-                continue;
-            const ColorEnum c = (ii < num_piece_types) ? BLACK : WHITE;
-            const auto p = PHelper::to_board_piece(c, pt);
-            const auto dir_ptr_begin = PHelper::get_attack_directions(p);
-            for (auto sq : EnumIterator<Square, num_squares>()) {
-                int index = 0;
-                for (auto dir_ptr = dir_ptr_begin; *dir_ptr != DIR_NA;) {
-                    const auto dst = shift(sq, *dir_ptr++);
-                    if (dst == SQ_NA)
-                        continue;
-                    non_ranging_attacks_array[ii][sq][index++] = dst;
                 }
             }
         }
