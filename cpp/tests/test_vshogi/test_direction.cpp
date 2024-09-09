@@ -7,7 +7,8 @@ namespace test_vshogi
 
 using namespace vshogi;
 
-TEST_GROUP(test_direction){};
+TEST_GROUP (test_direction) {
+};
 
 TEST(test_direction, rotate)
 {

@@ -7,7 +7,8 @@ namespace test_vshogi::test_animal_shogi
 
 using namespace vshogi::animal_shogi;
 
-TEST_GROUP(animal_shogi_game){};
+TEST_GROUP (animal_shogi_game) {
+};
 
 TEST(animal_shogi_game, feature_channels)
 {

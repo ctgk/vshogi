@@ -7,7 +7,8 @@ namespace test_vshogi::test_shogi
 
 using namespace vshogi::shogi;
 
-TEST_GROUP(test_shogi_generator){};
+TEST_GROUP (test_shogi_generator) {
+};
 
 TEST(test_shogi_generator, test_check_drop_move_generator)
 {

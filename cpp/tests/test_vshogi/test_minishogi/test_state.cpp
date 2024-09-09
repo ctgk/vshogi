@@ -9,7 +9,8 @@ namespace test_vshogi::test_minishogi
 
 using namespace vshogi::minishogi;
 
-TEST_GROUP(state){};
+TEST_GROUP (state) {
+};
 
 TEST(state, set_sfen)
 {

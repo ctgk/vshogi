@@ -7,7 +7,8 @@ namespace test_vshogi::test_minishogi
 
 using namespace vshogi::minishogi;
 
-TEST_GROUP(minishogi_board){};
+TEST_GROUP (minishogi_board) {
+};
 
 TEST(minishogi_board, get)
 {

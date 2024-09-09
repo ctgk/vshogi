@@ -7,7 +7,8 @@ namespace test_vshogi::test_minishogi
 
 using namespace vshogi::minishogi;
 
-TEST_GROUP(minishogi_game){};
+TEST_GROUP (minishogi_game) {
+};
 
 TEST(minishogi_game, num_dlshogi_policy)
 {

@@ -5,7 +5,8 @@
 namespace test_vshogi::test_game
 {
 
-TEST_GROUP(minishogi_king_entering){};
+TEST_GROUP (minishogi_king_entering) {
+};
 
 TEST(minishogi_king_entering, from_default_start_position)
 {
@@ -201,7 +202,8 @@ TEST(minishogi_king_entering, ongoing_because_of_point)
     CHECK_EQUAL(vshogi::ONGOING, game.get_result());
 }
 
-TEST_GROUP(minishogi_resign){};
+TEST_GROUP (minishogi_resign) {
+};
 
 TEST(minishogi_resign, black_resign)
 {

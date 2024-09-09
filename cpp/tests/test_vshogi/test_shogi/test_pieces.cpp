@@ -7,7 +7,8 @@ namespace test_vshogi::test_shogi
 
 using namespace vshogi::shogi;
 
-TEST_GROUP(shogi_pieces){};
+TEST_GROUP (shogi_pieces) {
+};
 
 TEST(shogi_pieces, is_promotable)
 {

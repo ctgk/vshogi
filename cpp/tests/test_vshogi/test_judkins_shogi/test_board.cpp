@@ -7,7 +7,8 @@ namespace test_vshogi::test_judkins_shogi
 
 using namespace vshogi::judkins_shogi;
 
-TEST_GROUP(judkins_shogi_board){};
+TEST_GROUP (judkins_shogi_board) {
+};
 
 TEST(judkins_shogi_board, get)
 {

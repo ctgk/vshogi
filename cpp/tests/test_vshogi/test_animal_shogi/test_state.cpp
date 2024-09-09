@@ -9,7 +9,8 @@ namespace test_vshogi::test_animal_shogi
 
 using namespace vshogi::animal_shogi;
 
-TEST_GROUP(animal_shogi_state){};
+TEST_GROUP (animal_shogi_state) {
+};
 
 TEST(animal_shogi_state, get_turn)
 {

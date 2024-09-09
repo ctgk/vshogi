@@ -7,7 +7,8 @@ namespace test_vshogi::test_minishogi
 
 using namespace vshogi::animal_shogi;
 
-TEST_GROUP(test_animal_shogi_generator){};
+TEST_GROUP (test_animal_shogi_generator) {
+};
 
 TEST(test_animal_shogi_generator, king_move_generator)
 {

@@ -8,7 +8,8 @@
 namespace test_vshogi::test_engine
 {
 
-TEST_GROUP(dfpn){};
+TEST_GROUP (dfpn) {
+};
 
 TEST(dfpn, mate_in_one_black)
 {

@@ -17,7 +17,8 @@ using Node = vshogi::engine::mcts::Node<Game, Move>;
 using Searcher = vshogi::engine::mcts::Searcher<Game, Move>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
-TEST_GROUP(animal_shogi_node){};
+TEST_GROUP (animal_shogi_node) {
+};
 
 TEST(animal_shogi_node, init_default)
 {
@@ -310,7 +311,8 @@ using Node = vshogi::engine::mcts::Node<Game, Move>;
 using Searcher = vshogi::engine::mcts::Searcher<Game, Move>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
-TEST_GROUP(minishogi_node){};
+TEST_GROUP (minishogi_node) {
+};
 
 TEST(minishogi_node, explore_until_game_end)
 {
@@ -344,7 +346,8 @@ using Node = vshogi::engine::mcts::Node<Game, Move>;
 using Searcher = vshogi::engine::mcts::Searcher<Game, Move>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
-TEST_GROUP(judkins_shogi_node){};
+TEST_GROUP (judkins_shogi_node) {
+};
 
 TEST(judkins_shogi_node, explore_until_game_end)
 {
@@ -378,7 +381,8 @@ using Node = vshogi::engine::mcts::Node<Game, Move>;
 using Searcher = vshogi::engine::mcts::Searcher<Game, Move>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
-TEST_GROUP(shogi_node){};
+TEST_GROUP (shogi_node) {
+};
 
 TEST(shogi_node, explore_until_game_end)
 {

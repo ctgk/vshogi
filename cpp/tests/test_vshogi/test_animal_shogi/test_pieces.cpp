@@ -7,7 +7,8 @@ namespace test_vshogi::test_animal_shogi
 
 using namespace vshogi::animal_shogi;
 
-TEST_GROUP(animal_shogi_pieces){};
+TEST_GROUP (animal_shogi_pieces) {
+};
 
 TEST(animal_shogi_pieces, is_promotable)
 {

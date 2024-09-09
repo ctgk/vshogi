@@ -7,7 +7,8 @@ namespace test_vshogi
 
 using namespace vshogi;
 
-TEST_GROUP(color){};
+TEST_GROUP (color) {
+};
 
 TEST(color, opposite)
 {

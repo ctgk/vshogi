@@ -7,7 +7,8 @@ namespace test_vshogi::test_animal_shogi
 
 using namespace vshogi::animal_shogi;
 
-TEST_GROUP(Move){};
+TEST_GROUP (Move) {
+};
 
 TEST(Move, usi)
 {

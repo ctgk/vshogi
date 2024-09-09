@@ -7,7 +7,8 @@ namespace test_vshogi::test_animal_shogi
 
 using namespace vshogi::animal_shogi;
 
-TEST_GROUP(animal_shogi_stand){};
+TEST_GROUP (animal_shogi_stand) {
+};
 
 TEST(animal_shogi_stand, sizeof)
 {
@@ -99,7 +100,8 @@ TEST(animal_shogi_stand, operator)
     CHECK_TRUE(a != b);
 }
 
-TEST_GROUP(animal_shogi_black_white_stands){};
+TEST_GROUP (animal_shogi_black_white_stands) {
+};
 
 TEST(animal_shogi_black_white_stands, sizeof)
 {

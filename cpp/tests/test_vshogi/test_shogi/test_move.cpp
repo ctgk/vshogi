@@ -7,7 +7,8 @@ namespace test_vshogi::test_shogi
 
 using namespace vshogi::shogi;
 
-TEST_GROUP(move){};
+TEST_GROUP (move) {
+};
 
 TEST(move, usi)
 {

@@ -7,7 +7,8 @@ namespace test_vshogi::test_judkins_shogi
 
 using namespace vshogi::judkins_shogi;
 
-TEST_GROUP(judkins_shogi_bitboard){};
+TEST_GROUP (judkins_shogi_bitboard) {
+};
 
 TEST(judkins_shogi_bitboard, xor_operator)
 {

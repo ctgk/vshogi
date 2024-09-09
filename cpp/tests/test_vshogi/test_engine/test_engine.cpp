@@ -14,7 +14,8 @@ using namespace vshogi::shogi;
 using Node = vshogi::engine::mcts::Node<Game, Move>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
-TEST_GROUP(shogi_engine){};
+TEST_GROUP (shogi_engine) {
+};
 
 TEST(shogi_engine, mcts_with_dfpn)
 {

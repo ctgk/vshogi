@@ -7,7 +7,8 @@ namespace test_vshogi::test_shogi
 
 using namespace vshogi::shogi;
 
-TEST_GROUP(shogi_game){};
+TEST_GROUP (shogi_game) {
+};
 
 TEST(shogi_game, feature_channels)
 {

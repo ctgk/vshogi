@@ -7,7 +7,8 @@ namespace test_vshogi::test_judkins_shogi
 
 using namespace vshogi::judkins_shogi;
 
-TEST_GROUP(judkins_shogi_generator){};
+TEST_GROUP (judkins_shogi_generator) {
+};
 
 TEST(judkins_shogi_generator, non_king_board_move_generator)
 {

@@ -7,7 +7,8 @@ namespace test_vshogi::test_shogi
 
 using namespace vshogi::shogi;
 
-TEST_GROUP(shogi_squares){};
+TEST_GROUP (shogi_squares) {
+};
 
 TEST(shogi_squares, to_rank)
 {
