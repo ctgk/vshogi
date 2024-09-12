@@ -1,7 +1,7 @@
 """Shogi API for shogi and its variants."""
 
 from vshogi import animal_shogi, judkins_shogi, minishogi, shogi
-from vshogi import engine
+from vshogi import dlshogi, engine
 from vshogi._game import Game
 from vshogi._play import play_game
 from vshogi._repr import _repr_enum
@@ -12,7 +12,7 @@ Result.__repr__ = _repr_enum
 
 _classes = [Color, Result, Game]
 _enums = [Color, Result]
-_modules = [animal_shogi, engine, judkins_shogi, minishogi, shogi]
+_modules = [animal_shogi, dlshogi, engine, judkins_shogi, minishogi, shogi]
 _functions = [play_game]
 
 

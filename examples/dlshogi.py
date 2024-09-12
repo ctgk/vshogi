@@ -17,7 +17,6 @@ import sys
 import typing as tp
 
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
-os.environ['TF_USE_LEGACY_KERAS']='1'
 
 from classopt import classopt, config
 import joblib
@@ -123,13 +122,13 @@ def build_policy_value_network(
 
         h2 = relu_pconv(x, 4)
         h2 = ConcatDiagonalDirections(max(input_size) - 1)(h2)
-        h2 = relu_pconv(h2, 4)
 
-        h = relu_pconv(x, 4)
+        h3 = relu_pconv(x, num_channels_in_bottleneck // 4)
         h3 = tf.keras.layers.DepthwiseConv2D(
-            (1, x.shape[2]), padding='valid', use_bias=False)(h)
+            (1, x.shape[2]), padding='valid', use_bias=False)(h3)
+        h4 = relu_pconv(x, num_channels_in_bottleneck // 4)
         h4 = tf.keras.layers.DepthwiseConv2D(
-            (x.shape[1], 1), padding='valid', use_bias=False)(h)
+            (x.shape[1], 1), padding='valid', use_bias=False)(h4)
 
         h = tf.keras.layers.Concatenate()([h1, h2, relu6(h3 + h4)])
         h = pointwise_conv2d(h, num_channels_in_hidden_layer, use_bias=False)
@@ -169,45 +168,6 @@ def build_policy_value_network(
     value = value_network(backbone_feature)
     model = tf.keras.Model(inputs=x, outputs=[policy_logits, value])
     return model
-
-
-class PolicyValueFunction:
-
-    def __init__(
-        self,
-        model: tp.Union[tf.keras.Model, str],
-        num_threads: int = 1,
-    ) -> None:
-        if isinstance(model, str):
-            self._model_content = None
-            self._interpreter = tf.lite.Interpreter(model_path=model, num_threads=num_threads)
-        else:
-            converter = tf.lite.TFLiteConverter.from_keras_model(model)
-            self._model_content = converter.convert()
-            self._interpreter = tf.lite.Interpreter(
-                model_content=self._model_content, num_threads=num_threads)
-
-        self._interpreter.allocate_tensors()
-        input_details = self._interpreter.get_input_details()[0]
-        self._input_placeholder = np.empty(input_details['shape'], dtype=np.float32)
-        self._input_index = input_details['index']
-        output_details = self._interpreter.get_output_details()
-        self._value_index = output_details[0]['index']
-        self._policy_index = output_details[1]['index']
-
-    def __call__(self, game: vshogi.Game) -> tp.Tuple[np.ndarray, float]:
-        game.to_dlshogi_features(out=self._input_placeholder)
-        self._interpreter.set_tensor(self._input_index, self._input_placeholder)
-        self._interpreter.invoke()
-        value = self._interpreter.get_tensor(self._value_index).item()
-        policy_logits = self._interpreter.get_tensor(self._policy_index)
-        return policy_logits, value
-
-    def save_model_as_tflite(self, output_path: str):
-        if self._model_content is None:
-            raise ValueError('Cannot save tflite binary.')
-        with open(output_path, 'wb') as f:
-            f.write(self._model_content)
 
 
 def dump_game_records(file_, game: vshogi.Game, color_filter: vshogi.Color = None) -> None:
@@ -325,12 +285,12 @@ def load_player_of(index_path_or_network, num_threads=1) -> vshogi.engine.DfpnMc
     if isinstance(index_path_or_network, int):
         i = index_path_or_network
         mcts = vshogi.engine.Mcts(
-            PolicyValueFunction(f'models/model_{i:04d}.tflite', num_threads),
+            vshogi.dlshogi.PolicyValueFunction(f'models/model_{i:04d}.tflite'),
             coeff_puct=args.mcts_coeff_puct,
         )
     else:
         mcts = vshogi.engine.Mcts(
-            PolicyValueFunction(index_path_or_network, num_threads),
+            vshogi.dlshogi.PolicyValueFunction(index_path_or_network),
             coeff_puct=args.mcts_coeff_puct,
         )
     return vshogi.engine.DfpnMcts(vshogi.engine.DfpnSearcher(), mcts)
@@ -587,7 +547,7 @@ def run_train(args: Args):
     if i > 0:
         load_data_and_train_network(network, i, args.nn_learning_rate)
         network.save_weights(f'models/checkpoint_{i:04d}/checkpoint_{i:04d}')
-    PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
+    vshogi.dlshogi.PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
 
 
 def run_rl_cycle(args: Args):
