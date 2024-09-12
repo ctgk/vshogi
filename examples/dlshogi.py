@@ -70,106 +70,6 @@ class Args:
     output: str = config(short=True, type=str, help='Output path of self-play datasets and trained NN models, default=`shogi`')
 
 
-def build_policy_value_network(
-    input_size: tp.Tuple[int, int],  # (H, W)
-    input_channels: int,
-    num_policy_per_square: int,
-    num_channels_in_hidden_layer: int,
-    num_channels_in_bottleneck: int,
-    use_long_range_concat: bool,
-    num_backbone_blocks: int,
-):
-    class ConcatDiagonalDirections(tf.keras.layers.Layer):
-
-        def __init__(self, max_dilation_rate: int):
-            super().__init__()
-            self._max_dilation_rate = max_dilation_rate
-
-        def build(self, input_shape):
-            assert input_shape[-1] == 4, input_shape[-1]
-            k = np.concatenate(
-                (np.eye(9, 4)[:, :-1:2], np.eye(9, 4, k=-5)[:, 1::2]), axis=-1
-            ).reshape(3, 3, 4, 1)
-            self.kernel = tf.constant(k, dtype=tf.float32)
-
-        def call(self, x):
-            feature_maps = [
-                tf.nn.depthwise_conv2d(
-                    x, self.kernel, (1, 1, 1, 1), 'SAME', dilations=(d, d))
-                for d in range(1, self._max_dilation_rate + 1)
-            ]
-            return tf.concat(feature_maps, -1)
-
-    def pointwise_conv2d(x, ch, use_bias=True):
-        return tf.keras.layers.Conv2D(ch, 1, use_bias=use_bias)(x)
-
-    def depthwise_conv2d(x, dilation=1, use_bias=True):
-        return tf.keras.layers.DepthwiseConv2D(
-            3, dilation_rate=dilation, padding='same', use_bias=use_bias)(x)
-
-    def bn(x):
-        return tf.keras.layers.BatchNormalization(center=False, scale=False)(x)
-
-    def relu6(x):
-        return tf.keras.layers.ReLU(max_value=6)(x)
-
-    def relu_pconv(x, ch):
-        return relu6(pointwise_conv2d(x, ch))
-
-    def multidilation_resblock(x):
-        h1 = relu_pconv(x, num_channels_in_bottleneck)
-        h1 = relu6(depthwise_conv2d(h1))
-
-        h2 = relu_pconv(x, 4)
-        h2 = ConcatDiagonalDirections(max(input_size) - 1)(h2)
-
-        h3 = relu_pconv(x, num_channels_in_bottleneck // 4)
-        h3 = tf.keras.layers.DepthwiseConv2D(
-            (1, x.shape[2]), padding='valid', use_bias=False)(h3)
-        h4 = relu_pconv(x, num_channels_in_bottleneck // 4)
-        h4 = tf.keras.layers.DepthwiseConv2D(
-            (x.shape[1], 1), padding='valid', use_bias=False)(h4)
-
-        h = tf.keras.layers.Concatenate()([h1, h2, relu6(h3 + h4)])
-        h = pointwise_conv2d(h, num_channels_in_hidden_layer, use_bias=False)
-        return relu6(bn(x + h))
-
-    def resblock(x):
-        h = relu_pconv(x, num_channels_in_bottleneck)
-        h = relu6(depthwise_conv2d(h))
-        h = pointwise_conv2d(h, num_channels_in_hidden_layer, use_bias=False)
-        return relu6(bn(x + h))
-
-    def backbone_network(x):
-        h = relu_pconv(x, num_channels_in_hidden_layer)
-        h = relu6(bn(depthwise_conv2d(h, use_bias=False)))
-
-        for _ in range(num_backbone_blocks):
-            if use_long_range_concat:
-                h = multidilation_resblock(h)
-            else:
-                h = resblock(h)
-        return h
-
-    def policy_network(x):
-        h = pointwise_conv2d(x, num_policy_per_square)
-        return tf.keras.layers.Flatten(name='policy_logits')(h)
-
-    def value_network(x):
-        h = bn(pointwise_conv2d(x, 1))
-        h = tf.keras.layers.LeakyReLU()(h)
-        h = tf.keras.layers.Flatten()(h)
-        return tf.keras.layers.Dense(
-            1, activation='tanh', name='value')(h)
-
-    x = tf.keras.Input(shape=(*input_size, input_channels))
-    backbone_feature = backbone_network(x)
-    policy_logits = policy_network(backbone_feature)
-    value = value_network(backbone_feature)
-    model = tf.keras.Model(inputs=x, outputs=[policy_logits, value])
-    return model
-
-
 def dump_game_records(file_, game: vshogi.Game, color_filter: vshogi.Color = None) -> None:
     game.dump_records(
         (
@@ -527,7 +427,7 @@ def run_train(args: Args):
         return train_network(network, dataset, learning_rate)
 
     shogi = args._shogi
-    network = build_policy_value_network(
+    network = vshogi.dlshogi.build_policy_value_network(
         input_size=(shogi.Game.ranks, shogi.Game.files),
         input_channels=shogi.Game.feature_channels,
         num_policy_per_square=shogi.Move._num_policy_per_square(),

@@ -107,6 +107,19 @@ class Game(abc.ABC):
         """
         return self._get_backend_game_class().num_dlshogi_policy()
 
+    @classmethod
+    def attention_matrix(cls) -> np.ndarray:
+        """Return attention matrix of the game.
+
+        Returns
+        -------
+        np.ndarray
+            Attention matrix whose size is (N, N) where N is number of squares.
+            The matrix (A) has value 1 at (i, j) if there is a legal move from
+            i-th square to j-th square in the game, otherwise 0.
+        """
+        return cls._get_backend_game_class().to_attention_matrix()
+
     @property
     def turn(self) -> Color:
         """Return current turn.

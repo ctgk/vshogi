@@ -201,6 +201,15 @@ inline void export_game(pybind11::module& m)
         .def_static("files", &Game::files)
         .def_static("feature_channels", &Game::feature_channels)
         .def_static("num_dlshogi_policy", &Game::num_dlshogi_policy)
+        .def_static(
+            "to_attention_matrix",
+            []() {
+                const auto n = Game::squares();
+                const auto shape = std::vector<py::ssize_t>({n, n});
+                auto out = py::array_t<float>(shape);
+                Game::to_attention_matrix(out.mutable_data());
+                return out;
+            })
         .def(
             "to_dlshogi_features",
             [](const Game& self) {
