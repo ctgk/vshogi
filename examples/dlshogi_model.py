@@ -1,4 +1,5 @@
 from tqdm import tqdm
+
 import vshogi
 
 
@@ -9,10 +10,13 @@ if __name__ == '__main__':
         input_size=(Game.ranks, Game.files),
         input_channels=Game.feature_channels,
         num_policy_per_square=Move._num_policy_per_square(),
-        num_channels_in_hidden_layer=128,
-        num_channels_in_bottleneck=32,
-        use_long_range_concat=True,
+        hidden_channels=128,
+        bottleneck_channels=32,
         num_backbone_blocks=10,
+        attention_matrices=(
+            Game.get_adjacent_attention(),
+            Game.get_diagonal_attention(),
+        ),
     )
     network.summary()
     player = vshogi.engine.DfpnMcts(

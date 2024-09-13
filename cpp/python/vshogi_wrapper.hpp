@@ -202,12 +202,31 @@ inline void export_game(pybind11::module& m)
         .def_static("feature_channels", &Game::feature_channels)
         .def_static("num_dlshogi_policy", &Game::num_dlshogi_policy)
         .def_static(
-            "to_attention_matrix",
+            "get_adjacent_attention",
             []() {
                 const auto n = Game::squares();
                 const auto shape = std::vector<py::ssize_t>({n, n});
                 auto out = py::array_t<float>(shape);
-                Game::to_attention_matrix(out.mutable_data());
+                Game::attention_matrix(
+                    out.mutable_data(),
+                    {vshogi::DIR_N,
+                     vshogi::DIR_W,
+                     vshogi::DIR_E,
+                     vshogi::DIR_S});
+                return out;
+            })
+        .def_static(
+            "get_diagonal_attention",
+            []() {
+                const auto n = Game::squares();
+                const auto shape = std::vector<py::ssize_t>({n, n});
+                auto out = py::array_t<float>(shape);
+                Game::attention_matrix(
+                    out.mutable_data(),
+                    {vshogi::DIR_NW,
+                     vshogi::DIR_NE,
+                     vshogi::DIR_SW,
+                     vshogi::DIR_SE});
                 return out;
             })
         .def(

@@ -24,16 +24,30 @@ def test_num_dlshogi_policy():
     assert 5 * 5 * (2 * 8 + 5) == shogi.Game().num_dlshogi_policy
 
 
-def test_attention_matrix():
-    a = shogi.Game.attention_matrix()
+def test_get_adjacent_attention():
+    a = shogi.Game.get_adjacent_attention()
     assert a.shape == (25, 25)
     assert np.allclose(a.T, a)
     expect = np.array([
-        [1, 1, 1, 1, 1],
-        [1, 1, 1, 0, 0],
-        [0, 1, 0, 1, 0],
-        [0, 1, 0, 0, 1],
+        [1, 0, 1, 1, 1],
         [0, 1, 0, 0, 0],
+        [0, 1, 0, 0, 0],
+        [0, 1, 0, 0, 0],
+        [0, 1, 0, 0, 0],
+    ])
+    assert np.allclose(a[1].reshape(5, 5), expect)
+
+
+def test_get_diagonal_attention():
+    a = shogi.Game.get_diagonal_attention()
+    assert a.shape == (25, 25)
+    assert np.allclose(a.T, a)
+    expect = np.array([
+        [0, 0, 0, 0, 0],
+        [1, 0, 1, 0, 0],
+        [0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0],
     ])
     assert np.allclose(a[1].reshape(5, 5), expect)
 

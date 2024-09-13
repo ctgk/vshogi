@@ -552,6 +552,23 @@ inline animal_shogi::Game::Game(const animal_shogi::State& s)
     update_result();
 }
 
+template <>
+inline void animal_shogi::Game::attention_matrix(
+    float* const data, const std::vector<DirectionEnum>& directions)
+{
+    std::fill_n(data, num_squares * num_squares, 0.f);
+    for (auto sq : EnumIterator<Square, num_squares>()) {
+        const uint ii = static_cast<uint>(sq);
+        for (auto dir : directions) {
+            const auto attention = SHelper::shift(sq, dir);
+            if (attention != SHelper::SQ_NA) {
+                const uint jj = static_cast<uint>(attention);
+                data[ii * num_squares + jj] = 1.f;
+            }
+        }
+    }
+}
+
 } // namespace vshogi
 
 #endif // VSHOGI_VARIANTS_ANIMAL_SHOGI_HPP

@@ -431,10 +431,13 @@ def run_train(args: Args):
         input_size=(shogi.Game.ranks, shogi.Game.files),
         input_channels=shogi.Game.feature_channels,
         num_policy_per_square=shogi.Move._num_policy_per_square(),
-        num_channels_in_hidden_layer=args.nn_hidden_channels,
-        num_channels_in_bottleneck=args.nn_bottleneck_channels,
-        use_long_range_concat=(args.shogi_variant != "animal_shogi"),
+        hidden_channels=args.nn_hidden_channels,
+        bottleneck_channels=args.nn_bottleneck_channels,
         num_backbone_blocks=args.nn_backbone_blocks,
+        attention_matrices=(
+            shogi.Game.get_adjacent_attention(),
+            shogi.Game.get_diagonal_attention(),
+        ),
     )
     i = args.resume_rl_cycle_from
     if i > 1:

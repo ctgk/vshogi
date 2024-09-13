@@ -236,13 +236,13 @@ public:
     {
         m_current_state.to_feature_map(data);
     }
-    static void to_attention_matrix(float* const data)
+    static void attention_matrix(
+        float* const data, const std::vector<DirectionEnum>& directions)
     {
         std::fill_n(data, num_squares * num_squares, 0.f);
         for (auto sq : EnumIterator<Square, num_squares>()) {
             const uint ii = static_cast<uint>(sq);
-            data[ii * num_squares + ii] = 1.f;
-            for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
+            for (auto dir : directions) {
                 auto ptr_sq = SHelper::get_squares_along(dir, sq);
                 for (; *ptr_sq != SHelper::SQ_NA; ++ptr_sq) {
                     const uint jj = static_cast<uint>(*ptr_sq);
