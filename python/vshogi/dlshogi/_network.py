@@ -4,11 +4,11 @@ import numpy as np
 import tensorflow as tf
 
 
-def _pconv2d(x, ch, use_bias=False):
+def _pconv(x, ch, use_bias=False):
     return tf.keras.layers.Conv2D(ch, 1, use_bias=use_bias)(x)
 
 
-def _dconv2d(x, use_bias=False):
+def _dconv(x, use_bias=False):
     return tf.keras.layers.DepthwiseConv2D(
         3, padding='same', use_bias=use_bias)(x)
 
@@ -21,12 +21,12 @@ def _act(x):
     return tf.keras.layers.LeakyReLU()(x)
 
 
-def _act_bn_pconv2d(x, ch):
-    return _act(_bn(_pconv2d(x, ch, use_bias=False)))
+def _act_pconv(x, ch):
+    return _act(_pconv(x, ch, use_bias=True))
 
 
-def _act_bn_dconv2d(x):
-    return _act(_bn(_dconv2d(x, use_bias=False)))
+def _act_bn_pconv(x, ch):
+    return _act(_bn(_pconv(x, ch, use_bias=False)))
 
 
 class _Attention(tf.keras.layers.Layer):
@@ -48,6 +48,14 @@ class _Attention(tf.keras.layers.Layer):
         return tf.reshape(h, self._input_shape)
 
 
+def _vertical_attention(x):
+    return tf.math.reduce_sum(x, axis=1, keepdims=True) - x
+
+
+def _horizontal_attention(x):
+    return tf.math.reduce_sum(x, axis=2, keepdims=True) - x
+
+
 def build_policy_value_network(
     input_size: tp.Tuple[int, int],  # (H, W)
     input_channels: int,
@@ -55,7 +63,7 @@ def build_policy_value_network(
     hidden_channels: int,
     bottleneck_channels: int,
     num_backbone_blocks: int,
-    attention_matrices: tp.Tuple[np.ndarray, np.ndarray],
+    diagonal_attention_matrix: np.ndarray,
 ):
     """Return policy-value network.
 
@@ -71,40 +79,46 @@ def build_policy_value_network(
         Number of feature-channel in bottleneck block.
     num_backbone_blocks : int
         Number of backbone blocks.
-    attention_matrices : tp.Tuple[np.ndarray, np.ndarray]
-        Attention matrices
+    diagonal_attention_matrix : np.ndarray
+        Attention matrix along diagonal directions.
     """
-    attention_layers = [_Attention(a) for a in attention_matrices]
+    diagonal_attention = _Attention(diagonal_attention_matrix)
 
     def resblock(x):
-        h1 = _act_bn_pconv2d(x, bottleneck_channels // 2)
-        h1 = _act_bn_dconv2d(h1)
+        h = _act_pconv(x, bottleneck_channels)
+        h1, h2, h3, h4 = tf.split(
+            h,
+            [
+                bottleneck_channels // 2,
+                bottleneck_channels // 4,
+                bottleneck_channels // 8,
+                bottleneck_channels // 8,
+            ],
+            axis=-1,
+        )
 
-        h2 = _pconv2d(x, bottleneck_channels // 4)
-        h2 = _act(_bn(attention_layers[0](h2)))
-        h2 = _act_bn_pconv2d(h2, bottleneck_channels // 4)
+        h1 = _dconv(h1)
+        h2 = diagonal_attention(h2)
+        h3 = _vertical_attention(h3)
+        h4 = _horizontal_attention(h4)
 
-        h3 = _pconv2d(x, bottleneck_channels // 4)
-        h3 = _act(_bn(attention_layers[1](h3)))
-        h3 = _act_bn_pconv2d(h3, bottleneck_channels // 4)
-
-        h = tf.keras.layers.Concatenate()([h1, h2, h3])
-        h = _pconv2d(h, x.shape[-1])
+        h = tf.keras.layers.Concatenate()([h1, h2, h3, h4])
+        h = _act(h)
+        h = _pconv(h, x.shape[-1])
         return _act(_bn(x + h))
 
     def backbone_network(x):
-        h = _act_bn_pconv2d(x, hidden_channels)
-        h = _act_bn_dconv2d(h)
+        h = _act_bn_pconv(x, hidden_channels)
         for _ in range(num_backbone_blocks):
             h = resblock(h)
         return h
 
     def policy_network(x):
-        h = _pconv2d(x, num_policy_per_square, use_bias=True)
+        h = _pconv(x, num_policy_per_square, use_bias=True)
         return tf.keras.layers.Flatten(name='policy_logits')(h)
 
     def value_network(x):
-        h = _act_bn_pconv2d(x, 1)
+        h = _act_bn_pconv(x, 1)
         h = tf.keras.layers.Flatten()(h)
         return tf.keras.layers.Dense(1, activation='tanh', name='value')(h)
 

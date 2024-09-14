@@ -13,10 +13,7 @@ if __name__ == '__main__':
         hidden_channels=128,
         bottleneck_channels=32,
         num_backbone_blocks=10,
-        attention_matrices=(
-            Game.get_adjacent_attention(),
-            Game.get_diagonal_attention(),
-        ),
+        diagonal_attention_matrix=Game.get_diagonal_attention(),
     )
     network.summary()
     player = vshogi.engine.DfpnMcts(
