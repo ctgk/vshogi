@@ -39,8 +39,12 @@ class PolicyValueFunction:
             input_details['shape'], dtype=np.float32)
         self._input_index = input_details['index']
         output_details = self._interpreter.get_output_details()
-        self._value_index = output_details[0]['index']
-        self._policy_index = output_details[1]['index']
+        if output_details[0]['shape'][-1] == 1:
+            self._value_index = output_details[0]['index']
+            self._policy_index = output_details[1]['index']
+        else:
+            self._value_index = output_details[1]['index']
+            self._policy_index = output_details[0]['index']
 
     def __call__(self, game: Game) -> tp.Tuple[np.ndarray, float]:
         """Return logits of policy and value of the current game state.

@@ -26,33 +26,6 @@ MESSAGE_TEMPLATE = '''\
 +---------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
 '''
 
-class PolicyValueFunction:
-
-    def __init__(
-        self,
-        model: str,
-        num_threads: int = 1,
-    ) -> None:
-        self._interpreter = tf.lite.Interpreter(
-            model_path=model, num_threads=num_threads)
-        self._interpreter.allocate_tensors()
-        input_details = self._interpreter.get_input_details()[0]
-        self._input_placeholder = np.empty(
-            input_details['shape'], dtype=np.float32)
-        self._input_index = input_details['index']
-        output_details = self._interpreter.get_output_details()
-        self._value_index = output_details[0]['index']
-        self._policy_index = output_details[1]['index']
-
-    def __call__(self, game: vshogi.Game) -> tp.Tuple[np.ndarray, float]:
-        game.to_dlshogi_features(out=self._input_placeholder)
-        self._interpreter.set_tensor(
-            self._input_index, self._input_placeholder)
-        self._interpreter.invoke()
-        value = self._interpreter.get_tensor(self._value_index).item()
-        policy_logits = self._interpreter.get_tensor(self._policy_index)
-        return policy_logits, value
-
 
 @classopt(default_long=True)
 class Args:
@@ -115,14 +88,14 @@ def _get_results_of_single_pair(
     player1 = vshogi.engine.DfpnMcts(
         vshogi.engine.DfpnSearcher(),
         vshogi.engine.Mcts(
-            PolicyValueFunction(player1),
+            vshogi.dlshogi.PolicyValueFunction(player1),
             **mcts_init_args,
         ),
     )
     player2 = vshogi.engine.DfpnMcts(
         vshogi.engine.DfpnSearcher(),
         vshogi.engine.Mcts(
-            PolicyValueFunction(player2),
+            vshogi.dlshogi.PolicyValueFunction(player2),
             **mcts_init_args,
         ),
     )

@@ -56,6 +56,30 @@ def _horizontal_attention(x):
     return tf.math.reduce_sum(x, axis=2, keepdims=True) - x
 
 
+def _resblock(x, ch, diagonal_attention_layer):
+    h = _act_pconv(x, ch)
+    h1, h2, h3, h4 = tf.split(h, [ch // 2, ch // 4, ch // 8, ch // 8], axis=-1)
+    h1 = _dconv(h1)
+    h2 = diagonal_attention_layer(h2)
+    h3 = _vertical_attention(h3)
+    h4 = _horizontal_attention(h4)
+    h = tf.keras.layers.Concatenate()([h1, h2, h3, h4])
+    h = _act(h)
+    h = _pconv(h, x.shape[-1])
+    return _act(_bn(x + h))
+
+
+def _policy_head(x, num_policy_per_square, name='policy_logits'):
+    h = _pconv(x, num_policy_per_square, use_bias=True)
+    return tf.keras.layers.Flatten(name=name)(h)
+
+
+def _value_head(x, name='value'):
+    h = _act_bn_pconv(x, 1)
+    h = tf.keras.layers.Flatten()(h)
+    return tf.keras.layers.Dense(1, activation='tanh', name=name)(h)
+
+
 def build_policy_value_network(
     input_size: tp.Tuple[int, int],  # (H, W)
     input_channels: int,
@@ -84,47 +108,12 @@ def build_policy_value_network(
     """
     diagonal_attention = _Attention(diagonal_attention_matrix)
 
-    def resblock(x):
-        h = _act_pconv(x, bottleneck_channels)
-        h1, h2, h3, h4 = tf.split(
-            h,
-            [
-                bottleneck_channels // 2,
-                bottleneck_channels // 4,
-                bottleneck_channels // 8,
-                bottleneck_channels // 8,
-            ],
-            axis=-1,
-        )
-
-        h1 = _dconv(h1)
-        h2 = diagonal_attention(h2)
-        h3 = _vertical_attention(h3)
-        h4 = _horizontal_attention(h4)
-
-        h = tf.keras.layers.Concatenate()([h1, h2, h3, h4])
-        h = _act(h)
-        h = _pconv(h, x.shape[-1])
-        return _act(_bn(x + h))
-
-    def backbone_network(x):
-        h = _act_bn_pconv(x, hidden_channels)
-        for _ in range(num_backbone_blocks):
-            h = resblock(h)
-        return h
-
-    def policy_network(x):
-        h = _pconv(x, num_policy_per_square, use_bias=True)
-        return tf.keras.layers.Flatten(name='policy_logits')(h)
-
-    def value_network(x):
-        h = _act_bn_pconv(x, 1)
-        h = tf.keras.layers.Flatten()(h)
-        return tf.keras.layers.Dense(1, activation='tanh', name='value')(h)
-
     x = tf.keras.Input(shape=(*input_size, input_channels))
-    backbone_feature = backbone_network(x)
-    policy_logits = policy_network(backbone_feature)
-    value = value_network(backbone_feature)
+    h = _act_bn_pconv(x, hidden_channels)
+    for _ in range(num_backbone_blocks):
+        h = _resblock(h, bottleneck_channels, diagonal_attention)
+
+    policy_logits = _policy_head(h, num_policy_per_square)
+    value = _value_head(h)
     model = tf.keras.Model(inputs=x, outputs=[policy_logits, value])
     return model
