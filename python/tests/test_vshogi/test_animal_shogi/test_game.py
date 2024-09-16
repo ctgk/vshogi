@@ -23,6 +23,19 @@ def test_num_dlshogi_policy():
     assert 3 * 4 * (8 + 3) == shogi.Game().num_dlshogi_policy
 
 
+def test_get_attention():
+    a = shogi.Game.get_attention()
+    assert a.shape == (12, 12)
+    assert np.allclose(a.T, a)
+    expect = np.array([
+        [0, 1, 0],
+        [0, 1, 1],
+        [0, 0, 0],
+        [0, 0, 0],
+    ])
+    assert np.allclose(a[2].reshape(4, 3), expect)
+
+
 def test_get_adjacent_attention():
     a = shogi.Game.get_adjacent_attention()
     assert a.shape == (12, 12)

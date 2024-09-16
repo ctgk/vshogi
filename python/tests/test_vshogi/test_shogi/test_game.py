@@ -24,6 +24,24 @@ def test_num_dlshogi_policy():
     assert 9 * 9 * (2 * 10 + 7) == shogi.Game().num_dlshogi_policy
 
 
+def test_get_attention():
+    a = shogi.Game.get_attention()
+    assert a.shape == (81, 81)
+    assert np.allclose(a.T, a)
+    expect = np.array([
+        [1, 0, 1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 0, 0, 0, 0, 0, 0],
+        [1, 1, 1, 1, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 1, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 1, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 1, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0, 1, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0, 1],
+        [0, 1, 0, 0, 0, 0, 0, 0, 0],
+    ])
+    assert np.allclose(a[1].reshape(9, 9), expect)
+
+
 def test_get_adjacent_attention():
     a = shogi.Game.get_adjacent_attention()
     assert a.shape == (81, 81)
