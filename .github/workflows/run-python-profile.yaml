@@ -19,4 +19,4 @@ jobs:
     - name: Install dependencies
       run: pip install .[dlshogi]
     - name: Run command
-      run: python examples/dlshogi_model.py
+      run: python -m cProfile -s tottime examples/dlshogi_model.py
