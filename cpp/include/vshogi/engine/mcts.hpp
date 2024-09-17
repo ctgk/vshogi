@@ -469,7 +469,7 @@ private:
                 = (is_black_turn)
                       ? actions[ii].to_dlshogi_policy_index()
                       : actions[ii].rotate().to_dlshogi_policy_index();
-            probas[ii] = policy_logits[index];
+            probas[ii] = (policy_logits) ? policy_logits[index] : 0.f;
         }
         softmax(probas);
 
@@ -637,6 +637,76 @@ public:
             s -= p;
         }
         return ch->get_action(); // For numerical instability.
+    }
+    static float
+    evaluate_by_random_playout(const GameType& g, const uint num_random_playout)
+    {
+        float v = 0.f;
+        const auto turn = g.get_turn();
+        for (uint ii = num_random_playout; ii--;)
+            v += result_to_value(single_random_playout(g), turn);
+        return v / static_cast<float>(num_random_playout);
+    }
+
+private:
+    static ResultEnum single_random_playout(const GameType& g)
+    {
+        auto g_copy = GameType(g);
+        while (g_copy.get_result() == ONGOING) {
+            const auto m = random_select_legal_action(g);
+            g_copy.apply_nocheck(m);
+        }
+        return g_copy.get_result();
+    }
+    static MoveType random_select_legal_action(const GameType& g)
+    {
+        const State<Config>& state = g.get_state();
+        const auto turn = state.get_turn();
+        auto iter_drop = DropMoveGenerator<Config>(state);
+        auto iter_king = KingMoveGenerator<Config>(state);
+        auto iter_board = NonKingBoardMoveGenerator<Config>(state);
+        const auto num_droppable
+            = iter_drop.is_end() ? 0u : state.get_stand(turn).unique_count();
+        const auto num_non_king
+            = iter_board.is_end()
+                  ? 0u
+                  : state.get_board().get_occupied(turn).hamming_weight() - 1u;
+        const auto num_king = iter_king.is_end() ? 0u : 1u;
+        const float num_source
+            = static_cast<float>(num_droppable + num_non_king + num_king);
+        const auto fraction_drop
+            = static_cast<float>(num_droppable) / num_source;
+        const auto fraction_non_king
+            = static_cast<float>(num_non_king) / num_source;
+        float s_iter
+            = std::max(dist(engine), 0.99999f); // for numerical stability
+        if (s_iter < fraction_drop)
+            return random_select_one_action(iter_drop);
+        s_iter -= fraction_drop;
+        if (s_iter < fraction_non_king)
+            return random_select_one_action(iter_board);
+        return random_select_one_action(iter_king);
+    }
+    template <class Iterable>
+    static MoveType random_select_one_action(Iterable&& iter)
+    {
+        std::vector<MoveType> legal_moves{};
+        for (auto m : iter) {
+            legal_moves.emplace_back(m);
+        }
+        const auto n = static_cast<uint>(legal_moves.size());
+        const float s = dist(engine);
+        const auto index = static_cast<uint>(s * static_cast<float>(n));
+        return legal_moves[std::max(index, n - 1u)];
+    }
+    static float result_to_value(const ResultEnum r, const ColorEnum turn)
+    {
+        if (r == DRAW)
+            return 0.f;
+        if ((static_cast<int>(r) - static_cast<int>(BLACK_WIN))
+            == static_cast<int>(turn))
+            return 1.f;
+        return -1.f;
     }
 };
 
