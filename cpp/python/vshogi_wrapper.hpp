@@ -34,17 +34,15 @@ template <class Config>
 inline void export_piece_stand(pybind11::module& m)
 {
     using Stand = vshogi::Stand<Config>;
-    using Pieces = vshogi::Pieces<Config>;
     using PieceType = typename Config::PieceType;
+    constexpr auto num_stand_types = Config::num_stand_piece_types;
     pybind11::class_<Stand>(m, "Stand")
         .def("count", &Stand::count)
         .def("any", &Stand::any)
         .def("to_dict", [](const Stand& self) -> pybind11::dict {
             pybind11::dict out;
-            for (uint ii = 0; ii < Config::num_stand_piece_types; ++ii) {
-                const auto p = static_cast<PieceType>(ii);
-                out[pybind11::cast(p)] = self.count(p);
-            }
+            for (auto pt : vshogi::EnumIterator<PieceType, num_stand_types>())
+                out[pybind11::cast(pt)] = self.count(pt);
             return out;
         });
 }
@@ -317,11 +315,13 @@ inline void export_game(pybind11::module& m)
         .def("copy", [](const Game& self) { return Game(self); });
 }
 
-template <class Game, class Move>
+template <class Config>
 inline void export_mcts_node(pybind11::module& m)
 {
     namespace py = pybind11;
-    using Node = vshogi::engine::mcts::Node<Game, Move>;
+    using Game = vshogi::Game<Config>;
+    using Move = vshogi::Move<Config>;
+    using Node = vshogi::engine::mcts::Node<Config>;
 
     py::class_<Node>(m, "MctsNode")
         .def(
@@ -399,12 +399,12 @@ inline void export_mcts_node(pybind11::module& m)
         });
 }
 
-template <class Game, class Move>
+template <class Config>
 inline void export_mcts_searcher(pybind11::module& m)
 {
     namespace py = pybind11;
-    using Node = vshogi::engine::mcts::Node<Game, Move>;
-    using Searcher = vshogi::engine::mcts::Searcher<Game, Move>;
+    using Game = vshogi::Game<Config>;
+    using Searcher = vshogi::engine::mcts::Searcher<Config>;
 
     py::class_<Searcher>(m, "MCTS")
         .def(py::init<const float, const int, const int>())
@@ -467,8 +467,8 @@ void export_classes(pybind11::module& m)
     export_move<Config>(m);
     export_state<Config>(m);
     export_game<Config>(m);
-    export_mcts_searcher<GameType, vshogi::Move<Config>>(m);
-    export_mcts_node<GameType, vshogi::Move<Config>>(m);
+    export_mcts_searcher<Config>(m);
+    export_mcts_node<Config>(m);
 
     if constexpr (!std::is_same<GameType, vshogi::animal_shogi::Game>::value)
         export_dfpn_searcher<Config>(m);

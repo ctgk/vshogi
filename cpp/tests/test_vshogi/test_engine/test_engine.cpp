@@ -11,7 +11,7 @@ namespace test_shogi
 {
 
 using namespace vshogi::shogi;
-using Node = vshogi::engine::mcts::Node<Game, Move>;
+using Node = vshogi::engine::mcts::Node<Config>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
 TEST_GROUP (shogi_engine) {
@@ -46,7 +46,7 @@ TEST(shogi_engine, mcts_with_dfpn)
     };
 
     auto g = Game();
-    auto mcts = vshogi::engine::mcts::Searcher<Game, Move>(4.f, 3, 1);
+    auto mcts = vshogi::engine::mcts::Searcher<Config>(4.f, 3, 1);
     mcts.set_game(g, 0.f, zeros);
     auto dfpn = vshogi::engine::dfpn::Searcher<Config>();
     for (int ii = 0; ii < 167; ++ii) {
