@@ -19,6 +19,7 @@ if __name__ == '__main__':
     player = vshogi.engine.DfpnMcts(
         vshogi.engine.DfpnSearcher(),
         vshogi.engine.Mcts(vshogi.dlshogi.PolicyValueFunction(network)),
+        vshogi.engine.Mcts(),
     )
 
     game = Game()
@@ -49,5 +50,9 @@ if __name__ == '__main__':
         if game.result != vshogi.Result.ONGOING:
             break
         player.set_game(game)
-        player.search(mcts_searches=1000, kldgain_threshold=1e-4)
+        player.search(
+            mcts_searches=1000,
+            mcts_endgame_searches=10000,
+            kldgain_threshold=1e-4,
+        )
         game.apply(move)

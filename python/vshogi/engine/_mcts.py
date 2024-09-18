@@ -50,12 +50,15 @@ def _tree(
     return out
 
 
+PVFunc = tp.Callable[[Game], tp.Tuple[Policy, Value]]
+
+
 class Mcts(Engine):
     """Monte Carlo Tree Searcher engine."""
 
     def __init__(
         self,
-        policy_value_func: tp.Callable[[Game], tp.Tuple[Policy, Value]],
+        policy_value_func: tp.Optional[PVFunc] = None,
         coeff_puct: float = 1.,
         non_random_ratio: int = 3,
         random_depth: int = 1,
@@ -64,7 +67,7 @@ class Mcts(Engine):
 
         Parameters
         ----------
-        policy_value_func : tp.Callable[[Game], tp.Tuple[Policy, Value]]
+        policy_value_func : tp.Optional[PVFunc]
             Function to return policy and value given a game.
         coeff_puct : float, optional
             Default coefficient used to compute PUCT score. Higher the value
@@ -84,10 +87,13 @@ class Mcts(Engine):
         self._random_depth = random_depth
 
     def _set_game(self, game: Game):
-        policy_logits, value = self._policy_value_func(game)
         self._searcher = game._get_mcts_searcher_class()(
             self._coeff_puct, self._non_random_ratio, self._random_depth)
-        self._searcher.set_game(game._game, value, policy_logits)
+        if self._policy_value_func is None:
+            self._searcher.set_game(game._game, 0.)
+        else:
+            policy_logits, value = self._policy_value_func(game)
+            self._searcher.set_game(game._game, value, policy_logits)
         self._game = game
 
     def _is_ready(self) -> bool:
@@ -134,6 +140,13 @@ class Mcts(Engine):
             node = self._searcher.select(game._game)
             if node is None:
                 continue
+            self._simulate_expand_and_backprop(node, game)
+
+    def _simulate_expand_and_backprop(self, node, game):
+        if self._policy_value_func is None:
+            value = self._searcher.evaluate_by_random_playout(game._game, 10)
+            node.simulate_expand_and_backprop(game._game, value)
+        else:
             policy_logits, value = self._policy_value_func(game)
             node.simulate_expand_and_backprop(game._game, value, policy_logits)
 

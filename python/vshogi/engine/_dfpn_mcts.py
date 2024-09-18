@@ -148,8 +148,7 @@ class DfpnMcts(Engine):
             if self._dfpn.search(dfpn_searches_at_vertex):
                 node.simulate_mate_and_backprop()
             else:
-                policy, value = mcts._policy_value_func(game)
-                node.simulate_expand_and_backprop(game._game, value, policy)
+                mcts._simulate_expand_and_backprop(node, game)
 
     def _kldgain(self, mcts, prev_visits: tp.Dict[Move, int]) -> float:
         prev_visits_added = {m: v + 1 for m, v in prev_visits.items()}
