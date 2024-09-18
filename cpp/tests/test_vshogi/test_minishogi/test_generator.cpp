@@ -92,11 +92,13 @@ TEST(test_minishogi_generator, drop_move_generator)
         CHECK_FALSE(iter != iter.end());
     }
     {
+        // in check
         const auto s = State("4k/4G/5/5/5 w p");
         auto iter = DropMoveGenerator(s);
         CHECK_FALSE(iter != iter.end());
     }
     {
+        // in check
         const auto s = State("4k/5/5/5/B4 w ps");
         auto iter = DropMoveGenerator(s);
         CHECK_TRUE(Move(SQ_2B, FU) == *iter);
@@ -112,6 +114,13 @@ TEST(test_minishogi_generator, drop_move_generator)
         CHECK_TRUE(Move(SQ_4D, GI) == *iter);
         ++iter;
         CHECK_FALSE(iter != iter.end());
+    }
+    {
+        // in double check
+        const auto s = State("r3k/5/5/5/K3r b PSG");
+        auto iter = DropMoveGenerator(s);
+        CHECK_FALSE(iter != iter.end());
+        CHECK_TRUE(iter.is_end());
     }
 }
 
@@ -144,6 +153,13 @@ TEST(test_minishogi_generator, test_check_drop_move_generator)
         const auto s = State("4k/5/3g1/5/2PKP w p");
         auto iter = CheckDropMoveGenerator(s);
         CHECK_FALSE(iter != iter.end());
+    }
+    {
+        // in double check
+        const auto s = State("3kb/5/5/5/K3r b R");
+        auto iter = CheckDropMoveGenerator(s);
+        CHECK_FALSE(iter != iter.end());
+        CHECK_TRUE(iter.is_end());
     }
 }
 

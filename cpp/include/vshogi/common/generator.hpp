@@ -204,6 +204,10 @@ public:
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_stand(state.get_stand(m_turn)), m_sq_iter{}, m_pt_iter{}
     {
+        if (state.in_double_check()) {
+            m_pt_iter = static_cast<PieceType>(num_stand_piece_types);
+            return;
+        }
         init_sq_iter();
         increment_iterators_unless_legal();
     }
@@ -397,6 +401,10 @@ public:
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_stand(state.get_stand(m_turn)), m_sq_iter{}, m_pt_iter{}
     {
+        if (state.in_double_check()) {
+            m_pt_iter = static_cast<PieceType>(num_stand_piece_types);
+            return;
+        }
         init_sq_iter();
         increment_iterators_unless_legal();
     }
