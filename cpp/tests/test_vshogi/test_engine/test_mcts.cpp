@@ -336,6 +336,31 @@ TEST(minishogi_node, explore_until_game_end)
     }
 }
 
+TEST_GROUP (minishogi_searcher) {
+};
+
+TEST(minishogi_searcher, evaluate_by_random_playout)
+{
+    // Turn: BLACK
+    // White: -
+    //     5   4   3   2   1
+    //   *---*---*---*---*---*
+    // A |   |   |   |-FU|-OU|
+    //   *---*---*---*---*---*
+    // B |   |+GI|   |   |   |
+    //   *---*---*---*---*---*
+    // C |+HI|+KA|   |   |+GI|
+    //   *---*---*---*---*---*
+    // D |+FU|+KI|   |   |+HI|
+    //   *---*---*---*---*---*
+    // E |+OU|   |   |+KA|   |
+    //   *---*---*---*---*---*
+    // Black: -
+    auto g = Game("3pk/1S3/RB2S/PG2R/K2B1 b G");
+    const auto actual = Searcher::evaluate_by_random_playout(g, 100);
+    CHECK_TRUE(actual > 0.01f);
+}
+
 } // namespace test_minishogi
 
 namespace test_judkins_shogi

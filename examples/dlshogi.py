@@ -181,13 +181,17 @@ def play_game(
     return game
 
 
-def load_player_of(index_path_or_network, num_threads=1) -> vshogi.engine.DfpnMcts:
+def load_player_of(index_path_or_network) -> vshogi.engine.DfpnMcts:
     if isinstance(index_path_or_network, int):
         i = index_path_or_network
-        mcts = vshogi.engine.Mcts(
-            vshogi.dlshogi.PolicyValueFunction(f'models/model_{i:04d}.tflite'),
-            coeff_puct=args.mcts_coeff_puct,
-        )
+        if i == 0:
+            mcts = vshogi.engine.Mcts(coeff_puct=args.mcts_coeff_puct)
+        else:
+            mcts = vshogi.engine.Mcts(
+                vshogi.dlshogi.PolicyValueFunction(
+                    f'models/model_{i:04d}.tflite'),
+                coeff_puct=args.mcts_coeff_puct,
+            )
     else:
         mcts = vshogi.engine.Mcts(
             vshogi.dlshogi.PolicyValueFunction(index_path_or_network),
@@ -453,7 +457,7 @@ def run_train(args: Args):
 def run_rl_cycle(args: Args):
 
     def get_best_past_player_against_latest(args: Args, index: int):
-        player = load_player_of(index, args.jobs)
+        player = load_player_of(index)
         indices_prev = list(range(index - 1, -1, -1))
         n = 10
         if len(indices_prev) > n:
@@ -463,7 +467,7 @@ def run_rl_cycle(args: Args):
             indices_prev = np.sort(indices_prev)[::-1]
         validation_result_list = []
         for i_prev in indices_prev:
-            player_prev = load_player_of(int(i_prev), args.jobs)
+            player_prev = load_player_of(int(i_prev))
             validation_results = {'win': 0, 'loss': 0, 'draw': 0}
             pbar = tqdm(range(args.validations), ncols=100)
             for n in pbar:
@@ -497,8 +501,8 @@ def run_rl_cycle(args: Args):
 
     def get_best_player_index(current: int, best: int):
         results = {'win': 0, 'loss': 0, 'draw': 0}
-        player_curr = load_player_of(current, args.jobs)
-        player_best = load_player_of(best, args.jobs)
+        player_curr = load_player_of(current)
+        player_best = load_player_of(best)
         num_play = 40
         win_threshold = num_play * args.win_ratio_threshold
         loss_threshold = num_play * (1 - args.win_ratio_threshold)

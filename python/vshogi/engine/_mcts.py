@@ -144,7 +144,7 @@ class Mcts(Engine):
 
     def _simulate_expand_and_backprop(self, node, game):
         if self._policy_value_func is None:
-            value = self._searcher.evaluate_by_random_playout(game._game, 10)
+            value = self._searcher.evaluate_by_random_playout(game._game, 1)
             node.simulate_expand_and_backprop(game._game, value)
         else:
             policy_logits, value = self._policy_value_func(game)

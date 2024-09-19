@@ -19,7 +19,6 @@ if __name__ == '__main__':
     player = vshogi.engine.DfpnMcts(
         vshogi.engine.DfpnSearcher(),
         vshogi.engine.Mcts(vshogi.dlshogi.PolicyValueFunction(network)),
-        vshogi.engine.Mcts(),
     )
 
     game = Game()

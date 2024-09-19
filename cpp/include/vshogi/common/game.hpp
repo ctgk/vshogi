@@ -225,6 +225,17 @@ public:
     {
         return m_current_state.in_check();
     }
+    bool dupe_after_apply(const MoveType move) const
+    {
+        StateType s = StateType(m_current_state);
+        std::uint64_t hash = m_zobrist_hash;
+        s.apply(move, &hash);
+        return std::find(
+                   m_zobrist_hash_list.cbegin(),
+                   m_zobrist_hash_list.cend(),
+                   hash)
+               != m_zobrist_hash_list.cend();
+    }
     void clear_records_for_dfpn()
     {
         m_zobrist_hash_list.clear();

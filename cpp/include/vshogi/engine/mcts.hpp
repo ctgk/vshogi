@@ -651,9 +651,15 @@ public:
 private:
     static ResultEnum single_random_playout(const GameType& g)
     {
-        auto g_copy = GameType(g);
+        GameType g_copy = GameType(g);
         while (g_copy.get_result() == ONGOING) {
-            const auto m = random_select_legal_action(g);
+            MoveType m{};
+            for (int ii = 3; ii--;) {
+                m = random_select_legal_action(g_copy);
+                if (g_copy.dupe_after_apply(m))
+                    continue;
+                break;
+            }
             g_copy.apply_nocheck(m);
         }
         return g_copy.get_result();
@@ -679,7 +685,7 @@ private:
         const auto fraction_non_king
             = static_cast<float>(num_non_king) / num_source;
         float s_iter
-            = std::max(dist(engine), 0.99999f); // for numerical stability
+            = std::min(dist(engine), 0.99999f); // for numerical stability
         if (s_iter < fraction_drop)
             return random_select_one_action(iter_drop);
         s_iter -= fraction_drop;

@@ -1,11 +1,60 @@
 #include "vshogi/engine/dfpn.hpp"
 #include "vshogi/engine/mcts.hpp"
+#include "vshogi/variants/minishogi.hpp"
 #include "vshogi/variants/shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
 
 namespace test_vshogi::test_engine
 {
+
+namespace test_minishogi
+{
+
+using namespace vshogi::minishogi;
+
+TEST_GROUP (test_minishogi_engine) {
+};
+
+TEST(test_minishogi_engine, test_random_playout_searcher)
+{
+    auto g = Game();
+    auto searcher = vshogi::engine::mcts::Searcher<Config>(4.f, 3, 1);
+    searcher.set_game(g, 0.f, nullptr);
+    auto dfpn = vshogi::engine::dfpn::Searcher<Config>();
+    while (true) {
+        if (g.get_result() != vshogi::ONGOING)
+            break;
+
+        {
+            dfpn.set_game(g);
+            dfpn.explore(10000);
+        }
+
+        for (int jj = (100 - searcher.get_visit_count()); jj--;) {
+            auto g_copy = Game(g);
+            const auto n = searcher.select(g_copy);
+            if (n == nullptr)
+                continue;
+
+            dfpn.set_game(g_copy);
+            if (dfpn.explore(100))
+                n->simulate_mate_and_backprop();
+            else
+                n->simulate_expand_and_backprop(
+                    g_copy.get_legal_moves(),
+                    g_copy.get_turn(),
+                    searcher.evaluate_by_random_playout(g_copy, 1),
+                    nullptr);
+        }
+
+        const auto m = searcher.get_action_by_visit_max();
+        g.apply(m);
+        searcher.apply(m);
+    }
+}
+
+} // namespace test_minishogi
 
 namespace test_shogi
 {
@@ -139,7 +188,7 @@ TEST(shogi_engine, random_playout_searcher)
                 n->simulate_expand_and_backprop(
                     g_copy.get_legal_moves(),
                     g_copy.get_turn(),
-                    searcher.evaluate_by_random_playout(g_copy, 10),
+                    searcher.evaluate_by_random_playout(g_copy, 1),
                     nullptr);
         }
 
