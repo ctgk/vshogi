@@ -40,6 +40,13 @@ public:
     {
         return static_cast<uint>((m_value & masks[p]) >> shift_bits[p]);
     }
+    uint unique_count() const
+    {
+        uint out = 0u;
+        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>())
+            out += static_cast<uint>(exist(pt));
+        return out;
+    }
     bool exist(const PieceType& p) const
     {
         return (m_value & masks[p]) > 0;

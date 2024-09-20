@@ -370,6 +370,12 @@ inline void export_mcts_node(pybind11::module& m)
                 self.simulate_expand_and_backprop(
                     game.get_legal_moves(), game.get_turn(), value, data);
             })
+        .def(
+            "simulate_expand_and_backprop",
+            [](Node& self, const Game& game, const float value) {
+                self.simulate_expand_and_backprop(
+                    game.get_legal_moves(), game.get_turn(), value, nullptr);
+            })
         .def("simulate_mate_and_backprop", &Node::simulate_mate_and_backprop)
         .def(
             "_select_node_to_explore",
@@ -417,6 +423,11 @@ inline void export_mcts_searcher(pybind11::module& m)
                 self.set_game(g, v, logits.data());
             })
         .def(
+            "set_game",
+            [](Searcher& self, const Game& g, const float v) {
+                self.set_game(g, v, nullptr);
+            })
+        .def(
             "select",
             [](Searcher& self, Game& game) -> py::object {
                 const auto out = self.select(game);
@@ -437,7 +448,10 @@ inline void export_mcts_searcher(pybind11::module& m)
         .def("get_action_by_visit_max", &Searcher::get_action_by_visit_max)
         .def(
             "get_action_by_visit_distribution",
-            &Searcher::get_action_by_visit_distribution);
+            &Searcher::get_action_by_visit_distribution)
+        .def_static(
+            "evaluate_by_random_playout",
+            &Searcher::evaluate_by_random_playout);
 }
 
 template <class Config>
