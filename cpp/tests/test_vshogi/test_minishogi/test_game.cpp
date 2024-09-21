@@ -93,6 +93,25 @@ TEST(minishogi_game, is_legal)
         auto g = Game("rbsg1/3kp/5/PK3/1GSBR w -");
         CHECK_FALSE(g.is_legal(Move(SQ_2B, SQ_1A)));
     }
+    {
+        // Turn: BLACK
+        // White: -
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // B |+OU|-KA|   |-RY|   |
+        //   *---*---*---*---*---*
+        // C |   |   |+KA|   |   |
+        //   *---*---*---*---*---*
+        // D |   |   |   |-KI|   |
+        //   *---*---*---*---*---*
+        // E |   |   |   |   |-OU|
+        //   *---*---*---*---*---*
+        // Black: -
+        auto g = Game("5/Kb1+r1/2B2/3g1/4k b -");
+        CHECK_FALSE(g.is_legal(Move(SQ_1E, SQ_3C)));
+    }
 }
 
 TEST(minishogi_game, get_legal_moves)

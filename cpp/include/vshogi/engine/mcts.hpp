@@ -697,7 +697,7 @@ private:
         const auto n = static_cast<uint>(legal_moves.size());
         const float s = dist(engine);
         const auto index = static_cast<uint>(s * static_cast<float>(n));
-        return legal_moves[std::max(index, n - 1u)];
+        return legal_moves[std::min(index, n - 1u)];
     }
     static float result_to_value(const ResultEnum r, const ColorEnum turn)
     {
