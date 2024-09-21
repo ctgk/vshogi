@@ -688,16 +688,16 @@ private:
         return random_select_one_action(iter_king);
     }
     template <class Iterable>
-    static MoveType random_select_one_action(Iterable&& iter)
+    static MoveType random_select_one_action(Iterable& iter)
     {
-        std::vector<MoveType> legal_moves{};
-        for (auto m : iter) {
-            legal_moves.emplace_back(m);
+        MoveType out = *iter;
+        ++iter;
+        for (uint ii = 2u; !iter.is_end(); ++ii, ++iter) {
+            const auto r = dist(engine);
+            if (static_cast<uint>(r * static_cast<float>(ii)) == 0u)
+                out = *iter;
         }
-        const auto n = static_cast<uint>(legal_moves.size());
-        const float s = dist(engine);
-        const auto index = static_cast<uint>(s * static_cast<float>(n));
-        return legal_moves[std::min(index, n - 1u)];
+        return out;
     }
     static float result_to_value(const ResultEnum r, const ColorEnum turn)
     {
