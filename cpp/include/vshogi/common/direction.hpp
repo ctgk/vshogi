@@ -63,7 +63,17 @@ inline bool has_dir_e(const DirectionEnum& d)
 
 inline bool is_knight_direction(const DirectionEnum& d)
 {
-    return (d >= DIR_SSW);
+    return (d >= DIR_SSW) && (d != DIR_NA);
+}
+
+inline bool is_adjacent_direction(const DirectionEnum& d)
+{
+    return (d == DIR_N) || (d == DIR_W) || (d == DIR_E) || (d == DIR_S);
+}
+
+inline bool is_diagonal_direction(const DirectionEnum& d)
+{
+    return (d == DIR_NW) || (d == DIR_NE) || (d == DIR_SW) || (d == DIR_SE);
 }
 
 } // namespace vshogi
