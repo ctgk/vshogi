@@ -179,4 +179,40 @@ TEST(minishogi_board, get_occupied)
     }
 }
 
+TEST(minishogi_board, is_square_attacked)
+{
+    {
+        // by FU.
+        const auto b = Board("5/5/2P2/5/5 b");
+        CHECK_TRUE(b.is_square_attacked(SQ_3B, vshogi::BLACK));
+        CHECK_FALSE(b.is_square_attacked(SQ_2B, vshogi::BLACK));
+    }
+    {
+        // by GI.
+        const auto b = Board("5/5/2S2/5/5 b");
+        CHECK_TRUE(b.is_square_attacked(SQ_3B, vshogi::BLACK));
+        CHECK_FALSE(b.is_square_attacked(SQ_3D, vshogi::BLACK));
+    }
+    {
+        // by gold like piece.
+        const auto b = Board("5/5/2+P2/5/5 b");
+        CHECK_TRUE(b.is_square_attacked(SQ_3B, vshogi::BLACK));
+        CHECK_FALSE(b.is_square_attacked(SQ_2D, vshogi::BLACK));
+    }
+    {
+        // by king like piece.
+        const auto b = Board("5/5/5/5/4+R b");
+        CHECK_TRUE(b.is_square_attacked(SQ_2D, vshogi::BLACK));
+        CHECK_FALSE(b.is_square_attacked(SQ_2C, vshogi::BLACK));
+    }
+    {
+        // by a ranging piece.
+        const auto b = Board("5/5/5/5/1P2R b");
+        CHECK_TRUE(b.is_square_attacked(SQ_1A, vshogi::BLACK));
+        CHECK_FALSE(b.is_square_attacked(SQ_2A, vshogi::BLACK));
+        CHECK_TRUE(b.is_square_attacked(SQ_4E, vshogi::BLACK));
+        CHECK_FALSE(b.is_square_attacked(SQ_5E, vshogi::BLACK));
+    }
+}
+
 } // namespace test_vshogi::test_minishogi

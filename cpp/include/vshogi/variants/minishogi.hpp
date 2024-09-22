@@ -504,6 +504,41 @@ inline minishogi::BitBoard
                                         [minishogi::Config::magic_table_size]
     = {};
 
+template <>
+inline bool minishogi::Board::is_square_attacked_by_ranging_pieces(
+    const minishogi::SquareEnum& sq, const ColorEnum& offence) const
+{
+    using namespace minishogi;
+    const BitBoardType occ_full = get_occupied();
+    {
+        const auto attack_inverted
+            = minishogi::Magic::get_diagonal_attack(sq, occ_full);
+        const auto occ_offence = get_occupied<KA, UM>(offence);
+        if ((attack_inverted & occ_offence).any())
+            return true;
+    }
+    {
+        const auto attack_inverted
+            = minishogi::Magic::get_adjacent_attack(sq, occ_full);
+        const auto occ_offence = get_occupied<HI, RY>(offence);
+        if ((attack_inverted & occ_offence).any())
+            return true;
+    }
+    return false;
+}
+
+template <>
+inline bool minishogi::Board::is_square_attacked(
+    const Square& sq, const ColorEnum& by_side) const
+{
+    using namespace minishogi;
+    return is_square_attacked_by<FU>(sq, by_side)
+           || is_square_attacked_by<GI>(sq, by_side)
+           || is_square_attacked_by<KI, TO, NG>(sq, by_side)
+           || is_square_attacked_by<OU, UM, RY>(sq, by_side)
+           || is_square_attacked_by_ranging_pieces(sq, by_side);
+}
+
 } // namespace vshogi
 
 #endif // VSHOGI_VARIANTS_MINISHOGI_HPP

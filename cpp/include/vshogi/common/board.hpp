@@ -95,6 +95,16 @@ public:
         const auto pt = PHelper::to_piece_type(p);
         return m_bb_color[c] & m_bb_piece[pt];
     }
+    template <PieceType PT>
+    BitBoardType get_occupied(const ColorEnum& c) const
+    {
+        return m_bb_color[c] & m_bb_piece[PT];
+    }
+    template <PieceType PT1, PieceType PT2, PieceType... Args>
+    BitBoardType get_occupied(const ColorEnum& c) const
+    {
+        return get_occupied<PT1>(c) | get_occupied<PT2, Args...>(c);
+    }
     void append_sfen(std::string& out) const
     {
         append_sfen_rank(static_cast<Rank>(0), out);
@@ -173,13 +183,19 @@ public:
         }
         return SQ_NA;
     }
-    bool is_square_attacked(
-        const ColorEnum& attacker_color,
-        const Square& sq,
-        const Square& skip = SQ_NA) const
+    bool is_square_attacked(const Square& sq, const ColorEnum& by_side) const
     {
         for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
-            if (find_attacker(attacker_color, sq, dir, skip) != SQ_NA)
+            if (find_attacker(by_side, sq, dir) != SQ_NA)
+                return true;
+        }
+        return false;
+    }
+    bool is_square_attacked(
+        const Square& sq, const ColorEnum& by_side, const Square& skip) const
+    {
+        for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
+            if (find_attacker(by_side, sq, dir, skip) != SQ_NA)
                 return true;
         }
         return false;
@@ -291,6 +307,25 @@ private:
         m_bb_color[c].toggle(sq);
         m_bb_piece[pt].toggle(sq);
     }
+    template <PieceType PT>
+    bool is_square_attacked_by(const Square& sq, const ColorEnum& offence) const
+    {
+        const auto attack_inverted = BitBoardType::get_attacks_by(
+            PHelper::to_board_piece(~offence, PT), sq);
+        const auto occ_offence
+            = get_occupied(PHelper::to_board_piece(offence, PT));
+        return (attack_inverted & occ_offence).any();
+    }
+    template <PieceType Base, PieceType Alike, PieceType... Args>
+    bool is_square_attacked_by(const Square& sq, const ColorEnum& offence) const
+    {
+        const auto attack_inverted = BitBoardType::get_attacks_by(
+            PHelper::to_board_piece(~offence, Base), sq);
+        const auto occ_offence = get_occupied<Base, Alike, Args...>(offence);
+        return (attack_inverted & occ_offence).any();
+    }
+    bool is_square_attacked_by_ranging_pieces(
+        const Square& sq, const ColorEnum& offence) const;
 };
 
 } // namespace vshogi

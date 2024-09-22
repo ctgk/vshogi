@@ -350,7 +350,7 @@ private:
             const auto& board = g.get_board();
             const auto enemy_king_sq = board.get_king_location(defence);
             const auto is_attacked
-                = board.is_square_attacked(defence, dst, enemy_king_sq);
+                = board.is_square_attacked(dst, defence, enemy_king_sq);
             is_attacked_cache[dst] = static_cast<uint>(is_attacked) + 1u;
         }
         ch->m_pn += cent * (is_attacked_cache[dst] - 1);

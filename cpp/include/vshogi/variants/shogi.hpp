@@ -818,6 +818,50 @@ inline shogi::BitBoard
                                     [shogi::Config::magic_table_size]
     = {};
 
+template <>
+inline bool shogi::Board::is_square_attacked_by_ranging_pieces(
+    const shogi::SquareEnum& sq, const ColorEnum& offence) const
+{
+    using namespace shogi;
+    const BitBoardType occ_full = get_occupied();
+    {
+        const auto attack_inverted
+            = (offence == BLACK) ? shogi::Magic::get_south_attack(sq, occ_full)
+                                 : shogi::Magic::get_north_attack(sq, occ_full);
+        const auto occ_offence = get_occupied<KY>(offence);
+        if ((attack_inverted & occ_offence).any())
+            return true;
+    }
+    {
+        const auto attack_inverted
+            = shogi::Magic::get_diagonal_attack(sq, occ_full);
+        const auto occ_offence = get_occupied<KA, UM>(offence);
+        if ((attack_inverted & occ_offence).any())
+            return true;
+    }
+    {
+        const auto attack_inverted
+            = shogi::Magic::get_adjacent_attack(sq, occ_full);
+        const auto occ_offence = get_occupied<HI, RY>(offence);
+        if ((attack_inverted & occ_offence).any())
+            return true;
+    }
+    return false;
+}
+
+template <>
+inline bool shogi::Board::is_square_attacked(
+    const Square& sq, const ColorEnum& by_side) const
+{
+    using namespace shogi;
+    return is_square_attacked_by<FU>(sq, by_side)
+           || is_square_attacked_by<KE>(sq, by_side)
+           || is_square_attacked_by<GI>(sq, by_side)
+           || is_square_attacked_by<KI, TO, NY, NK, NG>(sq, by_side)
+           || is_square_attacked_by<OU, UM, RY>(sq, by_side)
+           || is_square_attacked_by_ranging_pieces(sq, by_side);
+}
+
 } // namespace vshogi
 
 #endif // VSHOGI_VARIANTS_SHOGI_HPP

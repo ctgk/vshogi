@@ -575,6 +575,42 @@ inline judkins_shogi::BitBoard judkins_shogi::Magic::attack_table_sw_ne
     [judkins_shogi::Config::magic_table_size]
     = {};
 
+template <>
+inline bool judkins_shogi::Board::is_square_attacked_by_ranging_pieces(
+    const judkins_shogi::SquareEnum& sq, const ColorEnum& offence) const
+{
+    using namespace judkins_shogi;
+    const BitBoardType occ_full = get_occupied();
+    {
+        const auto attack_inverted
+            = judkins_shogi::Magic::get_diagonal_attack(sq, occ_full);
+        const auto occ_offence = get_occupied<KA, UM>(offence);
+        if ((attack_inverted & occ_offence).any())
+            return true;
+    }
+    {
+        const auto attack_inverted
+            = judkins_shogi::Magic::get_adjacent_attack(sq, occ_full);
+        const auto occ_offence = get_occupied<HI, RY>(offence);
+        if ((attack_inverted & occ_offence).any())
+            return true;
+    }
+    return false;
+}
+
+template <>
+inline bool judkins_shogi::Board::is_square_attacked(
+    const Square& sq, const ColorEnum& by_side) const
+{
+    using namespace judkins_shogi;
+    return is_square_attacked_by<FU>(sq, by_side)
+           || is_square_attacked_by<KE>(sq, by_side)
+           || is_square_attacked_by<GI>(sq, by_side)
+           || is_square_attacked_by<KI, TO, NK, NG>(sq, by_side)
+           || is_square_attacked_by<OU, UM, RY>(sq, by_side)
+           || is_square_attacked_by_ranging_pieces(sq, by_side);
+}
+
 } // namespace vshogi
 
 #endif // VSHOGI_VARIANTS_JUDKINS_SHOGI_HPP
