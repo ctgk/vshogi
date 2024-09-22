@@ -183,6 +183,30 @@ public:
         }
         return SQ_NA;
     }
+    Square find_ranging_attacker(
+        const ColorEnum& attacker_color,
+        const Square& attacked,
+        const DirectionEnum& dir,
+        const Square& skip = SQ_NA) const
+    {
+        const auto dir_from_attacker = rotate(dir);
+        const auto ray = BitBoardType::get_ray_to(attacked, dir);
+        if (!(ray & m_bb_color[attacker_color]).any())
+            return SQ_NA;
+        auto psq = SHelper::get_squares_along(dir, attacked);
+        if (psq == nullptr)
+            return SQ_NA;
+        for (; *psq != SQ_NA; ++psq) {
+            const auto& p = m_pieces[*psq];
+            if ((p == VOID) || (*psq == skip))
+                continue;
+            if ((PHelper::get_color(p) == attacker_color)
+                && PHelper::is_ranging_to(p, dir_from_attacker))
+                return *psq;
+            return SQ_NA;
+        }
+        return SQ_NA;
+    }
     bool is_square_attacked(const Square& sq, const ColorEnum& by_side) const
     {
         for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {

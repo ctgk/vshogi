@@ -113,8 +113,8 @@ public:
     {
         const auto enemy_king_sq = m_board.get_king_location(~m_turn);
         const auto checker_dir = SHelper::get_direction(m_src, enemy_king_sq);
-        const auto checker_sq
-            = m_board.find_attacker(m_turn, enemy_king_sq, checker_dir, m_src);
+        const auto checker_sq = m_board.find_ranging_attacker(
+            m_turn, enemy_king_sq, checker_dir, m_src);
         if (checker_sq == SHelper::SQ_NA)
             return;
         const auto attacks
@@ -357,8 +357,9 @@ private:
             if (attacking_the_pawn) {
                 const auto discovered_dir
                     = SHelper::get_direction(src_next, enemy_king_sq);
-                const auto discovered_attacker_sq = m_board.find_attacker(
-                    m_turn, enemy_king_sq, discovered_dir, src_next);
+                const auto discovered_attacker_sq
+                    = m_board.find_ranging_attacker(
+                        m_turn, enemy_king_sq, discovered_dir, src_next);
                 const auto pinned = (discovered_attacker_sq != SHelper::SQ_NA);
                 if (!pinned)
                     return false;
@@ -564,8 +565,9 @@ private:
             if (attacking_the_pawn) {
                 const auto discovered_dir
                     = SHelper::get_direction(src_next, enemy_king_sq);
-                const auto discovered_attacker_sq = m_board.find_attacker(
-                    m_turn, enemy_king_sq, discovered_dir, src_next);
+                const auto discovered_attacker_sq
+                    = m_board.find_ranging_attacker(
+                        m_turn, enemy_king_sq, discovered_dir, src_next);
                 const auto pinned = (discovered_attacker_sq != SHelper::SQ_NA);
                 if (!pinned)
                     return false;
@@ -699,8 +701,8 @@ private:
                            .set(checker_sq);
         }
         const auto src_dir_from_king = SHelper::get_direction(src, king_sq);
-        const auto hidden_attacker_sq
-            = m_board.find_attacker(~m_turn, king_sq, src_dir_from_king, src);
+        const auto hidden_attacker_sq = m_board.find_ranging_attacker(
+            ~m_turn, king_sq, src_dir_from_king, src);
         if (hidden_attacker_sq != SHelper::SQ_NA) {
             movable
                 &= BitBoardType::get_line_segment(hidden_attacker_sq, king_sq)
@@ -895,8 +897,8 @@ private:
         BitBoardType& mask, const Square src, const Square king_sq)
     {
         const auto src_dir_from_king = SHelper::get_direction(src, king_sq);
-        const auto hidden_attacker_sq
-            = m_board.find_attacker(~m_turn, king_sq, src_dir_from_king, src);
+        const auto hidden_attacker_sq = m_board.find_ranging_attacker(
+            ~m_turn, king_sq, src_dir_from_king, src);
         if (hidden_attacker_sq != SHelper::SQ_NA) {
             mask &= BitBoardType::get_line_segment(hidden_attacker_sq, king_sq)
                         .set(hidden_attacker_sq);
@@ -911,7 +913,7 @@ private:
         auto pt = PHelper::to_piece_type(p);
         if (m_promote)
             pt = PHelper::promote_nocheck(pt);
-        const auto discovered_checker_sq = m_board.find_attacker(
+        const auto discovered_checker_sq = m_board.find_ranging_attacker(
             m_turn,
             enemy_king_sq,
             SHelper::get_direction(src, enemy_king_sq),
