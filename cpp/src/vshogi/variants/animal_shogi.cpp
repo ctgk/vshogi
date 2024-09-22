@@ -24,7 +24,7 @@ animal_shogi::Board::Board()
         VOID, B_CH, VOID,
         B_EL, B_LI, B_GI,
         // clang-format on
-    }, m_king_locations{}, m_bb_color{}
+    }, m_king_locations{}, m_bb_color{}, m_bb_piece{}
 {
     update_internals_based_on_pieces();
 }

@@ -40,7 +40,7 @@ judkins_shogi::Board::Board()
         B_FU, VOID, VOID, VOID, VOID, VOID,
         B_OU, B_KI, B_GI, B_KE, B_KA, B_HI,
         // clang-format on
-    }, m_king_locations{}, m_bb_color{}
+    }, m_king_locations{}, m_bb_color{}, m_bb_piece{}
 {
     update_internals_based_on_pieces();
 }

@@ -41,6 +41,7 @@ private:
     ColoredPiece m_pieces[num_squares];
     Square m_king_locations[num_colors];
     BitBoardType m_bb_color[num_colors];
+    BitBoardType m_bb_piece[num_piece_types];
 
 public:
     Board();
@@ -72,6 +73,28 @@ public:
     {
         return m_bb_color[c];
     }
+    /**
+     * @brief Get occupation by the given piece type.
+     *
+     * @param pt Piece type. Note that `NA` is not allowed here.
+     * @return BitBoardType Occupation by the given piece type.
+     */
+    BitBoardType get_occupied(const PieceType& pt) const
+    {
+        return m_bb_piece[pt];
+    }
+    /**
+     * @brief Get occupation by the given colored piece.
+     *
+     * @param p Colored piece. Note that `VOID` is not allowed here.
+     * @return BitBoardType Occupation by the given colored piece.
+     */
+    BitBoardType get_occupied(const ColoredPiece& p) const
+    {
+        const auto c = PHelper::get_color(p);
+        const auto pt = PHelper::to_piece_type(p);
+        return m_bb_color[c] & m_bb_piece[pt];
+    }
     void append_sfen(std::string& out) const
     {
         append_sfen_rank(static_cast<Rank>(0), out);
@@ -86,24 +109,8 @@ public:
         std::uint64_t* const hash = nullptr)
     {
         const ColoredPiece popped = place_piece_on(dst, p);
-
-        const auto c_in = PHelper::get_color(p);
-        const auto c_out = PHelper::get_color(popped);
-
-        if (PHelper::to_piece_type(p) == PHelper::OU)
-            m_king_locations[c_in] = dst;
-        if (PHelper::to_piece_type(popped) == PHelper::OU)
-            m_king_locations[c_out] = SQ_NA;
-
-        if (popped != VOID)
-            m_bb_color[c_out].toggle(dst);
-        if (p != VOID)
-            m_bb_color[c_in].toggle(dst);
-
-        if (hash != nullptr) {
-            *hash ^= zobrist_table[dst][popped];
-            *hash ^= zobrist_table[dst][p];
-        }
+        update_internals_by_placed(p, dst, hash);
+        update_internals_by_popped(popped, dst, hash);
         return popped;
     }
     ColoredPiece apply(
@@ -113,16 +120,8 @@ public:
         std::uint64_t* const hash = nullptr)
     {
         ColoredPiece moving_piece = place_piece_on(src, VOID);
-
-        if (moving_piece != VOID) {
-            m_bb_color[PHelper::get_color(moving_piece)].toggle(src);
-        }
-
-        if (hash != nullptr) {
-            *hash ^= zobrist_table[src][VOID];
-            *hash ^= zobrist_table[src][moving_piece];
-        }
-
+        update_internals_by_placed(VOID, src, hash);
+        update_internals_by_popped(moving_piece, src, hash);
         if (promote)
             moving_piece = PHelper::promote_nocheck(moving_piece);
         return apply(dst, moving_piece, hash);
@@ -251,11 +250,46 @@ private:
         for (auto sq : EnumIterator<Square, num_squares>()) {
             const auto& p = m_pieces[sq];
             const auto c = PHelper::get_color(p);
-            if (PHelper::to_piece_type(p) == PHelper::OU)
+            const auto pt = PHelper::to_piece_type(p);
+            if (pt == PHelper::OU)
                 m_king_locations[c] = sq;
-            if (p != VOID)
+            if (p != VOID) {
                 m_bb_color[c].toggle(sq);
+                m_bb_piece[pt].toggle(sq);
+            }
         }
+    }
+    void update_internals_by_placed(
+        const ColoredPiece& p,
+        const Square& sq,
+        std::uint64_t* const hash = nullptr)
+    {
+        if (hash != nullptr)
+            *hash ^= zobrist_table[sq][p];
+        if (p == VOID)
+            return;
+        const auto c = PHelper::get_color(p);
+        const auto pt = PHelper::to_piece_type(p);
+        if (pt == PHelper::OU)
+            m_king_locations[c] = sq;
+        m_bb_color[c].toggle(sq);
+        m_bb_piece[pt].toggle(sq);
+    }
+    void update_internals_by_popped(
+        const ColoredPiece& p,
+        const Square& sq,
+        std::uint64_t* const hash = nullptr)
+    {
+        if (hash != nullptr)
+            *hash ^= zobrist_table[sq][p];
+        if (p == VOID)
+            return;
+        const auto c = PHelper::get_color(p);
+        const auto pt = PHelper::to_piece_type(p);
+        if (pt == PHelper::OU)
+            m_king_locations[c] = SQ_NA;
+        m_bb_color[c].toggle(sq);
+        m_bb_piece[pt].toggle(sq);
     }
 };
 

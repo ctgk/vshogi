@@ -136,4 +136,47 @@ TEST(minishogi_board, apply)
     }
 }
 
+TEST(minishogi_board, get_occupied)
+{
+    {
+        const auto b = Board("4k/5/5/5/K4 b");
+        CHECK_EQUAL((bb_1a | bb_5e).value(), b.get_occupied().value());
+        CHECK_EQUAL(bb_5e.value(), b.get_occupied(vshogi::BLACK).value());
+        CHECK_EQUAL(bb_1a.value(), b.get_occupied(vshogi::WHITE).value());
+        CHECK_EQUAL(0, b.get_occupied(FU).value());
+        CHECK_EQUAL(0, b.get_occupied(B_FU).value());
+        CHECK_EQUAL(0, b.get_occupied(W_FU).value());
+        CHECK_EQUAL((bb_1a | bb_5e).value(), b.get_occupied(OU).value());
+        CHECK_EQUAL(bb_5e.value(), b.get_occupied(B_OU).value());
+        CHECK_EQUAL(bb_1a.value(), b.get_occupied(W_OU).value());
+    }
+    {
+        auto b = Board("4k/5/5/5/K4 b");
+        b.apply(SQ_1A, SQ_5E);
+        CHECK_EQUAL(bb_1a.value(), b.get_occupied().value());
+        CHECK_EQUAL(bb_1a.value(), b.get_occupied(vshogi::BLACK).value());
+        CHECK_EQUAL(0, b.get_occupied(vshogi::WHITE).value());
+        CHECK_EQUAL(0, b.get_occupied(FU).value());
+        CHECK_EQUAL(0, b.get_occupied(B_FU).value());
+        CHECK_EQUAL(0, b.get_occupied(W_FU).value());
+        CHECK_EQUAL(bb_1a.value(), b.get_occupied(OU).value());
+        CHECK_EQUAL(bb_1a.value(), b.get_occupied(B_OU).value());
+        CHECK_EQUAL(0, b.get_occupied(W_OU).value());
+    }
+    {
+        auto b = Board("4k/5/5/5/K4 b");
+        b.apply(SQ_1A, B_FU);
+        CHECK_EQUAL((bb_1a | bb_5e).value(), b.get_occupied().value());
+        CHECK_EQUAL(
+            (bb_1a | bb_5e).value(), b.get_occupied(vshogi::BLACK).value());
+        CHECK_EQUAL(0, b.get_occupied(vshogi::WHITE).value());
+        CHECK_EQUAL(bb_1a.value(), b.get_occupied(FU).value());
+        CHECK_EQUAL(bb_1a.value(), b.get_occupied(B_FU).value());
+        CHECK_EQUAL(0, b.get_occupied(W_FU).value());
+        CHECK_EQUAL(bb_5e.value(), b.get_occupied(OU).value());
+        CHECK_EQUAL(bb_5e.value(), b.get_occupied(B_OU).value());
+        CHECK_EQUAL(0, b.get_occupied(W_OU).value());
+    }
+}
+
 } // namespace test_vshogi::test_minishogi
