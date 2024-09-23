@@ -876,9 +876,10 @@ inline shogi::Move shogi::NonKingBoardMoveGenerator::random_select()
     const auto src_minor = m_board.get_occupied<FU, KE, GI>(m_turn);
     const auto src_gold = m_board.get_occupied<KI, TO, NY, NK, NG>(m_turn);
     const auto src_ranging = m_board.get_occupied<KY, KA, HI, UM, RY>(m_turn);
-    auto iter_minor = NonKingBoardMoveGenerator(m_state, src_minor);
-    auto iter_gold = NonKingBoardMoveGenerator(m_state, src_gold);
-    auto iter_ranging = NonKingBoardMoveGenerator(m_state, src_ranging);
+    auto iter_minor = NonKingBoardMoveGenerator(m_state, src_minor, m_pinned);
+    auto iter_gold = NonKingBoardMoveGenerator(m_state, src_gold, m_pinned);
+    auto iter_ranging
+        = NonKingBoardMoveGenerator(m_state, src_ranging, m_pinned);
     const float num_minor
         = iter_minor.is_end() ? 0.f
                               : static_cast<float>(src_minor.hamming_weight());

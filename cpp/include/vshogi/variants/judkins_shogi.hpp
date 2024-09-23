@@ -618,6 +618,30 @@ judkins_shogi::Board::get_occupied_by_ranging(const ColorEnum& c) const
     return get_occupied<KA, HI, UM, RY>(c);
 }
 
+template <>
+inline judkins_shogi::Move
+judkins_shogi::NonKingBoardMoveGenerator::random_select()
+{
+    using namespace judkins_shogi;
+    const auto src_minor
+        = m_board.get_occupied<FU, KE, GI, KI, TO, NK, NG>(m_turn);
+    const auto src_major = m_board.get_occupied<KA, HI, UM, RY>(m_turn);
+    auto iter_minor = NonKingBoardMoveGenerator(m_state, src_minor, m_pinned);
+    auto iter_major = NonKingBoardMoveGenerator(m_state, src_major, m_pinned);
+    const float num_minor
+        = iter_minor.is_end() ? 0.f
+                              : static_cast<float>(src_minor.hamming_weight());
+    const float num_major
+        = iter_major.is_end() ? 0.f
+                              : static_cast<float>(src_major.hamming_weight());
+    const float num_src = num_minor + num_major;
+    const auto fraction_minor = num_minor / num_src;
+    float r = dist01(random_engine);
+    if (r < fraction_minor)
+        return iter_minor.random_select_by_iterating_all();
+    return iter_major.random_select_by_iterating_all();
+}
+
 } // namespace vshogi
 
 #endif // VSHOGI_VARIANTS_JUDKINS_SHOGI_HPP

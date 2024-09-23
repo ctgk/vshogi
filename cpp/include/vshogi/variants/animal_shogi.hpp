@@ -446,7 +446,7 @@ template <>
 inline animal_shogi::NonKingBoardMoveGenerator::NonKingBoardMoveGenerator(
     const animal_shogi::State& state)
     : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-      m_src_iter(), m_dst_iter(), m_promote(false)
+      m_pinned(), m_src_iter(), m_dst_iter(), m_promote(false)
 {
     init_src_iter();
     while (!m_src_iter.is_end()) {

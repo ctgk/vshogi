@@ -552,8 +552,8 @@ inline minishogi::Move minishogi::NonKingBoardMoveGenerator::random_select()
     using namespace minishogi;
     const auto src_minor = m_board.get_occupied<FU, GI, KI, TO, NG>(m_turn);
     const auto src_major = m_board.get_occupied<KA, HI, UM, RY>(m_turn);
-    auto iter_minor = NonKingBoardMoveGenerator(m_state, src_minor);
-    auto iter_major = NonKingBoardMoveGenerator(m_state, src_major);
+    auto iter_minor = NonKingBoardMoveGenerator(m_state, src_minor, m_pinned);
+    auto iter_major = NonKingBoardMoveGenerator(m_state, src_major, m_pinned);
     const float num_minor
         = iter_minor.is_end() ? 0.f
                               : static_cast<float>(src_minor.hamming_weight());

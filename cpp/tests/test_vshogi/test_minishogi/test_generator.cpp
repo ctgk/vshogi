@@ -221,6 +221,15 @@ TEST(test_minishogi_generator, non_king_board_move_generator)
         CHECK_FALSE(iter != iter.end());
     }
     {
+        // pinned
+        const auto s = State("+b3k/5/5/3S1/4K b -");
+        auto iter = NonKingBoardMoveGenerator(s);
+        CHECK_TRUE(Move(SQ_3C, SQ_2D) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+        CHECK_TRUE(iter.is_end());
+    }
+    {
         const auto s = State("4k/5/2P2/5/K4 b -");
         auto iter = NonKingBoardMoveGenerator(s);
         CHECK_TRUE(Move(SQ_3B, SQ_3C) == *iter);

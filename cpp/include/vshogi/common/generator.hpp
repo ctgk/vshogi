@@ -617,6 +617,7 @@ private:
     const StateType& m_state;
     const ColorEnum m_turn;
     const BoardType& m_board;
+    const BitBoardType m_pinned;
     typename BitBoardType::SquareIterator m_src_iter;
     typename BitBoardType::SquareIterator m_dst_iter;
     bool m_promote;
@@ -624,7 +625,8 @@ private:
 public:
     NonKingBoardMoveGenerator(const StateType& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_src_iter(), m_dst_iter(), m_promote(true)
+          m_pinned(m_board.find_pinned(m_turn)), m_src_iter(), m_dst_iter(),
+          m_promote(true)
     {
         if (m_state.in_double_check())
             return;
@@ -641,7 +643,8 @@ public:
     NonKingBoardMoveGenerator(
         const StateType& state, const BitBoardType& src_mask)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_src_iter(), m_dst_iter(), m_promote(true)
+          m_pinned(m_board.find_pinned(m_turn)), m_src_iter(), m_dst_iter(),
+          m_promote(true)
     {
         if (m_state.in_double_check())
             return;
@@ -720,6 +723,25 @@ public:
     }
 
 private:
+    NonKingBoardMoveGenerator(
+        const StateType& state,
+        const BitBoardType& src_mask,
+        const BitBoardType& pinned)
+        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
+          m_pinned(pinned), m_src_iter(), m_dst_iter(), m_promote(true)
+    {
+        if (m_state.in_double_check())
+            return;
+        init_src_iter(src_mask);
+        while (!m_src_iter.is_end()) {
+            init_dst_iter();
+            if (m_dst_iter.is_end())
+                ++m_src_iter;
+            else
+                break;
+        }
+        init_promote();
+    }
     void init_src_iter()
     {
         const auto king_sq = m_board.get_king_location(m_turn);
@@ -736,25 +758,24 @@ private:
         const auto p = m_board[src];
         auto movable
             = BitBoardType::get_attacks_by(p, src, m_board.get_occupied());
-        movable &= ~m_board.get_occupied(m_turn);
         const auto king_sq = m_board.get_king_location(m_turn);
+
+        movable &= ~m_board.get_occupied(m_turn);
+        if (!movable.any())
+            goto ExitLabel;
+
         if (m_state.in_check()) {
             const auto checker_sq = m_state.get_checker_location();
             movable &= BitBoardType::get_line_segment(checker_sq, king_sq)
                            .set(checker_sq);
-            if (!movable.any()) {
-                m_dst_iter = movable.square_iterator();
-                return;
-            }
+            if (!movable.any())
+                goto ExitLabel;
         }
-        const auto src_dir_from_king = SHelper::get_direction(src, king_sq);
-        const auto hidden_attacker_sq = m_board.find_ranging_attacker(
-            ~m_turn, king_sq, src_dir_from_king, src);
-        if (hidden_attacker_sq != SHelper::SQ_NA) {
-            movable
-                &= BitBoardType::get_line_segment(hidden_attacker_sq, king_sq)
-                       .set(hidden_attacker_sq);
+        if (m_pinned.is_one(src)) {
+            movable &= BitBoardType::get_ray_to(
+                king_sq, SHelper::get_direction(src, king_sq));
         }
+    ExitLabel:
         m_dst_iter = movable.square_iterator();
     }
     void init_promote()
@@ -802,6 +823,7 @@ private:
     const StateType& m_state;
     const ColorEnum m_turn;
     const BoardType& m_board;
+    const BitBoardType m_pinned;
     typename BitBoardType::SquareIterator m_src_iter;
     bool m_promote;
     typename BitBoardType::SquareIterator m_dst_iter;
@@ -809,7 +831,8 @@ private:
 public:
     CheckNonKingBoardMoveGenerator(const StateType& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_src_iter(), m_promote(true), m_dst_iter()
+          m_pinned(m_board.find_pinned(m_turn)), m_src_iter(), m_promote(true),
+          m_dst_iter()
     {
         if (m_state.in_double_check())
             return;
@@ -886,13 +909,13 @@ public:
     }
     bool is_end() const
     {
-        return m_src_iter.is_end() && m_dst_iter.is_end();
+        return m_src_iter.is_end();
     }
 
 private:
     CheckNonKingBoardMoveGenerator(const StateType& state, const bool promote)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_src_iter(), m_promote(promote), m_dst_iter()
+          m_pinned(), m_src_iter(), m_promote(promote), m_dst_iter()
     {
     }
     void init_src_iter()
@@ -954,12 +977,9 @@ private:
     bool update_mask_by_counter_check(
         BitBoardType& mask, const Square src, const Square king_sq)
     {
-        const auto src_dir_from_king = SHelper::get_direction(src, king_sq);
-        const auto hidden_attacker_sq = m_board.find_ranging_attacker(
-            ~m_turn, king_sq, src_dir_from_king, src);
-        if (hidden_attacker_sq != SHelper::SQ_NA) {
-            mask &= BitBoardType::get_line_segment(hidden_attacker_sq, king_sq)
-                        .set(hidden_attacker_sq);
+        if (m_pinned.is_one(src)) {
+            mask &= BitBoardType::get_ray_to(
+                king_sq, SHelper::get_direction(src, king_sq));
             return true;
         }
         return false;
