@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <random>
 #include <type_traits>
 #include <vector>
 
@@ -11,6 +12,10 @@ namespace vshogi
 {
 
 using uint = unsigned int;
+static std::random_device seed_gen;
+static std::default_random_engine random_engine(seed_gen());
+static std::uniform_real_distribution<float>
+    dist01(0.f, 0.9999f); // for numerical stability
 
 /**
  * @brief Iterator for Enum.

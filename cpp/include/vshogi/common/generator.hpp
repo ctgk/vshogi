@@ -616,6 +616,23 @@ public:
         }
         init_promote();
     }
+    NonKingBoardMoveGenerator(
+        const StateType& state, const BitBoardType& src_mask)
+        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
+          m_src_iter(), m_dst_iter(), m_promote(true)
+    {
+        if (m_state.in_double_check())
+            return;
+        init_src_iter(src_mask);
+        while (!m_src_iter.is_end()) {
+            init_dst_iter();
+            if (m_dst_iter.is_end())
+                ++m_src_iter;
+            else
+                break;
+        }
+        init_promote();
+    }
     NonKingBoardMoveGenerator& operator++()
     {
         if (!m_promote) {
@@ -661,7 +678,8 @@ public:
     }
     NonKingBoardMoveGenerator end()
     {
-        static const auto end_iter = NonKingBoardMoveGenerator(m_state, true);
+        static const auto end_iter
+            = NonKingBoardMoveGenerator(m_state, BitBoardType());
         return end_iter;
     }
     bool operator!=(const NonKingBoardMoveGenerator& other) const
@@ -676,15 +694,14 @@ public:
     }
 
 private:
-    NonKingBoardMoveGenerator(const StateType& state, const bool promote)
-        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_src_iter(), m_dst_iter(), m_promote(promote)
-    {
-    }
     void init_src_iter()
     {
         const auto king_sq = m_board.get_king_location(m_turn);
         const auto src_mask = m_board.get_occupied(m_turn).clear(king_sq);
+        m_src_iter = src_mask.square_iterator();
+    }
+    void init_src_iter(const BitBoardType& src_mask)
+    {
         m_src_iter = src_mask.square_iterator();
     }
     void init_dst_iter()
@@ -699,6 +716,10 @@ private:
             const auto checker_sq = m_state.get_checker_location();
             movable &= BitBoardType::get_line_segment(checker_sq, king_sq)
                            .set(checker_sq);
+            if (!movable.any()) {
+                m_dst_iter = movable.square_iterator();
+                return;
+            }
         }
         const auto src_dir_from_king = SHelper::get_direction(src, king_sq);
         const auto hidden_attacker_sq = m_board.find_ranging_attacker(

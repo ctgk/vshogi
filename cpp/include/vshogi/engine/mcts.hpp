@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cmath>
 #include <memory>
-#include <random>
 #include <stdexcept>
 #include <vector>
 
@@ -17,10 +16,6 @@
 
 namespace vshogi::engine::mcts
 {
-
-static std::random_device seed_gen;
-static std::default_random_engine engine(seed_gen());
-static std::uniform_real_distribution<float> dist(0.f, 1.f);
 
 template <class Config>
 class Node
@@ -348,7 +343,7 @@ private:
     {
         if (random_depth <= 0)
             return false;
-        const float u = dist(engine);
+        const float u = dist01(random_engine);
         const float p_random = 1.f / static_cast<float>(1 + non_random_ratio);
         if (u > p_random)
             return false;
@@ -385,7 +380,7 @@ private:
         const float p = 1.f / static_cast<float>(num);
         Node* ch = nullptr;
         for (std::size_t ii = num_max_try; ii--;) {
-            float s = dist(engine);
+            float s = dist01(random_engine);
             for (ch = m_child.get(); ch != nullptr; ch = ch->m_sibling.get()) {
                 if (p > s) {
                     if (!ch->is_mate_to_win())
@@ -628,7 +623,7 @@ public:
         }
         softmax(probas);
 
-        float s = dist(engine);
+        float s = dist01(random_engine);
         ch = m_root->get_child();
         for (uint ii = 0u; ch != nullptr; ch = ch->get_sibling()) {
             const auto p = probas[ii++];
@@ -678,8 +673,7 @@ private:
             = static_cast<float>(num_droppable) / num_source;
         const auto fraction_non_king
             = static_cast<float>(num_non_king) / num_source;
-        float s_iter
-            = std::min(dist(engine), 0.99999f); // for numerical stability
+        float s_iter = dist01(random_engine);
         if (s_iter < fraction_drop)
             return random_select_one_action(iter_drop);
         s_iter -= fraction_drop;
@@ -693,7 +687,7 @@ private:
         MoveType out = *iter;
         ++iter;
         for (uint ii = 2u; !iter.is_end(); ++ii, ++iter) {
-            const auto r = dist(engine);
+            const auto r = dist01(random_engine);
             if (static_cast<uint>(r * static_cast<float>(ii)) == 0u)
                 out = *iter;
         }
