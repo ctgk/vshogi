@@ -188,6 +188,20 @@ TEST(test_minishogi_generator, test_check_drop_move_generator)
     }
 }
 
+TEST(test_minishogi_generator, no_promo_move_generator)
+{
+    const auto s = State("4k/5/5/K4/G4 b -");
+    const auto src_mask = s.get_board().get_occupied<KI>(s.get_turn());
+    CHECK_EQUAL(bb_5e.value(), src_mask.value());
+    auto iter = vshogi::NoPromoMoveGenerator<Config>(s, src_mask, BitBoard());
+    CHECK_TRUE(Move(SQ_4D, SQ_5E) == *iter);
+    ++iter;
+    CHECK_TRUE(Move(SQ_4E, SQ_5E) == *iter);
+    ++iter;
+    CHECK_FALSE(iter != iter.end());
+    CHECK_TRUE(iter.is_end());
+}
+
 TEST(test_minishogi_generator, non_king_board_move_generator)
 {
     {

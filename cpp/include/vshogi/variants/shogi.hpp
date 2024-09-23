@@ -873,33 +873,40 @@ template <>
 inline shogi::Move shogi::NonKingBoardMoveGenerator::random_select()
 {
     using namespace shogi;
-    const auto src_minor = m_board.get_occupied<FU, KE, GI>(m_turn);
+    const auto src_fgke = m_board.get_occupied<FU, GI, KE>(m_turn);
+    const auto src_kkhi = m_board.get_occupied<KY, KA, HI>(m_turn);
     const auto src_gold = m_board.get_occupied<KI, TO, NY, NK, NG>(m_turn);
-    const auto src_ranging = m_board.get_occupied<KY, KA, HI, UM, RY>(m_turn);
-    auto iter_minor = NonKingBoardMoveGenerator(m_state, src_minor, m_pinned);
-    auto iter_gold = NonKingBoardMoveGenerator(m_state, src_gold, m_pinned);
-    auto iter_ranging
-        = NonKingBoardMoveGenerator(m_state, src_ranging, m_pinned);
-    const float num_minor
-        = iter_minor.is_end() ? 0.f
-                              : static_cast<float>(src_minor.hamming_weight());
-    const float num_gold = iter_gold.is_end()
-                               ? 0.f
-                               : static_cast<float>(src_gold.hamming_weight());
-    const float num_ranging
-        = iter_ranging.is_end()
-              ? 0.f
-              : static_cast<float>(src_ranging.hamming_weight());
-    const float num_src = num_minor + num_gold + num_ranging;
-    const auto fraction_minor = num_minor / num_src;
-    const auto fraction_gold = num_gold / num_src;
+    const auto src_umry = m_board.get_occupied<UM, RY>(m_turn);
+    auto iter_fgke = NonKingBoardMoveGenerator(m_state, src_fgke, m_pinned);
+    auto iter_kkhi = NonKingBoardMoveGenerator(m_state, src_kkhi, m_pinned);
+    auto iter_gold = NoPromoMoveGenerator<Config>(m_state, src_gold, m_pinned);
+    auto iter_umry = NoPromoMoveGenerator<Config>(m_state, src_umry, m_pinned);
+    const auto num_fgke = iter_fgke.is_end()
+                              ? 0.f
+                              : static_cast<float>(src_fgke.hamming_weight());
+    const auto num_kkhi = iter_kkhi.is_end()
+                              ? 0.f
+                              : static_cast<float>(src_kkhi.hamming_weight());
+    const auto num_gold = iter_gold.is_end()
+                              ? 0.f
+                              : static_cast<float>(src_gold.hamming_weight());
+    const auto num_umry = iter_umry.is_end()
+                              ? 0.f
+                              : static_cast<float>(src_umry.hamming_weight());
+    const auto num_src = num_fgke + num_kkhi + num_gold + num_umry;
     float r = dist01(random_engine);
-    if (r < fraction_minor)
-        return iter_minor.random_select_by_iterating_all();
-    r -= fraction_minor;
+    const auto fraction_fgke = num_fgke / num_src;
+    if (r < fraction_fgke)
+        return iter_fgke.random_select_by_iterating_all();
+    r -= fraction_fgke;
+    const auto fraction_kkhi = num_kkhi / num_src;
+    if (r < fraction_kkhi)
+        return iter_kkhi.random_select_by_iterating_all();
+    r -= fraction_kkhi;
+    const auto fraction_gold = num_gold / num_src;
     if (r < fraction_gold)
-        return iter_gold.random_select_by_iterating_all();
-    return iter_ranging.random_select_by_iterating_all();
+        return iter_gold.random_select();
+    return iter_umry.random_select();
 }
 
 } // namespace vshogi
