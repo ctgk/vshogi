@@ -68,6 +68,17 @@ public:
     {
         return m_iter.is_end();
     }
+    MoveType random_select()
+    {
+        MoveType out = operator*();
+        operator++();
+        for (uint ii = 2u; !is_end(); ++ii, operator++()) {
+            const auto r = dist01(random_engine);
+            if (static_cast<uint>(r * static_cast<float>(ii)) == 0u)
+                out = operator*();
+        }
+        return out;
+    }
 
 private:
     KingMoveGenerator(const StateType& state, const bool)
@@ -238,6 +249,17 @@ public:
     bool is_end() const
     {
         return m_sq_iter.is_end() && (m_pt_iter == num_stand_piece_types);
+    }
+    MoveType random_select()
+    {
+        MoveType out = operator*();
+        operator++();
+        for (uint ii = 2u; !is_end(); ++ii, operator++()) {
+            const auto r = dist01(random_engine);
+            if (static_cast<uint>(r * static_cast<float>(ii)) == 0u)
+                out = operator*();
+        }
+        return out;
     }
 
 private:
@@ -692,6 +714,10 @@ public:
     {
         return m_src_iter.is_end() && m_dst_iter.is_end();
     }
+    MoveType random_select()
+    {
+        return random_select_by_iterating_all();
+    }
 
 private:
     void init_src_iter()
@@ -744,6 +770,17 @@ private:
         if (BitBoardType::get_attacks_by(p, *m_dst_iter).any())
             return;
         m_promote = true;
+    }
+    MoveType random_select_by_iterating_all()
+    {
+        MoveType out = operator*();
+        operator++();
+        for (uint ii = 2u; !is_end(); ++ii, operator++()) {
+            const auto r = dist01(random_engine);
+            if (static_cast<uint>(r * static_cast<float>(ii)) == 0u)
+                out = operator*();
+        }
+        return out;
     }
 };
 

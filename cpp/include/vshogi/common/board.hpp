@@ -285,8 +285,8 @@ private:
     {
         m_king_locations[BLACK] = SQ_NA;
         m_king_locations[WHITE] = SQ_NA;
-        m_bb_color[BLACK] = BitBoardType();
-        m_bb_color[WHITE] = BitBoardType();
+        std::fill_n(m_bb_color, num_colors, BitBoardType());
+        std::fill_n(m_bb_piece, num_piece_types, BitBoardType());
         for (auto sq : EnumIterator<Square, num_squares>()) {
             const auto& p = m_pieces[sq];
             const auto c = PHelper::get_color(p);

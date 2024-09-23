@@ -862,6 +862,38 @@ inline bool shogi::Board::is_square_attacked(
            || is_square_attacked_by_ranging_pieces(sq, by_side);
 }
 
+template <>
+inline shogi::Move shogi::NonKingBoardMoveGenerator::random_select()
+{
+    using namespace shogi;
+    const auto src_minor = m_board.get_occupied<FU, KE, GI>(m_turn);
+    const auto src_gold = m_board.get_occupied<KI, TO, NY, NK, NG>(m_turn);
+    const auto src_ranging = m_board.get_occupied<KY, KA, HI, UM, RY>(m_turn);
+    auto iter_minor = NonKingBoardMoveGenerator(m_state, src_minor);
+    auto iter_gold = NonKingBoardMoveGenerator(m_state, src_gold);
+    auto iter_ranging = NonKingBoardMoveGenerator(m_state, src_ranging);
+    const float num_minor
+        = iter_minor.is_end() ? 0.f
+                              : static_cast<float>(src_minor.hamming_weight());
+    const float num_gold = iter_gold.is_end()
+                               ? 0.f
+                               : static_cast<float>(src_gold.hamming_weight());
+    const float num_ranging
+        = iter_ranging.is_end()
+              ? 0.f
+              : static_cast<float>(src_ranging.hamming_weight());
+    const float num_src = num_minor + num_gold + num_ranging;
+    const auto fraction_minor = num_minor / num_src;
+    const auto fraction_gold = num_gold / num_src;
+    float r = dist01(random_engine);
+    if (r < fraction_minor)
+        return iter_minor.random_select_by_iterating_all();
+    r -= fraction_minor;
+    if (r < fraction_gold)
+        return iter_gold.random_select_by_iterating_all();
+    return iter_ranging.random_select_by_iterating_all();
+}
+
 } // namespace vshogi
 
 #endif // VSHOGI_VARIANTS_SHOGI_HPP

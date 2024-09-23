@@ -675,23 +675,11 @@ private:
             = static_cast<float>(num_non_king) / num_source;
         float s_iter = dist01(random_engine);
         if (s_iter < fraction_drop)
-            return random_select_one_action(iter_drop);
+            return iter_drop.random_select();
         s_iter -= fraction_drop;
         if (s_iter < fraction_non_king)
-            return random_select_one_action(iter_board);
-        return random_select_one_action(iter_king);
-    }
-    template <class Iterable>
-    static MoveType random_select_one_action(Iterable& iter)
-    {
-        MoveType out = *iter;
-        ++iter;
-        for (uint ii = 2u; !iter.is_end(); ++ii, ++iter) {
-            const auto r = dist01(random_engine);
-            if (static_cast<uint>(r * static_cast<float>(ii)) == 0u)
-                out = *iter;
-        }
-        return out;
+            return iter_board.random_select();
+        return iter_king.random_select();
     }
     static float result_to_value(const ResultEnum r, const ColorEnum turn)
     {

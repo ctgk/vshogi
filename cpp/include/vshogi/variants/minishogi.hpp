@@ -539,6 +539,28 @@ inline bool minishogi::Board::is_square_attacked(
            || is_square_attacked_by_ranging_pieces(sq, by_side);
 }
 
+template <>
+inline minishogi::Move minishogi::NonKingBoardMoveGenerator::random_select()
+{
+    using namespace minishogi;
+    const auto src_minor = m_board.get_occupied<FU, GI, KI, TO, NG>(m_turn);
+    const auto src_major = m_board.get_occupied<KA, HI, UM, RY>(m_turn);
+    auto iter_minor = NonKingBoardMoveGenerator(m_state, src_minor);
+    auto iter_major = NonKingBoardMoveGenerator(m_state, src_major);
+    const float num_minor
+        = iter_minor.is_end() ? 0.f
+                              : static_cast<float>(src_minor.hamming_weight());
+    const float num_major
+        = iter_major.is_end() ? 0.f
+                              : static_cast<float>(src_major.hamming_weight());
+    const float num_src = num_minor + num_major;
+    const auto fraction_minor = num_minor / num_src;
+    float r = dist01(random_engine);
+    if (r < fraction_minor)
+        return iter_minor.random_select_by_iterating_all();
+    return iter_major.random_select_by_iterating_all();
+}
+
 } // namespace vshogi
 
 #endif // VSHOGI_VARIANTS_MINISHOGI_HPP

@@ -177,6 +177,16 @@ TEST(minishogi_board, get_occupied)
         CHECK_EQUAL(bb_5e.value(), b.get_occupied(B_OU).value());
         CHECK_EQUAL(0, b.get_occupied(W_OU).value());
     }
+    {
+        // W_GI VOID VOID VOID VOID
+        // W_OU W_GI VOID B_RY VOID
+        // VOID VOID VOID B_KI B_FU
+        // B_FU B_OU VOID VOID VOID
+        // VOID VOID VOID W_KA B_HI
+        auto b = Board("s4/ks1+R1/3GP/PK3/3bR w -");
+        const auto actual = b.get_occupied<KA, HI, UM, RY>(vshogi::WHITE);
+        CHECK_EQUAL(bb_2e.value(), actual.value());
+    }
 }
 
 TEST(minishogi_board, is_square_attacked)
@@ -212,6 +222,25 @@ TEST(minishogi_board, is_square_attacked)
         CHECK_FALSE(b.is_square_attacked(SQ_2A, vshogi::BLACK));
         CHECK_TRUE(b.is_square_attacked(SQ_4E, vshogi::BLACK));
         CHECK_FALSE(b.is_square_attacked(SQ_5E, vshogi::BLACK));
+    }
+    {
+        // Turn: WHITE
+        // White: HI
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |+HI|   |+NG|   |   |
+        //   *---*---*---*---*---*
+        // B |   |   |   |   |-OU|
+        //   *---*---*---*---*---*
+        // C |+GI|   |   |-UM|-KI|
+        //   *---*---*---*---*---*
+        // D |+FU|+OU|   |   |   |
+        //   *---*---*---*---*---*
+        // E |   |   |   |+KA|   |
+        //   *---*---*---*---*---*
+        // Black: -
+        const auto b = Board("R1+S2/4k/S2+bg/PK3/3B1 w r 40");
+        CHECK_TRUE(b.is_square_attacked(SQ_2A, vshogi::BLACK));
     }
 }
 

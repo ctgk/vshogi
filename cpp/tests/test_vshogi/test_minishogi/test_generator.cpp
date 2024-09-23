@@ -32,6 +32,31 @@ TEST(test_minishogi_generator, king_move_generator)
         ++iter;
         CHECK_FALSE(iter != iter.end());
     }
+    {
+        // Turn: WHITE
+        // White: HI
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |+HI|   |+NG|   |   |
+        //   *---*---*---*---*---*
+        // B |   |   |   |   |-OU|
+        //   *---*---*---*---*---*
+        // C |+GI|   |   |-UM|-KI|
+        //   *---*---*---*---*---*
+        // D |+FU|+OU|   |   |   |
+        //   *---*---*---*---*---*
+        // E |   |   |   |+KA|   |
+        //   *---*---*---*---*---*
+        // Black: -
+        const auto s = State("R1+S2/4k/S2+bg/PK3/3B1 w r 40");
+        auto iter = KingMoveGenerator(s);
+        CHECK_TRUE(Move(SQ_1A, SQ_1B) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_2B, SQ_1B) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+        CHECK_TRUE(iter.is_end());
+    }
 }
 
 TEST(test_minishogi_generator, check_king_move_generator)
@@ -221,6 +246,22 @@ TEST(test_minishogi_generator, non_king_board_move_generator)
         CHECK_TRUE(Move(SQ_3A, SQ_3B, true) == *iter);
         ++iter;
         CHECK_FALSE(iter != iter.end());
+    }
+    {
+        // W_GI VOID VOID VOID VOID
+        // W_OU W_GI VOID B_RY VOID
+        // VOID VOID VOID B_KI B_FU
+        // B_FU B_OU VOID VOID VOID
+        // VOID VOID VOID W_KA B_HI
+        const auto s = State("s4/ks1+R1/3GP/PK3/3bR w -");
+        const auto& b = s.get_board();
+        const auto src_mask = b.get_occupied<KA, HI, UM, RY>(vshogi::WHITE);
+        CHECK_EQUAL(bb_2e.value(), src_mask.value());
+        auto iter = NonKingBoardMoveGenerator(s, src_mask);
+        CHECK_TRUE(Move(SQ_4C, SQ_2E, false) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_4C, SQ_2E, true) == *iter);
+        ++iter;
     }
 }
 

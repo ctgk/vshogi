@@ -38,6 +38,7 @@ TEST(minishogi_stand, add)
 {
     CHECK_EQUAL(1, Stand().add(FU).count(FU));
     CHECK_EQUAL(0, Stand().add(GI).count(FU));
+    CHECK_EQUAL(1, Stand().add(HI).count(HI));
 }
 
 TEST(minishogi_stand, subtract)
