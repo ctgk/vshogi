@@ -538,6 +538,13 @@ inline bool minishogi::Board::is_square_attacked(
            || is_square_attacked_by<OU, UM, RY>(sq, by_side)
            || is_square_attacked_by_ranging_pieces(sq, by_side);
 }
+template <>
+inline minishogi::BitBoard
+minishogi::Board::get_occupied_by_ranging(const ColorEnum& c) const
+{
+    using namespace minishogi;
+    return get_occupied<KA, HI, UM, RY>(c);
+}
 
 template <>
 inline minishogi::Move minishogi::NonKingBoardMoveGenerator::random_select()

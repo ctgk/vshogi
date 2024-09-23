@@ -861,6 +861,13 @@ inline bool shogi::Board::is_square_attacked(
            || is_square_attacked_by<OU, UM, RY>(sq, by_side)
            || is_square_attacked_by_ranging_pieces(sq, by_side);
 }
+template <>
+inline shogi::BitBoard
+shogi::Board::get_occupied_by_ranging(const ColorEnum& c) const
+{
+    using namespace shogi;
+    return get_occupied<KY, KA, HI, UM, RY>(c);
+}
 
 template <>
 inline shogi::Move shogi::NonKingBoardMoveGenerator::random_select()

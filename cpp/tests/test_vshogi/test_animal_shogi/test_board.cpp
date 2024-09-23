@@ -137,4 +137,11 @@ TEST(animal_shogi_board, zobrist_hash)
     CHECK_TRUE(Board("gle/1c1/3/ELG").zobrist_hash() != hash);
 }
 
+TEST(animal_shogi_board, find_pinned)
+{
+    const auto b = Board();
+    const auto actual = b.find_pinned(vshogi::BLACK);
+    CHECK_EQUAL(0u, actual.value());
+}
+
 } // namespace test_vshogi::test_animal_shogi

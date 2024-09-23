@@ -170,4 +170,12 @@ TEST(judkins_shogi_board, is_square_attacked)
     }
 }
 
+TEST(judkins_shogi_board, find_pinned)
+{
+    const auto b = Board("1b3+r/6/3P1P/6/1r1P1K");
+    const auto actual = b.find_pinned(vshogi::BLACK);
+    const auto expect = bb_3c | bb_1c | bb_3e;
+    CHECK_EQUAL(expect.value(), actual.value());
+}
+
 } // namespace test_vshogi::test_judkins_shogi

@@ -207,6 +207,24 @@ public:
         }
         return SQ_NA;
     }
+    BitBoardType find_pinned(const ColorEnum& c) const
+    {
+        const Square& king = m_king_locations[c];
+        BitBoardType out{};
+        const BitBoardType occ_full = m_bb_color[BLACK] | m_bb_color[WHITE];
+        for (auto atk : get_occupied_by_ranging(~c).square_iterator()) {
+            const auto king_dir = SHelper::get_direction(king, atk);
+            if (!PHelper::is_ranging_to(m_pieces[atk], king_dir))
+                continue;
+            const auto segment = BitBoardType::get_line_segment(atk, king);
+            if ((occ_full & segment).hamming_weight() != 1u)
+                continue;
+            const BitBoardType pinned_mask = m_bb_color[c] & segment;
+            if (pinned_mask.hamming_weight() == 1u)
+                out.set(*pinned_mask.square_iterator());
+        }
+        return out;
+    }
     bool is_square_attacked(const Square& sq, const ColorEnum& by_side) const
     {
         for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
@@ -350,6 +368,10 @@ private:
     }
     bool is_square_attacked_by_ranging_pieces(
         const Square& sq, const ColorEnum& offence) const;
+    BitBoardType get_occupied_by_ranging(const ColorEnum&) const
+    {
+        return BitBoardType();
+    }
 };
 
 } // namespace vshogi

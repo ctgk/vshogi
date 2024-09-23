@@ -610,6 +610,13 @@ inline bool judkins_shogi::Board::is_square_attacked(
            || is_square_attacked_by<OU, UM, RY>(sq, by_side)
            || is_square_attacked_by_ranging_pieces(sq, by_side);
 }
+template <>
+inline judkins_shogi::BitBoard
+judkins_shogi::Board::get_occupied_by_ranging(const ColorEnum& c) const
+{
+    using namespace judkins_shogi;
+    return get_occupied<KA, HI, UM, RY>(c);
+}
 
 } // namespace vshogi
 
