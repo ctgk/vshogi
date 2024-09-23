@@ -175,6 +175,12 @@ public:
         update_result();
         return *this;
     }
+    Game& apply_random_playout(const MoveType& move)
+    {
+        add_record_and_update_state(move);
+        update_result_for_random_playout();
+        return *this;
+    }
     Game& apply_dfpn(const MoveType& move)
     {
         add_record_and_update_state_for_dfpn(move);
@@ -360,6 +366,15 @@ protected:
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
         if (is_duplicate_at_least_once())
             m_result = DRAW;
+        if (can_declare_win_by_king_enter())
+            m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
+    }
+    void update_result_for_random_playout()
+    {
+        m_result = ONGOING;
+        const auto turn = get_turn();
+        if (LegalMoveGenerator<Config>(m_current_state).is_end())
+            m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
         if (can_declare_win_by_king_enter())
             m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
     }
