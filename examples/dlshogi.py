@@ -46,6 +46,7 @@ class Args:
     nn_epochs: int = config(type=int, default=10, help='# of epochs in NN training. By default 10.')
     nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
     nn_learning_rate: float = config(type=float, default=1e-3, help='Learning rate of NN weight update')
+    nn_ema: bool = config(type=bool, default=False, help='Apply exponential moving average on parameters of a network if true.')
     mcts_kldgain_threshold: float = config(type=float, default=1e-4, help='KL divergence threshold to stop MCT-search')
     mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000. Alpha Zero used 800 simulations.')
     mcts_random_rate: float = config(
@@ -401,7 +402,7 @@ def run_train(args: Args):
                 masked_softmax_cross_entropy,
                 tf.keras.losses.MeanSquaredError(),
             ],
-            optimizer=tf.keras.optimizers.Adam(learning_rate),
+            optimizer=tf.keras.optimizers.Adam(learning_rate, use_ema=args.nn_ema),
         )
         network.fit(
             dataset,
