@@ -401,7 +401,7 @@ def run_train(args: Args):
                 masked_softmax_cross_entropy,
                 tf.keras.losses.MeanSquaredError(),
             ],
-            optimizer=tf.keras.optimizers.Adam(learning_rate),
+            optimizer=tf.keras.optimizers.Adam(learning_rate, use_ema=True),
         )
         network.fit(
             dataset,
