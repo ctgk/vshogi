@@ -46,6 +46,7 @@ class Args:
     nn_epochs: int = config(type=int, default=10, help='# of epochs in NN training. By default 10.')
     nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
     nn_learning_rate: float = config(type=float, default=1e-3, help='Learning rate of NN weight update')
+    nn_use_ema: bool = config(default=False, action='store_true', help='Apply exponential moving average on parameters of a network.')
     mcts_kldgain_threshold: float = config(type=float, default=1e-4, help='KL divergence threshold to stop MCT-search')
     mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000. Alpha Zero used 800 simulations.')
     mcts_random_rate: float = config(
@@ -401,7 +402,7 @@ def run_train(args: Args):
                 masked_softmax_cross_entropy,
                 tf.keras.losses.MeanSquaredError(),
             ],
-            optimizer=tf.keras.optimizers.Adam(learning_rate),
+            optimizer=tf.keras.optimizers.Adam(learning_rate, use_ema=args.nn_use_ema),
         )
         network.fit(
             dataset,
@@ -551,7 +552,7 @@ def run_rl_cycle(args: Args):
         ] + ' '.join([
             f'--{k} {v}' for k, v in args.to_dict().items()
             if (
-                (k not in ('run', 'shogi_variant', 'resume_rl_cycle_from', 'another_player'))
+                (k not in ('run', 'shogi_variant', 'resume_rl_cycle_from', 'another_player', 'nn_use_ema'))
                 and (v is not None)
             )
         ]).split())
@@ -594,6 +595,7 @@ def run_rl_cycle(args: Args):
                 if (k not in (
                     'run', 'shogi_variant', "another_player",
                     'resume_rl_cycle_from', 'self_play_index_from',
+                    'nn_use_ema',
                 ) and (v is not None))
             ]).split())
 
@@ -601,10 +603,11 @@ def run_rl_cycle(args: Args):
             subprocess.call([
                 sys.executable, "dlshogi.py", "train", args.shogi_variant,
                 "--resume_rl_cycle_from", str(i),
+                '--nn_use_ema' if args.nn_use_ema else '',
             ] + ' '.join([
                 f'--{k} {v}' for k, v in args.to_dict().items()
                 if (
-                    (k not in ('run', 'shogi_variant', 'resume_rl_cycle_from', 'another_player'))
+                    (k not in ('run', 'shogi_variant', 'resume_rl_cycle_from', 'another_player', 'nn_use_ema'))
                     and (v is not None)
                 )
             ]).split())
