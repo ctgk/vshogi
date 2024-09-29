@@ -332,38 +332,6 @@ inline std::uint64_t minishogi::Board::zobrist_table
     = {};
 
 template <>
-inline const minishogi::BitBoard minishogi::BitBoard::square_to_bitboard_array
-    [minishogi::Config::num_squares + 1]
-    = {
-        BitBoard(1) << static_cast<uint>(0),
-        BitBoard(1) << static_cast<uint>(1),
-        BitBoard(1) << static_cast<uint>(2),
-        BitBoard(1) << static_cast<uint>(3),
-        BitBoard(1) << static_cast<uint>(4),
-        BitBoard(1) << static_cast<uint>(5),
-        BitBoard(1) << static_cast<uint>(6),
-        BitBoard(1) << static_cast<uint>(7),
-        BitBoard(1) << static_cast<uint>(8),
-        BitBoard(1) << static_cast<uint>(9),
-        BitBoard(1) << static_cast<uint>(10),
-        BitBoard(1) << static_cast<uint>(11),
-        BitBoard(1) << static_cast<uint>(12),
-        BitBoard(1) << static_cast<uint>(13),
-        BitBoard(1) << static_cast<uint>(14),
-        BitBoard(1) << static_cast<uint>(15),
-        BitBoard(1) << static_cast<uint>(16),
-        BitBoard(1) << static_cast<uint>(17),
-        BitBoard(1) << static_cast<uint>(18),
-        BitBoard(1) << static_cast<uint>(19),
-        BitBoard(1) << static_cast<uint>(20),
-        BitBoard(1) << static_cast<uint>(21),
-        BitBoard(1) << static_cast<uint>(22),
-        BitBoard(1) << static_cast<uint>(23),
-        BitBoard(1) << static_cast<uint>(24),
-        BitBoard(),
-};
-
-template <>
 inline minishogi::BitBoard minishogi::BitBoard::attacks_table
     [minishogi::Config::num_colored_piece_types][minishogi::Config::num_squares]
     = {};

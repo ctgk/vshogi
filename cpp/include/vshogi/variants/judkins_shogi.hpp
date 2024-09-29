@@ -374,49 +374,6 @@ inline std::uint64_t judkins_shogi::Board::zobrist_table
     = {};
 
 template <>
-inline const judkins_shogi::BitBoard judkins_shogi::BitBoard::
-    square_to_bitboard_array[judkins_shogi::Config::num_squares + 1]
-    = {
-        BitBoard(1) << static_cast<uint>(0),
-        BitBoard(1) << static_cast<uint>(1),
-        BitBoard(1) << static_cast<uint>(2),
-        BitBoard(1) << static_cast<uint>(3),
-        BitBoard(1) << static_cast<uint>(4),
-        BitBoard(1) << static_cast<uint>(5),
-        BitBoard(1) << static_cast<uint>(6),
-        BitBoard(1) << static_cast<uint>(7),
-        BitBoard(1) << static_cast<uint>(8),
-        BitBoard(1) << static_cast<uint>(9),
-        BitBoard(1) << static_cast<uint>(10),
-        BitBoard(1) << static_cast<uint>(11),
-        BitBoard(1) << static_cast<uint>(12),
-        BitBoard(1) << static_cast<uint>(13),
-        BitBoard(1) << static_cast<uint>(14),
-        BitBoard(1) << static_cast<uint>(15),
-        BitBoard(1) << static_cast<uint>(16),
-        BitBoard(1) << static_cast<uint>(17),
-        BitBoard(1) << static_cast<uint>(18),
-        BitBoard(1) << static_cast<uint>(19),
-        BitBoard(1) << static_cast<uint>(20),
-        BitBoard(1) << static_cast<uint>(21),
-        BitBoard(1) << static_cast<uint>(22),
-        BitBoard(1) << static_cast<uint>(23),
-        BitBoard(1) << static_cast<uint>(24),
-        BitBoard(1) << static_cast<uint>(25),
-        BitBoard(1) << static_cast<uint>(26),
-        BitBoard(1) << static_cast<uint>(27),
-        BitBoard(1) << static_cast<uint>(28),
-        BitBoard(1) << static_cast<uint>(29),
-        BitBoard(1) << static_cast<uint>(30),
-        BitBoard(1) << static_cast<uint>(31),
-        BitBoard(1) << static_cast<uint>(32),
-        BitBoard(1) << static_cast<uint>(33),
-        BitBoard(1) << static_cast<uint>(34),
-        BitBoard(1) << static_cast<uint>(35),
-        BitBoard(),
-};
-
-template <>
 inline judkins_shogi::BitBoard judkins_shogi::BitBoard::attacks_table
     [judkins_shogi::Config::num_colored_piece_types]
     [judkins_shogi::Config::num_squares]

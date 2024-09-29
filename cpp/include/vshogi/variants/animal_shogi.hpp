@@ -320,25 +320,6 @@ constexpr uint animal_shogi::Move::num_policy_per_square()
 }
 
 template <>
-inline const animal_shogi::BitBoard animal_shogi::BitBoard::
-    square_to_bitboard_array[animal_shogi::Config::num_squares + 1]
-    = {
-        BitBoard(1) << static_cast<uint>(0),
-        BitBoard(1) << static_cast<uint>(1),
-        BitBoard(1) << static_cast<uint>(2),
-        BitBoard(1) << static_cast<uint>(3),
-        BitBoard(1) << static_cast<uint>(4),
-        BitBoard(1) << static_cast<uint>(5),
-        BitBoard(1) << static_cast<uint>(6),
-        BitBoard(1) << static_cast<uint>(7),
-        BitBoard(1) << static_cast<uint>(8),
-        BitBoard(1) << static_cast<uint>(9),
-        BitBoard(1) << static_cast<uint>(10),
-        BitBoard(1) << static_cast<uint>(11),
-        BitBoard(),
-};
-
-template <>
 inline animal_shogi::BitBoard animal_shogi::BitBoard::attacks_table
     [animal_shogi::Config::num_colored_piece_types]
     [animal_shogi::Config::num_squares]

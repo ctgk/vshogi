@@ -32,7 +32,6 @@ private:
 
     static constexpr UInt mask
         = (static_cast<UInt>(1) << num_squares) - static_cast<UInt>(1);
-    static const BitBoard square_to_bitboard_array[num_squares + 1U];
     static BitBoard attacks_table[num_colored_piece_types][num_squares];
     static BitBoard ray_table[num_squares][num_dir];
     static BitBoard line_segment_table[num_squares][num_squares];
@@ -151,7 +150,7 @@ public:
 
     static BitBoard from_square(const Square& sq)
     {
-        return square_to_bitboard_array[sq];
+        return BitBoard(1) << sq;
     }
     static BitBoard get_promotion_zone(const ColorEnum& c)
     {
