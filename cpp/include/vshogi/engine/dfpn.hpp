@@ -323,7 +323,7 @@ private:
             /**
              * @brief 0:?, 1:false, 2:true
              */
-            uint is_attacked_cache[GameType::squares()] = {0};
+            uint is_attacked_cache[GameType::num_squares] = {0};
 
             for (auto m : CheckMoveGenerator<Config>(game.get_state())) {
                 *ch = std::make_unique<Node>(!m_attacker, this, m);
@@ -398,7 +398,7 @@ private:
             /**
              * @brief 0:?, 1:false, 2:true
              */
-            uint is_attacked_cache[GameType::squares()] = {0};
+            uint is_attacked_cache[GameType::num_squares] = {0};
 
             for (auto m : CheckMoveGenerator<Config>(game.get_state())) {
                 *ch = std::make_unique<Node>(!m_attacker, this, m);

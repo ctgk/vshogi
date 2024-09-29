@@ -125,8 +125,8 @@ inline void export_state(pybind11::module& m)
             [](const State& self) {
                 const auto shape = std::vector<py::ssize_t>(
                     {1,
-                     State::ranks(),
-                     State::files(),
+                     State::num_ranks,
+                     State::num_files,
                      State::feature_channels()});
                 auto out = py::array_t<float>(shape);
                 self.to_feature_map(out.mutable_data());
@@ -208,14 +208,14 @@ inline void export_game(pybind11::module& m)
         .def("resign", [](Game& self) { return self.resign(); })
         .def("get_move_at", &Game::get_move_at)
         .def("get_sfen_at", &Game::get_sfen_at)
-        .def_static("ranks", &Game::ranks)
-        .def_static("files", &Game::files)
+        .def_static("ranks", []() { return &Game::num_ranks; })
+        .def_static("files", []() { return &Game::num_files; })
         .def_static("feature_channels", &Game::feature_channels)
         .def_static("num_dlshogi_policy", &Game::num_dlshogi_policy)
         .def_static(
             "get_attention",
             []() {
-                const auto n = Game::squares();
+                const auto n = Game::num_squares;
                 const auto shape = std::vector<py::ssize_t>({n, n});
                 auto out = py::array_t<float>(shape);
                 Game::attention_matrix(out.mutable_data());
@@ -224,7 +224,7 @@ inline void export_game(pybind11::module& m)
         .def_static(
             "get_adjacent_attention",
             []() {
-                const auto n = Game::squares();
+                const auto n = Game::num_squares;
                 const auto shape = std::vector<py::ssize_t>({n, n});
                 auto out = py::array_t<float>(shape);
                 Game::attention_matrix(
@@ -238,7 +238,7 @@ inline void export_game(pybind11::module& m)
         .def_static(
             "get_diagonal_attention",
             []() {
-                const auto n = Game::squares();
+                const auto n = Game::num_squares;
                 const auto shape = std::vector<py::ssize_t>({n, n});
                 auto out = py::array_t<float>(shape);
                 Game::attention_matrix(
@@ -254,8 +254,8 @@ inline void export_game(pybind11::module& m)
             [](const Game& self) {
                 const auto shape = std::vector<py::ssize_t>(
                     {1,
-                     Game::ranks(),
-                     Game::files(),
+                     Game::num_ranks,
+                     Game::num_files,
                      Game::feature_channels()});
                 auto out = py::array_t<float>(shape);
                 self.to_feature_map(out.mutable_data());

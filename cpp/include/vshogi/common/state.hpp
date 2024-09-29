@@ -20,6 +20,11 @@ namespace vshogi
 template <class Config>
 class State
 {
+public:
+    static constexpr uint num_ranks = Config::num_ranks;
+    static constexpr uint num_files = Config::num_files;
+    static constexpr uint num_squares = Config::num_squares;
+
 private:
     using PieceType = typename Config::PieceType;
     using ColoredPiece = typename Config::ColoredPiece;
@@ -34,11 +39,8 @@ private:
     using StandType = Stand<Config>;
 
     static constexpr uint max_stand_piece_count = Config::max_stand_piece_count;
-    static constexpr uint num_squares = Config::num_squares;
     static constexpr uint num_piece_types = Config::num_piece_types;
     static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
-    static constexpr uint num_ranks = Config::num_ranks;
-    static constexpr uint num_files = Config::num_files;
     static constexpr uint num_dir = Config::num_dir;
     static constexpr Square SQ_NA = SHelper::SQ_NA; // NOLINT
 
@@ -61,25 +63,13 @@ public:
         set_sfen(sfen);
         update_checkers();
     }
-    static constexpr uint ranks()
-    {
-        return num_ranks;
-    }
-    static constexpr uint files()
-    {
-        return num_files;
-    }
-    static constexpr uint squares()
-    {
-        return num_squares;
-    }
     static constexpr uint feature_channels()
     {
         return 2 * (num_piece_types + num_stand_piece_types);
     }
     static constexpr uint num_dlshogi_policy()
     {
-        return squares() * MoveType::num_policy_per_square();
+        return num_squares * MoveType::num_policy_per_square();
     }
     bool operator==(const State& other) const
     {
@@ -163,7 +153,6 @@ public:
     void to_feature_map(float* const data) const
     {
         constexpr uint sp_types = num_stand_piece_types;
-        constexpr uint unpromoted_piece_types = sp_types + 1; // + OU
         constexpr uint ch_half = sp_types + num_piece_types;
         constexpr uint ch = ch_half * 2;
 

@@ -23,6 +23,11 @@ namespace vshogi
 template <class Config>
 class Game
 {
+public:
+    static constexpr uint num_ranks = Config::num_ranks;
+    static constexpr uint num_files = Config::num_files;
+    static constexpr uint num_squares = Config::num_squares;
+
 private:
     using Square = typename Config::Square;
     using File = typename Config::File;
@@ -39,9 +44,6 @@ private:
     static constexpr uint num_piece_types = Config::num_piece_types;
     static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
     static constexpr uint num_dir = Config::num_dir;
-    static constexpr uint num_ranks = Config::num_ranks;
-    static constexpr uint num_files = Config::num_files;
-    static constexpr uint num_squares = Config::num_squares;
     static constexpr uint max_acceptable_repetitions
         = Config::max_acceptable_repetitions;
 
@@ -61,26 +63,14 @@ public:
     Game(const std::string& sfen) : Game(StateType(sfen))
     {
     }
-    static constexpr uint ranks()
-    {
-        return num_ranks;
-    }
-    static constexpr uint files()
-    {
-        return num_files;
-    }
-    static constexpr uint squares()
-    {
-        return num_squares;
-    }
     static constexpr uint feature_channels()
     {
         // 2-player * (piece-types + stand-piece-types)
-        return 2 * (num_piece_types + num_stand_piece_types);
+        return StateType::feature_channels();
     }
     static constexpr uint num_dlshogi_policy()
     {
-        return ranks() * files() * MoveType::num_policy_per_square();
+        return StateType::num_dlshogi_policy();
     }
     ColorEnum get_turn() const
     {
