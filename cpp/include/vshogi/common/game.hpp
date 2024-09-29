@@ -375,6 +375,8 @@ protected:
         const auto turn = get_turn();
         if (LegalMoveGenerator<Config>(m_current_state).is_end())
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
+        if (is_duplicate_at_least_once())
+            m_result = DRAW;
         if (can_declare_win_by_king_enter())
             m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
     }

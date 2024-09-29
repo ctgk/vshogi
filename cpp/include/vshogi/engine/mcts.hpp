@@ -656,30 +656,46 @@ private:
     static MoveType random_select_legal_action(const GameType& g)
     {
         const State<Config>& state = g.get_state();
+        const Board<Config>& board = state.get_board();
         const auto turn = state.get_turn();
-        auto iter_drop = DropMoveGenerator<Config>(state);
-        auto iter_king = KingMoveGenerator<Config>(state);
-        auto iter_board = NonKingBoardMoveGenerator<Config>(state);
-        const auto num_droppable
-            = iter_drop.is_end() ? 0u : state.get_stand(turn).unique_count();
-        const auto num_non_king
-            = iter_board.is_end()
-                  ? 0u
-                  : state.get_board().get_occupied(turn).hamming_weight() - 1u;
-        const auto num_king = iter_king.is_end() ? 0u : 1u;
-        const float num_source
-            = static_cast<float>(num_droppable + num_non_king + num_king);
-        const auto fraction_drop
-            = static_cast<float>(num_droppable) / num_source;
-        const auto fraction_non_king
-            = static_cast<float>(num_non_king) / num_source;
-        float s_iter = dist01(random_engine);
-        if (s_iter < fraction_drop)
+        const auto n_drop = state.get_stand(turn).unique_count();
+        const auto n_ally = board.get_occupied(turn).hamming_weight() - 1u;
+        const auto n_king = 1u;
+        const auto n_src = static_cast<float>(n_drop + n_ally + n_king);
+        const auto r_drop = static_cast<float>(n_drop) / n_src;
+        const auto r_ally = static_cast<float>(n_ally) / n_src;
+        float r = dist01(random_engine);
+        if (r < r_drop) {
+            auto iter_drop = DropMoveGenerator<Config>(state);
+            if (!iter_drop.is_end())
+                return iter_drop.random_select();
+            auto iter_ally = NonKingBoardMoveGenerator<Config>(state);
+            if (!iter_ally.is_end())
+                return iter_ally.random_select();
+            auto iter_king = KingMoveGenerator<Config>(state);
+            return iter_king.random_select();
+        }
+        r -= r_drop;
+        if (r < r_ally) {
+            auto iter_ally = NonKingBoardMoveGenerator<Config>(state);
+            if (!iter_ally.is_end())
+                return iter_ally.random_select();
+            auto iter_king = KingMoveGenerator<Config>(state);
+            if (!iter_king.is_end())
+                return iter_king.random_select();
+            auto iter_drop = DropMoveGenerator<Config>(state);
             return iter_drop.random_select();
-        s_iter -= fraction_drop;
-        if (s_iter < fraction_non_king)
-            return iter_board.random_select();
-        return iter_king.random_select();
+        }
+        {
+            auto iter_king = KingMoveGenerator<Config>(state);
+            if (!iter_king.is_end())
+                return iter_king.random_select();
+            auto iter_drop = DropMoveGenerator<Config>(state);
+            if (!iter_drop.is_end())
+                return iter_drop.random_select();
+            auto iter_ally = NonKingBoardMoveGenerator<Config>(state);
+            return iter_ally.random_select();
+        }
     }
     static float result_to_value(const ResultEnum r, const ColorEnum turn)
     {
