@@ -97,8 +97,9 @@ public:
           m_game(std::make_unique<GameType>(GameType(g))), m_sibling(nullptr),
           m_child(nullptr), m_pn(unit), m_dn(unit)
     {
+        std::unordered_map<std::uint64_t, bool> mate_cache{};
         m_game->clear_records_for_dfpn();
-        simulate_expand_backprop();
+        simulate_expand_backprop(mate_cache);
     }
     Node(const GameType& g, std::unordered_map<std::uint64_t, bool>& mate_cache)
         : m_attacker(true), m_parent(nullptr), m_action(),
@@ -187,10 +188,8 @@ public:
 
     void select_simulate_expand_backprop()
     {
-        Node* n = this;
-        while (n->m_child != nullptr)
-            n = n->select();
-        n->simulate_expand_backprop();
+        std::unordered_map<std::uint64_t, bool> mate_cache{};
+        select_simulate_expand_backprop(mate_cache);
     }
     void select_simulate_expand_backprop(
         std::unordered_map<std::uint64_t, bool>& mate_cache)
@@ -202,16 +201,6 @@ public:
     }
 
 private:
-    void simulate_expand_backprop()
-    {
-        const GameType& game = *m_game;
-        const ResultEnum r = game.get_result();
-        if (r == ONGOING)
-            expand(game);
-        else
-            simulate(game);
-        backprop();
-    }
     void simulate_expand_backprop(
         std::unordered_map<std::uint64_t, bool>& mate_cache)
     {
@@ -308,36 +297,6 @@ private:
         }
     }
 
-    /**
-     * @brief Expand child nodes and edit #P(Proof) and #D(Disproof).
-     *
-     * - Attacker: #P = min(#P of children), #D = sum(#D of children)
-     * - Defence: #P = sum(#P of children), #D = min(#D of children)
-     *
-     * @param game
-     */
-    void expand(const GameType& game)
-    {
-        std::unique_ptr<Node>* ch = &m_child;
-        if (m_attacker) {
-            /**
-             * @brief 0:?, 1:false, 2:true
-             */
-            uint is_attacked_cache[GameType::num_squares] = {0};
-
-            for (auto m : CheckMoveGenerator<Config>(game.get_state())) {
-                *ch = std::make_unique<Node>(!m_attacker, this, m);
-                modify_pndn_by_attacks(ch->get(), game, m, is_attacked_cache);
-                ch = &ch->get()->m_sibling;
-            }
-        } else {
-            for (auto m : LegalMoveGenerator<Config>(game.get_state())) {
-                *ch = std::make_unique<Node>(!m_attacker, this, m);
-                modify_pndn_by_defence(ch->get(), game, m);
-                ch = &ch->get()->m_sibling;
-            }
-        }
-    }
     void modify_pndn_by_attacks(
         Node* const ch,
         const GameType& g,
@@ -389,6 +348,14 @@ private:
         }
     }
 
+    /**
+     * @brief Expand child nodes and edit #P(Proof) and #D(Disproof).
+     *
+     * - Attacker: #P = min(#P of children), #D = sum(#D of children)
+     * - Defence: #P = sum(#P of children), #D = min(#D of children)
+     *
+     * @param game
+     */
     void expand(
         const GameType& game,
         std::unordered_map<std::uint64_t, bool>& mate_cache)
@@ -423,43 +390,6 @@ private:
      * - Defence: #P = sum(#P of children), #D = min(#D of children)
      *
      */
-    void backprop()
-    {
-        if (!found_conclusion()) {
-            if (m_attacker) {
-                m_pn = max_number;
-                m_dn = zero;
-                const Node* ch = m_child.get();
-                for (; ch != nullptr; ch = ch->m_sibling.get()) {
-                    if (m_pn > ch->m_pn)
-                        m_pn = ch->m_pn;
-
-                    if ((m_dn == max_number) || (ch->m_dn == max_number))
-                        m_dn = max_number;
-                    else
-                        m_dn += ch->m_dn;
-                }
-            } else {
-                m_dn = max_number;
-                m_pn = zero;
-                const Node* ch = m_child.get();
-                for (; ch != nullptr; ch = ch->m_sibling.get()) {
-                    if (m_dn > ch->m_dn)
-                        m_dn = ch->m_dn;
-
-                    if ((m_pn == max_number) || (ch->m_pn == max_number))
-                        m_pn = max_number;
-                    else
-                        m_pn += ch->m_pn;
-                }
-            }
-        }
-        if (found_no_mate()) {
-            m_child.reset();
-        }
-        if (m_parent != nullptr)
-            m_parent->backprop();
-    }
     void backprop(std::unordered_map<std::uint64_t, bool>& mate_cache)
     {
         if (!found_conclusion()) {
