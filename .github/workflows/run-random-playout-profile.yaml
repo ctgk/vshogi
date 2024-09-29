@@ -1,0 +1,20 @@
+name: Run random playout profiling
+
+on:
+  push:
+    branches: [ main, develop, tmp ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: install packages
+      run: sudo apt update -y; sudo apt install -y build-essential make cpputest libc++-dev
+    - name: Build
+      run: cmake -DCMAKE_CXX_FLAGS=-pg -DCMAKE_EXE_LINKER_FLAGS=-pg -DCMAKE_SHARED_LINKER_FLAGS=-pg ./cpp; make
+    - name: Execute
+      run: ./tests/test_vshogi -r1 -g shogi_engine -n random_playout_searcher
+    - name: Profile
+      run: gprof ./tests/test_vshogi gmon.out
