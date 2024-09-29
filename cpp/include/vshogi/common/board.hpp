@@ -17,6 +17,11 @@ namespace vshogi
 template <class Config>
 class Board
 {
+public:
+    static constexpr auto num_files = Config::num_files;
+    static constexpr auto num_ranks = Config::num_ranks;
+    static constexpr auto num_squares = Config::num_squares;
+
 private:
     using SHelper = Squares<Config>;
     using PHelper = Pieces<Config>;
@@ -27,9 +32,6 @@ private:
     using Square = typename Config::Square;
     using Rank = typename Config::Rank;
     static constexpr auto num_dir = Config::num_dir;
-    static constexpr auto num_files = Config::num_files;
-    static constexpr auto num_ranks = Config::num_ranks;
-    static constexpr auto num_squares = Config::num_squares;
     static constexpr auto num_piece_types = Config::num_piece_types;
     static constexpr auto num_square_states = num_colors * num_piece_types + 1;
     static constexpr auto VOID = PHelper::VOID; // NOLINT

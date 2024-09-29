@@ -5,46 +5,20 @@ cf. https://en.wikipedia.org/wiki/Shogi
 
 import numpy as np
 
-from vshogi._repr import _repr_enum, _repr_move, _repr_square, _repr_stand
+from vshogi._repr import (
+    _repr_board, _repr_enum, _repr_move, _repr_square, _repr_stand,
+)
 from vshogi._vshogi import Color, Result
 from vshogi._vshogi.shogi import (
     Board, BoardPiece, Move, Piece, Square, Stand, State,
 )
 from vshogi.shogi._game import Game
 
-_board_template = '''\
-    9   8   7   6   5   4   3   2   1
-  +---+---+---+---+---+---+---+---+---+
-A |{}|{}|{}|{}|{}|{}|{}|{}|{}|
-  +---+---+---+---+---+---+---+---+---+
-B |{}|{}|{}|{}|{}|{}|{}|{}|{}|
-  +---+---+---+---+---+---+---+---+---+
-C |{}|{}|{}|{}|{}|{}|{}|{}|{}|
-  +---+---+---+---+---+---+---+---+---+
-D |{}|{}|{}|{}|{}|{}|{}|{}|{}|
-  +---+---+---+---+---+---+---+---+---+
-E |{}|{}|{}|{}|{}|{}|{}|{}|{}|
-  +---+---+---+---+---+---+---+---+---+
-F |{}|{}|{}|{}|{}|{}|{}|{}|{}|
-  +---+---+---+---+---+---+---+---+---+
-G |{}|{}|{}|{}|{}|{}|{}|{}|{}|
-  +---+---+---+---+---+---+---+---+---+
-H |{}|{}|{}|{}|{}|{}|{}|{}|{}|
-  +---+---+---+---+---+---+---+---+---+
-I |{}|{}|{}|{}|{}|{}|{}|{}|{}|
-  +---+---+---+---+---+---+---+---+---+'''
-
-
-def _board_repr(self: Board) -> str:
-    return _board_template.format(
-        *[self.__getitem__(Square(i))._to_3char() for i in range(81)],
-    )
-
 
 Board.__array__ = lambda self: np.array([
     self[Square(i)] for i in range(81)
 ], dtype=BoardPiece).reshape(9, 9)
-Board.__repr__ = _board_repr
+Board.__repr__ = _repr_board
 BoardPiece.__repr__ = _repr_enum
 BoardPiece._to_3char = lambda self: (
     "   " if self == BoardPiece.VOID

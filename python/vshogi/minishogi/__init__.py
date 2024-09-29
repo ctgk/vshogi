@@ -10,17 +10,17 @@ Examples
 Turn: BLACK
 White: -
     5   4   3   2   1
-  *---*---*---*---*---*
+  +---+---+---+---+---+
 A |-HI|-KA|-GI|-KI|-OU|
-  *---*---*---*---*---*
+  +---+---+---+---+---+
 B |   |   |   |   |-FU|
-  *---*---*---*---*---*
+  +---+---+---+---+---+
 C |   |   |   |   |   |
-  *---*---*---*---*---*
+  +---+---+---+---+---+
 D |+FU|   |   |   |   |
-  *---*---*---*---*---*
+  +---+---+---+---+---+
 E |+OU|+KI|+GI|+KA|+HI|
-  *---*---*---*---*---*
+  +---+---+---+---+---+
 Black: -
 >>> game.apply(SQ_4C, SQ_2E)
 Game(sfen="rbsgk/4p/1B3/P4/KGS1R w - 2")
@@ -36,23 +36,25 @@ Game(sfen="rbs+Rk/5/1B3/P3p/KGS2 w G 6")
 BLACK_WIN
 White: -
     5   4   3   2   1
-  *---*---*---*---*---*
+  +---+---+---+---+---+
 A |-HI|-KA|-GI|+RY|-OU|
-  *---*---*---*---*---*
+  +---+---+---+---+---+
 B |   |   |   |   |   |
-  *---*---*---*---*---*
+  +---+---+---+---+---+
 C |   |+KA|   |   |   |
-  *---*---*---*---*---*
+  +---+---+---+---+---+
 D |+FU|   |   |   |-FU|
-  *---*---*---*---*---*
+  +---+---+---+---+---+
 E |+OU|+KI|+GI|   |   |
-  *---*---*---*---*---*
+  +---+---+---+---+---+
 Black: KI
 """
 
 import numpy as np
 
-from vshogi._repr import _repr_enum, _repr_move, _repr_square, _repr_stand
+from vshogi._repr import (
+    _repr_board, _repr_enum, _repr_move, _repr_square, _repr_stand,
+)
 from vshogi._vshogi import Color, Result
 from vshogi._vshogi.minishogi import (
     Board, BoardPiece, Move, Piece, Square, Stand, State,
@@ -60,31 +62,10 @@ from vshogi._vshogi.minishogi import (
 from vshogi.minishogi._game import Game
 
 
-_board_template = '''\
-    5   4   3   2   1
-  *---*---*---*---*---*
-A |{}|{}|{}|{}|{}|
-  *---*---*---*---*---*
-B |{}|{}|{}|{}|{}|
-  *---*---*---*---*---*
-C |{}|{}|{}|{}|{}|
-  *---*---*---*---*---*
-D |{}|{}|{}|{}|{}|
-  *---*---*---*---*---*
-E |{}|{}|{}|{}|{}|
-  *---*---*---*---*---*'''
-
-
-def _board_repr(self: Board) -> str:
-    return _board_template.format(
-        *[self.__getitem__(Square(i))._to_3char() for i in range(25)],
-    )
-
-
 Board.__array__ = lambda self: np.array([
-    self[Square(i)] for i in range(25)
+    self[i] for i in range(25)
 ], dtype=BoardPiece).reshape(5, 5)
-Board.__repr__ = _board_repr
+Board.__repr__ = _repr_board
 BoardPiece.__repr__ = _repr_enum
 BoardPiece._to_3char = lambda self: (
     "   " if self == BoardPiece.VOID

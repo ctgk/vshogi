@@ -20,14 +20,27 @@ inline bool has(const std::vector<T>& vec, const T& target)
     return std::find(vec.cbegin(), vec.cend(), target) != vec.cend();
 }
 
-template <class Board, class Square>
+template <class Config>
 inline void export_board(pybind11::module& m)
 {
-    pybind11::class_<Board>(m, "Board")
+    namespace py = pybind11;
+    using Board = vshogi::Board<Config>;
+    using Square = typename Config::Square;
+    py::class_<Board>(m, "Board")
         .def(
             "__getitem__",
-            pybind11::overload_cast<const Square&>(
-                &Board::operator[], pybind11::const_));
+            py::overload_cast<const Square&>(&Board::operator[], py::const_))
+        .def(
+            "__getitem__",
+            [](const Board& self, const uint index) {
+                return self[static_cast<Square>(index)];
+            })
+        .def_property_readonly_static(
+            "num_files", [](py::object) { return Board::num_files; })
+        .def_property_readonly_static(
+            "num_ranks", [](py::object) { return Board::num_ranks; })
+        .def_property_readonly_static(
+            "num_squares", [](py::object) { return Board::num_squares; });
 }
 
 template <class Config>
@@ -476,7 +489,7 @@ void export_classes(pybind11::module& m)
 {
     using GameType = vshogi::Game<Config>;
 
-    export_board<vshogi::Board<Config>, typename Config::Square>(m);
+    export_board<Config>(m);
     export_piece_stand<Config>(m);
     export_move<Config>(m);
     export_state<Config>(m);
