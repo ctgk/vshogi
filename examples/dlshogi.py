@@ -46,6 +46,7 @@ class Args:
     nn_epochs: int = config(type=int, default=10, help='# of epochs in NN training. By default 10.')
     nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
     nn_learning_rate: float = config(type=float, default=1e-3, help='Learning rate of NN weight update')
+    nn_entropy_regularization: float = config(type=float, default=1e-2)
     mcts_kldgain_threshold: float = config(type=float, default=1e-4, help='KL divergence threshold to stop MCT-search')
     mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000. Alpha Zero used 800 simulations.')
     mcts_random_rate: float = config(
@@ -388,7 +389,7 @@ def run_train(args: Args):
             log_softmax = logit_subtracted - logsumexp
             return (
                 tf.reduce_sum(-y_true_masked * log_softmax, axis=1)
-                + 0.001 * tf.reduce_sum(-tf.math.exp(log_softmax) * log_softmax, axis=1)
+                + args.nn_entropy_regularization * tf.reduce_sum(-tf.math.exp(log_softmax) * log_softmax, axis=1)
             )
 
         def lr_scheduler(epoch):
