@@ -90,7 +90,7 @@ private:
     void increment_iterator_while_square_is_attacked()
     {
         while (!m_iter.is_end()) {
-            if (m_board.is_square_attacked(*m_iter, ~m_turn, m_src))
+            if (m_board.is_destination_attacked(~m_turn, *m_iter, m_src))
                 ++m_iter;
             else
                 break;
@@ -175,7 +175,7 @@ private:
     void increment_iterator_while_square_is_attacked()
     {
         while (!m_iter.is_end()) {
-            if (m_board.is_square_attacked(*m_iter, ~m_turn, m_src))
+            if (m_board.is_destination_attacked(~m_turn, *m_iter, m_src))
                 ++m_iter;
             else
                 break;
@@ -364,7 +364,7 @@ private:
                   m_board[enemy_king_sq], enemy_king_sq)
               & (~enemy_mask);
         for (auto sq : enemy_king_movable.square_iterator()) {
-            if (m_board.is_square_attacked(sq, m_turn, enemy_king_sq))
+            if (m_board.is_destination_attacked(m_turn, sq, enemy_king_sq))
                 continue;
             return false;
         }
@@ -572,7 +572,7 @@ private:
                   m_board[enemy_king_sq], enemy_king_sq)
               & (~enemy_mask);
         for (auto sq : enemy_king_movable.square_iterator()) {
-            if (m_board.is_square_attacked(sq, m_turn, enemy_king_sq))
+            if (m_board.is_destination_attacked(m_turn, sq, enemy_king_sq))
                 continue;
             return false;
         }

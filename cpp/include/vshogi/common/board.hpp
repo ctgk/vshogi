@@ -227,19 +227,11 @@ public:
         }
         return out;
     }
-    bool is_square_attacked(const Square& sq, const ColorEnum& by_side) const
+    bool is_destination_attacked(
+        const ColorEnum& by_side, const Square& dst, const Square& src) const
     {
         for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
-            if (find_attacker(by_side, sq, dir) != SQ_NA)
-                return true;
-        }
-        return false;
-    }
-    bool is_square_attacked(
-        const Square& sq, const ColorEnum& by_side, const Square& skip) const
-    {
-        for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
-            if (find_attacker(by_side, sq, dir, skip) != SQ_NA)
+            if (find_attacker(by_side, dst, dir, src) != SQ_NA)
                 return true;
         }
         return false;
@@ -374,6 +366,8 @@ private:
     {
         return BitBoardType();
     }
+    bool is_destination_attacked_by_ranging_pieces(
+        const ColorEnum& by_side, const Square& dst, const Square& src) const;
 };
 
 } // namespace vshogi
