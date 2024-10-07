@@ -12,6 +12,7 @@ namespace vshogi
 {
 
 using uint = unsigned int;
+using ZobristHashType = std::uint64_t;
 static std::random_device seed_gen;
 static std::default_random_engine random_engine(seed_gen());
 static std::uniform_real_distribution<float>

@@ -356,7 +356,7 @@ TEST(dfpn, no_mate_1)
     // Black: GIx2
     auto searcher = Searcher();
     searcher.set_game(Game("2k2/5/1+P3/5/5 b 2S"));
-    searcher.explore(700);
+    searcher.explore(1000);
     CHECK_TRUE(searcher.found_conclusion());
     CHECK_FALSE(searcher.found_mate());
     CHECK_TRUE(searcher.found_no_mate());

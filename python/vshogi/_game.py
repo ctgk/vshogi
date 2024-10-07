@@ -62,6 +62,8 @@ class Game(abc.ABC):
             self._game = sfen
         else:
             self._game = cls_(sfen)
+        self._move_list: tp.List[Move] = []
+        self._sfen_list: tp.List[str] = []
 
     @_ClassProperty
     def ranks(self) -> int:
@@ -281,6 +283,8 @@ class Game(abc.ABC):
         Game(sfen="r2gk/2bsp/5/PGBS1/K3R w - 6")
         """
         move = self._get_move(move, *arg, **kwargs)
+        self._move_list.append(move)
+        self._sfen_list.append(self.to_sfen(False))
         self._game.apply(move)
         return self
 
@@ -364,9 +368,7 @@ class Game(abc.ABC):
         >>> game.get_move_at(-1)
         Move(dst=SQ_2B, src=SQ_3A)
         """
-        if n < 0:
-            n = self.record_length + n
-        return self._game.get_move_at(n)
+        return self._move_list[n]
 
     def get_sfen_at(self, n: int, include_move_count: bool = True) -> str:
         """Return n-th game state in SFEN, where n starts from 0.
@@ -398,7 +400,10 @@ class Game(abc.ABC):
         """
         if n < 0:
             n = self.record_length + n
-        return self._game.get_sfen_at(n, include_move_count)
+        if include_move_count:
+            return self._sfen_list[n] + f' {n + 1}'
+        else:
+            return self._sfen_list[n]
 
     def dump_records(
         self,

@@ -443,15 +443,4 @@ TEST(minishogi_game, result)
     }
 }
 
-TEST(minishogi_game, get_sfen_move_at)
-{
-    {
-        const auto game = Game().apply(Move(SQ_3D, SQ_4E));
-        CHECK_TRUE(Move(SQ_3D, SQ_4E) == game.get_move_at(0));
-        STRCMP_EQUAL("rbsgk/4p/5/P4/KGSBR b - 1", game.get_sfen_at(0).c_str());
-        STRCMP_EQUAL(
-            "rbsgk/4p/5/P4/KGSBR b -", game.get_sfen_at(0, false).c_str());
-    }
-}
-
 } // namespace test_vshogi::test_minishogi

@@ -49,12 +49,10 @@ private:
 
 private:
     StateType m_current_state;
-
-    std::vector<std::uint64_t> m_zobrist_hash_list;
-    std::vector<MoveType> m_move_list;
     ResultEnum m_result;
     std::uint64_t m_zobrist_hash;
     const std::string m_initial_sfen_without_ply;
+    std::vector<ZobristHashType> m_hash_list;
 
 public:
     Game() : Game(StateType())
@@ -113,27 +111,13 @@ public:
     {
         if (include_move_count)
             return m_current_state.to_sfen() + " "
-                   + std::to_string(m_move_list.size() + 1);
+                   + std::to_string(m_hash_list.size() + 1);
         else
             return m_current_state.to_sfen();
     }
     std::size_t record_length() const
     {
-        return m_move_list.size();
-    }
-    MoveType get_move_at(const std::size_t n) const
-    {
-        return m_move_list[n];
-    }
-    std::string
-    get_sfen_at(const std::size_t n, const bool include_move_count = true) const
-    {
-        auto s = StateType(m_initial_sfen_without_ply);
-        for (std::size_t ii = 0; ii < n; ++ii)
-            s.apply(m_move_list[ii]);
-        if (include_move_count)
-            return s.to_sfen() + ' ' + std::to_string(n + 1);
-        return s.to_sfen();
+        return m_hash_list.size();
     }
 
     /**
@@ -181,11 +165,10 @@ public:
     {
         auto out = Game(
             m_current_state,
-            m_zobrist_hash_list,
-            m_move_list,
             m_result,
             m_zobrist_hash,
-            m_initial_sfen_without_ply);
+            m_initial_sfen_without_ply,
+            m_hash_list);
         out.apply_dfpn(move);
         return out;
     }
@@ -223,10 +206,8 @@ public:
     }
     void clear_records_for_dfpn()
     {
-        m_zobrist_hash_list.clear();
-        m_move_list.clear();
-        m_zobrist_hash_list.emplace_back(
-            m_current_state.get_board().zobrist_hash());
+        m_hash_list.clear();
+        m_hash_list.emplace_back(m_current_state.get_board().zobrist_hash());
     }
     void to_feature_map(float* const data) const
     {
@@ -264,25 +245,22 @@ public:
 
 protected:
     Game(const StateType& s)
-        : m_current_state(s), m_zobrist_hash_list(), m_move_list(),
-          m_result(ONGOING), m_zobrist_hash(m_current_state.zobrist_hash()),
-          m_initial_sfen_without_ply(m_current_state.to_sfen())
+        : m_current_state(s), m_result(ONGOING),
+          m_zobrist_hash(m_current_state.zobrist_hash()),
+          m_initial_sfen_without_ply(m_current_state.to_sfen()), m_hash_list{}
     {
-        m_zobrist_hash_list.reserve(128);
-        m_move_list.reserve(128);
+        m_hash_list.reserve(256);
         update_result();
     }
     Game(
         const StateType& s,
-        const std::vector<uint64_t>& zobrist_hash_list,
-        const std::vector<MoveType>& move_list,
         const ResultEnum& result,
         const uint64_t& zobrist_hash,
-        const std::string& initial_sfen_without_ply)
-        : m_current_state(s), m_zobrist_hash_list(zobrist_hash_list),
-          m_move_list(move_list), m_result(result),
-          m_zobrist_hash(zobrist_hash),
-          m_initial_sfen_without_ply(initial_sfen_without_ply)
+        const std::string& initial_sfen_without_ply,
+        const std::vector<ZobristHashType>& hash_list)
+        : m_current_state(s), m_result(result), m_zobrist_hash(zobrist_hash),
+          m_initial_sfen_without_ply(initial_sfen_without_ply),
+          m_hash_list(hash_list)
     {
     }
     static uint num_pieces(const StateType& s, const ColorEnum& c)
@@ -320,16 +298,13 @@ protected:
 protected:
     void add_record_and_update_state(const MoveType& move)
     {
-        m_zobrist_hash_list.emplace_back(m_zobrist_hash);
-        m_move_list.emplace_back(move);
+        m_hash_list.emplace_back(m_zobrist_hash);
         m_current_state.apply(move, &m_zobrist_hash);
     }
     void add_record_and_update_state_for_dfpn(const MoveType& move)
     {
-        m_move_list.emplace_back(move);
         m_current_state.apply(move, &m_zobrist_hash);
-        m_zobrist_hash_list.emplace_back(
-            m_current_state.get_board().zobrist_hash());
+        m_hash_list.emplace_back(m_current_state.get_board().zobrist_hash());
     }
 
 protected:
@@ -354,7 +329,7 @@ protected:
         const auto turn = get_turn();
         if (LegalMoveGenerator<Config>(m_current_state).is_end())
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
-        if (is_duplicate_at_least_once())
+        if (is_repetitions(1u))
             m_result = DRAW;
         if (can_declare_win_by_king_enter())
             m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
@@ -365,30 +340,20 @@ protected:
         const auto turn = get_turn();
         if (LegalMoveGenerator<Config>(m_current_state).is_end())
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
-        if (is_duplicate_at_least_once())
+        if (is_repetitions(1u))
             m_result = DRAW;
         if (can_declare_win_by_king_enter())
             m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
     }
-    bool is_repetitions() const
+    bool is_repetitions(
+        const uint max_repetitions_inclusive = max_acceptable_repetitions) const
     {
         uint num = 1u;
-        const int n = static_cast<int>(m_move_list.size());
+        const int n = static_cast<int>(m_hash_list.size());
         for (int ii = n - 4; ii >= 0; ii -= 2) {
             const uint index = static_cast<uint>(ii);
-            num += (m_zobrist_hash == m_zobrist_hash_list[index]);
+            num += (m_zobrist_hash == m_hash_list[index]);
             if (num > max_acceptable_repetitions)
-                return true;
-        }
-        return false;
-    }
-    bool is_duplicate_at_least_once() const
-    {
-        const int n = static_cast<int>(m_move_list.size());
-        for (int ii = n - 4; ii >= 0; ii -= 2) {
-            const uint index = static_cast<uint>(ii);
-            if (m_zobrist_hash_list[static_cast<uint>(n)]
-                == m_zobrist_hash_list[index])
                 return true;
         }
         return false;
