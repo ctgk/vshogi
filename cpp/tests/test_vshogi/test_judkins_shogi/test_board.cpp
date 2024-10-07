@@ -138,7 +138,7 @@ TEST(judkins_shogi_board, is_destination_attacked)
     }
     {
         // by KE.
-        const auto b = Board("1n4/6/6/6/6/6");
+        const auto b = Board("1n4/6/6/6/6/6 b");
         CHECK_TRUE(b.is_destination_attacked(vshogi::WHITE, SQ_6C, SQ_1A));
         CHECK_FALSE(b.is_destination_attacked(vshogi::WHITE, SQ_5C, SQ_1A));
     }
@@ -172,7 +172,7 @@ TEST(judkins_shogi_board, is_destination_attacked)
 
 TEST(judkins_shogi_board, find_pinned)
 {
-    const auto b = Board("1b3+r/6/3P1P/6/1r1P1K");
+    const auto b = Board("1b3+r/6/3P1P/6/1r1P1K b");
     const auto actual = b.find_pinned(vshogi::BLACK);
     const auto expect = bb_3c | bb_1c | bb_3e;
     CHECK_EQUAL(expect.value(), actual.value());

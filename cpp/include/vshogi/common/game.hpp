@@ -353,7 +353,7 @@ protected:
         for (int ii = n - 4; ii >= 0; ii -= 2) {
             const uint index = static_cast<uint>(ii);
             num += (m_zobrist_hash == m_hash_list[index]);
-            if (num > max_acceptable_repetitions)
+            if (num > max_repetitions_inclusive)
                 return true;
         }
         return false;
