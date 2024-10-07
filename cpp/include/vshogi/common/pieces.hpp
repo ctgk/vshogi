@@ -136,6 +136,10 @@ public:
     {
         return get_point(to_piece_type(p));
     }
+    static uint get_value(const PieceType& pt)
+    {
+        return Config::piece_type_to_value[pt];
+    }
 
     static void append_sfen(const ColoredPiece& p, std::string& out)
     {

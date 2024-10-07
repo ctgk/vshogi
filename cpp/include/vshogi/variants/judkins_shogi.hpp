@@ -133,6 +133,8 @@ struct Config
     static constexpr uint num_piece_types = 12; // FU, KE, GI, KA, HI, KI, OU, TO, NK, NG, UM, RY
     static constexpr uint num_stand_piece_types = 6; // FU, KE, GI, KA, HI, KI
     static constexpr uint piece_type_to_point[] = {1, 1, 1, 5, 5, 1, 0, 1, 1, 1, 5, 5, 0};
+    static constexpr uint piece_type_to_value[] = {5, 35, 55, 95, 100, 60, 0, 60, 60, 60, 115, 120, 0};
+    static constexpr uint sum_piece_value = 2 * (60 * 4 + 115 + 120);
     static constexpr uint num_files = 6; // 1, 2, 3, 4, 5, 6
     static constexpr uint num_ranks = 6; // A, B, C, D, E, F
     static constexpr uint num_promotion_ranks = 2;

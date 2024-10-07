@@ -157,6 +157,8 @@ struct Config
     static constexpr uint num_piece_types = 14; // FU, KY, KE, GI, KA, HI, KI, OU, TO, NY, NK, NG, UM, RY
     static constexpr uint num_stand_piece_types = 7; // FU, KY, KE, GI, KA, HI, KI
     static constexpr uint piece_type_to_point[] = {1, 1, 1, 1, 5, 5, 1, 0, 1, 1, 1, 1, 5, 5, 0};
+    static constexpr uint piece_type_to_value[] = {5, 30, 35, 55, 95, 100, 60, 0, 60, 60, 60, 60, 115, 120, 0}; // https://shogi.zukeran.org/2018/06/12/piece-value-1/
+    static constexpr uint sum_piece_value = 2 * (60 * 17 + 115 + 120);
     static constexpr uint num_files = 9; // 1, 2, 3, 4, 5, 6, 7, 8, 9
     static constexpr uint num_ranks = 9; // A, B, C, D, E, F, G, H, I
     static constexpr uint num_promotion_ranks = 3;
