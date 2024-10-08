@@ -6,6 +6,7 @@
 
 #include "vshogi/engine/dfpn.hpp"
 #include "vshogi/engine/mcts.hpp"
+#include "vshogi/engine/piece_value.hpp"
 
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
@@ -483,6 +484,13 @@ inline void export_dfpn_searcher(pybind11::module& m)
 }
 
 template <class Config>
+inline void export_value_functions(pybind11::module& m)
+{
+    namespace py = pybind11;
+    m.def("piece_value_func", &vshogi::engine::piece_value_func<Config>);
+}
+
+template <class Config>
 void export_classes(pybind11::module& m)
 {
     using GameType = vshogi::Game<Config>;
@@ -494,6 +502,7 @@ void export_classes(pybind11::module& m)
     export_game<Config>(m);
     export_mcts_searcher<Config>(m);
     export_mcts_node<Config>(m);
+    export_value_functions<Config>(m);
 
     if constexpr (!std::is_same<GameType, vshogi::animal_shogi::Game>::value)
         export_dfpn_searcher<Config>(m);

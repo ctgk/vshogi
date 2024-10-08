@@ -674,6 +674,10 @@ class Game(abc.ABC):
         """
         return self._game.get_mate_moves_if_any(num_dfpn_nodes)
 
+    @abc.abstractmethod
+    def _piece_value_func(self) -> float:
+        pass
+
     def __repr__(self) -> str:
         """Return representation of the object for debugging.
 

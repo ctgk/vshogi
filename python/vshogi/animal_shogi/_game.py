@@ -4,6 +4,7 @@ from vshogi._game import Game as BaseGame
 from vshogi._vshogi.animal_shogi import MCTS, MctsNode, Move
 from vshogi._vshogi.animal_shogi import Stand
 from vshogi._vshogi.animal_shogi import _Game as _AnimalshogiGame
+from vshogi._vshogi.animal_shogi import piece_value_func
 
 
 Stand.__str__ = lambda self: ','.join([
@@ -106,3 +107,6 @@ class Game(BaseGame):
             "`vshogi.animal_shogi.Game.get_mate_moves_if_any()` "
             "is not supported yet.")
         return None
+
+    def _piece_value_func(self) -> float:
+        return piece_value_func(self._game)

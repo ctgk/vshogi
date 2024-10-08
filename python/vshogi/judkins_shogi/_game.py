@@ -5,6 +5,7 @@ from vshogi._vshogi.judkins_shogi import (
     MctsNode,
     Move,
     _Game as _ShogiGame,
+    piece_value_func,
 )
 
 
@@ -62,3 +63,6 @@ class Game(BaseGame):
     @classmethod
     def _get_dfpn_searcher_class(cls) -> type:
         return DfpnSearcher
+
+    def _piece_value_func(self) -> float:
+        return piece_value_func(self._game)
