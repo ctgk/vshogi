@@ -186,7 +186,10 @@ def load_player_of(index_path_or_network) -> vshogi.engine.DfpnMcts:
     if isinstance(index_path_or_network, int):
         i = index_path_or_network
         mcts = vshogi.engine.Mcts(
-            vshogi.dlshogi.PolicyValueFunction(f'models/model_{i:04d}.tflite'),
+            (
+                vshogi.dlshogi.PolicyValueFunction(f'models/model_{i:04d}.tflite')
+                if i != 0 else lambda g: (np.zeros(g.num_dlshogi_policy, dtype=np.float32), vshogi.engine.piece_value_func(g))
+            ),
             coeff_puct=args.mcts_coeff_puct,
         )
     else:
