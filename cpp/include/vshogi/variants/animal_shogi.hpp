@@ -373,6 +373,50 @@ inline animal_shogi::ColoredPieceEnum animal_shogi::Board::apply(
 }
 
 template <>
+inline void animal_shogi::State::update_checkers()
+{
+    using namespace animal_shogi;
+    std::fill_n(m_checker_locations, 2, SQ_NA);
+    uint index = 0u;
+    const auto king_sq = m_board.get_king_location(m_turn);
+    for (auto sq : m_board.get_attacks_by_nocheck(king_sq).square_iterator()) {
+        if (m_board.is_empty(sq))
+            continue;
+        if (m_board.get_attacks_by_nocheck(sq).is_one(king_sq))
+            m_checker_locations[index++] = sq;
+        if (index > 1)
+            return;
+    }
+    const auto mask_rank_2nd = (m_turn == BLACK) ? bb_rank3 : bb_rank2;
+    const auto enemy_king_sq = m_board.get_king_location(~m_turn);
+    if (mask_rank_2nd.is_one(enemy_king_sq))
+        m_checker_locations[index++] = enemy_king_sq;
+}
+
+template <>
+inline void
+animal_shogi::State::update_checkers_before_turn_update(const Square& dst)
+{
+    using namespace animal_shogi;
+    const auto enemy_king_sq = m_board.get_king_location(~m_turn);
+    uint index = 0u;
+    std::fill_n(m_checker_locations, 2, SQ_NA);
+    if (m_board.get_attacks_by_nocheck(dst).is_one(enemy_king_sq))
+        m_checker_locations[index++] = dst;
+    const auto king_sq = m_board.get_king_location(m_turn);
+    const auto mask_rank_3rd = (m_turn == BLACK) ? bb_rank3 : bb_rank2;
+    if (mask_rank_3rd.is_one(king_sq))
+        m_checker_locations[index++] = king_sq;
+}
+
+template <>
+inline void animal_shogi::State::update_checkers_before_turn_update(
+    const Square& dst, const Square&)
+{
+    return update_checkers_before_turn_update(dst);
+}
+
+template <>
 inline void
 animal_shogi::KingMoveGenerator::increment_iterator_while_square_is_attacked()
 {

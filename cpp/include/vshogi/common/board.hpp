@@ -146,6 +146,10 @@ public:
         update_internals_based_on_pieces();
         return sfen;
     }
+    BitBoardType get_attacks_by_nocheck(const Square& sq) const
+    {
+        return BitBoardType::get_attacks_by(m_pieces[sq], sq, get_occupied());
+    }
     Square find_attacker(
         const ColorEnum& attacker_color,
         const Square& attacked,

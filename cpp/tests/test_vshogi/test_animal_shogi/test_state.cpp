@@ -99,4 +99,28 @@ TEST(animal_shogi_state, zobrist_hash)
     CHECK_TRUE(another != hash);
 }
 
+TEST(animal_shogi_state, in_check)
+{
+    {
+        const auto s = State("1l1/3/3/1L1 b -");
+        CHECK_FALSE(s.in_check());
+    }
+    {
+        const auto s = State("1l1/3/1c1/1L1 b -");
+        CHECK_TRUE(s.in_check());
+    }
+    {
+        const auto s = State("3/3/l2/2L b -");
+        CHECK_TRUE(s.in_check());
+    }
+    {
+        auto s = State("3/l2/3/1L1 b -");
+        CHECK_FALSE(s.in_check());
+        s.apply(Move(SQ_B3, SQ_B4));
+        CHECK_TRUE(s.in_check()); // B_LI is attacking W_LI
+        s.apply(Move(SQ_A3, SQ_A2));
+        CHECK_TRUE(s.in_check()); // W_LI reached the second furthest rank
+    }
+}
+
 } // namespace test_vshogi::test_animal_shogi
