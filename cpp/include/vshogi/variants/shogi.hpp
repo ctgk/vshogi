@@ -734,59 +734,28 @@ inline shogi::BitBoard
 
 template <>
 inline bool shogi::Board::is_square_attacked_by_ranging_pieces(
-    const shogi::SquareEnum& sq, const ColorEnum& offence) const
+    const ColorEnum& by_side, const Square& sq, const Square& skip) const
 {
     using namespace shogi;
-    const BitBoardType occ_full = get_occupied();
+    const BitBoardType occ_full = get_occupied().clear(skip);
     {
         const auto attack_inverted
-            = (offence == BLACK) ? shogi::Magic::get_south_attack(sq, occ_full)
+            = (by_side == BLACK) ? shogi::Magic::get_south_attack(sq, occ_full)
                                  : shogi::Magic::get_north_attack(sq, occ_full);
-        const auto occ_offence = get_occupied<KY>(offence);
-        if ((attack_inverted & occ_offence).any())
-            return true;
-    }
-    {
-        const auto attack_inverted
-            = shogi::Magic::get_diagonal_attack(sq, occ_full);
-        const auto occ_offence = get_occupied<KA, UM>(offence);
-        if ((attack_inverted & occ_offence).any())
-            return true;
-    }
-    {
-        const auto attack_inverted
-            = shogi::Magic::get_adjacent_attack(sq, occ_full);
-        const auto occ_offence = get_occupied<HI, RY>(offence);
-        if ((attack_inverted & occ_offence).any())
-            return true;
-    }
-    return false;
-}
-template <>
-inline bool shogi::Board::is_destination_attacked_by_ranging_pieces(
-    const ColorEnum& by_side, const Square& dst, const Square& src) const
-{
-    using namespace shogi;
-    const BitBoardType occ_full = get_occupied().clear(src);
-    {
-        const auto attack_inverted
-            = (by_side == BLACK)
-                  ? shogi::Magic::get_south_attack(dst, occ_full)
-                  : shogi::Magic::get_north_attack(dst, occ_full);
         const auto occ_offence = get_occupied<KY>(by_side);
         if ((attack_inverted & occ_offence).any())
             return true;
     }
     {
         const auto attack_inverted
-            = shogi::Magic::get_diagonal_attack(dst, occ_full);
+            = shogi::Magic::get_diagonal_attack(sq, occ_full);
         const auto occ_offence = get_occupied<KA, UM>(by_side);
         if ((attack_inverted & occ_offence).any())
             return true;
     }
     {
         const auto attack_inverted
-            = shogi::Magic::get_adjacent_attack(dst, occ_full);
+            = shogi::Magic::get_adjacent_attack(sq, occ_full);
         const auto occ_offence = get_occupied<HI, RY>(by_side);
         if ((attack_inverted & occ_offence).any())
             return true;
@@ -795,16 +764,16 @@ inline bool shogi::Board::is_destination_attacked_by_ranging_pieces(
 }
 
 template <>
-inline bool shogi::Board::is_destination_attacked(
-    const ColorEnum& by_side, const Square& dst, const Square& src) const
+inline bool shogi::Board::is_square_attacked(
+    const ColorEnum& by_side, const Square& sq, const Square& skip) const
 {
     using namespace shogi;
-    return is_square_attacked_by<FU>(dst, by_side)
-           || is_square_attacked_by<KE>(dst, by_side)
-           || is_square_attacked_by<GI>(dst, by_side)
-           || is_square_attacked_by<KI, TO, NY, NK, NG>(dst, by_side)
-           || is_square_attacked_by<OU, UM, RY>(dst, by_side)
-           || is_destination_attacked_by_ranging_pieces(by_side, dst, src);
+    return is_square_attacked_by<FU>(by_side, sq)
+           || is_square_attacked_by<KE>(by_side, sq)
+           || is_square_attacked_by<GI>(by_side, sq)
+           || is_square_attacked_by<KI, TO, NY, NK, NG>(by_side, sq)
+           || is_square_attacked_by<OU, UM, RY>(by_side, sq)
+           || is_square_attacked_by_ranging_pieces(by_side, sq, skip);
 }
 template <>
 inline shogi::BitBoard

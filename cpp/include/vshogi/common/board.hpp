@@ -227,11 +227,13 @@ public:
         }
         return out;
     }
-    bool is_destination_attacked(
-        const ColorEnum& by_side, const Square& dst, const Square& src) const
+    bool is_square_attacked(
+        const ColorEnum& by_side,
+        const Square& sq,
+        const Square& skip = SQ_NA) const
     {
         for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
-            if (find_attacker(by_side, dst, dir, src) != SQ_NA)
+            if (find_attacker(by_side, sq, dir, skip) != SQ_NA)
                 return true;
         }
         return false;
@@ -344,30 +346,28 @@ private:
         m_bb_piece[pt].toggle(sq);
     }
     template <PieceType PT>
-    bool is_square_attacked_by(const Square& sq, const ColorEnum& offence) const
+    bool is_square_attacked_by(const ColorEnum& by_side, const Square& sq) const
     {
         const auto attack_inverted = BitBoardType::get_attacks_by(
-            PHelper::to_board_piece(~offence, PT), sq);
+            PHelper::to_board_piece(~by_side, PT), sq);
         const auto occ_offence
-            = get_occupied(PHelper::to_board_piece(offence, PT));
+            = get_occupied(PHelper::to_board_piece(by_side, PT));
         return (attack_inverted & occ_offence).any();
     }
     template <PieceType Base, PieceType Alike, PieceType... Args>
-    bool is_square_attacked_by(const Square& sq, const ColorEnum& offence) const
+    bool is_square_attacked_by(const ColorEnum& by_side, const Square& sq) const
     {
         const auto attack_inverted = BitBoardType::get_attacks_by(
-            PHelper::to_board_piece(~offence, Base), sq);
-        const auto occ_offence = get_occupied<Base, Alike, Args...>(offence);
+            PHelper::to_board_piece(~by_side, Base), sq);
+        const auto occ_offence = get_occupied<Base, Alike, Args...>(by_side);
         return (attack_inverted & occ_offence).any();
     }
     bool is_square_attacked_by_ranging_pieces(
-        const Square& sq, const ColorEnum& offence) const;
+        const ColorEnum& by_side, const Square& sq, const Square& skip) const;
     BitBoardType get_occupied_by_ranging(const ColorEnum&) const
     {
         return BitBoardType();
     }
-    bool is_destination_attacked_by_ranging_pieces(
-        const ColorEnum& by_side, const Square& dst, const Square& src) const;
 };
 
 } // namespace vshogi

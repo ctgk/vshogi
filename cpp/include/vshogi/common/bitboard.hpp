@@ -131,13 +131,26 @@ public:
         m_value ^= static_cast<UInt>(static_cast<UInt>(1) << sq);
         return *this;
     }
+
     /**
-     * @brief Clear a bit corresponding to the given square.
+     * @brief Clear a bit corresponding to the given square if not `SQ_NA`.
      *
-     * @param sq Corresponding square bit to clear. Do not pass `SQ_NA`.
+     * @param sq Corresponding square bit to clear.
      * @return BitBoard& Cleared bitboard.
      */
     BitBoard& clear(const Square& sq)
+    {
+        if (sq != SHelper::SQ_NA)
+            return clear_nocheck(sq);
+        return *this;
+    }
+    /**
+     * @brief Clear a bit corresponding to the given square.
+     * @note Note that you are not allowed to pass `SQ_NA` here.
+     * @param sq Corresponding square bit to clear.
+     * @return BitBoard& Cleared bitboard.
+     */
+    BitBoard& clear_nocheck(const Square& sq)
     {
         m_value &= static_cast<UInt>(~(static_cast<UInt>(1) << sq));
         return *this;

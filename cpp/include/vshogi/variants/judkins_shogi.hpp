@@ -536,44 +536,22 @@ inline judkins_shogi::BitBoard judkins_shogi::Magic::attack_table_sw_ne
 
 template <>
 inline bool judkins_shogi::Board::is_square_attacked_by_ranging_pieces(
-    const judkins_shogi::SquareEnum& sq, const ColorEnum& offence) const
+    const ColorEnum& by_side,
+    const judkins_shogi::SquareEnum& sq,
+    const judkins_shogi::SquareEnum& skip) const
 {
     using namespace judkins_shogi;
-    const BitBoardType occ_full = get_occupied();
+    const BitBoardType occ_full = get_occupied().clear(skip);
     {
         const auto attack_inverted
             = judkins_shogi::Magic::get_diagonal_attack(sq, occ_full);
-        const auto occ_offence = get_occupied<KA, UM>(offence);
-        if ((attack_inverted & occ_offence).any())
-            return true;
-    }
-    {
-        const auto attack_inverted
-            = judkins_shogi::Magic::get_adjacent_attack(sq, occ_full);
-        const auto occ_offence = get_occupied<HI, RY>(offence);
-        if ((attack_inverted & occ_offence).any())
-            return true;
-    }
-    return false;
-}
-template <>
-inline bool judkins_shogi::Board::is_destination_attacked_by_ranging_pieces(
-    const ColorEnum& by_side,
-    const judkins_shogi::SquareEnum& dst,
-    const judkins_shogi::SquareEnum& src) const
-{
-    using namespace judkins_shogi;
-    const BitBoardType occ_full = get_occupied().clear(src);
-    {
-        const auto attack_inverted
-            = judkins_shogi::Magic::get_diagonal_attack(dst, occ_full);
         const auto occ_offence = get_occupied<KA, UM>(by_side);
         if ((attack_inverted & occ_offence).any())
             return true;
     }
     {
         const auto attack_inverted
-            = judkins_shogi::Magic::get_adjacent_attack(dst, occ_full);
+            = judkins_shogi::Magic::get_adjacent_attack(sq, occ_full);
         const auto occ_offence = get_occupied<HI, RY>(by_side);
         if ((attack_inverted & occ_offence).any())
             return true;
@@ -582,18 +560,18 @@ inline bool judkins_shogi::Board::is_destination_attacked_by_ranging_pieces(
 }
 
 template <>
-inline bool judkins_shogi::Board::is_destination_attacked(
+inline bool judkins_shogi::Board::is_square_attacked(
     const ColorEnum& by_side,
-    const judkins_shogi::SquareEnum& dst,
-    const judkins_shogi::SquareEnum& src) const
+    const judkins_shogi::SquareEnum& sq,
+    const judkins_shogi::SquareEnum& skip) const
 {
     using namespace judkins_shogi;
-    return is_square_attacked_by<FU>(dst, by_side)
-           || is_square_attacked_by<KE>(dst, by_side)
-           || is_square_attacked_by<GI>(dst, by_side)
-           || is_square_attacked_by<KI, TO, NK, NG>(dst, by_side)
-           || is_square_attacked_by<OU, UM, RY>(dst, by_side)
-           || is_destination_attacked_by_ranging_pieces(by_side, dst, src);
+    return is_square_attacked_by<FU>(by_side, sq)
+           || is_square_attacked_by<KE>(by_side, sq)
+           || is_square_attacked_by<GI>(by_side, sq)
+           || is_square_attacked_by<KI, TO, NK, NG>(by_side, sq)
+           || is_square_attacked_by<OU, UM, RY>(by_side, sq)
+           || is_square_attacked_by_ranging_pieces(by_side, sq, skip);
 }
 template <>
 inline judkins_shogi::BitBoard

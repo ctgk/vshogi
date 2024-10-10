@@ -128,45 +128,45 @@ TEST(judkins_shogi_board, append_sfen)
     STRCMP_EQUAL(expected, actual.c_str());
 }
 
-TEST(judkins_shogi_board, is_destination_attacked)
+TEST(judkins_shogi_board, is_square_attacked)
 {
     {
         // by FU.
         const auto b = Board("6/6/6/3p2/6/6 b");
-        CHECK_TRUE(b.is_destination_attacked(vshogi::WHITE, SQ_3E, SQ_1A));
-        CHECK_FALSE(b.is_destination_attacked(vshogi::WHITE, SQ_3C, SQ_1A));
+        CHECK_TRUE(b.is_square_attacked(vshogi::WHITE, SQ_3E, SQ_1A));
+        CHECK_FALSE(b.is_square_attacked(vshogi::WHITE, SQ_3C, SQ_1A));
     }
     {
         // by KE.
         const auto b = Board("1n4/6/6/6/6/6 b");
-        CHECK_TRUE(b.is_destination_attacked(vshogi::WHITE, SQ_6C, SQ_1A));
-        CHECK_FALSE(b.is_destination_attacked(vshogi::WHITE, SQ_5C, SQ_1A));
+        CHECK_TRUE(b.is_square_attacked(vshogi::WHITE, SQ_6C, SQ_1A));
+        CHECK_FALSE(b.is_square_attacked(vshogi::WHITE, SQ_5C, SQ_1A));
     }
     {
         // by GI.
         const auto b = Board("6/6/2s3/6/6/6 b");
-        CHECK_TRUE(b.is_destination_attacked(vshogi::WHITE, SQ_5B, SQ_1A));
-        CHECK_FALSE(b.is_destination_attacked(vshogi::WHITE, SQ_4B, SQ_1A));
-        CHECK_FALSE(b.is_destination_attacked(vshogi::WHITE, SQ_5C, SQ_1A));
+        CHECK_TRUE(b.is_square_attacked(vshogi::WHITE, SQ_5B, SQ_1A));
+        CHECK_FALSE(b.is_square_attacked(vshogi::WHITE, SQ_4B, SQ_1A));
+        CHECK_FALSE(b.is_square_attacked(vshogi::WHITE, SQ_5C, SQ_1A));
     }
     {
         // by gold like piece.
         const auto b = Board("6/6/3+n2/6/6 b");
-        CHECK_TRUE(b.is_destination_attacked(vshogi::WHITE, SQ_3B, SQ_1A));
-        CHECK_TRUE(b.is_destination_attacked(vshogi::WHITE, SQ_2D, SQ_1A));
-        CHECK_FALSE(b.is_destination_attacked(vshogi::WHITE, SQ_4B, SQ_1A));
+        CHECK_TRUE(b.is_square_attacked(vshogi::WHITE, SQ_3B, SQ_1A));
+        CHECK_TRUE(b.is_square_attacked(vshogi::WHITE, SQ_2D, SQ_1A));
+        CHECK_FALSE(b.is_square_attacked(vshogi::WHITE, SQ_4B, SQ_1A));
     }
     {
         // by king like piece.
         const auto b = Board("6/6/6/6/6/5+b b");
-        CHECK_TRUE(b.is_destination_attacked(vshogi::WHITE, SQ_2E, SQ_1A));
-        CHECK_FALSE(b.is_destination_attacked(vshogi::WHITE, SQ_2C, SQ_1A));
+        CHECK_TRUE(b.is_square_attacked(vshogi::WHITE, SQ_2E, SQ_1A));
+        CHECK_FALSE(b.is_square_attacked(vshogi::WHITE, SQ_2C, SQ_1A));
     }
     {
         // by a ranging piece.
         const auto b = Board("6/6/6/6/1p4/b5 b");
-        CHECK_FALSE(b.is_destination_attacked(vshogi::WHITE, SQ_1A, SQ_1A));
-        CHECK_TRUE(b.is_destination_attacked(vshogi::WHITE, SQ_5E, SQ_1A));
+        CHECK_FALSE(b.is_square_attacked(vshogi::WHITE, SQ_1A, SQ_1A));
+        CHECK_TRUE(b.is_square_attacked(vshogi::WHITE, SQ_5E, SQ_1A));
     }
 }
 

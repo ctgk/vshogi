@@ -476,42 +476,20 @@ inline minishogi::BitBoard
 
 template <>
 inline bool minishogi::Board::is_square_attacked_by_ranging_pieces(
-    const minishogi::SquareEnum& sq, const ColorEnum& offence) const
+    const ColorEnum& by_side, const Square& sq, const Square& skip) const
 {
     using namespace minishogi;
-    const BitBoardType occ_full = get_occupied();
+    const BitBoardType occ_full = get_occupied().clear(skip);
     {
         const auto attack_inverted
             = minishogi::Magic::get_diagonal_attack(sq, occ_full);
-        const auto occ_offence = get_occupied<KA, UM>(offence);
-        if ((attack_inverted & occ_offence).any())
-            return true;
-    }
-    {
-        const auto attack_inverted
-            = minishogi::Magic::get_adjacent_attack(sq, occ_full);
-        const auto occ_offence = get_occupied<HI, RY>(offence);
-        if ((attack_inverted & occ_offence).any())
-            return true;
-    }
-    return false;
-}
-template <>
-inline bool minishogi::Board::is_destination_attacked_by_ranging_pieces(
-    const ColorEnum& by_side, const Square& dst, const Square& src) const
-{
-    using namespace minishogi;
-    const BitBoardType occ_full = get_occupied().clear(src);
-    {
-        const auto attack_inverted
-            = minishogi::Magic::get_diagonal_attack(dst, occ_full);
         const auto occ_offence = get_occupied<KA, UM>(by_side);
         if ((attack_inverted & occ_offence).any())
             return true;
     }
     {
         const auto attack_inverted
-            = minishogi::Magic::get_adjacent_attack(dst, occ_full);
+            = minishogi::Magic::get_adjacent_attack(sq, occ_full);
         const auto occ_offence = get_occupied<HI, RY>(by_side);
         if ((attack_inverted & occ_offence).any())
             return true;
@@ -520,15 +498,15 @@ inline bool minishogi::Board::is_destination_attacked_by_ranging_pieces(
 }
 
 template <>
-inline bool minishogi::Board::is_destination_attacked(
-    const ColorEnum& by_side, const Square& dst, const Square& src) const
+inline bool minishogi::Board::is_square_attacked(
+    const ColorEnum& by_side, const Square& sq, const Square& skip) const
 {
     using namespace minishogi;
-    return is_square_attacked_by<FU>(dst, by_side)
-           || is_square_attacked_by<GI>(dst, by_side)
-           || is_square_attacked_by<KI, TO, NG>(dst, by_side)
-           || is_square_attacked_by<OU, UM, RY>(dst, by_side)
-           || is_destination_attacked_by_ranging_pieces(by_side, dst, src);
+    return is_square_attacked_by<FU>(by_side, sq)
+           || is_square_attacked_by<GI>(by_side, sq)
+           || is_square_attacked_by<KI, TO, NG>(by_side, sq)
+           || is_square_attacked_by<OU, UM, RY>(by_side, sq)
+           || is_square_attacked_by_ranging_pieces(by_side, sq, skip);
 }
 template <>
 inline minishogi::BitBoard

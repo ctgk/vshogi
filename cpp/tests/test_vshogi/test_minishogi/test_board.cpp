@@ -189,39 +189,39 @@ TEST(minishogi_board, get_occupied)
     }
 }
 
-TEST(minishogi_board, is_destination_attacked)
+TEST(minishogi_board, is_square_attacked)
 {
     {
         // by FU.
         const auto b = Board("5/5/2P2/5/5 b");
-        CHECK_TRUE(b.is_destination_attacked(vshogi::BLACK, SQ_3B, SQ_3B));
-        CHECK_FALSE(b.is_destination_attacked(vshogi::BLACK, SQ_2B, SQ_2B));
+        CHECK_TRUE(b.is_square_attacked(vshogi::BLACK, SQ_3B, SQ_3B));
+        CHECK_FALSE(b.is_square_attacked(vshogi::BLACK, SQ_2B, SQ_2B));
     }
     {
         // by GI.
         const auto b = Board("5/5/2S2/5/5 b");
-        CHECK_TRUE(b.is_destination_attacked(vshogi::BLACK, SQ_3B, SQ_3B));
-        CHECK_FALSE(b.is_destination_attacked(vshogi::BLACK, SQ_3D, SQ_3D));
+        CHECK_TRUE(b.is_square_attacked(vshogi::BLACK, SQ_3B, SQ_3B));
+        CHECK_FALSE(b.is_square_attacked(vshogi::BLACK, SQ_3D, SQ_3D));
     }
     {
         // by gold like piece.
         const auto b = Board("5/5/2+P2/5/5 b");
-        CHECK_TRUE(b.is_destination_attacked(vshogi::BLACK, SQ_3B, SQ_3B));
-        CHECK_FALSE(b.is_destination_attacked(vshogi::BLACK, SQ_2D, SQ_2D));
+        CHECK_TRUE(b.is_square_attacked(vshogi::BLACK, SQ_3B, SQ_3B));
+        CHECK_FALSE(b.is_square_attacked(vshogi::BLACK, SQ_2D, SQ_2D));
     }
     {
         // by king like piece.
         const auto b = Board("5/5/5/5/4+R b");
-        CHECK_TRUE(b.is_destination_attacked(vshogi::BLACK, SQ_2D, SQ_2D));
-        CHECK_FALSE(b.is_destination_attacked(vshogi::BLACK, SQ_2C, SQ_2C));
+        CHECK_TRUE(b.is_square_attacked(vshogi::BLACK, SQ_2D, SQ_2D));
+        CHECK_FALSE(b.is_square_attacked(vshogi::BLACK, SQ_2C, SQ_2C));
     }
     {
         // by a ranging piece.
         const auto b = Board("5/5/5/5/1P2R b");
-        CHECK_TRUE(b.is_destination_attacked(vshogi::BLACK, SQ_1A, SQ_1A));
-        CHECK_FALSE(b.is_destination_attacked(vshogi::BLACK, SQ_2A, SQ_2A));
-        CHECK_TRUE(b.is_destination_attacked(vshogi::BLACK, SQ_4E, SQ_4E));
-        CHECK_FALSE(b.is_destination_attacked(vshogi::BLACK, SQ_5E, SQ_5E));
+        CHECK_TRUE(b.is_square_attacked(vshogi::BLACK, SQ_1A, SQ_1A));
+        CHECK_FALSE(b.is_square_attacked(vshogi::BLACK, SQ_2A, SQ_2A));
+        CHECK_TRUE(b.is_square_attacked(vshogi::BLACK, SQ_4E, SQ_4E));
+        CHECK_FALSE(b.is_square_attacked(vshogi::BLACK, SQ_5E, SQ_5E));
     }
     {
         // Turn: WHITE
@@ -240,12 +240,12 @@ TEST(minishogi_board, is_destination_attacked)
         //   *---*---*---*---*---*
         // Black: -
         const auto b = Board("R1+S2/4k/S2+bg/PK3/3B1 w r 40");
-        CHECK_TRUE(b.is_destination_attacked(vshogi::BLACK, SQ_2A, SQ_2A));
+        CHECK_TRUE(b.is_square_attacked(vshogi::BLACK, SQ_2A, SQ_2A));
     }
     {
         const auto b = Board("k3b/5/2K2/5/5 b");
-        CHECK_TRUE(b.is_destination_attacked(vshogi::WHITE, SQ_4D, SQ_3C));
-        CHECK_FALSE(b.is_destination_attacked(vshogi::WHITE, SQ_2D, SQ_3C));
+        CHECK_TRUE(b.is_square_attacked(vshogi::WHITE, SQ_4D, SQ_3C));
+        CHECK_FALSE(b.is_square_attacked(vshogi::WHITE, SQ_2D, SQ_3C));
     }
 }
 
