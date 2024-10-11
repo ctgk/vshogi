@@ -23,6 +23,7 @@ private:
     static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
     using PieceType = typename Config::PieceType;
     using ColoredPiece = typename Config::ColoredPiece;
+    static_assert(sizeof(ColoredPiece) == sizeof(std::uint8_t));
 
     static const DirectionEnum attack_directions_table[2 * num_piece_types + 1]
                                                       [9];

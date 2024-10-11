@@ -93,10 +93,11 @@ TEST(animal_shogi_state, zobrist_hash)
     s.apply(Move(SQ_A2, SQ_B1), &hash);
     s.apply(Move(SQ_B1, SQ_B2), &hash); // promote
 
+    constexpr std::uint64_t lsb40bit = 0x000000ffffffffffu;
     const auto expect = State("gHe/l2/3/ELG w C").zobrist_hash();
     const auto another = State("gCe/l2/3/ELG w C").zobrist_hash();
-    CHECK_EQUAL(expect, hash);
-    CHECK_TRUE(another != hash);
+    CHECK_EQUAL(expect & lsb40bit, hash & lsb40bit);
+    CHECK_TRUE((another & lsb40bit) != (hash & lsb40bit));
 }
 
 TEST(animal_shogi_state, in_check)

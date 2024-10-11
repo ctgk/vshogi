@@ -43,8 +43,8 @@ private:
     static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
     static constexpr uint num_dir = Config::num_dir;
     static constexpr Square SQ_NA = SHelper::SQ_NA; // NOLINT
-
-    static constexpr std::uint64_t zobrist_hash_for_turn = 0xaaaaaaaaaaaaaaaau;
+    static constexpr ColoredPiece VOID = PHelper::VOID; // NOLINT
+    static constexpr std::uint64_t zobrist_hash_for_turn = 0x000000aaaaaaaaaau;
 
 private:
     BoardType m_board;
@@ -132,17 +132,18 @@ public:
     }
     State& apply(const MoveType& move, std::uint64_t* const hash = nullptr)
     {
+        const Square dst = move.destination();
         if (move.is_drop()) {
             const PieceType src = move.source_piece();
-            const Square dst = move.destination();
             const ColoredPiece p = m_stands.pop_piece_from(m_turn, src, hash);
             m_board.apply(dst, p, hash);
+            fill_ms24b_with(hash, VOID, move);
             update_checkers_before_turn_update(dst);
         } else {
             const Square src = move.source_square();
-            const Square dst = move.destination();
             const auto captured = m_board.apply(dst, src, move.promote(), hash);
             m_stands.add_captured_piece(captured, hash);
+            fill_ms24b_with(hash, captured, move);
             update_checkers_before_turn_update(dst, src);
         }
         m_turn = ~m_turn;
@@ -270,6 +271,19 @@ private:
         return !(BitBoardType::get_line_segment(dst, enemy_king_sq)
                  & m_board.get_occupied())
                     .any();
+    }
+    static void fill_ms24b_with(
+        std::uint64_t* const hash, const ColoredPiece& p, const MoveType& m)
+    {
+        if (hash == nullptr)
+            return;
+        *hash <<= 24u;
+        *hash >>= 24u;
+
+        static_assert(sizeof(ColoredPiece) == sizeof(std::uint8_t));
+        static_assert(sizeof(MoveType) == sizeof(std::uint16_t));
+        *hash ^= static_cast<std::uint64_t>(p) << (64u - 8u);
+        *hash ^= static_cast<std::uint64_t>(m.hash()) << (64u - 24u);
     }
 };
 

@@ -535,13 +535,13 @@ inline animal_shogi::Game&
 animal_shogi::Game::apply(const animal_shogi::Move& move)
 {
     const auto illegal = !is_legal(move);
-    m_hash_list.emplace_back(m_zobrist_hash);
+    m_hash_list.emplace_back(m_captured_move_hash);
     if (!move.is_drop()) {
         const auto moving = get_board()[move.source_square()];
         const auto captured = get_board()[move.destination()];
         m_result = animal_shogi::internal::move_result(move, moving, captured);
     }
-    m_current_state.apply(move, &m_zobrist_hash);
+    m_current_state.apply(move, &m_captured_move_hash);
     if (illegal)
         m_result = (get_turn() == BLACK) ? BLACK_WIN : WHITE_WIN;
     else if (m_result == ONGOING)
@@ -553,13 +553,13 @@ template <>
 inline animal_shogi::Game&
 animal_shogi::Game::apply_nocheck(const animal_shogi::Move& move)
 {
-    m_hash_list.emplace_back(m_zobrist_hash);
+    m_hash_list.emplace_back(m_captured_move_hash);
     if (!move.is_drop()) {
         const auto moving = get_board()[move.source_square()];
         const auto captured = get_board()[move.destination()];
         m_result = animal_shogi::internal::move_result(move, moving, captured);
     }
-    m_current_state.apply(move, &m_zobrist_hash);
+    m_current_state.apply(move, &m_captured_move_hash);
     if (m_result == ONGOING) {
         update_result();
     }
@@ -569,7 +569,7 @@ animal_shogi::Game::apply_nocheck(const animal_shogi::Move& move)
 template <>
 inline animal_shogi::Game::Game(const animal_shogi::State& s)
     : m_current_state(s), m_result(ONGOING),
-      m_zobrist_hash(m_current_state.zobrist_hash()),
+      m_captured_move_hash(m_current_state.zobrist_hash() & lsb40bit),
       m_initial_sfen_without_ply(m_current_state.to_sfen()), m_hash_list()
 {
     m_hash_list.reserve(128);

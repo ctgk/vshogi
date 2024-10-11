@@ -46,11 +46,12 @@ private:
     static constexpr uint num_dir = Config::num_dir;
     static constexpr uint max_acceptable_repetitions
         = Config::max_acceptable_repetitions;
+    static constexpr std::uint64_t lsb40bit = 0x000000ffffffffffu;
 
 private:
     StateType m_current_state;
     ResultEnum m_result;
-    std::uint64_t m_zobrist_hash;
+    std::uint64_t m_captured_move_hash;
     const std::string m_initial_sfen_without_ply;
     std::vector<ZobristHashType> m_hash_list;
 
@@ -105,7 +106,7 @@ public:
     }
     std::uint64_t get_zobrist_hash() const
     {
-        return m_zobrist_hash;
+        return m_captured_move_hash & lsb40bit;
     }
     std::string to_sfen(const bool include_move_count = true) const
     {
@@ -166,7 +167,7 @@ public:
         auto out = Game(
             m_current_state,
             m_result,
-            m_zobrist_hash,
+            m_captured_move_hash,
             m_initial_sfen_without_ply,
             m_hash_list);
         out.apply_dfpn(move);
@@ -246,7 +247,7 @@ public:
 protected:
     Game(const StateType& s)
         : m_current_state(s), m_result(ONGOING),
-          m_zobrist_hash(m_current_state.zobrist_hash()),
+          m_captured_move_hash(m_current_state.zobrist_hash() & lsb40bit),
           m_initial_sfen_without_ply(m_current_state.to_sfen()), m_hash_list{}
     {
         m_hash_list.reserve(256);
@@ -258,7 +259,8 @@ protected:
         const uint64_t& zobrist_hash,
         const std::string& initial_sfen_without_ply,
         const std::vector<ZobristHashType>& hash_list)
-        : m_current_state(s), m_result(result), m_zobrist_hash(zobrist_hash),
+        : m_current_state(s), m_result(result),
+          m_captured_move_hash(zobrist_hash & lsb40bit),
           m_initial_sfen_without_ply(initial_sfen_without_ply),
           m_hash_list(hash_list)
     {
@@ -298,12 +300,12 @@ protected:
 protected:
     void add_record_and_update_state(const MoveType& move)
     {
-        m_hash_list.emplace_back(m_zobrist_hash);
-        m_current_state.apply(move, &m_zobrist_hash);
+        m_hash_list.emplace_back(m_captured_move_hash);
+        m_current_state.apply(move, &m_captured_move_hash);
     }
     void add_record_and_update_state_for_dfpn(const MoveType& move)
     {
-        m_current_state.apply(move, &m_zobrist_hash);
+        m_current_state.apply(move, &m_captured_move_hash);
         m_hash_list.emplace_back(m_current_state.get_board().zobrist_hash());
     }
 
@@ -348,11 +350,12 @@ protected:
     bool is_repetitions(
         const uint max_repetitions_inclusive = max_acceptable_repetitions) const
     {
+        const auto hash = lsb40bit & m_captured_move_hash;
         uint num = 1u;
         const int n = static_cast<int>(m_hash_list.size());
         for (int ii = n - 4; ii >= 0; ii -= 2) {
             const uint index = static_cast<uint>(ii);
-            num += (m_zobrist_hash == m_hash_list[index]);
+            num += (hash == (m_hash_list[index] & lsb40bit));
             if (num > max_repetitions_inclusive)
                 return true;
         }
