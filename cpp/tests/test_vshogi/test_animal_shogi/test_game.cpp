@@ -77,6 +77,7 @@ TEST(animal_shogi_game, result)
         CHECK_EQUAL(vshogi::ONGOING, game.get_result());
         game.apply(Move(SQ_A1, SQ_A2));
         CHECK_EQUAL(vshogi::DRAW, game.get_result()); // #repeat = 3
+        CHECK_EQUAL(3, game.get_num_fold());
     }
 }
 

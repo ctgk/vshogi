@@ -570,7 +570,8 @@ template <>
 inline animal_shogi::Game::Game(const animal_shogi::State& s)
     : m_current_state(s), m_result(ONGOING),
       m_captured_move_hash(m_current_state.zobrist_hash() & lsb40bit),
-      m_initial_sfen_without_ply(m_current_state.to_sfen()), m_hash_list()
+      m_initial_sfen_without_ply(m_current_state.to_sfen()), m_hash_list(),
+      m_num_fold(1u)
 {
     m_hash_list.reserve(128);
     update_result();

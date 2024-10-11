@@ -54,6 +54,7 @@ private:
     std::uint64_t m_captured_move_hash;
     const std::string m_initial_sfen_without_ply;
     std::vector<ZobristHashType> m_hash_list;
+    uint m_num_fold;
 
 public:
     Game() : Game(StateType())
@@ -103,6 +104,10 @@ public:
     ResultEnum get_result() const
     {
         return m_result;
+    }
+    uint get_num_fold() const
+    {
+        return m_num_fold;
     }
     std::uint64_t get_zobrist_hash() const
     {
@@ -248,7 +253,8 @@ protected:
     Game(const StateType& s)
         : m_current_state(s), m_result(ONGOING),
           m_captured_move_hash(m_current_state.zobrist_hash() & lsb40bit),
-          m_initial_sfen_without_ply(m_current_state.to_sfen()), m_hash_list{}
+          m_initial_sfen_without_ply(m_current_state.to_sfen()), m_hash_list{},
+          m_num_fold(1u)
     {
         m_hash_list.reserve(256);
         update_result();
@@ -262,7 +268,7 @@ protected:
         : m_current_state(s), m_result(result),
           m_captured_move_hash(zobrist_hash & lsb40bit),
           m_initial_sfen_without_ply(initial_sfen_without_ply),
-          m_hash_list(hash_list)
+          m_hash_list(hash_list), m_num_fold(1u)
     {
     }
     static uint num_pieces(const StateType& s, const ColorEnum& c)
@@ -348,15 +354,15 @@ protected:
             m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
     }
     bool is_repetitions(
-        const uint max_repetitions_inclusive = max_acceptable_repetitions) const
+        const uint max_repetitions_inclusive = max_acceptable_repetitions)
     {
+        m_num_fold = 1u;
         const auto hash = lsb40bit & m_captured_move_hash;
-        uint num = 1u;
         const int n = static_cast<int>(m_hash_list.size());
         for (int ii = n - 4; ii >= 0; ii -= 2) {
             const uint index = static_cast<uint>(ii);
-            num += (hash == (m_hash_list[index] & lsb40bit));
-            if (num > max_repetitions_inclusive)
+            m_num_fold += (hash == (m_hash_list[index] & lsb40bit));
+            if (m_num_fold > max_repetitions_inclusive)
                 return true;
         }
         return false;
