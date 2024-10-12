@@ -34,6 +34,55 @@ TEST(minishogi_game, apply)
     }
 }
 
+TEST(minishogi_game, undo)
+{
+    {
+        // no promotion no capturing
+        auto game = Game();
+        game.apply(Move(SQ_3D, SQ_4E));
+        CHECK_EQUAL(1, game.record_length());
+        game.undo();
+        CHECK_EQUAL(0, game.record_length());
+        STRCMP_EQUAL("rbsgk/4p/5/P4/KGSBR b - 1", game.to_sfen().c_str());
+    }
+    {
+        // undo capturing move
+        auto game = Game();
+        game.apply(Move(SQ_1B, SQ_1E));
+        CHECK_EQUAL(1, game.get_stand(vshogi::BLACK).count(FU));
+        game.undo();
+        CHECK_EQUAL(0, game.get_stand(vshogi::BLACK).count(FU));
+        STRCMP_EQUAL("rbsgk/4p/5/P4/KGSBR b - 1", game.to_sfen().c_str());
+    }
+    {
+        // undo promotion
+        auto game = Game("rbsgk/4p/5/P4/KGSRB b -");
+        game.apply(Move(SQ_5A, SQ_1E, true));
+        CHECK_EQUAL(
+            static_cast<int>(B_UM), static_cast<int>(game.get_board()[SQ_5A]));
+        game.undo();
+        STRCMP_EQUAL("rbsgk/4p/5/P4/KGSRB b - 1", game.to_sfen().c_str());
+    }
+    {
+        auto game = Game("4k/4r/5/5/4K b P");
+        game.apply(Move(SQ_1C, FU));
+        game.undo();
+        CHECK_TRUE(game.in_check());
+        CHECK_EQUAL(SQ_1B, game.get_checker_location());
+    }
+    {
+        // undo ignoring check & undo drop move
+        auto game = Game("4k/4p/4K/5/5 b P");
+        game.apply(Move(SQ_5B, FU));
+        CHECK_EQUAL(0, game.get_stand(vshogi::BLACK).count(FU));
+        CHECK_EQUAL(vshogi::WHITE_WIN, game.get_result());
+        game.undo();
+        CHECK_EQUAL(1, game.get_stand(vshogi::BLACK).count(FU));
+        CHECK_EQUAL(vshogi::ONGOING, game.get_result());
+        CHECK_TRUE(game.in_check());
+    }
+}
+
 TEST(minishogi_game, is_legal)
 {
     {

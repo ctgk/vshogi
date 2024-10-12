@@ -181,7 +181,9 @@ public:
         }
     }
     ColoredPiece pop_piece_from(
-        const ColorEnum& c, const PieceType& pt, std::uint64_t* const hash)
+        const ColorEnum& c,
+        const PieceType& pt,
+        std::uint64_t* const hash = nullptr)
     {
         m_stands[c].subtract(pt);
         if (hash != nullptr) {
@@ -219,6 +221,19 @@ public:
             *hash ^= zobrist_table[c][pt_demoted][num_before];
             *hash ^= zobrist_table[c][pt_demoted][num_after];
         }
+    }
+    void return_dropped_piece(const ColoredPiece& dropped)
+    {
+        const auto c = PHelper::get_color(dropped);
+        const auto pt = PHelper::to_piece_type(dropped);
+        m_stands[c].add(pt);
+    }
+    void remove_captured_piece(const ColoredPiece& captured)
+    {
+        const auto c = ~PHelper::get_color(captured);
+        const auto pt_demoted
+            = PHelper::demote(PHelper::to_piece_type(captured));
+        m_stands[c].subtract(pt_demoted);
     }
 
     std::uint64_t zobrist_hash() const

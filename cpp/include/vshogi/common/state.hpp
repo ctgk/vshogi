@@ -151,6 +151,25 @@ public:
             *hash ^= zobrist_hash_for_turn;
         return *this;
     }
+    State& undo(const MoveType& move, const ColoredPiece& captured)
+    {
+        const Square dst = move.destination();
+        if (captured != VOID)
+            m_stands.remove_captured_piece(captured);
+        if (move.is_drop()) {
+            const auto dropped = m_board.apply(dst, captured);
+            m_stands.return_dropped_piece(dropped);
+        } else {
+            const auto src = move.source_square();
+            auto moved = m_board.apply(dst, captured);
+            if (move.promote())
+                moved = PHelper::demote_nocheck(moved);
+            m_board.apply(src, moved);
+        }
+        m_turn = ~m_turn;
+        update_checkers();
+        return *this;
+    }
     void to_feature_map(float* const data) const
     {
         constexpr uint sp_types = num_stand_piece_types;

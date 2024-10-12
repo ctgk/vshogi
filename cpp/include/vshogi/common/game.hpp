@@ -178,6 +178,20 @@ public:
         out.apply_dfpn(move);
         return out;
     }
+    Game& undo()
+    {
+        m_captured_move_hash >>= (64u - 8u - 16u);
+        const auto move = MoveType(
+            static_cast<std::uint16_t>(m_captured_move_hash & 0x0ffffu));
+        const auto captured
+            = static_cast<ColoredPiece>(m_captured_move_hash >> 16u);
+        m_current_state.undo(move, captured);
+        m_result = ONGOING;
+        m_captured_move_hash = m_hash_list[m_hash_list.size() - 1u];
+        m_hash_list.pop_back();
+        m_num_fold = 0u;
+        return *this;
+    }
     bool is_legal(const MoveType move) const
     {
         if (move.is_drop()) {
