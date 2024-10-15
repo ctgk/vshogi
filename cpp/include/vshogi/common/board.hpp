@@ -350,20 +350,23 @@ private:
         m_bb_piece[pt].toggle(sq);
     }
     template <PieceType PT>
-    bool is_square_attacked_by(const ColorEnum& by_side, const Square& sq) const
+    bool is_square_attacked_by(
+        const ColorEnum& by_side, const Square& sq, const Square& skip) const
     {
         const auto attack_inverted = BitBoardType::get_attacks_by(
             PHelper::to_board_piece(~by_side, PT), sq);
         const auto occ_offence
-            = get_occupied(PHelper::to_board_piece(by_side, PT));
+            = get_occupied(PHelper::to_board_piece(by_side, PT)).clear(skip);
         return (attack_inverted & occ_offence).any();
     }
     template <PieceType Base, PieceType Alike, PieceType... Args>
-    bool is_square_attacked_by(const ColorEnum& by_side, const Square& sq) const
+    bool is_square_attacked_by(
+        const ColorEnum& by_side, const Square& sq, const Square& skip) const
     {
         const auto attack_inverted = BitBoardType::get_attacks_by(
             PHelper::to_board_piece(~by_side, Base), sq);
-        const auto occ_offence = get_occupied<Base, Alike, Args...>(by_side);
+        const auto occ_offence
+            = get_occupied<Base, Alike, Args...>(by_side).clear(skip);
         return (attack_inverted & occ_offence).any();
     }
     bool is_square_attacked_by_ranging_pieces(

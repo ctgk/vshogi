@@ -502,10 +502,10 @@ inline bool minishogi::Board::is_square_attacked(
     const ColorEnum& by_side, const Square& sq, const Square& skip) const
 {
     using namespace minishogi;
-    return is_square_attacked_by<FU>(by_side, sq)
-           || is_square_attacked_by<GI>(by_side, sq)
-           || is_square_attacked_by<KI, TO, NG>(by_side, sq)
-           || is_square_attacked_by<OU, UM, RY>(by_side, sq)
+    return is_square_attacked_by<FU>(by_side, sq, skip)
+           || is_square_attacked_by<GI>(by_side, sq, skip)
+           || is_square_attacked_by<KI, TO, NG>(by_side, sq, skip)
+           || is_square_attacked_by<OU, UM, RY>(by_side, sq, skip)
            || is_square_attacked_by_ranging_pieces(by_side, sq, skip);
 }
 template <>

@@ -105,6 +105,10 @@ public:
     {
         return m_checker_locations[1] != SQ_NA;
     }
+    bool is_checker_location(const Square& sq) const
+    {
+        return (m_checker_locations[0] == sq) || (m_checker_locations[1] == sq);
+    }
     void set_sfen(const std::string& sfen)
     {
         auto s = sfen.c_str();
@@ -130,19 +134,23 @@ public:
     {
         return State(m_board.hflip(), m_stands, m_turn);
     }
-    State& apply(const MoveType& move, std::uint64_t* const hash = nullptr)
+    State& apply(
+        const MoveType& move,
+        std::uint64_t* const hash = nullptr,
+        const bool& hash_stands = true)
     {
         const Square dst = move.destination();
         if (move.is_drop()) {
             const PieceType src = move.source_piece();
-            const ColoredPiece p = m_stands.pop_piece_from(m_turn, src, hash);
+            const ColoredPiece p = m_stands.pop_piece_from(
+                m_turn, src, hash_stands ? hash : nullptr);
             m_board.apply(dst, p, hash);
             fill_ms24b_with(hash, VOID, move);
             update_checkers_before_turn_update(dst);
         } else {
             const Square src = move.source_square();
             const auto captured = m_board.apply(dst, src, move.promote(), hash);
-            m_stands.add_captured_piece(captured, hash);
+            m_stands.add_captured_piece(captured, hash_stands ? hash : nullptr);
             fill_ms24b_with(hash, captured, move);
             update_checkers_before_turn_update(dst, src);
         }
@@ -205,9 +213,11 @@ public:
             data_ch[k + sp_types] = 1.f;
         }
     }
-    std::uint64_t zobrist_hash() const
+    std::uint64_t zobrist_hash(const bool& hash_stands = true) const
     {
-        auto out = m_stands.zobrist_hash() ^ m_board.zobrist_hash();
+        auto out = m_board.zobrist_hash();
+        if (hash_stands)
+            out ^= m_stands.zobrist_hash();
         if (m_turn == WHITE)
             out ^= zobrist_hash_for_turn;
         return out;
