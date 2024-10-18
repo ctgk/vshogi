@@ -521,12 +521,13 @@ inline bool animal_shogi::NonKingBoardMoveGenerator::operator!=(
 }
 
 template <>
-inline void animal_shogi::Game::update_result()
+inline void
+animal_shogi::Game::update_result(const uint max_repetitions_inclusive)
 {
     const auto turn = get_turn();
     if (LegalMoveGenerator<animal_shogi::Config>(m_current_state).is_end())
         m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
-    if (is_repetitions())
+    if (is_repetitions(max_acceptable_repetitions))
         m_result = DRAW;
 }
 
@@ -545,7 +546,7 @@ animal_shogi::Game::apply(const animal_shogi::Move& move)
     if (illegal)
         m_result = (get_turn() == BLACK) ? BLACK_WIN : WHITE_WIN;
     else if (m_result == ONGOING)
-        update_result();
+        update_result(max_acceptable_repetitions);
     return *this;
 }
 
@@ -561,7 +562,7 @@ animal_shogi::Game::apply_nocheck(const animal_shogi::Move& move)
     }
     m_current_state.apply(move, &m_captured_move_hash);
     if (m_result == ONGOING) {
-        update_result();
+        update_result(max_acceptable_repetitions);
     }
     return *this;
 }
@@ -574,7 +575,7 @@ inline animal_shogi::Game::Game(const animal_shogi::State& s)
       m_num_fold(1u)
 {
     m_hash_list.reserve(128);
-    update_result();
+    update_result(max_acceptable_repetitions);
 }
 
 template <>
