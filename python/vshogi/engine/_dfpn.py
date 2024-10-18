@@ -98,7 +98,7 @@ class DfpnSearcher(Engine):
         """
         if self._searcher is None:
             return False
-        return self._searcher.explore(n)
+        return self._searcher.search(n)
 
     def select(self) -> Move:
         """Get first action to mate.

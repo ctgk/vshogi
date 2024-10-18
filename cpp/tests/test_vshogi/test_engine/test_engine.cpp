@@ -28,7 +28,7 @@ TEST(test_minishogi_engine, test_random_playout_searcher)
 
         {
             dfpn.set_game(g);
-            dfpn.explore(10000);
+            dfpn.search(10000);
         }
 
         for (int jj = (100 - searcher.get_visit_count()); jj--;) {
@@ -38,7 +38,7 @@ TEST(test_minishogi_engine, test_random_playout_searcher)
                 continue;
 
             dfpn.set_game(g_copy);
-            if (dfpn.explore(100))
+            if (dfpn.search(100))
                 n->simulate_mate_and_backprop();
             else
                 n->simulate_expand_and_backprop(
@@ -104,7 +104,7 @@ TEST(shogi_engine, mcts_with_dfpn)
 
         {
             dfpn.set_game(g);
-            dfpn.explore(10000);
+            dfpn.search(10000);
         }
 
         for (int jj = (100 - mcts.get_visit_count()); jj--;) {
@@ -114,7 +114,7 @@ TEST(shogi_engine, mcts_with_dfpn)
                 continue;
 
             dfpn.set_game(g_copy);
-            if (dfpn.explore(100))
+            if (dfpn.search(100))
                 n->simulate_mate_and_backprop();
             else
                 n->simulate_expand_and_backprop(
@@ -173,7 +173,7 @@ TEST(shogi_engine, random_playout_searcher)
 
         {
             dfpn.set_game(g);
-            dfpn.explore(10000);
+            dfpn.search(10000);
         }
 
         for (int jj = (100 - searcher.get_visit_count()); jj--;) {
@@ -183,7 +183,7 @@ TEST(shogi_engine, random_playout_searcher)
                 continue;
 
             dfpn.set_game(g_copy);
-            if (dfpn.explore(100))
+            if (dfpn.search(100))
                 n->simulate_mate_and_backprop();
             else
                 n->simulate_expand_and_backprop(

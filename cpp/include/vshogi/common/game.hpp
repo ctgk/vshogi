@@ -152,19 +152,19 @@ public:
     Game& apply_nocheck(const MoveType& move)
     {
         add_record_and_update_state(move);
-        update_result();
+        update_result(max_acceptable_repetitions);
         return *this;
     }
     Game& apply_random_playout(const MoveType& move)
     {
         add_record_and_update_state(move);
-        update_result_for_random_playout();
+        update_result(1u);
         return *this;
     }
     Game& apply_dfpn(const MoveType& move)
     {
-        add_record_and_update_state_for_dfpn(move);
-        update_result_for_dfpn();
+        add_record_and_update_state(move, false);
+        update_result(1u);
         return *this;
     }
     Game copy_and_apply_dfpn(const MoveType& move)
@@ -178,14 +178,14 @@ public:
         out.apply_dfpn(move);
         return out;
     }
-    Game& undo()
+    Game& undo(const bool& update_checks = true)
     {
         m_captured_move_hash >>= (64u - 8u - 16u);
         const auto move = MoveType(
             static_cast<std::uint16_t>(m_captured_move_hash & 0x0ffffu));
         const auto captured
             = static_cast<ColoredPiece>(m_captured_move_hash >> 16u);
-        m_current_state.undo(move, captured);
+        m_current_state.undo(move, captured, update_checks);
         m_result = ONGOING;
         m_captured_move_hash = m_hash_list[m_hash_list.size() - 1u];
         m_hash_list.pop_back();
@@ -227,7 +227,7 @@ public:
     void clear_records_for_dfpn()
     {
         m_hash_list.clear();
-        m_hash_list.emplace_back(m_current_state.get_board().zobrist_hash());
+        m_captured_move_hash = m_current_state.zobrist_hash(false);
     }
     void to_feature_map(float* const data) const
     {
@@ -271,7 +271,7 @@ protected:
           m_num_fold(1u)
     {
         m_hash_list.reserve(256);
-        update_result();
+        update_result(max_acceptable_repetitions);
     }
     Game(
         const StateType& s,
@@ -318,25 +318,21 @@ protected:
     }
 
 protected:
-    void add_record_and_update_state(const MoveType& move)
+    void add_record_and_update_state(
+        const MoveType& move, const bool& hash_stands = true)
     {
         m_hash_list.emplace_back(m_captured_move_hash);
-        m_current_state.apply(move, &m_captured_move_hash);
-    }
-    void add_record_and_update_state_for_dfpn(const MoveType& move)
-    {
-        m_current_state.apply(move, &m_captured_move_hash);
-        m_hash_list.emplace_back(m_current_state.get_board().zobrist_hash());
+        m_current_state.apply(move, &m_captured_move_hash, hash_stands);
     }
 
 protected:
-    void update_result()
+    void update_result(const uint max_repetitions_inclusive)
     {
         m_result = ONGOING;
         const auto turn = get_turn();
         if (LegalMoveGenerator<Config>(m_current_state).is_end())
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
-        if (is_repetitions()) {
+        if (is_repetitions(max_repetitions_inclusive)) {
             if (m_current_state.in_check())
                 m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
             else
@@ -345,30 +341,7 @@ protected:
         if (can_declare_win_by_king_enter())
             m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
     }
-    void update_result_for_dfpn()
-    {
-        m_result = ONGOING;
-        const auto turn = get_turn();
-        if (LegalMoveGenerator<Config>(m_current_state).is_end())
-            m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
-        if (is_repetitions(1u))
-            m_result = DRAW;
-        if (can_declare_win_by_king_enter())
-            m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
-    }
-    void update_result_for_random_playout()
-    {
-        m_result = ONGOING;
-        const auto turn = get_turn();
-        if (LegalMoveGenerator<Config>(m_current_state).is_end())
-            m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
-        if (is_repetitions(1u))
-            m_result = DRAW;
-        if (can_declare_win_by_king_enter())
-            m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
-    }
-    bool is_repetitions(
-        const uint max_repetitions_inclusive = max_acceptable_repetitions)
+    bool is_repetitions(const uint max_repetitions_inclusive)
     {
         m_num_fold = 1u;
         const auto hash = lsb40bit & m_captured_move_hash;
