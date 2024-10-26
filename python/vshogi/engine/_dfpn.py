@@ -47,16 +47,28 @@ class DfpnSearcher(Engine):
     ['B*2c', '1b2c', '2e2d', '2c1b', '2d2c']
     """
 
-    def __init__(self) -> None:
-        """Initialize DFPN mate-moves searcher object."""
+    def __init__(self, thnc_def: tp.Optional[int] = None) -> None:
+        """Initialize DFPN mate-moves searcher object.
+
+        Parameters
+        ----------
+        thnc_def : tp.Optional[int]
+            Threshold for number of child nodes below a defence node. A search
+            stops when exceeding the value.
+        """
         self._searcher = None
+        self._thnc_def = thnc_def
 
     def _set_game(self, game: Game):
+        try:
+            cls_ = game._get_dfpn_searcher_class()
+        except:
+            return
         if self._searcher is None:
-            try:
-                self._searcher = game._get_dfpn_searcher_class()()
-            except:
-                return
+            if self._thnc_def is None:
+                self._searcher = cls_()
+            else:
+                self._searcher = cls_(self._thnc_def)
         self._searcher.set_game(game._game)
 
     def _is_ready(self) -> bool:
