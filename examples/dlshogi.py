@@ -438,7 +438,12 @@ def run_train(args: Args):
         hidden_channels=args.nn_hidden_channels,
         bottleneck_channels=args.nn_bottleneck_channels,
         num_backbone_blocks=args.nn_backbone_blocks,
-        attention_matrix=shogi.Game.get_attention(),
+        attention_matrix=(
+            shogi.Game.get_whole_attention(),
+            shogi.Game.get_local_attention(),
+            shogi.Game.get_adjacent_attention(),
+            shogi.Game.get_diagonal_attention(),
+        ),
     )
     i = args.resume_rl_cycle_from
     if i > 1:

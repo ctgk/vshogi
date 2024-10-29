@@ -8,11 +8,6 @@ def _pconv(x, ch, use_bias=False):
     return tf.keras.layers.Conv2D(ch, 1, use_bias=use_bias)(x)
 
 
-def _dconv(x, use_bias=False):
-    return tf.keras.layers.DepthwiseConv2D(
-        3, padding='same', use_bias=use_bias)(x)
-
-
 def _bn(x):
     return tf.keras.layers.BatchNormalization(center=False, scale=False)(x)
 
@@ -62,11 +57,15 @@ class _DepthwiseAttentiveDense(tf.keras.layers.Layer):
         return tf.reshape(h, self._input_shape)
 
 
-def _resblock(x, ch, attention_matrix):
-    h = _act_pconv(x, ch)
-    h = _act(_DepthwiseAttentiveDense(attention_matrix, use_bias=True)(h))
-    h = _pconv(h, x.shape[-1])
-    return _act(_bn(x + h))
+def _resblock(x, ch, attention_matrices):
+    ch_ = ch // len(attention_matrices)
+    h = [_act_bn_pconv(x, ch_) for _ in attention_matrices]
+    h = _act(_bn(tf.keras.layers.Concatenate()([
+        _DepthwiseAttentiveDense(a, use_bias=False)
+        for a in attention_matrices
+    ])))
+    h = _bn(_pconv(h, x.shape[-1]))
+    return _act(x + h)
 
 
 def _policy_head(x, num_policy_per_square, name='policy_logits'):
@@ -87,14 +86,14 @@ def build_policy_value_network(
     hidden_channels: int,
     bottleneck_channels: int,
     num_backbone_blocks: int,
-    attention_matrix: np.ndarray,
+    attention_matrix: tp.Union[np.ndarray, tp.Tuple[np.ndarray, ...]],
 ):
     """Return policy-value network.
 
     Parameters
     ----------
     input_size : tp.Tuple[int, int]
-        Input height and width of the network. e.g. (9, 9) for Shogi.
+        Input height (H) and width (W) of the network. e.g. (9, 9) for Shogi.
     num_policy_per_square : int
         Number of policies per square. e.g. 27(= 2 * 10 + 7) for Shogi.
     hidden_channels : int
@@ -103,9 +102,12 @@ def build_policy_value_network(
         Number of feature-channel in bottleneck block.
     num_backbone_blocks : int
         Number of backbone blocks.
-    attention_matrix : np.ndarray
-        Attention matrix.
+    attention_matrix : tp.Union[np.ndarray, tp.Tuple[np.ndarray, ...]]
+        Attention matrix or tuple of them, whose shape is `(H*W, H*W)`.
     """
+    if not isinstance(attention_matrix, tuple):
+        attention_matrix = (attention_matrix,)
+
     x = tf.keras.Input(shape=(*input_size, input_channels))
     h = _act_bn_pconv(x, hidden_channels)
     for _ in range(num_backbone_blocks):

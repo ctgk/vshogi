@@ -110,8 +110,8 @@ class Game(abc.ABC):
         return self._get_backend_game_class().num_dlshogi_policy()
 
     @classmethod
-    def get_attention(cls) -> np.ndarray:
-        """Return attention matrix of the game.
+    def get_whole_attention(cls) -> np.ndarray:
+        """Return whole attention matrix of the game.
 
         Returns
         -------
@@ -120,7 +120,21 @@ class Game(abc.ABC):
             The matrix (A) has value 1 at (i, j) if there is a piece that can
             move from i-th square to j-th square, otherwise 0.
         """
-        return cls._get_backend_game_class().get_attention()
+        return cls._get_backend_game_class().get_whole_attention()
+
+    @classmethod
+    def get_local_attention(cls) -> np.ndarray:
+        """Return local attention matrix of the game.
+
+        Returns
+        -------
+        np.ndarray
+            Attention matrix whose shape is (N, N) where N is the number of
+            squares. The matrix has the value of 1 at (i, j) if there is a
+            non-ranging piece that can move from i-th square to j-th square,
+            otherwise 0.
+        """
+        return cls._get_backend_game_class().get_local_attention()
 
     @classmethod
     def get_adjacent_attention(cls) -> np.ndarray:
