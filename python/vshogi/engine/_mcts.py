@@ -121,15 +121,16 @@ class Mcts(Engine):
             return 0
         return self._searcher.get_visit_count()
 
-    def search(self, n: int = 100):
+    def search(self, n_or_t: tp.Union[int, float] = 0.01):
         """Explore from root node for n times.
 
         Parameters
         ----------
-        n : int, optional
-            Number of game positions to search, by default 100
+        n_or_t : tp.Union[int, float], optional
+            Number of game positions to search or period of time to search
+            in second, by default 0.01
         """
-        for _ in range(n):
+        for _ in self._count(n_or_t=n_or_t):
             game = self._game.copy()
             node = self._searcher.select(game._game)
             if node is None:

@@ -49,7 +49,7 @@ def test_num_searched():
 
     searcher = Mcts(uniform_pv_func)
     searcher.set_game(game)
-    searcher.search(n=100)
+    searcher.search(n_or_t=100)
     assert searcher.num_searched == 100 + 1
 
 
@@ -57,7 +57,7 @@ def test_num_searched():
 #     game = shogi.Game()
 #     searcher = Mcts(uniform_pv_func)
 #     searcher.set_game(game)
-#     searcher.search(n=1000)
+#     searcher.search(n_or_t=1000)
 #     m = shogi.Move(shogi.B2, shogi.B3)
 #     assert searcher.num_explored == 1000 + 1
 
@@ -86,7 +86,7 @@ def test_clear():
 
     searcher = Mcts(uniform_pv_func)
     searcher.set_game(game)
-    searcher.search(n=100)
+    searcher.search(n_or_t=100)
     searcher.clear()
     assert searcher.is_ready() is False
     assert searcher.num_searched == 0
@@ -111,7 +111,7 @@ def test_q_values_mate_in_one():
 
     searcher = Mcts(uniform_pv_func, random_depth=0)
     searcher.set_game(game)
-    searcher.search(n=100)
+    searcher.search(n_or_t=100)
     actual = searcher.get_q_values()
     print(actual)
     assert np.isclose(actual[m], 1, rtol=0, atol=1e-2)
@@ -121,7 +121,7 @@ def test_q_values_initial():
     game = shogi.Game()
     searcher = Mcts(uniform_pv_func)
     searcher.set_game(game)
-    searcher.search(n=100)
+    searcher.search(n_or_t=100)
     actual = searcher.get_q_values()
     print(actual)
     for a in actual.values():
@@ -147,7 +147,7 @@ def test_mate_in_three():
 
     searcher = Mcts(uniform_pv_func, random_depth=0)
     searcher.set_game(game)
-    searcher.search(n=100)
+    searcher.search(n_or_t=100)
 
     actual = searcher.get_q_values()
     print(actual)
@@ -155,7 +155,7 @@ def test_mate_in_three():
     assert np.isclose(actual[m], 1, rtol=0, atol=1e-2)
 
     visit_count = searcher.get_visit_counts()[m]
-    searcher.search(n=100)
+    searcher.search(n_or_t=100)
     # If there is a mate, all explorations go through the mate.
     assert searcher.get_visit_counts()[m] == visit_count + 100
 
@@ -167,7 +167,7 @@ def test_visit_count_by_random():
     searcher = Mcts(
         lambda g: (np.arange(g.num_dlshogi_policy), 0.), random_depth=0)
     searcher.set_game(game)
-    searcher.search(n=100)
+    searcher.search(n_or_t=100)
     visit_count = searcher.get_visit_counts()[m]
     print(searcher._tree(depth=2, breadth=-1))
 
@@ -175,7 +175,7 @@ def test_visit_count_by_random():
         lambda g: (np.arange(g.num_dlshogi_policy), 0.),
         random_depth=1, non_random_ratio=0)
     searcher.set_game(game)
-    searcher.search(n=100)
+    searcher.search(n_or_t=100)
     visit_count_with_noise = searcher.get_visit_counts()[m]
     print(searcher._tree(depth=2, breadth=-1))
     assert visit_count > visit_count_with_noise + 10
@@ -185,7 +185,7 @@ def test_greedy_q_value():
     game = shogi.Game()
     searcher = Mcts(uniform_pv_func)
     searcher.set_game(game)
-    searcher.search(n=100)
+    searcher.search(n_or_t=100)
     action = searcher.select()
 
     assert np.isclose(

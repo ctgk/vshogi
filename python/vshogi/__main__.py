@@ -2,13 +2,10 @@
 
 import itertools
 import os
-import typing as tp
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 from classopt import classopt, config
-import numpy as np
-import tensorflow as tf
 from tqdm import tqdm
 
 import vshogi
@@ -55,9 +52,13 @@ class Args:
         type=float, default=None,
         help='KL divergence threshold to stop MCT-search',
     )
-    mcts_explorations: int = config(
-        type=int, default=100,
-        help='# of explorations by players at each game status, default=100',
+    mcts_search_count: int = config(
+        type=int, default=None,
+        help='Number of searches at each game status, default=None',
+    )
+    mcts_search_second: float = config(
+        type=float, default=None,
+        help='Duration of searches at each game status, default=None',
     )
     mcts_coeff_puct: float = config(
         type=float, default=4.,
@@ -184,7 +185,9 @@ if __name__ == "__main__":
             },
             search_args={
                 'dfpn_searches_at_root': args.dfpn_search_root,
-                'mcts_searches': args.mcts_explorations,
+                'mcts_searches': (
+                    args.mcts_search_count or args.mcts_search_second
+                ),
                 'dfpn_searches_at_vertex': args.dfpn_search_vertex,
                 'kldgain_threshold': args.mcts_kldgain_threshold,
             },

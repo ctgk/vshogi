@@ -1,5 +1,6 @@
 import abc
 import typing as tp
+from time import time
 
 from vshogi._game import Game
 
@@ -66,3 +67,21 @@ class Engine(abc.ABC):
         method = f'{self.__class__.__name__}.set_game()'
         if not self.is_ready():
             raise ValueError(f"Please call `{method}` beforehand.")
+
+    @classmethod
+    def _count(
+        cls,
+        n_or_t: tp.Union[int, float],
+    ) -> tp.Generator[int, int, int]:
+        if isinstance(n_or_t, int):
+            for i in range(n_or_t):
+                yield i
+        else:
+            start_sec = time()
+            c = 0
+            while True:
+                now = time()
+                if (now - start_sec) > n_or_t:
+                    break
+                yield c
+                c += 1

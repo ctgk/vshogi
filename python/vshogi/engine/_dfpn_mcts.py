@@ -18,7 +18,6 @@ class DfpnMcts(Engine):
         self,
         dfpn: DfpnSearcher,
         mcts: Mcts,
-        mcts_endgame: tp.Optional[Mcts] = None,
     ) -> None:
         """Initialize DFPN+MCTS search engine.
 
@@ -33,13 +32,10 @@ class DfpnMcts(Engine):
         """
         self._dfpn = dfpn
         self._mcts = mcts
-        self._mcts_endgame = mcts_endgame
         self._found_mate: bool = False
 
     def _set_game(self, game: Game):
         self._mcts._set_game(game)
-        if self._mcts_endgame is not None:
-            self._mcts_endgame._set_game(game)
         self._found_mate = False
 
     def _is_ready(self) -> bool:
@@ -48,8 +44,6 @@ class DfpnMcts(Engine):
     def _clear(self):
         self._dfpn._clear()
         self._mcts._clear()
-        if self._mcts_endgame is not None:
-            self._mcts_endgame._clear()
         self._found_mate = False
 
     def apply(self, move: Move):
@@ -62,8 +56,6 @@ class DfpnMcts(Engine):
         """
         if self._is_ready():
             self._mcts.apply(move)
-            if self._mcts_endgame is not None:
-                self._mcts_endgame.apply(move)
         self._found_mate = False
 
     @property
@@ -75,7 +67,7 @@ class DfpnMcts(Engine):
         int
             Number of game positions searched so far by MCTS.
         """
-        mcts = self._select_mcts()
+        mcts = self._get_mcts()
         return mcts.num_searched
 
     @property
@@ -89,19 +81,14 @@ class DfpnMcts(Engine):
         """
         return self._found_mate
 
-    def _select_mcts(self):
-        if self._mcts_endgame is None:
-            return self._mcts
-        if self._dfpn.found_conclusion():
-            return self._mcts
-        return self._mcts_endgame
+    def _get_mcts(self):
+        return self._mcts
 
     def search(
         self,
         dfpn_searches_at_root: int = 10000,
-        mcts_searches: int = 100,
+        mcts_searches: tp.Union[int, float] = 0.01,
         dfpn_searches_at_vertex: int = 100,
-        mcts_endgame_searches: int = 1000,
         kldgain_threshold: float = None,
     ):
         """Search for subsequent game positions.
@@ -110,8 +97,9 @@ class DfpnMcts(Engine):
         ----------
         dfpn_searches_at_root : int, optional
             Number of searches by DFPN at root, by default 10000
-        mcts_searches : int, optional
-            Number of searches by MCTS, by default 100
+        mcts_searches : tp.Union[int, float], optional
+            Number of searches by MCTS if int
+            or period of time [sec] to search if float, by default 0.01.
         dfpn_searches_at_vertex : int, optional
             Number of searches by DFPN at every vertex of MCTS, by default 100
         mcts_endgame_searches : int, optional
@@ -124,14 +112,10 @@ class DfpnMcts(Engine):
             self._found_mate = True
             return
 
-        mcts = self._select_mcts()
-        num_searches = mcts_searches
-        if (mcts is not self._mcts):
-            num_searches = mcts_endgame_searches
-
+        mcts = self._get_mcts()
         prev_visits = None
         kldgain_steps = 100
-        for ii in range(num_searches):
+        for ii in self._count(n_or_t=mcts_searches):
             if ((ii % kldgain_steps == 0) and (kldgain_threshold is not None)):
                 if prev_visits is None:
                     prev_visits = mcts.get_visit_counts()
@@ -189,7 +173,7 @@ class DfpnMcts(Engine):
         """
         if self._found_mate:
             return self._dfpn.select()
-        mcts = self._select_mcts()
+        mcts = self._get_mcts()
         return mcts.select(temperature)
 
     def get_mate_moves(self) -> tp.List[Move]:
@@ -213,7 +197,7 @@ class DfpnMcts(Engine):
         float
             Raw value estimate of the current game position.
         """
-        mcts = self._select_mcts()
+        mcts = self._get_mcts()
         return mcts.get_value()
 
     def get_q_value(self, greedy_depth: int = 0) -> float:
@@ -230,7 +214,7 @@ class DfpnMcts(Engine):
         float
             Q-value estimate of the current game position.
         """
-        return self._select_mcts().get_q_value(greedy_depth)
+        return self._get_mcts().get_q_value(greedy_depth)
 
     def get_probas(self) -> tp.Dict[Move, float]:
         """Return raw probabilities of selecting actions.
@@ -240,7 +224,7 @@ class DfpnMcts(Engine):
         tp.Dict[Move, float]
             Raw probabilities of selecting actions by `policy_value_func`.
         """
-        mcts = self._select_mcts()
+        mcts = self._get_mcts()
         move_proba_pair_list = [
             (m, mcts._root.get_child(m).get_proba())
             for m in mcts._root.get_actions()
@@ -262,7 +246,7 @@ class DfpnMcts(Engine):
         tp.Dict[Move, float]
             Q value of each action.
         """
-        mcts = self._select_mcts()
+        mcts = self._get_mcts()
         move_q_pair_list = [
             (m, -mcts._root.get_child(m).get_q_value(greedy_depth))
             for m in mcts._root.get_actions()
@@ -286,7 +270,7 @@ class DfpnMcts(Engine):
         tp.Dict[Move, int]
             Visit counts of each action.
         """
-        return self._select_mcts().get_visit_counts(
+        return self._get_mcts().get_visit_counts(
             include_random=include_random)
 
     def _tree(
@@ -298,7 +282,7 @@ class DfpnMcts(Engine):
         greedy_depth: int = 0,
     ) -> str:
         return _tree(
-            self._select_mcts()._searcher.get_root(),
+            self._get_mcts()._searcher.get_root(),
             depth,
             breadth,
             sort_key=sort_key,
