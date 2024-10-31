@@ -29,7 +29,7 @@ def _act_bn_pconv(x, ch):
     return _act(_bn(_pconv(x, ch, use_bias=False)))
 
 
-class _DepthwiseAttentiveDense(tf.keras.layers.Layer):
+class _DepthwiseAttention(tf.keras.layers.Layer):
 
     def __init__(self, attention_matrix: np.ndarray, use_bias: bool = True):
         super().__init__()
@@ -41,11 +41,6 @@ class _DepthwiseAttentiveDense(tf.keras.layers.Layer):
         self._reshape_target = (-1, n, input_shape[3])
         self._input_shape = (-1, *input_shape[1:])
         assert n == self._attention_matrix.shape[0]
-        self.kernel = self.add_weight(
-            shape=self._attention_matrix.shape,
-            constraint=lambda w: w * self._attention_matrix,
-            name=self.name + '_kernel',
-        )
         if self._use_bias:
             self.bias = self.add_weight(
                 shape=self._attention_matrix.shape[-1],
@@ -55,7 +50,7 @@ class _DepthwiseAttentiveDense(tf.keras.layers.Layer):
 
     def call(self, x):
         h = tf.reshape(x, self._reshape_target)
-        h = tf.matmul(h, self.kernel, transpose_a=True)
+        h = tf.matmul(h, self._attention_matrix, transpose_a=True)
         if self._use_bias:
             h = h + self.bias
         h = tf.transpose(h, perm=[0, 2, 1])
@@ -63,10 +58,12 @@ class _DepthwiseAttentiveDense(tf.keras.layers.Layer):
 
 
 def _resblock(x, ch, attention_matrix):
-    h = _act_pconv(x, ch)
-    h = _act(_DepthwiseAttentiveDense(attention_matrix, use_bias=True)(h))
-    h = _pconv(h, x.shape[-1])
-    return _act(_bn(x + h))
+    h = _act_bn_pconv(x, ch)
+    h1 = _pconv(h, ch // 2)
+    h2 = _DepthwiseAttention(attention_matrix)(_pconv(h, ch // 2))
+    h = _act(tf.keras.layers.Concatenate()([h1, h2]))
+    h = _bn(_pconv(h, x.shape[-1]))
+    return _act(x + h)
 
 
 def _policy_head(x, num_policy_per_square, name='policy_logits'):

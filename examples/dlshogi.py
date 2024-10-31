@@ -622,10 +622,10 @@ def parse_args() -> Args:
     args = Args.from_args()
     args._shogi = getattr(vshogi, args.shogi_variant)
     default_configs = {
-        'animal_shogi':  {'nn_hidden_channels':  32, 'nn_bottleneck_channels':  8, 'nn_backbone_blocks': 3},
-        'minishogi':     {'nn_hidden_channels':  64, 'nn_bottleneck_channels': 16, 'nn_backbone_blocks': 3},
-        'judkins_shogi': {'nn_hidden_channels':  64, 'nn_bottleneck_channels': 16, 'nn_backbone_blocks': 4},
-        'shogi':         {'nn_hidden_channels': 128, 'nn_bottleneck_channels': 32, 'nn_backbone_blocks': 6},
+        'animal_shogi':  {'nn_hidden_channels':  32, 'nn_bottleneck_channels': 16, 'nn_backbone_blocks': 3},
+        'minishogi':     {'nn_hidden_channels':  64, 'nn_bottleneck_channels': 32, 'nn_backbone_blocks': 3},
+        'judkins_shogi': {'nn_hidden_channels':  64, 'nn_bottleneck_channels': 32, 'nn_backbone_blocks': 4},
+        'shogi':         {'nn_hidden_channels': 128, 'nn_bottleneck_channels': 64, 'nn_backbone_blocks': 6},
     }
     if args.shogi_variant in default_configs:
         for key, value in default_configs[args.shogi_variant].items():
