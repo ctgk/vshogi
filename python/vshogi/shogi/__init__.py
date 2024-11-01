@@ -33,6 +33,13 @@ Board.__array__ = lambda self: np.array(
 ).reshape(9, 9)
 Board.__repr__ = _repr_board
 BoardPiece.__repr__ = _repr_enum
+BoardPiece.to_sfen = lambda self: (
+    'P', 'L', 'N', 'S', 'B', 'R', 'G', 'K',
+    '+P', '+L', '+N', '+S', '+B', '+R',
+    'p', 'l', 'n', 's', 'b', 'r', 'g', 'k',
+    '+p', '+l', '+n', '+s', '+b', '+r',
+    '',
+)[self.value]
 BoardPiece._to_3char = lambda self: (
     "   "
     if self == BoardPiece.VOID
