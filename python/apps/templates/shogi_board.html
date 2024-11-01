@@ -75,9 +75,43 @@
 
 <script>
     function drag(event) {
+        const piece = event.target;
+        const canvas = document.createElement('canvas');
+        document.body.appendChild(canvas);
+
+        const context = canvas.getContext('2d');
+        const size = 50; // Assuming the piece size is 50x50
+
+        canvas.width = size;
+        canvas.height = size;
+        canvas.style.position = 'absolute';
+        canvas.style.top = '-9999px';
+
+        context.fillStyle = 'black';
+        context.font = '24px sans-serif';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+
+        // Draw the piece onto the canvas
+        context.translate(size / 2, size / 2);
+        if (piece.classList.contains('rotated')) {
+            context.rotate(Math.PI); // Rotate 180 degrees
+        }
+        context.translate(-size / 2, -size / 2);
+
+        context.fillText(piece.textContent.trim(), size / 2, size / 2);
+        console.log(canvas);
+
+        // Set the custom drag image
+        event.dataTransfer.setDragImage(canvas, size / 2, size / 2);
+
         event.dataTransfer.setData("piece", event.target.dataset.piece);
         event.dataTransfer.setData("sourceRow", event.target.parentNode.dataset.row);
         event.dataTransfer.setData("sourceCol", event.target.parentNode.dataset.col);
+
+        setTimeout(() => {
+            document.body.removeChild(canvas);
+        }, 0);
     }
 
     function allowDrop(event) {
