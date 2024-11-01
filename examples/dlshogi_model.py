@@ -11,7 +11,7 @@ if __name__ == '__main__':
         input_channels=Game.feature_channels,
         num_policy_per_square=Move._num_policy_per_square(),
         hidden_channels=128,
-        bottleneck_channels=32,
+        bottleneck_channels=64,
         num_backbone_blocks=10,
         attention_matrix=Game.get_attention(),
     )
@@ -49,5 +49,5 @@ if __name__ == '__main__':
         if game.result != vshogi.Result.ONGOING:
             break
         player.set_game(game)
-        player.search(mcts_searches=1000, kldgain_threshold=1e-4)
+        player.search(mcts_search=1000, kldgain_threshold=1e-4)
         game.apply(move)

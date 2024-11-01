@@ -69,7 +69,7 @@ class Args:
         help='Temperature parameter to select action to take, default=0.',
     )
     dfpn_search_root: int = config(type=int, default=10000)
-    dfpn_search_vertex: int = config(type=int, default=100)
+    dfpn_search_leaf: int = config(type=int, default=100)
     show_pbar: bool = config(
         action='store_true', help='Print progress bar if passed',
     )
@@ -184,11 +184,11 @@ if __name__ == "__main__":
                 'coeff_puct': args.mcts_coeff_puct,
             },
             search_args={
-                'dfpn_searches_at_root': args.dfpn_search_root,
-                'mcts_searches': (
+                'dfpn_search_root': args.dfpn_search_root,
+                'mcts_search': (
                     args.mcts_search_count or args.mcts_search_second
                 ),
-                'dfpn_searches_at_vertex': args.dfpn_search_vertex,
+                'dfpn_search_leaf': args.dfpn_search_leaf,
                 'kldgain_threshold': args.mcts_kldgain_threshold,
             },
             select_args={

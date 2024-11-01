@@ -48,7 +48,7 @@ class Args:
     nn_learning_rate: float = config(type=float, default=1e-3, help='Learning rate of NN weight update')
     nn_entropy_regularization: float = config(type=float, default=1e-2)
     mcts_kldgain_threshold: float = config(type=float, default=1e-4, help='KL divergence threshold to stop MCT-search')
-    mcts_explorations: int = config(type=int, default=1000, help='# of explorations in MCTS, default=1000. Alpha Zero used 800 simulations.')
+    mcts_search: int = config(type=int, default=1000, help='# of searches in MCTS, default=1000. Alpha Zero used 800 simulations.')
     mcts_random_rate: float = config(
         type=float, default=0.25,
         help=(
@@ -60,8 +60,8 @@ class Args:
     mcts_temperature: float = config(type=float, default=1., help='Temperature parameter when selecting action by random.')
     mcts_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in MCTS, default=4.')
     mcts_q_greedy_depth: int = config(type=int, default=1, help='Number of depth to select node greedily when computing Q-value of a node, by default=1')
-    dfpn_searches_root: int = config(type=int, default=10000, help='Number of DFPN searches at root node of MCTS tree. By default 10000.')
-    dfpn_searches_leaf: int = config(type=int, default=100, help='Number of DFPN searches at leaf node of MCTS tree. By default 100.')
+    dfpn_search_root: int = config(type=int, default=10000, help='Number of DFPN searches at root node of MCTS tree. By default 10000.')
+    dfpn_search_leaf: int = config(type=int, default=100, help='Number of DFPN searches at leaf node of MCTS tree. By default 100.')
     self_play: int = config(type=int, default=200, help='# of self-play in one RL cycle, default=200')
     self_play_index_from: int = config(type=int, default=0, help='Index to start self-play from, default=0')
     another_player: list = config(type=int, nargs='*', default=[])
@@ -140,15 +140,15 @@ def play_game(
             player.set_game(game)
 
         player.search(
-            dfpn_searches_at_root=args.dfpn_searches_root,
-            mcts_searches=args.mcts_explorations - player.mcts_num_searched,
-            dfpn_searches_at_vertex=args.dfpn_searches_leaf,
+            dfpn_search_root=args.dfpn_search_root,
+            mcts_search=args.mcts_search - player.mcts_num_searched,
+            dfpn_search_leaf=args.dfpn_search_leaf,
             kldgain_threshold=args.mcts_kldgain_threshold,
         )
         if player.dfpn_found_mate:
             mate_moves = player.get_mate_moves()
             for i, move in enumerate(mate_moves):
-                player.search(dfpn_searches_at_root=0, mcts_searches=1, dfpn_searches_at_vertex=0)
+                player.search(dfpn_search_root=0, mcts_search=1, dfpn_search_leaf=0)
                 game.v_value_record.append(player.get_value())
                 game.q_value_record.append(int(i % 2 == 0) * 2 - 1)
                 game.visit_count_record.append({})
