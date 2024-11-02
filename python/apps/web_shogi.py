@@ -35,9 +35,28 @@ def move():
     data = request.json
     dst = Square(data['to'][0] * 9 + data['to'][1])
     src = Square(data['from'][0] * 9 + data['from'][1])
-    move = Move(dst, src)
-    if not game.is_legal(move):
+    move, move_promote = Move(dst, src), Move(dst, src, promote=True)
+    move_legal = game.is_legal(move)
+    move_promote_legal = game.is_legal(move_promote)
+    if move_legal and move_promote_legal:
+        return jsonify({'valid': True, 'needs_promotion_choice': True})
+    elif move_legal:
+        game.apply(move)
+        return jsonify({'valid': True})
+    elif move_promote_legal:
+        game.apply(move_promote)
+        return jsonify({'valid': True})
+    else:
         return jsonify({'valid': False, 'message': 'Illegal move!'})
+
+
+@app.route('/promote', methods=['POST'])
+def promote():
+    data = request.json
+    dst = Square(data['to'][0] * 9 + data['to'][1])
+    src = Square(data['from'][0] * 9 + data['from'][1])
+    promote = data.get('promote', False)
+    move = Move(dst, src, promote=promote)
     game.apply(move)
     return jsonify({'valid': True})
 

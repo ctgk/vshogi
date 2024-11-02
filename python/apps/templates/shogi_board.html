@@ -194,23 +194,35 @@
         const targetRow = event.currentTarget.dataset.row;
         const targetCol = event.currentTarget.dataset.col;
 
+        const moveData = {
+            piece: piece,
+            from: [parseInt(sourceRow), parseInt(sourceCol)],
+            to: [parseInt(targetRow), parseInt(targetCol)],
+        };
+
         // Send move to server
         fetch('/move', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                piece: piece,
-                from: [parseInt(sourceRow), parseInt(sourceCol)],
-                to: [parseInt(targetRow), parseInt(targetCol)]
-            })
+            body: JSON.stringify(moveData)
         })
             .then(response => response.json())
             .then(data => {
                 if (data.valid) {
-                    // Refresh the board to show the new position
-                    window.location.reload();
+                    if (data.needs_promotion_choice) {
+                        const promote = window.confirm('Promote?');
+                        fetch('/promote', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ ...moveData, promote: promote })
+                        }).then(() => { window.location.reload() });
+                    } else {
+                        window.location.reload();
+                    }
                 } else {
                     alert(data.message || 'Invalid move!');
                 }
