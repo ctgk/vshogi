@@ -34,47 +34,99 @@
         .cell.source-cell {
             background-color: #fff3cd;
         }
+
+        .game-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 2px;
+            margin: 20px auto;
+            width: fit-content;
+        }
+
+        .stand {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            min-width: 50px;
+            margin: 20px 5px 0 5px;
+        }
+
+        .stand-piece {
+            font-size: 24px;
+            text-align: center;
+            padding: 2px;
+            user-select: none;
+        }
+
+        .stand-label {
+            font-size: 24px;
+            text-align: center;
+            padding: 2px;
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 5px;
+            user-select: none;
+        }
     </style>
 </head>
 
 <body>
-    <table class="board">
-        {% set piece_map = {
-        'p': '歩', 'P': '歩',
-        'l': '香', 'L': '香',
-        'n': '桂', 'N': '桂',
-        's': '銀', 'S': '銀',
-        'g': '金', 'G': '金',
-        'r': '飛', 'R': '飛',
-        'b': '角', 'B': '角',
-        'k': '玉', 'K': '王',
-        '+p': 'と', '+P': 'と',
-        '+l': '杏', '+L': '杏',
-        '+n': '圭', '+N': '圭',
-        '+s': '全', '+S': '全',
-        '+r': '龍', '+R': '龍',
-        '+b': '馬', '+B': '馬'
-        } %}
-        {% for row_idx in range(board|length) %}
-        <tr>
-            {% for col_idx in range(board[row_idx]|length) %}
-            <td class="cell" data-row="{{ row_idx }}" data-col="{{ col_idx }}" ondrop="drop(event)"
-                ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
-                {% set cell = board[row_idx][col_idx] %}
-                {% if cell %}
-                {% set char = piece_map.get(cell, '') %}
-                {% if cell[-1].isupper() %}
-                <span class="piece" draggable="true" ondragstart="drag(event)" data-piece="{{ cell }}">{{ char }}</span>
-                {% else %}
-                <span class="piece rotated" draggable="true" ondragstart="drag(event)" data-piece="{{ cell }}">{{ char
-                    }}</span>
-                {% endif %}
-                {% endif %}
-            </td>
+    {% set piece_map = {
+    'p': '歩', 'P': '歩',
+    'l': '香', 'L': '香',
+    'n': '桂', 'N': '桂',
+    's': '銀', 'S': '銀',
+    'g': '金', 'G': '金',
+    'r': '飛', 'R': '飛',
+    'b': '角', 'B': '角',
+    'k': '玉', 'K': '王',
+    '+p': 'と', '+P': 'と',
+    '+l': '杏', '+L': '杏',
+    '+n': '圭', '+N': '圭',
+    '+s': '全', '+S': '全',
+    '+r': '龍', '+R': '龍',
+    '+b': '馬', '+B': '馬'
+    } %}
+    <div class="game-container">
+        <div class="stand">
+            <div class="stand-label">☖</div>
+            {% for piece, n in white_stand.items() %}
+            <div class="stand-piece">{{ piece_map[piece] }}{% if n > 1 %}{{ n }}{% endif %}</div>
             {% endfor %}
-        </tr>
-        {% endfor %}
-    </table>
+        </div>
+        <table class="board">
+            {% for row_idx in range(board|length) %}
+            <tr>
+                {% for col_idx in range(board[row_idx]|length) %}
+                <td class="cell" data-row="{{ row_idx }}" data-col="{{ col_idx }}" ondrop="drop(event)"
+                    ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                    {% set cell = board[row_idx][col_idx] %}
+                    {% if cell %}
+                    {% set char = piece_map.get(cell, '') %}
+                    {% if cell[-1].isupper() %}
+                    <span class="piece" draggable="true" ondragstart="drag(event)" data-piece="{{ cell }}">{{ char
+                        }}</span>
+                    {% else %}
+                    <span class="piece rotated" draggable="true" ondragstart="drag(event)" data-piece="{{ cell }}">{{
+                        char
+                        }}</span>
+                    {% endif %}
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+        <div class="stand">
+            <div class="stand-label">☗</div>
+            {% for piece, n in black_stand.items() %}
+            <div class="stand-piece">{{ piece_map[piece] }}{% if n > 1 %}{{ n }}{% endif %}</div>
+            {% endfor %}
+        </div>
+    </div>
 </body>
 
 <script>
