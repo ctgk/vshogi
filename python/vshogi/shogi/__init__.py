@@ -49,16 +49,13 @@ BoardPiece.to_jpn = lambda self: to_jpn(self)
 BoardPiece.to_sfen = lambda self: to_sfen(self)
 Move.__repr__ = _repr_move
 Piece.__repr__ = _repr_enum
-<<<<<<< HEAD
 Piece.to_jpn = lambda self: to_jpn(self)
 Piece.to_sfen = lambda self: to_sfen(self)
-=======
-Piece.to_sfen = lambda self: (
+Piece.from_sfen = lambda sfen: Piece([
     'P', 'L', 'N', 'S', 'B', 'R', 'G', 'K',
     '+P', '+L', '+N', '+S', '+B', '+R',
     '',
-)[self.value]
->>>>>>> 6861f95 (ADD: render captured pieces)
+].index(sfen.upper()))
 Stand.__repr__ = _repr_stand
 Square.__repr__ = _repr_square
 Square.to_jpn = lambda self: to_jpn(self)

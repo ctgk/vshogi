@@ -62,6 +62,10 @@
             user-select: none;
         }
 
+        .stand-piece.source-piece {
+            background-color: #fff3cd;
+        }
+
         .stand-label {
             font-size: 24px;
             text-align: center;
@@ -94,7 +98,7 @@
         <div class="stand">
             <div class="stand-label">☖</div>
             {% for piece, n in white_stand.items() %}
-            <div class="stand-piece">{{ piece_map[piece] }}{% if n > 1 %}{{ n }}{% endif %}</div>
+            <div class="stand-piece" draggable="true" ondragstart="dragFromStand(event)" data-piece="{{ piece }}">{{ piece_map[piece] }}{% if n > 1 %}{{ n }}{% endif %}</div>
             {% endfor %}
         </div>
         <table class="board">
@@ -123,7 +127,7 @@
         <div class="stand">
             <div class="stand-label">☗</div>
             {% for piece, n in black_stand.items() %}
-            <div class="stand-piece">{{ piece_map[piece] }}{% if n > 1 %}{{ n }}{% endif %}</div>
+            <div class="stand-piece" draggable="true" ondragstart="dragFromStand(event)" data-piece="{{ piece }}">{{ piece_map[piece] }}{% if n > 1 %}{{ n }}{% endif %}</div>
             {% endfor %}
         </div>
     </div>
@@ -156,7 +160,6 @@
         context.translate(-size / 2, -size / 2);
 
         context.fillText(piece.textContent.trim(), size / 2, size / 2);
-        console.log(canvas);
 
         // Set the custom drag image
         event.dataTransfer.setDragImage(canvas, size / 2, size / 2);
@@ -165,6 +168,44 @@
         event.dataTransfer.setData("piece", event.target.dataset.piece);
         event.dataTransfer.setData("sourceRow", event.target.parentNode.dataset.row);
         event.dataTransfer.setData("sourceCol", event.target.parentNode.dataset.col);
+
+        setTimeout(() => {
+            document.body.removeChild(canvas);
+        }, 0);
+    }
+
+    function dragFromStand(event) {
+        const piece = event.target;
+
+        const canvas = document.createElement('canvas');
+        document.body.appendChild(canvas);
+
+        const context = canvas.getContext('2d');
+        const size = 50;
+
+        canvas.width = size;
+        canvas.height = size;
+        canvas.style.position = 'absolute';
+        canvas.style.top = '-9999px';
+
+        context.fillStyle = 'black';
+        context.font = '24px sans-serif';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+
+        // Draw the piece onto the canvas
+        context.translate(size / 2, size / 2);
+        if (piece.classList.contains('rotated')) {
+            context.rotate(Math.PI); // Rotate 180 degrees
+        }
+        context.translate(-size / 2, -size / 2);
+
+        context.fillText(piece.textContent.trim().charAt(0), size / 2, size / 2);
+
+        event.target.classList.add('source-piece');
+        event.dataTransfer.setDragImage(canvas, size / 2, size / 2);
+        event.dataTransfer.setData("piece", piece.dataset.piece);
+        event.dataTransfer.setData("fromStand", "true");
 
         setTimeout(() => {
             document.body.removeChild(canvas);
@@ -187,18 +228,32 @@
             cell.classList.remove('droppable-hover');
             cell.classList.remove('source-cell');
         });
+        const pieces = document.querySelectorAll('.stand-piece');
+        pieces.forEach(piece => {
+            piece.classList.remove('source-piece');
+        });
 
         const piece = event.dataTransfer.getData("piece");
-        const sourceRow = event.dataTransfer.getData("sourceRow");
-        const sourceCol = event.dataTransfer.getData("sourceCol");
+        const fromStand = event.dataTransfer.getData("fromStand");
         const targetRow = event.currentTarget.dataset.row;
         const targetCol = event.currentTarget.dataset.col;
 
-        const moveData = {
-            piece: piece,
-            from: [parseInt(sourceRow), parseInt(sourceCol)],
-            to: [parseInt(targetRow), parseInt(targetCol)],
-        };
+        let moveData;
+        if (fromStand === "true") {
+            moveData = {
+                piece: piece,
+                from: "stand",
+                to: [parseInt(targetRow), parseInt(targetCol)],
+            };
+        } else {
+            const sourceRow = event.dataTransfer.getData("sourceRow");
+            const sourceCol = event.dataTransfer.getData("sourceCol");
+            moveData = {
+                piece: piece,
+                from: [parseInt(sourceRow), parseInt(sourceCol)],
+                to: [parseInt(targetRow), parseInt(targetCol)],
+            };
+        }
 
         // Send move to server
         fetch('/move', {

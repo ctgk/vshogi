@@ -1,7 +1,7 @@
 import numpy as np
 from flask import Flask, jsonify, render_template, request
 
-from vshogi.shogi import Color, Game, Move, Square
+from vshogi.shogi import Color, Game, Move, Piece, Square
 
 
 app = Flask(__name__)
@@ -34,6 +34,14 @@ def show_board():
 def move():
     data = request.json
     dst = Square(data['to'][0] * 9 + data['to'][1])
+    if data['from'] == 'stand':
+        move = Move(dst, Piece.from_sfen(data['piece']))
+        if game.is_legal(move):
+            game.apply(move)
+            return jsonify({'valid': True})
+        else:
+            return jsonify({'valid': False, 'message': 'Illegal move!'})
+
     src = Square(data['from'][0] * 9 + data['from'][1])
     move, move_promote = Move(dst, src), Move(dst, src, promote=True)
     move_legal = game.is_legal(move)
