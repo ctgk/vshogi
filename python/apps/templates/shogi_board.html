@@ -98,7 +98,7 @@
         <div class="stand">
             <div class="stand-label">☖</div>
             {% for piece, n in white_stand.items() %}
-            <div class="stand-piece" draggable="true" ondragstart="dragFromStand(event)" data-piece="{{ piece }}">{{ piece_map[piece] }}{% if n > 1 %}{{ n }}{% endif %}</div>
+            <div class="stand-piece" draggable="true" ondragstart="dragFromStand(event)" onclick="handleStandPieceClick(this)" data-piece="{{ piece }}">{{ piece_map[piece] }}{% if n > 1 %}{{ n }}{% endif %}</div>
             {% endfor %}
         </div>
         <table class="board">
@@ -111,7 +111,7 @@
                     {% if cell %}
                     {% set char = piece_map.get(cell, '') %}
                     {% if cell[-1].isupper() %}
-                    <span class="piece" draggable="true" ondragstart="drag(event)" data-piece="{{ cell }}">{{ char
+                    <span class="piece" draggable="true" ondragstart="drag(event)" onclick="handleCellClick(this)"data-piece="{{ cell }}">{{ char
                         }}</span>
                     {% else %}
                     <span class="piece rotated" draggable="true" ondragstart="drag(event)" data-piece="{{ cell }}">{{
@@ -127,13 +127,24 @@
         <div class="stand">
             <div class="stand-label">☗</div>
             {% for piece, n in black_stand.items() %}
-            <div class="stand-piece" draggable="true" ondragstart="dragFromStand(event)" data-piece="{{ piece }}">{{ piece_map[piece] }}{% if n > 1 %}{{ n }}{% endif %}</div>
+            <div class="stand-piece" draggable="true" ondragstart="dragFromStand(event)" onclick="handleStandPieceClick(this)" data-piece="{{ piece }}">{{ piece_map[piece] }}{% if n > 1 %}{{ n }}{% endif %}</div>
             {% endfor %}
         </div>
     </div>
 </body>
 
 <script>
+    let selectedCell = null;
+    let selectedStandPiece = null;
+    function handleCellClick(cell) {
+        if (selectedCell) {
+            const targetRow = cell.dataset.row;
+            const targetCol = cell.dataset.col;
+
+            let moveData;
+            if (selectedStandPiece) {
+        }
+    }
     function drag(event) {
         const piece = event.target;
         const canvas = document.createElement('canvas');
