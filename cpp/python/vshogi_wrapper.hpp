@@ -431,6 +431,27 @@ inline void export_mcts_searcher(pybind11::module& m)
 }
 
 template <class Config>
+inline void export_dfpn_node(pybind11::module& m)
+{
+    namespace py = pybind11;
+    using Node = vshogi::engine::dfpn::Node<Config>;
+    py::class_<Node>(m, "DfpnNode")
+        .def("is_attacker", &Node::is_attacker)
+        .def("pn", &Node::pn)
+        .def("dn", &Node::dn)
+        .def("get_action", &Node::get_action)
+        .def("has_child", &Node::has_child)
+        .def("get_children", [](const Node& self) -> py::object {
+            std::vector<const Node*> out;
+            if (self.has_child()) {
+                for (auto ch = self.get_child(); ch; ch = ch->get_sibling())
+                    out.emplace_back(ch);
+            }
+            return py::cast(out, py::return_value_policy::reference);
+        });
+}
+
+template <class Config>
 inline void export_dfpn_searcher(pybind11::module& m)
 {
     namespace py = pybind11;
@@ -445,7 +466,13 @@ inline void export_dfpn_searcher(pybind11::module& m)
         .def("found_mate", &Searcher::found_mate)
         .def("found_no_mate", &Searcher::found_no_mate)
         .def("found_conclusion", &Searcher::found_conclusion)
-        .def("get_mate_moves", &Searcher::get_mate_moves);
+        .def("get_mate_moves", &Searcher::get_mate_moves)
+        .def("get_root", [](const Searcher& self) -> py::object {
+            const auto out = self.get_root();
+            if (out == nullptr)
+                return py::none();
+            return py::cast(*out, py::return_value_policy::reference);
+        });
 }
 
 template <class Config>
@@ -469,8 +496,10 @@ void export_classes(pybind11::module& m)
     export_mcts_node<Config>(m);
     export_value_functions<Config>(m);
 
-    if constexpr (!std::is_same<GameType, vshogi::animal_shogi::Game>::value)
+    if constexpr (!std::is_same<GameType, vshogi::animal_shogi::Game>::value) {
         export_dfpn_searcher<Config>(m);
+        export_dfpn_node<Config>(m);
+    }
 }
 
 } // namespace pyvshogi

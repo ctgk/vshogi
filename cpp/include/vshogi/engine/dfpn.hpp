@@ -129,6 +129,10 @@ public:
     Node(Node&& other) = default; // 4/5 move constructor
     Node& operator=(Node&& other) = default; // 5/5 move assignment
 
+    bool is_attacker() const
+    {
+        return m_attacker;
+    }
     uint pn() const
     {
         return m_pn;
@@ -144,6 +148,10 @@ public:
     bool has_child() const
     {
         return static_cast<bool>(m_child);
+    }
+    const Node* get_child() const
+    {
+        return m_child ? m_child.get() : nullptr;
     }
     Node* get_sibling()
     {
@@ -440,6 +448,10 @@ public:
             out.emplace_back(n->get_action());
         }
         return out;
+    }
+    const Node<Config>* get_root() const
+    {
+        return m_root ? m_root.get() : nullptr;
     }
 };
 

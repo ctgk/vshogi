@@ -165,3 +165,46 @@ class DfpnSearcher(Engine):
         """
         self._raise_error_if_not_ready()
         return self._searcher.get_mate_moves()
+
+    def _tree(
+        self,
+        depth: int = 1,
+        breadth: int = 3,
+        pv_line: tp.List[Move] = [],
+        *,
+        sort_key=lambda n: n.dn() if n.is_attacker() else n.pn(),
+    ):
+        self._raise_error_if_not_ready()
+        root = self._searcher.get_root()
+        if root is None:
+            return None
+        for m in pv_line:
+            for child in root.get_children():
+                if child.get_action() == m:
+                    root = child
+                    break
+            else:
+                raise ValueError(f'Cannot find child with action, {m}')
+        return _tree(root, depth, breadth, sort_key)
+
+
+def _tree(node, depth: int, breadth: int, sort_key: callable):
+    out = _repr_node(node)
+    if depth == 0:
+        return out
+    children = node.get_children()
+    children.sort(key=sort_key)
+    if breadth >= 0:
+        children = children[:breadth]
+    for i, child in enumerate(children):
+        s = _tree(child, depth - 1, breadth, sort_key)
+        if i == len(children) - 1:
+            s = s.replace('\n', '\n    ')
+        else:
+            s = s.replace('\n', '\n|   ')
+        out += f'\n+-- {child.get_action()} -> {s}'
+    return out
+
+
+def _repr_node(n) -> str:
+    return f'Node(is_attacker={n.is_attacker()}, #P={n.pn()}, #D={n.dn()})'
