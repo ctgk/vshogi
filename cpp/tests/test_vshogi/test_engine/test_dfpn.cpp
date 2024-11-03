@@ -64,7 +64,7 @@ TEST(dfpn, minishogi_no_mate)
         // Black: GIx2
         auto searcher = Searcher();
         searcher.set_game(Game("2k2/5/1+P3/5/5 b 2S"));
-        searcher.search(800);
+        searcher.search(1100);
         CHECK_TRUE(searcher.found_conclusion());
         CHECK_FALSE(searcher.found_mate());
         CHECK_TRUE(searcher.found_no_mate());
@@ -375,7 +375,7 @@ TEST(dfpn, mate_in_five)
     // Black: GIx2
     auto searcher = vshogi::engine::dfpn::Searcher<Config>(5);
     searcher.set_game(Game("2pkb/4R/2+bG1/5/5 b 2S"));
-    CHECK_TRUE(searcher.search(800));
+    CHECK_TRUE(searcher.search(1000));
     CHECK_EQUAL(Move(SQ_2B, GI).hash(), searcher.get_mate_move().hash());
 }
 

@@ -163,7 +163,7 @@ public:
     }
     Game& apply_dfpn(const MoveType& move)
     {
-        add_record_and_update_state(move, false);
+        add_record_and_update_state(move);
         update_result(1u);
         return *this;
     }
@@ -318,11 +318,10 @@ protected:
     }
 
 protected:
-    void add_record_and_update_state(
-        const MoveType& move, const bool& hash_stands = true)
+    void add_record_and_update_state(const MoveType& move)
     {
         m_hash_list.emplace_back(m_captured_move_hash);
-        m_current_state.apply(move, &m_captured_move_hash, hash_stands);
+        m_current_state.apply(move, &m_captured_move_hash);
     }
 
 protected:
