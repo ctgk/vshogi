@@ -336,16 +336,6 @@ inline void export_mcts_node(pybind11::module& m)
     using Node = vshogi::engine::mcts::Node<Config>;
 
     py::class_<Node>(m, "MctsNode")
-        .def(
-            py::init([](const Game& g,
-                        const float v,
-                        const py::array_t<float>& logits) {
-                return Node(
-                    g.get_legal_moves(), g.get_turn(), v, logits.data());
-            }),
-            py::arg("game"),
-            py::arg("value"),
-            py::arg("policy_logits"))
         .def("get_visit_count", &Node::get_visit_count)
         .def(
             "get_visit_count_excluding_random",
@@ -388,33 +378,7 @@ inline void export_mcts_node(pybind11::module& m)
                 self.simulate_expand_and_backprop(
                     game.get_legal_moves(), game.get_turn(), value, nullptr);
             })
-        .def("simulate_mate_and_backprop", &Node::simulate_mate_and_backprop)
-        .def(
-            "_select_node_to_explore",
-            [](Node& node,
-               Game& game,
-               const float coeff_puct,
-               const int non_random_ratio,
-               const int random_depth) -> py::object {
-                const auto out = node.select(
-                    game, coeff_puct, non_random_ratio, random_depth);
-                if (out == nullptr)
-                    return py::none();
-                return py::cast(*out, py::return_value_policy::reference);
-            })
-        .def("get_action_by_proba_max", [](const Node& self) {
-            Move out{};
-            float max_proba = -1.f;
-            for (const Node* ch = self.get_child(); ch != nullptr;
-                 ch = ch->get_sibling()) {
-                const auto p = ch->get_proba();
-                if (p > max_proba) {
-                    max_proba = p;
-                    out = ch->get_action();
-                }
-            }
-            return out;
-        });
+        .def("simulate_mate_and_backprop", &Node::simulate_mate_and_backprop);
 }
 
 template <class Config>
