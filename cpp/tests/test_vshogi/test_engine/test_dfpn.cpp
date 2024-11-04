@@ -69,29 +69,6 @@ TEST(dfpn, minishogi_no_mate)
         CHECK_FALSE(searcher.found_mate());
         CHECK_TRUE(searcher.found_no_mate());
     }
-    {
-        // Turn: BLACK
-        // White: -
-        //     5   4   3   2   1
-        //   *---*---*---*---*---*
-        // A |   |   |-OU|   |   |
-        //   *---*---*---*---*---*
-        // B |   |   |   |   |   |
-        //   *---*---*---*---*---*
-        // C |   |+TO|   |   |   |
-        //   *---*---*---*---*---*
-        // D |   |   |   |   |   |
-        //   *---*---*---*---*---*
-        // E |   |   |   |   |   |
-        //   *---*---*---*---*---*
-        // Black: GIx2
-        auto searcher = Searcher(5);
-        searcher.set_game(Game("2k2/5/1+P3/5/5 b 2S"));
-        searcher.search(500);
-        CHECK_TRUE(searcher.found_conclusion());
-        CHECK_FALSE(searcher.found_mate());
-        CHECK_TRUE(searcher.found_no_mate());
-    }
 }
 
 TEST(dfpn, no_mate_1)
@@ -148,7 +125,7 @@ TEST(dfpn, mate_in_one)
 {
     using namespace vshogi::minishogi;
     using Searcher = vshogi::engine::dfpn::Searcher<Config>;
-    auto searcher = Searcher(9);
+    auto searcher = Searcher();
 
     {
         // Turn: BLACK
@@ -226,7 +203,7 @@ TEST(dfpn, mate_in_three_straight_forward)
 TEST(dfpn, mate_in_three)
 {
     using namespace vshogi::minishogi;
-    auto searcher = vshogi::engine::dfpn::Searcher<Config>(5);
+    auto searcher = vshogi::engine::dfpn::Searcher<Config>();
     {
         // Turn: White
         // White: KIx2
@@ -373,7 +350,7 @@ TEST(dfpn, mate_in_five)
     // E |   |   |   |   |   |
     //   *---*---*---*---*---*
     // Black: GIx2
-    auto searcher = vshogi::engine::dfpn::Searcher<Config>(5);
+    auto searcher = vshogi::engine::dfpn::Searcher<Config>();
     searcher.set_game(Game("2pkb/4R/2+bG1/5/5 b 2S"));
     CHECK_TRUE(searcher.search(1000));
     CHECK_EQUAL(Move(SQ_2B, GI).hash(), searcher.get_mate_move().hash());

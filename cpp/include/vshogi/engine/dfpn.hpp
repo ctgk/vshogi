@@ -113,7 +113,7 @@ public:
           m_child(nullptr), m_child_1st(nullptr), m_child_2nd(nullptr),
           m_pn(unit), m_dn(unit)
     {
-        simulate_or_expand(g, max_number);
+        simulate_or_expand(g);
     }
     Node(Node* const parent, const MoveType& action)
         : m_attacker(!parent->m_attacker), m_action(action), m_parent(parent),
@@ -181,26 +181,21 @@ public:
     {
         return (found_mate() || found_no_mate());
     }
-    void search(
-        GameType& game,
-        uint& num_nodes,
-        const uint thpn,
-        const uint thdn,
-        const uint thnc_def = max_number)
+    void
+    search(GameType& game, uint& num_nodes, const uint thpn, const uint thdn)
     {
         if (m_parent)
             game.apply_dfpn(m_action);
 
         if (!has_child()) {
-            simulate_or_expand(game, thnc_def);
+            simulate_or_expand(game);
             --num_nodes;
         }
         while (num_nodes) {
             if ((m_pn < thpn) && (m_dn < thdn)) {
                 const uint thpn_ch = compute_thpn_for_child(thpn);
                 const uint thdn_ch = compute_thdn_for_child(thdn);
-                m_child_1st->search(
-                    game, num_nodes, thpn_ch, thdn_ch, thnc_def);
+                m_child_1st->search(game, num_nodes, thpn_ch, thdn_ch);
             } else {
                 break;
             }
@@ -235,10 +230,10 @@ private:
                     : max_number);
         }
     }
-    void simulate_or_expand(const GameType& game, const uint thnc_def)
+    void simulate_or_expand(const GameType& game)
     {
         if (!simulate(game))
-            expand(game, thnc_def);
+            expand(game);
     }
 
     /**
@@ -279,7 +274,7 @@ private:
      *
      * @param game
      */
-    void expand(const GameType& game, const uint thnc_def)
+    void expand(const GameType& game)
     {
         std::unique_ptr<Node>* ch = &m_child;
         const State<Config>& s = game.get_state();
@@ -291,7 +286,6 @@ private:
                 if (atk_move.is_drop())
                     p->m_pn = cent;
                 update_offence_dn_ch1st_ch2nd(p);
-                m_pn = std::min(m_pn, p->m_pn);
                 ch = &(p->m_sibling);
             }
             m_pn = m_child_1st ? m_child_1st->m_pn : max_number;
@@ -307,10 +301,10 @@ private:
                 update_defence_pn_ch1st_ch2nd(p);
                 ch = &(p->m_sibling);
             }
-            m_dn = m_child_1st->m_dn;
-            if (num_ch > thnc_def) {
-                set_pndn_no_mate();
-                m_child.reset();
+            if (num_ch == 0u) {
+                set_pndn_mate();
+            } else {
+                m_dn = m_child_1st->m_dn;
             }
         }
     }
@@ -390,11 +384,9 @@ private:
 private:
     std::unique_ptr<GameType> m_game;
     std::unique_ptr<Node<Config>> m_root;
-    const uint m_thnc_def;
 
 public:
-    Searcher(const uint thnc_def = max_number)
-        : m_game(nullptr), m_root(nullptr), m_thnc_def(thnc_def)
+    Searcher() : m_game(nullptr), m_root(nullptr)
     {
     }
 
@@ -420,7 +412,7 @@ public:
     {
         Node<Config>* const root = m_root.get();
         GameType& game = *m_game;
-        root->search(game, n, max_number, max_number, m_thnc_def);
+        root->search(game, n, max_number, max_number);
         return root->found_mate();
     }
     bool found_mate() const

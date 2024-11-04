@@ -16,12 +16,7 @@ def test_found_no_mate():
     g = shogi.Game("2k2/5/1+P3/5/5 b 2S")
     searcher = DfpnSearcher()
     searcher.set_game(g)
-    searcher.search(600)
-    assert searcher.found_conclusion() is False
-
-    searcher = DfpnSearcher(thnc_def=5)
-    searcher.set_game(g)
-    searcher.search(500)
+    searcher.search(1100)
     assert searcher.found_conclusion()
     assert searcher.found_no_mate()
 
