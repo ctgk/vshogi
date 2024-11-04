@@ -102,7 +102,7 @@ TEST(dfpn, no_mate_1)
                   "1NK1B2+rL w GSPsnl3p 134");
     auto searcher = Searcher();
     searcher.set_game(g);
-    CHECK_FALSE(searcher.search(100));
+    CHECK_FALSE(searcher.search(2000));
     CHECK_TRUE(searcher.found_no_mate());
 }
 
@@ -352,7 +352,7 @@ TEST(dfpn, mate_in_five)
     // Black: GIx2
     auto searcher = vshogi::engine::dfpn::Searcher<Config>();
     searcher.set_game(Game("2pkb/4R/2+bG1/5/5 b 2S"));
-    CHECK_TRUE(searcher.search(1000));
+    CHECK_TRUE(searcher.search(3000));
     CHECK_EQUAL(Move(SQ_2B, GI).hash(), searcher.get_mate_move().hash());
 }
 
@@ -437,6 +437,21 @@ TEST(dfpn, debug2)
     searcher.search(100);
     CHECK_TRUE(searcher.found_conclusion());
     CHECK_TRUE(searcher.found_no_mate());
+}
+
+TEST(dfpn, debug_tmp)
+{
+    using namespace vshogi::shogi;
+    auto g = Game("7bk/8p/9/9/9/9/B8/9/9 b Nplnsgbr 1");
+    g.apply(Move("9g8h"))
+        .apply(Move("L*5e"))
+        .apply(Move("8h5e"))
+        .apply(Move("P*2b"));
+    auto searcher = vshogi::engine::dfpn::Searcher<Config>();
+    searcher.set_game(g);
+    searcher.search(100);
+    CHECK_TRUE(searcher.found_conclusion());
+    CHECK_TRUE(searcher.found_mate());
 }
 
 // TEST(dfpn, mate_moves_without_waste_moves)

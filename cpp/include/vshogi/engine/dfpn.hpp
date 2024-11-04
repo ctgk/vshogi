@@ -276,37 +276,73 @@ private:
      */
     void expand(const GameType& game)
     {
+        if (m_attacker) {
+            expand_offence_moves(game);
+        } else {
+            expand_defence_moves(game);
+        }
+    }
+    void expand_offence_moves(const GameType& game)
+    {
         std::unique_ptr<Node>* ch = &m_child;
         const State<Config>& s = game.get_state();
-        if (m_attacker) {
-            m_dn = zero;
-            for (Move<Config> atk_move : CheckMoveGenerator<Config>(s)) {
-                *ch = std::make_unique<Node>(this, atk_move);
-                Node* const p = ch->get();
-                if (atk_move.is_drop())
-                    p->m_pn = cent;
-                update_offence_dn_ch1st_ch2nd(p);
-                ch = &(p->m_sibling);
-            }
-            m_pn = m_child_1st ? m_child_1st->m_pn : max_number;
-        } else {
-            m_pn = zero;
-            uint num_ch = 0u;
-            for (Move<Config> def_move : LegalMoveGenerator<Config>(s)) {
-                *ch = std::make_unique<Node>(this, def_move);
-                ++num_ch;
-                Node* const p = ch->get();
-                if (s.is_checker_location(def_move.destination()))
-                    p->m_dn = cent;
-                update_defence_pn_ch1st_ch2nd(p);
-                ch = &(p->m_sibling);
-            }
-            if (num_ch == 0u) {
-                set_pndn_mate();
-            } else {
-                m_dn = m_child_1st->m_dn;
-            }
+        m_dn = zero;
+        for (Move<Config> atk_move : CheckMoveGenerator<Config>(s)) {
+            *ch = std::make_unique<Node>(this, atk_move);
+            Node* const p = ch->get();
+            if (atk_move.is_drop())
+                p->m_pn = cent;
+            update_offence_dn_ch1st_ch2nd(p);
+            ch = &(p->m_sibling);
         }
+        m_pn = m_child_1st ? m_child_1st->m_pn : max_number;
+    }
+    void expand_defence_moves(const GameType& game)
+    {
+        std::unique_ptr<Node>* ch = &m_child;
+        const State<Config>& s = game.get_state();
+        m_pn = zero;
+        uint num_ch = 0u;
+        const bool include_drop = !had_two_consecutive_sacrifice_drops();
+        for (Move<Config> def_move :
+             LegalMoveGenerator<Config>(s, include_drop)) {
+            *ch = std::make_unique<Node>(this, def_move);
+            ++num_ch;
+            Node* const p = ch->get();
+            if (s.is_checker_location(def_move.destination()))
+                p->m_dn = cent;
+            update_defence_pn_ch1st_ch2nd(p);
+            ch = &(p->m_sibling);
+        }
+        if (num_ch == 0u) {
+            set_pndn_mate();
+        } else {
+            m_dn = m_child_1st->m_dn;
+        }
+    }
+    bool had_two_consecutive_sacrifice_drops() const
+    {
+        // `get_action()`: capture second sacrifice drop
+        // `m_parent->get_action()`: second sacrifice drop
+        // `m_parent->m_parent->get_action()`: capture first sacrifice drop
+        // `m_parent->m_parent->m_parent->get_action()`: first sacrifice drop
+
+        if ((m_parent == nullptr) || (m_parent->m_parent == nullptr)
+            || (m_parent->m_parent->m_parent == nullptr))
+            return false;
+        const Move<Config> drop1st = m_parent->m_parent->m_parent->get_action();
+        const Move<Config> capt1st = m_parent->m_parent->get_action();
+        const Move<Config> drop2nd = m_parent->get_action();
+        const Move<Config> capt2nd = get_action();
+        if (!drop1st.is_drop())
+            return false;
+        if (drop1st.destination() != capt1st.destination())
+            return false;
+        if (!drop2nd.is_drop())
+            return false;
+        if (drop2nd.destination() != capt2nd.destination())
+            return false;
+        return true;
     }
 
     void backprop_one()

@@ -261,6 +261,12 @@ public:
         }
         return out;
     }
+    DropMoveGenerator& increment_to_end()
+    {
+        m_sq_iter = BitBoardType().square_iterator();
+        m_pt_iter = static_cast<PieceType>(num_stand_piece_types);
+        return *this;
+    }
 
 private:
     DropMoveGenerator(const StateType& state, const PieceType pt)
@@ -502,6 +508,7 @@ private:
                 m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
                 if (m_pt_iter == num_stand_piece_types)
                     break;
+                init_sq_iter();
             } else {
                 break;
             }
@@ -1182,9 +1189,11 @@ private:
     uint m_index; //!< 0: king, 1: board, 2: drop, 3: end
 
 public:
-    LegalMoveGenerator(const StateType& s)
+    LegalMoveGenerator(const StateType& s, const bool& include_drop = true)
         : m_king_iter(s), m_board_iter(s), m_drop_iter(s), m_index(0u)
     {
+        if (!include_drop)
+            m_drop_iter.increment_to_end();
         if (m_king_iter.is_end()) {
             ++m_index;
             if (m_board_iter.is_end()) {
