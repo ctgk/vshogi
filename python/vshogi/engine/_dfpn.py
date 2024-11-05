@@ -47,9 +47,10 @@ class DfpnSearcher(Engine):
     ['B*2c', '1b2c', '2e2d', '2c1b', '2d2c']
     """
 
-    def __init__(self) -> None:
+    def __init__(self, collect_garbage: bool = True) -> None:
         """Initialize DFPN mate-moves searcher object."""
         self._searcher = None
+        self._collect_garbage = collect_garbage
 
     def _set_game(self, game: Game):
         try:
@@ -57,7 +58,7 @@ class DfpnSearcher(Engine):
         except:
             return
         if self._searcher is None:
-            self._searcher = cls_()
+            self._searcher = cls_(self._collect_garbage)
         self._searcher.set_game(game._game)
 
     def _is_ready(self) -> bool:
@@ -191,9 +192,10 @@ def _tree(node, depth: int, breadth: int, sort_key: callable):
             s = s.replace('\n', '\n    ')
         else:
             s = s.replace('\n', '\n|   ')
-        out += f'\n+-- {child.get_action()} -> {s}'
+        out += f'\n+-- {child.get_action().to_usi()} -> {s}'
     return out
 
 
 def _repr_node(n) -> str:
-    return f'Node(is_attacker={n.is_attacker()}, #P={n.pn()}, #D={n.dn()})'
+    name = 'OR' if n.is_attacker() else 'AND'
+    return f'{name}(#P={n.pn()}, #D={n.dn()})'

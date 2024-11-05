@@ -459,6 +459,7 @@ inline void export_dfpn_searcher(pybind11::module& m)
 
     py::class_<Searcher>(m, "DfpnSearcher")
         .def(py::init<>())
+        .def(py::init<const bool&>())
         .def("is_ready", &Searcher::is_ready)
         .def("set_game", &Searcher::set_game)
         .def("search", &Searcher::search)
