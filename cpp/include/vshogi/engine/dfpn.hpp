@@ -236,8 +236,15 @@ private:
     }
     void simulate_or_expand(const GameType& game)
     {
-        if (!simulate(game))
+        if (simulate(game)) {
+            if ((!m_attacker) && found_mate() && m_parent->m_action.is_drop()
+                && (m_parent->m_parent != nullptr)) {
+                m_parent->m_parent->set_pndn_mate_to_all_child_if_drop_to(
+                    m_parent->m_action.destination());
+            }
+        } else {
             expand(game);
+        }
     }
 
     /**
@@ -364,6 +371,14 @@ private:
     {
         m_pn = max_number;
         m_dn = zero;
+    }
+    void set_pndn_mate_to_all_child_if_drop_to(const Square dst)
+    {
+        for (Node* ch = m_child.get(); ch; ch = ch->get_sibling()) {
+            if (ch->m_action.is_drop() && (ch->m_action.destination() == dst)) {
+                ch->set_pndn_mate();
+            }
+        }
     }
     void update_pn_dn_ch1st_ch2nd()
     {
