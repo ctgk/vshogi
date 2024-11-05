@@ -425,10 +425,12 @@ private:
     std::unique_ptr<GameType> m_game;
     std::unique_ptr<Node<Config>> m_root;
     const bool m_collect_garbage;
+    uint m_num_searched;
 
 public:
     Searcher(const bool& collect_garbage = true)
-        : m_game(nullptr), m_root(nullptr), m_collect_garbage(collect_garbage)
+        : m_game(nullptr), m_root(nullptr), m_collect_garbage(collect_garbage),
+          m_num_searched(0u)
     {
     }
 
@@ -441,6 +443,7 @@ public:
         m_game = std::make_unique<GameType>(g);
         m_game->clear_records_for_dfpn();
         m_root = std::make_unique<Node<Config>>(*m_game);
+        m_num_searched = 0u;
     }
 
     /**
@@ -450,11 +453,13 @@ public:
      * @return true Found mate moves.
      * @return false No mate moves found but further searches may find ones.
      */
-    bool search(uint n)
+    bool search(const uint n)
     {
         Node<Config>* const root = m_root.get();
         GameType& game = *m_game;
-        root->search(game, n, max_number, max_number, m_collect_garbage);
+        uint num = n;
+        root->search(game, num, max_number, max_number, m_collect_garbage);
+        m_num_searched += n - num;
         return root->found_mate();
     }
     bool found_mate() const
@@ -468,6 +473,10 @@ public:
     bool found_conclusion() const
     {
         return m_root->found_conclusion();
+    }
+    uint get_search_count() const
+    {
+        return m_num_searched;
     }
     MoveType get_mate_move() const
     {

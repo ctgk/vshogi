@@ -65,9 +65,12 @@ TEST(dfpn, minishogi_no_mate)
         auto searcher = Searcher();
         searcher.set_game(Game("2k2/5/1+P3/5/5 b 2S"));
         searcher.search(1100);
+        const auto num_searched = searcher.get_search_count();
         CHECK_TRUE(searcher.found_conclusion());
         CHECK_FALSE(searcher.found_mate());
         CHECK_TRUE(searcher.found_no_mate());
+        CHECK_TRUE(1000 < num_searched);
+        CHECK_TRUE(num_searched < 1100);
     }
 }
 
@@ -119,6 +122,7 @@ TEST(dfpn, mate_in_one_straight_forward)
 
     CHECK_TRUE(searcher.search(1u));
     CHECK_EQUAL(Move(SQ_1B, SQ_1C).hash(), searcher.get_mate_move().hash());
+    CHECK_EQUAL(1, searcher.get_search_count());
 }
 
 TEST(dfpn, mate_in_one)
@@ -147,6 +151,7 @@ TEST(dfpn, mate_in_one)
         CHECK_TRUE(searcher.search(10u));
         CHECK_TRUE(searcher.found_mate());
         CHECK_EQUAL(Move(SQ_3B, SQ_3C).hash(), searcher.get_mate_move().hash());
+        CHECK_TRUE(searcher.get_search_count() <= 10u);
     }
     {
         // DISCOVERED CHECK
@@ -168,6 +173,7 @@ TEST(dfpn, mate_in_one)
         // Black: KI
         searcher.set_game(Game("3b1/2r1k/3pB/3gR/5 b G"));
         CHECK_TRUE(searcher.search(50));
+        CHECK_TRUE(searcher.get_search_count() < 50u);
     }
 }
 
@@ -242,10 +248,13 @@ TEST(dfpn, mate_in_three)
         //   *---*---*---*---*---*
         // Black: HI
         searcher.set_game(Game("2sgk/5/3RG/5/4K b R"));
-        CHECK_TRUE(searcher.search(300));
+        CHECK_TRUE(searcher.search(200));
         CHECK_TRUE(searcher.found_conclusion());
         CHECK_TRUE(searcher.found_mate());
         CHECK_EQUAL(Move(SQ_1B, SQ_1C).hash(), searcher.get_mate_move().hash());
+        const auto num_searched = searcher.get_search_count();
+        CHECK_TRUE(100 < num_searched);
+        CHECK_TRUE(num_searched < 200);
     }
 }
 
@@ -352,8 +361,11 @@ TEST(dfpn, mate_in_five)
     // Black: GIx2
     auto searcher = vshogi::engine::dfpn::Searcher<Config>();
     searcher.set_game(Game("2pkb/4R/2+bG1/5/5 b 2S"));
-    CHECK_TRUE(searcher.search(3000));
+    CHECK_TRUE(searcher.search(2700));
     CHECK_EQUAL(Move(SQ_2B, GI).hash(), searcher.get_mate_move().hash());
+    const auto num_searched = searcher.get_search_count();
+    CHECK_TRUE(2600 < num_searched);
+    CHECK_TRUE(num_searched < 2700);
 }
 
 TEST(dfpn, king_entering_before_mate)

@@ -466,6 +466,7 @@ inline void export_dfpn_searcher(pybind11::module& m)
         .def("found_mate", &Searcher::found_mate)
         .def("found_no_mate", &Searcher::found_no_mate)
         .def("found_conclusion", &Searcher::found_conclusion)
+        .def("get_search_count", &Searcher::get_search_count)
         .def("get_mate_moves", &Searcher::get_mate_moves)
         .def("get_root", [](const Searcher& self) -> py::object {
             const auto out = self.get_root();

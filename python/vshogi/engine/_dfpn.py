@@ -145,6 +145,10 @@ class DfpnSearcher(Engine):
         self._raise_error_if_not_ready()
         return self._searcher.found_no_mate()
 
+    def get_search_count(self) -> int:
+        self._raise_error_if_not_ready()
+        return self._searcher.get_search_count()
+
     def get_mate_moves(self) -> tp.List[Move]:
         """Return mate moves found.
 
