@@ -1,6 +1,7 @@
 #ifndef VSHOGI_VARIANTS_JUDKINS_SHOGI_HPP
 #define VSHOGI_VARIANTS_JUDKINS_SHOGI_HPP
 
+#include <cassert>
 #include <cstdint>
 #include <type_traits>
 
@@ -565,6 +566,7 @@ inline bool judkins_shogi::Board::is_square_attacked(
     const judkins_shogi::SquareEnum& sq,
     const judkins_shogi::SquareEnum& skip) const
 {
+    assert(sq != SQ_NA);
     using namespace judkins_shogi;
     return is_square_attacked_by<FU>(by_side, sq)
            || is_square_attacked_by<KE>(by_side, sq)

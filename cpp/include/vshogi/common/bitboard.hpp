@@ -1,6 +1,7 @@
 #ifndef VSHOGI_BITBOARD_HPP
 #define VSHOGI_BITBOARD_HPP
 
+#include <cassert>
 #include <cstdint>
 
 #include "vshogi/common/color.hpp"
@@ -106,6 +107,7 @@ public:
     }
     bool is_one(const Square& sq) const
     {
+        assert((m_value >> SHelper::SQ_NA) == 0);
         return static_cast<bool>((m_value >> sq) & static_cast<UInt>(1));
     }
 
@@ -117,6 +119,7 @@ public:
      */
     BitBoard& set(const Square& sq)
     {
+        assert(sq != SHelper::SQ_NA);
         m_value |= static_cast<UInt>(static_cast<UInt>(1) << sq);
         return *this;
     }
@@ -128,6 +131,7 @@ public:
      */
     BitBoard& toggle(const Square& sq)
     {
+        assert(sq != SHelper::SQ_NA);
         m_value ^= static_cast<UInt>(static_cast<UInt>(1) << sq);
         return *this;
     }
@@ -204,6 +208,8 @@ public:
         const ColoredPiece& p, const Square& sq, const BitBoard& occupied);
     static BitBoard get_ray_to(const Square& sq, const DirectionEnum& dir)
     {
+        if ((sq == SHelper::SQ_NA) || (dir == DIR_NA))
+            return BitBoard();
         return ray_table[sq][dir];
     }
 

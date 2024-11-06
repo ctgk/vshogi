@@ -379,13 +379,16 @@ inline void animal_shogi::State::update_checkers()
     std::fill_n(m_checker_locations, 2, SQ_NA);
     uint index = 0u;
     const auto king_sq = m_board.get_king_location(m_turn);
-    for (auto sq : m_board.get_attacks_by_nocheck(king_sq).square_iterator()) {
-        if (m_board.is_empty(sq))
-            continue;
-        if (m_board.get_attacks_by_nocheck(sq).is_one(king_sq))
-            m_checker_locations[index++] = sq;
-        if (index > 1)
-            return;
+    if (king_sq != SQ_NA) {
+        for (auto sq :
+             m_board.get_attacks_by_nocheck(king_sq).square_iterator()) {
+            if (m_board.is_empty(sq))
+                continue;
+            if (m_board.get_attacks_by_nocheck(sq).is_one(king_sq))
+                m_checker_locations[index++] = sq;
+            if (index > 1)
+                return;
+        }
     }
     const auto mask_rank_2nd = (m_turn == BLACK) ? bb_rank3 : bb_rank2;
     const auto enemy_king_sq = m_board.get_king_location(~m_turn);

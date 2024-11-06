@@ -34,11 +34,12 @@ private:
 public:
     KingMoveGenerator(const StateType& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_src(m_board.get_king_location(m_turn)),
-          m_iter((BitBoardType::get_attacks_by(m_board[m_src], m_src)
-                  & (~m_board.get_occupied(m_turn)))
-                     .square_iterator())
+          m_src(m_board.get_king_location(m_turn)), m_iter()
     {
+        if (m_src != SQ_NA)
+            m_iter = (BitBoardType::get_attacks_by(m_board[m_src], m_src)
+                      & (~m_board.get_occupied(m_turn)))
+                         .square_iterator();
         increment_iterator_while_square_is_attacked();
     }
     KingMoveGenerator& operator++()
@@ -314,8 +315,8 @@ private:
     }
     void increment_piece_type_unless_in_stand()
     {
-        while (!m_stand.exist(m_pt_iter)
-               && (m_pt_iter < num_stand_piece_types)) {
+        while ((m_pt_iter < num_stand_piece_types)
+               && !m_stand.exist(m_pt_iter)) {
             m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
         }
     }
@@ -360,7 +361,8 @@ private:
     bool is_drop_pawn_mate(const Square dst, const ColoredPiece pawn) const
     {
         const auto enemy_king_sq = m_board.get_king_location(~m_turn);
-        if (!BitBoardType::get_attacks_by(pawn, dst).is_one(enemy_king_sq))
+        if ((enemy_king_sq == SQ_NA)
+            || !BitBoardType::get_attacks_by(pawn, dst).is_one(enemy_king_sq))
             return false;
 
         // if enemy king can move away from the attack, then return false.
@@ -523,8 +525,8 @@ private:
     }
     void increment_piece_type_unless_in_stand()
     {
-        while (!m_stand.exist(m_pt_iter)
-               && (m_pt_iter < num_stand_piece_types)) {
+        while ((m_pt_iter < num_stand_piece_types)
+               && !m_stand.exist(m_pt_iter)) {
             m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
         }
     }
@@ -1078,8 +1080,7 @@ private:
     void init_src_iter()
     {
         const auto king_sq = m_board.get_king_location(m_turn);
-        const auto src_mask
-            = m_board.get_occupied(m_turn).clear_nocheck(king_sq);
+        const auto src_mask = m_board.get_occupied(m_turn).clear(king_sq);
         m_src_iter = src_mask.square_iterator();
     }
     void init_dst_iter()

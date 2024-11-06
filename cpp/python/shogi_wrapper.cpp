@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include "vshogi/variants/shogi.hpp"
 
 #include <pybind11/pybind11.h>
@@ -232,6 +234,7 @@ void export_pieces(py::module& m)
 
 void export_shogi(py::module& m)
 {
+    assert(0 == 1);
     sg::Pieces::init_tables();
     sg::Squares::init_tables();
     sg::BlackWhiteStands::init_tables();

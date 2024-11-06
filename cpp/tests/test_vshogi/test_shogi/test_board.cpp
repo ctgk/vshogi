@@ -80,7 +80,7 @@ TEST(shogi_board, is_square_attacked)
     }
     {
         // by gold like piece.
-        const auto b = Board("9/9/6+l2/9/9/9/9/9 b");
+        const auto b = Board("9/9/6+l2/9/9/9/9/9/9 b");
         CHECK_TRUE(b.is_square_attacked(vshogi::WHITE, SQ_3B, SQ_3B));
         CHECK_TRUE(b.is_square_attacked(vshogi::WHITE, SQ_2D, SQ_2D));
         CHECK_FALSE(b.is_square_attacked(vshogi::WHITE, SQ_4B, SQ_4B));

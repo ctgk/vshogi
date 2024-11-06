@@ -259,6 +259,11 @@ private:
     update_checkers_before_turn_update(const Square& dst, const Square& src)
     {
         const auto enemy_king_sq = m_board.get_king_location(~m_turn);
+        if (enemy_king_sq == SQ_NA) {
+            m_checker_locations[0] = SQ_NA;
+            m_checker_locations[1] = SQ_NA;
+            return;
+        }
         const auto dst_dir = SHelper::get_direction(dst, enemy_king_sq);
         const auto discovered_checker_sq = find_discovered_checker_location(
             enemy_king_sq, dst_dir, SHelper::get_direction(src, enemy_king_sq));

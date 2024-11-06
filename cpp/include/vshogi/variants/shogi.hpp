@@ -1,6 +1,7 @@
 #ifndef VSHOGI_VARIANTS_SHOGI_HPP
 #define VSHOGI_VARIANTS_SHOGI_HPP
 
+#include <cassert>
 #include <cstdint>
 #include <type_traits>
 
@@ -767,6 +768,7 @@ template <>
 inline bool shogi::Board::is_square_attacked(
     const ColorEnum& by_side, const Square& sq, const Square& skip) const
 {
+    assert(sq != SQ_NA);
     using namespace shogi;
     return is_square_attacked_by<FU>(by_side, sq)
            || is_square_attacked_by<KE>(by_side, sq)

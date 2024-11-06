@@ -1,6 +1,8 @@
 #ifndef VSHOGI_PIECES_HPP
 #define VSHOGI_PIECES_HPP
 
+#include <cassert>
+#include <cctype>
 #include <string>
 
 #include "vshogi/common/color.hpp"
@@ -73,6 +75,12 @@ public:
             return VOID;
         return static_cast<ColoredPiece>(c * num_piece_types + p);
     }
+    static constexpr ColoredPiece to_board_piece(const char c)
+    {
+        return to_board_piece(
+            std::islower(static_cast<int>(c)) ? WHITE : BLACK,
+            to_piece_type(c));
+    }
     static constexpr char to_char(const PieceType& pt_demoted)
     {
         return Config::piece_type_to_char[pt_demoted];
@@ -113,6 +121,7 @@ public:
     template <class T>
     static constexpr T promote_nocheck(const T& p)
     {
+        assert(is_promotable(p));
         return static_cast<T>(p + num_stand_piece_types + 1);
     }
 
@@ -156,6 +165,7 @@ public:
     }
     static const DirectionEnum* get_attack_directions(const ColoredPiece& p)
     {
+        assert(p != VOID);
         return attack_directions_table[p];
     }
     static void init_tables()

@@ -151,7 +151,7 @@ TEST(judkins_shogi_board, is_square_attacked)
     }
     {
         // by gold like piece.
-        const auto b = Board("6/6/3+n2/6/6 b");
+        const auto b = Board("6/6/3+n2/6/6/6 b");
         CHECK_TRUE(b.is_square_attacked(vshogi::WHITE, SQ_3B, SQ_1A));
         CHECK_TRUE(b.is_square_attacked(vshogi::WHITE, SQ_2D, SQ_1A));
         CHECK_FALSE(b.is_square_attacked(vshogi::WHITE, SQ_4B, SQ_1A));
@@ -172,7 +172,7 @@ TEST(judkins_shogi_board, is_square_attacked)
 
 TEST(judkins_shogi_board, find_pinned)
 {
-    const auto b = Board("1b3+r/6/3P1P/6/1r1P1K b");
+    const auto b = Board("1b3+r/6/3P1P/6/1r1P1K/6 b");
     const auto actual = b.find_pinned(vshogi::BLACK);
     const auto expect = bb_3c | bb_1c | bb_3e;
     CHECK_EQUAL(expect.value(), actual.value());

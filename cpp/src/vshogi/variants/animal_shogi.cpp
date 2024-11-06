@@ -39,9 +39,9 @@ animal_shogi::Board::set_sfen_rank(const char* const sfen_rank, const Rank rank)
     const char* sfen_ptr;
     for (sfen_ptr = sfen_rank; sfen_ptr < sfen_rank + max_length; ++sfen_ptr) {
         switch (*sfen_ptr) {
-        case '/': // fall-through
-        case ' ': // fall-through
+        case '/':
             ++sfen_ptr;
+        case ' ':
         case '\0':
             goto OUT_OF_LOOP;
         case '3':
