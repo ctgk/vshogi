@@ -236,8 +236,19 @@ private:
     }
     void simulate_or_expand(const GameType& game)
     {
-        if (!simulate(game))
+        if (simulate(game)) {
+            if (m_attacker)
+                return;
+            if (found_mate() && m_parent->m_action.is_drop()
+                && m_parent->m_parent) {
+                // m_parent: offence's turn
+                // m_parent->m_parent: defence's turn
+                m_parent->m_parent->set_pndn_mate_to_all_child_drop_to(
+                    m_parent->m_action.destination(), this);
+            }
+        } else {
             expand(game);
+        }
     }
 
     /**
@@ -268,6 +279,16 @@ private:
         else
             set_pndn_no_mate();
         return true;
+    }
+
+    void set_pndn_mate_to_all_child_drop_to(const Square dst, Node* const leaf)
+    {
+        for (Node* ch = m_child.get(); ch; ch = ch->get_sibling()) {
+            if (ch->m_action.is_drop() && (ch->m_action.destination() == dst)) {
+                ch->set_pndn_mate();
+                ch->m_child_1st = leaf;
+            }
+        }
     }
 
     /**
