@@ -203,7 +203,7 @@ public:
             } else {
                 break;
             }
-            backprop_one(collect_garbage);
+            backprop_one(game, collect_garbage);
         }
         if (m_parent)
             game.undo(false);
@@ -294,8 +294,6 @@ private:
         for (Move<Config> atk_move : CheckMoveGenerator<Config>(s)) {
             *ch = std::make_unique<Node>(this, atk_move);
             Node* const p = ch->get();
-            if (atk_move.is_drop())
-                p->m_pn = cent;
             update_offence_dn_ch1st_ch2nd(p);
             ch = &(p->m_sibling);
         }
@@ -313,9 +311,7 @@ private:
             *ch = std::make_unique<Node>(this, def_move);
             ++num_ch;
             Node* const p = ch->get();
-            if (s.is_checker_location(def_move.destination()))
-                p->m_dn = cent;
-            update_defence_pn_ch1st_ch2nd(p);
+            update_defence_pn_ch1st_ch2nd(p, game);
             ch = &(p->m_sibling);
         }
         if (num_ch == 0u) {
@@ -349,9 +345,9 @@ private:
         return true;
     }
 
-    void backprop_one(const bool& collect_garbage = true)
+    void backprop_one(const GameType& g, const bool& collect_garbage = true)
     {
-        update_pn_dn_ch1st_ch2nd();
+        update_pn_dn_ch1st_ch2nd(g);
         if (collect_garbage && found_no_mate())
             m_child.reset();
     }
@@ -365,7 +361,7 @@ private:
         m_pn = max_number;
         m_dn = zero;
     }
-    void update_pn_dn_ch1st_ch2nd()
+    void update_pn_dn_ch1st_ch2nd(const GameType& g)
     {
         // - Offence: #P = min(#P of children), #D = sum(#D of children)
         // - Defence: #P = sum(#P of children), #D = min(#D of children)
@@ -381,29 +377,52 @@ private:
         } else {
             m_pn = 0u;
             for (Node* ch = m_child.get(); ch; ch = ch->get_sibling())
-                update_defence_pn_ch1st_ch2nd(ch);
+                update_defence_pn_ch1st_ch2nd(ch, g);
             m_dn = m_child_1st->m_dn;
         }
     }
     void update_offence_dn_ch1st_ch2nd(Node* const ch)
     {
-        if ((m_child_1st == nullptr) || (m_child_1st->m_pn > ch->m_pn)) {
+        if (ch->is_better_pn_choice_than(m_child_1st)) {
             m_child_2nd = m_child_1st;
             m_child_1st = ch;
-        } else if ((m_child_2nd == nullptr) || (m_child_2nd->m_pn > ch->m_pn)) {
+        } else if (ch->is_better_pn_choice_than(m_child_2nd)) {
             m_child_2nd = ch;
         }
         increment_with_guard(m_dn, ch->m_dn);
     }
-    void update_defence_pn_ch1st_ch2nd(Node* const ch)
+    bool is_better_pn_choice_than(const Node* const other) const
     {
-        if ((m_child_1st == nullptr) || (m_child_1st->m_dn > ch->m_dn)) {
+        if (other == nullptr)
+            return true;
+        if (m_pn < other->m_pn)
+            return true;
+        if (m_pn > other->m_pn)
+            return false;
+        return (m_action.is_drop() && (!other->m_action.is_drop()));
+    }
+    void update_defence_pn_ch1st_ch2nd(Node* const ch, const GameType& g)
+    {
+        if (ch->is_better_dn_choice_than(m_child_1st, g)) {
             m_child_2nd = m_child_1st;
             m_child_1st = ch;
-        } else if ((m_child_2nd == nullptr) || (m_child_2nd->m_dn > ch->m_dn)) {
+        } else if (ch->is_better_dn_choice_than(m_child_2nd, g)) {
             m_child_2nd = ch;
         }
         increment_with_guard(m_pn, ch->m_pn);
+    }
+    bool
+    is_better_dn_choice_than(const Node* const other, const GameType& g) const
+    {
+        if (other == nullptr)
+            return true;
+        if (m_dn < other->m_dn)
+            return true;
+        if (m_dn > other->m_dn)
+            return false;
+        const State<Config>& s = g.get_state();
+        return s.is_checker_location(m_action.destination())
+               && !s.is_checker_location(other->m_action.destination());
     }
     static void increment_with_guard(uint& n, uint other)
     {

@@ -69,8 +69,8 @@ TEST(dfpn, minishogi_no_mate)
         CHECK_TRUE(searcher.found_conclusion());
         CHECK_FALSE(searcher.found_mate());
         CHECK_TRUE(searcher.found_no_mate());
-        CHECK_TRUE(1000 < num_searched);
-        CHECK_TRUE(num_searched < 1100);
+        CHECK_COMPARE(900, <, num_searched);
+        CHECK_COMPARE(num_searched, <, 1000);
     }
 }
 
@@ -105,8 +105,10 @@ TEST(dfpn, no_mate_1)
                   "1NK1B2+rL w GSPsnl3p 134");
     auto searcher = Searcher();
     searcher.set_game(g);
-    CHECK_FALSE(searcher.search(2000));
+    CHECK_FALSE(searcher.search(5000));
     CHECK_TRUE(searcher.found_no_mate());
+    CHECK_COMPARE(3000, <, searcher.get_search_count());
+    CHECK_COMPARE(searcher.get_search_count(), <, 3100);
 }
 
 TEST(dfpn, mate_in_one_straight_forward)
@@ -227,8 +229,10 @@ TEST(dfpn, mate_in_three)
         //   *---*---*---*---*---*
         // Black: -
         searcher.set_game(Game("5/2p2/5/2K2/5 w 2g"));
-        CHECK_TRUE(searcher.search(20));
+        CHECK_TRUE(searcher.search(100));
         CHECK_TRUE(searcher.found_mate());
+        CHECK_COMPARE(20, <, searcher.get_search_count());
+        CHECK_COMPARE(searcher.get_search_count(), <, 30);
         CHECK_EQUAL(Move(SQ_3C, KI).hash(), searcher.get_mate_move().hash());
     }
     {
@@ -361,11 +365,11 @@ TEST(dfpn, mate_in_five)
     // Black: GIx2
     auto searcher = vshogi::engine::dfpn::Searcher<Config>();
     searcher.set_game(Game("2pkb/4R/2+bG1/5/5 b 2S"));
-    CHECK_TRUE(searcher.search(2700));
+    CHECK_TRUE(searcher.search(5000));
     CHECK_EQUAL(Move(SQ_2B, GI).hash(), searcher.get_mate_move().hash());
     const auto num_searched = searcher.get_search_count();
-    CHECK_TRUE(2600 < num_searched);
-    CHECK_TRUE(num_searched < 2700);
+    CHECK_COMPARE(3500, <, num_searched);
+    CHECK_COMPARE(num_searched, <, 3600);
 }
 
 TEST(dfpn, king_entering_before_mate)
