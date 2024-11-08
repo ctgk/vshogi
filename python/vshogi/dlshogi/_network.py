@@ -45,7 +45,7 @@ class _DepthwiseAttention(tf.keras.layers.Layer):
             self.bias = self.add_weight(
                 shape=self._attention_matrix.shape[-1],
                 initializer='zeros',
-                name=self.name + '_bias',
+                name='bias',
             )
 
     def call(self, x):
@@ -66,15 +66,35 @@ def _resblock(x, ch, attention_matrix):
     return _act(x + h)
 
 
-def _policy_head(x, num_policy_per_square, name='policy_logits'):
-    h = _pconv(x, num_policy_per_square, use_bias=True)
-    return tf.keras.layers.Flatten(name=name)(h)
+def _build_backbone(
+    input_shape: tp.Tuple[int, int, int],
+    hidden_channels: int,
+    bottleneck_channels: int,
+    num_resblocks: int,
+    attention_matrix: np.ndarray,
+):
+    x = tf.keras.Input(shape=input_shape)
+    h = _act_bn_pconv(x, hidden_channels)
+    for _ in range(num_resblocks):
+        h = _resblock(h, bottleneck_channels, attention_matrix)
+    return tf.keras.Model(inputs=x, outputs=h, name='backbone')
 
 
-def _value_head(x, name='value'):
-    h = _act_bn_pconv(x, 1)
-    h = tf.keras.layers.Flatten()(h)
-    return tf.keras.layers.Dense(1, activation='tanh', name=name)(h)
+def _build_policy_head(num_policy_per_square, name='policy_head'):
+    return tf.keras.Sequential([
+        tf.keras.layers.Conv2D(num_policy_per_square, 1),
+        tf.keras.layers.Flatten(name='policy_logits'),
+    ], name=name)
+
+
+def _build_value_head(name='value_head'):
+    return tf.keras.Sequential([
+        tf.keras.layers.Conv2D(1, 1),
+        tf.keras.layers.BatchNormalization(center=False, scale=False),
+        tf.keras.layers.LeakyReLU(),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(1, activation='tanh', name='value'),
+    ], name=name)
 
 
 def build_policy_value_network(
@@ -104,11 +124,14 @@ def build_policy_value_network(
         Attention matrix.
     """
     x = tf.keras.Input(shape=(*input_size, input_channels))
-    h = _act_bn_pconv(x, hidden_channels)
-    for _ in range(num_backbone_blocks):
-        h = _resblock(h, bottleneck_channels, attention_matrix)
-
-    policy_logits = _policy_head(h, num_policy_per_square)
-    value = _value_head(h)
+    h = _build_backbone(
+        (*input_size, input_channels),
+        hidden_channels,
+        bottleneck_channels,
+        num_backbone_blocks,
+        attention_matrix,
+    )(x)
+    policy_logits = _build_policy_head(num_policy_per_square)(h)
+    value = _build_value_head()(h)
     model = tf.keras.Model(inputs=x, outputs=[policy_logits, value])
     return model

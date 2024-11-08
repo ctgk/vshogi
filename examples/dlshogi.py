@@ -448,6 +448,26 @@ def run_train(args: Args):
         elif os.path.exists(f'models/checkpoint_{i-1:04d}'):
             print(f"Loading checkpoint_{i-1:04d}")
             network.load_weights(f'models/checkpoint_{i-1:04d}/checkpoint_{i-1:04d}').expect_partial()
+        random_network = vshogi.dlshogi.build_policy_value_network(
+            input_size=(shogi.Game.ranks, shogi.Game.files),
+            input_channels=shogi.Game.feature_channels,
+            num_policy_per_square=shogi.Move._num_policy_per_square(),
+            hidden_channels=args.nn_hidden_channels,
+            bottleneck_channels=args.nn_bottleneck_channels,
+            num_backbone_blocks=args.nn_backbone_blocks,
+            attention_matrix=shogi.Game.get_attention(),
+        )
+        random_network.compile()
+        for key in ('backbone', 'policy_head', 'value_head'):
+            subnet = network.get_layer(key)
+            random_subnet = random_network.get_layer(key)
+            if key == 'backbone':
+                subnet.set_weights([
+                    0.8 * p + 0.2 * r for p, r
+                    in zip(subnet.get_weights(), random_subnet.get_weights())
+                ])
+            else:
+                subnet.set_weights(random_subnet.get_weights())
     if i > 0:
         load_data_and_train_network(network, i, args.nn_learning_rate)
         network.save_weights(f'models/checkpoint_{i:04d}/checkpoint_{i:04d}')
