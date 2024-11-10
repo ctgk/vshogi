@@ -8,10 +8,122 @@
 namespace test_vshogi::test_engine
 {
 
-TEST_GROUP (dfpn) {
+TEST_GROUP (dfpn_transposition_table) {
 };
 
-TEST(dfpn, no_mate_no_check)
+TEST(dfpn_transposition_table, init)
+{
+    using namespace vshogi::minishogi;
+    using Node = vshogi::engine::dfpn::Node<Config>;
+    using TranspositionTable = vshogi::engine::dfpn::TranspositionTable<Config>;
+
+    auto g = Game("4k/5/4G/5/5 b G");
+    auto table = TranspositionTable();
+    auto root = table.get_root();
+    table.add(*root, g, Move(SQ_1B, GI));
+    Node* actual = nullptr;
+    table.look_up(g, Move(SQ_1B, GI), &actual);
+    CHECK_TRUE(actual != nullptr);
+
+    table.clear();
+    table.look_up(g, Move(SQ_1B, GI), &actual);
+    CHECK_TRUE(actual == nullptr);
+}
+
+TEST(dfpn_transposition_table, look_up_offence)
+{
+    using namespace vshogi::minishogi;
+    using Node = vshogi::engine::dfpn::Node<Config>;
+    using TranspositionTable = vshogi::engine::dfpn::TranspositionTable<Config>;
+
+    auto g = Game("4k/5/4G/5/5 b G");
+    auto table = TranspositionTable();
+    auto root = table.get_root();
+    Node* const n = table.add(*root, g, Move(SQ_1B, GI));
+    Node* actual = nullptr;
+
+    CHECK_FALSE(
+        table.look_up(Game("4k/5/4G/5/5 b -"), Move(SQ_1B, GI), &actual));
+    CHECK_TRUE(actual == nullptr);
+    CHECK_FALSE(
+        table.look_up(Game("4k/5/4G/5/5 w G"), Move(SQ_1B, GI), &actual));
+    CHECK_TRUE(actual == nullptr);
+    CHECK_FALSE(
+        table.look_up(Game("4k/5/4G/5/5 b GS"), Move(SQ_2B, GI), &actual));
+    CHECK_TRUE(actual == nullptr);
+    CHECK_FALSE(
+        table.look_up(Game("4k/5/4G/5/5 b GS"), Move(SQ_1B, GI), &actual));
+    CHECK_TRUE(n == actual);
+    CHECK_TRUE(
+        table.look_up(Game("4k/5/4G/5/5 b G"), Move(SQ_1B, GI), &actual));
+    CHECK_TRUE(n == actual);
+}
+
+TEST(dfpn_transposition_table, look_up_defence)
+{
+    using namespace vshogi::minishogi;
+    using Node = vshogi::engine::dfpn::Node<Config>;
+    using TranspositionTable = vshogi::engine::dfpn::TranspositionTable<Config>;
+    auto table = TranspositionTable();
+    auto g = Game("4k/5/4P/5/5 b s");
+    auto p = table.add(*table.get_root(), g, Move(SQ_1B, SQ_1C));
+    g.apply_dfpn(Move(SQ_1B, SQ_1C));
+    Node* const n = table.add(*p, g, Move(SQ_1B, SQ_1A)); // 4k/4P/5/5/5 w s
+    g.undo();
+    Node* actual = nullptr;
+
+    CHECK_FALSE(
+        table.look_up(Game("4k/4P/5/5/5 w -"), Move(SQ_1B, SQ_1A), &actual));
+    CHECK_TRUE(actual == nullptr);
+    CHECK_FALSE(
+        table.look_up(Game("4k/4P/5/5/5 b s"), Move(SQ_1B, SQ_1A), &actual));
+    CHECK_TRUE(actual == nullptr);
+    CHECK_FALSE(
+        table.look_up(Game("4k/4P/5/5/5 w s"), Move(SQ_2B, SQ_1A), &actual));
+    CHECK_TRUE(actual == nullptr);
+    CHECK_TRUE(
+        table.look_up(Game("4k/4P/5/5/5 w s"), Move(SQ_1B, SQ_1A), &actual));
+    CHECK_TRUE(actual == n);
+    CHECK_FALSE(
+        table.look_up(Game("4k/4P/5/5/5 w gs"), Move(SQ_1B, SQ_1A), &actual));
+    CHECK_TRUE(actual == n);
+    CHECK_FALSE(
+        table.look_up(Game("4k/4P/5/5/5 w g"), Move(SQ_1B, SQ_1A), &actual));
+    CHECK_TRUE(actual == nullptr);
+}
+
+TEST(dfpn_transposition_table, look_up_offence_stronger_of_two_weakers)
+{
+    using namespace vshogi::minishogi;
+    using Node = vshogi::engine::dfpn::Node<Config>;
+    using TranspositionTable = vshogi::engine::dfpn::TranspositionTable<Config>;
+
+    auto table = TranspositionTable();
+    auto root = table.get_root();
+    auto g1 = Game("4k/5/4G/5/5 b G");
+    const auto n1 = table.add(*root, g1, Move(SQ_1B, GI));
+    auto g2 = Game("4k/5/4G/5/5 b 2G");
+    const auto n2 = table.add(*root, g2, Move(SQ_1B, GI));
+    Node* actual = nullptr;
+
+    CHECK_FALSE(
+        table.look_up(Game("4k/5/4G/5/5 b -"), Move(SQ_1B, GI), &actual));
+    CHECK_TRUE(actual == nullptr);
+    CHECK_FALSE(
+        table.look_up(Game("4k/5/4G/5/5 b 2GS"), Move(SQ_1B, GI), &actual));
+    CHECK_TRUE(actual == n2);
+    CHECK_TRUE(
+        table.look_up(Game("4k/5/4G/5/5 b G"), Move(SQ_1B, GI), &actual));
+    CHECK_TRUE(actual == n1);
+    CHECK_TRUE(
+        table.look_up(Game("4k/5/4G/5/5 b 2G"), Move(SQ_1B, GI), &actual));
+    CHECK_TRUE(actual == n2);
+}
+
+TEST_GROUP (dfpn_searcher) {
+};
+
+TEST(dfpn_searcher, no_mate_no_check)
 {
     using namespace vshogi::minishogi;
 
@@ -41,7 +153,7 @@ TEST(dfpn, no_mate_no_check)
     CHECK_TRUE(searcher.found_no_mate());
 }
 
-TEST(dfpn, minishogi_no_mate)
+TEST(dfpn_searcher, minishogi_no_mate)
 {
     using namespace vshogi::minishogi;
     using Searcher = vshogi::engine::dfpn::Searcher<Config>;
@@ -74,7 +186,7 @@ TEST(dfpn, minishogi_no_mate)
     }
 }
 
-TEST(dfpn, no_mate_1)
+TEST(dfpn_searcher, no_mate_1)
 {
     using namespace vshogi::shogi;
     using Searcher = vshogi::engine::dfpn::Searcher<Config>;
@@ -111,7 +223,7 @@ TEST(dfpn, no_mate_1)
     CHECK_COMPARE(searcher.get_search_count(), <, 3100);
 }
 
-TEST(dfpn, mate_in_one_straight_forward)
+TEST(dfpn_searcher, mate_in_one_straight_forward)
 {
     using namespace vshogi::minishogi;
     using Searcher = vshogi::engine::dfpn::Searcher<Config>;
@@ -127,7 +239,7 @@ TEST(dfpn, mate_in_one_straight_forward)
     CHECK_EQUAL(1, searcher.get_search_count());
 }
 
-TEST(dfpn, mate_in_one)
+TEST(dfpn_searcher, mate_in_one)
 {
     using namespace vshogi::minishogi;
     using Searcher = vshogi::engine::dfpn::Searcher<Config>;
@@ -179,7 +291,7 @@ TEST(dfpn, mate_in_one)
     }
 }
 
-TEST(dfpn, mate_in_three_straight_forward)
+TEST(dfpn_searcher, mate_in_three_straight_forward)
 {
     using namespace vshogi::minishogi;
     using Searcher = vshogi::engine::dfpn::Searcher<Config>;
@@ -208,7 +320,7 @@ TEST(dfpn, mate_in_three_straight_forward)
     CHECK_EQUAL(Move(SQ_1B, SQ_1C).hash(), searcher.get_mate_move().hash());
 }
 
-TEST(dfpn, mate_in_three)
+TEST(dfpn_searcher, mate_in_three)
 {
     using namespace vshogi::minishogi;
     auto searcher = vshogi::engine::dfpn::Searcher<Config>();
@@ -262,7 +374,7 @@ TEST(dfpn, mate_in_three)
     }
 }
 
-TEST(dfpn, mate_in_three_by_king_move)
+TEST(dfpn_searcher, mate_in_three_by_king_move)
 {
     using namespace vshogi::judkins_shogi;
     using Searcher = vshogi::engine::dfpn::Searcher<Config>;
@@ -316,7 +428,7 @@ TEST(dfpn, mate_in_three_by_king_move)
     }
 }
 
-TEST(dfpn, mate_in_five_straight_forward)
+TEST(dfpn_searcher, mate_in_five_straight_forward)
 {
     using namespace vshogi::judkins_shogi;
 
@@ -344,7 +456,7 @@ TEST(dfpn, mate_in_five_straight_forward)
     CHECK_EQUAL(Move(SQ_2C, KA).hash(), searcher.get_mate_move().hash());
 }
 
-TEST(dfpn, mate_in_five)
+TEST(dfpn_searcher, mate_in_five)
 {
     using namespace vshogi::minishogi;
 
@@ -372,7 +484,7 @@ TEST(dfpn, mate_in_five)
     CHECK_COMPARE(num_searched, <, 3600);
 }
 
-TEST(dfpn, king_entering_before_mate)
+TEST(dfpn_searcher, king_entering_before_mate)
 {
     using namespace vshogi::judkins_shogi;
     using Searcher = vshogi::engine::dfpn::Searcher<Config>;
@@ -403,7 +515,7 @@ TEST(dfpn, king_entering_before_mate)
     CHECK_TRUE(actual[1] == Move(SQ_6F, SQ_5F));
 }
 
-TEST(dfpn, debug)
+TEST(dfpn_searcher, debug)
 {
     using namespace vshogi::shogi;
     using Searcher = vshogi::engine::dfpn::Searcher<Config>;
@@ -442,7 +554,7 @@ TEST(dfpn, debug)
     CHECK_TRUE(g.get_result() == vshogi::BLACK_WIN);
 }
 
-TEST(dfpn, debug2)
+TEST(dfpn_searcher, debug2)
 {
     using namespace vshogi::shogi;
     using Searcher = vshogi::engine::dfpn::Searcher<Config>;
@@ -455,7 +567,7 @@ TEST(dfpn, debug2)
     CHECK_TRUE(searcher.found_no_mate());
 }
 
-TEST(dfpn, debug_tmp)
+TEST(dfpn_searcher, debug_tmp)
 {
     using namespace vshogi::shogi;
     auto g = Game("7bk/8p/9/9/9/9/B8/9/9 b Nplnsgbr 1");
@@ -470,7 +582,7 @@ TEST(dfpn, debug_tmp)
     CHECK_TRUE(searcher.found_mate());
 }
 
-// TEST(dfpn, mate_moves_without_waste_moves)
+// TEST(dfpn_searcher, mate_moves_without_waste_moves)
 // {
 //     using namespace vshogi::shogi;
 //     using Searcher = vshogi::engine::dfpn::Searcher<Config>;
@@ -507,7 +619,7 @@ TEST(dfpn, debug_tmp)
 //     CHECK_EQUAL(3, actual.size());
 // }
 
-// TEST(dfpn, cache)
+// TEST(dfpn_searcher, cache)
 // {
 //     using namespace vshogi::minishogi;
 //     using Searcher = vshogi::engine::dfpn::Searcher<Config>;

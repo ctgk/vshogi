@@ -88,6 +88,19 @@ public:
     {
         return (((m_value - other.m_value) & ~mask) == 0u);
     }
+    bool operator<=(const Stand& other) const
+    {
+        return other.operator>=(*this);
+    }
+    bool operator>(const Stand& other) const
+    {
+        const auto d = m_value - other.m_value;
+        return (d != 0u) && ((d & ~mask) == 0u);
+    }
+    bool operator<(const Stand& other) const
+    {
+        return other.operator>(*this);
+    }
 };
 
 template <class Config>

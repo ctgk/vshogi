@@ -113,6 +113,10 @@ public:
     {
         return m_captured_move_hash & lsb40bit;
     }
+    std::uint64_t get_board_turn_hash() const
+    {
+        return get_zobrist_hash() ^ (m_current_state.hash_stands() & lsb40bit);
+    }
     std::string to_sfen(const bool include_move_count = true) const
     {
         if (include_move_count)

@@ -25,6 +25,14 @@ TEST(minishogi_game, record_length)
     CHECK_EQUAL(3, game.record_length());
 }
 
+TEST(minishogi_game, get_board_turn_hash)
+{
+    auto g1 = Game("4k/5/4G/5/5 b G");
+    auto g2 = Game("4k/5/4G/5/5 b GS");
+    CHECK_TRUE(g1.get_zobrist_hash() != g2.get_zobrist_hash());
+    CHECK_EQUAL(g1.get_board_turn_hash(), g2.get_board_turn_hash());
+}
+
 TEST(minishogi_game, apply)
 {
     {

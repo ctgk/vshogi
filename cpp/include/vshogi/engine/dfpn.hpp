@@ -108,6 +108,12 @@ private:
     uint m_dn;
 
 public:
+    Node()
+        : m_attacker(true), m_action(), m_parent(nullptr), m_sibling(nullptr),
+          m_child(nullptr), m_child_1st(nullptr), m_child_2nd(nullptr),
+          m_pn(unit), m_dn(unit)
+    {
+    }
     Node(const GameType& g)
         : m_attacker(true), m_action(), m_parent(nullptr), m_sibling(nullptr),
           m_child(nullptr), m_child_1st(nullptr), m_child_2nd(nullptr),
@@ -129,6 +135,15 @@ public:
     Node(Node&& other) = default; // 4/5 move constructor
     Node& operator=(Node&& other) = default; // 5/5 move assignment
 
+    void init()
+    {
+        m_sibling.reset();
+        m_child.reset();
+        m_child_1st = nullptr;
+        m_child_2nd = nullptr;
+        m_pn = unit;
+        m_dn = unit;
+    }
     bool is_attacker() const
     {
         return m_attacker;
@@ -430,6 +445,113 @@ private:
             n = max_number;
         else
             n += other;
+    }
+};
+
+template <class Config>
+class TranspositionTable
+{
+private:
+    using BaseTypeStand = typename Config::BaseTypeStand;
+    using StandNodeTable = std::unordered_map<BaseTypeStand, Node<Config>>;
+    using StandType = Stand<Config>;
+    using GameType = Game<Config>;
+    using MoveType = Move<Config>;
+    using NodeType = Node<Config>;
+
+private:
+    std::unordered_map<std::uint64_t, StandNodeTable> m_table;
+    NodeType m_root;
+
+public:
+    TranspositionTable() : m_table{}, m_root{}
+    {
+    }
+    void clear()
+    {
+        m_table.clear();
+        m_root.init();
+    }
+    NodeType* get_root()
+    {
+        return &m_root;
+    }
+    const NodeType* get_root() const
+    {
+        return &m_root;
+    }
+
+    NodeType* add(NodeType& parent, const GameType& g, const MoveType& m)
+    {
+        const std::uint64_t btm_hash
+            = (static_cast<std::uint64_t>(m.hash()) << 40)
+              ^ g.get_board_turn_hash();
+        const auto t = g.get_turn();
+        const auto s = g.get_stand(t).value();
+        auto it = m_table.find(btm_hash);
+        if (it == m_table.end()) {
+            m_table.emplace(btm_hash, StandNodeTable());
+            m_table[btm_hash].emplace(s, NodeType(&parent, m));
+            return &(m_table[btm_hash][s]);
+        } else {
+            it->second.emplace(s, NodeType(&parent, m));
+            return &(it->second[s]);
+        }
+    }
+
+    /**
+     * @brief Look up corresponding node given game position and move to apply.
+     *
+     * @param g Game position
+     * @param m Move to apply on the position.
+     * @param out Corresponding node
+     * @return true Corresponding node with exact stand state.
+     * @return false Corresponding node but with weaker stand or no node found.
+     */
+    bool look_up(const GameType& g, const MoveType& m, NodeType** out)
+    {
+        *out = nullptr;
+        const std::uint64_t btm_hash
+            = (static_cast<std::uint64_t>(m.hash()) << 40)
+              ^ g.get_board_turn_hash();
+        auto it = m_table.find(btm_hash);
+        if (it == m_table.end())
+            return false;
+        return look_up(g, it->second, out);
+    }
+
+private:
+    bool look_up(const GameType& g, StandNodeTable& table, NodeType** out)
+    {
+        const auto t = g.get_turn();
+        const auto s = g.get_stand(t);
+        *out = nullptr;
+        bool is_exact_stand = false;
+        Stand<Config> s_weaker = Stand<Config>();
+        for (auto& it : table) {
+            const auto s_iter = Stand<Config>(it.first);
+            if (s_iter == s) {
+                *out = &it.second;
+                is_exact_stand = true;
+            } else if (s_iter < s) {
+                // return a node if there is one with weaker stand
+                if ((it.second.is_attacker() && it.second.found_mate())
+                    || (!it.second.is_attacker()
+                        && it.second.found_no_mate())) {
+                    *out = &it.second;
+                    is_exact_stand = false;
+                    break;
+                }
+                if ((*out == nullptr)
+                    || ((s_weaker < s_iter) && !is_exact_stand)) {
+                    // s_weaker < s_iter < s
+                    s_weaker = it.first;
+                    *out = &it.second;
+                    is_exact_stand = false;
+                }
+            }
+        }
+        return is_exact_stand;
     }
 };
 
