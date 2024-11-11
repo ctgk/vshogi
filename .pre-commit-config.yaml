@@ -20,7 +20,7 @@ repos:
     hooks:
     -   id: clang-format
         name: Check C++ format
-        entry: bash -c 'cmd=`which clang-format-12 || which clang-format-13 || which clang-format`; for file in "$@"; do diff $file <($cmd $file); if [ $? = 1 ]; then echo $file; exit 1; fi; done' --
+        entry: bash -c 'cmd=`which clang-format-15 || which clang-format`; for file in "$@"; do diff $file <($cmd $file); if [ $? = 1 ]; then echo $file; exit 1; fi; done' --
         types: [text]
         files: '\.(c|h|cpp|hpp)$'
         language: system
@@ -34,7 +34,7 @@ repos:
         language: system
     -   id: clang-tidy
         name: Check C++ naming convention
-        entry: bash -c 'cmd=`which clang-tidy-11 || which clang-tidy-13 || which clang-tidy`; cd `git rev-parse --show-toplevel`; $cmd $@ -p build/pre-commit -extra-arg=-Wno-unknown-warning-option' --
+        entry: bash -c 'cmd=`which clang-tidy-17 || which clang-tidy`; cd `git rev-parse --show-toplevel`; $cmd $@ -p build/pre-commit -extra-arg=-Wno-unknown-warning-option' --
         language: system
         types: [text]
         files: '\.(c|h|cpp|hpp)$'

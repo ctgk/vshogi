@@ -391,6 +391,7 @@ private:
         std::uint64_t* const hash = nullptr)
     {
         assert(sq < SQ_NA);
+        assert(p < num_square_states);
         if (hash != nullptr)
             *hash ^= zobrist_table[sq][p];
         if (p == VOID)
