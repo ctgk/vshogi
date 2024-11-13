@@ -18,7 +18,7 @@ def test_mate():
 
     actual_total_searches = 0
     expect_total_searches = 0
-    searcher = DfpnSearcher(collect_garbage=False)
+    searcher = DfpnSearcher()
     for sfen, searches in sfen_searches_pair_list:
         game = shogi.Game(sfen)
         searcher.set_game(game)

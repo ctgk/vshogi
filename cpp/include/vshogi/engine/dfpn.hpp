@@ -200,12 +200,8 @@ public:
     {
         return (found_mate() || found_no_mate());
     }
-    void search(
-        GameType& game,
-        uint& num_nodes,
-        const uint thpn,
-        const uint thdn,
-        const bool collect_garbage = true)
+    void
+    search(GameType& game, uint& num_nodes, const uint thpn, const uint thdn)
     {
         if (m_parent)
             game.apply_dfpn(m_action);
@@ -222,7 +218,7 @@ public:
             } else {
                 break;
             }
-            backprop_one(game, collect_garbage);
+            backprop_one(game);
         }
         if (m_parent)
             game.undo(false);
@@ -362,23 +358,7 @@ private:
         return true;
     }
 
-    void backprop_one(const GameType& g, const bool& collect_garbage = true)
-    {
-        update_pn_dn_ch1st_ch2nd(g);
-        if (collect_garbage && found_no_mate())
-            m_child.reset();
-    }
-    void set_pndn_mate()
-    {
-        m_pn = zero;
-        m_dn = max_number;
-    }
-    void set_pndn_no_mate()
-    {
-        m_pn = max_number;
-        m_dn = zero;
-    }
-    void update_pn_dn_ch1st_ch2nd(const GameType& g)
+    void backprop_one(const GameType& g)
     {
         // - Offence: #P = min(#P of children), #D = sum(#D of children)
         // - Defence: #P = sum(#P of children), #D = min(#D of children)
@@ -397,6 +377,16 @@ private:
                 update_defence_pn_ch1st_ch2nd(ch, g);
             m_dn = m_child_1st->m_dn;
         }
+    }
+    void set_pndn_mate()
+    {
+        m_pn = zero;
+        m_dn = max_number;
+    }
+    void set_pndn_no_mate()
+    {
+        m_pn = max_number;
+        m_dn = zero;
     }
     void update_offence_dn_ch1st_ch2nd(Node* const ch)
     {
@@ -567,13 +557,10 @@ private:
 private:
     std::unique_ptr<GameType> m_game;
     std::unique_ptr<Node<Config>> m_root;
-    const bool m_collect_garbage;
     uint m_num_searched;
 
 public:
-    Searcher(const bool& collect_garbage = true)
-        : m_game(nullptr), m_root(nullptr), m_collect_garbage(collect_garbage),
-          m_num_searched(0u)
+    Searcher() : m_game(nullptr), m_root(nullptr), m_num_searched(0u)
     {
     }
 
@@ -601,7 +588,7 @@ public:
         Node<Config>* const root = m_root.get();
         GameType& game = *m_game;
         uint num = n;
-        root->search(game, num, max_number, max_number, m_collect_garbage);
+        root->search(game, num, max_number, max_number);
         m_num_searched += n - num;
         return root->found_mate();
     }
