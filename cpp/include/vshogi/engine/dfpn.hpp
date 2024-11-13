@@ -200,29 +200,6 @@ public:
     {
         return (found_mate() || found_no_mate());
     }
-    void
-    search(GameType& game, uint& num_nodes, const uint thpn, const uint thdn)
-    {
-        if (m_parent)
-            game.apply_dfpn(m_action);
-
-        if (!has_child()) {
-            simulate_or_expand(game);
-            --num_nodes;
-        }
-        while (num_nodes) {
-            if ((m_pn < thpn) && (m_dn < thdn)) {
-                const uint thpn_ch = compute_thpn_for_child(thpn);
-                const uint thdn_ch = compute_thdn_for_child(thdn);
-                m_child_1st->search(game, num_nodes, thpn_ch, thdn_ch);
-            } else {
-                break;
-            }
-            backprop_one(game);
-        }
-        if (m_parent)
-            game.undo(false);
-    }
 
 private:
     uint compute_thpn_for_child(const uint thpn) const
@@ -588,7 +565,14 @@ public:
         Node<Config>* const root = m_root.get();
         GameType& game = *m_game;
         uint num = n;
-        root->search(game, num, max_number, max_number);
+        while (num) {
+            if (root->found_conclusion())
+                break;
+            const uint thpn_ch = root->compute_thpn_for_child(max_number);
+            const uint thdn_ch = root->compute_thdn_for_child(max_number);
+            search_inner(*root->get_child_1st(), game, num, thpn_ch, thdn_ch);
+            root->backprop_one(game);
+        }
         m_num_searched += n - num;
         return root->found_mate();
     }
@@ -625,6 +609,31 @@ public:
     const Node<Config>* get_root() const
     {
         return m_root ? m_root.get() : nullptr;
+    }
+
+private:
+    static void search_inner(
+        Node<Config>& n,
+        GameType& game,
+        uint& searches,
+        const uint thpn,
+        const uint thdn)
+    {
+        game.apply_dfpn(n.get_action());
+        if (!n.has_child()) {
+            if (!n.simulate(game))
+                n.expand(game);
+            --searches;
+        }
+        while (searches) {
+            if ((n.pn() >= thpn) || (n.dn() >= thdn))
+                break;
+            const uint thpn_ch = n.compute_thpn_for_child(thpn);
+            const uint thdn_ch = n.compute_thdn_for_child(thdn);
+            search_inner(*n.get_child_1st(), game, searches, thpn_ch, thdn_ch);
+            n.backprop_one(game);
+        }
+        game.undo();
     }
 };
 

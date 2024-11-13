@@ -181,8 +181,8 @@ TEST(dfpn_searcher, minishogi_no_mate)
         CHECK_TRUE(searcher.found_conclusion());
         CHECK_FALSE(searcher.found_mate());
         CHECK_TRUE(searcher.found_no_mate());
-        CHECK_COMPARE(900, <, num_searched);
-        CHECK_COMPARE(num_searched, <, 1000);
+        CHECK_COMPARE(800, <, num_searched);
+        CHECK_COMPARE(num_searched, <, 900);
     }
 }
 
@@ -219,8 +219,8 @@ TEST(dfpn_searcher, no_mate_1)
     searcher.set_game(g);
     CHECK_FALSE(searcher.search(5000));
     CHECK_TRUE(searcher.found_no_mate());
-    CHECK_COMPARE(3000, <, searcher.get_search_count());
-    CHECK_COMPARE(searcher.get_search_count(), <, 3100);
+    CHECK_COMPARE(2900, <, searcher.get_search_count());
+    CHECK_COMPARE(searcher.get_search_count(), <, 3000);
 }
 
 TEST(dfpn_searcher, mate_in_one_straight_forward)
