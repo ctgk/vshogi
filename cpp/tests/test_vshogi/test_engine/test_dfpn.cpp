@@ -20,7 +20,7 @@ TEST(dfpn_transposition_table, init)
     auto g = Game("4k/5/4G/5/5 b G");
     auto table = TranspositionTable();
     auto root = table.get_root();
-    table.add(*root, g, Move(SQ_1B, GI));
+    table.add(*root, Move(SQ_1B, GI), g);
     Node* actual = nullptr;
     table.look_up(g, Move(SQ_1B, GI), &actual);
     CHECK_TRUE(actual != nullptr);
@@ -39,7 +39,7 @@ TEST(dfpn_transposition_table, look_up_offence)
     auto g = Game("4k/5/4G/5/5 b G");
     auto table = TranspositionTable();
     auto root = table.get_root();
-    Node* const n = table.add(*root, g, Move(SQ_1B, GI));
+    Node* const n = table.add(*root, Move(SQ_1B, GI), g);
     Node* actual = nullptr;
 
     CHECK_FALSE(
@@ -66,9 +66,9 @@ TEST(dfpn_transposition_table, look_up_defence)
     using TranspositionTable = vshogi::engine::dfpn::TranspositionTable<Config>;
     auto table = TranspositionTable();
     auto g = Game("4k/5/4P/5/5 b s");
-    auto p = table.add(*table.get_root(), g, Move(SQ_1B, SQ_1C));
+    auto p = table.add(*table.get_root(), Move(SQ_1B, SQ_1C), g);
     g.apply_dfpn(Move(SQ_1B, SQ_1C));
-    Node* const n = table.add(*p, g, Move(SQ_1B, SQ_1A)); // 4k/4P/5/5/5 w s
+    Node* const n = table.add(*p, Move(SQ_1B, SQ_1A), g); // 4k/4P/5/5/5 w s
     g.undo();
     Node* actual = nullptr;
 
@@ -101,9 +101,9 @@ TEST(dfpn_transposition_table, look_up_offence_stronger_of_two_weakers)
     auto table = TranspositionTable();
     auto root = table.get_root();
     auto g1 = Game("4k/5/4G/5/5 b G");
-    const auto n1 = table.add(*root, g1, Move(SQ_1B, GI));
+    const auto n1 = table.add(*root, Move(SQ_1B, GI), g1);
     auto g2 = Game("4k/5/4G/5/5 b 2G");
-    const auto n2 = table.add(*root, g2, Move(SQ_1B, GI));
+    const auto n2 = table.add(*root, Move(SQ_1B, GI), g2);
     Node* actual = nullptr;
 
     CHECK_FALSE(

@@ -121,11 +121,15 @@ public:
     {
         simulate_or_expand(g);
     }
-    Node(Node* const parent, const MoveType& action)
+    Node(Node* const parent, const MoveType& action, const GameType& g)
         : m_attacker(!parent->m_attacker), m_action(action), m_parent(parent),
           m_sibling(nullptr), m_child(nullptr), m_child_1st(nullptr),
           m_child_2nd(nullptr), m_pn(unit), m_dn(unit)
     {
+        if (parent->m_attacker)
+            parent->update_offence_dn_ch1st_ch2nd(this);
+        else
+            parent->update_defence_pn_ch1st_ch2nd(this, g);
     }
 
     // Rules of 5
@@ -307,9 +311,8 @@ private:
         const State<Config>& s = game.get_state();
         m_dn = zero;
         for (Move<Config> atk_move : CheckMoveGenerator<Config>(s)) {
-            *ch = std::make_unique<Node>(this, atk_move);
+            *ch = std::make_unique<Node>(this, atk_move, game);
             Node* const p = ch->get();
-            update_offence_dn_ch1st_ch2nd(p);
             ch = &(p->m_sibling);
         }
         m_pn = m_child_1st ? m_child_1st->m_pn : max_number;
@@ -323,10 +326,9 @@ private:
         const bool include_drop = !had_two_consecutive_sacrifice_drops();
         for (Move<Config> def_move :
              LegalMoveGenerator<Config>(s, include_drop)) {
-            *ch = std::make_unique<Node>(this, def_move);
+            *ch = std::make_unique<Node>(this, def_move, game);
             ++num_ch;
             Node* const p = ch->get();
-            update_defence_pn_ch1st_ch2nd(p, game);
             ch = &(p->m_sibling);
         }
         if (num_ch == 0u) {
@@ -481,7 +483,7 @@ public:
         return &m_root;
     }
 
-    NodeType* add(NodeType& parent, const GameType& g, const MoveType& m)
+    NodeType* add(NodeType& parent, const MoveType& m, const GameType& g)
     {
         const std::uint64_t btm_hash
             = (static_cast<std::uint64_t>(m.hash()) << 40)
@@ -491,10 +493,10 @@ public:
         auto it = m_table.find(btm_hash);
         if (it == m_table.end()) {
             m_table.emplace(btm_hash, StandNodeTable());
-            m_table[btm_hash].emplace(s, NodeType(&parent, m));
+            m_table[btm_hash].emplace(s, NodeType(&parent, m, g));
             return &(m_table[btm_hash][s]);
         } else {
-            it->second.emplace(s, NodeType(&parent, m));
+            it->second.emplace(s, NodeType(&parent, m, g));
             return &(it->second[s]);
         }
     }
