@@ -532,24 +532,28 @@ private:
     using MoveType = Move<Config>;
 
 private:
+    TranspositionTable<Config> m_table;
     std::unique_ptr<GameType> m_game;
-    std::unique_ptr<Node<Config>> m_root;
     uint m_num_searched;
 
 public:
-    Searcher() : m_game(nullptr), m_root(nullptr), m_num_searched(0u)
+    Searcher() : m_table(), m_game(nullptr), m_num_searched(0u)
     {
     }
 
     bool is_ready() const
     {
-        return (m_root != nullptr);
+        return static_cast<bool>(m_game);
     }
     void set_game(const GameType& g)
     {
+        m_table.clear();
         m_game = std::make_unique<GameType>(g);
         m_game->clear_records_for_dfpn();
-        m_root = std::make_unique<Node<Config>>(*m_game);
+        const GameType& game = *m_game;
+        Node<Config>* const root = m_table.get_root();
+        if (!root->simulate(game))
+            root->expand(game);
         m_num_searched = 0u;
     }
 
@@ -562,7 +566,7 @@ public:
      */
     bool search(const uint n)
     {
-        Node<Config>* const root = m_root.get();
+        Node<Config>* const root = m_table.get_root();
         GameType& game = *m_game;
         uint num = n;
         while (num) {
@@ -578,15 +582,15 @@ public:
     }
     bool found_mate() const
     {
-        return m_root->found_mate();
+        return m_table.get_root()->found_mate();
     }
     bool found_no_mate() const
     {
-        return m_root->found_no_mate();
+        return m_table.get_root()->found_no_mate();
     }
     bool found_conclusion() const
     {
-        return m_root->found_conclusion();
+        return m_table.get_root()->found_conclusion();
     }
     uint get_search_count() const
     {
@@ -594,12 +598,12 @@ public:
     }
     MoveType get_mate_move() const
     {
-        return m_root->get_child_1st()->get_action();
+        return m_table.get_root()->get_child_1st()->get_action();
     }
     std::vector<MoveType> get_mate_moves() const
     {
         std::vector<MoveType> out{};
-        Node<Config>* n = m_root.get();
+        const Node<Config>* n = m_table.get_root();
         while (n->has_child()) {
             n = n->get_child_1st();
             out.emplace_back(n->get_action());
@@ -608,7 +612,7 @@ public:
     }
     const Node<Config>* get_root() const
     {
-        return m_root ? m_root.get() : nullptr;
+        return m_table.get_root();
     }
 
 private:
