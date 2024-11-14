@@ -422,7 +422,7 @@ class TranspositionTable
 {
 private:
     using BaseTypeStand = typename Config::BaseTypeStand;
-    using StandNodeTable = std::unordered_map<BaseTypeStand, Node<Config>>;
+    using StandNodeTable = std::unordered_map<BaseTypeStand, Node<Config>*>;
     using StandType = Stand<Config>;
     using GameType = Game<Config>;
     using MoveType = Move<Config>;
@@ -450,7 +450,7 @@ public:
         return &m_root;
     }
 
-    NodeType* add(NodeType& parent, const MoveType& m, const GameType& g)
+    void add(NodeType* const n, const GameType& g, const MoveType& m)
     {
         const std::uint64_t btm_hash
             = (static_cast<std::uint64_t>(m.hash()) << 40)
@@ -460,11 +460,9 @@ public:
         auto it = m_table.find(btm_hash);
         if (it == m_table.end()) {
             m_table.emplace(btm_hash, StandNodeTable());
-            m_table[btm_hash].emplace(s, NodeType(&parent, m, g));
-            return &(m_table[btm_hash][s]);
+            m_table[btm_hash].emplace(s, n);
         } else {
-            it->second.emplace(s, NodeType(&parent, m, g));
-            return &(it->second[s]);
+            it->second.emplace(s, n);
         }
     }
 
@@ -500,14 +498,14 @@ private:
         for (auto& it : table) {
             const auto s_iter = Stand<Config>(it.first);
             if (s_iter == s) {
-                *out = &it.second;
+                *out = it.second;
                 is_exact_stand = true;
             } else if (s_iter < s) {
                 // return a node if there is one with weaker stand
-                if ((it.second.is_attacker() && it.second.found_mate())
-                    || (!it.second.is_attacker()
-                        && it.second.found_no_mate())) {
-                    *out = &it.second;
+                if ((it.second->is_attacker() && it.second->found_mate())
+                    || (!it.second->is_attacker()
+                        && it.second->found_no_mate())) {
+                    *out = it.second;
                     is_exact_stand = false;
                     break;
                 }
@@ -515,7 +513,7 @@ private:
                     || ((s_weaker < s_iter) && !is_exact_stand)) {
                     // s_weaker < s_iter < s
                     s_weaker = it.first;
-                    *out = &it.second;
+                    *out = it.second;
                     is_exact_stand = false;
                 }
             }
