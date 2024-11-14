@@ -114,13 +114,6 @@ public:
           m_pn(unit), m_dn(unit)
     {
     }
-    Node(const GameType& g)
-        : m_attacker(true), m_action(), m_parent(nullptr), m_sibling(nullptr),
-          m_child(nullptr), m_child_1st(nullptr), m_child_2nd(nullptr),
-          m_pn(unit), m_dn(unit)
-    {
-        simulate_or_expand(g);
-    }
     Node(Node* const parent, const MoveType& action, const GameType& g)
         : m_attacker(!parent->m_attacker), m_action(action), m_parent(parent),
           m_sibling(nullptr), m_child(nullptr), m_child_1st(nullptr),
@@ -226,11 +219,6 @@ private:
                     : max_number);
         }
     }
-    void simulate_or_expand(const GameType& game)
-    {
-        if (!simulate(game))
-            expand(game);
-    }
 
     /**
      * @brief Simulate the current game position.
@@ -262,54 +250,6 @@ private:
         return true;
     }
 
-    /**
-     * @brief Expand child nodes and compute #P(Proof) and #D(Disproof).
-     *
-     * - Offence: #P = min(#P of children), #D = sum(#D of children)
-     * - Defence: #P = sum(#P of children), #D = min(#D of children)
-     *
-     * @param game
-     */
-    void expand(const GameType& game)
-    {
-        if (m_attacker) {
-            expand_offence_moves(game);
-        } else {
-            expand_defence_moves(game);
-        }
-    }
-    void expand_offence_moves(const GameType& game)
-    {
-        std::unique_ptr<Node>* ch = &m_child;
-        const State<Config>& s = game.get_state();
-        m_dn = zero;
-        for (Move<Config> atk_move : CheckMoveGenerator<Config>(s)) {
-            *ch = std::make_unique<Node>(this, atk_move, game);
-            Node* const p = ch->get();
-            ch = &(p->m_sibling);
-        }
-        m_pn = m_child_1st ? m_child_1st->m_pn : max_number;
-    }
-    void expand_defence_moves(const GameType& game)
-    {
-        std::unique_ptr<Node>* ch = &m_child;
-        const State<Config>& s = game.get_state();
-        m_pn = zero;
-        uint num_ch = 0u;
-        const bool include_drop = !had_two_consecutive_sacrifice_drops();
-        for (Move<Config> def_move :
-             LegalMoveGenerator<Config>(s, include_drop)) {
-            *ch = std::make_unique<Node>(this, def_move, game);
-            ++num_ch;
-            Node* const p = ch->get();
-            ch = &(p->m_sibling);
-        }
-        if (num_ch == 0u) {
-            set_pndn_mate();
-        } else {
-            m_dn = m_child_1st->m_dn;
-        }
-    }
     bool had_two_consecutive_sacrifice_drops() const
     {
         // `get_action()`: capture second sacrifice drop
@@ -551,7 +491,7 @@ public:
         const GameType& game = *m_game;
         Node<Config>* const root = m_table.get_root();
         if (!root->simulate(game))
-            root->expand(game);
+            expand_at(*root, game);
         m_num_searched = 0u;
     }
 
@@ -614,7 +554,7 @@ public:
     }
 
 private:
-    static void search_inner(
+    void search_inner(
         Node<Config>& n,
         GameType& game,
         uint& searches,
@@ -624,7 +564,7 @@ private:
         game.apply_dfpn(n.get_action());
         if (!n.has_child()) {
             if (!n.simulate(game))
-                n.expand(game);
+                expand_at(n, game);
             --searches;
         }
         while (searches) {
@@ -636,6 +576,43 @@ private:
             n.backprop_one(game);
         }
         game.undo();
+    }
+    void expand_at(Node<Config>& n, const GameType& g)
+    {
+        if (n.is_attacker())
+            expand_at_offence(n, g);
+        else
+            expand_at_defence(n, g);
+    }
+    void expand_at_offence(Node<Config>& n, const GameType& g)
+    {
+        std::unique_ptr<Node<Config>>* ch = &n.m_child;
+        const State<Config>& s = g.get_state();
+        n.m_dn = zero;
+        for (Move<Config> atk_move : CheckMoveGenerator<Config>(s)) {
+            *ch = std::make_unique<Node<Config>>(&n, atk_move, g);
+            Node<Config>* const p = ch->get();
+            ch = &(p->m_sibling);
+        }
+        n.m_pn = n.m_child_1st ? n.m_child_1st->m_pn : max_number;
+    }
+    void expand_at_defence(Node<Config>& n, const GameType& g)
+    {
+        std::unique_ptr<Node<Config>>* ch = &n.m_child;
+        const State<Config>& s = g.get_state();
+        n.m_pn = zero;
+        const bool include_drop = !n.had_two_consecutive_sacrifice_drops();
+        for (Move<Config> def_move :
+             LegalMoveGenerator<Config>(s, include_drop)) {
+            *ch = std::make_unique<Node<Config>>(&n, def_move, g);
+            Node<Config>* const p = ch->get();
+            ch = &(p->m_sibling);
+        }
+        if (n.m_child_1st == nullptr) {
+            n.set_pndn_mate();
+        } else {
+            n.m_dn = n.m_child_1st->m_dn;
+        }
     }
 };
 
