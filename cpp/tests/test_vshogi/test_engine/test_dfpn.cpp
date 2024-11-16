@@ -20,15 +20,13 @@ TEST(dfpn_transposition_table, init)
     auto g = Game("4k/5/4G/5/5 b G");
     auto table = TranspositionTable();
     auto root = table.get_root();
-    auto n = Node(root, Move(SQ_1B, GI), g);
-    table.add(&n, g, Move(SQ_1B, GI));
-    Node* actual = nullptr;
-    table.look_up(g, Move(SQ_1B, GI), &actual);
-    CHECK_TRUE(actual == &n);
+    auto n = Node(root, Move(SQ_1B, SQ_1C));
+    g.apply(Move(SQ_1B, SQ_1C));
+    table.add(&n, g);
+    CHECK_TRUE(table.look_up_fuzzy(false, g) == &n);
 
     table.clear();
-    table.look_up(g, Move(SQ_1B, GI), &actual);
-    CHECK_TRUE(actual == nullptr);
+    CHECK_TRUE(table.look_up_fuzzy(false, g) == nullptr);
 }
 
 TEST(dfpn_transposition_table, look_up_offence)
@@ -39,26 +37,13 @@ TEST(dfpn_transposition_table, look_up_offence)
 
     auto g = Game("4k/5/4G/5/5 b G");
     auto table = TranspositionTable();
-    auto root = table.get_root();
-    auto n = Node(root, Move(SQ_1B, GI), g);
-    table.add(&n, g, Move(SQ_1B, GI));
-    Node* actual = nullptr;
+    auto n = Node();
+    table.add(&n, g);
 
-    CHECK_FALSE(
-        table.look_up(Game("4k/5/4G/5/5 b -"), Move(SQ_1B, GI), &actual));
-    CHECK_TRUE(actual == nullptr);
-    CHECK_FALSE(
-        table.look_up(Game("4k/5/4G/5/5 w G"), Move(SQ_1B, GI), &actual));
-    CHECK_TRUE(actual == nullptr);
-    CHECK_FALSE(
-        table.look_up(Game("4k/5/4G/5/5 b GS"), Move(SQ_2B, GI), &actual));
-    CHECK_TRUE(actual == nullptr);
-    CHECK_FALSE(
-        table.look_up(Game("4k/5/4G/5/5 b GS"), Move(SQ_1B, GI), &actual));
-    CHECK_TRUE(&n == actual);
-    CHECK_TRUE(
-        table.look_up(Game("4k/5/4G/5/5 b G"), Move(SQ_1B, GI), &actual));
-    CHECK_TRUE(&n == actual);
+    CHECK_TRUE(table.look_up_fuzzy(true, Game("4k/5/4G/5/5 b -")) == nullptr);
+    CHECK_TRUE(table.look_up_fuzzy(true, Game("4k/5/4G/5/5 b G")) == &n);
+    CHECK_TRUE(table.look_up_fuzzy(true, Game("4k/5/4G/5/5 w G")) == nullptr);
+    CHECK_TRUE(table.look_up_fuzzy(true, Game("4k/5/4G/5/5 b 2G")) == &n);
 }
 
 TEST(dfpn_transposition_table, look_up_defence)
@@ -68,33 +53,14 @@ TEST(dfpn_transposition_table, look_up_defence)
     using TranspositionTable = vshogi::engine::dfpn::TranspositionTable<Config>;
     auto table = TranspositionTable();
     auto g = Game("4k/5/4P/5/5 b s");
+    g.apply(Move(SQ_1B, SQ_1C));
     auto r = table.get_root();
-    auto p = Node(r, Move(SQ_1B, SQ_1C), g);
-    table.add(&p, g, Move(SQ_1B, SQ_1C));
-    g.apply_dfpn(Move(SQ_1B, SQ_1C));
-    auto n = Node(&p, Move(SQ_1B, SQ_1A), g);
-    table.add(&n, g, Move(SQ_1B, SQ_1A)); // 4k/4P/5/5/5 w s
-    g.undo();
-    Node* actual = nullptr;
+    auto n = Node(r, Move(SQ_1B, SQ_1C)); // 4k/4P/5/5/5 w s
+    table.add(&n, g);
 
-    CHECK_FALSE(
-        table.look_up(Game("4k/4P/5/5/5 w -"), Move(SQ_1B, SQ_1A), &actual));
-    CHECK_TRUE(actual == nullptr);
-    CHECK_FALSE(
-        table.look_up(Game("4k/4P/5/5/5 b s"), Move(SQ_1B, SQ_1A), &actual));
-    CHECK_TRUE(actual == nullptr);
-    CHECK_FALSE(
-        table.look_up(Game("4k/4P/5/5/5 w s"), Move(SQ_2B, SQ_1A), &actual));
-    CHECK_TRUE(actual == nullptr);
-    CHECK_TRUE(
-        table.look_up(Game("4k/4P/5/5/5 w s"), Move(SQ_1B, SQ_1A), &actual));
-    CHECK_TRUE(actual == &n);
-    CHECK_FALSE(
-        table.look_up(Game("4k/4P/5/5/5 w gs"), Move(SQ_1B, SQ_1A), &actual));
-    CHECK_TRUE(actual == &n);
-    CHECK_FALSE(
-        table.look_up(Game("4k/4P/5/5/5 w g"), Move(SQ_1B, SQ_1A), &actual));
-    CHECK_TRUE(actual == nullptr);
+    CHECK_TRUE(table.look_up_fuzzy(false, Game("4k/4P/5/5/5 w -")) == &n);
+    CHECK_TRUE(table.look_up_fuzzy(false, Game("4k/4P/5/5/5 w s")) == &n);
+    CHECK_TRUE(table.look_up_fuzzy(false, Game("4k/4P/5/5/5 w sg")) == nullptr);
 }
 
 TEST(dfpn_transposition_table, look_up_offence_stronger_of_two_weakers)
@@ -106,25 +72,16 @@ TEST(dfpn_transposition_table, look_up_offence_stronger_of_two_weakers)
     auto table = TranspositionTable();
     auto root = table.get_root();
     auto g1 = Game("4k/5/4G/5/5 b G");
-    auto n1 = Node(root, Move(SQ_1B, GI), g1);
-    table.add(&n1, g1, Move(SQ_1B, GI));
+    auto n1 = Node();
+    table.add(&n1, g1);
     auto g2 = Game("4k/5/4G/5/5 b 2G");
-    auto n2 = Node(root, Move(SQ_1B, GI), g1);
-    table.add(&n2, g2, Move(SQ_1B, GI));
-    Node* actual = nullptr;
+    auto n2 = Node();
+    table.add(&n2, g2);
 
-    CHECK_FALSE(
-        table.look_up(Game("4k/5/4G/5/5 b -"), Move(SQ_1B, GI), &actual));
-    CHECK_TRUE(actual == nullptr);
-    CHECK_FALSE(
-        table.look_up(Game("4k/5/4G/5/5 b 2GS"), Move(SQ_1B, GI), &actual));
-    CHECK_TRUE(actual == &n2);
-    CHECK_TRUE(
-        table.look_up(Game("4k/5/4G/5/5 b G"), Move(SQ_1B, GI), &actual));
-    CHECK_TRUE(actual == &n1);
-    CHECK_TRUE(
-        table.look_up(Game("4k/5/4G/5/5 b 2G"), Move(SQ_1B, GI), &actual));
-    CHECK_TRUE(actual == &n2);
+    CHECK_TRUE(table.look_up_fuzzy(true, Game("4k/5/4G/5/5 b -")) == nullptr);
+    CHECK_TRUE(table.look_up_fuzzy(true, Game("4k/5/4G/5/5 b G")) == &n1);
+    CHECK_TRUE(table.look_up_fuzzy(true, Game("4k/5/4G/5/5 b 2G")) == &n2);
+    CHECK_TRUE(table.look_up_fuzzy(true, Game("4k/5/4G/5/5 b 2GS")) == &n2);
 }
 
 TEST_GROUP (dfpn_searcher) {
@@ -188,8 +145,8 @@ TEST(dfpn_searcher, minishogi_no_mate)
         CHECK_TRUE(searcher.found_conclusion());
         CHECK_FALSE(searcher.found_mate());
         CHECK_TRUE(searcher.found_no_mate());
-        CHECK_COMPARE(800, <, num_searched);
-        CHECK_COMPARE(num_searched, <, 900);
+        CHECK_COMPARE(400, <, num_searched);
+        CHECK_COMPARE(num_searched, <, 500);
     }
 }
 
@@ -226,8 +183,8 @@ TEST(dfpn_searcher, no_mate_1)
     searcher.set_game(g);
     CHECK_FALSE(searcher.search(5000));
     CHECK_TRUE(searcher.found_no_mate());
-    CHECK_COMPARE(2900, <, searcher.get_search_count());
-    CHECK_COMPARE(searcher.get_search_count(), <, 3000);
+    CHECK_COMPARE(800, <, searcher.get_search_count());
+    CHECK_COMPARE(searcher.get_search_count(), <, 900);
 }
 
 TEST(dfpn_searcher, mate_in_one_straight_forward)
@@ -435,6 +392,19 @@ TEST(dfpn_searcher, mate_in_three_by_king_move)
     }
 }
 
+TEST(dfpn_searcher, mate_in_three_regardless_of_sacrifice_drop)
+{
+    using namespace vshogi::minishogi;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    auto searcher = Searcher();
+    searcher.set_game(Game("3bk/4p/B2P1/5/5 b 2s"));
+    searcher.search(100);
+    CHECK_TRUE(searcher.found_conclusion());
+    CHECK_TRUE(searcher.found_mate());
+    CHECK_COMPARE(0, <, searcher.get_search_count());
+    CHECK_COMPARE(searcher.get_search_count(), <, 7);
+}
+
 TEST(dfpn_searcher, mate_in_five_straight_forward)
 {
     using namespace vshogi::judkins_shogi;
@@ -487,8 +457,8 @@ TEST(dfpn_searcher, mate_in_five)
     CHECK_TRUE(searcher.search(5000));
     CHECK_EQUAL(Move(SQ_2B, GI).hash(), searcher.get_mate_move().hash());
     const auto num_searched = searcher.get_search_count();
-    CHECK_COMPARE(3500, <, num_searched);
-    CHECK_COMPARE(num_searched, <, 3600);
+    CHECK_COMPARE(3200, <, num_searched);
+    CHECK_COMPARE(num_searched, <, 3300);
 }
 
 TEST(dfpn_searcher, king_entering_before_mate)
@@ -585,6 +555,34 @@ TEST(dfpn_searcher, debug_tmp)
     auto searcher = vshogi::engine::dfpn::Searcher<Config>();
     searcher.set_game(g);
     searcher.search(100);
+    CHECK_TRUE(searcher.found_conclusion());
+    CHECK_TRUE(searcher.found_mate());
+}
+
+TEST(dfpn_searcher, debug_tmp2)
+{
+    using namespace vshogi::minishogi;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+
+    // Turn: BLACK
+    // White: KI
+    //     5   4   3   2   1
+    //   +---+---+---+---+---+
+    // A |   |   |   |   |-OU|
+    //   +---+---+---+---+---+
+    // B |-HI|   |   |   |-FU|
+    //   +---+---+---+---+---+
+    // C |   |   |-GI|   |   |
+    //   +---+---+---+---+---+
+    // D |+FU|+UM|   |+GI|   |
+    //   +---+---+---+---+---+
+    // E |+OU|   |   |   |+HI|
+    //   +---+---+---+---+---+
+    // Black: KA,KI
+    auto g = Game("4k/r3p/2s2/P+B1S1/K3R b BGg 17");
+    auto searcher = Searcher();
+    searcher.set_game(g);
+    searcher.search(10000);
     CHECK_TRUE(searcher.found_conclusion());
     CHECK_TRUE(searcher.found_mate());
 }

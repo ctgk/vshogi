@@ -114,15 +114,11 @@ public:
           m_pn(unit), m_dn(unit)
     {
     }
-    Node(Node* const parent, const MoveType& action, const GameType& g)
+    Node(Node* const parent, const MoveType& action)
         : m_attacker(!parent->m_attacker), m_action(action), m_parent(parent),
           m_sibling(nullptr), m_child(nullptr), m_child_1st(nullptr),
           m_child_2nd(nullptr), m_pn(unit), m_dn(unit)
     {
-        if (parent->m_attacker)
-            parent->update_offence_dn_ch1st_ch2nd(this);
-        else
-            parent->update_defence_pn_ch1st_ch2nd(this, g);
     }
 
     // Rules of 5
@@ -294,6 +290,8 @@ private:
                 update_defence_pn_ch1st_ch2nd(ch, g);
             m_dn = m_child_1st->m_dn;
         }
+        assert((m_pn == 0u) ? (m_dn == max_number) : (m_dn != max_number));
+        assert((m_dn == 0u) ? (m_pn == max_number) : (m_pn != max_number));
     }
     void set_pndn_mate()
     {
@@ -390,75 +388,56 @@ public:
         return &m_root;
     }
 
-    void add(NodeType* const n, const GameType& g, const MoveType& m)
+    void add(NodeType* const n, const GameType& g)
     {
-        const std::uint64_t btm_hash
-            = (static_cast<std::uint64_t>(m.hash()) << 40)
-              ^ g.get_board_turn_hash();
+        const std::uint64_t bt_hash = g.get_board_turn_hash();
         const auto t = g.get_turn();
         const auto s = g.get_stand(t).value();
-        auto it = m_table.find(btm_hash);
+        auto it = m_table.find(bt_hash);
         if (it == m_table.end()) {
-            m_table.emplace(btm_hash, StandNodeTable());
-            m_table[btm_hash].emplace(s, n);
+            m_table.emplace(bt_hash, StandNodeTable());
+            m_table[bt_hash].emplace(s, n);
         } else {
             it->second.emplace(s, n);
         }
     }
 
-    /**
-     * @brief Look up corresponding node given game position and move to apply.
-     *
-     * @param g Game position
-     * @param m Move to apply on the position.
-     * @param out Corresponding node
-     * @return true Corresponding node with exact stand state.
-     * @return false Corresponding node but with weaker stand or no node found.
-     */
-    bool look_up(const GameType& g, const MoveType& m, NodeType** out)
+    NodeType* look_up_fuzzy(const bool attacker, const GameType& g)
     {
-        *out = nullptr;
-        const std::uint64_t btm_hash
-            = (static_cast<std::uint64_t>(m.hash()) << 40)
-              ^ g.get_board_turn_hash();
-        auto it = m_table.find(btm_hash);
+        const std::uint64_t bt_hash = g.get_board_turn_hash();
+        auto it = m_table.find(bt_hash);
         if (it == m_table.end())
-            return false;
-        return look_up(g, it->second, out);
+            return nullptr;
+        return look_up_fuzzy(attacker, g, it->second);
     }
 
 private:
-    bool look_up(const GameType& g, StandNodeTable& table, NodeType** out)
+    NodeType*
+    look_up_fuzzy(const bool attacker, const GameType& g, StandNodeTable& table)
     {
         const auto t = g.get_turn();
         const auto s = g.get_stand(t);
-        *out = nullptr;
-        bool is_exact_stand = false;
+        NodeType* n_weaker = nullptr; // weaker for offence
         Stand<Config> s_weaker = Stand<Config>();
         for (auto& it : table) {
             const auto s_iter = Stand<Config>(it.first);
             if (s_iter == s) {
-                *out = it.second;
-                is_exact_stand = true;
-            } else if (s_iter < s) {
-                // return a node if there is one with weaker stand
-                if ((it.second->is_attacker() && it.second->found_mate())
-                    || (!it.second->is_attacker()
-                        && it.second->found_no_mate())) {
-                    *out = it.second;
-                    is_exact_stand = false;
-                    break;
-                }
-                if ((*out == nullptr)
-                    || ((s_weaker < s_iter) && !is_exact_stand)) {
+                n_weaker = it.second;
+                s_weaker = s_iter;
+            } else if (attacker ? (s_iter < s) : (s < s_iter)) {
+                // return a node if there is one with weaker stand.
+                if (attacker ? it.second->found_mate()
+                             : it.second->found_no_mate())
+                    return it.second;
+                if ((n_weaker == nullptr)
+                    || (attacker ? (s_weaker < s_iter) : (s_iter < s_weaker))) {
                     // s_weaker < s_iter < s
                     s_weaker = it.first;
-                    *out = it.second;
-                    is_exact_stand = false;
+                    n_weaker = it.second;
                 }
             }
         }
-        return is_exact_stand;
+        return n_weaker;
     }
 };
 
@@ -562,6 +541,18 @@ private:
         const uint thdn)
     {
         game.apply_dfpn(n.get_action());
+        {
+            if (Node<Config>* p
+                = m_table.look_up_fuzzy(n.is_attacker(), game)) {
+                if (p->found_conclusion()) {
+                    n.m_pn = p->pn();
+                    n.m_dn = p->dn();
+                    n.m_child_1st = p->m_child_1st;
+                }
+                game.undo();
+                return;
+            }
+        }
         if (!n.has_child()) {
             if (!n.simulate(game))
                 expand_at(n, game);
@@ -572,8 +563,12 @@ private:
                 break;
             const uint thpn_ch = n.compute_thpn_for_child(thpn);
             const uint thdn_ch = n.compute_thdn_for_child(thdn);
-            search_inner(*n.get_child_1st(), game, searches, thpn_ch, thdn_ch);
+            Node<Config>* const ch1st = n.get_child_1st();
+            search_inner(*ch1st, game, searches, thpn_ch, thdn_ch);
             n.backprop_one(game);
+        }
+        if (n.found_conclusion()) {
+            m_table.add(&n, game);
         }
         game.undo();
     }
@@ -583,15 +578,21 @@ private:
             expand_at_offence(n, g);
         else
             expand_at_defence(n, g);
+        assert(
+            (n.pn() == 0u) ? (n.dn() == max_number) : (n.dn() != max_number));
+        assert(
+            (n.dn() == 0u) ? (n.pn() == max_number) : (n.pn() != max_number));
     }
     void expand_at_offence(Node<Config>& n, const GameType& g)
     {
         std::unique_ptr<Node<Config>>* ch = &n.m_child;
         const State<Config>& s = g.get_state();
+        Node<Config>* candidate = nullptr;
         n.m_dn = zero;
         for (Move<Config> atk_move : CheckMoveGenerator<Config>(s)) {
-            *ch = std::make_unique<Node<Config>>(&n, atk_move, g);
+            *ch = std::make_unique<Node<Config>>(&n, atk_move);
             Node<Config>* const p = ch->get();
+            n.update_offence_dn_ch1st_ch2nd(p);
             ch = &(p->m_sibling);
         }
         n.m_pn = n.m_child_1st ? n.m_child_1st->m_pn : max_number;
@@ -600,12 +601,14 @@ private:
     {
         std::unique_ptr<Node<Config>>* ch = &n.m_child;
         const State<Config>& s = g.get_state();
+        Node<Config>* candidate = nullptr;
         n.m_pn = zero;
         const bool include_drop = !n.had_two_consecutive_sacrifice_drops();
         for (Move<Config> def_move :
              LegalMoveGenerator<Config>(s, include_drop)) {
-            *ch = std::make_unique<Node<Config>>(&n, def_move, g);
+            *ch = std::make_unique<Node<Config>>(&n, def_move);
             Node<Config>* const p = ch->get();
+            n.update_defence_pn_ch1st_ch2nd(p, g);
             ch = &(p->m_sibling);
         }
         if (n.m_child_1st == nullptr) {
