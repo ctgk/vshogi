@@ -47,10 +47,9 @@ class DfpnSearcher(Engine):
     ['B*2c', '1b2c', '2e2d', '2c1b', '2d2c']
     """
 
-    def __init__(self, collect_garbage: bool = True) -> None:
+    def __init__(self) -> None:
         """Initialize DFPN mate-moves searcher object."""
         self._searcher = None
-        self._collect_garbage = collect_garbage
 
     def _set_game(self, game: Game):
         try:
@@ -58,7 +57,7 @@ class DfpnSearcher(Engine):
         except:
             return
         if self._searcher is None:
-            self._searcher = cls_(self._collect_garbage)
+            self._searcher = cls_()
         self._searcher.set_game(game._game)
 
     def _is_ready(self) -> bool:

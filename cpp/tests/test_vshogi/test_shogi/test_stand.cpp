@@ -93,4 +93,22 @@ TEST(shogi_stand, append_sfen)
     }
 }
 
+TEST(shogi_stand, operators)
+{
+    CHECK_TRUE(Stand(1, 0, 0, 0, 0, 0, 0) == Stand(1, 0, 0, 0, 0, 0, 0));
+    CHECK_FALSE(Stand(1, 0, 0, 0, 0, 0, 0) != Stand(1, 0, 0, 0, 0, 0, 0));
+    CHECK_TRUE(Stand(1, 0, 0, 0, 0, 0, 0) >= Stand(1, 0, 0, 0, 0, 0, 0));
+
+    CHECK_TRUE(Stand(2, 0, 0, 0, 0, 0, 0) >= Stand(1, 0, 0, 0, 0, 0, 0));
+    CHECK_FALSE(Stand(2, 0, 0, 0, 0, 0, 0) >= Stand(3, 0, 0, 0, 0, 0, 0));
+
+    CHECK_TRUE(Stand(9, 4, 4, 4, 2, 2, 4) >= Stand(3, 4, 4, 4, 4, 2, 4));
+    CHECK_FALSE(Stand(9, 0, 4, 4, 2, 2, 4) >= Stand(3, 4, 4, 4, 2, 2, 4));
+    CHECK_FALSE(Stand(9, 4, 0, 4, 2, 2, 4) >= Stand(3, 4, 4, 4, 2, 2, 4));
+    CHECK_FALSE(Stand(9, 4, 4, 0, 2, 2, 4) >= Stand(3, 4, 4, 4, 2, 2, 4));
+    CHECK_FALSE(Stand(9, 4, 4, 4, 0, 2, 4) >= Stand(3, 4, 4, 4, 2, 2, 4));
+    CHECK_FALSE(Stand(9, 4, 4, 4, 2, 0, 4) >= Stand(3, 4, 4, 4, 2, 2, 4));
+    CHECK_FALSE(Stand(9, 4, 4, 4, 2, 2, 0) >= Stand(3, 4, 4, 4, 2, 2, 4));
+}
+
 } // namespace test_vshogi::test_shogi

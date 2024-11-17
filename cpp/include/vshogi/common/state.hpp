@@ -222,6 +222,10 @@ public:
             out ^= zobrist_hash_for_turn;
         return out;
     }
+    std::uint64_t hash_stands() const
+    {
+        return m_stands.zobrist_hash();
+    }
 
 private:
     State(const BoardType& b, const Stands& s, const ColorEnum& turn)

@@ -84,4 +84,10 @@ TEST(minishogi_stand, append_sfen)
     }
 }
 
+TEST(minishogi_stand, operators)
+{
+    CHECK_TRUE(Stand(0, 0, 0, 0, 1) >= Stand(0, 0, 0, 0, 0));
+    CHECK_FALSE(Stand(0, 0, 0, 0, 1) >= Stand(0, 1, 0, 0, 0));
+}
+
 } // namespace test_vshogi::test_minishogi

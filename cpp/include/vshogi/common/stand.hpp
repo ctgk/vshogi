@@ -36,6 +36,10 @@ public:
     template <typename... Args>
     Stand(const int, const int, Args...);
 
+    Int value() const
+    {
+        return m_value;
+    }
     uint count(const PieceType& p) const
     {
         assert(static_cast<uint>(p) < num_stand_piece_types);
@@ -79,6 +83,23 @@ public:
     bool operator!=(const Stand& other) const
     {
         return m_value != other.m_value;
+    }
+    bool operator>=(const Stand& other) const
+    {
+        return (((m_value - other.m_value) & ~mask) == 0u);
+    }
+    bool operator<=(const Stand& other) const
+    {
+        return other.operator>=(*this);
+    }
+    bool operator>(const Stand& other) const
+    {
+        const auto d = m_value - other.m_value;
+        return (d != 0u) && ((d & ~mask) == 0u);
+    }
+    bool operator<(const Stand& other) const
+    {
+        return other.operator>(*this);
     }
 };
 

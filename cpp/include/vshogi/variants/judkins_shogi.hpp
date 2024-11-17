@@ -151,16 +151,16 @@ struct Config
     // clang-format on
 
     /**
-     * @brief 16-bit integer representing pieces on a stand.
+     * @brief 32-bit integer representing pieces on a stand.
      * @details
-     * ________ ______**  FU (2 pieces)
-     * ________ ____**__  KE (2 pieces)
-     * ________ __**____  GI (2 pieces)
-     * ________ **______  KA (2 pieces)
-     * ______** ________  HI (2 pieces)
-     * ____**__ ________  KI (2 pieces)
+     * ________ ________ ________ ______**  FU (2 pieces)
+     * ________ ________ ________ ___**___  KE (2 pieces)
+     * ________ ________ ________ **______  GI (2 pieces)
+     * ________ ________ _____**_ ________  KA (2 pieces)
+     * ________ ________ __**____ ________  HI (2 pieces)
+     * ________ _______* *_______ ________  KI (2 pieces)
      */
-    using BaseTypeStand = std::uint16_t;
+    using BaseTypeStand = std::uint32_t;
 
     Config() = delete;
     using PieceType = PieceTypeEnum;
@@ -306,34 +306,35 @@ judkins_shogi::Pieces::is_ranging_piece(const judkins_shogi::PieceTypeEnum& pt)
 }
 
 template <>
-inline const uint judkins_shogi::Stand::shift_bits[] = {0, 2, 4, 6, 8, 10};
+inline const uint judkins_shogi::Stand::shift_bits[] = {0, 3, 6, 9, 12, 15};
 
 template <>
-inline const std::uint16_t judkins_shogi::Stand::masks[] = {
+inline const std::uint32_t judkins_shogi::Stand::masks[] = {
     // clang-format off
-    0x0003, // FU
-    0x000c, // KE
-    0x0030, // GI
-    0x00c0, // KA
-    0x0300, // HI
-    0x0c00, // KI
+    0x00003, // FU
+    0x00018, // KE
+    0x000c0, // GI
+    0x00600, // KA
+    0x03000, // HI
+    0x18000, // KI
     // clang-format on
 };
 
 template <>
-inline const std::uint16_t judkins_shogi::Stand::deltas[] = {
+inline const std::uint32_t judkins_shogi::Stand::deltas[] = {
     // clang-format off
-    0x0001, // FU
-    0x0004, // KE
-    0x0010, // GI
-    0x0040, // KA
-    0x0100, // HI
-    0x0400, // KI
+    1 << 0, // FU
+    1 << 3, // KE
+    1 << 6, // GI
+    1 << 9, // KA
+    1 << 12, // HI
+    1 << 15, // KI
     // clang-format on
 };
 
 template <>
-inline const std::uint16_t judkins_shogi::Stand::mask = 0x0fff;
+inline const std::uint32_t judkins_shogi::Stand::mask
+    = 0x00003 | 0x00018 | 0x000c0 | 0x00600 | 0x03000 | 0x18000;
 
 template <>
 template <>
@@ -344,7 +345,7 @@ inline judkins_shogi::Stand::Stand(
     const int num_ka,
     const int num_hi,
     const int num_ki)
-    : Stand(static_cast<std::uint16_t>(
+    : Stand(static_cast<Int>(
         (num_fu << shift_bits[judkins_shogi::FU])
         + (num_ke << shift_bits[judkins_shogi::KE])
         + (num_gi << shift_bits[judkins_shogi::GI])
