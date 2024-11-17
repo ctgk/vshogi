@@ -46,14 +46,13 @@ private:
     static constexpr uint num_dir = Config::num_dir;
     static constexpr uint max_acceptable_repetitions
         = Config::max_acceptable_repetitions;
-    static constexpr std::uint64_t lsb40bit = 0x000000ffffffffffu;
 
 private:
     StateType m_current_state;
     ResultEnum m_result;
-    std::uint64_t m_captured_move_hash;
-    const std::string m_initial_sfen_without_ply;
+    ZobristHashType m_hash;
     std::vector<ZobristHashType> m_hash_list;
+    std::vector<std::uint32_t> m_captured_move_list;
     uint m_num_fold;
 
 public:
@@ -109,25 +108,25 @@ public:
     {
         return m_num_fold;
     }
-    std::uint64_t get_zobrist_hash() const
+    ZobristHashType get_zobrist_hash() const
     {
-        return m_captured_move_hash & lsb40bit;
+        return m_hash;
     }
     std::uint64_t get_board_turn_hash() const
     {
-        return get_zobrist_hash() ^ (m_current_state.hash_stands() & lsb40bit);
+        return get_zobrist_hash() ^ m_current_state.hash_stands();
     }
     std::string to_sfen(const bool include_move_count = true) const
     {
         if (include_move_count)
             return m_current_state.to_sfen() + " "
-                   + std::to_string(m_hash_list.size() + 1);
+                   + std::to_string(m_captured_move_list.size() + 1);
         else
             return m_current_state.to_sfen();
     }
     std::size_t record_length() const
     {
-        return m_hash_list.size();
+        return m_captured_move_list.size();
     }
 
     /**
@@ -173,15 +172,15 @@ public:
     }
     Game& undo(const bool& update_checks = true)
     {
-        m_captured_move_hash >>= (64u - 8u - 16u);
-        const auto move = MoveType(
-            static_cast<std::uint16_t>(m_captured_move_hash & 0x0ffffu));
-        const auto captured
-            = static_cast<ColoredPiece>(m_captured_move_hash >> 16u);
+        const auto n = record_length() - 1u;
+        std::uint32_t v = m_captured_move_list[n];
+        const auto move = MoveType(static_cast<std::uint16_t>(v & 0x0ffffu));
+        const auto captured = static_cast<ColoredPiece>(v >> 16u);
         m_current_state.undo(move, captured, update_checks);
         m_result = ONGOING;
-        m_captured_move_hash = m_hash_list[m_hash_list.size() - 1u];
+        m_hash = m_hash_list[n];
         m_hash_list.pop_back();
+        m_captured_move_list.pop_back();
         m_num_fold = 0u;
         return *this;
     }
@@ -220,7 +219,8 @@ public:
     void clear_records_for_dfpn()
     {
         m_hash_list.clear();
-        m_captured_move_hash = m_current_state.zobrist_hash(false);
+        m_captured_move_list.clear();
+        m_hash = m_current_state.zobrist_hash();
     }
     void to_feature_map(float* const data) const
     {
@@ -259,9 +259,8 @@ public:
 protected:
     Game(const StateType& s)
         : m_current_state(s), m_result(ONGOING),
-          m_captured_move_hash(m_current_state.zobrist_hash() & lsb40bit),
-          m_initial_sfen_without_ply(m_current_state.to_sfen()), m_hash_list{},
-          m_num_fold(1u)
+          m_hash(m_current_state.zobrist_hash()), m_hash_list{},
+          m_captured_move_list{}, m_num_fold(1u)
     {
         m_hash_list.reserve(256);
         update_result(max_acceptable_repetitions);
@@ -290,8 +289,13 @@ protected:
 protected:
     void add_record_and_update_state(const MoveType& move)
     {
-        m_hash_list.emplace_back(m_captured_move_hash);
-        m_current_state.apply(move, &m_captured_move_hash);
+        const auto captured = m_current_state.get_board()[move.destination()];
+        m_hash_list.emplace_back(m_hash);
+        static_assert(sizeof(MoveType) == sizeof(std::uint16_t));
+        m_captured_move_list.emplace_back(
+            static_cast<std::uint32_t>(move.hash())
+            ^ (static_cast<std::uint32_t>(captured) << 16));
+        m_current_state.apply(move, &m_hash);
     }
 
 protected:
@@ -326,11 +330,10 @@ protected:
     bool is_repetitions(const uint max_repetitions_inclusive)
     {
         m_num_fold = 1u;
-        const auto hash = lsb40bit & m_captured_move_hash;
         const int n = static_cast<int>(m_hash_list.size());
         for (int ii = n - 4; ii >= 0; ii -= 2) {
             const uint index = static_cast<uint>(ii);
-            m_num_fold += (hash == (m_hash_list[index] & lsb40bit));
+            m_num_fold += (m_hash == m_hash_list[index]);
             if (m_num_fold > max_repetitions_inclusive)
                 return true;
         }

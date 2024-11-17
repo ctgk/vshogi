@@ -141,13 +141,11 @@ public:
             const PieceType src = move.source_piece();
             const ColoredPiece p = m_stands.pop_piece_from(m_turn, src, hash);
             m_board.apply(dst, p, hash);
-            fill_ms24b_with(hash, VOID, move);
             update_checkers_before_turn_update(dst);
         } else {
             const Square src = move.source_square();
             const auto captured = m_board.apply(dst, src, move.promote(), hash);
             m_stands.add_captured_piece(captured, hash);
-            fill_ms24b_with(hash, captured, move);
             update_checkers_before_turn_update(dst, src);
         }
         m_turn = ~m_turn;
