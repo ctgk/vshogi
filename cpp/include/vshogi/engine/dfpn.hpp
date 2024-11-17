@@ -521,8 +521,10 @@ public:
     {
         std::vector<MoveType> out{};
         const Node<Config>* n = m_table.get_root();
-        while (n->has_child()) {
+        while (true) {
             n = n->get_child_1st();
+            if (n == nullptr)
+                break;
             out.emplace_back(n->get_action());
         }
         return out;
