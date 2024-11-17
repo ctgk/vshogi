@@ -171,17 +171,6 @@ public:
         update_result_dfpn(1u);
         return *this;
     }
-    Game copy_and_apply_dfpn(const MoveType& move)
-    {
-        auto out = Game(
-            m_current_state,
-            m_result,
-            m_captured_move_hash,
-            m_initial_sfen_without_ply,
-            m_hash_list);
-        out.apply_dfpn(move);
-        return out;
-    }
     Game& undo(const bool& update_checks = true)
     {
         m_captured_move_hash >>= (64u - 8u - 16u);
@@ -276,18 +265,6 @@ protected:
     {
         m_hash_list.reserve(256);
         update_result(max_acceptable_repetitions);
-    }
-    Game(
-        const StateType& s,
-        const ResultEnum& result,
-        const uint64_t& zobrist_hash,
-        const std::string& initial_sfen_without_ply,
-        const std::vector<ZobristHashType>& hash_list)
-        : m_current_state(s), m_result(result),
-          m_captured_move_hash(zobrist_hash & lsb40bit),
-          m_initial_sfen_without_ply(initial_sfen_without_ply),
-          m_hash_list(hash_list), m_num_fold(1u)
-    {
     }
     static uint num_pieces(const StateType& s, const ColorEnum& c)
     {
