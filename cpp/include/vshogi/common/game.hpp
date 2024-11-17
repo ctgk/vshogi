@@ -268,16 +268,9 @@ protected:
     }
     static uint num_pieces(const StateType& s, const ColorEnum& c)
     {
-        const auto& board = s.get_board();
+        const BoardType& board = s.get_board();
         const auto& stand = s.get_stand(c);
-        uint out = 0u;
-        for (auto sq : EnumIterator<Square, num_squares>()) {
-            const auto p = board[sq];
-            if (p == PHelper::VOID)
-                continue;
-            if (PHelper::get_color(p) == c)
-                out += 1u;
-        }
+        uint out = board.get_occupied(c).hamming_weight();
         for (auto pt : EnumIterator<PieceType, num_stand_piece_types>())
             out += stand.count(pt);
         return out;
@@ -285,16 +278,12 @@ protected:
     static uint total_point(const StateType& s, const ColorEnum& c)
     {
         uint out = 0u;
-        const auto& board = s.get_board();
+        const BoardType& board = s.get_board();
         const auto& stand = s.get_stand(c);
-        for (auto sq : EnumIterator<Square, num_squares>()) {
-            const auto p = board[sq];
-            if (PHelper::get_color(p) == c)
-                out += PHelper::get_point(p);
-        }
-        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>()) {
+        for (auto sq : board.get_occupied(c).square_iterator())
+            out += PHelper::get_point(board[sq]);
+        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>())
             out += stand.count(pt) * PHelper::get_point(pt);
-        }
         return out;
     }
 
