@@ -574,6 +574,8 @@ private:
     }
     void expand_at(Node<Config>& n, const GameType& g)
     {
+        n.m_child_1st = nullptr;
+        n.m_child_2nd = nullptr;
         if (n.is_attacker())
             expand_at_offence(n, g);
         else
@@ -595,7 +597,10 @@ private:
             n.update_offence_dn_ch1st_ch2nd(p);
             ch = &(p->m_sibling);
         }
-        n.m_pn = n.m_child_1st ? n.m_child_1st->m_pn : max_number;
+        if (n.m_child_1st == nullptr)
+            n.set_pndn_no_mate();
+        else
+            n.m_pn = n.m_child_1st->m_pn;
     }
     void expand_at_defence(Node<Config>& n, const GameType& g)
     {
@@ -611,11 +616,10 @@ private:
             n.update_defence_pn_ch1st_ch2nd(p, g);
             ch = &(p->m_sibling);
         }
-        if (n.m_child_1st == nullptr) {
+        if (n.m_child_1st == nullptr)
             n.set_pndn_mate();
-        } else {
+        else
             n.m_dn = n.m_child_1st->m_dn;
-        }
     }
 };
 

@@ -168,7 +168,7 @@ public:
     Game& apply_dfpn(const MoveType& move)
     {
         add_record_and_update_state(move);
-        update_result(1u);
+        update_result_dfpn(1u);
         return *this;
     }
     Game copy_and_apply_dfpn(const MoveType& move)
@@ -335,6 +335,19 @@ protected:
         const auto turn = get_turn();
         if (LegalMoveGenerator<Config>(m_current_state).is_end())
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
+        if (is_repetitions(max_repetitions_inclusive)) {
+            if (m_current_state.in_check())
+                m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
+            else
+                m_result = DRAW;
+        }
+        if (can_declare_win_by_king_enter())
+            m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
+    }
+    void update_result_dfpn(const uint max_repetitions_inclusive)
+    {
+        m_result = ONGOING;
+        const auto turn = get_turn();
         if (is_repetitions(max_repetitions_inclusive)) {
             if (m_current_state.in_check())
                 m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
