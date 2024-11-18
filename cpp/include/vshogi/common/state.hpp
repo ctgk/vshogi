@@ -156,7 +156,7 @@ public:
     State& undo(
         const MoveType& move,
         const ColoredPiece& captured,
-        const bool& update_checks = true)
+        const Square& checker_sq)
     {
         const Square dst = move.destination();
         if (captured != VOID)
@@ -172,8 +172,8 @@ public:
             m_board.apply(src, moved);
         }
         m_turn = ~m_turn;
-        if (update_checks)
-            update_checkers();
+        m_checker_locations[0] = checker_sq;
+        m_checker_locations[1] = SQ_NA;
         return *this;
     }
     void to_feature_map(float* const data) const

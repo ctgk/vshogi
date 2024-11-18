@@ -170,13 +170,14 @@ public:
         update_result_dfpn(1u);
         return *this;
     }
-    Game& undo(const bool& update_checks = true)
+    Game& undo()
     {
         const auto n = record_length() - 1u;
         std::uint32_t v = m_captured_move_list[n];
         const auto move = MoveType(static_cast<std::uint16_t>(v & 0x0ffffu));
-        const auto captured = static_cast<ColoredPiece>(v >> 16u);
-        m_current_state.undo(move, captured, update_checks);
+        const auto captured = static_cast<ColoredPiece>((v >> 16u) & 0x0ffu);
+        const auto checker_sq = static_cast<Square>(v >> 24u);
+        m_current_state.undo(move, captured, checker_sq);
         m_result = ONGOING;
         m_hash = m_hash_list[n];
         m_hash_list.pop_back();
@@ -290,11 +291,14 @@ protected:
     void add_record_and_update_state(const MoveType& move)
     {
         const auto captured = m_current_state.get_board()[move.destination()];
+        const auto checker_sq = m_current_state.get_checker_location();
         m_hash_list.emplace_back(m_hash);
         static_assert(sizeof(MoveType) == sizeof(std::uint16_t));
+        static_assert(sizeof(captured) == sizeof(std::uint8_t));
         m_captured_move_list.emplace_back(
             static_cast<std::uint32_t>(move.hash())
-            ^ (static_cast<std::uint32_t>(captured) << 16));
+            ^ (static_cast<std::uint32_t>(captured) << 16)
+            ^ (static_cast<std::uint32_t>(checker_sq) << 24));
         m_current_state.apply(move, &m_hash);
     }
 
