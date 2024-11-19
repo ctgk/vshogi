@@ -402,37 +402,34 @@ public:
         }
     }
 
-    NodeType* look_up_fuzzy(const bool attacker, const GameType& g)
+    NodeType* look_up_fuzzy(const GameType& g)
     {
         const std::uint64_t bt_hash = g.get_board_turn_hash();
         auto it = m_table.find(bt_hash);
         if (it == m_table.end())
             return nullptr;
-        return look_up_fuzzy(attacker, g, it->second);
+        return look_up_fuzzy(g, it->second);
     }
 
 private:
-    NodeType*
-    look_up_fuzzy(const bool attacker, const GameType& g, StandNodeTable& table)
+    NodeType* look_up_fuzzy(const GameType& g, StandNodeTable& table)
     {
         const auto t = g.get_turn();
         const auto s = g.get_stand(t);
-        NodeType* n_weaker = nullptr; // weaker for offence
+        NodeType* n_weaker = nullptr;
         Stand<Config> s_weaker = Stand<Config>();
         for (auto& it : table) {
             const auto s_iter = Stand<Config>(it.first);
             if (s_iter == s) {
                 n_weaker = it.second;
                 s_weaker = s_iter;
-            } else if (attacker ? (s_iter < s) : (s < s_iter)) {
+            } else if (s_iter < s) {
                 // return a node if there is one with weaker stand.
-                if (attacker ? it.second->found_mate()
-                             : it.second->found_no_mate())
+                if (it.second->found_conclusion())
                     return it.second;
-                if ((n_weaker == nullptr)
-                    || (attacker ? (s_weaker < s_iter) : (s_iter < s_weaker))) {
+                if ((n_weaker == nullptr) || (s_weaker < s_iter)) {
                     // s_weaker < s_iter < s
-                    s_weaker = it.first;
+                    s_weaker = s_iter;
                     n_weaker = it.second;
                 }
             }
@@ -470,7 +467,7 @@ public:
         const GameType& game = *m_game;
         Node<Config>* const root = m_table.get_root();
         if (!root->simulate(game))
-            expand_at(*root, game);
+            expand_at(*root, game, nullptr);
         m_num_searched = 0u;
     }
 
@@ -543,21 +540,18 @@ private:
         const uint thdn)
     {
         game.apply_dfpn(n.get_action());
-        {
-            if (Node<Config>* p
-                = m_table.look_up_fuzzy(n.is_attacker(), game)) {
-                if (p->found_conclusion()) {
-                    n.m_pn = p->pn();
-                    n.m_dn = p->dn();
-                    n.m_child_1st = p->m_child_1st;
-                }
-                game.undo();
-                return;
-            }
+        Node<Config>* const p = m_table.look_up_fuzzy(game);
+        if ((p != nullptr) && (p->found_conclusion())) {
+            n.m_pn = p->pn();
+            n.m_dn = p->dn();
+            n.m_child_1st = p->m_child_1st;
+            --searches;
+            game.undo();
+            return;
         }
         if (!n.has_child()) {
             if (!n.simulate(game))
-                expand_at(n, game);
+                expand_at(n, game, p);
             --searches;
         }
         while (searches) {
@@ -569,32 +563,55 @@ private:
             search_inner(*ch1st, game, searches, thpn_ch, thdn_ch);
             n.backprop_one(game);
         }
-        if (n.found_conclusion()) {
+        if (n.found_conclusion() || (p == nullptr)) {
             m_table.add(&n, game);
         }
         game.undo();
     }
-    void expand_at(Node<Config>& n, const GameType& g)
+    void expand_at(
+        Node<Config>& n, const GameType& g, const Node<Config>* const cousin)
     {
         n.m_child_1st = nullptr;
         n.m_child_2nd = nullptr;
         if (n.is_attacker())
-            expand_at_offence(n, g);
+            expand_at_offence(n, g, cousin);
         else
-            expand_at_defence(n, g);
+            expand_at_defence(n, g, cousin);
         assert(
             (n.pn() == 0u) ? (n.dn() == max_number) : (n.dn() != max_number));
         assert(
             (n.dn() == 0u) ? (n.pn() == max_number) : (n.pn() != max_number));
     }
-    void expand_at_offence(Node<Config>& n, const GameType& g)
+    void expand_at_offence(
+        Node<Config>& n, const GameType& g, const Node<Config>* const cousin)
     {
         std::unique_ptr<Node<Config>>* ch = &n.m_child;
         const State<Config>& s = g.get_state();
         Node<Config>* candidate = nullptr;
         n.m_dn = zero;
-        for (Move<Config> atk_move : CheckMoveGenerator<Config>(s)) {
-            *ch = std::make_unique<Node<Config>>(&n, atk_move);
+        if (cousin) {
+            for (const Node<Config>* nib = cousin->get_child(); nib;
+                 nib = nib->get_sibling()) {
+                const auto m = nib->get_action();
+                if (m.is_drop())
+                    break;
+                *ch = std::make_unique<Node<Config>>(&n, m);
+                Node<Config>* const p = ch->get();
+                p->m_pn = nib->m_pn;
+                p->m_dn = nib->m_dn;
+                n.update_offence_dn_ch1st_ch2nd(p);
+                ch = &(p->m_sibling);
+            }
+        } else {
+            for (Move<Config> m : CheckBoardMoveGenerator<Config>(s)) {
+                *ch = std::make_unique<Node<Config>>(&n, m);
+                Node<Config>* const p = ch->get();
+                n.update_offence_dn_ch1st_ch2nd(p);
+                ch = &(p->m_sibling);
+            }
+        }
+        for (Move<Config> m : CheckDropMoveGenerator<Config>(s)) {
+            *ch = std::make_unique<Node<Config>>(&n, m);
             Node<Config>* const p = ch->get();
             n.update_offence_dn_ch1st_ch2nd(p);
             ch = &(p->m_sibling);
@@ -604,19 +621,41 @@ private:
         else
             n.m_pn = n.m_child_1st->m_pn;
     }
-    void expand_at_defence(Node<Config>& n, const GameType& g)
+    void expand_at_defence(
+        Node<Config>& n, const GameType& g, const Node<Config>* const cousin)
     {
         std::unique_ptr<Node<Config>>* ch = &n.m_child;
         const State<Config>& s = g.get_state();
         Node<Config>* candidate = nullptr;
         n.m_pn = zero;
-        const bool include_drop = !n.had_two_consecutive_sacrifice_drops();
-        for (Move<Config> def_move :
-             LegalMoveGenerator<Config>(s, include_drop)) {
-            *ch = std::make_unique<Node<Config>>(&n, def_move);
-            Node<Config>* const p = ch->get();
-            n.update_defence_pn_ch1st_ch2nd(p, g);
-            ch = &(p->m_sibling);
+        if (cousin) {
+            for (const Node<Config>* nib = cousin->get_child(); nib;
+                 nib = nib->get_sibling()) {
+                const auto m = nib->get_action();
+                if (m.is_drop())
+                    break;
+                *ch = std::make_unique<Node<Config>>(&n, m);
+                Node<Config>* const p = ch->get();
+                p->m_pn = nib->m_pn;
+                p->m_dn = nib->m_dn;
+                n.update_defence_pn_ch1st_ch2nd(p, g);
+                ch = &(p->m_sibling);
+            }
+        } else {
+            for (Move<Config> m : BoardMoveGenerator<Config>(s)) {
+                *ch = std::make_unique<Node<Config>>(&n, m);
+                Node<Config>* const p = ch->get();
+                n.update_defence_pn_ch1st_ch2nd(p, g);
+                ch = &(p->m_sibling);
+            }
+        }
+        if (!n.had_two_consecutive_sacrifice_drops()) {
+            for (Move<Config> m : DropMoveGenerator<Config>(s)) {
+                *ch = std::make_unique<Node<Config>>(&n, m);
+                Node<Config>* const p = ch->get();
+                n.update_defence_pn_ch1st_ch2nd(p, g);
+                ch = &(p->m_sibling);
+            }
         }
         if (n.m_child_1st == nullptr)
             n.set_pndn_mate();

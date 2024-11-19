@@ -23,10 +23,10 @@ TEST(dfpn_transposition_table, init)
     auto n = Node(root, Move(SQ_1B, SQ_1C));
     g.apply(Move(SQ_1B, SQ_1C));
     table.add(&n, g);
-    CHECK_TRUE(table.look_up_fuzzy(false, g) == &n);
+    CHECK_TRUE(table.look_up_fuzzy(g) == &n);
 
     table.clear();
-    CHECK_TRUE(table.look_up_fuzzy(false, g) == nullptr);
+    CHECK_TRUE(table.look_up_fuzzy(g) == nullptr);
 }
 
 TEST(dfpn_transposition_table, look_up_offence)
@@ -40,10 +40,10 @@ TEST(dfpn_transposition_table, look_up_offence)
     auto n = Node();
     table.add(&n, g);
 
-    CHECK_TRUE(table.look_up_fuzzy(true, Game("4k/5/4G/5/5 b -")) == nullptr);
-    CHECK_TRUE(table.look_up_fuzzy(true, Game("4k/5/4G/5/5 b G")) == &n);
-    CHECK_TRUE(table.look_up_fuzzy(true, Game("4k/5/4G/5/5 w G")) == nullptr);
-    CHECK_TRUE(table.look_up_fuzzy(true, Game("4k/5/4G/5/5 b 2G")) == &n);
+    CHECK_TRUE(table.look_up_fuzzy(Game("4k/5/4G/5/5 b -")) == nullptr);
+    CHECK_TRUE(table.look_up_fuzzy(Game("4k/5/4G/5/5 b G")) == &n);
+    CHECK_TRUE(table.look_up_fuzzy(Game("4k/5/4G/5/5 w G")) == nullptr);
+    CHECK_TRUE(table.look_up_fuzzy(Game("4k/5/4G/5/5 b 2G")) == &n);
 }
 
 TEST(dfpn_transposition_table, look_up_defence)
@@ -58,9 +58,9 @@ TEST(dfpn_transposition_table, look_up_defence)
     auto n = Node(r, Move(SQ_1B, SQ_1C)); // 4k/4P/5/5/5 w s
     table.add(&n, g);
 
-    CHECK_TRUE(table.look_up_fuzzy(false, Game("4k/4P/5/5/5 w -")) == &n);
-    CHECK_TRUE(table.look_up_fuzzy(false, Game("4k/4P/5/5/5 w s")) == &n);
-    CHECK_TRUE(table.look_up_fuzzy(false, Game("4k/4P/5/5/5 w sg")) == nullptr);
+    CHECK_TRUE(table.look_up_fuzzy(Game("4k/4P/5/5/5 w -")) == nullptr);
+    CHECK_TRUE(table.look_up_fuzzy(Game("4k/4P/5/5/5 w s")) == &n);
+    CHECK_TRUE(table.look_up_fuzzy(Game("4k/4P/5/5/5 w sg")) == &n);
 }
 
 TEST(dfpn_transposition_table, look_up_offence_stronger_of_two_weakers)
@@ -78,10 +78,10 @@ TEST(dfpn_transposition_table, look_up_offence_stronger_of_two_weakers)
     auto n2 = Node();
     table.add(&n2, g2);
 
-    CHECK_TRUE(table.look_up_fuzzy(true, Game("4k/5/4G/5/5 b -")) == nullptr);
-    CHECK_TRUE(table.look_up_fuzzy(true, Game("4k/5/4G/5/5 b G")) == &n1);
-    CHECK_TRUE(table.look_up_fuzzy(true, Game("4k/5/4G/5/5 b 2G")) == &n2);
-    CHECK_TRUE(table.look_up_fuzzy(true, Game("4k/5/4G/5/5 b 2GS")) == &n2);
+    CHECK_TRUE(table.look_up_fuzzy(Game("4k/5/4G/5/5 b -")) == nullptr);
+    CHECK_TRUE(table.look_up_fuzzy(Game("4k/5/4G/5/5 b G")) == &n1);
+    CHECK_TRUE(table.look_up_fuzzy(Game("4k/5/4G/5/5 b 2G")) == &n2);
+    CHECK_TRUE(table.look_up_fuzzy(Game("4k/5/4G/5/5 b 2GS")) == &n2);
 }
 
 TEST_GROUP (dfpn_searcher) {
@@ -121,6 +121,7 @@ TEST(dfpn_searcher, minishogi_no_mate)
 {
     using namespace vshogi::minishogi;
     using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    auto searcher = Searcher();
 
     {
         // Turn: BLACK
@@ -137,8 +138,32 @@ TEST(dfpn_searcher, minishogi_no_mate)
         //   *---*---*---*---*---*
         // E |   |   |   |   |   |
         //   *---*---*---*---*---*
+        // Black: GI
+        searcher.set_game(Game("2k2/5/1+P3/5/5 b S"));
+        searcher.search(100);
+        const auto num_searched = searcher.get_search_count();
+        CHECK_TRUE(searcher.found_conclusion());
+        CHECK_FALSE(searcher.found_mate());
+        CHECK_TRUE(searcher.found_no_mate());
+        CHECK_COMPARE(70, <, num_searched);
+        CHECK_COMPARE(num_searched, <, 75);
+    }
+    {
+        // Turn: BLACK
+        // White: -
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |   |   |-OU|   |   |
+        //   *---*---*---*---*---*
+        // B |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // C |   |+TO|   |   |   |
+        //   *---*---*---*---*---*
+        // D |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // E |   |   |   |   |   |
+        //   *---*---*---*---*---*
         // Black: GIx2
-        auto searcher = Searcher();
         searcher.set_game(Game("2k2/5/1+P3/5/5 b 2S"));
         searcher.search(1100);
         const auto num_searched = searcher.get_search_count();
@@ -146,7 +171,7 @@ TEST(dfpn_searcher, minishogi_no_mate)
         CHECK_FALSE(searcher.found_mate());
         CHECK_TRUE(searcher.found_no_mate());
         CHECK_COMPARE(400, <, num_searched);
-        CHECK_COMPARE(num_searched, <, 500);
+        CHECK_COMPARE(num_searched, <, 450);
     }
 }
 
@@ -183,8 +208,8 @@ TEST(dfpn_searcher, no_mate_1)
     searcher.set_game(g);
     CHECK_FALSE(searcher.search(5000));
     CHECK_TRUE(searcher.found_no_mate());
-    CHECK_COMPARE(800, <, searcher.get_search_count());
-    CHECK_COMPARE(searcher.get_search_count(), <, 900);
+    CHECK_COMPARE(1000, <, searcher.get_search_count());
+    CHECK_COMPARE(searcher.get_search_count(), <, 1100);
 }
 
 TEST(dfpn_searcher, mate_in_one_straight_forward)
@@ -333,8 +358,8 @@ TEST(dfpn_searcher, mate_in_three)
         CHECK_TRUE(searcher.found_mate());
         CHECK_EQUAL(Move(SQ_1B, SQ_1C).hash(), searcher.get_mate_move().hash());
         const auto num_searched = searcher.get_search_count();
-        CHECK_TRUE(100 < num_searched);
-        CHECK_TRUE(num_searched < 200);
+        CHECK_COMPARE(90, <, num_searched);
+        CHECK_COMPARE(num_searched, <, 100);
     }
 }
 
@@ -392,17 +417,84 @@ TEST(dfpn_searcher, mate_in_three_by_king_move)
     }
 }
 
-TEST(dfpn_searcher, mate_in_three_regardless_of_sacrifice_drop)
+TEST(dfpn_searcher, cache_for_mate)
 {
     using namespace vshogi::minishogi;
     using Searcher = vshogi::engine::dfpn::Searcher<Config>;
     auto searcher = Searcher();
-    searcher.set_game(Game("3bk/4p/B2P1/5/5 b 2s"));
+    searcher.set_game(Game("3r1/+BP1r1/1+BP2/4p/2G1k b G"));
     searcher.search(100);
     CHECK_TRUE(searcher.found_conclusion());
     CHECK_TRUE(searcher.found_mate());
-    CHECK_COMPARE(0, <, searcher.get_search_count());
-    CHECK_COMPARE(searcher.get_search_count(), <, 7);
+    CHECK_EQUAL(5, searcher.get_mate_moves().size());
+
+    // It is 25 without cache table
+    CHECK_COMPARE(20, ==, searcher.get_search_count());
+    // searches= 1, SiEx: 3r1/+BP1r1/1+BP2/4p/2GGk w - 2
+    // searches= 2, SiEx: 3r1/+BP1r1/2P2/4p/2G+Bk w G 2
+    // searches= 3, SiEx: 3r1/+BP1r1/1+BP2/4p/3Gk w G 2
+    // searches= 4, SiEx: 3r1/+BP3/1+BP2/4p/3rk b Gg 3
+    // searches= 5, SiEx: 3r1/+BP3/2P2/4p/3+Bk w RGg 4
+    // searches= 6, SiEx: 5/+BP3/2P2/4p/3rk b RGbg 5
+    // searches= 7, SiEx: 5/1P3/2P2/4p/3+Bk w 2RGbg 6
+    // searches= 8, SiEx: 5/1P3/2P2/4p/3k1 b 2RG2bg 7
+    // searches= 9, SiEx: 5/+BP3/2P2/4p/3+rk b RGbg 5
+    // searches=10, SiEx: 5/1P3/2P2/4p/3+Bk w 2RGbg 6
+    // searches=11, SiEx: 5/1P3/2P2/4p/3k1 b 2RG2bg 7 (large #D from 8)
+    // searches=12, SiEx: 3r1/+BP3/1+BP2/4p/2Grk b g 3
+    // searches=13, SiEx: 3r1/+BP3/1+BP2/4p/2G+rk b g 3
+    // searches=14, SiEx: 3r1/+BP3/2P2/4p/2G+Bk w Rg 4
+    // searches=15, SiEx: 3r1/+BP3/1+BP2/4p/3Gk w Rg 4, (mate bp from 17, 19)
+    // searches=16, SiEx: 5/+BP3/1+BP2/4p/3rk b R2g 5 (mate bp from 17)
+    // searches=17, SiEx: 5/+BP3/2P2/4p/3+Bk w 2R2g 6, mate
+    // searches=18, SiEx: 5/+BP3/1+BP2/4p/3+rk b R2g 5, (mate bp from 19)
+    // searches=19, SiEx: 5/+BP3/2P2/4p/3+Bk w 2R2g 6, (mate look-up 17)
+    // searches=20, SiEx: 3r1/+BP3/2P2/4p/2G+Bk w Rg 4
+    // searches=21, SiEx: 3r1/+BP3/1+BP2/4p/3Gk w Rg 4, (mate look-up 15)
+    // searches=22, SiEx: 5/+BP3/1+BP2/4p/3rk b R2g 5
+    // searches=23, SiEx: 5/+BP3/2P2/4p/3+Bk w 2R2g 6, mate
+    // searches=24, SiEx: 5/+BP3/1+BP2/4p/3+rk b R2g 5
+    // searches=25, SiEx: 5/+BP3/2P2/4p/3+Bk w 2R2g 6, mate
+}
+
+TEST(dfpn_searcher, cache_for_no_mate)
+{
+    using namespace vshogi::minishogi;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    auto searcher = Searcher();
+
+    // Turn: BLACK
+    // White: -
+    //     5   4   3   2   1
+    //   *---*---*---*---*---*
+    // A |-OU|+GI|   |+UM|+HI|
+    //   *---*---*---*---*---*
+    // B |   |-KA|   |   |-FU|
+    //   *---*---*---*---*---*
+    // C |   |   |   |   |   |
+    //   *---*---*---*---*---*
+    // D |   |   |   |   |   |
+    //   *---*---*---*---*---*
+    // E |   |   |   |   |   |
+    //   *---*---*---*---*---*
+    // Black: -
+    searcher.set_game(Game("kS1+BR/1b2p/5/5/5 b -"));
+    searcher.search(100);
+    const auto num_searched = searcher.get_search_count();
+    CHECK_TRUE(searcher.found_conclusion());
+    CHECK_FALSE(searcher.found_mate());
+    CHECK_TRUE(searcher.found_no_mate());
+
+    // it is 8 without cache
+    CHECK_EQUAL(num_searched, 6);
+    // 99, k2+BR/Sb2p/5/5/5 w - 2, #P=100, #D=100
+    // 98, 3+BR/kb2p/5/5/5 b s 3, #P=100, #D=100
+    // 97, 4R/kb2p/1+B3/5/5 w s 4, #P=100, #D=100
+    // 96, 4R/1b2p/1k3/5/5 b bs 5, #P=4294967295, #D=0
+    // 95, k2+BR/+Sb2p/5/5/5 w - 2, #P=100, #D=100
+    // 94, 3+BR/kb2p/5/5/5 b s 3, #P=100, #D=100 (equiv. 98)
+    // 93, 4R/kb2p/1+B3/5/5 w s 4, #P=100, #D=100 (equiv. 97)
+    // 92, 4R/1b2p/1k3/5/5 b bs 5, #P=4294967295, #D=0
 }
 
 TEST(dfpn_searcher, mate_in_five_straight_forward)
@@ -457,8 +549,8 @@ TEST(dfpn_searcher, mate_in_five)
     CHECK_TRUE(searcher.search(5000));
     CHECK_EQUAL(Move(SQ_2B, GI).hash(), searcher.get_mate_move().hash());
     const auto num_searched = searcher.get_search_count();
-    CHECK_COMPARE(3200, <, num_searched);
-    CHECK_COMPARE(num_searched, <, 3300);
+    CHECK_COMPARE(1750, <, num_searched);
+    CHECK_COMPARE(num_searched, <, 1850);
 }
 
 TEST(dfpn_searcher, king_entering_before_mate)

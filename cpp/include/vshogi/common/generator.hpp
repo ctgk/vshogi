@@ -1177,6 +1177,95 @@ private:
 };
 
 template <class Config>
+class BoardMoveGenerator
+{
+private:
+    using MoveType = Move<Config>;
+    using StateType = State<Config>;
+
+private:
+    KingMoveGenerator<Config> m_king_iter;
+    NonKingBoardMoveGenerator<Config> m_board_iter;
+    uint m_index; //!< 0: king, 1: board, 2: end
+
+public:
+    BoardMoveGenerator(const StateType& s)
+        : m_king_iter(s), m_board_iter(s), m_index(0u)
+    {
+        if (m_king_iter.is_end()) {
+            ++m_index;
+            if (m_board_iter.is_end()) {
+                ++m_index;
+            }
+        }
+    }
+    BoardMoveGenerator& operator++()
+    {
+        switch (m_index) {
+        case 0u:
+            ++m_king_iter;
+            if (m_king_iter.is_end()) {
+                ++m_index;
+                if (m_board_iter.is_end()) {
+                    ++m_index;
+                }
+            }
+            break;
+        case 1u:
+            ++m_board_iter;
+            if (m_board_iter.is_end()) {
+                ++m_index;
+            }
+            break;
+        default:
+            break;
+        }
+        return *this;
+    }
+    MoveType operator*() const
+    {
+        switch (m_index) {
+        case 0u:
+            return *m_king_iter;
+        case 1u:
+            return *m_board_iter;
+        default:
+            break;
+        }
+        return MoveType();
+    }
+    BoardMoveGenerator begin()
+    {
+        return *this;
+    }
+    BoardMoveGenerator end()
+    {
+        static const auto end_iter
+            = BoardMoveGenerator(m_king_iter.end(), m_board_iter.end(), 2u);
+        return end_iter;
+    }
+    bool operator!=(const BoardMoveGenerator& other) const
+    {
+        return (m_king_iter != other.m_king_iter)
+               || (m_board_iter != other.m_board_iter)
+               || (m_index != other.m_index);
+    }
+    bool is_end() const
+    {
+        return (m_index == 2u);
+    }
+
+private:
+    BoardMoveGenerator(
+        const KingMoveGenerator<Config>& king_iter,
+        const NonKingBoardMoveGenerator<Config>& board_iter,
+        const uint index)
+        : m_king_iter(king_iter), m_board_iter(board_iter), m_index(index)
+    {
+    }
+};
+
+template <class Config>
 class LegalMoveGenerator
 {
 private:
@@ -1280,6 +1369,95 @@ private:
         const uint index)
         : m_king_iter(king_iter), m_board_iter(board_iter),
           m_drop_iter(drop_iter), m_index(index)
+    {
+    }
+};
+
+template <class Config>
+class CheckBoardMoveGenerator
+{
+private:
+    using MoveType = Move<Config>;
+    using StateType = State<Config>;
+
+private:
+    CheckKingMoveGenerator<Config> m_king_iter;
+    CheckNonKingBoardMoveGenerator<Config> m_board_iter;
+    uint m_index; //!< 0: king, 1: board, 2: end
+
+public:
+    CheckBoardMoveGenerator(const StateType& s)
+        : m_king_iter(s), m_board_iter(s), m_index(0u)
+    {
+        if (m_king_iter.is_end()) {
+            ++m_index;
+            if (m_board_iter.is_end()) {
+                ++m_index;
+            }
+        }
+    }
+    CheckBoardMoveGenerator& operator++()
+    {
+        switch (m_index) {
+        case 0u:
+            ++m_king_iter;
+            if (m_king_iter.is_end()) {
+                ++m_index;
+                if (m_board_iter.is_end()) {
+                    ++m_index;
+                }
+            }
+            break;
+        case 1u:
+            ++m_board_iter;
+            if (m_board_iter.is_end()) {
+                ++m_index;
+            }
+            break;
+        default:
+            break;
+        }
+        return *this;
+    }
+    MoveType operator*() const
+    {
+        switch (m_index) {
+        case 0u:
+            return *m_king_iter;
+        case 1u:
+            return *m_board_iter;
+        default:
+            break;
+        }
+        return MoveType();
+    }
+    CheckBoardMoveGenerator begin()
+    {
+        return *this;
+    }
+    CheckBoardMoveGenerator end()
+    {
+        static const auto end_iter = CheckBoardMoveGenerator(
+            m_king_iter.end(), m_board_iter.end(), 2u);
+        return end_iter;
+    }
+    bool operator!=(const CheckBoardMoveGenerator& other) const
+    {
+        return (m_king_iter != other.m_king_iter)
+               || (m_board_iter != other.m_board_iter)
+               || (m_index != other.m_index);
+    }
+    bool is_end() const
+    {
+        return (m_index == 2u);
+    }
+
+private:
+    CheckBoardMoveGenerator(
+        const CheckKingMoveGenerator<Config>& king_iter,
+        const CheckNonKingBoardMoveGenerator<Config>& board_iter,
+        const uint index)
+        : m_king_iter(king_iter), m_board_iter(board_iter), m_index(index)
     {
     }
 };
