@@ -103,6 +103,22 @@ public:
     {
         return is_promoted(to_piece_type(p));
     }
+    static constexpr bool is_promotion_complete_upgrade(const PieceType& pt)
+    {
+        switch (pt) {
+        case FU:
+        case OU - 3u:
+        case OU - 2u:
+            return true;
+        default:
+            break;
+        }
+        return false;
+    }
+    static constexpr bool is_promotion_complete_upgrade(const ColoredPiece& p)
+    {
+        return is_promotion_complete_upgrade(to_piece_type(p));
+    }
     static bool is_ranging_to(const ColoredPiece& p, const DirectionEnum& d);
     static bool is_ranging_piece(const PieceType& pt);
     static bool is_ranging_piece(const ColoredPiece& p)

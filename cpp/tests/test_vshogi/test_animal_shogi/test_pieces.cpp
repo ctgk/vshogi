@@ -20,6 +20,27 @@ TEST(animal_shogi_pieces, is_promotable)
     CHECK_FALSE(Pieces::is_promotable(NA));
 }
 
+TEST(animal_shogi_pieces, is_promotion_complete_upgrade)
+{
+    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(CH));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(EL));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(GI));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(LI));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(HE));
+
+    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(B_CH));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_EL));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_GI));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_LI));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_HE));
+
+    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(W_CH));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_EL));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_GI));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_LI));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_HE));
+}
+
 TEST(animal_shogi_pieces, to_piece_type)
 {
     CHECK_EQUAL(CH, Pieces::to_piece_type('c'));

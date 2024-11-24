@@ -219,6 +219,13 @@ animal_shogi::Pieces::is_promotable(const animal_shogi::PieceTypeEnum& pt)
 }
 
 template <>
+constexpr bool animal_shogi::Pieces::is_promotion_complete_upgrade(
+    const animal_shogi::PieceTypeEnum& pt)
+{
+    return (pt == animal_shogi::CH);
+}
+
+template <>
 inline bool animal_shogi::Pieces::is_ranging_to(
     const animal_shogi::ColoredPieceEnum&, const DirectionEnum&)
 {

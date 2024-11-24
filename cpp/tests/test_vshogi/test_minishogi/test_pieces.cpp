@@ -62,6 +62,42 @@ TEST(minishogi_pieces, is_promoted)
     CHECK_TRUE(Pieces::is_promoted(W_RY));
 }
 
+TEST(minishogi_pieces, is_promotion_complete_upgrade)
+{
+    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(FU));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(GI));
+    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(KA));
+    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(HI));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(KI));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(OU));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(TO));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(NG));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(UM));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(RY));
+
+    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(B_FU));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_GI));
+    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(B_KA));
+    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(B_HI));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_KI));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_OU));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_TO));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_NG));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_UM));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_RY));
+
+    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(W_FU));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_GI));
+    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(W_KA));
+    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(W_HI));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_KI));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_OU));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_TO));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_NG));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_UM));
+    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_RY));
+}
+
 TEST(minishogi_pieces, promote_nocheck)
 {
     CHECK_EQUAL(TO, Pieces::promote_nocheck(FU));
