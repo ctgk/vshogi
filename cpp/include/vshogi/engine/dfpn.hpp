@@ -585,31 +585,12 @@ private:
     void expand_at_offence(
         Node<Config>& n, const GameType& g, const Node<Config>* const cousin)
     {
-        std::unique_ptr<Node<Config>>* ch = &n.m_child;
         const State<Config>& s = g.get_state();
         Node<Config>* candidate = nullptr;
         n.m_dn = zero;
-        if (cousin) {
-            for (const Node<Config>* nib = cousin->get_child(); nib;
-                 nib = nib->get_sibling()) {
-                const auto m = nib->get_action();
-                if (m.is_drop())
-                    break;
-                *ch = std::make_unique<Node<Config>>(&n, m);
-                Node<Config>* const p = ch->get();
-                p->m_pn = nib->m_pn;
-                p->m_dn = nib->m_dn;
-                n.update_offence_dn_ch1st_ch2nd(p);
-                ch = &(p->m_sibling);
-            }
-        } else {
-            for (Move<Config> m : CheckBoardMoveGenerator<Config>(s)) {
-                *ch = std::make_unique<Node<Config>>(&n, m);
-                Node<Config>* const p = ch->get();
-                n.update_offence_dn_ch1st_ch2nd(p);
-                ch = &(p->m_sibling);
-            }
-        }
+        std::unique_ptr<Node<Config>>* ch
+            = (cousin) ? expand_board_moves_at_offence(n, *cousin)
+                       : expand_board_moves_at_offence(n, s);
         for (Move<Config> m : CheckDropMoveGenerator<Config>(s)) {
             *ch = std::make_unique<Node<Config>>(&n, m);
             Node<Config>* const p = ch->get();
@@ -620,6 +601,35 @@ private:
             n.set_pndn_no_mate();
         else
             n.m_pn = n.m_child_1st->m_pn;
+    }
+    static std::unique_ptr<Node<Config>>* expand_board_moves_at_offence(
+        Node<Config>& parent, const Node<Config>& cousin)
+    {
+        std::unique_ptr<Node<Config>>* ch = &parent.m_child;
+        for (const Node<Config>* nib = cousin.get_child(); nib;
+             nib = nib->get_sibling()) {
+            const auto m = nib->get_action();
+            if (m.is_drop())
+                break;
+            *ch = std::make_unique<Node<Config>>(&parent, m);
+            Node<Config>* const p = ch->get();
+            p->m_pn = nib->m_pn;
+            p->m_dn = nib->m_dn;
+            parent.update_offence_dn_ch1st_ch2nd(p);
+            ch = &(p->m_sibling);
+        }
+        return ch;
+    }
+    static std::unique_ptr<Node<Config>>* expand_board_moves_at_offence(
+        Node<Config>& parent, const State<Config>& state)
+    {
+        std::unique_ptr<Node<Config>>* ch = &parent.m_child;
+        for (Move<Config> m : CheckBoardMoveGenerator<Config>(state)) {
+            *ch = std::make_unique<Node<Config>>(&parent, m);
+            parent.update_offence_dn_ch1st_ch2nd(ch->get());
+            ch = &((*ch)->m_sibling);
+        }
+        return ch;
     }
     void expand_at_defence(
         Node<Config>& n, const GameType& g, const Node<Config>* const cousin)
