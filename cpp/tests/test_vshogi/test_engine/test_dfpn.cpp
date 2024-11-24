@@ -358,8 +358,8 @@ TEST(dfpn_searcher, mate_in_three)
         CHECK_TRUE(searcher.found_mate());
         CHECK_EQUAL(Move(SQ_1B, SQ_1C).hash(), searcher.get_mate_move().hash());
         const auto num_searched = searcher.get_search_count();
-        CHECK_COMPARE(90, <, num_searched);
-        CHECK_COMPARE(num_searched, <, 100);
+        CHECK_COMPARE(80, <, num_searched);
+        CHECK_COMPARE(num_searched, <, 90);
     }
 }
 
@@ -390,7 +390,8 @@ TEST(dfpn_searcher, mate_in_three_by_king_move)
         searcher.search(100);
         CHECK_TRUE(searcher.found_conclusion());
         CHECK_TRUE(searcher.found_mate());
-        CHECK_EQUAL(Move(SQ_3B, SQ_3A).hash(), searcher.get_mate_move().hash());
+        CHECK_EQUAL(
+            Move(SQ_3B, SQ_3A, true).hash(), searcher.get_mate_move().hash());
     }
     {
         // COUNTER CHECK
@@ -549,8 +550,8 @@ TEST(dfpn_searcher, mate_in_five)
     CHECK_TRUE(searcher.search(5000));
     CHECK_EQUAL(Move(SQ_2B, GI).hash(), searcher.get_mate_move().hash());
     const auto num_searched = searcher.get_search_count();
-    CHECK_COMPARE(1750, <, num_searched);
-    CHECK_COMPARE(num_searched, <, 1850);
+    CHECK_COMPARE(1550, <, num_searched);
+    CHECK_COMPARE(num_searched, <, 1650);
 }
 
 TEST(dfpn_searcher, king_entering_before_mate)

@@ -444,6 +444,7 @@ class Searcher
 private:
     using GameType = Game<Config>;
     using MoveType = Move<Config>;
+    using PHelper = Pieces<Config>;
 
 private:
     TranspositionTable<Config> m_table;
@@ -623,8 +624,13 @@ private:
     static std::unique_ptr<Node<Config>>* expand_board_moves_at_offence(
         Node<Config>& parent, const State<Config>& state)
     {
+        const Board<Config>& b = state.get_board();
         std::unique_ptr<Node<Config>>* ch = &parent.m_child;
         for (Move<Config> m : CheckBoardMoveGenerator<Config>(state)) {
+            const auto p = b[m.source_square()];
+            if ((!m.promote()) && PHelper::is_promotion_complete_upgrade(p)
+                && state.in_promotion_zone(m))
+                continue;
             *ch = std::make_unique<Node<Config>>(&parent, m);
             parent.update_offence_dn_ch1st_ch2nd(ch->get());
             ch = &((*ch)->m_sibling);

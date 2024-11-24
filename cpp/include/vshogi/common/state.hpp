@@ -109,6 +109,14 @@ public:
     {
         return (m_checker_locations[0] == sq) || (m_checker_locations[1] == sq);
     }
+    bool in_promotion_zone(const MoveType& m) const
+    {
+        if (SHelper::in_promotion_zone(m.destination(), m_turn))
+            return true;
+        if (m.is_drop())
+            return false;
+        return SHelper::in_promotion_zone(m.source_square(), m_turn);
+    }
     void set_sfen(const std::string& sfen)
     {
         auto s = sfen.c_str();
