@@ -577,7 +577,10 @@ private:
             search_inner(*ch1st, game, searches, thpn_ch, thdn_ch);
             n.backprop_one(game);
         }
-        if (p == nullptr) {
+
+        // Adding & looking-up take too much time when there are many nodes
+        // in the table.
+        if ((p == nullptr) && n.found_conclusion()) {
             m_table.add(&n, game);
         }
         game.undo();
