@@ -414,27 +414,40 @@ public:
 private:
     NodeType* look_up_fuzzy(const GameType& g, StandNodeTable& table)
     {
+        // - offence turn (`is_attacker == true`)
+        //     - Weaker offence stand, but mate (or #P <= #D)
+        //     - Stronger offence stand, but no-mate (#P > #D).
+        // - defence turn
+        //     - Weaker defence stand, but no-mate.
+        //     - Stronger defence stand, but mate.
         const auto t = g.get_turn();
         const auto s = g.get_stand(t);
-        NodeType* n_weaker = nullptr;
-        Stand<Config> s_weaker = Stand<Config>();
+        Stand<Config> s_out = Stand<Config>();
+        NodeType* n_out = nullptr;
         for (auto& it : table) {
             const auto s_iter = Stand<Config>(it.first);
+            NodeType* n_iter = it.second;
+            const bool is_atk = n_iter->is_attacker();
+            const bool is_mate = n_iter->found_mate();
+            const bool is_no_mate = n_iter->found_no_mate();
+            if ((s < s_iter) && (is_atk ? is_no_mate : is_mate))
+                return n_iter; // stronger offence stand, but no mate.
             if (s_iter == s) {
-                n_weaker = it.second;
-                s_weaker = s_iter;
+                s_out = s_iter;
+                n_out = n_iter;
             } else if (s_iter < s) {
-                // return a node if there is one with weaker stand.
-                if (it.second->found_conclusion())
-                    return it.second;
-                if ((n_weaker == nullptr) || (s_weaker < s_iter)) {
-                    // s_weaker < s_iter < s
-                    s_weaker = s_iter;
-                    n_weaker = it.second;
+                if (is_atk ? is_mate : is_no_mate)
+                    return n_iter; // weaker offence stand, but mate
+                else if (is_atk ? (!is_no_mate) : (!is_mate)) {
+                    // exclude weaker offence stand, and no mate.
+                    if ((n_out == nullptr) || (s_out < s_iter)) {
+                        s_out = s_iter;
+                        n_out = n_iter;
+                    }
                 }
             }
         }
-        return n_weaker;
+        return n_out;
     }
 };
 
@@ -542,7 +555,7 @@ private:
     {
         game.apply_dfpn(n.get_action());
         Node<Config>* const p = m_table.look_up_fuzzy(game);
-        if ((p != nullptr) && (p->found_conclusion())) {
+        if ((p != nullptr) && p->found_conclusion()) {
             n.m_pn = p->pn();
             n.m_dn = p->dn();
             n.m_child_1st = p->m_child_1st;
@@ -564,7 +577,7 @@ private:
             search_inner(*ch1st, game, searches, thpn_ch, thdn_ch);
             n.backprop_one(game);
         }
-        if (n.found_conclusion() || (p == nullptr)) {
+        if (p == nullptr) {
             m_table.add(&n, game);
         }
         game.undo();
@@ -614,8 +627,11 @@ private:
                 break;
             *ch = std::make_unique<Node<Config>>(&parent, m);
             Node<Config>* const p = ch->get();
-            p->m_pn = nib->m_pn;
-            p->m_dn = nib->m_dn;
+            if (nib->found_conclusion()) {
+                p->m_pn = nib->m_pn;
+                p->m_dn = nib->m_dn;
+                p->m_child_1st = nib->m_child_1st;
+            }
             parent.update_offence_dn_ch1st_ch2nd(p);
             ch = &(p->m_sibling);
         }
@@ -652,8 +668,11 @@ private:
                     break;
                 *ch = std::make_unique<Node<Config>>(&n, m);
                 Node<Config>* const p = ch->get();
-                p->m_pn = nib->m_pn;
-                p->m_dn = nib->m_dn;
+                if (nib->found_conclusion()) {
+                    p->m_pn = nib->m_pn;
+                    p->m_dn = nib->m_dn;
+                    p->m_child_1st = nib->m_child_1st;
+                }
                 n.update_defence_pn_ch1st_ch2nd(p, g);
                 ch = &(p->m_sibling);
             }

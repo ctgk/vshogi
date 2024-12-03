@@ -1,12 +1,13 @@
 import pytest
 
-import vshogi.judkins_shogi as shogi
+import vshogi.minishogi as shogi
 from vshogi.engine import DfpnSearcher
 
 
 def test_mate():
     sfen_searches_pair_list = [
         ('4+P/1gk2/1p3/3+R1/5 b G2s2br', 4),
+        ('2+B1k/3r1/3Sp/G1K2/3r1 w Gbsp', 6285),
     ]
 
     actual_total_searches = 0
@@ -26,6 +27,11 @@ def test_mate():
                 f'actual={searcher.get_search_count()}',
                 f'expect={searches}',
             )
+        for m in searcher.get_mate_moves():
+            assert game.result == shogi.ONGOING
+            game.apply(m)
+        assert game.result == (
+            shogi.BLACK_WIN if sfen.split()[1] == 'b' else shogi.WHITE_WIN)
         actual_total_searches += searcher.get_search_count()
         expect_total_searches += searches
     print(

@@ -6,7 +6,7 @@ from vshogi.engine import DfpnSearcher
 
 def test_mate():
     sfen_searches_pair_list = [
-        ('3+B2/3s1n/3k1p/3N2/2S1P1/6 b Ggb2r', 574),
+        ('3+B2/3s1n/3k1p/3N2/2S1P1/6 b Ggb2r', 692),
     ]
 
     actual_total_searches = 0
@@ -26,6 +26,11 @@ def test_mate():
                 f'actual={searcher.get_search_count()}',
                 f'expect={searches}',
             )
+        for m in searcher.get_mate_moves():
+            assert game.result == shogi.ONGOING
+            game.apply(m)
+        assert game.result == (
+            shogi.BLACK_WIN if sfen.split()[1] == 'b' else shogi.WHITE_WIN)
         actual_total_searches += searcher.get_search_count()
         expect_total_searches += searches
     print(
