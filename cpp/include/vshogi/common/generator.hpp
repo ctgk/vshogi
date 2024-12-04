@@ -984,35 +984,34 @@ private:
     const BoardType& m_board;
     const BitBoardType m_pinned;
     typename BitBoardType::SquareIterator m_src_iter;
-    bool m_promote;
     typename BitBoardType::SquareIterator m_dst_iter;
+    bool m_promote;
+    BitBoardType m_dst_mask;
+    Square m_discovered_checker_sq;
 
 public:
     CheckNonKingBoardMoveGenerator(const StateType& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_pinned(m_board.find_pinned(m_turn)), m_src_iter(), m_promote(true),
-          m_dst_iter()
+          m_pinned(m_board.find_pinned(m_turn)), m_src_iter(), m_dst_iter(),
+          m_promote(true), m_dst_mask(), m_discovered_checker_sq(SQ_NA)
     {
         if (m_state.in_double_check())
             return;
         init_src_iter();
-        if (m_src_iter.is_end())
-            return;
-
-        init_promote();
         while (!m_src_iter.is_end()) {
-            init_dst_iter();
-            if (m_dst_iter.is_end()) {
-                if (m_promote) {
-                    ++m_src_iter;
-                    m_promote = false;
-                } else {
-                    m_promote = true;
-                }
-            } else
-                return;
+            init_dst_mask();
+            if (m_dst_mask.any()) {
+                m_promote = false;
+                init_dst_iter();
+                if (!m_dst_iter.is_end())
+                    return;
+                m_promote = true;
+                init_dst_iter();
+                if (!m_dst_iter.is_end())
+                    return;
+            }
+            ++m_src_iter;
         }
-        m_promote = true;
     }
     CheckNonKingBoardMoveGenerator& operator++()
     {
@@ -1026,23 +1025,21 @@ public:
             if (!m_dst_iter.is_end())
                 return *this;
         }
+        ++m_src_iter;
 
-        m_promote = false;
         while (!m_src_iter.is_end()) {
-            ++m_src_iter;
-            if (m_src_iter.is_end()) {
+            init_dst_mask();
+            if (m_dst_mask.any()) {
+                m_promote = false;
+                init_dst_iter();
+                if (!m_dst_iter.is_end())
+                    return *this;
                 m_promote = true;
-                m_dst_iter = BitBoardType().square_iterator();
-                return *this;
+                init_dst_iter();
+                if (!m_dst_iter.is_end())
+                    return *this;
             }
-            m_promote = false;
-            init_dst_iter();
-            if (!m_dst_iter.is_end())
-                return *this;
-            m_promote = true;
-            init_dst_iter();
-            if (!m_dst_iter.is_end())
-                return *this;
+            ++m_src_iter;
         }
         return *this;
     }
@@ -1074,7 +1071,8 @@ public:
 private:
     CheckNonKingBoardMoveGenerator(const StateType& state, const bool promote)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_pinned(), m_src_iter(), m_promote(promote), m_dst_iter()
+          m_pinned(), m_src_iter(), m_dst_iter(), m_promote(promote),
+          m_dst_mask(), m_discovered_checker_sq(SQ_NA)
     {
     }
     void init_src_iter()
@@ -1083,36 +1081,41 @@ private:
         const auto src_mask = m_board.get_occupied(m_turn).clear(king_sq);
         m_src_iter = src_mask.square_iterator();
     }
+    void init_dst_mask()
+    {
+        const auto src = *m_src_iter;
+        const auto p = m_board[src];
+        const auto king_sq = m_board.get_king_location(m_turn);
+        const auto enemy_king_sq = m_board.get_king_location(~m_turn);
+
+        m_dst_mask
+            = BitBoardType::get_attacks_by(p, src, m_board.get_occupied());
+        m_dst_mask &= ~m_board.get_occupied(m_turn);
+        update_dst_mask_by_current_check(king_sq);
+        update_dst_mask_by_counter_check(src, king_sq);
+        m_discovered_checker_sq = m_board.find_ranging_attacker(
+            m_turn,
+            enemy_king_sq,
+            SHelper::get_direction(src, enemy_king_sq),
+            src);
+    }
     void init_dst_iter()
     {
         const auto src = *m_src_iter;
         const auto p = m_board[src];
-        auto movable = BitBoardType();
-        const auto king_sq = m_board.get_king_location(m_turn);
+        m_dst_iter = BitBoardType().square_iterator();
 
-        if (m_promote && (!PHelper::is_promotable(p)))
-            goto ExitLabel;
+        if (m_promote && (!PHelper::is_promotable(p))) {
+            return;
+        }
 
-        movable |= BitBoardType::get_attacks_by(p, src, m_board.get_occupied());
-        movable &= ~m_board.get_occupied(m_turn);
-        if (!movable.any())
-            goto ExitLabel;
-
+        auto movable = m_dst_mask;
         if (update_mask_by_promotion(movable, src)) {
-            if (!movable.any())
-                goto ExitLabel;
+            if (!movable.any()) {
+                return;
+            }
         }
-        if (update_mask_by_current_check(movable, king_sq)) {
-            if (!movable.any())
-                goto ExitLabel;
-        }
-        if (update_mask_by_counter_check(movable, src, king_sq)) {
-            if (!movable.any())
-                goto ExitLabel;
-        }
-        update_mask_by_forcing_check(movable, p, src);
-
-    ExitLabel:
+        update_mask_by_forcing_check(movable, p);
         m_dst_iter = movable.square_iterator();
     }
     bool update_mask_by_promotion(BitBoardType& mask, const Square src)
@@ -1123,39 +1126,29 @@ private:
         }
         return false;
     }
-    bool update_mask_by_current_check(BitBoardType& mask, const Square king_sq)
+    void update_dst_mask_by_current_check(const Square king_sq)
     {
         if (m_state.in_check()) {
             const auto checker_sq = m_state.get_checker_location();
-            mask &= BitBoardType::get_line_segment(checker_sq, king_sq)
-                        .set(checker_sq);
-            return true;
+            m_dst_mask &= BitBoardType::get_line_segment(checker_sq, king_sq)
+                              .set(checker_sq);
         }
-        return false;
     }
-    bool update_mask_by_counter_check(
-        BitBoardType& mask, const Square src, const Square king_sq)
+    void
+    update_dst_mask_by_counter_check(const Square src, const Square king_sq)
     {
         if (m_pinned.is_one(src)) {
-            mask &= BitBoardType::get_ray_to(
+            m_dst_mask &= BitBoardType::get_ray_to(
                 king_sq, SHelper::get_direction(src, king_sq));
-            return true;
         }
-        return false;
     }
-    void update_mask_by_forcing_check(
-        BitBoardType& mask, const ColoredPiece p, const Square src)
+    void update_mask_by_forcing_check(BitBoardType& mask, const ColoredPiece p)
     {
         const auto enemy_king_sq = m_board.get_king_location(~m_turn);
         auto pt = PHelper::to_piece_type(p);
         if (m_promote)
             pt = PHelper::promote_nocheck(pt);
-        const auto discovered_checker_sq = m_board.find_ranging_attacker(
-            m_turn,
-            enemy_king_sq,
-            SHelper::get_direction(src, enemy_king_sq),
-            src);
-        if (discovered_checker_sq == SQ_NA) // check by moving piece.
+        if (m_discovered_checker_sq == SQ_NA) // check by moving piece.
             mask &= BitBoardType::get_attacks_by(
                 PHelper::to_board_piece(~m_turn, pt),
                 enemy_king_sq,
@@ -1167,12 +1160,8 @@ private:
                         enemy_king_sq,
                         m_board.get_occupied())
                     | (~BitBoardType::get_line_segment(
-                        discovered_checker_sq, enemy_king_sq)));
+                        m_discovered_checker_sq, enemy_king_sq)));
         }
-    }
-    void init_promote()
-    {
-        m_promote = false;
     }
 };
 
