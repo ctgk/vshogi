@@ -309,7 +309,7 @@ TEST(shogi_magic, get_diagonal_attack)
 // TEST(shogi_magic, generate_magic_numbers)
 // {
 //     using namespace vshogi::shogi;
-//     std::uint32_t magics[Config::num_squares];
+//     std::uint32_t magics[Config::num_squares] = {};
 
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
 //         const std::uint32_t magic
@@ -363,6 +363,25 @@ TEST(shogi_magic, get_diagonal_attack)
 //         magics[sq] = magic;
 //     }
 //     std::cout << "\nMagic numbers for SW-NE attacks" << std::endl;
+//     print_array(magics, true);
+
+//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//         const std::uint32_t magic = find_magic_number(
+//             sq, {vshogi::DIR_N, vshogi::DIR_W, vshogi::DIR_E, vshogi::DIR_S});
+//         // CHECK_FALSE(magic == 0u);
+//         magics[sq] = magic;
+//     }
+//     std::cout << "\nMagic numbers for adjacent attacks" << std::endl;
+//     print_array(magics, true);
+
+//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//         const std::uint32_t magic = find_magic_number(
+//             sq,
+//             {vshogi::DIR_NW, vshogi::DIR_NE, vshogi::DIR_SW, vshogi::DIR_SE});
+//         CHECK_FALSE(magic == 0u);
+//         magics[sq] = magic;
+//     }
+//     std::cout << "\nMagic numbers for diagonal attacks" << std::endl;
 //     print_array(magics, true);
 // }
 
