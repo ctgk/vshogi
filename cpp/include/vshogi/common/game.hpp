@@ -124,9 +124,9 @@ public:
         else
             return m_current_state.to_sfen();
     }
-    std::size_t record_length() const
+    uint record_length() const
     {
-        return m_captured_move_list.size();
+        return static_cast<uint>(m_captured_move_list.size());
     }
 
     /**
@@ -216,6 +216,11 @@ public:
     bool in_check() const
     {
         return m_current_state.in_check();
+    }
+    Move<Config> get_record_action(const uint index) const
+    {
+        return Move<Config>(
+            static_cast<std::uint16_t>(m_captured_move_list[index]));
     }
     void clear_records_for_dfpn()
     {

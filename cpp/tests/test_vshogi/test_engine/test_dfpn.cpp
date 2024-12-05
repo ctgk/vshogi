@@ -20,7 +20,7 @@ TEST(dfpn_transposition_table, init)
     auto g = Game("4k/5/4G/5/5 b G");
     auto table = TranspositionTable();
     auto root = table.get_root();
-    auto n = Node(root, Move(SQ_1B, SQ_1C));
+    auto n = Node(!root->is_attacker(), Move(SQ_1B, SQ_1C));
     g.apply(Move(SQ_1B, SQ_1C));
     table.add(&n, g);
     CHECK_TRUE(table.look_up_fuzzy(g) == &n);
@@ -55,7 +55,7 @@ TEST(dfpn_transposition_table, look_up_defence)
     auto g = Game("4k/5/4P/5/5 b s");
     g.apply(Move(SQ_1B, SQ_1C));
     auto r = table.get_root();
-    auto n = Node(r, Move(SQ_1B, SQ_1C)); // 4k/4P/5/5/5 w s
+    auto n = Node(!r->is_attacker(), Move(SQ_1B, SQ_1C)); // 4k/4P/5/5/5 w s
     table.add(&n, g);
 
     CHECK_TRUE(table.look_up_fuzzy(Game("4k/4P/5/5/5 w -")) == nullptr);

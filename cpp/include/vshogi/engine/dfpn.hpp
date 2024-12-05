@@ -78,8 +78,6 @@ private:
      */
     const MoveType m_action;
 
-    Node* const m_parent;
-
     /**
      * @brief Pointer to sibling node.
      * @ref https://blog.mozilla.org/nnethercote/2012/03/07/n-ary-trees-in-c/
@@ -109,15 +107,14 @@ private:
 
 public:
     Node()
-        : m_attacker(true), m_action(), m_parent(nullptr), m_sibling(nullptr),
-          m_child(nullptr), m_child_1st(nullptr), m_child_2nd(nullptr),
-          m_pn(unit), m_dn(unit)
+        : m_attacker(true), m_action(), m_sibling(nullptr), m_child(nullptr),
+          m_child_1st(nullptr), m_child_2nd(nullptr), m_pn(unit), m_dn(unit)
     {
     }
-    Node(Node* const parent, const MoveType& action)
-        : m_attacker(!parent->m_attacker), m_action(action), m_parent(parent),
-          m_sibling(nullptr), m_child(nullptr), m_child_1st(nullptr),
-          m_child_2nd(nullptr), m_pn(unit), m_dn(unit)
+    Node(const bool attacker, const MoveType& action)
+        : m_attacker(attacker), m_action(action), m_sibling(nullptr),
+          m_child(nullptr), m_child_1st(nullptr), m_child_2nd(nullptr),
+          m_pn(unit), m_dn(unit)
     {
     }
 
@@ -243,31 +240,6 @@ private:
             set_pndn_mate();
         else
             set_pndn_no_mate();
-        return true;
-    }
-
-    bool had_two_consecutive_sacrifice_drops() const
-    {
-        // `get_action()`: capture second sacrifice drop
-        // `m_parent->get_action()`: second sacrifice drop
-        // `m_parent->m_parent->get_action()`: capture first sacrifice drop
-        // `m_parent->m_parent->m_parent->get_action()`: first sacrifice drop
-
-        if ((m_parent == nullptr) || (m_parent->m_parent == nullptr)
-            || (m_parent->m_parent->m_parent == nullptr))
-            return false;
-        const Move<Config> drop1st = m_parent->m_parent->m_parent->get_action();
-        const Move<Config> capt1st = m_parent->m_parent->get_action();
-        const Move<Config> drop2nd = m_parent->get_action();
-        const Move<Config> capt2nd = get_action();
-        if (!drop1st.is_drop())
-            return false;
-        if (drop1st.destination() != capt1st.destination())
-            return false;
-        if (!drop2nd.is_drop())
-            return false;
-        if (drop2nd.destination() != capt2nd.destination())
-            return false;
         return true;
     }
 
@@ -608,12 +580,7 @@ private:
         std::unique_ptr<Node<Config>>* ch
             = (cousin) ? expand_board_moves_at_offence(n, *cousin)
                        : expand_board_moves_at_offence(n, s);
-        for (Move<Config> m : CheckDropMoveGenerator<Config>(s)) {
-            *ch = std::make_unique<Node<Config>>(&n, m);
-            Node<Config>* const p = ch->get();
-            n.update_offence_dn_ch1st_ch2nd(p);
-            ch = &(p->m_sibling);
-        }
+        expand_drop_moves_at_offence(n, ch, s);
         if (n.m_child_1st == nullptr)
             n.set_pndn_no_mate();
         else
@@ -628,7 +595,7 @@ private:
             const auto m = nib->get_action();
             if (m.is_drop())
                 break;
-            *ch = std::make_unique<Node<Config>>(&parent, m);
+            *ch = std::make_unique<Node<Config>>(false, m);
             Node<Config>* const p = ch->get();
             if (nib->found_conclusion()) {
                 p->m_pn = nib->m_pn;
@@ -650,55 +617,109 @@ private:
             if ((!m.promote()) && PHelper::is_promotion_complete_upgrade(p)
                 && state.in_promotion_zone(m))
                 continue;
-            *ch = std::make_unique<Node<Config>>(&parent, m);
+            *ch = std::make_unique<Node<Config>>(false, m);
             parent.update_offence_dn_ch1st_ch2nd(ch->get());
             ch = &((*ch)->m_sibling);
         }
         return ch;
     }
+    static void expand_drop_moves_at_offence(
+        Node<Config>& parent,
+        std::unique_ptr<Node<Config>>* ch,
+        const State<Config>& state)
+    {
+        for (Move<Config> m : CheckDropMoveGenerator<Config>(state)) {
+            *ch = std::make_unique<Node<Config>>(false, m);
+            Node<Config>* const p = ch->get();
+            parent.update_offence_dn_ch1st_ch2nd(p);
+            ch = &(p->m_sibling);
+        }
+    }
     void expand_at_defence(
         Node<Config>& n, const GameType& g, const Node<Config>* const cousin)
     {
-        std::unique_ptr<Node<Config>>* ch = &n.m_child;
         const State<Config>& s = g.get_state();
-        Node<Config>* candidate = nullptr;
         n.m_pn = zero;
-        if (cousin) {
-            for (const Node<Config>* nib = cousin->get_child(); nib;
-                 nib = nib->get_sibling()) {
-                const auto m = nib->get_action();
-                if (m.is_drop())
-                    break;
-                *ch = std::make_unique<Node<Config>>(&n, m);
-                Node<Config>* const p = ch->get();
-                if (nib->found_conclusion()) {
-                    p->m_pn = nib->m_pn;
-                    p->m_dn = nib->m_dn;
-                    p->m_child_1st = nib->m_child_1st;
-                }
-                n.update_defence_pn_ch1st_ch2nd(p, g);
-                ch = &(p->m_sibling);
-            }
-        } else {
-            for (Move<Config> m : BoardMoveGenerator<Config>(s)) {
-                *ch = std::make_unique<Node<Config>>(&n, m);
-                Node<Config>* const p = ch->get();
-                n.update_defence_pn_ch1st_ch2nd(p, g);
-                ch = &(p->m_sibling);
-            }
-        }
-        if (!n.had_two_consecutive_sacrifice_drops()) {
-            for (Move<Config> m : DropMoveGenerator<Config>(s)) {
-                *ch = std::make_unique<Node<Config>>(&n, m);
-                Node<Config>* const p = ch->get();
-                n.update_defence_pn_ch1st_ch2nd(p, g);
-                ch = &(p->m_sibling);
-            }
+        std::unique_ptr<Node<Config>>* ch
+            = (cousin) ? expand_board_moves_at_defence(n, g, *cousin)
+                       : expand_board_moves_at_defence(n, g, s);
+        if (!had_two_consecutive_sacrifice_drops(g)) {
+            expand_drop_moves_at_defence(n, ch, g, s);
         }
         if (n.m_child_1st == nullptr)
             n.set_pndn_mate();
         else
             n.m_dn = n.m_child_1st->m_dn;
+    }
+    static std::unique_ptr<Node<Config>>* expand_board_moves_at_defence(
+        Node<Config>& parent, const GameType& game, const Node<Config>& cousin)
+    {
+        std::unique_ptr<Node<Config>>* ch = &parent.m_child;
+        for (const Node<Config>* nib = cousin.get_child(); nib;
+             nib = nib->get_sibling()) {
+            const auto m = nib->get_action();
+            if (m.is_drop())
+                break;
+            *ch = std::make_unique<Node<Config>>(true, m);
+            Node<Config>* const p = ch->get();
+            if (nib->found_conclusion()) {
+                p->m_pn = nib->m_pn;
+                p->m_dn = nib->m_dn;
+                p->m_child_1st = nib->m_child_1st;
+            }
+            parent.update_defence_pn_ch1st_ch2nd(p, game);
+            ch = &(p->m_sibling);
+        }
+        return ch;
+    }
+    static std::unique_ptr<Node<Config>>* expand_board_moves_at_defence(
+        Node<Config>& parent, const GameType& game, const State<Config>& state)
+    {
+        std::unique_ptr<Node<Config>>* ch = &parent.m_child;
+        for (Move<Config> m : BoardMoveGenerator<Config>(state)) {
+            *ch = std::make_unique<Node<Config>>(true, m);
+            Node<Config>* const p = ch->get();
+            parent.update_defence_pn_ch1st_ch2nd(p, game);
+            ch = &(p->m_sibling);
+        }
+        return ch;
+    }
+    static void expand_drop_moves_at_defence(
+        Node<Config>& parent,
+        std::unique_ptr<Node<Config>>* ch,
+        const GameType& game,
+        const State<Config>& state)
+    {
+        for (Move<Config> m : DropMoveGenerator<Config>(state)) {
+            *ch = std::make_unique<Node<Config>>(true, m);
+            Node<Config>* const p = ch->get();
+            parent.update_defence_pn_ch1st_ch2nd(p, game);
+            ch = &(p->m_sibling);
+        }
+    }
+    static bool had_two_consecutive_sacrifice_drops(const GameType& g)
+    {
+        const uint n = g.record_length();
+        if (n < 4u)
+            return false;
+
+        // first sacrifice drop
+        const Move<Config> drop1st = g.get_record_action(n - 4u);
+        // capture first sacrifice drop
+        const Move<Config> capt1st = g.get_record_action(n - 3u);
+        // second sacrifice drop
+        const Move<Config> drop2nd = g.get_record_action(n - 2u);
+        // capture second sacrifice drop
+        const Move<Config> capt2nd = g.get_record_action(n - 1u);
+        if (!drop1st.is_drop())
+            return false;
+        if (drop1st.destination() != capt1st.destination())
+            return false;
+        if (!drop2nd.is_drop())
+            return false;
+        if (drop2nd.destination() != capt2nd.destination())
+            return false;
+        return true;
     }
 };
 
