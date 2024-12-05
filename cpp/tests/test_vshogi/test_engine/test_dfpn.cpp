@@ -175,8 +175,8 @@ TEST(dfpn_searcher, minishogi_no_mate_2)
     CHECK_TRUE(searcher.found_conclusion());
     CHECK_FALSE(searcher.found_mate());
     CHECK_TRUE(searcher.found_no_mate());
-    CHECK_COMPARE(750, <, num_searched);
-    CHECK_COMPARE(num_searched, <, 850);
+    CHECK_COMPARE(700, <, num_searched);
+    CHECK_COMPARE(num_searched, <, 800);
 }
 
 TEST(dfpn_searcher, no_mate_1)

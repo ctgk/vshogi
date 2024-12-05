@@ -534,6 +534,8 @@ private:
             --searches;
             game.undo();
             return;
+        } else if (p == nullptr) {
+            m_table.add(&n, game);
         }
         if (!n.has_child()) {
             if (!n.simulate(game))
@@ -548,12 +550,6 @@ private:
             Node<Config>* const ch1st = n.get_child_1st();
             search_inner(*ch1st, game, searches, thpn_ch, thdn_ch);
             n.backprop_one(game);
-        }
-
-        // Adding & looking-up take too much time when there are many nodes
-        // in the table.
-        if ((p == nullptr) && n.found_conclusion()) {
-            m_table.add(&n, game);
         }
         game.undo();
     }

@@ -19,7 +19,7 @@ def test_found_no_mate():
     searcher.search(1100)
     assert searcher.found_conclusion()
     assert searcher.found_no_mate()
-    assert 750 < searcher.get_search_count() < 850
+    assert 700 < searcher.get_search_count() < 800
 
 
 if __name__ == '__main__':
