@@ -10,7 +10,7 @@
 namespace test_vshogi::test_shogi
 {
 
-TEST_GROUP (shogi_magic) {
+TEST_GROUP (test_shogi_magic) {
     std::uint32_t random_uint32()
     {
         const std::uint32_t u1 = static_cast<std::uint32_t>(random()) & 0xffffu;
@@ -61,11 +61,11 @@ TEST_GROUP (shogi_magic) {
         for (uint ii = (1u << num_relevant_squares); ii--;) {
             occupancies[ii] = Magic::get_occupancy(
                 ii, num_relevant_squares, relevant_square_locations);
-            attacks[ii]
-                = BitBoard::compute_ray_to(sq, directions[0], occupancies[ii]);
-            if (directions.size() == 2)
-                attacks[ii] |= BitBoard::compute_ray_to(
-                    sq, directions[1], occupancies[ii]);
+            attacks[ii] = BitBoard();
+            for (auto&& dir : directions) {
+                attacks[ii]
+                    |= BitBoard::compute_ray_to(sq, dir, occupancies[ii]);
+            }
         }
 
         for (uint kk = 10000000; kk--;) {
@@ -114,11 +114,14 @@ TEST_GROUP (shogi_magic) {
         using namespace vshogi::shogi;
         for (auto sq :
              vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-            std::cout << "0x" << std::hex << std::setfill('0') << std::setw(5)
+            std::cout << "(static_cast<uint128>(0x" << std::hex
+                      << std::setfill('0') << std::setw(5)
                       << static_cast<std::uint64_t>(array[sq] >> 64)
+                      << ") << 64) | static_cast<uint128>(0x"
                       << std::setfill('0')
                       << std::setw(sizeof(std::uint64_t) * 2)
-                      << static_cast<std::uint64_t>(array[sq]) << std::dec;
+                      << static_cast<std::uint64_t>(array[sq]) << ")"
+                      << std::dec;
 
             if (Squares::to_file(sq) == FILE1)
                 std::cout << ",\n";
@@ -128,7 +131,7 @@ TEST_GROUP (shogi_magic) {
     }
 };
 
-TEST(shogi_magic, get_south_attack)
+TEST(test_shogi_magic, get_south_attack)
 {
     using namespace vshogi::shogi;
     {
@@ -140,7 +143,7 @@ TEST(shogi_magic, get_south_attack)
     }
 }
 
-TEST(shogi_magic, get_adjacent_attack)
+TEST(test_shogi_magic, get_adjacent_attack)
 {
     using namespace vshogi::shogi;
     {
@@ -166,7 +169,7 @@ TEST(shogi_magic, get_adjacent_attack)
     }
 }
 
-TEST(shogi_magic, get_diagonal_attack)
+TEST(test_shogi_magic, get_diagonal_attack)
 {
     using namespace vshogi::shogi;
     {
@@ -192,7 +195,79 @@ TEST(shogi_magic, get_diagonal_attack)
     }
 }
 
-// TEST(shogi_magic, generate_premask_north)
+// TEST(test_shogi_magic, generate_magic_numbers)
+// {
+//     using namespace vshogi::shogi;
+//     std::uint32_t magics[Config::num_squares] = {};
+
+//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//         const std::uint32_t magic
+//             = find_magic_number(sq, {vshogi::DIR_N,});
+//         CHECK_FALSE(magic == 0u);
+//         magics[sq] = magic;
+//     }
+//     std::cout << "\ntemplate <>\n";
+//     std::cout << "inline const std::uint32_t "
+//                  "shogi::Magic::magic_number_north["
+//                  "shogi::Config::num_squares]={\n// clang-format off\n";
+//     print_array(magics, true);
+//     std::cout << "// clang-format on\n};";
+
+//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//         const std::uint32_t magic
+//             = find_magic_number(sq, {vshogi::DIR_S,});
+//         CHECK_FALSE(magic == 0u);
+//         magics[sq] = magic;
+//     }
+//     std::cout << "\ntemplate <>\n";
+//     std::cout << "inline const std::uint32_t "
+//                  "shogi::Magic::magic_number_south["
+//                  "shogi::Config::num_squares]={\n// clang-format off\n";
+//     print_array(magics, true);
+//     std::cout << "// clang-format on\n};";
+
+//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//         const std::uint32_t magic
+//             = find_magic_number(sq, {vshogi::DIR_N, vshogi::DIR_S});
+//         CHECK_FALSE(magic == 0u);
+//         magics[sq] = magic;
+//     }
+//     std::cout << "\ntemplate <>\n";
+//     std::cout << "inline const std::uint32_t "
+//                  "shogi::Magic::magic_number_vertical["
+//                  "shogi::Config::num_squares]={\n// clang-format off\n";
+//     print_array(magics, true);
+//     std::cout << "// clang-format on\n};";
+
+//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//         const std::uint32_t magic
+//             = find_magic_number(sq, {vshogi::DIR_W, vshogi::DIR_E});
+//         CHECK_FALSE(magic == 0u);
+//         magics[sq] = magic;
+//     }
+//     std::cout << "\ntemplate <>\n";
+//     std::cout << "inline const std::uint32_t "
+//                  "shogi::Magic::magic_number_horizontal["
+//                  "shogi::Config::num_squares]={\n// clang-format off\n";
+//     print_array(magics, true);
+//     std::cout << "// clang-format on\n};";
+
+//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//         const std::uint32_t magic = find_magic_number(
+//             sq,
+//             {vshogi::DIR_NW, vshogi::DIR_NE, vshogi::DIR_SW, vshogi::DIR_SE});
+//         CHECK_FALSE(magic == 0u);
+//         magics[sq] = magic;
+//     }
+//     std::cout << "\ntemplate <>\n";
+//     std::cout << "inline const std::uint32_t "
+//                  "shogi::Magic::magic_number_diagonal["
+//                  "shogi::Config::num_squares]={\n// clang-format off\n";
+//     print_array(magics, true);
+//     std::cout << "// clang-format on\n};";
+// }
+
+// TEST(test_shogi_magic, generate_premasks)
 // {
 //     using namespace vshogi::shogi;
 //     vshogi::uint128 premask_array[Config::num_squares] = {};
@@ -207,14 +282,14 @@ TEST(shogi_magic, get_diagonal_attack)
 //             }
 //         }
 //     }
-//     std::cout << "\nPremasks for northern attacks\n";
+//     std::cout << "\ntemplate <>\n";
+//     std::cout << "inline const shogi::BitBoard shogi::Magic::premask_north["
+//                  "shogi::Config::num_squares]={\n"
+//                  "// clang-format off\n";
 //     print_array(premask_array);
-// }
+//     std::cout << "// clang-format on\n" << "};";
 
-// TEST(shogi_magic, generate_premask_south)
-// {
-//     using namespace vshogi::shogi;
-//     vshogi::uint128 premask_array[Config::num_squares] = {};
+//     std::fill_n(premask_array, Config::num_squares, 0u);
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
 //         for (auto&& dir : {vshogi::DIR_S,}) {
 //             for (SquareEnum s = Squares::shift(sq, dir);;) {
@@ -226,14 +301,14 @@ TEST(shogi_magic, get_diagonal_attack)
 //             }
 //         }
 //     }
-//     std::cout << "\nPremasks for southern attacks\n";
+//     std::cout << "\ntemplate <>\n";
+//     std::cout << "inline const shogi::BitBoard shogi::Magic::premask_south["
+//                  "shogi::Config::num_squares]={\n"
+//                  "// clang-format off\n";
 //     print_array(premask_array);
-// }
+//     std::cout << "// clang-format on\n" << "};";
 
-// TEST(shogi_magic, generate_premask_vertical)
-// {
-//     using namespace vshogi::shogi;
-//     vshogi::uint128 premask_array[Config::num_squares] = {};
+//     std::fill_n(premask_array, Config::num_squares, 0u);
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
 //         for (auto&& dir : {vshogi::DIR_N, vshogi::DIR_S}) {
 //             for (SquareEnum s = Squares::shift(sq, dir);;) {
@@ -245,14 +320,14 @@ TEST(shogi_magic, get_diagonal_attack)
 //             }
 //         }
 //     }
-//     std::cout << "\nPremasks for vertical attacks\n";
+//     std::cout << "\ntemplate <>\n";
+//     std::cout << "inline const shogi::BitBoard shogi::Magic::premask_vertical["
+//                  "shogi::Config::num_squares]={\n"
+//                  "// clang-format off\n";
 //     print_array(premask_array);
-// }
+//     std::cout << "// clang-format on\n" << "};";
 
-// TEST(shogi_magic, generate_premask_horizontal)
-// {
-//     using namespace vshogi::shogi;
-//     vshogi::uint128 premask_array[Config::num_squares] = {};
+//     std::fill_n(premask_array, Config::num_squares, 0u);
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
 //         for (auto&& dir : {vshogi::DIR_W, vshogi::DIR_E}) {
 //             for (SquareEnum s = Squares::shift(sq, dir);;) {
@@ -264,16 +339,18 @@ TEST(shogi_magic, get_diagonal_attack)
 //             }
 //         }
 //     }
-//     std::cout << "\nPremasks for horizontal attacks\n";
+//     std::cout << "\ntemplate <>\n";
+//     std::cout << "inline const shogi::BitBoard "
+//                  "shogi::Magic::premask_horizontal["
+//                  "shogi::Config::num_squares]={\n"
+//                  "// clang-format off\n";
 //     print_array(premask_array);
-// }
+//     std::cout << "// clang-format on\n" << "};";
 
-// TEST(shogi_magic, generate_premask_sw_ne)
-// {
-//     using namespace vshogi::shogi;
-//     vshogi::uint128 premask_array[Config::num_squares] = {};
+//     std::fill_n(premask_array, Config::num_squares, 0u);
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         for (auto&& dir : {vshogi::DIR_SW, vshogi::DIR_NE}) {
+//         for (auto&& dir :
+//              {vshogi::DIR_NW, vshogi::DIR_NE, vshogi::DIR_SW, vshogi::DIR_SE}) {
 //             for (SquareEnum s = Squares::shift(sq, dir);;) {
 //                 const auto next = Squares::shift(s, dir);
 //                 if (next == SQ_NA)
@@ -283,106 +360,13 @@ TEST(shogi_magic, get_diagonal_attack)
 //             }
 //         }
 //     }
-//     std::cout << "\nPremasks for SW-NE attacks\n" << std::endl;
+//     std::cout << "\ntemplate <>\n";
+//     std::cout << "inline const shogi::BitBoard "
+//                  "shogi::Magic::premask_diagonal["
+//                  "shogi::Config::num_squares]={\n"
+//                  "// clang-format off\n";
 //     print_array(premask_array);
-// }
-
-// TEST(shogi_magic, generate_premask_nw_se)
-// {
-//     using namespace vshogi::shogi;
-//     vshogi::uint128 premask_array[Config::num_squares] = {};
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         for (auto&& dir : {vshogi::DIR_NW, vshogi::DIR_SE}) {
-//             for (SquareEnum s = Squares::shift(sq, dir);;) {
-//                 const auto next = Squares::shift(s, dir);
-//                 if (next == SQ_NA)
-//                     break;
-//                 premask_array[sq] |= BitBoard::from_square(s).value();
-//                 s = next;
-//             }
-//         }
-//     }
-//     std::cout << "\nPremasks for NW-SE attacks\n" << std::endl;
-//     print_array(premask_array);
-// }
-
-// TEST(shogi_magic, generate_magic_numbers)
-// {
-//     using namespace vshogi::shogi;
-//     std::uint32_t magics[Config::num_squares] = {};
-
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic
-//             = find_magic_number(sq, {vshogi::DIR_N,});
-//         CHECK_FALSE(magic == 0u);
-//         magics[sq] = magic;
-//     }
-//     std::cout << "\nMagic numbers for northern attacks" << std::endl;
-//     print_array(magics, true);
-
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic
-//             = find_magic_number(sq, {vshogi::DIR_S,});
-//         CHECK_FALSE(magic == 0u);
-//         magics[sq] = magic;
-//     }
-//     std::cout << "\nMagic numbers for southern attacks" << std::endl;
-//     print_array(magics, true);
-
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic
-//             = find_magic_number(sq, {vshogi::DIR_N, vshogi::DIR_S});
-//         CHECK_FALSE(magic == 0u);
-//         magics[sq] = magic;
-//     }
-//     std::cout << "\nMagic numbers for vertical attacks" << std::endl;
-//     print_array(magics, true);
-
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic
-//             = find_magic_number(sq, {vshogi::DIR_W, vshogi::DIR_E});
-//         CHECK_FALSE(magic == 0u);
-//         magics[sq] = magic;
-//     }
-//     std::cout << "\nMagic numbers for horizontal attacks" << std::endl;
-//     print_array(magics, true);
-
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic
-//             = find_magic_number(sq, {vshogi::DIR_NW, vshogi::DIR_SE});
-//         CHECK_FALSE(magic == 0u);
-//         magics[sq] = magic;
-//     }
-//     std::cout << "\nMagic numbers for NW-SE attacks" << std::endl;
-//     print_array(magics, true);
-
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic
-//             = find_magic_number(sq, {vshogi::DIR_SW, vshogi::DIR_NE});
-//         CHECK_FALSE(magic == 0u);
-//         magics[sq] = magic;
-//     }
-//     std::cout << "\nMagic numbers for SW-NE attacks" << std::endl;
-//     print_array(magics, true);
-
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic = find_magic_number(
-//             sq, {vshogi::DIR_N, vshogi::DIR_W, vshogi::DIR_E, vshogi::DIR_S});
-//         // CHECK_FALSE(magic == 0u);
-//         magics[sq] = magic;
-//     }
-//     std::cout << "\nMagic numbers for adjacent attacks" << std::endl;
-//     print_array(magics, true);
-
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic = find_magic_number(
-//             sq,
-//             {vshogi::DIR_NW, vshogi::DIR_NE, vshogi::DIR_SW, vshogi::DIR_SE});
-//         CHECK_FALSE(magic == 0u);
-//         magics[sq] = magic;
-//     }
-//     std::cout << "\nMagic numbers for diagonal attacks" << std::endl;
-//     print_array(magics, true);
+//     std::cout << "// clang-format on\n" << "};";
 // }
 
 } // namespace test_vshogi::test_shogi

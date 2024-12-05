@@ -120,7 +120,7 @@ struct Config
     static constexpr uint num_promotion_ranks = 1;
     static constexpr uint num_dir = 8; //!< NW, N, NE, W, E, SW, S, SE
     static constexpr uint num_dir_dl = 8; //!< NW, N, NE, W, E, SW, S, SE
-    static constexpr uint log2_magic_table_size = 3;
+    static constexpr uint log2_magic_table_size = 4;
     static constexpr uint max_stand_piece_count = 2;
     static constexpr uint max_stand_sfen_length = 11; // "2p2s2g2b2r "
     static constexpr uint max_acceptable_repetitions = 3;
@@ -396,63 +396,43 @@ inline const minishogi::BitBoard
 };
 template <>
 inline const minishogi::BitBoard
-    minishogi::Magic::premask_nw_se[minishogi::Config::num_squares]
+    minishogi::Magic::premask_diagonal[minishogi::Config::num_squares]
     = {
-        0x00041040, 0x00002080, 0x00000100, 0x00000000, 0x00000000,
-        0x00020800, 0x00041000, 0x00002000, 0x00000000, 0x00000000,
-        0x00010000, 0x00020000, 0x00040040, 0x00000080, 0x00000100,
-        0x00000000, 0x00000000, 0x00000800, 0x00001040, 0x00002080,
-        0x00000000, 0x00000000, 0x00010000, 0x00020800, 0x00041040,
-};
-template <>
-inline const minishogi::BitBoard
-    minishogi::Magic::premask_sw_ne[minishogi::Config::num_squares]
-    = {
-        0x00000000, 0x00000000, 0x00000040, 0x00000880, 0x00011100,
-        0x00000000, 0x00000000, 0x00000800, 0x00011000, 0x00022000,
-        0x00000040, 0x00000080, 0x00010100, 0x00020000, 0x00040000,
-        0x00000880, 0x00001100, 0x00002000, 0x00000000, 0x00000000,
-        0x00011100, 0x00022000, 0x00040000, 0x00000000, 0x00000000,
+        0x00041040, 0x00002080, 0x00000140, 0x00000880, 0x00011100,
+        0x00020800, 0x00041000, 0x00002800, 0x00011000, 0x00022000,
+        0x00010040, 0x00020080, 0x00050140, 0x00020080, 0x00040100,
+        0x00000880, 0x00001100, 0x00002800, 0x00001040, 0x00002080,
+        0x00011100, 0x00022000, 0x00050000, 0x00020800, 0x00041040,
 };
 template <>
 inline const std::uint32_t
     minishogi::Magic::magic_number_vertical[minishogi::Config::num_squares]
     = {
-        0x01208480, 0x01102004, 0x00444200, 0x04828800, 0x18220709,
-        0x0520a100, 0x80104005, 0x02144a10, 0x80020820, 0x00028402,
-        0xc10502c8, 0xc50cb001, 0x01402420, 0x38602500, 0x80940800,
-        0x1a620224, 0x81240020, 0xb0540000, 0x01444005, 0x02288013,
-        0x04144900, 0x4111a048, 0x20824400, 0x044c0a01, 0x00249002,
+        0x01208480, 0x01102004, 0x00811600, 0x28209001, 0x00325820,
+        0x00102e08, 0x01822001, 0x51288900, 0x0080d000, 0x00d21400,
+        0x0200a004, 0x10808000, 0x208028c2, 0x0488c404, 0x00108c90,
+        0x24a10122, 0x42020002, 0x10414020, 0x00440000, 0x00410000,
+        0x8118a020, 0x04828800, 0x00a24008, 0x82111400, 0x002c6908,
 };
 template <>
 inline const std::uint32_t
     minishogi::Magic::magic_number_horizontal[minishogi::Config::num_squares]
     = {
-        0x10012000, 0x9c000204, 0x10002381, 0x10001044, 0x10004420,
-        0x20800002, 0x44803410, 0x008904d0, 0x80910048, 0x20804a42,
-        0x60048010, 0x04040850, 0x40310000, 0x14080602, 0x08141820,
-        0x01006000, 0x00801000, 0x00402802, 0x0010282a, 0x00009000,
-        0x01a22100, 0x00020100, 0x00020100, 0x10050240, 0x20004102,
+        0x8842842c, 0x04100100, 0x10020004, 0xa0400000, 0x08900200,
+        0x00c80800, 0x02240001, 0x22300a40, 0x5944080a, 0x03610010,
+        0x00020420, 0x40410008, 0x00248220, 0x40268080, 0x00112080,
+        0x40049040, 0x18a21080, 0x080c3a14, 0x40408a04, 0x00002000,
+        0x08020080, 0x64801091, 0x08000428, 0x60010524, 0x00840240,
 };
 template <>
 inline const std::uint32_t
-    minishogi::Magic::magic_number_nw_se[minishogi::Config::num_squares]
+    minishogi::Magic::magic_number_diagonal[minishogi::Config::num_squares]
     = {
-        0x00883080, 0x07190010, 0x80342404, 0x08001400, 0x44200084,
-        0x0004460c, 0x00042300, 0x40040000, 0x40040000, 0x00100902,
-        0x00808000, 0x00814000, 0x03200800, 0x54510800, 0x00500410,
-        0x08090190, 0x021c0008, 0x16100100, 0x41020040, 0x0101a100,
-        0x40200082, 0x21401400, 0x00028040, 0x00089108, 0x2a021300,
-};
-template <>
-inline const std::uint32_t
-    minishogi::Magic::magic_number_sw_ne[minishogi::Config::num_squares]
-    = {
-        0x00000180, 0x50000000, 0x62810a00, 0x00488340, 0x0882480e,
-        0x04010004, 0x00280020, 0x1004004d, 0x00262000, 0x00612209,
-        0x02a08022, 0x00800028, 0x88e85080, 0x0000a004, 0x08082000,
-        0x91040000, 0x5c4a0018, 0x00820003, 0x80040000, 0x00200000,
-        0x41568004, 0x00049110, 0x42002000, 0x00a00c00, 0x24a00000,
+        0x42c22000, 0x8084c482, 0x00824000, 0x88420080, 0x0412c050,
+        0x4002c000, 0x00028402, 0x86040008, 0x0288900a, 0x20020888,
+        0x00422000, 0x40201801, 0x00881000, 0x0128a400, 0x00102000,
+        0x00291120, 0x04144900, 0x00040100, 0x00814400, 0x404400a4,
+        0x10218802, 0x00020d48, 0x00022a02, 0x892c0802, 0x0064a200,
 };
 template <>
 inline minishogi::BitBoard
@@ -465,13 +445,8 @@ inline minishogi::BitBoard minishogi::Magic::attack_table_horizontal
     = {};
 template <>
 inline minishogi::BitBoard
-    minishogi::Magic::attack_table_nw_se[minishogi::Config::num_squares]
-                                        [minishogi::Config::magic_table_size]
-    = {};
-template <>
-inline minishogi::BitBoard
-    minishogi::Magic::attack_table_sw_ne[minishogi::Config::num_squares]
-                                        [minishogi::Config::magic_table_size]
+    minishogi::Magic::attack_table_diagonal[minishogi::Config::num_squares]
+                                           [minishogi::Config::magic_table_size]
     = {};
 
 template <>

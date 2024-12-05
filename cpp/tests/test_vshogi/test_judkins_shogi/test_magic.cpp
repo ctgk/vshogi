@@ -10,7 +10,7 @@
 namespace test_vshogi::test_judkins_shogi
 {
 
-TEST_GROUP (judkins_shogi_magic) {
+TEST_GROUP (test_judkins_shogi_magic) {
     std::uint32_t random_uint32()
     {
         const std::uint32_t u1 = static_cast<std::uint32_t>(random()) & 0xffffu;
@@ -43,7 +43,8 @@ TEST_GROUP (judkins_shogi_magic) {
         const std::vector<vshogi::DirectionEnum>& directions)
     {
         using namespace vshogi::judkins_shogi;
-        constexpr uint max_num_unique_occupancies = 1u << 8;
+        constexpr uint max_num_unique_occupancies
+            = (1u << Config::log2_magic_table_size);
         const auto premask = get_premask(sq, directions);
         const uint num_relevant_squares = premask.hamming_weight();
         if (num_relevant_squares == 0u)
@@ -60,10 +61,11 @@ TEST_GROUP (judkins_shogi_magic) {
         for (uint ii = (1u << num_relevant_squares); ii--;) {
             occupancies[ii] = Magic::get_occupancy(
                 ii, num_relevant_squares, relevant_square_locations);
-            attacks[ii]
-                = BitBoard::compute_ray_to(sq, directions[0], occupancies[ii])
-                  | BitBoard::compute_ray_to(
-                      sq, directions[1], occupancies[ii]);
+            attacks[ii] = BitBoard();
+            for (auto&& dir : directions) {
+                attacks[ii]
+                    |= BitBoard::compute_ray_to(sq, dir, occupancies[ii]);
+            }
         }
 
         for (uint kk = 1000000; kk--;) {
@@ -108,7 +110,7 @@ TEST_GROUP (judkins_shogi_magic) {
     }
 };
 
-TEST(judkins_shogi_magic, get_adjacent_attack)
+TEST(test_judkins_shogi_magic, get_adjacent_attack)
 {
     using namespace vshogi::judkins_shogi;
     {
@@ -134,7 +136,7 @@ TEST(judkins_shogi_magic, get_adjacent_attack)
     }
 }
 
-TEST(judkins_shogi_magic, get_diagonal_attack)
+TEST(test_judkins_shogi_magic, get_diagonal_attack)
 {
     using namespace vshogi::judkins_shogi;
     {
@@ -167,7 +169,53 @@ TEST(judkins_shogi_magic, get_diagonal_attack)
     }
 }
 
-// TEST(judkins_shogi_magic, generate_premask_vertical)
+// TEST(test_judkins_shogi_magic, generate_magic_numbers)
+// {
+//     using namespace vshogi::judkins_shogi;
+//     std::uint32_t magics[Config::num_squares];
+
+//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//         const std::uint32_t magic
+//             = find_magic_number(sq, {vshogi::DIR_N, vshogi::DIR_S});
+//         CHECK_FALSE(magic == 0u);
+//         magics[sq] = magic;
+//     }
+//     std::cout << "\ntemplate <>\n";
+//     std::cout << "inline const std::uint32_t "
+//                  "judkins_shogi::Magic::magic_number_vertical["
+//                  "judkins_shogi::Config::num_squares]={\n";
+//     print_array(magics, true);
+//     std::cout << "};";
+
+//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//         const std::uint32_t magic
+//             = find_magic_number(sq, {vshogi::DIR_W, vshogi::DIR_E});
+//         CHECK_FALSE(magic == 0u);
+//         magics[sq] = magic;
+//     }
+//     std::cout << "\ntemplate <>\n";
+//     std::cout << "inline const std::uint32_t "
+//                  "judkins_shogi::Magic::magic_number_horizontal["
+//                  "judkins_shogi::Config::num_squares]={\n";
+//     print_array(magics, true);
+//     std::cout << "};";
+
+//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//         const std::uint32_t magic = find_magic_number(
+//             sq,
+//             {vshogi::DIR_NW, vshogi::DIR_NE, vshogi::DIR_SW, vshogi::DIR_SE});
+//         CHECK_FALSE(magic == 0u);
+//         magics[sq] = magic;
+//     }
+//     std::cout << "\ntemplate <>\n";
+//     std::cout << "inline const std::uint32_t "
+//                  "judkins_shogi::Magic::magic_number_diagonal["
+//                  "judkins_shogi::Config::num_squares]={\n";
+//     print_array(magics, true);
+//     std::cout << "};";
+// }
+
+// TEST(test_judkins_shogi_magic, generate_premasks)
 // {
 //     using namespace vshogi::judkins_shogi;
 //     std::uint64_t premask_array[Config::num_squares] = {};
@@ -182,14 +230,15 @@ TEST(judkins_shogi_magic, get_diagonal_attack)
 //             }
 //         }
 //     }
-//     std::cout << "\nPremasks for vertical attacks\n";
+//     std::cout << "\ntemplate <>\n";
+//     std::cout << "inline const judkins_shogi::BitBoard "
+//                  "judkins_shogi::Magic::premask_vertical["
+//                  "judkins_shogi::Config::num_squares]={\n"
+//                  "// clang-format off\n";
 //     print_array(premask_array, true);
-// }
+//     std::cout << "// clang-format on\n" << "};";
 
-// TEST(judkins_shogi_magic, generate_premask_horizontal)
-// {
-//     using namespace vshogi::judkins_shogi;
-//     std::uint64_t premask_array[Config::num_squares] = {};
+//     std::fill_n(premask_array, Config::num_squares, 0u);
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
 //         for (auto&& dir : {vshogi::DIR_W, vshogi::DIR_E}) {
 //             for (SquareEnum s = Squares::shift(sq, dir);;) {
@@ -201,16 +250,18 @@ TEST(judkins_shogi_magic, get_diagonal_attack)
 //             }
 //         }
 //     }
-//     std::cout << "\nPremasks for horizontal attacks\n";
+//     std::cout << "\ntemplate <>\n";
+//     std::cout << "inline const judkins_shogi::BitBoard "
+//                  "judkins_shogi::Magic::premask_horizontal["
+//                  "judkins_shogi::Config::num_squares]={\n"
+//                  "// clang-format off\n";
 //     print_array(premask_array, true);
-// }
+//     std::cout << "// clang-format on\n" << "};";
 
-// TEST(judkins_shogi_magic, generate_premask_sw_ne)
-// {
-//     using namespace vshogi::judkins_shogi;
-//     std::uint64_t premask_array[Config::num_squares] = {};
+//     std::fill_n(premask_array, Config::num_squares, 0u);
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         for (auto&& dir : {vshogi::DIR_SW, vshogi::DIR_NE}) {
+//         for (auto&& dir :
+//              {vshogi::DIR_NW, vshogi::DIR_NE, vshogi::DIR_SW, vshogi::DIR_SE}) {
 //             for (SquareEnum s = Squares::shift(sq, dir);;) {
 //                 const auto next = Squares::shift(s, dir);
 //                 if (next == SQ_NA)
@@ -220,69 +271,13 @@ TEST(judkins_shogi_magic, get_diagonal_attack)
 //             }
 //         }
 //     }
-//     std::cout << "\nPremasks for SW-NE attacks\n" << std::endl;
+//     std::cout << "\ntemplate <>\n";
+//     std::cout << "inline const judkins_shogi::BitBoard "
+//                  "judkins_shogi::Magic::premask_diagonal["
+//                  "judkins_shogi::Config::num_squares]={\n"
+//                  "// clang-format off\n";
 //     print_array(premask_array, true);
-// }
-
-// TEST(judkins_shogi_magic, generate_premask_nw_se)
-// {
-//     using namespace vshogi::judkins_shogi;
-//     std::uint64_t premask_array[Config::num_squares] = {};
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         for (auto&& dir : {vshogi::DIR_NW, vshogi::DIR_SE}) {
-//             for (SquareEnum s = Squares::shift(sq, dir);;) {
-//                 const auto next = Squares::shift(s, dir);
-//                 if (next == SQ_NA)
-//                     break;
-//                 premask_array[sq] |= BitBoard::from_square(s).value();
-//                 s = next;
-//             }
-//         }
-//     }
-//     std::cout << "\nPremasks for NW-SE attacks\n" << std::endl;
-//     print_array(premask_array, true);
-// }
-
-// TEST(judkins_shogi_magic, generate_magic_numbers)
-// {
-//     using namespace vshogi::judkins_shogi;
-//     std::uint32_t magics[Config::num_squares];
-
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic
-//             = find_magic_number(sq, {vshogi::DIR_N, vshogi::DIR_S});
-//         CHECK_FALSE(magic == 0u);
-//         magics[sq] = magic;
-//     }
-//     std::cout << "\nMagic numbers for vertical attacks" << std::endl;
-//     print_array(magics, true);
-
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic
-//             = find_magic_number(sq, {vshogi::DIR_W, vshogi::DIR_E});
-//         CHECK_FALSE(magic == 0u);
-//         magics[sq] = magic;
-//     }
-//     std::cout << "\nMagic numbers for horizontal attacks" << std::endl;
-//     print_array(magics, true);
-
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic
-//             = find_magic_number(sq, {vshogi::DIR_NW, vshogi::DIR_SE});
-//         CHECK_FALSE(magic == 0u);
-//         magics[sq] = magic;
-//     }
-//     std::cout << "\nMagic numbers for NW-SE attacks" << std::endl;
-//     print_array(magics, true);
-
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic
-//             = find_magic_number(sq, {vshogi::DIR_SW, vshogi::DIR_NE});
-//         CHECK_FALSE(magic == 0u);
-//         magics[sq] = magic;
-//     }
-//     std::cout << "\nMagic numbers for SW-NE attacks" << std::endl;
-//     print_array(magics, true);
+//     std::cout << "// clang-format on\n" << "};";
 // }
 
 } // namespace test_vshogi::test_judkins_shogi
