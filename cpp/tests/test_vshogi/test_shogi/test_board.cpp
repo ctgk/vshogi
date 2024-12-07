@@ -7,10 +7,10 @@ namespace test_vshogi::test_shogi
 
 using namespace vshogi::shogi;
 
-TEST_GROUP (shogi_board) {
+TEST_GROUP (test_shogi_board) {
 };
 
-TEST(shogi_board, get)
+TEST(test_shogi_board, get)
 {
     const auto b = Board();
     CHECK_EQUAL(VOID, b[SQ_5E]);
@@ -19,7 +19,7 @@ TEST(shogi_board, get)
     CHECK_EQUAL(SQ_5A, b.get_king_location(vshogi::WHITE));
 }
 
-TEST(shogi_board, set)
+TEST(test_shogi_board, set)
 {
     auto b = Board();
     b.apply(SQ_5E, B_HI);
@@ -33,7 +33,7 @@ TEST(shogi_board, set)
     CHECK_EQUAL(SQ_4H, b.get_king_location(vshogi::BLACK));
 }
 
-TEST(shogi_board, set_sfen)
+TEST(test_shogi_board, set_sfen)
 {
     auto b = Board();
     const auto sfen = "8k/8P/9/9/9/9/9/4K4/9 b - 1";
@@ -47,7 +47,7 @@ TEST(shogi_board, set_sfen)
     CHECK_EQUAL(SQ_5H, b.get_king_location(vshogi::BLACK));
 }
 
-TEST(shogi_board, append_sfen)
+TEST(test_shogi_board, append_sfen)
 {
     const auto b = Board();
     auto actual = std::string();
@@ -57,7 +57,7 @@ TEST(shogi_board, append_sfen)
         actual.c_str());
 }
 
-TEST(shogi_board, is_square_attacked)
+TEST(test_shogi_board, is_square_attacked)
 {
     {
         // by FU.
@@ -99,12 +99,46 @@ TEST(shogi_board, is_square_attacked)
     }
 }
 
-TEST(shogi_board, find_pinned)
+TEST(test_shogi_board, find_pinned)
 {
     const auto b = Board("4b3l/9/6P1P/9/4r1P1K/9/9/9/9");
     const auto actual = b.find_pinned(vshogi::BLACK);
     const auto expect = bb_3c | bb_1c | bb_3e;
     CHECK_TRUE(expect.value() == actual.value());
+}
+
+TEST(test_shogi_board, find_ranging_attacker)
+{
+    {
+        const auto b = Board("9/9/9/9/9/9/9/9/9");
+        const auto actual
+            = b.find_ranging_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
+        CHECK_EQUAL(SQ_NA, actual);
+    }
+    {
+        const auto b = Board("9/9/9/9/9/9/9/9/8L");
+        const auto actual
+            = b.find_ranging_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
+        CHECK_EQUAL(SQ_1I, actual);
+    }
+    {
+        const auto b = Board("9/9/9/8P/9/9/9/9/8L");
+        const auto actual
+            = b.find_ranging_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
+        CHECK_EQUAL(SQ_NA, actual);
+    }
+    {
+        const auto b = Board("9/9/9/8P/9/9/9/9/8L");
+        const auto actual = b.find_ranging_attacker(
+            vshogi::BLACK, SQ_1A, vshogi::DIR_S, SQ_1D);
+        CHECK_EQUAL(SQ_1I, actual);
+    }
+    {
+        const auto b = Board("9/9/9/8P/9/9/9/8l/8L");
+        const auto actual = b.find_ranging_attacker(
+            vshogi::BLACK, SQ_1A, vshogi::DIR_S, SQ_1D);
+        CHECK_EQUAL(SQ_NA, actual);
+    }
 }
 
 } // namespace test_vshogi::test_shogi

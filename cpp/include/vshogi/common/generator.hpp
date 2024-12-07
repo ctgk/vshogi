@@ -1,6 +1,8 @@
 #ifndef VSHOGI_COMMON_GENERATOR_HPP
 #define VSHOGI_COMMON_GENERATOR_HPP
 
+#include <cassert>
+
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
@@ -1158,6 +1160,7 @@ private:
     {
         if (m_state.in_check()) {
             const auto checker_sq = m_state.get_checker_location();
+            assert(checker_sq != SQ_NA);
             m_dst_mask &= BitBoardType::get_line_segment(checker_sq, king_sq)
                               .set(checker_sq);
         }

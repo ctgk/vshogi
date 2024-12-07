@@ -178,4 +178,32 @@ TEST(judkins_shogi_board, find_pinned)
     CHECK_EQUAL(expect.value(), actual.value());
 }
 
+TEST(judkins_shogi_board, find_ranging_attacker)
+{
+    {
+        const auto b = Board("6/6/6/6/6/b5");
+        const auto actual
+            = b.find_ranging_attacker(vshogi::WHITE, SQ_1A, vshogi::DIR_SW);
+        CHECK_EQUAL(SQ_6F, actual);
+    }
+    {
+        const auto b = Board("6/6/3p2/6/6/b5");
+        const auto actual
+            = b.find_ranging_attacker(vshogi::WHITE, SQ_1A, vshogi::DIR_SW);
+        CHECK_EQUAL(SQ_NA, actual);
+    }
+    {
+        const auto b = Board("6/6/3p2/6/6/b5");
+        const auto actual = b.find_ranging_attacker(
+            vshogi::WHITE, SQ_1A, vshogi::DIR_SW, SQ_3C);
+        CHECK_EQUAL(SQ_6F, actual);
+    }
+    {
+        const auto b = Board("6/6/3p2/2r3/6/b5");
+        const auto actual = b.find_ranging_attacker(
+            vshogi::WHITE, SQ_1A, vshogi::DIR_SW, SQ_3C);
+        CHECK_EQUAL(SQ_NA, actual);
+    }
+}
+
 } // namespace test_vshogi::test_judkins_shogi

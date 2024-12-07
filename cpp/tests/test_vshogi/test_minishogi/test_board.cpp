@@ -257,4 +257,32 @@ TEST(minishogi_board, find_pinned)
     CHECK_EQUAL(expect.value(), actual.value());
 }
 
+TEST(minishogi_board, find_ranging_attacker)
+{
+    {
+        const auto b = Board("5/5/5/5/4R");
+        const auto actual
+            = b.find_ranging_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
+        CHECK_EQUAL(SQ_1E, actual);
+    }
+    {
+        const auto b = Board("5/5/4P/5/4R");
+        const auto actual
+            = b.find_ranging_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
+        CHECK_EQUAL(SQ_NA, actual);
+    }
+    {
+        const auto b = Board("5/5/4P/5/4R");
+        const auto actual = b.find_ranging_attacker(
+            vshogi::BLACK, SQ_1A, vshogi::DIR_S, SQ_1C);
+        CHECK_EQUAL(SQ_1E, actual);
+    }
+    {
+        const auto b = Board("5/5/4P/4B/4R");
+        const auto actual = b.find_ranging_attacker(
+            vshogi::BLACK, SQ_1A, vshogi::DIR_S, SQ_1C);
+        CHECK_EQUAL(SQ_NA, actual);
+    }
+}
+
 } // namespace test_vshogi::test_minishogi
