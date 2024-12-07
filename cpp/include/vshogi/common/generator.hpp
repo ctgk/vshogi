@@ -742,8 +742,9 @@ private:
                 goto ExitLabel;
         }
         if (m_pinned.is_one(src)) {
-            movable &= BitBoardType::get_ray_to(
-                king_sq, SHelper::get_direction(src, king_sq));
+            const auto dir = SHelper::get_direction(src, king_sq);
+            assert((dir < 8) || (dir == DIR_NA));
+            movable &= BitBoardType::get_ray_to(king_sq, dir);
         }
     ExitLabel:
         m_dst_iter = movable.square_iterator();
@@ -934,8 +935,9 @@ private:
                 goto ExitLabel;
         }
         if (m_pinned.is_one(src)) {
-            movable &= BitBoardType::get_ray_to(
-                king_sq, SHelper::get_direction(src, king_sq));
+            const auto dir = SHelper::get_direction(src, king_sq);
+            assert((dir < 8) || (dir == DIR_NA));
+            movable &= BitBoardType::get_ray_to(king_sq, dir);
         }
     ExitLabel:
         m_dst_iter = movable.square_iterator();
@@ -1169,8 +1171,9 @@ private:
     update_dst_mask_by_counter_check(const Square src, const Square king_sq)
     {
         if (m_pinned.is_one(src)) {
-            m_dst_mask &= BitBoardType::get_ray_to(
-                king_sq, SHelper::get_direction(src, king_sq));
+            const auto dir = SHelper::get_direction(src, king_sq);
+            assert((dir < 8) || (dir == DIR_NA));
+            m_dst_mask &= BitBoardType::get_ray_to(king_sq, dir);
         }
     }
     void update_mask_by_forcing_check(BitBoardType& mask, const ColoredPiece p)

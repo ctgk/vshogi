@@ -206,6 +206,15 @@ public:
     }
     static BitBoard get_attacks_by(
         const ColoredPiece& p, const Square& sq, const BitBoard& occupied);
+
+    /**
+     * Get ray mask along a direction from a square.
+     *
+     * @note Ray is infinite even if the direction is a knight-direction.
+     * @param sq Beginning square of a ray. (exclusive)
+     * @param dir Direction of a ray.
+     * @return BitBoard ray mask.
+     */
     static BitBoard get_ray_to(const Square& sq, const DirectionEnum& dir)
     {
         if ((sq == SHelper::SQ_NA) || (dir == DIR_NA))

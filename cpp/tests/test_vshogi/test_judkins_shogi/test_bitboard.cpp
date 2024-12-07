@@ -7,10 +7,10 @@ namespace test_vshogi::test_judkins_shogi
 
 using namespace vshogi::judkins_shogi;
 
-TEST_GROUP (judkins_shogi_bitboard) {
+TEST_GROUP (test_judkins_shogi_bitboard) {
 };
 
-TEST(judkins_shogi_bitboard, xor_operator)
+TEST(test_judkins_shogi_bitboard, xor_operator)
 {
     {
         const auto actual = (bb_1a | bb_2a) ^ (bb_2a | bb_3a);
@@ -25,7 +25,7 @@ TEST(judkins_shogi_bitboard, xor_operator)
     }
 }
 
-TEST(judkins_shogi_bitboard, shift)
+TEST(test_judkins_shogi_bitboard, shift)
 {
     for (auto dir :
          vshogi::EnumIterator<vshogi::DirectionEnum, Config::num_dir>()) {
@@ -38,7 +38,34 @@ TEST(judkins_shogi_bitboard, shift)
     }
 }
 
-TEST(judkins_shogi_bitboard, fu)
+TEST(test_judkins_shogi_bitboard, get_ray_to)
+{
+    {
+        const auto actual = BitBoard::get_ray_to(SQ_NA, vshogi::DIR_NA);
+        CHECK_EQUAL(0, actual.hamming_weight());
+    }
+    {
+        const auto actual = BitBoard::get_ray_to(SQ_1B, vshogi::DIR_NA);
+        CHECK_EQUAL(0, actual.hamming_weight());
+    }
+    {
+        const auto actual = BitBoard::get_ray_to(SQ_NA, vshogi::DIR_N);
+        CHECK_EQUAL(0, actual.hamming_weight());
+    }
+    {
+        const auto actual = BitBoard::get_ray_to(SQ_1B, vshogi::DIR_N);
+        CHECK_EQUAL(1, actual.hamming_weight());
+        CHECK_TRUE(actual.is_one(SQ_1A));
+    }
+    {
+        const auto actual = BitBoard::get_ray_to(SQ_1B, vshogi::DIR_SSW);
+        CHECK_EQUAL(2, actual.hamming_weight());
+        CHECK_TRUE(actual.is_one(SQ_2D));
+        CHECK_TRUE(actual.is_one(SQ_3F));
+    }
+}
+
+TEST(test_judkins_shogi_bitboard, fu)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_FU, SQ_3A);
@@ -56,7 +83,7 @@ TEST(judkins_shogi_bitboard, fu)
     }
 }
 
-TEST(judkins_shogi_bitboard, ke)
+TEST(test_judkins_shogi_bitboard, ke)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_KE, SQ_5E);
@@ -77,7 +104,7 @@ TEST(judkins_shogi_bitboard, ke)
     }
 }
 
-TEST(judkins_shogi_bitboard, gi)
+TEST(test_judkins_shogi_bitboard, gi)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_GI, SQ_2E);
@@ -93,7 +120,7 @@ TEST(judkins_shogi_bitboard, gi)
     }
 }
 
-TEST(judkins_shogi_bitboard, ki)
+TEST(test_judkins_shogi_bitboard, ki)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_KI, SQ_6A);
@@ -107,7 +134,7 @@ TEST(judkins_shogi_bitboard, ki)
     }
 }
 
-TEST(judkins_shogi_bitboard, to)
+TEST(test_judkins_shogi_bitboard, to)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_TO, SQ_6A);
@@ -121,7 +148,7 @@ TEST(judkins_shogi_bitboard, to)
     }
 }
 
-TEST(judkins_shogi_bitboard, nk)
+TEST(test_judkins_shogi_bitboard, nk)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_NK, SQ_6A);
@@ -135,7 +162,7 @@ TEST(judkins_shogi_bitboard, nk)
     }
 }
 
-TEST(judkins_shogi_bitboard, ng)
+TEST(test_judkins_shogi_bitboard, ng)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_NG, SQ_6A);
@@ -149,7 +176,7 @@ TEST(judkins_shogi_bitboard, ng)
     }
 }
 
-TEST(judkins_shogi_bitboard, ka)
+TEST(test_judkins_shogi_bitboard, ka)
 {
     CHECK_EQUAL(9, BitBoard::get_attacks_by(B_KA, SQ_3C).hamming_weight());
     CHECK_TRUE(
@@ -169,7 +196,7 @@ TEST(judkins_shogi_bitboard, ka)
     CHECK_TRUE(BitBoard::get_attacks_by(B_KA, SQ_6E).is_one(SQ_2A));
 }
 
-TEST(judkins_shogi_bitboard, um)
+TEST(test_judkins_shogi_bitboard, um)
 {
     CHECK_EQUAL(13, BitBoard::get_attacks_by(B_UM, SQ_3C).hamming_weight());
     CHECK_EQUAL(8, BitBoard::get_attacks_by(W_UM, SQ_3A).hamming_weight());
@@ -183,7 +210,7 @@ TEST(judkins_shogi_bitboard, um)
         BitBoard::get_attacks_by(B_UM, SQ_3C, bb_2b | bb_4d).hamming_weight());
 }
 
-TEST(judkins_shogi_bitboard, hi)
+TEST(test_judkins_shogi_bitboard, hi)
 {
     CHECK_EQUAL(10, BitBoard::get_attacks_by(B_HI, SQ_3C).hamming_weight());
     CHECK_EQUAL(10, BitBoard::get_attacks_by(W_HI, SQ_3A).hamming_weight());
@@ -191,7 +218,7 @@ TEST(judkins_shogi_bitboard, hi)
         7, BitBoard::get_attacks_by(B_HI, SQ_2B, bb_3b).hamming_weight());
 }
 
-TEST(judkins_shogi_bitboard, ry)
+TEST(test_judkins_shogi_bitboard, ry)
 {
     CHECK_EQUAL(14, BitBoard::get_attacks_by(B_RY, SQ_3C).hamming_weight());
     CHECK_EQUAL(12, BitBoard::get_attacks_by(W_RY, SQ_3A).hamming_weight());
@@ -199,7 +226,7 @@ TEST(judkins_shogi_bitboard, ry)
         11, BitBoard::get_attacks_by(B_RY, SQ_2B, bb_3b).hamming_weight());
 }
 
-TEST(judkins_shogi_bitboard, ou)
+TEST(test_judkins_shogi_bitboard, ou)
 {
     {
         const auto actual = BitBoard::get_attacks_by(B_OU, SQ_2B);
@@ -211,7 +238,7 @@ TEST(judkins_shogi_bitboard, ou)
     }
 }
 
-TEST(judkins_shogi_bitboard, get_promotion_zone)
+TEST(test_judkins_shogi_bitboard, get_promotion_zone)
 {
     {
         const auto actual = BitBoard::get_promotion_zone(vshogi::BLACK);
