@@ -38,6 +38,22 @@ TEST(test_judkins_shogi_bitboard, shift)
     }
 }
 
+TEST(test_judkins_shogi_bitboard, compute_2nd_neighbor_of)
+{
+    {
+        const auto actual
+            = BitBoard::compute_2nd_neighbor_of(SQ_NA, vshogi::WHITE);
+        CHECK_EQUAL(0, actual.value());
+    }
+    {
+        const auto actual
+            = BitBoard::compute_2nd_neighbor_of(SQ_1A, vshogi::BLACK);
+        CHECK_EQUAL(15, actual.hamming_weight());
+        CHECK_TRUE(actual.is_one(SQ_3E));
+        CHECK_FALSE(actual.is_one(SQ_4E));
+    }
+}
+
 TEST(test_judkins_shogi_bitboard, get_ray_to)
 {
     {

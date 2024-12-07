@@ -197,6 +197,25 @@ public:
         else
             return (*this & filemask[dir]) >> static_cast<uint>(-delta);
     }
+    static BitBoard
+    compute_2nd_neighbor_of(const Square& sq, const ColorEnum& c)
+    {
+        auto out = BitBoard::from_square(sq);
+        out
+            |= (out.shift(DIR_NW) | out.shift(DIR_N) | out.shift(DIR_NE)
+                | out.shift(DIR_W) | out.shift(DIR_E) | out.shift(DIR_SW)
+                | out.shift(DIR_S) | out.shift(DIR_SE));
+        out
+            |= (out.shift(DIR_NW) | out.shift(DIR_N) | out.shift(DIR_NE)
+                | out.shift(DIR_W) | out.shift(DIR_E) | out.shift(DIR_SW)
+                | out.shift(DIR_S) | out.shift(DIR_SE));
+        if constexpr (num_dir > 8) {
+            const auto d = (c == BLACK) ? DIR_S : DIR_N;
+            out |= out.shift(d);
+            out |= out.shift(d);
+        }
+        return out;
+    }
 
     static BitBoard get_attacks_by(const ColoredPiece& p, const Square& sq)
     {

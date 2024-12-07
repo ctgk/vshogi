@@ -1090,24 +1090,8 @@ private:
         const auto eight_dir_mask
             = Magic<Config>::get_adjacent_attack(enemy_king_sq)
               | Magic<Config>::get_diagonal_attack(enemy_king_sq);
-        auto second_neighbor = BitBoardType::from_square(enemy_king_sq);
-        second_neighbor
-            = second_neighbor | second_neighbor.shift(DIR_NW)
-              | second_neighbor.shift(DIR_N) | second_neighbor.shift(DIR_NE)
-              | second_neighbor.shift(DIR_W) | second_neighbor.shift(DIR_E)
-              | second_neighbor.shift(DIR_SW) | second_neighbor.shift(DIR_S)
-              | second_neighbor.shift(DIR_SE);
-        second_neighbor
-            = second_neighbor | second_neighbor.shift(DIR_NW)
-              | second_neighbor.shift(DIR_N) | second_neighbor.shift(DIR_NE)
-              | second_neighbor.shift(DIR_W) | second_neighbor.shift(DIR_E)
-              | second_neighbor.shift(DIR_SW) | second_neighbor.shift(DIR_S)
-              | second_neighbor.shift(DIR_SE);
-        if (Config::num_dir > 8) {
-            const auto d = (m_turn == BLACK) ? DIR_S : DIR_N;
-            second_neighbor |= second_neighbor.shift(d);
-            second_neighbor |= second_neighbor.shift(d);
-        }
+        const auto second_neighbor
+            = BitBoardType::compute_2nd_neighbor_of(enemy_king_sq, m_turn);
         const auto src_mask
             = non_king_occupancy
               & (eight_dir_mask | ranging_occupancy | second_neighbor);

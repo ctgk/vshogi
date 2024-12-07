@@ -44,6 +44,30 @@ TEST(test_minishogi_bitboard, is_one)
     CHECK_TRUE(bb_1a.is_one(SQ_1A));
 }
 
+TEST(test_minishogi_bitboard, compute_2nd_neighbor_of)
+{
+    {
+        const auto actual
+            = BitBoard::compute_2nd_neighbor_of(SQ_NA, vshogi::BLACK);
+        CHECK_EQUAL(0, actual.value());
+    }
+    {
+        const auto actual
+            = BitBoard::compute_2nd_neighbor_of(SQ_1A, vshogi::BLACK);
+        CHECK_EQUAL(9, actual.hamming_weight());
+        CHECK_EQUAL(
+            (bb_1a | bb_1b | bb_1c | bb_2a | bb_2b | bb_2c | bb_3a | bb_3b
+             | bb_3c)
+                .value(),
+            actual.value());
+    }
+    {
+        const auto actual
+            = BitBoard::compute_2nd_neighbor_of(SQ_3C, vshogi::WHITE);
+        CHECK_EQUAL((~BitBoard()).value(), actual.value());
+    }
+}
+
 TEST(test_minishogi_bitboard, get_ray_to)
 {
     {

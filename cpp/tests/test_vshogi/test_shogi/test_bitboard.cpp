@@ -87,6 +87,31 @@ TEST(test_shogi_bitboard, set)
     CHECK_TRUE(actual.is_one(SQ_1I));
 }
 
+TEST(test_shogi_bitboard, compute_2nd_neighbor_of)
+{
+    {
+        const auto actual
+            = BitBoard::compute_2nd_neighbor_of(SQ_NA, vshogi::BLACK);
+        CHECK_EQUAL(0, actual.hamming_weight());
+    }
+    {
+        const auto actual
+            = BitBoard::compute_2nd_neighbor_of(SQ_1A, vshogi::WHITE);
+        CHECK_EQUAL(9, actual.hamming_weight());
+        CHECK_TRUE(actual.is_one(SQ_3C));
+        CHECK_FALSE(actual.is_one(SQ_3D));
+    }
+    {
+        const auto actual
+            = BitBoard::compute_2nd_neighbor_of(SQ_1A, vshogi::BLACK);
+        CHECK_EQUAL(15, actual.hamming_weight());
+        CHECK_TRUE(actual.is_one(SQ_3C));
+        CHECK_TRUE(actual.is_one(SQ_3D));
+        CHECK_TRUE(actual.is_one(SQ_3E));
+        CHECK_FALSE(actual.is_one(SQ_3F));
+    }
+}
+
 TEST(test_shogi_bitboard, get_ray_to)
 {
     {
