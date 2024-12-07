@@ -7,10 +7,10 @@ namespace test_vshogi::test_shogi
 
 using namespace vshogi::shogi;
 
-TEST_GROUP (shogi_squares) {
+TEST_GROUP (test_shogi_squares) {
 };
 
-TEST(shogi_squares, to_rank)
+TEST(test_shogi_squares, to_rank)
 {
     CHECK_EQUAL(RANK1, Squares::to_rank(SQ_1A));
     CHECK_EQUAL(RANK1, Squares::to_rank(SQ_2A));
@@ -95,7 +95,7 @@ TEST(shogi_squares, to_rank)
     CHECK_EQUAL(RANK9, Squares::to_rank(SQ_9I));
 }
 
-TEST(shogi_squares, to_file)
+TEST(test_shogi_squares, to_file)
 {
     CHECK_EQUAL(FILE1, Squares::to_file(SQ_1A));
     CHECK_EQUAL(FILE2, Squares::to_file(SQ_2A));
@@ -180,7 +180,7 @@ TEST(shogi_squares, to_file)
     CHECK_EQUAL(FILE9, Squares::to_file(SQ_9I));
 }
 
-TEST(shogi_squares, to_square)
+TEST(test_shogi_squares, to_square)
 {
     CHECK_EQUAL(SQ_1A, Squares::to_square("1a"));
     CHECK_EQUAL(SQ_1B, Squares::to_square("1b"));
@@ -265,7 +265,7 @@ TEST(shogi_squares, to_square)
     CHECK_EQUAL(SQ_9I, Squares::to_square("9i"));
 }
 
-TEST(shogi_squares, to_usi)
+TEST(test_shogi_squares, to_usi)
 {
     // clang-format off
     { char actual[3] = {}; Squares::to_usi(actual, SQ_1A); STRCMP_EQUAL("1a", actual); }
@@ -352,7 +352,7 @@ TEST(shogi_squares, to_usi)
     // clang-format on
 }
 
-TEST(shogi_squares, shift)
+TEST(test_shogi_squares, shift)
 {
     CHECK_EQUAL(SQ_NA, Squares::shift(SQ_1A, vshogi::DIR_NNW));
     CHECK_EQUAL(SQ_NA, Squares::shift(SQ_1A, vshogi::DIR_NNE));
@@ -394,7 +394,7 @@ TEST(shogi_squares, shift)
     CHECK_EQUAL(SQ_NA, Squares::shift(SQ_9I, vshogi::DIR_SSE));
 }
 
-TEST(shogi_squares, get_direction)
+TEST(test_shogi_squares, get_direction)
 {
     CHECK_EQUAL(vshogi::DIR_NW, Squares::get_direction(SQ_2A, SQ_1B));
     CHECK_EQUAL(vshogi::DIR_N, Squares::get_direction(SQ_8B, SQ_8F));
@@ -408,6 +408,40 @@ TEST(shogi_squares, get_direction)
     CHECK_EQUAL(vshogi::DIR_SSE, Squares::get_direction(SQ_2I, SQ_3G));
     CHECK_EQUAL(vshogi::DIR_NA, Squares::get_direction(SQ_9A, SQ_2B));
     CHECK_EQUAL(vshogi::DIR_NA, Squares::get_direction(SQ_5C, SQ_1A));
+}
+
+TEST(test_shogi_squares, get_squares_along)
+{
+    {
+        const auto actual = Squares::get_squares_along(vshogi::DIR_NA, SQ_NA);
+        CHECK_EQUAL(nullptr, actual);
+    }
+    {
+        const auto actual = Squares::get_squares_along(vshogi::DIR_NA, SQ_1A);
+        CHECK_EQUAL(nullptr, actual);
+    }
+    {
+        const auto actual = Squares::get_squares_along(vshogi::DIR_S, SQ_NA);
+        CHECK_EQUAL(nullptr, actual);
+    }
+    {
+        const auto actual = Squares::get_squares_along(vshogi::DIR_E, SQ_1A);
+        CHECK_EQUAL(SQ_NA, actual[0]);
+    }
+    {
+        const auto actual = Squares::get_squares_along(vshogi::DIR_S, SQ_1H);
+        CHECK_EQUAL(SQ_1I, actual[0]);
+        CHECK_EQUAL(SQ_NA, actual[1]);
+    }
+    {
+        const auto actual = Squares::get_squares_along(vshogi::DIR_NNE, SQ_5E);
+        CHECK_EQUAL(SQ_4C, actual[0]);
+        CHECK_EQUAL(SQ_NA, actual[1]);
+    }
+    {
+        const auto actual = Squares::get_squares_along(vshogi::DIR_NNE, SQ_5B);
+        CHECK_EQUAL(SQ_NA, actual[0]);
+    }
 }
 
 } // namespace test_vshogi::test_shogi

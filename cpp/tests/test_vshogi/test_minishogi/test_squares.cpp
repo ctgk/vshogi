@@ -7,16 +7,16 @@ namespace test_vshogi::test_minishogi
 
 using namespace vshogi::minishogi;
 
-TEST_GROUP (minishogi_squares) {
+TEST_GROUP (test_minishogi_squares) {
 };
 
-TEST(minishogi_squares, shift)
+TEST(test_minishogi_squares, shift)
 {
     CHECK_EQUAL(SQ_1A, Squares::shift(SQ_1B, vshogi::DIR_N));
     CHECK_EQUAL(SQ_1C, Squares::shift(SQ_1B, vshogi::DIR_S));
 }
 
-TEST(minishogi_squares, to_rank)
+TEST(test_minishogi_squares, to_rank)
 {
     CHECK_EQUAL(RANK1, Squares::to_rank(SQ_1A));
     CHECK_EQUAL(RANK2, Squares::to_rank(SQ_1B));
@@ -45,7 +45,7 @@ TEST(minishogi_squares, to_rank)
     CHECK_EQUAL(RANK5, Squares::to_rank(SQ_5E));
 }
 
-TEST(minishogi_squares, to_file)
+TEST(test_minishogi_squares, to_file)
 {
     CHECK_EQUAL(FILE1, Squares::to_file(SQ_1A));
     CHECK_EQUAL(FILE1, Squares::to_file(SQ_1B));
@@ -74,7 +74,7 @@ TEST(minishogi_squares, to_file)
     CHECK_EQUAL(FILE5, Squares::to_file(SQ_5E));
 }
 
-TEST(minishogi_squares, to_square)
+TEST(test_minishogi_squares, to_square)
 {
     CHECK_EQUAL(SQ_1A, Squares::to_square("1a"));
     CHECK_EQUAL(SQ_1B, Squares::to_square("1b"));
@@ -103,7 +103,7 @@ TEST(minishogi_squares, to_square)
     CHECK_EQUAL(SQ_5E, Squares::to_square("5e"));
 }
 
-TEST(minishogi_squares, in_promotion_zone)
+TEST(test_minishogi_squares, in_promotion_zone)
 {
     CHECK_TRUE(Squares::in_promotion_zone(SQ_5A, vshogi::BLACK));
     CHECK_FALSE(Squares::in_promotion_zone(SQ_4B, vshogi::BLACK));
@@ -130,12 +130,37 @@ TEST(minishogi_squares, in_promotion_zone)
     CHECK_TRUE(Squares::in_promotion_zone(RANK5, vshogi::WHITE));
 }
 
-TEST(minishogi_squares, get_direction)
+TEST(test_minishogi_squares, get_direction)
 {
     CHECK_EQUAL(vshogi::DIR_NW, Squares::get_direction(SQ_5A, SQ_3C));
 
     // note that there is no knight move in Minishogi.
     CHECK_EQUAL(vshogi::DIR_NA, Squares::get_direction(SQ_5A, SQ_4C));
+}
+
+TEST(test_minishogi_squares, get_squares_along)
+{
+    {
+        const auto actual = Squares::get_squares_along(vshogi::DIR_NA, SQ_NA);
+        CHECK_EQUAL(nullptr, actual);
+    }
+    {
+        const auto actual = Squares::get_squares_along(vshogi::DIR_NA, SQ_1A);
+        CHECK_EQUAL(nullptr, actual);
+    }
+    {
+        const auto actual = Squares::get_squares_along(vshogi::DIR_S, SQ_NA);
+        CHECK_EQUAL(nullptr, actual);
+    }
+    {
+        const auto actual = Squares::get_squares_along(vshogi::DIR_E, SQ_1A);
+        CHECK_EQUAL(SQ_NA, actual[0]);
+    }
+    {
+        const auto actual = Squares::get_squares_along(vshogi::DIR_S, SQ_1D);
+        CHECK_EQUAL(SQ_1E, actual[0]);
+        CHECK_EQUAL(SQ_NA, actual[1]);
+    }
 }
 
 } // namespace test_vshogi::test_minishogi
