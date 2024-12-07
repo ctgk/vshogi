@@ -85,11 +85,19 @@ public:
         const auto index = to_magic_table_index(occupied, magic);
         return attack_table_south[sq][index];
     }
+    static BitBoardType get_adjacent_attack(const Square& sq)
+    {
+        return attack_table_vertical[sq][0u] | attack_table_horizontal[sq][0u];
+    }
     static BitBoardType
     get_adjacent_attack(const Square& sq, BitBoardType occupied)
     {
         return get_vertical_attack(sq, occupied)
                | get_horizontal_attack(sq, occupied);
+    }
+    static BitBoardType get_diagonal_attack(const Square& sq)
+    {
+        return attack_table_diagonal[sq][0u];
     }
     static BitBoardType
     get_diagonal_attack(const Square& sq, BitBoardType occupied)

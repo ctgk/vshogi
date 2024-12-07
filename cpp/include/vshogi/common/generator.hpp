@@ -4,6 +4,7 @@
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
+#include "vshogi/common/magic.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/squares.hpp"
 #include "vshogi/common/state.hpp"
@@ -1078,7 +1079,34 @@ private:
     void init_src_iter()
     {
         const auto king_sq = m_board.get_king_location(m_turn);
-        const auto src_mask = m_board.get_occupied(m_turn).clear(king_sq);
+        const auto enemy_king_sq = m_board.get_king_location(~m_turn);
+        const auto non_king_occupancy
+            = m_board.get_occupied(m_turn).clear(king_sq);
+        const auto ranging_occupancy = m_board.get_occupied_by_ranging(m_turn);
+        const auto eight_dir_mask
+            = Magic<Config>::get_adjacent_attack(enemy_king_sq)
+              | Magic<Config>::get_diagonal_attack(enemy_king_sq);
+        auto second_neighbor = BitBoardType::from_square(enemy_king_sq);
+        second_neighbor
+            = second_neighbor | second_neighbor.shift(DIR_NW)
+              | second_neighbor.shift(DIR_N) | second_neighbor.shift(DIR_NE)
+              | second_neighbor.shift(DIR_W) | second_neighbor.shift(DIR_E)
+              | second_neighbor.shift(DIR_SW) | second_neighbor.shift(DIR_S)
+              | second_neighbor.shift(DIR_SE);
+        second_neighbor
+            = second_neighbor | second_neighbor.shift(DIR_NW)
+              | second_neighbor.shift(DIR_N) | second_neighbor.shift(DIR_NE)
+              | second_neighbor.shift(DIR_W) | second_neighbor.shift(DIR_E)
+              | second_neighbor.shift(DIR_SW) | second_neighbor.shift(DIR_S)
+              | second_neighbor.shift(DIR_SE);
+        if (Config::num_dir > 8) {
+            const auto d = (m_turn == BLACK) ? DIR_S : DIR_N;
+            second_neighbor |= second_neighbor.shift(d);
+            second_neighbor |= second_neighbor.shift(d);
+        }
+        const auto src_mask
+            = non_king_occupancy
+              & (eight_dir_mask | ranging_occupancy | second_neighbor);
         m_src_iter = src_mask.square_iterator();
     }
     void init_dst_mask()

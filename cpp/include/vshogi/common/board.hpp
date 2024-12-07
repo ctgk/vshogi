@@ -114,6 +114,10 @@ public:
     {
         return get_occupied<PT1>(c) | get_occupied<PT2, Args...>(c);
     }
+    BitBoardType get_occupied_by_ranging(const ColorEnum&) const
+    {
+        return BitBoardType();
+    }
     void append_sfen(std::string& out) const
     {
         append_sfen_rank(static_cast<Rank>(0), out);
@@ -443,10 +447,6 @@ private:
     }
     bool is_square_attacked_by_ranging_pieces(
         const ColorEnum& by_side, const Square& sq, const Square& skip) const;
-    BitBoardType get_occupied_by_ranging(const ColorEnum&) const
-    {
-        return BitBoardType();
-    }
 };
 
 } // namespace vshogi
