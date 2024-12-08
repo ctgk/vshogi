@@ -8,6 +8,58 @@
 namespace test_vshogi::test_engine
 {
 
+TEST_GROUP (dfpn_node) {
+};
+
+TEST(dfpn_node, init)
+{
+    using namespace vshogi::minishogi;
+    using Node = vshogi::engine::dfpn::Node<Config>;
+    {
+        auto n = Node();
+        CHECK_TRUE(n.is_attacker());
+        CHECK_FALSE(n.has_child());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, n.pn());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, n.dn());
+    }
+    {
+        auto n = Node(false, Move(SQ_1A, SQ_1B));
+        CHECK_FALSE(n.is_attacker());
+        CHECK_FALSE(n.has_child());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, n.pn());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, n.dn());
+        CHECK_EQUAL(Move(SQ_1A, SQ_1B).hash(), n.get_action().hash());
+    }
+}
+
+TEST(dfpn_node, add_child)
+{
+    using namespace vshogi::minishogi;
+    using Node = vshogi::engine::dfpn::Node<Config>;
+    {
+        auto n = Node();
+        auto ch = n.add_child(Move(SQ_1A, SQ_1B), nullptr);
+        CHECK_FALSE(ch->is_attacker());
+        CHECK_FALSE(ch->has_child());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, ch->pn());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, ch->dn());
+        CHECK_EQUAL(Move(SQ_1A, SQ_1B).hash(), ch->get_action().hash());
+        CHECK_TRUE(n.has_child());
+    }
+    {
+        auto n = Node();
+        auto ch = n.add_child(Move(SQ_1A, SQ_1B), nullptr);
+        auto ch2nd = n.add_child(Move(SQ_2A, SQ_1B), ch);
+        CHECK_FALSE(ch2nd->is_attacker());
+        CHECK_FALSE(ch2nd->has_child());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, ch2nd->pn());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, ch2nd->dn());
+        CHECK_EQUAL(Move(SQ_2A, SQ_1B).hash(), ch2nd->get_action().hash());
+        CHECK_EQUAL(ch2nd, ch->get_sibling());
+        CHECK_TRUE(n.has_child());
+    }
+}
+
 TEST_GROUP (dfpn_transposition_table) {
 };
 
