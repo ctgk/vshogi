@@ -56,6 +56,32 @@ template <class Config>
 class Searcher;
 
 template <class Config>
+bool had_two_consecutive_sacrifice_drops(const Game<Config>& g)
+{
+    const uint n = g.record_length();
+    if (n < 4u)
+        return false;
+
+    // first sacrifice drop
+    const Move<Config> drop1st = g.get_record_action(n - 4u);
+    // capture first sacrifice drop
+    const Move<Config> capt1st = g.get_record_action(n - 3u);
+    // second sacrifice drop
+    const Move<Config> drop2nd = g.get_record_action(n - 2u);
+    // capture second sacrifice drop
+    const Move<Config> capt2nd = g.get_record_action(n - 1u);
+    if (!drop1st.is_drop())
+        return false;
+    if (drop1st.destination() != capt1st.destination())
+        return false;
+    if (!drop2nd.is_drop())
+        return false;
+    if (drop2nd.destination() != capt2nd.destination())
+        return false;
+    return true;
+}
+
+template <class Config>
 class Node
 {
     static_assert(!std::is_same<Config, animal_shogi::Config>::value);
@@ -64,6 +90,7 @@ private:
     using GameType = Game<Config>;
     using MoveType = Move<Config>;
     using Square = typename Config::Square;
+    using PHelper = Pieces<Config>;
     using SHelper = Squares<Config>;
     friend Searcher<Config>;
 
@@ -186,13 +213,16 @@ public:
     {
         return (found_mate() || found_no_mate());
     }
-    Node* add_child(const Move<Config>& action, Node<Config>* const last_child)
+    void expand(const GameType& game, const Node<Config>* const cousin)
     {
-        assert(last_child ? (!last_child->m_sibling) : !has_child());
-        std::unique_ptr<Node<Config>>* placeholder
-            = (last_child) ? (&last_child->m_sibling) : (&m_child);
-        *placeholder = std::make_unique<Node<Config>>(!m_attacker, action);
-        return placeholder->get();
+        m_child_1st = nullptr;
+        m_child_2nd = nullptr;
+        if (m_attacker)
+            expand_at_offence(game, cousin);
+        else
+            expand_at_defence(game, cousin);
+        assert((pn() == 0u) ? (dn() == max_number) : (dn() != max_number));
+        assert((dn() == 0u) ? (pn() == max_number) : (pn() != max_number));
     }
 
 private:
@@ -251,6 +281,129 @@ private:
         return true;
     }
 
+private:
+    void expand_at_offence(const GameType& g, const Node<Config>* const cousin)
+    {
+        const State<Config>& s = g.get_state();
+        assert(
+            s.get_board().get_king_location(~s.get_turn()) != SHelper::SQ_NA);
+        assert(
+            s.get_board()[s.get_board().get_king_location(~s.get_turn())]
+            == PHelper::to_board_piece(~s.get_turn(), PHelper::OU));
+        m_dn = zero;
+        std::unique_ptr<Node<Config>>* next_child
+            = cousin ? expand_board_moves_at_offence(*cousin)
+                     : expand_board_moves_at_offence(s);
+        expand_drop_moves_at_offence(next_child, s);
+        if (m_child_1st == nullptr)
+            set_pndn_no_mate();
+        else
+            m_pn = m_child_1st->m_pn;
+    }
+    void expand_at_defence(const GameType& g, const Node<Config>* const cousin)
+    {
+        m_pn = zero;
+        std::unique_ptr<Node<Config>>* const next_child
+            = cousin ? expand_board_moves_at_defence(*cousin, g)
+                     : expand_board_moves_at_defence(g);
+        if (!had_two_consecutive_sacrifice_drops(g))
+            expand_drop_moves_at_defence(next_child, g);
+        if (m_child_1st == nullptr)
+            set_pndn_mate();
+        else
+            m_dn = m_child_1st->m_dn;
+    }
+    std::unique_ptr<Node<Config>>*
+    expand_board_moves_at_offence(const Node<Config>& cousin)
+    {
+        std::unique_ptr<Node<Config>>* holder = &m_child;
+        for (auto nib = cousin.get_child(); nib; nib = nib->get_sibling()) {
+            const auto m = nib->get_action();
+            if (m.is_drop())
+                break;
+            *holder = std::make_unique<Node<Config>>(!m_attacker, m);
+            Node<Config>* const ch = holder->get();
+            if (nib->found_conclusion()) {
+                ch->m_pn = nib->m_pn;
+                ch->m_dn = nib->m_dn;
+                ch->m_child_1st = nib->m_child_1st;
+            }
+            update_offence_dn_ch1st_ch2nd(ch);
+            holder = &(ch->m_sibling);
+        }
+        return holder;
+    }
+    std::unique_ptr<Node<Config>>*
+    expand_board_moves_at_offence(const State<Config>& state)
+    {
+        const Board<Config>& b = state.get_board();
+        std::unique_ptr<Node<Config>>* holder = &m_child;
+        for (Move<Config> m : CheckBoardMoveGenerator<Config>(state)) {
+            const auto p = b[m.source_square()];
+            if ((!m.promote()) && PHelper::is_promotion_complete_upgrade(p)
+                && state.in_promotion_zone(m))
+                continue;
+            *holder = std::make_unique<Node<Config>>(!m_attacker, m);
+            Node<Config>* const ch = holder->get();
+            update_offence_dn_ch1st_ch2nd(ch);
+            holder = &(ch->m_sibling);
+        }
+        return holder;
+    }
+    void expand_drop_moves_at_offence(
+        std::unique_ptr<Node<Config>>* next, const State<Config>& state)
+    {
+        for (Move<Config> m : CheckDropMoveGenerator<Config>(state)) {
+            *next = std::make_unique<Node<Config>>(!m_attacker, m);
+            Node<Config>* const p = next->get();
+            update_offence_dn_ch1st_ch2nd(p);
+            next = &(p->m_sibling);
+        }
+    }
+    std::unique_ptr<Node<Config>>* expand_board_moves_at_defence(
+        const Node<Config>& cousin, const GameType& game)
+    {
+        std::unique_ptr<Node<Config>>* holder = &m_child;
+        for (auto nib = cousin.get_child(); nib; nib = nib->get_sibling()) {
+            const auto m = nib->get_action();
+            if (m.is_drop())
+                break;
+            *holder = std::make_unique<Node<Config>>(!m_attacker, m);
+            Node<Config>* const ch = holder->get();
+            if (nib->found_conclusion()) {
+                ch->m_pn = nib->m_pn;
+                ch->m_dn = nib->m_dn;
+                ch->m_child_1st = nib->m_child_1st;
+            }
+            update_defence_pn_ch1st_ch2nd(ch, game);
+            holder = &(ch->m_sibling);
+        }
+        return holder;
+    }
+    std::unique_ptr<Node<Config>>*
+    expand_board_moves_at_defence(const GameType& game)
+    {
+        std::unique_ptr<Node<Config>>* holder = &m_child;
+        for (Move<Config> m : BoardMoveGenerator<Config>(game.get_state())) {
+            *holder = std::make_unique<Node<Config>>(!m_attacker, m);
+            Node<Config>* const ch = holder->get();
+            update_defence_pn_ch1st_ch2nd(ch, game);
+            holder = &(ch->m_sibling);
+        }
+        return holder;
+    }
+    void expand_drop_moves_at_defence(
+        std::unique_ptr<Node<Config>>* next, const GameType& game)
+    {
+        for (Move<Config> m : DropMoveGenerator<Config>(game.get_state())) {
+            *next = std::make_unique<Node<Config>>(!m_attacker, m);
+            Node<Config>* const ch = next->get();
+            update_defence_pn_ch1st_ch2nd(ch, game);
+            next = &(ch->m_sibling);
+        }
+    }
+
+private:
     void backprop_one(const GameType& g)
     {
         // - Offence: #P = min(#P of children), #D = sum(#D of children)
@@ -461,7 +614,7 @@ public:
         const GameType& game = *m_game;
         Node<Config>* const root = m_table.get_root();
         if (!root->simulate(game))
-            expand_at(*root, game, nullptr);
+            root->expand(game, nullptr);
         m_num_searched = 0u;
     }
 
@@ -548,7 +701,7 @@ private:
         }
         if (!n.has_child()) {
             if (!n.simulate(game))
-                expand_at(n, game, p);
+                n.expand(game, p);
             --searches;
         }
         while (searches) {
@@ -561,158 +714,6 @@ private:
             n.backprop_one(game);
         }
         game.undo();
-    }
-    void expand_at(
-        Node<Config>& n, const GameType& g, const Node<Config>* const cousin)
-    {
-        n.m_child_1st = nullptr;
-        n.m_child_2nd = nullptr;
-        if (n.is_attacker())
-            expand_at_offence(n, g, cousin);
-        else
-            expand_at_defence(n, g, cousin);
-        assert(
-            (n.pn() == 0u) ? (n.dn() == max_number) : (n.dn() != max_number));
-        assert(
-            (n.dn() == 0u) ? (n.pn() == max_number) : (n.pn() != max_number));
-    }
-    void expand_at_offence(
-        Node<Config>& n, const GameType& g, const Node<Config>* const cousin)
-    {
-        const State<Config>& s = g.get_state();
-        Node<Config>* candidate = nullptr;
-        n.m_dn = zero;
-        Node<Config>* last_child
-            = (cousin) ? expand_board_moves_at_offence(n, *cousin)
-                       : expand_board_moves_at_offence(n, s);
-        expand_drop_moves_at_offence(n, last_child, s);
-        if (n.m_child_1st == nullptr)
-            n.set_pndn_no_mate();
-        else
-            n.m_pn = n.m_child_1st->m_pn;
-    }
-    static Node<Config>* expand_board_moves_at_offence(
-        Node<Config>& parent, const Node<Config>& cousin)
-    {
-        Node<Config>* last_child = nullptr;
-        for (const Node<Config>* nib = cousin.get_child(); nib;
-             nib = nib->get_sibling()) {
-            const auto m = nib->get_action();
-            if (m.is_drop())
-                break;
-            last_child = parent.add_child(m, last_child);
-            if (nib->found_conclusion()) {
-                last_child->m_pn = nib->m_pn;
-                last_child->m_dn = nib->m_dn;
-                last_child->m_child_1st = nib->m_child_1st;
-            }
-            parent.update_offence_dn_ch1st_ch2nd(last_child);
-        }
-        return last_child;
-    }
-    static Node<Config>* expand_board_moves_at_offence(
-        Node<Config>& parent, const State<Config>& state)
-    {
-        const Board<Config>& b = state.get_board();
-        Node<Config>* last_child = nullptr;
-        for (Move<Config> m : CheckBoardMoveGenerator<Config>(state)) {
-            if ((!m.promote())
-                && PHelper::is_promotion_complete_upgrade(b[m.source_square()])
-                && state.in_promotion_zone(m))
-                continue;
-            last_child = parent.add_child(m, last_child);
-            parent.update_offence_dn_ch1st_ch2nd(last_child);
-        }
-        return last_child;
-    }
-    static void expand_drop_moves_at_offence(
-        Node<Config>& parent,
-        Node<Config>* last_child,
-        const State<Config>& state)
-    {
-        for (Move<Config> action : CheckDropMoveGenerator<Config>(state)) {
-            last_child = parent.add_child(action, last_child);
-            parent.update_offence_dn_ch1st_ch2nd(last_child);
-        }
-    }
-    void expand_at_defence(
-        Node<Config>& n, const GameType& g, const Node<Config>* const cousin)
-    {
-        const State<Config>& s = g.get_state();
-        n.m_pn = zero;
-        Node<Config>* const last_child
-            = (cousin) ? expand_board_moves_at_defence(n, g, *cousin)
-                       : expand_board_moves_at_defence(n, g, s);
-        if (!had_two_consecutive_sacrifice_drops(g))
-            expand_drop_moves_at_defence(n, last_child, g, s);
-        if (n.m_child_1st == nullptr)
-            n.set_pndn_mate();
-        else
-            n.m_dn = n.m_child_1st->m_dn;
-    }
-    static Node<Config>* expand_board_moves_at_defence(
-        Node<Config>& parent, const GameType& game, const Node<Config>& cousin)
-    {
-        Node<Config>* last_child = nullptr;
-        std::unique_ptr<Node<Config>>* ch = &parent.m_child;
-        for (auto nib = cousin.get_child(); nib; nib = nib->get_sibling()) {
-            const auto m = nib->get_action();
-            if (m.is_drop())
-                break;
-            last_child = parent.add_child(m, last_child);
-            if (nib->found_conclusion()) {
-                last_child->m_pn = nib->m_pn;
-                last_child->m_dn = nib->m_dn;
-                last_child->m_child_1st = nib->m_child_1st;
-            }
-            parent.update_defence_pn_ch1st_ch2nd(last_child, game);
-        }
-        return last_child;
-    }
-    static Node<Config>* expand_board_moves_at_defence(
-        Node<Config>& parent, const GameType& game, const State<Config>& state)
-    {
-        Node<Config>* last_child = nullptr;
-        for (Move<Config> m : BoardMoveGenerator<Config>(state)) {
-            last_child = parent.add_child(m, last_child);
-            parent.update_defence_pn_ch1st_ch2nd(last_child, game);
-        }
-        return last_child;
-    }
-    static void expand_drop_moves_at_defence(
-        Node<Config>& parent,
-        Node<Config>* last_child,
-        const GameType& game,
-        const State<Config>& state)
-    {
-        for (Move<Config> action : DropMoveGenerator<Config>(state)) {
-            last_child = parent.add_child(action, last_child);
-            parent.update_defence_pn_ch1st_ch2nd(last_child, game);
-        }
-    }
-    static bool had_two_consecutive_sacrifice_drops(const GameType& g)
-    {
-        const uint n = g.record_length();
-        if (n < 4u)
-            return false;
-
-        // first sacrifice drop
-        const Move<Config> drop1st = g.get_record_action(n - 4u);
-        // capture first sacrifice drop
-        const Move<Config> capt1st = g.get_record_action(n - 3u);
-        // second sacrifice drop
-        const Move<Config> drop2nd = g.get_record_action(n - 2u);
-        // capture second sacrifice drop
-        const Move<Config> capt2nd = g.get_record_action(n - 1u);
-        if (!drop1st.is_drop())
-            return false;
-        if (drop1st.destination() != capt1st.destination())
-            return false;
-        if (!drop2nd.is_drop())
-            return false;
-        if (drop2nd.destination() != capt2nd.destination())
-            return false;
-        return true;
     }
 };
 

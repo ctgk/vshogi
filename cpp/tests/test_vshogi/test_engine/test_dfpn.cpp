@@ -32,32 +32,60 @@ TEST(dfpn_node, init)
     }
 }
 
-TEST(dfpn_node, add_child)
+TEST(dfpn_node, expand)
 {
     using namespace vshogi::minishogi;
     using Node = vshogi::engine::dfpn::Node<Config>;
     {
         auto n = Node();
-        auto ch = n.add_child(Move(SQ_1A, SQ_1B), nullptr);
-        CHECK_FALSE(ch->is_attacker());
-        CHECK_FALSE(ch->has_child());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, ch->pn());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, ch->dn());
-        CHECK_EQUAL(Move(SQ_1A, SQ_1B).hash(), ch->get_action().hash());
-        CHECK_TRUE(n.has_child());
+        n.expand(Game("k4/5/5/5/5 b -"), nullptr);
+        CHECK_FALSE(n.has_child());
+        CHECK_EQUAL(vshogi::engine::dfpn::max_number, n.pn());
+        CHECK_EQUAL(vshogi::engine::dfpn::zero, n.dn());
     }
     {
         auto n = Node();
-        auto ch = n.add_child(Move(SQ_1A, SQ_1B), nullptr);
-        auto ch2nd = n.add_child(Move(SQ_2A, SQ_1B), ch);
-        CHECK_FALSE(ch2nd->is_attacker());
-        CHECK_FALSE(ch2nd->has_child());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, ch2nd->pn());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, ch2nd->dn());
-        CHECK_EQUAL(Move(SQ_2A, SQ_1B).hash(), ch2nd->get_action().hash());
-        CHECK_EQUAL(ch2nd, ch->get_sibling());
+        n.expand(Game("2kp+R/5/5/5/5 b -"), nullptr);
         CHECK_TRUE(n.has_child());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, n.pn());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit * 2u, n.dn());
     }
+}
+
+TEST(dfpn_node, expand_using_cousin)
+{
+    using namespace vshogi::minishogi;
+    using Node = vshogi::engine::dfpn::Node<Config>;
+
+    auto n = Node();
+    auto cousin = Node();
+    cousin.expand(Game("k2p+R/5/5/5/5 b -"), nullptr);
+    n.expand(Game("2kp+R/5/5/5/5 b -"), &cousin);
+    CHECK_TRUE(n.has_child());
+    CHECK_EQUAL(vshogi::engine::dfpn::unit, n.pn());
+    CHECK_EQUAL(vshogi::engine::dfpn::unit, n.dn());
+    auto ch = n.get_child();
+    CHECK_EQUAL(Move(SQ_2A, SQ_1A).hash(), ch->get_action().hash());
+
+    // No move from SQ_1A to SQ_2B
+    CHECK_EQUAL(nullptr, ch->get_sibling());
+}
+
+TEST(dfpn_node, expand_removes_no_promotion_moves_by_rook)
+{
+    using namespace vshogi::minishogi;
+    using Node = vshogi::engine::dfpn::Node<Config>;
+
+    auto n = Node();
+    n.expand(Game("k2pR/5/5/5/5 b -"), nullptr);
+    CHECK_TRUE(n.has_child());
+    auto ch = n.get_child();
+    CHECK_TRUE(ch != nullptr);
+    CHECK_EQUAL(Move(SQ_2A, SQ_1A, true).hash(), ch->get_action().hash());
+    ch = ch->get_sibling();
+    CHECK_TRUE(ch == nullptr);
+    CHECK_EQUAL(vshogi::engine::dfpn::unit, n.pn());
+    CHECK_EQUAL(vshogi::engine::dfpn::unit, n.dn());
 }
 
 TEST_GROUP (dfpn_transposition_table) {
