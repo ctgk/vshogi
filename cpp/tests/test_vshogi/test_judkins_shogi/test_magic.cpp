@@ -114,6 +114,10 @@ TEST(test_judkins_shogi_magic, get_adjacent_attack)
 {
     using namespace vshogi::judkins_shogi;
     {
+        const auto actual = Magic::get_adjacent_attack(SQ_1A);
+        CHECK_EQUAL((bb_file1 | bb_ranka).clear(SQ_1A).value(), actual.value());
+    }
+    {
         const auto sq = SQ_5A;
         const auto occ = BitBoard();
         const auto actual = Magic::get_adjacent_attack(sq, occ);
@@ -139,6 +143,12 @@ TEST(test_judkins_shogi_magic, get_adjacent_attack)
 TEST(test_judkins_shogi_magic, get_diagonal_attack)
 {
     using namespace vshogi::judkins_shogi;
+    {
+        const auto actual = Magic::get_diagonal_attack(SQ_2C);
+        CHECK_EQUAL(
+            (bb_4a | bb_3b | bb_1d | bb_1b | bb_3d | bb_4e | bb_5f).value(),
+            actual.value());
+    }
     {
         const auto sq = SQ_5A;
         const auto occ = BitBoard();

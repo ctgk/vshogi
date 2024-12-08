@@ -147,6 +147,10 @@ TEST(test_shogi_magic, get_adjacent_attack)
 {
     using namespace vshogi::shogi;
     {
+        const auto actual = Magic::get_adjacent_attack(SQ_5E);
+        CHECK_TRUE((bb_file5 | bb_ranke).clear(SQ_5E) == actual);
+    }
+    {
         const auto sq = SQ_5A;
         const auto occ = BitBoard();
         const auto actual = Magic::get_adjacent_attack(sq, occ);
@@ -172,6 +176,12 @@ TEST(test_shogi_magic, get_adjacent_attack)
 TEST(test_shogi_magic, get_diagonal_attack)
 {
     using namespace vshogi::shogi;
+    {
+        const auto actual = Magic::get_diagonal_attack(SQ_1A);
+        CHECK_TRUE(
+            (bb_2b | bb_3c | bb_4d | bb_5e | bb_6f | bb_7g | bb_8h | bb_9i)
+            == actual);
+    }
     {
         const auto sq = SQ_5A;
         const auto occ = BitBoard();

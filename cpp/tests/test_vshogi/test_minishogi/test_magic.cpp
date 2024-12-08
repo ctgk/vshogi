@@ -109,35 +109,52 @@ TEST_GROUP (test_minishogi_magic) {
 TEST(test_minishogi_magic, get_adjacent_attack)
 {
     using namespace vshogi::minishogi;
-    const SquareEnum sq_list[] = {SQ_5A, SQ_5A, SQ_3C};
-    const BitBoard occ_list[] = {BitBoard(), bb_5b, bb_1a};
-    for (auto ii = sizeof(sq_list) / sizeof(sq_list[0]); ii--;) {
-        const auto sq = sq_list[ii];
-        const auto occ = occ_list[ii];
-        const auto expect = BitBoard::compute_ray_to(sq, vshogi::DIR_N, occ)
-                            | BitBoard::compute_ray_to(sq, vshogi::DIR_W, occ)
-                            | BitBoard::compute_ray_to(sq, vshogi::DIR_E, occ)
-                            | BitBoard::compute_ray_to(sq, vshogi::DIR_S, occ);
-        const auto actual = Magic::get_adjacent_attack(sq, occ);
-        CHECK_EQUAL(expect.value(), actual.value());
+    {
+        const auto actual = Magic::get_adjacent_attack(SQ_3C);
+        CHECK_EQUAL((bb_file3 | bb_rankc).clear(SQ_3C).value(), actual.value());
+    }
+    {
+        const SquareEnum sq_list[] = {SQ_5A, SQ_5A, SQ_3C};
+        const BitBoard occ_list[] = {BitBoard(), bb_5b, bb_1a};
+        for (auto ii = sizeof(sq_list) / sizeof(sq_list[0]); ii--;) {
+            const auto sq = sq_list[ii];
+            const auto occ = occ_list[ii];
+            const auto expect
+                = BitBoard::compute_ray_to(sq, vshogi::DIR_N, occ)
+                  | BitBoard::compute_ray_to(sq, vshogi::DIR_W, occ)
+                  | BitBoard::compute_ray_to(sq, vshogi::DIR_E, occ)
+                  | BitBoard::compute_ray_to(sq, vshogi::DIR_S, occ);
+            const auto actual = Magic::get_adjacent_attack(sq, occ);
+            CHECK_EQUAL(expect.value(), actual.value());
+        }
     }
 }
 
 TEST(test_minishogi_magic, get_diagonal_attack)
 {
     using namespace vshogi::minishogi;
-    const SquareEnum sq_list[] = {SQ_5A, SQ_5A, SQ_3C, SQ_3C};
-    const BitBoard occ_list[]
-        = {BitBoard(), bb_4b, bb_2b | bb_2d, bb_4b | bb_2b | bb_2d};
-    for (auto ii = sizeof(sq_list) / sizeof(sq_list[0]); ii--;) {
-        const auto sq = sq_list[ii];
-        const auto occ = occ_list[ii];
-        const auto expect = BitBoard::compute_ray_to(sq, vshogi::DIR_NW, occ)
-                            | BitBoard::compute_ray_to(sq, vshogi::DIR_NE, occ)
-                            | BitBoard::compute_ray_to(sq, vshogi::DIR_SW, occ)
-                            | BitBoard::compute_ray_to(sq, vshogi::DIR_SE, occ);
-        const auto actual = Magic::get_diagonal_attack(sq, occ);
-        CHECK_EQUAL(expect.value(), actual.value());
+    {
+        const auto actual = Magic::get_diagonal_attack(SQ_3C);
+        CHECK_EQUAL(
+            (bb_1a | bb_2b | bb_4d | bb_5e | bb_5a | bb_4b | bb_2d | bb_1e)
+                .value(),
+            actual.value());
+    }
+    {
+        const SquareEnum sq_list[] = {SQ_5A, SQ_5A, SQ_3C, SQ_3C};
+        const BitBoard occ_list[]
+            = {BitBoard(), bb_4b, bb_2b | bb_2d, bb_4b | bb_2b | bb_2d};
+        for (auto ii = sizeof(sq_list) / sizeof(sq_list[0]); ii--;) {
+            const auto sq = sq_list[ii];
+            const auto occ = occ_list[ii];
+            const auto expect
+                = BitBoard::compute_ray_to(sq, vshogi::DIR_NW, occ)
+                  | BitBoard::compute_ray_to(sq, vshogi::DIR_NE, occ)
+                  | BitBoard::compute_ray_to(sq, vshogi::DIR_SW, occ)
+                  | BitBoard::compute_ray_to(sq, vshogi::DIR_SE, occ);
+            const auto actual = Magic::get_diagonal_attack(sq, occ);
+            CHECK_EQUAL(expect.value(), actual.value());
+        }
     }
 }
 
