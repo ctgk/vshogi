@@ -64,21 +64,23 @@ bool had_two_consecutive_sacrifice_drops(const Game<Config>& g)
 
     // first sacrifice drop
     const Move<Config> drop1st = g.get_record_action(n - 4u);
-    // capture first sacrifice drop
-    const Move<Config> capt1st = g.get_record_action(n - 3u);
-    // second sacrifice drop
-    const Move<Config> drop2nd = g.get_record_action(n - 2u);
-    // capture second sacrifice drop
-    const Move<Config> capt2nd = g.get_record_action(n - 1u);
     if (!drop1st.is_drop())
         return false;
+
+    // capture first sacrifice drop
+    const Move<Config> capt1st = g.get_record_action(n - 3u);
     if (drop1st.destination() != capt1st.destination())
         return false;
+
+    // second sacrifice drop
+    const Move<Config> drop2nd = g.get_record_action(n - 2u);
     if (!drop2nd.is_drop())
         return false;
-    if (drop2nd.destination() != capt2nd.destination())
-        return false;
-    return true;
+
+    // capture second sacrifice drop
+    const Move<Config> capt2nd = g.get_record_action(n - 1u);
+    return (drop2nd.destination() == capt2nd.destination())
+           && (capt1st.destination() == capt2nd.source_square());
 }
 
 template <class Config>
