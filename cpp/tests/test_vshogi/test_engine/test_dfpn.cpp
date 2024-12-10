@@ -144,19 +144,85 @@ TEST(dfpn_node, expand_using_cousin)
 {
     using namespace vshogi::minishogi;
     using Node = vshogi::engine::dfpn::Node<Config>;
+    {
+        auto n = Node();
+        auto cousin = Node();
+        cousin.expand(Game("k2p+R/5/5/5/5 b -"), nullptr);
+        n.expand(Game("2kp+R/5/5/5/5 b -"), &cousin);
+        CHECK_TRUE(n.has_child());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, n.pn());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, n.dn());
+        auto ch = n.get_child();
+        CHECK_EQUAL(Move(SQ_2A, SQ_1A).hash(), ch->get_action().hash());
 
-    auto n = Node();
-    auto cousin = Node();
-    cousin.expand(Game("k2p+R/5/5/5/5 b -"), nullptr);
-    n.expand(Game("2kp+R/5/5/5/5 b -"), &cousin);
-    CHECK_TRUE(n.has_child());
-    CHECK_EQUAL(vshogi::engine::dfpn::unit, n.pn());
-    CHECK_EQUAL(vshogi::engine::dfpn::unit, n.dn());
-    auto ch = n.get_child();
-    CHECK_EQUAL(Move(SQ_2A, SQ_1A).hash(), ch->get_action().hash());
+        // No move from SQ_1A to SQ_2B
+        CHECK_EQUAL(nullptr, ch->get_sibling());
+    }
+    {
+        auto cousin = Node();
+        cousin.expand(Game("3rk/3p1/3BG/5/4K b -"), nullptr); // two children
+        cousin.get_child_1st()->simulate(Game("3rk/3pG/3B1/5/4K w -")); // mate
+        CHECK_TRUE(cousin.get_child_1st()->found_mate());
 
-    // No move from SQ_1A to SQ_2B
-    CHECK_EQUAL(nullptr, ch->get_sibling());
+        auto atk_node = Node();
+        atk_node.expand(Game("3rk/3p1/3BG/5/4K b G"), &cousin);
+        CHECK_TRUE(atk_node.has_child());
+        CHECK_TRUE(atk_node.found_mate());
+        CHECK_EQUAL(vshogi::engine::dfpn::zero, atk_node.pn());
+        CHECK_EQUAL(vshogi::engine::dfpn::max_number, atk_node.dn());
+    }
+    {
+        auto cousin = Node();
+        cousin.expand(Game("3rk/3p1/3BP/5/4K b -"), nullptr); // one child
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, cousin.pn());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, cousin.dn());
+        cousin.get_child_1st()->simulate(
+            Game("4K/5/5/5/+r+sg+bk w p")); // not mate
+        CHECK_TRUE(cousin.get_child_1st()->found_no_mate());
+
+        auto atk_node = Node();
+        atk_node.expand(Game("3rk/3p1/3BP/5/4K b B"), &cousin);
+        CHECK_TRUE(atk_node.has_child());
+
+        // stronger stand may lead to mate even if nibling is not mate.
+        CHECK_FALSE(atk_node.found_conclusion());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, atk_node.pn());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, atk_node.dn());
+    }
+    {
+        auto cousin = Node(false, Move(SQ_1A, SQ_1B));
+        cousin.expand(Game("3k1/4G/5/5/4K w -"), nullptr); // multiple child
+        cousin.get_child_1st()->expand(Game("4k/5/5/5/4K b -"), nullptr);
+        CHECK_TRUE(cousin.get_child_1st()->found_no_mate());
+
+        auto def_node = Node(false, Move(SQ_1A, SQ_1B));
+        def_node.expand(Game("3k1/4G/5/5/4K w -"), &cousin);
+        CHECK_TRUE(def_node.has_child());
+        CHECK_TRUE(def_node.found_no_mate());
+        CHECK_EQUAL(vshogi::engine::dfpn::max_number, def_node.pn());
+        CHECK_EQUAL(vshogi::engine::dfpn::zero, def_node.dn());
+    }
+    {
+        auto cousin = Node(false, Move(SQ_1A, SQ_1B));
+        cousin.expand(Game("3rk/3pG/4R/2b2/1B2K w -"), nullptr); // one child
+        {
+            auto ch = cousin.get_child_1st();
+            ch->expand(Game("3rk/3pb/4R/5/1B2K b g"), nullptr); // one child
+            ch->get_child_1st()->simulate(Game("3rk/3pR/5/5/1B2K w Bg"));
+            CHECK_TRUE(ch->get_child_1st()->found_mate());
+            ch->backprop_one(Game("3rk/3pb/4R/5/1B2K b g"));
+        }
+        CHECK_TRUE(cousin.get_child_1st()->found_mate());
+
+        auto def_node = Node(false, Move(SQ_1A, SQ_1B));
+        def_node.expand(Game("3rk/3pG/4R/2b2/1B2K w g"), &cousin);
+        CHECK_TRUE(def_node.has_child());
+
+        // stronger stand may lead to no-mate even if nibling is mate.
+        CHECK_FALSE(def_node.found_conclusion());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, def_node.pn());
+        CHECK_EQUAL(vshogi::engine::dfpn::unit, def_node.dn());
+    }
 }
 
 TEST(dfpn_node, expand_removes_no_promotion_moves_by_rook)
@@ -899,6 +965,46 @@ TEST(dfpn_searcher, minishogi_debug)
     CHECK_EQUAL(vshogi::WHITE_WIN, g.get_result());
 }
 
+TEST(dfpn_searcher, test_shogi_debug)
+{
+    using namespace vshogi::shogi;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+
+    // Turn: WHITE
+    // White: FUx4,KE,KIx2
+    //     9   8   7   6   5   4   3   2   1
+    //   +---+---+---+---+---+---+---+---+---+
+    // A |-KY|-KE|-GI|   |   |   |-KI|-KE|   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // B |   |   |-KI|   |-OU|   |   |-KA|-KY|
+    //   +---+---+---+---+---+---+---+---+---+
+    // C |   |   |-FU|-FU|-FU|-FU|-FU|-GI|   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // D |+FU|   |   |   |   |   |   |   |-FU|
+    //   +---+---+---+---+---+---+---+---+---+
+    // E |   |   |   |+KE|   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // F |   |+OU|+FU|   |   |+KA|+HI|   |+FU|
+    //   +---+---+---+---+---+---+---+---+---+
+    // G |   |+FU|   |+FU|+FU|+FU|+FU|   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // H |+KY|   |+GI|   |-RY|   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // I |   |   |   |   |-GI|   |   |   |+KY|
+    //   +---+---+---+---+---+---+---+---+---+
+    // Black: -
+    auto g = Game("lns3gn1/2g1k2bl/2ppppps1/P7p/3N5/1KP2BR1P/1P1PPPP2/L1S1+r4/"
+                  "4s3L w 2gn4p 74");
+    auto searcher = Searcher();
+    searcher.set_game(g);
+    searcher.search(10000u);
+    const auto mate_moves = searcher.get_mate_moves();
+    for (auto&& m : mate_moves) {
+        CHECK_EQUAL(vshogi::ONGOING, g.get_result());
+        g.apply(m);
+    }
+}
+
 // TEST(dfpn_searcher, mate_moves_without_waste_moves)
 // {
 //     using namespace vshogi::shogi;
@@ -934,56 +1040,6 @@ TEST(dfpn_searcher, minishogi_debug)
 //     // Mate moves w/o waste moves: ['L*2f', '2e1e', '1g1f']
 //     const auto actual = searcher.get_mate_moves();
 //     CHECK_EQUAL(3, actual.size());
-// }
-
-// TEST(dfpn_searcher, cache)
-// {
-//     using namespace vshogi::minishogi;
-//     using Searcher = vshogi::engine::dfpn::Searcher<Config>;
-
-//     // Turn: White
-//     // White: KIx2
-//     //     5   4   3   2   1
-//     //   *---*---*---*---*---*
-//     // A |   |   |   |   |   |
-//     //   *---*---*---*---*---*
-//     // B |   |   |-FU|   |   |
-//     //   *---*---*---*---*---*
-//     // C |   |   |   |   |   |
-//     //   *---*---*---*---*---*
-//     // D |   |   |+OU|   |   |
-//     //   *---*---*---*---*---*
-//     // E |   |   |   |   |   |
-//     //   *---*---*---*---*---*
-//     // Black: -
-//     auto searcher = Searcher();
-//     searcher.set_game(Game("5/2p2/5/2K2/5 w 2g"));
-//     searcher.explore(21);
-//     CHECK_FALSE(searcher.found_mate());
-//     searcher.explore(100);
-//     CHECK_TRUE(searcher.found_mate());
-
-//     /**
-//      * @brief It should only take 7 searches to prove checkmate.
-//      *
-//      * - W: G*3c
-//      *      - B: 3d4e
-//      *          - W: G*4d
-//      *      - B: 3d3e
-//      *          - W: G*3d
-//      *      - B: 3d2e
-//      *          - W: G*2d
-//      */
-//     searcher.set_game(Game("5/2p2/5/2K2/5 w 2g"));
-//     CHECK_FALSE(searcher.found_mate());
-//     searcher.explore(6);
-//     CHECK_FALSE(searcher.found_mate());
-//     searcher.explore(1);
-//     CHECK_TRUE(searcher.found_mate());
-
-//     const auto actual = searcher.get_mate_moves();
-//     CHECK_EQUAL(3, actual.size());
-//     CHECK_TRUE(Move(SQ_3C, KI) == actual[0]);
 // }
 
 } // namespace test_vshogi::test_engine

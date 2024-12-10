@@ -215,44 +215,6 @@ public:
     {
         return (found_mate() || found_no_mate());
     }
-    void expand(const GameType& game, const Node<Config>* const cousin)
-    {
-        m_child_1st = nullptr;
-        m_child_2nd = nullptr;
-        if (m_attacker)
-            expand_at_offence(game, cousin);
-        else
-            expand_at_defence(game, cousin);
-        assert((pn() == 0u) ? (dn() == max_number) : (dn() != max_number));
-        assert((dn() == 0u) ? (pn() == max_number) : (pn() != max_number));
-    }
-
-private:
-    uint compute_thpn_for_child(const uint thpn) const
-    {
-        if (m_attacker) {
-            return std::min(
-                thpn,
-                (m_child_2nd && (m_child_2nd->m_pn != max_number))
-                    ? m_child_2nd->m_pn + 1u
-                    : max_number);
-        } else {
-            return thpn;
-        }
-    }
-    uint compute_thdn_for_child(const uint thdn) const
-    {
-        if (m_attacker) {
-            return thdn;
-        } else {
-            return std::min(
-                thdn,
-                (m_child_2nd && (m_child_2nd->m_dn != max_number))
-                    ? m_child_2nd->m_dn + 1u
-                    : max_number);
-        }
-    }
-
     /**
      * @brief Simulate the current game position.
      *
@@ -281,6 +243,67 @@ private:
         else
             set_pndn_no_mate();
         return true;
+    }
+
+    void expand(const GameType& game, const Node<Config>* const cousin)
+    {
+        m_child_1st = nullptr;
+        m_child_2nd = nullptr;
+        if (m_attacker)
+            expand_at_offence(game, cousin);
+        else
+            expand_at_defence(game, cousin);
+        assert((pn() == 0u) ? (dn() == max_number) : (dn() != max_number));
+        assert((dn() == 0u) ? (pn() == max_number) : (pn() != max_number));
+    }
+
+    void backprop_one(const GameType& g)
+    {
+        // - Offence: #P = min(#P of children), #D = sum(#D of children)
+        // - Defence: #P = sum(#P of children), #D = min(#D of children)
+        if (found_conclusion())
+            return;
+        m_child_1st = nullptr;
+        m_child_2nd = nullptr;
+        if (m_attacker) {
+            m_dn = 0u;
+            for (Node* ch = m_child.get(); ch; ch = ch->get_sibling())
+                update_offence_dn_ch1st_ch2nd(ch);
+            m_pn = m_child_1st->m_pn;
+        } else {
+            m_pn = 0u;
+            for (Node* ch = m_child.get(); ch; ch = ch->get_sibling())
+                update_defence_pn_ch1st_ch2nd(ch, g);
+            m_dn = m_child_1st->m_dn;
+        }
+        assert((m_pn == 0u) ? (m_dn == max_number) : (m_dn != max_number));
+        assert((m_dn == 0u) ? (m_pn == max_number) : (m_pn != max_number));
+    }
+
+private:
+    uint compute_thpn_for_child(const uint thpn) const
+    {
+        if (m_attacker) {
+            return std::min(
+                thpn,
+                (m_child_2nd && (m_child_2nd->m_pn != max_number))
+                    ? m_child_2nd->m_pn + 1u
+                    : max_number);
+        } else {
+            return thpn;
+        }
+    }
+    uint compute_thdn_for_child(const uint thdn) const
+    {
+        if (m_attacker) {
+            return thdn;
+        } else {
+            return std::min(
+                thdn,
+                (m_child_2nd && (m_child_2nd->m_dn != max_number))
+                    ? m_child_2nd->m_dn + 1u
+                    : max_number);
+        }
     }
 
 private:
@@ -325,7 +348,7 @@ private:
                 break;
             *holder = std::make_unique<Node<Config>>(!m_attacker, m);
             Node<Config>* const ch = holder->get();
-            if (nib->found_conclusion()) {
+            if (nib->found_mate()) {
                 ch->m_pn = nib->m_pn;
                 ch->m_dn = nib->m_dn;
                 ch->m_child_1st = nib->m_child_1st;
@@ -372,7 +395,7 @@ private:
                 break;
             *holder = std::make_unique<Node<Config>>(!m_attacker, m);
             Node<Config>* const ch = holder->get();
-            if (nib->found_conclusion()) {
+            if (nib->found_no_mate()) {
                 ch->m_pn = nib->m_pn;
                 ch->m_dn = nib->m_dn;
                 ch->m_child_1st = nib->m_child_1st;
@@ -406,28 +429,6 @@ private:
     }
 
 private:
-    void backprop_one(const GameType& g)
-    {
-        // - Offence: #P = min(#P of children), #D = sum(#D of children)
-        // - Defence: #P = sum(#P of children), #D = min(#D of children)
-        if (found_conclusion())
-            return;
-        m_child_1st = nullptr;
-        m_child_2nd = nullptr;
-        if (m_attacker) {
-            m_dn = 0u;
-            for (Node* ch = m_child.get(); ch; ch = ch->get_sibling())
-                update_offence_dn_ch1st_ch2nd(ch);
-            m_pn = m_child_1st->m_pn;
-        } else {
-            m_pn = 0u;
-            for (Node* ch = m_child.get(); ch; ch = ch->get_sibling())
-                update_defence_pn_ch1st_ch2nd(ch, g);
-            m_dn = m_child_1st->m_dn;
-        }
-        assert((m_pn == 0u) ? (m_dn == max_number) : (m_dn != max_number));
-        assert((m_dn == 0u) ? (m_pn == max_number) : (m_pn != max_number));
-    }
     void set_pndn_mate()
     {
         m_pn = zero;
