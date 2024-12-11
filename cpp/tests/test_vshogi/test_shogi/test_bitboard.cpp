@@ -39,6 +39,14 @@ TEST(test_shogi_bitboard, from_square)
     }
 }
 
+TEST(test_shogi_bitboard, from_rank)
+{
+    CHECK_TRUE(bb_ranka == BitBoard::from_rank(Squares::RANK1));
+    CHECK_TRUE(bb_rankb == BitBoard::from_rank(Squares::RANK2));
+    CHECK_TRUE(bb_rankh == BitBoard::from_rank(Squares::RANK_2ND_MAX));
+    CHECK_TRUE(bb_ranki == BitBoard::from_rank(Squares::RANK_MAX));
+}
+
 TEST(test_shogi_bitboard, bitshift)
 {
     {

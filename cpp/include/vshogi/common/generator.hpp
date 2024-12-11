@@ -1126,7 +1126,7 @@ private:
         }
 
         auto movable = m_dst_mask;
-        if (update_mask_by_promotion(movable, src)) {
+        if (update_mask_by_promotion(movable, p, src)) {
             if (!movable.any()) {
                 return;
             }
@@ -1134,10 +1134,27 @@ private:
         update_mask_by_forcing_check(movable, p);
         m_dst_iter = movable.square_iterator();
     }
-    bool update_mask_by_promotion(BitBoardType& mask, const Square src)
+    bool update_mask_by_promotion(
+        BitBoardType& mask, const ColoredPiece p, const Square src)
     {
         if (m_promote && !SHelper::in_promotion_zone(src, m_turn)) {
             mask &= BitBoardType::get_promotion_zone(m_turn);
+            return true;
+        } else if (!m_promote) {
+            const auto dirs = PHelper::get_attack_directions(p);
+            if (dirs[1] == DIR_NA) {
+                mask &= ~BitBoardType::from_rank(
+                    (dirs[0] == DIR_N) ? SHelper::RANK1 : SHelper::RANK_MAX);
+            } else if (dirs[1] > DIR_SE) {
+                if (dirs[1] >= DIR_NNW)
+                    mask &= ~(
+                        BitBoardType::from_rank(SHelper::RANK1)
+                        | BitBoardType::from_rank(SHelper::RANK2));
+                else
+                    mask &= ~(
+                        BitBoardType::from_rank(SHelper::RANK_MAX)
+                        | BitBoardType::from_rank(SHelper::RANK_2ND_MAX));
+            }
             return true;
         }
         return false;

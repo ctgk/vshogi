@@ -48,6 +48,11 @@ private:
 
 public:
     static constexpr Rank RANK1 = static_cast<Rank>(0); // NOLINT
+    static constexpr Rank RANK2 = static_cast<Rank>(1); // NOLINT
+    static constexpr Rank RANK_MAX // NOLINT
+        = static_cast<Rank>(num_ranks - 1u);
+    static constexpr Rank RANK_2ND_MAX // NOLINT
+        = static_cast<Rank>(num_ranks - 2u);
     static constexpr Square SQ_NA = static_cast<Square>(num_squares); // NOLINT
 
     inline static Square file_to_square_array[num_files][num_ranks];

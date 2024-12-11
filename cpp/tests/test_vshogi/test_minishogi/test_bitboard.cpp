@@ -44,6 +44,16 @@ TEST(test_minishogi_bitboard, is_one)
     CHECK_TRUE(bb_1a.is_one(SQ_1A));
 }
 
+TEST(test_minishogi_bitboard, from_rank)
+{
+    CHECK_EQUAL(bb_ranka.value(), BitBoard::from_rank(Squares::RANK1).value());
+    CHECK_EQUAL(bb_rankb.value(), BitBoard::from_rank(Squares::RANK2).value());
+    CHECK_EQUAL(
+        bb_rankd.value(), BitBoard::from_rank(Squares::RANK_2ND_MAX).value());
+    CHECK_EQUAL(
+        bb_ranke.value(), BitBoard::from_rank(Squares::RANK_MAX).value());
+}
+
 TEST(test_minishogi_bitboard, compute_2nd_neighbor_of)
 {
     {

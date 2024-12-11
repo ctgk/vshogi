@@ -17,6 +17,7 @@ class BitBoard
 {
 private:
     using ColoredPiece = typename Config::ColoredPiece;
+    using Rank = typename Config::Rank;
     using Square = typename Config::Square;
     using UInt = typename Config::BaseTypeBitBoard;
     static constexpr uint num_squares = Config::num_squares;
@@ -168,6 +169,12 @@ public:
     static BitBoard from_square(const Square& sq)
     {
         return BitBoard(1) << sq;
+    }
+    static BitBoard from_rank(const Rank& r)
+    {
+        return BitBoard(
+            static_cast<UInt>((1u << num_files) - 1u)
+            << (static_cast<uint>(r) * num_files));
     }
     static BitBoard get_promotion_zone(const ColorEnum& c)
     {
