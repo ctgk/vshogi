@@ -336,7 +336,7 @@ private:
                 ++m_sq_iter;
                 continue;
             }
-            if (is_drop_pawn_mate(*m_sq_iter, p)) {
+            if (m_board.is_drop_pawn_mate(*m_sq_iter, m_turn)) {
                 ++m_sq_iter;
                 continue;
             }
@@ -360,46 +360,6 @@ private:
                 return true;
         }
         return false;
-    }
-    bool is_drop_pawn_mate(const Square dst, const ColoredPiece pawn) const
-    {
-        const auto enemy_king_sq = m_board.get_king_location(~m_turn);
-        if ((enemy_king_sq == SQ_NA)
-            || !BitBoardType::get_attacks_by(pawn, dst).is_one(enemy_king_sq))
-            return false;
-
-        // if enemy king can move away from the attack, then return false.
-        const auto enemy_mask = m_board.get_occupied(~m_turn);
-        const auto enemy_king_movable
-            = BitBoardType::get_attacks_by(
-                  m_board[enemy_king_sq], enemy_king_sq)
-              & (~enemy_mask);
-        for (auto sq : enemy_king_movable.square_iterator()) {
-            if (m_board.is_square_attacked(m_turn, sq, enemy_king_sq))
-                continue;
-            return false;
-        }
-
-        // if enemy can capture the pawn, then return false.
-        const auto enemy_king_dir = (m_turn == BLACK) ? DIR_N : DIR_S;
-        for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
-            if (dir == enemy_king_dir)
-                continue;
-            const auto src_next = m_board.find_attacker(~m_turn, dst, dir);
-            const auto attacking_the_pawn = (src_next != SHelper::SQ_NA);
-            if (attacking_the_pawn) {
-                const auto discovered_dir
-                    = SHelper::get_direction(src_next, enemy_king_sq);
-                const auto discovered_attacker_sq
-                    = m_board.find_ranging_attacker(
-                        m_turn, enemy_king_sq, discovered_dir, src_next);
-                const auto pinned = (discovered_attacker_sq != SHelper::SQ_NA);
-                if (!pinned)
-                    return false;
-            }
-        }
-
-        return true;
     }
 };
 
@@ -546,7 +506,7 @@ private:
                 ++m_sq_iter;
                 continue;
             }
-            if (is_drop_pawn_mate(*m_sq_iter, p)) {
+            if (m_board.is_drop_pawn_mate(*m_sq_iter, m_turn)) {
                 ++m_sq_iter;
                 continue;
             }
@@ -570,45 +530,6 @@ private:
                 return true;
         }
         return false;
-    }
-    bool is_drop_pawn_mate(const Square dst, const ColoredPiece pawn) const
-    {
-        const auto enemy_king_sq = m_board.get_king_location(~m_turn);
-        if (!BitBoardType::get_attacks_by(pawn, dst).is_one(enemy_king_sq))
-            return false;
-
-        // if enemy king can move away from the attack, then return false.
-        const auto enemy_mask = m_board.get_occupied(~m_turn);
-        const auto enemy_king_movable
-            = BitBoardType::get_attacks_by(
-                  m_board[enemy_king_sq], enemy_king_sq)
-              & (~enemy_mask);
-        for (auto sq : enemy_king_movable.square_iterator()) {
-            if (m_board.is_square_attacked(m_turn, sq, enemy_king_sq))
-                continue;
-            return false;
-        }
-
-        // if enemy can capture the pawn, then return false.
-        const auto enemy_king_dir = (m_turn == BLACK) ? DIR_N : DIR_S;
-        for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
-            if (dir == enemy_king_dir)
-                continue;
-            const auto src_next = m_board.find_attacker(~m_turn, dst, dir);
-            const auto attacking_the_pawn = (src_next != SHelper::SQ_NA);
-            if (attacking_the_pawn) {
-                const auto discovered_dir
-                    = SHelper::get_direction(src_next, enemy_king_sq);
-                const auto discovered_attacker_sq
-                    = m_board.find_ranging_attacker(
-                        m_turn, enemy_king_sq, discovered_dir, src_next);
-                const auto pinned = (discovered_attacker_sq != SHelper::SQ_NA);
-                if (!pinned)
-                    return false;
-            }
-        }
-
-        return true;
     }
 };
 

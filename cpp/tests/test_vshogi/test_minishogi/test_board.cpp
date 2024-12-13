@@ -285,4 +285,17 @@ TEST(minishogi_board, find_ranging_attacker)
     }
 }
 
+TEST(minishogi_board, is_drop_pawn_mate)
+{
+    {
+        const auto b = Board("3rk/5/4G/5/4K");
+        CHECK_TRUE(b.is_drop_pawn_mate(SQ_1B, vshogi::BLACK));
+        CHECK_FALSE(b.is_drop_pawn_mate(SQ_2B, vshogi::BLACK));
+    }
+    {
+        const auto b = Board("5/5/4s/5/3GK");
+        CHECK_FALSE(b.is_drop_pawn_mate(SQ_1D, vshogi::WHITE));
+    }
+}
+
 } // namespace test_vshogi::test_minishogi

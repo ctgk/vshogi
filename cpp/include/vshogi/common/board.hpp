@@ -265,6 +265,16 @@ public:
         }
         return false;
     }
+    bool is_drop_pawn_mate(const Square& dst, const ColorEnum& by_side) const
+    {
+        if (!is_pawn_attacking_to_enemy_king(dst, by_side))
+            return false;
+        if (king_can_move_away_from_a_pawn_attack(~by_side))
+            return false;
+        if (enemy_can_capture_the_drop_pawn(dst, by_side))
+            return false;
+        return true;
+    }
     Board hflip() const
     {
         Board out;
@@ -447,6 +457,52 @@ private:
     }
     bool is_square_attacked_by_ranging_pieces(
         const ColorEnum& by_side, const Square& sq, const Square& skip) const;
+    bool is_pawn_attacking_to_enemy_king(
+        const Square& sq, const ColorEnum& by_side) const
+    {
+        const auto enemy_king_sq = m_king_locations[~by_side];
+        if (enemy_king_sq == SQ_NA)
+            return false;
+        return enemy_king_sq
+               == SHelper::shift(sq, (by_side == BLACK) ? DIR_N : DIR_S);
+    }
+    bool
+    king_can_move_away_from_a_pawn_attack(const ColorEnum& king_color) const
+    {
+        const Square& king_sq = m_king_locations[king_color];
+        const BitBoardType& ally_mask = m_bb_color[king_color];
+        const BitBoardType king_dst_mask
+            = get_attacks_by_nocheck(king_sq) & (~ally_mask);
+        for (auto sq : king_dst_mask.square_iterator()) {
+            if (is_square_attacked(~king_color, sq, king_sq))
+                continue;
+            return true;
+        }
+        return false;
+    }
+    bool enemy_can_capture_the_drop_pawn(
+        const Square& dst, const ColorEnum& by_side) const
+    {
+        const auto enemy_king_sq = m_king_locations[~by_side];
+        const auto enemy_king_dir = (by_side == BLACK) ? DIR_N : DIR_S;
+        for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
+            if (dir == enemy_king_dir)
+                continue;
+            const auto src_next = find_attacker(~by_side, dst, dir);
+            const bool is_attacking_the_pawn = (src_next != SHelper::SQ_NA);
+            if (is_attacking_the_pawn) {
+                const auto discovered_dir
+                    = SHelper::get_direction(src_next, enemy_king_sq);
+                const auto discovered_attacker_sq = find_ranging_attacker(
+                    by_side, enemy_king_sq, discovered_dir, src_next);
+                const auto is_pinned
+                    = (discovered_attacker_sq != SHelper::SQ_NA);
+                if (!is_pinned)
+                    return true;
+            }
+        }
+        return false;
+    }
 };
 
 } // namespace vshogi
