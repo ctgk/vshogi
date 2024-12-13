@@ -1005,6 +1005,46 @@ TEST(dfpn_searcher, test_shogi_debug)
     }
 }
 
+TEST(dfpn_searcher, test_shogi_debug_2)
+{
+    using namespace vshogi::shogi;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    // Turn: WHITE
+    // White: FUx5,GI
+    //     9   8   7   6   5   4   3   2   1
+    //   +---+---+---+---+---+---+---+---+---+
+    // A |-HI|   |   |   |   |   |-FU|+KI|   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // B |-KY|   |   |-FU|-GI|   |-KI|-FU|   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // C |-KE|   |-OU|   |-FU|   |-GI|   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // D |   |   |-FU|   |-KA|+FU|   |   |-KY|
+    //   +---+---+---+---+---+---+---+---+---+
+    // E |-FU|   |   |   |+HI|   |   |+KE|+FU|
+    //   +---+---+---+---+---+---+---+---+---+
+    // F |   |   |   |+KI|   |-KE|+FU|-KY|   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // G |+FU|-FU|   |+KI|   |   |+KE|   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // H |+KY|   |   |-KA|   |+GI|   |   |+OU|
+    //   +---+---+---+---+---+---+---+---+---+
+    // I |   |   |   |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // Black: FUx2
+    auto g = Game("r5pG1/l2ps1gp1/n1k1p1s2/2p1bP2l/p3R2NP/3G1nPl1/Pp1G2N2/"
+                  "L2b1S2K/9 w 2Ps5p 162");
+    auto searcher = Searcher();
+    searcher.set_game(g);
+    searcher.search(200u);
+    const auto mate_moves = searcher.get_mate_moves();
+    for (auto&& m : mate_moves) {
+        CHECK_EQUAL(vshogi::ONGOING, g.get_result());
+        g.apply(m);
+    }
+    CHECK_EQUAL(vshogi::WHITE_WIN, g.get_result());
+}
+
 // TEST(dfpn_searcher, mate_moves_without_waste_moves)
 // {
 //     using namespace vshogi::shogi;

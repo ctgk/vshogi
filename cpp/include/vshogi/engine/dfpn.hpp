@@ -319,6 +319,8 @@ private:
         std::unique_ptr<Node<Config>>* next_child
             = cousin ? expand_board_moves_at_offence(*cousin)
                      : expand_board_moves_at_offence(s);
+        if (found_mate())
+            return;
         expand_drop_moves_at_offence(next_child, s);
         if (m_child_1st == nullptr)
             set_pndn_no_mate();
@@ -331,6 +333,8 @@ private:
         std::unique_ptr<Node<Config>>* const next_child
             = cousin ? expand_board_moves_at_defence(*cousin, g)
                      : expand_board_moves_at_defence(g);
+        if (found_no_mate())
+            return;
         if (!had_two_consecutive_sacrifice_drops(g))
             expand_drop_moves_at_defence(next_child, g);
         if (m_child_1st == nullptr)
@@ -351,7 +355,8 @@ private:
             if (nib->found_mate()) {
                 ch->m_pn = nib->m_pn;
                 ch->m_dn = nib->m_dn;
-                ch->m_child_1st = nib->m_child_1st;
+                set_pndn_mate();
+                break;
             }
             update_offence_dn_ch1st_ch2nd(ch);
             holder = &(ch->m_sibling);
@@ -398,7 +403,8 @@ private:
             if (nib->found_no_mate()) {
                 ch->m_pn = nib->m_pn;
                 ch->m_dn = nib->m_dn;
-                ch->m_child_1st = nib->m_child_1st;
+                set_pndn_no_mate();
+                break;
             }
             update_defence_pn_ch1st_ch2nd(ch, game);
             holder = &(ch->m_sibling);
@@ -544,11 +550,20 @@ public:
         auto it = m_table.find(bt_hash);
         if (it == m_table.end())
             return nullptr;
-        return look_up_fuzzy(g, it->second);
+        return look_up_fuzzy<NodeType*>(g, it->second);
+    }
+    const NodeType* look_up_fuzzy(const GameType& g) const
+    {
+        const std::uint64_t bt_hash = g.get_board_turn_hash();
+        auto it = m_table.find(bt_hash);
+        if (it == m_table.end())
+            return nullptr;
+        return look_up_fuzzy<const NodeType*>(g, it->second);
     }
 
 private:
-    NodeType* look_up_fuzzy(const GameType& g, StandNodeTable& table)
+    template <class T>
+    T look_up_fuzzy(const GameType& g, const StandNodeTable& table) const
     {
         // - offence turn (`is_attacker == true`)
         //     - Weaker offence stand, but mate (or #P <= #D)
@@ -559,10 +574,10 @@ private:
         const auto t = g.get_turn();
         const auto s = g.get_stand(t);
         Stand<Config> s_out = Stand<Config>();
-        NodeType* n_out = nullptr;
+        T n_out = nullptr;
         for (auto& it : table) {
             const auto s_iter = Stand<Config>(it.first);
-            NodeType* n_iter = it.second;
+            T n_iter = it.second;
             const bool is_atk = n_iter->is_attacker();
             const bool is_mate = n_iter->found_mate();
             const bool is_no_mate = n_iter->found_no_mate();
@@ -667,13 +682,7 @@ public:
     std::vector<MoveType> get_mate_moves() const
     {
         std::vector<MoveType> out{};
-        const Node<Config>* n = m_table.get_root();
-        while (true) {
-            n = n->get_child_1st();
-            if (n == nullptr)
-                break;
-            out.emplace_back(n->get_action());
-        }
+        append_mate_moves(out, *m_game, m_table.get_root()->get_child_1st());
         return out;
     }
     const Node<Config>* get_root() const
@@ -692,10 +701,9 @@ private:
         game.apply_dfpn(n.get_action());
         assert(n.is_attacker() || game.in_check());
         Node<Config>* const p = m_table.look_up_fuzzy(game);
-        if ((p != nullptr) && p->found_conclusion()) {
+        if ((p != nullptr) && (p->found_conclusion())) {
             n.m_pn = p->pn();
             n.m_dn = p->dn();
-            n.m_child_1st = p->m_child_1st;
             --searches;
             game.undo();
             return;
@@ -717,6 +725,55 @@ private:
             n.backprop_one(game);
         }
         game.undo();
+    }
+    void append_mate_moves(
+        std::vector<MoveType>& out,
+        GameType& game,
+        const Node<Config>* const node) const
+    {
+        const MoveType action = node->get_action();
+        game.apply_dfpn(action);
+        out.emplace_back(action);
+        if (node->has_child()) {
+            append_mate_moves(out, game, node->get_child_1st());
+        } else if (game.get_result() == ONGOING) {
+            append_mate_moves(out, game);
+        }
+        game.undo();
+    }
+    void append_mate_moves(std::vector<MoveType>& out, GameType& game) const
+    {
+        const Node<Config>* const cousin = m_table.look_up_fuzzy(game);
+        const MoveType action = find_legal_action_to_mate(game, cousin);
+        if (action.hash() == 0u)
+            return;
+        game.apply_dfpn(action);
+        out.emplace_back(action);
+        if (game.get_result() == ONGOING)
+            append_mate_moves(out, game);
+        game.undo();
+    }
+    MoveType find_legal_action_to_mate(
+        const GameType& game, const Node<Config>* const cousin) const
+    {
+        const ColorEnum t = game.get_turn();
+        const Board<Config>& board = game.get_board();
+        const Stand<Config>& stand = game.get_stand(t);
+        for (auto nib = cousin->get_child(); nib; nib = nib->get_sibling()) {
+            if (!nib->found_mate())
+                continue;
+            const MoveType action = nib->get_action();
+            if (!action.is_drop())
+                return action;
+            const auto pt = action.source_piece();
+            if (!stand.exist(pt))
+                continue;
+            if ((pt != PHelper::FU)
+                || (!board.is_drop_pawn_mate(action.destination(), t)))
+                return action;
+        }
+        assert(false);
+        return MoveType();
     }
 };
 

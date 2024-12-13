@@ -9,6 +9,7 @@
 """
 
 import contextlib
+from datetime import datetime
 from glob import glob
 import os
 import random
@@ -148,7 +149,7 @@ def play_game(
         if player.dfpn_found_mate:
             sfen = game.to_sfen()
             mate_moves = player.get_mate_moves()
-            for i, move in enumerate(mate_moves[:-1]):
+            for i, move in enumerate(mate_moves):
                 player.search(dfpn_search_root=0, mcts_search=1, dfpn_search_leaf=0)
                 game.v_value_record.append(player.get_value())
                 game.q_value_record.append(int(i % 2 == 0) * 2 - 1)
@@ -156,18 +157,13 @@ def play_game(
                 game.z_weight_record.append(1.)
                 game.apply(move)
                 player.apply(move)
-                if game.result != vshogi.Result.ONGOING:
-                    date = None
+                if ((game.result != vshogi.Result.ONGOING)
+                    if (i != len(mate_moves) - 1)
+                    else (game.result == vshogi.Result.ONGOING)
+                ):
+                    date = datetime.today()
                     with open("./.bug_log", mode='a') as f:
-                        print(date, 'DFPN', sfen, sep='\t', file=f)
-            player.search(dfpn_search_root=0, mcts_search=1, dfpn_search_leaf=0)
-            game.v_value_record.append(player.get_value())
-            game.q_value_record.append(int((len(mate_moves) - 1) % 2 == 0) * 2 - 1)
-            game.visit_count_record.append({})
-            game.z_weight_record.append(1.)
-            game.apply(mate_moves[-1])
-            player.apply(mate_moves[-1])
-            break
+                        print(date, 'DFPN', sfen, [m.to_usi() for m in mate_moves], sep='\t', file=f)
 
         if game.record_length < num_random_moves:
             move = player.select(temperature=args.mcts_temperature)
