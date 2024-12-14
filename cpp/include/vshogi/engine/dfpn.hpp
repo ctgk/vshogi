@@ -732,10 +732,14 @@ private:
         const Node<Config>* const node) const
     {
         const MoveType action = node->get_action();
-        game.apply_dfpn(action);
+        game.apply_nocheck(action);
         out.emplace_back(action);
-        if (node->has_child()) {
-            append_mate_moves(out, game, node->get_child_1st());
+        const Node<Config>* const ch1st = node->get_child_1st();
+        if ((ch1st != nullptr) && ch1st->found_mate()) {
+            // The 1st child may not have mate value because
+            // `search_inner()` can assign mate value on a node having children
+            // with arbitrary #P and #D values by `m_table.look_up_fuzzy()`.
+            append_mate_moves(out, game, ch1st);
         } else if (game.get_result() == ONGOING) {
             append_mate_moves(out, game);
         }
@@ -747,7 +751,7 @@ private:
         const MoveType action = find_legal_action_to_mate(game, cousin);
         if (action.hash() == 0u)
             return;
-        game.apply_dfpn(action);
+        game.apply_nocheck(action);
         out.emplace_back(action);
         if (game.get_result() == ONGOING)
             append_mate_moves(out, game);
