@@ -492,7 +492,8 @@ class TranspositionTable
 {
 private:
     using BaseTypeStand = typename Config::BaseTypeStand;
-    using StandNodeTable = std::unordered_map<BaseTypeStand, Node<Config>*>;
+    using StandNodeTable
+        = std::unordered_map<BaseTypeStand, const Node<Config>*>;
     using StandType = Stand<Config>;
     using GameType = Game<Config>;
     using MoveType = Move<Config>;
@@ -520,7 +521,7 @@ public:
         return &m_root;
     }
 
-    void add(NodeType* const n, const GameType& g)
+    void add(const NodeType* const n, const GameType& g)
     {
         const std::uint64_t bt_hash = g.get_board_turn_hash();
         const auto t = g.get_turn();
@@ -533,27 +534,18 @@ public:
             it->second.emplace(s, n);
         }
     }
-
-    NodeType* look_up_fuzzy(const GameType& g)
-    {
-        const std::uint64_t bt_hash = g.get_board_turn_hash();
-        auto it = m_table.find(bt_hash);
-        if (it == m_table.end())
-            return nullptr;
-        return look_up_fuzzy<NodeType*>(g, it->second);
-    }
     const NodeType* look_up_fuzzy(const GameType& g) const
     {
         const std::uint64_t bt_hash = g.get_board_turn_hash();
         auto it = m_table.find(bt_hash);
         if (it == m_table.end())
             return nullptr;
-        return look_up_fuzzy<const NodeType*>(g, it->second);
+        return look_up_fuzzy(g, it->second);
     }
 
 private:
-    template <class T>
-    T look_up_fuzzy(const GameType& g, const StandNodeTable& table) const
+    const NodeType*
+    look_up_fuzzy(const GameType& g, const StandNodeTable& table) const
     {
         // - offence turn (`is_attacker == true`)
         //     - Weaker offence stand, but mate (or #P <= #D)
@@ -564,10 +556,10 @@ private:
         const auto t = g.get_turn();
         const auto s = g.get_stand(t);
         Stand<Config> s_out = Stand<Config>();
-        T n_out = nullptr;
+        const NodeType* n_out = nullptr;
         for (auto& it : table) {
             const auto s_iter = Stand<Config>(it.first);
-            T n_iter = it.second;
+            const NodeType* n_iter = it.second;
             const bool is_atk = n_iter->is_attacker();
             const bool is_mate = n_iter->found_mate();
             const bool is_no_mate = n_iter->found_no_mate();
@@ -690,7 +682,7 @@ private:
     {
         game.apply_dfpn(n.get_action());
         assert(n.is_attacker() || game.in_check());
-        Node<Config>* const p = m_table.look_up_fuzzy(game);
+        const Node<Config>* const p = m_table.look_up_fuzzy(game);
         if ((p != nullptr) && (p->found_conclusion())) {
             n.m_pn = p->pn();
             n.m_dn = p->dn();
