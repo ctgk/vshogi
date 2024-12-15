@@ -146,38 +146,25 @@ def play_game(
             dfpn_search_leaf=args.dfpn_search_leaf,
             kldgain_threshold=args.mcts_kldgain_threshold,
         )
-        if player.dfpn_found_mate:
-            sfen = game.to_sfen()
-            mate_moves = player.get_mate_moves()
-            for i, move in enumerate(mate_moves):
-                player.search(dfpn_search_root=0, mcts_search=1, dfpn_search_leaf=0)
-                game.v_value_record.append(player.get_value())
-                game.q_value_record.append(int(i % 2 == 0) * 2 - 1)
-                game.visit_count_record.append({})
-                game.z_weight_record.append(1.)
-                game.apply(move)
-                player.apply(move)
-                if ((game.result != vshogi.Result.ONGOING)
-                    if (i != len(mate_moves) - 1)
-                    else (game.result == vshogi.Result.ONGOING)
-                ):
-                    date = datetime.today()
-                    with open("./.bug_log", mode='a') as f:
-                        print(date, 'DFPN', sfen, [m.to_usi() for m in mate_moves], sep='\t', file=f)
 
-        if game.record_length < num_random_moves:
+        if player.dfpn_found_mate:
+            move = player.select()
+            game.z_weight_record.append(1.)
+        elif game.record_length < num_random_moves:
             move = player.select(temperature=args.mcts_temperature)
             game.z_weight_record.append(0.)
         else:
             move = player.select()
             game.z_weight_record.append(0.5)
 
-        visit_count = {
+        visit_count = {} if player.dfpn_found_mate else {
             m.to_usi(): v + 1  # +1 for smoothing
             for m, v in player.get_visit_counts(include_random=False).items()
         }
         game.v_value_record.append(player.get_value())
-        game.q_value_record.append(player.get_q_value(greedy_depth=args.mcts_q_greedy_depth))
+        game.q_value_record.append(
+            1 if player.dfpn_found_mate else
+            player.get_q_value(greedy_depth=args.mcts_q_greedy_depth))
         game.visit_count_record.append(visit_count)
 
         game.apply(move)

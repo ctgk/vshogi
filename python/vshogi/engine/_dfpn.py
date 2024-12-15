@@ -109,7 +109,7 @@ class DfpnSearcher(Engine):
         Move
             First action to mate.
         """
-        return self._searcher.get_mate_moves()[0]
+        return self._searcher.get_mate_move()
 
     def found_conclusion(self) -> bool:
         """Return true if there is a mate or no-mate for sure.
@@ -147,6 +147,17 @@ class DfpnSearcher(Engine):
     def get_search_count(self) -> int:
         self._raise_error_if_not_ready()
         return self._searcher.get_search_count()
+
+    def get_mate_move(self) -> Move:
+        """Return move to mate found.
+
+        Returns
+        -------
+        Move
+            Move to mate found.
+        """
+        self._raise_error_if_not_ready()
+        return self._searcher.get_mate_move()
 
     def get_mate_moves(self) -> tp.List[Move]:
         """Return mate moves found.

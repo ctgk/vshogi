@@ -747,8 +747,7 @@ private:
     }
     void append_mate_moves(std::vector<MoveType>& out, GameType& game) const
     {
-        const Node<Config>* const cousin = m_table.look_up_fuzzy(game);
-        const MoveType action = find_legal_action_to_mate(game, cousin);
+        const MoveType action = find_action_from_transposition_table(game);
         if (action.hash() == 0u)
             return;
         game.apply_nocheck(action);
@@ -757,23 +756,27 @@ private:
             append_mate_moves(out, game);
         game.undo();
     }
-    MoveType find_legal_action_to_mate(
-        const GameType& game, const Node<Config>* const cousin) const
+    MoveType find_action_from_transposition_table(const GameType& game) const
     {
         const ColorEnum t = game.get_turn();
         const Board<Config>& board = game.get_board();
         const Stand<Config>& stand = game.get_stand(t);
-        for (auto nib = cousin->get_child(); nib; nib = nib->get_sibling()) {
-            if (!nib->found_mate())
+        const Node<Config>* const cousin = m_table.look_up_fuzzy(game);
+        if (cousin == nullptr) {
+            assert(game.in_check()); // assert defence turn
+            return *LegalMoveGenerator<Config>(game.get_state());
+        }
+
+        const bool is_atk = cousin->is_attacker();
+        assert((!is_atk) || cousin->found_mate());
+        for (auto n = cousin->get_child(); n; n = n->get_sibling()) {
+            if (is_atk && (!n->found_mate()))
                 continue;
-            const MoveType action = nib->get_action();
-            if (!action.is_drop())
+            const MoveType action = n->get_action();
+            if (!action.is_drop()) // legal for sure
                 return action;
             const auto pt = action.source_piece();
-            if (!stand.exist(pt))
-                continue;
-            if ((pt != PHelper::FU)
-                || (!board.is_drop_pawn_mate(action.destination(), t)))
+            if (stand.exist(pt))
                 return action;
         }
         assert(false);
