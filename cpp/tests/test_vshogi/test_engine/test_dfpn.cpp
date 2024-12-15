@@ -126,14 +126,14 @@ TEST(dfpn_node, expand)
     using Node = vshogi::engine::dfpn::Node<Config>;
     {
         auto n = Node();
-        n.expand(Game("k4/5/5/5/5 b -"), nullptr);
+        n.expand(Game("k4/5/5/5/5 b -"), nullptr, nullptr);
         CHECK_FALSE(n.has_child());
         CHECK_EQUAL(vshogi::engine::dfpn::max_number, n.pn());
         CHECK_EQUAL(vshogi::engine::dfpn::zero, n.dn());
     }
     {
         auto n = Node();
-        n.expand(Game("2kp+R/5/5/5/5 b -"), nullptr);
+        n.expand(Game("2kp+R/5/5/5/5 b -"), nullptr, nullptr);
         CHECK_TRUE(n.has_child());
         CHECK_EQUAL(vshogi::engine::dfpn::unit, n.pn());
         CHECK_EQUAL(vshogi::engine::dfpn::unit * 2u, n.dn());
@@ -147,8 +147,8 @@ TEST(dfpn_node, expand_using_cousin)
     {
         auto n = Node();
         auto cousin = Node();
-        cousin.expand(Game("k2p+R/5/5/5/5 b -"), nullptr);
-        n.expand(Game("2kp+R/5/5/5/5 b -"), &cousin);
+        cousin.expand(Game("k2p+R/5/5/5/5 b -"), nullptr, nullptr);
+        n.expand(Game("2kp+R/5/5/5/5 b -"), &cousin, nullptr);
         CHECK_TRUE(n.has_child());
         CHECK_EQUAL(vshogi::engine::dfpn::unit, n.pn());
         CHECK_EQUAL(vshogi::engine::dfpn::unit, n.dn());
@@ -160,7 +160,8 @@ TEST(dfpn_node, expand_using_cousin)
     }
     {
         auto cousin = Node();
-        cousin.expand(Game("3rk/3p1/3BP/5/4K b -"), nullptr); // one child
+        // one child
+        cousin.expand(Game("3rk/3p1/3BP/5/4K b -"), nullptr, nullptr);
         CHECK_EQUAL(vshogi::engine::dfpn::unit, cousin.pn());
         CHECK_EQUAL(vshogi::engine::dfpn::unit, cousin.dn());
         cousin.get_child_1st()->simulate(
@@ -168,7 +169,7 @@ TEST(dfpn_node, expand_using_cousin)
         CHECK_TRUE(cousin.get_child_1st()->found_no_mate());
 
         auto atk_node = Node();
-        atk_node.expand(Game("3rk/3p1/3BP/5/4K b B"), &cousin);
+        atk_node.expand(Game("3rk/3p1/3BP/5/4K b B"), &cousin, nullptr);
         CHECK_TRUE(atk_node.has_child());
 
         // stronger stand may lead to mate even if nibling is not mate.
@@ -178,10 +179,12 @@ TEST(dfpn_node, expand_using_cousin)
     }
     {
         auto cousin = Node(false, Move(SQ_1A, SQ_1B));
-        cousin.expand(Game("3rk/3pG/4R/2b2/1B2K w -"), nullptr); // one child
+        // one child
+        cousin.expand(Game("3rk/3pG/4R/2b2/1B2K w -"), nullptr, nullptr);
         {
             auto ch = cousin.get_child_1st();
-            ch->expand(Game("3rk/3pb/4R/5/1B2K b g"), nullptr); // one child
+            // one child
+            ch->expand(Game("3rk/3pb/4R/5/1B2K b g"), nullptr, nullptr);
             ch->get_child_1st()->simulate(Game("3rk/3pR/5/5/1B2K w Bg"));
             CHECK_TRUE(ch->get_child_1st()->found_mate());
             ch->backprop_one(Game("3rk/3pb/4R/5/1B2K b g"));
@@ -189,7 +192,7 @@ TEST(dfpn_node, expand_using_cousin)
         CHECK_TRUE(cousin.get_child_1st()->found_mate());
 
         auto def_node = Node(false, Move(SQ_1A, SQ_1B));
-        def_node.expand(Game("3rk/3pG/4R/2b2/1B2K w g"), &cousin);
+        def_node.expand(Game("3rk/3pG/4R/2b2/1B2K w g"), &cousin, nullptr);
         CHECK_TRUE(def_node.has_child());
 
         // stronger stand may lead to no-mate even if nibling is mate.
@@ -205,7 +208,7 @@ TEST(dfpn_node, expand_removes_no_promotion_moves_by_rook)
     using Node = vshogi::engine::dfpn::Node<Config>;
 
     auto n = Node();
-    n.expand(Game("k2pR/5/5/5/5 b -"), nullptr);
+    n.expand(Game("k2pR/5/5/5/5 b -"), nullptr, nullptr);
     CHECK_TRUE(n.has_child());
     auto ch = n.get_child();
     CHECK_TRUE(ch != nullptr);

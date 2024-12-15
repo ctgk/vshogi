@@ -245,14 +245,17 @@ public:
         return true;
     }
 
-    void expand(const GameType& game, const Node<Config>* const cousin)
+    void expand(
+        const GameType& game,
+        const Node<Config>* const cousin_ge_stand,
+        const Node<Config>* const cousin_le_stand)
     {
         m_child_1st = nullptr;
         m_child_2nd = nullptr;
         if (m_attacker)
-            expand_at_offence(game, cousin);
+            expand_at_offence(game, cousin_ge_stand, cousin_le_stand);
         else
-            expand_at_defence(game, cousin);
+            expand_at_defence(game, cousin_ge_stand, cousin_le_stand);
         assert((pn() == 0u) ? (dn() == max_number) : (dn() != max_number));
         assert((dn() == 0u) ? (pn() == max_number) : (pn() != max_number));
     }
@@ -307,7 +310,10 @@ private:
     }
 
 private:
-    void expand_at_offence(const GameType& g, const Node<Config>* const cousin)
+    void expand_at_offence(
+        const GameType& g,
+        const Node<Config>* const cousin_ge_stand,
+        const Node<Config>* const cousin_le_stand)
     {
         const State<Config>& s = g.get_state();
         assert(
@@ -316,9 +322,15 @@ private:
             s.get_board()[s.get_board().get_king_location(~s.get_turn())]
             == PHelper::to_board_piece(~s.get_turn(), PHelper::OU));
         m_dn = zero;
-        if (cousin) {
-            assert(!cousin->found_conclusion());
-            const Node<Config>* nibling = cousin->get_child();
+        if (cousin_ge_stand) {
+            assert(!cousin_ge_stand->found_conclusion());
+            const Node<Config>* nibling = cousin_ge_stand->get_child();
+            const auto next_child = expand_board_moves_at_offence(&nibling);
+            expand_drop_moves_at_offence(
+                next_child, s.get_stand(s.get_turn()), nibling);
+        } else if (cousin_le_stand) {
+            assert(!cousin_le_stand->found_conclusion());
+            const Node<Config>* nibling = cousin_le_stand->get_child();
             const auto next_child = expand_board_moves_at_offence(&nibling);
             expand_drop_moves_at_offence(next_child, s);
         } else {
@@ -330,15 +342,29 @@ private:
         else
             m_pn = m_child_1st->m_pn;
     }
-    void expand_at_defence(const GameType& g, const Node<Config>* const cousin)
+    void expand_at_defence(
+        const GameType& g,
+        const Node<Config>* const cousin_ge_stand,
+        const Node<Config>* const cousin_le_stand)
     {
         m_pn = zero;
-        assert((cousin == nullptr) || (!cousin->found_conclusion()));
-        std::unique_ptr<Node<Config>>* const next_child
-            = cousin ? expand_board_moves_at_defence(*cousin, g)
-                     : expand_board_moves_at_defence(g);
-        if (!had_two_consecutive_sacrifice_drops(g))
-            expand_drop_moves_at_defence(next_child, g);
+        if (cousin_ge_stand) {
+            assert(!cousin_ge_stand->found_conclusion());
+            const Node<Config>* nibling = cousin_ge_stand->get_child();
+            const auto next_child = expand_board_moves_at_defence(g, &nibling);
+            if (!had_two_consecutive_sacrifice_drops(g))
+                expand_drop_moves_at_defence(next_child, g, nibling);
+        } else if (cousin_le_stand) {
+            assert(!cousin_le_stand->found_conclusion());
+            const Node<Config>* nibling = cousin_le_stand->get_child();
+            const auto next_child = expand_board_moves_at_defence(g, &nibling);
+            if (!had_two_consecutive_sacrifice_drops(g))
+                expand_drop_moves_at_defence(next_child, g);
+        } else {
+            const auto next_child = expand_board_moves_at_defence(g);
+            if (!had_two_consecutive_sacrifice_drops(g))
+                expand_drop_moves_at_defence(next_child, g);
+        }
         if (m_child_1st == nullptr)
             set_pndn_mate();
         else
@@ -386,12 +412,29 @@ private:
             next = &(p->m_sibling);
         }
     }
+    void expand_drop_moves_at_offence(
+        std::unique_ptr<Node<Config>>* next,
+        const Stand<Config>& stand,
+        const Node<Config>* nibling)
+    {
+
+        for (; nibling; nibling = nibling->get_sibling()) {
+            const auto m = nibling->get_action();
+            assert(m.is_drop());
+            if (!stand.exist(m.source_piece()))
+                continue;
+            *next = std::make_unique<Node<Config>>(!m_attacker, m);
+            Node<Config>* const p = next->get();
+            update_offence_dn_ch1st_ch2nd(p);
+            next = &(p->m_sibling);
+        }
+    }
     std::unique_ptr<Node<Config>>* expand_board_moves_at_defence(
-        const Node<Config>& cousin, const GameType& game)
+        const GameType& game, const Node<Config>** const nibling)
     {
         std::unique_ptr<Node<Config>>* holder = &m_child;
-        for (auto nib = cousin.get_child(); nib; nib = nib->get_sibling()) {
-            const auto m = nib->get_action();
+        for (; (*nibling); *nibling = (*nibling)->get_sibling()) {
+            const auto m = (*nibling)->get_action();
             if (m.is_drop())
                 break;
             *holder = std::make_unique<Node<Config>>(!m_attacker, m);
@@ -417,6 +460,23 @@ private:
         std::unique_ptr<Node<Config>>* next, const GameType& game)
     {
         for (Move<Config> m : DropMoveGenerator<Config>(game.get_state())) {
+            *next = std::make_unique<Node<Config>>(!m_attacker, m);
+            Node<Config>* const ch = next->get();
+            update_defence_pn_ch1st_ch2nd(ch, game);
+            next = &(ch->m_sibling);
+        }
+    }
+    void expand_drop_moves_at_defence(
+        std::unique_ptr<Node<Config>>* next,
+        const GameType& game,
+        const Node<Config>* nibling)
+    {
+        const Stand<Config>& stand = game.get_stand(game.get_turn());
+        for (; nibling; nibling = nibling->get_sibling()) {
+            const auto m = nibling->get_action();
+            assert(m.is_drop());
+            if (!stand.exist(m.source_piece()))
+                continue;
             *next = std::make_unique<Node<Config>>(!m_attacker, m);
             Node<Config>* const ch = next->get();
             update_defence_pn_ch1st_ch2nd(ch, game);
@@ -543,6 +603,50 @@ public:
         return look_up_fuzzy(g, it->second);
     }
 
+    /**
+     * @brief Prefer node with mate if offence turn else no-mate, and return it
+     *
+     * @param g
+     * @return const NodeType*
+     */
+    const NodeType* look_up_le_stand(const GameType& g) const
+    {
+        const std::uint64_t bt_hash = g.get_board_turn_hash();
+        auto it = m_table.find(bt_hash);
+        if (it == m_table.end())
+            return nullptr;
+        return look_up_le_stand(g, it->second);
+    }
+
+    /**
+     * @brief Prefer node with no-mate if offence turn else mate, and return it
+     *
+     * @param g
+     * @return const NodeType*
+     */
+    const NodeType* look_up_ge_stand(const GameType& g) const
+    {
+        const std::uint64_t bt_hash = g.get_board_turn_hash();
+        auto it = m_table.find(bt_hash);
+        if (it == m_table.end())
+            return nullptr;
+        return look_up_ge_stand(g, it->second);
+    }
+
+    void look_up_le_ge_stand(
+        const GameType& g,
+        const NodeType** const node_le_stand,
+        const NodeType** const node_ge_stand) const
+    {
+        const std::uint64_t bt_hash = g.get_board_turn_hash();
+        auto it = m_table.find(bt_hash);
+        *node_le_stand = nullptr;
+        *node_ge_stand = nullptr;
+        if (it == m_table.end())
+            return;
+        return look_up_le_ge_stand(g, it->second, node_le_stand, node_ge_stand);
+    }
+
 private:
     const NodeType*
     look_up_fuzzy(const GameType& g, const StandNodeTable& table) const
@@ -582,6 +686,125 @@ private:
         }
         return n_out;
     }
+    const NodeType*
+    look_up_le_stand(const GameType& g, const StandNodeTable& table) const
+    {
+        // - offence turn (`is_attacker == true`)
+        //     - Weaker offence stand, but mate (or #P <= #D)
+        //     - Stronger offence stand, but no-mate (#P > #D).
+        // - defence turn
+        //     - Weaker defence stand, but no-mate.
+        //     - Stronger defence stand, but mate.
+        const auto t = g.get_turn();
+        const auto s = g.get_stand(t);
+        Stand<Config> s_out = Stand<Config>();
+        const NodeType* n_out = nullptr;
+        for (auto& it : table) {
+            const auto s_iter = Stand<Config>(it.first);
+            const NodeType* n_iter = it.second;
+            const bool is_atk = n_iter->is_attacker();
+            const bool is_mate = n_iter->found_mate();
+            const bool is_no_mate = n_iter->found_no_mate();
+            if (s_iter <= s) {
+                if (is_atk ? is_mate : is_no_mate)
+                    return n_iter; // weaker offence stand, but mate
+                else if (is_atk ? (!is_no_mate) : (!is_mate)) {
+                    // exclude weaker offence stand, and no mate.
+                    if ((n_out == nullptr) || (s_out < s_iter)) {
+                        s_out = s_iter;
+                        n_out = n_iter;
+                    }
+                }
+            }
+        }
+        return n_out;
+    }
+    const NodeType*
+    look_up_ge_stand(const GameType& g, const StandNodeTable& table) const
+    {
+        // - offence turn (`is_attacker == true`)
+        //     - Weaker offence stand, but mate (or #P <= #D)
+        //     - Stronger offence stand, but no-mate (#P > #D).
+        // - defence turn
+        //     - Weaker defence stand, but no-mate.
+        //     - Stronger defence stand, but mate.
+        const auto t = g.get_turn();
+        const auto s = g.get_stand(t);
+        Stand<Config> s_out = Stand<Config>();
+        const NodeType* n_out = nullptr;
+        for (auto& it : table) {
+            const auto s_iter = Stand<Config>(it.first);
+            const NodeType* n_iter = it.second;
+            const bool is_atk = n_iter->is_attacker();
+            const bool is_mate = n_iter->found_mate();
+            const bool is_no_mate = n_iter->found_no_mate();
+            if (s <= s_iter) {
+                if (is_atk ? is_no_mate : is_mate)
+                    return n_iter;
+                else if (is_atk ? (!is_mate) : (!is_no_mate)) {
+                    // exclude greater offence stand, and mate.
+                    if ((n_out == nullptr) || (s_iter < s_out)) {
+                        s_out = s_iter;
+                        n_out = n_iter;
+                    }
+                }
+            }
+        }
+        return n_out;
+    }
+    void look_up_le_ge_stand(
+        const GameType& g,
+        const StandNodeTable& table,
+        const NodeType** const node_le_stand,
+        const NodeType** const node_ge_stand) const
+    {
+        // - offence turn (`is_attacker == true`)
+        //     - Weaker offence stand, but mate (or #P <= #D)
+        //     - Stronger offence stand, but no-mate (#P > #D).
+        // - defence turn
+        //     - Weaker defence stand, but no-mate.
+        //     - Stronger defence stand, but mate.
+        const auto t = g.get_turn();
+        const auto s = g.get_stand(t);
+        Stand<Config> s_le = Stand<Config>();
+        Stand<Config> s_ge = Stand<Config>();
+        bool found_best_le = false;
+        bool found_best_ge = false;
+        for (auto& it : table) {
+            const auto s_iter = Stand<Config>(it.first);
+            const NodeType* n_iter = it.second;
+            const bool is_atk = n_iter->is_attacker();
+            const bool is_mate = n_iter->found_mate();
+            const bool is_no_mate = n_iter->found_no_mate();
+            if (s_iter <= s) {
+                if (is_atk ? is_mate : is_no_mate) {
+                    // weaker offence stand, but mate
+                    *node_le_stand = n_iter;
+                    found_best_le = true;
+                } else if (
+                    (!found_best_le) && (is_atk ? (!is_no_mate) : (!is_mate))) {
+                    // exclude weaker offence stand, and no mate.
+                    if ((*node_le_stand == nullptr) || (s_le < s_iter)) {
+                        s_le = s_iter;
+                        *node_le_stand = n_iter;
+                    }
+                }
+            }
+            if (s <= s_iter) {
+                if (is_atk ? is_no_mate : is_mate) {
+                    *node_ge_stand = n_iter;
+                    found_best_ge = true;
+                } else if (
+                    (!found_best_ge) && (is_atk ? (!is_mate) : (!is_no_mate))) {
+                    // exclude greater offence stand, and mate.
+                    if ((*node_ge_stand == nullptr) || (s_iter < s_ge)) {
+                        s_ge = s_iter;
+                        *node_ge_stand = n_iter;
+                    }
+                }
+            }
+        }
+    }
 };
 
 template <class Config>
@@ -614,7 +837,7 @@ public:
         const GameType& game = *m_game;
         Node<Config>* const root = m_table.get_root();
         if (!root->simulate(game))
-            root->expand(game, nullptr);
+            root->expand(game, nullptr, nullptr);
         m_num_searched = 0u;
     }
 
@@ -682,19 +905,28 @@ private:
     {
         game.apply_dfpn(n.get_action());
         assert(n.is_attacker() || game.in_check());
-        const Node<Config>* const p = m_table.look_up_fuzzy(game);
-        if ((p != nullptr) && (p->found_conclusion())) {
-            n.m_pn = p->pn();
-            n.m_dn = p->dn();
+        const Node<Config>* node_le = nullptr;
+        const Node<Config>* node_ge = nullptr;
+        m_table.look_up_le_ge_stand(game, &node_le, &node_ge);
+        if (node_le == nullptr) {
+            m_table.add(&n, game);
+        } else if (node_le->found_conclusion()) {
+            n.m_pn = node_le->pn();
+            n.m_dn = node_le->dn();
             --searches;
             game.undo();
             return;
-        } else if (p == nullptr) {
-            m_table.add(&n, game);
+        }
+        if (node_ge && node_ge->found_conclusion()) {
+            n.m_pn = node_ge->pn();
+            n.m_dn = node_ge->dn();
+            --searches;
+            game.undo();
+            return;
         }
         if (!n.has_child()) {
             if (!n.simulate(game))
-                n.expand(game, p);
+                n.expand(game, node_ge, node_le);
             --searches;
         }
         while (searches) {
@@ -743,7 +975,7 @@ private:
         const ColorEnum t = game.get_turn();
         const Board<Config>& board = game.get_board();
         const Stand<Config>& stand = game.get_stand(t);
-        const Node<Config>* const cousin = m_table.look_up_fuzzy(game);
+        const Node<Config>* const cousin = m_table.look_up_le_stand(game);
         if (cousin == nullptr) {
             assert(game.in_check()); // assert defence turn
             return *LegalMoveGenerator<Config>(game.get_state());
