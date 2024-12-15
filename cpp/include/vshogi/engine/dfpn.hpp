@@ -316,12 +316,15 @@ private:
             s.get_board()[s.get_board().get_king_location(~s.get_turn())]
             == PHelper::to_board_piece(~s.get_turn(), PHelper::OU));
         m_dn = zero;
-        std::unique_ptr<Node<Config>>* next_child
-            = cousin ? expand_board_moves_at_offence(*cousin)
-                     : expand_board_moves_at_offence(s);
-        if (found_mate())
-            return;
-        expand_drop_moves_at_offence(next_child, s);
+        if (cousin) {
+            assert(!cousin->found_conclusion());
+            const Node<Config>* nibling = cousin->get_child();
+            const auto next_child = expand_board_moves_at_offence(&nibling);
+            expand_drop_moves_at_offence(next_child, s);
+        } else {
+            const auto next_child = expand_board_moves_at_offence(s);
+            expand_drop_moves_at_offence(next_child, s);
+        }
         if (m_child_1st == nullptr)
             set_pndn_no_mate();
         else
@@ -330,11 +333,10 @@ private:
     void expand_at_defence(const GameType& g, const Node<Config>* const cousin)
     {
         m_pn = zero;
+        assert((cousin == nullptr) || (!cousin->found_conclusion()));
         std::unique_ptr<Node<Config>>* const next_child
             = cousin ? expand_board_moves_at_defence(*cousin, g)
                      : expand_board_moves_at_defence(g);
-        if (found_no_mate())
-            return;
         if (!had_two_consecutive_sacrifice_drops(g))
             expand_drop_moves_at_defence(next_child, g);
         if (m_child_1st == nullptr)
@@ -343,21 +345,15 @@ private:
             m_dn = m_child_1st->m_dn;
     }
     std::unique_ptr<Node<Config>>*
-    expand_board_moves_at_offence(const Node<Config>& cousin)
+    expand_board_moves_at_offence(const Node<Config>** const nibling)
     {
         std::unique_ptr<Node<Config>>* holder = &m_child;
-        for (auto nib = cousin.get_child(); nib; nib = nib->get_sibling()) {
-            const auto m = nib->get_action();
+        for (; *nibling; *nibling = (*nibling)->get_sibling()) {
+            const auto m = (*nibling)->get_action();
             if (m.is_drop())
                 break;
             *holder = std::make_unique<Node<Config>>(!m_attacker, m);
             Node<Config>* const ch = holder->get();
-            if (nib->found_mate()) {
-                ch->m_pn = nib->m_pn;
-                ch->m_dn = nib->m_dn;
-                set_pndn_mate();
-                break;
-            }
             update_offence_dn_ch1st_ch2nd(ch);
             holder = &(ch->m_sibling);
         }
@@ -400,12 +396,6 @@ private:
                 break;
             *holder = std::make_unique<Node<Config>>(!m_attacker, m);
             Node<Config>* const ch = holder->get();
-            if (nib->found_no_mate()) {
-                ch->m_pn = nib->m_pn;
-                ch->m_dn = nib->m_dn;
-                set_pndn_no_mate();
-                break;
-            }
             update_defence_pn_ch1st_ch2nd(ch, game);
             holder = &(ch->m_sibling);
         }
