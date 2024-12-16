@@ -910,21 +910,16 @@ private:
         m_table.look_up_le_ge_stand(game, &node_le, &node_ge);
         if (node_le == nullptr) {
             m_table.add(&n, game);
-        } else if (node_le->found_conclusion()) {
+        }
+        if (node_le && node_le->found_conclusion()) {
             n.m_pn = node_le->pn();
             n.m_dn = node_le->dn();
             --searches;
-            game.undo();
-            return;
-        }
-        if (node_ge && node_ge->found_conclusion()) {
+        } else if (node_ge && node_ge->found_conclusion()) {
             n.m_pn = node_ge->pn();
             n.m_dn = node_ge->dn();
             --searches;
-            game.undo();
-            return;
-        }
-        if (!n.has_child()) {
+        } else if (!n.has_child()) {
             if (!n.simulate(game))
                 n.expand(game, node_ge, node_le);
             --searches;
