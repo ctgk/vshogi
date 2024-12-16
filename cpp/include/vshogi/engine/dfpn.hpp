@@ -50,6 +50,7 @@ namespace vshogi::engine::dfpn
 static constexpr uint zero = 0u;
 static constexpr uint unit = 100u;
 static constexpr uint cent = 1u;
+static constexpr uint kilo = 1000u * unit;
 static constexpr uint max_number = std::numeric_limits<uint>::max();
 
 template <class Config>
@@ -380,6 +381,8 @@ private:
                 break;
             *holder = std::make_unique<Node<Config>>(!m_attacker, m);
             Node<Config>* const ch = holder->get();
+            ch->m_pn = std::clamp((*nibling)->pn(), cent, kilo);
+            ch->m_dn = std::clamp((*nibling)->dn(), cent, kilo);
             update_offence_dn_ch1st_ch2nd(ch);
             holder = &(ch->m_sibling);
         }
@@ -425,6 +428,8 @@ private:
                 continue;
             *next = std::make_unique<Node<Config>>(!m_attacker, m);
             Node<Config>* const p = next->get();
+            p->m_pn = std::clamp(nibling->pn(), cent, kilo);
+            p->m_dn = std::clamp(nibling->dn(), cent, kilo);
             update_offence_dn_ch1st_ch2nd(p);
             next = &(p->m_sibling);
         }
@@ -439,6 +444,8 @@ private:
                 break;
             *holder = std::make_unique<Node<Config>>(!m_attacker, m);
             Node<Config>* const ch = holder->get();
+            ch->m_pn = std::clamp((*nibling)->pn(), cent, kilo);
+            ch->m_dn = std::clamp((*nibling)->dn(), cent, kilo);
             update_defence_pn_ch1st_ch2nd(ch, game);
             holder = &(ch->m_sibling);
         }
@@ -479,6 +486,8 @@ private:
                 continue;
             *next = std::make_unique<Node<Config>>(!m_attacker, m);
             Node<Config>* const ch = next->get();
+            ch->m_pn = std::clamp(nibling->pn(), cent, kilo);
+            ch->m_dn = std::clamp(nibling->dn(), cent, kilo);
             update_defence_pn_ch1st_ch2nd(ch, game);
             next = &(ch->m_sibling);
         }
@@ -553,7 +562,7 @@ class TranspositionTable
 private:
     using BaseTypeStand = typename Config::BaseTypeStand;
     using StandNodeTable
-        = std::unordered_map<BaseTypeStand, const Node<Config>*>;
+        = std::vector<std::pair<BaseTypeStand, const Node<Config>*>>;
     using StandType = Stand<Config>;
     using GameType = Game<Config>;
     using MoveType = Move<Config>;
@@ -589,9 +598,13 @@ public:
         auto it = m_table.find(bt_hash);
         if (it == m_table.end()) {
             m_table.emplace(bt_hash, StandNodeTable());
-            m_table[bt_hash].emplace(s, n);
+            m_table[bt_hash].emplace_back(s, n);
         } else {
-            it->second.emplace(s, n);
+            for (auto&& pair : it->second) {
+                if (pair.first == s)
+                    return;
+            }
+            it->second.emplace_back(s, n);
         }
     }
     const NodeType* look_up_fuzzy(const GameType& g) const
@@ -706,11 +719,16 @@ private:
             const bool is_mate = n_iter->found_mate();
             const bool is_no_mate = n_iter->found_no_mate();
             if (s_iter <= s) {
-                if (is_atk ? is_mate : is_no_mate)
-                    return n_iter; // weaker offence stand, but mate
-                else if (is_atk ? (!is_no_mate) : (!is_mate)) {
+                if (is_atk ? is_mate : is_no_mate) {
+                    const NodeType* const ch1st = n_iter->get_child_1st();
+                    if (ch1st && ch1st->found_conclusion())
+                        return n_iter; // weaker offence stand, but mate
+                    s_out = s_iter;
+                    n_out = n_iter;
+                } else if (is_atk ? (!is_no_mate) : (!is_mate)) {
                     // exclude weaker offence stand, and no mate.
-                    if ((n_out == nullptr) || (s_out < s_iter)) {
+                    if ((n_out == nullptr) || (!n_out->found_conclusion())
+                        || (s_out < s_iter)) {
                         s_out = s_iter;
                         n_out = n_iter;
                     }
@@ -970,15 +988,15 @@ private:
         const ColorEnum t = game.get_turn();
         const Board<Config>& board = game.get_board();
         const Stand<Config>& stand = game.get_stand(t);
-        const Node<Config>* const cousin = m_table.look_up_le_stand(game);
-        if (cousin == nullptr) {
+        const Node<Config>* n = m_table.look_up_le_stand(game);
+        if (n == nullptr) {
             assert(game.in_check()); // assert defence turn
             return *LegalMoveGenerator<Config>(game.get_state());
         }
 
-        const bool is_atk = cousin->is_attacker();
-        assert((!is_atk) || cousin->found_mate());
-        for (auto n = cousin->get_child(); n; n = n->get_sibling()) {
+        const bool is_atk = n->is_attacker();
+        assert((!is_atk) || n->found_mate());
+        for (n = n->get_child(); n; n = n->get_sibling()) {
             if (is_atk && (!n->found_mate()))
                 continue;
             const MoveType action = n->get_action();

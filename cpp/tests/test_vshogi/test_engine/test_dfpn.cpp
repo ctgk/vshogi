@@ -174,8 +174,8 @@ TEST(dfpn_node, expand_using_cousin)
 
         // stronger stand may lead to mate even if nibling is not mate.
         CHECK_FALSE(atk_node.found_conclusion());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, atk_node.pn());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, atk_node.dn());
+        CHECK_EQUAL(vshogi::engine::dfpn::kilo, atk_node.pn());
+        CHECK_EQUAL(vshogi::engine::dfpn::cent, atk_node.dn());
     }
     {
         auto cousin = Node(false, Move(SQ_1A, SQ_1B));
@@ -197,8 +197,8 @@ TEST(dfpn_node, expand_using_cousin)
 
         // stronger stand may lead to no-mate even if nibling is mate.
         CHECK_FALSE(def_node.found_conclusion());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, def_node.pn());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, def_node.dn());
+        CHECK_EQUAL(vshogi::engine::dfpn::cent, def_node.pn());
+        CHECK_EQUAL(vshogi::engine::dfpn::kilo, def_node.dn());
     }
 }
 
@@ -423,8 +423,8 @@ TEST(dfpn_searcher, no_mate_1)
     searcher.set_game(g);
     CHECK_FALSE(searcher.search(5000));
     CHECK_TRUE(searcher.found_no_mate());
-    CHECK_COMPARE(1500, <, searcher.get_search_count());
-    CHECK_COMPARE(searcher.get_search_count(), <, 1600);
+    CHECK_COMPARE(1400, <, searcher.get_search_count());
+    CHECK_COMPARE(searcher.get_search_count(), <, 1500);
 }
 
 TEST(dfpn_searcher, mate_in_one_straight_forward)
@@ -576,8 +576,8 @@ TEST(dfpn_searcher, mate_in_three_2)
     CHECK_TRUE(searcher.found_mate());
     CHECK_EQUAL(Move(SQ_1B, SQ_1C).hash(), searcher.get_mate_move().hash());
     const auto num_searched = searcher.get_search_count();
-    CHECK_COMPARE(80, <, num_searched);
-    CHECK_COMPARE(num_searched, <, 90);
+    CHECK_COMPARE(40, <, num_searched);
+    CHECK_COMPARE(num_searched, <, 50);
 }
 
 TEST(dfpn_searcher, mate_in_three_by_king_move)
@@ -647,7 +647,7 @@ TEST(dfpn_searcher, cache_for_mate)
     CHECK_EQUAL(5, searcher.get_mate_moves().size());
 
     // It is 25 without cache table
-    CHECK_COMPARE(21, ==, searcher.get_search_count());
+    CHECK_COMPARE(20, ==, searcher.get_search_count());
     // searches= 1, SiEx: 3r1/+BP1r1/1+BP2/4p/2GGk w - 2
     // searches= 2, SiEx: 3r1/+BP1r1/2P2/4p/2G+Bk w G 2
     // searches= 3, SiEx: 3r1/+BP1r1/1+BP2/4p/3Gk w G 2
@@ -767,8 +767,8 @@ TEST(dfpn_searcher, mate_in_five)
     CHECK_TRUE(searcher.search(5000));
     CHECK_EQUAL(Move(SQ_2B, GI).hash(), searcher.get_mate_move().hash());
     const auto num_searched = searcher.get_search_count();
-    CHECK_COMPARE(2350, <, num_searched);
-    CHECK_COMPARE(num_searched, <, 2450);
+    CHECK_COMPARE(1200, <, num_searched);
+    CHECK_COMPARE(num_searched, <, 1300);
 }
 
 TEST(dfpn_searcher, king_entering_before_mate)
@@ -944,7 +944,7 @@ TEST(dfpn_searcher, minishogi_debug)
     CHECK_EQUAL(vshogi::WHITE_WIN, g.get_result());
 }
 
-TEST(dfpn_searcher, test_shogi_debug)
+TEST(dfpn_searcher, test_shogi_debug_1)
 {
     using namespace vshogi::shogi;
     using Searcher = vshogi::engine::dfpn::Searcher<Config>;
