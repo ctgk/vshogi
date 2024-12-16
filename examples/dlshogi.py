@@ -222,7 +222,36 @@ def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
     if fraction is None:
         return df
     n = int(len(df) * fraction)
-    return df.tail(n)
+    df = df.tail(n).reset_index(drop=True)
+    return df
+
+
+def drop_swinging_rows(df: pd.DataFrame, key: str = 'q_value') -> pd.DataFrame:
+    df_colors = [
+        df[df['state'].apply(lambda x: x.split()[1] == c)]
+        for c in ('b', 'w')
+    ]
+    df_diffs = [df_[key] - df_[key].shift(fill_value=0.) for df_ in df_colors]
+    if 'BLACK_WIN' in df['result'][0]:
+        df_masks = [
+            (df_diffs[0] >= 0.).iloc[::-1].cummin().iloc[::-1], # b
+            (df_diffs[1] <= 0.).iloc[::-1].cummin().iloc[::-1], # w
+        ]
+    elif 'WHITE_WIN' in df['result'][0]:
+        df_masks = [
+            (df_diffs[0] <= 0.).iloc[::-1].cummin().iloc[::-1], # b
+            (df_diffs[1] >= 0.).iloc[::-1].cummin().iloc[::-1], # w
+        ]
+    else:
+        return df
+    indices = [m.index[m].min() for m in df_masks]
+    index = np.max(indices)
+    if np.isnan(index):
+        return df
+    index = int(index)
+    df = df.tail(len(df) - index)
+    df = df.reset_index(drop=True)
+    return df
 
 
 def kifu_to_tfrecord(
@@ -233,6 +262,8 @@ def kifu_to_tfrecord(
 ):
     with tf.io.TFRecordWriter(tfrecord_path) as writer:
         df = read_kifu(kifu_path, fraction=fraction)
+        if len(df) > 0:
+            df = drop_swinging_rows(df)
         for i in range(len(df)):
             row = df.iloc[i]
             state = args._shogi.State(row.state)
