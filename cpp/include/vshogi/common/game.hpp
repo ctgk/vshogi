@@ -222,12 +222,6 @@ public:
         return Move<Config>(
             static_cast<std::uint16_t>(m_captured_move_list[index]));
     }
-    void clear_records_for_dfpn()
-    {
-        m_hash_list.clear();
-        m_captured_move_list.clear();
-        m_hash = m_current_state.zobrist_hash();
-    }
     void to_feature_map(float* const data) const
     {
         m_current_state.to_feature_map(data);

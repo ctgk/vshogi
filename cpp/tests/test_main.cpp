@@ -5,6 +5,13 @@
 
 #include <CppUTest/CommandLineTestRunner.h>
 
+#if defined(__aarch64__) || defined(_M_ARM64)
+SimpleString StringFrom(std::nullptr_t)
+{
+    return SimpleString("nullptr");
+}
+#endif
+
 int main(int argc, char* argv[])
 {
     vshogi::animal_shogi::Pieces::init_tables();

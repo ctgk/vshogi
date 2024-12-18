@@ -802,6 +802,51 @@ TEST(dfpn_searcher, king_entering_before_mate)
     CHECK_TRUE(actual[1] == Move(SQ_6F, SQ_5F));
 }
 
+TEST(dfpn_searcher, avoid_consecutive_checks)
+{
+    using namespace vshogi::minishogi;
+    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    // Turn: WHITE
+    // White: HI,KI
+    //     5   4   3   2   1
+    //   +---+---+---+---+---+
+    // A |   |   |-GI|   |-OU|
+    //   +---+---+---+---+---+
+    // B |   |   |   |   |-FU|
+    //   +---+---+---+---+---+
+    // C |+GI|+OU|   |   |   |
+    //   +---+---+---+---+---+
+    // D |   |   |   |   |   |
+    //   +---+---+---+---+---+
+    // E |   |-UM|-KI|   |   |
+    //   +---+---+---+---+---+
+    // Black: FU,KA
+    auto g = Game("2s1k/4p/SK3/5/1+bg2 w BPrg 32");
+    g.apply(Move(SQ_3D, SQ_4E));
+    g.apply(Move(SQ_5D, SQ_4C));
+    g.apply(Move(SQ_4E, SQ_3D));
+    g.apply(Move(SQ_4C, SQ_5D));
+    auto searcher = Searcher();
+    searcher.set_game(g);
+    CHECK_TRUE(searcher.search(1000u));
+    const auto actual = searcher.get_mate_moves();
+    for (auto&& m : actual) {
+        CHECK_EQUAL(vshogi::ONGOING, g.get_result());
+        g.apply(m);
+    }
+    CHECK_EQUAL(vshogi::WHITE_WIN, g.get_result());
+
+    auto root = searcher.get_root();
+    auto ch = root->get_child();
+    for (; ch; ch = ch->get_sibling()) {
+        if (ch->get_action() == Move(SQ_3D, SQ_4E)) {
+            CHECK_TRUE(ch->found_no_mate());
+            break;
+        }
+    }
+    CHECK_TRUE(ch != nullptr);
+}
+
 TEST(dfpn_searcher, debug)
 {
     using namespace vshogi::shogi;

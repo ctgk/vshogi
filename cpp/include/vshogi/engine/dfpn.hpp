@@ -851,7 +851,6 @@ public:
     {
         m_table.clear();
         m_game = std::make_unique<GameType>(g);
-        m_game->clear_records_for_dfpn();
         const GameType& game = *m_game;
         Node<Config>* const root = m_table.get_root();
         if (!root->simulate(game))
