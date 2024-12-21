@@ -299,6 +299,26 @@ class Game(abc.ABC):
         self._game.resign()
         return self
 
+    def undo(self) -> 'Game':
+        """Undo a previous move.
+
+        Returns
+        -------
+        Game
+            Previous game position.
+
+        Examples
+        --------
+        >>> from vshogi.minishogi import *
+        >>> g = Game()
+        >>> g.apply("1e1b")
+        Game(sfen="rbsgk/4R/5/P4/KGSB1 w P 2")
+        >>> g.undo()
+        Game(sfen="rbsgk/4p/5/P4/KGSBR b - 1")
+        """
+        self._game.undo()
+        return self
+
     def is_legal(self, move=None, *arg, **kwargs) -> bool:
         """Return true if the move is legal at the current state.
 

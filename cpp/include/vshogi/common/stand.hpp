@@ -265,9 +265,11 @@ public:
     }
     void remove_captured_piece(const ColoredPiece& captured)
     {
+        const auto pt = PHelper::to_piece_type(captured);
+        if (pt == PHelper::OU)
+            return;
         const auto c = ~PHelper::get_color(captured);
-        const auto pt_demoted
-            = PHelper::demote(PHelper::to_piece_type(captured));
+        const auto pt_demoted = PHelper::demote(pt);
         m_stands[c].subtract(pt_demoted);
     }
 

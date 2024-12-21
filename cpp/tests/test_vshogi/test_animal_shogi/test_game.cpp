@@ -81,4 +81,12 @@ TEST(animal_shogi_game, result)
     }
 }
 
+TEST(animal_shogi_game, undo)
+{
+    auto game = Game("g1e/lc1/LC1/E1G b - 1");
+    game.apply(Move(SQ_A2, SQ_A3));
+    game.undo();
+    STRCMP_EQUAL("g1e/lc1/LC1/E1G b - 1", game.to_sfen().c_str());
+}
+
 } // namespace test_vshogi::test_animal_shogi
