@@ -925,7 +925,7 @@ private:
         const Node<Config>* node_le = nullptr;
         const Node<Config>* node_ge = nullptr;
         m_table.look_up_le_ge_stand(game, &node_le, &node_ge);
-        if (node_le == nullptr) {
+        if (node_le != &n) {
             m_table.add(&n, game);
         }
         if (node_le && node_le->found_conclusion()) {

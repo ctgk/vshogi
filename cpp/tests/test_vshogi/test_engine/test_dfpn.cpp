@@ -423,8 +423,7 @@ TEST(dfpn_searcher, no_mate_1)
     searcher.set_game(g);
     CHECK_FALSE(searcher.search(5000));
     CHECK_TRUE(searcher.found_no_mate());
-    CHECK_COMPARE(1400, <, searcher.get_search_count());
-    CHECK_COMPARE(searcher.get_search_count(), <, 1500);
+    CHECK_EQUAL(1297, searcher.get_search_count());
 }
 
 TEST(dfpn_searcher, mate_in_one_straight_forward)

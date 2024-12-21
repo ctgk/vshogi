@@ -9,11 +9,12 @@ def test_mate():
         ('9/9/9/6l1+P/5n3/7ks/6R2/5B1Np/7P1 b R10p4l2n3s4gb', 124),
         ('8l/5+R3/4B1sNk/6G1p/9/9/9/9/9 b G10p3l3n3s2gbr', 877),
         ('9/5+R3/6n2/6k+b1/8+B/5P3/9/9/9 b 2S10p4l3n2s4gr', 819),
-        ('5p+r1S/9/8k/5+B2p/7PN/9/9/9/9 b B10p4l3n3s4gr', 2953),
-        ('7bk/8p/9/9/9/9/B8/9/9 b N10p4l3n4s4gb2r', 6061),
+        ('5p+r1S/9/8k/5+B2p/7PN/9/9/9/9 b B10p4l3n3s4gr', 2754),
+        ('7p1/5l3/5pk2/6B+r1/5P1P1/6L2/9/9/9 b Rrb4g4s4n3l9p', 5518),
+        ('7bk/8p/9/9/9/9/B8/9/9 b N10p4l3n4s4gb2r', 6007),
         ('3R2l2/4r2+B1/5+Bnn1/8k/6G2/8P/7P1/9/9 b 10p3l2n4s4g', 4605),
-        ('5+Pnk1/8P/4p1+rsS/9/9/9/9/9/9 b BGS10p4l3ns3gbr', 17825),
-        ('4k4/5s+r2/3R1Ls2/3+B5/9/9/9/9/9 b B10p3l4n2s4g', 25489),
+        ('5+Pnk1/8P/4p1+rsS/9/9/9/9/9/9 b BGS10p4l3ns3gbr', 15490),
+        ('4k4/5s+r2/3R1Ls2/3+B5/9/9/9/9/9 b B10p3l4n2s4g', 25684),
     ]
 
     actual_total_searches = 0
