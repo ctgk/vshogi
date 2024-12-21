@@ -922,6 +922,21 @@ private:
     {
         game.apply_dfpn(n.get_action());
         assert(n.is_attacker() || game.in_check());
+        simulate_or_expand(n, game, searches);
+        while (searches) {
+            if ((n.pn() >= thpn) || (n.dn() >= thdn))
+                break;
+            const uint thpn_ch = n.compute_thpn_for_child(thpn);
+            const uint thdn_ch = n.compute_thdn_for_child(thdn);
+            Node<Config>* const ch1st = n.get_child_1st();
+            search_inner(*ch1st, game, searches, thpn_ch, thdn_ch);
+            n.backprop_one(game);
+        }
+        game.undo();
+    }
+    void
+    simulate_or_expand(Node<Config>& n, const GameType& game, uint& searches)
+    {
         const Node<Config>* node_le = nullptr;
         const Node<Config>* node_ge = nullptr;
         m_table.look_up_le_ge_stand(game, &node_le, &node_ge);
@@ -941,16 +956,6 @@ private:
                 n.expand(game, node_ge, node_le);
             --searches;
         }
-        while (searches) {
-            if ((n.pn() >= thpn) || (n.dn() >= thdn))
-                break;
-            const uint thpn_ch = n.compute_thpn_for_child(thpn);
-            const uint thdn_ch = n.compute_thdn_for_child(thdn);
-            Node<Config>* const ch1st = n.get_child_1st();
-            search_inner(*ch1st, game, searches, thpn_ch, thdn_ch);
-            n.backprop_one(game);
-        }
-        game.undo();
     }
     void append_mate_moves(
         std::vector<MoveType>& out,
