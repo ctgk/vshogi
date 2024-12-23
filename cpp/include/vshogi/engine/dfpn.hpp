@@ -8,10 +8,10 @@
 #include <vector>
 
 #include "vshogi/common/color.hpp"
+#include "vshogi/common/game.hpp"
 #include "vshogi/common/generator.hpp"
 #include "vshogi/common/result.hpp"
 #include "vshogi/common/utils.hpp"
-#include "vshogi/variants/animal_shogi.hpp"
 
 /**
  * @brief Namespace for DFPN algorithm.
@@ -87,8 +87,6 @@ bool had_two_consecutive_sacrifice_drops(const Game<Config>& g)
 template <class Config>
 class Node
 {
-    static_assert(!std::is_same<Config, animal_shogi::Config>::value);
-
 private:
     using GameType = Game<Config>;
     using MoveType = Move<Config>;

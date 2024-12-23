@@ -196,14 +196,13 @@ class Game(abc.ABC):
 
         Examples
         --------
-        >>> import vshogi.animal_shogi as shogi
+        >>> import vshogi.minishogi as shogi
         >>> game = shogi.Game()
         >>> game.result
         Result.ONGOING
-        >>> game.apply(shogi.A3, shogi.B4).apply(
-        ...     shogi.A2, shogi.B1).apply(shogi.A2, shogi.A3)
-        Game(sfen="g1e/Lc1/1C1/E1G w - 4")
-        >>> game.result
+        >>> game.apply("4e3d").apply("2a3b").apply("3d2c").apply("3b4c").result
+        Result.ONGOING
+        >>> game.apply("2c1b").result
         Result.BLACK_WIN
         """
         return self._game.get_result()
@@ -453,16 +452,20 @@ class Game(abc.ABC):
 
         Examples
         --------
-        >>> import vshogi.animal_shogi as shogi; import io
-        >>> game = shogi.Game().apply(shogi.A3, shogi.B4).apply(
-        ...     shogi.A2, shogi.B1).apply(shogi.A2, shogi.A3)
+        >>> import vshogi.minishogi as shogi; import io
+        >>> game = shogi.Game()
+        >>> moves = ["4e3d", "2a3b", "3d2c", "3b4c", "2c1b"]
+        >>> for m in moves:
+        ...     game = game.apply(m)
         >>> with io.StringIO() as f:
         ...     game.dump_records(file_=f)
         ...     _ = f.seek(0)
         ...     print(f.read())
-        gle/1c1/1C1/ELG b - 1
-        gle/1c1/LC1/E1G w - 2
-        g1e/lc1/LC1/E1G b - 3
+        rbsgk/4p/5/P4/KGSBR b - 1
+        rbsgk/4p/5/P1G2/K1SBR w - 2
+        rbs1k/2g1p/5/P1G2/K1SBR b - 3
+        rbs1k/2g1p/3G1/P4/K1SBR w - 4
+        rbs1k/4p/1g1G1/P4/K1SBR b - 5
         <BLANKLINE>
         >>> with io.StringIO() as f:
         ...     game.dump_records(
@@ -478,8 +481,9 @@ class Game(abc.ABC):
         ...     _ = f.seek(0)
         ...     print(f.read())  #doctest: +NORMALIZE_WHITESPACE
         sfen        move    result
-        gle/1c1/1C1/ELG b - 1       b4a3    Result.BLACK_WIN
-        g1e/lc1/LC1/E1G b - 3       a3a2    Result.BLACK_WIN
+        rbsgk/4p/5/P4/KGSBR b - 1   4e3d    Result.BLACK_WIN
+        rbs1k/2g1p/5/P1G2/K1SBR b - 3       3d2c    Result.BLACK_WIN
+        rbs1k/4p/1g1G1/P4/K1SBR b - 5       2c1b    Result.BLACK_WIN
         <BLANKLINE>
         """
         if names is not None:
@@ -506,36 +510,40 @@ class Game(abc.ABC):
 
         Examples
         --------
-        >>> import vshogi.animal_shogi as shogi
-        >>> g = shogi.Game()
-        >>> print(g.apply(shogi.C3, shogi.C4))
+        >>> import vshogi.minishogi as shogi
+        >>> g = shogi.Game().apply("5d5c")
+        >>> print(g)
         Turn: WHITE
         White: -
-            A  B  C
-          *--*--*--*
-        1 |-G|-L|-E|
-          *--*--*--*
-        2 |  |-C|  |
-          *--*--*--*
-        3 |  |+C|+G|
-          *--*--*--*
-        4 |+E|+L|  |
-          *--*--*--*
+            5   4   3   2   1
+          +---+---+---+---+---+
+        A |-HI|-KA|-GI|-KI|-OU|
+          +---+---+---+---+---+
+        B |   |   |   |   |-FU|
+          +---+---+---+---+---+
+        C |+FU|   |   |   |   |
+          +---+---+---+---+---+
+        D |   |   |   |   |   |
+          +---+---+---+---+---+
+        E |+OU|+KI|+GI|+KA|+HI|
+          +---+---+---+---+---+
         Black: -
         >>> g_hflip = g.hflip()
         >>> print(g_hflip)
         Turn: WHITE
         White: -
-            A  B  C
-          *--*--*--*
-        1 |-E|-L|-G|
-          *--*--*--*
-        2 |  |-C|  |
-          *--*--*--*
-        3 |+G|+C|  |
-          *--*--*--*
-        4 |  |+L|+E|
-          *--*--*--*
+            5   4   3   2   1
+          +---+---+---+---+---+
+        A |-OU|-KI|-GI|-KA|-HI|
+          +---+---+---+---+---+
+        B |-FU|   |   |   |   |
+          +---+---+---+---+---+
+        C |   |   |   |   |+FU|
+          +---+---+---+---+---+
+        D |   |   |   |   |   |
+          +---+---+---+---+---+
+        E |+HI|+KA|+GI|+KI|+OU|
+          +---+---+---+---+---+
         Black: -
         >>> g.record_length
         1
@@ -559,39 +567,39 @@ class Game(abc.ABC):
 
         Examples
         --------
-        >>> import vshogi.animal_shogi as shogi
-        >>> x = shogi.Game("3/elg/1C1/ELG b C").to_dlshogi_features()
-        >>> print(x[0, ..., 0]) # Black's CH on stand
-        [[1. 1. 1.]
-         [1. 1. 1.]
-         [1. 1. 1.]
-         [1. 1. 1.]]
-        >>> print(x[0, ..., 6]) # Black's LI on board
-        [[0. 0. 0.]
-         [0. 0. 0.]
-         [0. 0. 0.]
-         [0. 1. 0.]]
-        >>> print(x[0, ..., 8]) # White's CH on stand
-        [[0. 0. 0.]
-         [0. 0. 0.]
-         [0. 0. 0.]
-         [0. 0. 0.]]
-        >>> print(x[0, ..., 14]) # White's LI on board
-        [[0. 0. 0.]
-         [0. 1. 0.]
-         [0. 0. 0.]
-         [0. 0. 0.]]
-        >>> shogi.Game("3/elg/1C1/ELG C w").to_dlshogi_features(out=x)
-        >>> print(x[0, ..., 6]) # White's LI on board from white's view
-        [[0. 0. 0.]
-         [0. 0. 0.]
-         [0. 1. 0.]
-         [0. 0. 0.]]
-        >>> print(x[0, ..., 14]) # Black's LI on board from white's view
-        [[0. 1. 0.]
-         [0. 0. 0.]
-         [0. 0. 0.]
-         [0. 0. 0.]]
+        >>> import vshogi.minishogi as shogi
+        >>> x = shogi.Game("rbs1k/4g/5/P4/KGSB1 b P").to_dlshogi_features()
+        >>> print(x[0, ..., 0]) # Black's FU on stand
+        [[1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1.]]
+        >>> print(x[0, ..., 10]) # Black's OU on board
+        [[0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [1. 0. 0. 0. 0.]]
+        >>> print(x[0, ..., 15]) # White's FU on stand
+        [[0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]]
+        >>> print(x[0, ..., 25]) # White's LI on board
+        [[0. 0. 0. 0. 1.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]]
+        >>> shogi.Game("rbs1k/4g/5/P4/KGSB1 w P").to_dlshogi_features(out=x)
+        >>> print(x[0, ..., 9]) # White's KI on board from white's view
+        [[0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [1. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]]
         """
         if out is None:
             return self._game.to_dlshogi_features()
@@ -657,14 +665,14 @@ class Game(abc.ABC):
 
         Examples
         --------
-        >>> import vshogi.animal_shogi as shogi
-        >>> g = shogi.Game()
+        >>> import vshogi.minishogi as shogi
+        >>> g = shogi.Game("4k/5/5/5/4S b -")
         >>> logits = np.zeros(g.num_dlshogi_policy)
         >>> proba = g.masked_softmax(logits)
-        >>> proba[shogi.Move("c4c3")]
-        0.25
-        >>> proba[shogi.Move("b4c3")]
-        0.25
+        >>> proba[shogi.Move("1e1d")]
+        0.5
+        >>> proba[shogi.Move("1e2d")]
+        0.5
         """
         return self._game.masked_softmax(logits)
 

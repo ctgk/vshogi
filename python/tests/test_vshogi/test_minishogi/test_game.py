@@ -1,3 +1,5 @@
+from copy import copy
+
 import numpy as np
 import pytest
 
@@ -22,6 +24,92 @@ def test_feature_channels():
 def test_num_dlshogi_policy():
     assert 5 * 5 * (2 * 8 + 5) == shogi.Game.num_dlshogi_policy
     assert 5 * 5 * (2 * 8 + 5) == shogi.Game().num_dlshogi_policy
+
+
+def test_init():
+    shogi.Game()
+
+
+@pytest.mark.parametrize('sfen, expect_turn, expect_result', [
+    ('4k/5/5/5/K4 b -', shogi.BLACK, shogi.ONGOING),
+    ('4k/5/5/5/K3R w -', shogi.WHITE, shogi.ONGOING),
+    ('4k/5/4p/4g/4K b -', shogi.BLACK, shogi.WHITE_WIN),
+])
+def test_init_sfen(sfen, expect_turn, expect_result):
+    g = shogi.Game(sfen)
+    assert g.turn == expect_turn
+    assert g.result == expect_result
+
+
+def test_board():
+    game: shogi.Game = shogi.Game()
+    actual = np.asarray(game.board)
+
+    expected = np.array([
+        [shogi.W_HI, shogi.W_KA, shogi.W_GI, shogi.W_KI, shogi.W_OU],
+        [shogi.VOID, shogi.VOID, shogi.VOID, shogi.VOID, shogi.W_FU],
+        [shogi.VOID, shogi.VOID, shogi.VOID, shogi.VOID, shogi.VOID],
+        [shogi.B_FU, shogi.VOID, shogi.VOID, shogi.VOID, shogi.VOID],
+        [shogi.B_OU, shogi.B_KI, shogi.B_GI, shogi.B_KA, shogi.B_HI],
+    ])
+    assert (actual == expected).all()
+
+
+def test_to_sfen():
+    game = shogi.Game().apply(shogi.Move(shogi.SQ_1B, shogi.SQ_1E))
+
+    actual = shogi.Game(game.to_sfen())
+    assert shogi.B_HI == actual.board[shogi.SQ_1B]
+    assert shogi.VOID == actual.board[shogi.SQ_1E]
+    assert actual.stand(shogi.BLACK) == {
+        shogi.FU: 1, shogi.GI: 0, shogi.KI: 0, shogi.KA: 0, shogi.HI: 0,
+    }
+    assert actual.stand(shogi.WHITE) == {
+        shogi.FU: 0, shogi.GI: 0, shogi.KI: 0, shogi.KA: 0, shogi.HI: 0,
+    }
+
+
+def test_shallow_copy():
+    g1 = shogi.Game()
+    g2 = copy(g1)
+    g1.apply(shogi.Move(shogi.SQ_5C, shogi.SQ_5D))
+    assert g1.board[shogi.SQ_5C] == g2.board[shogi.SQ_5C]
+
+
+def test_copy():
+    g1 = shogi.Game()
+    g2 = g1.copy()
+    g1.apply(shogi.Move(shogi.SQ_5C, shogi.SQ_5D))
+    assert g1.board[shogi.SQ_5C] != g2.board[shogi.SQ_5C]
+
+
+def test_play():
+    game = shogi.Game()
+    moves = ["4e3d", "2a3b", "3d2c", "3b4c", "2c1b"]
+    for m in moves:
+        assert shogi.ONGOING == game.result
+        game.apply(m)
+    assert shogi.BLACK_WIN == game.result
+
+
+def test_get_legal_moves():
+    game = shogi.Game()
+    actual = game.get_legal_moves()
+    assert len(actual) == 14
+
+
+def test_get_attention():
+    a = shogi.Game.get_attention()
+    assert a.shape == (25, 25)
+    assert np.allclose(a.T, a)
+    expect = np.array([
+        [1, 0, 1, 1, 1],
+        [1, 1, 1, 0, 0],
+        [0, 1, 0, 1, 0],
+        [0, 1, 0, 0, 1],
+        [0, 1, 0, 0, 0],
+    ])
+    assert np.allclose(a[1].reshape(5, 5), expect)
 
 
 def test_get_adjacent_attention():

@@ -35,7 +35,7 @@ class Args:
     run: str = config(long=False, choices=['rl', 'self-play', 'train'])
     shogi_variant: str = config(
         long=False,
-        choices=['shogi', 'animal_shogi', 'judkins_shogi', 'minishogi'],
+        choices=['shogi', 'judkins_shogi', 'minishogi'],
         help='Choose a variant of shogi to train!',
     )
     rl_cycle: int = config(type=int, default=10, help='# of Reinforcement Learning cycle. By default 10.')
@@ -617,7 +617,6 @@ def parse_args() -> Args:
     args = Args.from_args()
     args._shogi = getattr(vshogi, args.shogi_variant)
     default_configs = {
-        'animal_shogi':  {'nn_hidden_channels':  32, 'nn_bottleneck_channels': 16, 'nn_backbone_blocks': 3},
         'minishogi':     {'nn_hidden_channels':  64, 'nn_bottleneck_channels': 32, 'nn_backbone_blocks': 3},
         'judkins_shogi': {'nn_hidden_channels':  64, 'nn_bottleneck_channels': 32, 'nn_backbone_blocks': 4},
         'shogi':         {'nn_hidden_channels': 128, 'nn_bottleneck_channels': 64, 'nn_backbone_blocks': 6},

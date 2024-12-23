@@ -10,7 +10,6 @@ jobs:
     strategy:
       matrix:
         game: [
-          {name: animal_shogi, rl_cycle: 5, nn_backbone_blocks: 3},
           {name: minishogi, rl_cycle: 4, nn_backbone_blocks: 3},
           {name: judkins_shogi, rl_cycle: 3, nn_backbone_blocks: 3},
           {name: shogi, rl_cycle: 1, nn_backbone_blocks: 2},

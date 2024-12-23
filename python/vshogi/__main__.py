@@ -28,7 +28,7 @@ MESSAGE_TEMPLATE = '''\
 class Args:
     shogi_variant: str = config(
         long=False,
-        choices=['shogi', 'animal_shogi', 'judkins_shogi', 'minishogi'],
+        choices=['shogi', 'judkins_shogi', 'minishogi'],
         help='Choose a variant of shogi to play',
     )
     player1: str = config(

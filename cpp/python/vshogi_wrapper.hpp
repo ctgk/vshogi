@@ -311,17 +311,12 @@ inline void export_game(pybind11::module& m)
         .def(
             "get_mate_moves_if_any",
             [](const Game& self, const int num_dfpn_nodes) -> py::object {
-                if constexpr (std::is_same<Game, vshogi::animal_shogi::Game>::
-                                  value) {
-                    return py::none();
+                vshogi::engine::dfpn::Searcher<Config> dfpn{};
+                dfpn.set_game(self);
+                if (dfpn.search(num_dfpn_nodes)) {
+                    return py::cast(dfpn.get_mate_moves());
                 } else {
-                    vshogi::engine::dfpn::Searcher<Config> dfpn{};
-                    dfpn.set_game(self);
-                    if (dfpn.search(num_dfpn_nodes)) {
-                        return py::cast(dfpn.get_mate_moves());
-                    } else {
-                        return py::none();
-                    }
+                    return py::none();
                 }
             },
             py::arg("num_dfpn_nodes"))
@@ -497,11 +492,8 @@ void export_classes(pybind11::module& m)
     export_mcts_searcher<Config>(m);
     export_mcts_node<Config>(m);
     export_value_functions<Config>(m);
-
-    if constexpr (!std::is_same<GameType, vshogi::animal_shogi::Game>::value) {
-        export_dfpn_searcher<Config>(m);
-        export_dfpn_node<Config>(m);
-    }
+    export_dfpn_searcher<Config>(m);
+    export_dfpn_node<Config>(m);
 }
 
 } // namespace pyvshogi

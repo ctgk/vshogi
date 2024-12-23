@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-import vshogi.animal_shogi as shogi
+import vshogi.minishogi as shogi
 from vshogi.engine import Mcts
 
 
@@ -10,21 +10,7 @@ def uniform_pv_func(game):
 
 
 def test_is_ready():
-    # Turn: BLACK
-    # White: -
-    #     A  B  C
-    #   *--*--*--*
-    # 1 |-G|  |-E|
-    #   *--*--*--*
-    # 2 |  |-C|-L|
-    #   *--*--*--*
-    # 3 |  |+C|+L|
-    #   *--*--*--*
-    # 4 |+E|  |+G|
-    #   *--*--*--*
-    # Black: -
-    game = shogi.Game('g1e/1cl/1CL/E1G b -')
-
+    game = shogi.Game()
     searcher = Mcts(uniform_pv_func)
     assert searcher.is_ready() is False
     searcher.set_game(game)
@@ -32,21 +18,7 @@ def test_is_ready():
 
 
 def test_num_searched():
-    # Turn: BLACK
-    # White: -
-    #     A  B  C
-    #   *--*--*--*
-    # 1 |-G|  |-E|
-    #   *--*--*--*
-    # 2 |  |-C|-L|
-    #   *--*--*--*
-    # 3 |  |+C|+L|
-    #   *--*--*--*
-    # 4 |+E|  |+G|
-    #   *--*--*--*
-    # Black: -
-    game = shogi.Game('g1e/1cl/1CL/E1G b -')
-
+    game = shogi.Game()
     searcher = Mcts(uniform_pv_func)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
@@ -69,21 +41,7 @@ def test_num_searched():
 
 
 def test_clear():
-    # Turn: BLACK
-    # White: -
-    #     A  B  C
-    #   *--*--*--*
-    # 1 |-G|  |-E|
-    #   *--*--*--*
-    # 2 |  |-C|-L|
-    #   *--*--*--*
-    # 3 |  |+C|+L|
-    #   *--*--*--*
-    # 4 |+E|  |+G|
-    #   *--*--*--*
-    # Black: -
-    game = shogi.Game('g1e/1cl/1CL/E1G b -')
-
+    game = shogi.Game()
     searcher = Mcts(uniform_pv_func)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
@@ -93,21 +51,8 @@ def test_clear():
 
 
 def test_q_values_mate_in_one():
-    # Turn: BLACK
-    # White: -
-    #     A  B  C
-    #   *--*--*--*
-    # 1 |-G|  |-E|
-    #   *--*--*--*
-    # 2 |  |-C|-L|
-    #   *--*--*--*
-    # 3 |  |+C|+L|
-    #   *--*--*--*
-    # 4 |+E|  |+G|
-    #   *--*--*--*
-    # Black: -
-    game = shogi.Game('g1e/1cl/1CL/E1G b -')
-    m = shogi.Move(shogi.C2, shogi.C3)
+    game = shogi.Game("b2pk/3b1/4P/2gRR/4K b -")
+    m = shogi.Move(shogi.SQ_1B, shogi.SQ_1C)
 
     searcher = Mcts(uniform_pv_func, random_depth=0)
     searcher.set_game(game)
@@ -129,21 +74,8 @@ def test_q_values_initial():
 
 
 def test_mate_in_three():
-    # Turn: BLACK
-    # White: -
-    #     A  B  C
-    #   *--*--*--*
-    # 1 |-G|  |-E|
-    #   *--*--*--*
-    # 2 |-L|-C|  |
-    #   *--*--*--*
-    # 3 |  |+C|+L|
-    #   *--*--*--*
-    # 4 |+E|  |+G|
-    #   *--*--*--*
-    # Black: -
-    game = shogi.Game('l1e/gc1/1CL/E1G b -')
-    m = shogi.Move(shogi.C2, shogi.C3)
+    game = shogi.Game('1r3/2k1G/5/2PG1/5 b -')
+    m = shogi.Move(shogi.SQ_3C, shogi.SQ_2D)
 
     searcher = Mcts(uniform_pv_func, random_depth=0)
     searcher.set_game(game)
@@ -162,17 +94,17 @@ def test_mate_in_three():
 
 def test_visit_count_by_random():
     game = shogi.Game()
-    m = shogi.Move(shogi.C3, shogi.C4)
+    m = shogi.Move(shogi.SQ_5B, shogi.SQ_2E)
 
     searcher = Mcts(
-        lambda g: (np.arange(g.num_dlshogi_policy), 0.), random_depth=0)
+        lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.), random_depth=0)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
     visit_count = searcher.get_visit_counts()[m]
     print(searcher._tree(depth=2, breadth=-1))
 
     searcher = Mcts(
-        lambda g: (np.arange(g.num_dlshogi_policy), 0.),
+        lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.),
         random_depth=1, non_random_ratio=0)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
