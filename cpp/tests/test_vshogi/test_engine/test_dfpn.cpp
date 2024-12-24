@@ -423,7 +423,7 @@ TEST(dfpn_searcher, no_mate_1)
     searcher.set_game(g);
     CHECK_FALSE(searcher.search(5000));
     CHECK_TRUE(searcher.found_no_mate());
-    CHECK_EQUAL(1297, searcher.get_search_count());
+    CHECK_EQUAL(1603, searcher.get_search_count());
 }
 
 TEST(dfpn_searcher, mate_in_one_straight_forward)
@@ -577,6 +577,72 @@ TEST(dfpn_searcher, mate_in_three_2)
     const auto num_searched = searcher.get_search_count();
     CHECK_COMPARE(40, <, num_searched);
     CHECK_COMPARE(num_searched, <, 50);
+}
+
+TEST(dfpn_searcher, mate_in_three_3)
+{
+    using namespace vshogi::judkins_shogi;
+    auto searcher = vshogi::engine::dfpn::Searcher<Config>();
+    // Turn: BLACK
+    // White: -
+    //     6   5   4   3   2   1
+    //   +---+---+---+---+---+---+
+    // A |   |   |   |-GI|+GI|-HI|
+    //   +---+---+---+---+---+---+
+    // B |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+
+    // C |   |   |   |-FU|-OU|-KE|
+    //   +---+---+---+---+---+---+
+    // D |   |   |   |   |+KE|-FU|
+    //   +---+---+---+---+---+---+
+    // E |   |   |   |   |+RY|   |
+    //   +---+---+---+---+---+---+
+    // F |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+
+    // Black: KI
+    auto g = Game("3sSr/6/3pkn/4Np/4+R1/6 b G");
+    searcher.set_game(g);
+    CHECK_TRUE(searcher.search(100u));
+    CHECK_TRUE(searcher.found_mate());
+    const auto mate_moves = searcher.get_mate_moves();
+    for (auto&& m : mate_moves) {
+        CHECK_EQUAL(vshogi::ONGOING, g.get_result());
+        g.apply(m);
+    }
+    CHECK_EQUAL(vshogi::BLACK_WIN, g.get_result());
+}
+
+TEST(dfpn_searcher, mate_in_three_4)
+{
+    using namespace vshogi::judkins_shogi;
+    auto searcher = vshogi::engine::dfpn::Searcher<Config>();
+    // Turn: BLACK
+    // White: -
+    //     6   5   4   3   2   1
+    //   +---+---+---+---+---+---+
+    // A |   |   |   |-GI|+GI|-HI|
+    //   +---+---+---+---+---+---+
+    // B |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+
+    // C |   |   |   |-FU|-OU|-KE|
+    //   +---+---+---+---+---+---+
+    // D |   |   |   |   |+KE|-FU|
+    //   +---+---+---+---+---+---+
+    // E |   |   |   |   |+RY|   |
+    //   +---+---+---+---+---+---+
+    // F |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+
+    // Black: KI
+    auto g = Game("3sSr/6/3pkn/4Np/4+R1/6 b Gpgbr");
+    searcher.set_game(g);
+    CHECK_TRUE(searcher.search(100u));
+    CHECK_TRUE(searcher.found_mate());
+    const auto mate_moves = searcher.get_mate_moves();
+    for (auto&& m : mate_moves) {
+        CHECK_EQUAL(vshogi::ONGOING, g.get_result());
+        g.apply(m);
+    }
+    CHECK_EQUAL(vshogi::BLACK_WIN, g.get_result());
 }
 
 TEST(dfpn_searcher, mate_in_three_by_king_move)

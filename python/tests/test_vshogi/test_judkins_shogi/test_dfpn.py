@@ -1,3 +1,4 @@
+
 import pytest
 
 import vshogi.judkins_shogi as shogi
@@ -6,7 +7,7 @@ from vshogi.engine import DfpnSearcher
 
 def test_mate():
     sfen_searches_pair_list = [
-        ('3+B2/3s1n/3k1p/3N2/2S1P1/6 b Ggb2r', 441),
+        ('3+B2/3s1n/3k1p/3N2/2S1P1/6 b Ggb2r', 443),
     ]
 
     actual_total_searches = 0

@@ -273,10 +273,7 @@ public:
                 update_offence_dn_ch1st_ch2nd(ch);
             m_pn = m_child_1st->m_pn;
         } else {
-            m_pn = 0u;
-            for (Node* ch = m_child.get(); ch; ch = ch->get_sibling())
-                update_defence_pn_ch1st_ch2nd(ch, g);
-            m_dn = m_child_1st->m_dn;
+            backprop_one_at_defence(g);
         }
         assert((m_pn == 0u) ? (m_dn == max_number) : (m_dn != max_number));
         assert((m_dn == 0u) ? (m_pn == max_number) : (m_pn != max_number));
@@ -464,11 +461,24 @@ private:
     void expand_drop_moves_at_defence(
         std::unique_ptr<Node<Config>>* next, const GameType& game)
     {
+        // https://komorinfo.com/blog/proof-number-double-count/
+        uint pn_max[Config::num_squares] = {0u};
         for (Move<Config> m : DropMoveGenerator<Config>(game.get_state())) {
             *next = std::make_unique<Node<Config>>(!m_attacker, m);
             Node<Config>* const ch = next->get();
-            update_defence_pn_ch1st_ch2nd(ch, game);
+            if (ch->is_better_dn_choice_than(m_child_1st, game)) {
+                m_child_2nd = m_child_1st;
+                m_child_1st = ch;
+            } else if (ch->is_better_dn_choice_than(m_child_2nd, game)) {
+                m_child_2nd = ch;
+            }
+            const auto dst = ch->m_action.destination();
+            if (pn_max[dst] < ch->m_pn)
+                pn_max[dst] = ch->m_pn;
             next = &(ch->m_sibling);
+        }
+        for (uint ii = Config::num_squares; ii--;) {
+            increment_with_guard(m_pn, pn_max[ii]);
         }
     }
     void expand_drop_moves_at_defence(
@@ -476,6 +486,8 @@ private:
         const GameType& game,
         const Node<Config>* nibling)
     {
+        // https://komorinfo.com/blog/proof-number-double-count/
+        uint pn_max[Config::num_squares] = {0u};
         const Stand<Config>& stand = game.get_stand(game.get_turn());
         for (; nibling; nibling = nibling->get_sibling()) {
             const auto m = nibling->get_action();
@@ -486,8 +498,56 @@ private:
             Node<Config>* const ch = next->get();
             ch->m_pn = std::clamp(nibling->pn(), cent, kilo);
             ch->m_dn = std::clamp(nibling->dn(), cent, kilo);
-            update_defence_pn_ch1st_ch2nd(ch, game);
+            if (ch->is_better_dn_choice_than(m_child_1st, game)) {
+                m_child_2nd = m_child_1st;
+                m_child_1st = ch;
+            } else if (ch->is_better_dn_choice_than(m_child_2nd, game)) {
+                m_child_2nd = ch;
+            }
+            const auto dst = ch->m_action.destination();
+            if (pn_max[dst] < ch->m_pn)
+                pn_max[dst] = ch->m_pn;
             next = &(ch->m_sibling);
+        }
+        for (uint ii = Config::num_squares; ii--;) {
+            increment_with_guard(m_pn, pn_max[ii]);
+        }
+    }
+
+private:
+    void backprop_one_at_defence(const GameType& g)
+    {
+        m_pn = 0u;
+        Node* const ch = backprop_at_defence_board_moves(g);
+        backprop_at_defence_drop_moves(ch, g);
+        m_dn = m_child_1st->m_dn;
+    }
+    Node* backprop_at_defence_board_moves(const GameType& g)
+    {
+        Node* ch = m_child.get();
+        for (; ch && !ch->m_action.is_drop(); ch = ch->get_sibling()) {
+            update_defence_pn_ch1st_ch2nd(ch, g);
+        }
+        return ch;
+    }
+    void backprop_at_defence_drop_moves(Node* ch, const GameType& g)
+    {
+        // https://komorinfo.com/blog/proof-number-double-count/
+        uint pn_max[Config::num_squares] = {0u};
+        for (; ch; ch = ch->get_sibling()) {
+            assert(ch->m_action.is_drop());
+            if (ch->is_better_dn_choice_than(m_child_1st, g)) {
+                m_child_2nd = m_child_1st;
+                m_child_1st = ch;
+            } else if (ch->is_better_dn_choice_than(m_child_2nd, g)) {
+                m_child_2nd = ch;
+            }
+            const auto dst = ch->m_action.destination();
+            if (pn_max[dst] < ch->m_pn)
+                pn_max[dst] = ch->m_pn;
+        }
+        for (uint ii = Config::num_squares; ii--;) {
+            increment_with_guard(m_pn, pn_max[ii]);
         }
     }
 
