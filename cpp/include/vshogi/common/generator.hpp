@@ -928,11 +928,11 @@ public:
             init_dst_mask();
             if (m_dst_mask.any()) {
                 m_promote = false;
-                init_dst_iter();
+                init_dst_iter_nopromo();
                 if (!m_dst_iter.is_end())
                     return;
                 m_promote = true;
-                init_dst_iter();
+                init_dst_iter_promotion();
                 if (!m_dst_iter.is_end())
                     return;
             }
@@ -947,7 +947,7 @@ public:
 
         if (m_promote == false) {
             m_promote = true;
-            init_dst_iter();
+            init_dst_iter_promotion();
             if (!m_dst_iter.is_end())
                 return *this;
         }
@@ -957,11 +957,11 @@ public:
             init_dst_mask();
             if (m_dst_mask.any()) {
                 m_promote = false;
-                init_dst_iter();
+                init_dst_iter_nopromo();
                 if (!m_dst_iter.is_end())
                     return *this;
                 m_promote = true;
-                init_dst_iter();
+                init_dst_iter_promotion();
                 if (!m_dst_iter.is_end())
                     return *this;
             }
@@ -1036,18 +1036,16 @@ private:
             SHelper::get_direction(src, enemy_king_sq),
             src);
     }
-    void init_dst_iter()
+    void init_dst_iter_promotion()
     {
+        assert(m_promote);
         const auto src = *m_src_iter;
         const auto p = m_board[src];
-        m_dst_iter = BitBoardType().square_iterator();
-
-        if (m_promote && (!PHelper::is_promotable(p))) {
+        if (!PHelper::is_promotable(p)) {
             return;
         }
-
         auto movable = m_dst_mask;
-        if (update_mask_by_promotion(movable, p, src)) {
+        if (update_mask_by_promotion(movable, src)) {
             if (!movable.any()) {
                 return;
             }
@@ -1055,30 +1053,44 @@ private:
         update_mask_by_forcing_check(movable, p);
         m_dst_iter = movable.square_iterator();
     }
-    bool update_mask_by_promotion(
-        BitBoardType& mask, const ColoredPiece p, const Square src)
+    void init_dst_iter_nopromo()
     {
-        if (m_promote && !SHelper::in_promotion_zone(src, m_turn)) {
+        assert(!m_promote);
+        const auto src = *m_src_iter;
+        const auto p = m_board[src];
+        auto movable = m_dst_mask;
+        update_mask_by_nopromo(movable, p);
+        if (!movable.any()) {
+            return;
+        }
+        update_mask_by_forcing_check(movable, p);
+        m_dst_iter = movable.square_iterator();
+    }
+    bool update_mask_by_promotion(BitBoardType& mask, const Square src)
+    {
+        assert(m_promote);
+        if (!SHelper::in_promotion_zone(src, m_turn)) {
             mask &= BitBoardType::get_promotion_zone(m_turn);
-            return true;
-        } else if (!m_promote) {
-            const auto dirs = PHelper::get_attack_directions(p);
-            if (dirs[1] == DIR_NA) {
-                mask &= ~BitBoardType::from_rank(
-                    (dirs[0] == DIR_N) ? SHelper::RANK1 : SHelper::RANK_MAX);
-            } else if (dirs[1] > DIR_SE) {
-                if (dirs[1] >= DIR_NNW)
-                    mask &= ~(
-                        BitBoardType::from_rank(SHelper::RANK1)
-                        | BitBoardType::from_rank(SHelper::RANK2));
-                else
-                    mask &= ~(
-                        BitBoardType::from_rank(SHelper::RANK_MAX)
-                        | BitBoardType::from_rank(SHelper::RANK_2ND_MAX));
-            }
             return true;
         }
         return false;
+    }
+    void update_mask_by_nopromo(BitBoardType& mask, const ColoredPiece p)
+    {
+        const auto dirs = PHelper::get_attack_directions(p);
+        if (dirs[1] == DIR_NA) {
+            mask &= ~BitBoardType::from_rank(
+                (dirs[0] == DIR_N) ? SHelper::RANK1 : SHelper::RANK_MAX);
+        } else if (dirs[1] > DIR_SE) {
+            if (dirs[1] >= DIR_NNW)
+                mask &= ~(
+                    BitBoardType::from_rank(SHelper::RANK1)
+                    | BitBoardType::from_rank(SHelper::RANK2));
+            else
+                mask &= ~(
+                    BitBoardType::from_rank(SHelper::RANK_MAX)
+                    | BitBoardType::from_rank(SHelper::RANK_2ND_MAX));
+        }
     }
     void update_dst_mask_by_current_check(const Square king_sq)
     {
