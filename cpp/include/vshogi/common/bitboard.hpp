@@ -160,6 +160,11 @@ public:
         m_value &= static_cast<UInt>(~(static_cast<UInt>(1) << sq));
         return *this;
     }
+    BitBoard msb() const
+    {
+        constexpr uint n = sizeof(UInt) * 8u - 1u;
+        return from_square(static_cast<Square>(n - clz(m_value)));
+    }
 
     uint hamming_weight() const
     {

@@ -25,6 +25,14 @@ TEST(test_judkins_shogi_bitboard, xor_operator)
     }
 }
 
+TEST(test_judkins_shogi_bitboard, msb)
+{
+    CHECK_EQUAL(bb_2a.value(), bb_2a.msb().value());
+    CHECK_EQUAL(bb_1a.value(), (bb_1a | bb_2a).msb().value());
+    CHECK_EQUAL(bb_1b.value(), (bb_1a | bb_1b).msb().value());
+    CHECK_EQUAL(bb_5e.value(), (bb_1a | bb_5e).msb().value());
+}
+
 TEST(test_judkins_shogi_bitboard, shift)
 {
     for (auto dir :

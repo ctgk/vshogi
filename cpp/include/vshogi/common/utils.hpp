@@ -267,6 +267,24 @@ constexpr uint ntz(const uint128 x)
     return ntz(x64) + 64u;
 }
 
+inline uint clz(const std::uint32_t z)
+{
+    return static_cast<uint>(__builtin_clz(z));
+}
+
+inline uint clz(const std::uint64_t z)
+{
+    return static_cast<uint>(__builtin_clzll(z));
+}
+
+inline uint clz(const uint128 x)
+{
+    const std::uint32_t x32 = static_cast<std::uint32_t>(x >> 64);
+    if (static_cast<bool>(x32))
+        return 32u + clz(x32);
+    return 64u + clz(static_cast<std::uint64_t>(x));
+}
+
 template <class UInt>
 inline uint hamming_weight(UInt x);
 

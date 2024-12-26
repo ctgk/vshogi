@@ -25,6 +25,13 @@ TEST(test_minishogi_bitboard, xor_operator)
     }
 }
 
+TEST(test_minishogi_bitboard, msb)
+{
+    CHECK_EQUAL(bb_2a.value(), bb_2a.msb().value());
+    CHECK_EQUAL(bb_1a.value(), (bb_1a | bb_2a).msb().value());
+    CHECK_EQUAL(bb_1b.value(), (bb_1a | bb_1b).msb().value());
+}
+
 TEST(test_minishogi_bitboard, shift)
 {
     for (auto dir :

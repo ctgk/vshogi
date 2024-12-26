@@ -25,6 +25,15 @@ TEST(test_shogi_bitboard, xor_operator)
     }
 }
 
+TEST(test_shogi_bitboard, msb)
+{
+    CHECK_TRUE(bb_2a == bb_2a.msb());
+    CHECK_TRUE(bb_1a == (bb_1a | bb_2a).msb());
+    CHECK_TRUE(bb_1b == (bb_1a | bb_1b).msb());
+    CHECK_TRUE(bb_5b == (bb_1a | bb_5b).msb());
+    CHECK_TRUE(bb_5i == (bb_1a | bb_5a | bb_5i).msb());
+}
+
 TEST(test_shogi_bitboard, from_square)
 {
     {
