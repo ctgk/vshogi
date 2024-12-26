@@ -186,12 +186,17 @@ TEST(test_shogi_bitboard, get_attacks_by_ky)
         CHECK_TRUE(actual.is_one(SQ_1H));
     }
     {
-        const auto actual = BitBoard::get_attacks_by(
-            B_KY, SQ_1I, BitBoard::from_square(SQ_1G));
+        const auto actual
+            = BitBoard::get_attacks_by(B_KY, SQ_1I, bb_1g | bb_1b);
         CHECK_EQUAL(2, actual.hamming_weight());
         CHECK_FALSE(actual.is_one(SQ_1F));
         CHECK_TRUE(actual.is_one(SQ_1G));
         CHECK_TRUE(actual.is_one(SQ_1H));
+    }
+    {
+        const auto actual = BitBoard::get_attacks_by(B_KY, SQ_1B, bb_1a);
+        CHECK_EQUAL(1, actual.hamming_weight());
+        CHECK_TRUE(actual.is_one(SQ_1A));
     }
     {
         const auto actual = BitBoard::get_attacks_by(W_KY, SQ_9A);

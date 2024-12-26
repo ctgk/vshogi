@@ -558,22 +558,6 @@ inline const shogi::BitBoard
 };
 template <>
 inline const std::uint32_t
-    shogi::Magic::magic_number_north[shogi::Config::num_squares]
-    = {
-        // clang-format off
-0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
-0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
-0x00420061, 0x58ec9440, 0x54891828, 0x004201e2, 0x41880103, 0x20420926, 0x079ac001, 0x55325004, 0xc0583021,
-0x81152105, 0x08c08058, 0x80829089, 0x86102410, 0x0400c004, 0xb0058500, 0xd4a10830, 0x20618040, 0x0a01823e,
-0x4294916a, 0x0428500c, 0x08027802, 0x023a40aa, 0x252085d1, 0xc114b004, 0x08400534, 0x20b98c08, 0x0091b608,
-0x10a344b1, 0x0aa18028, 0x1c20121e, 0x2010080b, 0xc5400e23, 0x01090422, 0x05912038, 0x30210a78, 0x02c84504,
-0x1804ca39, 0x0257190c, 0x40841232, 0x40029101, 0x02019884, 0x44040e23, 0x64446724, 0x1c200c1c, 0x48048030,
-0x68278c11, 0x00004194, 0x4b000b11, 0x12109099, 0x42a48489, 0x81420848, 0x0a805164, 0x76e0b805, 0x1280427c,
-0x40619c0a, 0x0a280624, 0x2f0c0203, 0x930d402d, 0x00800a24, 0x0101a451, 0x01011094, 0x04022032, 0x00112f48,
-        // clang-format on
-};
-template <>
-inline const std::uint32_t
     shogi::Magic::magic_number_vertical[shogi::Config::num_squares]
     = {
         // clang-format off
@@ -620,11 +604,6 @@ inline const std::uint32_t
 0x020a2403, 0x41390011, 0x1b82552c, 0x01792049, 0x20014052, 0xd0988a06, 0x01414228, 0x04c83099, 0x52359c02,
         // clang-format on
 };
-template <>
-inline shogi::BitBoard
-    shogi::Magic::attack_table_north[shogi::Config::num_squares]
-                                    [shogi::Config::magic_table_size]
-    = {};
 template <>
 inline shogi::BitBoard
     shogi::Magic::attack_table_vertical[shogi::Config::num_squares]
