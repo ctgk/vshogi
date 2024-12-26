@@ -197,8 +197,8 @@ TEST(test_shogi_bitboard, get_attacks_by_ky)
         CHECK_TRUE(actual.is_one(SQ_9I));
     }
     {
-        const auto actual = BitBoard::get_attacks_by(
-            W_KY, SQ_9A, BitBoard::from_square(SQ_9F));
+        const auto actual
+            = BitBoard::get_attacks_by(W_KY, SQ_9A, bb_9f | bb_9h);
         CHECK_EQUAL(5, actual.hamming_weight());
         CHECK_TRUE(actual.is_one(SQ_9B));
         CHECK_TRUE(actual.is_one(SQ_9C));
