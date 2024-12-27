@@ -15,16 +15,17 @@
 namespace vshogi
 {
 
-template <class Config>
+template <class Parameters>
 class KingMoveGenerator
 {
 private:
-    using BitBoardType = BitBoard<Config>;
-    using BoardType = Board<Config>;
-    using MoveType = Move<Config>;
-    using StateType = State<Config>;
-    using Square = typename Config::Square;
-    using SHelper = Squares<Config>;
+    using C = Configuration<Parameters>;
+    using BitBoardType = BitBoard<Parameters>;
+    using BoardType = Board<Parameters>;
+    using MoveType = Move<Parameters>;
+    using StateType = State<Parameters>;
+    using Square = typename C::Square;
+    using SHelper = Squares<Parameters>;
     static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
 private:
@@ -102,16 +103,17 @@ private:
     }
 };
 
-template <class Config>
+template <class Parameters>
 class CheckKingMoveGenerator
 {
 private:
-    using BitBoardType = BitBoard<Config>;
-    using BoardType = Board<Config>;
-    using MoveType = Move<Config>;
-    using StateType = State<Config>;
-    using Square = typename Config::Square;
-    using SHelper = Squares<Config>;
+    using C = Configuration<Parameters>;
+    using BitBoardType = BitBoard<Parameters>;
+    using BoardType = Board<Parameters>;
+    using MoveType = Move<Parameters>;
+    using StateType = State<Parameters>;
+    using Square = typename C::Square;
+    using SHelper = Squares<Parameters>;
     static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
 private:
@@ -187,23 +189,24 @@ private:
     }
 };
 
-template <class Config>
+template <class Parameters>
 class DropMoveGenerator
 {
 private:
-    using BitBoardType = BitBoard<Config>;
-    using BoardType = Board<Config>;
-    using MoveType = Move<Config>;
-    using StateType = State<Config>;
-    using StandType = Stand<Config>;
-    using PieceType = typename Config::PieceType;
-    using ColoredPiece = typename Config::ColoredPiece;
-    using Square = typename Config::Square;
-    using File = typename Config::File;
-    using PHelper = Pieces<Config>;
-    using SHelper = Squares<Config>;
-    static constexpr uint num_dir = Config::num_dir;
-    static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
+    using C = Configuration<Parameters>;
+    using BitBoardType = BitBoard<Parameters>;
+    using BoardType = Board<Parameters>;
+    using MoveType = Move<Parameters>;
+    using StateType = State<Parameters>;
+    using StandType = Stand<Parameters>;
+    using PieceType = typename C::PieceType;
+    using ColoredPiece = typename C::ColoredPiece;
+    using Square = typename C::Square;
+    using File = typename C::File;
+    using PHelper = Pieces<Parameters>;
+    using SHelper = Squares<Parameters>;
+    static constexpr uint num_dir = C::num_dir;
+    static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
     static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
 private:
@@ -363,23 +366,24 @@ private:
     }
 };
 
-template <class Config>
+template <class Parameters>
 class CheckDropMoveGenerator
 {
 private:
-    using BitBoardType = BitBoard<Config>;
-    using BoardType = Board<Config>;
-    using MoveType = Move<Config>;
-    using StateType = State<Config>;
-    using StandType = Stand<Config>;
-    using PieceType = typename Config::PieceType;
-    using ColoredPiece = typename Config::ColoredPiece;
-    using Square = typename Config::Square;
-    using File = typename Config::File;
-    using PHelper = Pieces<Config>;
-    using SHelper = Squares<Config>;
-    static constexpr uint num_dir = Config::num_dir;
-    static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
+    using C = Configuration<Parameters>;
+    using BitBoardType = BitBoard<Parameters>;
+    using BoardType = Board<Parameters>;
+    using MoveType = Move<Parameters>;
+    using StateType = State<Parameters>;
+    using StandType = Stand<Parameters>;
+    using PieceType = typename C::PieceType;
+    using ColoredPiece = typename C::ColoredPiece;
+    using Square = typename C::Square;
+    using File = typename C::File;
+    using PHelper = Pieces<Parameters>;
+    using SHelper = Squares<Parameters>;
+    static constexpr uint num_dir = C::num_dir;
+    static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
     static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
 private:
@@ -533,17 +537,18 @@ private:
     }
 };
 
-template <class Config>
+template <class Parameters>
 class NoPromoMoveGenerator
 {
 private:
-    using BitBoardType = BitBoard<Config>;
-    using BoardType = Board<Config>;
-    using MoveType = Move<Config>;
-    using StateType = State<Config>;
-    using Square = typename Config::Square;
-    using PHelper = Pieces<Config>;
-    using SHelper = Squares<Config>;
+    using C = Configuration<Parameters>;
+    using BitBoardType = BitBoard<Parameters>;
+    using BoardType = Board<Parameters>;
+    using MoveType = Move<Parameters>;
+    using StateType = State<Parameters>;
+    using Square = typename C::Square;
+    using PHelper = Pieces<Parameters>;
+    using SHelper = Squares<Parameters>;
     static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
 private:
@@ -683,17 +688,18 @@ private:
     }
 };
 
-template <class Config>
+template <class Parameters>
 class NonKingBoardMoveGenerator
 {
 private:
-    using BitBoardType = BitBoard<Config>;
-    using BoardType = Board<Config>;
-    using MoveType = Move<Config>;
-    using StateType = State<Config>;
-    using Square = typename Config::Square;
-    using PHelper = Pieces<Config>;
-    using SHelper = Squares<Config>;
+    using C = Configuration<Parameters>;
+    using BitBoardType = BitBoard<Parameters>;
+    using BoardType = Board<Parameters>;
+    using MoveType = Move<Parameters>;
+    using StateType = State<Parameters>;
+    using Square = typename C::Square;
+    using PHelper = Pieces<Parameters>;
+    using SHelper = Squares<Parameters>;
     static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
 private:
@@ -890,18 +896,19 @@ private:
     }
 };
 
-template <class Config>
+template <class Parameters>
 class CheckNonKingBoardMoveGenerator
 {
 private:
-    using BitBoardType = BitBoard<Config>;
-    using BoardType = Board<Config>;
-    using MoveType = Move<Config>;
-    using StateType = State<Config>;
-    using ColoredPiece = typename Config::ColoredPiece;
-    using Square = typename Config::Square;
-    using PHelper = Pieces<Config>;
-    using SHelper = Squares<Config>;
+    using C = Configuration<Parameters>;
+    using BitBoardType = BitBoard<Parameters>;
+    using BoardType = Board<Parameters>;
+    using MoveType = Move<Parameters>;
+    using StateType = State<Parameters>;
+    using ColoredPiece = typename C::ColoredPiece;
+    using Square = typename C::Square;
+    using PHelper = Pieces<Parameters>;
+    using SHelper = Squares<Parameters>;
     static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
 private:
@@ -1009,8 +1016,8 @@ private:
             = m_board.get_occupied(m_turn).clear(king_sq);
         const auto ranging_occupancy = m_board.get_occupied_by_ranging(m_turn);
         const auto eight_dir_mask
-            = Magic<Config>::get_adjacent_attack(enemy_king_sq)
-              | Magic<Config>::get_diagonal_attack(enemy_king_sq);
+            = Magic<Parameters>::get_adjacent_attack(enemy_king_sq)
+              | Magic<Parameters>::get_diagonal_attack(enemy_king_sq);
         const auto second_neighbor
             = BitBoardType::compute_2nd_neighbor_of(enemy_king_sq, m_turn);
         const auto src_mask
@@ -1133,16 +1140,16 @@ private:
     }
 };
 
-template <class Config>
+template <class Parameters>
 class BoardMoveGenerator
 {
 private:
-    using MoveType = Move<Config>;
-    using StateType = State<Config>;
+    using MoveType = Move<Parameters>;
+    using StateType = State<Parameters>;
 
 private:
-    KingMoveGenerator<Config> m_king_iter;
-    NonKingBoardMoveGenerator<Config> m_board_iter;
+    KingMoveGenerator<Parameters> m_king_iter;
+    NonKingBoardMoveGenerator<Parameters> m_board_iter;
     uint m_index; //!< 0: king, 1: board, 2: end
 
 public:
@@ -1214,25 +1221,25 @@ public:
 
 private:
     BoardMoveGenerator(
-        const KingMoveGenerator<Config>& king_iter,
-        const NonKingBoardMoveGenerator<Config>& board_iter,
+        const KingMoveGenerator<Parameters>& king_iter,
+        const NonKingBoardMoveGenerator<Parameters>& board_iter,
         const uint index)
         : m_king_iter(king_iter), m_board_iter(board_iter), m_index(index)
     {
     }
 };
 
-template <class Config>
+template <class Parameters>
 class LegalMoveGenerator
 {
 private:
-    using MoveType = Move<Config>;
-    using StateType = State<Config>;
+    using MoveType = Move<Parameters>;
+    using StateType = State<Parameters>;
 
 private:
-    KingMoveGenerator<Config> m_king_iter;
-    NonKingBoardMoveGenerator<Config> m_board_iter;
-    DropMoveGenerator<Config> m_drop_iter;
+    KingMoveGenerator<Parameters> m_king_iter;
+    NonKingBoardMoveGenerator<Parameters> m_board_iter;
+    DropMoveGenerator<Parameters> m_drop_iter;
     uint m_index; //!< 0: king, 1: board, 2: drop, 3: end
 
 public:
@@ -1320,9 +1327,9 @@ public:
 
 private:
     LegalMoveGenerator(
-        const KingMoveGenerator<Config>& king_iter,
-        const NonKingBoardMoveGenerator<Config>& board_iter,
-        const DropMoveGenerator<Config>& drop_iter,
+        const KingMoveGenerator<Parameters>& king_iter,
+        const NonKingBoardMoveGenerator<Parameters>& board_iter,
+        const DropMoveGenerator<Parameters>& drop_iter,
         const uint index)
         : m_king_iter(king_iter), m_board_iter(board_iter),
           m_drop_iter(drop_iter), m_index(index)
@@ -1330,16 +1337,16 @@ private:
     }
 };
 
-template <class Config>
+template <class Parameters>
 class CheckBoardMoveGenerator
 {
 private:
-    using MoveType = Move<Config>;
-    using StateType = State<Config>;
+    using MoveType = Move<Parameters>;
+    using StateType = State<Parameters>;
 
 private:
-    CheckKingMoveGenerator<Config> m_king_iter;
-    CheckNonKingBoardMoveGenerator<Config> m_board_iter;
+    CheckKingMoveGenerator<Parameters> m_king_iter;
+    CheckNonKingBoardMoveGenerator<Parameters> m_board_iter;
     uint m_index; //!< 0: king, 1: board, 2: end
 
 public:
@@ -1411,25 +1418,25 @@ public:
 
 private:
     CheckBoardMoveGenerator(
-        const CheckKingMoveGenerator<Config>& king_iter,
-        const CheckNonKingBoardMoveGenerator<Config>& board_iter,
+        const CheckKingMoveGenerator<Parameters>& king_iter,
+        const CheckNonKingBoardMoveGenerator<Parameters>& board_iter,
         const uint index)
         : m_king_iter(king_iter), m_board_iter(board_iter), m_index(index)
     {
     }
 };
 
-template <class Config>
+template <class Parameters>
 class CheckMoveGenerator
 {
 private:
-    using MoveType = Move<Config>;
-    using StateType = State<Config>;
+    using MoveType = Move<Parameters>;
+    using StateType = State<Parameters>;
 
 private:
-    CheckKingMoveGenerator<Config> m_king_iter;
-    CheckNonKingBoardMoveGenerator<Config> m_board_iter;
-    CheckDropMoveGenerator<Config> m_drop_iter;
+    CheckKingMoveGenerator<Parameters> m_king_iter;
+    CheckNonKingBoardMoveGenerator<Parameters> m_board_iter;
+    CheckDropMoveGenerator<Parameters> m_drop_iter;
     uint m_index; //!< 0: king, 1: board, 2: drop, 3: end
 
 public:
@@ -1515,9 +1522,9 @@ public:
 
 private:
     CheckMoveGenerator(
-        const CheckKingMoveGenerator<Config>& king_iter,
-        const CheckNonKingBoardMoveGenerator<Config>& board_iter,
-        const CheckDropMoveGenerator<Config>& drop_iter,
+        const CheckKingMoveGenerator<Parameters>& king_iter,
+        const CheckNonKingBoardMoveGenerator<Parameters>& board_iter,
+        const CheckDropMoveGenerator<Parameters>& drop_iter,
         const uint index)
         : m_king_iter(king_iter), m_board_iter(board_iter),
           m_drop_iter(drop_iter), m_index(index)

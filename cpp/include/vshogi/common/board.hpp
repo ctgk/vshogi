@@ -7,6 +7,7 @@
 
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/color.hpp"
+#include "vshogi/common/config.hpp"
 #include "vshogi/common/direction.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/pieces.hpp"
@@ -15,26 +16,28 @@
 namespace vshogi
 {
 
-template <class Config>
+template <class Parameters>
 class Board
 {
+private:
+    using C = Configuration<Parameters>;
+
 public:
-    static constexpr auto num_files = Config::num_files;
-    static constexpr auto num_ranks = Config::num_ranks;
-    static constexpr auto num_squares = Config::num_squares;
+    static constexpr auto num_files = C::num_files;
+    static constexpr auto num_ranks = C::num_ranks;
+    static constexpr auto num_squares = C::num_squares;
 
 private:
-    using SHelper = Squares<Config>;
-    using PHelper = Pieces<Config>;
-    using BitBoardType = BitBoard<Config>;
-    using MoveType = Move<Config>;
-    using PieceType = typename Config::PieceType;
-    using ColoredPiece = typename Config::ColoredPiece;
-    using Square = typename Config::Square;
-    using Rank = typename Config::Rank;
-    static constexpr auto num_dir = Config::num_dir;
-    static constexpr auto num_piece_types = Config::num_piece_types;
-    static constexpr auto num_square_states = num_colors * num_piece_types + 1;
+    using SHelper = Squares<Parameters>;
+    using PHelper = Pieces<Parameters>;
+    using BitBoardType = BitBoard<Parameters>;
+    using MoveType = Move<Parameters>;
+    using PieceType = typename C::PieceType;
+    using ColoredPiece = typename C::ColoredPiece;
+    using Square = typename C::Square;
+    using Rank = typename C::Rank;
+    static constexpr auto num_square_states
+        = num_colors * C::num_piece_types + 1;
     static constexpr auto VOID = PHelper::VOID; // NOLINT
     static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
@@ -44,7 +47,7 @@ private:
     ColoredPiece m_pieces[num_squares];
     Square m_king_locations[num_colors];
     BitBoardType m_bb_color[num_colors];
-    BitBoardType m_bb_piece[num_piece_types];
+    BitBoardType m_bb_piece[C::num_piece_types];
 
 public:
     Board();
@@ -259,7 +262,7 @@ public:
     {
         if (sq == SQ_NA)
             return false;
-        for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
+        for (auto dir : EnumIterator<DirectionEnum, C::num_dir>()) {
             if (find_attacker(by_side, sq, dir, skip) != SQ_NA)
                 return true;
         }
@@ -386,7 +389,7 @@ private:
         m_king_locations[BLACK] = SQ_NA;
         m_king_locations[WHITE] = SQ_NA;
         std::fill_n(m_bb_color, num_colors, BitBoardType());
-        std::fill_n(m_bb_piece, num_piece_types, BitBoardType());
+        std::fill_n(m_bb_piece, C::num_piece_types, BitBoardType());
         for (auto sq : EnumIterator<Square, num_squares>()) {
             const auto& p = m_pieces[sq];
             const auto c = PHelper::get_color(p);
@@ -485,7 +488,7 @@ private:
     {
         const auto enemy_king_sq = m_king_locations[~by_side];
         const auto enemy_king_dir = (by_side == BLACK) ? DIR_N : DIR_S;
-        for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
+        for (auto dir : EnumIterator<DirectionEnum, C::num_dir>()) {
             if (dir == enemy_king_dir)
                 continue;
             const auto src_next = find_attacker(~by_side, dst, dir);

@@ -3,6 +3,7 @@
 
 #include <cctype> // std::toupper
 
+#include "vshogi/common/config.hpp"
 #include "vshogi/common/direction.hpp"
 #include "vshogi/common/pieces.hpp"
 #include "vshogi/common/squares.hpp"
@@ -20,17 +21,18 @@ namespace vshogi
  *       _******* ________       Source square or piece
  * (MSB) xxxxxxxx xxxxxxxx (LSB)
  */
-template <class Config>
+template <class Parameters>
 class Move
 {
 private:
-    static constexpr auto num_squares = Config::num_squares;
-    static constexpr auto num_stand_piece_types = Config::num_stand_piece_types;
-    static constexpr auto num_dir_dl = Config::num_dir_dl;
-    using SquaresHelper = Squares<Config>;
-    using PiecesHelper = Pieces<Config>;
-    using Square = typename Config::Square;
-    using PieceType = typename Config::PieceType;
+    using C = Configuration<Parameters>;
+    static constexpr auto num_squares = C::num_squares;
+    static constexpr auto num_stand_piece_types = C::num_stand_piece_types;
+    static constexpr auto num_dir_dl = C::num_dir_dl;
+    using SquaresHelper = Squares<Parameters>;
+    using PiecesHelper = Pieces<Parameters>;
+    using Square = typename C::Square;
+    using PieceType = typename C::PieceType;
 
     using Int = std::uint16_t;
     static constexpr uint msb_destination = 6u;

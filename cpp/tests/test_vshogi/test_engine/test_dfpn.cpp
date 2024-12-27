@@ -5,8 +5,10 @@
 
 #include <CppUTest/TestHarness.h>
 
-namespace test_vshogi::test_engine
+namespace test_vshogi::test_engine::test_dfpn
 {
+
+using namespace vshogi::engine::dfpn;
 
 TEST_GROUP (dfpn_misc) {
 };
@@ -17,82 +19,62 @@ TEST(dfpn_misc, had_two_consecutive_sacrifice_drops)
     {
         auto g = Game("9/9/6k2/9/9/9/9/9/B8 w 8p");
         g.apply_dfpn(Move(SQ_8H, FU));
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
         g.apply_dfpn(Move(SQ_8H, SQ_9I));
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
         g.apply_dfpn(Move(SQ_7G, FU));
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
         g.apply_dfpn(Move(SQ_7G, SQ_8H));
-        CHECK_TRUE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_TRUE(had_two_consecutive_sacrifice_drops(g));
     }
     {
         auto g = Game("9/9/6k2/9/9/6N2/1p7/9/B5L2 w 8p");
         g.apply_dfpn(Move(SQ_8H, SQ_8G));
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
         g.apply_dfpn(Move(SQ_8H, SQ_9I));
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
         g.apply_dfpn(Move(SQ_4D, FU));
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
         g.apply_dfpn(Move(SQ_4D, SQ_3F));
         // false because 1st sacrifice is not a drop move.
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
     }
     {
         auto g = Game("9/9/6k2/9/9/6N2/9/9/B5L2 w 8p");
         g.apply_dfpn(Move(SQ_8H, FU));
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
         g.apply_dfpn(Move(SQ_4D, SQ_3F));
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
         g.apply_dfpn(Move(SQ_3E, FU));
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
         g.apply_dfpn(Move(SQ_3E, SQ_3F));
         // false because 1st sacrifice is not captured.
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
     }
     {
         auto g = Game("9/9/5pk2/9/9/9/9/9/B8 w 8p");
         g.apply_dfpn(Move(SQ_8H, FU));
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
         g.apply_dfpn(Move(SQ_8H, SQ_9I));
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
         g.apply_dfpn(Move(SQ_4D, SQ_4C));
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
         g.apply_dfpn(Move(SQ_4D, SQ_8H));
         // false because 2nd sacrifice is not a drop move.
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
     }
     {
         auto g = Game("9/9/6k2/9/9/6N2/9/9/B5L2 w 8p");
         g.apply_dfpn(Move(SQ_8H, FU));
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
         g.apply_dfpn(Move(SQ_8H, SQ_9I));
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
         g.apply_dfpn(Move(SQ_4D, FU));
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
         g.apply_dfpn(Move(SQ_4D, SQ_3F));
         // false because different pieces carried out
         // the 1st ("9i8h") and the 2nd ("3f4d") captures.
-        CHECK_FALSE(
-            vshogi::engine::dfpn::had_two_consecutive_sacrifice_drops(g));
+        CHECK_FALSE(had_two_consecutive_sacrifice_drops(g));
     }
 }
 
@@ -102,20 +84,20 @@ TEST_GROUP (dfpn_node) {
 TEST(dfpn_node, init)
 {
     using namespace vshogi::minishogi;
-    using Node = vshogi::engine::dfpn::Node<Config>;
+    using Node = Node<Parameters>;
     {
         auto n = Node();
         CHECK_TRUE(n.is_attacker());
         CHECK_FALSE(n.has_child());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, n.pn());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, n.dn());
+        CHECK_EQUAL(unit, n.pn());
+        CHECK_EQUAL(unit, n.dn());
     }
     {
         auto n = Node(false, Move(SQ_1A, SQ_1B));
         CHECK_FALSE(n.is_attacker());
         CHECK_FALSE(n.has_child());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, n.pn());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, n.dn());
+        CHECK_EQUAL(unit, n.pn());
+        CHECK_EQUAL(unit, n.dn());
         CHECK_EQUAL(Move(SQ_1A, SQ_1B).hash(), n.get_action().hash());
     }
 }
@@ -123,35 +105,35 @@ TEST(dfpn_node, init)
 TEST(dfpn_node, expand)
 {
     using namespace vshogi::minishogi;
-    using Node = vshogi::engine::dfpn::Node<Config>;
+    using Node = Node<Parameters>;
     {
         auto n = Node();
         n.expand(Game("k4/5/5/5/5 b -"), nullptr, nullptr);
         CHECK_FALSE(n.has_child());
-        CHECK_EQUAL(vshogi::engine::dfpn::max_number, n.pn());
-        CHECK_EQUAL(vshogi::engine::dfpn::zero, n.dn());
+        CHECK_EQUAL(max_number, n.pn());
+        CHECK_EQUAL(zero, n.dn());
     }
     {
         auto n = Node();
         n.expand(Game("2kp+R/5/5/5/5 b -"), nullptr, nullptr);
         CHECK_TRUE(n.has_child());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, n.pn());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit * 2u, n.dn());
+        CHECK_EQUAL(unit, n.pn());
+        CHECK_EQUAL(unit * 2u, n.dn());
     }
 }
 
 TEST(dfpn_node, expand_using_cousin)
 {
     using namespace vshogi::minishogi;
-    using Node = vshogi::engine::dfpn::Node<Config>;
+    using Node = Node<Parameters>;
     {
         auto n = Node();
         auto cousin = Node();
         cousin.expand(Game("k2p+R/5/5/5/5 b -"), nullptr, nullptr);
         n.expand(Game("2kp+R/5/5/5/5 b -"), &cousin, nullptr);
         CHECK_TRUE(n.has_child());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, n.pn());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, n.dn());
+        CHECK_EQUAL(unit, n.pn());
+        CHECK_EQUAL(unit, n.dn());
         auto ch = n.get_child();
         CHECK_EQUAL(Move(SQ_2A, SQ_1A).hash(), ch->get_action().hash());
 
@@ -162,8 +144,8 @@ TEST(dfpn_node, expand_using_cousin)
         auto cousin = Node();
         // one child
         cousin.expand(Game("3rk/3p1/3BP/5/4K b -"), nullptr, nullptr);
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, cousin.pn());
-        CHECK_EQUAL(vshogi::engine::dfpn::unit, cousin.dn());
+        CHECK_EQUAL(unit, cousin.pn());
+        CHECK_EQUAL(unit, cousin.dn());
         cousin.get_child_1st()->simulate(
             Game("4K/5/5/5/+r+sg+bk w p")); // not mate
         CHECK_TRUE(cousin.get_child_1st()->found_no_mate());
@@ -174,8 +156,8 @@ TEST(dfpn_node, expand_using_cousin)
 
         // stronger stand may lead to mate even if nibling is not mate.
         CHECK_FALSE(atk_node.found_conclusion());
-        CHECK_EQUAL(vshogi::engine::dfpn::kilo, atk_node.pn());
-        CHECK_EQUAL(vshogi::engine::dfpn::cent, atk_node.dn());
+        CHECK_EQUAL(kilo, atk_node.pn());
+        CHECK_EQUAL(cent, atk_node.dn());
     }
     {
         auto cousin = Node(false, Move(SQ_1A, SQ_1B));
@@ -197,15 +179,15 @@ TEST(dfpn_node, expand_using_cousin)
 
         // stronger stand may lead to no-mate even if nibling is mate.
         CHECK_FALSE(def_node.found_conclusion());
-        CHECK_EQUAL(vshogi::engine::dfpn::cent, def_node.pn());
-        CHECK_EQUAL(vshogi::engine::dfpn::kilo, def_node.dn());
+        CHECK_EQUAL(cent, def_node.pn());
+        CHECK_EQUAL(kilo, def_node.dn());
     }
 }
 
 TEST(dfpn_node, expand_removes_no_promotion_moves_by_rook)
 {
     using namespace vshogi::minishogi;
-    using Node = vshogi::engine::dfpn::Node<Config>;
+    using Node = Node<Parameters>;
 
     auto n = Node();
     n.expand(Game("k2pR/5/5/5/5 b -"), nullptr, nullptr);
@@ -215,8 +197,8 @@ TEST(dfpn_node, expand_removes_no_promotion_moves_by_rook)
     CHECK_EQUAL(Move(SQ_2A, SQ_1A, true).hash(), ch->get_action().hash());
     ch = ch->get_sibling();
     CHECK_TRUE(ch == nullptr);
-    CHECK_EQUAL(vshogi::engine::dfpn::unit, n.pn());
-    CHECK_EQUAL(vshogi::engine::dfpn::unit, n.dn());
+    CHECK_EQUAL(unit, n.pn());
+    CHECK_EQUAL(unit, n.dn());
 }
 
 TEST_GROUP (dfpn_transposition_table) {
@@ -225,8 +207,8 @@ TEST_GROUP (dfpn_transposition_table) {
 TEST(dfpn_transposition_table, init)
 {
     using namespace vshogi::minishogi;
-    using Node = vshogi::engine::dfpn::Node<Config>;
-    using TranspositionTable = vshogi::engine::dfpn::TranspositionTable<Config>;
+    using Node = Node<Parameters>;
+    using TranspositionTable = TranspositionTable<Parameters>;
 
     auto g = Game("4k/5/4G/5/5 b G");
     auto table = TranspositionTable();
@@ -243,8 +225,8 @@ TEST(dfpn_transposition_table, init)
 TEST(dfpn_transposition_table, look_up_offence)
 {
     using namespace vshogi::minishogi;
-    using Node = vshogi::engine::dfpn::Node<Config>;
-    using TranspositionTable = vshogi::engine::dfpn::TranspositionTable<Config>;
+    using Node = Node<Parameters>;
+    using TranspositionTable = TranspositionTable<Parameters>;
 
     auto g = Game("4k/5/4G/5/5 b G");
     auto table = TranspositionTable();
@@ -260,8 +242,8 @@ TEST(dfpn_transposition_table, look_up_offence)
 TEST(dfpn_transposition_table, look_up_defence)
 {
     using namespace vshogi::minishogi;
-    using Node = vshogi::engine::dfpn::Node<Config>;
-    using TranspositionTable = vshogi::engine::dfpn::TranspositionTable<Config>;
+    using Node = Node<Parameters>;
+    using TranspositionTable = TranspositionTable<Parameters>;
     auto table = TranspositionTable();
     auto g = Game("4k/5/4P/5/5 b s");
     g.apply(Move(SQ_1B, SQ_1C));
@@ -277,8 +259,8 @@ TEST(dfpn_transposition_table, look_up_defence)
 TEST(dfpn_transposition_table, look_up_offence_stronger_of_two_weakers)
 {
     using namespace vshogi::minishogi;
-    using Node = vshogi::engine::dfpn::Node<Config>;
-    using TranspositionTable = vshogi::engine::dfpn::TranspositionTable<Config>;
+    using Node = Node<Parameters>;
+    using TranspositionTable = TranspositionTable<Parameters>;
 
     auto table = TranspositionTable();
     auto root = table.get_root();
@@ -317,7 +299,7 @@ TEST(dfpn_searcher, no_mate_no_check)
     // E |   |   |+OU|   |   |
     //   *---*---*---*---*---*
     // Black: -
-    auto searcher = vshogi::engine::dfpn::Searcher<Config>();
+    auto searcher = Searcher<Parameters>();
     searcher.set_game(Game("2k2/5/5/5/2K2 b -"));
     CHECK_TRUE(searcher.found_conclusion());
     CHECK_FALSE(searcher.found_mate());
@@ -331,7 +313,7 @@ TEST(dfpn_searcher, no_mate_no_check)
 TEST(dfpn_searcher, minishogi_no_mate_1)
 {
     using namespace vshogi::minishogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
     auto searcher = Searcher();
 
     // Turn: BLACK
@@ -362,7 +344,7 @@ TEST(dfpn_searcher, minishogi_no_mate_1)
 TEST(dfpn_searcher, minishogi_no_mate_2)
 {
     using namespace vshogi::minishogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
     auto searcher = Searcher();
 
     // Turn: BLACK
@@ -393,7 +375,7 @@ TEST(dfpn_searcher, minishogi_no_mate_2)
 TEST(dfpn_searcher, no_mate_1)
 {
     using namespace vshogi::shogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
     // Turn: WHITE
     // White: FUx3,KY,KE,GI
     //     9   8   7   6   5   4   3   2   1
@@ -429,7 +411,7 @@ TEST(dfpn_searcher, no_mate_1)
 TEST(dfpn_searcher, mate_in_one_straight_forward)
 {
     using namespace vshogi::minishogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
     auto g = Game("3rk/3b1/4P/4R/4K b -");
 
     auto searcher = Searcher();
@@ -445,7 +427,7 @@ TEST(dfpn_searcher, mate_in_one_straight_forward)
 TEST(dfpn_searcher, mate_in_one)
 {
     using namespace vshogi::minishogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
     auto searcher = Searcher();
 
     {
@@ -497,7 +479,7 @@ TEST(dfpn_searcher, mate_in_one)
 TEST(dfpn_searcher, mate_in_three_straight_forward)
 {
     using namespace vshogi::minishogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
 
     // Turn: BLACK
     // White: -
@@ -515,7 +497,7 @@ TEST(dfpn_searcher, mate_in_three_straight_forward)
     //   *---*---*---*---*---*
     // Black: HI
     auto g = Game("3bk/3s1/3BP/4+R/4K b -");
-    auto searcher = vshogi::engine::dfpn::Searcher<Config>();
+    auto searcher = Searcher();
     searcher.set_game(g);
     CHECK_FALSE(searcher.search(1u));
     CHECK_FALSE(searcher.search(1u));
@@ -526,7 +508,7 @@ TEST(dfpn_searcher, mate_in_three_straight_forward)
 TEST(dfpn_searcher, mate_in_three_1)
 {
     using namespace vshogi::minishogi;
-    auto searcher = vshogi::engine::dfpn::Searcher<Config>();
+    auto searcher = Searcher<Parameters>();
     // Turn: White
     // White: KIx2
     //     5   4   3   2   1
@@ -553,7 +535,7 @@ TEST(dfpn_searcher, mate_in_three_1)
 TEST(dfpn_searcher, mate_in_three_2)
 {
     using namespace vshogi::minishogi;
-    auto searcher = vshogi::engine::dfpn::Searcher<Config>();
+    auto searcher = Searcher<Parameters>();
     // Turn: BLACK
     // White: -
     //     5   4   3   2   1
@@ -582,7 +564,7 @@ TEST(dfpn_searcher, mate_in_three_2)
 TEST(dfpn_searcher, mate_in_three_3)
 {
     using namespace vshogi::judkins_shogi;
-    auto searcher = vshogi::engine::dfpn::Searcher<Config>();
+    auto searcher = Searcher<Parameters>();
     // Turn: BLACK
     // White: -
     //     6   5   4   3   2   1
@@ -615,7 +597,7 @@ TEST(dfpn_searcher, mate_in_three_3)
 TEST(dfpn_searcher, mate_in_three_4)
 {
     using namespace vshogi::judkins_shogi;
-    auto searcher = vshogi::engine::dfpn::Searcher<Config>();
+    auto searcher = Searcher<Parameters>();
     // Turn: BLACK
     // White: -
     //     6   5   4   3   2   1
@@ -648,7 +630,7 @@ TEST(dfpn_searcher, mate_in_three_4)
 TEST(dfpn_searcher, mate_in_three_by_king_move)
 {
     using namespace vshogi::judkins_shogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
     auto searcher = Searcher();
     {
         // Turn: BLACK
@@ -703,7 +685,7 @@ TEST(dfpn_searcher, mate_in_three_by_king_move)
 TEST(dfpn_searcher, cache_for_mate)
 {
     using namespace vshogi::minishogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
     auto searcher = Searcher();
     searcher.set_game(Game("3r1/+BP1r1/1+BP2/4p/2G1k b G"));
     searcher.search(100);
@@ -743,7 +725,7 @@ TEST(dfpn_searcher, cache_for_mate)
 TEST(dfpn_searcher, cache_for_no_mate)
 {
     using namespace vshogi::minishogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
     auto searcher = Searcher();
 
     // Turn: BLACK
@@ -801,7 +783,7 @@ TEST(dfpn_searcher, mate_in_five_straight_forward)
     // F |   |   |   |+KI|+HI|+KI|
     //   +---+---+---+---+---+---+
     // Black: KA
-    auto searcher = vshogi::engine::dfpn::Searcher<Config>();
+    auto searcher = Searcher<Parameters>();
     searcher.set_game(Game("4pp/3pbk/3n1N/3P1P/2S1SR/3GRG b B"));
     CHECK_FALSE(searcher.search(4u));
     CHECK_TRUE(searcher.search(1u));
@@ -827,7 +809,7 @@ TEST(dfpn_searcher, mate_in_five)
     // E |   |   |   |   |   |
     //   *---*---*---*---*---*
     // Black: GIx2
-    auto searcher = vshogi::engine::dfpn::Searcher<Config>();
+    auto searcher = Searcher<Parameters>();
     searcher.set_game(Game("2pkb/4R/2+bG1/5/5 b 2S"));
     CHECK_TRUE(searcher.search(5000));
     CHECK_EQUAL(Move(SQ_2B, GI).hash(), searcher.get_mate_move().hash());
@@ -839,7 +821,7 @@ TEST(dfpn_searcher, mate_in_five)
 TEST(dfpn_searcher, king_entering_before_mate)
 {
     using namespace vshogi::judkins_shogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
     // Turn: WHITE
     // White: GI
     //     6   5   4   3   2   1
@@ -870,7 +852,7 @@ TEST(dfpn_searcher, king_entering_before_mate)
 TEST(dfpn_searcher, avoid_consecutive_checks)
 {
     using namespace vshogi::minishogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
     // Turn: WHITE
     // White: HI,KI
     //     5   4   3   2   1
@@ -915,7 +897,7 @@ TEST(dfpn_searcher, avoid_consecutive_checks)
 TEST(dfpn_searcher, debug)
 {
     using namespace vshogi::shogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
     // Turn: BLACK
     // White: FUx3,KI
     //     9   8   7   6   5   4   3   2   1
@@ -954,7 +936,7 @@ TEST(dfpn_searcher, debug)
 TEST(dfpn_searcher, debug2)
 {
     using namespace vshogi::shogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
     auto g = Game("ln5nl/3rgkgs1/1pp1pp1pp/p3s1p2/3P3Pb/P1P1P4/1PBSSPP1P/"
                   "2G1G2R1/LN2K2NL b P 29");
     auto searcher = Searcher();
@@ -972,7 +954,7 @@ TEST(dfpn_searcher, debug_tmp)
         .apply(Move("L*5e"))
         .apply(Move("8h5e"))
         .apply(Move("P*2b"));
-    auto searcher = vshogi::engine::dfpn::Searcher<Config>();
+    auto searcher = Searcher<Parameters>();
     searcher.set_game(g);
     searcher.search(100);
     CHECK_TRUE(searcher.found_conclusion());
@@ -988,7 +970,7 @@ TEST(dfpn_searcher, debug_tmp)
 TEST(dfpn_searcher, debug_tmp2)
 {
     using namespace vshogi::minishogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
 
     // Turn: BLACK
     // White: KI
@@ -1022,7 +1004,7 @@ TEST(dfpn_searcher, debug_tmp2)
 TEST(dfpn_searcher, minishogi_debug)
 {
     using namespace vshogi::minishogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
 
     // Turn: WHITE
     // White: FU,GI,KA
@@ -1057,7 +1039,7 @@ TEST(dfpn_searcher, minishogi_debug)
 TEST(dfpn_searcher, test_shogi_debug_1)
 {
     using namespace vshogi::shogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
 
     // Turn: WHITE
     // White: FUx4,KE,KIx2
@@ -1097,7 +1079,7 @@ TEST(dfpn_searcher, test_shogi_debug_1)
 TEST(dfpn_searcher, test_shogi_debug_2)
 {
     using namespace vshogi::shogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
     // Turn: WHITE
     // White: FUx5,GI
     //     9   8   7   6   5   4   3   2   1
@@ -1137,7 +1119,7 @@ TEST(dfpn_searcher, test_shogi_debug_2)
 TEST(dfpn_searcher, test_shogi_debug_3)
 {
     using namespace vshogi::shogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
     // Turn: WHITE
     // White: FUx2,KEx2,GI
     //     9   8   7   6   5   4   3   2   1
@@ -1177,7 +1159,7 @@ TEST(dfpn_searcher, test_shogi_debug_3)
 TEST(dfpn_searcher, test_shogi_debug_4)
 {
     using namespace vshogi::shogi;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = Searcher<Parameters>;
     // Turn: WHITE
     // White: FU,KY,KIx2
     //     9   8   7   6   5   4   3   2   1
@@ -1218,7 +1200,7 @@ TEST(dfpn_searcher, test_shogi_debug_4)
 // TEST(dfpn_searcher, mate_moves_without_waste_moves)
 // {
 //     using namespace vshogi::shogi;
-//     using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+//     using Searcher = Searcher<Parameters>;
 //     // Turn: BLACK
 //     // White: -
 //     //     9   8   7   6   5   4   3   2   1
@@ -1252,4 +1234,4 @@ TEST(dfpn_searcher, test_shogi_debug_4)
 //     CHECK_EQUAL(3, actual.size());
 // }
 
-} // namespace test_vshogi::test_engine
+} // namespace test_vshogi::test_engine::test_dfpn

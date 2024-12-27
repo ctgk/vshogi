@@ -17,34 +17,34 @@
 namespace vshogi
 {
 
-template <class Config>
+template <class Parameters>
 class State
 {
-public:
-    static constexpr uint num_ranks = Config::num_ranks;
-    static constexpr uint num_files = Config::num_files;
-    static constexpr uint num_squares = Config::num_squares;
-
 private:
-    using PieceType = typename Config::PieceType;
-    using ColoredPiece = typename Config::ColoredPiece;
-    using Rank = typename Config::Rank;
-    using Square = typename Config::Square;
-    using PHelper = Pieces<Config>;
-    using SHelper = Squares<Config>;
-    using BitBoardType = BitBoard<Config>;
-    using BoardType = Board<Config>;
-    using MoveType = Move<Config>;
-    using Stands = BlackWhiteStands<Config>;
-    using StandType = Stand<Config>;
-
-    static constexpr uint max_stand_piece_count = Config::max_stand_piece_count;
-    static constexpr uint num_piece_types = Config::num_piece_types;
-    static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
-    static constexpr uint num_dir = Config::num_dir;
+    using C = Configuration<Parameters>;
+    using PieceType = typename C::PieceType;
+    using ColoredPiece = typename C::ColoredPiece;
+    using Rank = typename C::Rank;
+    using Square = typename C::Square;
+    using PHelper = Pieces<Parameters>;
+    using SHelper = Squares<Parameters>;
+    using BitBoardType = BitBoard<Parameters>;
+    using BoardType = Board<Parameters>;
+    using MoveType = Move<Parameters>;
+    using Stands = BlackWhiteStands<Parameters>;
+    using StandType = Stand<Parameters>;
+    static constexpr uint max_stand_piece_count = C::max_stand_piece_count;
+    static constexpr uint num_piece_types = C::num_piece_types;
+    static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
+    static constexpr uint num_dir = C::num_dir;
     static constexpr Square SQ_NA = SHelper::SQ_NA; // NOLINT
     static constexpr ColoredPiece VOID = PHelper::VOID; // NOLINT
     static constexpr std::uint64_t zobrist_hash_for_turn = 0x000000aaaaaaaaaau;
+
+public:
+    static constexpr uint num_ranks = C::num_ranks;
+    static constexpr uint num_files = C::num_files;
+    static constexpr uint num_squares = C::num_squares;
 
 private:
     BoardType m_board;

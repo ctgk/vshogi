@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "vshogi/common/config.hpp"
 #include "vshogi/engine/dfpn.hpp"
 #include "vshogi/engine/mcts.hpp"
 #include "vshogi/engine/piece_value.hpp"
@@ -21,12 +22,13 @@ inline bool has(const std::vector<T>& vec, const T& target)
     return std::find(vec.cbegin(), vec.cend(), target) != vec.cend();
 }
 
-template <class Config>
+template <class Parameters>
 inline void export_board(pybind11::module& m)
 {
     namespace py = pybind11;
-    using Board = vshogi::Board<Config>;
-    using Square = typename Config::Square;
+    using C = vshogi::Configuration<Parameters>;
+    using Board = vshogi::Board<Parameters>;
+    using Square = typename C::Square;
     py::class_<Board>(m, "Board")
         .def(
             "__getitem__",
@@ -44,12 +46,13 @@ inline void export_board(pybind11::module& m)
             "num_squares", [](py::object) { return Board::num_squares; });
 }
 
-template <class Config>
+template <class Parameters>
 inline void export_piece_stand(pybind11::module& m)
 {
-    using Stand = vshogi::Stand<Config>;
-    using PieceType = typename Config::PieceType;
-    constexpr auto num_stand_types = Config::num_stand_piece_types;
+    using C = vshogi::Configuration<Parameters>;
+    using Stand = vshogi::Stand<Parameters>;
+    using PieceType = typename Parameters::PieceType;
+    constexpr auto num_stand_types = C::num_stand_piece_types;
     pybind11::class_<Stand>(m, "Stand")
         .def("count", &Stand::count)
         .def("any", &Stand::any)
@@ -61,13 +64,13 @@ inline void export_piece_stand(pybind11::module& m)
         });
 }
 
-template <class Config>
+template <class Parameters>
 inline void export_move(pybind11::module& m)
 {
     namespace py = pybind11;
-    using Move = vshogi::Move<Config>;
-    using Square = typename Config::Square;
-    using PieceType = typename Config::PieceType;
+    using Move = vshogi::Move<Parameters>;
+    using Square = typename Parameters::Square;
+    using PieceType = typename Parameters::PieceType;
     py::class_<Move>(m, "Move")
         .def(
             py::init<const Square, const Square, const bool>(),
@@ -110,12 +113,12 @@ inline void export_move(pybind11::module& m)
             [](py::tuple t) { return Move(t[0].cast<std::size_t>()); }));
 }
 
-template <class Config>
+template <class Parameters>
 inline void export_state(pybind11::module& m)
 {
     namespace py = pybind11;
-    using State = vshogi::State<Config>;
-    using Move = vshogi::Move<Config>;
+    using State = vshogi::State<Parameters>;
+    using Move = vshogi::Move<Parameters>;
 
     py::class_<State>(m, "State")
         .def(py::init<const std::string&>())
@@ -186,12 +189,12 @@ inline void export_state(pybind11::module& m)
             py::arg("out"));
 }
 
-template <class Config>
+template <class Parameters>
 inline void export_game(pybind11::module& m)
 {
     namespace py = pybind11;
-    using Game = vshogi::Game<Config>;
-    using Move = vshogi::Move<Config>;
+    using Game = vshogi::Game<Parameters>;
+    using Move = vshogi::Move<Parameters>;
     py::class_<Game>(m, "_Game")
         .def(py::init<>())
         .def(py::init<const std::string&>())
@@ -311,7 +314,7 @@ inline void export_game(pybind11::module& m)
         .def(
             "get_mate_moves_if_any",
             [](const Game& self, const int num_dfpn_nodes) -> py::object {
-                vshogi::engine::dfpn::Searcher<Config> dfpn{};
+                vshogi::engine::dfpn::Searcher<Parameters> dfpn{};
                 dfpn.set_game(self);
                 if (dfpn.search(num_dfpn_nodes)) {
                     return py::cast(dfpn.get_mate_moves());
@@ -323,13 +326,13 @@ inline void export_game(pybind11::module& m)
         .def("copy", [](const Game& self) { return Game(self); });
 }
 
-template <class Config>
+template <class Parameters>
 inline void export_mcts_node(pybind11::module& m)
 {
     namespace py = pybind11;
-    using Game = vshogi::Game<Config>;
-    using Move = vshogi::Move<Config>;
-    using Node = vshogi::engine::mcts::Node<Config>;
+    using Game = vshogi::Game<Parameters>;
+    using Move = vshogi::Move<Parameters>;
+    using Node = vshogi::engine::mcts::Node<Parameters>;
 
     py::class_<Node>(m, "MctsNode")
         .def("get_visit_count", &Node::get_visit_count)
@@ -377,12 +380,12 @@ inline void export_mcts_node(pybind11::module& m)
         .def("simulate_mate_and_backprop", &Node::simulate_mate_and_backprop);
 }
 
-template <class Config>
+template <class Parameters>
 inline void export_mcts_searcher(pybind11::module& m)
 {
     namespace py = pybind11;
-    using Game = vshogi::Game<Config>;
-    using Searcher = vshogi::engine::mcts::Searcher<Config>;
+    using Game = vshogi::Game<Parameters>;
+    using Searcher = vshogi::engine::mcts::Searcher<Parameters>;
 
     py::class_<Searcher>(m, "MCTS")
         .def(py::init<const float, const int, const int>())
@@ -426,11 +429,11 @@ inline void export_mcts_searcher(pybind11::module& m)
             &Searcher::evaluate_by_random_playout);
 }
 
-template <class Config>
+template <class Parameters>
 inline void export_dfpn_node(pybind11::module& m)
 {
     namespace py = pybind11;
-    using Node = vshogi::engine::dfpn::Node<Config>;
+    using Node = vshogi::engine::dfpn::Node<Parameters>;
     py::class_<Node>(m, "DfpnNode")
         .def("is_attacker", &Node::is_attacker)
         .def("pn", &Node::pn)
@@ -447,11 +450,11 @@ inline void export_dfpn_node(pybind11::module& m)
         });
 }
 
-template <class Config>
+template <class Parameters>
 inline void export_dfpn_searcher(pybind11::module& m)
 {
     namespace py = pybind11;
-    using Searcher = vshogi::engine::dfpn::Searcher<Config>;
+    using Searcher = vshogi::engine::dfpn::Searcher<Parameters>;
 
     py::class_<Searcher>(m, "DfpnSearcher")
         .def(py::init<>())
@@ -472,28 +475,26 @@ inline void export_dfpn_searcher(pybind11::module& m)
         });
 }
 
-template <class Config>
+template <class Parameters>
 inline void export_value_functions(pybind11::module& m)
 {
     namespace py = pybind11;
-    m.def("piece_value_func", &vshogi::engine::piece_value_func<Config>);
+    m.def("piece_value_func", &vshogi::engine::piece_value_func<Parameters>);
 }
 
-template <class Config>
+template <class Parameters>
 void export_classes(pybind11::module& m)
 {
-    using GameType = vshogi::Game<Config>;
-
-    export_board<Config>(m);
-    export_piece_stand<Config>(m);
-    export_move<Config>(m);
-    export_state<Config>(m);
-    export_game<Config>(m);
-    export_mcts_searcher<Config>(m);
-    export_mcts_node<Config>(m);
-    export_value_functions<Config>(m);
-    export_dfpn_searcher<Config>(m);
-    export_dfpn_node<Config>(m);
+    export_board<Parameters>(m);
+    export_piece_stand<Parameters>(m);
+    export_move<Parameters>(m);
+    export_state<Parameters>(m);
+    export_game<Parameters>(m);
+    export_mcts_searcher<Parameters>(m);
+    export_mcts_node<Parameters>(m);
+    export_value_functions<Parameters>(m);
+    export_dfpn_searcher<Parameters>(m);
+    export_dfpn_node<Parameters>(m);
 }
 
 } // namespace pyvshogi

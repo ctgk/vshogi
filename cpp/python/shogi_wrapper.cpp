@@ -245,5 +245,5 @@ void export_shogi(py::module& m)
     export_square_enum(m);
     export_pieces(m);
 
-    pyvshogi::export_classes<sg::Config>(m);
+    pyvshogi::export_classes<sg::Parameters>(m);
 }

@@ -19,9 +19,9 @@ TEST_GROUP (test_minishogi_engine) {
 TEST(test_minishogi_engine, test_random_playout_searcher)
 {
     auto g = Game();
-    auto searcher = vshogi::engine::mcts::Searcher<Config>(4.f, 3, 1);
+    auto searcher = vshogi::engine::mcts::Searcher<Parameters>(4.f, 3, 1);
     searcher.set_game(g, 0.f, nullptr);
-    auto dfpn = vshogi::engine::dfpn::Searcher<Config>();
+    auto dfpn = vshogi::engine::dfpn::Searcher<Parameters>();
     while (true) {
         if (g.get_result() != vshogi::ONGOING)
             break;
@@ -60,7 +60,7 @@ namespace test_shogi
 {
 
 using namespace vshogi::shogi;
-using Node = vshogi::engine::mcts::Node<Config>;
+using Node = vshogi::engine::mcts::Node<Parameters>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
 TEST_GROUP (shogi_engine) {
@@ -95,9 +95,9 @@ TEST(shogi_engine, mcts_with_dfpn)
     };
 
     auto g = Game();
-    auto mcts = vshogi::engine::mcts::Searcher<Config>(4.f, 3, 1);
+    auto mcts = vshogi::engine::mcts::Searcher<Parameters>(4.f, 3, 1);
     mcts.set_game(g, 0.f, zeros);
-    auto dfpn = vshogi::engine::dfpn::Searcher<Config>();
+    auto dfpn = vshogi::engine::dfpn::Searcher<Parameters>();
     for (int ii = 0; ii < 167; ++ii) {
         if (g.get_result() != vshogi::ONGOING)
             break;
@@ -164,9 +164,9 @@ TEST(shogi_engine, random_playout_searcher)
     };
 
     auto g = Game();
-    auto searcher = vshogi::engine::mcts::Searcher<Config>(4.f, 3, 1);
+    auto searcher = vshogi::engine::mcts::Searcher<Parameters>(4.f, 3, 1);
     searcher.set_game(g, 0.f, nullptr);
-    auto dfpn = vshogi::engine::dfpn::Searcher<Config>();
+    auto dfpn = vshogi::engine::dfpn::Searcher<Parameters>();
     for (int ii = 0; ii < 167; ++ii) {
         if (g.get_result() != vshogi::ONGOING)
             break;

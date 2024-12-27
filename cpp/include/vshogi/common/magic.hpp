@@ -2,25 +2,27 @@
 #define VSHOGI_COMMON_MAGIC_HPP
 
 #include "vshogi/common/bitboard.hpp"
+#include "vshogi/common/config.hpp"
 #include "vshogi/common/squares.hpp"
 #include "vshogi/common/utils.hpp"
 
 namespace vshogi
 {
 
-template <class Config>
+template <class Parameters>
 struct Magic
 {
 private:
-    using BitBoardType = BitBoard<Config>;
-    using SHelper = Squares<Config>;
-    using Square = typename Config::Square;
-    using UInt = typename Config::BaseTypeBitBoard;
-    static constexpr uint num_squares = Config::num_squares;
-    static constexpr uint num_files = Config::num_files;
-    static constexpr uint num_ranks = Config::num_ranks;
-    static constexpr uint magic_table_size = Config::magic_table_size;
-    static constexpr uint log2_magic_table_size = Config::log2_magic_table_size;
+    using C = Configuration<Parameters>;
+    using BitBoardType = BitBoard<Parameters>;
+    using SHelper = Squares<Parameters>;
+    using Square = typename C::Square;
+    using UInt = typename C::BaseTypeBitBoard;
+    static constexpr uint num_squares = C::num_squares;
+    static constexpr uint num_files = C::num_files;
+    static constexpr uint num_ranks = C::num_ranks;
+    static constexpr uint magic_table_size = C::magic_table_size;
+    static constexpr uint log2_magic_table_size = C::log2_magic_table_size;
 
     static const BitBoardType premask_north[num_squares];
     static const BitBoardType premask_south[num_squares];

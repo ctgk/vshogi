@@ -6,25 +6,26 @@
 #include <string>
 
 #include "vshogi/common/color.hpp"
+#include "vshogi/common/config.hpp"
 #include "vshogi/common/direction.hpp"
 
 namespace vshogi
 {
 
-template <class Config>
+template <class Parameters>
 struct Pieces
 {
 private:
+    using C = Configuration<Parameters>;
     static_assert(
-        (Config::num_piece_types + 1) // num_piece_types +  NA
-        == sizeof(Config::piece_type_to_point)
-               / sizeof(Config::piece_type_to_point[0]));
-    static constexpr uint num_piece_types = Config::num_piece_types;
-    static constexpr uint num_colored_piece_types
-        = Config::num_colored_piece_types;
-    static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
-    using PieceType = typename Config::PieceType;
-    using ColoredPiece = typename Config::ColoredPiece;
+        (C::num_piece_types + 1) // num_piece_types +  NA
+        == sizeof(C::Param::piece_type_to_point)
+               / sizeof(C::Param::piece_type_to_point[0]));
+    static constexpr uint num_piece_types = C::num_piece_types;
+    static constexpr uint num_colored_piece_types = C::num_colored_piece_types;
+    static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
+    using PieceType = typename C::PieceType;
+    using ColoredPiece = typename C::ColoredPiece;
     static_assert(sizeof(ColoredPiece) == sizeof(std::uint8_t));
 
     static const DirectionEnum attack_directions_table[2 * num_piece_types + 1]
@@ -61,10 +62,10 @@ public:
     static PieceType to_piece_type(char c)
     {
         c = static_cast<char>(std::tolower(static_cast<int>(c)));
-        const char* p = Config::piece_type_to_char;
+        const char* p = C::Param::piece_type_to_char;
         for (; *p != '\0'; ++p) {
             if (*p == c)
-                return static_cast<PieceType>(p - Config::piece_type_to_char);
+                return static_cast<PieceType>(p - C::Param::piece_type_to_char);
         }
         return NA;
     }
@@ -83,7 +84,7 @@ public:
     }
     static constexpr char to_char(const PieceType& pt_demoted)
     {
-        return Config::piece_type_to_char[pt_demoted];
+        return Parameters::piece_type_to_char[pt_demoted];
     }
 
     static constexpr bool is_promotable(const PieceType& p)
@@ -156,7 +157,7 @@ public:
 
     static uint get_point(const PieceType& p)
     {
-        return Config::piece_type_to_point[p];
+        return Parameters::piece_type_to_point[p];
     }
     static uint get_point(const ColoredPiece& p)
     {
@@ -164,7 +165,7 @@ public:
     }
     static uint get_value(const PieceType& pt)
     {
-        return Config::piece_type_to_value[pt];
+        return Parameters::piece_type_to_value[pt];
     }
 
     static void append_sfen(const ColoredPiece& p, std::string& out)

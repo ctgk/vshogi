@@ -20,32 +20,34 @@
 namespace vshogi
 {
 
-template <class Config>
+template <class Parameters>
 class Game
 {
+private:
+    using C = Configuration<Parameters>;
+    using Square = typename C::Square;
+    using File = typename C::File;
+    using PieceType = typename C::PieceType;
+    using ColoredPiece = typename C::ColoredPiece;
+    using PHelper = Pieces<Parameters>;
+    using SHelper = Squares<Parameters>;
+    using BitBoardType = BitBoard<Parameters>;
+    using BoardType = Board<Parameters>;
+    using MoveType = Move<Parameters>;
+    using StandType = Stand<Parameters>;
+    using StateType = State<Parameters>;
+
 public:
-    static constexpr uint num_ranks = Config::num_ranks;
-    static constexpr uint num_files = Config::num_files;
-    static constexpr uint num_squares = Config::num_squares;
+    static constexpr uint num_ranks = C::num_ranks;
+    static constexpr uint num_files = C::num_files;
+    static constexpr uint num_squares = C::num_squares;
 
 private:
-    using Square = typename Config::Square;
-    using File = typename Config::File;
-    using PieceType = typename Config::PieceType;
-    using ColoredPiece = typename Config::ColoredPiece;
-    using PHelper = Pieces<Config>;
-    using SHelper = Squares<Config>;
-    using BitBoardType = BitBoard<Config>;
-    using BoardType = Board<Config>;
-    using MoveType = Move<Config>;
-    using StandType = Stand<Config>;
-    using StateType = State<Config>;
-
-    static constexpr uint num_piece_types = Config::num_piece_types;
-    static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
-    static constexpr uint num_dir = Config::num_dir;
+    static constexpr uint num_piece_types = C::num_piece_types;
+    static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
+    static constexpr uint num_dir = C::num_dir;
     static constexpr uint max_acceptable_repetitions
-        = Config::max_acceptable_repetitions;
+        = C::max_acceptable_repetitions;
 
 private:
     StateType m_current_state;
@@ -92,7 +94,7 @@ public:
         std::vector<MoveType> out{};
         if (m_result != ONGOING)
             return out;
-        for (auto m : LegalMoveGenerator<Config>(m_current_state))
+        for (auto m : LegalMoveGenerator<Parameters>(m_current_state))
             out.emplace_back(m);
         return out;
     }
@@ -188,18 +190,19 @@ public:
     bool is_legal(const MoveType move) const
     {
         if (move.is_drop()) {
-            for (auto m : DropMoveGenerator<Config>(m_current_state)) {
+            for (auto m : DropMoveGenerator<Parameters>(m_current_state)) {
                 if (m == move)
                     return true;
             }
         } else if (
             move.source_square() == get_board().get_king_location(get_turn())) {
-            for (auto m : KingMoveGenerator<Config>(m_current_state)) {
+            for (auto m : KingMoveGenerator<Parameters>(m_current_state)) {
                 if (m == move)
                     return true;
             }
         } else {
-            for (auto m : NonKingBoardMoveGenerator<Config>(m_current_state)) {
+            for (auto m :
+                 NonKingBoardMoveGenerator<Parameters>(m_current_state)) {
                 if (m == move)
                     return true;
             }
@@ -217,9 +220,9 @@ public:
     {
         return m_current_state.in_check();
     }
-    Move<Config> get_record_action(const uint index) const
+    Move<Parameters> get_record_action(const uint index) const
     {
-        return Move<Config>(
+        return Move<Parameters>(
             static_cast<std::uint16_t>(m_captured_move_list[index]));
     }
     void to_feature_map(float* const data) const
@@ -306,7 +309,7 @@ protected:
     {
         m_result = ONGOING;
         const auto turn = get_turn();
-        if (LegalMoveGenerator<Config>(m_current_state).is_end())
+        if (LegalMoveGenerator<Parameters>(m_current_state).is_end())
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
         if (is_repetitions(max_repetitions_inclusive)) {
             if (m_current_state.in_check())
@@ -361,15 +364,15 @@ protected:
 
         // (3) The declaring side has 10 or more pieces other than the King in
         // the third rank or beyond.
-        if (num_pieces_in_zone <= Config::half_num_initial_pieces)
+        if (num_pieces_in_zone <= C::half_num_init_piece_each)
             return false;
 
         // (2) The declaring side has 28 (the first player (sente, black)) or
         // 27 (the second player (gote, white)) piece points or more.
         if (turn == BLACK)
-            return count_point_of(turn, piece_mask) > Config::initial_points;
+            return count_point_of(turn, piece_mask) > C::initial_points;
         else
-            return count_point_of(turn, piece_mask) >= Config::initial_points;
+            return count_point_of(turn, piece_mask) >= C::initial_points;
     }
     uint count_point_of(const ColorEnum& c, const BitBoardType& mask) const
     {

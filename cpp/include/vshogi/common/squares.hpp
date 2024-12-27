@@ -5,41 +5,38 @@
 #include <cstddef>
 
 #include "vshogi/common/color.hpp"
+#include "vshogi/common/config.hpp"
 #include "vshogi/common/direction.hpp"
 #include "vshogi/common/pieces.hpp"
 
 namespace vshogi
 {
 
-template <class Config>
+template <class Parameters>
 struct Squares
 {
     Squares() = delete;
 
 private:
-    using PieceType = typename Config::PieceType;
-    using ColoredPiece = typename Config::ColoredPiece;
-    using Square = typename Config::Square;
-    using File = typename Config::File;
-    using Rank = typename Config::Rank;
-    using PHelper = Pieces<Config>;
+    using C = Configuration<Parameters>;
+    using PieceType = typename C::PieceType;
+    using ColoredPiece = typename C::ColoredPiece;
+    using Square = typename C::Square;
+    using File = typename C::File;
+    using Rank = typename C::Rank;
+    using PHelper = Pieces<Parameters>;
 
-    static constexpr uint num_files = Config::num_files;
-    static constexpr uint num_ranks = Config::num_ranks;
-    static constexpr uint num_squares = Config::num_squares;
-    static constexpr uint num_piece_types = Config::num_piece_types;
-    static constexpr uint num_dir = Config::num_dir;
-    static constexpr uint num_dir_dl = Config::num_dir_dl;
-    inline static Square shift_table[num_squares][num_dir];
-    inline static DirectionEnum direction_src_dst_table[num_squares]
-                                                       [num_squares];
+    inline static Square shift_table[C::num_squares][C::num_dir];
+    inline static DirectionEnum direction_src_dst_table[C::num_squares]
+                                                       [C::num_squares];
     inline static Square
-        ranging_squares_to[num_squares][num_dir]
-                          [(num_files > num_ranks) ? num_files : num_ranks];
+        ranging_squares_to[C::num_squares][C::num_dir]
+                          [(C::num_files > C::num_ranks) ? C::num_files
+                                                         : C::num_ranks];
 
     static constexpr File file_right_most()
     {
-        return static_cast<File>(num_files - 1);
+        return static_cast<File>(C::num_files - 1);
     }
     static constexpr File file_left_most()
     {
@@ -50,24 +47,25 @@ public:
     static constexpr Rank RANK1 = static_cast<Rank>(0); // NOLINT
     static constexpr Rank RANK2 = static_cast<Rank>(1); // NOLINT
     static constexpr Rank RANK_MAX // NOLINT
-        = static_cast<Rank>(num_ranks - 1u);
+        = static_cast<Rank>(C::num_ranks - 1u);
     static constexpr Rank RANK_2ND_MAX // NOLINT
-        = static_cast<Rank>(num_ranks - 2u);
-    static constexpr Square SQ_NA = static_cast<Square>(num_squares); // NOLINT
+        = static_cast<Rank>(C::num_ranks - 2u);
+    static constexpr Square SQ_NA // NOLINT
+        = static_cast<Square>(C::num_squares);
 
-    inline static Square file_to_square_array[num_files][num_ranks];
+    inline static Square file_to_square_array[C::num_files][C::num_ranks];
 
     static constexpr File to_file(const Square& sq)
     {
-        return static_cast<File>(sq % num_files);
+        return static_cast<File>(sq % C::num_files);
     }
     static constexpr Rank to_rank(const Square& sq)
     {
-        return static_cast<Rank>(sq / num_files);
+        return static_cast<Rank>(sq / C::num_files);
     }
     static constexpr Square to_square(const File& f, const Rank& r)
     {
-        return static_cast<Square>(r * num_files + f);
+        return static_cast<Square>(r * C::num_files + f);
     }
     static Square to_square(const char usi[2])
     {
@@ -78,7 +76,7 @@ public:
     static void to_usi(char usi[2], const Square& sq)
     {
         usi[0] = static_cast<char>(
-            static_cast<int>(num_files - 1 - to_file(sq)) + '1');
+            static_cast<int>(C::num_files - 1 - to_file(sq)) + '1');
         usi[1] = static_cast<char>(static_cast<int>(to_rank(sq)) + 'a');
     }
     static Square hflip(const Square& sq)
@@ -88,12 +86,12 @@ public:
     static File hflip(const File& f)
     {
         return static_cast<File>(
-            static_cast<int>(num_files) - 1 - static_cast<int>(f));
+            static_cast<int>(C::num_files) - 1 - static_cast<int>(f));
     }
 
     static void init_tables()
     {
-        for (auto sq : EnumIterator<Square, num_squares>()) {
+        for (auto sq : EnumIterator<Square, C::num_squares>()) {
             file_to_square_array[to_file(sq)][to_rank(sq)] = sq;
         }
         init_shift_table();
@@ -105,8 +103,8 @@ public:
 
     static bool in_promotion_zone(const Rank& r, const ColorEnum& c)
     {
-        return (c == BLACK) ? (r < Config::num_promotion_ranks)
-                            : (r > num_ranks - 1 - Config::num_promotion_ranks);
+        return (c == BLACK) ? (r < C::num_promotion_ranks)
+                            : (r > C::num_ranks - 1 - C::num_promotion_ranks);
     }
     static bool in_promotion_zone(const Square& sq, const ColorEnum& c)
     {
@@ -125,7 +123,7 @@ public:
     }
     constexpr static int direction_to_delta(const DirectionEnum& d)
     {
-        constexpr int nf = static_cast<int>(num_files);
+        constexpr int nf = static_cast<int>(C::num_files);
         constexpr int table[]
             = {-nf - 1,
                -nf,
@@ -154,12 +152,12 @@ private:
     {
         constexpr Rank r1 = static_cast<Rank>(0);
         constexpr Rank r2 = static_cast<Rank>(1);
-        constexpr Rank rm = static_cast<Rank>(num_ranks - 2);
-        constexpr Rank rn = static_cast<Rank>(num_ranks - 1);
-        for (auto sq : EnumIterator<Square, num_squares>()) {
+        constexpr Rank rm = static_cast<Rank>(C::num_ranks - 2);
+        constexpr Rank rn = static_cast<Rank>(C::num_ranks - 1);
+        for (auto sq : EnumIterator<Square, C::num_squares>()) {
             const auto r = to_rank(sq);
             const auto f = to_file(sq);
-            for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
+            for (auto dir : EnumIterator<DirectionEnum, C::num_dir>()) {
                 if (((r == r1) && has_dir_n(dir))
                     || ((r == r2) && (dir == DIR_NNW || dir == DIR_NNE))
                     || ((r == rn) && has_dir_s(dir))
@@ -179,8 +177,8 @@ private:
             = sizeof(ranging_squares_to) / sizeof(ranging_squares_to[0][0][0]);
         std::fill_n(&ranging_squares_to[0][0][0], size, SQ_NA);
 
-        for (auto src : EnumIterator<Square, num_squares>()) {
-            for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
+        for (auto src : EnumIterator<Square, C::num_squares>()) {
+            for (auto dir : EnumIterator<DirectionEnum, C::num_dir>()) {
                 auto dst = src;
                 int index = 0;
                 while (true) {
@@ -201,8 +199,8 @@ private:
             sizeof(direction_src_dst_table)
                 / sizeof(direction_src_dst_table[0][0]),
             DIR_NA);
-        for (auto src : EnumIterator<Square, num_squares>()) {
-            for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
+        for (auto src : EnumIterator<Square, C::num_squares>()) {
+            for (auto dir : EnumIterator<DirectionEnum, C::num_dir>()) {
                 for (auto dst = shift(src, dir); dst != SQ_NA;
                      dst = shift(dst, dir))
                     direction_src_dst_table[src][dst] = dir;

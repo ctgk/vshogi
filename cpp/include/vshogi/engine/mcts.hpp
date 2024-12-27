@@ -17,12 +17,12 @@
 namespace vshogi::engine::mcts
 {
 
-template <class Config>
+template <class Parameters>
 class Node
 {
 private:
-    using GameType = Game<Config>;
-    using MoveType = Move<Config>;
+    using GameType = Game<Parameters>;
+    using MoveType = Move<Parameters>;
 
     /**
      * @brief Pointer to parent node.
@@ -551,15 +551,15 @@ private:
     }
 };
 
-template <class Config>
+template <class Parameters>
 class Searcher
 {
 private:
-    using GameType = Game<Config>;
-    using MoveType = Move<Config>;
+    using GameType = Game<Parameters>;
+    using MoveType = Move<Parameters>;
 
 private:
-    std::unique_ptr<Node<Config>> m_root;
+    std::unique_ptr<Node<Parameters>> m_root;
     const float m_coeff_puct;
     const int m_non_random_ratio;
     const int m_random_depth;
@@ -575,16 +575,16 @@ public:
     }
     void set_game(const GameType& g, const float v, const float* const p_logits)
     {
-        m_root = std::make_unique<Node<Config>>(
+        m_root = std::make_unique<Node<Parameters>>(
             g.get_legal_moves(), g.get_turn(), v, p_logits);
     }
     int get_visit_count() const
     {
         return m_root->get_visit_count();
     }
-    Node<Config>* select(GameType& game)
+    Node<Parameters>* select(GameType& game)
     {
-        Node<Config>* node = m_root.get();
+        Node<Parameters>* node = m_root.get();
         int random_depth = m_random_depth;
         node->increment_visit_counts();
         while (node->has_child()) {
@@ -593,18 +593,18 @@ public:
         }
         return node->select_at_leaf(game);
     }
-    Searcher<Config>& apply(const MoveType& action)
+    Searcher<Parameters>& apply(const MoveType& action)
     {
         m_root->apply(action);
         return *this;
     }
-    const Node<Config>* get_root() const
+    const Node<Parameters>* get_root() const
     {
         return m_root.get();
     }
     MoveType get_action_by_visit_max() const
     {
-        const Node<Config>* const ch = m_root->get_most_visited_child();
+        const Node<Parameters>* const ch = m_root->get_most_visited_child();
         if (ch == nullptr)
             return MoveType();
         else
@@ -615,7 +615,7 @@ public:
         constexpr float eps = 1.f;
 
         std::vector<float> probas(m_root->get_num_child());
-        const Node<Config>* ch = m_root->get_child();
+        const Node<Parameters>* ch = m_root->get_child();
         for (uint ii = 0u; ch != nullptr; ch = ch->get_sibling()) {
             const auto v
                 = static_cast<float>(ch->get_visit_count_excluding_random());
@@ -655,8 +655,8 @@ private:
     }
     static MoveType random_select_legal_action(const GameType& g)
     {
-        const State<Config>& state = g.get_state();
-        const Board<Config>& board = state.get_board();
+        const State<Parameters>& state = g.get_state();
+        const Board<Parameters>& board = state.get_board();
         const auto turn = state.get_turn();
         const auto n_drop = state.get_stand(turn).unique_count();
         const auto n_ally = board.get_occupied(turn).hamming_weight() - 1u;
@@ -666,34 +666,34 @@ private:
         const auto r_ally = static_cast<float>(n_ally) / n_src;
         float r = dist01(random_engine);
         if (r < r_drop) {
-            auto iter_drop = DropMoveGenerator<Config>(state);
+            auto iter_drop = DropMoveGenerator<Parameters>(state);
             if (!iter_drop.is_end())
                 return iter_drop.random_select();
-            auto iter_ally = NonKingBoardMoveGenerator<Config>(state);
+            auto iter_ally = NonKingBoardMoveGenerator<Parameters>(state);
             if (!iter_ally.is_end())
                 return iter_ally.random_select();
-            auto iter_king = KingMoveGenerator<Config>(state);
+            auto iter_king = KingMoveGenerator<Parameters>(state);
             return iter_king.random_select();
         }
         r -= r_drop;
         if (r < r_ally) {
-            auto iter_ally = NonKingBoardMoveGenerator<Config>(state);
+            auto iter_ally = NonKingBoardMoveGenerator<Parameters>(state);
             if (!iter_ally.is_end())
                 return iter_ally.random_select();
-            auto iter_king = KingMoveGenerator<Config>(state);
+            auto iter_king = KingMoveGenerator<Parameters>(state);
             if (!iter_king.is_end())
                 return iter_king.random_select();
-            auto iter_drop = DropMoveGenerator<Config>(state);
+            auto iter_drop = DropMoveGenerator<Parameters>(state);
             return iter_drop.random_select();
         }
         {
-            auto iter_king = KingMoveGenerator<Config>(state);
+            auto iter_king = KingMoveGenerator<Parameters>(state);
             if (!iter_king.is_end())
                 return iter_king.random_select();
-            auto iter_drop = DropMoveGenerator<Config>(state);
+            auto iter_drop = DropMoveGenerator<Parameters>(state);
             if (!iter_drop.is_end())
                 return iter_drop.random_select();
-            auto iter_ally = NonKingBoardMoveGenerator<Config>(state);
+            auto iter_ally = NonKingBoardMoveGenerator<Parameters>(state);
             return iter_ally.random_select();
         }
     }

@@ -5,6 +5,7 @@
 #include <cstdint>
 
 #include "vshogi/common/color.hpp"
+#include "vshogi/common/config.hpp"
 #include "vshogi/common/direction.hpp"
 #include "vshogi/common/squares.hpp"
 #include "vshogi/common/utils.hpp"
@@ -12,31 +13,25 @@
 namespace vshogi
 {
 
-template <class Config>
+template <class Parameters>
 class BitBoard
 {
 private:
-    using ColoredPiece = typename Config::ColoredPiece;
-    using Rank = typename Config::Rank;
-    using Square = typename Config::Square;
-    using UInt = typename Config::BaseTypeBitBoard;
-    static constexpr uint num_squares = Config::num_squares;
-    static constexpr uint num_files = Config::num_files;
-    static constexpr uint num_ranks = Config::num_ranks;
-    static constexpr uint num_dir = Config::num_dir;
-    static constexpr uint num_promotion_ranks = Config::num_promotion_ranks;
-    static constexpr uint num_colored_piece_types
-        = Config::num_colored_piece_types;
-    using SHelper = Squares<Config>;
-    using PHelper = Pieces<Config>;
+    using C = Configuration<Parameters>;
+    using ColoredPiece = typename C::ColoredPiece;
+    using Rank = typename C::Rank;
+    using Square = typename C::Square;
+    using UInt = typename C::BaseTypeBitBoard;
+    using SHelper = Squares<Parameters>;
+    using PHelper = Pieces<Parameters>;
 
     UInt m_value;
 
     static constexpr UInt mask
-        = (static_cast<UInt>(1) << num_squares) - static_cast<UInt>(1);
-    static BitBoard attacks_table[num_colored_piece_types][num_squares];
-    static BitBoard ray_table[num_squares][num_dir];
-    static BitBoard line_segment_table[num_squares][num_squares];
+        = (static_cast<UInt>(1) << C::num_squares) - static_cast<UInt>(1);
+    static BitBoard attacks_table[C::num_colored_piece_types][C::num_squares];
+    static BitBoard ray_table[C::num_squares][C::num_dir];
+    static BitBoard line_segment_table[C::num_squares][C::num_squares];
 
 public:
     constexpr BitBoard() : m_value()
@@ -173,12 +168,13 @@ public:
     static BitBoard from_rank(const Rank& r)
     {
         return BitBoard(
-            static_cast<UInt>((1u << num_files) - 1u)
-            << (static_cast<uint>(r) * num_files));
+            static_cast<UInt>((1u << C::num_files) - 1u)
+            << (static_cast<uint>(r) * C::num_files));
     }
     static BitBoard get_promotion_zone(const ColorEnum& c)
     {
-        constexpr uint s = num_squares - num_promotion_ranks * num_files;
+        constexpr uint s
+            = C::num_squares - C::num_promotion_ranks * C::num_files;
         static const BitBoard promotion_zone_array[2]
             = {((~BitBoard(0)) << s) >> s, ((~BitBoard(0)) >> s) << s};
         return promotion_zone_array[c];
@@ -216,7 +212,7 @@ public:
             |= (out.shift(DIR_NW) | out.shift(DIR_N) | out.shift(DIR_NE)
                 | out.shift(DIR_W) | out.shift(DIR_E) | out.shift(DIR_SW)
                 | out.shift(DIR_S) | out.shift(DIR_SE));
-        if constexpr (num_dir > 8) {
+        if constexpr (C::num_dir > 8) {
             const auto d = (c == BLACK) ? DIR_S : DIR_N;
             out |= out.shift(d);
             out |= out.shift(d);
@@ -283,20 +279,21 @@ public:
 
     static void init_tables()
     {
-        for (auto p : EnumIterator<ColoredPiece, num_colored_piece_types>()) {
-            for (auto sq : EnumIterator<Square, num_squares>()) {
+        for (auto p :
+             EnumIterator<ColoredPiece, C::num_colored_piece_types>()) {
+            for (auto sq : EnumIterator<Square, C::num_squares>()) {
                 attacks_table[p][sq] = compute_attack_by(p, sq);
             }
         }
 
-        for (auto sq : EnumIterator<Square, num_squares>()) {
-            for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
+        for (auto sq : EnumIterator<Square, C::num_squares>()) {
+            for (auto dir : EnumIterator<DirectionEnum, C::num_dir>()) {
                 ray_table[sq][dir] = compute_ray_to(sq, dir);
             }
         }
 
-        for (auto sq1 : EnumIterator<Square, num_squares>()) {
-            for (auto sq2 : EnumIterator<Square, num_squares>()) {
+        for (auto sq1 : EnumIterator<Square, C::num_squares>()) {
+            for (auto sq2 : EnumIterator<Square, C::num_squares>()) {
                 line_segment_table[sq1][sq2] = compute_line_segment(sq1, sq2);
             }
         }
@@ -310,16 +307,16 @@ public:
         uint m_curr;
 
     public:
-        SquareIterator() : m_mask(), m_curr(num_squares)
+        SquareIterator() : m_mask(), m_curr(C::num_squares)
         {
         }
         SquareIterator(const UInt& bb_value) : m_mask(bb_value), m_curr()
         {
             if (!static_cast<bool>(m_mask)) {
-                m_curr = num_squares;
+                m_curr = C::num_squares;
                 return;
             }
-            const auto shift = std::min(ntz(m_mask), num_squares);
+            const auto shift = std::min(ntz(m_mask), C::num_squares);
             m_curr = shift;
             m_mask = static_cast<UInt>(m_mask >> shift);
         }
@@ -329,7 +326,7 @@ public:
             ++m_curr;
             m_mask = static_cast<UInt>(m_mask >> 1u);
             if (!static_cast<bool>(m_mask)) {
-                m_curr = num_squares;
+                m_curr = C::num_squares;
                 return *this;
             }
             const auto shift = ntz(m_mask);
@@ -356,7 +353,7 @@ public:
         }
         bool is_end() const
         {
-            return m_curr >= num_squares;
+            return m_curr >= C::num_squares;
         }
     };
     SquareIterator square_iterator() const
@@ -399,24 +396,24 @@ private:
     }
 
 private:
-    template <uint NumSquaresFromTop = num_ranks>
+    template <uint NumSquaresFromTop = C::num_ranks>
     static constexpr BitBoard file_mask_leftmost()
     {
         if constexpr (NumSquaresFromTop == 0u)
             return BitBoard(0);
         else
-            return (file_mask_leftmost<NumSquaresFromTop - 1>() << num_files)
+            return (file_mask_leftmost<NumSquaresFromTop - 1>() << C::num_files)
                    | BitBoard(1);
     }
-    template <uint NumSquaresFromTop = num_ranks>
+    template <uint NumSquaresFromTop = C::num_ranks>
     static constexpr BitBoard file_mask_rightmost()
     {
         if constexpr (NumSquaresFromTop == 0u)
             return BitBoard(0);
         else
-            return (BitBoard(1) << (num_files - 1))
+            return (BitBoard(1) << (C::num_files - 1))
                    | (file_mask_rightmost<NumSquaresFromTop - 1>()
-                      << num_files);
+                      << C::num_files);
     }
     static BitBoard compute_attack_by(const ColoredPiece& p, const Square& sq)
     {

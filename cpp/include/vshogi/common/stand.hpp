@@ -10,14 +10,15 @@
 namespace vshogi
 {
 
-template <class Config>
+template <class Parameters>
 class Stand
 {
 private:
-    using Int = typename Config::BaseTypeStand;
-    using PieceType = typename Config::PieceType;
-    using PHelper = Pieces<Config>;
-    static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
+    using C = Configuration<Parameters>;
+    using Int = typename C::BaseTypeStand;
+    using PieceType = typename C::PieceType;
+    using PHelper = Pieces<Parameters>;
+    static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
 
     static const uint shift_bits[num_stand_piece_types];
     static const Int masks[num_stand_piece_types];
@@ -103,19 +104,22 @@ public:
     }
 };
 
-template <class Config>
+template <class Parameters>
 class BlackWhiteStands
 {
+private:
+    using C = Configuration<Parameters>;
+    using PHelper = Pieces<Parameters>;
+    using PieceType = typename C::PieceType;
+    using ColoredPiece = typename C::ColoredPiece;
+
 public:
-    using StandType = Stand<Config>;
+    using StandType = Stand<Parameters>;
 
 private:
-    using PHelper = Pieces<Config>;
-    using PieceType = typename Config::PieceType;
-    using ColoredPiece = typename Config::ColoredPiece;
-    static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
-    static constexpr uint max_stand_piece_count = Config::max_stand_piece_count;
-    static constexpr uint max_sfen_length = Config::max_stand_sfen_length;
+    static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
+    static constexpr uint max_stand_piece_count = C::max_stand_piece_count;
+    static constexpr uint max_sfen_length = C::max_stand_sfen_length;
 
     static const PieceType stand_pieces_in_sfen_order[num_stand_piece_types];
     static std::uint64_t zobrist_table[num_colors][num_stand_piece_types]

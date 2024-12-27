@@ -151,7 +151,7 @@ enum FileEnum : uint
     FILE1,
 };
 
-struct Config
+struct Parameters
 {
     // clang-format off
     static constexpr char piece_type_to_char[] = "plnsbrgk";
@@ -169,52 +169,31 @@ struct Config
     static constexpr uint max_stand_piece_count = 18;
     static constexpr uint max_stand_sfen_length = 26; // "10p2l2n2sbr2g2P2L2N2SBR2G "
     static constexpr uint max_acceptable_repetitions = 3;
-    static constexpr uint half_num_initial_pieces = 10;
+    static constexpr uint num_init_piece_each = 20;
     static constexpr uint initial_points = 27;
     using BaseTypeBitBoard = uint128;
-    // clang-format on
-
-    /**
-     * @brief 32-bit integer representing pieces on a stand.
-     * @details
-     * ________ ________ ________ ___*****  FU (18 pieces)
-     * ________ ________ _______* **______  KY (4 pieces)
-     * ________ ________ ___***__ ________  KE (4 pieces)
-     * ________ _______* **______ ________  GI (4 pieces)
-     * ________ ____**__ ________ ________  KA (2 pieces)
-     * ________ _**_____ ________ ________  HI (2 pieces)
-     * _____*** ________ ________ ________  KI (4 pieces)
-     */
-    using BaseTypeStand = std::uint32_t;
-
-    Config() = delete;
+    using BaseTypeStand = std::uint32_t; // _____*** _**_**_* **_***_* **_***** (KI, HI, KA, GI, KE, KY, FU)
     using PieceType = PieceTypeEnum;
     using ColoredPiece = ColoredPieceEnum;
     using Square = SquareEnum;
     using File = FileEnum;
     using Rank = RankEnum;
-    static constexpr uint num_squares = num_files * num_ranks;
-    static constexpr uint num_colored_piece_types = 2 * num_piece_types;
-    static constexpr uint magic_table_size = 1u << log2_magic_table_size;
+    Parameters() = delete;
+    // clang-format on
 };
 
-using Pieces = vshogi::Pieces<Config>;
-using Squares = vshogi::Squares<Config>;
-using Move = vshogi::Move<Config>;
-using BitBoard = vshogi::BitBoard<Config>;
-using Magic = vshogi::Magic<Config>;
-using Board = vshogi::Board<Config>;
-using Stand = vshogi::Stand<Config>;
-using BlackWhiteStands = vshogi::BlackWhiteStands<Config>;
-using State = vshogi::State<Config>;
-using DropMoveGenerator = vshogi::DropMoveGenerator<Config>;
-using CheckDropMoveGenerator = vshogi::CheckDropMoveGenerator<Config>;
-using NonKingBoardMoveGenerator = vshogi::NonKingBoardMoveGenerator<Config>;
-using CheckNonKingBoardMoveGenerator
-    = vshogi::CheckNonKingBoardMoveGenerator<Config>;
-using KingMoveGenerator = vshogi::KingMoveGenerator<Config>;
-using CheckKingMoveGenerator = vshogi::CheckKingMoveGenerator<Config>;
-using Game = vshogi::Game<Config>;
+using Config = vshogi::Configuration<Parameters>;
+using Pieces = vshogi::Pieces<Parameters>;
+using Squares = vshogi::Squares<Parameters>;
+using Move = vshogi::Move<Parameters>;
+using BitBoard = vshogi::BitBoard<Parameters>;
+using Magic = vshogi::Magic<Parameters>;
+using Board = vshogi::Board<Parameters>;
+using Stand = vshogi::Stand<Parameters>;
+using BlackWhiteStands = vshogi::BlackWhiteStands<Parameters>;
+using State = vshogi::State<Parameters>;
+using LegalMoveGenerator = vshogi::LegalMoveGenerator<Parameters>;
+using Game = vshogi::Game<Parameters>;
 static_assert(FU == Pieces::FU);
 static_assert(OU == Pieces::OU);
 static_assert(NA == Pieces::NA);
@@ -747,7 +726,7 @@ shogi::Board::get_occupied_by_ranging(const ColorEnum& c) const
 }
 
 template <>
-inline shogi::Move shogi::NonKingBoardMoveGenerator::random_select()
+inline shogi::Move NonKingBoardMoveGenerator<shogi::Parameters>::random_select()
 {
     using namespace shogi;
     const auto src_fgke = m_board.get_occupied<FU, GI, KE>(m_turn);
@@ -762,18 +741,20 @@ inline shogi::Move shogi::NonKingBoardMoveGenerator::random_select()
     float r = dist01(random_engine);
     const auto fraction_fgke = num_fgke / num_src;
     if (r < fraction_fgke) {
-        auto iter_fgke = NonKingBoardMoveGenerator(m_state, src_fgke, m_pinned);
+        auto iter_fgke = NonKingBoardMoveGenerator<Parameters>(
+            m_state, src_fgke, m_pinned);
         if (!iter_fgke.is_end())
             return iter_fgke.random_select_by_iterating_all();
-        auto iter_kkhi = NonKingBoardMoveGenerator(m_state, src_kkhi, m_pinned);
+        auto iter_kkhi = NonKingBoardMoveGenerator<Parameters>(
+            m_state, src_kkhi, m_pinned);
         if (!iter_kkhi.is_end())
             return iter_kkhi.random_select_by_iterating_all();
         auto iter_gold
-            = NoPromoMoveGenerator<Config>(m_state, src_gold, m_pinned);
+            = NoPromoMoveGenerator<Parameters>(m_state, src_gold, m_pinned);
         if (!iter_gold.is_end())
             return iter_gold.random_select();
         auto iter_umry
-            = NoPromoMoveGenerator<Config>(m_state, src_umry, m_pinned);
+            = NoPromoMoveGenerator<Parameters>(m_state, src_umry, m_pinned);
         return iter_umry.random_select();
     }
     r -= fraction_fgke;
@@ -783,11 +764,11 @@ inline shogi::Move shogi::NonKingBoardMoveGenerator::random_select()
         if (!iter_kkhi.is_end())
             return iter_kkhi.random_select_by_iterating_all();
         auto iter_gold
-            = NoPromoMoveGenerator<Config>(m_state, src_gold, m_pinned);
+            = NoPromoMoveGenerator<Parameters>(m_state, src_gold, m_pinned);
         if (!iter_gold.is_end())
             return iter_gold.random_select();
         auto iter_umry
-            = NoPromoMoveGenerator<Config>(m_state, src_umry, m_pinned);
+            = NoPromoMoveGenerator<Parameters>(m_state, src_umry, m_pinned);
         if (!iter_umry.is_end())
             return iter_umry.random_select();
         auto iter_fgke = NonKingBoardMoveGenerator(m_state, src_fgke, m_pinned);
@@ -797,11 +778,11 @@ inline shogi::Move shogi::NonKingBoardMoveGenerator::random_select()
     const auto fraction_gold = num_gold / num_src;
     if (r < fraction_gold) {
         auto iter_gold
-            = NoPromoMoveGenerator<Config>(m_state, src_gold, m_pinned);
+            = NoPromoMoveGenerator<Parameters>(m_state, src_gold, m_pinned);
         if (!iter_gold.is_end())
             return iter_gold.random_select();
         auto iter_umry
-            = NoPromoMoveGenerator<Config>(m_state, src_umry, m_pinned);
+            = NoPromoMoveGenerator<Parameters>(m_state, src_umry, m_pinned);
         if (!iter_umry.is_end())
             return iter_umry.random_select();
         auto iter_fgke = NonKingBoardMoveGenerator(m_state, src_fgke, m_pinned);
@@ -812,7 +793,7 @@ inline shogi::Move shogi::NonKingBoardMoveGenerator::random_select()
     }
     {
         auto iter_umry
-            = NoPromoMoveGenerator<Config>(m_state, src_umry, m_pinned);
+            = NoPromoMoveGenerator<Parameters>(m_state, src_umry, m_pinned);
         if (!iter_umry.is_end())
             return iter_umry.random_select();
         auto iter_fgke = NonKingBoardMoveGenerator(m_state, src_fgke, m_pinned);
@@ -822,7 +803,7 @@ inline shogi::Move shogi::NonKingBoardMoveGenerator::random_select()
         if (!iter_kkhi.is_end())
             return iter_kkhi.random_select_by_iterating_all();
         auto iter_gold
-            = NoPromoMoveGenerator<Config>(m_state, src_gold, m_pinned);
+            = NoPromoMoveGenerator<Parameters>(m_state, src_gold, m_pinned);
         return iter_gold.random_select();
     }
 }

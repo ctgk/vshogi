@@ -53,47 +53,48 @@ static constexpr uint cent = 1u;
 static constexpr uint kilo = 1000u * unit;
 static constexpr uint max_number = std::numeric_limits<uint>::max();
 
-template <class Config>
+template <class Parameters>
 class Searcher;
 
-template <class Config>
-bool had_two_consecutive_sacrifice_drops(const Game<Config>& g)
+template <class Parameters>
+bool had_two_consecutive_sacrifice_drops(const Game<Parameters>& g)
 {
     const uint n = g.record_length();
     if (n < 4u)
         return false;
 
     // first sacrifice drop
-    const Move<Config> drop1st = g.get_record_action(n - 4u);
+    const Move<Parameters> drop1st = g.get_record_action(n - 4u);
     if (!drop1st.is_drop())
         return false;
 
     // capture first sacrifice drop
-    const Move<Config> capt1st = g.get_record_action(n - 3u);
+    const Move<Parameters> capt1st = g.get_record_action(n - 3u);
     if (drop1st.destination() != capt1st.destination())
         return false;
 
     // second sacrifice drop
-    const Move<Config> drop2nd = g.get_record_action(n - 2u);
+    const Move<Parameters> drop2nd = g.get_record_action(n - 2u);
     if (!drop2nd.is_drop())
         return false;
 
     // capture second sacrifice drop
-    const Move<Config> capt2nd = g.get_record_action(n - 1u);
+    const Move<Parameters> capt2nd = g.get_record_action(n - 1u);
     return (drop2nd.destination() == capt2nd.destination())
            && (capt1st.destination() == capt2nd.source_square());
 }
 
-template <class Config>
+template <class Parameters>
 class Node
 {
 private:
-    using GameType = Game<Config>;
-    using MoveType = Move<Config>;
-    using Square = typename Config::Square;
-    using PHelper = Pieces<Config>;
-    using SHelper = Squares<Config>;
-    friend Searcher<Config>;
+    using C = Configuration<Parameters>;
+    using GameType = Game<Parameters>;
+    using MoveType = Move<Parameters>;
+    using Square = typename C::Square;
+    using PHelper = Pieces<Parameters>;
+    using SHelper = Squares<Parameters>;
+    friend Searcher<Parameters>;
 
 private:
     /**
@@ -246,8 +247,8 @@ public:
 
     void expand(
         const GameType& game,
-        const Node<Config>* const cousin_ge_stand,
-        const Node<Config>* const cousin_le_stand)
+        const Node<Parameters>* const cousin_ge_stand,
+        const Node<Parameters>* const cousin_le_stand)
     {
         m_child_1st = nullptr;
         m_child_2nd = nullptr;
@@ -308,10 +309,10 @@ private:
 private:
     void expand_at_offence(
         const GameType& g,
-        const Node<Config>* const cousin_ge_stand,
-        const Node<Config>* const cousin_le_stand)
+        const Node<Parameters>* const cousin_ge_stand,
+        const Node<Parameters>* const cousin_le_stand)
     {
-        const State<Config>& s = g.get_state();
+        const State<Parameters>& s = g.get_state();
         assert(
             s.get_board().get_king_location(~s.get_turn()) != SHelper::SQ_NA);
         assert(
@@ -320,13 +321,13 @@ private:
         m_dn = zero;
         if (cousin_ge_stand) {
             assert(!cousin_ge_stand->found_conclusion());
-            const Node<Config>* nibling = cousin_ge_stand->get_child();
+            const Node<Parameters>* nibling = cousin_ge_stand->get_child();
             const auto next_child = expand_board_moves_at_offence(&nibling);
             expand_drop_moves_at_offence(
                 next_child, s.get_stand(s.get_turn()), nibling);
         } else if (cousin_le_stand) {
             assert(!cousin_le_stand->found_conclusion());
-            const Node<Config>* nibling = cousin_le_stand->get_child();
+            const Node<Parameters>* nibling = cousin_le_stand->get_child();
             const auto next_child = expand_board_moves_at_offence(&nibling);
             expand_drop_moves_at_offence(next_child, s);
         } else {
@@ -340,19 +341,19 @@ private:
     }
     void expand_at_defence(
         const GameType& g,
-        const Node<Config>* const cousin_ge_stand,
-        const Node<Config>* const cousin_le_stand)
+        const Node<Parameters>* const cousin_ge_stand,
+        const Node<Parameters>* const cousin_le_stand)
     {
         m_pn = zero;
         if (cousin_ge_stand) {
             assert(!cousin_ge_stand->found_conclusion());
-            const Node<Config>* nibling = cousin_ge_stand->get_child();
+            const Node<Parameters>* nibling = cousin_ge_stand->get_child();
             const auto next_child = expand_board_moves_at_defence(g, &nibling);
             if (!had_two_consecutive_sacrifice_drops(g))
                 expand_drop_moves_at_defence(next_child, g, nibling);
         } else if (cousin_le_stand) {
             assert(!cousin_le_stand->found_conclusion());
-            const Node<Config>* nibling = cousin_le_stand->get_child();
+            const Node<Parameters>* nibling = cousin_le_stand->get_child();
             const auto next_child = expand_board_moves_at_defence(g, &nibling);
             if (!had_two_consecutive_sacrifice_drops(g))
                 expand_drop_moves_at_defence(next_child, g);
@@ -366,16 +367,16 @@ private:
         else
             m_dn = m_child_1st->m_dn;
     }
-    std::unique_ptr<Node<Config>>*
-    expand_board_moves_at_offence(const Node<Config>** const nibling)
+    std::unique_ptr<Node<Parameters>>*
+    expand_board_moves_at_offence(const Node<Parameters>** const nibling)
     {
-        std::unique_ptr<Node<Config>>* holder = &m_child;
+        std::unique_ptr<Node<Parameters>>* holder = &m_child;
         for (; *nibling; *nibling = (*nibling)->get_sibling()) {
             const auto m = (*nibling)->get_action();
             if (m.is_drop())
                 break;
-            *holder = std::make_unique<Node<Config>>(!m_attacker, m);
-            Node<Config>* const ch = holder->get();
+            *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            Node<Parameters>* const ch = holder->get();
             ch->m_pn = std::clamp((*nibling)->pn(), cent, kilo);
             ch->m_dn = std::clamp((*nibling)->dn(), cent, kilo);
             update_offence_dn_ch1st_ch2nd(ch);
@@ -383,37 +384,37 @@ private:
         }
         return holder;
     }
-    std::unique_ptr<Node<Config>>*
-    expand_board_moves_at_offence(const State<Config>& state)
+    std::unique_ptr<Node<Parameters>>*
+    expand_board_moves_at_offence(const State<Parameters>& state)
     {
-        const Board<Config>& b = state.get_board();
-        std::unique_ptr<Node<Config>>* holder = &m_child;
-        for (Move<Config> m : CheckBoardMoveGenerator<Config>(state)) {
+        const Board<Parameters>& b = state.get_board();
+        std::unique_ptr<Node<Parameters>>* holder = &m_child;
+        for (Move<Parameters> m : CheckBoardMoveGenerator<Parameters>(state)) {
             const auto p = b[m.source_square()];
             if ((!m.promote()) && PHelper::is_promotion_complete_upgrade(p)
                 && state.in_promotion_zone(m))
                 continue;
-            *holder = std::make_unique<Node<Config>>(!m_attacker, m);
-            Node<Config>* const ch = holder->get();
+            *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            Node<Parameters>* const ch = holder->get();
             update_offence_dn_ch1st_ch2nd(ch);
             holder = &(ch->m_sibling);
         }
         return holder;
     }
     void expand_drop_moves_at_offence(
-        std::unique_ptr<Node<Config>>* next, const State<Config>& state)
+        std::unique_ptr<Node<Parameters>>* next, const State<Parameters>& state)
     {
-        for (Move<Config> m : CheckDropMoveGenerator<Config>(state)) {
-            *next = std::make_unique<Node<Config>>(!m_attacker, m);
-            Node<Config>* const p = next->get();
+        for (Move<Parameters> m : CheckDropMoveGenerator<Parameters>(state)) {
+            *next = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            Node<Parameters>* const p = next->get();
             update_offence_dn_ch1st_ch2nd(p);
             next = &(p->m_sibling);
         }
     }
     void expand_drop_moves_at_offence(
-        std::unique_ptr<Node<Config>>* next,
-        const Stand<Config>& stand,
-        const Node<Config>* nibling)
+        std::unique_ptr<Node<Parameters>>* next,
+        const Stand<Parameters>& stand,
+        const Node<Parameters>* nibling)
     {
 
         for (; nibling; nibling = nibling->get_sibling()) {
@@ -421,24 +422,24 @@ private:
             assert(m.is_drop());
             if (!stand.exist(m.source_piece()))
                 continue;
-            *next = std::make_unique<Node<Config>>(!m_attacker, m);
-            Node<Config>* const p = next->get();
+            *next = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            Node<Parameters>* const p = next->get();
             p->m_pn = std::clamp(nibling->pn(), cent, kilo);
             p->m_dn = std::clamp(nibling->dn(), cent, kilo);
             update_offence_dn_ch1st_ch2nd(p);
             next = &(p->m_sibling);
         }
     }
-    std::unique_ptr<Node<Config>>* expand_board_moves_at_defence(
-        const GameType& game, const Node<Config>** const nibling)
+    std::unique_ptr<Node<Parameters>>* expand_board_moves_at_defence(
+        const GameType& game, const Node<Parameters>** const nibling)
     {
-        std::unique_ptr<Node<Config>>* holder = &m_child;
+        std::unique_ptr<Node<Parameters>>* holder = &m_child;
         for (; (*nibling); *nibling = (*nibling)->get_sibling()) {
             const auto m = (*nibling)->get_action();
             if (m.is_drop())
                 break;
-            *holder = std::make_unique<Node<Config>>(!m_attacker, m);
-            Node<Config>* const ch = holder->get();
+            *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            Node<Parameters>* const ch = holder->get();
             ch->m_pn = std::clamp((*nibling)->pn(), cent, kilo);
             ch->m_dn = std::clamp((*nibling)->dn(), cent, kilo);
             update_defence_pn_ch1st_ch2nd(ch, game);
@@ -446,26 +447,28 @@ private:
         }
         return holder;
     }
-    std::unique_ptr<Node<Config>>*
+    std::unique_ptr<Node<Parameters>>*
     expand_board_moves_at_defence(const GameType& game)
     {
-        std::unique_ptr<Node<Config>>* holder = &m_child;
-        for (Move<Config> m : BoardMoveGenerator<Config>(game.get_state())) {
-            *holder = std::make_unique<Node<Config>>(!m_attacker, m);
-            Node<Config>* const ch = holder->get();
+        std::unique_ptr<Node<Parameters>>* holder = &m_child;
+        for (Move<Parameters> m :
+             BoardMoveGenerator<Parameters>(game.get_state())) {
+            *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            Node<Parameters>* const ch = holder->get();
             update_defence_pn_ch1st_ch2nd(ch, game);
             holder = &(ch->m_sibling);
         }
         return holder;
     }
     void expand_drop_moves_at_defence(
-        std::unique_ptr<Node<Config>>* next, const GameType& game)
+        std::unique_ptr<Node<Parameters>>* next, const GameType& game)
     {
         // https://komorinfo.com/blog/proof-number-double-count/
-        uint pn_max[Config::num_squares] = {0u};
-        for (Move<Config> m : DropMoveGenerator<Config>(game.get_state())) {
-            *next = std::make_unique<Node<Config>>(!m_attacker, m);
-            Node<Config>* const ch = next->get();
+        uint pn_max[C::num_squares] = {0u};
+        for (Move<Parameters> m :
+             DropMoveGenerator<Parameters>(game.get_state())) {
+            *next = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            Node<Parameters>* const ch = next->get();
             if (ch->is_better_dn_choice_than(m_child_1st, game)) {
                 m_child_2nd = m_child_1st;
                 m_child_1st = ch;
@@ -477,25 +480,25 @@ private:
                 pn_max[dst] = ch->m_pn;
             next = &(ch->m_sibling);
         }
-        for (uint ii = Config::num_squares; ii--;) {
+        for (uint ii = C::num_squares; ii--;) {
             increment_with_guard(m_pn, pn_max[ii]);
         }
     }
     void expand_drop_moves_at_defence(
-        std::unique_ptr<Node<Config>>* next,
+        std::unique_ptr<Node<Parameters>>* next,
         const GameType& game,
-        const Node<Config>* nibling)
+        const Node<Parameters>* nibling)
     {
         // https://komorinfo.com/blog/proof-number-double-count/
-        uint pn_max[Config::num_squares] = {0u};
-        const Stand<Config>& stand = game.get_stand(game.get_turn());
+        uint pn_max[C::num_squares] = {0u};
+        const Stand<Parameters>& stand = game.get_stand(game.get_turn());
         for (; nibling; nibling = nibling->get_sibling()) {
             const auto m = nibling->get_action();
             assert(m.is_drop());
             if (!stand.exist(m.source_piece()))
                 continue;
-            *next = std::make_unique<Node<Config>>(!m_attacker, m);
-            Node<Config>* const ch = next->get();
+            *next = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            Node<Parameters>* const ch = next->get();
             ch->m_pn = std::clamp(nibling->pn(), cent, kilo);
             ch->m_dn = std::clamp(nibling->dn(), cent, kilo);
             if (ch->is_better_dn_choice_than(m_child_1st, game)) {
@@ -509,7 +512,7 @@ private:
                 pn_max[dst] = ch->m_pn;
             next = &(ch->m_sibling);
         }
-        for (uint ii = Config::num_squares; ii--;) {
+        for (uint ii = C::num_squares; ii--;) {
             increment_with_guard(m_pn, pn_max[ii]);
         }
     }
@@ -533,7 +536,7 @@ private:
     void backprop_at_defence_drop_moves(Node* ch, const GameType& g)
     {
         // https://komorinfo.com/blog/proof-number-double-count/
-        uint pn_max[Config::num_squares] = {0u};
+        uint pn_max[C::num_squares] = {0u};
         for (; ch; ch = ch->get_sibling()) {
             assert(ch->m_action.is_drop());
             if (ch->is_better_dn_choice_than(m_child_1st, g)) {
@@ -546,7 +549,7 @@ private:
             if (pn_max[dst] < ch->m_pn)
                 pn_max[dst] = ch->m_pn;
         }
-        for (uint ii = Config::num_squares; ii--;) {
+        for (uint ii = C::num_squares; ii--;) {
             increment_with_guard(m_pn, pn_max[ii]);
         }
     }
@@ -601,7 +604,7 @@ private:
             return true;
         if (m_dn > other->m_dn)
             return false;
-        const State<Config>& s = g.get_state();
+        const State<Parameters>& s = g.get_state();
         return s.is_checker_location(m_action.destination())
                && !s.is_checker_location(other->m_action.destination());
     }
@@ -614,17 +617,18 @@ private:
     }
 };
 
-template <class Config>
+template <class Parameters>
 class TranspositionTable
 {
 private:
-    using BaseTypeStand = typename Config::BaseTypeStand;
+    using C = Configuration<Parameters>;
+    using BaseTypeStand = typename C::BaseTypeStand;
     using StandNodeTable
-        = std::vector<std::pair<BaseTypeStand, const Node<Config>*>>;
-    using StandType = Stand<Config>;
-    using GameType = Game<Config>;
-    using MoveType = Move<Config>;
-    using NodeType = Node<Config>;
+        = std::vector<std::pair<BaseTypeStand, const Node<Parameters>*>>;
+    using StandType = Stand<Parameters>;
+    using GameType = Game<Parameters>;
+    using MoveType = Move<Parameters>;
+    using NodeType = Node<Parameters>;
 
 private:
     std::unordered_map<std::uint64_t, StandNodeTable> m_table;
@@ -730,10 +734,10 @@ private:
         //     - Stronger defence stand, but mate.
         const auto t = g.get_turn();
         const auto s = g.get_stand(t);
-        Stand<Config> s_out = Stand<Config>();
+        Stand<Parameters> s_out = Stand<Parameters>();
         const NodeType* n_out = nullptr;
         for (auto& it : table) {
-            const auto s_iter = Stand<Config>(it.first);
+            const auto s_iter = Stand<Parameters>(it.first);
             const NodeType* n_iter = it.second;
             const bool is_atk = n_iter->is_attacker();
             const bool is_mate = n_iter->found_mate();
@@ -768,10 +772,10 @@ private:
         //     - Stronger defence stand, but mate.
         const auto t = g.get_turn();
         const auto s = g.get_stand(t);
-        Stand<Config> s_out = Stand<Config>();
+        Stand<Parameters> s_out = Stand<Parameters>();
         const NodeType* n_out = nullptr;
         for (auto& it : table) {
-            const auto s_iter = Stand<Config>(it.first);
+            const auto s_iter = Stand<Parameters>(it.first);
             const NodeType* n_iter = it.second;
             const bool is_atk = n_iter->is_attacker();
             const bool is_mate = n_iter->found_mate();
@@ -806,10 +810,10 @@ private:
         //     - Stronger defence stand, but mate.
         const auto t = g.get_turn();
         const auto s = g.get_stand(t);
-        Stand<Config> s_out = Stand<Config>();
+        Stand<Parameters> s_out = Stand<Parameters>();
         const NodeType* n_out = nullptr;
         for (auto& it : table) {
-            const auto s_iter = Stand<Config>(it.first);
+            const auto s_iter = Stand<Parameters>(it.first);
             const NodeType* n_iter = it.second;
             const bool is_atk = n_iter->is_attacker();
             const bool is_mate = n_iter->found_mate();
@@ -842,12 +846,12 @@ private:
         //     - Stronger defence stand, but mate.
         const auto t = g.get_turn();
         const auto s = g.get_stand(t);
-        Stand<Config> s_le = Stand<Config>();
-        Stand<Config> s_ge = Stand<Config>();
+        Stand<Parameters> s_le = Stand<Parameters>();
+        Stand<Parameters> s_ge = Stand<Parameters>();
         bool found_best_le = false;
         bool found_best_ge = false;
         for (auto& it : table) {
-            const auto s_iter = Stand<Config>(it.first);
+            const auto s_iter = Stand<Parameters>(it.first);
             const NodeType* n_iter = it.second;
             const bool is_atk = n_iter->is_attacker();
             const bool is_mate = n_iter->found_mate();
@@ -883,16 +887,16 @@ private:
     }
 };
 
-template <class Config>
+template <class Parameters>
 class Searcher
 {
 private:
-    using GameType = Game<Config>;
-    using MoveType = Move<Config>;
-    using PHelper = Pieces<Config>;
+    using GameType = Game<Parameters>;
+    using MoveType = Move<Parameters>;
+    using PHelper = Pieces<Parameters>;
 
 private:
-    TranspositionTable<Config> m_table;
+    TranspositionTable<Parameters> m_table;
     std::unique_ptr<GameType> m_game;
     uint m_num_searched;
 
@@ -910,7 +914,7 @@ public:
         m_table.clear();
         m_game = std::make_unique<GameType>(g);
         const GameType& game = *m_game;
-        Node<Config>* const root = m_table.get_root();
+        Node<Parameters>* const root = m_table.get_root();
         if (!root->simulate(game))
             root->expand(game, nullptr, nullptr);
         m_num_searched = 0u;
@@ -925,7 +929,7 @@ public:
      */
     bool search(const uint n)
     {
-        Node<Config>* const root = m_table.get_root();
+        Node<Parameters>* const root = m_table.get_root();
         GameType& game = *m_game;
         uint num = n;
         while (num) {
@@ -965,14 +969,14 @@ public:
         append_mate_moves(out, *m_game, m_table.get_root()->get_child_1st());
         return out;
     }
-    const Node<Config>* get_root() const
+    const Node<Parameters>* get_root() const
     {
         return m_table.get_root();
     }
 
 private:
     void search_inner(
-        Node<Config>& n,
+        Node<Parameters>& n,
         GameType& game,
         uint& searches,
         const uint thpn,
@@ -986,17 +990,17 @@ private:
                 break;
             const uint thpn_ch = n.compute_thpn_for_child(thpn);
             const uint thdn_ch = n.compute_thdn_for_child(thdn);
-            Node<Config>* const ch1st = n.get_child_1st();
+            Node<Parameters>* const ch1st = n.get_child_1st();
             search_inner(*ch1st, game, searches, thpn_ch, thdn_ch);
             n.backprop_one(game);
         }
         game.undo();
     }
-    void
-    simulate_or_expand(Node<Config>& n, const GameType& game, uint& searches)
+    void simulate_or_expand(
+        Node<Parameters>& n, const GameType& game, uint& searches)
     {
-        const Node<Config>* node_le = nullptr;
-        const Node<Config>* node_ge = nullptr;
+        const Node<Parameters>* node_le = nullptr;
+        const Node<Parameters>* node_ge = nullptr;
         m_table.look_up_le_ge_stand(game, &node_le, &node_ge);
         if (node_le != &n) {
             m_table.add(&n, game);
@@ -1018,12 +1022,12 @@ private:
     void append_mate_moves(
         std::vector<MoveType>& out,
         GameType& game,
-        const Node<Config>* const node) const
+        const Node<Parameters>* const node) const
     {
         const MoveType action = node->get_action();
         game.apply_nocheck(action);
         out.emplace_back(action);
-        const Node<Config>* const ch1st = node->get_child_1st();
+        const Node<Parameters>* const ch1st = node->get_child_1st();
         if ((ch1st != nullptr) && ch1st->found_mate()) {
             // The 1st child may not have mate value because
             // `search_inner()` can assign mate value on a node having children
@@ -1048,12 +1052,11 @@ private:
     MoveType find_action_from_transposition_table(const GameType& game) const
     {
         const ColorEnum t = game.get_turn();
-        const Board<Config>& board = game.get_board();
-        const Stand<Config>& stand = game.get_stand(t);
-        const Node<Config>* n = m_table.look_up_le_stand(game);
+        const Stand<Parameters>& stand = game.get_stand(t);
+        const Node<Parameters>* n = m_table.look_up_le_stand(game);
         if (n == nullptr) {
             assert(game.in_check()); // assert defence turn
-            return *LegalMoveGenerator<Config>(game.get_state());
+            return *LegalMoveGenerator<Parameters>(game.get_state());
         }
 
         const bool is_atk = n->is_attacker();

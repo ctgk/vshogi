@@ -8,6 +8,7 @@
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
+#include "vshogi/common/config.hpp"
 #include "vshogi/common/game.hpp"
 #include "vshogi/common/generator.hpp"
 #include "vshogi/common/magic.hpp"
@@ -127,7 +128,7 @@ enum FileEnum : uint
     FILE1,
 };
 
-struct Config
+struct Parameters
 {
     // clang-format off
     static constexpr char piece_type_to_char[] = "pnsbrgk";
@@ -145,51 +146,31 @@ struct Config
     static constexpr uint max_stand_piece_count = 2;
     static constexpr uint max_stand_sfen_length = 13; // "RBGSNPrbgsnp "
     static constexpr uint max_acceptable_repetitions = 3;
-    static constexpr uint half_num_initial_pieces = 3;
+    static constexpr uint num_init_piece_each = 6;
     static constexpr uint initial_points = 14;
     using BaseTypeBitBoard = std::uint64_t;
-    // clang-format on
-
-    /**
-     * @brief 32-bit integer representing pieces on a stand.
-     * @details
-     * ________ ________ ________ ______**  FU (2 pieces)
-     * ________ ________ ________ ___**___  KE (2 pieces)
-     * ________ ________ ________ **______  GI (2 pieces)
-     * ________ ________ _____**_ ________  KA (2 pieces)
-     * ________ ________ __**____ ________  HI (2 pieces)
-     * ________ _______* *_______ ________  KI (2 pieces)
-     */
-    using BaseTypeStand = std::uint32_t;
-
-    Config() = delete;
+    using BaseTypeStand = std::uint32_t; // _______* *_**_**_ **_**_** (KI, HI, KA, GI, KE, FU)
     using PieceType = PieceTypeEnum;
     using ColoredPiece = ColoredPieceEnum;
     using Square = SquareEnum;
     using File = FileEnum;
     using Rank = RankEnum;
-    static constexpr uint num_squares = num_files * num_ranks;
-    static constexpr uint num_colored_piece_types = 2 * num_piece_types;
-    static constexpr uint magic_table_size = 1u << log2_magic_table_size;
+    Parameters() = delete;
+    // clang-format on
 };
 
-using Pieces = vshogi::Pieces<Config>;
-using Squares = vshogi::Squares<Config>;
-using Move = vshogi::Move<Config>;
-using BitBoard = vshogi::BitBoard<Config>;
-using Magic = vshogi::Magic<Config>;
-using Board = vshogi::Board<Config>;
-using Stand = vshogi::Stand<Config>;
-using BlackWhiteStands = vshogi::BlackWhiteStands<Config>;
-using State = vshogi::State<Config>;
-using DropMoveGenerator = vshogi::DropMoveGenerator<Config>;
-using CheckDropMoveGenerator = vshogi::CheckDropMoveGenerator<Config>;
-using NonKingBoardMoveGenerator = vshogi::NonKingBoardMoveGenerator<Config>;
-using CheckNonKingBoardMoveGenerator
-    = vshogi::CheckNonKingBoardMoveGenerator<Config>;
-using KingMoveGenerator = vshogi::KingMoveGenerator<Config>;
-using CheckKingMoveGenerator = vshogi::CheckKingMoveGenerator<Config>;
-using Game = vshogi::Game<Config>;
+using Config = vshogi::Configuration<Parameters>;
+using Pieces = vshogi::Pieces<Parameters>;
+using Squares = vshogi::Squares<Parameters>;
+using Move = vshogi::Move<Parameters>;
+using BitBoard = vshogi::BitBoard<Parameters>;
+using Magic = vshogi::Magic<Parameters>;
+using Board = vshogi::Board<Parameters>;
+using Stand = vshogi::Stand<Parameters>;
+using BlackWhiteStands = vshogi::BlackWhiteStands<Parameters>;
+using State = vshogi::State<Parameters>;
+using LegalMoveGenerator = vshogi::LegalMoveGenerator<Parameters>;
+using Game = vshogi::Game<Parameters>;
 static_assert(FU == Pieces::FU);
 static_assert(OU == Pieces::OU);
 static_assert(NA == Pieces::NA);
@@ -557,17 +538,21 @@ judkins_shogi::Board::get_occupied_by_ranging(const ColorEnum& c) const
 
 template <>
 inline judkins_shogi::Move
-judkins_shogi::NonKingBoardMoveGenerator::random_select()
+NonKingBoardMoveGenerator<judkins_shogi::Parameters>::random_select()
 {
     using namespace judkins_shogi;
     const auto src_fgke = m_board.get_occupied<FU, GI, KE>(m_turn);
     const auto src_kahi = m_board.get_occupied<KA, HI>(m_turn);
     const auto src_gold = m_board.get_occupied<KI, TO, NK, NG>(m_turn);
     const auto src_umry = m_board.get_occupied<UM, RY>(m_turn);
-    auto iter_fgke = NonKingBoardMoveGenerator(m_state, src_fgke, m_pinned);
-    auto iter_kahi = NonKingBoardMoveGenerator(m_state, src_kahi, m_pinned);
-    auto iter_gold = NoPromoMoveGenerator<Config>(m_state, src_gold, m_pinned);
-    auto iter_umry = NoPromoMoveGenerator<Config>(m_state, src_umry, m_pinned);
+    auto iter_fgke
+        = NonKingBoardMoveGenerator<Parameters>(m_state, src_fgke, m_pinned);
+    auto iter_kahi
+        = NonKingBoardMoveGenerator<Parameters>(m_state, src_kahi, m_pinned);
+    auto iter_gold
+        = NoPromoMoveGenerator<Parameters>(m_state, src_gold, m_pinned);
+    auto iter_umry
+        = NoPromoMoveGenerator<Parameters>(m_state, src_umry, m_pinned);
     const auto num_fgke = iter_fgke.is_end()
                               ? 0.f
                               : static_cast<float>(src_fgke.hamming_weight());

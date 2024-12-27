@@ -9,20 +9,21 @@
 namespace vshogi::engine
 {
 
-template <class Config>
-inline float piece_value_func(const Game<Config>& g)
+template <class Parameters>
+inline float piece_value_func(const Game<Parameters>& g)
 {
-    using PHelper = Pieces<Config>;
-    using PieceType = typename Config::PieceType;
-    using Square = typename Config::Square;
-    constexpr uint num_squares = Config::num_squares;
-    constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
-    constexpr float scaler = static_cast<float>(Config::sum_piece_value);
+    using C = Configuration<Parameters>;
+    using PHelper = Pieces<Parameters>;
+    using PieceType = typename C::PieceType;
+    using Square = typename C::Square;
+    constexpr uint num_squares = C::num_squares;
+    constexpr uint num_stand_piece_types = C::num_stand_piece_types;
+    constexpr float scaler = static_cast<float>(C::sum_piece_value);
 
     const ColorEnum turn = g.get_turn();
-    const Board<Config>& board = g.get_board();
-    const Stand<Config>& ally_stand = g.get_stand(turn);
-    const Stand<Config>& enemy_stand = g.get_stand(~turn);
+    const Board<Parameters>& board = g.get_board();
+    const Stand<Parameters>& ally_stand = g.get_stand(turn);
+    const Stand<Parameters>& enemy_stand = g.get_stand(~turn);
     float value = 0.f;
     for (Square sq : EnumIterator<Square, num_squares>()) {
         const auto p = board[sq];

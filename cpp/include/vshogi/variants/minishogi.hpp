@@ -7,6 +7,7 @@
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
+#include "vshogi/common/config.hpp"
 #include "vshogi/common/game.hpp"
 #include "vshogi/common/generator.hpp"
 #include "vshogi/common/magic.hpp"
@@ -106,7 +107,7 @@ enum RankEnum : uint
     RANK5,
 };
 
-struct Config
+struct Parameters
 {
     // clang-format off
     static constexpr char piece_type_to_char[] = "psbrgk";
@@ -124,50 +125,31 @@ struct Config
     static constexpr uint max_stand_piece_count = 2;
     static constexpr uint max_stand_sfen_length = 11; // "2p2s2g2b2r "
     static constexpr uint max_acceptable_repetitions = 3;
-    static constexpr uint half_num_initial_pieces = 3;
+    static constexpr uint num_init_piece_each = 6;
     static constexpr uint initial_points = 13;
     using BaseTypeBitBoard = std::uint32_t;
-    // clang-format on
-
-    /**
-     * @brief 16-bit integer representing pieces on a stand.
-     * @details
-     * ________ ______11  FU (2-bit for 0, 1, or 2 pieces)
-     * ________ ___11___  GI (2-bit)
-     * ________ 11______  KA (2-bit)
-     * _____11_ ________  HI (2-bit)
-     * __11____ ________  KI (2-bit)
-     */
-    using BaseTypeStand = std::uint16_t;
-
-    Config() = delete;
+    using BaseTypeStand = std::uint16_t; // __11_11_ 11_11_11 (KI, HI, KA, GI, FU)
     using PieceType = PieceTypeEnum;
     using ColoredPiece = ColoredPieceEnum;
     using Square = SquareEnum;
     using File = FileEnum;
     using Rank = RankEnum;
-    static constexpr uint num_squares = num_files * num_ranks;
-    static constexpr uint num_colored_piece_types = 2 * num_piece_types;
-    static constexpr uint magic_table_size = 1u << log2_magic_table_size;
+    Parameters() = delete;
+    // clang-format on
 };
 
-using Pieces = vshogi::Pieces<Config>;
-using Squares = vshogi::Squares<Config>;
-using Move = vshogi::Move<Config>;
-using BitBoard = vshogi::BitBoard<Config>;
-using Magic = vshogi::Magic<Config>;
-using Board = vshogi::Board<Config>;
-using Stand = vshogi::Stand<Config>;
-using BlackWhiteStands = vshogi::BlackWhiteStands<Config>;
-using State = vshogi::State<Config>;
-using DropMoveGenerator = vshogi::DropMoveGenerator<Config>;
-using CheckDropMoveGenerator = vshogi::CheckDropMoveGenerator<Config>;
-using NonKingBoardMoveGenerator = vshogi::NonKingBoardMoveGenerator<Config>;
-using CheckNonKingBoardMoveGenerator
-    = vshogi::CheckNonKingBoardMoveGenerator<Config>;
-using KingMoveGenerator = vshogi::KingMoveGenerator<Config>;
-using CheckKingMoveGenerator = vshogi::CheckKingMoveGenerator<Config>;
-using Game = vshogi::Game<Config>;
+using Config = vshogi::Configuration<Parameters>;
+using Pieces = vshogi::Pieces<Parameters>;
+using Squares = vshogi::Squares<Parameters>;
+using Move = vshogi::Move<Parameters>;
+using BitBoard = vshogi::BitBoard<Parameters>;
+using Magic = vshogi::Magic<Parameters>;
+using Board = vshogi::Board<Parameters>;
+using Stand = vshogi::Stand<Parameters>;
+using BlackWhiteStands = vshogi::BlackWhiteStands<Parameters>;
+using State = vshogi::State<Parameters>;
+using LegalMoveGenerator = vshogi::LegalMoveGenerator<Parameters>;
+using Game = vshogi::Game<Parameters>;
 static_assert(FU == Pieces::FU);
 static_assert(OU == Pieces::OU);
 static_assert(NA == Pieces::NA);
@@ -492,7 +474,8 @@ minishogi::Board::get_occupied_by_ranging(const ColorEnum& c) const
 }
 
 template <>
-inline minishogi::Move minishogi::NonKingBoardMoveGenerator::random_select()
+inline minishogi::Move
+NonKingBoardMoveGenerator<minishogi::Parameters>::random_select()
 {
     using namespace minishogi;
     const auto src_fugi = m_board.get_occupied<FU, GI>(m_turn);
@@ -501,8 +484,10 @@ inline minishogi::Move minishogi::NonKingBoardMoveGenerator::random_select()
     const auto src_umry = m_board.get_occupied<UM, RY>(m_turn);
     auto iter_fugi = NonKingBoardMoveGenerator(m_state, src_fugi, m_pinned);
     auto iter_kahi = NonKingBoardMoveGenerator(m_state, src_kahi, m_pinned);
-    auto iter_gold = NoPromoMoveGenerator<Config>(m_state, src_gold, m_pinned);
-    auto iter_umry = NoPromoMoveGenerator<Config>(m_state, src_umry, m_pinned);
+    auto iter_gold
+        = NoPromoMoveGenerator<Parameters>(m_state, src_gold, m_pinned);
+    auto iter_umry
+        = NoPromoMoveGenerator<Parameters>(m_state, src_umry, m_pinned);
     const auto num_fugi = iter_fugi.is_end()
                               ? 0.f
                               : static_cast<float>(src_fugi.hamming_weight());
