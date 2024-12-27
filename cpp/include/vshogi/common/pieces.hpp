@@ -19,8 +19,7 @@ private:
     using C = Configuration<Parameters>;
     static_assert(
         (C::num_piece_types + 1) // num_piece_types +  NA
-        == sizeof(C::Param::piece_type_to_point)
-               / sizeof(C::Param::piece_type_to_point[0]));
+        == sizeof(C::piece_type_to_point) / sizeof(C::piece_type_to_point[0]));
     static constexpr uint num_piece_types = C::num_piece_types;
     static constexpr uint num_colored_piece_types = C::num_colored_piece_types;
     static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
@@ -157,7 +156,7 @@ public:
 
     static uint get_point(const PieceType& p)
     {
-        return Parameters::piece_type_to_point[p];
+        return C::piece_type_to_point[p];
     }
     static uint get_point(const ColoredPiece& p)
     {

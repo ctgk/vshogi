@@ -93,7 +93,15 @@ public: // game rules
      * @brief Maximum # of repetitions accepted in the game rule.
      * E.g. 3 in minishogi.
      */
-    static constexpr uint max_acceptable_repetitions = 3;
+    static constexpr uint max_acceptable_repetitions
+        = Param::max_acceptable_repetitions;
+
+    /**
+     * @brief Array to get king entering point for each piece type.
+     */
+    static constexpr std::array<uint, num_piece_types + 1u> piece_type_to_point
+        = Param::piece_type_to_point;
+    static_assert(Param::piece_type_to_point.size() == (num_piece_types + 1u));
 
     static constexpr uint num_init_piece_each = Param::num_init_piece_each;
     static constexpr uint half_num_init_piece_each = num_init_piece_each / 2u;
