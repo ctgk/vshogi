@@ -8,27 +8,220 @@
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/direction.hpp"
+#include "vshogi/common/utils.hpp"
 
 namespace vshogi
 {
+
+struct FPTHelper
+{
+private:
+    static const DirectionEnum attack_directions_table[29][9];
+
+public:
+    FPTHelper() = delete;
+
+    static constexpr FullPieceTypes to_fpt(char c)
+    {
+        c = static_cast<char>(std::tolower(static_cast<int>(c)));
+        switch (c) {
+        case 'p':
+            return PT_FU;
+        case 'l':
+            return PT_KY;
+        case 'n':
+            return PT_KE;
+        case 's':
+            return PT_GI;
+        case 'b':
+            return PT_KA;
+        case 'r':
+            return PT_HI;
+        case 'g':
+            return PT_KI;
+        case 'k':
+            return PT_OU;
+        default:
+            break;
+        }
+        return PT_NA;
+    }
+    static constexpr char to_char(const FullPieceTypes pt)
+    {
+        constexpr char table[] = {
+            'p', //!< Fu (Pawn)
+            'l', //!< Kyo (Lance)
+            'n', //!< Kei (Knight)
+            's', //!< Gin (Silver)
+            'b', //!< Kaku (Bishop)
+            'r', //!< Hisha (Rook)
+            'g', //!< Kin (Gold)
+            'k', //!< Ou, Gyoku (King)
+            'p', //!< Tokin (Promoted Pawn)
+            'l', //!< Nari-Kyo (Promoted Lance)
+            'n', //!< Nari-Kei (Promoted Knight)
+            's', //!< Nari-Gin (Promoted Silver)
+            'b', //!< Uma (Promoted Bishop)
+            'r', //!< Ryu (Promoted Rook)
+            '?', //!< NA
+        };
+        return table[pt];
+    }
+    static constexpr bool is_promotable(const FullPieceTypes pt)
+    {
+        return pt < PT_KI;
+    }
+    static constexpr bool is_promoted(const FullPieceTypes pt)
+    {
+        return pt > PT_OU;
+    }
+    static constexpr bool is_promotion_fully_superior(const FullPieceTypes pt)
+    {
+        return (pt == PT_FU) || (pt == PT_KA) || (pt == PT_HI);
+    }
+    static constexpr uint to_point(const FullPieceTypes pt)
+    {
+        constexpr uint table[] = {
+            1, //!< Fu (Pawn)
+            1, //!< Kyo (Lance)
+            1, //!< Kei (Knight)
+            1, //!< Gin (Silver)
+            5, //!< Kaku (Bishop)
+            5, //!< Hisha (Rook)
+            1, //!< Kin (Gold)
+            0, //!< Ou, Gyoku (King)
+            1, //!< Tokin (Promoted Pawn)
+            1, //!< Nari-Kyo (Promoted Lance)
+            1, //!< Nari-Kei (Promoted Knight)
+            1, //!< Nari-Gin (Promoted Silver)
+            5, //!< Uma (Promoted Bishop)
+            5, //!< Ryu (Promoted Rook)
+            0, //!< NA
+        };
+        return table[pt];
+    }
+
+    /**
+     * @brief Get valuation of a piece type.
+     * @ref https://shogi.zukeran.org/2018/06/12/piece-value-1/
+     *
+     * @param pt Input
+     * @return constexpr uint valuation of the input
+     */
+    static constexpr uint to_value(const FullPieceTypes pt)
+    {
+        constexpr uint table[] = {
+            5, //!< Fu (Pawn)
+            30, //!< Kyo (Lance)
+            35, //!< Kei (Knight)
+            55, //!< Gin (Silver)
+            95, //!< Kaku (Bishop)
+            100, //!< Hisha (Rook)
+            60, //!< Kin (Gold)
+            0, //!< Ou, Gyoku (King)
+            60, //!< Tokin (Promoted Pawn)
+            60, //!< Nari-Kyo (Promoted Lance)
+            60, //!< Nari-Kei (Promoted Knight)
+            60, //!< Nari-Gin (Promoted Silver)
+            115, //!< Uma (Promoted Bishop)
+            120, //!< Ryu (Promoted Rook)
+            0, //!< NA
+        };
+        return table[pt];
+    }
+
+    static const DirectionEnum*
+    get_attack_directions(const FullPieceTypes pt, const ColorEnum c)
+    {
+        if (pt == PT_NA)
+            return attack_directions_table[28];
+        return attack_directions_table[pt + static_cast<uint>(c) * 14u];
+    }
+    static bool is_ranging(const FullPieceTypes pt)
+    {
+        constexpr bool table[] = {
+            false, //!< Fu (Pawn)
+            true, //!< Kyo (Lance)
+            false, //!< Kei (Knight)
+            false, //!< Gin (Silver)
+            true, //!< Kaku (Bishop)
+            true, //!< Hisha (Rook)
+            false, //!< Kin (Gold)
+            false, //!< Ou, Gyoku (King)
+            false, //!< Tokin (Promoted Pawn)
+            false, //!< Nari-Kyo (Promoted Lance)
+            false, //!< Nari-Kei (Promoted Knight)
+            false, //!< Nari-Gin (Promoted Silver)
+            true, //!< Uma (Promoted Bishop)
+            true, //!< Ryu (Promoted Rook)
+            false, //!< NA
+        };
+        return table[pt];
+    }
+    static bool is_ranging_to(const FullPieceTypes pt, const DirectionEnum d)
+    {
+        switch (pt) {
+        case PT_KY:
+            return (d == DIR_N);
+        case PT_KA:
+        case PT_UM:
+            return (d == DIR_NW) || (d == DIR_NE) || (d == DIR_SW)
+                   || (d == DIR_SE);
+        case PT_HI:
+        case PT_RY:
+            return (d == DIR_N) || (d == DIR_W) || (d == DIR_E) || (d == DIR_S);
+        default:
+            break;
+        }
+        return false;
+    }
+};
+
+inline const DirectionEnum FPTHelper::attack_directions_table[29][9] = {
+    // clang-format off
+    {DIR_N,                                                      DIR_NA}, // B_FU
+    {DIR_N,                                                      DIR_NA}, // B_KY
+    {DIR_NNW, DIR_NNE,                                           DIR_NA}, // B_KE
+    {DIR_NW, DIR_N, DIR_NE, DIR_SW, DIR_SE,                      DIR_NA}, // B_GI
+    {DIR_NW, DIR_NE, DIR_SW, DIR_SE,                             DIR_NA}, // B_KA
+    {DIR_N, DIR_W, DIR_E, DIR_S,                                 DIR_NA}, // B_HI
+    {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_KI
+    {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_OU
+    {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_TO
+    {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_NY
+    {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_NK
+    {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_NG
+    {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_UM
+    {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_RY
+    {DIR_S,                                                      DIR_NA}, // W_FU
+    {DIR_S,                                                      DIR_NA}, // W_KY
+    {DIR_SSE, DIR_SSW,                                           DIR_NA}, // W_KE
+    {DIR_SE, DIR_S, DIR_SW, DIR_NE, DIR_NW,                      DIR_NA}, // W_GI
+    {DIR_SE, DIR_SW, DIR_NE, DIR_NW,                             DIR_NA}, // W_KA
+    {DIR_S, DIR_E, DIR_W, DIR_N,                                 DIR_NA}, // W_HI
+    {DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_KI
+    {DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_OU
+    {DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_TO
+    {DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_NY
+    {DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_NK
+    {DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_NG
+    {DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_UM
+    {DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_RY
+    {                                                            DIR_NA}, // NA
+    // clang-format on
+};
 
 template <class Parameters>
 struct Pieces
 {
 private:
     using C = Configuration<Parameters>;
-    static_assert(
-        (C::num_piece_types + 1) // num_piece_types +  NA
-        == sizeof(C::piece_type_to_point) / sizeof(C::piece_type_to_point[0]));
     static constexpr uint num_piece_types = C::num_piece_types;
     static constexpr uint num_colored_piece_types = C::num_colored_piece_types;
     static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
     using PieceType = typename C::PieceType;
     using ColoredPiece = typename C::ColoredPiece;
     static_assert(sizeof(ColoredPiece) == sizeof(std::uint8_t));
-
-    static const DirectionEnum attack_directions_table[2 * num_piece_types + 1]
-                                                      [9];
 
 public:
     static constexpr PieceType FU = static_cast<PieceType>(0); // NOLINT
@@ -60,11 +253,12 @@ public:
     }
     static PieceType to_piece_type(char c)
     {
+        const FullPieceTypes fpt = FPTHelper::to_fpt(c);
         c = static_cast<char>(std::tolower(static_cast<int>(c)));
-        const char* p = C::Param::piece_type_to_char;
-        for (; *p != '\0'; ++p) {
-            if (*p == c)
-                return static_cast<PieceType>(p - C::Param::piece_type_to_char);
+        const FullPieceTypes* ptr = C::piece_types.data();
+        for (; *ptr != PT_NA; ++ptr) {
+            if (*ptr == fpt)
+                return static_cast<PieceType>(ptr - C::piece_types.data());
         }
         return NA;
     }
@@ -81,9 +275,9 @@ public:
             std::islower(static_cast<int>(c)) ? WHITE : BLACK,
             to_piece_type(c));
     }
-    static constexpr char to_char(const PieceType& pt_demoted)
+    static constexpr char to_char(const PieceType& pt)
     {
-        return Parameters::piece_type_to_char[pt_demoted];
+        return FPTHelper::to_char(C::piece_types[pt]);
     }
 
     static constexpr bool is_promotable(const PieceType& p)
@@ -103,24 +297,24 @@ public:
     {
         return is_promoted(to_piece_type(p));
     }
-    static constexpr bool is_promotion_complete_upgrade(const PieceType& pt)
+    static constexpr bool is_promotion_fully_superior(const PieceType& pt)
     {
-        switch (pt) {
-        case FU:
-        case OU - 3u:
-        case OU - 2u:
-            return true;
-        default:
-            break;
-        }
-        return false;
+        return FPTHelper::is_promotion_fully_superior(C::piece_types[pt]);
     }
-    static constexpr bool is_promotion_complete_upgrade(const ColoredPiece& p)
+    static constexpr bool is_promotion_fully_superior(const ColoredPiece& p)
     {
-        return is_promotion_complete_upgrade(to_piece_type(p));
+        return is_promotion_fully_superior(to_piece_type(p));
     }
-    static bool is_ranging_to(const ColoredPiece& p, const DirectionEnum& d);
-    static bool is_ranging_piece(const PieceType& pt);
+    static bool is_ranging_to(const ColoredPiece& p, const DirectionEnum& d)
+    {
+        return FPTHelper::is_ranging_to(
+            C::piece_types[to_piece_type(p)],
+            (get_color(p) == BLACK) ? d : rotate(d));
+    }
+    static bool is_ranging_piece(const PieceType& pt)
+    {
+        return FPTHelper::is_ranging(C::piece_types[pt]);
+    }
     static bool is_ranging_piece(const ColoredPiece& p)
     {
         return is_ranging_piece(to_piece_type(p));
@@ -156,7 +350,7 @@ public:
 
     static uint get_point(const PieceType& p)
     {
-        return C::piece_type_to_point[p];
+        return FPTHelper::to_point(C::piece_types[p]);
     }
     static uint get_point(const ColoredPiece& p)
     {
@@ -164,7 +358,7 @@ public:
     }
     static uint get_value(const PieceType& pt)
     {
-        return Parameters::piece_type_to_value[pt];
+        return FPTHelper::to_value(C::piece_types[pt]);
     }
 
     static void append_sfen(const ColoredPiece& p, std::string& out)
@@ -182,7 +376,8 @@ public:
     static const DirectionEnum* get_attack_directions(const ColoredPiece& p)
     {
         assert(p != VOID);
-        return attack_directions_table[p];
+        return FPTHelper::get_attack_directions(
+            C::piece_types[to_piece_type(p)], get_color(p));
     }
     static void init_tables()
     {

@@ -27,7 +27,15 @@ public: // pieces
      * E.g. 10 (p, s, b, r, g, k, +p, +s, +b, +r) in minishogi.
      * @note Differentiate promotions but not colored.
      */
-    static constexpr uint num_piece_types = Param::num_piece_types;
+    static constexpr uint num_piece_types = Param::piece_types.size() - 1u;
+
+    /**
+     * @brief Array of piece types appears in the game.
+     * E.g. {FU, GI, KA, HI, KI, OU, TO, NG, UM, RY, NA} in minishogi.
+     */
+    static constexpr std::array<FullPieceTypes, Param::piece_types.size()>
+        piece_types = Param::piece_types;
+    static_assert(piece_types[num_piece_types] == PT_NA);
 
     /**
      * @brief Number of colored piece types.
@@ -95,13 +103,6 @@ public: // game rules
      */
     static constexpr uint max_acceptable_repetitions
         = Param::max_acceptable_repetitions;
-
-    /**
-     * @brief Array to get king entering point for each piece type.
-     */
-    static constexpr std::array<uint, num_piece_types + 1u> piece_type_to_point
-        = Param::piece_type_to_point;
-    static_assert(Param::piece_type_to_point.size() == (num_piece_types + 1u));
 
     static constexpr uint num_init_piece_each = Param::num_init_piece_each;
     static constexpr uint half_num_init_piece_each = num_init_piece_each / 2u;

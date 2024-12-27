@@ -98,46 +98,46 @@ TEST(judkins_shogi_pieces, is_promoted)
     CHECK_TRUE(Pieces::is_promoted(W_RY));
 }
 
-TEST(judkins_shogi_pieces, is_promotion_complete_upgrade)
+TEST(judkins_shogi_pieces, is_promotion_fully_superior)
 {
-    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(FU));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(KE));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(GI));
-    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(KA));
-    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(HI));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(KI));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(OU));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(TO));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(NK));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(NG));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(UM));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(RY));
+    CHECK_TRUE(Pieces::is_promotion_fully_superior(FU));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(KE));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(GI));
+    CHECK_TRUE(Pieces::is_promotion_fully_superior(KA));
+    CHECK_TRUE(Pieces::is_promotion_fully_superior(HI));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(KI));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(OU));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(TO));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(NK));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(NG));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(UM));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(RY));
 
-    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(B_FU));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_KE));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_GI));
-    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(B_KA));
-    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(B_HI));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_KI));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_OU));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_TO));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_NK));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_NG));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_UM));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(B_RY));
+    CHECK_TRUE(Pieces::is_promotion_fully_superior(B_FU));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(B_KE));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(B_GI));
+    CHECK_TRUE(Pieces::is_promotion_fully_superior(B_KA));
+    CHECK_TRUE(Pieces::is_promotion_fully_superior(B_HI));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(B_KI));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(B_OU));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(B_TO));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(B_NK));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(B_NG));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(B_UM));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(B_RY));
 
-    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(W_FU));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_KE));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_GI));
-    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(W_KA));
-    CHECK_TRUE(Pieces::is_promotion_complete_upgrade(W_HI));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_KI));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_OU));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_TO));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_NK));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_NG));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_UM));
-    CHECK_FALSE(Pieces::is_promotion_complete_upgrade(W_RY));
+    CHECK_TRUE(Pieces::is_promotion_fully_superior(W_FU));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(W_KE));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(W_GI));
+    CHECK_TRUE(Pieces::is_promotion_fully_superior(W_KA));
+    CHECK_TRUE(Pieces::is_promotion_fully_superior(W_HI));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(W_KI));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(W_OU));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(W_TO));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(W_NK));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(W_NG));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(W_UM));
+    CHECK_FALSE(Pieces::is_promotion_fully_superior(W_RY));
 }
 
 TEST(judkins_shogi_pieces, promote)
@@ -342,6 +342,90 @@ TEST(judkins_shogi_pieces, to_char)
     CHECK_EQUAL('r', Pieces::to_char(HI));
     CHECK_EQUAL('g', Pieces::to_char(KI));
     CHECK_EQUAL('k', Pieces::to_char(OU));
+}
+
+TEST(judkins_shogi_pieces, is_ranging_piece)
+{
+    CHECK_FALSE(Pieces::is_ranging_piece(FU));
+    CHECK_FALSE(Pieces::is_ranging_piece(KE));
+    CHECK_FALSE(Pieces::is_ranging_piece(GI));
+    CHECK_TRUE(Pieces::is_ranging_piece(KA));
+    CHECK_TRUE(Pieces::is_ranging_piece(HI));
+    CHECK_FALSE(Pieces::is_ranging_piece(KI));
+    CHECK_FALSE(Pieces::is_ranging_piece(OU));
+    CHECK_FALSE(Pieces::is_ranging_piece(TO));
+    CHECK_FALSE(Pieces::is_ranging_piece(NK));
+    CHECK_FALSE(Pieces::is_ranging_piece(NG));
+    CHECK_TRUE(Pieces::is_ranging_piece(UM));
+    CHECK_TRUE(Pieces::is_ranging_piece(RY));
+    CHECK_FALSE(Pieces::is_ranging_piece(NA));
+
+    CHECK_FALSE(Pieces::is_ranging_piece(B_FU));
+    CHECK_FALSE(Pieces::is_ranging_piece(B_KE));
+    CHECK_FALSE(Pieces::is_ranging_piece(B_GI));
+    CHECK_TRUE(Pieces::is_ranging_piece(B_KA));
+    CHECK_TRUE(Pieces::is_ranging_piece(B_HI));
+    CHECK_FALSE(Pieces::is_ranging_piece(B_KI));
+    CHECK_FALSE(Pieces::is_ranging_piece(B_OU));
+    CHECK_FALSE(Pieces::is_ranging_piece(B_TO));
+    CHECK_FALSE(Pieces::is_ranging_piece(B_NK));
+    CHECK_FALSE(Pieces::is_ranging_piece(B_NG));
+    CHECK_TRUE(Pieces::is_ranging_piece(B_UM));
+    CHECK_TRUE(Pieces::is_ranging_piece(B_RY));
+
+    CHECK_FALSE(Pieces::is_ranging_piece(W_FU));
+    CHECK_FALSE(Pieces::is_ranging_piece(W_KE));
+    CHECK_FALSE(Pieces::is_ranging_piece(W_GI));
+    CHECK_TRUE(Pieces::is_ranging_piece(W_KA));
+    CHECK_TRUE(Pieces::is_ranging_piece(W_HI));
+    CHECK_FALSE(Pieces::is_ranging_piece(W_KI));
+    CHECK_FALSE(Pieces::is_ranging_piece(W_OU));
+    CHECK_FALSE(Pieces::is_ranging_piece(W_TO));
+    CHECK_FALSE(Pieces::is_ranging_piece(W_NK));
+    CHECK_FALSE(Pieces::is_ranging_piece(W_NG));
+    CHECK_TRUE(Pieces::is_ranging_piece(W_UM));
+    CHECK_TRUE(Pieces::is_ranging_piece(W_RY));
+
+    CHECK_FALSE(Pieces::is_ranging_piece(VOID));
+}
+
+TEST(judkins_shogi_pieces, is_ranging_to)
+{
+    CHECK_FALSE(Pieces::is_ranging_to(B_FU, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::is_ranging_to(B_KE, vshogi::DIR_NNW));
+    CHECK_FALSE(Pieces::is_ranging_to(B_GI, vshogi::DIR_N));
+    CHECK_TRUE(Pieces::is_ranging_to(B_KA, vshogi::DIR_NW));
+    CHECK_FALSE(Pieces::is_ranging_to(B_KA, vshogi::DIR_N));
+    CHECK_TRUE(Pieces::is_ranging_to(B_HI, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::is_ranging_to(B_HI, vshogi::DIR_NE));
+    CHECK_FALSE(Pieces::is_ranging_to(B_KI, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::is_ranging_to(B_OU, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::is_ranging_to(B_TO, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::is_ranging_to(B_NK, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::is_ranging_to(B_NG, vshogi::DIR_N));
+    CHECK_TRUE(Pieces::is_ranging_to(B_UM, vshogi::DIR_NW));
+    CHECK_FALSE(Pieces::is_ranging_to(B_UM, vshogi::DIR_N));
+    CHECK_TRUE(Pieces::is_ranging_to(B_RY, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::is_ranging_to(B_RY, vshogi::DIR_NE));
+
+    CHECK_FALSE(Pieces::is_ranging_to(W_FU, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::is_ranging_to(W_KE, vshogi::DIR_SSE));
+    CHECK_FALSE(Pieces::is_ranging_to(W_GI, vshogi::DIR_N));
+    CHECK_TRUE(Pieces::is_ranging_to(W_KA, vshogi::DIR_SW));
+    CHECK_FALSE(Pieces::is_ranging_to(W_KA, vshogi::DIR_S));
+    CHECK_TRUE(Pieces::is_ranging_to(W_HI, vshogi::DIR_S));
+    CHECK_FALSE(Pieces::is_ranging_to(W_HI, vshogi::DIR_SE));
+    CHECK_FALSE(Pieces::is_ranging_to(W_KI, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::is_ranging_to(W_OU, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::is_ranging_to(W_TO, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::is_ranging_to(W_NK, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::is_ranging_to(W_NG, vshogi::DIR_N));
+    CHECK_TRUE(Pieces::is_ranging_to(W_UM, vshogi::DIR_NW));
+    CHECK_FALSE(Pieces::is_ranging_to(W_UM, vshogi::DIR_N));
+    CHECK_TRUE(Pieces::is_ranging_to(W_RY, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::is_ranging_to(W_RY, vshogi::DIR_NE));
+
+    CHECK_FALSE(Pieces::is_ranging_to(VOID, vshogi::DIR_N));
 }
 
 TEST(judkins_shogi_pieces, append_sfen)

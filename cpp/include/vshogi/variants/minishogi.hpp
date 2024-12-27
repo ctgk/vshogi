@@ -110,11 +110,8 @@ enum RankEnum : uint
 struct Parameters
 {
     // clang-format off
-    static constexpr char piece_type_to_char[] = "psbrgk";
-    static constexpr uint num_piece_types = 10; // FU, GI, KA, HI, KI, OU, TO, NG, UM, RY
+    static constexpr std::array<FullPieceTypes, 11u> piece_types = {PT_FU, PT_GI, PT_KA, PT_HI, PT_KI, PT_OU, PT_TO, PT_NG, PT_UM, PT_RY, PT_NA};
     static constexpr uint num_stand_piece_types = 5; // FU, GI, KA, HI, KI
-    static constexpr std::array<uint, 11u> piece_type_to_point = {1, 1, 5, 5, 1, 0, 1, 1, 5, 5, 0};
-    static constexpr uint piece_type_to_value[] = {5, 55, 95, 100, 60, 0, 60, 60, 115, 120, 0};
     static constexpr uint sum_piece_value = 2 * (60 * 3 + 115 + 120);
     static constexpr uint num_files = 5; // 1, 2, 3, 4, 5
     static constexpr uint num_ranks = 5; // A, B, C, D, E
@@ -199,55 +196,6 @@ constexpr BitBoard bb_file5 = bb_5a | bb_5b | bb_5c | bb_5d | bb_5e;
 
 namespace vshogi
 {
-
-template <>
-inline const DirectionEnum
-    minishogi::Pieces::attack_directions_table[2 * num_piece_types + 1][9]
-    = {
-        // clang-format off
-{DIR_N,                                                      DIR_NA}, // B_FU
-{DIR_NW, DIR_N, DIR_NE, DIR_SW, DIR_SE,                      DIR_NA}, // B_GI
-{DIR_NW, DIR_NE, DIR_SW, DIR_SE,                             DIR_NA}, // B_KA
-{DIR_N, DIR_W, DIR_E, DIR_S,                                 DIR_NA}, // B_HI
-{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_KI
-{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_OU
-{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_TO
-{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_NG
-{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_UM
-{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_RY
-{DIR_S,                                                      DIR_NA}, // W_FU
-{DIR_SE, DIR_S, DIR_SW, DIR_NE, DIR_NW,                      DIR_NA}, // W_GI
-{DIR_SE, DIR_SW, DIR_NE, DIR_NW,                             DIR_NA}, // W_KA
-{DIR_S, DIR_E, DIR_W, DIR_N,                                 DIR_NA}, // W_HI
-{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_KI
-{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_OU
-{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_TO
-{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_NG
-{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_UM
-{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_RY
-        // clang-format on
-};
-
-template <>
-inline bool vshogi::minishogi::Pieces::is_ranging_to(
-    const vshogi::minishogi::ColoredPieceEnum& p, const DirectionEnum& d)
-{
-    using namespace vshogi::minishogi;
-    const auto base = demote(to_piece_type(p));
-    if (base == HI)
-        return (d == DIR_N) || (d == DIR_W) || (d == DIR_E) || (d == DIR_S);
-    if (base == KA)
-        return (d == DIR_NW) || (d == DIR_NE) || (d == DIR_SW) || (d == DIR_SE);
-    return false;
-}
-
-template <>
-inline bool
-minishogi::Pieces::is_ranging_piece(const minishogi::PieceTypeEnum& pt)
-{
-    using namespace minishogi;
-    return ((pt == KA) || (pt == HI) || (pt == UM) || (pt == RY));
-}
 
 template <>
 inline const uint minishogi::Stand::shift_bits[] = {0, 3, 6, 9, 12};

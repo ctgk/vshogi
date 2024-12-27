@@ -131,11 +131,8 @@ enum FileEnum : uint
 struct Parameters
 {
     // clang-format off
-    static constexpr char piece_type_to_char[] = "pnsbrgk";
-    static constexpr uint num_piece_types = 12; // FU, KE, GI, KA, HI, KI, OU, TO, NK, NG, UM, RY
+    static constexpr std::array<FullPieceTypes, 13u> piece_types = {PT_FU, PT_KE, PT_GI, PT_KA, PT_HI, PT_KI, PT_OU, PT_TO, PT_NK, PT_NG, PT_UM, PT_RY, PT_NA};
     static constexpr uint num_stand_piece_types = 6; // FU, KE, GI, KA, HI, KI
-    static constexpr std::array<uint, 13u> piece_type_to_point = {1, 1, 1, 5, 5, 1, 0, 1, 1, 1, 5, 5, 0};
-    static constexpr uint piece_type_to_value[] = {5, 35, 55, 95, 100, 60, 0, 60, 60, 60, 115, 120, 0};
     static constexpr uint sum_piece_value = 2 * (60 * 4 + 115 + 120);
     static constexpr uint num_files = 6; // 1, 2, 3, 4, 5, 6
     static constexpr uint num_ranks = 6; // A, B, C, D, E, F
@@ -232,59 +229,6 @@ constexpr BitBoard bb_rankf = bb_1f | bb_2f | bb_3f | bb_4f | bb_5f | bb_6f;
 
 namespace vshogi
 {
-
-template <>
-inline const DirectionEnum
-    judkins_shogi::Pieces::attack_directions_table[2 * num_piece_types + 1][9]
-    = {
-        // clang-format off
-{DIR_N,                                                      DIR_NA}, // B_FU
-{DIR_NNW, DIR_NNE,                                           DIR_NA}, // B_KE
-{DIR_NW, DIR_N, DIR_NE, DIR_SW, DIR_SE,                      DIR_NA}, // B_GI
-{DIR_NW, DIR_NE, DIR_SW, DIR_SE,                             DIR_NA}, // B_KA
-{DIR_N, DIR_W, DIR_E, DIR_S,                                 DIR_NA}, // B_HI
-{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_KI
-{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_OU
-{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_TO
-{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_NK
-{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_S,                 DIR_NA}, // B_NG
-{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_UM
-{DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_RY
-{DIR_S,                                                      DIR_NA}, // W_FU
-{DIR_SSE, DIR_SSW,                                           DIR_NA}, // W_KE
-{DIR_SE, DIR_S, DIR_SW, DIR_NE, DIR_NW,                      DIR_NA}, // W_GI
-{DIR_SE, DIR_SW, DIR_NE, DIR_NW,                             DIR_NA}, // W_KA
-{DIR_S, DIR_E, DIR_W, DIR_N,                                 DIR_NA}, // W_HI
-{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_KI
-{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_OU
-{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_TO
-{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_NK
-{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_N,                 DIR_NA}, // W_NG
-{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_UM
-{DIR_SE, DIR_S, DIR_SW, DIR_E, DIR_W, DIR_NE, DIR_N, DIR_NW, DIR_NA}, // W_RY
-        // clang-format on
-};
-
-template <>
-inline bool vshogi::judkins_shogi::Pieces::is_ranging_to(
-    const vshogi::judkins_shogi::ColoredPieceEnum& p, const DirectionEnum& d)
-{
-    using namespace vshogi::judkins_shogi;
-    const auto base = demote(to_piece_type(p));
-    if (base == HI)
-        return (d == DIR_N) || (d == DIR_W) || (d == DIR_E) || (d == DIR_S);
-    if (base == KA)
-        return (d == DIR_NW) || (d == DIR_NE) || (d == DIR_SW) || (d == DIR_SE);
-    return false;
-}
-
-template <>
-inline bool
-judkins_shogi::Pieces::is_ranging_piece(const judkins_shogi::PieceTypeEnum& pt)
-{
-    using namespace judkins_shogi;
-    return ((pt == KA) || (pt == HI) || (pt == UM) || (pt == RY));
-}
 
 template <>
 inline const uint judkins_shogi::Stand::shift_bits[] = {0, 3, 6, 9, 12, 15};

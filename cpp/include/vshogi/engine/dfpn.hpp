@@ -391,7 +391,7 @@ private:
         std::unique_ptr<Node<Parameters>>* holder = &m_child;
         for (Move<Parameters> m : CheckBoardMoveGenerator<Parameters>(state)) {
             const auto p = b[m.source_square()];
-            if ((!m.promote()) && PHelper::is_promotion_complete_upgrade(p)
+            if ((!m.promote()) && PHelper::is_promotion_fully_superior(p)
                 && state.in_promotion_zone(m))
                 continue;
             *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);

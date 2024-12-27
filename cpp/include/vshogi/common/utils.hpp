@@ -18,6 +18,25 @@ static std::default_random_engine random_engine(seed_gen());
 static std::uniform_real_distribution<float>
     dist01(0.f, 0.9999f); // for numerical stability
 
+enum FullPieceTypes : uint
+{
+    PT_FU, //!< Fu (Pawn)
+    PT_KY, //!< Kyo (Lance)
+    PT_KE, //!< Kei (Knight)
+    PT_GI, //!< Gin (Silver)
+    PT_KA, //!< Kaku (Bishop)
+    PT_HI, //!< Hisha (Rook)
+    PT_KI, //!< Kin (Gold)
+    PT_OU, //!< Ou, Gyoku (King)
+    PT_TO, //!< Tokin (Promoted Pawn)
+    PT_NY, //!< Nari-Kyo (Promoted Lance)
+    PT_NK, //!< Nari-Kei (Promoted Knight)
+    PT_NG, //!< Nari-Gin (Promoted Silver)
+    PT_UM, //!< Uma (Promoted Bishop)
+    PT_RY, //!< Ryu (Promoted Rook)
+    PT_NA, //!< NA
+};
+
 /**
  * @brief Iterator for Enum.
  *
