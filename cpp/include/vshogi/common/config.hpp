@@ -86,7 +86,7 @@ public: // squares
      * @brief Number of direction of piece attacks by turn player.
      * E.g. 10 (NNW, NNE, NW, N, NE, W, E, SW, S, SE) in shogi.
      */
-    static constexpr uint num_dir_dl = Param::num_dir_dl;
+    static constexpr uint num_dir_dl = num_dir - (num_dir > 8) * 2u;
 
 public: // stand
     static constexpr uint max_stand_piece_count = Param::max_stand_piece_count;

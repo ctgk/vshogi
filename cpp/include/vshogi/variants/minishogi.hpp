@@ -117,7 +117,6 @@ struct Parameters
     static constexpr uint num_ranks = 5; // A, B, C, D, E
     static constexpr uint num_promotion_ranks = 1;
     static constexpr uint num_dir = 8; //!< NW, N, NE, W, E, SW, S, SE
-    static constexpr uint num_dir_dl = 8; //!< NW, N, NE, W, E, SW, S, SE
     static constexpr uint log2_magic_table_size = 4;
     static constexpr uint max_stand_piece_count = 2;
     static constexpr uint max_stand_sfen_length = 11; // "2p2s2g2b2r "
