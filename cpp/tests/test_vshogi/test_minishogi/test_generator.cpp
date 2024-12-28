@@ -20,15 +20,15 @@ TEST(test_minishogi_generator, king_move_generator)
     {
         const auto s = State("5/2k2/5/2K2/5 b -");
         auto iter = vshogi::KingMoveGenerator<Parameters>(s);
-        CHECK_TRUE(Move(SQ_4D, SQ_3D) == *iter);
-        ++iter;
         CHECK_TRUE(Move(SQ_2D, SQ_3D) == *iter);
         ++iter;
-        CHECK_TRUE(Move(SQ_4E, SQ_3D) == *iter);
+        CHECK_TRUE(Move(SQ_2E, SQ_3D) == *iter);
         ++iter;
         CHECK_TRUE(Move(SQ_3E, SQ_3D) == *iter);
         ++iter;
-        CHECK_TRUE(Move(SQ_2E, SQ_3D) == *iter);
+        CHECK_TRUE(Move(SQ_4D, SQ_3D) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_4E, SQ_3D) == *iter);
         ++iter;
         CHECK_FALSE(iter != iter.end());
     }
@@ -69,19 +69,20 @@ TEST(test_minishogi_generator, check_king_move_generator)
     {
         const auto s = State("4k/5/2K2/5/B4 b -");
         auto iter = vshogi::CheckKingMoveGenerator<Parameters>(s);
-        CHECK_TRUE(Move(SQ_4B, SQ_3C) == *iter);
-        ++iter;
-        CHECK_TRUE(Move(SQ_3B, SQ_3C) == *iter);
-        ++iter;
-        CHECK_TRUE(Move(SQ_4C, SQ_3C) == *iter);
-        ++iter;
         CHECK_TRUE(Move(SQ_2C, SQ_3C) == *iter);
-        ++iter;
-        CHECK_TRUE(Move(SQ_3D, SQ_3C) == *iter);
         ++iter;
         CHECK_TRUE(Move(SQ_2D, SQ_3C) == *iter);
         ++iter;
+        CHECK_TRUE(Move(SQ_3B, SQ_3C) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_3D, SQ_3C) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_4B, SQ_3C) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_4C, SQ_3C) == *iter);
+        ++iter;
         CHECK_FALSE(iter != iter.end());
+        CHECK_TRUE(iter.is_end());
     }
 }
 
@@ -95,15 +96,18 @@ TEST(test_minishogi_generator, drop_move_generator)
     {
         const auto s = State("5/5/5/5/5 w pg");
         auto iter = vshogi::DropMoveGenerator<Parameters>(s);
-        for (int i = 0; i < 20; ++i) {
-            CHECK_TRUE(Move(static_cast<SquareEnum>(i), FU) == *iter);
+        for (auto sq : vshogi::EnumIterator<SquareEnum, 25>()) {
+            if (Squares::to_rank(sq) == RANK5)
+                continue;
+            CHECK_TRUE(Move(sq, FU) == *iter);
             ++iter;
         }
-        for (int i = 0; i < 25; ++i) {
-            CHECK_TRUE(Move(static_cast<SquareEnum>(i), KI) == *iter);
+        for (auto sq : vshogi::EnumIterator<SquareEnum, 25>()) {
+            CHECK_TRUE(Move(sq, KI) == *iter);
             ++iter;
         }
         CHECK_FALSE(iter != iter.end());
+        CHECK_TRUE(iter.is_end());
     }
     {
         const auto s = State("3rk/R4/5/P4/KPPP1 b P");
@@ -221,9 +225,9 @@ TEST(test_minishogi_generator, non_king_board_move_generator)
         // in check
         const auto s = State("4k/5/5/3S1/K3r b -");
         auto iter = vshogi::NonKingBoardMoveGenerator<Parameters>(s);
-        CHECK_TRUE(Move(SQ_3E, SQ_2D) == *iter);
-        ++iter;
         CHECK_TRUE(Move(SQ_1E, SQ_2D) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_3E, SQ_2D) == *iter);
         ++iter;
         CHECK_FALSE(iter != iter.end());
     }
@@ -263,11 +267,11 @@ TEST(test_minishogi_generator, non_king_board_move_generator)
     {
         const auto s = State("B3k/1pP2/5/5/K4 b -");
         auto iter = vshogi::NonKingBoardMoveGenerator<Parameters>(s);
+        CHECK_TRUE(Move(SQ_3A, SQ_3B, true) == *iter);
+        ++iter;
         CHECK_TRUE(Move(SQ_4B, SQ_5A, false) == *iter);
         ++iter;
         CHECK_TRUE(Move(SQ_4B, SQ_5A, true) == *iter);
-        ++iter;
-        CHECK_TRUE(Move(SQ_3A, SQ_3B, true) == *iter);
         ++iter;
         CHECK_FALSE(iter != iter.end());
     }
@@ -282,9 +286,9 @@ TEST(test_minishogi_generator, non_king_board_move_generator)
         const auto src_mask = b.get_occupied<KA, HI, UM, RY>(vshogi::WHITE);
         CHECK_EQUAL(bb_2e.value(), src_mask.value());
         auto iter = vshogi::NonKingBoardMoveGenerator<Parameters>(s, src_mask);
-        CHECK_TRUE(Move(SQ_4C, SQ_2E, false) == *iter);
+        CHECK_TRUE(Move(SQ_1D, SQ_2E, false) == *iter);
         ++iter;
-        CHECK_TRUE(Move(SQ_4C, SQ_2E, true) == *iter);
+        CHECK_TRUE(Move(SQ_1D, SQ_2E, true) == *iter);
         ++iter;
     }
 }
@@ -313,22 +317,22 @@ TEST(test_minishogi_generator, check_non_king_board_move_generator)
     {
         const auto s = State("B4/5/5/4k/K4 b -");
         auto iter = vshogi::CheckNonKingBoardMoveGenerator<Parameters>(s);
-        CHECK_TRUE(Move(SQ_2D, SQ_5A, true) == *iter);
-        ++iter;
         CHECK_TRUE(Move(SQ_1E, SQ_5A, true) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_2D, SQ_5A, true) == *iter);
         ++iter;
         CHECK_FALSE(iter != iter.end());
     }
     {
         const auto s = State("B1S1k/5/5/5/K4 b -");
         auto iter = vshogi::CheckNonKingBoardMoveGenerator<Parameters>(s);
-        CHECK_TRUE(Move(SQ_3C, SQ_5A, false) == *iter);
-        ++iter;
-        CHECK_TRUE(Move(SQ_3C, SQ_5A, true) == *iter);
-        ++iter;
         CHECK_TRUE(Move(SQ_2B, SQ_3A, false) == *iter);
         ++iter;
         CHECK_TRUE(Move(SQ_2B, SQ_3A, true) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_3C, SQ_5A, false) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_3C, SQ_5A, true) == *iter);
         ++iter;
         CHECK_FALSE(iter != iter.end());
     }

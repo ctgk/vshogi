@@ -94,7 +94,7 @@ def test_mate_in_three():
 
 def test_visit_count_by_random():
     game = shogi.Game()
-    m = shogi.Move(shogi.SQ_5B, shogi.SQ_2E)
+    m = shogi.Move(shogi.SQ_1B, shogi.SQ_1E)
 
     searcher = Mcts(
         lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.), random_depth=0)

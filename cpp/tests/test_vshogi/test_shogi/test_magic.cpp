@@ -102,7 +102,7 @@ TEST_GROUP (test_shogi_magic) {
             else
                 std::cout << array[sq];
 
-            if (Squares::to_file(sq) == FILE1)
+            if (Squares::to_rank(sq) == RANK9)
                 std::cout << ",\n";
             else
                 std::cout << ", ";
@@ -123,7 +123,7 @@ TEST_GROUP (test_shogi_magic) {
                       << static_cast<std::uint64_t>(array[sq]) << ")"
                       << std::dec;
 
-            if (Squares::to_file(sq) == FILE1)
+            if (Squares::to_rank(sq) == RANK9)
                 std::cout << ",\n";
             else
                 std::cout << ", ";

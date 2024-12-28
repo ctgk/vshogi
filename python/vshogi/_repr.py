@@ -35,4 +35,7 @@ def _repr_board(b) -> str:
         + divider.join(f'{c} ' + row for c in ascii_uppercase[:nr])
         + divider[:-1]
     )
-    return template.format(*[b[i]._to_3char() for i in range(nr * nf)])
+    return template.format(*[
+        b[f * nr + r]._to_3char()
+        for r in range(nr) for f in range(nf - 1, -1, -1)
+    ])

@@ -52,7 +52,7 @@ TEST(test_shogi_bitboard, bitshift)
     {
         const auto bb = BitBoard::from_square(SQ_9H) << 1;
         CHECK_EQUAL(1, bb.hamming_weight());
-        CHECK_TRUE(bb.is_one(SQ_8H));
+        CHECK_TRUE(bb.is_one(SQ_9I));
     }
 }
 

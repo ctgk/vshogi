@@ -313,7 +313,7 @@ private:
     const char* set_sfen_rank(const char* const sfen_rank, const Rank rank)
     {
         constexpr int max_length = 19; // e.g. "+p+p+p+p+p+p+p+p+p/"
-        auto piece_ptr = m_pieces + num_files * static_cast<uint>(rank);
+        auto piece_ptr = m_pieces + rank + (num_files - 1u) * num_ranks;
         const char* sfen_ptr = sfen_rank;
         bool promotion_flag = false;
         for (; sfen_ptr < sfen_rank + max_length; ++sfen_ptr) {
@@ -324,46 +324,55 @@ private:
             case '\0':
                 goto OUT_OF_LOOP;
             case '9':
-                (*piece_ptr++) = VOID; // fall-through
+                *piece_ptr = VOID;
+                piece_ptr -= num_ranks; // fall-through
             case '8':
-                (*piece_ptr++) = VOID; // fall-through
+                *piece_ptr = VOID;
+                piece_ptr -= num_ranks; // fall-through
             case '7':
-                (*piece_ptr++) = VOID; // fall-through
+                *piece_ptr = VOID;
+                piece_ptr -= num_ranks; // fall-through
             case '6':
-                (*piece_ptr++) = VOID; // fall-through
+                *piece_ptr = VOID;
+                piece_ptr -= num_ranks; // fall-through
             case '5':
-                (*piece_ptr++) = VOID; // fall-through
+                *piece_ptr = VOID;
+                piece_ptr -= num_ranks; // fall-through
             case '4':
-                (*piece_ptr++) = VOID; // fall-through
+                *piece_ptr = VOID;
+                piece_ptr -= num_ranks; // fall-through
             case '3':
-                (*piece_ptr++) = VOID; // fall-through
+                *piece_ptr = VOID;
+                piece_ptr -= num_ranks; // fall-through
             case '2':
-                (*piece_ptr++) = VOID; // fall-through
+                *piece_ptr = VOID;
+                piece_ptr -= num_ranks; // fall-through
             case '1':
-                (*piece_ptr++) = VOID;
+                *piece_ptr = VOID;
+                piece_ptr -= num_ranks;
                 break;
             case '+':
                 promotion_flag = true;
                 continue;
             default:
-                (*piece_ptr++) = promotion_flag
-                                     ? PHelper::promote_nocheck(
-                                         PHelper::to_board_piece(*sfen_ptr))
-                                     : PHelper::to_board_piece(*sfen_ptr);
+                *piece_ptr = promotion_flag
+                                 ? PHelper::promote_nocheck(
+                                     PHelper::to_board_piece(*sfen_ptr))
+                                 : PHelper::to_board_piece(*sfen_ptr);
+                piece_ptr -= num_ranks;
                 break;
             }
             promotion_flag = false;
         }
     OUT_OF_LOOP:
-        assert((piece_ptr - m_pieces) % num_files == 0u);
+        assert(piece_ptr + num_ranks == m_pieces + rank);
         return sfen_ptr;
     }
     void append_sfen_rank(const Rank rank, std::string& out) const
     {
-        auto ptr = m_pieces + num_files * static_cast<uint>(rank);
-        const auto end = ptr + num_files;
+        auto ptr = m_pieces + rank + (num_files - 1u) * num_ranks;
         int num_void = 0;
-        for (; ptr < end; ++ptr) {
+        for (; ptr >= m_pieces; ptr -= num_ranks) {
             if (*ptr == VOID) {
                 ++num_void;
                 continue;

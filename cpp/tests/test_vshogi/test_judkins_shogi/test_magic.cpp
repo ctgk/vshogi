@@ -102,7 +102,7 @@ TEST_GROUP (test_judkins_shogi_magic) {
             else
                 std::cout << array[sq];
 
-            if (Squares::to_file(sq) == FILE1)
+            if (Squares::to_rank(sq) == RANK6)
                 std::cout << ",\n";
             else
                 std::cout << ", ";
@@ -137,6 +137,12 @@ TEST(test_judkins_shogi_magic, get_adjacent_attack)
         const auto actual = Magic::get_adjacent_attack(sq, occ);
         CHECK_EQUAL(
             BitBoard::get_attacks_by(B_HI, sq, occ).value(), actual.value());
+    }
+    {
+        const auto actual = Magic::get_adjacent_attack(SQ_2B, bb_3b);
+        const auto expect
+            = (bb_2a | bb_3b | bb_1b | bb_2c | bb_2d | bb_2e | bb_2f);
+        CHECK_EQUAL(expect.value(), actual.value());
     }
 }
 

@@ -12,6 +12,7 @@ TEST_GROUP (test_judkins_shogi_squares) {
 
 TEST(test_judkins_shogi_squares, shift)
 {
+    CHECK_EQUAL(SQ_NA, Squares::shift(SQ_1A, vshogi::DIR_NW));
     CHECK_EQUAL(SQ_4A, Squares::shift(SQ_3C, vshogi::DIR_NNW));
     CHECK_EQUAL(SQ_2A, Squares::shift(SQ_3C, vshogi::DIR_NNE));
     CHECK_EQUAL(SQ_4B, Squares::shift(SQ_3C, vshogi::DIR_NW));

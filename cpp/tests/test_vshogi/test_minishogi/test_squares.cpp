@@ -136,6 +136,8 @@ TEST(test_minishogi_squares, get_direction)
 
     // note that there is no knight move in Minishogi.
     CHECK_EQUAL(vshogi::DIR_NA, Squares::get_direction(SQ_5A, SQ_4C));
+
+    CHECK_EQUAL(vshogi::DIR_NE, Squares::get_direction(SQ_1A, SQ_4D));
 }
 
 TEST(test_minishogi_squares, get_squares_along)

@@ -7,10 +7,10 @@ namespace test_vshogi::test_minishogi
 
 using namespace vshogi::minishogi;
 
-TEST_GROUP (minishogi_board) {
+TEST_GROUP (test_minishogi_board) {
 };
 
-TEST(minishogi_board, get)
+TEST(test_minishogi_board, get)
 {
     auto b = Board();
     CHECK_EQUAL(W_HI, b[SQ_5A]);
@@ -18,7 +18,7 @@ TEST(minishogi_board, get)
     CHECK_EQUAL(VOID, b[SQ_1D]);
 }
 
-TEST(minishogi_board, set)
+TEST(test_minishogi_board, set)
 {
     auto b = Board();
     b.apply(SQ_2D, W_GI);
@@ -28,7 +28,7 @@ TEST(minishogi_board, set)
     CHECK_EQUAL(VOID, b[SQ_1D]);
 }
 
-TEST(minishogi_board, hflip)
+TEST(test_minishogi_board, hflip)
 {
     const auto b = Board();
     const auto actual = b.hflip();
@@ -38,7 +38,7 @@ TEST(minishogi_board, hflip)
     CHECK_EQUAL(B_HI, actual[SQ_5E]);
 }
 
-TEST(minishogi_board, set_sfen)
+TEST(test_minishogi_board, set_sfen)
 {
     {
         const char sfen[] = "2+S1k/1r2+P/2K2/5/5 b 2bP2GSR 1";
@@ -106,11 +106,12 @@ TEST(minishogi_board, set_sfen)
     }
 }
 
-TEST(minishogi_board, append_sfen)
+TEST(test_minishogi_board, append_sfen)
 {
     const char sfen[] = "2+S1k/1r2+P/2K2/5/5 b 2bP2GSR 1";
     auto b = Board();
     b.set_sfen(sfen);
+    CHECK_EQUAL(W_OU, b[SQ_1A]);
 
     const char expected[] = "2+S1k/1r2+P/2K2/5/5";
     auto actual = std::string();
@@ -118,7 +119,7 @@ TEST(minishogi_board, append_sfen)
     STRCMP_EQUAL(expected, actual.c_str());
 }
 
-TEST(minishogi_board, apply)
+TEST(test_minishogi_board, apply)
 {
     {
         auto b = Board();
@@ -136,7 +137,7 @@ TEST(minishogi_board, apply)
     }
 }
 
-TEST(minishogi_board, get_occupied)
+TEST(test_minishogi_board, get_occupied)
 {
     {
         const auto b = Board("4k/5/5/5/K4 b");
@@ -189,7 +190,7 @@ TEST(minishogi_board, get_occupied)
     }
 }
 
-TEST(minishogi_board, is_square_attacked)
+TEST(test_minishogi_board, is_square_attacked)
 {
     {
         // by FU.
@@ -249,7 +250,7 @@ TEST(minishogi_board, is_square_attacked)
     }
 }
 
-TEST(minishogi_board, find_pinned)
+TEST(test_minishogi_board, find_pinned)
 {
     const auto b = Board("b3+r/5/2P1P/5/r1P1K");
     const auto actual = b.find_pinned(vshogi::BLACK);
@@ -257,7 +258,7 @@ TEST(minishogi_board, find_pinned)
     CHECK_EQUAL(expect.value(), actual.value());
 }
 
-TEST(minishogi_board, find_ranging_attacker)
+TEST(test_minishogi_board, find_ranging_attacker)
 {
     {
         const auto b = Board("5/5/5/5/4R");
@@ -285,7 +286,7 @@ TEST(minishogi_board, find_ranging_attacker)
     }
 }
 
-TEST(minishogi_board, is_drop_pawn_mate)
+TEST(test_minishogi_board, is_drop_pawn_mate)
 {
     {
         const auto b = Board("3rk/5/4G/5/4K");

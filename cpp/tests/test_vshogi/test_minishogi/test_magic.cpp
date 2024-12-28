@@ -98,7 +98,7 @@ TEST_GROUP (test_minishogi_magic) {
             else
                 std::cout << array[sq];
 
-            if (Squares::to_file(sq) == FILE1)
+            if (Squares::to_rank(sq) == RANK5)
                 std::cout << ",\n";
             else
                 std::cout << ", ";

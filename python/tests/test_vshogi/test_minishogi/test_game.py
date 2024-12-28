@@ -45,7 +45,7 @@ def test_board():
     game: shogi.Game = shogi.Game()
     actual = np.asarray(game.board)
 
-    expected = np.array([
+    expected = np.rot90([
         [shogi.W_HI, shogi.W_KA, shogi.W_GI, shogi.W_KI, shogi.W_OU],
         [shogi.VOID, shogi.VOID, shogi.VOID, shogi.VOID, shogi.W_FU],
         [shogi.VOID, shogi.VOID, shogi.VOID, shogi.VOID, shogi.VOID],
@@ -195,42 +195,42 @@ def test_array_white():
     assert np.allclose(actual[0, ..., 3], 0)  # white's captured bishop
     assert np.allclose(actual[0, ..., 4], 0)  # white's captured rook
     assert np.allclose(actual[0, ..., 5], 0)  # white's board pawn
-    assert np.allclose(actual[0, ..., 6], [
+    assert np.allclose(actual[0, ..., 6], np.rot90([
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
         [0, 0, 1, 0, 0],
-    ])  # white's board silver
-    assert np.allclose(actual[0, ..., 7], [
+    ]))  # white's board silver
+    assert np.allclose(actual[0, ..., 7], np.rot90([
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
         [0, 0, 0, 1, 0],
-    ])  # white's board bishop
-    assert np.allclose(actual[0, ..., 8], [
+    ]))  # white's board bishop
+    assert np.allclose(actual[0, ..., 8], np.rot90([
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 1],
-    ])  # white's board rook
-    assert np.allclose(actual[0, ..., 9], [
+    ]))  # white's board rook
+    assert np.allclose(actual[0, ..., 9], np.rot90([
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
         [0, 1, 0, 0, 0],
-    ])  # white's board gold
+    ]))  # white's board gold
     assert np.allclose(actual[0, ..., 15], 1)  # black's captured pawn
-    assert np.allclose(actual[0, ..., 23], [
+    assert np.allclose(actual[0, ..., 23], np.rot90([
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
         [1, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
-    ])  # black's rook
+    ]))  # black's rook
 
 
 def test_stand():

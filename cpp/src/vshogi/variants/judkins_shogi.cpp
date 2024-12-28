@@ -33,12 +33,12 @@ template <>
 judkins_shogi::Board::Board()
     : m_pieces{
         // clang-format off
-        W_HI, W_KA, W_KE, W_GI, W_KI, W_OU,
-        VOID, VOID, VOID, VOID, VOID, W_FU,
-        VOID, VOID, VOID, VOID, VOID, VOID,
-        VOID, VOID, VOID, VOID, VOID, VOID,
-        B_FU, VOID, VOID, VOID, VOID, VOID,
-        B_OU, B_KI, B_GI, B_KE, B_KA, B_HI,
+        W_OU, W_FU, VOID, VOID, VOID, B_HI,
+        W_KI, VOID, VOID, VOID, VOID, B_KA,
+        W_GI, VOID, VOID, VOID, VOID, B_KE,
+        W_KE, VOID, VOID, VOID, VOID, B_GI,
+        W_KA, VOID, VOID, VOID, VOID, B_KI,
+        W_HI, VOID, VOID, VOID, B_FU, B_OU,
         // clang-format on
     }, m_king_locations{}, m_bb_color{}, m_bb_piece{}
 {

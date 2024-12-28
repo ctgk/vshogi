@@ -37,15 +37,15 @@ template <>
 shogi::Board::Board()
     : m_pieces{
         // clang-format off
-        W_KY, W_KE, W_GI, W_KI, W_OU, W_KI, W_GI, W_KE, W_KY,
-        VOID, W_HI, VOID, VOID, VOID, VOID, VOID, W_KA, VOID,
-        W_FU, W_FU, W_FU, W_FU, W_FU, W_FU, W_FU, W_FU, W_FU,
-        VOID, VOID, VOID, VOID, VOID, VOID, VOID, VOID, VOID,
-        VOID, VOID, VOID, VOID, VOID, VOID, VOID, VOID, VOID,
-        VOID, VOID, VOID, VOID, VOID, VOID, VOID, VOID, VOID,
-        B_FU, B_FU, B_FU, B_FU, B_FU, B_FU, B_FU, B_FU, B_FU,
-        VOID, B_KA, VOID, VOID, VOID, VOID, VOID, B_HI, VOID,
-        B_KY, B_KE, B_GI, B_KI, B_OU, B_KI, B_GI, B_KE, B_KY,
+        W_KY, VOID, W_FU, VOID, VOID, VOID, B_FU, VOID, B_KY,
+        W_KE, W_KA, W_FU, VOID, VOID, VOID, B_FU, B_HI, B_KE,
+        W_GI, VOID, W_FU, VOID, VOID, VOID, B_FU, VOID, B_GI,
+        W_KI, VOID, W_FU, VOID, VOID, VOID, B_FU, VOID, B_KI,
+        W_OU, VOID, W_FU, VOID, VOID, VOID, B_FU, VOID, B_OU,
+        W_KI, VOID, W_FU, VOID, VOID, VOID, B_FU, VOID, B_KI,
+        W_GI, VOID, W_FU, VOID, VOID, VOID, B_FU, VOID, B_GI,
+        W_KE, W_HI, W_FU, VOID, VOID, VOID, B_FU, B_KA, B_KE,
+        W_KY, VOID, W_FU, VOID, VOID, VOID, B_FU, VOID, B_KY,
         // clang-format on
     }, m_king_locations{}, m_bb_color{}, m_bb_piece{}
 {

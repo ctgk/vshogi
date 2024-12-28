@@ -34,15 +34,6 @@ private:
                           [(C::num_files > C::num_ranks) ? C::num_files
                                                          : C::num_ranks];
 
-    static constexpr File file_right_most()
-    {
-        return static_cast<File>(C::num_files - 1);
-    }
-    static constexpr File file_left_most()
-    {
-        return static_cast<File>(0);
-    }
-
 public:
     static constexpr Rank RANK1 = static_cast<Rank>(0); // NOLINT
     static constexpr Rank RANK2 = static_cast<Rank>(1); // NOLINT
@@ -57,26 +48,24 @@ public:
 
     static constexpr File to_file(const Square& sq)
     {
-        return static_cast<File>(sq % C::num_files);
+        return static_cast<File>(sq / C::num_ranks);
     }
     static constexpr Rank to_rank(const Square& sq)
     {
-        return static_cast<Rank>(sq / C::num_files);
+        return static_cast<Rank>(sq % C::num_ranks);
     }
     static constexpr Square to_square(const File& f, const Rank& r)
     {
-        return static_cast<Square>(r * C::num_files + f);
+        return static_cast<Square>(f * C::num_ranks + r);
     }
     static Square to_square(const char usi[2])
     {
         return to_square(
-            hflip(static_cast<File>(usi[0] - '1')),
-            static_cast<Rank>(usi[1] - 'a'));
+            static_cast<File>(usi[0] - '1'), static_cast<Rank>(usi[1] - 'a'));
     }
     static void to_usi(char usi[2], const Square& sq)
     {
-        usi[0] = static_cast<char>(
-            static_cast<int>(C::num_files - 1 - to_file(sq)) + '1');
+        usi[0] = static_cast<char>(static_cast<int>(to_file(sq)) + '1');
         usi[1] = static_cast<char>(static_cast<int>(to_rank(sq)) + 'a');
     }
     static Square hflip(const Square& sq)
@@ -123,20 +112,16 @@ public:
     }
     constexpr static int direction_to_delta(const DirectionEnum& d)
     {
-        constexpr int nf = static_cast<int>(C::num_files);
-        constexpr int table[]
-            = {-nf - 1,
-               -nf,
-               1 - nf,
-               -1,
-               1,
-               nf - 1,
-               nf,
-               nf + 1,
-               2 * nf - 1,
-               2 * nf + 1,
-               -2 * nf - 1,
-               1 - 2 * nf};
+        constexpr int r = static_cast<int>(C::num_ranks);
+        constexpr int table[] = {
+            // clang-format off
+            -1+r, -1, -1-r,
+               r,       -r,
+            +1+r, +1, +1-r,
+            +2+r,     +2-r,
+            -2+r,     -2-r,
+            // clang-format on
+        };
         return table[d];
     }
     static const Square*
@@ -150,6 +135,8 @@ public:
 private:
     static void init_shift_table()
     {
+        constexpr File f1 = static_cast<File>(0);
+        constexpr File fn = static_cast<File>(C::num_ranks - 1);
         constexpr Rank r1 = static_cast<Rank>(0);
         constexpr Rank r2 = static_cast<Rank>(1);
         constexpr Rank rm = static_cast<Rank>(C::num_ranks - 2);
@@ -162,8 +149,8 @@ private:
                     || ((r == r2) && (dir == DIR_NNW || dir == DIR_NNE))
                     || ((r == rn) && has_dir_s(dir))
                     || ((r == rm) && (dir == DIR_SSW || dir == DIR_SSE))
-                    || ((f == file_right_most()) && has_dir_e(dir))
-                    || ((f == file_left_most()) && has_dir_w(dir)))
+                    || ((f == f1) && has_dir_e(dir))
+                    || ((f == fn) && has_dir_w(dir)))
                     shift_table[sq][dir] = SQ_NA;
                 else
                     shift_table[sq][dir] = static_cast<Square>(

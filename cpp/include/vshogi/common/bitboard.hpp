@@ -19,6 +19,7 @@ class BitBoard
 private:
     using C = Configuration<Parameters>;
     using ColoredPiece = typename C::ColoredPiece;
+    using File = typename C::File;
     using Rank = typename C::Rank;
     using Square = typename C::Square;
     using UInt = typename C::BaseTypeBitBoard;
@@ -165,40 +166,67 @@ public:
     {
         return BitBoard(1) << sq;
     }
-    static BitBoard from_rank(const Rank& r)
+    template <Square SQ>
+    static BitBoard from_square()
     {
-        return BitBoard(
-            static_cast<UInt>((1u << C::num_files) - 1u)
-            << (static_cast<uint>(r) * C::num_files));
+        return BitBoard(1) << SQ;
+    }
+    template <Square SQ1, Square SQ2, Square... Args>
+    static constexpr BitBoard from_square()
+    {
+        return from_square<SQ1>() | from_square<SQ2, Args...>();
+    }
+    static constexpr BitBoard from_rank(const Rank& r)
+    {
+        return from_rank1<>() << r;
+    }
+    template <Rank R>
+    static constexpr BitBoard from_rank()
+    {
+        return from_rank1<>() << R;
+    }
+    template <Rank R1, Rank R2, Rank... Args>
+    static constexpr BitBoard from_rank()
+    {
+        return from_rank<R1>() | from_rank<R2, Args...>();
+    }
+    static constexpr BitBoard from_file(const File& f)
+    {
+        return BitBoard(static_cast<UInt>(1u << C::num_ranks) - 1u)
+               << (static_cast<uint>(f) * C::num_ranks);
     }
     static BitBoard get_promotion_zone(const ColorEnum& c)
     {
-        constexpr uint s
-            = C::num_squares - C::num_promotion_ranks * C::num_files;
-        static const BitBoard promotion_zone_array[2]
-            = {((~BitBoard(0)) << s) >> s, ((~BitBoard(0)) >> s) << s};
+        constexpr uint s = C::num_ranks - C::num_promotion_ranks;
+        constexpr BitBoard br = from_ranks<C::num_promotion_ranks>();
+        static const BitBoard promotion_zone_array[2] = {br, br << s};
         return promotion_zone_array[c];
     }
 
     constexpr BitBoard shift(const DirectionEnum& dir) const
     {
         constexpr auto bb_all = ~BitBoard(0);
-        constexpr auto bb_all_but_lmost = ~file_mask_leftmost();
-        constexpr auto bb_all_but_rmost = ~file_mask_rightmost();
+        constexpr auto bb_all_but_top = ~from_rank(static_cast<Rank>(0));
+        constexpr auto bb_all_but_top2
+            = bb_all_but_top & ~from_rank(static_cast<Rank>(1));
+        constexpr auto bb_all_but_btm
+            = ~from_rank(static_cast<Rank>(C::num_ranks - 1u));
+        constexpr auto bb_all_but_btm2
+            = bb_all_but_btm & ~from_rank(static_cast<Rank>(C::num_ranks - 2u));
         const auto delta = SHelper::direction_to_delta(dir);
-        constexpr BitBoard filemask[] = {
+        constexpr BitBoard rankmask[] = {
             // clang-format off
-            bb_all_but_lmost, bb_all, bb_all_but_rmost,
-            bb_all_but_lmost,         bb_all_but_rmost,
-            bb_all_but_lmost, bb_all, bb_all_but_rmost,
-            bb_all_but_lmost,         bb_all_but_rmost,
-            bb_all_but_lmost,         bb_all_but_rmost,
+            bb_all_but_top, bb_all_but_top, bb_all_but_top,
+            bb_all,                         bb_all,
+            bb_all_but_btm, bb_all_but_btm, bb_all_but_btm,
+            bb_all_but_btm2,                bb_all_but_btm2,
+            bb_all_but_top2,                bb_all_but_top2,
             // clang-format on
         };
         if (delta > 0)
-            return (*this & filemask[dir]) << static_cast<uint>(delta);
+            return (*this & rankmask[dir]) << static_cast<uint>(delta);
         else
-            return (*this & filemask[dir]) >> static_cast<uint>(-delta);
+            return (*this & rankmask[dir]) >> static_cast<uint>(-delta);
     }
     static BitBoard
     compute_2nd_neighbor_of(const Square& sq, const ColorEnum& c)
@@ -396,24 +424,22 @@ private:
     }
 
 private:
-    template <uint NumSquaresFromTop = C::num_ranks>
-    static constexpr BitBoard file_mask_leftmost()
+    template <uint NumSqsFromSQ1A = C::num_files>
+    static constexpr BitBoard from_rank1()
     {
-        if constexpr (NumSquaresFromTop == 0u)
+        if constexpr (NumSqsFromSQ1A == 0u)
             return BitBoard(0);
         else
-            return (file_mask_leftmost<NumSquaresFromTop - 1>() << C::num_files)
+            return (from_rank1<NumSqsFromSQ1A - 1>() << C::num_ranks)
                    | BitBoard(1);
     }
-    template <uint NumSquaresFromTop = C::num_ranks>
-    static constexpr BitBoard file_mask_rightmost()
+    template <uint NumRanks>
+    static constexpr BitBoard from_ranks()
     {
-        if constexpr (NumSquaresFromTop == 0u)
+        if constexpr (NumRanks == 0u)
             return BitBoard(0);
         else
-            return (BitBoard(1) << (C::num_files - 1))
-                   | (file_mask_rightmost<NumSquaresFromTop - 1>()
-                      << C::num_files);
+            return (from_ranks<NumRanks - 1>() << 1u) | from_rank1<>();
     }
     static BitBoard compute_attack_by(const ColoredPiece& p, const Square& sq)
     {

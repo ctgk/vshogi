@@ -567,7 +567,7 @@ class Game(abc.ABC):
 
         Examples
         --------
-        >>> import vshogi.minishogi as shogi
+        >>> import vshogi.minishogi as shogi; import numpy as np
         >>> x = shogi.Game("rbs1k/4g/5/P4/KGSB1 b P").to_dlshogi_features()
         >>> print(x[0, ..., 0]) # Black's FU on stand
         [[1. 1. 1. 1. 1.]
@@ -575,26 +575,26 @@ class Game(abc.ABC):
          [1. 1. 1. 1. 1.]
          [1. 1. 1. 1. 1.]
          [1. 1. 1. 1. 1.]]
-        >>> print(x[0, ..., 10]) # Black's OU on board
+        >>> print(np.rot90(x[0, ..., 10], -1)) # Black's OU on board
         [[0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [1. 0. 0. 0. 0.]]
-        >>> print(x[0, ..., 15]) # White's FU on stand
+        >>> print(np.rot90(x[0, ..., 15], -1)) # White's FU on stand
         [[0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]]
-        >>> print(x[0, ..., 25]) # White's LI on board
+        >>> print(np.rot90(x[0, ..., 25], -1)) # White's LI on board
         [[0. 0. 0. 0. 1.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]]
         >>> shogi.Game("rbs1k/4g/5/P4/KGSB1 w P").to_dlshogi_features(out=x)
-        >>> print(x[0, ..., 9]) # White's KI on board from white's view
+        >>> print(np.rot90(x[0, ..., 9], -1)) # White's KI from white's view
         [[0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]

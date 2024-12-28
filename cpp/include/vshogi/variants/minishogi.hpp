@@ -64,39 +64,26 @@ enum ColoredPieceEnum : std::uint8_t
 
 /**
  * @brief Enumeration of board squares following SFEN.
- * @details
- *   5   4   3   2   1
- * +---+---+---+---+---+
- * | 0 | 1 | 2 | 3 | 4 | a (1)
- * +---+---+---+---+---+
- * | 5 | 6 | 7 | 8 | 9 | b (2)
- * +---+---+---+---+---+
- * | 10| 11| 12| 13| 14| c (3)
- * +---+---+---+---+---+
- * | 15| 16| 17| 18| 19| d (4)
- * +---+---+---+---+---+
- * | 20| 21| 22| 23| 24| e (5)
- * +---+---+---+---+---+
  */
 enum SquareEnum : uint
 {
     // clang-format off
-    SQ_5A =  0, SQ_4A =  1, SQ_3A =  2, SQ_2A =  3, SQ_1A =  4,
-    SQ_5B =  5, SQ_4B =  6, SQ_3B =  7, SQ_2B =  8, SQ_1B =  9,
-    SQ_5C = 10, SQ_4C = 11, SQ_3C = 12, SQ_2C = 13, SQ_1C = 14,
-    SQ_5D = 15, SQ_4D = 16, SQ_3D = 17, SQ_2D = 18, SQ_1D = 19,
-    SQ_5E = 20, SQ_4E = 21, SQ_3E = 22, SQ_2E = 23, SQ_1E = 24,
+    SQ_5A = 20, SQ_4A = 15, SQ_3A = 10, SQ_2A = 5, SQ_1A = 0,
+    SQ_5B = 21, SQ_4B = 16, SQ_3B = 11, SQ_2B = 6, SQ_1B = 1,
+    SQ_5C = 22, SQ_4C = 17, SQ_3C = 12, SQ_2C = 7, SQ_1C = 2,
+    SQ_5D = 23, SQ_4D = 18, SQ_3D = 13, SQ_2D = 8, SQ_1D = 3,
+    SQ_5E = 24, SQ_4E = 19, SQ_3E = 14, SQ_2E = 9, SQ_1E = 4,
     // clang-format on
-    SQ_NA,
+    SQ_NA = 25,
     NUM_SQ = 25,
 };
 enum FileEnum : uint
 {
-    FILE5 = 0,
-    FILE4,
-    FILE3,
+    FILE1 = 0,
     FILE2,
-    FILE1,
+    FILE3,
+    FILE4,
+    FILE5,
 };
 enum RankEnum : uint
 {
@@ -153,6 +140,7 @@ static_assert(B_OU == Pieces::B_OU);
 static_assert(W_OU == Pieces::W_OU);
 static_assert(VOID == Pieces::VOID);
 
+constexpr BitBoard bb_na = BitBoard();
 constexpr BitBoard bb_1a = (BitBoard(1) << static_cast<uint>(SQ_1A));
 constexpr BitBoard bb_1b = (BitBoard(1) << static_cast<uint>(SQ_1B));
 constexpr BitBoard bb_1c = (BitBoard(1) << static_cast<uint>(SQ_1C));
@@ -307,21 +295,21 @@ template <>
 inline const minishogi::BitBoard
     minishogi::Magic::premask_vertical[minishogi::Config::num_squares]
     = {
-        0x00008420, 0x00010840, 0x00021080, 0x00042100, 0x00084200,
-        0x00008400, 0x00010800, 0x00021000, 0x00042000, 0x00084000,
-        0x00008020, 0x00010040, 0x00020080, 0x00040100, 0x00080200,
-        0x00000420, 0x00000840, 0x00001080, 0x00002100, 0x00004200,
-        0x00008420, 0x00010840, 0x00021080, 0x00042100, 0x00084200,
-};
-template <>
-inline const minishogi::BitBoard
-    minishogi::Magic::premask_horizontal[minishogi::Config::num_squares]
-    = {
         0x0000000e, 0x0000000c, 0x0000000a, 0x00000006, 0x0000000e,
         0x000001c0, 0x00000180, 0x00000140, 0x000000c0, 0x000001c0,
         0x00003800, 0x00003000, 0x00002800, 0x00001800, 0x00003800,
         0x00070000, 0x00060000, 0x00050000, 0x00030000, 0x00070000,
         0x00e00000, 0x00c00000, 0x00a00000, 0x00600000, 0x00e00000,
+};
+template <>
+inline const minishogi::BitBoard
+    minishogi::Magic::premask_horizontal[minishogi::Config::num_squares]
+    = {
+        0x00008420, 0x00010840, 0x00021080, 0x00042100, 0x00084200,
+        0x00008400, 0x00010800, 0x00021000, 0x00042000, 0x00084000,
+        0x00008020, 0x00010040, 0x00020080, 0x00040100, 0x00080200,
+        0x00000420, 0x00000840, 0x00001080, 0x00002100, 0x00004200,
+        0x00008420, 0x00010840, 0x00021080, 0x00042100, 0x00084200,
 };
 template <>
 inline const minishogi::BitBoard
@@ -337,31 +325,31 @@ template <>
 inline const std::uint32_t
     minishogi::Magic::magic_number_vertical[minishogi::Config::num_squares]
     = {
-        0x01208480, 0x01102004, 0x00811600, 0x28209001, 0x00325820,
-        0x00102e08, 0x01822001, 0x51288900, 0x0080d000, 0x00d21400,
-        0x0200a004, 0x10808000, 0x208028c2, 0x0488c404, 0x00108c90,
-        0x24a10122, 0x42020002, 0x10414020, 0x00440000, 0x00410000,
-        0x8118a020, 0x04828800, 0x00a24008, 0x82111400, 0x002c6908,
+        0x50881008, 0x05124000, 0x90010000, 0x0a00802a, 0x10000001,
+        0x00410000, 0x03408118, 0x01104008, 0x00444200, 0x01110020,
+        0x02430108, 0x00021408, 0x44040621, 0x28a80a00, 0x01240140,
+        0x02101010, 0x08801060, 0x28209001, 0x00003200, 0x60002001,
+        0x020040a4, 0x02020527, 0x00002100, 0x40080100, 0x080a8080,
 };
 template <>
 inline const std::uint32_t
     minishogi::Magic::magic_number_horizontal[minishogi::Config::num_squares]
     = {
-        0x8842842c, 0x04100100, 0x10020004, 0xa0400000, 0x08900200,
-        0x00c80800, 0x02240001, 0x22300a40, 0x5944080a, 0x03610010,
-        0x00020420, 0x40410008, 0x00248220, 0x40268080, 0x00112080,
-        0x40049040, 0x18a21080, 0x080c3a14, 0x40408a04, 0x00002000,
-        0x08020080, 0x64801091, 0x08000428, 0x60010524, 0x00840240,
+        0x0488c404, 0x04961210, 0x01041341, 0x0023f004, 0x04704f00,
+        0x84082000, 0x2084888a, 0x00082000, 0x000450a1, 0x08084801,
+        0x02822001, 0x00a24008, 0x01002050, 0x82111400, 0x04509000,
+        0x00a10210, 0x02221000, 0x00280810, 0x22808904, 0x00424000,
+        0x0520a100, 0x42c22000, 0x00824000, 0x0288900a, 0x00088808,
 };
 template <>
 inline const std::uint32_t
     minishogi::Magic::magic_number_diagonal[minishogi::Config::num_squares]
     = {
-        0x42c22000, 0x8084c482, 0x00824000, 0x88420080, 0x0412c050,
-        0x4002c000, 0x00028402, 0x86040008, 0x0288900a, 0x20020888,
-        0x00422000, 0x40201801, 0x00881000, 0x0128a400, 0x00102000,
-        0x00291120, 0x04144900, 0x00040100, 0x00814400, 0x404400a4,
-        0x10218802, 0x00020d48, 0x00022a02, 0x892c0802, 0x0064a200,
+        0x32511000, 0x40210680, 0xa0820000, 0x81240020, 0x00291120,
+        0x04144900, 0x10218802, 0x00020d48, 0x0021c000, 0x00022a02,
+        0x0064a200, 0x1e404000, 0x4111a048, 0x00202002, 0x00621000,
+        0x20824400, 0x001d0c10, 0x04040800, 0x35220a00, 0x40240004,
+        0x08842024, 0x20045010, 0x02051010, 0x50050c04, 0x02043600,
 };
 template <>
 inline minishogi::BitBoard

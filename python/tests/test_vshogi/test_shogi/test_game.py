@@ -28,17 +28,17 @@ def test_get_attention():
     a = shogi.Game.get_attention()
     assert a.shape == (81, 81)
     assert np.allclose(a.T, a)
-    expect = np.array([
-        [1, 0, 1, 1, 1, 1, 1, 1, 1],
-        [1, 1, 1, 0, 0, 0, 0, 0, 0],
-        [1, 1, 1, 1, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 1, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 1, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 1, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 1, 0],
+    expect = np.rot90(np.array([
+        [0, 0, 0, 0, 0, 0, 0, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1, 1],
+        [0, 0, 0, 0, 0, 0, 1, 1, 1],
+        [0, 0, 0, 0, 0, 1, 0, 0, 1],
+        [0, 0, 0, 0, 1, 0, 0, 0, 1],
+        [0, 0, 0, 1, 0, 0, 0, 0, 1],
+        [0, 0, 1, 0, 0, 0, 0, 0, 1],
         [0, 1, 0, 0, 0, 0, 0, 0, 1],
-        [0, 1, 0, 0, 0, 0, 0, 0, 0],
-    ])
+    ]))
     assert np.allclose(a[1].reshape(9, 9), expect)
 
 
@@ -203,7 +203,7 @@ def test_array_black():
     assert np.allclose(actual[0, ..., 4], 1)  # black's captured bishop
     assert np.allclose(actual[0, ..., 5], 0)  # black's captured rook
     assert np.allclose(actual[0, ..., 6], 0)  # black's captured gold
-    assert np.allclose(actual[0, ..., 7], [
+    assert np.allclose(actual[0, ..., 7], np.rot90([
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -213,8 +213,8 @@ def test_array_black():
         [0, 1, 0, 1, 1, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ])  # black's board pawn
-    assert np.allclose(actual[0, ..., 8], [
+    ]))  # black's board pawn
+    assert np.allclose(actual[0, ..., 8], np.rot90([
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -224,8 +224,8 @@ def test_array_black():
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 1, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ])  # black's board lance
-    assert np.allclose(actual[0, ..., 9], [
+    ]))  # black's board lance
+    assert np.allclose(actual[0, ..., 9], np.rot90([
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -235,8 +235,8 @@ def test_array_black():
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 1, 0, 0, 0, 0, 0, 0, 0],
-    ])  # black's board knight
-    assert np.allclose(actual[0, ..., 10], [
+    ]))  # black's board knight
+    assert np.allclose(actual[0, ..., 10], np.rot90([
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -246,10 +246,10 @@ def test_array_black():
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 1, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ])  # black's board silver
+    ]))  # black's board silver
     assert np.allclose(actual[0, ..., 11], 0)  # black's board bishop
     assert np.allclose(actual[0, ..., 12], 0)  # black's board rook
-    assert np.allclose(actual[0, ..., 13], [
+    assert np.allclose(actual[0, ..., 13], np.rot90([
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -259,8 +259,8 @@ def test_array_black():
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 1, 0, 1, 0, 0, 0, 0],
-    ])  # black's board gold
-    assert np.allclose(actual[0, ..., 14], [
+    ]))  # black's board gold
+    assert np.allclose(actual[0, ..., 14], np.rot90([
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -270,9 +270,9 @@ def test_array_black():
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 1, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ])  # black's board king
+    ]))  # black's board king
     assert np.allclose(actual[0, ..., 15], 0)  # black's promoted pawn
-    assert np.allclose(actual[0, ..., 14 + 21], [
+    assert np.allclose(actual[0, ..., 14 + 21], np.rot90([
         [0, 0, 1, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -282,7 +282,7 @@ def test_array_black():
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ])  # white's king
+    ]))  # white's king
 
 
 def test_array_white():
@@ -320,7 +320,7 @@ def test_array_white():
     assert np.allclose(actual[0, ..., 4], 1)  # White's captured bishop
     assert np.allclose(actual[0, ..., 5], 1)  # White's captured rook
     assert np.allclose(actual[0, ..., 6], 1)  # White's captured gold
-    assert np.allclose(actual[0, ..., 7], [
+    assert np.allclose(actual[0, ..., 7], np.rot90([
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -330,8 +330,8 @@ def test_array_white():
         [0, 0, 0, 0, 1, 0, 0, 1, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ])  # White's board pawn
-    assert np.allclose(actual[0, ..., 8], [
+    ]))  # White's board pawn
+    assert np.allclose(actual[0, ..., 8], np.rot90([
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -341,8 +341,8 @@ def test_array_white():
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 1],
-    ])  # White's board lance
-    assert np.allclose(actual[0, ..., 9], [
+    ]))  # White's board lance
+    assert np.allclose(actual[0, ..., 9], np.rot90([
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -352,8 +352,8 @@ def test_array_white():
         [0, 0, 0, 0, 0, 0, 1, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ])  # White's board knight
-    assert np.allclose(actual[0, ..., 10], [
+    ]))  # White's board knight
+    assert np.allclose(actual[0, ..., 10], np.rot90([
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -363,10 +363,10 @@ def test_array_white():
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ])  # White's board silver
+    ]))  # White's board silver
     assert np.allclose(actual[0, ..., 11], 0)  # White's board bishop
     assert np.allclose(actual[0, ..., 12], 0)  # White's board rook
-    assert np.allclose(actual[0, ..., 13], [
+    assert np.allclose(actual[0, ..., 13], np.rot90([
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -376,8 +376,8 @@ def test_array_white():
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 1, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ])  # White's board gold
-    assert np.allclose(actual[0, ..., 14], [
+    ]))  # White's board gold
+    assert np.allclose(actual[0, ..., 14], np.rot90([
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -387,8 +387,8 @@ def test_array_white():
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 1, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ])  # White's board king
-    assert np.allclose(actual[0, ..., 15], [
+    ]))  # White's board king
+    assert np.allclose(actual[0, ..., 15], np.rot90([
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 1, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -398,12 +398,12 @@ def test_array_white():
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ])  # White's board promoted pawn
+    ]))  # White's board promoted pawn
     assert np.allclose(actual[0, ..., 0 + 21], 2)  # Black's captured pawn
     assert np.allclose(actual[0, ..., 1 + 21], 2)  # Black's captured lance
     assert np.allclose(actual[0, ..., 2 + 21], 0)  # Black's captured knight
     assert np.allclose(actual[0, ..., 3 + 21], 2)  # Black's captured silver
-    assert np.allclose(actual[0, ..., 14 + 21], [
+    assert np.allclose(actual[0, ..., 14 + 21], np.rot90([
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 1, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -413,25 +413,35 @@ def test_array_white():
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ])  # Black's board king
+    ]))  # Black's board king
 
 
 @pytest.mark.parametrize('game, move, expected', [
-    (shogi.Game(), shogi.Move(shogi.F2, shogi.G2), np.eye(2187)[1410]),
+    (
+        shogi.Game(),
+        shogi.Move(shogi.F2, shogi.G2),
+        np.eye(2187)[int(shogi.F2) * (10 * 2 + 7) + 6],
+    ),
     (
         shogi.Game('9/9/1k7/9/9/9/9/9/8K w -'),
         shogi.Move(shogi.D8, shogi.C8),
-        np.eye(2187)[1410],
+        np.eye(2187)[int(shogi.F2) * (10 * 2 + 7) + 6],
     ),
     (
         shogi.Game(),
         {shogi.Move('2g2f'): 1, shogi.Move('7g7f'): 1},
-        0.5 * (np.eye(2187)[1410] + np.eye(2187)[1275]),
+        0.5 * (
+            np.eye(2187)[int(shogi.F2) * (10 * 2 + 7) + 6]
+            + np.eye(2187)[int(shogi.F7) * (10 * 2 + 7) + 6]
+        ),
     ),
     (
         shogi.Game('9/9/9/9/9/9/9/9/9 w - 1'),
         {shogi.Move('8c8d'): 1, shogi.Move('3c3d'): 1},
-        0.5 * (np.eye(2187)[1410] + np.eye(2187)[1275]),
+        0.5 * (
+            np.eye(2187)[int(shogi.F2) * (10 * 2 + 7) + 6]
+            + np.eye(2187)[int(shogi.F7) * (10 * 2 + 7) + 6]
+        ),
     ),
 ])
 def test_to_dlshogi_policy(game, move, expected):
