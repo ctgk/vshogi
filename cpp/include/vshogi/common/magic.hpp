@@ -135,11 +135,11 @@ public:
                     ^= static_cast<std::uint32_t>(relevant_occupancies.value())
                        * magic;
 
-                //// Note: Shifting 32-bit fails to differentiate masks between
-                //// bb_9g(=54) and bb_5c(=22=54-32), which both of them lie
-                //// along a diagonal direction from SQ_3A.
+                // Note: Shifting 32-bit fails to differentiate masks between
+                // bb_9g(=54) and bb_5c(=22=54-32), which both of them lie
+                // along a diagonal direction from SQ_3A.
+                // Possibly the same in major column board representation.
                 // relevant_occupancies >>= 32u;
-
                 relevant_occupancies >>= 31u;
             }
         }

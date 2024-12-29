@@ -222,10 +222,16 @@ public:
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_stand(state.get_stand(m_turn)), m_sq_iter{}, m_pt_iter{}
     {
-        if (state.in_double_check()) {
+        if (state.in_double_check()
+            || (state.in_check()
+                && !PHelper::is_ranging_piece(
+                    m_board[state.get_checker_location()]))) {
             m_pt_iter = static_cast<PieceType>(num_stand_piece_types);
             return;
         }
+        increment_piece_type_unless_in_stand();
+        if (m_pt_iter == num_stand_piece_types)
+            return;
         init_sq_iter();
         increment_iterators_unless_legal();
     }
@@ -335,9 +341,12 @@ private:
                 ++m_sq_iter;
                 continue;
             }
-            if (m_board.has_pawn_in_file(
-                    SHelper::to_file(*m_sq_iter), m_turn)) {
-                ++m_sq_iter;
+            const auto f = SHelper::to_file(*m_sq_iter);
+            if (m_board.has_pawn_in_file(f, m_turn)) {
+                do {
+                    ++m_sq_iter;
+                }
+                while (SHelper::to_file(*m_sq_iter) == f);
                 continue;
             }
             if (m_board.is_drop_pawn_mate(*m_sq_iter, m_turn)) {
@@ -392,10 +401,16 @@ public:
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_stand(state.get_stand(m_turn)), m_sq_iter{}, m_pt_iter{}
     {
-        if (state.in_double_check()) {
+        if (state.in_double_check()
+            || (state.in_check()
+                && !PHelper::is_ranging_piece(
+                    m_board[state.get_checker_location()]))) {
             m_pt_iter = static_cast<PieceType>(num_stand_piece_types);
             return;
         }
+        increment_piece_type_unless_in_stand();
+        if (m_pt_iter == num_stand_piece_types)
+            return;
         init_sq_iter();
         increment_iterators_unless_legal();
     }
