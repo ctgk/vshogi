@@ -125,11 +125,25 @@ public:
     static uint to_magic_table_index(
         BitBoardType relevant_occupancies, const std::uint32_t magic)
     {
-        std::uint32_t product = 0u;
         if constexpr (sizeof(BitBoardType) == sizeof(std::uint32_t)) {
             // shifting 32-bit of 32-bit integer results in undefined behavior.
-            product = relevant_occupancies.value() * magic;
+            std::uint32_t product = relevant_occupancies.value() * magic;
+            return product >> (32u - log2_magic_table_size);
+        } else if constexpr (sizeof(BitBoardType) == sizeof(std::uint64_t)) {
+            std::uint64_t r = relevant_occupancies.value();
+            std::uint32_t product = static_cast<std::uint32_t>(r) * magic;
+            product ^= static_cast<std::uint32_t>(r >> 31u) * magic;
+            return product >> (32u - log2_magic_table_size);
+        } else if constexpr (sizeof(BitBoardType) == sizeof(uint128)) {
+            uint128 r = relevant_occupancies.value();
+            std::uint32_t product = static_cast<std::uint32_t>(r) * magic;
+            r >>= 31u;
+            product ^= static_cast<std::uint32_t>(r) * magic;
+            r >>= 31u;
+            product ^= static_cast<std::uint32_t>(r) * magic;
+            return product >> (32u - log2_magic_table_size);
         } else {
+            std::uint32_t product = 0u;
             while (relevant_occupancies.any()) {
                 product
                     ^= static_cast<std::uint32_t>(relevant_occupancies.value())
@@ -142,8 +156,8 @@ public:
                 // relevant_occupancies >>= 32u;
                 relevant_occupancies >>= 31u;
             }
+            return product >> (32u - log2_magic_table_size);
         }
-        return product >> (32u - log2_magic_table_size);
     }
 
 private:
