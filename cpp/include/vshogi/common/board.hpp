@@ -35,6 +35,7 @@ private:
     using PieceType = typename C::PieceType;
     using ColoredPiece = typename C::ColoredPiece;
     using Square = typename C::Square;
+    using File = typename C::File;
     using Rank = typename C::Rank;
     static constexpr auto num_square_states
         = num_colors * C::num_piece_types + 1;
@@ -267,6 +268,11 @@ public:
                 return true;
         }
         return false;
+    }
+    bool has_pawn_in_file(const File& f, const ColorEnum& by_side) const
+    {
+        const BitBoardType occ = get_occupied<PHelper::FU>(by_side);
+        return (BitBoardType::from_file(f) & occ).any();
     }
     bool is_drop_pawn_mate(const Square& dst, const ColorEnum& by_side) const
     {

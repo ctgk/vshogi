@@ -286,6 +286,16 @@ TEST(test_minishogi_board, find_ranging_attacker)
     }
 }
 
+TEST(test_minishogi_board, has_pawn_in_file)
+{
+    const auto b = Board("1+p1p1/5/5/5/5");
+    CHECK_FALSE(b.has_pawn_in_file(FILE1, vshogi::BLACK));
+    CHECK_FALSE(b.has_pawn_in_file(FILE2, vshogi::BLACK));
+    CHECK_FALSE(b.has_pawn_in_file(FILE1, vshogi::WHITE));
+    CHECK_TRUE(b.has_pawn_in_file(FILE2, vshogi::WHITE));
+    CHECK_FALSE(b.has_pawn_in_file(FILE4, vshogi::WHITE));
+}
+
 TEST(test_minishogi_board, is_drop_pawn_mate)
 {
     {

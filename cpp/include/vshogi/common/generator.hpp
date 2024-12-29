@@ -335,7 +335,8 @@ private:
                 ++m_sq_iter;
                 continue;
             }
-            if (has_pawn_in_file(SHelper::to_file(*m_sq_iter), p)) {
+            if (m_board.has_pawn_in_file(
+                    SHelper::to_file(*m_sq_iter), m_turn)) {
                 ++m_sq_iter;
                 continue;
             }
@@ -355,14 +356,6 @@ private:
                 break;
             ++m_sq_iter;
         }
-    }
-    bool has_pawn_in_file(const File f, const ColoredPiece pawn) const
-    {
-        for (auto sq : SHelper::file_to_square_array[f]) {
-            if (pawn == m_board[sq])
-                return true;
-        }
-        return false;
     }
 };
 
@@ -506,7 +499,8 @@ private:
                 ++m_sq_iter;
                 continue;
             }
-            if (has_pawn_in_file(SHelper::to_file(*m_sq_iter), p)) {
+            if (m_board.has_pawn_in_file(
+                    SHelper::to_file(*m_sq_iter), m_turn)) {
                 ++m_sq_iter;
                 continue;
             }
@@ -526,14 +520,6 @@ private:
                 break;
             ++m_sq_iter;
         }
-    }
-    bool has_pawn_in_file(const File f, const ColoredPiece pawn) const
-    {
-        for (auto sq : SHelper::file_to_square_array[f]) {
-            if (pawn == m_board[sq])
-                return true;
-        }
-        return false;
     }
 };
 

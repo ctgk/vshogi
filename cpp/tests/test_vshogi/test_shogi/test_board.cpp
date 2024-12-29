@@ -141,4 +141,13 @@ TEST(test_shogi_board, find_ranging_attacker)
     }
 }
 
+TEST(test_shogi_board, has_pawn_in_file)
+{
+    const auto b = Board("9/9/9/9/9/9/P1P1P1P1P/9/9");
+    CHECK_TRUE(b.has_pawn_in_file(FILE1, vshogi::BLACK));
+    CHECK_FALSE(b.has_pawn_in_file(FILE2, vshogi::BLACK));
+    CHECK_FALSE(b.has_pawn_in_file(FILE1, vshogi::WHITE));
+    CHECK_FALSE(b.has_pawn_in_file(FILE2, vshogi::WHITE));
+}
+
 } // namespace test_vshogi::test_shogi

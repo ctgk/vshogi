@@ -44,8 +44,6 @@ public:
     static constexpr Square SQ_NA // NOLINT
         = static_cast<Square>(C::num_squares);
 
-    inline static Square file_to_square_array[C::num_files][C::num_ranks];
-
     static constexpr File to_file(const Square& sq)
     {
         return static_cast<File>(sq / C::num_ranks);
@@ -80,9 +78,6 @@ public:
 
     static void init_tables()
     {
-        for (auto sq : EnumIterator<Square, C::num_squares>()) {
-            file_to_square_array[to_file(sq)][to_rank(sq)] = sq;
-        }
         init_shift_table();
 
         // `shift_table` must be initialized, when calling the following.
