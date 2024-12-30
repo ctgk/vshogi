@@ -18,11 +18,11 @@ private:
     using Int = typename C::BaseTypeStand;
     using PieceType = typename C::PieceType;
     using PHelper = Pieces<Parameters>;
-    static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
+    static constexpr uint num_piece_types = C::num_stand_piece_types;
 
-    static const uint shift_bits[num_stand_piece_types];
-    static const Int masks[num_stand_piece_types];
-    static const Int deltas[num_stand_piece_types];
+    static const uint shift_bits[num_piece_types];
+    static const Int masks[num_piece_types];
+    static const Int deltas[num_piece_types];
     static const Int mask;
 
     Int m_value;
@@ -43,19 +43,19 @@ public:
     }
     uint count(const PieceType& p) const
     {
-        assert(static_cast<uint>(p) < num_stand_piece_types);
+        assert(static_cast<uint>(p) < num_piece_types);
         return static_cast<uint>((m_value & masks[p]) >> shift_bits[p]);
     }
     uint unique_count() const
     {
         uint out = 0u;
-        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>())
+        for (auto pt : EnumIterator<PieceType, num_piece_types>())
             out += static_cast<uint>(exist(pt));
         return out;
     }
     bool exist(const PieceType& p) const
     {
-        assert(static_cast<uint>(p) < num_stand_piece_types);
+        assert(static_cast<uint>(p) < num_piece_types);
         return (m_value & masks[p]) > 0;
     }
     bool any() const
@@ -117,13 +117,13 @@ public:
     using StandType = Stand<Parameters>;
 
 private:
-    static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
-    static constexpr uint max_stand_piece_count = C::max_stand_piece_count;
-    static constexpr uint max_sfen_length = C::max_stand_sfen_length;
+    static constexpr uint num_piece_types = C::num_stand_piece_types;
+    static constexpr uint max_piece_count = C::max_stand_piece_count;
+    static constexpr uint max_sfen_length = 100u;
 
-    static const PieceType stand_pieces_in_sfen_order[num_stand_piece_types];
-    static std::uint64_t zobrist_table[num_colors][num_stand_piece_types]
-                                      [max_stand_piece_count + 1];
+    static const PieceType pieces_in_sfen_order[num_piece_types];
+    static std::uint64_t zobrist_table[num_colors][num_piece_types]
+                                      [max_piece_count + 1];
 
     StandType m_stands[num_colors];
 
@@ -163,7 +163,7 @@ public:
     {
         int num = 0;
         const char* ptr = sfen;
-        for (; ptr - sfen < max_sfen_length; ++ptr) {
+        for (; ptr < sfen + max_sfen_length; ++ptr) {
             switch (*ptr) {
             case '-':
                 ++ptr;
@@ -201,7 +201,7 @@ public:
             return;
         }
         for (auto& c : color_array) {
-            for (auto& p : stand_pieces_in_sfen_order) {
+            for (auto& p : pieces_in_sfen_order) {
                 const auto num = operator[](c).count(p);
                 if (num == 0)
                     continue;
@@ -223,8 +223,8 @@ public:
             const auto num_after = m_stands[c].count(pt);
             const auto num_before = num_after + 1;
             assert(pt != C::NA);
-            assert(num_before <= max_stand_piece_count);
-            assert(num_after <= max_stand_piece_count);
+            assert(num_before <= max_piece_count);
+            assert(num_after <= max_piece_count);
             *hash ^= zobrist_table[c][pt][num_before];
             *hash ^= zobrist_table[c][pt][num_after];
         }
@@ -254,9 +254,9 @@ public:
         if (hash != nullptr) {
             const auto num_after = m_stands[c].count(pt_demoted);
             const auto num_before = num_after - 1;
-            assert(pt_demoted < num_stand_piece_types);
-            assert(num_before <= max_stand_piece_count);
-            assert(num_after <= max_stand_piece_count);
+            assert(pt_demoted < num_piece_types);
+            assert(num_before <= max_piece_count);
+            assert(num_after <= max_piece_count);
             *hash ^= zobrist_table[c][pt_demoted][num_before];
             *hash ^= zobrist_table[c][pt_demoted][num_after];
         }
@@ -281,10 +281,10 @@ public:
     {
         std::uint64_t out = static_cast<std::uint64_t>(0);
         for (auto& c : color_array) {
-            for (auto pt : EnumIterator<PieceType, num_stand_piece_types>()) {
+            for (auto pt : EnumIterator<PieceType, num_piece_types>()) {
                 const auto num = m_stands[c].count(pt);
-                assert(pt < num_stand_piece_types);
-                assert(num <= max_stand_piece_count);
+                assert(pt < num_piece_types);
+                assert(num <= max_piece_count);
                 out ^= zobrist_table[c][pt][num];
             }
         }
@@ -297,10 +297,10 @@ public:
         std::mt19937_64 rng(dev());
         std::uniform_int_distribution<std::uint64_t> dist;
         for (auto&& c : color_array) {
-            for (auto pt : EnumIterator<PieceType, num_stand_piece_types>()) {
-                for (uint num = 0; num < max_stand_piece_count + 1; ++num) {
-                    assert(pt < num_stand_piece_types);
-                    assert(num <= max_stand_piece_count);
+            for (auto pt : EnumIterator<PieceType, num_piece_types>()) {
+                for (uint num = 0; num < max_piece_count + 1; ++num) {
+                    assert(pt < num_piece_types);
+                    assert(num <= max_piece_count);
                     zobrist_table[c][pt][num] = dist(rng);
                 }
             }

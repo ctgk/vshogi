@@ -334,7 +334,7 @@ inline shogi::Stand::Stand(
 
 template <>
 inline const shogi::PieceTypeEnum
-    shogi::BlackWhiteStands::stand_pieces_in_sfen_order[]
+    shogi::BlackWhiteStands::pieces_in_sfen_order[]
     = {shogi::HI,
        shogi::KA,
        shogi::KI,

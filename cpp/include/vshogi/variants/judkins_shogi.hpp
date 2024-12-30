@@ -265,7 +265,7 @@ inline judkins_shogi::Stand::Stand(
 
 template <>
 inline const judkins_shogi::PieceTypeEnum
-    judkins_shogi::BlackWhiteStands::stand_pieces_in_sfen_order[]
+    judkins_shogi::BlackWhiteStands::pieces_in_sfen_order[]
     = {judkins_shogi::HI,
        judkins_shogi::KA,
        judkins_shogi::KI,

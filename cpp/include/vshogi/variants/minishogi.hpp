@@ -229,7 +229,7 @@ inline minishogi::Stand::Stand(
 
 template <>
 inline const minishogi::PieceTypeEnum
-    minishogi::BlackWhiteStands::stand_pieces_in_sfen_order[]
+    minishogi::BlackWhiteStands::pieces_in_sfen_order[]
     = {minishogi::HI,
        minishogi::KA,
        minishogi::KI,
