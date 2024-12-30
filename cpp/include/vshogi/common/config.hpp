@@ -118,7 +118,6 @@ public: // stand
 
 public: // magic
     static constexpr uint log2_magic_table_size = Param::log2_magic_table_size;
-    static constexpr uint magic_table_size = 1u << log2_magic_table_size;
 
 public: // game rules
     /**

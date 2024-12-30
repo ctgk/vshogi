@@ -401,18 +401,15 @@ inline const std::uint32_t judkins_shogi::Magic::magic_number_diagonal
 };
 template <>
 inline judkins_shogi::BitBoard judkins_shogi::Magic::attack_table_vertical
-    [judkins_shogi::Config::num_squares]
-    [judkins_shogi::Config::magic_table_size]
+    [judkins_shogi::Config::num_squares][judkins_shogi::Magic::table_size]
     = {};
 template <>
 inline judkins_shogi::BitBoard judkins_shogi::Magic::attack_table_horizontal
-    [judkins_shogi::Config::num_squares]
-    [judkins_shogi::Config::magic_table_size]
+    [judkins_shogi::Config::num_squares][judkins_shogi::Magic::table_size]
     = {};
 template <>
 inline judkins_shogi::BitBoard judkins_shogi::Magic::attack_table_diagonal
-    [judkins_shogi::Config::num_squares]
-    [judkins_shogi::Config::magic_table_size]
+    [judkins_shogi::Config::num_squares][judkins_shogi::Magic::table_size]
     = {};
 
 template <>

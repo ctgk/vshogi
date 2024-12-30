@@ -558,27 +558,27 @@ inline const std::uint32_t
 template <>
 inline shogi::BitBoard
     shogi::Magic::attack_table_north[shogi::Config::num_squares]
-                                    [shogi::Config::magic_table_size]
+                                    [shogi::Magic::table_size]
     = {};
 template <>
 inline shogi::BitBoard
     shogi::Magic::attack_table_south[shogi::Config::num_squares]
-                                    [shogi::Config::magic_table_size]
+                                    [shogi::Magic::table_size]
     = {};
 template <>
 inline shogi::BitBoard
     shogi::Magic::attack_table_vertical[shogi::Config::num_squares]
-                                       [shogi::Config::magic_table_size]
+                                       [shogi::Magic::table_size]
     = {};
 template <>
 inline shogi::BitBoard
     shogi::Magic::attack_table_horizontal[shogi::Config::num_squares]
-                                         [shogi::Config::magic_table_size]
+                                         [shogi::Magic::table_size]
     = {};
 template <>
 inline shogi::BitBoard
     shogi::Magic::attack_table_diagonal[shogi::Config::num_squares]
-                                       [shogi::Config::magic_table_size]
+                                       [shogi::Magic::table_size]
     = {};
 
 template <>

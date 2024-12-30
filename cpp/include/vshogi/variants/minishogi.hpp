@@ -352,16 +352,17 @@ inline const std::uint32_t
 template <>
 inline minishogi::BitBoard
     minishogi::Magic::attack_table_vertical[minishogi::Config::num_squares]
-                                           [minishogi::Config::magic_table_size]
+                                           [minishogi::Magic::table_size]
     = {};
 template <>
-inline minishogi::BitBoard minishogi::Magic::attack_table_horizontal
-    [minishogi::Config::num_squares][minishogi::Config::magic_table_size]
+inline minishogi::BitBoard
+    minishogi::Magic::attack_table_horizontal[minishogi::Config::num_squares]
+                                             [minishogi::Magic::table_size]
     = {};
 template <>
 inline minishogi::BitBoard
     minishogi::Magic::attack_table_diagonal[minishogi::Config::num_squares]
-                                           [minishogi::Config::magic_table_size]
+                                           [minishogi::Magic::table_size]
     = {};
 
 template <>
