@@ -24,26 +24,14 @@ private:
     using Square = typename C::Square;
     using File = typename C::File;
     using Rank = typename C::Rank;
-    using PHelper = Pieces<Parameters>;
 
     inline static Square shift_table[C::num_squares][C::num_dir];
     inline static DirectionEnum direction_src_dst_table[C::num_squares]
                                                        [C::num_squares];
-    inline static Square
-        ranging_squares_to[C::num_squares][C::num_dir]
-                          [(C::num_files > C::num_ranks) ? C::num_files
-                                                         : C::num_ranks];
+    inline static Square ranging_squares_to[C::num_squares][C::num_dir]
+                                           [C::board_length];
 
 public:
-    static constexpr Rank RANK1 = static_cast<Rank>(0); // NOLINT
-    static constexpr Rank RANK2 = static_cast<Rank>(1); // NOLINT
-    static constexpr Rank RANK_MAX // NOLINT
-        = static_cast<Rank>(C::num_ranks - 1u);
-    static constexpr Rank RANK_2ND_MAX // NOLINT
-        = static_cast<Rank>(C::num_ranks - 2u);
-    static constexpr Square SQ_NA // NOLINT
-        = static_cast<Square>(C::num_squares);
-
     static constexpr File to_file(const Square& sq)
     {
         return static_cast<File>(sq / C::num_ranks);
@@ -97,11 +85,11 @@ public:
 
     static Square shift(const Square& sq, const DirectionEnum& d)
     {
-        return (d == DIR_NA || sq == SQ_NA) ? SQ_NA : shift_table[sq][d];
+        return (d == DIR_NA || sq == C::SQ_NA) ? C::SQ_NA : shift_table[sq][d];
     }
     static DirectionEnum get_direction(const Square& dst, const Square& src)
     {
-        if ((dst == SQ_NA) || (src == SQ_NA))
+        if ((dst == C::SQ_NA) || (src == C::SQ_NA))
             return DIR_NA;
         return direction_src_dst_table[src][dst];
     }
@@ -122,7 +110,7 @@ public:
     static const Square*
     get_squares_along(const DirectionEnum& direction, const Square& location)
     {
-        if ((direction == DIR_NA) || (location == SQ_NA))
+        if ((direction == DIR_NA) || (location == C::SQ_NA))
             return nullptr;
         return ranging_squares_to[location][direction];
     }
@@ -146,7 +134,7 @@ private:
                     || ((r == rm) && (dir == DIR_SSW || dir == DIR_SSE))
                     || ((f == f1) && has_dir_e(dir))
                     || ((f == fn) && has_dir_w(dir)))
-                    shift_table[sq][dir] = SQ_NA;
+                    shift_table[sq][dir] = C::SQ_NA;
                 else
                     shift_table[sq][dir] = static_cast<Square>(
                         static_cast<int>(sq) + direction_to_delta(dir));
@@ -157,7 +145,7 @@ private:
     {
         constexpr int size
             = sizeof(ranging_squares_to) / sizeof(ranging_squares_to[0][0][0]);
-        std::fill_n(&ranging_squares_to[0][0][0], size, SQ_NA);
+        std::fill_n(&ranging_squares_to[0][0][0], size, C::SQ_NA);
 
         for (auto src : EnumIterator<Square, C::num_squares>()) {
             for (auto dir : EnumIterator<DirectionEnum, C::num_dir>()) {
@@ -165,7 +153,7 @@ private:
                 int index = 0;
                 while (true) {
                     dst = Squares::shift(dst, dir);
-                    if (dst == SQ_NA)
+                    if (dst == C::SQ_NA)
                         break;
                     ranging_squares_to[src][dir][index++] = dst;
                     if (is_knight_direction(dir))
@@ -183,7 +171,7 @@ private:
             DIR_NA);
         for (auto src : EnumIterator<Square, C::num_squares>()) {
             for (auto dir : EnumIterator<DirectionEnum, C::num_dir>()) {
-                for (auto dst = shift(src, dir); dst != SQ_NA;
+                for (auto dst = shift(src, dir); dst != C::SQ_NA;
                      dst = shift(dst, dir))
                     direction_src_dst_table[src][dst] = dir;
             }

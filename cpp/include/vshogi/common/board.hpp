@@ -39,8 +39,6 @@ private:
     using Rank = typename C::Rank;
     static constexpr auto num_square_states
         = num_colors * C::num_piece_types + 1;
-    static constexpr auto VOID = C::VOID; // NOLINT
-    static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
     static std::uint64_t zobrist_table[num_squares][num_square_states];
 
@@ -58,18 +56,18 @@ public:
     }
     ColoredPiece get(const Square& sq) const
     {
-        assert(sq != SQ_NA);
+        assert(sq != C::SQ_NA);
         return m_pieces[sq];
     }
     ColoredPiece operator[](const Square& sq) const
     {
-        assert(sq != SQ_NA);
+        assert(sq != C::SQ_NA);
         return m_pieces[sq];
     }
     bool is_empty(const Square& sq) const
     {
-        assert(sq != SQ_NA);
-        return (m_pieces[sq] == VOID);
+        assert(sq != C::SQ_NA);
+        return (m_pieces[sq] == C::VOID);
     }
     Square get_king_location(const ColorEnum& c) const
     {
@@ -97,12 +95,12 @@ public:
     /**
      * @brief Get occupation by the given colored piece.
      *
-     * @param p Colored piece. Note that `VOID` is not allowed here.
+     * @param p Colored piece. Note that `C::VOID` is not allowed here.
      * @return BitBoardType Occupation by the given colored piece.
      */
     BitBoardType get_occupied(const ColoredPiece& p) const
     {
-        assert(p != VOID);
+        assert(p != C::VOID);
         const auto c = PHelper::get_color(p);
         const auto pt = PHelper::to_piece_type(p);
         return m_bb_color[c] & m_bb_piece[pt];
@@ -146,8 +144,8 @@ public:
         const bool& promote = false,
         std::uint64_t* const hash = nullptr)
     {
-        ColoredPiece moving_piece = place_piece_on(src, VOID);
-        update_internals_by_placed(VOID, src, hash);
+        ColoredPiece moving_piece = place_piece_on(src, C::VOID);
+        update_internals_by_placed(C::VOID, src, hash);
         update_internals_by_popped(moving_piece, src, hash);
         if (promote)
             moving_piece = PHelper::promote_nocheck(moving_piece);
@@ -167,80 +165,80 @@ public:
     }
     BitBoardType get_attacks_by_nocheck(const Square& sq) const
     {
-        assert(sq < SQ_NA);
+        assert(sq < C::SQ_NA);
         return BitBoardType::get_attacks_by(m_pieces[sq], sq, get_occupied());
     }
     Square find_attacker(
         const ColorEnum& attacker_color,
         const Square& attacked,
         const DirectionEnum& dir,
-        const Square& skip = SQ_NA) const
+        const Square& skip = C::SQ_NA) const
     {
         auto ptr_sq = SHelper::get_squares_along(dir, attacked);
         if (ptr_sq == nullptr)
-            return SQ_NA;
+            return C::SQ_NA;
         if (!(BitBoardType::get_ray_to(attacked, dir)
               & m_bb_color[attacker_color])
                  .any())
-            return SQ_NA;
+            return C::SQ_NA;
         {
             const ColoredPiece& p = m_pieces[*ptr_sq];
-            if ((p != VOID) && (*ptr_sq != skip)) {
+            if ((p != C::VOID) && (*ptr_sq != skip)) {
                 if ((PHelper::get_color(p) == attacker_color)
                     && BitBoardType::get_attacks_by(p, *ptr_sq)
                            .is_one(attacked))
                     return *ptr_sq;
                 else
-                    return SQ_NA;
+                    return C::SQ_NA;
             }
         }
 
         const auto dir_rotated = rotate(dir);
         ++ptr_sq;
-        for (; *ptr_sq != SQ_NA; ++ptr_sq) {
+        for (; *ptr_sq != C::SQ_NA; ++ptr_sq) {
             const auto& sq = *ptr_sq;
-            assert(sq != SQ_NA);
+            assert(sq != C::SQ_NA);
             const auto& p = m_pieces[sq];
-            if ((p == VOID) || (sq == skip))
+            if ((p == C::VOID) || (sq == skip))
                 continue;
             if ((PHelper::get_color(p) == attacker_color)
                 && PHelper::is_ranging_to(p, dir_rotated))
                 return sq;
-            return SQ_NA;
+            return C::SQ_NA;
         }
-        return SQ_NA;
+        return C::SQ_NA;
     }
     Square find_ranging_attacker(
         const ColorEnum& attacker_color,
         const Square& attacked,
         const DirectionEnum& dir,
-        const Square& skip = SQ_NA) const
+        const Square& skip = C::SQ_NA) const
     {
-        if ((dir == DIR_NA) || (attacked == SQ_NA))
-            return SQ_NA;
+        if ((dir == DIR_NA) || (attacked == C::SQ_NA))
+            return C::SQ_NA;
         const auto dir_from_attacker = rotate(dir);
         const auto ray = BitBoardType::get_ray_to(attacked, dir);
         if (!(ray & m_bb_color[attacker_color]).any())
-            return SQ_NA;
+            return C::SQ_NA;
         auto psq = SHelper::get_squares_along(dir, attacked);
         if (psq == nullptr)
-            return SQ_NA;
-        for (; *psq != SQ_NA; ++psq) {
+            return C::SQ_NA;
+        for (; *psq != C::SQ_NA; ++psq) {
             const auto& p = m_pieces[*psq];
-            if ((p == VOID) || (*psq == skip))
+            if ((p == C::VOID) || (*psq == skip))
                 continue;
             if ((PHelper::get_color(p) == attacker_color)
                 && PHelper::is_ranging_to(p, dir_from_attacker))
                 return *psq;
-            return SQ_NA;
+            return C::SQ_NA;
         }
-        return SQ_NA;
+        return C::SQ_NA;
     }
     BitBoardType find_pinned(const ColorEnum& c) const
     {
         BitBoardType out{};
         const Square& king = m_king_locations[c];
-        if (king == SQ_NA)
+        if (king == C::SQ_NA)
             return out;
         const BitBoardType occ_full = m_bb_color[BLACK] | m_bb_color[WHITE];
         for (auto atk : get_occupied_by_ranging(~c).square_iterator()) {
@@ -259,12 +257,12 @@ public:
     bool is_square_attacked(
         const ColorEnum& by_side,
         const Square& sq,
-        const Square& skip = SQ_NA) const
+        const Square& skip = C::SQ_NA) const
     {
-        if (sq == SQ_NA)
+        if (sq == C::SQ_NA)
             return false;
         for (auto dir : EnumIterator<DirectionEnum, C::num_dir>()) {
-            if (find_attacker(by_side, sq, dir, skip) != SQ_NA)
+            if (find_attacker(by_side, sq, dir, skip) != C::SQ_NA)
                 return true;
         }
         return false;
@@ -289,7 +287,7 @@ public:
         Board out;
         for (auto sq : EnumIterator<Square, num_squares>()) {
             const auto sq_hflipped = SHelper::hflip(sq);
-            assert(sq_hflipped != SQ_NA);
+            assert(sq_hflipped != C::SQ_NA);
             out.m_pieces[sq_hflipped] = m_pieces[sq];
         }
         out.update_internals_based_on_pieces();
@@ -330,31 +328,31 @@ private:
             case '\0':
                 goto OUT_OF_LOOP;
             case '9':
-                *piece_ptr = VOID;
+                *piece_ptr = C::VOID;
                 piece_ptr -= num_ranks; // fall-through
             case '8':
-                *piece_ptr = VOID;
+                *piece_ptr = C::VOID;
                 piece_ptr -= num_ranks; // fall-through
             case '7':
-                *piece_ptr = VOID;
+                *piece_ptr = C::VOID;
                 piece_ptr -= num_ranks; // fall-through
             case '6':
-                *piece_ptr = VOID;
+                *piece_ptr = C::VOID;
                 piece_ptr -= num_ranks; // fall-through
             case '5':
-                *piece_ptr = VOID;
+                *piece_ptr = C::VOID;
                 piece_ptr -= num_ranks; // fall-through
             case '4':
-                *piece_ptr = VOID;
+                *piece_ptr = C::VOID;
                 piece_ptr -= num_ranks; // fall-through
             case '3':
-                *piece_ptr = VOID;
+                *piece_ptr = C::VOID;
                 piece_ptr -= num_ranks; // fall-through
             case '2':
-                *piece_ptr = VOID;
+                *piece_ptr = C::VOID;
                 piece_ptr -= num_ranks; // fall-through
             case '1':
-                *piece_ptr = VOID;
+                *piece_ptr = C::VOID;
                 piece_ptr -= num_ranks;
                 break;
             case '+':
@@ -379,7 +377,7 @@ private:
         auto ptr = m_pieces + rank + (num_files - 1u) * num_ranks;
         int num_void = 0;
         for (; ptr >= m_pieces; ptr -= num_ranks) {
-            if (*ptr == VOID) {
+            if (*ptr == C::VOID) {
                 ++num_void;
                 continue;
             }
@@ -394,15 +392,15 @@ private:
     }
     ColoredPiece place_piece_on(const Square& sq, const ColoredPiece& p)
     {
-        assert(sq < SQ_NA);
+        assert(sq < C::SQ_NA);
         const auto out = m_pieces[sq];
         m_pieces[sq] = p;
         return out;
     }
     void update_internals_based_on_pieces()
     {
-        m_king_locations[BLACK] = SQ_NA;
-        m_king_locations[WHITE] = SQ_NA;
+        m_king_locations[BLACK] = C::SQ_NA;
+        m_king_locations[WHITE] = C::SQ_NA;
         std::fill_n(m_bb_color, num_colors, BitBoardType());
         std::fill_n(m_bb_piece, C::num_piece_types, BitBoardType());
         for (auto sq : EnumIterator<Square, num_squares>()) {
@@ -411,7 +409,7 @@ private:
             const auto pt = PHelper::to_piece_type(p);
             if (pt == C::OU)
                 m_king_locations[c] = sq;
-            if (p != VOID) {
+            if (p != C::VOID) {
                 m_bb_color[c].toggle(sq);
                 m_bb_piece[pt].toggle(sq);
             }
@@ -422,11 +420,11 @@ private:
         const Square& sq,
         std::uint64_t* const hash = nullptr)
     {
-        assert(sq < SQ_NA);
+        assert(sq < C::SQ_NA);
         assert(p < num_square_states);
         if (hash != nullptr)
             *hash ^= zobrist_table[sq][p];
-        if (p == VOID)
+        if (p == C::VOID)
             return;
         const auto c = PHelper::get_color(p);
         const auto pt = PHelper::to_piece_type(p);
@@ -440,15 +438,15 @@ private:
         const Square& sq,
         std::uint64_t* const hash = nullptr)
     {
-        assert(sq < SQ_NA);
+        assert(sq < C::SQ_NA);
         if (hash != nullptr)
             *hash ^= zobrist_table[sq][p];
-        if (p == VOID)
+        if (p == C::VOID)
             return;
         const auto c = PHelper::get_color(p);
         const auto pt = PHelper::to_piece_type(p);
         if (pt == C::OU)
-            m_king_locations[c] = SQ_NA;
+            m_king_locations[c] = C::SQ_NA;
         m_bb_color[c].toggle(sq);
         m_bb_piece[pt].toggle(sq);
     }
@@ -456,7 +454,7 @@ private:
     bool is_square_attacked_by(const ColorEnum& by_side, const Square& sq) const
     {
         static_assert(PT < C::NA);
-        assert(sq < SQ_NA);
+        assert(sq < C::SQ_NA);
         const auto attack_inverted = BitBoardType::get_attacks_by(
             PHelper::to_board_piece(~by_side, PT), sq);
         const auto occ_offence
@@ -467,7 +465,7 @@ private:
     bool is_square_attacked_by(const ColorEnum& by_side, const Square& sq) const
     {
         static_assert(Base < C::NA);
-        assert(sq < SQ_NA);
+        assert(sq < C::SQ_NA);
         const auto attack_inverted = BitBoardType::get_attacks_by(
             PHelper::to_board_piece(~by_side, Base), sq);
         const auto occ_offence = get_occupied<Base, Alike, Args...>(by_side);
@@ -479,7 +477,7 @@ private:
         const Square& sq, const ColorEnum& by_side) const
     {
         const auto enemy_king_sq = m_king_locations[~by_side];
-        if (enemy_king_sq == SQ_NA)
+        if (enemy_king_sq == C::SQ_NA)
             return false;
         return enemy_king_sq
                == SHelper::shift(sq, (by_side == BLACK) ? DIR_N : DIR_S);
@@ -507,14 +505,13 @@ private:
             if (dir == enemy_king_dir)
                 continue;
             const auto src_next = find_attacker(~by_side, dst, dir);
-            const bool is_attacking_the_pawn = (src_next != SHelper::SQ_NA);
+            const bool is_attacking_the_pawn = (src_next != C::SQ_NA);
             if (is_attacking_the_pawn) {
                 const auto discovered_dir
                     = SHelper::get_direction(src_next, enemy_king_sq);
                 const auto discovered_attacker_sq = find_ranging_attacker(
                     by_side, enemy_king_sq, discovered_dir, src_next);
-                const auto is_pinned
-                    = (discovered_attacker_sq != SHelper::SQ_NA);
+                const auto is_pinned = (discovered_attacker_sq != C::SQ_NA);
                 if (!is_pinned)
                     return true;
             }

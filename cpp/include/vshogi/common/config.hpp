@@ -77,6 +77,12 @@ public: // squares
     static constexpr uint num_ranks = Param::num_ranks;
 
     /**
+     * @brief Longer length of the board.
+     * E.g. 5 in minishogi.
+     */
+    static constexpr uint board_length = std::max(num_files, num_ranks);
+
+    /**
      * @brief Number of squares in the board.
      * E.g. 25 (SQ_1A, SQ_1B, ..., SQ_5E) in minishogi.
      */
@@ -99,6 +105,12 @@ public: // squares
      * E.g. 10 (NNW, NNE, NW, N, NE, W, E, SW, S, SE) in shogi.
      */
     static constexpr uint num_dir_dl = num_dir - (num_dir > 8) * 2u;
+
+    static constexpr Square SQ_NA = static_cast<Square>(num_squares); // NOLINT
+    static constexpr Rank RANK_A = static_cast<Rank>(0); // NOLINT
+    static constexpr Rank RANK_B = static_cast<Rank>(1); // NOLINT
+    static constexpr Rank RANK_Y = static_cast<Rank>(num_ranks - 2u); // NOLINT
+    static constexpr Rank RANK_Z = static_cast<Rank>(num_ranks - 1u); // NOLINT
 
 public: // stand
     static constexpr uint max_stand_piece_count = Param::max_stand_piece_count;

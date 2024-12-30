@@ -104,7 +104,7 @@ public:
     }
     bool is_one(const Square& sq) const
     {
-        assert((m_value >> SHelper::SQ_NA) == 0);
+        assert((m_value >> C::SQ_NA) == 0);
         return static_cast<bool>((m_value >> sq) & static_cast<UInt>(1));
     }
 
@@ -116,7 +116,7 @@ public:
      */
     BitBoard& set(const Square& sq)
     {
-        assert(sq != SHelper::SQ_NA);
+        assert(sq != C::SQ_NA);
         m_value |= static_cast<UInt>(static_cast<UInt>(1) << sq);
         return *this;
     }
@@ -128,7 +128,7 @@ public:
      */
     BitBoard& toggle(const Square& sq)
     {
-        assert(sq != SHelper::SQ_NA);
+        assert(sq != C::SQ_NA);
         m_value ^= static_cast<UInt>(static_cast<UInt>(1) << sq);
         return *this;
     }
@@ -141,7 +141,7 @@ public:
      */
     BitBoard& clear(const Square& sq)
     {
-        if (sq != SHelper::SQ_NA)
+        if (sq != C::SQ_NA)
             return clear_nocheck(sq);
         return *this;
     }
@@ -164,12 +164,12 @@ public:
 
     static BitBoard from_square(const Square& sq)
     {
-        return BitBoard(1) << sq;
+        return BitBoard(static_cast<UInt>(1) << sq);
     }
     template <Square SQ>
     static BitBoard from_square()
     {
-        return BitBoard(1) << SQ;
+        return BitBoard(static_cast<UInt>(1) << SQ);
     }
     template <Square SQ1, Square SQ2, Square... Args>
     static constexpr BitBoard from_square()
@@ -250,7 +250,7 @@ public:
 
     static BitBoard get_attacks_by(const ColoredPiece& p, const Square& sq)
     {
-        if ((p == C::VOID) || (sq == SHelper::SQ_NA))
+        if ((p == C::VOID) || (sq == C::SQ_NA))
             return BitBoard();
         return attacks_table[p][sq];
     }
@@ -267,7 +267,7 @@ public:
      */
     static BitBoard get_ray_to(const Square& sq, const DirectionEnum& dir)
     {
-        if ((sq == SHelper::SQ_NA) || (dir == DIR_NA))
+        if ((sq == C::SQ_NA) || (dir == DIR_NA))
             return BitBoard();
         return ray_table[sq][dir];
     }
@@ -281,7 +281,7 @@ public:
      */
     static BitBoard get_line_segment(const Square& a, const Square& b)
     {
-        if ((a == SHelper::SQ_NA) || (b == SHelper::SQ_NA))
+        if ((a == C::SQ_NA) || (b == C::SQ_NA))
             return BitBoard();
         return line_segment_table[a][b];
     }
@@ -293,7 +293,7 @@ public:
         BitBoard out{};
         while (true) {
             sq = SHelper::shift(sq, dir);
-            if (sq == SHelper::SQ_NA)
+            if (sq == C::SQ_NA)
                 break; // reached the end of the board
             else if (occupied.is_one(sq)) {
                 out.set(sq);

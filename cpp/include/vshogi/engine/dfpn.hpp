@@ -313,8 +313,7 @@ private:
         const Node<Parameters>* const cousin_le_stand)
     {
         const State<Parameters>& s = g.get_state();
-        assert(
-            s.get_board().get_king_location(~s.get_turn()) != SHelper::SQ_NA);
+        assert(s.get_board().get_king_location(~s.get_turn()) != C::SQ_NA);
         assert(
             s.get_board()[s.get_board().get_king_location(~s.get_turn())]
             == PHelper::to_board_piece(~s.get_turn(), C::OU));

@@ -236,7 +236,7 @@ public:
             const uint ii = static_cast<uint>(sq);
             for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
                 auto ptr_sq = SHelper::get_squares_along(dir, sq);
-                for (; *ptr_sq != SHelper::SQ_NA; ++ptr_sq) {
+                for (; *ptr_sq != C::SQ_NA; ++ptr_sq) {
                     const uint jj = static_cast<uint>(*ptr_sq);
                     data[ii * num_squares + jj] = 1.f;
                 }
@@ -251,7 +251,7 @@ public:
             const uint ii = static_cast<uint>(sq);
             for (auto dir : directions) {
                 auto ptr_sq = SHelper::get_squares_along(dir, sq);
-                for (; *ptr_sq != SHelper::SQ_NA; ++ptr_sq) {
+                for (; *ptr_sq != C::SQ_NA; ++ptr_sq) {
                     const uint jj = static_cast<uint>(*ptr_sq);
                     data[ii * num_squares + jj] = 1.f;
                 }

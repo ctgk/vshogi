@@ -26,7 +26,6 @@ private:
     using StateType = State<Parameters>;
     using Square = typename C::Square;
     using SHelper = Squares<Parameters>;
-    static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
 private:
     const StateType& m_state;
@@ -40,7 +39,7 @@ public:
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_src(m_board.get_king_location(m_turn)), m_iter()
     {
-        if (m_src != SQ_NA)
+        if (m_src != C::SQ_NA)
             m_iter = (BitBoardType::get_attacks_by(m_board[m_src], m_src)
                       & (~m_board.get_occupied(m_turn)))
                          .square_iterator();
@@ -114,7 +113,6 @@ private:
     using StateType = State<Parameters>;
     using Square = typename C::Square;
     using SHelper = Squares<Parameters>;
-    static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
 private:
     const StateType& m_state;
@@ -132,7 +130,7 @@ public:
         const auto checker_dir = SHelper::get_direction(m_src, enemy_king_sq);
         const auto checker_sq = m_board.find_ranging_attacker(
             m_turn, enemy_king_sq, checker_dir, m_src);
-        if (checker_sq == SHelper::SQ_NA)
+        if (checker_sq == C::SQ_NA)
             return;
         const auto attacks
             = BitBoardType::get_attacks_by(m_board[m_src], m_src);
@@ -207,7 +205,6 @@ private:
     using SHelper = Squares<Parameters>;
     static constexpr uint num_dir = C::num_dir;
     static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
-    static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
 private:
     const StateType& m_state;
@@ -386,7 +383,6 @@ private:
     using SHelper = Squares<Parameters>;
     static constexpr uint num_dir = C::num_dir;
     static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
-    static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
 private:
     const StateType& m_state;
@@ -550,7 +546,6 @@ private:
     using Square = typename C::Square;
     using PHelper = Pieces<Parameters>;
     using SHelper = Squares<Parameters>;
-    static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
 private:
     const StateType& m_state;
@@ -701,7 +696,6 @@ private:
     using Square = typename C::Square;
     using PHelper = Pieces<Parameters>;
     using SHelper = Squares<Parameters>;
-    static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
 private:
     const StateType& m_state;
@@ -910,7 +904,6 @@ private:
     using Square = typename C::Square;
     using PHelper = Pieces<Parameters>;
     using SHelper = Squares<Parameters>;
-    static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
 private:
     const StateType& m_state;
@@ -927,7 +920,7 @@ public:
     CheckNonKingBoardMoveGenerator(const StateType& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(m_board.find_pinned(m_turn)), m_src_iter(), m_dst_iter(),
-          m_promote(true), m_dst_mask(), m_discovered_checker_sq(SQ_NA)
+          m_promote(true), m_dst_mask(), m_discovered_checker_sq(C::SQ_NA)
     {
         if (m_state.in_double_check())
             return;
@@ -1006,7 +999,7 @@ private:
     CheckNonKingBoardMoveGenerator(const StateType& state, const bool promote)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(), m_src_iter(), m_dst_iter(), m_promote(promote),
-          m_dst_mask(), m_discovered_checker_sq(SQ_NA)
+          m_dst_mask(), m_discovered_checker_sq(C::SQ_NA)
     {
     }
     void init_src_iter()
@@ -1088,23 +1081,21 @@ private:
         const auto dirs = PHelper::get_attack_directions(p);
         if (dirs[1] == DIR_NA) {
             mask &= ~BitBoardType::from_rank(
-                (dirs[0] == DIR_N) ? SHelper::RANK1 : SHelper::RANK_MAX);
+                (dirs[0] == DIR_N) ? C::RANK_A : C::RANK_Z);
         } else if (dirs[1] > DIR_SE) {
             if (dirs[1] >= DIR_NNW)
-                mask &= ~(
-                    BitBoardType::from_rank(SHelper::RANK1)
-                    | BitBoardType::from_rank(SHelper::RANK2));
+                mask &= ~BitBoardType::
+                            template from_rank<C::RANK_A, C::RANK_B>();
             else
-                mask &= ~(
-                    BitBoardType::from_rank(SHelper::RANK_MAX)
-                    | BitBoardType::from_rank(SHelper::RANK_2ND_MAX));
+                mask &= ~BitBoardType::
+                            template from_rank<C::RANK_Y, C::RANK_Z>();
         }
     }
     void update_dst_mask_by_current_check(const Square king_sq)
     {
         if (m_state.in_check()) {
             const auto checker_sq = m_state.get_checker_location();
-            assert(checker_sq != SQ_NA);
+            assert(checker_sq != C::SQ_NA);
             m_dst_mask &= BitBoardType::get_line_segment(checker_sq, king_sq)
                               .set(checker_sq);
         }
@@ -1124,7 +1115,7 @@ private:
         auto pt = PHelper::to_piece_type(p);
         if (m_promote)
             pt = PHelper::promote_nocheck(pt);
-        if (m_discovered_checker_sq == SQ_NA) // check by moving piece.
+        if (m_discovered_checker_sq == C::SQ_NA) // check by moving piece.
             mask &= BitBoardType::get_attacks_by(
                 PHelper::to_board_piece(~m_turn, pt),
                 enemy_king_sq,
