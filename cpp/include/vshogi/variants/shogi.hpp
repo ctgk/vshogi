@@ -176,87 +176,87 @@ static_assert(VOID == Config::VOID);
 
 // clang-format off
 constexpr BitBoard bb_na = BitBoard();
-constexpr BitBoard bb_1a = (BitBoard(1) << static_cast<uint>(SQ_1A));
-constexpr BitBoard bb_1b = (BitBoard(1) << static_cast<uint>(SQ_1B));
-constexpr BitBoard bb_1c = (BitBoard(1) << static_cast<uint>(SQ_1C));
-constexpr BitBoard bb_1d = (BitBoard(1) << static_cast<uint>(SQ_1D));
-constexpr BitBoard bb_1e = (BitBoard(1) << static_cast<uint>(SQ_1E));
-constexpr BitBoard bb_1f = (BitBoard(1) << static_cast<uint>(SQ_1F));
-constexpr BitBoard bb_1g = (BitBoard(1) << static_cast<uint>(SQ_1G));
-constexpr BitBoard bb_1h = (BitBoard(1) << static_cast<uint>(SQ_1H));
-constexpr BitBoard bb_1i = (BitBoard(1) << static_cast<uint>(SQ_1I));
-constexpr BitBoard bb_2a = (BitBoard(1) << static_cast<uint>(SQ_2A));
-constexpr BitBoard bb_2b = (BitBoard(1) << static_cast<uint>(SQ_2B));
-constexpr BitBoard bb_2c = (BitBoard(1) << static_cast<uint>(SQ_2C));
-constexpr BitBoard bb_2d = (BitBoard(1) << static_cast<uint>(SQ_2D));
-constexpr BitBoard bb_2e = (BitBoard(1) << static_cast<uint>(SQ_2E));
-constexpr BitBoard bb_2f = (BitBoard(1) << static_cast<uint>(SQ_2F));
-constexpr BitBoard bb_2g = (BitBoard(1) << static_cast<uint>(SQ_2G));
-constexpr BitBoard bb_2h = (BitBoard(1) << static_cast<uint>(SQ_2H));
-constexpr BitBoard bb_2i = (BitBoard(1) << static_cast<uint>(SQ_2I));
-constexpr BitBoard bb_3a = (BitBoard(1) << static_cast<uint>(SQ_3A));
-constexpr BitBoard bb_3b = (BitBoard(1) << static_cast<uint>(SQ_3B));
-constexpr BitBoard bb_3c = (BitBoard(1) << static_cast<uint>(SQ_3C));
-constexpr BitBoard bb_3d = (BitBoard(1) << static_cast<uint>(SQ_3D));
-constexpr BitBoard bb_3e = (BitBoard(1) << static_cast<uint>(SQ_3E));
-constexpr BitBoard bb_3f = (BitBoard(1) << static_cast<uint>(SQ_3F));
-constexpr BitBoard bb_3g = (BitBoard(1) << static_cast<uint>(SQ_3G));
-constexpr BitBoard bb_3h = (BitBoard(1) << static_cast<uint>(SQ_3H));
-constexpr BitBoard bb_3i = (BitBoard(1) << static_cast<uint>(SQ_3I));
-constexpr BitBoard bb_4a = (BitBoard(1) << static_cast<uint>(SQ_4A));
-constexpr BitBoard bb_4b = (BitBoard(1) << static_cast<uint>(SQ_4B));
-constexpr BitBoard bb_4c = (BitBoard(1) << static_cast<uint>(SQ_4C));
-constexpr BitBoard bb_4d = (BitBoard(1) << static_cast<uint>(SQ_4D));
-constexpr BitBoard bb_4e = (BitBoard(1) << static_cast<uint>(SQ_4E));
-constexpr BitBoard bb_4f = (BitBoard(1) << static_cast<uint>(SQ_4F));
-constexpr BitBoard bb_4g = (BitBoard(1) << static_cast<uint>(SQ_4G));
-constexpr BitBoard bb_4h = (BitBoard(1) << static_cast<uint>(SQ_4H));
-constexpr BitBoard bb_4i = (BitBoard(1) << static_cast<uint>(SQ_4I));
-constexpr BitBoard bb_5a = (BitBoard(1) << static_cast<uint>(SQ_5A));
-constexpr BitBoard bb_5b = (BitBoard(1) << static_cast<uint>(SQ_5B));
-constexpr BitBoard bb_5c = (BitBoard(1) << static_cast<uint>(SQ_5C));
-constexpr BitBoard bb_5d = (BitBoard(1) << static_cast<uint>(SQ_5D));
-constexpr BitBoard bb_5e = (BitBoard(1) << static_cast<uint>(SQ_5E));
-constexpr BitBoard bb_5f = (BitBoard(1) << static_cast<uint>(SQ_5F));
-constexpr BitBoard bb_5g = (BitBoard(1) << static_cast<uint>(SQ_5G));
-constexpr BitBoard bb_5h = (BitBoard(1) << static_cast<uint>(SQ_5H));
-constexpr BitBoard bb_5i = (BitBoard(1) << static_cast<uint>(SQ_5I));
-constexpr BitBoard bb_6a = (BitBoard(1) << static_cast<uint>(SQ_6A));
-constexpr BitBoard bb_6b = (BitBoard(1) << static_cast<uint>(SQ_6B));
-constexpr BitBoard bb_6c = (BitBoard(1) << static_cast<uint>(SQ_6C));
-constexpr BitBoard bb_6d = (BitBoard(1) << static_cast<uint>(SQ_6D));
-constexpr BitBoard bb_6e = (BitBoard(1) << static_cast<uint>(SQ_6E));
-constexpr BitBoard bb_6f = (BitBoard(1) << static_cast<uint>(SQ_6F));
-constexpr BitBoard bb_6g = (BitBoard(1) << static_cast<uint>(SQ_6G));
-constexpr BitBoard bb_6h = (BitBoard(1) << static_cast<uint>(SQ_6H));
-constexpr BitBoard bb_6i = (BitBoard(1) << static_cast<uint>(SQ_6I));
-constexpr BitBoard bb_7a = (BitBoard(1) << static_cast<uint>(SQ_7A));
-constexpr BitBoard bb_7b = (BitBoard(1) << static_cast<uint>(SQ_7B));
-constexpr BitBoard bb_7c = (BitBoard(1) << static_cast<uint>(SQ_7C));
-constexpr BitBoard bb_7d = (BitBoard(1) << static_cast<uint>(SQ_7D));
-constexpr BitBoard bb_7e = (BitBoard(1) << static_cast<uint>(SQ_7E));
-constexpr BitBoard bb_7f = (BitBoard(1) << static_cast<uint>(SQ_7F));
-constexpr BitBoard bb_7g = (BitBoard(1) << static_cast<uint>(SQ_7G));
-constexpr BitBoard bb_7h = (BitBoard(1) << static_cast<uint>(SQ_7H));
-constexpr BitBoard bb_7i = (BitBoard(1) << static_cast<uint>(SQ_7I));
-constexpr BitBoard bb_8a = (BitBoard(1) << static_cast<uint>(SQ_8A));
-constexpr BitBoard bb_8b = (BitBoard(1) << static_cast<uint>(SQ_8B));
-constexpr BitBoard bb_8c = (BitBoard(1) << static_cast<uint>(SQ_8C));
-constexpr BitBoard bb_8d = (BitBoard(1) << static_cast<uint>(SQ_8D));
-constexpr BitBoard bb_8e = (BitBoard(1) << static_cast<uint>(SQ_8E));
-constexpr BitBoard bb_8f = (BitBoard(1) << static_cast<uint>(SQ_8F));
-constexpr BitBoard bb_8g = (BitBoard(1) << static_cast<uint>(SQ_8G));
-constexpr BitBoard bb_8h = (BitBoard(1) << static_cast<uint>(SQ_8H));
-constexpr BitBoard bb_8i = (BitBoard(1) << static_cast<uint>(SQ_8I));
-constexpr BitBoard bb_9a = (BitBoard(1) << static_cast<uint>(SQ_9A));
-constexpr BitBoard bb_9b = (BitBoard(1) << static_cast<uint>(SQ_9B));
-constexpr BitBoard bb_9c = (BitBoard(1) << static_cast<uint>(SQ_9C));
-constexpr BitBoard bb_9d = (BitBoard(1) << static_cast<uint>(SQ_9D));
-constexpr BitBoard bb_9e = (BitBoard(1) << static_cast<uint>(SQ_9E));
-constexpr BitBoard bb_9f = (BitBoard(1) << static_cast<uint>(SQ_9F));
-constexpr BitBoard bb_9g = (BitBoard(1) << static_cast<uint>(SQ_9G));
-constexpr BitBoard bb_9h = (BitBoard(1) << static_cast<uint>(SQ_9H));
-constexpr BitBoard bb_9i = (BitBoard(1) << static_cast<uint>(SQ_9I));
+constexpr BitBoard bb_1a = BitBoard::from_square<SQ_1A>();
+constexpr BitBoard bb_1b = BitBoard::from_square<SQ_1B>();
+constexpr BitBoard bb_1c = BitBoard::from_square<SQ_1C>();
+constexpr BitBoard bb_1d = BitBoard::from_square<SQ_1D>();
+constexpr BitBoard bb_1e = BitBoard::from_square<SQ_1E>();
+constexpr BitBoard bb_1f = BitBoard::from_square<SQ_1F>();
+constexpr BitBoard bb_1g = BitBoard::from_square<SQ_1G>();
+constexpr BitBoard bb_1h = BitBoard::from_square<SQ_1H>();
+constexpr BitBoard bb_1i = BitBoard::from_square<SQ_1I>();
+constexpr BitBoard bb_2a = BitBoard::from_square<SQ_2A>();
+constexpr BitBoard bb_2b = BitBoard::from_square<SQ_2B>();
+constexpr BitBoard bb_2c = BitBoard::from_square<SQ_2C>();
+constexpr BitBoard bb_2d = BitBoard::from_square<SQ_2D>();
+constexpr BitBoard bb_2e = BitBoard::from_square<SQ_2E>();
+constexpr BitBoard bb_2f = BitBoard::from_square<SQ_2F>();
+constexpr BitBoard bb_2g = BitBoard::from_square<SQ_2G>();
+constexpr BitBoard bb_2h = BitBoard::from_square<SQ_2H>();
+constexpr BitBoard bb_2i = BitBoard::from_square<SQ_2I>();
+constexpr BitBoard bb_3a = BitBoard::from_square<SQ_3A>();
+constexpr BitBoard bb_3b = BitBoard::from_square<SQ_3B>();
+constexpr BitBoard bb_3c = BitBoard::from_square<SQ_3C>();
+constexpr BitBoard bb_3d = BitBoard::from_square<SQ_3D>();
+constexpr BitBoard bb_3e = BitBoard::from_square<SQ_3E>();
+constexpr BitBoard bb_3f = BitBoard::from_square<SQ_3F>();
+constexpr BitBoard bb_3g = BitBoard::from_square<SQ_3G>();
+constexpr BitBoard bb_3h = BitBoard::from_square<SQ_3H>();
+constexpr BitBoard bb_3i = BitBoard::from_square<SQ_3I>();
+constexpr BitBoard bb_4a = BitBoard::from_square<SQ_4A>();
+constexpr BitBoard bb_4b = BitBoard::from_square<SQ_4B>();
+constexpr BitBoard bb_4c = BitBoard::from_square<SQ_4C>();
+constexpr BitBoard bb_4d = BitBoard::from_square<SQ_4D>();
+constexpr BitBoard bb_4e = BitBoard::from_square<SQ_4E>();
+constexpr BitBoard bb_4f = BitBoard::from_square<SQ_4F>();
+constexpr BitBoard bb_4g = BitBoard::from_square<SQ_4G>();
+constexpr BitBoard bb_4h = BitBoard::from_square<SQ_4H>();
+constexpr BitBoard bb_4i = BitBoard::from_square<SQ_4I>();
+constexpr BitBoard bb_5a = BitBoard::from_square<SQ_5A>();
+constexpr BitBoard bb_5b = BitBoard::from_square<SQ_5B>();
+constexpr BitBoard bb_5c = BitBoard::from_square<SQ_5C>();
+constexpr BitBoard bb_5d = BitBoard::from_square<SQ_5D>();
+constexpr BitBoard bb_5e = BitBoard::from_square<SQ_5E>();
+constexpr BitBoard bb_5f = BitBoard::from_square<SQ_5F>();
+constexpr BitBoard bb_5g = BitBoard::from_square<SQ_5G>();
+constexpr BitBoard bb_5h = BitBoard::from_square<SQ_5H>();
+constexpr BitBoard bb_5i = BitBoard::from_square<SQ_5I>();
+constexpr BitBoard bb_6a = BitBoard::from_square<SQ_6A>();
+constexpr BitBoard bb_6b = BitBoard::from_square<SQ_6B>();
+constexpr BitBoard bb_6c = BitBoard::from_square<SQ_6C>();
+constexpr BitBoard bb_6d = BitBoard::from_square<SQ_6D>();
+constexpr BitBoard bb_6e = BitBoard::from_square<SQ_6E>();
+constexpr BitBoard bb_6f = BitBoard::from_square<SQ_6F>();
+constexpr BitBoard bb_6g = BitBoard::from_square<SQ_6G>();
+constexpr BitBoard bb_6h = BitBoard::from_square<SQ_6H>();
+constexpr BitBoard bb_6i = BitBoard::from_square<SQ_6I>();
+constexpr BitBoard bb_7a = BitBoard::from_square<SQ_7A>();
+constexpr BitBoard bb_7b = BitBoard::from_square<SQ_7B>();
+constexpr BitBoard bb_7c = BitBoard::from_square<SQ_7C>();
+constexpr BitBoard bb_7d = BitBoard::from_square<SQ_7D>();
+constexpr BitBoard bb_7e = BitBoard::from_square<SQ_7E>();
+constexpr BitBoard bb_7f = BitBoard::from_square<SQ_7F>();
+constexpr BitBoard bb_7g = BitBoard::from_square<SQ_7G>();
+constexpr BitBoard bb_7h = BitBoard::from_square<SQ_7H>();
+constexpr BitBoard bb_7i = BitBoard::from_square<SQ_7I>();
+constexpr BitBoard bb_8a = BitBoard::from_square<SQ_8A>();
+constexpr BitBoard bb_8b = BitBoard::from_square<SQ_8B>();
+constexpr BitBoard bb_8c = BitBoard::from_square<SQ_8C>();
+constexpr BitBoard bb_8d = BitBoard::from_square<SQ_8D>();
+constexpr BitBoard bb_8e = BitBoard::from_square<SQ_8E>();
+constexpr BitBoard bb_8f = BitBoard::from_square<SQ_8F>();
+constexpr BitBoard bb_8g = BitBoard::from_square<SQ_8G>();
+constexpr BitBoard bb_8h = BitBoard::from_square<SQ_8H>();
+constexpr BitBoard bb_8i = BitBoard::from_square<SQ_8I>();
+constexpr BitBoard bb_9a = BitBoard::from_square<SQ_9A>();
+constexpr BitBoard bb_9b = BitBoard::from_square<SQ_9B>();
+constexpr BitBoard bb_9c = BitBoard::from_square<SQ_9C>();
+constexpr BitBoard bb_9d = BitBoard::from_square<SQ_9D>();
+constexpr BitBoard bb_9e = BitBoard::from_square<SQ_9E>();
+constexpr BitBoard bb_9f = BitBoard::from_square<SQ_9F>();
+constexpr BitBoard bb_9g = BitBoard::from_square<SQ_9G>();
+constexpr BitBoard bb_9h = BitBoard::from_square<SQ_9H>();
+constexpr BitBoard bb_9i = BitBoard::from_square<SQ_9I>();
 constexpr BitBoard bb_file1 = bb_1a | bb_1b | bb_1c | bb_1d | bb_1e | bb_1f | bb_1g | bb_1h | bb_1i;
 constexpr BitBoard bb_file2 = bb_2a | bb_2b | bb_2c | bb_2d | bb_2e | bb_2f | bb_2g | bb_2h | bb_2i;
 constexpr BitBoard bb_file3 = bb_3a | bb_3b | bb_3c | bb_3d | bb_3e | bb_3f | bb_3g | bb_3h | bb_3i;
@@ -402,10 +402,8 @@ inline shogi::BitBoard shogi::BitBoard::get_attacks_by(
 }
 
 template <>
-inline const shogi::BitBoard
-    shogi::Magic::premask_north[shogi::Config::num_squares]
-    = {
-        // clang-format off
+inline const uint128 shogi::Magic::premask_north[shogi::Config::num_squares] = {
+    // clang-format off
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000002), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000006), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000000000e), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000000001e), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000000003e), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000000007e), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000fe),
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000c00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000001c00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000003c00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000007c00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000000fc00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001fc00),
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000080000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000180000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000380000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000780000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000f80000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000001f80000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000003f80000),
@@ -415,13 +413,11 @@ inline const shogi::BitBoard
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0080000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0180000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0380000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0780000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0f80000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x1f80000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x3f80000000000000),
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00003) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00007) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0000f) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0001f) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0003f) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0007f) << 64) | static_cast<uint128>(0x0000000000000000),
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00200) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00600) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00e00) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x01e00) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x03e00) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x07e00) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0fe00) << 64) | static_cast<uint128>(0x0000000000000000),
-        // clang-format on
+    // clang-format on
 };
 template <>
-inline const shogi::BitBoard
-    shogi::Magic::premask_south[shogi::Config::num_squares]
-    = {
-        // clang-format off
+inline const uint128 shogi::Magic::premask_south[shogi::Config::num_squares] = {
+    // clang-format off
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000fe), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000fc), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000f8), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000f0), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000e0), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000c0), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000080), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000),
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001fc00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001f800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001f000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001e000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001c000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000018000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000010000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000),
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000003f80000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000003f00000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000003e00000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000003c00000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000003800000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000003000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000002000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000),
@@ -431,11 +427,10 @@ inline const shogi::BitBoard
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x3f80000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x3f00000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x3e00000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x3c00000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x3800000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x3000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x2000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000),
 (static_cast<uint128>(0x0007f) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0007e) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0007c) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00078) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00070) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00060) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000),
 (static_cast<uint128>(0x0fe00) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0fc00) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0f800) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0f000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0e000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x0c000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x08000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000),
-        // clang-format on
+    // clang-format on
 };
 template <>
-inline const shogi::BitBoard
-    shogi::Magic::premask_vertical[shogi::Config::num_squares]
+inline const uint128 shogi::Magic::premask_vertical[shogi::Config::num_squares]
     = {
         // clang-format off
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000fe), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000fc), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000fa), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000f6), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000ee), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000de), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000be), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000000007e), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000fe),
@@ -450,7 +445,7 @@ inline const shogi::BitBoard
         // clang-format on
 };
 template <>
-inline const shogi::BitBoard
+inline const uint128
     shogi::Magic::premask_horizontal[shogi::Config::num_squares]
     = {
         // clang-format off
@@ -466,8 +461,7 @@ inline const shogi::BitBoard
         // clang-format on
 };
 template <>
-inline const shogi::BitBoard
-    shogi::Magic::premask_diagonal[shogi::Config::num_squares]
+inline const uint128 shogi::Magic::premask_diagonal[shogi::Config::num_squares]
     = {
         // clang-format off
 (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x1004010040100400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x2008020080200800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0010040100401400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000080200882800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000411105000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000202220a000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000404040414000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0080808080808000), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0101010101010000),
@@ -622,7 +616,7 @@ template <>
 inline bool shogi::Board::is_square_attacked(
     const ColorEnum& by_side, const Square& sq, const Square& skip) const
 {
-    assert(sq != SQ_NA);
+    assert(sq != C::SQ_NA);
     using namespace shogi;
     return is_square_attacked_by<FU>(by_side, sq)
            || is_square_attacked_by<KE>(by_side, sq)

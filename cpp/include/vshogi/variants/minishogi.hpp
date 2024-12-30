@@ -139,31 +139,31 @@ static_assert(NA == Config::NA);
 static_assert(VOID == Config::VOID);
 
 constexpr BitBoard bb_na = BitBoard();
-constexpr BitBoard bb_1a = (BitBoard(1) << static_cast<uint>(SQ_1A));
-constexpr BitBoard bb_1b = (BitBoard(1) << static_cast<uint>(SQ_1B));
-constexpr BitBoard bb_1c = (BitBoard(1) << static_cast<uint>(SQ_1C));
-constexpr BitBoard bb_1d = (BitBoard(1) << static_cast<uint>(SQ_1D));
-constexpr BitBoard bb_1e = (BitBoard(1) << static_cast<uint>(SQ_1E));
-constexpr BitBoard bb_2a = (BitBoard(1) << static_cast<uint>(SQ_2A));
-constexpr BitBoard bb_2b = (BitBoard(1) << static_cast<uint>(SQ_2B));
-constexpr BitBoard bb_2c = (BitBoard(1) << static_cast<uint>(SQ_2C));
-constexpr BitBoard bb_2d = (BitBoard(1) << static_cast<uint>(SQ_2D));
-constexpr BitBoard bb_2e = (BitBoard(1) << static_cast<uint>(SQ_2E));
-constexpr BitBoard bb_3a = (BitBoard(1) << static_cast<uint>(SQ_3A));
-constexpr BitBoard bb_3b = (BitBoard(1) << static_cast<uint>(SQ_3B));
-constexpr BitBoard bb_3c = (BitBoard(1) << static_cast<uint>(SQ_3C));
-constexpr BitBoard bb_3d = (BitBoard(1) << static_cast<uint>(SQ_3D));
-constexpr BitBoard bb_3e = (BitBoard(1) << static_cast<uint>(SQ_3E));
-constexpr BitBoard bb_4a = (BitBoard(1) << static_cast<uint>(SQ_4A));
-constexpr BitBoard bb_4b = (BitBoard(1) << static_cast<uint>(SQ_4B));
-constexpr BitBoard bb_4c = (BitBoard(1) << static_cast<uint>(SQ_4C));
-constexpr BitBoard bb_4d = (BitBoard(1) << static_cast<uint>(SQ_4D));
-constexpr BitBoard bb_4e = (BitBoard(1) << static_cast<uint>(SQ_4E));
-constexpr BitBoard bb_5a = (BitBoard(1) << static_cast<uint>(SQ_5A));
-constexpr BitBoard bb_5b = (BitBoard(1) << static_cast<uint>(SQ_5B));
-constexpr BitBoard bb_5c = (BitBoard(1) << static_cast<uint>(SQ_5C));
-constexpr BitBoard bb_5d = (BitBoard(1) << static_cast<uint>(SQ_5D));
-constexpr BitBoard bb_5e = (BitBoard(1) << static_cast<uint>(SQ_5E));
+constexpr BitBoard bb_1a = BitBoard::from_square<SQ_1A>();
+constexpr BitBoard bb_1b = BitBoard::from_square<SQ_1B>();
+constexpr BitBoard bb_1c = BitBoard::from_square<SQ_1C>();
+constexpr BitBoard bb_1d = BitBoard::from_square<SQ_1D>();
+constexpr BitBoard bb_1e = BitBoard::from_square<SQ_1E>();
+constexpr BitBoard bb_2a = BitBoard::from_square<SQ_2A>();
+constexpr BitBoard bb_2b = BitBoard::from_square<SQ_2B>();
+constexpr BitBoard bb_2c = BitBoard::from_square<SQ_2C>();
+constexpr BitBoard bb_2d = BitBoard::from_square<SQ_2D>();
+constexpr BitBoard bb_2e = BitBoard::from_square<SQ_2E>();
+constexpr BitBoard bb_3a = BitBoard::from_square<SQ_3A>();
+constexpr BitBoard bb_3b = BitBoard::from_square<SQ_3B>();
+constexpr BitBoard bb_3c = BitBoard::from_square<SQ_3C>();
+constexpr BitBoard bb_3d = BitBoard::from_square<SQ_3D>();
+constexpr BitBoard bb_3e = BitBoard::from_square<SQ_3E>();
+constexpr BitBoard bb_4a = BitBoard::from_square<SQ_4A>();
+constexpr BitBoard bb_4b = BitBoard::from_square<SQ_4B>();
+constexpr BitBoard bb_4c = BitBoard::from_square<SQ_4C>();
+constexpr BitBoard bb_4d = BitBoard::from_square<SQ_4D>();
+constexpr BitBoard bb_4e = BitBoard::from_square<SQ_4E>();
+constexpr BitBoard bb_5a = BitBoard::from_square<SQ_5A>();
+constexpr BitBoard bb_5b = BitBoard::from_square<SQ_5B>();
+constexpr BitBoard bb_5c = BitBoard::from_square<SQ_5C>();
+constexpr BitBoard bb_5d = BitBoard::from_square<SQ_5D>();
+constexpr BitBoard bb_5e = BitBoard::from_square<SQ_5E>();
 
 constexpr BitBoard bb_ranka = bb_1a | bb_2a | bb_3a | bb_4a | bb_5a;
 constexpr BitBoard bb_rankb = bb_1b | bb_2b | bb_3b | bb_4b | bb_5b;
@@ -290,7 +290,7 @@ inline minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
 }
 
 template <>
-inline const minishogi::BitBoard
+inline const std::uint32_t
     minishogi::Magic::premask_vertical[minishogi::Config::num_squares]
     = {
         0x0000000e, 0x0000000c, 0x0000000a, 0x00000006, 0x0000000e,
@@ -300,7 +300,7 @@ inline const minishogi::BitBoard
         0x00e00000, 0x00c00000, 0x00a00000, 0x00600000, 0x00e00000,
 };
 template <>
-inline const minishogi::BitBoard
+inline const std::uint32_t
     minishogi::Magic::premask_horizontal[minishogi::Config::num_squares]
     = {
         0x00008420, 0x00010840, 0x00021080, 0x00042100, 0x00084200,
@@ -310,7 +310,7 @@ inline const minishogi::BitBoard
         0x00008420, 0x00010840, 0x00021080, 0x00042100, 0x00084200,
 };
 template <>
-inline const minishogi::BitBoard
+inline const std::uint32_t
     minishogi::Magic::premask_diagonal[minishogi::Config::num_squares]
     = {
         0x00041040, 0x00002080, 0x00000140, 0x00000880, 0x00011100,

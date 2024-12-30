@@ -73,9 +73,9 @@ TEST_GROUP (test_judkins_shogi_magic) {
             const auto magic = sparse_random();
             bool found_magic = true;
             for (uint ii = (1u << num_relevant_squares); ii--;) {
-                const auto index
-                    = Magic::to_magic_table_index(occupancies[ii], magic);
-                if (used_attacks[index] == 0u) {
+                const auto index = Magic::to_magic_table_index(
+                    occupancies[ii].value(), magic);
+                if (used_attacks[index].value() == 0u) {
                     used_attacks[index] = attacks[ii];
                 } else if (used_attacks[index] != attacks[ii]) {
                     found_magic = false;

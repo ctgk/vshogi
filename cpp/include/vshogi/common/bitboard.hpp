@@ -34,12 +34,12 @@ private:
     static BitBoard ray_table[C::num_squares][C::num_dir];
     static BitBoard line_segment_table[C::num_squares][C::num_squares];
 
-public:
-    constexpr BitBoard() : m_value()
+    constexpr BitBoard(const UInt v_masked) : m_value(v_masked)
     {
     }
-    template <class Int>
-    constexpr BitBoard(const Int& v) : m_value(UInt(v) & mask)
+
+public:
+    constexpr BitBoard() : m_value()
     {
     }
     constexpr UInt value() const
@@ -48,7 +48,7 @@ public:
     }
     constexpr BitBoard operator~() const
     {
-        return BitBoard(~m_value);
+        return BitBoard(m_value ^ mask);
     }
     constexpr BitBoard operator|(const BitBoard& other) const
     {
@@ -79,7 +79,7 @@ public:
     }
     constexpr BitBoard operator<<(const uint& shift_width) const
     {
-        return BitBoard(m_value << shift_width);
+        return BitBoard((m_value << shift_width) & mask);
     }
     constexpr BitBoard operator>>(const uint& shift_width) const
     {
@@ -134,24 +134,12 @@ public:
     }
 
     /**
-     * @brief Clear a bit corresponding to the given square if not `SQ_NA`.
+     * @brief Clear a bit corresponding to the given square.
      *
      * @param sq Corresponding square bit to clear.
      * @return BitBoard& Cleared bitboard.
      */
     BitBoard& clear(const Square& sq)
-    {
-        if (sq != C::SQ_NA)
-            return clear_nocheck(sq);
-        return *this;
-    }
-    /**
-     * @brief Clear a bit corresponding to the given square.
-     * @note Note that you are not allowed to pass `SQ_NA` here.
-     * @param sq Corresponding square bit to clear.
-     * @return BitBoard& Cleared bitboard.
-     */
-    BitBoard& clear_nocheck(const Square& sq)
     {
         m_value &= static_cast<UInt>(~(static_cast<UInt>(1) << sq));
         return *this;
@@ -162,21 +150,21 @@ public:
         return vshogi::hamming_weight(m_value);
     }
 
+    template <class Int>
+    static BitBoard from_value(const Int& v)
+    {
+        return BitBoard(static_cast<UInt>(v) & mask);
+    }
     static BitBoard from_square(const Square& sq)
     {
-        return BitBoard(static_cast<UInt>(1) << sq);
+        return BitBoard((static_cast<UInt>(1) << sq) & mask);
     }
     template <Square SQ>
-    static BitBoard from_square()
+    static constexpr BitBoard from_square()
     {
         return BitBoard(static_cast<UInt>(1) << SQ);
     }
-    template <Square SQ1, Square SQ2, Square... Args>
-    static constexpr BitBoard from_square()
-    {
-        return from_square<SQ1>() | from_square<SQ2, Args...>();
-    }
-    static constexpr BitBoard from_rank(const Rank& r)
+    static BitBoard from_rank(const Rank& r)
     {
         return from_rank1<>() << r;
     }
@@ -205,14 +193,11 @@ public:
 
     constexpr BitBoard shift(const DirectionEnum& dir) const
     {
-        constexpr auto bb_all = ~BitBoard(0);
-        constexpr auto bb_all_but_top = ~from_rank(static_cast<Rank>(0));
-        constexpr auto bb_all_but_top2
-            = bb_all_but_top & ~from_rank(static_cast<Rank>(1));
-        constexpr auto bb_all_but_btm
-            = ~from_rank(static_cast<Rank>(C::num_ranks - 1u));
-        constexpr auto bb_all_but_btm2
-            = bb_all_but_btm & ~from_rank(static_cast<Rank>(C::num_ranks - 2u));
+        constexpr auto bb_all = mask;
+        constexpr auto bb_all_but_top = ~from_rank<C::RANK_A>();
+        constexpr auto bb_all_but_top2 = ~from_rank<C::RANK_A, C::RANK_B>();
+        constexpr auto bb_all_but_btm = ~from_rank<C::RANK_Z>();
+        constexpr auto bb_all_but_btm2 = ~from_rank<C::RANK_Y, C::RANK_Z>();
         const auto delta = SHelper::direction_to_delta(dir);
         constexpr BitBoard rankmask[] = {
             // clang-format off

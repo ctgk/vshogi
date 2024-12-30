@@ -829,8 +829,7 @@ private:
     void init_src_iter()
     {
         const auto king_sq = m_board.get_king_location(m_turn);
-        const auto src_mask
-            = m_board.get_occupied(m_turn).clear_nocheck(king_sq);
+        const auto src_mask = m_board.get_occupied(m_turn).clear(king_sq);
         m_src_iter = src_mask.square_iterator();
     }
     void init_src_iter(const BitBoardType& src_mask)
@@ -1006,6 +1005,7 @@ private:
     {
         const auto king_sq = m_board.get_king_location(m_turn);
         const auto enemy_king_sq = m_board.get_king_location(~m_turn);
+        assert(enemy_king_sq != C::SQ_NA);
         const auto non_king_occupancy
             = m_board.get_occupied(m_turn).clear(king_sq);
         const auto ranging_occupancy = m_board.get_occupied_by_ranging(m_turn);

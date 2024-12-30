@@ -363,7 +363,7 @@ public:
     }
     static const DirectionEnum* get_attack_directions(const ColoredPiece& p)
     {
-        assert(p != VOID);
+        assert(p != C::VOID);
         return FPTHelper::get_attack_directions(
             C::piece_types[to_piece_type(p)], get_color(p));
     }

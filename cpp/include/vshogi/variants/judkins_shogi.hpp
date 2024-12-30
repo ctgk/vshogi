@@ -158,42 +158,42 @@ static_assert(NA == Config::NA);
 static_assert(VOID == Config::VOID);
 
 constexpr BitBoard bb_na = BitBoard();
-constexpr BitBoard bb_1a = (BitBoard(1) << static_cast<uint>(SQ_1A));
-constexpr BitBoard bb_1b = (BitBoard(1) << static_cast<uint>(SQ_1B));
-constexpr BitBoard bb_1c = (BitBoard(1) << static_cast<uint>(SQ_1C));
-constexpr BitBoard bb_1d = (BitBoard(1) << static_cast<uint>(SQ_1D));
-constexpr BitBoard bb_1e = (BitBoard(1) << static_cast<uint>(SQ_1E));
-constexpr BitBoard bb_1f = (BitBoard(1) << static_cast<uint>(SQ_1F));
-constexpr BitBoard bb_2a = (BitBoard(1) << static_cast<uint>(SQ_2A));
-constexpr BitBoard bb_2b = (BitBoard(1) << static_cast<uint>(SQ_2B));
-constexpr BitBoard bb_2c = (BitBoard(1) << static_cast<uint>(SQ_2C));
-constexpr BitBoard bb_2d = (BitBoard(1) << static_cast<uint>(SQ_2D));
-constexpr BitBoard bb_2e = (BitBoard(1) << static_cast<uint>(SQ_2E));
-constexpr BitBoard bb_2f = (BitBoard(1) << static_cast<uint>(SQ_2F));
-constexpr BitBoard bb_3a = (BitBoard(1) << static_cast<uint>(SQ_3A));
-constexpr BitBoard bb_3b = (BitBoard(1) << static_cast<uint>(SQ_3B));
-constexpr BitBoard bb_3c = (BitBoard(1) << static_cast<uint>(SQ_3C));
-constexpr BitBoard bb_3d = (BitBoard(1) << static_cast<uint>(SQ_3D));
-constexpr BitBoard bb_3e = (BitBoard(1) << static_cast<uint>(SQ_3E));
-constexpr BitBoard bb_3f = (BitBoard(1) << static_cast<uint>(SQ_3F));
-constexpr BitBoard bb_4a = (BitBoard(1) << static_cast<uint>(SQ_4A));
-constexpr BitBoard bb_4b = (BitBoard(1) << static_cast<uint>(SQ_4B));
-constexpr BitBoard bb_4c = (BitBoard(1) << static_cast<uint>(SQ_4C));
-constexpr BitBoard bb_4d = (BitBoard(1) << static_cast<uint>(SQ_4D));
-constexpr BitBoard bb_4e = (BitBoard(1) << static_cast<uint>(SQ_4E));
-constexpr BitBoard bb_4f = (BitBoard(1) << static_cast<uint>(SQ_4F));
-constexpr BitBoard bb_5a = (BitBoard(1) << static_cast<uint>(SQ_5A));
-constexpr BitBoard bb_5b = (BitBoard(1) << static_cast<uint>(SQ_5B));
-constexpr BitBoard bb_5c = (BitBoard(1) << static_cast<uint>(SQ_5C));
-constexpr BitBoard bb_5d = (BitBoard(1) << static_cast<uint>(SQ_5D));
-constexpr BitBoard bb_5e = (BitBoard(1) << static_cast<uint>(SQ_5E));
-constexpr BitBoard bb_5f = (BitBoard(1) << static_cast<uint>(SQ_5F));
-constexpr BitBoard bb_6a = (BitBoard(1) << static_cast<uint>(SQ_6A));
-constexpr BitBoard bb_6b = (BitBoard(1) << static_cast<uint>(SQ_6B));
-constexpr BitBoard bb_6c = (BitBoard(1) << static_cast<uint>(SQ_6C));
-constexpr BitBoard bb_6d = (BitBoard(1) << static_cast<uint>(SQ_6D));
-constexpr BitBoard bb_6e = (BitBoard(1) << static_cast<uint>(SQ_6E));
-constexpr BitBoard bb_6f = (BitBoard(1) << static_cast<uint>(SQ_6F));
+constexpr BitBoard bb_1a = BitBoard::from_square<SQ_1A>();
+constexpr BitBoard bb_1b = BitBoard::from_square<SQ_1B>();
+constexpr BitBoard bb_1c = BitBoard::from_square<SQ_1C>();
+constexpr BitBoard bb_1d = BitBoard::from_square<SQ_1D>();
+constexpr BitBoard bb_1e = BitBoard::from_square<SQ_1E>();
+constexpr BitBoard bb_1f = BitBoard::from_square<SQ_1F>();
+constexpr BitBoard bb_2a = BitBoard::from_square<SQ_2A>();
+constexpr BitBoard bb_2b = BitBoard::from_square<SQ_2B>();
+constexpr BitBoard bb_2c = BitBoard::from_square<SQ_2C>();
+constexpr BitBoard bb_2d = BitBoard::from_square<SQ_2D>();
+constexpr BitBoard bb_2e = BitBoard::from_square<SQ_2E>();
+constexpr BitBoard bb_2f = BitBoard::from_square<SQ_2F>();
+constexpr BitBoard bb_3a = BitBoard::from_square<SQ_3A>();
+constexpr BitBoard bb_3b = BitBoard::from_square<SQ_3B>();
+constexpr BitBoard bb_3c = BitBoard::from_square<SQ_3C>();
+constexpr BitBoard bb_3d = BitBoard::from_square<SQ_3D>();
+constexpr BitBoard bb_3e = BitBoard::from_square<SQ_3E>();
+constexpr BitBoard bb_3f = BitBoard::from_square<SQ_3F>();
+constexpr BitBoard bb_4a = BitBoard::from_square<SQ_4A>();
+constexpr BitBoard bb_4b = BitBoard::from_square<SQ_4B>();
+constexpr BitBoard bb_4c = BitBoard::from_square<SQ_4C>();
+constexpr BitBoard bb_4d = BitBoard::from_square<SQ_4D>();
+constexpr BitBoard bb_4e = BitBoard::from_square<SQ_4E>();
+constexpr BitBoard bb_4f = BitBoard::from_square<SQ_4F>();
+constexpr BitBoard bb_5a = BitBoard::from_square<SQ_5A>();
+constexpr BitBoard bb_5b = BitBoard::from_square<SQ_5B>();
+constexpr BitBoard bb_5c = BitBoard::from_square<SQ_5C>();
+constexpr BitBoard bb_5d = BitBoard::from_square<SQ_5D>();
+constexpr BitBoard bb_5e = BitBoard::from_square<SQ_5E>();
+constexpr BitBoard bb_5f = BitBoard::from_square<SQ_5F>();
+constexpr BitBoard bb_6a = BitBoard::from_square<SQ_6A>();
+constexpr BitBoard bb_6b = BitBoard::from_square<SQ_6B>();
+constexpr BitBoard bb_6c = BitBoard::from_square<SQ_6C>();
+constexpr BitBoard bb_6d = BitBoard::from_square<SQ_6D>();
+constexpr BitBoard bb_6e = BitBoard::from_square<SQ_6E>();
+constexpr BitBoard bb_6f = BitBoard::from_square<SQ_6F>();
 
 constexpr BitBoard bb_file1 = bb_1a | bb_1b | bb_1c | bb_1d | bb_1e | bb_1f;
 constexpr BitBoard bb_file2 = bb_2a | bb_2b | bb_2c | bb_2d | bb_2e | bb_2f;
@@ -328,7 +328,7 @@ inline judkins_shogi::BitBoard judkins_shogi::BitBoard::get_attacks_by(
 }
 
 template <>
-inline const judkins_shogi::BitBoard
+inline const std::uint64_t
     judkins_shogi::Magic::premask_vertical[judkins_shogi::Config::num_squares]
     = {
         // clang-format off
@@ -341,7 +341,7 @@ inline const judkins_shogi::BitBoard
         // clang-format on
 };
 template <>
-inline const judkins_shogi::BitBoard
+inline const std::uint64_t
     judkins_shogi::Magic::premask_horizontal[judkins_shogi::Config::num_squares]
     = {
         // clang-format off
@@ -354,7 +354,7 @@ inline const judkins_shogi::BitBoard
         // clang-format on
 };
 template <>
-inline const judkins_shogi::BitBoard
+inline const std::uint64_t
     judkins_shogi::Magic::premask_diagonal[judkins_shogi::Config::num_squares]
     = {
         // clang-format off
@@ -446,7 +446,7 @@ inline bool judkins_shogi::Board::is_square_attacked(
     const judkins_shogi::SquareEnum& sq,
     const judkins_shogi::SquareEnum& skip) const
 {
-    assert(sq != SQ_NA);
+    assert(sq != C::SQ_NA);
     using namespace judkins_shogi;
     return is_square_attacked_by<FU>(by_side, sq)
            || is_square_attacked_by<KE>(by_side, sq)
