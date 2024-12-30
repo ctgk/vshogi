@@ -250,7 +250,7 @@ public:
 
     static BitBoard get_attacks_by(const ColoredPiece& p, const Square& sq)
     {
-        if ((p == PHelper::VOID) || (sq == SHelper::SQ_NA))
+        if ((p == C::VOID) || (sq == SHelper::SQ_NA))
             return BitBoard();
         return attacks_table[p][sq];
     }

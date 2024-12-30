@@ -20,6 +20,7 @@ struct Configuration
     using Rank = typename Param::Rank;
     using BaseTypeBitBoard = typename ParamS::BaseTypeBitBoard;
     using BaseTypeStand = typename ParamS::BaseTypeStand;
+    static_assert(sizeof(ColoredPiece) == sizeof(std::uint8_t));
 
 public: // pieces
     /**
@@ -50,6 +51,17 @@ public: // pieces
      * @note `num_stand_piece_types` + #promotions + 1(OU) == `num_piece_types`
      */
     static constexpr uint num_stand_piece_types = Param::num_stand_piece_types;
+
+    static constexpr PieceType FU = static_cast<PieceType>(0); // NOLINT
+    static_assert(piece_types[0u] == PT_FU);
+    static constexpr PieceType OU // NOLINT
+        = static_cast<PieceType>(num_stand_piece_types);
+    static_assert(piece_types[num_stand_piece_types] == PT_OU);
+    static constexpr PieceType NA // NOLINT
+        = static_cast<PieceType>(num_piece_types);
+    static_assert(piece_types[num_piece_types] == PT_NA);
+    static constexpr ColoredPiece VOID // NOLINT
+        = static_cast<ColoredPiece>(num_colored_piece_types);
 
 public: // squares
     /**

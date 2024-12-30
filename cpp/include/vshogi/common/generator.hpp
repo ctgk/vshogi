@@ -320,7 +320,7 @@ private:
     }
     void increment_square()
     {
-        if (m_pt_iter == PHelper::FU)
+        if (m_pt_iter == C::FU)
             increment_square_for_pawn_unless_legal();
         else
             increment_square_unless_legal();
@@ -493,7 +493,7 @@ private:
     }
     void increment_square()
     {
-        if (m_pt_iter == PHelper::FU)
+        if (m_pt_iter == C::FU)
             increment_square_for_pawn_unless_legal();
         else
             increment_square_unless_legal();

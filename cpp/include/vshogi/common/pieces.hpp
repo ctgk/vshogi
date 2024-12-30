@@ -216,22 +216,10 @@ struct Pieces
 {
 private:
     using C = Configuration<Parameters>;
-    static constexpr uint num_piece_types = C::num_piece_types;
-    static constexpr uint num_colored_piece_types = C::num_colored_piece_types;
-    static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
     using PieceType = typename C::PieceType;
     using ColoredPiece = typename C::ColoredPiece;
-    static_assert(sizeof(ColoredPiece) == sizeof(std::uint8_t));
 
 public:
-    static constexpr PieceType FU = static_cast<PieceType>(0); // NOLINT
-    static constexpr PieceType OU // NOLINT
-        = static_cast<PieceType>(num_stand_piece_types);
-    static constexpr PieceType NA // NOLINT
-        = static_cast<PieceType>(num_piece_types);
-    static constexpr ColoredPiece VOID // NOLINT
-        = static_cast<ColoredPiece>(num_colored_piece_types);
-
     Pieces() = delete;
 
     /**
@@ -243,13 +231,13 @@ public:
      */
     static constexpr ColorEnum get_color(const ColoredPiece& p)
     {
-        return static_cast<ColorEnum>(p >= num_piece_types);
+        return static_cast<ColorEnum>(p >= C::num_piece_types);
     }
     static constexpr PieceType to_piece_type(const ColoredPiece& p)
     {
-        return (p < num_piece_types)
+        return (p < C::num_piece_types)
                    ? static_cast<PieceType>(p)
-                   : static_cast<PieceType>(p - num_piece_types);
+                   : static_cast<PieceType>(p - C::num_piece_types);
     }
     static PieceType to_piece_type(char c)
     {
@@ -260,14 +248,14 @@ public:
             if (*ptr == fpt)
                 return static_cast<PieceType>(ptr - C::piece_types.data());
         }
-        return NA;
+        return C::NA;
     }
     static constexpr ColoredPiece
     to_board_piece(const ColorEnum& c, const PieceType& p)
     {
-        if (p == NA)
-            return VOID;
-        return static_cast<ColoredPiece>(c * num_piece_types + p);
+        if (p == C::NA)
+            return C::VOID;
+        return static_cast<ColoredPiece>(c * C::num_piece_types + p);
     }
     static constexpr ColoredPiece to_board_piece(const char c)
     {
@@ -282,7 +270,7 @@ public:
 
     static constexpr bool is_promotable(const PieceType& p)
     {
-        return (p + 1u < num_stand_piece_types);
+        return (p + 1u < C::num_stand_piece_types);
     }
     static constexpr bool is_promotable(const ColoredPiece& p)
     {
@@ -291,7 +279,7 @@ public:
 
     static constexpr bool is_promoted(const PieceType& pt)
     {
-        return pt > num_stand_piece_types;
+        return pt > C::num_stand_piece_types;
     }
     static constexpr bool is_promoted(const ColoredPiece& p)
     {
@@ -332,7 +320,7 @@ public:
     static constexpr T promote_nocheck(const T& p)
     {
         assert(is_promotable(p));
-        return static_cast<T>(p + num_stand_piece_types + 1);
+        return static_cast<T>(p + C::num_stand_piece_types + 1);
     }
 
     template <class T>
@@ -345,7 +333,7 @@ public:
     template <class T>
     static constexpr T demote_nocheck(const T& p)
     {
-        return static_cast<T>(p - num_stand_piece_types - 1);
+        return static_cast<T>(p - C::num_stand_piece_types - 1);
     }
 
     static uint get_point(const PieceType& p)
@@ -382,9 +370,6 @@ public:
     static void init_tables()
     {
     }
-
-    static constexpr ColoredPiece B_OU = to_board_piece(BLACK, OU); // NOLINT
-    static constexpr ColoredPiece W_OU = to_board_piece(WHITE, OU); // NOLINT
 };
 
 } // namespace vshogi

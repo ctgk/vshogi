@@ -317,7 +317,7 @@ private:
             s.get_board().get_king_location(~s.get_turn()) != SHelper::SQ_NA);
         assert(
             s.get_board()[s.get_board().get_king_location(~s.get_turn())]
-            == PHelper::to_board_piece(~s.get_turn(), PHelper::OU));
+            == PHelper::to_board_piece(~s.get_turn(), C::OU));
         m_dn = zero;
         if (cousin_ge_stand) {
             assert(!cousin_ge_stand->found_conclusion());

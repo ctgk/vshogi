@@ -64,7 +64,7 @@ public:
     }
     Stand& add(const PieceType& p, const int num = 1)
     {
-        assert(p != PHelper::NA);
+        assert(p != C::NA);
         const auto p_demoted = PHelper::demote(p);
         for (int ii = num; ii--;) {
             m_value = static_cast<Int>(m_value + deltas[p_demoted]);
@@ -73,7 +73,7 @@ public:
     }
     Stand& subtract(const PieceType& p)
     {
-        assert(p != PHelper::NA);
+        assert(p != C::NA);
         m_value = static_cast<Int>(m_value - deltas[PHelper::demote(p)]);
         return *this;
     }
@@ -222,7 +222,7 @@ public:
         if (hash != nullptr) {
             const auto num_after = m_stands[c].count(pt);
             const auto num_before = num_after + 1;
-            assert(pt != PHelper::NA);
+            assert(pt != C::NA);
             assert(num_before <= max_stand_piece_count);
             assert(num_after <= max_stand_piece_count);
             *hash ^= zobrist_table[c][pt][num_before];
@@ -243,8 +243,8 @@ public:
     void add_captured_piece(
         const ColoredPiece& captured, std::uint64_t* const hash = nullptr)
     {
-        if ((captured == PHelper::VOID)
-            || (PHelper::to_piece_type(captured) == PHelper::OU))
+        if ((captured == C::VOID)
+            || (PHelper::to_piece_type(captured) == C::OU))
             return;
 
         const auto c = ~PHelper::get_color(captured);
@@ -270,7 +270,7 @@ public:
     void remove_captured_piece(const ColoredPiece& captured)
     {
         const auto pt = PHelper::to_piece_type(captured);
-        if (pt == PHelper::OU)
+        if (pt == C::OU)
             return;
         const auto c = ~PHelper::get_color(captured);
         const auto pt_demoted = PHelper::demote(pt);

@@ -38,7 +38,7 @@ private:
     static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
     static constexpr uint num_dir = C::num_dir;
     static constexpr Square SQ_NA = SHelper::SQ_NA; // NOLINT
-    static constexpr ColoredPiece VOID = PHelper::VOID; // NOLINT
+    static constexpr ColoredPiece VOID = C::VOID; // NOLINT
     static constexpr std::uint64_t zobrist_hash_for_turn = 0x000000aaaaaaaaaau;
 
 public:

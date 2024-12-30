@@ -39,7 +39,7 @@ private:
     using Rank = typename C::Rank;
     static constexpr auto num_square_states
         = num_colors * C::num_piece_types + 1;
-    static constexpr auto VOID = PHelper::VOID; // NOLINT
+    static constexpr auto VOID = C::VOID; // NOLINT
     static constexpr auto SQ_NA = SHelper::SQ_NA; // NOLINT
 
     static std::uint64_t zobrist_table[num_squares][num_square_states];
@@ -91,7 +91,7 @@ public:
      */
     BitBoardType get_occupied(const PieceType& pt) const
     {
-        assert(pt != PHelper::NA);
+        assert(pt != C::NA);
         return m_bb_piece[pt];
     }
     /**
@@ -110,7 +110,7 @@ public:
     template <PieceType PT>
     BitBoardType get_occupied(const ColorEnum& c) const
     {
-        static_assert(PT != PHelper::NA);
+        static_assert(PT != C::NA);
         return m_bb_color[c] & m_bb_piece[PT];
     }
     template <PieceType PT1, PieceType PT2, PieceType... Args>
@@ -271,7 +271,7 @@ public:
     }
     bool has_pawn_in_file(const File& f, const ColorEnum& by_side) const
     {
-        const BitBoardType occ = get_occupied<PHelper::FU>(by_side);
+        const BitBoardType occ = get_occupied<C::FU>(by_side);
         return (BitBoardType::from_file(f) & occ).any();
     }
     bool is_drop_pawn_mate(const Square& dst, const ColorEnum& by_side) const
@@ -409,7 +409,7 @@ private:
             const auto& p = m_pieces[sq];
             const auto c = PHelper::get_color(p);
             const auto pt = PHelper::to_piece_type(p);
-            if (pt == PHelper::OU)
+            if (pt == C::OU)
                 m_king_locations[c] = sq;
             if (p != VOID) {
                 m_bb_color[c].toggle(sq);
@@ -430,7 +430,7 @@ private:
             return;
         const auto c = PHelper::get_color(p);
         const auto pt = PHelper::to_piece_type(p);
-        if (pt == PHelper::OU)
+        if (pt == C::OU)
             m_king_locations[c] = sq;
         m_bb_color[c].toggle(sq);
         m_bb_piece[pt].toggle(sq);
@@ -447,7 +447,7 @@ private:
             return;
         const auto c = PHelper::get_color(p);
         const auto pt = PHelper::to_piece_type(p);
-        if (pt == PHelper::OU)
+        if (pt == C::OU)
             m_king_locations[c] = SQ_NA;
         m_bb_color[c].toggle(sq);
         m_bb_piece[pt].toggle(sq);
@@ -455,7 +455,7 @@ private:
     template <PieceType PT>
     bool is_square_attacked_by(const ColorEnum& by_side, const Square& sq) const
     {
-        static_assert(PT < PHelper::NA);
+        static_assert(PT < C::NA);
         assert(sq < SQ_NA);
         const auto attack_inverted = BitBoardType::get_attacks_by(
             PHelper::to_board_piece(~by_side, PT), sq);
@@ -466,7 +466,7 @@ private:
     template <PieceType Base, PieceType Alike, PieceType... Args>
     bool is_square_attacked_by(const ColorEnum& by_side, const Square& sq) const
     {
-        static_assert(Base < PHelper::NA);
+        static_assert(Base < C::NA);
         assert(sq < SQ_NA);
         const auto attack_inverted = BitBoardType::get_attacks_by(
             PHelper::to_board_piece(~by_side, Base), sq);

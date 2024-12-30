@@ -169,12 +169,10 @@ using BlackWhiteStands = vshogi::BlackWhiteStands<Parameters>;
 using State = vshogi::State<Parameters>;
 using LegalMoveGenerator = vshogi::LegalMoveGenerator<Parameters>;
 using Game = vshogi::Game<Parameters>;
-static_assert(FU == Pieces::FU);
-static_assert(OU == Pieces::OU);
-static_assert(NA == Pieces::NA);
-static_assert(B_OU == Pieces::B_OU);
-static_assert(W_OU == Pieces::W_OU);
-static_assert(VOID == Pieces::VOID);
+static_assert(FU == Config::FU);
+static_assert(OU == Config::OU);
+static_assert(NA == Config::NA);
+static_assert(VOID == Config::VOID);
 
 // clang-format off
 constexpr BitBoard bb_na = BitBoard();
