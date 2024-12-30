@@ -21,13 +21,6 @@ class Board
 {
 private:
     using C = Configuration<Parameters>;
-
-public:
-    static constexpr auto num_files = C::num_files;
-    static constexpr auto num_ranks = C::num_ranks;
-    static constexpr auto num_squares = C::num_squares;
-
-private:
     using SHelper = Squares<Parameters>;
     using PHelper = Pieces<Parameters>;
     using BitBoardType = BitBoard<Parameters>;
@@ -37,13 +30,11 @@ private:
     using Square = typename C::Square;
     using File = typename C::File;
     using Rank = typename C::Rank;
-    static constexpr auto num_square_states
-        = num_colors * C::num_piece_types + 1;
-
-    static std::uint64_t zobrist_table[num_squares][num_square_states];
+    static constexpr uint num_square_states = C::num_colored_piece_types + 1u;
+    static std::uint64_t zobrist_table[C::num_squares][num_square_states];
 
 private:
-    ColoredPiece m_pieces[num_squares];
+    ColoredPiece m_pieces[C::num_squares];
     Square m_king_locations[num_colors];
     BitBoardType m_bb_color[num_colors];
     BitBoardType m_bb_piece[C::num_piece_types];
@@ -87,7 +78,7 @@ public:
      * @param pt Piece type. Note that `NA` is not allowed here.
      * @return BitBoardType Occupation by the given piece type.
      */
-    BitBoardType get_occupied(const PieceType& pt) const
+    const BitBoardType& get_occupied(const PieceType& pt) const
     {
         assert(pt != C::NA);
         return m_bb_piece[pt];
@@ -116,14 +107,19 @@ public:
     {
         return get_occupied<PT1>(c) | get_occupied<PT2, Args...>(c);
     }
-    BitBoardType get_occupied_by_ranging(const ColorEnum&) const
+    BitBoardType get_occupied_by_ranging(const ColorEnum& c) const
     {
-        return BitBoardType();
+        BitBoardType out{};
+        for (PieceType pt : EnumIterator<PieceType, C::num_piece_types>()) {
+            if (FPTHelper::is_ranging(C::piece_types[pt]))
+                out |= (m_bb_color[c] & m_bb_piece[pt]);
+        }
+        return out;
     }
     void append_sfen(std::string& out) const
     {
         append_sfen_rank(static_cast<Rank>(0), out);
-        for (uint ir = 1; ir < num_ranks; ++ir) {
+        for (uint ir = 1; ir < C::num_ranks; ++ir) {
             out += '/';
             append_sfen_rank(static_cast<Rank>(ir), out);
         }
@@ -153,7 +149,7 @@ public:
     }
     const char* set_sfen(const char* sfen)
     {
-        for (uint ir = 0U; ir < num_ranks; ++ir) {
+        for (uint ir = 0U; ir < C::num_ranks; ++ir) {
             assert(sfen[0] != ' ');
             sfen = set_sfen_rank(sfen, static_cast<Rank>(ir));
         }
@@ -285,7 +281,7 @@ public:
     Board hflip() const
     {
         Board out;
-        for (auto sq : EnumIterator<Square, num_squares>()) {
+        for (auto sq : EnumIterator<Square, C::num_squares>()) {
             const auto sq_hflipped = SHelper::hflip(sq);
             assert(sq_hflipped != C::SQ_NA);
             out.m_pieces[sq_hflipped] = m_pieces[sq];
@@ -298,7 +294,7 @@ public:
         std::random_device dev;
         std::mt19937_64 rng(dev());
         std::uniform_int_distribution<std::uint64_t> dist;
-        for (auto sq : EnumIterator<Square, num_squares>()) {
+        for (auto sq : EnumIterator<Square, C::num_squares>()) {
             for (uint ii = 0u; ii < num_square_states; ++ii) {
                 zobrist_table[sq][ii] = dist(rng);
             }
@@ -307,7 +303,7 @@ public:
     std::uint64_t zobrist_hash() const
     {
         std::uint64_t out = static_cast<std::uint64_t>(0);
-        for (auto sq = num_squares; sq--;) {
+        for (auto sq = C::num_squares; sq--;) {
             out ^= zobrist_table[sq][m_pieces[sq]];
         }
         return out;
@@ -317,7 +313,7 @@ private:
     const char* set_sfen_rank(const char* const sfen_rank, const Rank rank)
     {
         constexpr int max_length = 19; // e.g. "+p+p+p+p+p+p+p+p+p/"
-        auto piece_ptr = m_pieces + rank + (num_files - 1u) * num_ranks;
+        auto piece_ptr = m_pieces + rank + (C::num_files - 1u) * C::num_ranks;
         const char* sfen_ptr = sfen_rank;
         bool promotion_flag = false;
         for (; sfen_ptr < sfen_rank + max_length; ++sfen_ptr) {
@@ -329,31 +325,31 @@ private:
                 goto OUT_OF_LOOP;
             case '9':
                 *piece_ptr = C::VOID;
-                piece_ptr -= num_ranks; // fall-through
+                piece_ptr -= C::num_ranks; // fall-through
             case '8':
                 *piece_ptr = C::VOID;
-                piece_ptr -= num_ranks; // fall-through
+                piece_ptr -= C::num_ranks; // fall-through
             case '7':
                 *piece_ptr = C::VOID;
-                piece_ptr -= num_ranks; // fall-through
+                piece_ptr -= C::num_ranks; // fall-through
             case '6':
                 *piece_ptr = C::VOID;
-                piece_ptr -= num_ranks; // fall-through
+                piece_ptr -= C::num_ranks; // fall-through
             case '5':
                 *piece_ptr = C::VOID;
-                piece_ptr -= num_ranks; // fall-through
+                piece_ptr -= C::num_ranks; // fall-through
             case '4':
                 *piece_ptr = C::VOID;
-                piece_ptr -= num_ranks; // fall-through
+                piece_ptr -= C::num_ranks; // fall-through
             case '3':
                 *piece_ptr = C::VOID;
-                piece_ptr -= num_ranks; // fall-through
+                piece_ptr -= C::num_ranks; // fall-through
             case '2':
                 *piece_ptr = C::VOID;
-                piece_ptr -= num_ranks; // fall-through
+                piece_ptr -= C::num_ranks; // fall-through
             case '1':
                 *piece_ptr = C::VOID;
-                piece_ptr -= num_ranks;
+                piece_ptr -= C::num_ranks;
                 break;
             case '+':
                 promotion_flag = true;
@@ -363,7 +359,7 @@ private:
                                  ? PHelper::promote_nocheck(
                                      PHelper::to_board_piece(*sfen_ptr))
                                  : PHelper::to_board_piece(*sfen_ptr);
-                piece_ptr -= num_ranks;
+                piece_ptr -= C::num_ranks;
                 break;
             }
             promotion_flag = false;
@@ -374,9 +370,9 @@ private:
     }
     void append_sfen_rank(const Rank rank, std::string& out) const
     {
-        auto ptr = m_pieces + rank + (num_files - 1u) * num_ranks;
+        auto ptr = m_pieces + rank + (C::num_files - 1u) * C::num_ranks;
         int num_void = 0;
-        for (; ptr >= m_pieces; ptr -= num_ranks) {
+        for (; ptr >= m_pieces; ptr -= C::num_ranks) {
             if (*ptr == C::VOID) {
                 ++num_void;
                 continue;
@@ -403,7 +399,7 @@ private:
         m_king_locations[WHITE] = C::SQ_NA;
         std::fill_n(m_bb_color, num_colors, BitBoardType());
         std::fill_n(m_bb_piece, C::num_piece_types, BitBoardType());
-        for (auto sq : EnumIterator<Square, num_squares>()) {
+        for (auto sq : EnumIterator<Square, C::num_squares>()) {
             const auto& p = m_pieces[sq];
             const auto c = PHelper::get_color(p);
             const auto pt = PHelper::to_piece_type(p);
@@ -455,6 +451,7 @@ private:
     {
         static_assert(PT < C::NA);
         assert(sq < C::SQ_NA);
+        assert(!PHelper::is_ranging_piece(PT));
         const auto attack_inverted = BitBoardType::get_attacks_by(
             PHelper::to_board_piece(~by_side, PT), sq);
         const auto occ_offence

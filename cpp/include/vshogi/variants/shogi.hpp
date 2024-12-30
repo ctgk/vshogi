@@ -588,26 +588,33 @@ inline bool shogi::Board::is_square_attacked_by_ranging_pieces(
     using namespace shogi;
     const BitBoardType occ_full = get_occupied().clear(skip);
     {
-        const auto attack_inverted
-            = (by_side == BLACK) ? shogi::Magic::get_south_attack(sq, occ_full)
-                                 : shogi::Magic::get_north_attack(sq, occ_full);
-        const auto occ_offence = get_occupied<KY>(by_side);
-        if ((attack_inverted & occ_offence).any())
-            return true;
+        const auto occ_offence = get_occupied<KY, HI, RY>(by_side);
+        if (occ_offence.any()) {
+            const auto attack_inverted
+                = (by_side == BLACK)
+                      ? shogi::Magic::get_south_attack(sq, occ_full)
+                      : shogi::Magic::get_north_attack(sq, occ_full);
+            if ((attack_inverted & occ_offence).any())
+                return true;
+        }
     }
     {
-        const auto attack_inverted
-            = shogi::Magic::get_diagonal_attack(sq, occ_full);
         const auto occ_offence = get_occupied<KA, UM>(by_side);
-        if ((attack_inverted & occ_offence).any())
-            return true;
+        if (occ_offence.any()) {
+            const auto attack_inverted
+                = shogi::Magic::get_diagonal_attack(sq, occ_full);
+            if ((attack_inverted & occ_offence).any())
+                return true;
+        }
     }
     {
-        const auto attack_inverted
-            = shogi::Magic::get_adjacent_attack(sq, occ_full);
         const auto occ_offence = get_occupied<HI, RY>(by_side);
-        if ((attack_inverted & occ_offence).any())
-            return true;
+        if (occ_offence.any()) {
+            const auto attack_inverted
+                = shogi::Magic::get_adjacent_attack(sq, occ_full);
+            if ((attack_inverted & occ_offence).any())
+                return true;
+        }
     }
     return false;
 }

@@ -39,11 +39,11 @@ inline void export_board(pybind11::module& m)
                 return self[static_cast<Square>(index)];
             })
         .def_property_readonly_static(
-            "num_files", [](py::object) { return Board::num_files; })
+            "num_files", [](py::object) { return C::num_files; })
         .def_property_readonly_static(
-            "num_ranks", [](py::object) { return Board::num_ranks; })
+            "num_ranks", [](py::object) { return C::num_ranks; })
         .def_property_readonly_static(
-            "num_squares", [](py::object) { return Board::num_squares; });
+            "num_squares", [](py::object) { return C::num_squares; });
 }
 
 template <class Parameters>
