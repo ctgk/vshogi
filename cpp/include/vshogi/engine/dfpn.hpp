@@ -403,7 +403,7 @@ private:
     void expand_drop_moves_at_offence(
         std::unique_ptr<Node<Parameters>>* next, const State<Parameters>& state)
     {
-        for (Move<Parameters> m : CheckDropMoveGenerator<Parameters>(state)) {
+        for (Move<Parameters> m : DropMoveGenerator<Parameters, true>(state)) {
             *next = std::make_unique<Node<Parameters>>(!m_attacker, m);
             Node<Parameters>* const p = next->get();
             update_offence_dn_ch1st_ch2nd(p);

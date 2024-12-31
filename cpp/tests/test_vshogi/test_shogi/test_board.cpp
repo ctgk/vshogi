@@ -141,13 +141,12 @@ TEST(test_shogi_board, find_ranging_attacker)
     }
 }
 
-TEST(test_shogi_board, has_pawn_in_file)
+TEST(test_shogi_board, compute_droppable)
 {
     const auto b = Board("9/9/9/9/9/9/P1P1P1P1P/9/9");
-    CHECK_TRUE(b.has_pawn_in_file(FILE1, vshogi::BLACK));
-    CHECK_FALSE(b.has_pawn_in_file(FILE2, vshogi::BLACK));
-    CHECK_FALSE(b.has_pawn_in_file(FILE1, vshogi::WHITE));
-    CHECK_FALSE(b.has_pawn_in_file(FILE2, vshogi::WHITE));
+    const auto actual = b.compute_droppable<false>(B_FU);
+    CHECK_TRUE(
+        ((bb_file2 | bb_file4 | bb_file6 | bb_file8) & ~bb_ranka) == actual);
 }
 
 } // namespace test_vshogi::test_shogi

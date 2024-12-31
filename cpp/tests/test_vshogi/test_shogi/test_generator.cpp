@@ -20,7 +20,7 @@ TEST(test_shogi_generator, check_non_king_board_move_generator)
     CHECK_FALSE(iter != iter.end());
 }
 
-TEST(test_shogi_generator, test_check_drop_move_generator)
+TEST(test_shogi_generator, test_drop_move_generator)
 {
     // Turn: WHITE
     // White: FU
@@ -46,7 +46,7 @@ TEST(test_shogi_generator, test_check_drop_move_generator)
     //   +---+---+---+---+---+---+---+---+---+
     // Black: -
     auto s = State("3k5/9/9/9/9/9/7g1/9/5rPKL w p");
-    auto iter = vshogi::CheckDropMoveGenerator<Parameters>(s);
+    auto iter = vshogi::DropMoveGenerator<Parameters, true>(s);
     CHECK_FALSE(iter != iter.end());
 }
 

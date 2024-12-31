@@ -263,20 +263,22 @@ public:
         }
         return false;
     }
-    bool has_pawn_in_file(const File& f, const ColorEnum& by_side) const
+    template <bool Check>
+    BitBoardType compute_droppable(const ColoredPiece& p) const
     {
-        const BitBoardType occ = get_occupied<C::FU>(by_side);
-        return (BitBoardType::from_file(f) & occ).any();
+        const auto occ_full = get_occupied();
+        auto droppable = ~occ_full;
+        update_droppable<Check>(droppable, p, occ_full);
+        return droppable;
     }
-    bool is_drop_pawn_mate(const Square& dst, const ColorEnum& by_side) const
+    template <bool Check>
+    BitBoardType
+    compute_droppable(const ColoredPiece& p, BitBoardType droppable) const
     {
-        if (!is_pawn_attacking_to_enemy_king(dst, by_side))
-            return false;
-        if (king_can_move_away_from_a_pawn_attack(~by_side))
-            return false;
-        if (enemy_can_capture_the_drop_pawn(dst, by_side))
-            return false;
-        return true;
+        const auto occ_full = get_occupied();
+        droppable &= ~occ_full;
+        update_droppable<Check>(droppable, p, occ_full);
+        return droppable;
     }
     Board hflip() const
     {
@@ -365,7 +367,7 @@ private:
             promotion_flag = false;
         }
     OUT_OF_LOOP:
-        assert(piece_ptr + num_ranks == m_pieces + rank);
+        assert(piece_ptr + C::num_ranks == m_pieces + rank);
         return sfen_ptr;
     }
     void append_sfen_rank(const Rank rank, std::string& out) const
@@ -470,6 +472,74 @@ private:
     }
     bool is_square_attacked_by_ranging_pieces(
         const ColorEnum& by_side, const Square& sq, const Square& skip) const;
+    template <bool Check>
+    void update_droppable(
+        BitBoardType& droppable,
+        const ColoredPiece& p,
+        const BitBoardType& occ_full) const
+    {
+        if constexpr (Check) {
+            const auto pt = PHelper::to_piece_type(p);
+            const auto c = PHelper::get_color(p);
+            const Square& target = m_king_locations[~c];
+            droppable &= BitBoardType::get_attacks_by(
+                PHelper::to_board_piece(~c, pt), target, occ_full);
+            if (pt == C::FU) {
+                if (!droppable.any())
+                    return;
+                if (has_pawn_in_file(SHelper::to_file(target), c)
+                    || (can_drop_pawn_mate(c)))
+                    droppable &= BitBoardType();
+            }
+        } else {
+            droppable &= BitBoardType::compute_droppable(p);
+            if (PHelper::to_piece_type(p) == C::FU) {
+                const auto c = PHelper::get_color(p);
+                exclude_two_pawns_in_a_file(droppable, c);
+                exclude_drop_pawn_mate(droppable, c);
+            }
+        }
+    }
+    void exclude_two_pawns_in_a_file(
+        BitBoardType& occ, const ColorEnum& by_side) const
+    {
+        for (auto f : EnumIterator<File, C::num_files>()) {
+            if (has_pawn_in_file(f, by_side))
+                occ &= ~BitBoardType::from_file(f);
+        }
+    }
+    bool has_pawn_in_file(const File& f, const ColorEnum& by_side) const
+    {
+        const BitBoardType occ = get_occupied<C::FU>(by_side);
+        return (BitBoardType::from_file(f) & occ).any();
+    }
+    bool can_drop_pawn_mate(const ColorEnum& by_side) const
+    {
+        const Square dst = SHelper::shift(
+            m_king_locations[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
+        if (dst == C::SQ_NA)
+            return false;
+        if (king_can_move_away_from_a_pawn_attack(~by_side))
+            return false;
+        if (enemy_can_capture_the_drop_pawn(dst, by_side))
+            return false;
+        return true;
+    }
+    void
+    exclude_drop_pawn_mate(BitBoardType& occ, const ColorEnum& by_side) const
+    {
+        const Square dst = SHelper::shift(
+            m_king_locations[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
+        if (dst == C::SQ_NA)
+            return;
+        if (!occ.is_one(dst))
+            return;
+        if (king_can_move_away_from_a_pawn_attack(~by_side))
+            return;
+        if (enemy_can_capture_the_drop_pawn(dst, by_side))
+            return;
+        occ.clear(dst);
+    }
     bool is_pawn_attacking_to_enemy_king(
         const Square& sq, const ColorEnum& by_side) const
     {

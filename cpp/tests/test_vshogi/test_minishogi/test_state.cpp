@@ -9,10 +9,10 @@ namespace test_vshogi::test_minishogi
 
 using namespace vshogi::minishogi;
 
-TEST_GROUP (state) {
+TEST_GROUP (test_minishogi_state) {
 };
 
-TEST(state, set_sfen)
+TEST(test_minishogi_state, set_sfen)
 {
     {
         auto s = State();
@@ -42,7 +42,7 @@ TEST(state, set_sfen)
     }
 }
 
-TEST(state, to_sfen)
+TEST(test_minishogi_state, to_sfen)
 {
     auto s = State();
     s.set_sfen("2+S1k/1r2+P/2K2/5/5 b R2GSP2b 1");
@@ -50,7 +50,7 @@ TEST(state, to_sfen)
     STRCMP_EQUAL("2+S1k/1r2+P/2K2/5/5 b R2GSP2b", actual.c_str());
 }
 
-TEST(state, apply)
+TEST(test_minishogi_state, apply)
 {
     {
         auto s = State();
@@ -69,7 +69,7 @@ TEST(state, apply)
     }
 }
 
-TEST(state, check)
+TEST(test_minishogi_state, check)
 {
     {
         auto s = State();
@@ -103,7 +103,7 @@ TEST(state, check)
     }
 }
 
-TEST(state, zobrist_hash)
+TEST(test_minishogi_state, zobrist_hash)
 {
     {
         const auto s1 = State("4k/5/P4/5/K4 b -");
@@ -120,7 +120,7 @@ TEST(state, zobrist_hash)
     }
 }
 
-TEST(state, compute_king_movable)
+TEST(test_minishogi_state, compute_king_movable)
 {
     {
         // in single check

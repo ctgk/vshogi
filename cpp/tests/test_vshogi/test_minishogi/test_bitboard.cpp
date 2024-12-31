@@ -47,6 +47,12 @@ TEST(test_minishogi_bitboard, is_one)
     CHECK_TRUE(bb_1a.is_one(SQ_1A));
 }
 
+TEST(test_minishogi_bitboard, from_file)
+{
+    CHECK_EQUAL(
+        bb_na.value(), BitBoard::from_file(Squares::to_file(SQ_NA)).value());
+}
+
 TEST(test_minishogi_bitboard, from_rank)
 {
     CHECK_EQUAL(bb_ranka.value(), BitBoard::from_rank(Config::RANK_A).value());

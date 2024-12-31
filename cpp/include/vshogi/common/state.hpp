@@ -37,7 +37,6 @@ private:
     static constexpr uint num_piece_types = C::num_piece_types;
     static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
     static constexpr uint num_dir = C::num_dir;
-    static constexpr Square SQ_NA = C::SQ_NA; // NOLINT
     static constexpr ColoredPiece VOID = C::VOID; // NOLINT
     static constexpr std::uint64_t zobrist_hash_for_turn = 0x000000aaaaaaaaaau;
 
@@ -55,7 +54,7 @@ private:
 public:
     State()
         : m_board(), m_stands(),
-          m_turn(BLACK), m_checker_locations{SQ_NA, SQ_NA}
+          m_turn(BLACK), m_checker_locations{C::SQ_NA, C::SQ_NA}
     {
     }
     State(const std::string& sfen) : m_board(), m_stands(), m_turn()
@@ -99,11 +98,11 @@ public:
     }
     bool in_check() const
     {
-        return m_checker_locations[0] != SQ_NA;
+        return m_checker_locations[0] != C::SQ_NA;
     }
     bool in_double_check() const
     {
-        return m_checker_locations[1] != SQ_NA;
+        return m_checker_locations[1] != C::SQ_NA;
     }
     bool is_checker_location(const Square& sq) const
     {
@@ -181,7 +180,7 @@ public:
         }
         m_turn = ~m_turn;
         m_checker_locations[0] = checker_sq;
-        m_checker_locations[1] = SQ_NA;
+        m_checker_locations[1] = C::SQ_NA;
         return *this;
     }
     void to_feature_map(float* const data) const
@@ -269,12 +268,12 @@ private:
     }
     void update_checkers()
     {
-        std::fill_n(m_checker_locations, 2, SQ_NA);
+        std::fill_n(m_checker_locations, 2, C::SQ_NA);
         uint index = 0u;
         const auto king_sq = m_board.get_king_location(m_turn);
         for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
             const auto sq = m_board.find_attacker(~m_turn, king_sq, dir);
-            if (sq != SQ_NA) {
+            if (sq != C::SQ_NA) {
                 m_checker_locations[index++] = sq;
                 if (index > 1)
                     break;
@@ -286,23 +285,23 @@ private:
         const auto enemy_king_sq = m_board.get_king_location(~m_turn);
         const bool check_by_moved = is_check_by_moved(enemy_king_sq, dst);
 
-        m_checker_locations[0] = (check_by_moved) ? dst : SQ_NA;
-        m_checker_locations[1] = SQ_NA;
+        m_checker_locations[0] = (check_by_moved) ? dst : C::SQ_NA;
+        m_checker_locations[1] = C::SQ_NA;
     }
     void
     update_checkers_before_turn_update(const Square& dst, const Square& src)
     {
         const auto enemy_king_sq = m_board.get_king_location(~m_turn);
-        if (enemy_king_sq == SQ_NA) {
-            m_checker_locations[0] = SQ_NA;
-            m_checker_locations[1] = SQ_NA;
+        if (enemy_king_sq == C::SQ_NA) {
+            m_checker_locations[0] = C::SQ_NA;
+            m_checker_locations[1] = C::SQ_NA;
             return;
         }
         const auto dst_dir = SHelper::get_direction(dst, enemy_king_sq);
         const auto discovered_checker_sq = find_discovered_checker_location(
             enemy_king_sq, dst_dir, SHelper::get_direction(src, enemy_king_sq));
 
-        const bool check_by_discovered = (discovered_checker_sq != SQ_NA);
+        const bool check_by_discovered = (discovered_checker_sq != C::SQ_NA);
         const bool check_by_moved = is_check_by_moved(enemy_king_sq, dst);
 
         if (check_by_moved && check_by_discovered) {
@@ -310,13 +309,13 @@ private:
             m_checker_locations[1] = discovered_checker_sq;
         } else if (check_by_moved) {
             m_checker_locations[0] = dst;
-            m_checker_locations[1] = SQ_NA;
+            m_checker_locations[1] = C::SQ_NA;
         } else if (check_by_discovered) {
             m_checker_locations[0] = discovered_checker_sq;
-            m_checker_locations[1] = SQ_NA;
+            m_checker_locations[1] = C::SQ_NA;
         } else {
-            m_checker_locations[0] = SQ_NA;
-            m_checker_locations[1] = SQ_NA;
+            m_checker_locations[0] = C::SQ_NA;
+            m_checker_locations[1] = C::SQ_NA;
         }
     }
     Square find_discovered_checker_location(
@@ -325,7 +324,7 @@ private:
         const DirectionEnum& src_dir)
     {
         if ((src_dir == DIR_NA) || (src_dir == dst_dir))
-            return SQ_NA;
+            return C::SQ_NA;
         return m_board.find_attacker(m_turn, enemy_king_sq, src_dir);
     }
     bool is_check_by_moved(const Square& enemy_king_sq, const Square& dst)

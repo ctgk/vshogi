@@ -286,26 +286,27 @@ TEST(test_minishogi_board, find_ranging_attacker)
     }
 }
 
-TEST(test_minishogi_board, has_pawn_in_file)
-{
-    const auto b = Board("1+p1p1/5/5/5/5");
-    CHECK_FALSE(b.has_pawn_in_file(FILE1, vshogi::BLACK));
-    CHECK_FALSE(b.has_pawn_in_file(FILE2, vshogi::BLACK));
-    CHECK_FALSE(b.has_pawn_in_file(FILE1, vshogi::WHITE));
-    CHECK_TRUE(b.has_pawn_in_file(FILE2, vshogi::WHITE));
-    CHECK_FALSE(b.has_pawn_in_file(FILE4, vshogi::WHITE));
-}
-
-TEST(test_minishogi_board, is_drop_pawn_mate)
+TEST(test_minishogi_board, compute_droppable)
 {
     {
+        const auto b = Board("1+p1p1/5/5/5/5");
+        const auto actual = b.compute_droppable<false>(W_FU);
+        CHECK_EQUAL((~bb_ranke & ~bb_file2 & ~bb_4a).value(), actual.value());
+    }
+    {
         const auto b = Board("3rk/5/4G/5/4K");
-        CHECK_TRUE(b.is_drop_pawn_mate(SQ_1B, vshogi::BLACK));
-        CHECK_FALSE(b.is_drop_pawn_mate(SQ_2B, vshogi::BLACK));
+        const auto actual = b.compute_droppable<true>(B_FU);
+        CHECK_EQUAL(bb_na.value(), actual.value());
     }
     {
         const auto b = Board("5/5/4s/5/3GK");
-        CHECK_FALSE(b.is_drop_pawn_mate(SQ_1D, vshogi::WHITE));
+        const auto actual = b.compute_droppable<true>(W_FU);
+        CHECK_EQUAL(bb_1d.value(), actual.value());
+    }
+    {
+        const auto b = Board("5/5/4s/4P/3GK");
+        const auto actual = b.compute_droppable<true>(W_FU);
+        CHECK_EQUAL(bb_na.value(), actual.value());
     }
 }
 

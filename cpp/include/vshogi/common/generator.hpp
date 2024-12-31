@@ -98,55 +98,48 @@ public:
     }
 };
 
-template <class Parameters>
+template <class Parameters, bool Check = false>
 class DropMoveGenerator
 {
 private:
     using C = Configuration<Parameters>;
+    using SquareIterator = typename BitBoard<Parameters>::SquareIterator;
     using BitBoardType = BitBoard<Parameters>;
-    using BoardType = Board<Parameters>;
     using MoveType = Move<Parameters>;
     using StateType = State<Parameters>;
     using StandType = Stand<Parameters>;
     using PieceType = typename C::PieceType;
-    using ColoredPiece = typename C::ColoredPiece;
-    using Square = typename C::Square;
-    using File = typename C::File;
     using PHelper = Pieces<Parameters>;
-    using SHelper = Squares<Parameters>;
-    static constexpr uint num_dir = C::num_dir;
-    static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
 
 private:
     const StateType& m_state;
     const ColorEnum m_turn;
-    const BoardType& m_board;
     const StandType& m_stand;
-    typename BitBoardType::SquareIterator m_sq_iter;
+    SquareIterator m_sq_iter;
     PieceType m_pt_iter;
 
 public:
     DropMoveGenerator(const StateType& state)
-        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
+        : m_state(state), m_turn(state.get_turn()),
           m_stand(state.get_stand(m_turn)), m_sq_iter{}, m_pt_iter{}
     {
         if (state.in_double_check()
             || (state.in_check()
                 && !PHelper::is_ranging_piece(
-                    m_board[state.get_checker_location()]))) {
-            m_pt_iter = static_cast<PieceType>(num_stand_piece_types);
+                    state.get_board()[state.get_checker_location()]))) {
+            m_pt_iter = static_cast<PieceType>(C::num_stand_piece_types);
             return;
         }
         increment_piece_type_unless_in_stand();
-        if (m_pt_iter == num_stand_piece_types)
+        if (m_pt_iter == C::num_stand_piece_types)
             return;
         init_sq_iter();
-        increment_iterators_unless_legal();
+        increment_piece_type_while_no_dst();
     }
     DropMoveGenerator& operator++()
     {
         ++m_sq_iter;
-        increment_iterators_unless_legal();
+        increment_piece_type_while_no_dst();
         return *this;
     }
     MoveType operator*() const
@@ -160,7 +153,7 @@ public:
     DropMoveGenerator end()
     {
         static const auto end_iter = DropMoveGenerator(
-            m_state, static_cast<PieceType>(num_stand_piece_types));
+            m_state, static_cast<PieceType>(C::num_stand_piece_types));
         return end_iter;
     }
     bool operator!=(const DropMoveGenerator& other) const
@@ -169,7 +162,7 @@ public:
     }
     bool is_end() const
     {
-        return m_sq_iter.is_end() && (m_pt_iter == num_stand_piece_types);
+        return m_sq_iter.is_end() && (m_pt_iter == C::num_stand_piece_types);
     }
     MoveType random_select()
     {
@@ -182,265 +175,44 @@ public:
         }
         return out;
     }
-    DropMoveGenerator& increment_to_end()
-    {
-        m_sq_iter = BitBoardType().square_iterator();
-        m_pt_iter = static_cast<PieceType>(num_stand_piece_types);
-        return *this;
-    }
 
 private:
     DropMoveGenerator(const StateType& state, const PieceType pt)
-        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_stand(state.get_stand(m_turn)),
-          m_sq_iter(BitBoardType().square_iterator()), m_pt_iter(pt)
+        : m_state(state), m_turn(state.get_turn()),
+          m_stand(state.get_stand(m_turn)), m_sq_iter(), m_pt_iter(pt)
     {
     }
     void init_sq_iter()
     {
-        if (m_state.in_check())
-            m_sq_iter = BitBoardType::get_line_segment(
-                            m_board.get_king_location(m_turn),
-                            m_state.get_checker_location())
+        const auto& b = m_state.get_board();
+        const auto p = PHelper::to_board_piece(m_turn, m_pt_iter);
+        if (m_state.in_check()) {
+            m_sq_iter = b.template compute_droppable<Check>(
+                             p,
+                             BitBoardType::get_line_segment(
+                                 m_state.get_checker_location(),
+                                 b.get_king_location(m_turn)))
                             .square_iterator();
-        else
-            m_sq_iter = (~m_board.get_occupied()).square_iterator();
-    }
-    void increment_iterators_unless_legal()
-    {
-        while (m_pt_iter < num_stand_piece_types) {
-            increment_piece_type_unless_in_stand();
-            if (m_pt_iter == num_stand_piece_types) {
-                m_sq_iter = BitBoardType().square_iterator();
-                break;
-            }
-            increment_square();
-
-            if (m_sq_iter.is_end()) {
-                m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
-                if (m_pt_iter == num_stand_piece_types)
-                    break;
-                init_sq_iter();
-            } else {
-                break;
-            }
+        } else {
+            m_sq_iter
+                = b.template compute_droppable<Check>(p).square_iterator();
         }
     }
-    void increment_square()
+    void increment_piece_type_while_no_dst()
     {
-        if (m_pt_iter == C::FU)
-            increment_square_for_pawn_unless_legal();
-        else
-            increment_square_unless_legal();
+        while (m_sq_iter.is_end()) {
+            m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
+            increment_piece_type_unless_in_stand();
+            if (m_pt_iter >= C::num_stand_piece_types)
+                break;
+            init_sq_iter();
+        }
     }
     void increment_piece_type_unless_in_stand()
     {
-        while ((m_pt_iter < num_stand_piece_types)
+        while ((m_pt_iter < C::num_stand_piece_types)
                && !m_stand.exist(m_pt_iter)) {
             m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
-        }
-    }
-    void increment_square_for_pawn_unless_legal()
-    {
-        const auto p = PHelper::to_board_piece(m_turn, m_pt_iter);
-        while (!m_sq_iter.is_end()) {
-            const auto attacks = BitBoardType::get_attacks_by(p, *m_sq_iter);
-            if (!attacks.any()) {
-                ++m_sq_iter;
-                continue;
-            }
-            const auto f = SHelper::to_file(*m_sq_iter);
-            if (m_board.has_pawn_in_file(f, m_turn)) {
-                do {
-                    ++m_sq_iter;
-                }
-                while (SHelper::to_file(*m_sq_iter) == f);
-                continue;
-            }
-            if (m_board.is_drop_pawn_mate(*m_sq_iter, m_turn)) {
-                ++m_sq_iter;
-                continue;
-            }
-            break;
-        }
-    }
-    void increment_square_unless_legal()
-    {
-        const auto p = PHelper::to_board_piece(m_turn, m_pt_iter);
-        while (!m_sq_iter.is_end()) {
-            const auto attacks = BitBoardType::get_attacks_by(p, *m_sq_iter);
-            if (attacks.any())
-                break;
-            ++m_sq_iter;
-        }
-    }
-};
-
-template <class Parameters>
-class CheckDropMoveGenerator
-{
-private:
-    using C = Configuration<Parameters>;
-    using BitBoardType = BitBoard<Parameters>;
-    using BoardType = Board<Parameters>;
-    using MoveType = Move<Parameters>;
-    using StateType = State<Parameters>;
-    using StandType = Stand<Parameters>;
-    using PieceType = typename C::PieceType;
-    using ColoredPiece = typename C::ColoredPiece;
-    using Square = typename C::Square;
-    using File = typename C::File;
-    using PHelper = Pieces<Parameters>;
-    using SHelper = Squares<Parameters>;
-    static constexpr uint num_dir = C::num_dir;
-    static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
-
-private:
-    const StateType& m_state;
-    const ColorEnum m_turn;
-    const BoardType& m_board;
-    const StandType& m_stand;
-    typename BitBoardType::SquareIterator m_sq_iter;
-    PieceType m_pt_iter;
-
-public:
-    CheckDropMoveGenerator(const StateType& state)
-        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_stand(state.get_stand(m_turn)), m_sq_iter{}, m_pt_iter{}
-    {
-        if (state.in_double_check()
-            || (state.in_check()
-                && !PHelper::is_ranging_piece(
-                    m_board[state.get_checker_location()]))) {
-            m_pt_iter = static_cast<PieceType>(num_stand_piece_types);
-            return;
-        }
-        increment_piece_type_unless_in_stand();
-        if (m_pt_iter == num_stand_piece_types)
-            return;
-        init_sq_iter();
-        increment_iterators_unless_legal();
-    }
-    CheckDropMoveGenerator& operator++()
-    {
-        ++m_sq_iter;
-        increment_iterators_unless_legal();
-        return *this;
-    }
-    MoveType operator*() const
-    {
-        return MoveType(*m_sq_iter, m_pt_iter);
-    }
-    CheckDropMoveGenerator begin()
-    {
-        return *this;
-    }
-    CheckDropMoveGenerator end()
-    {
-        static const auto end_iter = CheckDropMoveGenerator(
-            m_state, static_cast<PieceType>(num_stand_piece_types));
-        return end_iter;
-    }
-    bool operator!=(const CheckDropMoveGenerator& other) const
-    {
-        return (m_sq_iter != other.m_sq_iter) || (m_pt_iter != other.m_pt_iter);
-    }
-    bool is_end() const
-    {
-        return m_sq_iter.is_end() && (m_pt_iter == num_stand_piece_types);
-    }
-
-private:
-    CheckDropMoveGenerator(const StateType& state, const PieceType pt)
-        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_stand(state.get_stand(m_turn)),
-          m_sq_iter(BitBoardType().square_iterator()), m_pt_iter(pt)
-    {
-    }
-    void init_sq_iter()
-    {
-        const auto enemy_king_sq = m_board.get_king_location(~m_turn);
-        const auto occupied = m_board.get_occupied();
-        const auto dst_mask = BitBoardType::get_attacks_by(
-                                  PHelper::to_board_piece(~m_turn, m_pt_iter),
-                                  enemy_king_sq,
-                                  occupied)
-                              & (~occupied);
-        if (m_state.in_check())
-            m_sq_iter = (BitBoardType::get_line_segment(
-                             m_board.get_king_location(m_turn),
-                             m_state.get_checker_location())
-                         & dst_mask)
-                            .square_iterator();
-        else
-            m_sq_iter = dst_mask.square_iterator();
-    }
-    void increment_iterators_unless_legal()
-    {
-        while (m_pt_iter < num_stand_piece_types) {
-            const auto before = m_pt_iter;
-            increment_piece_type_unless_in_stand();
-            if (m_pt_iter == num_stand_piece_types) {
-                m_sq_iter = BitBoardType().square_iterator();
-                break;
-            } else if (m_pt_iter != before) {
-                init_sq_iter();
-            }
-            increment_square();
-
-            if (m_sq_iter.is_end()) {
-                m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
-                if (m_pt_iter == num_stand_piece_types)
-                    break;
-                init_sq_iter();
-            } else {
-                break;
-            }
-        }
-    }
-    void increment_square()
-    {
-        if (m_pt_iter == C::FU)
-            increment_square_for_pawn_unless_legal();
-        else
-            increment_square_unless_legal();
-    }
-    void increment_piece_type_unless_in_stand()
-    {
-        while ((m_pt_iter < num_stand_piece_types)
-               && !m_stand.exist(m_pt_iter)) {
-            m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
-        }
-    }
-    void increment_square_for_pawn_unless_legal()
-    {
-        const auto p = PHelper::to_board_piece(m_turn, m_pt_iter);
-        while (!m_sq_iter.is_end()) {
-            const auto attacks = BitBoardType::get_attacks_by(p, *m_sq_iter);
-            if (!attacks.any()) {
-                ++m_sq_iter;
-                continue;
-            }
-            if (m_board.has_pawn_in_file(
-                    SHelper::to_file(*m_sq_iter), m_turn)) {
-                ++m_sq_iter;
-                continue;
-            }
-            if (m_board.is_drop_pawn_mate(*m_sq_iter, m_turn)) {
-                ++m_sq_iter;
-                continue;
-            }
-            break;
-        }
-    }
-    void increment_square_unless_legal()
-    {
-        const auto p = PHelper::to_board_piece(m_turn, m_pt_iter);
-        while (!m_sq_iter.is_end()) {
-            const auto attacks = BitBoardType::get_attacks_by(p, *m_sq_iter);
-            if (attacks.any())
-                break;
-            ++m_sq_iter;
         }
     }
 };
@@ -1146,11 +918,9 @@ private:
     uint m_index; //!< 0: king, 1: board, 2: drop, 3: end
 
 public:
-    LegalMoveGenerator(const StateType& s, const bool& include_drop = true)
+    LegalMoveGenerator(const StateType& s)
         : m_king_iter(s), m_board_iter(s), m_drop_iter(s), m_index(0u)
     {
-        if (!include_drop)
-            m_drop_iter.increment_to_end();
         if (m_king_iter.is_end()) {
             ++m_index;
             if (m_board_iter.is_end()) {
@@ -1339,7 +1109,7 @@ private:
 private:
     KingMoveGenerator<Parameters, true> m_king_iter;
     CheckNonKingBoardMoveGenerator<Parameters> m_board_iter;
-    CheckDropMoveGenerator<Parameters> m_drop_iter;
+    DropMoveGenerator<Parameters, true> m_drop_iter;
     uint m_index; //!< 0: king, 1: board, 2: drop, 3: end
 
 public:
@@ -1427,7 +1197,7 @@ private:
     CheckMoveGenerator(
         const KingMoveGenerator<Parameters, true>& king_iter,
         const CheckNonKingBoardMoveGenerator<Parameters>& board_iter,
-        const CheckDropMoveGenerator<Parameters>& drop_iter,
+        const DropMoveGenerator<Parameters, true>& drop_iter,
         const uint index)
         : m_king_iter(king_iter), m_board_iter(board_iter),
           m_drop_iter(drop_iter), m_index(index)

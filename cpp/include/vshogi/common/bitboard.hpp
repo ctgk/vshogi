@@ -178,6 +178,14 @@ public:
     {
         return from_rank<R1>() | from_rank<R2, Args...>();
     }
+
+    /**
+     * @brief Return bit mask filled with 1s in the file.
+     * @note Passing invalid file returns an empty mask.
+     *
+     * @param f Input file to fill with 1s.
+     * @return constexpr BitBoard Bit mask filled with 1s in the file.
+     */
     static constexpr BitBoard from_file(const File& f)
     {
         return BitBoard(static_cast<UInt>(1u << C::num_ranks) - 1u)
@@ -193,7 +201,7 @@ public:
 
     constexpr BitBoard shift(const DirectionEnum& dir) const
     {
-        constexpr auto bb_all = mask;
+        constexpr auto bb_all = BitBoard(mask);
         constexpr auto bb_all_but_top = ~from_rank<C::RANK_A>();
         constexpr auto bb_all_but_top2 = ~from_rank<C::RANK_A, C::RANK_B>();
         constexpr auto bb_all_but_btm = ~from_rank<C::RANK_Z>();
@@ -231,6 +239,19 @@ public:
             out |= out.shift(d);
         }
         return out;
+    }
+    static BitBoard compute_droppable(const ColoredPiece& p)
+    {
+        const auto dirs = PHelper::get_attack_directions(p);
+        if (dirs[1] == DIR_NA) {
+            return (dirs[0] == DIR_N) ? ~from_rank<C::RANK_A>()
+                                      : ~from_rank<C::RANK_Z>();
+        } else if (dirs[2] == DIR_NA) {
+            return (has_dir_n(dirs[0])) ? ~from_rank<C::RANK_A, C::RANK_B>()
+                                        : ~from_rank<C::RANK_Y, C::RANK_Z>();
+        } else {
+            return BitBoard(mask);
+        }
     }
 
     static BitBoard get_attacks_by(const ColoredPiece& p, const Square& sq)

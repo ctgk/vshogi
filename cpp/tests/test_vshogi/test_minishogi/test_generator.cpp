@@ -102,11 +102,11 @@ TEST(test_minishogi_generator, drop_move_generator)
         for (auto sq : vshogi::EnumIterator<SquareEnum, 25>()) {
             if (Squares::to_rank(sq) == RANK5)
                 continue;
-            CHECK_TRUE(Move(sq, FU) == *iter);
+            CHECK_EQUAL(Move(sq, FU).hash(), (*iter).hash());
             ++iter;
         }
         for (auto sq : vshogi::EnumIterator<SquareEnum, 25>()) {
-            CHECK_TRUE(Move(sq, KI) == *iter);
+            CHECK_EQUAL(Move(sq, KI).hash(), (*iter).hash());
             ++iter;
         }
         CHECK_FALSE(iter != iter.end());
@@ -154,42 +154,39 @@ TEST(test_minishogi_generator, drop_move_generator)
         CHECK_FALSE(iter != iter.end());
         CHECK_TRUE(iter.is_end());
     }
-}
-
-TEST(test_minishogi_generator, test_check_drop_move_generator)
-{
     {
         const auto s = State("5/5/5/5/5 b -");
-        auto iter = vshogi::CheckDropMoveGenerator<Parameters>(s);
+        auto iter = vshogi::DropMoveGenerator<Parameters, true>(s);
         CHECK_FALSE(iter != iter.end());
     }
     {
         const auto s = State("4k/5/5/5/5 b P");
-        auto iter = vshogi::CheckDropMoveGenerator<Parameters>(s);
-        CHECK_TRUE(Move(SQ_1B, FU) == *iter);
+        auto iter = vshogi::DropMoveGenerator<Parameters, true>(s);
+        CHECK_EQUAL(Move(SQ_1B, FU).hash(), (*iter).hash());
         ++iter;
         CHECK_FALSE(iter != iter.end());
     }
     {
         const auto s = State("4k/5/5/1P3/5 b BP");
-        auto iter = vshogi::CheckDropMoveGenerator<Parameters>(s);
-        CHECK_TRUE(Move(SQ_1B, FU) == *iter);
+        auto iter = vshogi::DropMoveGenerator<Parameters, true>(s);
+        CHECK_EQUAL(Move(SQ_1B, FU).hash(), (*iter).hash());
         ++iter;
-        CHECK_TRUE(Move(SQ_2B, KA) == *iter);
+        CHECK_EQUAL(Move(SQ_2B, KA).hash(), (*iter).hash());
         ++iter;
-        CHECK_TRUE(Move(SQ_3C, KA) == *iter);
+        CHECK_EQUAL(Move(SQ_3C, KA).hash(), (*iter).hash());
         ++iter;
         CHECK_FALSE(iter != iter.end());
     }
     {
+        // Inhibit drop pawn check due to two pawns in a file.
         const auto s = State("4k/5/3g1/5/2PKP w p");
-        auto iter = vshogi::CheckDropMoveGenerator<Parameters>(s);
+        auto iter = vshogi::DropMoveGenerator<Parameters, true>(s);
         CHECK_FALSE(iter != iter.end());
     }
     {
         // in double check
         const auto s = State("3kb/5/5/5/K3r b R");
-        auto iter = vshogi::CheckDropMoveGenerator<Parameters>(s);
+        auto iter = vshogi::DropMoveGenerator<Parameters, true>(s);
         CHECK_FALSE(iter != iter.end());
         CHECK_TRUE(iter.is_end());
     }
