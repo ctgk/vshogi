@@ -120,4 +120,29 @@ TEST(state, zobrist_hash)
     }
 }
 
+TEST(state, compute_king_movable)
+{
+    {
+        // in single check
+        const auto s = State("2k1+R/5/5/5/5 w -");
+        const auto actual = s.compute_king_movable();
+        const auto expect = bb_3b | bb_4b;
+        CHECK_EQUAL(expect.value(), actual.value());
+    }
+    {
+        // double check
+        const auto s = State("2k1+R/5/B4/5/5 w -");
+        const auto actual = s.compute_king_movable();
+        const auto expect = bb_3b;
+        CHECK_EQUAL(expect.value(), actual.value());
+    }
+    {
+        // no check
+        const auto s = State("2k2/5/3+R1/5/5 w -");
+        const auto actual = s.compute_king_movable();
+        const auto expect = bb_4a | bb_4b;
+        CHECK_EQUAL(expect.value(), actual.value());
+    }
+}
+
 } // namespace test_vshogi::test_minishogi

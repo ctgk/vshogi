@@ -66,4 +66,19 @@ TEST(state, to_sfen)
     }
 }
 
+TEST(state, compute_king_movable)
+{
+    {
+        const auto s = State();
+        const auto actual = s.compute_king_movable();
+        const auto expect = bb_4h | bb_5h | bb_6h;
+        CHECK_TRUE(expect == actual);
+    }
+    {
+        const auto s = State("9/9/9/9/9/9/PPPPPPPPP/3LRL3/LNSGKGSNL b -");
+        const auto actual = s.compute_king_movable();
+        CHECK_TRUE(!actual.any());
+    }
+}
+
 } // namespace test_vshogi::test_shogi

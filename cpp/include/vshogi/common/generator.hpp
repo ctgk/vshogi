@@ -15,40 +15,53 @@
 namespace vshogi
 {
 
-template <class Parameters>
+template <class Parameters, bool Check = false>
 class KingMoveGenerator
 {
 private:
     using C = Configuration<Parameters>;
+    using SHelper = Squares<Parameters>;
     using BitBoardType = BitBoard<Parameters>;
-    using BoardType = Board<Parameters>;
     using MoveType = Move<Parameters>;
     using StateType = State<Parameters>;
+    using SquareIterator = typename BitBoard<Parameters>::SquareIterator;
     using Square = typename C::Square;
-    using SHelper = Squares<Parameters>;
 
 private:
-    const StateType& m_state;
-    const ColorEnum m_turn;
-    const BoardType& m_board;
     const Square m_src; //!< King square
-    typename BitBoardType::SquareIterator m_iter;
+    SquareIterator m_iter;
+
+    KingMoveGenerator() : m_src(C::SQ_NA), m_iter()
+    {
+    }
 
 public:
     KingMoveGenerator(const StateType& state)
-        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_src(m_board.get_king_location(m_turn)), m_iter()
+        : m_src(state.get_board().get_king_location(state.get_turn())), m_iter()
     {
-        if (m_src != C::SQ_NA)
-            m_iter = (BitBoardType::get_attacks_by(m_board[m_src], m_src)
-                      & (~m_board.get_occupied(m_turn)))
-                         .square_iterator();
-        increment_iterator_while_square_is_attacked();
+        if constexpr (Check) {
+            const auto t = state.get_turn();
+            const auto& b = state.get_board();
+            const auto enemy_king_sq = b.get_king_location(~t);
+            const auto checker_dir
+                = SHelper::get_direction(m_src, enemy_king_sq);
+            const auto checker_sq
+                = b.find_ranging_attacker(t, enemy_king_sq, checker_dir, m_src);
+            if (checker_sq == C::SQ_NA) {
+                return;
+            } else {
+                m_iter = (state.compute_king_movable()
+                          & (~BitBoardType::get_line_segment(
+                              checker_sq, enemy_king_sq)))
+                             .square_iterator();
+            }
+        } else {
+            m_iter = state.compute_king_movable().square_iterator();
+        }
     }
     KingMoveGenerator& operator++()
     {
         ++m_iter;
-        increment_iterator_while_square_is_attacked();
         return *this;
     }
     MoveType operator*() const
@@ -61,7 +74,7 @@ public:
     }
     KingMoveGenerator end() const
     {
-        static const auto end_iter = KingMoveGenerator(m_state, true);
+        static const auto end_iter = KingMoveGenerator();
         return end_iter;
     }
     bool operator!=(const KingMoveGenerator& other) const
@@ -82,108 +95,6 @@ public:
                 out = operator*();
         }
         return out;
-    }
-
-private:
-    KingMoveGenerator(const StateType& state, const bool)
-        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_src(m_board.get_king_location(m_turn)),
-          m_iter(BitBoardType().square_iterator())
-    {
-    }
-    void increment_iterator_while_square_is_attacked()
-    {
-        while (!m_iter.is_end()) {
-            if (m_board.is_square_attacked(~m_turn, *m_iter, m_src))
-                ++m_iter;
-            else
-                break;
-        }
-    }
-};
-
-template <class Parameters>
-class CheckKingMoveGenerator
-{
-private:
-    using C = Configuration<Parameters>;
-    using BitBoardType = BitBoard<Parameters>;
-    using BoardType = Board<Parameters>;
-    using MoveType = Move<Parameters>;
-    using StateType = State<Parameters>;
-    using Square = typename C::Square;
-    using SHelper = Squares<Parameters>;
-
-private:
-    const StateType& m_state;
-    const ColorEnum m_turn;
-    const BoardType& m_board;
-    const Square m_src; //!< King square
-    typename BitBoardType::SquareIterator m_iter;
-
-public:
-    CheckKingMoveGenerator(const StateType& state)
-        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_src(m_board.get_king_location(m_turn)), m_iter()
-    {
-        const auto enemy_king_sq = m_board.get_king_location(~m_turn);
-        const auto checker_dir = SHelper::get_direction(m_src, enemy_king_sq);
-        const auto checker_sq = m_board.find_ranging_attacker(
-            m_turn, enemy_king_sq, checker_dir, m_src);
-        if (checker_sq == C::SQ_NA)
-            return;
-        const auto attacks
-            = BitBoardType::get_attacks_by(m_board[m_src], m_src);
-        const auto mask
-            = (~m_board.get_occupied(m_turn))
-              & (~BitBoardType::get_line_segment(checker_sq, enemy_king_sq));
-        const auto dst_mask = (attacks & mask);
-        m_iter = dst_mask.square_iterator();
-        increment_iterator_while_square_is_attacked();
-    }
-    CheckKingMoveGenerator& operator++()
-    {
-        ++m_iter;
-        increment_iterator_while_square_is_attacked();
-        return *this;
-    }
-    MoveType operator*() const
-    {
-        return MoveType(*m_iter, m_src, false);
-    }
-    CheckKingMoveGenerator begin() const
-    {
-        return *this;
-    }
-    CheckKingMoveGenerator end() const
-    {
-        static const auto end_iter = CheckKingMoveGenerator(m_state, true);
-        return end_iter;
-    }
-    bool operator!=(const CheckKingMoveGenerator& other) const
-    {
-        return m_iter != other.m_iter;
-    }
-    bool is_end() const
-    {
-        return m_iter.is_end();
-    }
-
-private:
-    CheckKingMoveGenerator(const StateType& state, const bool)
-        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_src(m_board.get_king_location(m_turn)),
-          m_iter(BitBoardType().square_iterator())
-    {
-    }
-    void increment_iterator_while_square_is_attacked()
-    {
-        while (!m_iter.is_end()) {
-            if (m_board.is_square_attacked(~m_turn, *m_iter, m_src))
-                ++m_iter;
-            else
-                break;
-        }
     }
 };
 
@@ -1337,7 +1248,7 @@ private:
     using StateType = State<Parameters>;
 
 private:
-    CheckKingMoveGenerator<Parameters> m_king_iter;
+    KingMoveGenerator<Parameters, true> m_king_iter;
     CheckNonKingBoardMoveGenerator<Parameters> m_board_iter;
     uint m_index; //!< 0: king, 1: board, 2: end
 
@@ -1410,7 +1321,7 @@ public:
 
 private:
     CheckBoardMoveGenerator(
-        const CheckKingMoveGenerator<Parameters>& king_iter,
+        const KingMoveGenerator<Parameters, true>& king_iter,
         const CheckNonKingBoardMoveGenerator<Parameters>& board_iter,
         const uint index)
         : m_king_iter(king_iter), m_board_iter(board_iter), m_index(index)
@@ -1426,7 +1337,7 @@ private:
     using StateType = State<Parameters>;
 
 private:
-    CheckKingMoveGenerator<Parameters> m_king_iter;
+    KingMoveGenerator<Parameters, true> m_king_iter;
     CheckNonKingBoardMoveGenerator<Parameters> m_board_iter;
     CheckDropMoveGenerator<Parameters> m_drop_iter;
     uint m_index; //!< 0: king, 1: board, 2: drop, 3: end
@@ -1514,7 +1425,7 @@ public:
 
 private:
     CheckMoveGenerator(
-        const CheckKingMoveGenerator<Parameters>& king_iter,
+        const KingMoveGenerator<Parameters, true>& king_iter,
         const CheckNonKingBoardMoveGenerator<Parameters>& board_iter,
         const CheckDropMoveGenerator<Parameters>& drop_iter,
         const uint index)

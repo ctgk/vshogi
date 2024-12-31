@@ -588,7 +588,9 @@ inline bool shogi::Board::is_square_attacked_by_ranging_pieces(
     using namespace shogi;
     const BitBoardType occ_full = get_occupied().clear(skip);
     {
-        const auto occ_offence = get_occupied<KY, HI, RY>(by_side);
+        const auto occ_offence = get_occupied<KY, HI, RY>(by_side)
+                                 & BitBoardType::get_attacks_by(
+                                     PHelper::to_board_piece(~by_side, KY), sq);
         if (occ_offence.any()) {
             const auto attack_inverted
                 = (by_side == BLACK)
@@ -599,7 +601,8 @@ inline bool shogi::Board::is_square_attacked_by_ranging_pieces(
         }
     }
     {
-        const auto occ_offence = get_occupied<KA, UM>(by_side);
+        const auto occ_offence = get_occupied<KA, UM>(by_side)
+                                 & shogi::Magic::get_diagonal_attack(sq);
         if (occ_offence.any()) {
             const auto attack_inverted
                 = shogi::Magic::get_diagonal_attack(sq, occ_full);
@@ -608,7 +611,8 @@ inline bool shogi::Board::is_square_attacked_by_ranging_pieces(
         }
     }
     {
-        const auto occ_offence = get_occupied<HI, RY>(by_side);
+        const auto occ_offence = get_occupied<HI, RY>(by_side)
+                                 & BitBoardType::get_attacks_by(B_HI, sq);
         if (occ_offence.any()) {
             const auto attack_inverted
                 = shogi::Magic::get_adjacent_attack(sq, occ_full);
