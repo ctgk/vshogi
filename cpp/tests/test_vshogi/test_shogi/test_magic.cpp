@@ -38,6 +38,15 @@ TEST_GROUP (test_shogi_magic) {
         }
         return out;
     }
+    uint to_magic_table_index(vshogi::uint128 occ, std::uint32_t magic)
+    {
+        std::uint32_t product = static_cast<std::uint32_t>(occ) * magic;
+        magic *= magic;
+        product ^= static_cast<std::uint32_t>(occ >> 28u) * magic;
+        magic *= magic;
+        product ^= static_cast<std::uint32_t>(occ >> 56u) * magic;
+        return product >> (32u - vshogi::shogi::Config::log2_magic_table_size);
+    }
     std::uint32_t find_magic_number(
         const vshogi::shogi::SquareEnum& sq,
         const std::vector<vshogi::DirectionEnum>& directions)
@@ -68,13 +77,13 @@ TEST_GROUP (test_shogi_magic) {
             }
         }
 
-        for (uint kk = 10000000; kk--;) {
+        for (uint kk = 1000000; kk--;) {
             BitBoard used_attacks[max_unique_occupancies] = {};
             const std::uint32_t magic = sparse_random();
             bool found_magic = true;
             for (uint ii = (1u << num_relevant_squares); ii--;) {
-                const auto index = Magic::to_magic_table_index(
-                    occupancies[ii].value(), magic);
+                const auto index
+                    = to_magic_table_index(occupancies[ii].value(), magic);
                 if (!used_attacks[index].any()) {
                     used_attacks[index] = attacks[ii];
                 } else if (used_attacks[index] != attacks[ii]) {
@@ -213,6 +222,14 @@ TEST(test_shogi_magic, get_diagonal_attack)
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
 //         const std::uint32_t magic
 //             = find_magic_number(sq, {vshogi::DIR_N,});
+//         if (magic == 0u) {
+//             std::cout << "\ntemplate <>\n";
+//             std::cout << "inline const std::uint32_t "
+//                          "shogi::Magic::magic_number_north["
+//                          "shogi::Config::num_squares]={\n// clang-format off\n";
+//             print_array(magics, true);
+//             std::cout << "// clang-format on\n};";
+//         }
 //         CHECK_FALSE(magic == 0u);
 //         magics[sq] = magic;
 //     }
@@ -223,6 +240,7 @@ TEST(test_shogi_magic, get_diagonal_attack)
 //     print_array(magics, true);
 //     std::cout << "// clang-format on\n};";
 
+//     std::fill_n(magics, Config::num_squares, 0u);
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
 //         const std::uint32_t magic
 //             = find_magic_number(sq, {vshogi::DIR_S,});
@@ -236,36 +254,41 @@ TEST(test_shogi_magic, get_diagonal_attack)
 //     print_array(magics, true);
 //     std::cout << "// clang-format on\n};";
 
+//     std::fill_n(magics, Config::num_squares, 0u);
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic
-//             = find_magic_number(sq, {vshogi::DIR_N, vshogi::DIR_S});
+//         const std::uint32_t magic = find_magic_number(
+//             sq, {vshogi::DIR_N, vshogi::DIR_W, vshogi::DIR_E, vshogi::DIR_S});
+//         if (magic == 0u) {
+//             std::cout << "\ntemplate <>\n";
+//             std::cout << "inline const std::uint32_t "
+//                          "shogi::Magic::magic_number_adjacent["
+//                          "shogi::Config::num_squares]={\n// clang-format off\n";
+//             print_array(magics, true);
+//             std::cout << "// clang-format on\n};";
+//         }
 //         CHECK_FALSE(magic == 0u);
 //         magics[sq] = magic;
 //     }
 //     std::cout << "\ntemplate <>\n";
 //     std::cout << "inline const std::uint32_t "
-//                  "shogi::Magic::magic_number_vertical["
+//                  "shogi::Magic::magic_number_adjacent["
 //                  "shogi::Config::num_squares]={\n// clang-format off\n";
 //     print_array(magics, true);
 //     std::cout << "// clang-format on\n};";
 
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic
-//             = find_magic_number(sq, {vshogi::DIR_W, vshogi::DIR_E});
-//         CHECK_FALSE(magic == 0u);
-//         magics[sq] = magic;
-//     }
-//     std::cout << "\ntemplate <>\n";
-//     std::cout << "inline const std::uint32_t "
-//                  "shogi::Magic::magic_number_horizontal["
-//                  "shogi::Config::num_squares]={\n// clang-format off\n";
-//     print_array(magics, true);
-//     std::cout << "// clang-format on\n};";
-
+//     std::fill_n(magics, Config::num_squares, 0u);
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
 //         const std::uint32_t magic = find_magic_number(
 //             sq,
 //             {vshogi::DIR_NW, vshogi::DIR_NE, vshogi::DIR_SW, vshogi::DIR_SE});
+//         if (magic == 0u) {
+//             std::cout << "\ntemplate <>\n";
+//             std::cout << "inline const std::uint32_t "
+//                         "shogi::Magic::magic_number_diagonal["
+//                         "shogi::Config::num_squares]={\n// clang-format off\n";
+//             print_array(magics, true);
+//             std::cout << "// clang-format on\n};";
+//         }
 //         CHECK_FALSE(magic == 0u);
 //         magics[sq] = magic;
 //     }
@@ -293,7 +316,7 @@ TEST(test_shogi_magic, get_diagonal_attack)
 //         }
 //     }
 //     std::cout << "\ntemplate <>\n";
-//     std::cout << "inline const shogi::BitBoard shogi::Magic::premask_north["
+//     std::cout << "inline const uint128 shogi::Magic::premask_north["
 //                  "shogi::Config::num_squares]={\n"
 //                  "// clang-format off\n";
 //     print_array(premask_array);
@@ -312,7 +335,7 @@ TEST(test_shogi_magic, get_diagonal_attack)
 //         }
 //     }
 //     std::cout << "\ntemplate <>\n";
-//     std::cout << "inline const shogi::BitBoard shogi::Magic::premask_south["
+//     std::cout << "inline const uint128 shogi::Magic::premask_south["
 //                  "shogi::Config::num_squares]={\n"
 //                  "// clang-format off\n";
 //     print_array(premask_array);
@@ -320,7 +343,8 @@ TEST(test_shogi_magic, get_diagonal_attack)
 
 //     std::fill_n(premask_array, Config::num_squares, 0u);
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         for (auto&& dir : {vshogi::DIR_N, vshogi::DIR_S}) {
+//         for (auto&& dir :
+//              {vshogi::DIR_N, vshogi::DIR_W, vshogi::DIR_E, vshogi::DIR_S}) {
 //             for (SquareEnum s = Squares::shift(sq, dir);;) {
 //                 const auto next = Squares::shift(s, dir);
 //                 if (next == SQ_NA)
@@ -331,27 +355,8 @@ TEST(test_shogi_magic, get_diagonal_attack)
 //         }
 //     }
 //     std::cout << "\ntemplate <>\n";
-//     std::cout << "inline const shogi::BitBoard shogi::Magic::premask_vertical["
-//                  "shogi::Config::num_squares]={\n"
-//                  "// clang-format off\n";
-//     print_array(premask_array);
-//     std::cout << "// clang-format on\n" << "};";
-
-//     std::fill_n(premask_array, Config::num_squares, 0u);
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         for (auto&& dir : {vshogi::DIR_W, vshogi::DIR_E}) {
-//             for (SquareEnum s = Squares::shift(sq, dir);;) {
-//                 const auto next = Squares::shift(s, dir);
-//                 if (next == SQ_NA)
-//                     break;
-//                 premask_array[sq] |= BitBoard::from_square(s).value();
-//                 s = next;
-//             }
-//         }
-//     }
-//     std::cout << "\ntemplate <>\n";
-//     std::cout << "inline const shogi::BitBoard "
-//                  "shogi::Magic::premask_horizontal["
+//     std::cout << "inline const uint128 "
+//                  "shogi::Magic::premask_adjacent["
 //                  "shogi::Config::num_squares]={\n"
 //                  "// clang-format off\n";
 //     print_array(premask_array);
@@ -371,7 +376,7 @@ TEST(test_shogi_magic, get_diagonal_attack)
 //         }
 //     }
 //     std::cout << "\ntemplate <>\n";
-//     std::cout << "inline const shogi::BitBoard "
+//     std::cout << "inline const uint128 "
 //                  "shogi::Magic::premask_diagonal["
 //                  "shogi::Config::num_squares]={\n"
 //                  "// clang-format off\n";

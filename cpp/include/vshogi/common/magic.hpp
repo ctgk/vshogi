@@ -24,17 +24,11 @@ private:
     static const UInt premask_south[C::num_squares];
 
     /**
-     * @brief Mask to get all relevant occupancies along vertical directions.
+     * @brief Mask to get all relevant occupancies along adjacent directions.
      * @details See below for detail:
      * https://www.chessprogramming.org/Best_Magics_so_far#Legende
      */
-    static const UInt premask_vertical[C::num_squares];
-    /**
-     * @brief Mask to get all relevant occupancies along horizontal directions.
-     * @details See below for detail:
-     * https://www.chessprogramming.org/Best_Magics_so_far#Legende
-     */
-    static const UInt premask_horizontal[C::num_squares];
+    static const UInt premask_adjacent[C::num_squares];
 
     /**
      * @brief Mask to get all relevant occupancies along diagonal directions.
@@ -43,14 +37,12 @@ private:
      */
     static const UInt premask_diagonal[C::num_squares];
 
-    static const std::uint32_t magic_number_vertical[C::num_squares];
-    static const std::uint32_t magic_number_horizontal[C::num_squares];
+    static const std::uint32_t magic_number_adjacent[C::num_squares];
     static const std::uint32_t magic_number_diagonal[C::num_squares];
     static const std::uint32_t magic_number_north[C::num_squares];
     static const std::uint32_t magic_number_south[C::num_squares];
 
-    static BitBoardType attack_table_vertical[C::num_squares][table_size];
-    static BitBoardType attack_table_horizontal[C::num_squares][table_size];
+    static BitBoardType attack_table_adjacent[C::num_squares][table_size];
     static BitBoardType attack_table_diagonal[C::num_squares][table_size];
     static BitBoardType attack_table_north[C::num_squares][table_size];
     static BitBoardType attack_table_south[C::num_squares][table_size];
@@ -59,8 +51,7 @@ public:
     Magic() = delete;
     static void init_tables()
     {
-        init_attack_table_vertical();
-        init_attack_table_horizontal();
+        init_attack_table_adjacent();
         init_attack_table_diagonal();
         if constexpr (C::num_squares > 80) {
             init_attack_table_north();
@@ -85,13 +76,15 @@ public:
     }
     static BitBoardType get_adjacent_attack(const Square& sq)
     {
-        return attack_table_vertical[sq][0u] | attack_table_horizontal[sq][0u];
+        return attack_table_adjacent[sq][0u];
     }
     static BitBoardType
     get_adjacent_attack(const Square& sq, const BitBoardType& occupied)
     {
-        return get_vertical_attack(sq, occupied)
-               | get_horizontal_attack(sq, occupied);
+        const std::uint32_t magic = magic_number_adjacent[sq];
+        const auto index = to_magic_table_index(
+            occupied.value() & premask_adjacent[sq], magic);
+        return attack_table_adjacent[sq][index];
     }
     static BitBoardType get_diagonal_attack(const Square& sq)
     {
@@ -118,8 +111,7 @@ public:
         }
         return out;
     }
-    static uint
-    to_magic_table_index(UInt relevant_occ, const std::uint32_t magic)
+    static uint to_magic_table_index(UInt relevant_occ, std::uint32_t magic)
     {
         if constexpr (sizeof(UInt) == sizeof(std::uint32_t)) {
             // shifting 32-bit of 32-bit integer results in undefined behavior.
@@ -133,10 +125,10 @@ public:
         } else if constexpr (sizeof(UInt) == sizeof(uint128)) {
             std::uint32_t product
                 = static_cast<std::uint32_t>(relevant_occ) * magic;
-            relevant_occ >>= 31u;
-            product ^= static_cast<std::uint32_t>(relevant_occ) * magic;
-            relevant_occ >>= 31u;
-            product ^= static_cast<std::uint32_t>(relevant_occ) * magic;
+            magic *= magic;
+            product ^= static_cast<std::uint32_t>(relevant_occ >> 28u) * magic;
+            magic *= magic;
+            product ^= static_cast<std::uint32_t>(relevant_occ >> 56u) * magic;
             return product >> (32u - C::log2_magic_table_size);
         } else {
             std::uint32_t product = 0u;
@@ -201,13 +193,13 @@ private:
             }
         }
     }
-    static void init_attack_table_vertical()
+    static void init_attack_table_adjacent()
     {
         for (auto sq : EnumIterator<Square, C::num_squares>()) {
             const BitBoardType premask
-                = BitBoardType::from_value(premask_vertical[sq]);
+                = BitBoardType::from_value(premask_adjacent[sq]);
             const uint num_relevant_squares = premask.hamming_weight();
-            const std::uint32_t magic = magic_number_vertical[sq];
+            const std::uint32_t magic = magic_number_adjacent[sq];
 
             uint relevant_square_locations[C::num_squares] = {0};
             for (uint ii = 0, jj = 0; ii < C::num_squares; ++ii) {
@@ -219,33 +211,11 @@ private:
                     ii, num_relevant_squares, relevant_square_locations);
                 const BitBoardType attack
                     = BitBoardType::compute_ray_to(sq, DIR_N, occ)
+                      | BitBoardType::compute_ray_to(sq, DIR_W, occ)
+                      | BitBoardType::compute_ray_to(sq, DIR_E, occ)
                       | BitBoardType::compute_ray_to(sq, DIR_S, occ);
                 const auto index = to_magic_table_index(occ.value(), magic);
-                attack_table_vertical[sq][index] = attack;
-            }
-        }
-    }
-    static void init_attack_table_horizontal()
-    {
-        for (auto sq : EnumIterator<Square, C::num_squares>()) {
-            const BitBoardType premask
-                = BitBoardType::from_value(premask_horizontal[sq]);
-            const uint num_relevant_squares = premask.hamming_weight();
-            const std::uint32_t magic = magic_number_horizontal[sq];
-
-            uint relevant_square_locations[C::num_squares] = {0};
-            for (uint ii = 0, jj = 0; ii < C::num_squares; ++ii) {
-                if (premask.is_one(static_cast<Square>(ii)))
-                    relevant_square_locations[jj++] = ii;
-            }
-            for (uint ii = (1u << num_relevant_squares); ii--;) {
-                const BitBoardType occ = get_occupancy(
-                    ii, num_relevant_squares, relevant_square_locations);
-                const BitBoardType attack
-                    = BitBoardType::compute_ray_to(sq, DIR_W, occ)
-                      | BitBoardType::compute_ray_to(sq, DIR_E, occ);
-                const auto index = to_magic_table_index(occ.value(), magic);
-                attack_table_horizontal[sq][index] = attack;
+                attack_table_adjacent[sq][index] = attack;
             }
         }
     }
@@ -274,22 +244,6 @@ private:
                 attack_table_diagonal[sq][index] = attack;
             }
         }
-    }
-    static BitBoardType
-    get_vertical_attack(const Square& sq, const BitBoardType& occupied)
-    {
-        const std::uint32_t magic = magic_number_vertical[sq];
-        const auto index = to_magic_table_index(
-            occupied.value() & premask_vertical[sq], magic);
-        return attack_table_vertical[sq][index];
-    }
-    static BitBoardType
-    get_horizontal_attack(const Square& sq, const BitBoardType& occupied)
-    {
-        const std::uint32_t magic = magic_number_horizontal[sq];
-        const auto index = to_magic_table_index(
-            occupied.value() & premask_horizontal[sq], magic);
-        return attack_table_horizontal[sq][index];
     }
 };
 

@@ -104,7 +104,7 @@ struct Parameters
     static constexpr uint num_ranks = 5; // A, B, C, D, E
     static constexpr uint num_promotion_ranks = 1;
     static constexpr uint num_dir = 8; //!< NW, N, NE, W, E, SW, S, SE
-    static constexpr uint log2_magic_table_size = 4;
+    static constexpr uint log2_magic_table_size = 6;
     static constexpr uint max_stand_piece_count = 2;
     static constexpr uint max_stand_sfen_length = 11; // "2p2s2g2b2r "
     static constexpr uint max_acceptable_repetitions = 3;
@@ -291,23 +291,13 @@ inline minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
 
 template <>
 inline const std::uint32_t
-    minishogi::Magic::premask_vertical[minishogi::Config::num_squares]
+    minishogi::Magic::premask_adjacent[minishogi::Config::num_squares]
     = {
-        0x0000000e, 0x0000000c, 0x0000000a, 0x00000006, 0x0000000e,
-        0x000001c0, 0x00000180, 0x00000140, 0x000000c0, 0x000001c0,
-        0x00003800, 0x00003000, 0x00002800, 0x00001800, 0x00003800,
-        0x00070000, 0x00060000, 0x00050000, 0x00030000, 0x00070000,
-        0x00e00000, 0x00c00000, 0x00a00000, 0x00600000, 0x00e00000,
-};
-template <>
-inline const std::uint32_t
-    minishogi::Magic::premask_horizontal[minishogi::Config::num_squares]
-    = {
-        0x00008420, 0x00010840, 0x00021080, 0x00042100, 0x00084200,
-        0x00008400, 0x00010800, 0x00021000, 0x00042000, 0x00084000,
-        0x00008020, 0x00010040, 0x00020080, 0x00040100, 0x00080200,
-        0x00000420, 0x00000840, 0x00001080, 0x00002100, 0x00004200,
-        0x00008420, 0x00010840, 0x00021080, 0x00042100, 0x00084200,
+        0x0000842e, 0x0001084c, 0x0002108a, 0x00042106, 0x0008420e,
+        0x000085c0, 0x00010980, 0x00021140, 0x000420c0, 0x000841c0,
+        0x0000b820, 0x00013040, 0x00022880, 0x00041900, 0x00083a00,
+        0x00070420, 0x00060840, 0x00051080, 0x00032100, 0x00074200,
+        0x00e08420, 0x00c10840, 0x00a21080, 0x00642100, 0x00e84200,
 };
 template <>
 inline const std::uint32_t
@@ -321,43 +311,28 @@ inline const std::uint32_t
 };
 template <>
 inline const std::uint32_t
-    minishogi::Magic::magic_number_vertical[minishogi::Config::num_squares]
+    minishogi::Magic::magic_number_adjacent[minishogi::Config::num_squares]
     = {
-        0x50881008, 0x05124000, 0x90010000, 0x0a00802a, 0x10000001,
-        0x00410000, 0x03408118, 0x01104008, 0x00444200, 0x01110020,
-        0x02430108, 0x00021408, 0x44040621, 0x28a80a00, 0x01240140,
-        0x02101010, 0x08801060, 0x28209001, 0x00003200, 0x60002001,
-        0x020040a4, 0x02020527, 0x00002100, 0x40080100, 0x080a8080,
-};
-template <>
-inline const std::uint32_t
-    minishogi::Magic::magic_number_horizontal[minishogi::Config::num_squares]
-    = {
-        0x0488c404, 0x04961210, 0x01041341, 0x0023f004, 0x04704f00,
-        0x84082000, 0x2084888a, 0x00082000, 0x000450a1, 0x08084801,
-        0x02822001, 0x00a24008, 0x01002050, 0x82111400, 0x04509000,
-        0x00a10210, 0x02221000, 0x00280810, 0x22808904, 0x00424000,
-        0x0520a100, 0x42c22000, 0x00824000, 0x0288900a, 0x00088808,
+        0x24100840, 0x0200a004, 0x0488c404, 0x88040211, 0x28020161,
+        0x02822001, 0x82111400, 0x04509000, 0x81004440, 0x02221000,
+        0x00212340, 0x00424000, 0x002c6908, 0x8842842c, 0x18220709,
+        0x00201410, 0x06008602, 0x02144a10, 0x8084c482, 0x80020820,
+        0x01a22100, 0x101420e0, 0x00288210, 0x00241040, 0x20081100,
 };
 template <>
 inline const std::uint32_t
     minishogi::Magic::magic_number_diagonal[minishogi::Config::num_squares]
     = {
-        0x32511000, 0x40210680, 0xa0820000, 0x81240020, 0x00291120,
-        0x04144900, 0x10218802, 0x00020d48, 0x0021c000, 0x00022a02,
-        0x0064a200, 0x1e404000, 0x4111a048, 0x00202002, 0x00621000,
-        0x20824400, 0x001d0c10, 0x04040800, 0x35220a00, 0x40240004,
-        0x08842024, 0x20045010, 0x02051010, 0x50050c04, 0x02043600,
+        0x158204c0, 0x00110404, 0x01809840, 0x00210008, 0x88e85080,
+        0x0000a004, 0x00020201, 0x08082000, 0x10014800, 0x40402058,
+        0x02104100, 0x01008298, 0x23c18988, 0x0100d000, 0x12941000,
+        0x04100002, 0x40804000, 0x00302001, 0x50408080, 0x41568004,
+        0x00049110, 0x42002000, 0x00a00c00, 0x00260800, 0x42040112,
 };
 template <>
 inline minishogi::BitBoard
-    minishogi::Magic::attack_table_vertical[minishogi::Config::num_squares]
+    minishogi::Magic::attack_table_adjacent[minishogi::Config::num_squares]
                                            [minishogi::Magic::table_size]
-    = {};
-template <>
-inline minishogi::BitBoard
-    minishogi::Magic::attack_table_horizontal[minishogi::Config::num_squares]
-                                             [minishogi::Magic::table_size]
     = {};
 template <>
 inline minishogi::BitBoard

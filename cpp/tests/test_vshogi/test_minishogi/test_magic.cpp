@@ -164,25 +164,13 @@ TEST(test_minishogi_magic, get_diagonal_attack)
 //     std::uint32_t magics[Config::num_squares];
 
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic
-//             = find_magic_number(sq, {vshogi::DIR_N, vshogi::DIR_S});
+//         const std::uint32_t magic = find_magic_number(
+//             sq, {vshogi::DIR_N, vshogi::DIR_W, vshogi::DIR_E, vshogi::DIR_S});
 //         CHECK_FALSE(magic == 0u);
 //         magics[sq] = magic;
 //     }
 //     std::cout << "\ntemplate <>\ninline const std::uint32_t\n";
-//     std::cout << "minishogi::Magic::magic_number_vertical[minishogi::Config::"
-//                  "num_squares]={\n";
-//     print_array(magics, true);
-//     std::cout << "};";
-
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic
-//             = find_magic_number(sq, {vshogi::DIR_W, vshogi::DIR_E});
-//         CHECK_FALSE(magic == 0u);
-//         magics[sq] = magic;
-//     }
-//     std::cout << "\ntemplate <>\ninline const std::uint32_t\n";
-//     std::cout << "minishogi::Magic::magic_number_horizontal[minishogi::Config::"
+//     std::cout << "minishogi::Magic::magic_number_adjacent[minishogi::Config::"
 //                  "num_squares]={\n";
 //     print_array(magics, true);
 //     std::cout << "};";
@@ -208,7 +196,8 @@ TEST(test_minishogi_magic, get_diagonal_attack)
 
 //     std::fill_n(premask_array, Config::num_squares, 0u);
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         for (auto&& dir : {vshogi::DIR_N, vshogi::DIR_S}) {
+//         for (auto&& dir :
+//              {vshogi::DIR_N, vshogi::DIR_W, vshogi::DIR_E, vshogi::DIR_S}) {
 //             for (SquareEnum s = Squares::shift(sq, dir);;) {
 //                 const auto next = Squares::shift(s, dir);
 //                 if (next == SQ_NA)
@@ -219,27 +208,8 @@ TEST(test_minishogi_magic, get_diagonal_attack)
 //         }
 //     }
 //     std::cout << "\ntemplate <>\n";
-//     std::cout << "inline const minishogi::BitBoard "
-//                  "minishogi::Magic::premask_vertical[minishogi::Config::num_"
-//                  "squares]={\n";
-//     print_array(premask_array, true);
-//     std::cout << "};";
-
-//     std::fill_n(premask_array, Config::num_squares, 0u);
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         for (auto&& dir : {vshogi::DIR_W, vshogi::DIR_E}) {
-//             for (SquareEnum s = Squares::shift(sq, dir);;) {
-//                 const auto next = Squares::shift(s, dir);
-//                 if (next == SQ_NA)
-//                     break;
-//                 premask_array[sq] |= BitBoard::from_square(s).value();
-//                 s = next;
-//             }
-//         }
-//     }
-//     std::cout << "\ntemplate <>\n";
-//     std::cout << "inline const minishogi::BitBoard "
-//                  "minishogi::Magic::premask_horizontal[minishogi::Config::num_"
+//     std::cout << "inline const std::uint32_t "
+//                  "minishogi::Magic::premask_adjacent[minishogi::Config::num_"
 //                  "squares]={\n";
 //     print_array(premask_array, true);
 //     std::cout << "};";
@@ -258,7 +228,7 @@ TEST(test_minishogi_magic, get_diagonal_attack)
 //         }
 //     }
 //     std::cout << "\ntemplate <>\n";
-//     std::cout << "inline const minishogi::BitBoard "
+//     std::cout << "inline const std::uint32_t "
 //                  "minishogi::Magic::premask_diagonal[minishogi::Config::num_"
 //                  "squares]={\n";
 //     print_array(premask_array, true);
