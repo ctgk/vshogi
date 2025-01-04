@@ -116,9 +116,6 @@ public: // stand
     static constexpr uint max_stand_piece_count = Param::max_stand_piece_count;
     static constexpr uint max_stand_sfen_length = Param::max_stand_sfen_length;
 
-public: // magic
-    static constexpr uint log2_magic_table_size = Param::log2_magic_table_size;
-
 public: // game rules
     /**
      * @brief Maximum # of repetitions accepted in the game rule.

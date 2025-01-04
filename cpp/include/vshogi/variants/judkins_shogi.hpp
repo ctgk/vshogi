@@ -123,7 +123,6 @@ struct Parameters
     static constexpr uint num_ranks = 6; // A, B, C, D, E, F
     static constexpr uint num_promotion_ranks = 2;
     static constexpr uint num_dir = 12; //!< NW, N, NE, W, E, SW, S, SE, SSW, SSE, NNW, NNE
-    static constexpr uint log2_magic_table_size = 8;
     static constexpr uint max_stand_piece_count = 2;
     static constexpr uint max_stand_sfen_length = 13; // "RBGSNPrbgsnp "
     static constexpr uint max_acceptable_repetitions = 3;
@@ -357,31 +356,33 @@ template <>
 inline const std::uint32_t judkins_shogi::Magic::magic_number_adjacent
     [judkins_shogi::Config::num_squares]
     = {
-        0x02002040, 0x01809840, 0x86800844, 0x64020a10, 0x92004028, 0x02004012,
-        0x4008110a, 0x01072841, 0x08120911, 0x04844010, 0x20021202, 0x81440402,
-        0x02001011, 0x58420404, 0x10480848, 0x12101008, 0x0400d302, 0x00806004,
-        0x10040080, 0x03010088, 0x20040838, 0x20040804, 0x02020448, 0x05080104,
-        0x80052001, 0x10105086, 0x08050809, 0x202102b2, 0x00880101, 0x04104042,
-        0x01012020, 0xa0846209, 0x08400c44, 0x04a00402, 0x021a8004, 0x08002204,
+        0x02002040, 0x20840c03, 0x0c020814, 0x02010202, 0x08680163, 0x0200a024,
+        0x05280840, 0x38040840, 0x00442010, 0x00100830, 0x51084204, 0x13084002,
+        0x80282040, 0x80121020, 0x00010804, 0x00010488, 0x00051814, 0x02008104,
+        0x848800a0, 0x45405040, 0x02010260, 0x00080310, 0x10040422, 0x08044204,
+        0x6202004d, 0x01000c51, 0x040480c8, 0x23068101, 0x00842005, 0x002a4098,
+        0x04084042, 0x81804440, 0x15084021, 0xa040100a, 0x21204021, 0x00881813,
 };
 template <>
 inline const std::uint32_t judkins_shogi::Magic::magic_number_diagonal
     [judkins_shogi::Config::num_squares]
     = {
-        0x00888201, 0x00040200, 0x409a0304, 0x10082090, 0x40068491, 0x44004602,
-        0x20402801, 0x00803901, 0x04011a00, 0x48008020, 0x41040441, 0x0020c812,
-        0x00020120, 0x00200b02, 0x0e212108, 0x0a030808, 0x00008406, 0x008c8008,
-        0x04101019, 0x00aa4c10, 0x400e0302, 0x00542011, 0x00022031, 0x20021124,
-        0x00010410, 0x00040301, 0x00480501, 0x02119a00, 0x20224a10, 0x41400840,
-        0x402021a8, 0x00005090, 0x08014025, 0x00043186, 0x00640104, 0x00032401,
+        0x88b08098, 0x04101080, 0x02280440, 0x02140cc4, 0x00045080, 0x03082402,
+        0x00410401, 0x010900a5, 0x00108888, 0x0004a4c0, 0x80084440, 0x08000408,
+        0x02594811, 0x80114501, 0x00840082, 0x01c80822, 0x40320b0a, 0x00245224,
+        0x03042418, 0x80288001, 0x48202004, 0x00108011, 0x00201010, 0x04100508,
+        0x40391420, 0xa0811803, 0x80100400, 0x0b03a110, 0x01108a00, 0x40828238,
+        0x54044818, 0x81190520, 0x080108a6, 0x00008401, 0x51904108, 0x1a104482,
 };
 template <>
 inline judkins_shogi::BitBoard judkins_shogi::Magic::attack_table_adjacent
-    [judkins_shogi::Config::num_squares][judkins_shogi::Magic::table_size]
+    [judkins_shogi::Config::num_squares]
+    [judkins_shogi::Magic::table_size_adjacent]
     = {};
 template <>
 inline judkins_shogi::BitBoard judkins_shogi::Magic::attack_table_diagonal
-    [judkins_shogi::Config::num_squares][judkins_shogi::Magic::table_size]
+    [judkins_shogi::Config::num_squares]
+    [judkins_shogi::Magic::table_size_diagonal]
     = {};
 
 template <>

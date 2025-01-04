@@ -38,15 +38,7 @@ TEST_GROUP (test_shogi_magic) {
         }
         return out;
     }
-    uint to_magic_table_index(vshogi::uint128 occ, std::uint32_t magic)
-    {
-        std::uint32_t product = static_cast<std::uint32_t>(occ) * magic;
-        magic *= magic;
-        product ^= static_cast<std::uint32_t>(occ >> 28u) * magic;
-        magic *= magic;
-        product ^= static_cast<std::uint32_t>(occ >> 56u) * magic;
-        return product >> (32u - vshogi::shogi::Config::log2_magic_table_size);
-    }
+    template <uint Shift>
     std::uint32_t find_magic_number(
         const vshogi::shogi::SquareEnum& sq,
         const std::vector<vshogi::DirectionEnum>& directions)
@@ -54,8 +46,7 @@ TEST_GROUP (test_shogi_magic) {
         using namespace vshogi::shogi;
         const auto premask = get_premask(sq, directions);
         const uint num_relevant_squares = premask.hamming_weight();
-        constexpr uint max_unique_occupancies
-            = (1u << Config::log2_magic_table_size);
+        constexpr uint max_unique_occupancies = (1u << Shift);
         if (num_relevant_squares == 0u)
             return 0xffffffff;
 
@@ -82,8 +73,8 @@ TEST_GROUP (test_shogi_magic) {
             const std::uint32_t magic = sparse_random();
             bool found_magic = true;
             for (uint ii = (1u << num_relevant_squares); ii--;) {
-                const auto index
-                    = to_magic_table_index(occupancies[ii].value(), magic);
+                const auto index = Magic::to_magic_table_index<Shift>(
+                    occupancies[ii].value(), magic);
                 if (!used_attacks[index].any()) {
                     used_attacks[index] = attacks[ii];
                 } else if (used_attacks[index] != attacks[ii]) {
@@ -221,7 +212,11 @@ TEST(test_shogi_magic, get_diagonal_attack)
 
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
 //         const std::uint32_t magic
-//             = find_magic_number(sq, {vshogi::DIR_N,});
+//             = find_magic_number<Magic::log2_table_size_lance>(
+//                 sq,
+//                 {
+//                     vshogi::DIR_N,
+//                 });
 //         if (magic == 0u) {
 //             std::cout << "\ntemplate <>\n";
 //             std::cout << "inline const std::uint32_t "
@@ -243,7 +238,11 @@ TEST(test_shogi_magic, get_diagonal_attack)
 //     std::fill_n(magics, Config::num_squares, 0u);
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
 //         const std::uint32_t magic
-//             = find_magic_number(sq, {vshogi::DIR_S,});
+//             = find_magic_number<Magic::log2_table_size_lance>(
+//                 sq,
+//                 {
+//                     vshogi::DIR_S,
+//                 });
 //         CHECK_FALSE(magic == 0u);
 //         magics[sq] = magic;
 //     }
@@ -256,8 +255,10 @@ TEST(test_shogi_magic, get_diagonal_attack)
 
 //     std::fill_n(magics, Config::num_squares, 0u);
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic = find_magic_number(
-//             sq, {vshogi::DIR_N, vshogi::DIR_W, vshogi::DIR_E, vshogi::DIR_S});
+//         const std::uint32_t magic
+//             = find_magic_number<Magic::log2_table_size_adjacent>(
+//                 sq,
+//                 {vshogi::DIR_N, vshogi::DIR_W, vshogi::DIR_E, vshogi::DIR_S});
 //         if (magic == 0u) {
 //             std::cout << "\ntemplate <>\n";
 //             std::cout << "inline const std::uint32_t "
@@ -278,9 +279,13 @@ TEST(test_shogi_magic, get_diagonal_attack)
 
 //     std::fill_n(magics, Config::num_squares, 0u);
 //     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
-//         const std::uint32_t magic = find_magic_number(
-//             sq,
-//             {vshogi::DIR_NW, vshogi::DIR_NE, vshogi::DIR_SW, vshogi::DIR_SE});
+//         const std::uint32_t magic
+//             = find_magic_number<Magic::log2_table_size_diagonal>(
+//                 sq,
+//                 {vshogi::DIR_NW,
+//                  vshogi::DIR_NE,
+//                  vshogi::DIR_SW,
+//                  vshogi::DIR_SE});
 //         if (magic == 0u) {
 //             std::cout << "\ntemplate <>\n";
 //             std::cout << "inline const std::uint32_t "

@@ -104,7 +104,6 @@ struct Parameters
     static constexpr uint num_ranks = 5; // A, B, C, D, E
     static constexpr uint num_promotion_ranks = 1;
     static constexpr uint num_dir = 8; //!< NW, N, NE, W, E, SW, S, SE
-    static constexpr uint log2_magic_table_size = 6;
     static constexpr uint max_stand_piece_count = 2;
     static constexpr uint max_stand_sfen_length = 11; // "2p2s2g2b2r "
     static constexpr uint max_acceptable_repetitions = 3;
@@ -313,31 +312,29 @@ template <>
 inline const std::uint32_t
     minishogi::Magic::magic_number_adjacent[minishogi::Config::num_squares]
     = {
-        0x24100840, 0x0200a004, 0x0488c404, 0x88040211, 0x28020161,
-        0x02822001, 0x82111400, 0x04509000, 0x81004440, 0x02221000,
-        0x00212340, 0x00424000, 0x002c6908, 0x8842842c, 0x18220709,
-        0x00201410, 0x06008602, 0x02144a10, 0x8084c482, 0x80020820,
-        0x01a22100, 0x101420e0, 0x00288210, 0x00241040, 0x20081100,
+        0x24208005, 0x42841008, 0x62081008, 0x22040405, 0x10081700,
+        0x20504014, 0x20208c04, 0x02182008, 0x02440140, 0x01219110,
+        0x0d082040, 0x88161000, 0x10422020, 0x04910105, 0x00a40881,
+        0x1022080c, 0x0c150c81, 0x10382400, 0x00502000, 0x02845048,
+        0x04100941, 0x65160900, 0x03010240, 0x01044480, 0x42085100,
 };
 template <>
 inline const std::uint32_t
     minishogi::Magic::magic_number_diagonal[minishogi::Config::num_squares]
     = {
-        0x158204c0, 0x00110404, 0x01809840, 0x00210008, 0x88e85080,
-        0x0000a004, 0x00020201, 0x08082000, 0x10014800, 0x40402058,
-        0x02104100, 0x01008298, 0x23c18988, 0x0100d000, 0x12941000,
-        0x04100002, 0x40804000, 0x00302001, 0x50408080, 0x41568004,
-        0x00049110, 0x42002000, 0x00a00c00, 0x00260800, 0x42040112,
+        0x45084810, 0x82810004, 0x04881240, 0x0c840001, 0x801290a0,
+        0x09501000, 0x00040400, 0x0c040000, 0x20442088, 0x0040a000,
+        0x00801090, 0x00402001, 0x30801082, 0x18a04000, 0x42100820,
+        0x01088008, 0x04428062, 0x0822000c, 0x02010820, 0x40c0d0a0,
+        0x08814108, 0x80090800, 0xa0084800, 0x00101402, 0xa8881000,
 };
 template <>
-inline minishogi::BitBoard
-    minishogi::Magic::attack_table_adjacent[minishogi::Config::num_squares]
-                                           [minishogi::Magic::table_size]
+inline minishogi::BitBoard minishogi::Magic::attack_table_adjacent
+    [minishogi::Config::num_squares][minishogi::Magic::table_size_adjacent]
     = {};
 template <>
-inline minishogi::BitBoard
-    minishogi::Magic::attack_table_diagonal[minishogi::Config::num_squares]
-                                           [minishogi::Magic::table_size]
+inline minishogi::BitBoard minishogi::Magic::attack_table_diagonal
+    [minishogi::Config::num_squares][minishogi::Magic::table_size_diagonal]
     = {};
 
 template <>
