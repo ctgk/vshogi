@@ -9,6 +9,7 @@
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/direction.hpp"
+#include "vshogi/common/magic.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/pieces.hpp"
 #include "vshogi/common/squares.hpp"
@@ -232,23 +233,17 @@ public:
     }
     BitBoardType find_pinned(const ColorEnum& c) const
     {
-        BitBoardType out{};
-        const Square& king = m_king_locations[c];
-        if (king == C::SQ_NA)
-            return out;
-        const BitBoardType occ_full = m_bb_color[BLACK] | m_bb_color[WHITE];
-        for (auto atk : get_occupied_by_ranging(~c).square_iterator()) {
-            const auto king_dir = SHelper::get_direction(king, atk);
-            if (!PHelper::is_ranging_to(m_pieces[atk], king_dir))
-                continue;
-            const auto segment = BitBoardType::get_line_segment(atk, king);
-            if ((occ_full & segment).hamming_weight() != 1u)
-                continue;
-            const BitBoardType pinned_mask = m_bb_color[c] & segment;
-            if (pinned_mask.hamming_weight() == 1u)
-                out.set(*pinned_mask.square_iterator());
-        }
-        return out;
+        const Square& ally_king = m_king_locations[c];
+        if (ally_king == C::SQ_NA)
+            return BitBoardType();
+        return find_ranging_attack_blockers(~c, c, ally_king);
+    }
+    BitBoardType find_cover(const ColorEnum& c) const
+    {
+        const Square& enemy_king = m_king_locations[~c];
+        if (enemy_king == C::SQ_NA)
+            return BitBoardType();
+        return find_ranging_attack_blockers(c, c, enemy_king);
     }
     bool is_square_attacked(
         const ColorEnum& by_side,
@@ -447,6 +442,31 @@ private:
             m_king_locations[c] = C::SQ_NA;
         m_bb_color[c].toggle(sq);
         m_bb_piece[pt].toggle(sq);
+    }
+    BitBoardType find_ranging_attack_blockers(
+        const ColorEnum& attack_by,
+        const ColorEnum& block_by,
+        const Square& target) const
+    {
+        BitBoardType out{};
+        const BitBoardType occ_full = m_bb_color[BLACK] | m_bb_color[WHITE];
+        const auto ranger = get_occupied_by_ranging(attack_by);
+        const auto mask_8dir = Magic<Parameters>::get_adjacent_attack(target)
+                               | Magic<Parameters>::get_diagonal_attack(target);
+        const auto mask_attackers = ranger & mask_8dir;
+        for (auto atk : mask_attackers.square_iterator()) {
+            const auto king_dir = SHelper::get_direction(target, atk);
+            if (!PHelper::is_ranging_to(m_pieces[atk], king_dir))
+                continue;
+            const auto segment = BitBoardType::get_line_segment(atk, target);
+            const BitBoardType blockers = occ_full & segment;
+            if (blockers.hamming_weight() != 1u)
+                continue;
+            const auto blocker = *blockers.square_iterator();
+            if (PHelper::get_color(m_pieces[blocker]) == block_by)
+                out.set(blocker);
+        }
+        return out;
     }
     template <PieceType PT>
     bool is_square_attacked_by(const ColorEnum& by_side, const Square& sq) const

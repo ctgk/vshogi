@@ -392,20 +392,14 @@ private:
 public:
     NonKingBoardMoveGenerator(const StateType& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_pinned(m_board.find_pinned(m_turn)), m_src_iter(), m_dst_iter(),
-          m_promote(true)
+          m_pinned(
+              m_state.in_double_check() ? BitBoardType()
+                                        : m_board.find_pinned(m_turn)),
+          m_src_iter(), m_dst_iter(), m_promote(true)
     {
         if (m_state.in_double_check())
             return;
-        init_src_iter();
-        while (!m_src_iter.is_end()) {
-            init_dst_iter();
-            if (m_dst_iter.is_end())
-                ++m_src_iter;
-            else
-                break;
-        }
-        init_promote();
+        init_no_check();
     }
     NonKingBoardMoveGenerator(
         const StateType& state, const BitBoardType& src_mask)
@@ -500,6 +494,18 @@ private:
         if (m_state.in_double_check())
             return;
         init_src_iter(src_mask);
+        while (!m_src_iter.is_end()) {
+            init_dst_iter();
+            if (m_dst_iter.is_end())
+                ++m_src_iter;
+            else
+                break;
+        }
+        init_promote();
+    }
+    void init_no_check()
+    {
+        init_src_iter();
         while (!m_src_iter.is_end()) {
             init_dst_iter();
             if (m_dst_iter.is_end())
@@ -686,20 +692,7 @@ private:
     }
     void init_src_iter()
     {
-        const auto king_sq = m_board.get_king_location(m_turn);
-        const auto enemy_king_sq = m_board.get_king_location(~m_turn);
-        assert(enemy_king_sq != C::SQ_NA);
-        const auto non_king_occupancy
-            = m_board.get_occupied(m_turn).clear(king_sq);
-        const auto ranging_occupancy = m_board.get_occupied_by_ranging(m_turn);
-        const auto eight_dir_mask
-            = Magic<Parameters>::get_adjacent_attack(enemy_king_sq)
-              | Magic<Parameters>::get_diagonal_attack(enemy_king_sq);
-        const auto second_neighbor
-            = BitBoardType::compute_2nd_neighbor_of(enemy_king_sq, m_turn);
-        const auto src_mask
-            = non_king_occupancy
-              & (eight_dir_mask | ranging_occupancy | second_neighbor);
+        const auto src_mask = m_state.template compute_src_mask<true>();
         m_src_iter = src_mask.square_iterator();
     }
     void init_dst_mask()

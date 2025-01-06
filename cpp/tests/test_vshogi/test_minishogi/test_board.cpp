@@ -252,10 +252,17 @@ TEST(test_minishogi_board, is_square_attacked)
 
 TEST(test_minishogi_board, find_pinned)
 {
-    const auto b = Board("b3+r/5/2P1P/5/r1P1K");
-    const auto actual = b.find_pinned(vshogi::BLACK);
-    const auto expect = bb_3c | bb_1c | bb_3e;
-    CHECK_EQUAL(expect.value(), actual.value());
+    {
+        const auto b = Board("b3+r/5/2P1P/5/r1P1K");
+        const auto actual = b.find_pinned(vshogi::BLACK);
+        const auto expect = bb_3c | bb_1c | bb_3e;
+        CHECK_EQUAL(expect.value(), actual.value());
+    }
+    {
+        const auto b = Board("2s1R/2k2/4G/5/4K");
+        const auto actual = b.find_pinned(vshogi::BLACK);
+        CHECK_EQUAL(bb_na.value(), actual.value());
+    }
 }
 
 TEST(test_minishogi_board, find_ranging_attacker)

@@ -101,10 +101,80 @@ TEST(test_shogi_board, is_square_attacked)
 
 TEST(test_shogi_board, find_pinned)
 {
-    const auto b = Board("4b3l/9/6P1P/9/4r1P1K/9/9/9/9");
-    const auto actual = b.find_pinned(vshogi::BLACK);
-    const auto expect = bb_3c | bb_1c | bb_3e;
-    CHECK_TRUE(expect.value() == actual.value());
+    {
+        // not pinned because KA does not attack to the north direction.
+        const auto b = Board("8k/8g/9/9/9/9/9/9/8B");
+        const auto actual = b.find_pinned(vshogi::WHITE);
+        const auto expect = bb_na;
+        CHECK_TRUE(expect == actual);
+    }
+    {
+        // pinned because KY does attack to the north direction.
+        const auto b = Board("8k/8g/9/9/9/9/9/9/8L");
+        const auto actual = b.find_pinned(vshogi::WHITE);
+        const auto expect = bb_1b;
+        CHECK_TRUE(expect == actual);
+    }
+    {
+        // no pinned pieces because there is no pieces in between
+        const auto b = Board("8k/9/9/9/9/9/9/9/8L");
+        const auto actual = b.find_pinned(vshogi::WHITE);
+        const auto expect = bb_na;
+        CHECK_TRUE(expect == actual);
+    }
+    {
+        // no pinned pieces because there are two ally pieces in between
+        const auto b = Board("8k/8g/8g/9/9/9/9/9/8L");
+        const auto actual = b.find_pinned(vshogi::WHITE);
+        const auto expect = bb_na;
+        CHECK_TRUE(expect == actual);
+    }
+    {
+        // no pinned pieces because there are one ally and one enemy piece
+        const auto b = Board("8k/8g/8G/9/9/9/9/9/8L");
+        const auto actual = b.find_pinned(vshogi::WHITE);
+        const auto expect = bb_na;
+        CHECK_TRUE(expect == actual);
+    }
+    {
+        const auto b = Board("4b3l/9/6P1P/9/4r1P1K/9/9/9/9");
+        const auto actual = b.find_pinned(vshogi::BLACK);
+        const auto expect = bb_3c | bb_1c | bb_3e;
+        CHECK_TRUE(expect.value() == actual.value());
+    }
+}
+
+TEST(test_shogi_board, find_cover)
+{
+    {
+        const auto b = Board("8k/9/9/9/9/9/9/8G/8L");
+        const auto actual = b.find_cover(vshogi::BLACK);
+        CHECK_TRUE(bb_1h == actual);
+    }
+    {
+        // no cover because no pieces in between king and the attacker
+        const auto b = Board("8k/9/9/9/9/9/9/9/8L");
+        const auto actual = b.find_cover(vshogi::BLACK);
+        CHECK_TRUE(bb_na == actual);
+    }
+    {
+        // no cover because the blocker is not ally piece
+        const auto b = Board("8k/9/9/9/9/9/9/8g/8L");
+        const auto actual = b.find_cover(vshogi::BLACK);
+        CHECK_TRUE(bb_na == actual);
+    }
+    {
+        // no cover because two ally blockers
+        const auto b = Board("8k/9/9/9/9/9/8S/8G/8L");
+        const auto actual = b.find_cover(vshogi::BLACK);
+        CHECK_TRUE(bb_na == actual);
+    }
+    {
+        // no cover because one ally and one enemy blocker
+        const auto b = Board("8k/9/9/9/9/9/8s/8G/8L");
+        const auto actual = b.find_cover(vshogi::BLACK);
+        CHECK_TRUE(bb_na == actual);
+    }
 }
 
 TEST(test_shogi_board, find_ranging_attacker)
