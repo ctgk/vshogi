@@ -736,11 +736,10 @@ private:
         const auto src = *m_src_iter;
         const auto p = m_board[src];
         auto movable = m_dst_mask;
-        update_mask_by_nopromo(movable, p);
-        if (!movable.any()) {
-            return;
-        }
         update_mask_by_forcing_check(movable, p);
+        if (movable.any()) {
+            update_mask_by_nopromo(movable, p);
+        }
         m_dst_iter = movable.square_iterator();
     }
     bool update_mask_by_promotion(BitBoardType& mask, const Square src)

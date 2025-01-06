@@ -224,15 +224,11 @@ public:
     static BitBoard
     compute_2nd_neighbor_of(const Square& sq, const ColorEnum& c)
     {
-        auto out = BitBoard::from_square(sq);
-        out
-            |= (out.shift(DIR_NW) | out.shift(DIR_N) | out.shift(DIR_NE)
-                | out.shift(DIR_W) | out.shift(DIR_E) | out.shift(DIR_SW)
-                | out.shift(DIR_S) | out.shift(DIR_SE));
-        out
-            |= (out.shift(DIR_NW) | out.shift(DIR_N) | out.shift(DIR_NE)
-                | out.shift(DIR_W) | out.shift(DIR_E) | out.shift(DIR_SW)
-                | out.shift(DIR_S) | out.shift(DIR_SE));
+        const auto base = BitBoard::from_square(sq);
+        auto out = base;
+        out |= get_attacks_by(PHelper::to_board_piece(BLACK, C::OU), sq);
+        out |= out.shift(DIR_W) | out.shift(DIR_E);
+        out |= out.shift(DIR_N) | out.shift(DIR_S);
         if constexpr (C::num_dir > 8) {
             const auto d = (c == BLACK) ? DIR_S : DIR_N;
             out |= out.shift(d);
