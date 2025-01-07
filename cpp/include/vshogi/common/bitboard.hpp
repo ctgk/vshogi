@@ -102,6 +102,10 @@ public:
     {
         return static_cast<bool>(m_value);
     }
+    constexpr bool empty() const
+    {
+        return !static_cast<bool>(m_value);
+    }
     bool is_one(const Square& sq) const
     {
         assert((m_value >> C::SQ_NA) == 0);
@@ -221,14 +225,19 @@ public:
         else
             return (*this & rankmask[dir]) >> static_cast<uint>(-delta);
     }
-    static BitBoard
-    compute_2nd_neighbor_of(const Square& sq, const ColorEnum& c)
+    static BitBoard compute_neighbor5x5(const Square& sq)
     {
         const auto base = BitBoard::from_square(sq);
         auto out = base;
         out |= get_attacks_by(PHelper::to_board_piece(BLACK, C::OU), sq);
         out |= out.shift(DIR_W) | out.shift(DIR_E);
         out |= out.shift(DIR_N) | out.shift(DIR_S);
+        return out;
+    }
+    static BitBoard
+    compute_2nd_neighbor_of(const Square& sq, const ColorEnum& c)
+    {
+        auto out = compute_neighbor5x5(sq);
         if constexpr (C::num_dir > 8) {
             const auto d = (c == BLACK) ? DIR_S : DIR_N;
             out |= out.shift(d);

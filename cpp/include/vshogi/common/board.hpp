@@ -245,18 +245,30 @@ public:
             return BitBoardType();
         return find_ranging_attack_blockers(c, c, enemy_king);
     }
-    bool is_square_attacked(
+    BitBoardType compute_king_movable(
         const ColorEnum& by_side,
-        const Square& sq,
-        const Square& skip = C::SQ_NA) const
+        const Square* const checker_locations = nullptr) const
     {
-        if (sq == C::SQ_NA)
-            return false;
-        for (auto dir : EnumIterator<DirectionEnum, C::num_dir>()) {
-            if (find_attacker(by_side, sq, dir, skip) != C::SQ_NA)
-                return true;
+        const auto src = m_king_locations[by_side];
+        if (src == C::SQ_NA)
+            return BitBoardType();
+        assert(m_pieces[src] == PHelper::to_board_piece(by_side, C::OU));
+        BitBoardType out = BitBoardType::get_attacks_by(m_pieces[src], src);
+        const BitBoardType occ_full_but_king = get_occupied().clear(src);
+        out &= ~m_bb_color[by_side];
+        if (checker_locations) {
+            for (uint ii = 0u; ii < 2u; ++ii) {
+                const Square& sq = checker_locations[ii];
+                if (sq == C::SQ_NA)
+                    break;
+                out &= ~BitBoardType::get_attacks_by(
+                    m_pieces[sq], sq, occ_full_but_king);
+                if (!out.any())
+                    return out;
+            }
         }
-        return false;
+        clear_mask_where_attacked(out, ~by_side, occ_full_but_king);
+        return out;
     }
     template <bool Check>
     BitBoardType compute_droppable(const ColoredPiece& p) const
@@ -468,30 +480,31 @@ private:
         }
         return out;
     }
-    template <PieceType PT>
-    bool is_square_attacked_by(const ColorEnum& by_side, const Square& sq) const
+    void clear_mask_where_attacked(
+        BitBoardType& mask,
+        const ColorEnum& by_side,
+        const BitBoardType& occ_full_but_king) const
     {
-        static_assert(PT < C::NA);
-        assert(sq < C::SQ_NA);
-        assert(!PHelper::is_ranging_piece(PT));
-        const auto attack_inverted = BitBoardType::get_attacks_by(
-            PHelper::to_board_piece(~by_side, PT), sq);
-        const auto occ_offence
-            = get_occupied(PHelper::to_board_piece(by_side, PT));
-        return (attack_inverted & occ_offence).any();
+        const BitBoardType occ_ranging = get_occupied_by_ranging(by_side);
+        const BitBoardType occ_melee = m_bb_color[by_side] ^ occ_ranging;
+        const BitBoardType neighbor5x5
+            = BitBoardType::compute_neighbor5x5(m_king_locations[~by_side]);
+        const BitBoardType neighbor
+            = neighbor5x5
+              | neighbor5x5.shift((by_side == BLACK) ? DIR_S : DIR_N);
+        const BitBoardType occ_atks = occ_ranging ^ (neighbor & occ_melee);
+        for (auto sq : occ_atks.square_iterator()) {
+            const auto& p = m_pieces[sq];
+            if (PHelper::is_ranging_piece(p)
+                && (BitBoardType::get_attacks_by(p, sq) & mask).any()) {
+                mask &= ~BitBoardType::get_attacks_by(p, sq, occ_full_but_king);
+            } else {
+                mask &= ~BitBoardType::get_attacks_by(p, sq);
+            }
+            if (mask.empty())
+                return;
+        }
     }
-    template <PieceType Base, PieceType Alike, PieceType... Args>
-    bool is_square_attacked_by(const ColorEnum& by_side, const Square& sq) const
-    {
-        static_assert(Base < C::NA);
-        assert(sq < C::SQ_NA);
-        const auto attack_inverted = BitBoardType::get_attacks_by(
-            PHelper::to_board_piece(~by_side, Base), sq);
-        const auto occ_offence = get_occupied<Base, Alike, Args...>(by_side);
-        return (attack_inverted & occ_offence).any();
-    }
-    bool is_square_attacked_by_ranging_pieces(
-        const ColorEnum& by_side, const Square& sq, const Square& skip) const;
     template <bool Check>
     void update_droppable(
         BitBoardType& droppable,
@@ -574,14 +587,8 @@ private:
     {
         const Square& king_sq = m_king_locations[king_color];
         const BitBoardType& ally_mask = m_bb_color[king_color];
-        const BitBoardType king_dst_mask
-            = get_attacks_by_nocheck(king_sq) & (~ally_mask);
-        for (auto sq : king_dst_mask.square_iterator()) {
-            if (is_square_attacked(~king_color, sq, king_sq))
-                continue;
-            return true;
-        }
-        return false;
+        const BitBoardType king_dst_mask = compute_king_movable(king_color);
+        return king_dst_mask.any();
     }
     bool enemy_can_capture_the_drop_pawn(
         const Square& dst, const ColorEnum& by_side) const
