@@ -234,7 +234,17 @@ public:
 
     BitBoardType compute_king_movable() const
     {
-        return m_board.compute_king_movable(m_turn, m_checker_locations);
+        return compute_king_movable(~BitBoardType());
+    }
+    BitBoardType compute_king_movable(BitBoardType movable) const
+    {
+        for (uint ii = 0u; ii < 2u; ++ii) {
+            const Square& sq = m_checker_locations[ii];
+            if (sq == C::SQ_NA)
+                break;
+            movable &= ~m_board.get_attacks_by_nocheck(sq);
+        }
+        return m_board.compute_king_movable(m_turn, movable);
     }
     template <bool Check>
     BitBoardType compute_src_mask() const

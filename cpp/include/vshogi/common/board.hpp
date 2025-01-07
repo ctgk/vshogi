@@ -246,27 +246,16 @@ public:
         return find_ranging_attack_blockers(c, c, enemy_king);
     }
     BitBoardType compute_king_movable(
-        const ColorEnum& by_side,
-        const Square* const checker_locations = nullptr) const
+        const ColorEnum& by_side, const BitBoardType& movable) const
     {
         const auto src = m_king_locations[by_side];
         if (src == C::SQ_NA)
             return BitBoardType();
         assert(m_pieces[src] == PHelper::to_board_piece(by_side, C::OU));
-        BitBoardType out = BitBoardType::get_attacks_by(m_pieces[src], src);
+        BitBoardType out
+            = BitBoardType::get_attacks_by(m_pieces[src], src) & movable;
         const BitBoardType occ_full_but_king = get_occupied().clear(src);
         out &= ~m_bb_color[by_side];
-        if (checker_locations) {
-            for (uint ii = 0u; ii < 2u; ++ii) {
-                const Square& sq = checker_locations[ii];
-                if (sq == C::SQ_NA)
-                    break;
-                out &= ~BitBoardType::get_attacks_by(
-                    m_pieces[sq], sq, occ_full_but_king);
-                if (!out.any())
-                    return out;
-            }
-        }
         clear_mask_where_attacked(out, ~by_side, occ_full_but_king);
         return out;
     }
@@ -587,7 +576,8 @@ private:
     {
         const Square& king_sq = m_king_locations[king_color];
         const BitBoardType& ally_mask = m_bb_color[king_color];
-        const BitBoardType king_dst_mask = compute_king_movable(king_color);
+        const BitBoardType king_dst_mask
+            = compute_king_movable(king_color, ~BitBoardType());
         return king_dst_mask.any();
     }
     bool enemy_can_capture_the_drop_pawn(

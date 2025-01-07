@@ -50,10 +50,11 @@ public:
             if (checker_sq == C::SQ_NA) {
                 return;
             } else {
-                m_iter = (state.compute_king_movable()
-                          & (~BitBoardType::get_line_segment(
-                              checker_sq, enemy_king_sq)))
-                             .square_iterator();
+                m_iter
+                    = state
+                          .compute_king_movable(~BitBoardType::get_line_segment(
+                              checker_sq, enemy_king_sq))
+                          .square_iterator();
             }
         } else {
             m_iter = state.compute_king_movable().square_iterator();
