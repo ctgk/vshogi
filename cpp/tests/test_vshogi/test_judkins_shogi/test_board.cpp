@@ -164,4 +164,20 @@ TEST(judkins_shogi_board, find_ranging_attacker)
     }
 }
 
+TEST(judkins_shogi_board, compute_movable_to)
+{
+    {
+        const auto b = Board("6/6/6/4n1/6/6");
+        const auto actual
+            = b.compute_movable_to(SQ_1F, vshogi::WHITE, ~BitBoard());
+        CHECK_EQUAL(bb_2d.value(), actual.value());
+    }
+    {
+        const auto b = Board("6/6/6/4n1/6/6");
+        const auto actual
+            = b.compute_movable_to(SQ_1F, vshogi::WHITE, bb_ranka);
+        CHECK_EQUAL(bb_na.value(), actual.value());
+    }
+}
+
 } // namespace test_vshogi::test_judkins_shogi

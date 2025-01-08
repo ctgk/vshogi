@@ -293,6 +293,76 @@ TEST(test_minishogi_generator, non_king_board_move_generator)
     }
 }
 
+TEST(test_minishogi_generator, block_move_generator)
+{
+    {
+        // no piece to move
+        const auto s = State("4k/5/5/5/K4 b -");
+        auto iter = vshogi::BlockMoveGenerator<Parameters>(s);
+        CHECK_FALSE(iter != iter.end());
+        CHECK_TRUE(iter.is_end());
+    }
+    {
+        // in double check
+        const auto s = State("4k/5/2P2/s4/K3r b -");
+        auto iter = vshogi::BlockMoveGenerator<Parameters>(s);
+        CHECK_FALSE(iter != iter.end());
+        CHECK_TRUE(iter.is_end());
+    }
+    {
+        // in check
+        const auto s = State("4k/5/5/3S1/K3r b -");
+        auto iter = vshogi::BlockMoveGenerator<Parameters>(s);
+        CHECK_TRUE(Move(SQ_1E, SQ_2D) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_3E, SQ_2D) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+        CHECK_TRUE(iter.is_end());
+    }
+    {
+        // in check
+        const auto s = State("4k/P2bp/5/G4/K3P b -");
+        auto iter = vshogi::BlockMoveGenerator<Parameters>(s);
+        CHECK_TRUE(Move(SQ_4D, SQ_5D) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+        CHECK_TRUE(iter.is_end());
+    }
+    {
+        // pinned
+        const auto s = State("+b3k/4r/5/3S1/3GK b -");
+        auto iter = vshogi::BlockMoveGenerator<Parameters>(s);
+        CHECK_TRUE(Move(SQ_1D, SQ_2E) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+        CHECK_TRUE(iter.is_end());
+    }
+    {
+        // Turn: WHITE
+        // White: GI
+        //     5   4   3   2   1
+        //   +---+---+---+---+---+
+        // A |   |   |-FU|-OU|+RY|
+        //   +---+---+---+---+---+
+        // B |   |   |   |-KA|   |
+        //   +---+---+---+---+---+
+        // C |   |   |-UM|+KI|   |
+        //   +---+---+---+---+---+
+        // D |   |   |   |   |   |
+        //   +---+---+---+---+---+
+        // E |   |   |   |   |   |
+        //   +---+---+---+---+---+
+        // Black: GI
+        const auto s = State("2pk+R/3b1/2+bG1/5/5 w Ss");
+        auto iter = vshogi::BlockMoveGenerator<Parameters>(s);
+        CHECK_EQUAL(Move(SQ_1A, SQ_2B).hash(), (*iter).hash());
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+        CHECK_TRUE(iter.is_end());
+    }
+}
+
 TEST(test_minishogi_generator, check_non_king_board_move_generator)
 {
     {

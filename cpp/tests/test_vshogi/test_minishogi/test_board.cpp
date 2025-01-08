@@ -233,6 +233,48 @@ TEST(test_minishogi_board, find_ranging_attacker)
     }
 }
 
+TEST(test_minishogi_board, compute_movable_to)
+{
+    {
+        const auto b = Board("5/5/5/5/5");
+        const auto actual
+            = b.compute_movable_to(SQ_1A, vshogi::BLACK, ~BitBoard());
+        CHECK_EQUAL(bb_na.value(), actual.value());
+    }
+    {
+        const auto b = Board("5/5/5/5/4R");
+        const auto actual
+            = b.compute_movable_to(SQ_1A, vshogi::BLACK, ~BitBoard());
+        CHECK_EQUAL(bb_1e.value(), actual.value());
+    }
+    {
+        const auto b = Board("5/4P/5/5/4R");
+        const auto actual
+            = b.compute_movable_to(SQ_1A, vshogi::BLACK, ~BitBoard());
+        CHECK_EQUAL(bb_1b.value(), actual.value());
+    }
+    {
+        // Turn: WHITE
+        // White: GI
+        //     5   4   3   2   1
+        //   +---+---+---+---+---+
+        // A |   |   |-FU|-OU|+RY|
+        //   +---+---+---+---+---+
+        // B |   |   |   |-KA|   |
+        //   +---+---+---+---+---+
+        // C |   |   |-UM|+KI|   |
+        //   +---+---+---+---+---+
+        // D |   |   |   |   |   |
+        //   +---+---+---+---+---+
+        // E |   |   |   |   |   |
+        //   +---+---+---+---+---+
+        // Black: GI
+        const auto b = Board("2pk+R/3b1/2+bG1/5/5");
+        const auto actual = b.compute_movable_to(SQ_1A, vshogi::WHITE, ~bb_2a);
+        CHECK_EQUAL(bb_2b.value(), actual.value());
+    }
+}
+
 TEST(test_minishogi_board, compute_droppable)
 {
     {

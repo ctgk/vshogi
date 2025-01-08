@@ -231,7 +231,12 @@ public:
     {
         return m_stands.zobrist_hash();
     }
-
+    BitBoardType find_pinned() const
+    {
+        if (in_double_check())
+            return BitBoardType();
+        return m_board.find_pinned(m_turn);
+    }
     BitBoardType compute_king_movable() const
     {
         return compute_king_movable(~BitBoardType());

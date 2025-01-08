@@ -259,6 +259,27 @@ public:
         clear_mask_where_attacked(out, ~by_side, occ_full_but_king);
         return out;
     }
+    BitBoardType compute_movable_to(
+        const Square& dst,
+        const ColorEnum& by_side,
+        const BitBoardType& src_mask) const
+    {
+        const auto occ = get_occupied();
+        const auto mask_ranging = get_occupied_by_ranging(by_side);
+        const auto mask_8dir
+            = (Magic<Parameters>::get_adjacent_attack(dst, occ)
+               | Magic<Parameters>::get_diagonal_attack(dst, occ));
+        const auto mask_melee = (m_bb_color[by_side] ^ mask_ranging)
+                                & BitBoardType::compute_neighbor5x5(dst);
+        const auto candidates
+            = src_mask & ((mask_ranging & mask_8dir) ^ mask_melee);
+        BitBoardType out{};
+        for (auto src : candidates.square_iterator()) {
+            if (BitBoardType::get_attacks_by(m_pieces[src], src).is_one(dst))
+                out.toggle(src);
+        }
+        return out;
+    }
     template <bool Check>
     BitBoardType compute_droppable(const ColoredPiece& p) const
     {

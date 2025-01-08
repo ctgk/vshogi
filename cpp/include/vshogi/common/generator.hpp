@@ -242,11 +242,10 @@ private:
 public:
     NoPromoMoveGenerator(const StateType& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_pinned(), m_src_iter(), m_dst_iter()
+          m_pinned(state.find_pinned()), m_src_iter(), m_dst_iter()
     {
         if (m_state.in_double_check())
             return;
-        m_pinned = m_board.find_pinned(m_turn);
         init_src_iter();
         while (!m_src_iter.is_end()) {
             init_dst_iter();
@@ -393,10 +392,8 @@ private:
 public:
     NonKingBoardMoveGenerator(const StateType& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_pinned(
-              m_state.in_double_check() ? BitBoardType()
-                                        : m_board.find_pinned(m_turn)),
-          m_src_iter(), m_dst_iter(), m_promote(true)
+          m_pinned(m_state.find_pinned()), m_src_iter(), m_dst_iter(),
+          m_promote(true)
     {
         if (m_state.in_double_check())
             return;
@@ -405,7 +402,7 @@ public:
     NonKingBoardMoveGenerator(
         const StateType& state, const BitBoardType& src_mask)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_pinned(m_board.find_pinned(m_turn)), m_src_iter(), m_dst_iter(),
+          m_pinned(state.find_pinned()), m_src_iter(), m_dst_iter(),
           m_promote(true)
     {
         if (m_state.in_double_check())
@@ -581,6 +578,134 @@ private:
 };
 
 template <class Parameters>
+class BlockMoveGenerator
+{
+private:
+    using C = Configuration<Parameters>;
+    using BitBoardType = BitBoard<Parameters>;
+    using BoardType = Board<Parameters>;
+    using MoveType = Move<Parameters>;
+    using PHelper = Pieces<Parameters>;
+    using SHelper = Squares<Parameters>;
+    using StateType = State<Parameters>;
+    using Square = typename C::Square;
+    using SquareIterator = typename BitBoardType::SquareIterator;
+
+    const BoardType& m_board;
+    const ColorEnum m_turn;
+    const BitBoardType m_not_pinned;
+    SquareIterator m_dst_iter;
+    SquareIterator m_src_iter;
+    bool m_promote;
+
+public:
+    BlockMoveGenerator(const StateType& state)
+        : m_board(state.get_board()), m_turn(state.get_turn()),
+          m_not_pinned(
+              ~(state.find_pinned().set(m_board.get_king_location(m_turn)))),
+          m_dst_iter(), m_src_iter(), m_promote()
+    {
+        if (state.in_double_check())
+            return;
+        if (!state.in_check())
+            return;
+        init_dst_iter(state.get_checker_location());
+        while (!m_dst_iter.is_end()) {
+            init_src_iter();
+            if (m_src_iter.is_end())
+                ++m_dst_iter;
+            else
+                break;
+        }
+        init_promote();
+    }
+    BlockMoveGenerator& operator++()
+    {
+        if (m_promote) {
+            const auto dst = *m_dst_iter;
+            const auto& p = m_board[*m_src_iter];
+            if (BitBoardType::get_attacks_by(p, dst).any()) {
+                m_promote = false;
+                return *this;
+            }
+        }
+
+        ++m_src_iter;
+        if (!m_src_iter.is_end()) {
+            init_promote();
+            return *this;
+        }
+
+        ++m_dst_iter;
+        while (!m_dst_iter.is_end()) {
+            init_src_iter();
+            if (m_src_iter.is_end())
+                ++m_dst_iter;
+            else
+                break;
+        }
+        init_promote();
+        return *this;
+    }
+    MoveType operator*() const
+    {
+        return MoveType(*m_dst_iter, *m_src_iter, m_promote);
+    }
+    BlockMoveGenerator begin()
+    {
+        return *this;
+    }
+    BlockMoveGenerator end()
+    {
+        static const auto end_iter = BlockMoveGenerator(m_board);
+        return end_iter;
+    }
+    bool operator!=(const BlockMoveGenerator& other) const
+    {
+        return (m_dst_iter != other.m_dst_iter)
+               || (m_src_iter != other.m_src_iter)
+               || (m_promote != other.m_promote);
+    }
+    bool is_end() const
+    {
+        return m_src_iter.is_end() && m_dst_iter.is_end();
+    }
+
+private:
+    BlockMoveGenerator(const BoardType& b)
+        : m_board(b), m_turn(), m_not_pinned(), m_dst_iter(), m_src_iter(),
+          m_promote()
+    {
+    }
+    void init_dst_iter(const Square& checker_sq)
+    {
+        const auto& king = m_board.get_king_location(m_turn);
+        m_dst_iter = BitBoardType::get_line_segment(checker_sq, king)
+                         .set(checker_sq)
+                         .square_iterator();
+    }
+    void init_src_iter()
+    {
+        const Square dst = *m_dst_iter;
+        m_src_iter = m_board.compute_movable_to(dst, m_turn, m_not_pinned)
+                         .square_iterator();
+    }
+    void init_promote()
+    {
+        if (m_dst_iter.is_end() || m_src_iter.is_end()) {
+            m_promote = false;
+            return;
+        }
+        const Square dst = *m_dst_iter;
+        const Square src = *m_src_iter;
+        const auto& p = m_board[src];
+        m_promote = PHelper::is_promotable(p)
+                    && (SHelper::in_promotion_zone(dst, m_turn)
+                        || SHelper::in_promotion_zone(src, m_turn));
+    }
+};
+
+template <class Parameters>
 class CheckNonKingBoardMoveGenerator
 {
 private:
@@ -608,7 +733,7 @@ private:
 public:
     CheckNonKingBoardMoveGenerator(const StateType& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_pinned(m_board.find_pinned(m_turn)), m_src_iter(), m_dst_iter(),
+          m_pinned(state.find_pinned()), m_src_iter(), m_dst_iter(),
           m_promote(true), m_dst_mask(), m_discovered_checker_sq(C::SQ_NA)
     {
         if (m_state.in_double_check())

@@ -451,7 +451,14 @@ private:
     {
         std::unique_ptr<Node<Parameters>>* holder = &m_child;
         for (Move<Parameters> m :
-             BoardMoveGenerator<Parameters>(game.get_state())) {
+             KingMoveGenerator<Parameters>(game.get_state())) {
+            *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            Node<Parameters>* const ch = holder->get();
+            update_defence_pn_ch1st_ch2nd(ch, game);
+            holder = &(ch->m_sibling);
+        }
+        for (Move<Parameters> m :
+             BlockMoveGenerator<Parameters>(game.get_state())) {
             *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
             Node<Parameters>* const ch = holder->get();
             update_defence_pn_ch1st_ch2nd(ch, game);
