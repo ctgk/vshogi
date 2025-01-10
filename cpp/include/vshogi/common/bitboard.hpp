@@ -205,19 +205,19 @@ public:
 
     constexpr BitBoard shift(const DirectionEnum& dir) const
     {
-        constexpr auto bb_all = BitBoard(mask);
-        constexpr auto bb_all_but_top = ~from_rank<C::RANK_A>();
-        constexpr auto bb_all_but_top2 = ~from_rank<C::RANK_A, C::RANK_B>();
-        constexpr auto bb_all_but_btm = ~from_rank<C::RANK_Z>();
-        constexpr auto bb_all_but_btm2 = ~from_rank<C::RANK_Y, C::RANK_Z>();
         const auto delta = SHelper::direction_to_delta(dir);
+        constexpr BitBoard all = BitBoard(mask);
+        constexpr BitBoard all_but_a = ~from_rank<C::RANK_A>();
+        constexpr BitBoard all_but_z = ~from_rank<C::RANK_Z>();
+        constexpr BitBoard all_but_ab = ~from_rank<C::RANK_A, C::RANK_B>();
+        constexpr BitBoard all_but_yz = ~from_rank<C::RANK_Y, C::RANK_Z>();
         constexpr BitBoard rankmask[] = {
             // clang-format off
-            bb_all_but_top, bb_all_but_top, bb_all_but_top,
-            bb_all,                         bb_all,
-            bb_all_but_btm, bb_all_but_btm, bb_all_but_btm,
-            bb_all_but_btm2,                bb_all_but_btm2,
-            bb_all_but_top2,                bb_all_but_top2,
+            all_but_a, all_but_a, all_but_a,
+            all,                  all,
+            all_but_z, all_but_z, all_but_z,
+            all_but_yz,           all_but_yz,
+            all_but_ab,           all_but_ab,
             // clang-format on
         };
         if (delta > 0)
@@ -247,15 +247,18 @@ public:
     }
     static BitBoard compute_droppable(const ColoredPiece& p)
     {
+        constexpr BitBoard all = BitBoard(mask);
+        constexpr BitBoard all_but_a = ~from_rank<C::RANK_A>();
+        constexpr BitBoard all_but_z = ~from_rank<C::RANK_Z>();
+        constexpr BitBoard all_but_ab = ~from_rank<C::RANK_A, C::RANK_B>();
+        constexpr BitBoard all_but_yz = ~from_rank<C::RANK_Y, C::RANK_Z>();
         const auto dirs = PHelper::get_attack_directions(p);
         if (dirs[1] == DIR_NA) {
-            return (dirs[0] == DIR_N) ? ~from_rank<C::RANK_A>()
-                                      : ~from_rank<C::RANK_Z>();
+            return (dirs[0] == DIR_N) ? all_but_a : all_but_z;
         } else if (dirs[2] == DIR_NA) {
-            return (has_dir_n(dirs[0])) ? ~from_rank<C::RANK_A, C::RANK_B>()
-                                        : ~from_rank<C::RANK_Y, C::RANK_Z>();
+            return (dirs[0] > DIR_SSE) ? all_but_ab : all_but_yz;
         } else {
-            return BitBoard(mask);
+            return all;
         }
     }
 
