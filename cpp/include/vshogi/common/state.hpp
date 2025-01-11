@@ -251,20 +251,6 @@ public:
         }
         return m_board.compute_king_movable(m_turn, movable);
     }
-    template <bool Check>
-    BitBoardType compute_src_mask() const
-    {
-        static_assert(Check);
-        const auto king_sq = m_board.get_king_location(m_turn);
-        const auto target = m_board.get_king_location(~m_turn);
-        assert(target != C::SQ_NA);
-        const auto occ_pieces = m_board.get_occupied(m_turn).clear(king_sq);
-        const auto occ_ranger = m_board.get_occupied_by_ranging(m_turn);
-        const auto neighbor2nd
-            = BitBoardType::compute_2nd_neighbor_of(target, m_turn);
-        const auto occ_cover = m_board.find_cover(m_turn);
-        return occ_pieces & (occ_ranger | neighbor2nd | occ_cover);
-    }
 
 private:
     State(const BoardType& b, const Stands& s, const ColorEnum& turn)

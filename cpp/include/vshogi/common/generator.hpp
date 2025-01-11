@@ -705,10 +705,11 @@ private:
     }
 };
 
-template <class Parameters>
-class CheckNonKingBoardMoveGenerator
+template <class Parameters, bool Check>
+class SoldierMoveGenerator
 {
 private:
+    static_assert(Check);
     using C = Configuration<Parameters>;
     using BitBoardType = BitBoard<Parameters>;
     using BoardType = Board<Parameters>;
@@ -724,19 +725,19 @@ private:
     const ColorEnum m_turn;
     const BoardType& m_board;
     const BitBoardType m_pinned;
+    const BitBoardType m_cover;
     typename BitBoardType::SquareIterator m_src_iter;
     typename BitBoardType::SquareIterator m_dst_iter;
     bool m_promote;
     BitBoardType m_dst_mask;
-    Square m_discovered_checker_sq;
 
 public:
-    CheckNonKingBoardMoveGenerator(const StateType& state)
+    SoldierMoveGenerator(const StateType& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_pinned(state.find_pinned()), m_src_iter(), m_dst_iter(),
-          m_promote(true), m_dst_mask(), m_discovered_checker_sq(C::SQ_NA)
+          m_pinned(state.find_pinned()), m_cover(compute_cover(state)),
+          m_src_iter(), m_dst_iter(), m_promote(true), m_dst_mask()
     {
-        if (m_state.in_double_check())
+        if (state.in_double_check())
             return;
         init_src_iter();
         while (!m_src_iter.is_end()) {
@@ -754,7 +755,7 @@ public:
             ++m_src_iter;
         }
     }
-    CheckNonKingBoardMoveGenerator& operator++()
+    SoldierMoveGenerator& operator++()
     {
         ++m_dst_iter;
         if (!m_dst_iter.is_end())
@@ -788,17 +789,16 @@ public:
     {
         return MoveType(*m_dst_iter, *m_src_iter, m_promote);
     }
-    CheckNonKingBoardMoveGenerator begin()
+    SoldierMoveGenerator begin()
     {
         return *this;
     }
-    CheckNonKingBoardMoveGenerator end()
+    SoldierMoveGenerator end()
     {
-        static const auto end_iter
-            = CheckNonKingBoardMoveGenerator(m_state, true);
+        static const auto end_iter = SoldierMoveGenerator(m_state, m_board);
         return end_iter;
     }
-    bool operator!=(const CheckNonKingBoardMoveGenerator& other) const
+    bool operator!=(const SoldierMoveGenerator& other) const
     {
         return (m_src_iter != other.m_src_iter)
                || (m_dst_iter != other.m_dst_iter)
@@ -810,15 +810,21 @@ public:
     }
 
 private:
-    CheckNonKingBoardMoveGenerator(const StateType& state, const bool promote)
-        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_pinned(), m_src_iter(), m_dst_iter(), m_promote(promote),
-          m_dst_mask(), m_discovered_checker_sq(C::SQ_NA)
+    SoldierMoveGenerator(const StateType& state, const BoardType& board)
+        : m_state(state), m_turn(), m_board(board), m_pinned(), m_cover(),
+          m_src_iter(), m_dst_iter(), m_promote(true), m_dst_mask()
     {
     }
     void init_src_iter()
     {
-        const auto src_mask = m_state.template compute_src_mask<true>();
+        const auto king_sq = m_board.get_king_location(m_turn);
+        const auto target = m_board.get_king_location(~m_turn);
+        assert(target != C::SQ_NA);
+        const auto occ_pieces = m_board.get_occupied(m_turn).clear(king_sq);
+        const auto occ_ranger = m_board.get_occupied_by_ranging(m_turn);
+        const auto neighbor
+            = BitBoardType::compute_2nd_neighbor_of(target, m_turn);
+        const auto src_mask = occ_pieces & (occ_ranger | neighbor | m_cover);
         m_src_iter = src_mask.square_iterator();
     }
     void init_dst_mask()
@@ -833,11 +839,6 @@ private:
         m_dst_mask &= ~m_board.get_occupied(m_turn);
         update_dst_mask_by_current_check(king_sq);
         update_dst_mask_by_counter_check(src, king_sq);
-        m_discovered_checker_sq = m_board.find_ranging_attacker(
-            m_turn,
-            enemy_king_sq,
-            SHelper::get_direction(src, enemy_king_sq),
-            src);
     }
     void init_dst_iter_promotion()
     {
@@ -853,7 +854,7 @@ private:
                 return;
             }
         }
-        update_mask_by_forcing_check(movable, p);
+        update_mask_by_forcing_check(movable, p, src);
         m_dst_iter = movable.square_iterator();
     }
     void init_dst_iter_nopromo()
@@ -862,7 +863,7 @@ private:
         const auto src = *m_src_iter;
         const auto p = m_board[src];
         auto movable = m_dst_mask;
-        update_mask_by_forcing_check(movable, p);
+        update_mask_by_forcing_check(movable, p, src);
         if (movable.any()) {
             update_mask_by_nopromo(movable, p);
         }
@@ -879,18 +880,7 @@ private:
     }
     void update_mask_by_nopromo(BitBoardType& mask, const ColoredPiece p)
     {
-        const auto dirs = PHelper::get_attack_directions(p);
-        if (dirs[1] == DIR_NA) {
-            mask &= ~BitBoardType::from_rank(
-                (dirs[0] == DIR_N) ? C::RANK_A : C::RANK_Z);
-        } else if (dirs[1] > DIR_SE) {
-            if (dirs[1] >= DIR_NNW)
-                mask &= ~BitBoardType::
-                            template from_rank<C::RANK_A, C::RANK_B>();
-            else
-                mask &= ~BitBoardType::
-                            template from_rank<C::RANK_Y, C::RANK_Z>();
-        }
+        mask &= BitBoardType::compute_droppable(p);
     }
     void update_dst_mask_by_current_check(const Square king_sq)
     {
@@ -910,26 +900,29 @@ private:
             m_dst_mask &= BitBoardType::get_ray_to(king_sq, dir);
         }
     }
-    void update_mask_by_forcing_check(BitBoardType& mask, const ColoredPiece p)
+    void update_mask_by_forcing_check(
+        BitBoardType& mask, const ColoredPiece p, const Square& src)
     {
         const auto enemy_king_sq = m_board.get_king_location(~m_turn);
         auto pt = PHelper::to_piece_type(p);
         if (m_promote)
             pt = PHelper::promote_nocheck(pt);
-        if (m_discovered_checker_sq == C::SQ_NA) // check by moving piece.
-            mask &= BitBoardType::get_attacks_by(
-                PHelper::to_board_piece(~m_turn, pt),
-                enemy_king_sq,
-                m_board.get_occupied());
-        else { // check by moving piece or a discovered piece.
-            mask
-                &= (BitBoardType::get_attacks_by(
-                        PHelper::to_board_piece(~m_turn, pt),
-                        enemy_king_sq,
-                        m_board.get_occupied())
-                    | (~BitBoardType::get_line_segment(
-                        m_discovered_checker_sq, enemy_king_sq)));
+        const auto atk = BitBoardType::get_attacks_by(
+            PHelper::to_board_piece(~m_turn, pt),
+            enemy_king_sq,
+            m_board.get_occupied());
+        if (m_cover.is_one(src)) {
+            const auto dir = SHelper::get_direction(src, enemy_king_sq);
+            mask &= atk | (~BitBoardType::get_ray_to(enemy_king_sq, dir));
+        } else {
+            mask &= atk;
         }
+    }
+    static BitBoardType compute_cover(const StateType& s)
+    {
+        if (s.in_double_check())
+            return BitBoardType();
+        return s.get_board().find_cover(s.get_turn());
     }
 };
 
@@ -1137,16 +1130,16 @@ private:
 
 private:
     KingMoveGenerator<Parameters, true> m_king_iter;
-    CheckNonKingBoardMoveGenerator<Parameters> m_board_iter;
+    SoldierMoveGenerator<Parameters, true> m_soldier_iter;
     uint m_index; //!< 0: king, 1: board, 2: end
 
 public:
     CheckBoardMoveGenerator(const StateType& s)
-        : m_king_iter(s), m_board_iter(s), m_index(0u)
+        : m_king_iter(s), m_soldier_iter(s), m_index(0u)
     {
         if (m_king_iter.is_end()) {
             ++m_index;
-            if (m_board_iter.is_end()) {
+            if (m_soldier_iter.is_end()) {
                 ++m_index;
             }
         }
@@ -1158,14 +1151,14 @@ public:
             ++m_king_iter;
             if (m_king_iter.is_end()) {
                 ++m_index;
-                if (m_board_iter.is_end()) {
+                if (m_soldier_iter.is_end()) {
                     ++m_index;
                 }
             }
             break;
         case 1u:
-            ++m_board_iter;
-            if (m_board_iter.is_end()) {
+            ++m_soldier_iter;
+            if (m_soldier_iter.is_end()) {
                 ++m_index;
             }
             break;
@@ -1180,7 +1173,7 @@ public:
         case 0u:
             return *m_king_iter;
         case 1u:
-            return *m_board_iter;
+            return *m_soldier_iter;
         default:
             break;
         }
@@ -1193,13 +1186,13 @@ public:
     CheckBoardMoveGenerator end()
     {
         static const auto end_iter = CheckBoardMoveGenerator(
-            m_king_iter.end(), m_board_iter.end(), 2u);
+            m_king_iter.end(), m_soldier_iter.end(), 2u);
         return end_iter;
     }
     bool operator!=(const CheckBoardMoveGenerator& other) const
     {
         return (m_king_iter != other.m_king_iter)
-               || (m_board_iter != other.m_board_iter)
+               || (m_soldier_iter != other.m_soldier_iter)
                || (m_index != other.m_index);
     }
     bool is_end() const
@@ -1210,115 +1203,9 @@ public:
 private:
     CheckBoardMoveGenerator(
         const KingMoveGenerator<Parameters, true>& king_iter,
-        const CheckNonKingBoardMoveGenerator<Parameters>& board_iter,
+        const SoldierMoveGenerator<Parameters, true>& soldier_iter,
         const uint index)
-        : m_king_iter(king_iter), m_board_iter(board_iter), m_index(index)
-    {
-    }
-};
-
-template <class Parameters>
-class CheckMoveGenerator
-{
-private:
-    using MoveType = Move<Parameters>;
-    using StateType = State<Parameters>;
-
-private:
-    KingMoveGenerator<Parameters, true> m_king_iter;
-    CheckNonKingBoardMoveGenerator<Parameters> m_board_iter;
-    DropMoveGenerator<Parameters, true> m_drop_iter;
-    uint m_index; //!< 0: king, 1: board, 2: drop, 3: end
-
-public:
-    CheckMoveGenerator(const StateType& s)
-        : m_king_iter(s), m_board_iter(s), m_drop_iter(s), m_index(0u)
-    {
-        if (m_king_iter.is_end()) {
-            ++m_index;
-            if (m_board_iter.is_end()) {
-                ++m_index;
-                if (m_drop_iter.is_end())
-                    ++m_index;
-            }
-        }
-    }
-    CheckMoveGenerator& operator++()
-    {
-        switch (m_index) {
-        case 0u:
-            ++m_king_iter;
-            if (m_king_iter.is_end()) {
-                ++m_index;
-                if (m_board_iter.is_end()) {
-                    ++m_index;
-                    if (m_drop_iter.is_end())
-                        ++m_index;
-                }
-            }
-            break;
-        case 1u:
-            ++m_board_iter;
-            if (m_board_iter.is_end()) {
-                ++m_index;
-                if (m_drop_iter.is_end())
-                    ++m_index;
-            }
-            break;
-        case 2u:
-            ++m_drop_iter;
-            if (m_drop_iter.is_end())
-                ++m_index;
-            break;
-        default:
-            break;
-        }
-        return *this;
-    }
-    MoveType operator*() const
-    {
-        switch (m_index) {
-        case 0u:
-            return *m_king_iter;
-        case 1u:
-            return *m_board_iter;
-        case 2u:
-            return *m_drop_iter;
-        default:
-            break;
-        }
-        return MoveType();
-    }
-    CheckMoveGenerator begin()
-    {
-        return *this;
-    }
-    CheckMoveGenerator end()
-    {
-        static const auto end_iter = CheckMoveGenerator(
-            m_king_iter.end(), m_board_iter.end(), m_drop_iter.end(), 3u);
-        return end_iter;
-    }
-    bool operator!=(const CheckMoveGenerator& other) const
-    {
-        return (m_king_iter != other.m_king_iter)
-               || (m_board_iter != other.m_board_iter)
-               || (m_drop_iter != other.m_drop_iter)
-               || (m_index != other.m_index);
-    }
-    bool is_end() const
-    {
-        return (m_index == 3u);
-    }
-
-private:
-    CheckMoveGenerator(
-        const KingMoveGenerator<Parameters, true>& king_iter,
-        const CheckNonKingBoardMoveGenerator<Parameters>& board_iter,
-        const DropMoveGenerator<Parameters, true>& drop_iter,
-        const uint index)
-        : m_king_iter(king_iter), m_board_iter(board_iter),
-          m_drop_iter(drop_iter), m_index(index)
+        : m_king_iter(king_iter), m_soldier_iter(soldier_iter), m_index(index)
     {
     }
 };

@@ -10,10 +10,10 @@ using namespace vshogi::shogi;
 TEST_GROUP (test_shogi_generator) {
 };
 
-TEST(test_shogi_generator, check_non_king_board_move_generator)
+TEST(test_shogi_generator, soldier_move_generator)
 {
     const auto s = State("b8/8K/9/9/9/9/9/7l1/8K w -");
-    auto iter = vshogi::CheckNonKingBoardMoveGenerator<Parameters>(s);
+    auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
     CHECK_TRUE(Move(SQ_2I, SQ_2H, true) == *iter);
     ++iter;
     CHECK_TRUE(iter.is_end());

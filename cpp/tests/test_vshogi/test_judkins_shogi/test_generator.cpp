@@ -33,10 +33,10 @@ TEST(test_judkins_shogi_generator, non_king_board_move_generator)
     }
 }
 
-TEST(test_judkins_shogi_generator, check_non_king_board_move_generator)
+TEST(test_judkins_shogi_generator, soldier_move_generator)
 {
     const auto s = State("5k/6/6/2N3/6/B4K b -");
-    auto iter = vshogi::CheckNonKingBoardMoveGenerator<Parameters>(s);
+    auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
     CHECK_TRUE(Move(SQ_3B, SQ_4D, true) == *iter);
     ++iter;
     CHECK_TRUE(Move(SQ_5B, SQ_4D, true) == *iter);
