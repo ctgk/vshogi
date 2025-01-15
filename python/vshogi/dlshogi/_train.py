@@ -1,0 +1,133 @@
+import tensorflow as tf
+from tqdm import tqdm
+
+
+@tf.function
+def masked_softmax_cross_entropy(y_true, logit, coeff_entropy_regularization):
+    """Return masked softmax cross entropy loss.
+
+    Parameters
+    ----------
+    y_true : Tensor
+        Ground truth. Negative values indicate masks.
+    logit : Tensor
+        Output logit
+    coeff_entropy_regularization : float
+        Coefficient of entropy regularization
+
+    Returns
+    -------
+    Tensor
+        Masked softmax cross entropy loss.
+    """
+    # https://github.com/tensorflow/tensorflow/issues/24476
+    # In order to make this function work in CPU,
+    # the following consists without using `tf.where()`
+    y_true_masked = tf.clip_by_value(y_true, 0., 1.)
+    # masked out values should be -100000 here.
+    logit_masked = logit + tf.clip_by_value(y_true, -100000., 0.)
+
+    logit_max = tf.stop_gradient(
+        tf.reduce_max(logit_masked, axis=1, keepdims=True))
+
+    # masked out values should be -100000 here.
+    logit_subtracted = logit_masked - logit_max
+
+    logsumexp = tf.reduce_logsumexp(logit_subtracted, axis=1, keepdims=True)
+    log_softmax = logit_subtracted - logsumexp
+    return tf.reduce_mean(
+        tf.reduce_sum(-y_true_masked * log_softmax, axis=1)
+        + (
+            coeff_entropy_regularization
+            * tf.reduce_sum(-tf.math.exp(log_softmax) * log_softmax, axis=1)
+        ),
+    )
+
+
+def train(
+    model: tf.keras.Model,
+    dataset: tf.data.Dataset,
+    epochs: int,
+    learning_rate: float,
+    coeff_entropy_regularization: float,
+    gradient_accumulation_steps: int = 1,
+) -> None:
+    """Train a model given dataset.
+
+    Parameters
+    ----------
+    model : tf.keras.Model
+        Model to train
+    dataset : tf.data.Dataset
+        Training dataset
+    epochs : int
+        Number of epochs to train
+    learning_rate : float
+        Learning rate of weight updates
+    coeff_entropy_regularization : float
+        Coefficient of entropy regularization
+    gradient_accumulation_steps : int, optional
+        Steps to accumulate gradient computation, by default 1
+    """
+    model.compile()
+    mse = tf.keras.losses.MeanSquaredError()
+    optimizer = tf.keras.optimizers.Adam(learning_rate)
+    loss_policy_ema = None
+    loss_value_ema = None
+    loss_ema = None
+
+    @tf.function
+    def compute_losses(x, y_policy, y_value):
+        policy_logits, value = model(x, training=True)
+        loss_policy = masked_softmax_cross_entropy(
+            y_policy, policy_logits, coeff_entropy_regularization)
+        loss_value = mse(y_value, value)
+        loss = loss_policy + loss_value
+        return loss, loss_policy, loss_value
+
+    @tf.function
+    def compute_losses_grads(x, y_policy, y_value):
+        with tf.GradientTape() as tape:
+            loss, loss_policy, loss_value = compute_losses(
+                x, y_policy, y_value,
+            )
+        grads = tape.gradient(loss, model.trainable_weights)
+        return float(loss), float(loss_policy), float(loss_value), grads
+
+    @tf.function
+    def apply_gradients(grads):
+        optimizer.apply_gradients(zip(grads, model.trainable_weights))
+
+    accumulated_grads = None
+    counter = 0
+    for e in range(1, epochs + 1):
+        pbar = tqdm(dataset, ncols=80)
+        for x_mb, (p_mb, v_mb) in pbar:
+            counter += 1
+            loss, loss_policy, loss_value, grads = compute_losses_grads(
+                x_mb, p_mb, v_mb)
+            if accumulated_grads is None:
+                accumulated_grads = grads
+            else:
+                accumulated_grads = [
+                    g1 + g2 for g1, g2 in zip(accumulated_grads, grads)
+                ]
+            if counter % gradient_accumulation_steps == 0:
+                apply_gradients([
+                    g / gradient_accumulation_steps
+                    for g in accumulated_grads
+                ])
+                accumulated_grads = None
+
+            if loss_policy_ema is None:
+                loss_policy_ema = loss_policy
+                loss_value_ema = loss_value
+                loss_ema = loss
+            loss_policy_ema = loss_policy_ema * 0.99 + loss_policy * 0.01
+            loss_value_ema = loss_value_ema * 0.99 + loss_value * 0.01
+            loss_ema = loss_ema * 0.99 + loss * 0.01
+            pbar.set_description(
+                f'Epoch {e:2}/{epochs}, loss={loss_ema:f}, '
+                f'loss_policy={loss_policy_ema:f}, '
+                f'loss_value={loss_value_ema:f}',
+            )

@@ -7,6 +7,7 @@ os.environ['TF_USE_LEGACY_KERAS'] = '1'
 
 from vshogi.dlshogi._network import build_policy_value_network
 from vshogi.dlshogi._policy_value_function import PolicyValueFunction
+from vshogi.dlshogi._train import train
 
 
 _classes = [
@@ -14,6 +15,7 @@ _classes = [
 ]
 _functions = [
     build_policy_value_network,
+    train,
 ]
 
 

@@ -46,6 +46,7 @@ class Args:
     nn_train_fraction: float = config(type=float, default=0.5, help='Fraction of game record by former models to use to train current one. By default 0.5')
     nn_epochs: int = config(type=int, default=10, help='# of epochs in NN training. By default 10.')
     nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
+    nn_grad_accum: int = config(type=int, default=1, help='Gradient accumulation steps. By default 1.')
     nn_learning_rate: float = config(type=float, default=1e-3, help='Learning rate of NN weight update')
     nn_entropy_regularization: float = config(type=float, default=1e-2)
     mcts_kldgain_threshold: float = config(type=float, default=1e-4, help='KL divergence threshold to stop MCT-search')
@@ -365,50 +366,6 @@ def run_train(args: Args):
         dataset = dataset.prefetch(2)
         return dataset
 
-    def train_network(
-        network: tf.keras.Model,
-        dataset: tf.data.Dataset,
-        learning_rate: float,
-    ) -> tf.keras.Model:
-
-        def masked_softmax_cross_entropy(y_true, logit):
-            # https://github.com/tensorflow/tensorflow/issues/24476
-            # In order to make this function work in CPU,
-            # the following consists without using `tf.where()`
-
-            y_true_masked = tf.clip_by_value(y_true, 0., 1.)
-            logit_masked = logit + tf.clip_by_value(y_true, -100000., 0.)  # masked out values should be -100000 here.
-
-            logit_max = tf.stop_gradient(tf.reduce_max(logit_masked, axis=1, keepdims=True))
-            # tf.debugging.assert_all_finite(logit_max, message="max(logit) should be finite")
-            logit_subtracted = logit_masked - logit_max  # masked out values should be -100000 here.
-            # tf.debugging.assert_near(tf.reduce_max(logit_subtracted, axis=1), 0., rtol=0., atol=0.1, message="`max(logit - max(logit))` should be near 0")
-            logsumexp = tf.reduce_logsumexp(logit_subtracted, axis=1, keepdims=True)
-            log_softmax = logit_subtracted - logsumexp
-            return (
-                tf.reduce_sum(-y_true_masked * log_softmax, axis=1)
-                + args.nn_entropy_regularization * tf.reduce_sum(-tf.math.exp(log_softmax) * log_softmax, axis=1)
-            )
-
-        def lr_scheduler(epoch):
-            # relative learning schedule from 1.0 to 0.5
-            schedule = np.cos(np.linspace(0, np.pi, args.nn_epochs)) * 0.25 + 0.75
-            return args.nn_learning_rate * schedule[epoch]
-
-        network.compile(
-            loss=[
-                masked_softmax_cross_entropy,
-                tf.keras.losses.MeanSquaredError(),
-            ],
-            optimizer=tf.keras.optimizers.Adam(learning_rate, use_ema=True),
-        )
-        network.fit(
-            dataset,
-            epochs=args.nn_epochs,
-            callbacks=[tf.keras.callbacks.LearningRateScheduler(lr_scheduler)],
-        )
-        return network
-
     def load_data_and_train_network(network, index: int, learning_rate: float):
         num_tfrecord_max = 100000
         tfrecord_list = []
@@ -423,7 +380,15 @@ def run_train(args: Args):
         random.shuffle(tfrecord_list)
         print(f'#tfrecord = {len(tfrecord_list):,}')
         dataset = get_dataset_from_tfrecord(tfrecord_list)
-        return train_network(network, dataset, learning_rate)
+        vshogi.dlshogi.train(
+            network,
+            dataset,
+            args.nn_epochs,
+            args.nn_learning_rate,
+            args.nn_entropy_regularization,
+            args.nn_grad_accum,
+        )
+        return network
 
     shogi = args._shogi
     network = vshogi.dlshogi.build_policy_value_network(
