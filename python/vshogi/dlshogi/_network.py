@@ -43,7 +43,7 @@ class _DepthwiseAttention(tf.keras.layers.Layer):
         assert n == self._attention_matrix.shape[0]
         if self._use_bias:
             self.bias = self.add_weight(
-                shape=self._attention_matrix.shape[-1],
+                shape=(self._attention_matrix.shape[-1],),
                 initializer='zeros',
                 name=self.name + '_bias',
             )

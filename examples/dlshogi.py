@@ -366,7 +366,7 @@ def run_train(args: Args):
         dataset = dataset.prefetch(2)
         return dataset
 
-    def load_data_and_train_network(network, index: int, learning_rate: float):
+    def load_data_and_train_network(network, index: int, optimizer):
         num_tfrecord_max = 100000
         tfrecord_list = []
         for i in range(index, 0, -1):
@@ -383,8 +383,8 @@ def run_train(args: Args):
         vshogi.dlshogi.train(
             network,
             dataset,
+            optimizer,
             args.nn_epochs,
-            args.nn_learning_rate,
             args.nn_entropy_regularization,
             args.nn_grad_accum,
         )
@@ -409,7 +409,8 @@ def run_train(args: Args):
             print(f"Loading checkpoint_{i-1:04d}")
             network.load_weights(f'models/checkpoint_{i-1:04d}/checkpoint_{i-1:04d}').expect_partial()
     if i > 0:
-        load_data_and_train_network(network, i, args.nn_learning_rate)
+        optimizer = tf.keras.optimizers.Adam(args.nn_learning_rate)
+        load_data_and_train_network(network, i, optimizer)
         network.save_weights(f'models/checkpoint_{i:04d}/checkpoint_{i:04d}')
     vshogi.dlshogi.PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
 

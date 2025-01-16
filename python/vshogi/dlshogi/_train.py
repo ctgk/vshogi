@@ -47,8 +47,8 @@ def masked_softmax_cross_entropy(y_true, logit, coeff_entropy_regularization):
 def train(
     model: tf.keras.Model,
     dataset: tf.data.Dataset,
+    optimizer,
     epochs: int,
-    learning_rate: float,
     coeff_entropy_regularization: float,
     gradient_accumulation_steps: int = 1,
 ) -> None:
@@ -71,7 +71,6 @@ def train(
     """
     model.compile()
     mse = tf.keras.losses.MeanSquaredError()
-    optimizer = tf.keras.optimizers.Adam(learning_rate)
     loss_policy_ema = None
     loss_value_ema = None
     loss_ema = None
@@ -114,8 +113,7 @@ def train(
                 ]
             if counter % gradient_accumulation_steps == 0:
                 apply_gradients([
-                    g / gradient_accumulation_steps
-                    for g in accumulated_grads
+                    g / gradient_accumulation_steps for g in accumulated_grads
                 ])
                 accumulated_grads = None
 
