@@ -3,14 +3,11 @@ import typing as tp
 import numpy as np
 import tensorflow as tf
 
+from vshogi.dlshogi._depthwise_attention import DepthwiseAttention
+
 
 def _pconv(x, ch, use_bias=False):
     return tf.keras.layers.Conv2D(ch, 1, use_bias=use_bias)(x)
-
-
-def _dconv(x, use_bias=False):
-    return tf.keras.layers.DepthwiseConv2D(
-        3, padding='same', use_bias=use_bias)(x)
 
 
 def _bn(x):
@@ -21,46 +18,14 @@ def _act(x):
     return tf.keras.layers.LeakyReLU()(x)
 
 
-def _act_pconv(x, ch):
-    return _act(_pconv(x, ch, use_bias=True))
-
-
 def _act_bn_pconv(x, ch):
     return _act(_bn(_pconv(x, ch, use_bias=False)))
-
-
-class _DepthwiseAttention(tf.keras.layers.Layer):
-
-    def __init__(self, attention_matrix: np.ndarray, use_bias: bool = True):
-        super().__init__()
-        self._attention_matrix = tf.constant(attention_matrix, tf.float32)
-        self._use_bias = use_bias
-
-    def build(self, input_shape):
-        n = input_shape[1] * input_shape[2]
-        self._reshape_target = (-1, n, input_shape[3])
-        self._input_shape = (-1, *input_shape[1:])
-        assert n == self._attention_matrix.shape[0]
-        if self._use_bias:
-            self.bias = self.add_weight(
-                shape=(self._attention_matrix.shape[-1],),
-                initializer='zeros',
-                name=self.name + '_bias',
-            )
-
-    def call(self, x):
-        h = tf.reshape(x, self._reshape_target)
-        h = tf.matmul(h, self._attention_matrix, transpose_a=True)
-        if self._use_bias:
-            h = h + self.bias
-        h = tf.transpose(h, perm=[0, 2, 1])
-        return tf.reshape(h, self._input_shape)
 
 
 def _resblock(x, ch, attention_matrix):
     h = _act_bn_pconv(x, ch)
     h1 = _pconv(h, ch // 2)
-    h2 = _DepthwiseAttention(attention_matrix)(_pconv(h, ch // 2))
+    h2 = DepthwiseAttention(attention_matrix)(_pconv(h, ch // 2))
     h = _act(tf.keras.layers.Concatenate()([h1, h2]))
     h = _bn(_pconv(h, x.shape[-1]))
     return _act(x + h)

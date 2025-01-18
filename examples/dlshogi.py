@@ -401,17 +401,18 @@ def run_train(args: Args):
         attention_matrix=shogi.Game.get_attention(),
     )
     i = args.resume_rl_cycle_from
+    weight_path = 'models/model_{:04d}.weights.h5'
     if i > 1:
-        if os.path.exists(f'models/checkpoint_{i:04d}'):
-            print(f"Loading checkpoint_{i:04d}")
-            network.load_weights(f'models/checkpoint_{i:04d}/checkpoint_{i:04d}').expect_partial()
-        elif os.path.exists(f'models/checkpoint_{i-1:04d}'):
-            print(f"Loading checkpoint_{i-1:04d}")
-            network.load_weights(f'models/checkpoint_{i-1:04d}/checkpoint_{i-1:04d}').expect_partial()
+        if os.path.exists(weight_path.format(i)):
+            print(f"Loading {weight_path.format(i)}")
+            network.load_weights(weight_path.format(i))
+        elif os.path.exists(weight_path.format(i - 1)):
+            print(f"Loading {weight_path.format(i - 1)}")
+            network.load_weights(weight_path.format(i - 1))
     if i > 0:
         optimizer = tf.keras.optimizers.Adam(args.nn_learning_rate)
         load_data_and_train_network(network, i, optimizer)
-        network.save_weights(f'models/checkpoint_{i:04d}/checkpoint_{i:04d}')
+        network.save_weights(weight_path.format(i))
     vshogi.dlshogi.PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
 
 

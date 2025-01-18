@@ -3,7 +3,6 @@
 import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-os.environ['TF_USE_LEGACY_KERAS'] = '1'
 
 from vshogi.dlshogi._network import build_policy_value_network
 from vshogi.dlshogi._policy_value_function import PolicyValueFunction

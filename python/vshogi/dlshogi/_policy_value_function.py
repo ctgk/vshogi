@@ -1,3 +1,4 @@
+import tempfile
 import typing as tp
 
 import numpy as np
@@ -28,6 +29,9 @@ class PolicyValueFunction:
             self._interpreter = tf.lite.Interpreter(
                 model_path=model, num_threads=num_threads)
         else:
+            with tempfile.TemporaryDirectory() as td:
+                tf.saved_model.save(model, td)
+                model = tf.saved_model.load(td)
             converter = tf.lite.TFLiteConverter.from_keras_model(model)
             self._model_content = converter.convert()
             self._interpreter = tf.lite.Interpreter(
