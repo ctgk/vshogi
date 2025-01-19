@@ -1,9 +1,8 @@
+# flake8: noqa
 import typing as tp
 
 import numpy as np
 import tensorflow as tf
-
-from vshogi.dlshogi._depthwise_attention import DepthwiseAttention
 
 
 def _pconv(x, ch, use_bias=False):
@@ -22,24 +21,88 @@ def _act_bn_pconv(x, ch):
     return _act(_bn(_pconv(x, ch, use_bias=False)))
 
 
-def _resblock(x, ch, attention_matrix):
-    h = _act_bn_pconv(x, ch)
-    h1 = _pconv(h, ch // 2)
-    h2 = DepthwiseAttention(attention_matrix)(_pconv(h, ch // 2))
-    h = _act(tf.keras.layers.Concatenate()([h1, h2]))
-    h = _bn(_pconv(h, x.shape[-1]))
-    return _act(x + h)
+class DepthwiseAttention(tf.keras.layers.Layer):
+
+    def __init__(self, attention_matrix: tf.Tensor, use_bias: bool = True):
+        super().__init__()
+        self._attention_matrix = tf.constant(attention_matrix, tf.float32)
+        self._use_bias = use_bias
+
+    def build(self, input_shape):
+        n = input_shape[1] * input_shape[2]
+        self._reshape_target = (-1, n, input_shape[3])
+        self._input_shape = (-1, *input_shape[1:])
+        assert n == self._attention_matrix.shape[0]
+        if self._use_bias:
+            self.bias = self.add_weight(
+                shape=(self._attention_matrix.shape[-1],),
+                initializer='zeros',
+                name=self.name + '_bias',
+            )
+
+    def call(self, x):
+        h = tf.reshape(x, self._reshape_target)
+        h = tf.matmul(h, self._attention_matrix, transpose_a=True)
+        if self._use_bias:
+            h = h + self.bias
+        h = tf.transpose(h, perm=[0, 2, 1])
+        return tf.reshape(h, self._input_shape)
 
 
-def _policy_head(x, num_policy_per_square, name='policy_logits'):
-    h = _pconv(x, num_policy_per_square, use_bias=True)
-    return tf.keras.layers.Flatten(name=name)(h)
+class ResBlock(tf.keras.layers.Layer):
+
+    def __init__(self, in_ch: int, hid_ch: int, attention_matrix: np.ndarray):
+        super().__init__()
+        self._act_bn_conv = tf.keras.Sequential([
+            tf.keras.layers.Conv2D(1, 1, use_bias=False),
+            tf.keras.layers.BatchNormalization(center=False, scale=False),
+            tf.keras.layers.LeakyReLU(),
+        ])
+        self._conv1 = tf.keras.layers.Conv2D(hid_ch // 2, 1)
+        self._conv2 = tf.keras.Sequential([
+            tf.keras.layers.Conv2D(hid_ch // 2, 1),
+            DepthwiseAttention(attention_matrix),
+        ])
+        self._bn_conv = tf.keras.Sequential([
+            tf.keras.layers.Conv2D(in_ch, 1, use_bias=False),
+            tf.keras.layers.BatchNormalization(center=False, scale=False),
+        ])
+
+    def call(self, x):
+        h = self._act_bn_conv(x)
+        h = tf.nn.leaky_relu(
+            tf.concat([self._conv1(h), self._conv2(h)], axis=-1))
+        h = self._bn_conv(h)
+        return tf.nn.leaky_relu(x + h)
 
 
-def _value_head(x, name='value'):
-    h = _act_bn_pconv(x, 1)
-    h = tf.keras.layers.Flatten()(h)
-    return tf.keras.layers.Dense(1, activation='tanh', name=name)(h)
+class PolicyHead(tf.keras.layers.Layer):
+
+    def __init__(self, num_policy_per_square: int):
+        super().__init__()
+        self._conv = tf.keras.layers.Conv2D(
+            num_policy_per_square, 1, use_bias=True)
+        self._flat = tf.keras.layers.Flatten()
+
+    def call(self, x):
+        return self._flat(self._conv(x))
+
+
+class ValueHead(tf.keras.layers.Layer):
+
+    def __init__(self):
+        super().__init__()
+        self._act_bn_conv = tf.keras.Sequential([
+            tf.keras.layers.Conv2D(1, 1, use_bias=False),
+            tf.keras.layers.BatchNormalization(center=False, scale=False),
+            tf.keras.layers.LeakyReLU(),
+        ])
+        self._flat = tf.keras.layers.Flatten()
+        self._dense = tf.keras.layers.Dense(1, activation='tanh')
+
+    def call(self, x, training=None):
+        h = self._act_bn_conv(x, training=training)
+        return self._dense(self._flat(h))
 
 
 def build_policy_value_network(
@@ -71,9 +134,9 @@ def build_policy_value_network(
     x = tf.keras.Input(shape=(*input_size, input_channels))
     h = _act_bn_pconv(x, hidden_channels)
     for _ in range(num_backbone_blocks):
-        h = _resblock(h, bottleneck_channels, attention_matrix)
+        h = ResBlock(hidden_channels, bottleneck_channels, attention_matrix)(h)
 
-    policy_logits = _policy_head(h, num_policy_per_square)
-    value = _value_head(h)
+    policy_logits = PolicyHead(num_policy_per_square)(h)
+    value = ValueHead()(h)
     model = tf.keras.Model(inputs=x, outputs=[policy_logits, value])
     return model
