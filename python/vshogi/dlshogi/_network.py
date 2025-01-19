@@ -6,7 +6,7 @@ import tensorflow as tf
 
 
 def _pconv(x, ch, use_bias=False):
-    return tf.keras.layers.Conv2D(ch, 1, use_bias=use_bias)(x)
+    return tf.keras.layers.Conv1D(ch, 1, use_bias=use_bias)(x)
 
 
 def _bn(x):
@@ -26,14 +26,7 @@ class DepthwiseAttention(tf.keras.layers.Layer):
     def __init__(self, attention_matrix: tf.Tensor, use_bias: bool = True):
         super().__init__()
         self._attention_matrix = tf.constant(attention_matrix, tf.float32)
-        self._use_bias = use_bias
-
-    def build(self, input_shape):
-        n = input_shape[1] * input_shape[2]
-        self._reshape_target = (-1, n, input_shape[3])
-        self._input_shape = (-1, *input_shape[1:])
-        assert n == self._attention_matrix.shape[0]
-        if self._use_bias:
+        if use_bias:
             self.bias = self.add_weight(
                 shape=(self._attention_matrix.shape[-1],),
                 initializer='zeros',
@@ -41,12 +34,10 @@ class DepthwiseAttention(tf.keras.layers.Layer):
             )
 
     def call(self, x):
-        h = tf.reshape(x, self._reshape_target)
-        h = tf.matmul(h, self._attention_matrix, transpose_a=True)
-        if self._use_bias:
+        h = tf.matmul(x, self._attention_matrix, transpose_a=True)
+        if hasattr(self, 'bias'):
             h = h + self.bias
-        h = tf.transpose(h, perm=[0, 2, 1])
-        return tf.reshape(h, self._input_shape)
+        return tf.transpose(h, perm=[0, 2, 1])
 
 
 class ResBlock(tf.keras.layers.Layer):
@@ -54,17 +45,17 @@ class ResBlock(tf.keras.layers.Layer):
     def __init__(self, in_ch: int, hid_ch: int, attention_matrix: np.ndarray):
         super().__init__()
         self._act_bn_conv = tf.keras.Sequential([
-            tf.keras.layers.Conv2D(1, 1, use_bias=False),
+            tf.keras.layers.Conv1D(1, 1, use_bias=False),
             tf.keras.layers.BatchNormalization(center=False, scale=False),
             tf.keras.layers.LeakyReLU(),
         ])
-        self._conv1 = tf.keras.layers.Conv2D(hid_ch // 2, 1)
+        self._conv1 = tf.keras.layers.Conv1D(hid_ch // 2, 1)
         self._conv2 = tf.keras.Sequential([
-            tf.keras.layers.Conv2D(hid_ch // 2, 1),
+            tf.keras.layers.Conv1D(hid_ch // 2, 1),
             DepthwiseAttention(attention_matrix),
         ])
         self._bn_conv = tf.keras.Sequential([
-            tf.keras.layers.Conv2D(in_ch, 1, use_bias=False),
+            tf.keras.layers.Conv1D(in_ch, 1, use_bias=False),
             tf.keras.layers.BatchNormalization(center=False, scale=False),
         ])
 
@@ -80,7 +71,7 @@ class PolicyHead(tf.keras.layers.Layer):
 
     def __init__(self, num_policy_per_square: int):
         super().__init__()
-        self._conv = tf.keras.layers.Conv2D(
+        self._conv = tf.keras.layers.Conv1D(
             num_policy_per_square, 1, use_bias=True)
         self._flat = tf.keras.layers.Flatten()
 
@@ -93,7 +84,7 @@ class ValueHead(tf.keras.layers.Layer):
     def __init__(self):
         super().__init__()
         self._act_bn_conv = tf.keras.Sequential([
-            tf.keras.layers.Conv2D(1, 1, use_bias=False),
+            tf.keras.layers.Conv1D(1, 1, use_bias=False),
             tf.keras.layers.BatchNormalization(center=False, scale=False),
             tf.keras.layers.LeakyReLU(),
         ])
@@ -132,7 +123,9 @@ def build_policy_value_network(
         Attention matrix.
     """
     x = tf.keras.Input(shape=(*input_size, input_channels))
-    h = _act_bn_pconv(x, hidden_channels)
+    h = tf.keras.layers.Reshape(
+        [input_size[0] * input_size[1], input_channels])(x)
+    h = _act_bn_pconv(h, hidden_channels)
     for _ in range(num_backbone_blocks):
         h = ResBlock(hidden_channels, bottleneck_channels, attention_matrix)(h)
 
