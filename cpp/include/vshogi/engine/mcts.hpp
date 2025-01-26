@@ -633,6 +633,25 @@ public:
         }
         return ch->get_action(); // For numerical instability.
     }
+    MoveType get_action_by_q_distribution(const float temperature) const
+    {
+        std::vector<float> probas(m_root->get_num_child());
+        const Node<Parameters>* ch = m_root->get_child();
+        for (uint ii = 0u; ch != nullptr; ch = ch->get_sibling()) {
+            probas[ii++] = -ch->get_q_value() / temperature;
+        }
+        softmax(probas);
+
+        float s = dist01(random_engine);
+        ch = m_root->get_child();
+        for (uint ii = 0u; ch != nullptr; ch = ch->get_sibling()) {
+            const auto p = probas[ii++];
+            if (s < p)
+                return ch->get_action();
+            s -= p;
+        }
+        return ch->get_action(); // For numerical instability.
+    }
     static float
     evaluate_by_random_playout(const GameType& g, const uint num_random_playout)
     {

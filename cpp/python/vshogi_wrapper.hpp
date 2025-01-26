@@ -424,6 +424,9 @@ inline void export_mcts_searcher(pybind11::module& m)
         .def(
             "get_action_by_visit_distribution",
             &Searcher::get_action_by_visit_distribution)
+        .def(
+            "get_action_by_q_distribution",
+            &Searcher::get_action_by_q_distribution)
         .def_static(
             "evaluate_by_random_playout",
             &Searcher::evaluate_by_random_playout);
