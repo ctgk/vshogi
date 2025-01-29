@@ -989,6 +989,8 @@ private:
         const uint thdn)
     {
         game.apply_dfpn(n.get_action());
+        if (!n.has_child())
+            game.update_result_dfpn(1u);
         assert(n.is_attacker() || game.in_check());
         simulate_or_expand(n, game, searches);
         while (searches) {
