@@ -71,9 +71,6 @@ def train(
     """
     model.compile()
     mse = tf.keras.losses.MeanSquaredError()
-    loss_policy_ema = None
-    loss_value_ema = None
-    loss_ema = None
 
     @tf.function
     def compute_losses(x, y_policy, y_value):
@@ -100,8 +97,11 @@ def train(
     accumulated_grads = None
     counter = 0
     for e in range(1, epochs + 1):
-        pbar = tqdm(dataset, ncols=80)
-        for x_mb, (p_mb, v_mb) in pbar:
+        pbar = tqdm(enumerate(dataset, start=1), ncols=80)
+        loss_policy_mean = 0.
+        loss_value_mean = 0.
+        loss_mean = 0.
+        for i, (x_mb, (p_mb, v_mb)) in pbar:
             counter += 1
             loss, loss_policy, loss_value, grads = compute_losses_grads(
                 x_mb, p_mb, v_mb)
@@ -117,15 +117,11 @@ def train(
                 ])
                 accumulated_grads = None
 
-            if loss_policy_ema is None:
-                loss_policy_ema = loss_policy
-                loss_value_ema = loss_value
-                loss_ema = loss
-            loss_policy_ema = loss_policy_ema * 0.99 + loss_policy * 0.01
-            loss_value_ema = loss_value_ema * 0.99 + loss_value * 0.01
-            loss_ema = loss_ema * 0.99 + loss * 0.01
+            loss_policy_mean = ((i - 1) * loss_policy_mean + loss_policy) / i
+            loss_value_mean = ((i - 1) * loss_value_mean + loss_value) / i
+            loss_mean = ((i - 1) * loss_mean + loss) / i
             pbar.set_description(
-                f'Epoch {e:2}/{epochs}, loss={loss_ema:f}, '
-                f'loss_policy={loss_policy_ema:f}, '
-                f'loss_value={loss_value_ema:f}',
+                f'Epoch {e:2}/{epochs}, loss={loss_mean:f}, '
+                f'loss_policy={loss_policy_mean:f}, '
+                f'loss_value={loss_value_mean:f}',
             )
