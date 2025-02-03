@@ -91,18 +91,33 @@ class TransformerBlock(tf.keras.layers.Layer):
 
 class DepthwiseAttention(tf.keras.layers.Layer):
 
-    def __init__(self, attention_matrix: tf.Tensor, use_bias: bool = True):
+    def __init__(self, attention_maps: tf.Tensor, use_bias: bool = True):
         super().__init__()
-        self._attention_matrix = tf.constant(attention_matrix, tf.float32)
+        if attention_maps.ndim == 2:
+            attention_maps = attention_maps[None, ...]
+        # (K, H*W, H*W)
+        self._attention_maps = tf.constant(attention_maps, tf.float32)
         if use_bias:
             self.bias = self.add_weight(
-                shape=(self._attention_matrix.shape[-1],),
+                shape=(self._attention_maps.shape[-1],),
                 initializer='zeros',
                 name=self.name + '_bias',
             )
 
-    def call(self, x):
-        h = tf.matmul(x, self._attention_matrix, transpose_a=True)
+    def build(self, input_shape):
+        self.kernel = self.add_weight(
+            shape=(input_shape[-1], self._attention_maps.shape[0], 1, 1),
+            initializer=None,
+            name=self.name + '_kernel',
+        )
+
+    def call(self, x):  # x: (N, H*W, C)
+        a = tf.reduce_sum(  # (C, H*W, H*W)
+            self.kernel * self._attention_maps, axis=1)
+        h = tf.transpose(x, perm=[0, 2, 1])  # (N, C, H*W)
+        h = tf.expand_dims(h, axis=2)  # (N, C, 1, H*W)
+        h = tf.matmul(h, a)  # (N, C, 1, H*W)
+        h = tf.squeeze(h, axis=2)  # (N, C, H*W)
         if hasattr(self, 'bias'):
             h = h + self.bias
         return tf.transpose(h, perm=[0, 2, 1])

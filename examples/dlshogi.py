@@ -398,10 +398,11 @@ def run_train(args: Args):
         hidden_channels=args.nn_hidden_channels,
         bottleneck_channels=args.nn_bottleneck_channels,
         num_backbone_blocks=args.nn_backbone_blocks,
-        attention_matrix=(
-            shogi.Game.get_attention()
-            + np.eye(shogi.Game.ranks * shogi.Game.files)
-        ),
+        attention_matrix=np.concatenate((
+            shogi.Game.get_local_attentions(),
+            shogi.Game.get_adjacent_attention()[None, ...],
+            shogi.Game.get_diagonal_attention()[None, ...],
+        ), axis=0) + np.eye(shogi.Game.ranks * shogi.Game.files),
     )
     i = args.resume_rl_cycle_from
     weight_path = 'models/model_{:04d}.weights.h5'

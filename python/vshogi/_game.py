@@ -123,6 +123,10 @@ class Game(abc.ABC):
         return cls._get_backend_game_class().get_attention()
 
     @classmethod
+    def get_local_attentions(cls) -> np.ndarray:
+        return cls._get_backend_game_class().get_local_attentions()
+
+    @classmethod
     def get_adjacent_attention(cls) -> np.ndarray:
         """Return adjacent attention matrix of the game.
 
