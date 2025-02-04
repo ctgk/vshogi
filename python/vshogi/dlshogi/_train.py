@@ -70,14 +70,14 @@ def train(
         Steps to accumulate gradient computation, by default 1
     """
     model.compile()
-    mse = tf.keras.losses.MeanSquaredError()
 
     @tf.function
     def compute_losses(x, y_policy, y_value):
-        policy_logits, value = model(x, training=True)
+        p_logits, v_logits = model(x, training=True)
         loss_policy = masked_softmax_cross_entropy(
-            y_policy, policy_logits, coeff_entropy_regularization)
-        loss_value = mse(y_value, value)
+            y_policy, p_logits, coeff_entropy_regularization)
+        loss_value = tf.reduce_mean(
+            tf.nn.sigmoid_cross_entropy_with_logits(y_value, v_logits))
         loss = loss_policy + loss_value
         return loss, loss_policy, loss_value
 

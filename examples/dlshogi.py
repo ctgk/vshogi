@@ -242,6 +242,7 @@ def kifu_to_tfrecord(
             visit_proba = {m: v / s for m, v in visit_count.items()}
             z_value = 0 if ('DRAW' in row.result) else 2 * int(('BLACK' in row.result) == ('b' == row.state.split()[1])) - 1
             value = row.z_weight * z_value + (1 - row.z_weight) * row.q_value
+            value = np.clip((value + 1) / 2, 0., 1.)
 
             x = state.to_dlshogi_features()
             policy = state.to_dlshogi_policy(visit_proba, default_value=-100000.)

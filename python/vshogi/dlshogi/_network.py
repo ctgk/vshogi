@@ -152,11 +152,14 @@ class ValueHead(tf.keras.layers.Layer):
             tf.keras.layers.BatchNormalization(center=False, scale=False),
             tf.keras.layers.LeakyReLU(),
             tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(1, activation='tanh'),
+            tf.keras.layers.Dense(1),
         ])
 
     def call(self, x, training=None):
-        return self.layers(x, training=training)
+        x = self.layers(x, training=training)
+        if training:
+            return x
+        return tf.tanh(x)
 
 
 def build_policy_value_network(
