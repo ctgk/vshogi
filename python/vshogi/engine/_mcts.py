@@ -164,6 +164,16 @@ class Mcts(Engine):
         """
         return self._searcher.get_root().get_q_value(greedy_depth)
 
+    def get_q_value_stddev(self) -> float:
+        """Return standard deviation of the Q-value estimate.
+
+        Returns
+        -------
+        float
+            Standard deviation of Q-value estimate of the current game position.
+        """
+        return self._searcher.get_root().get_q_value_stddev()
+
     def get_probas(self) -> tp.Dict[Move, float]:
         """Return raw probabilities of selecting actions.
 

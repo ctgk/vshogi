@@ -341,6 +341,7 @@ inline void export_mcts_node(pybind11::module& m)
             &Node::get_visit_count_excluding_random)
         .def("get_value", &Node::get_value)
         .def("get_q_value", &Node::get_q_value)
+        .def("get_q_value_stddev", &Node::get_q_value_stddev)
         .def(
             "get_actions",
             [](const Node& self) {

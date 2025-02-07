@@ -3,7 +3,12 @@ from tqdm import tqdm
 
 
 @tf.function
-def masked_softmax_cross_entropy(y_true, logit, coeff_entropy_regularization):
+def masked_softmax_cross_entropy(
+    y_true,
+    logit,
+    stddev,
+    coeff_entropy_regularization,
+):
     """Return masked softmax cross entropy loss.
 
     Parameters
@@ -36,7 +41,7 @@ def masked_softmax_cross_entropy(y_true, logit, coeff_entropy_regularization):
     logsumexp = tf.reduce_logsumexp(logit_subtracted, axis=1, keepdims=True)
     log_softmax = logit_subtracted - logsumexp
     return tf.reduce_mean(
-        tf.reduce_sum(-y_true_masked * log_softmax, axis=1)
+        tf.reduce_sum(-y_true_masked * log_softmax, axis=1) / stddev
         + (
             coeff_entropy_regularization
             * tf.reduce_sum(-tf.math.exp(log_softmax) * log_softmax, axis=1)
@@ -72,20 +77,20 @@ def train(
     model.compile()
 
     @tf.function
-    def compute_losses(x, y_policy, y_value):
+    def compute_losses(x, y_policy, y_value, stddev):
         p_logits, v_logits = model(x, training=True)
         loss_policy = masked_softmax_cross_entropy(
-            y_policy, p_logits, coeff_entropy_regularization)
+            y_policy, p_logits, stddev, coeff_entropy_regularization)
         loss_value = tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(y_value, v_logits))
+            tf.nn.sigmoid_cross_entropy_with_logits(y_value, v_logits) / stddev)
         loss = loss_policy + loss_value
         return loss, loss_policy, loss_value
 
     @tf.function
-    def compute_losses_grads(x, y_policy, y_value):
+    def compute_losses_grads(x, y_policy, y_value, stddev):
         with tf.GradientTape() as tape:
             loss, loss_policy, loss_value = compute_losses(
-                x, y_policy, y_value,
+                x, y_policy, y_value, stddev,
             )
         grads = tape.gradient(loss, model.trainable_weights)
         return float(loss), float(loss_policy), float(loss_value), grads
@@ -101,10 +106,10 @@ def train(
         loss_policy_mean = 0.
         loss_value_mean = 0.
         loss_mean = 0.
-        for i, (x_mb, (p_mb, v_mb)) in pbar:
+        for i, (x_mb, (p_mb, v_mb, stddev)) in pbar:
             counter += 1
             loss, loss_policy, loss_value, grads = compute_losses_grads(
-                x_mb, p_mb, v_mb)
+                x_mb, p_mb, v_mb, stddev)
             if accumulated_grads is None:
                 accumulated_grads = grads
             else:

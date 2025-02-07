@@ -81,10 +81,11 @@ def dump_game_records(file_, game: vshogi.Game, color_filter: vshogi.Color = Non
             lambda g, _: g.result,
             lambda g, i: g.v_value_record[i],
             lambda g, i: g.q_value_record[i],
+            lambda g, i: g.q_stddev_record[i],
             lambda g, i: g.visit_count_record[i],
             lambda g, i: g.z_weight_record[i],
         ),
-        names=('state', 'move', 'result', 'v_value', 'q_value', 'visit_count', 'z_weight'),
+        names=('state', 'move', 'result', 'v_value', 'q_value', 'q_stddev', 'visit_count', 'z_weight'),
         file_=file_,
         color_filter=color_filter,
     )
@@ -127,6 +128,7 @@ def play_game(
     game = args._shogi.Game()
     game.v_value_record = []
     game.q_value_record = []
+    game.q_stddev_record = []
     game.visit_count_record = []
     game.z_weight_record = []
     num_random_moves = (
@@ -166,6 +168,7 @@ def play_game(
         game.q_value_record.append(
             1 if player.dfpn_found_mate else
             player.get_q_value(greedy_depth=args.mcts_q_greedy_depth))
+        game.q_stddev_record.append(player.get_q_value_stddev())
         game.visit_count_record.append(visit_count)
 
         game.apply(move)
@@ -217,8 +220,8 @@ def play_game_and_dump_record(
 def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
     df = pd.read_csv(
         tsv_path, sep='\t',
-        usecols=['state', 'result', 'q_value', 'visit_count', 'z_weight'],
-        dtype={'state': str, 'result': str, 'q_value': float, 'visit_count': str, 'z_weight': float},
+        usecols=['state', 'result', 'q_value', 'q_stddev', 'visit_count', 'z_weight'],
+        dtype={'state': str, 'result': str, 'q_value': float, 'q_stddev': float, 'visit_count': str, 'z_weight': float},
     )
     if fraction is None:
         return df
@@ -243,6 +246,7 @@ def kifu_to_tfrecord(
             z_value = 0 if ('DRAW' in row.result) else 2 * int(('BLACK' in row.result) == ('b' == row.state.split()[1])) - 1
             value = row.z_weight * z_value + (1 - row.z_weight) * row.q_value
             value = np.clip((value + 1) / 2, 0., 1.)
+            q_std = np.clip(np.nan_to_num(row.q_stddev), 0.4, 10.)
 
             x = state.to_dlshogi_features()
             policy = state.to_dlshogi_policy(visit_proba, default_value=-100000.)
@@ -250,6 +254,7 @@ def kifu_to_tfrecord(
                 'x': tf.train.Feature(float_list=tf.train.FloatList(value=x.ravel())),
                 'policy': tf.train.Feature(float_list=tf.train.FloatList(value=policy.ravel())),
                 'value': tf.train.Feature(float_list=tf.train.FloatList(value=[value])),
+                'std': tf.train.Feature(float_list=tf.train.FloatList(value=[q_std])),
             })).SerializeToString()
             writer.write(record_bytes)
 
@@ -261,6 +266,7 @@ def kifu_to_tfrecord(
                 'x': tf.train.Feature(float_list=tf.train.FloatList(value=x.ravel())),
                 'policy': tf.train.Feature(float_list=tf.train.FloatList(value=policy.ravel())),
                 'value': tf.train.Feature(float_list=tf.train.FloatList(value=[value])),
+                'std': tf.train.Feature(float_list=tf.train.FloatList(value=[q_std])),
             })).SerializeToString()
             writer.write(record_bytes)
 
@@ -350,8 +356,9 @@ def run_train(args: Args):
                 'x': tf.io.FixedLenFeature(x_shape, dtype=tf.float32),
                 'policy': tf.io.FixedLenFeature(p_shape, dtype=tf.float32),
                 'value': tf.io.FixedLenFeature([1], dtype=tf.float32),
+                'std': tf.io.FixedLenFeature([1], dtype=tf.float32),
             })
-            return features['x'], (features['policy'], features['value'])
+            return features['x'], (features['policy'], features['value'], features['std'])
 
         dataset = tf.data.Dataset.from_tensor_slices(path_list).shuffle(
             buffer_size=50000,

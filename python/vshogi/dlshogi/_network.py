@@ -9,7 +9,6 @@ class MultiHeadAttention(tf.keras.layers.Layer):
 
     def __init__(self, ch: int, num_heads: int, hid_ch: int, mask: tf.Tensor):
         super().__init__()
-        assert num_heads == 1
         self.num_heads = num_heads
         self.hid_ch = hid_ch
         self.mask = tf.constant(mask, tf.float32)  # (H*W, H*W)
@@ -19,18 +18,18 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         self.dv = tf.keras.layers.Conv1D(num_heads * hid_ch, 1, use_bias=False)
 
         # https://arxiv.org/abs/2409.12272
-        self.bq = self.add_weight(
-            shape=(self.mask.shape[-1], 1),
-            initializer='zeros',
-            name=self.name + '_bias_q',
-        )
+        # self.bq = self.add_weight(
+        #     shape=(num_heads, self.mask.shape[-1], hid_ch),
+        #     initializer='zeros',
+        #     name=self.name + '_bias_q',
+        # )
         self.bk = self.add_weight(
-            shape=(self.mask.shape[-1], 1),
+            shape=(num_heads, self.mask.shape[-1], hid_ch),
             initializer='zeros',
             name=self.name + '_bias_k',
         )
         self.bv = self.add_weight(
-            shape=(self.mask.shape[-1], 1),
+            shape=(num_heads, self.mask.shape[-1], hid_ch),
             initializer='zeros',
             name=self.name + '_bias_v',
         )
@@ -52,9 +51,9 @@ class MultiHeadAttention(tf.keras.layers.Layer):
     def call(self, x):  # (N, H*W, ch)
         # (N, num_heads, H*W, hid_ch)
         h = self.conv_in(x)  # (N, H*W, hid_ch)
-        q = self._split_heads(self.dq(h) + self.bq)
-        k = self._split_heads(self.dk(h) + self.bk)
-        v = self._split_heads(self.dv(h) + self.bv)
+        q = self._split_heads(self.dq(h))
+        k = self._split_heads(self.dk(h)) + self.bk
+        v = self._split_heads(self.dv(h)) + self.bv
 
         qk = tf.matmul(q, k, transpose_b=True)  # (N, num_heads, H*W, H*W)
         attention_logits = qk / tf.math.sqrt(tf.cast(tf.shape(k)[-1], x.dtype))
@@ -83,10 +82,10 @@ class TransformerBlock(tf.keras.layers.Layer):
 
     def call(self, x, training=None):
         h = self.mha(x)
-        x = self.norm1(x + h)
+        x = self.norm1(x + h, training=training)
         h = self.conv(x)
         h = self.dropout(h, training=training)
-        return self.norm2(x + h)
+        return self.norm2(x + h, training=training)
 
 
 class DepthwiseAttention(tf.keras.layers.Layer):

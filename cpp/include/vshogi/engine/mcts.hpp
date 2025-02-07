@@ -79,11 +79,14 @@ private:
     float m_value;
 
     /**
-     * @brief Average of `m_value` of all the nodes below this including this
-     * one weighted by their `m_visit_count`.
-     * @note `m_q_arctanh = atanh(m_q_value)` does not necessarily hold.
+     * @brief Average of `m_value` of all the nodes below and this one
      */
     float m_q_value;
+
+    /**
+     * @brief Sum of squared values in total.
+     */
+    float m_sst;
 
     /**
      * @brief True if the node is in mate or leads to mate, otherwise false.
@@ -96,7 +99,7 @@ public:
     Node()
         : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr), m_action(),
           m_proba(0.f), m_visit_count(0), m_visit_count_excluding_random(0),
-          m_sqrt_visit_count(0.f), m_value(0.f), m_q_value(0.f),
+          m_sqrt_visit_count(0.f), m_value(0.f), m_q_value(0.f), m_sst(0.f),
           m_is_mate(false), m_most_visited_child(nullptr)
     {
     }
@@ -115,7 +118,7 @@ public:
         : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr),
           m_action(action), m_proba(proba), m_visit_count(0),
           m_visit_count_excluding_random(0), m_sqrt_visit_count(0.f),
-          m_value(0.f), m_q_value(0.f), m_is_mate(false),
+          m_value(0.f), m_q_value(0.f), m_sst(0.f), m_is_mate(false),
           m_most_visited_child(nullptr)
     {
     }
@@ -145,6 +148,13 @@ public:
             return m_q_value;
         else
             return -m_most_visited_child->get_q_value(greedy_depth - 1u);
+    }
+    float get_q_value_stddev() const
+    {
+        const float var
+            = m_sst / static_cast<float>(m_visit_count) - m_q_value * m_q_value;
+        const float stddev = std::sqrtf(var);
+        return stddev;
     }
     float get_proba() const
     {
@@ -279,6 +289,7 @@ public:
     {
         m_value = 1.f;
         m_q_value = 1.f;
+        m_sst = 1.f;
         m_is_mate = true;
         backprop_leaf(); // Increment `m_visit_count`.
     }
@@ -295,6 +306,7 @@ public:
                 m_sqrt_visit_count = ch->m_sqrt_visit_count;
                 m_value = ch->m_value;
                 m_q_value = ch->m_q_value;
+                m_sst = ch->m_sst;
                 m_is_mate = ch->m_is_mate;
                 m_most_visited_child = ch->m_most_visited_child;
                 m_child = std::move(ch->m_child);
@@ -308,6 +320,7 @@ public:
         m_sqrt_visit_count = 0.f;
         m_value = 0.f;
         m_q_value = 0.f;
+        m_sst = 0.f;
         m_is_mate = false;
         m_most_visited_child = nullptr;
         return *this;
@@ -433,6 +446,7 @@ private:
     {
         m_value = value;
         m_q_value = value;
+        m_sst = value * value;
     }
     void simulate_end_game(const GameType& game)
     {
@@ -445,6 +459,7 @@ private:
         const auto value = (winner == turn) ? 1.f : -1.f;
         m_value = value;
         m_q_value = value;
+        m_sst = 1.f;
         m_is_mate = true;
     }
 
@@ -485,6 +500,7 @@ private:
 
         m_q_value *= count_before / count_after;
         m_q_value += v / count_after;
+        m_sst += (v * v);
 
         if (m_parent != nullptr) {
             m_parent->update_most_visited_child(this);
@@ -501,6 +517,7 @@ private:
             m_is_mate = false;
             m_q_value *= count_before / count_after;
             m_q_value += v / count_after;
+            m_sst += (v * v);
             if (m_parent != nullptr) {
                 m_parent->update_most_visited_child(this);
                 m_parent->backprop_at_internal_vertex(-v);
@@ -508,6 +525,7 @@ private:
         } else {
             m_is_mate = true;
             m_q_value = v;
+            m_sst += (v * v);
             if (m_parent != nullptr) {
                 m_parent->update_most_visited_child(this);
                 m_parent->backprop_mate_at_internal_vertex(-v);

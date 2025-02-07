@@ -51,10 +51,13 @@ TEST(minishogi_node, explore_game_end)
     auto g = Game("b2pk/3b1/4P/2gRR/4K b -");
     auto root = Node(g.get_legal_moves(), g.get_turn(), 0.f, zeros);
     DOUBLES_EQUAL(0.f, root.get_q_value(), 1e-2f);
+    DOUBLES_EQUAL(0.f, root.get_q_value_stddev(), 1e-2f);
     const auto actual = root.select(g, 1.f, 0.f, 0); // 1b1c
     CHECK_TRUE(nullptr == actual);
+    CHECK_EQUAL(2, root.get_visit_count());
     DOUBLES_EQUAL(0.f, root.get_value(), 1e-2f);
     DOUBLES_EQUAL(1.f, root.get_q_value(), 1e-2f);
+    CHECK_TRUE(std::isnan(root.get_q_value_stddev()));
 }
 
 TEST(minishogi_node, explore_one_action)
@@ -62,6 +65,7 @@ TEST(minishogi_node, explore_one_action)
     auto g = Game("4k/5/4P/5/5 b -");
     auto root = Node(g.get_legal_moves(), g.get_turn(), 0.1f, zeros);
     DOUBLES_EQUAL(0.1f, root.get_q_value(100), 1e-2f);
+    DOUBLES_EQUAL(0.f, root.get_q_value_stddev(), 1e-2f);
 
     const auto actual = root.select(g, 1.f, 0.f, 0);
     {
@@ -80,10 +84,12 @@ TEST(minishogi_node, explore_one_action)
         CHECK_EQUAL(2, root.get_visit_count());
         DOUBLES_EQUAL(0.1f, root.get_value(), 1e-2f);
         DOUBLES_EQUAL((0.1f + 0.8f) / 2.f, root.get_q_value(), 1e-2f);
+        DOUBLES_EQUAL(0.35f, root.get_q_value_stddev(), 1e-2f);
 
         CHECK_EQUAL(1, actual->get_visit_count());
         DOUBLES_EQUAL(-0.8f, actual->get_value(), 1e-2f);
         DOUBLES_EQUAL(-0.8f, actual->get_q_value(), 1e-2f);
+        DOUBLES_EQUAL(0.f, actual->get_q_value_stddev(), 1e-2f);
 
         const auto ch = root.get_child(Move(SQ_1B, SQ_1C));
         CHECK_TRUE(actual == ch);
