@@ -1,16 +1,19 @@
+import logging
+
 import numpy as np
 from flask import Flask, jsonify, render_template, request
 
-from vshogi.shogi import Color, Game, Move, Piece, Square
+from vshogi.shogi import Color, Game, Move
 
 
 app = Flask(__name__)
-game = Game()
+logging.basicConfig(level=logging.DEBUG)
+game: Game = Game()
 
 
 @app.route('/')
 def show_board():
-    board = np.asarray(game.board).tolist()
+    board = np.rot90(np.asarray(game.board), k=-1).tolist()
     board = [[p.to_sfen() for p in row] for row in board]
     black_stand = {
         p.to_sfen(): n
@@ -27,46 +30,34 @@ def show_board():
         board=board,
         black_stand=black_stand,
         white_stand=white_stand,
+        current_turn='black' if game.turn == Color.BLACK else 'white',
     )
 
 
 @app.route('/move', methods=['POST'])
-def move():
-    data = request.json
-    dst = Square(data['to'][0] * 9 + data['to'][1])
-    if data['from'] == 'stand':
-        move = Move(dst, Piece.from_sfen(data['piece']))
-        if game.is_legal(move):
-            game.apply(move)
-            return jsonify({'valid': True})
-        else:
-            return jsonify({'valid': False, 'message': 'Illegal move!'})
+def make_move():
+    data = request.get_json()
+    logging.debug(f'make_move.data: {data}')
+    src = data.get('src')
+    dst = data.get('dst')
 
-    src = Square(data['from'][0] * 9 + data['from'][1])
-    move, move_promote = Move(dst, src), Move(dst, src, promote=True)
-    move_legal = game.is_legal(move)
-    move_promote_legal = game.is_legal(move_promote)
-    if move_legal and move_promote_legal:
-        return jsonify({'valid': True, 'needs_promotion_choice': True})
-    elif move_legal:
-        game.apply(move)
-        return jsonify({'valid': True})
-    elif move_promote_legal:
-        game.apply(move_promote)
-        return jsonify({'valid': True})
+    if isinstance(src, dict):
+        src = f'{9 - int(src["col"])}{chr(ord("a") + int(src["row"]))}'
+        dst = f'{9 - int(dst["col"])}{chr(ord("a") + int(dst["row"]))}'
+        move = Move(f'{src}{dst}')
     else:
-        return jsonify({'valid': False, 'message': 'Illegal move!'})
+        src = f'{src.lower()}*'
+        dst = f'{9 - int(dst["col"])}{chr(ord("a") + int(dst["row"]))}'
+        move = Move(f'{src}{dst}')
+    logging.debug(f'make_move.move: {move}')
 
-
-@app.route('/promote', methods=['POST'])
-def promote():
-    data = request.json
-    dst = Square(data['to'][0] * 9 + data['to'][1])
-    src = Square(data['from'][0] * 9 + data['from'][1])
-    promote = data.get('promote', False)
-    move = Move(dst, src, promote=promote)
-    game.apply(move)
-    return jsonify({'valid': True})
+    if game.is_legal(move):
+        game.apply(move)
+        logging.debug(f'make_move.game after game.apply(): {game.to_sfen()}')
+        return jsonify({'success': True})
+    else:
+        logging.debug(f'make_move: {move} is illegal at {game.to_sfen()}')
+        return jsonify({'success': False})
 
 
 if __name__ == '__main__':

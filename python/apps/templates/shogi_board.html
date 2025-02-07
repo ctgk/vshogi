@@ -9,7 +9,7 @@
             margin: 20px auto;
         }
 
-        .cell {
+        .square {
             width: 50px;
             height: 50px;
             border: 1px solid black;
@@ -27,11 +27,11 @@
             user-select: none;
         }
 
-        .cell.droppable-hover {
+        .square.droppable-hover {
             background-color: #e0e0e0;
         }
 
-        .cell.source-cell {
+        .square.source-square {
             background-color: #fff3cd;
         }
 
@@ -74,6 +74,11 @@
             margin-bottom: 5px;
             user-select: none;
         }
+
+        .stand-label.current-turn {
+            background-color: #fff3cd;
+            border-radius: 4px;
+        }
     </style>
 </head>
 
@@ -96,27 +101,23 @@
     } %}
     <div class="game-container">
         <div class="stand">
-            <div class="stand-label">☖</div>
+            <div class="stand-label {% if current_turn == 'white' %}current-turn{% endif %}">☖</div>
             {% for piece, n in white_stand.items() %}
-            <div class="stand-piece" draggable="true" ondragstart="dragFromStand(event)" onclick="handleStandPieceClick(this)" data-piece="{{ piece }}">{{ piece_map[piece] }}{% if n > 1 %}{{ n }}{% endif %}</div>
+            <div class="stand-piece" data-piece="{{ piece }}">{{ piece_map[piece] }}{% if n > 1 %}{{ n }}{% endif %}</div>
             {% endfor %}
         </div>
         <table class="board">
             {% for row_idx in range(board|length) %}
             <tr>
                 {% for col_idx in range(board[row_idx]|length) %}
-                <td class="cell" data-row="{{ row_idx }}" data-col="{{ col_idx }}" ondrop="drop(event)"
-                    ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
-                    {% set cell = board[row_idx][col_idx] %}
-                    {% if cell %}
-                    {% set char = piece_map.get(cell, '') %}
-                    {% if cell[-1].isupper() %}
-                    <span class="piece" draggable="true" ondragstart="drag(event)" onclick="handleCellClick(this)"data-piece="{{ cell }}">{{ char
-                        }}</span>
+                <td class="square" data-row="{{ row_idx }}" data-col="{{ col_idx }}">
+                    {% set square = board[row_idx][col_idx] %}
+                    {% if square %}
+                    {% set char = piece_map.get(square, '') %}
+                    {% if square[-1].isupper() %}
+                    <span class="piece" data-piece="{{ square }}">{{ char }}</span>
                     {% else %}
-                    <span class="piece rotated" draggable="true" ondragstart="drag(event)" data-piece="{{ cell }}">{{
-                        char
-                        }}</span>
+                    <span class="piece rotated" data-piece="{{ square }}">{{ char }}</span>
                     {% endif %}
                     {% endif %}
                 </td>
@@ -125,175 +126,132 @@
             {% endfor %}
         </table>
         <div class="stand">
-            <div class="stand-label">☗</div>
+            <div class="stand-label {% if current_turn == 'black' %}current-turn{% endif %}">☗</div>
             {% for piece, n in black_stand.items() %}
-            <div class="stand-piece" draggable="true" ondragstart="dragFromStand(event)" onclick="handleStandPieceClick(this)" data-piece="{{ piece }}">{{ piece_map[piece] }}{% if n > 1 %}{{ n }}{% endif %}</div>
+            <div class="stand-piece" data-piece="{{ piece }}">{{ piece_map[piece] }}{% if n > 1 %}{{ n }}{% endif %}</div>
             {% endfor %}
         </div>
     </div>
-</body>
 
-<script>
-    let selectedCell = null;
-    let selectedStandPiece = null;
-    function handleCellClick(cell) {
-        if (selectedCell) {
-            const targetRow = cell.dataset.row;
-            const targetCol = cell.dataset.col;
+    <script>
+        let selectedElement = null;
+        let src = null;
 
-            let moveData;
-            if (selectedStandPiece) {
-        }
-    }
-    function drag(event) {
-        const piece = event.target;
-        const canvas = document.createElement('canvas');
-        document.body.appendChild(canvas);
-
-        const context = canvas.getContext('2d');
-        const size = 50; // Assuming the piece size is 50x50
-
-        canvas.width = size;
-        canvas.height = size;
-        canvas.style.position = 'absolute';
-        canvas.style.top = '-9999px';
-
-        context.fillStyle = 'black';
-        context.font = '24px sans-serif';
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-
-        // Draw the piece onto the canvas
-        context.translate(size / 2, size / 2);
-        if (piece.classList.contains('rotated')) {
-            context.rotate(Math.PI); // Rotate 180 degrees
-        }
-        context.translate(-size / 2, -size / 2);
-
-        context.fillText(piece.textContent.trim(), size / 2, size / 2);
-
-        // Set the custom drag image
-        event.dataTransfer.setDragImage(canvas, size / 2, size / 2);
-
-        event.target.parentNode.classList.add('source-cell');
-        event.dataTransfer.setData("piece", event.target.dataset.piece);
-        event.dataTransfer.setData("sourceRow", event.target.parentNode.dataset.row);
-        event.dataTransfer.setData("sourceCol", event.target.parentNode.dataset.col);
-
-        setTimeout(() => {
-            document.body.removeChild(canvas);
-        }, 0);
-    }
-
-    function dragFromStand(event) {
-        const piece = event.target;
-
-        const canvas = document.createElement('canvas');
-        document.body.appendChild(canvas);
-
-        const context = canvas.getContext('2d');
-        const size = 50;
-
-        canvas.width = size;
-        canvas.height = size;
-        canvas.style.position = 'absolute';
-        canvas.style.top = '-9999px';
-
-        context.fillStyle = 'black';
-        context.font = '24px sans-serif';
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-
-        // Draw the piece onto the canvas
-        context.translate(size / 2, size / 2);
-        if (piece.classList.contains('rotated')) {
-            context.rotate(Math.PI); // Rotate 180 degrees
-        }
-        context.translate(-size / 2, -size / 2);
-
-        context.fillText(piece.textContent.trim().charAt(0), size / 2, size / 2);
-
-        event.target.classList.add('source-piece');
-        event.dataTransfer.setDragImage(canvas, size / 2, size / 2);
-        event.dataTransfer.setData("piece", piece.dataset.piece);
-        event.dataTransfer.setData("fromStand", "true");
-
-        setTimeout(() => {
-            document.body.removeChild(canvas);
-        }, 0);
-    }
-
-    function allowDrop(event) {
-        event.preventDefault();
-        event.currentTarget.classList.add('droppable-hover');
-    }
-
-    function dragLeave(event) {
-        event.currentTarget.classList.remove('droppable-hover');
-    }
-
-    function drop(event) {
-        event.preventDefault();
-        const cells = document.querySelectorAll('.cell');
-        cells.forEach(cell => {
-            cell.classList.remove('droppable-hover');
-            cell.classList.remove('source-cell');
-        });
-        const pieces = document.querySelectorAll('.stand-piece');
-        pieces.forEach(piece => {
-            piece.classList.remove('source-piece');
-        });
-
-        const piece = event.dataTransfer.getData("piece");
-        const fromStand = event.dataTransfer.getData("fromStand");
-        const targetRow = event.currentTarget.dataset.row;
-        const targetCol = event.currentTarget.dataset.col;
-
-        let moveData;
-        if (fromStand === "true") {
-            moveData = {
-                piece: piece,
-                from: "stand",
-                to: [parseInt(targetRow), parseInt(targetCol)],
-            };
-        } else {
-            const sourceRow = event.dataTransfer.getData("sourceRow");
-            const sourceCol = event.dataTransfer.getData("sourceCol");
-            moveData = {
-                piece: piece,
-                from: [parseInt(sourceRow), parseInt(sourceCol)],
-                to: [parseInt(targetRow), parseInt(targetCol)],
-            };
+        function clearSelection() {
+            if (selectedElement) {
+                selectedElement.classList.remove('source-piece');
+                if (selectedElement.parentElement.classList.contains('square')) {
+                    selectedElement.parentElement.classList.remove('source-square');
+                }
+                selectedElement = null;
+                src = null;
+            }
         }
 
-        // Send move to server
-        fetch('/move', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(moveData)
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.valid) {
-                    if (data.needs_promotion_choice) {
-                        const promote = window.confirm('Promote?');
-                        fetch('/promote', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ ...moveData, promote: promote })
-                        }).then(() => { window.location.reload() });
-                    } else {
+        function isPieceOwnedByCurrentPlayer(pieceElement) {
+            const piece = pieceElement.dataset.piece;
+            const currentTurn = document.querySelector('.stand-label.current-turn').textContent;
+
+            // ☖ (white) owns uppercase pieces, ☗ (black) owns lowercase pieces
+            if (currentTurn === '☖') {
+                return piece[0].toLowerCase() === piece[0];  // Is uppercase
+            } else {
+                return piece[0].toUpperCase() === piece[0];  // Is lowercase
+            }
+        }
+
+        function handleClick(event) {
+            event.stopPropagation();
+            console.log('clicked');
+            const clickedElement = event.target;
+            console.log(clickedElement);
+            console.log(clickedElement.parentElement);
+            const square = clickedElement.classList.contains('square') ?
+                clickedElement :
+                clickedElement.closest('.square');
+            console.log(square);
+
+            // If clicking on a stand piece
+            if (clickedElement.classList.contains('stand-piece')) {
+                // If there's already a selection, clear it
+                if (selectedElement) {
+                    selectedElement.classList.remove('source-piece');
+                    if (selectedElement.parentElement.classList.contains('square')) {
+                        selectedElement.parentElement.classList.remove('source-square');
+                    }
+                }
+
+                // Select the new piece
+                selectedElement = clickedElement;
+                selectedElement.classList.add('source-piece');
+                if (selectedElement.parentElement.classList.contains('square')) {
+                    selectedElement.parentElement.classList.add('source-square');
+                }
+
+                // Store the square information
+                src = `${clickedElement.dataset.piece}`;
+            }
+            // If clicking on a square
+            else if (square && (!selectedElement)) {
+                console.log('clicking on a square');
+                const pieceInSquare = square.querySelector('.piece');
+
+                // If no piece is selected and clicked on a square with our piece
+                if (!selectedElement && pieceInSquare && isPieceOwnedByCurrentPlayer(pieceInSquare)) {
+                    console.log('piece in square && is owned by current');
+                    selectedElement = pieceInSquare;
+                    selectedElement.classList.add('source-piece');
+                    square.classList.add('source-square');
+                    src = {
+                        row: square.dataset.row,
+                        col: square.dataset.col,
+                    };
+                }
+            }
+            // If clicking on a square and we have a selected piece
+            else if (selectedElement) {
+                const destination = {
+                    row: square.dataset.row,
+                    col: square.dataset.col
+                };
+
+                // Make the move
+                fetch('/move', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        src: src,
+                        dst: destination
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Refresh the page to show the new board state
                         window.location.reload();
                     }
-                } else {
-                    alert(data.message || 'Invalid move!');
+                });
+
+                // Clear selection
+                selectedElement.classList.remove('source-piece');
+                if (selectedElement.parentElement.classList.contains('square')) {
+                    selectedElement.parentElement.classList.remove('source-square');
                 }
-            });
-    }
-</script>
+                selectedElement = null;
+                src = null;
+            }
+        }
+
+        // Add click handlers to all squares and pieces
+        document.querySelectorAll('.square, .stand-piece').forEach(element => {
+            element.addEventListener('click', handleClick);
+        });
+
+        // Add click handler to document to clear selection when clicking outside
+        document.addEventListener('click', clearSelection);
+    </script>
+</body>
 
 </html>
