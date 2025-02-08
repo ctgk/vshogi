@@ -321,17 +321,21 @@ private:
         if (cousin_ge_stand) {
             assert(!cousin_ge_stand->found_conclusion());
             const Node<Parameters>* nibling = cousin_ge_stand->get_child();
-            const auto next_child = expand_board_moves_at_offence(&nibling);
-            expand_drop_moves_at_offence(
-                next_child, s.get_stand(s.get_turn()), nibling);
+            const auto next_child = expand_drop_moves_at_offence(
+                s.get_stand(s.get_turn()), &nibling);
+            expand_board_moves_at_offence(next_child, nibling);
         } else if (cousin_le_stand) {
             assert(!cousin_le_stand->found_conclusion());
             const Node<Parameters>* nibling = cousin_le_stand->get_child();
-            const auto next_child = expand_board_moves_at_offence(&nibling);
-            expand_drop_moves_at_offence(next_child, s);
+            for (; nibling; nibling = nibling->get_sibling()) {
+                if (!nibling->get_action().is_drop())
+                    break;
+            }
+            const auto next_child = expand_drop_moves_at_offence(s);
+            expand_board_moves_at_offence(next_child, nibling);
         } else {
-            const auto next_child = expand_board_moves_at_offence(s);
-            expand_drop_moves_at_offence(next_child, s);
+            const auto next_child = expand_drop_moves_at_offence(s);
+            expand_board_moves_at_offence(next_child, s);
         }
         if (m_child_1st == nullptr)
             set_pndn_no_mate();
@@ -366,14 +370,56 @@ private:
         else
             m_dn = m_child_1st->m_dn;
     }
+    void expand_board_moves_at_offence(
+        std::unique_ptr<Node<Parameters>>* holder,
+        const Node<Parameters>* nibling)
+    {
+        for (; nibling; nibling = nibling->get_sibling()) {
+            const auto m = nibling->get_action();
+            assert(!m.is_drop());
+            *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            Node<Parameters>* const ch = holder->get();
+            ch->m_pn = std::clamp(nibling->pn(), cent, kilo);
+            ch->m_dn = std::clamp(nibling->dn(), cent, kilo);
+            update_offence_dn_ch1st_ch2nd(ch);
+            holder = &(ch->m_sibling);
+        }
+    }
+    void expand_board_moves_at_offence(
+        std::unique_ptr<Node<Parameters>>* holder,
+        const State<Parameters>& state)
+    {
+        const Board<Parameters>& b = state.get_board();
+        for (Move<Parameters> m :
+             CheckBoardMoveGenerator<Parameters>(state, true)) {
+            *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            Node<Parameters>* const ch = holder->get();
+            update_offence_dn_ch1st_ch2nd(ch);
+            holder = &(ch->m_sibling);
+        }
+    }
     std::unique_ptr<Node<Parameters>>*
-    expand_board_moves_at_offence(const Node<Parameters>** const nibling)
+    expand_drop_moves_at_offence(const State<Parameters>& state)
     {
         std::unique_ptr<Node<Parameters>>* holder = &m_child;
-        for (; *nibling; *nibling = (*nibling)->get_sibling()) {
+        for (Move<Parameters> m : DropMoveGenerator<Parameters, true>(state)) {
+            *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            Node<Parameters>* const ch = holder->get();
+            update_offence_dn_ch1st_ch2nd(ch);
+            holder = &(ch->m_sibling);
+        }
+        return holder;
+    }
+    std::unique_ptr<Node<Parameters>>* expand_drop_moves_at_offence(
+        const Stand<Parameters>& stand, const Node<Parameters>** const nibling)
+    {
+        std::unique_ptr<Node<Parameters>>* holder = &m_child;
+        for (; (*nibling); (*nibling) = (*nibling)->get_sibling()) {
             const auto m = (*nibling)->get_action();
-            if (m.is_drop())
+            if (!m.is_drop())
                 break;
+            if (!stand.exist(m.source_piece()))
+                continue;
             *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
             Node<Parameters>* const ch = holder->get();
             ch->m_pn = std::clamp((*nibling)->pn(), cent, kilo);
@@ -382,49 +428,6 @@ private:
             holder = &(ch->m_sibling);
         }
         return holder;
-    }
-    std::unique_ptr<Node<Parameters>>*
-    expand_board_moves_at_offence(const State<Parameters>& state)
-    {
-        const Board<Parameters>& b = state.get_board();
-        std::unique_ptr<Node<Parameters>>* holder = &m_child;
-        for (Move<Parameters> m :
-             CheckBoardMoveGenerator<Parameters>(state, true)) {
-            *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
-            Node<Parameters>* const ch = holder->get();
-            update_offence_dn_ch1st_ch2nd(ch);
-            holder = &(ch->m_sibling);
-        }
-        return holder;
-    }
-    void expand_drop_moves_at_offence(
-        std::unique_ptr<Node<Parameters>>* next, const State<Parameters>& state)
-    {
-        for (Move<Parameters> m : DropMoveGenerator<Parameters, true>(state)) {
-            *next = std::make_unique<Node<Parameters>>(!m_attacker, m);
-            Node<Parameters>* const p = next->get();
-            update_offence_dn_ch1st_ch2nd(p);
-            next = &(p->m_sibling);
-        }
-    }
-    void expand_drop_moves_at_offence(
-        std::unique_ptr<Node<Parameters>>* next,
-        const Stand<Parameters>& stand,
-        const Node<Parameters>* nibling)
-    {
-
-        for (; nibling; nibling = nibling->get_sibling()) {
-            const auto m = nibling->get_action();
-            assert(m.is_drop());
-            if (!stand.exist(m.source_piece()))
-                continue;
-            *next = std::make_unique<Node<Parameters>>(!m_attacker, m);
-            Node<Parameters>* const p = next->get();
-            p->m_pn = std::clamp(nibling->pn(), cent, kilo);
-            p->m_dn = std::clamp(nibling->dn(), cent, kilo);
-            update_offence_dn_ch1st_ch2nd(p);
-            next = &(p->m_sibling);
-        }
     }
     std::unique_ptr<Node<Parameters>>* expand_board_moves_at_defence(
         const GameType& game, const Node<Parameters>** const nibling)
@@ -582,11 +585,7 @@ private:
     {
         if (other == nullptr)
             return true;
-        if (m_pn < other->m_pn)
-            return true;
-        if (m_pn > other->m_pn)
-            return false;
-        return (m_action.is_drop() && (!other->m_action.is_drop()));
+        return m_pn < other->m_pn;
     }
     void update_defence_pn_ch1st_ch2nd(Node* const ch, const GameType& g)
     {
