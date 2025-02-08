@@ -388,11 +388,8 @@ private:
     {
         const Board<Parameters>& b = state.get_board();
         std::unique_ptr<Node<Parameters>>* holder = &m_child;
-        for (Move<Parameters> m : CheckBoardMoveGenerator<Parameters>(state)) {
-            const auto p = b[m.source_square()];
-            if ((!m.promote()) && PHelper::is_promotion_fully_superior(p)
-                && state.in_promotion_zone(m))
-                continue;
+        for (Move<Parameters> m :
+             CheckBoardMoveGenerator<Parameters>(state, true)) {
             *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
             Node<Parameters>* const ch = holder->get();
             update_offence_dn_ch1st_ch2nd(ch);
