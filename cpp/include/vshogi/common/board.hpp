@@ -48,6 +48,7 @@ public:
         update_internals_based_on_pieces();
     }
     Board(const char* const sfen)
+        : m_pieces{}, m_king_locations{}, m_bb_color{}, m_bb_piece{}
     {
         set_sfen(sfen);
     }

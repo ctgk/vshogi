@@ -267,13 +267,17 @@ public:
         // - Defence: #P = sum(#P of children), #D = min(#D of children)
         if (found_conclusion())
             return;
-        m_child_1st = nullptr;
-        m_child_2nd = nullptr;
         if (m_attacker) {
-            m_dn = 0u;
-            for (Node* ch = m_child.get(); ch; ch = ch->get_sibling())
-                update_offence_dn_ch1st_ch2nd(ch);
-            m_pn = m_child_1st->m_pn;
+            if (m_child_1st->found_mate()) {
+                set_pndn_mate();
+            } else {
+                m_child_1st = nullptr;
+                m_child_2nd = nullptr;
+                m_dn = 0u;
+                for (Node* ch = m_child.get(); ch; ch = ch->get_sibling())
+                    update_offence_dn_ch1st_ch2nd(ch);
+                m_pn = m_child_1st->m_pn;
+            }
         } else {
             backprop_one_at_defence();
         }
@@ -524,10 +528,16 @@ private:
 private:
     void backprop_one_at_defence()
     {
-        m_pn = 0u;
-        Node* const ch = backprop_at_defence_board_moves();
-        backprop_at_defence_drop_moves(ch);
-        m_dn = m_child_1st->m_dn;
+        if (m_child_1st->found_no_mate()) {
+            set_pndn_no_mate();
+        } else {
+            m_child_1st = nullptr;
+            m_child_2nd = nullptr;
+            m_pn = 0u;
+            Node* const ch = backprop_at_defence_board_moves();
+            backprop_at_defence_drop_moves(ch);
+            m_dn = m_child_1st->m_dn;
+        }
     }
     Node* backprop_at_defence_board_moves()
     {
