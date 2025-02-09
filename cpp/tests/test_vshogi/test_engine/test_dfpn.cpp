@@ -169,7 +169,7 @@ TEST(dfpn_node, expand_using_cousin)
             ch->expand(Game("3rk/3pb/4R/5/1B2K b g"), nullptr, nullptr);
             ch->get_child_1st()->simulate(Game("3rk/3pR/5/5/1B2K w Bg"));
             CHECK_TRUE(ch->get_child_1st()->found_mate());
-            ch->backprop_one(Game("3rk/3pb/4R/5/1B2K b g"));
+            ch->backprop_one();
         }
         CHECK_TRUE(cousin.get_child_1st()->found_mate());
 

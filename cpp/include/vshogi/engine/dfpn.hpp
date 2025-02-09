@@ -90,6 +90,7 @@ class Node
 private:
     using C = Configuration<Parameters>;
     using GameType = Game<Parameters>;
+    using StateType = State<Parameters>;
     using MoveType = Move<Parameters>;
     using Square = typename C::Square;
     using PHelper = Pieces<Parameters>;
@@ -260,7 +261,7 @@ public:
         assert((dn() == 0u) ? (pn() == max_number) : (pn() != max_number));
     }
 
-    void backprop_one(const GameType& g)
+    void backprop_one()
     {
         // - Offence: #P = min(#P of children), #D = sum(#D of children)
         // - Defence: #P = sum(#P of children), #D = min(#D of children)
@@ -274,7 +275,7 @@ public:
                 update_offence_dn_ch1st_ch2nd(ch);
             m_pn = m_child_1st->m_pn;
         } else {
-            backprop_one_at_defence(g);
+            backprop_one_at_defence();
         }
         assert((m_pn == 0u) ? (m_dn == max_number) : (m_dn != max_number));
         assert((m_dn == 0u) ? (m_pn == max_number) : (m_pn != max_number));
@@ -348,22 +349,23 @@ private:
         const Node<Parameters>* const cousin_le_stand)
     {
         m_pn = zero;
+        const auto& s = g.get_state();
         if (cousin_ge_stand) {
             assert(!cousin_ge_stand->found_conclusion());
             const Node<Parameters>* nibling = cousin_ge_stand->get_child();
-            const auto next_child = expand_board_moves_at_defence(g, &nibling);
+            const auto next_child = expand_board_moves_at_defence(&nibling);
             if (!had_two_consecutive_sacrifice_drops(g))
-                expand_drop_moves_at_defence(next_child, g, nibling);
+                expand_drop_moves_at_defence(next_child, s, nibling);
         } else if (cousin_le_stand) {
             assert(!cousin_le_stand->found_conclusion());
             const Node<Parameters>* nibling = cousin_le_stand->get_child();
-            const auto next_child = expand_board_moves_at_defence(g, &nibling);
+            const auto next_child = expand_board_moves_at_defence(&nibling);
             if (!had_two_consecutive_sacrifice_drops(g))
-                expand_drop_moves_at_defence(next_child, g);
+                expand_drop_moves_at_defence(next_child, s);
         } else {
-            const auto next_child = expand_board_moves_at_defence(g);
+            const auto next_child = expand_board_moves_at_defence(s);
             if (!had_two_consecutive_sacrifice_drops(g))
-                expand_drop_moves_at_defence(next_child, g);
+                expand_drop_moves_at_defence(next_child, s);
         }
         if (m_child_1st == nullptr)
             set_pndn_mate();
@@ -429,8 +431,8 @@ private:
         }
         return holder;
     }
-    std::unique_ptr<Node<Parameters>>* expand_board_moves_at_defence(
-        const GameType& game, const Node<Parameters>** const nibling)
+    std::unique_ptr<Node<Parameters>>*
+    expand_board_moves_at_defence(const Node<Parameters>** const nibling)
     {
         std::unique_ptr<Node<Parameters>>* holder = &m_child;
         for (; (*nibling); *nibling = (*nibling)->get_sibling()) {
@@ -441,49 +443,47 @@ private:
             Node<Parameters>* const ch = holder->get();
             ch->m_pn = std::clamp((*nibling)->pn(), cent, kilo);
             ch->m_dn = std::clamp((*nibling)->dn(), cent, kilo);
-            update_defence_pn_ch1st_ch2nd(ch, game);
+            update_defence_pn_ch1st_ch2nd(ch);
             holder = &(ch->m_sibling);
         }
         return holder;
     }
     std::unique_ptr<Node<Parameters>>*
-    expand_board_moves_at_defence(const GameType& game)
+    expand_board_moves_at_defence(const StateType& state)
     {
         std::unique_ptr<Node<Parameters>>* holder = &m_child;
-        for (Move<Parameters> m :
-             KingMoveGenerator<Parameters>(game.get_state())) {
+        for (Move<Parameters> m : KingMoveGenerator<Parameters>(state)) {
             *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
             Node<Parameters>* const ch = holder->get();
-            update_defence_pn_ch1st_ch2nd(ch, game);
+            update_defence_pn_ch1st_ch2nd(ch);
             holder = &(ch->m_sibling);
         }
-        for (Move<Parameters> m :
-             BlockMoveGenerator<Parameters>(game.get_state())) {
+        for (Move<Parameters> m : BlockMoveGenerator<Parameters>(state)) {
             *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
             Node<Parameters>* const ch = holder->get();
-            update_defence_pn_ch1st_ch2nd(ch, game);
+            update_defence_pn_ch1st_ch2nd(ch);
             holder = &(ch->m_sibling);
         }
         return holder;
     }
     void expand_drop_moves_at_defence(
-        std::unique_ptr<Node<Parameters>>* next, const GameType& game)
+        std::unique_ptr<Node<Parameters>>* next, const StateType& state)
     {
         // https://komorinfo.com/blog/proof-number-double-count/
         uint pn_max[C::num_squares] = {0u};
-        for (Move<Parameters> m :
-             DropMoveGenerator<Parameters>(game.get_state())) {
+        const auto dst = m_action.destination();
+        for (Move<Parameters> m : DropMoveGenerator<Parameters>(state)) {
             *next = std::make_unique<Node<Parameters>>(!m_attacker, m);
             Node<Parameters>* const ch = next->get();
-            if (ch->is_better_dn_choice_than(m_child_1st, game)) {
+            if (ch->is_better_dn_choice_than(m_child_1st, dst)) {
                 m_child_2nd = m_child_1st;
                 m_child_1st = ch;
-            } else if (ch->is_better_dn_choice_than(m_child_2nd, game)) {
+            } else if (ch->is_better_dn_choice_than(m_child_2nd, dst)) {
                 m_child_2nd = ch;
             }
-            const auto dst = ch->m_action.destination();
-            if (pn_max[dst] < ch->m_pn)
-                pn_max[dst] = ch->m_pn;
+            const auto d = ch->m_action.destination();
+            if (pn_max[d] < ch->m_pn)
+                pn_max[d] = ch->m_pn;
             next = &(ch->m_sibling);
         }
         for (uint ii = C::num_squares; ii--;) {
@@ -492,12 +492,13 @@ private:
     }
     void expand_drop_moves_at_defence(
         std::unique_ptr<Node<Parameters>>* next,
-        const GameType& game,
+        const StateType& state,
         const Node<Parameters>* nibling)
     {
         // https://komorinfo.com/blog/proof-number-double-count/
         uint pn_max[C::num_squares] = {0u};
-        const Stand<Parameters>& stand = game.get_stand(game.get_turn());
+        const Stand<Parameters>& stand = state.get_stand(state.get_turn());
+        const auto dst = m_action.destination();
         for (; nibling; nibling = nibling->get_sibling()) {
             const auto m = nibling->get_action();
             assert(m.is_drop());
@@ -507,10 +508,10 @@ private:
             Node<Parameters>* const ch = next->get();
             ch->m_pn = std::clamp(nibling->pn(), cent, kilo);
             ch->m_dn = std::clamp(nibling->dn(), cent, kilo);
-            if (ch->is_better_dn_choice_than(m_child_1st, game)) {
+            if (ch->is_better_dn_choice_than(m_child_1st, dst)) {
                 m_child_2nd = m_child_1st;
                 m_child_1st = ch;
-            } else if (ch->is_better_dn_choice_than(m_child_2nd, game)) {
+            } else if (ch->is_better_dn_choice_than(m_child_2nd, dst)) {
                 m_child_2nd = ch;
             }
             const auto dst = ch->m_action.destination();
@@ -524,36 +525,37 @@ private:
     }
 
 private:
-    void backprop_one_at_defence(const GameType& g)
+    void backprop_one_at_defence()
     {
         m_pn = 0u;
-        Node* const ch = backprop_at_defence_board_moves(g);
-        backprop_at_defence_drop_moves(ch, g);
+        Node* const ch = backprop_at_defence_board_moves();
+        backprop_at_defence_drop_moves(ch);
         m_dn = m_child_1st->m_dn;
     }
-    Node* backprop_at_defence_board_moves(const GameType& g)
+    Node* backprop_at_defence_board_moves()
     {
         Node* ch = m_child.get();
         for (; ch && !ch->m_action.is_drop(); ch = ch->get_sibling()) {
-            update_defence_pn_ch1st_ch2nd(ch, g);
+            update_defence_pn_ch1st_ch2nd(ch);
         }
         return ch;
     }
-    void backprop_at_defence_drop_moves(Node* ch, const GameType& g)
+    void backprop_at_defence_drop_moves(Node* ch)
     {
         // https://komorinfo.com/blog/proof-number-double-count/
         uint pn_max[C::num_squares] = {0u};
+        const auto dst = m_action.destination();
         for (; ch; ch = ch->get_sibling()) {
             assert(ch->m_action.is_drop());
-            if (ch->is_better_dn_choice_than(m_child_1st, g)) {
+            if (ch->is_better_dn_choice_than(m_child_1st, dst)) {
                 m_child_2nd = m_child_1st;
                 m_child_1st = ch;
-            } else if (ch->is_better_dn_choice_than(m_child_2nd, g)) {
+            } else if (ch->is_better_dn_choice_than(m_child_2nd, dst)) {
                 m_child_2nd = ch;
             }
-            const auto dst = ch->m_action.destination();
-            if (pn_max[dst] < ch->m_pn)
-                pn_max[dst] = ch->m_pn;
+            const auto d = ch->m_action.destination();
+            if (pn_max[d] < ch->m_pn)
+                pn_max[d] = ch->m_pn;
         }
         for (uint ii = C::num_squares; ii--;) {
             increment_with_guard(m_pn, pn_max[ii]);
@@ -587,18 +589,19 @@ private:
             return true;
         return m_pn < other->m_pn;
     }
-    void update_defence_pn_ch1st_ch2nd(Node* const ch, const GameType& g)
+    void update_defence_pn_ch1st_ch2nd(Node* const ch)
     {
-        if (ch->is_better_dn_choice_than(m_child_1st, g)) {
+        const auto dst = m_action.destination();
+        if (ch->is_better_dn_choice_than(m_child_1st, dst)) {
             m_child_2nd = m_child_1st;
             m_child_1st = ch;
-        } else if (ch->is_better_dn_choice_than(m_child_2nd, g)) {
+        } else if (ch->is_better_dn_choice_than(m_child_2nd, dst)) {
             m_child_2nd = ch;
         }
         increment_with_guard(m_pn, ch->m_pn);
     }
-    bool
-    is_better_dn_choice_than(const Node* const other, const GameType& g) const
+    bool is_better_dn_choice_than(
+        const Node* const other, const Square& dst_prev) const
     {
         if (other == nullptr)
             return true;
@@ -606,9 +609,8 @@ private:
             return true;
         if (m_dn > other->m_dn)
             return false;
-        const State<Parameters>& s = g.get_state();
-        return s.is_checker_location(m_action.destination())
-               && !s.is_checker_location(other->m_action.destination());
+        return (m_action.destination() == dst_prev)
+               && (other->m_action.destination() != dst_prev);
     }
     static void increment_with_guard(uint& n, uint other)
     {
@@ -940,7 +942,7 @@ public:
             const uint thpn_ch = root->compute_thpn_for_child(max_number);
             const uint thdn_ch = root->compute_thdn_for_child(max_number);
             search_inner(*root->get_child_1st(), game, num, thpn_ch, thdn_ch);
-            root->backprop_one(game);
+            root->backprop_one();
         }
         m_num_searched += n - num;
         return root->found_mate();
@@ -996,7 +998,7 @@ private:
             const uint thdn_ch = n.compute_thdn_for_child(thdn);
             Node<Parameters>* const ch1st = n.get_child_1st();
             search_inner(*ch1st, game, searches, thpn_ch, thdn_ch);
-            n.backprop_one(game);
+            n.backprop_one();
         }
         game.undo();
     }
