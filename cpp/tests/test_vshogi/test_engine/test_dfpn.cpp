@@ -263,7 +263,6 @@ TEST(dfpn_transposition_table, look_up_offence_stronger_of_two_weakers)
     using TranspositionTable = TranspositionTable<Parameters>;
 
     auto table = TranspositionTable();
-    auto root = table.get_root();
     auto g1 = Game("4k/5/4G/5/5 b G");
     auto n1 = Node();
     table.add(&n1, g1);

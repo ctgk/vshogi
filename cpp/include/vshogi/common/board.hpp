@@ -562,7 +562,7 @@ private:
             m_king_locations[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
         if (dst == C::SQ_NA)
             return false;
-        if (king_can_move_away_from_a_pawn_attack(~by_side))
+        if (king_can_avoid_a_pawn_attack(~by_side))
             return false;
         if (enemy_can_capture_the_drop_pawn(dst, by_side))
             return false;
@@ -577,7 +577,7 @@ private:
             return;
         if (!occ.is_one(dst))
             return;
-        if (king_can_move_away_from_a_pawn_attack(~by_side))
+        if (king_can_avoid_a_pawn_attack(~by_side))
             return;
         if (enemy_can_capture_the_drop_pawn(dst, by_side))
             return;
@@ -592,14 +592,9 @@ private:
         return enemy_king_sq
                == SHelper::shift(sq, (by_side == BLACK) ? DIR_N : DIR_S);
     }
-    bool
-    king_can_move_away_from_a_pawn_attack(const ColorEnum& king_color) const
+    bool king_can_avoid_a_pawn_attack(const ColorEnum& king_color) const
     {
-        const Square& king_sq = m_king_locations[king_color];
-        const BitBoardType& ally_mask = m_bb_color[king_color];
-        const BitBoardType king_dst_mask
-            = compute_king_movable(king_color, ~BitBoardType());
-        return king_dst_mask.any();
+        return compute_king_movable(king_color, ~BitBoardType()).any();
     }
     bool enemy_can_capture_the_drop_pawn(
         const Square& dst, const ColorEnum& by_side) const

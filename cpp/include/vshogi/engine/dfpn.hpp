@@ -388,12 +388,9 @@ private:
         }
     }
     void expand_board_moves_at_offence(
-        std::unique_ptr<Node<Parameters>>* holder,
-        const State<Parameters>& state)
+        std::unique_ptr<Node<Parameters>>* holder, const State<Parameters>& s)
     {
-        const Board<Parameters>& b = state.get_board();
-        for (Move<Parameters> m :
-             CheckBoardMoveGenerator<Parameters>(state, true)) {
+        for (MoveType m : CheckBoardMoveGenerator<Parameters>(s, true)) {
             *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
             Node<Parameters>* const ch = holder->get();
             update_offence_dn_ch1st_ch2nd(ch);
@@ -514,9 +511,9 @@ private:
             } else if (ch->is_better_dn_choice_than(m_child_2nd, dst)) {
                 m_child_2nd = ch;
             }
-            const auto dst = ch->m_action.destination();
-            if (pn_max[dst] < ch->m_pn)
-                pn_max[dst] = ch->m_pn;
+            const auto d = ch->m_action.destination();
+            if (pn_max[d] < ch->m_pn)
+                pn_max[d] = ch->m_pn;
             next = &(ch->m_sibling);
         }
         for (uint ii = C::num_squares; ii--;) {

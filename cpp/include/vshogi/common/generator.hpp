@@ -836,7 +836,6 @@ private:
         const auto src = *m_src_iter;
         const auto p = m_board[src];
         const auto king_sq = m_board.get_king_location(m_turn);
-        const auto enemy_king_sq = m_board.get_king_location(~m_turn);
 
         m_dst_mask
             = BitBoardType::get_attacks_by(p, src, m_board.get_occupied());
