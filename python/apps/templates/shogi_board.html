@@ -79,6 +79,33 @@
             background-color: #fff3cd;
             border-radius: 4px;
         }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none; /* hidden by default */
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #fff;
+            padding: 20px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .modal-buttons {
+            margin-top: 10px;
+        }
     </style>
 </head>
 
@@ -133,9 +160,21 @@
         </div>
     </div>
 
+    <!-- Custom modal for promotion -->
+    <div id="promotionModal" class="modal-overlay">
+        <div class="modal">
+            <h3>Promote?</h3>
+            <div class="modal-buttons">
+                <button id="promoteYes">Yes</button>
+                <button id="promoteNo">No</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let selectedElement = null;
         let src = null;
+        let pendingPromotionData = null; // Store move data while user decides
 
         function clearSelection() {
             if (selectedElement) {
@@ -158,6 +197,47 @@
             } else {
                 return piece[0].toUpperCase() === piece[0];  // Is lowercase
             }
+        }
+
+        function showPromotionModal() {
+            document.getElementById('promotionModal').classList.add('active');
+        }
+
+        function hidePromotionModal() {
+            document.getElementById('promotionModal').classList.remove('active');
+        }
+
+        document.getElementById('promoteYes').addEventListener('click', () => {
+            hidePromotionModal();
+            if (pendingPromotionData) {
+                finalizePromotion(true);
+            }
+        });
+
+        document.getElementById('promoteNo').addEventListener('click', () => {
+            hidePromotionModal();
+            if (pendingPromotionData) {
+                finalizePromotion(false);
+            }
+        });
+
+        function finalizePromotion(promote) {
+            fetch('/move', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    src: pendingPromotionData.src,
+                    dst: pendingPromotionData.dst,
+                    promote: promote,
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                }
+            });
+            pendingPromotionData = null;
         }
 
         function handleClick(event) {
@@ -216,7 +296,7 @@
                 };
 
                 // Make the move
-                fetch('/move', {
+                fetch('/ask_or_move', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -228,7 +308,11 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success) {
+                    if (data.ask) {
+                        // Instead of `confirm('Promote?')`:
+                        pendingPromotionData = { src: data.src, dst: data.dst };
+                        showPromotionModal();
+                    } else if (data.legal) {
                         // Refresh the page to show the new board state
                         window.location.reload();
                     }

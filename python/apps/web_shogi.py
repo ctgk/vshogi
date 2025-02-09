@@ -34,8 +34,8 @@ def show_board():
     )
 
 
-@app.route('/move', methods=['POST'])
-def make_move():
+@app.route('/ask_or_move', methods=['POST'])
+def ask_or_move():
     data = request.get_json()
     logging.debug(f'make_move.data: {data}')
     src = data.get('src')
@@ -50,6 +50,33 @@ def make_move():
         dst = f'{9 - int(dst["col"])}{chr(ord("a") + int(dst["row"]))}'
         move = Move(f'{src}{dst}')
     logging.debug(f'make_move.move: {move}')
+    move_promotion = Move(f'{src}{dst}+')
+
+    move_is_legal = game.is_legal(move)
+    promotion_is_legal = game.is_legal(move_promotion)
+    if move_is_legal and promotion_is_legal:
+        return jsonify({'legal': True, 'ask': True, 'src': src, 'dst': dst})
+    elif move_is_legal:
+        game.apply(move)
+        logging.debug(f'make_move.game after game.apply(): {game.to_sfen()}')
+        return jsonify({'legal': True, 'ask': False, 'src': src, 'dst': dst})
+    elif promotion_is_legal:
+        game.apply(move_promotion)
+        logging.debug(f'make_move.game after game.apply(): {game.to_sfen()}')
+        return jsonify({'legal': True, 'ask': False, 'src': src, 'dst': dst})
+    else:
+        logging.debug(f'make_move: {move} is illegal at {game.to_sfen()}')
+        return jsonify({'legal': False, 'ask': False, 'src': src, 'dst': dst})
+
+
+@app.route('/move', methods=['POST'])
+def move():
+    data = request.get_json()
+    logging.debug(f'move(): {data}')
+    src = data.get('src')
+    dst = data.get('dst')
+    promote = data.get('promote')
+    move = Move(f'{src}{dst}' + ('+' if promote else ''))
 
     if game.is_legal(move):
         game.apply(move)
