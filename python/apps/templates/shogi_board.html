@@ -109,7 +109,7 @@
     </style>
 </head>
 
-<body>
+<body data-current-turn="{{ current_turn }}">
     {% set piece_map = {
     'p': '歩', 'P': '歩',
     'l': '香', 'L': '香',
@@ -189,13 +189,13 @@
 
         function isPieceOwnedByCurrentPlayer(pieceElement) {
             const piece = pieceElement.dataset.piece;
-            const currentTurn = document.querySelector('.stand-label.current-turn').textContent;
+            const currentTurn = document.body.dataset.currentTurn;
 
             // ☖ (white) owns uppercase pieces, ☗ (black) owns lowercase pieces
-            if (currentTurn === '☖') {
-                return piece[0].toLowerCase() === piece[0];  // Is uppercase
+            if (currentTurn === 'black') {
+                return piece[0].toUpperCase() === piece[0];
             } else {
-                return piece[0].toUpperCase() === piece[0];  // Is lowercase
+                return piece[0].toLowerCase() === piece[0];
             }
         }
 
