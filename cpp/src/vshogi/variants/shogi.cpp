@@ -3,53 +3,142 @@
 namespace vshogi
 {
 
-static constexpr auto B_FU = vshogi::shogi::B_FU; // NOLINT
-static constexpr auto B_KY = vshogi::shogi::B_KY; // NOLINT
-static constexpr auto B_KE = vshogi::shogi::B_KE; // NOLINT
-static constexpr auto B_GI = vshogi::shogi::B_GI; // NOLINT
-static constexpr auto B_KI = vshogi::shogi::B_KI; // NOLINT
-static constexpr auto B_KA = vshogi::shogi::B_KA; // NOLINT
-static constexpr auto B_HI = vshogi::shogi::B_HI; // NOLINT
-static constexpr auto B_OU = vshogi::shogi::B_OU; // NOLINT
-static constexpr auto B_TO = vshogi::shogi::B_TO; // NOLINT
-static constexpr auto B_NY = vshogi::shogi::B_NY; // NOLINT
-static constexpr auto B_NK = vshogi::shogi::B_NK; // NOLINT
-static constexpr auto B_NG = vshogi::shogi::B_NG; // NOLINT
-static constexpr auto B_UM = vshogi::shogi::B_UM; // NOLINT
-static constexpr auto B_RY = vshogi::shogi::B_RY; // NOLINT
-static constexpr auto W_FU = vshogi::shogi::W_FU; // NOLINT
-static constexpr auto W_KY = vshogi::shogi::W_KY; // NOLINT
-static constexpr auto W_KE = vshogi::shogi::W_KE; // NOLINT
-static constexpr auto W_GI = vshogi::shogi::W_GI; // NOLINT
-static constexpr auto W_KI = vshogi::shogi::W_KI; // NOLINT
-static constexpr auto W_KA = vshogi::shogi::W_KA; // NOLINT
-static constexpr auto W_HI = vshogi::shogi::W_HI; // NOLINT
-static constexpr auto W_OU = vshogi::shogi::W_OU; // NOLINT
-static constexpr auto W_TO = vshogi::shogi::W_TO; // NOLINT
-static constexpr auto W_NY = vshogi::shogi::W_NY; // NOLINT
-static constexpr auto W_NK = vshogi::shogi::W_NK; // NOLINT
-static constexpr auto W_NG = vshogi::shogi::W_NG; // NOLINT
-static constexpr auto W_UM = vshogi::shogi::W_UM; // NOLINT
-static constexpr auto W_RY = vshogi::shogi::W_RY; // NOLINT
-static constexpr auto VOID = vshogi::shogi::VOID; // NOLINT
+template <>
+template <>
+shogi::Stand::Stand(
+    const int num_fu,
+    const int num_ky,
+    const int num_ke,
+    const int num_gi,
+    const int num_ka,
+    const int num_hi,
+    const int num_ki)
+    : Stand(static_cast<std::uint32_t>(
+        (num_fu << shift_bits[shogi::FU]) + (num_ky << shift_bits[shogi::KY])
+        + (num_ke << shift_bits[shogi::KE]) + (num_gi << shift_bits[shogi::GI])
+        + (num_ka << shift_bits[shogi::KA]) + (num_hi << shift_bits[shogi::HI])
+        + (num_ki << shift_bits[shogi::KI])))
+{
+}
 
 template <>
-shogi::Board::Board()
-    : m_pieces{
-        // clang-format off
-        W_KY, VOID, W_FU, VOID, VOID, VOID, B_FU, VOID, B_KY,
-        W_KE, W_KA, W_FU, VOID, VOID, VOID, B_FU, B_HI, B_KE,
-        W_GI, VOID, W_FU, VOID, VOID, VOID, B_FU, VOID, B_GI,
-        W_KI, VOID, W_FU, VOID, VOID, VOID, B_FU, VOID, B_KI,
-        W_OU, VOID, W_FU, VOID, VOID, VOID, B_FU, VOID, B_OU,
-        W_KI, VOID, W_FU, VOID, VOID, VOID, B_FU, VOID, B_KI,
-        W_GI, VOID, W_FU, VOID, VOID, VOID, B_FU, VOID, B_GI,
-        W_KE, W_HI, W_FU, VOID, VOID, VOID, B_FU, B_KA, B_KE,
-        W_KY, VOID, W_FU, VOID, VOID, VOID, B_FU, VOID, B_KY,
-        // clang-format on
-    }, m_king_locations{}, m_bb_color{}, m_bb_piece{}
+shogi::BitBoard shogi::BitBoard::get_attacks_by(
+    const shogi::ColoredPieceEnum& p,
+    const shogi::SquareEnum& sq,
+    const shogi::BitBoard& occupied)
 {
-    update_internals_based_on_pieces();
+    switch (p) {
+    case shogi::B_KY:
+        return shogi::Magic::get_north_attack(sq, occupied);
+    case shogi::W_KY:
+        return shogi::Magic::get_south_attack(sq, occupied);
+    case shogi::B_KA:
+    case shogi::W_KA:
+        return shogi::Magic::get_diagonal_attack(sq, occupied);
+    case shogi::B_HI:
+    case shogi::W_HI:
+        return shogi::Magic::get_adjacent_attack(sq, occupied);
+    case shogi::B_UM:
+    case shogi::W_UM:
+        return shogi::Magic::get_diagonal_attack(sq, occupied)
+               | attacks_table[shogi::B_OU][sq];
+    case shogi::B_RY:
+    case shogi::W_RY:
+        return shogi::Magic::get_adjacent_attack(sq, occupied)
+               | attacks_table[shogi::B_OU][sq];
+    default:
+        return get_attacks_by(p, sq);
+    }
+}
+
+template <>
+shogi::BitBoard shogi::Board::get_occupied_by_ranging(const ColorEnum& c) const
+{
+    using namespace shogi;
+    return get_occupied<KY, KA, HI, UM, RY>(c);
+}
+
+template <>
+shogi::Move NonKingBoardMoveGenerator<shogi::Parameters>::random_select()
+{
+    using namespace shogi;
+    const auto src_fgke = m_board.get_occupied<FU, GI, KE>(m_turn);
+    const auto src_kkhi = m_board.get_occupied<KY, KA, HI>(m_turn);
+    const auto src_gold = m_board.get_occupied<KI, TO, NY, NK, NG>(m_turn);
+    const auto src_umry = m_board.get_occupied<UM, RY>(m_turn);
+    const auto num_fgke = static_cast<float>(src_fgke.hamming_weight());
+    const auto num_kkhi = static_cast<float>(src_kkhi.hamming_weight());
+    const auto num_gold = static_cast<float>(src_gold.hamming_weight());
+    const auto num_umry = static_cast<float>(src_umry.hamming_weight());
+    const auto num_src = num_fgke + num_kkhi + num_gold + num_umry;
+    float r = dist01(random_engine);
+    const auto fraction_fgke = num_fgke / num_src;
+    if (r < fraction_fgke) {
+        auto iter_fgke = NonKingBoardMoveGenerator<Parameters>(
+            m_state, src_fgke, m_pinned);
+        if (!iter_fgke.is_end())
+            return iter_fgke.random_select_by_iterating_all();
+        auto iter_kkhi = NonKingBoardMoveGenerator<Parameters>(
+            m_state, src_kkhi, m_pinned);
+        if (!iter_kkhi.is_end())
+            return iter_kkhi.random_select_by_iterating_all();
+        auto iter_gold
+            = NoPromoMoveGenerator<Parameters>(m_state, src_gold, m_pinned);
+        if (!iter_gold.is_end())
+            return iter_gold.random_select();
+        auto iter_umry
+            = NoPromoMoveGenerator<Parameters>(m_state, src_umry, m_pinned);
+        return iter_umry.random_select();
+    }
+    r -= fraction_fgke;
+    const auto fraction_kkhi = num_kkhi / num_src;
+    if (r < fraction_kkhi) {
+        auto iter_kkhi = NonKingBoardMoveGenerator(m_state, src_kkhi, m_pinned);
+        if (!iter_kkhi.is_end())
+            return iter_kkhi.random_select_by_iterating_all();
+        auto iter_gold
+            = NoPromoMoveGenerator<Parameters>(m_state, src_gold, m_pinned);
+        if (!iter_gold.is_end())
+            return iter_gold.random_select();
+        auto iter_umry
+            = NoPromoMoveGenerator<Parameters>(m_state, src_umry, m_pinned);
+        if (!iter_umry.is_end())
+            return iter_umry.random_select();
+        auto iter_fgke = NonKingBoardMoveGenerator(m_state, src_fgke, m_pinned);
+        return iter_fgke.random_select_by_iterating_all();
+    }
+    r -= fraction_kkhi;
+    const auto fraction_gold = num_gold / num_src;
+    if (r < fraction_gold) {
+        auto iter_gold
+            = NoPromoMoveGenerator<Parameters>(m_state, src_gold, m_pinned);
+        if (!iter_gold.is_end())
+            return iter_gold.random_select();
+        auto iter_umry
+            = NoPromoMoveGenerator<Parameters>(m_state, src_umry, m_pinned);
+        if (!iter_umry.is_end())
+            return iter_umry.random_select();
+        auto iter_fgke = NonKingBoardMoveGenerator(m_state, src_fgke, m_pinned);
+        if (!iter_fgke.is_end())
+            return iter_fgke.random_select_by_iterating_all();
+        auto iter_kkhi = NonKingBoardMoveGenerator(m_state, src_kkhi, m_pinned);
+        return iter_kkhi.random_select_by_iterating_all();
+    }
+    {
+        auto iter_umry
+            = NoPromoMoveGenerator<Parameters>(m_state, src_umry, m_pinned);
+        if (!iter_umry.is_end())
+            return iter_umry.random_select();
+        auto iter_fgke = NonKingBoardMoveGenerator(m_state, src_fgke, m_pinned);
+        if (!iter_fgke.is_end())
+            return iter_fgke.random_select_by_iterating_all();
+        auto iter_kkhi = NonKingBoardMoveGenerator(m_state, src_kkhi, m_pinned);
+        if (!iter_kkhi.is_end())
+            return iter_kkhi.random_select_by_iterating_all();
+        auto iter_gold
+            = NoPromoMoveGenerator<Parameters>(m_state, src_gold, m_pinned);
+        return iter_gold.random_select();
+    }
 }
 
 } // namespace vshogi

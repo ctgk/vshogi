@@ -3,41 +3,98 @@
 namespace vshogi
 {
 
-static constexpr auto B_FU = vshogi::minishogi::B_FU; // NOLINT
-static constexpr auto B_GI = vshogi::minishogi::B_GI; // NOLINT
-static constexpr auto B_KI = vshogi::minishogi::B_KI; // NOLINT
-static constexpr auto B_KA = vshogi::minishogi::B_KA; // NOLINT
-static constexpr auto B_HI = vshogi::minishogi::B_HI; // NOLINT
-static constexpr auto B_OU = vshogi::minishogi::B_OU; // NOLINT
-static constexpr auto B_TO = vshogi::minishogi::B_TO; // NOLINT
-static constexpr auto B_NG = vshogi::minishogi::B_NG; // NOLINT
-static constexpr auto B_UM = vshogi::minishogi::B_UM; // NOLINT
-static constexpr auto B_RY = vshogi::minishogi::B_RY; // NOLINT
-static constexpr auto W_FU = vshogi::minishogi::W_FU; // NOLINT
-static constexpr auto W_GI = vshogi::minishogi::W_GI; // NOLINT
-static constexpr auto W_KI = vshogi::minishogi::W_KI; // NOLINT
-static constexpr auto W_KA = vshogi::minishogi::W_KA; // NOLINT
-static constexpr auto W_HI = vshogi::minishogi::W_HI; // NOLINT
-static constexpr auto W_OU = vshogi::minishogi::W_OU; // NOLINT
-static constexpr auto W_TO = vshogi::minishogi::W_TO; // NOLINT
-static constexpr auto W_NG = vshogi::minishogi::W_NG; // NOLINT
-static constexpr auto W_UM = vshogi::minishogi::W_UM; // NOLINT
-static constexpr auto W_RY = vshogi::minishogi::W_RY; // NOLINT
-static constexpr auto VOID = vshogi::minishogi::VOID; // NOLINT
+template <>
+template <>
+minishogi::Stand::Stand(
+    const int num_fu,
+    const int num_gi,
+    const int num_ka,
+    const int num_hi,
+    const int num_ki)
+    : Stand(static_cast<std::uint16_t>(
+        (num_ki << shift_bits[minishogi::KI])
+        + (num_hi << shift_bits[minishogi::HI])
+        + (num_ka << shift_bits[minishogi::KA])
+        + (num_gi << shift_bits[minishogi::GI])
+        + (num_fu << shift_bits[minishogi::FU])))
+{
+}
 
 template <>
-minishogi::Board::Board()
-    : m_pieces{
-        // clang-format off
-        W_OU, W_FU, VOID, VOID, B_HI,
-        W_KI, VOID, VOID, VOID, B_KA,
-        W_GI, VOID, VOID, VOID, B_GI,
-        W_KA, VOID, VOID, VOID, B_KI,
-        W_HI, VOID, VOID, B_FU, B_OU,
-        // clang-format on
-    }, m_king_locations{}, m_bb_color{}, m_bb_piece{}
+minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
+    const vshogi::minishogi::ColoredPieceEnum& p,
+    const vshogi::minishogi::SquareEnum& sq,
+    const vshogi::minishogi::BitBoard& occupied)
 {
-    update_internals_based_on_pieces();
+    switch (p) {
+    case minishogi::B_KA:
+    case minishogi::W_KA:
+        return minishogi::Magic::get_diagonal_attack(sq, occupied);
+    case minishogi::B_HI:
+    case minishogi::W_HI:
+        return minishogi::Magic::get_adjacent_attack(sq, occupied);
+    case minishogi::B_UM:
+    case minishogi::W_UM:
+        return minishogi::Magic::get_diagonal_attack(sq, occupied)
+               | attacks_table[minishogi::B_OU][sq];
+    case minishogi::B_RY:
+    case minishogi::W_RY:
+        return minishogi::Magic::get_adjacent_attack(sq, occupied)
+               | attacks_table[minishogi::B_OU][sq];
+    default:
+        return get_attacks_by(p, sq);
+    }
+}
+
+template <>
+minishogi::BitBoard
+minishogi::Board::get_occupied_by_ranging(const ColorEnum& c) const
+{
+    using namespace minishogi;
+    return get_occupied<KA, HI, UM, RY>(c);
+}
+
+template <>
+minishogi::Move
+NonKingBoardMoveGenerator<minishogi::Parameters>::random_select()
+{
+    using namespace minishogi;
+    const auto src_fugi = m_board.get_occupied<FU, GI>(m_turn);
+    const auto src_kahi = m_board.get_occupied<KA, HI>(m_turn);
+    const auto src_gold = m_board.get_occupied<KI, TO, NG>(m_turn);
+    const auto src_umry = m_board.get_occupied<UM, RY>(m_turn);
+    auto iter_fugi = NonKingBoardMoveGenerator(m_state, src_fugi, m_pinned);
+    auto iter_kahi = NonKingBoardMoveGenerator(m_state, src_kahi, m_pinned);
+    auto iter_gold
+        = NoPromoMoveGenerator<Parameters>(m_state, src_gold, m_pinned);
+    auto iter_umry
+        = NoPromoMoveGenerator<Parameters>(m_state, src_umry, m_pinned);
+    const auto num_fugi = iter_fugi.is_end()
+                              ? 0.f
+                              : static_cast<float>(src_fugi.hamming_weight());
+    const auto num_kahi = iter_kahi.is_end()
+                              ? 0.f
+                              : static_cast<float>(src_kahi.hamming_weight());
+    const auto num_gold = iter_gold.is_end()
+                              ? 0.f
+                              : static_cast<float>(src_gold.hamming_weight());
+    const auto num_umry = iter_umry.is_end()
+                              ? 0.f
+                              : static_cast<float>(src_umry.hamming_weight());
+    const auto num_src = num_fugi + num_kahi + num_gold + num_umry;
+    float r = dist01(random_engine);
+    const auto fraction_fugi = num_fugi / num_src;
+    if (r < fraction_fugi)
+        return iter_fugi.random_select_by_iterating_all();
+    r -= fraction_fugi;
+    const auto fraction_kahi = num_kahi / num_src;
+    if (r < fraction_kahi)
+        return iter_kahi.random_select_by_iterating_all();
+    r -= fraction_kahi;
+    const auto fraction_gold = num_gold / num_src;
+    if (r < fraction_gold)
+        return iter_gold.random_select();
+    return iter_umry.random_select();
 }
 
 } // namespace vshogi

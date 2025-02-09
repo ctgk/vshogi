@@ -35,13 +35,18 @@ private:
     static std::uint64_t zobrist_table[C::num_squares][num_square_states];
 
 private:
-    ColoredPiece m_pieces[C::num_squares];
+    std::array<ColoredPiece, C::num_squares> m_pieces;
     Square m_king_locations[num_colors];
     BitBoardType m_bb_color[num_colors];
     BitBoardType m_bb_piece[C::num_piece_types];
 
 public:
-    Board();
+    Board()
+        : m_pieces(C::initial_position), m_king_locations{}, m_bb_color{},
+          m_bb_piece{}
+    {
+        update_internals_based_on_pieces();
+    }
     Board(const char* const sfen)
     {
         set_sfen(sfen);
@@ -332,7 +337,8 @@ private:
     const char* set_sfen_rank(const char* const sfen_rank, const Rank rank)
     {
         constexpr int max_length = 19; // e.g. "+p+p+p+p+p+p+p+p+p/"
-        auto piece_ptr = m_pieces + rank + (C::num_files - 1u) * C::num_ranks;
+        auto piece_ptr
+            = m_pieces.data() + rank + (C::num_files - 1u) * C::num_ranks;
         const char* sfen_ptr = sfen_rank;
         bool promotion_flag = false;
         for (; sfen_ptr < sfen_rank + max_length; ++sfen_ptr) {
@@ -384,14 +390,14 @@ private:
             promotion_flag = false;
         }
     OUT_OF_LOOP:
-        assert(piece_ptr + C::num_ranks == m_pieces + rank);
+        assert(piece_ptr + C::num_ranks == m_pieces.data() + rank);
         return sfen_ptr;
     }
     void append_sfen_rank(const Rank rank, std::string& out) const
     {
-        auto ptr = m_pieces + rank + (C::num_files - 1u) * C::num_ranks;
+        auto ptr = m_pieces.data() + rank + (C::num_files - 1u) * C::num_ranks;
         int num_void = 0;
-        for (; ptr >= m_pieces; ptr -= C::num_ranks) {
+        for (; ptr >= m_pieces.data(); ptr -= C::num_ranks) {
             if (*ptr == C::VOID) {
                 ++num_void;
                 continue;

@@ -128,6 +128,8 @@ public: // game rules
     static constexpr uint half_num_init_piece_each = num_init_piece_each / 2u;
     static constexpr uint initial_points = Param::initial_points;
     static constexpr uint sum_piece_value = Param::sum_piece_value;
+    static constexpr std::array<ColoredPiece, num_squares> initial_position
+        = Param::initial_position;
 };
 
 } // namespace vshogi
