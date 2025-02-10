@@ -385,13 +385,6 @@ TEST(test_minishogi_generator, soldier_move_generator)
         CHECK_FALSE(iter != iter.end());
     }
     {
-        const auto s = State("2B1k/5/5/5/K4 b -");
-        auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s, true);
-        CHECK_TRUE(Move(SQ_2B, SQ_3A, true) == *iter);
-        ++iter;
-        CHECK_FALSE(iter != iter.end());
-    }
-    {
         const auto s = State("B4/5/5/4k/K4 b -");
         auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
         CHECK_TRUE(Move(SQ_1E, SQ_5A, true) == *iter);

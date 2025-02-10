@@ -10,7 +10,7 @@ function(vshogi_add_compile_options target)
             -Wswitch-default -Wundef -Werror -Wno-unused -Wconversion
             -Wno-array-bounds)
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "^(Apple)?Clang$")
-        target_compile_options(${target} PRIVATE -Wall -Wextra -Wshadow)
+        target_compile_options(${target} PRIVATE -Werror -Wall -Wextra -Wshadow)
     endif()
     target_compile_options(${target} PRIVATE
         $<$<CONFIG:Release>:-O3>

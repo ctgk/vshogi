@@ -726,19 +726,16 @@ private:
     const BoardType& m_board;
     const BitBoardType m_pinned;
     const BitBoardType m_cover;
-    const bool m_promote_if_superior;
     typename BitBoardType::SquareIterator m_src_iter;
     typename BitBoardType::SquareIterator m_dst_iter;
     bool m_promote;
     BitBoardType m_dst_mask;
 
 public:
-    SoldierMoveGenerator(
-        const StateType& state, const bool promote_if_superior = false)
+    SoldierMoveGenerator(const StateType& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(state.find_pinned()), m_cover(compute_cover(state)),
-          m_promote_if_superior(promote_if_superior), m_src_iter(),
-          m_dst_iter(), m_promote(true), m_dst_mask()
+          m_src_iter(), m_dst_iter(), m_promote(true), m_dst_mask()
     {
         if (state.in_double_check())
             return;
@@ -815,8 +812,7 @@ public:
 private:
     SoldierMoveGenerator(const StateType& state, const BoardType& board)
         : m_state(state), m_turn(), m_board(board), m_pinned(), m_cover(),
-          m_promote_if_superior(false), m_src_iter(), m_dst_iter(),
-          m_promote(true), m_dst_mask()
+          m_src_iter(), m_dst_iter(), m_promote(true), m_dst_mask()
     {
     }
     void init_src_iter()
@@ -866,14 +862,6 @@ private:
         const auto src = *m_src_iter;
         const auto p = m_board[src];
         BitBoardType movable = m_dst_mask;
-        if (m_promote_if_superior && PHelper::is_promotion_fully_superior(p)) {
-            if (SHelper::in_promotion_zone(src, m_turn)) {
-                movable = BitBoardType();
-                m_dst_iter = movable.square_iterator();
-                return;
-            }
-            movable &= ~BitBoardType::get_promotion_zone(m_turn);
-        }
         update_mask_by_forcing_check(movable, p, src);
         if (movable.any()) {
             update_mask_by_nopromo(movable, p);
@@ -1145,9 +1133,8 @@ private:
     uint m_index; //!< 0: king, 1: board, 2: end
 
 public:
-    CheckBoardMoveGenerator(
-        const StateType& s, const bool promote_if_superior = false)
-        : m_king_iter(s), m_soldier_iter(s, promote_if_superior), m_index(0u)
+    CheckBoardMoveGenerator(const StateType& s)
+        : m_king_iter(s), m_soldier_iter(s), m_index(0u)
     {
         if (m_king_iter.is_end()) {
             ++m_index;

@@ -184,7 +184,7 @@ TEST(dfpn_node, expand_using_cousin)
     }
 }
 
-TEST(dfpn_node, expand_removes_no_promotion_moves_by_rook)
+TEST(dfpn_node, expand_no_promotion_moves_by_rook_has_large_pn)
 {
     using namespace vshogi::minishogi;
     using Node = Node<Parameters>;
@@ -193,12 +193,13 @@ TEST(dfpn_node, expand_removes_no_promotion_moves_by_rook)
     n.expand(Game("k2pR/5/5/5/5 b -"), nullptr, nullptr);
     CHECK_TRUE(n.has_child());
     auto ch = n.get_child();
+    for (; ch; ch = ch->get_sibling()) {
+        if (ch->get_action() == Move(SQ_2A, SQ_1A, false))
+            break;
+    }
     CHECK_TRUE(ch != nullptr);
-    CHECK_EQUAL(Move(SQ_2A, SQ_1A, true).hash(), ch->get_action().hash());
-    ch = ch->get_sibling();
-    CHECK_TRUE(ch == nullptr);
-    CHECK_EQUAL(unit, n.pn());
-    CHECK_EQUAL(unit, n.dn());
+    CHECK_EQUAL(kilo, ch->pn());
+    CHECK_EQUAL(cent, ch->dn());
 }
 
 TEST_GROUP (dfpn_transposition_table) {
@@ -401,7 +402,7 @@ TEST(dfpn_searcher, no_mate_1)
     searcher.set_game(g);
     CHECK_FALSE(searcher.search(5000));
     CHECK_TRUE(searcher.found_no_mate());
-    CHECK_EQUAL(1248, searcher.get_search_count());
+    CHECK_EQUAL(1286, searcher.get_search_count());
 }
 
 TEST(dfpn_searcher, mate_in_one_straight_forward)

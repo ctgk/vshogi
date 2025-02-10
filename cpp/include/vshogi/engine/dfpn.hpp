@@ -394,9 +394,15 @@ private:
     void expand_board_moves_at_offence(
         std::unique_ptr<Node<Parameters>>* holder, const State<Parameters>& s)
     {
-        for (MoveType m : CheckBoardMoveGenerator<Parameters>(s, true)) {
+        const auto& b = s.get_board();
+        for (MoveType m : CheckBoardMoveGenerator<Parameters>(s)) {
             *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
             Node<Parameters>* const ch = holder->get();
+            if (PHelper::is_promotion_fully_superior(b[m.source_square()])
+                && s.in_promotion_zone(m) && (!m.promote())) {
+                ch->m_pn = kilo;
+                ch->m_dn = cent;
+            }
             update_offence_dn_ch1st_ch2nd(ch);
             holder = &(ch->m_sibling);
         }
