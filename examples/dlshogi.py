@@ -466,7 +466,14 @@ def run_rl_cycle(args: Args):
         )
 
     def get_best_player_index(current: int, best: int):
-        results = {'win': 0, 'loss': 0, 'draw': 0}
+        results = {'win': 0, 'loss': 0, 'draw_b': 0, 'draw_w': 0}
+
+        def point_of_current(r):
+            return r['win'] + 0.4 * r['draw_b'] + 0.6 * r['draw_w']
+
+        def point_of_best(r):
+            return r['loss'] + 0.4 * r['draw_w'] + 0.6 * r['draw_b']
+
         player_curr = load_player_of(current)
         player_best = load_player_of(best)
         num_play = 40
@@ -474,26 +481,26 @@ def run_rl_cycle(args: Args):
         loss_threshold = num_play * (1 - args.win_ratio_threshold)
         pbar = tqdm(range(num_play), ncols=100)
         for n in pbar:
-            if (results['win'] > win_threshold) or (results['loss'] > loss_threshold):
+            if (point_of_current(results) >= win_threshold) or (point_of_best(results) > loss_threshold):
                 break
             if n % 2 == 0:
                 game = play_game(player_curr, player_best, args)
                 results[{
                     vshogi.BLACK_WIN: 'win',
                     vshogi.WHITE_WIN: 'loss',
-                    vshogi.DRAW: 'draw',
-                    vshogi.ONGOING: 'draw',
+                    vshogi.DRAW: 'draw_b',
+                    vshogi.ONGOING: 'draw_b',
                 }[game.result]] += 1
             else:
                 game = play_game(player_best, player_curr, args)
                 results[{
                     vshogi.BLACK_WIN: 'loss',
                     vshogi.WHITE_WIN: 'win',
-                    vshogi.DRAW: 'draw',
-                    vshogi.ONGOING: 'draw',
+                    vshogi.DRAW: 'draw_w',
+                    vshogi.ONGOING: 'draw_w',
                 }[game.result]] += 1
             pbar.set_description(f'{current} vs {best}: {results}')
-        return current if results['win'] > win_threshold else best
+        return current if point_of_current(results) >= win_threshold else best
 
     def keep_only_end_games_in_previous_tfrecord(index: int, args: Args):
         for i, f in zip(range(index, 0, -1), (args.nn_train_fraction ** i for i in range(index))):
@@ -567,14 +574,16 @@ def run_rl_cycle(args: Args):
                 ) and (v is not None))
             ]).split())
 
+            c = max(len(glob(pattern)) // args.self_play, 1)
             # Train NN!
             subprocess.call([
                 sys.executable, "dlshogi.py", "train", args.shogi_variant,
                 "--resume_rl_cycle_from", str(i),
+                "--nn_grad_accum", str(args.nn_grad_accum * c),
             ] + ' '.join([
                 f'--{k} {v}' for k, v in args.to_dict().items()
                 if (
-                    (k not in ('run', 'shogi_variant', 'resume_rl_cycle_from', 'another_player'))
+                    (k not in ('run', 'shogi_variant', 'resume_rl_cycle_from', 'another_player', 'nn_grad_accum'))
                     and (v is not None)
                 )
             ]).split())
