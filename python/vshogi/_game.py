@@ -552,6 +552,80 @@ class Game(abc.ABC):
         """
         return self.__class__(self._game.hflip())
 
+    def rotate(self) -> 'Game':
+        """Return new game with rotated current positions.
+
+        Returns
+        -------
+        Game
+            New game with rotated current positions.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> g = shogi.Game().apply("5d5c")
+        >>> print(g)
+        Turn: WHITE
+        White: -
+            5   4   3   2   1
+          +---+---+---+---+---+
+        A |-HI|-KA|-GI|-KI|-OU|
+          +---+---+---+---+---+
+        B |   |   |   |   |-FU|
+          +---+---+---+---+---+
+        C |+FU|   |   |   |   |
+          +---+---+---+---+---+
+        D |   |   |   |   |   |
+          +---+---+---+---+---+
+        E |+OU|+KI|+GI|+KA|+HI|
+          +---+---+---+---+---+
+        Black: -
+        >>> g_rotated = g.rotate()
+        >>> print(g_rotated)
+        Turn: BLACK
+        White: -
+            5   4   3   2   1
+          +---+---+---+---+---+
+        A |-HI|-KA|-GI|-KI|-OU|
+          +---+---+---+---+---+
+        B |   |   |   |   |   |
+          +---+---+---+---+---+
+        C |   |   |   |   |-FU|
+          +---+---+---+---+---+
+        D |+FU|   |   |   |   |
+          +---+---+---+---+---+
+        E |+OU|+KI|+GI|+KA|+HI|
+          +---+---+---+---+---+
+        Black: -
+        >>> g.record_length
+        1
+        >>> g_rotated.record_length
+        0
+        """
+        sfen = self.to_sfen(include_move_count=False)
+        sfen_board, sfen_turn, sfen_stand = sfen.split(' ')
+        sfen_board = ''.join([s if s == '+' else f'{s}.' for s in sfen_board])
+        sfen_rotated = ''
+        for s in reversed(sfen_board.split('.')):
+            if s.islower():
+                sfen_rotated = sfen_rotated + s.upper()
+            elif s.isupper():
+                sfen_rotated = sfen_rotated + s.lower()
+            else:
+                sfen_rotated = sfen_rotated + s  # '/', '1', ...
+
+        sfen_rotated = sfen_rotated + ' ' + (
+            'b ' if sfen_turn == 'w' else 'w ')
+
+        for s in sfen_stand:
+            if s.islower():
+                sfen_rotated = sfen_rotated + s.upper()
+            elif s.isupper():
+                sfen_rotated = sfen_rotated + s.lower()
+            else:
+                sfen_rotated = sfen_rotated + s  # '/', '1', ...
+        return self.__class__(sfen_rotated)
+
     def to_dlshogi_features(self, *, out: np.ndarray = None) -> np.ndarray:
         """Return DL-shogi features.
 
