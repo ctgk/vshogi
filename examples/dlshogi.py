@@ -94,10 +94,9 @@ def dump_game_records_and_convert_to_tfrecord(
     kifu_path: str,
     game: vshogi.Game,
     args: Args,
-    color_filter: vshogi.Color = None,
 ) -> None:
     with open(kifu_path, 'w') as f:
-        dump_game_records(f, game, color_filter)
+        dump_game_records(f, game)
     kifu_to_tfrecord(kifu_path.replace('.tsv', '.tfrecord'), kifu_path, args)
 
 
@@ -106,6 +105,7 @@ def play_game(
     player_white: vshogi.engine.DfpnMcts,
     args: Args,
     max_moves: int = 320,
+    main_player: tp.Optional[vshogi.engine.DfpnMcts] = None,
 ) -> vshogi.Game:
     """Make two players play the game until an end.
 
@@ -147,6 +147,15 @@ def play_game(
             dfpn_search_leaf=args.dfpn_search_leaf,
             kldgain_threshold=args.mcts_kldgain_threshold,
         )
+        if (main_player is not None) and (main_player is not player):
+            if not main_player.is_ready():
+                main_player.set_game(game)
+            main_player.search(
+                dfpn_search_root=args.dfpn_search_root,
+                mcts_search=args.mcts_search - player.mcts_num_searched,
+                dfpn_search_leaf=args.dfpn_search_leaf,
+                kldgain_threshold=args.mcts_kldgain_threshold,
+            )
 
         if player.dfpn_found_mate:
             move = player.select()
@@ -156,16 +165,19 @@ def play_game(
             game.z_weight_record.append(0.)
         else:
             move = player.select()
-            game.z_weight_record.append(0.5)
+            game.z_weight_record.append(
+                0.5 if (main_player is None) or (main_player is player) else 0.)
 
-        visit_count = {} if player.dfpn_found_mate else {
+        player_dump = main_player or player
+        visit_count = {} if player_dump.dfpn_found_mate else {
             m.to_usi(): v + 1  # +1 for smoothing
-            for m, v in player.get_visit_counts(include_random=False).items()
+            for m, v in
+            player_dump.get_visit_counts(include_random=False).items()
         }
-        game.v_value_record.append(player.get_value())
+        game.v_value_record.append(player_dump.get_value())
         game.q_value_record.append(
-            1 if player.dfpn_found_mate else
-            player.get_q_value(greedy_depth=args.mcts_q_greedy_depth))
+            1 if player_dump.dfpn_found_mate else
+            player_dump.get_q_value(greedy_depth=args.mcts_q_greedy_depth))
         game.visit_count_record.append(visit_count)
 
         game.apply(move)
@@ -202,15 +214,15 @@ def play_game_and_dump_record(
     args: Args,
     index: int,
     suffix: str,
-    color_filter: vshogi.Color = None,
+    main_player = None,
 ) -> vshogi.Result:
     while True:
-        game = play_game(black, white, args)
+        game = play_game(black, white, args, main_player=main_player)
         if game.result != vshogi.ONGOING:
             break
     if (index is not None) and (suffix is not None):
         path = f'datasets/dataset_{index:04d}/record_{suffix}.tsv'
-        dump_game_records_and_convert_to_tfrecord(path, game, args, color_filter)
+        dump_game_records_and_convert_to_tfrecord(path, game, args)
     return game.result
 
 
@@ -289,9 +301,9 @@ def run_self_play(args: Args):
 
     def _play_game_and_dump_record(player, player_another, index, index_another, nth_game: int):
         if (nth_game // 10) % 2 == 0:
-            play_game_and_dump_record(player, player_another, args, index, f'{nth_game:05d}_B{index-1:02d}vsW{index_another:02d}', vshogi.BLACK)
+            play_game_and_dump_record(player, player_another, args, index, f'{nth_game:05d}_B{index-1:02d}vsW{index_another:02d}', main_player=player)
         else:
-            play_game_and_dump_record(player_another, player, args, index, f'{nth_game:05d}_B{index_another:02d}vsW{index-1:02d}', vshogi.WHITE)
+            play_game_and_dump_record(player_another, player, args, index, f'{nth_game:05d}_B{index_another:02d}vsW{index-1:02d}', main_player=player)
 
     def self_play_and_dump_records_in_parallel(index: int, index_another: int, n_jobs: int):
 
