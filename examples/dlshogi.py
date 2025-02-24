@@ -47,7 +47,7 @@ class Args:
     nn_epochs: int = config(type=int, default=10, help='# of epochs in NN training. By default 10.')
     nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
     nn_grad_accum: int = config(type=int, default=1, help='Gradient accumulation steps. By default 1.')
-    nn_learning_rate: float = config(type=float, default=1e-3, help='Learning rate of NN weight update')
+    nn_learning_rate: float = config(type=float, default=1e-2, help='Learning rate of NN weight update')
     nn_entropy_regularization: float = config(type=float, default=1e-2)
     mcts_kldgain_threshold: float = config(type=float, default=1e-4, help='KL divergence threshold to stop MCT-search')
     mcts_search: int = config(type=int, default=1000, help='# of searches in MCTS, default=1000. Alpha Zero used 800 simulations.')
