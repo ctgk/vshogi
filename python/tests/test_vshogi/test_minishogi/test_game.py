@@ -100,7 +100,8 @@ def test_get_legal_moves():
 
 def test_get_attention():
     a = shogi.Game.get_attention()
-    assert a.shape == (25, 25)
+    assert a.shape == (5, 5, 5, 5)
+    a = a.reshape(25, 25)
     assert np.allclose(a.T, a)
     expect = np.array([
         [1, 0, 1, 1, 1],
@@ -114,7 +115,8 @@ def test_get_attention():
 
 def test_get_adjacent_attention():
     a = shogi.Game.get_adjacent_attention()
-    assert a.shape == (25, 25)
+    assert a.shape == (5, 5, 5, 5)
+    a = a.reshape(25, 25)
     assert np.allclose(a.T, a)
     expect = np.array([
         [1, 0, 1, 1, 1],
@@ -128,7 +130,8 @@ def test_get_adjacent_attention():
 
 def test_get_diagonal_attention():
     a = shogi.Game.get_diagonal_attention()
-    assert a.shape == (25, 25)
+    assert a.shape == (5, 5, 5, 5)
+    a = a.reshape(25, 25)
     assert np.allclose(a.T, a)
     expect = np.array([
         [0, 0, 0, 0, 0],

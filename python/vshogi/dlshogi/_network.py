@@ -89,16 +89,34 @@ class TransformerBlock(tf.keras.layers.Layer):
         return self.norm2(x + h)
 
 
+class HorizontalSymmetry(tf.keras.constraints.Constraint):
+
+    def __init__(self, shape: tuple):
+        super().__init__()
+        self._shape = shape
+
+    def __call__(self, w):
+        k = tf.reshape(w, self._shape)
+        return tf.reshape(0.5 * (k + k[::-1]), w.shape)
+
+
 class DepthwiseAttention(tf.keras.layers.Layer):
 
     def __init__(self, attention_matrix: tf.Tensor, use_bias: bool = True):
         super().__init__()
-        self._attention_matrix = tf.constant(attention_matrix, tf.float32)
+        self._attention_matrix = tf.reshape(
+            tf.constant(attention_matrix, tf.float32),
+            (
+                attention_matrix.shape[0] * attention_matrix.shape[1],
+                attention_matrix.shape[2] * attention_matrix.shape[3],
+            ),
+        )
         if use_bias:
             self.bias = self.add_weight(
                 shape=(self._attention_matrix.shape[-1],),
                 initializer='zeros',
                 name=self.name + '_bias',
+                constraint=HorizontalSymmetry(attention_matrix.shape[:2]),
             )
 
     def call(self, x):
@@ -125,7 +143,8 @@ class ResBlock(tf.keras.layers.Layer):
 
     def call(self, x, training=None):
         h = tf.nn.leaky_relu(
-            tf.concat([self._conv1(x), self._conv2(x)], axis=-1))
+            tf.concat([self._conv1(x), self._conv2(x)], axis=-1),
+        )
         h = self._bn_conv(h, training=training)
         return tf.nn.leaky_relu(x + h)
 
@@ -145,14 +164,18 @@ class PolicyHead(tf.keras.layers.Layer):
 
 class ValueHead(tf.keras.layers.Layer):
 
-    def __init__(self):
+    def __init__(self, shape: tp.Tuple[int, int]):
         super().__init__()
         self.layers = tf.keras.Sequential([
             tf.keras.layers.Conv1D(1, 1, use_bias=False),
             tf.keras.layers.BatchNormalization(center=False, scale=False),
             tf.keras.layers.LeakyReLU(),
             tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(1),
+            tf.keras.layers.Dense(
+                1,
+                kernel_constraint=HorizontalSymmetry(shape),
+                use_bias=False,
+            ),
         ])
 
     def call(self, x, training=None):
@@ -199,6 +222,6 @@ def build_policy_value_network(
         h = ResBlock(hidden_channels, bottleneck_channels, attention_matrix)(h)
 
     policy_logits = PolicyHead(num_policy_per_square)(h)
-    value = ValueHead()(h)
+    value = ValueHead(input_size)(h)
     model = tf.keras.Model(inputs=x, outputs=[policy_logits, value])
     return model

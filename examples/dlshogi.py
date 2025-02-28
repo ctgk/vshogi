@@ -413,7 +413,10 @@ def run_train(args: Args):
         num_backbone_blocks=args.nn_backbone_blocks,
         attention_matrix=(
             shogi.Game.get_attention()
-            + np.eye(shogi.Game.ranks * shogi.Game.files)
+            + np.eye(shogi.Game.ranks * shogi.Game.files).reshape(
+                shogi.Game.files, shogi.Game.ranks,
+                shogi.Game.files, shogi.Game.ranks,
+            )
         ),
     )
     i = args.resume_rl_cycle_from

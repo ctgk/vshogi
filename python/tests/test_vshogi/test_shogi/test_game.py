@@ -26,7 +26,8 @@ def test_num_dlshogi_policy():
 
 def test_get_attention():
     a = shogi.Game.get_attention()
-    assert a.shape == (81, 81)
+    assert a.shape == (9, 9, 9, 9)
+    a = a.reshape(81, 81)
     assert np.allclose(a.T, a)
     expect = np.rot90(np.array([
         [0, 0, 0, 0, 0, 0, 0, 1, 1],
@@ -44,7 +45,8 @@ def test_get_attention():
 
 def test_get_adjacent_attention():
     a = shogi.Game.get_adjacent_attention()
-    assert a.shape == (81, 81)
+    assert a.shape == (9, 9, 9, 9)
+    a = a.reshape(81, 81)
     assert np.allclose(a.T, a)
     expect = np.array([
         [1, 0, 1, 1, 1, 1, 1, 1, 1],
@@ -62,7 +64,8 @@ def test_get_adjacent_attention():
 
 def test_get_diagonal_attention():
     a = shogi.Game.get_diagonal_attention()
-    assert a.shape == (81, 81)
+    assert a.shape == (9, 9, 9, 9)
+    a = a.reshape(81, 81)
     assert np.allclose(a.T, a)
     expect = np.array([
         [0, 0, 0, 0, 0, 0, 0, 0, 0],

@@ -116,11 +116,13 @@ class Game(abc.ABC):
         Returns
         -------
         np.ndarray
-            Attention matrix whose size is (N, N) where N is number of squares.
-            The matrix (A) has value 1 at (i, j) if there is a piece that can
-            move from i-th square to j-th square, otherwise 0.
+            Attention matrix whose size is (F, R, F, R) where F and R are
+            number of files and ranks respectively.
+            The matrix (A) has value 1 at (fi, ri, fj, rj) if there is a piece
+            that can move from (fi, ri) square to (fj, rj) square, otherwise 0.
         """
-        return cls._get_backend_game_class().get_attention()
+        return cls._get_backend_game_class().get_attention().reshape(
+            cls.files, cls.ranks, cls.files, cls.ranks)
 
     @classmethod
     def get_adjacent_attention(cls) -> np.ndarray:
@@ -129,11 +131,13 @@ class Game(abc.ABC):
         Returns
         -------
         np.ndarray
-            Attention matrix whose size is (N, N) where N is number of squares.
-            The matrix (A) has value 1 at (i, j) if j-th square lies along
-            adjacent direction from i-th square, otherwise 0.
+            Attention matrix whose size is (F, R, F, R) where F and R are
+            number of files and ranks respectively.
+            The matrix (A) has value 1 at (fi, ri, fj, rj) if (fi, ri) square
+            lies along adjacent direction from (fj, rj) square, otherwise 0.
         """
-        return cls._get_backend_game_class().get_adjacent_attention()
+        return cls._get_backend_game_class().get_adjacent_attention().reshape(
+            cls.files, cls.ranks, cls.files, cls.ranks)
 
     @classmethod
     def get_diagonal_attention(cls) -> np.ndarray:
@@ -142,11 +146,13 @@ class Game(abc.ABC):
         Returns
         -------
         np.ndarray
-            Attention matrix whose size is (N, N) where N is number of squares.
-            The matrix (A) has value 1 at (i, j) if j-th square lies along
-            diagonal direction from i-th square, otherwise 0.
+            Attention matrix whose size is (F, R, F, R) where F and R are
+            number of files and ranks respectively.
+            The matrix (A) has value 1 at (fi, ri, fj, rj) if (fi, ri) square
+            lies along diagonal direction from (fj, rj) square, otherwise 0.
         """
-        return cls._get_backend_game_class().get_diagonal_attention()
+        return cls._get_backend_game_class().get_diagonal_attention().reshape(
+            cls.files, cls.ranks, cls.files, cls.ranks)
 
     @property
     def turn(self) -> Color:
