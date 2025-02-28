@@ -167,18 +167,19 @@ class ValueHead(tf.keras.layers.Layer):
     def __init__(self, shape: tp.Tuple[int, int]):
         super().__init__()
         self.layers = tf.keras.Sequential([
-            tf.keras.layers.Conv1D(1, 1, use_bias=False),
-            tf.keras.layers.BatchNormalization(center=False, scale=False),
-            tf.keras.layers.LeakyReLU(),
-            tf.keras.layers.Flatten(),
             tf.keras.layers.Dense(
                 1,
                 kernel_constraint=HorizontalSymmetry(shape),
                 use_bias=False,
             ),
+            tf.keras.layers.BatchNormalization(center=False, scale=False),
+            tf.keras.layers.LeakyReLU(),
+            tf.keras.layers.Flatten(),
+            tf.keras.layers.Dense(1, use_bias=False),
         ])
 
     def call(self, x, training=None):
+        x = tf.transpose(x, perm=[0, 2, 1])
         x = self.layers(x, training=training)
         if training:
             return x
@@ -186,7 +187,7 @@ class ValueHead(tf.keras.layers.Layer):
 
 
 def build_policy_value_network(
-    input_size: tp.Tuple[int, int],  # (H, W)
+    input_size: tp.Tuple[int, int],  # (#F, #R)
     input_channels: int,
     num_policy_per_square: int,
     hidden_channels: int,
@@ -199,7 +200,7 @@ def build_policy_value_network(
     Parameters
     ----------
     input_size : tp.Tuple[int, int]
-        Input height and width of the network. e.g. (9, 9) for Shogi.
+        # of input files and ranks of the network. e.g. (9, 9) for Shogi.
     num_policy_per_square : int
         Number of policies per square. e.g. 27(= 2 * 10 + 7) for Shogi.
     hidden_channels : int

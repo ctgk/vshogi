@@ -405,7 +405,7 @@ def run_train(args: Args):
 
     shogi = args._shogi
     network = vshogi.dlshogi.build_policy_value_network(
-        input_size=(shogi.Game.ranks, shogi.Game.files),
+        input_size=(shogi.Game.files, shogi.Game.ranks),
         input_channels=shogi.Game.feature_channels,
         num_policy_per_square=shogi.Move._num_policy_per_square(),
         hidden_channels=args.nn_hidden_channels,
