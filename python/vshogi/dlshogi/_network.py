@@ -93,7 +93,7 @@ class HorizontalSymmetry(tf.keras.constraints.Constraint):
 
     def __init__(self, shape: tuple):
         super().__init__()
-        self._shape = shape
+        self._shape = (*shape, -1)
 
     def __call__(self, w):
         k = tf.reshape(w, self._shape)
@@ -167,10 +167,10 @@ class ValueHead(tf.keras.layers.Layer):
     def __init__(self, shape: tp.Tuple[int, int]):
         super().__init__()
         self.layers = tf.keras.Sequential([
-            tf.keras.layers.Dense(
-                1,
-                kernel_constraint=HorizontalSymmetry(shape),
+            tf.keras.layers.DepthwiseConv1D(
+                shape[0] * shape[1],
                 use_bias=False,
+                depthwise_constraint=HorizontalSymmetry(shape),
             ),
             tf.keras.layers.BatchNormalization(center=False, scale=False),
             tf.keras.layers.LeakyReLU(),
@@ -179,7 +179,6 @@ class ValueHead(tf.keras.layers.Layer):
         ])
 
     def call(self, x, training=None):
-        x = tf.transpose(x, perm=[0, 2, 1])
         x = self.layers(x, training=training)
         if training:
             return x
