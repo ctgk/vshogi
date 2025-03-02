@@ -58,7 +58,7 @@ from vshogi._repr import (
 from vshogi._vshogi import Color, Result
 from vshogi._vshogi.minishogi import (
     Board, BoardPiece, Move, Piece, Square, Stand, State,
-    to_jpn,
+    to_jpn, to_sfen,
 )
 from vshogi.minishogi._game import Game
 
@@ -73,9 +73,11 @@ BoardPiece._to_3char = lambda self: (
     else {'B': '+', 'W': '-'}[self.name[0]] + self.name[2:4]
 )
 BoardPiece.to_jpn = lambda self: to_jpn(self)
+BoardPiece.to_sfen = lambda self: to_sfen(self)
 Move.__repr__ = _repr_move
 Piece.__repr__ = _repr_enum
 Piece.to_jpn = lambda self: to_jpn(self)
+Piece.to_sfen = lambda self: to_sfen(self)
 Stand.__str__ = _repr_stand
 Square.__repr__ = _repr_square
 

@@ -35,6 +35,27 @@ inline void export_to_jpn(pybind11::module& m)
 }
 
 template <class Parameters>
+inline void export_to_sfen(pybind11::module& m)
+{
+    namespace py = pybind11;
+    using C = vshogi::Configuration<Parameters>;
+    using PHelper = vshogi::Pieces<Parameters>;
+    m.def("to_sfen", [](const typename C::PieceType pt) -> std::string {
+        if ((pt == C::NA) || !PHelper::is_promoted(pt))
+            return std::string(1, PHelper::to_char(pt));
+        return std::string(1, '+') + PHelper::to_char(pt);
+    });
+    m.def("to_sfen", [](const typename C::ColoredPiece p) -> std::string {
+        auto c = PHelper::to_char(PHelper::to_piece_type(p));
+        if (PHelper::get_color(p) == vshogi::BLACK)
+            c = std::toupper(c);
+        if ((p == C::VOID) || !PHelper::is_promoted(p))
+            return std::string(1, c);
+        return std::string(1, '+') + c;
+    });
+}
+
+template <class Parameters>
 inline void export_board(pybind11::module& m)
 {
     namespace py = pybind11;
@@ -502,6 +523,7 @@ template <class Parameters>
 void export_classes(pybind11::module& m)
 {
     export_to_jpn<Parameters>(m);
+    export_to_sfen<Parameters>(m);
     export_board<Parameters>(m);
     export_piece_stand<Parameters>(m);
     export_move<Parameters>(m);
