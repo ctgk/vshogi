@@ -10,22 +10,22 @@ using namespace vshogi::shogi;
 TEST_GROUP (test_shogi_move) {
 };
 
-TEST(test_shogi_move, usi)
+TEST(test_shogi_move, sfen)
 {
     CHECK_TRUE(Move(SQ_1B, SQ_1A, true) == Move("1a1b+"));
     {
         char actual[6] = {'\0'};
-        Move(SQ_3G, FU).to_usi(actual);
+        Move(SQ_3G, FU).to_sfen(actual);
         STRCMP_EQUAL("P*3g", actual);
     }
     {
         char actual[6] = {'\0'};
-        Move(SQ_1B, SQ_1A).to_usi(actual);
+        Move(SQ_1B, SQ_1A).to_sfen(actual);
         STRCMP_EQUAL("1a1b", actual);
     }
     {
         char actual[6] = {'\0'};
-        Move(SQ_1B, SQ_1A, true).to_usi(actual);
+        Move(SQ_1B, SQ_1A, true).to_sfen(actual);
         STRCMP_EQUAL("1a1b+", actual);
     }
 }

@@ -10,22 +10,22 @@ using namespace vshogi::minishogi;
 TEST_GROUP (test_minishogi_move) {
 };
 
-TEST(test_minishogi_move, usi)
+TEST(test_minishogi_move, sfen)
 {
     CHECK_TRUE(Move(SQ_1B, SQ_1A, true) == Move("1a1b+"));
     {
         char actual[6] = {'\0'};
-        Move(SQ_3C, FU).to_usi(actual);
+        Move(SQ_3C, FU).to_sfen(actual);
         STRCMP_EQUAL("P*3c", actual);
     }
     {
         char actual[6] = {'\0'};
-        Move(SQ_1B, SQ_1A).to_usi(actual);
+        Move(SQ_1B, SQ_1A).to_sfen(actual);
         STRCMP_EQUAL("1a1b", actual);
     }
     {
         char actual[6] = {'\0'};
-        Move(SQ_1B, SQ_1A, true).to_usi(actual);
+        Move(SQ_1B, SQ_1A, true).to_sfen(actual);
         STRCMP_EQUAL("1a1b+", actual);
     }
 }

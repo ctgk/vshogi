@@ -43,7 +43,7 @@ class DfpnSearcher(Engine):
     >>> # Finds mates by restarting from the searches of the previous call!
     >>> searcher.search(n=1) # Note that numbers of searches add up to 5.
     True
-    >>> [m.to_usi() for m in searcher.get_mate_moves()]
+    >>> [m.to_sfen() for m in searcher.get_mate_moves()]
     ['B*2c', '1b2c', '2e2d', '2c1b', '2d2c']
     """
 
@@ -206,7 +206,7 @@ def _tree(node, depth: int, breadth: int, sort_key: callable):
             s = s.replace('\n', '\n    ')
         else:
             s = s.replace('\n', '\n|   ')
-        out += f'\n+-- {child.get_action().to_usi()} -> {s}'
+        out += f'\n+-- {child.get_action().to_sfen()} -> {s}'
     return out
 
 

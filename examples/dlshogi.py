@@ -77,7 +77,7 @@ def dump_game_records(file_, game: vshogi.Game, color_filter: vshogi.Color = Non
     game.dump_records(
         (
             lambda g, i: g.get_sfen_at(i, include_move_count=True),
-            lambda g, i: g.get_move_at(i).to_usi(),
+            lambda g, i: g.get_move_at(i).to_sfen(),
             lambda g, _: g.result,
             lambda g, i: g.v_value_record[i],
             lambda g, i: g.q_value_record[i],
@@ -170,7 +170,7 @@ def play_game(
 
         player_dump = main_player or player
         visit_count = {} if player_dump.dfpn_found_mate else {
-            m.to_usi(): v + 1  # +1 for smoothing
+            m.to_sfen(): v + 1  # +1 for smoothing
             for m, v in
             player_dump.get_visit_counts(include_random=False).items()
         }

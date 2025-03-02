@@ -44,15 +44,15 @@ public:
     {
         return static_cast<Square>(f * C::num_ranks + r);
     }
-    static Square to_square(const char usi[2])
+    static Square to_square(const char sfen[2])
     {
         return to_square(
-            static_cast<File>(usi[0] - '1'), static_cast<Rank>(usi[1] - 'a'));
+            static_cast<File>(sfen[0] - '1'), static_cast<Rank>(sfen[1] - 'a'));
     }
-    static void to_usi(char usi[2], const Square& sq)
+    static void to_sfen(char sfen[2], const Square& sq)
     {
-        usi[0] = static_cast<char>(static_cast<int>(to_file(sq)) + '1');
-        usi[1] = static_cast<char>(static_cast<int>(to_rank(sq)) + 'a');
+        sfen[0] = static_cast<char>(static_cast<int>(to_file(sq)) + '1');
+        sfen[1] = static_cast<char>(static_cast<int>(to_rank(sq)) + 'a');
     }
     static Square hflip(const Square& sq)
     {

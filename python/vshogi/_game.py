@@ -477,7 +477,7 @@ class Game(abc.ABC):
         ...     game.dump_records(
         ...         (
         ...             lambda g, i: g.get_sfen_at(i),
-        ...             lambda g, i: g.get_move_at(i).to_usi(),
+        ...             lambda g, i: g.get_move_at(i).to_sfen(),
         ...             lambda g, i: g.result,
         ...         ),
         ...         names=('sfen', 'move', 'result'),

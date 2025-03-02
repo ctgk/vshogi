@@ -60,30 +60,31 @@ public:
         : Move(dst, static_cast<uint>(src) + C::num_squares)
     {
     }
-    explicit Move(const char usi[5])
+    explicit Move(const char sfen[5])
         : Move(
-            SHelper::to_square(usi + 2),
-            (usi[1] == '*') ? static_cast<uint>(PHelper::to_piece_type(usi[0]))
-                                  + C::num_squares
-                            : static_cast<uint>(SHelper::to_square(usi)),
-            usi[4] == '+')
+            SHelper::to_square(sfen + 2),
+            (sfen[1] == '*')
+                ? static_cast<uint>(PHelper::to_piece_type(sfen[0]))
+                      + C::num_squares
+                : static_cast<uint>(SHelper::to_square(sfen)),
+            sfen[4] == '+')
     {
     }
     std::uint16_t hash() const
     {
         return m_value;
     }
-    void to_usi(char usi[5]) const
+    void to_sfen(char sfen[5]) const
     {
         if (is_drop()) {
-            usi[0] = static_cast<char>(
+            sfen[0] = static_cast<char>(
                 std::toupper(PHelper::to_char(source_piece())));
-            usi[1] = '*';
+            sfen[1] = '*';
         } else {
-            SHelper::to_usi(usi, source_square());
+            SHelper::to_sfen(sfen, source_square());
         }
-        SHelper::to_usi(usi + 2, destination());
-        usi[4] = (promote()) ? '+' : '\0';
+        SHelper::to_sfen(sfen + 2, destination());
+        sfen[4] = (promote()) ? '+' : '\0';
     }
     bool operator==(const Move& other) const
     {
