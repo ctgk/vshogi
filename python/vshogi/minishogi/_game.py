@@ -1,5 +1,6 @@
 from vshogi._game import Game as BaseGame
 from vshogi._vshogi.minishogi import (
+    BoardPiece,
     DfpnSearcher,
     MCTS,
     MctsNode,
@@ -45,6 +46,10 @@ class Game(BaseGame):
     @classmethod
     def _get_backend_game_class(cls) -> type:
         return _MinishogiGame
+
+    @classmethod
+    def _get_board_piece_class(cls) -> type:
+        return BoardPiece
 
     @classmethod
     def _get_move_class(cls) -> type:

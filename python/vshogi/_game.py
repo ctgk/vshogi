@@ -29,6 +29,11 @@ class Game(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
+    def _get_board_piece_class(cls) -> type:
+        pass
+
+    @classmethod
+    @abc.abstractmethod
     def _get_move_class(cls) -> type:
         pass
 
@@ -821,3 +826,20 @@ class Game(abc.ABC):
             Copy of the game object.
         """
         return self.__class__(self._game.copy())
+
+    def to_svg(self, scale: float = 1.):
+        """Return an SVG representation of the current game position.
+
+        Parameters
+        ----------
+        scale : float, optional
+            Scaling factor of the resulting SVG image, by default 1.
+
+        Returns
+        -------
+        object
+            SVG representation of the game position.
+        """
+        from vshogi._to_svg import _to_svg
+        lastmove = self.get_move_at(-1) if self.record_length > 0 else None
+        return _to_svg(self, lastmove, scale)
