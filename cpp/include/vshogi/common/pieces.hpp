@@ -67,6 +67,27 @@ public:
         };
         return table[pt];
     }
+    static const std::string& to_jpn(const FullPieceTypes pt)
+    {
+        static const std::string table[] = {
+            u8"\u6B69", //!< Fu (Pawn)
+            u8"\u9999", //!< Kyo (Lance)
+            u8"\u6842", //!< Kei (Knight)
+            u8"\u9280", //!< Gin (Silver)
+            u8"\u89D2", //!< Kaku (Bishop)
+            u8"\u98DB", //!< Hisha (Rook)
+            u8"\u91D1", //!< Kin (Gold)
+            u8"\u7389", //!< Ou, Gyoku (King)
+            u8"\u3068", //!< Tokin (Promoted Pawn)
+            u8"\u674F", //!< Nari-Kyo (Promoted Lance)
+            u8"\u572D", //!< Nari-Kei (Promoted Knight)
+            u8"\u5168", //!< Nari-Gin (Promoted Silver)
+            u8"\u99AC", //!< Uma (Promoted Bishop)
+            u8"\u9F8D", //!< Ryu (Promoted Rook)
+            u8"\uFF1F", //!< NA
+        };
+        return table[pt];
+    }
     static constexpr bool is_promotable(const FullPieceTypes pt)
     {
         return pt < PT_KI;
@@ -266,6 +287,10 @@ public:
     static constexpr char to_char(const PieceType& pt)
     {
         return FPTHelper::to_char(C::piece_types[pt]);
+    }
+    static const std::string& to_jpn(const PieceType& pt)
+    {
+        return FPTHelper::to_jpn(C::piece_types[pt]);
     }
 
     static constexpr bool is_promotable(const PieceType& p)

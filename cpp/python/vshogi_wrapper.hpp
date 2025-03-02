@@ -23,6 +23,18 @@ inline bool has(const std::vector<T>& vec, const T& target)
 }
 
 template <class Parameters>
+inline void export_to_jpn(pybind11::module& m)
+{
+    namespace py = pybind11;
+    using C = vshogi::Configuration<Parameters>;
+    using PHelper = vshogi::Pieces<Parameters>;
+    m.def("to_jpn", &PHelper::to_jpn);
+    m.def("to_jpn", [](const typename C::ColoredPiece p) {
+        return PHelper::to_jpn(PHelper::to_piece_type(p));
+    });
+}
+
+template <class Parameters>
 inline void export_board(pybind11::module& m)
 {
     namespace py = pybind11;
@@ -488,6 +500,7 @@ inline void export_value_functions(pybind11::module& m)
 template <class Parameters>
 void export_classes(pybind11::module& m)
 {
+    export_to_jpn<Parameters>(m);
     export_board<Parameters>(m);
     export_piece_stand<Parameters>(m);
     export_move<Parameters>(m);

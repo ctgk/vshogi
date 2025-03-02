@@ -11,6 +11,7 @@ from vshogi._repr import (
 from vshogi._vshogi import Color, Result
 from vshogi._vshogi.shogi import (
     Board, BoardPiece, Move, Piece, Square, Stand, State,
+    to_jpn,
 )
 from vshogi.shogi._game import Game
 
@@ -24,8 +25,10 @@ BoardPiece._to_3char = lambda self: (
     "   " if self == BoardPiece.VOID
     else {'B': '+', 'W': '-'}[self.name[0]] + self.name[2:4]
 )
+BoardPiece.to_jpn = lambda self: to_jpn(self)
 Move.__repr__ = _repr_move
 Piece.__repr__ = _repr_enum
+Piece.to_jpn = lambda self: to_jpn(self)
 Stand.__repr__ = _repr_stand
 Square.__repr__ = _repr_square
 
