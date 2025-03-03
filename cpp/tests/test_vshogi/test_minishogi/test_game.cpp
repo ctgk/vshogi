@@ -499,6 +499,10 @@ TEST(minishogi_game, result)
         game.apply(Move(SQ_1B, SQ_2B)); // #repeat = 4
         CHECK_EQUAL(vshogi::WHITE_WIN, game.get_result());
     }
+    {
+        auto game = Game("4k/5/5/5/4R b -");
+        CHECK_EQUAL(vshogi::BLACK_WIN, game.get_result());
+    }
 }
 
 } // namespace test_vshogi::test_minishogi

@@ -46,8 +46,6 @@ private:
     static constexpr uint num_piece_types = C::num_piece_types;
     static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
     static constexpr uint num_dir = C::num_dir;
-    static constexpr uint max_acceptable_repetitions
-        = C::max_acceptable_repetitions;
 
 private:
     StateType m_current_state;
@@ -63,6 +61,17 @@ public:
     }
     Game(const std::string& sfen) : Game(StateType(sfen))
     {
+        const auto t = get_turn();
+        const BoardType& b = get_board();
+        const auto enemy_king_sq = b.get_king_location(~t);
+        if (enemy_king_sq == C::SQ_NA)
+            return;
+        for (auto src : b.get_occupied(t).square_iterator()) {
+            if (b.get_attacks_by_nocheck(src).is_one(enemy_king_sq)) {
+                m_result = (t == BLACK) ? BLACK_WIN : WHITE_WIN;
+                return;
+            }
+        }
     }
     static constexpr uint feature_channels()
     {
@@ -157,7 +166,7 @@ public:
     Game& apply_nocheck(const MoveType& move)
     {
         add_record_and_update_state(move);
-        update_result(max_acceptable_repetitions);
+        update_result(C::max_acceptable_repetitions);
         return *this;
     }
     Game& apply_random_playout(const MoveType& move)
@@ -278,7 +287,7 @@ protected:
           m_captured_move_list{}, m_num_fold(1u)
     {
         m_hash_list.reserve(256);
-        update_result(max_acceptable_repetitions);
+        update_result(C::max_acceptable_repetitions);
     }
     static uint num_pieces(const StateType& s, const ColorEnum& c)
     {
