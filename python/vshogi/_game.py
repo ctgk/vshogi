@@ -254,6 +254,27 @@ class Game(abc.ABC):
         """
         return self._game.get_zobrist_hash()
 
+    def in_check(self) -> bool:
+        """Return true if a king of the current turn is in check.
+
+        Returns
+        -------
+        bool
+            True if current turn's king is in check otherwise false.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> game = shogi.Game("4k/5/4P/5/4K b -")
+        >>> game.in_check()
+        False
+        >>> game.apply("1c1b")
+        Game(sfen="4k/4P/5/5/4K w - 2")
+        >>> game.in_check()
+        True
+        """
+        return self._game.in_check()
+
     @classmethod
     def _get_move(cls, move=None, *arg, **kwargs) -> Move:
         if not (arg or kwargs):
