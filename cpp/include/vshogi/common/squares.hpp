@@ -54,6 +54,34 @@ public:
         sfen[0] = static_cast<char>(static_cast<int>(to_file(sq)) + '1');
         sfen[1] = static_cast<char>(static_cast<int>(to_rank(sq)) + 'a');
     }
+    static std::string to_jpn(const Square& sq)
+    {
+        const auto f = to_file(sq);
+        const auto r = to_rank(sq);
+        static const std::string arabic[] = {
+            u8"\uFF11",
+            u8"\uFF12",
+            u8"\uFF13",
+            u8"\uFF14",
+            u8"\uFF15",
+            u8"\uFF16",
+            u8"\uFF17",
+            u8"\uFF18",
+            u8"\uFF19",
+        };
+        static const std::string kanji[] = {
+            u8"\u4E00",
+            u8"\u4E8C",
+            u8"\u4E09",
+            u8"\u56DB",
+            u8"\u4E94",
+            u8"\u516D",
+            u8"\u4E03",
+            u8"\u516B",
+            u8"\u4E5D",
+        };
+        return arabic[f] + kanji[r];
+    }
     static Square hflip(const Square& sq)
     {
         return to_square(hflip(to_file(sq)), to_rank(sq));

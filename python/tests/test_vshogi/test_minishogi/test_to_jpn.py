@@ -37,8 +37,40 @@ import vshogi.minishogi as shogi
     (shogi.BoardPiece.W_RY, "龍"),
     (shogi.BoardPiece.VOID, "？"),
 ])
-def test_to_jpn(p, expect):
+def test_to_jpn_piece(p, expect):
     actual = p.to_jpn()
+    assert expect == actual
+
+
+@pytest.mark.parametrize('sq, expect', [
+    (shogi.Square.SQ_1A, "１一"),
+    (shogi.Square.SQ_1B, "１二"),
+    (shogi.Square.SQ_1C, "１三"),
+    (shogi.Square.SQ_1D, "１四"),
+    (shogi.Square.SQ_1E, "１五"),
+    (shogi.Square.SQ_2A, "２一"),
+    (shogi.Square.SQ_2B, "２二"),
+    (shogi.Square.SQ_2C, "２三"),
+    (shogi.Square.SQ_2D, "２四"),
+    (shogi.Square.SQ_2E, "２五"),
+    (shogi.Square.SQ_3A, "３一"),
+    (shogi.Square.SQ_3B, "３二"),
+    (shogi.Square.SQ_3C, "３三"),
+    (shogi.Square.SQ_3D, "３四"),
+    (shogi.Square.SQ_3E, "３五"),
+    (shogi.Square.SQ_4A, "４一"),
+    (shogi.Square.SQ_4B, "４二"),
+    (shogi.Square.SQ_4C, "４三"),
+    (shogi.Square.SQ_4D, "４四"),
+    (shogi.Square.SQ_4E, "４五"),
+    (shogi.Square.SQ_5A, "５一"),
+    (shogi.Square.SQ_5B, "５二"),
+    (shogi.Square.SQ_5C, "５三"),
+    (shogi.Square.SQ_5D, "５四"),
+    (shogi.Square.SQ_5E, "５五"),
+])
+def test_to_jpn_square(sq, expect):
+    actual = sq.to_jpn()
     assert expect == actual
 
 

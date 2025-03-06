@@ -456,6 +456,22 @@ class Game(abc.ABC):
         else:
             return self._sfen_list[n]
 
+    def to_jpn(self, move=None, *args, **kwargs) -> str:
+        """Return Japanese representation of the given move.
+
+        Parameters
+        ----------
+        move : Move
+            Move to represent in Japanese
+
+        Returns
+        -------
+        str
+            Japanese representation at the current game position.
+        """
+        move = self._get_move(move, *args, **kwargs)
+        return self._game.to_jpn(move)
+
     def dump_records(
         self,
         getters: tp.Tuple[

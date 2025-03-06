@@ -49,8 +49,123 @@ import vshogi.shogi as shogi
     (shogi.BoardPiece.W_RY, "龍"),
     (shogi.BoardPiece.VOID, "？"),
 ])
-def test_to_jpn(p, expect):
+def test_to_jpn_piece(p, expect):
     actual = p.to_jpn()
+    assert expect == actual
+
+
+@pytest.mark.parametrize('sq, expect', [
+    (shogi.Square.SQ_1A, "１一"),
+    (shogi.Square.SQ_1B, "１二"),
+    (shogi.Square.SQ_1C, "１三"),
+    (shogi.Square.SQ_1D, "１四"),
+    (shogi.Square.SQ_1E, "１五"),
+    (shogi.Square.SQ_1F, "１六"),
+    (shogi.Square.SQ_1G, "１七"),
+    (shogi.Square.SQ_1H, "１八"),
+    (shogi.Square.SQ_1I, "１九"),
+    (shogi.Square.SQ_2A, "２一"),
+    (shogi.Square.SQ_2B, "２二"),
+    (shogi.Square.SQ_2C, "２三"),
+    (shogi.Square.SQ_2D, "２四"),
+    (shogi.Square.SQ_2E, "２五"),
+    (shogi.Square.SQ_2F, "２六"),
+    (shogi.Square.SQ_2G, "２七"),
+    (shogi.Square.SQ_2H, "２八"),
+    (shogi.Square.SQ_2I, "２九"),
+    (shogi.Square.SQ_3A, "３一"),
+    (shogi.Square.SQ_3B, "３二"),
+    (shogi.Square.SQ_3C, "３三"),
+    (shogi.Square.SQ_3D, "３四"),
+    (shogi.Square.SQ_3E, "３五"),
+    (shogi.Square.SQ_3F, "３六"),
+    (shogi.Square.SQ_3G, "３七"),
+    (shogi.Square.SQ_3H, "３八"),
+    (shogi.Square.SQ_3I, "３九"),
+    (shogi.Square.SQ_4A, "４一"),
+    (shogi.Square.SQ_4B, "４二"),
+    (shogi.Square.SQ_4C, "４三"),
+    (shogi.Square.SQ_4D, "４四"),
+    (shogi.Square.SQ_4E, "４五"),
+    (shogi.Square.SQ_4F, "４六"),
+    (shogi.Square.SQ_4G, "４七"),
+    (shogi.Square.SQ_4H, "４八"),
+    (shogi.Square.SQ_4I, "４九"),
+    (shogi.Square.SQ_5A, "５一"),
+    (shogi.Square.SQ_5B, "５二"),
+    (shogi.Square.SQ_5C, "５三"),
+    (shogi.Square.SQ_5D, "５四"),
+    (shogi.Square.SQ_5E, "５五"),
+    (shogi.Square.SQ_5F, "５六"),
+    (shogi.Square.SQ_5G, "５七"),
+    (shogi.Square.SQ_5H, "５八"),
+    (shogi.Square.SQ_5I, "５九"),
+    (shogi.Square.SQ_6A, "６一"),
+    (shogi.Square.SQ_6B, "６二"),
+    (shogi.Square.SQ_6C, "６三"),
+    (shogi.Square.SQ_6D, "６四"),
+    (shogi.Square.SQ_6E, "６五"),
+    (shogi.Square.SQ_6F, "６六"),
+    (shogi.Square.SQ_6G, "６七"),
+    (shogi.Square.SQ_6H, "６八"),
+    (shogi.Square.SQ_6I, "６九"),
+    (shogi.Square.SQ_7A, "７一"),
+    (shogi.Square.SQ_7B, "７二"),
+    (shogi.Square.SQ_7C, "７三"),
+    (shogi.Square.SQ_7D, "７四"),
+    (shogi.Square.SQ_7E, "７五"),
+    (shogi.Square.SQ_7F, "７六"),
+    (shogi.Square.SQ_7G, "７七"),
+    (shogi.Square.SQ_7H, "７八"),
+    (shogi.Square.SQ_7I, "７九"),
+    (shogi.Square.SQ_8A, "８一"),
+    (shogi.Square.SQ_8B, "８二"),
+    (shogi.Square.SQ_8C, "８三"),
+    (shogi.Square.SQ_8D, "８四"),
+    (shogi.Square.SQ_8E, "８五"),
+    (shogi.Square.SQ_8F, "８六"),
+    (shogi.Square.SQ_8G, "８七"),
+    (shogi.Square.SQ_8H, "８八"),
+    (shogi.Square.SQ_8I, "８九"),
+    (shogi.Square.SQ_9A, "９一"),
+    (shogi.Square.SQ_9B, "９二"),
+    (shogi.Square.SQ_9C, "９三"),
+    (shogi.Square.SQ_9D, "９四"),
+    (shogi.Square.SQ_9E, "９五"),
+    (shogi.Square.SQ_9F, "９六"),
+    (shogi.Square.SQ_9G, "９七"),
+    (shogi.Square.SQ_9H, "９八"),
+    (shogi.Square.SQ_9I, "９九"),
+])
+def test_to_jpn_square(sq, expect):
+    actual = sq.to_jpn()
+    assert expect == actual
+
+
+@pytest.mark.parametrize('m, g, expect', [
+    (
+        shogi.Move('8h2b+'),
+        shogi.Game('4k4/7b1/9/9/9/9/9/1B7/4K4 b -'),
+        '２二角成（８八）',
+    ),
+    (
+        shogi.Move('8h2b'),
+        shogi.Game('4k4/7b1/9/9/9/9/9/1B7/4K4 b -'),
+        '２二角不成（８八）',
+    ),
+    (
+        shogi.Move('8h2b+'),
+        shogi.Game('4k3b/7+R1/9/9/9/9/9/1B7/4K4 b -').apply('1a2b'),
+        '同角成（８八）',
+    ),
+    (
+        shogi.Move('B*2b'),
+        shogi.Game('4k4/9/9/9/9/9/9/9/4K4 b B'),
+        '２二角打',
+    ),
+])
+def test_to_jpn_move(m, g, expect):
+    actual = g.to_jpn(m)
     assert expect == actual
 
 
