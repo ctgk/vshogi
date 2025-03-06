@@ -109,7 +109,7 @@ def _search_2ply_mate(game: Game) -> tp.List[tp.Tuple[Move, ...]]:
     out = []
     for m in legal_moves:
         game.apply(m)
-        mates_1ply = _search_1ply_mate(game)
+        mates_1ply = _search_1ply_mate(game, False)
         if len(mates_1ply) == 0:
             game.undo()
             return []  # No mate
@@ -129,3 +129,10 @@ def _search_3ply_mate(game: Game) -> tp.List[tp.Tuple[Move, ...]]:
             out.extend([(m, *moves) for moves in mates_2ply])
         game.undo()
     return out
+
+
+if __name__ == '__main__':
+    import vshogi.minishogi as shogi
+    g = shogi.Game('2pp1/3k1/5/3P1/R4 b Gsgbr')
+    print(g)
+    print(_search_3ply_mate(g))
