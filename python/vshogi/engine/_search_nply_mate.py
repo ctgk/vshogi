@@ -17,19 +17,15 @@ def _is_mate_after_redundant_blocks(game: Game, checker_sq) -> bool:
     expected_result = (
         Result.BLACK_WIN if game.turn == Color.WHITE else Result.WHITE_WIN
     )
-    block_moves = game.get_legal_moves()
-    for blk in block_moves:
+    for blk in game.get_legal_moves():
         if blk.destination == checker_sq:
             return False
         game.apply(blk)
         is_mate = False
-        for atk in game.get_legal_moves():
+        for atk in game.get_check_moves():
             if atk.destination != blk.destination:
                 continue
             game.apply(atk)
-            if not game.in_check():
-                game.undo()
-                continue
             if (
                 (game.result == expected_result)
                 or _is_mate_after_redundant_blocks(game, atk.destination)
@@ -49,16 +45,13 @@ def _search_1ply_mate(
     allow_redundant_blocks: bool,
 ) -> tp.List[tp.Tuple[Move]]:
     _raise_error_if_ended(game)
-    legal_moves = game.get_legal_moves()
+    check_moves = game.get_check_moves()
     out = []
     expected_result = (
         Result.BLACK_WIN if game.turn == Color.BLACK else Result.WHITE_WIN
     )
-    for m in legal_moves:
+    for m in check_moves:
         game.apply(m)
-        if not game.in_check():
-            game.undo()
-            continue
         if (
             (game.result == expected_result)
             or (
@@ -132,14 +125,13 @@ def _search_2ply_mate(game: Game, checker_sq) -> tp.List[tp.Tuple[Move, ...]]:
 
 def _search_3ply_mate(game: Game, target=None) -> tp.List[tp.Tuple[Move, ...]]:
     _raise_error_if_ended(game)
-    legal_moves = game.get_legal_moves()
+    check_moves = game.get_check_moves()
     out = []
-    for m in legal_moves:
+    for m in check_moves:
         if (target is not None) and (target != m.destination):
             continue
         game.apply(m)
-        if game.in_check():
-            mates_2ply = _search_2ply_mate(game, m.destination)
-            out.extend([(m, *moves) for moves in mates_2ply])
+        mates_2ply = _search_2ply_mate(game, m.destination)
+        out.extend([(m, *moves) for moves in mates_2ply])
         game.undo()
     return out
