@@ -98,6 +98,13 @@ def test_get_legal_moves():
     assert len(actual) == 14
 
 
+def test_get_check_moves():
+    game = shogi.Game()
+    actual = game.get_check_moves()
+    assert len(actual) == 1
+    assert actual[0] == shogi.Move('1e1b')
+
+
 def test_get_attention():
     a = shogi.Game.get_attention()
     assert a.shape == (5, 5, 5, 5)

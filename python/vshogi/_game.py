@@ -378,6 +378,16 @@ class Game(abc.ABC):
         """
         return self._game.get_legal_moves()
 
+    def get_check_moves(self) -> tp.List[Move]:
+        """Return list of check moves at the current state.
+
+        Returns
+        -------
+        tp.List[Move]
+            List of check moves.
+        """
+        return self._game.get_check_moves()
+
     def to_sfen(self, include_move_count: bool = True) -> str:
         """Return current game state in SFEN.
 

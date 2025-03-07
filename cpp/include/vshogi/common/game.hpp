@@ -107,6 +107,17 @@ public:
             out.emplace_back(m);
         return out;
     }
+    std::vector<MoveType> get_check_moves() const
+    {
+        std::vector<MoveType> out{};
+        if (m_result != ONGOING)
+            return out;
+        for (auto m : CheckBoardMoveGenerator<Parameters>(m_current_state))
+            out.emplace_back(m);
+        for (auto m : DropMoveGenerator<Parameters, true>(m_current_state))
+            out.emplace_back(m);
+        return out;
+    }
     Square get_checker_location(const uint index = 0u) const
     {
         return m_current_state.get_checker_location(index);
