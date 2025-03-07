@@ -864,13 +864,16 @@ class Game(abc.ABC):
         """
         return self.__class__(self._game.copy())
 
-    def to_svg(self, scale: float = 1.):
+    def to_svg(self, scale: float = 1., *, skip_white_stand: bool = False):
         """Return an SVG representation of the current game position.
 
         Parameters
         ----------
         scale : float, optional
             Scaling factor of the resulting SVG image, by default 1.
+        skip_white_stand : bool, optional
+            Skip depiction of white stand from SVG image if true,
+            by default false.
 
         Returns
         -------
@@ -879,4 +882,5 @@ class Game(abc.ABC):
         """
         from vshogi._to_svg import _to_svg
         lastmove = self.get_move_at(-1) if self.record_length > 0 else None
-        return _to_svg(self, lastmove, scale)
+        return _to_svg(
+            self, lastmove, scale, skip_white_stand=skip_white_stand)

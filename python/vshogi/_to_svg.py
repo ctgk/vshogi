@@ -22,6 +22,8 @@ def _to_svg(
     game: 'Game',
     lastmove: tp.Optional['Move'] = None,
     scale: float = 1.0,
+    *,
+    skip_white_stand: bool = False,
 ):
     # width = 230
     # height = 192
@@ -137,6 +139,8 @@ def _to_svg(
         hand_pieces[c].append((i, "☗" if c == Color.BLACK else "☖"))
 
     for c in (Color.BLACK, Color.WHITE):
+        if skip_white_stand and (c == Color.WHITE):
+            continue
         if c == Color.BLACK:
             x = 34 + 20 * game.files
             y = 10 + 20 * game.ranks
