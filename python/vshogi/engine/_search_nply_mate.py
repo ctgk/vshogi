@@ -13,12 +13,14 @@ def _raise_error_if_ended(game: Game):
             f'Input game ({game.to_sfen()}) has already been ended the game.')
 
 
-def _is_mate_after_redundant_blocks(game: Game) -> bool:
+def _is_mate_after_redundant_blocks(game: Game, checker_sq) -> bool:
     expected_result = (
         Result.BLACK_WIN if game.turn == Color.WHITE else Result.WHITE_WIN
     )
     block_moves = game.get_legal_moves()
     for blk in block_moves:
+        if blk.destination == checker_sq:
+            return False
         game.apply(blk)
         is_mate = False
         for atk in game.get_legal_moves():
@@ -30,7 +32,7 @@ def _is_mate_after_redundant_blocks(game: Game) -> bool:
                 continue
             if (
                 (game.result == expected_result)
-                or _is_mate_after_redundant_blocks(game)
+                or _is_mate_after_redundant_blocks(game, atk.destination)
             ):
                 is_mate = True
                 game.undo()
@@ -61,7 +63,7 @@ def _search_1ply_mate(
             (game.result == expected_result)
             or (
                 (not allow_redundant_blocks)
-                and _is_mate_after_redundant_blocks(game)
+                and _is_mate_after_redundant_blocks(game, m.destination)
             )
         ):
             out.append((m,))
@@ -69,12 +71,7 @@ def _search_1ply_mate(
     return out
 
 
-def search_nply_mate(
-    game: Game,
-    num_ply: int,
-    *,
-    allow_redundant_blocks: bool = False,
-) -> tp.List[tp.Tuple[Move, ...]]:
+def search_nply_mate(game: Game, num_ply: int) -> tp.List[tp.Tuple[Move, ...]]:
     """Return checkmate moves less than the specified length.
 
     Parameters
@@ -95,21 +92,36 @@ def search_nply_mate(
     >>> g = shogi.Game('3pk/5/3G1/5/R4 b psgbr')
     >>> search_nply_mate(g, 1)
     [(Move(dst=SQ_1E, src=SQ_5E),)]
-    >>> search_nply_mate(g, 1, allow_redundant_blocks=True)
-    []
     """
-    if num_ply != 1:
-        raise NotImplementedError('Only `num_ply == 1` is supported currently')
-    return _search_1ply_mate(game, allow_redundant_blocks)
+    if num_ply not in (1, 3):
+        raise NotImplementedError(
+            f'`num_ply == {num_ply}` is not currently supported')
+    for n in range(1, num_ply + 1, 2):
+        if n == 1:
+            out = _search_1ply_mate(game, False)
+            if out:
+                return out
+        if n == 3:
+            out = _search_3ply_mate(game)
+            if out:
+                return out
+    return []
 
 
-def _search_2ply_mate(game: Game) -> tp.List[tp.Tuple[Move, ...]]:
+def _search_2ply_mate(game: Game, checker_sq) -> tp.List[tp.Tuple[Move, ...]]:
     _raise_error_if_ended(game)
     legal_moves = game.get_legal_moves()
     out = []
     for m in legal_moves:
         game.apply(m)
-        mates_1ply = _search_1ply_mate(game, False)
+        if (m.destination != checker_sq):
+            mates_1ply = _search_1ply_mate(game, False)
+            if len(mates_1ply) == 0:
+                if (_search_3ply_mate(game, target=m.destination)):
+                    game.undo()
+                    continue
+        else:
+            mates_1ply = _search_1ply_mate(game, False)
         if len(mates_1ply) == 0:
             game.undo()
             return []  # No mate
@@ -118,21 +130,16 @@ def _search_2ply_mate(game: Game) -> tp.List[tp.Tuple[Move, ...]]:
     return out
 
 
-def _search_3ply_mate(game: Game) -> tp.List[tp.Tuple[Move, ...]]:
+def _search_3ply_mate(game: Game, target=None) -> tp.List[tp.Tuple[Move, ...]]:
     _raise_error_if_ended(game)
     legal_moves = game.get_legal_moves()
     out = []
     for m in legal_moves:
+        if (target is not None) and (target != m.destination):
+            continue
         game.apply(m)
         if game.in_check():
-            mates_2ply = _search_2ply_mate(game)
+            mates_2ply = _search_2ply_mate(game, m.destination)
             out.extend([(m, *moves) for moves in mates_2ply])
         game.undo()
     return out
-
-
-if __name__ == '__main__':
-    import vshogi.minishogi as shogi
-    g = shogi.Game('2pp1/3k1/5/3P1/R4 b Gsgbr')
-    print(g)
-    print(_search_3ply_mate(g))
