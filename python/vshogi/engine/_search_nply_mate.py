@@ -104,13 +104,20 @@ def search_nply_mate(game: Game, num_ply: int) -> tp.List[tp.Tuple[Move, ...]]:
 def _search_2ply_mate(game: Game, checker_sq) -> tp.List[tp.Tuple[Move, ...]]:
     _raise_error_if_ended(game)
     legal_moves = game.get_legal_moves()
+    redundant_block_cache = [None] * (game.ranks * game.files)
     out = []
     for m in legal_moves:
         game.apply(m)
+        if game.result != Result.ONGOING:
+            game.undo()
+            return []  # no mate
         if (m.destination != checker_sq):
             mates_1ply = _search_1ply_mate(game, False)
             if len(mates_1ply) == 0:
-                if (_search_3ply_mate(game, target=m.destination)):
+                if redundant_block_cache[int(m.destination)] is None:
+                    redundant_block_cache[int(m.destination)] = bool(
+                        _search_3ply_mate(game, target=m.destination))
+                if redundant_block_cache[int(m.destination)]:
                     game.undo()
                     continue
         else:
