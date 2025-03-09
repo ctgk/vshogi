@@ -67,9 +67,10 @@ public:
         };
         return table[pt];
     }
-    static const std::string& to_jpn(const FullPieceTypes pt)
+    static const std::string&
+    to_jpn(const FullPieceTypes pt, const bool single_char = true)
     {
-        static const std::string table[] = {
+        static const std::string single_char_table[] = {
             u8"\u6B69", //!< Fu (Pawn)
             u8"\u9999", //!< Kyo (Lance)
             u8"\u6842", //!< Kei (Knight)
@@ -86,7 +87,26 @@ public:
             u8"\u9F8D", //!< Ryu (Promoted Rook)
             u8"\uFF1F", //!< NA
         };
-        return table[pt];
+        static const std::string two_chars_table[] = {
+            u8"\u6B69", //!< Fu (Pawn)
+            u8"\u9999", //!< Kyo (Lance)
+            u8"\u6842", //!< Kei (Knight)
+            u8"\u9280", //!< Gin (Silver)
+            u8"\u89D2", //!< Kaku (Bishop)
+            u8"\u98DB", //!< Hisha (Rook)
+            u8"\u91D1", //!< Kin (Gold)
+            u8"\u7389", //!< Ou, Gyoku (King)
+            u8"\u3068", //!< Tokin (Promoted Pawn)
+            u8"\u6210\u9999", //!< Nari-Kyo (Promoted Lance)
+            u8"\u6210\u6842", //!< Nari-Kei (Promoted Knight)
+            u8"\u6210\u9280", //!< Nari-Gin (Promoted Silver)
+            u8"\u99AC", //!< Uma (Promoted Bishop)
+            u8"\u9F8D", //!< Ryu (Promoted Rook)
+            u8"\uFF1F", //!< NA
+        };
+        if (single_char)
+            return single_char_table[pt];
+        return two_chars_table[pt];
     }
     static constexpr bool is_promotable(const FullPieceTypes pt)
     {
@@ -291,6 +311,11 @@ public:
     static const std::string& to_jpn(const PieceType& pt)
     {
         return FPTHelper::to_jpn(C::piece_types[pt]);
+    }
+    static const std::string&
+    to_jpn(const PieceType& pt, const bool single_char)
+    {
+        return FPTHelper::to_jpn(C::piece_types[pt], single_char);
     }
 
     static constexpr bool is_promotable(const PieceType& p)

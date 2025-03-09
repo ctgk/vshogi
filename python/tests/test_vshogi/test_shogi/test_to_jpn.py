@@ -163,6 +163,11 @@ def test_to_jpn_square(sq, expect):
         shogi.Game('4k4/9/9/9/9/9/9/9/4K4 b B'),
         '２二角打',
     ),
+    (
+        shogi.Move('1a1b'),
+        shogi.Game('k7+S/9/9/9/9/9/9/9/K8 b -'),
+        '１二成銀（１一）',
+    ),
 ])
 def test_to_jpn_move(m, g, expect):
     actual = g.to_jpn(m)

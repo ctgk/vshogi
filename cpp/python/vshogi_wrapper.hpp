@@ -28,7 +28,9 @@ inline void export_to_jpn(pybind11::module& m)
     namespace py = pybind11;
     using C = vshogi::Configuration<Parameters>;
     using PHelper = vshogi::Pieces<Parameters>;
-    m.def("to_jpn", &PHelper::to_jpn);
+    m.def("to_jpn", [](const typename C::PieceType pt) {
+        return PHelper::to_jpn(pt);
+    });
     m.def("to_jpn", [](const typename C::ColoredPiece p) {
         return PHelper::to_jpn(PHelper::to_piece_type(p));
     });

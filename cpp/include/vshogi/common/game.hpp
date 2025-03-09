@@ -256,7 +256,7 @@ public:
             const Square src = move.source_square();
             const auto src_jpn = u8"\uff08" + SHelper::to_jpn(src) + u8"\uff09";
             const PieceType pt = PHelper::to_piece_type(get_board()[src]);
-            const auto pt_jpn = PHelper::to_jpn(pt);
+            const auto pt_jpn = PHelper::to_jpn(pt, false);
             const uint n = record_length();
             const ColorEnum t = get_turn();
             const auto dst_jpn
