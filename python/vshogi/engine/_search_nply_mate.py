@@ -46,11 +46,15 @@ def _search_1ply_mate(
 ) -> tp.List[tp.Tuple[Move]]:
     _raise_error_if_ended(game)
     check_moves = game.get_check_moves()
+    check_moves = sorted(check_moves, key=lambda m: not m.promote)
     out = []
     expected_result = (
         Result.BLACK_WIN if game.turn == Color.BLACK else Result.WHITE_WIN
     )
     for m in check_moves:
+        if (not m.is_drop()):
+            if (not m.promote) and ((type(m)(m.to_sfen() + '+'),) in out):
+                continue
         game.apply(m)
         if (
             (game.result == expected_result)
@@ -133,10 +137,17 @@ def _search_2ply_mate(game: Game, checker_sq) -> tp.List[tp.Tuple[Move, ...]]:
 def _search_3ply_mate(game: Game, target=None) -> tp.List[tp.Tuple[Move, ...]]:
     _raise_error_if_ended(game)
     check_moves = game.get_check_moves()
+    check_moves = sorted(check_moves, key=lambda m: not m.promote)
     out = []
     for m in check_moves:
         if (target is not None) and (target != m.destination):
             continue
+        if (not m.is_drop()):
+            if (
+                (not m.promote)
+                and ((type(m)(m.to_sfen() + '+'),) in [(o[0],) for o in out])
+            ):
+                continue
         game.apply(m)
         mates_2ply = _search_2ply_mate(game, m.destination)
         out.extend([(m, *moves) for moves in mates_2ply])
