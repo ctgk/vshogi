@@ -1,4 +1,5 @@
 import typing as tp
+import warnings
 
 from vshogi._game import Game
 from vshogi._vshogi import Color, Result
@@ -42,7 +43,7 @@ def _is_mate_after_redundant_blocks(game: Game, checker_sq) -> bool:
 
 def _search_1ply_mate(
     game: Game,
-    allow_redundant_blocks: bool,
+    allow_redundant_blocks: bool = False,
 ) -> tp.List[tp.Tuple[Move]]:
     _raise_error_if_ended(game)
     check_moves = game.get_check_moves()
@@ -90,18 +91,17 @@ def search_nply_mate(game: Game, num_ply: int) -> tp.List[tp.Tuple[Move, ...]]:
     >>> search_nply_mate(g, 1)
     [(Move(dst=SQ_1E, src=SQ_5E),)]
     """
-    if num_ply not in (1, 3):
+    if num_ply not in (1, 3, 5):
         raise NotImplementedError(
             f'`num_ply == {num_ply}` is not currently supported')
+    if num_ply == 5:
+        warnings.warn(
+            'Searching 5-ply mates involving redundant blocks is '
+            'not accurate yet.')
     for n in range(1, num_ply + 1, 2):
-        if n == 1:
-            out = _search_1ply_mate(game, False)
-            if out:
-                return out
-        if n == 3:
-            out = _search_3ply_mate(game)
-            if out:
-                return out
+        out = eval(f'_search_{n}ply_mate')(game)
+        if out:
+            return out
     return []
 
 
@@ -156,5 +156,45 @@ def _search_3ply_mate(game: Game, target=None) -> tp.List[tp.Tuple[Move, ...]]:
         game.apply(m)
         mates_2ply = _search_2ply_mate(game, m.destination)
         out.extend([(m, *moves) for moves in mates_2ply])
+        game.undo()
+    return out
+
+
+def _search_4ply_mate(game: Game) -> tp.List[tp.Tuple[Move, ...]]:
+    _raise_error_if_ended(game)
+    legal_moves = game.get_legal_moves()
+    out = []
+    for m in legal_moves:
+        game.apply(m)
+        if game.result != Result.ONGOING:
+            game.undo()
+            return []  # no mate
+        if _search_1ply_mate(game):
+            game.undo()
+            continue
+        mates_3ply = _search_3ply_mate(game)
+        if len(mates_3ply) == 0:
+            game.undo()
+            return []  # No mate
+        out.extend([(m, *moves) for moves in mates_3ply])
+        game.undo()
+    return out
+
+
+def _search_5ply_mate(game: Game) -> tp.List[tp.Tuple[Move, ...]]:
+    _raise_error_if_ended(game)
+    check_moves = game.get_check_moves()
+    check_moves = sorted(check_moves, key=lambda m: not m.promote)
+    out = []
+    for m in check_moves:
+        if (not m.is_drop()):
+            if (
+                (not m.promote)
+                and ((type(m)(m.to_sfen() + '+'),) in [(o[0],) for o in out])
+            ):
+                continue
+        game.apply(m)
+        mates_4ply = _search_4ply_mate(game)
+        out.extend([(m, *moves) for moves in mates_4ply])
         game.undo()
     return out

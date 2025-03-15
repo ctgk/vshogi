@@ -47,5 +47,22 @@ def test_search_3ply_mate(sfen, expect):
     assert set(expect) == set(actual)
 
 
+@pytest.mark.parametrize('sfen, expect', [
+    (
+        '6bkn/9/9/6Pr+B/9/9/9/9/9 b GSN2p2l2n2s2gr',
+        [
+            'N*3c, 2a1b, G*2b, 1b2b, S*1c',
+            'N*3c, 2a1b, G*2b, 2d2b, S*1c',
+            'N*3c, 2a1b, G*2b, 3a2b, S*2a',
+        ],
+    ),
+])
+def test_search_5ply_mate(sfen, expect):
+    expect = [tuple(shogi.Move(a) for a in e.split(', ')) for e in expect]
+    g = shogi.Game(sfen)
+    actual = search_nply_mate(g, num_ply=5)
+    assert set(expect) == set(actual)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
