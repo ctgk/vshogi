@@ -118,10 +118,15 @@ def _search_2ply_mate(game: Game, checker_sq) -> tp.List[tp.Tuple[Move, ...]]:
         if (m.destination != checker_sq):
             mates_1ply = _search_1ply_mate(game, False)
             if len(mates_1ply) == 0:
-                if redundant_block_cache[int(m.destination)] is None:
-                    redundant_block_cache[int(m.destination)] = bool(
-                        _search_3ply_mate(game, target=m.destination))
-                if redundant_block_cache[int(m.destination)]:
+                d = int(m.destination)
+                if redundant_block_cache[d] is None:
+                    mate_moves = _search_3ply_mate(game, m.destination)
+                    mate_moves = [
+                        m for m in mate_moves
+                        if game.stand(game.turn).get(m[-1].source, 1)
+                    ]
+                    redundant_block_cache[d] = bool(mate_moves)
+                if redundant_block_cache[d]:
                     game.undo()
                     continue
         else:
