@@ -40,6 +40,7 @@ def test_search_1ply_mate(sfen, expect):
         '4R1+B2/9/6kg1/6pp1/5P3/9/9/9/9 b rgs',
         [],
     ),
+    ('9/9/2n3+R2/2p6/2k6/2NPP4/9/4K4/LN7 b Gr2b3g4sn3l15p 3', []),
 ])
 def test_search_3ply_mate(sfen, expect):
     g = shogi.Game(sfen)
@@ -56,6 +57,12 @@ def test_search_3ply_mate(sfen, expect):
             'N*3c, 2a1b, G*2b, 3a2b, S*2a',
         ],
     ),
+    (
+        '9/9/2n3+R2/2pk5/9/3PP4/9/4K4/LN7 b GNr2b3g4sn3l15p',
+        [],
+    ),
+    ('1ns2+N3/1r2k4/2ppp4/9/9/9/9/1B7/9 b B2Gr2g3s2n4l15p', []),
+    ('8+R/1skg5/1pp6/4pB3/9/2P6/9/9/L8 b GSLrb2g2s4n2l14p', []),
 ])
 def test_search_5ply_mate(sfen, expect):
     expect = [tuple(shogi.Move(a) for a in e.split(', ')) for e in expect]
