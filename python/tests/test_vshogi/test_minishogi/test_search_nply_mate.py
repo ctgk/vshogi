@@ -25,6 +25,10 @@ def test_search_1ply_mate(sfen, expect):
         [(shogi.Move('5c4d'), shogi.Move('2a2b'), shogi.Move('G*1b'))],
     ),
     ('3sk/2p2/B3P/5/5 b Gsgbr', []),
+    (
+        '1b3/k5/5/P4/5 b GBpsgbr',
+        [(shogi.Move('G*5c'), shogi.Move('5b5a'), shogi.Move('B*4b'))],
+    ),
 ])
 def test_search_3ply_mate(sfen, expect):
     g = shogi.Game(sfen)

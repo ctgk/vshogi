@@ -62,12 +62,21 @@ def _search_1ply_mate(
             if (not m.promote) and ((type(m)(m.to_sfen() + '+'),) in out):
                 continue
         game.apply(m)
+        if game.result == expected_result:
+            out.append((m,))
+        game.undo()
+    if out:
+        return out
+    for m in check_moves:
+        if (max_duration is not None) and ((time() - start) > max_duration):
+            return []
+        if (not m.is_drop()):
+            if (not m.promote) and ((type(m)(m.to_sfen() + '+'),) in out):
+                continue
+        game.apply(m)
         if (
-            (game.result == expected_result)
-            or (
-                (not allow_redundant_blocks)
-                and _is_mate_after_redundant_blocks(game, m.destination)
-            )
+            (not allow_redundant_blocks)
+            and _is_mate_after_redundant_blocks(game, m.destination)
         ):
             out.append((m,))
         game.undo()
