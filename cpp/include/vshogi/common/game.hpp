@@ -256,6 +256,7 @@ public:
             return dst_jpn + PHelper::to_jpn(move.source_piece())
                    + b.unique_identifier_jpn(move, t);
         } else {
+            const BoardType& b = get_board();
             const Square src = move.source_square();
             const PieceType pt = PHelper::to_piece_type(b[src]);
             const auto pt_jpn = PHelper::to_jpn(pt, false);
