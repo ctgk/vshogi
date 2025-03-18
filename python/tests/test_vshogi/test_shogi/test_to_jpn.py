@@ -146,27 +146,32 @@ def test_to_jpn_square(sq, expect):
     (
         shogi.Move('8h2b+'),
         shogi.Game('4k4/7b1/9/9/9/9/9/1B7/4K4 b -'),
-        '２二角成（８八）',
+        '２二角成',
     ),
     (
         shogi.Move('8h2b'),
         shogi.Game('4k4/7b1/9/9/9/9/9/1B7/4K4 b -'),
-        '２二角不成（８八）',
+        '２二角不成',
     ),
     (
         shogi.Move('8h2b+'),
         shogi.Game('4k3b/7+R1/9/9/9/9/9/1B7/4K4 b -').apply('1a2b'),
-        '同角成（８八）',
+        '同角成',
     ),
     (
-        shogi.Move('B*2b'),
+        shogi.Move('B*5e'),
         shogi.Game('4k4/9/9/9/9/9/9/9/4K4 b B'),
-        '２二角打',
+        '５五角',
+    ),
+    (
+        shogi.Move('B*5e'),
+        shogi.Game('4k4/9/9/9/9/9/9/1B7/4K4 b B'),
+        '５五角打',
     ),
     (
         shogi.Move('1a1b'),
         shogi.Game('k7+S/9/9/9/9/9/9/9/K8 b -'),
-        '１二成銀（１一）',
+        '１二成銀',
     ),
 ])
 def test_to_jpn_move(m, g, expect):

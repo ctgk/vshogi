@@ -7,15 +7,15 @@ namespace test_vshogi::test_minishogi
 
 using namespace vshogi::minishogi;
 
-TEST_GROUP (minishogi_game) {
+TEST_GROUP (test_minishogi_game) {
 };
 
-TEST(minishogi_game, num_dlshogi_policy)
+TEST(test_minishogi_game, num_dlshogi_policy)
 {
     CHECK_EQUAL(5 * 5 * (2 * 8 + 5), Game::num_dlshogi_policy());
 }
 
-TEST(minishogi_game, record_length)
+TEST(test_minishogi_game, record_length)
 {
     auto game = Game();
     CHECK_EQUAL(0, game.record_length());
@@ -25,7 +25,7 @@ TEST(minishogi_game, record_length)
     CHECK_EQUAL(3, game.record_length());
 }
 
-TEST(minishogi_game, get_board_turn_hash)
+TEST(test_minishogi_game, get_board_turn_hash)
 {
     auto g1 = Game("4k/5/4G/5/5 b G");
     auto g2 = Game("4k/5/4G/5/5 b GS");
@@ -33,7 +33,7 @@ TEST(minishogi_game, get_board_turn_hash)
     CHECK_EQUAL(g1.get_board_turn_hash(), g2.get_board_turn_hash());
 }
 
-TEST(minishogi_game, apply)
+TEST(test_minishogi_game, apply)
 {
     {
         auto game = Game();
@@ -42,7 +42,7 @@ TEST(minishogi_game, apply)
     }
 }
 
-TEST(minishogi_game, undo)
+TEST(test_minishogi_game, undo)
 {
     {
         // no promotion no capturing
@@ -91,7 +91,7 @@ TEST(minishogi_game, undo)
     }
 }
 
-TEST(minishogi_game, is_legal)
+TEST(test_minishogi_game, is_legal)
 {
     {
         // Turn: WHITE
@@ -171,7 +171,7 @@ TEST(minishogi_game, is_legal)
     }
 }
 
-TEST(minishogi_game, get_legal_moves)
+TEST(test_minishogi_game, get_legal_moves)
 {
     {
         auto g = Game();
@@ -443,7 +443,7 @@ TEST(minishogi_game, get_legal_moves)
     }
 }
 
-TEST(minishogi_game, result)
+TEST(test_minishogi_game, result)
 {
     {
         auto game = Game();
@@ -502,6 +502,18 @@ TEST(minishogi_game, result)
     {
         auto game = Game("4k/5/5/5/4R b -");
         CHECK_EQUAL(vshogi::BLACK_WIN, game.get_result());
+    }
+}
+
+TEST(test_minishogi_game, to_jpn)
+{
+    {
+        auto game = Game("5/2G2/G4/5/5 b -");
+        {
+            const auto m = Move("5c4b");
+            const auto actual = game.to_jpn(m);
+            STRCMP_EQUAL(u8"\uFF14\u4E8C\u91D1\u4E0A", actual.c_str());
+        }
     }
 }
 

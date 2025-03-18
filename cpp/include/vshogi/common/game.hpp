@@ -249,29 +249,22 @@ public:
     std::string to_jpn(const Move<Parameters>& move) const
     {
         const Square dst = move.destination();
+        const BoardType& b = get_board();
+        const ColorEnum t = get_turn();
         if (move.is_drop()) {
             const auto dst_jpn = SHelper::to_jpn(dst);
-            return dst_jpn + PHelper::to_jpn(move.source_piece()) + u8"\u6253";
+            return dst_jpn + PHelper::to_jpn(move.source_piece())
+                   + b.unique_identifier_jpn(move, t);
         } else {
             const Square src = move.source_square();
-            const auto src_jpn = u8"\uff08" + SHelper::to_jpn(src) + u8"\uff09";
-            const PieceType pt = PHelper::to_piece_type(get_board()[src]);
+            const PieceType pt = PHelper::to_piece_type(b[src]);
             const auto pt_jpn = PHelper::to_jpn(pt, false);
+            const auto unique_identifier_jpn = b.unique_identifier_jpn(move, t);
+            const auto promotion_jpn = move.promotion_to_jpn(pt, t);
             const uint n = record_length();
-            const ColorEnum t = get_turn();
-            const auto dst_jpn
-                = ((n > 0u) && (get_record_action(n - 1u).destination() == dst))
-                      ? u8"\u540c"
-                      : SHelper::to_jpn(dst);
-            if (move.promote()) {
-                return dst_jpn + pt_jpn + u8"\u6210" + src_jpn;
-            } else if (
-                PHelper::is_promotable(pt)
-                && (SHelper::in_promotion_zone(dst, t)
-                    || SHelper::in_promotion_zone(src, t))) {
-                return dst_jpn + pt_jpn + u8"\u4e0d" + u8"\u6210" + src_jpn;
-            }
-            return dst_jpn + pt_jpn + src_jpn;
+            const auto dst_jpn = move.destination_to_jpn(
+                (n > 0u) ? get_record_action(n - 1u).destination() : C::SQ_NA);
+            return dst_jpn + pt_jpn + unique_identifier_jpn + promotion_jpn;
         }
     }
     void to_feature_map(float* const data) const

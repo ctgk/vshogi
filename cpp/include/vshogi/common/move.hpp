@@ -141,6 +141,23 @@ public:
     {
         return 2 * C::num_dir_dl + C::num_stand_piece_types;
     }
+    std::string destination_to_jpn(const Square dst_prev) const
+    {
+        const auto dst = destination();
+        if (dst == dst_prev)
+            return u8"\u540c";
+        return SHelper::to_jpn(dst);
+    }
+    std::string promotion_to_jpn(const PieceType pt, const ColorEnum t) const
+    {
+        if (promote())
+            return u8"\u6210";
+        if (PHelper::is_promotable(pt)
+            && (SHelper::in_promotion_zone(destination(), t)
+                || SHelper::in_promotion_zone(source_square(), t)))
+            return u8"\u4e0d\u6210";
+        return u8"";
+    }
 
 private:
     Move(const Square dst, const uint src, const bool promote = false)

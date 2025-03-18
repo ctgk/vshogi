@@ -625,6 +625,100 @@ private:
         }
         return false;
     }
+
+public:
+    std::string
+    unique_identifier_jpn(const MoveType& move, const ColorEnum& by_side) const
+    {
+        const auto dst = move.destination();
+        const auto dr = SHelper::to_rank(dst);
+        const auto df = SHelper::to_file(dst);
+        const auto p
+            = (move.is_drop())
+                  ? PHelper::to_board_piece(by_side, move.source_piece())
+                  : m_pieces[move.source_square()];
+        const auto src_candidates = get_src_candidates(dst, p, move.promote());
+        const auto num_cands = src_candidates.hamming_weight();
+        if (move.is_drop() && static_cast<bool>(num_cands))
+            return u8"\u6253";
+        if (num_cands < 2u)
+            return u8""; // no unique identifier required
+
+        const uint num_cands_vertical[3] = {
+            (src_candidates & BitBoardType::from_rank_below(dr, by_side))
+                .hamming_weight(),
+            (src_candidates & BitBoardType::from_rank(dr)).hamming_weight(),
+            (src_candidates & BitBoardType::from_rank_above(dr, by_side))
+                .hamming_weight(),
+        };
+        const uint num_cands_horizontal[3] = {
+            (src_candidates & BitBoardType::from_file_right(df, by_side))
+                .hamming_weight(),
+            (src_candidates & BitBoardType::from_file(df)).hamming_weight(),
+            (src_candidates & BitBoardType::from_file_left(df, by_side))
+                .hamming_weight(),
+        };
+        const auto src = move.source_square();
+        return get_unique_identifier_jpn(
+            compute_index(dr, SHelper::to_rank(src), by_side),
+            compute_index(SHelper::to_file(src), df, by_side),
+            num_cands_vertical,
+            num_cands_horizontal,
+            p);
+    }
+
+private:
+    BitBoardType get_src_candidates(
+        const Square dst, const ColoredPiece p, const bool promote) const
+    {
+        const auto t = PHelper::get_color(p);
+        const auto inverse_atk = BitBoardType::get_attacks_by(
+            PHelper::to_board_piece(~t, PHelper::to_piece_type(p)),
+            dst,
+            get_occupied());
+        BitBoardType src_candidates = inverse_atk & get_occupied(p);
+        if (promote && (!SHelper::in_promotion_zone(dst, t)))
+            src_candidates &= BitBoardType::get_promotion_zone(t);
+        return src_candidates;
+    }
+    template <class T>
+    static uint compute_index(const T d, const T s, const ColorEnum c)
+    {
+        return static_cast<uint>(
+            sign(
+                (static_cast<int>(c) * 2 - 1)
+                * (static_cast<int>(s) - static_cast<int>(d)))
+            + 1);
+    }
+    static std::string get_unique_identifier_jpn(
+        const uint vertical_index,
+        const uint horizontal_index,
+        const uint num_candidates_vertical[3],
+        const uint num_candidates_horizontal[3],
+        const ColoredPiece& p)
+    {
+        // https://www.shogi.or.jp/faq/kihuhyouki.html
+        static const std::string table_vertical[]
+            = {u8"\u4e0a", u8"\u5bc4", u8"\u5f15"};
+        static const std::string table_horizontal[]
+            = {u8"\u53f3", u8"\u76f4", u8"\u5de6"};
+        if (num_candidates_vertical[vertical_index] == 1u)
+            return table_vertical[vertical_index];
+        if (num_candidates_horizontal[horizontal_index] == 1u) {
+            if ((horizontal_index == 1u)
+                && (PHelper::is_ranging_to(p, DIR_E)
+                    || PHelper::is_ranging_to(p, DIR_NW)))
+                return (num_candidates_horizontal[0]) ? table_horizontal[2]
+                                                      : table_horizontal[0];
+            return table_horizontal[horizontal_index];
+        }
+        if ((vertical_index == 0u) && (horizontal_index == 1u))
+            return table_horizontal[horizontal_index];
+        if ((vertical_index == 2u) && (horizontal_index == 1u))
+            return table_vertical[vertical_index];
+        return table_horizontal[horizontal_index]
+               + table_vertical[vertical_index];
+    }
 };
 
 } // namespace vshogi

@@ -18,6 +18,20 @@ static std::default_random_engine random_engine(seed_gen());
 static std::uniform_real_distribution<float>
     dist01(0.f, 0.9999f); // for numerical stability
 
+/**
+ * @brief
+ * https://stackoverflow.com/questions/1903954/is-there-a-standard-sign-function-signum-sgn-in-c-c
+ *
+ * @tparam T
+ * @param val
+ * @return int
+ */
+template <typename T>
+int sign(T val)
+{
+    return (T(0) < val) - (val < T(0));
+}
+
 enum FullPieceTypes : uint
 {
     PT_FU, //!< Fu (Pawn)

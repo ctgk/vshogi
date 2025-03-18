@@ -182,6 +182,34 @@ public:
     {
         return from_rank<R1>() | from_rank<R2, Args...>();
     }
+    static BitBoard from_rank_above(const Rank r)
+    {
+        BitBoard out{};
+        for (uint i = 0u; i < r; ++i) {
+            out |= from_rank(static_cast<Rank>(i));
+        }
+        return out;
+    }
+    static BitBoard from_rank_below(const Rank r)
+    {
+        BitBoard out{};
+        for (uint i = static_cast<uint>(r) + 1; i < C::num_ranks; ++i) {
+            out |= from_rank(static_cast<Rank>(i));
+        }
+        return out;
+    }
+    static BitBoard from_rank_above(const Rank r, const ColorEnum c)
+    {
+        if (c == BLACK)
+            return from_rank_above(r);
+        return from_rank_below(r);
+    }
+    static BitBoard from_rank_below(const Rank r, const ColorEnum c)
+    {
+        if (c == BLACK)
+            return from_rank_below(r);
+        return from_rank_above(r);
+    }
 
     /**
      * @brief Return bit mask filled with 1s in the file.
@@ -195,6 +223,27 @@ public:
         return BitBoard(static_cast<UInt>(1u << C::num_ranks) - 1u)
                << (static_cast<uint>(f) * C::num_ranks);
     }
+    static BitBoard from_file_right(const File f)
+    {
+        return BitBoard(static_cast<UInt>((1u << (C::num_ranks * f)) - 1u));
+    }
+    static BitBoard from_file_left(const File f)
+    {
+        return ~from_file_right(static_cast<File>(static_cast<uint>(f) + 1u));
+    }
+    static BitBoard from_file_right(const File f, const ColorEnum c)
+    {
+        if (c == BLACK)
+            return from_file_right(f);
+        return from_file_left(f);
+    }
+    static BitBoard from_file_left(const File f, const ColorEnum c)
+    {
+        if (c == BLACK)
+            return from_file_left(f);
+        return from_file_right(f);
+    }
+
     static BitBoard get_promotion_zone(const ColorEnum& c)
     {
         constexpr uint s = C::num_ranks - C::num_promotion_ranks;
