@@ -666,6 +666,17 @@ public:
             num_cands_horizontal,
             p);
     }
+    std::string origin_eng(const MoveType& move) const
+    {
+        const auto src = move.source_square();
+        const auto p = m_pieces[src];
+        const BitBoardType src_candidates
+            = get_src_candidates(move.destination(), p, move.promote());
+        if (src_candidates.hamming_weight() < 2u)
+            return "";
+        return std::string(1, '1' + SHelper::to_file(src))
+               + std::string(1, '1' + SHelper::to_rank(src));
+    }
 
 private:
     BitBoardType get_src_candidates(

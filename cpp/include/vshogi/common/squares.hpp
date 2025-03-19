@@ -82,6 +82,12 @@ public:
         };
         return arabic[f] + kanji[r];
     }
+    static std::string to_eng(const Square& sq)
+    {
+        const auto f = to_file(sq);
+        const auto r = to_rank(sq);
+        return std::string(1, '1' + f) + std::string(1, '1' + r);
+    }
     static Square hflip(const Square& sq)
     {
         return to_square(hflip(to_file(sq)), to_rank(sq));

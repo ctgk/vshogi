@@ -317,6 +317,16 @@ public:
     {
         return FPTHelper::to_jpn(C::piece_types[pt], single_char);
     }
+    static const std::string to_eng(const PieceType& pt)
+    {
+        if (is_promoted(pt))
+            return "+" + std::string(1, std::toupper(to_char(pt)));
+        return std::string(1, std::toupper(to_char(pt)));
+    }
+    static const std::string to_eng(const ColoredPiece& p)
+    {
+        return to_eng(to_piece_type(p));
+    }
 
     static constexpr bool is_promotable(const PieceType& p)
     {

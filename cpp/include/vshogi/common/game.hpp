@@ -267,6 +267,21 @@ public:
             return dst_jpn + pt_jpn + unique_identifier_jpn + promotion_jpn;
         }
     }
+    std::string to_eng(const Move<Parameters>& move) const
+    {
+        const Square dst = move.destination();
+        const auto dst_eng = SHelper::to_eng(dst);
+        if (move.is_drop())
+            return PHelper::to_eng(move.source_piece()) + "*" + dst_eng;
+        const Square src = move.source_square();
+        const BoardType& b = get_board();
+        const auto pt_eng = PHelper::to_eng(b[src]);
+        const auto origin_eng = b.origin_eng(move);
+        const auto movement_eng = (b.is_empty(dst) ? "-" : "x");
+        const auto promotion_eng
+            = move.promotion_to_eng(PHelper::to_piece_type(b[src]), get_turn());
+        return pt_eng + origin_eng + movement_eng + dst_eng + promotion_eng;
+    }
     void to_feature_map(float* const data) const
     {
         m_current_state.to_feature_map(data);

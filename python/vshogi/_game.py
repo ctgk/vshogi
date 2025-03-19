@@ -457,20 +457,36 @@ class Game(abc.ABC):
             return self._sfen_list[n]
 
     def to_jpn(self, move=None, *args, **kwargs) -> str:
-        """Return Japanese representation of the given move.
+        """Return Japanese notation of a given move.
 
         Parameters
         ----------
         move : Move
-            Move to represent in Japanese
+            Move to notate in Japanese
 
         Returns
         -------
         str
-            Japanese representation at the current game position.
+            Japanese notation of the move at the current game position.
         """
         move = self._get_move(move, *args, **kwargs)
         return self._game.to_jpn(move)
+
+    def to_eng(self, move=None, *args, **kwargs) -> str:
+        """Return English notation of a given move.
+
+        Parameters
+        ----------
+        move : Move
+            Move to notate in English, by default None
+
+        Returns
+        -------
+        str
+            English notation of the move at the current game position.
+        """
+        move = self._get_move(move, *args, **kwargs)
+        return self._game.to_eng(move)
 
     def dump_records(
         self,

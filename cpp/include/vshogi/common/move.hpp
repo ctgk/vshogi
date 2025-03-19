@@ -158,6 +158,16 @@ public:
             return u8"\u4e0d\u6210";
         return u8"";
     }
+    std::string promotion_to_eng(const PieceType pt, const ColorEnum t) const
+    {
+        if (promote())
+            return "+";
+        if (PHelper::is_promotable(pt)
+            && (SHelper::in_promotion_zone(destination(), t)
+                || SHelper::in_promotion_zone(source_square(), t)))
+            return "=";
+        return "";
+    }
 
 private:
     Move(const Square dst, const uint src, const bool promote = false)
