@@ -7,20 +7,20 @@ namespace test_vshogi::test_shogi
 
 using namespace vshogi::shogi;
 
-TEST_GROUP (shogi_game) {
+TEST_GROUP (test_shogi_game) {
 };
 
-TEST(shogi_game, feature_channels)
+TEST(test_shogi_game, feature_channels)
 {
     CHECK_EQUAL(2 * (14 + 7), Game::feature_channels());
 }
 
-TEST(shogi_game, num_dlshogi_policy)
+TEST(test_shogi_game, num_dlshogi_policy)
 {
     CHECK_EQUAL(9 * 9 * (2 * 10 + 7), Game::num_dlshogi_policy());
 }
 
-TEST(shogi_game, record_length)
+TEST(test_shogi_game, record_length)
 {
     auto game = Game();
     CHECK_EQUAL(0, game.record_length());
@@ -28,7 +28,7 @@ TEST(shogi_game, record_length)
     CHECK_EQUAL(1, game.record_length());
 }
 
-TEST(shogi_game, apply)
+TEST(test_shogi_game, apply)
 {
     {
         auto game = Game();
@@ -40,7 +40,7 @@ TEST(shogi_game, apply)
     }
 }
 
-TEST(shogi_game, result)
+TEST(test_shogi_game, result)
 {
     {
         auto game = Game();
@@ -70,7 +70,7 @@ TEST(shogi_game, result)
     }
 }
 
-TEST(shogi_game, is_legal)
+TEST(test_shogi_game, is_legal)
 {
     // Turn: WHITE
     // White: FU
@@ -99,7 +99,7 @@ TEST(shogi_game, is_legal)
     CHECK_FALSE(g.is_legal(Move(SQ_2H, FU)));
 }
 
-TEST(shogi_game, get_legal_moves)
+TEST(test_shogi_game, get_legal_moves)
 {
     {
         auto g = Game("8+L/8g/9/9/4k4/9/9/2K6/9 w 2br10PR");
@@ -189,6 +189,18 @@ TEST(shogi_game, get_legal_moves)
         CHECK_FALSE(
             std::find(actual.cbegin(), actual.cend(), Move(SQ_5G, SQ_4H))
             != actual.cend());
+    }
+}
+
+TEST(test_shogi_game, is_valid_piece_count)
+{
+    {
+        auto game = Game("1+R7/2lk2g2/2pp1p3/9/9/9/9/9/9 b BS3rbg3s4n3l15p");
+        CHECK_FALSE(game.is_valid_piece_count(OU));
+    }
+    {
+        auto game = Game("1+R7/2lk2g2/2pp1p3/9/9/9/9/9/9 b BSrb3g3s4n3l15p");
+        CHECK_TRUE(game.is_valid_piece_count(OU));
     }
 }
 

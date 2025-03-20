@@ -252,6 +252,29 @@ public:
     {
         return m_current_state.in_check();
     }
+    bool is_valid_piece_count(const PieceType& except = C::NA) const
+    {
+        const BoardType& b = get_board();
+        const StandType& black_stand = get_stand(BLACK);
+        const StandType& white_stand = get_stand(WHITE);
+        uint piece_count[C::num_stand_piece_types + 1u] = {};
+        for (auto sq : EnumIterator<Square, C::num_squares>()) {
+            if (b.is_empty(sq))
+                continue;
+            piece_count[PHelper::demote(PHelper::to_piece_type(b[sq]))] += 1u;
+        }
+        for (auto pt : EnumIterator<PieceType, C::num_stand_piece_types>()) {
+            piece_count[pt] += black_stand.count(pt) + white_stand.count(pt);
+        }
+        for (auto pt :
+             EnumIterator<PieceType, C::num_stand_piece_types + 1u>()) {
+            if (pt == except)
+                continue;
+            if (piece_count[pt] != C::initial_piece_count[pt])
+                return false;
+        }
+        return true;
+    }
     Move<Parameters> get_record_action(const uint index) const
     {
         return Move<Parameters>(
@@ -267,7 +290,6 @@ public:
             return dst_jpn + PHelper::to_jpn(move.source_piece())
                    + b.unique_identifier_jpn(move, t);
         } else {
-            const BoardType& b = get_board();
             const Square src = move.source_square();
             const PieceType pt = PHelper::to_piece_type(b[src]);
             const auto pt_jpn = PHelper::to_jpn(pt, false);

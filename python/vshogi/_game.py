@@ -368,6 +368,23 @@ class Game(abc.ABC):
         move = self._get_move(move, *arg, **kwargs)
         return self._game.is_legal(move)
 
+    def is_valid_piece_count(self, ignore=None) -> bool:
+        """Return true if piece count at the current state is valid.
+
+        Parameters
+        ----------
+        ignore : PieceType, optional
+            PieceType to ignore from the piece count, by default None
+
+        Returns
+        -------
+        bool
+            True if piece count is valid, otherwise false.
+        """
+        if ignore is not None:
+            return self._game.is_valid_piece_count(ignore)
+        return self._game.is_valid_piece_count()
+
     def get_legal_moves(self) -> tp.List[Move]:
         """Return list of legal moves at the current state.
 

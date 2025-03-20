@@ -144,6 +144,7 @@ struct Parameters
     static constexpr uint max_stand_sfen_length = 26; // "10p2l2n2sbr2g2P2L2N2SBR2G "
     static constexpr uint max_acceptable_repetitions = 3;
     static constexpr uint num_init_piece_each = 20;
+    static constexpr std::array<uint, 15u> initial_piece_count = {18, 4, 4, 4, 2, 2, 4, 2, 0, 0, 0, 0, 0, 0, 0};
     static constexpr uint initial_points = 27;
     static constexpr std::array<ColoredPieceEnum, 81> initial_position = {
         W_KY, VOID, W_FU, VOID, VOID, VOID, B_FU, VOID, B_KY,

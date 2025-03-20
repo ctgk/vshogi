@@ -124,6 +124,13 @@ public: // game rules
     static constexpr uint max_acceptable_repetitions
         = Param::max_acceptable_repetitions;
 
+    /**
+     * @brief Array of initial piece count in the game.
+     * E.g. {2(FU), 2(GI), 2(KA), 2(HI), 2(KI), 2(OU), 0(TO), 0(NG), 0(UM), 0(RY), 0(NA)}
+     */
+    static constexpr std::array<uint, Param::piece_types.size()>
+        initial_piece_count = Param::initial_piece_count;
+
     static constexpr uint num_init_piece_each = Param::num_init_piece_each;
     static constexpr uint half_num_init_piece_each = num_init_piece_each / 2u;
     static constexpr uint initial_points = Param::initial_points;
