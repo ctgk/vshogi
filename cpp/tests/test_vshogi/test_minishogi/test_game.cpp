@@ -515,6 +515,19 @@ TEST(test_minishogi_game, to_jpn)
             STRCMP_EQUAL(u8"\uFF14\u4E8C\u91D1\u4E0A", actual.c_str());
         }
     }
+    {
+        auto game = Game("+B3+B/5/5/5/5 b -");
+        {
+            const auto m = Move("1a3c");
+            const auto actual = game.to_jpn(m);
+            STRCMP_EQUAL(u8"\uff13\u4e09\u99ac\u53f3", actual.c_str());
+        }
+        {
+            const auto m = Move("5a3c");
+            const auto actual = game.to_jpn(m);
+            STRCMP_EQUAL(u8"\uff13\u4e09\u99ac\u5de6", actual.c_str());
+        }
+    }
 }
 
 } // namespace test_vshogi::test_minishogi

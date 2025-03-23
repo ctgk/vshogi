@@ -225,11 +225,12 @@ public:
     }
     static BitBoard from_file_right(const File f)
     {
-        return BitBoard(static_cast<UInt>((1u << (C::num_ranks * f)) - 1u));
+        return BitBoard(static_cast<UInt>(
+            (static_cast<UInt>(1u) << (C::num_ranks * f)) - 1u));
     }
     static BitBoard from_file_left(const File f)
     {
-        return ~from_file_right(static_cast<File>(static_cast<uint>(f) + 1u));
+        return ~(from_file(f) | from_file_right(f));
     }
     static BitBoard from_file_right(const File f, const ColorEnum c)
     {

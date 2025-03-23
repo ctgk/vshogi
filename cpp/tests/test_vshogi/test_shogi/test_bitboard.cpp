@@ -490,4 +490,36 @@ TEST(test_shogi_bitboard, get_promotion_zone)
     }
 }
 
+TEST(test_shogi_bitboard, from_file_right)
+{
+    {
+        const auto actual = BitBoard::from_file_right(FILE2, vshogi::BLACK);
+        CHECK_TRUE(bb_file1 == actual);
+    }
+    {
+        const auto actual = BitBoard::from_file_right(FILE3, vshogi::BLACK);
+        CHECK_TRUE((bb_file1 | bb_file2) == actual);
+    }
+    {
+        const auto actual = BitBoard::from_file_right(FILE9, vshogi::BLACK);
+        CHECK_TRUE((~bb_file9) == actual);
+    }
+}
+
+TEST(test_shogi_bitboard, from_file_left)
+{
+    {
+        const auto actual = BitBoard::from_file_left(FILE8, vshogi::BLACK);
+        CHECK_TRUE(bb_file9 == actual);
+    }
+    {
+        const auto actual = BitBoard::from_file_left(FILE2, vshogi::WHITE);
+        CHECK_TRUE(bb_file1 == actual);
+    }
+    {
+        const auto actual = BitBoard::from_file_left(FILE9, vshogi::BLACK);
+        CHECK_TRUE(bb_na == actual);
+    }
+}
+
 } // namespace test_vshogi::test_shogi

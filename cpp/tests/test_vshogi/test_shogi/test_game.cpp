@@ -204,4 +204,16 @@ TEST(test_shogi_game, is_valid_piece_count)
     }
 }
 
+TEST(test_shogi_game, to_jpn)
+{
+    {
+        auto game = Game("1+B3+B3/9/9/9/9/9/9/9/9 b -");
+        {
+            const auto m = Move("4a6c");
+            const auto actual = game.to_jpn(m);
+            STRCMP_EQUAL(u8"\uff16\u4e09\u99ac\u53f3", actual.c_str());
+        }
+    }
+}
+
 } // namespace test_vshogi::test_shogi
