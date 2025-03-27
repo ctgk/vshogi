@@ -49,6 +49,7 @@ class Args:
     nn_grad_accum: int = config(type=int, default=1, help='Gradient accumulation steps. By default 1.')
     nn_learning_rate: float = config(type=float, default=1e-2, help='Learning rate of NN weight update')
     nn_entropy_regularization: float = config(type=float, default=1e-2)
+    discount_factor: float = config(type=float, default=0.99, help='Discount factor of reward supervision. By default 0.99.')
     mcts_kldgain_threshold: float = config(type=float, default=1e-4, help='KL divergence threshold to stop MCT-search')
     mcts_search: int = config(type=int, default=1000, help='# of searches in MCTS, default=1000. Alpha Zero used 800 simulations.')
     mcts_random_rate: float = config(
@@ -232,6 +233,9 @@ def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
         usecols=['state', 'result', 'q_value', 'visit_count', 'z_weight'],
         dtype={'state': str, 'result': str, 'q_value': float, 'visit_count': str, 'z_weight': float},
     )
+    record_length = len(df)
+    df['record_length'] = [record_length] * record_length
+    df['num_ply'] = list(range(record_length))
     if fraction is None:
         return df
     n = int(len(df) * fraction)
@@ -253,6 +257,7 @@ def kifu_to_tfrecord(
             s = sum(visit_count.values())
             visit_proba = {m: v / s for m, v in visit_count.items()}
             z_value = 0 if ('DRAW' in row.result) else 2 * int(('BLACK' in row.result) == ('b' == row.state.split()[1])) - 1
+            z_value = z_value * np.power(args.discount_factor, row.record_length - row.num_ply)
             value = row.z_weight * z_value + (1 - row.z_weight) * row.q_value
             value = np.clip((value + 1) / 2, 0., 1.)
 
