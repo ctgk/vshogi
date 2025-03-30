@@ -4,6 +4,8 @@ import typing as tp
 import numpy as np
 import tensorflow as tf
 
+from vshogi._game import Game
+
 
 class MultiHeadAttention(tf.keras.layers.Layer):
 
@@ -185,32 +187,40 @@ class ValueHead(tf.keras.layers.Layer):
         return tf.tanh(x)
 
 
+GameClass = tp.TypeVar('Game', bound=Game)
+
+
 def build_policy_value_network(
-    input_size: tp.Tuple[int, int],  # (#F, #R)
-    input_channels: int,
-    num_policy_per_square: int,
+    game_class: GameClass,
     hidden_channels: int,
     bottleneck_channels: int,
     num_backbone_blocks: int,
-    attention_matrix: np.ndarray,
 ):
     """Return policy-value network.
 
     Parameters
     ----------
-    input_size : tp.Tuple[int, int]
-        # of input files and ranks of the network. e.g. (9, 9) for Shogi.
-    num_policy_per_square : int
-        Number of policies per square. e.g. 27(= 2 * 10 + 7) for Shogi.
+    game_class : GameClass
+        A subclass of `vshogi.Game` class.
     hidden_channels : int
         Number of feature-channel of output of backbone network.
     bottleneck_channels : int
         Number of feature-channel in bottleneck block.
     num_backbone_blocks : int
         Number of backbone blocks.
-    attention_matrix : np.ndarray
-        Attention matrix.
     """
+    input_size = (game_class.files, game_class.ranks)
+    input_channels = game_class.feature_channels
+    num_policy_per_square = (
+        game_class._get_move_class()._num_policy_per_square())
+    attention_matrix = (
+        game_class.get_attention()
+        + np.eye(game_class.ranks * game_class.files).reshape(
+            game_class.files, game_class.ranks,
+            game_class.files, game_class.ranks,
+        )
+    )
+
     x = tf.keras.Input(shape=(*input_size, input_channels))
     h = tf.keras.layers.Reshape(
         [input_size[0] * input_size[1], input_channels])(x)

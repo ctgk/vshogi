@@ -410,19 +410,10 @@ def run_train(args: Args):
 
     shogi = args._shogi
     network = vshogi.dlshogi.build_policy_value_network(
-        input_size=(shogi.Game.files, shogi.Game.ranks),
-        input_channels=shogi.Game.feature_channels,
-        num_policy_per_square=shogi.Move._num_policy_per_square(),
+        game_class=shogi.Game,
         hidden_channels=args.nn_hidden_channels,
         bottleneck_channels=args.nn_bottleneck_channels,
         num_backbone_blocks=args.nn_backbone_blocks,
-        attention_matrix=(
-            shogi.Game.get_attention()
-            + np.eye(shogi.Game.ranks * shogi.Game.files).reshape(
-                shogi.Game.files, shogi.Game.ranks,
-                shogi.Game.files, shogi.Game.ranks,
-            )
-        ),
     )
     i = args.resume_rl_cycle_from
     weight_path = 'models/model_{:04d}.weights.h5'

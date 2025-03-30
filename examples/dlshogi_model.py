@@ -4,16 +4,13 @@ import vshogi
 
 
 if __name__ == '__main__':
-    from vshogi.shogi import Game, Move
+    from vshogi.shogi import Game
 
     network = vshogi.dlshogi.build_policy_value_network(
-        input_size=(Game.ranks, Game.files),
-        input_channels=Game.feature_channels,
-        num_policy_per_square=Move._num_policy_per_square(),
+        game_class=Game,
         hidden_channels=128,
         bottleneck_channels=64,
         num_backbone_blocks=10,
-        attention_matrix=Game.get_attention(),
     )
     network.summary()
     player = vshogi.engine.DfpnMcts(
@@ -45,7 +42,7 @@ if __name__ == '__main__':
         "5c4b" , "3a4b" , "G*5c" , "G*3a" , "G*4c" , "3b2a" , "5c4b" , "2i5i" ,
         "6h5i" , "4h5h" , "4b3a" , "2a3a" , "S*2b" , "3a4a" , "L*4b" ,
     ]
-    for move in tqdm(kifu, ncols=100):
+    for move in tqdm(kifu, ncols=50):
         if game.result != vshogi.Result.ONGOING:
             break
         player.set_game(game)
