@@ -46,7 +46,7 @@ def test_resblock_symmetry():
         grads = tape.gradient(loss, layer.trainable_weights)
         optimizer.apply_gradients(zip(grads, layer.trainable_weights))
 
-    g = shogi.Game('4k/5/5/5/2K2 b -')
+    g = shogi.Game('4k/5/5/5/P1K1S b -')
     x1 = g.to_dlshogi_features().reshape(1, 5 * 5, -1)
     x2 = g.hflip().to_dlshogi_features().reshape(1, 5 * 5, -1)
     h1 = layer(x1).numpy().reshape(1, 5, 5, -1).sum(axis=-1)[0]
