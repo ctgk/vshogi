@@ -22,6 +22,10 @@ def test_search_1ply_mate(sfen, expect):
         [(shogi.Move('9g8h'), shogi.Move('P*2b'), shogi.Move('N*2c'))],
     ),
     (
+        '7bk/8p/9/9/9/9/B8/9/9 b N10psgbr',
+        [(shogi.Move('9g8h'), shogi.Move('P*2b'), shogi.Move('N*2c'))],
+    ),
+    (
         '6gk1/7nb/5S3/6R2/9/9/9/9/9 b -',
         [(shogi.Move('3d3a+'), shogi.Move('2a3a'), shogi.Move('G*3b'))],
     ),

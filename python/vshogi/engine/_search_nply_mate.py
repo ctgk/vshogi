@@ -83,9 +83,54 @@ def _search_1ply_mate(
     return out
 
 
+def _are_same_drop_destination(m1, m2):
+    if not m1.is_drop():
+        return False
+    if not m2.is_drop():
+        return False
+    return m1.destination == m2.destination
+
+
+def _is_duplicate_futile_interposition(
+    mate_moves_1: tuple,
+    mate_moves_2: tuple,
+) -> bool:
+    if len(mate_moves_1) != len(mate_moves_2):
+        raise ValueError(
+            'len(mate_moves_1) != len(mate_mates_2), '
+            f'({len(mate_moves_1)} != {len(mate_moves_2)})')
+    if mate_moves_1 == mate_moves_2:
+        raise ValueError(
+            f'`mate_moves_1` and `mate_moves_2` are identical, {mate_moves_1}')
+    if any(m1 != m2 for m1, m2 in zip(mate_moves_1[::2], mate_moves_2[::2])):
+        return False  # Found different attack moves
+    return all(
+        ((m1 == m2) or _are_same_drop_destination(m1, m2))
+        for m1, m2 in zip(mate_moves_1[1::2], mate_moves_2[1::2]))
+
+
+def _has_duplicate_futile_interposition(
+    mates_list: list,
+    mate_moves: tuple,
+) -> bool:
+    for m in mates_list:
+        if _is_duplicate_futile_interposition(m, mate_moves):
+            return True
+    return False
+
+
+def _remove_duplicate_futile_interposition(mates_list: list) -> list:
+    out = []
+    for mate_moves in mates_list:
+        if not _has_duplicate_futile_interposition(out, mate_moves):
+            out.append(mate_moves)
+    return out
+
+
 def search_nply_mate(
     game: Game,
     num_ply: int,
+    remove_duplicate_futile_interposition: bool = True,
     *,
     max_duration_second: float = 10.,
 ) -> tp.List[tp.Tuple[Move, ...]]:
@@ -121,7 +166,10 @@ def search_nply_mate(
     for n in range(1, num_ply + 1, 2):
         out = eval(f'_search_{n}ply_mate')(game, start, max_duration_second)
         if out:
-            return out
+            if remove_duplicate_futile_interposition:
+                return _remove_duplicate_futile_interposition(out)
+            else:
+                return out
     return []
 
 
