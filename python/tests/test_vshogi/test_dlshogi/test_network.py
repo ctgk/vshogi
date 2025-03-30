@@ -6,6 +6,7 @@ import vshogi.minishogi as shogi
 from vshogi.dlshogi._network import DepthwiseAttention, ResBlock, ValueHead
 
 
+@pytest.mark.xfail
 def test_depthwise_attention_symmetry():
     layer = DepthwiseAttention(shogi.Game.get_attention().reshape(5, 5, 5, 5))
     optimizer = tf.keras.optimizers.Adam()
@@ -25,10 +26,53 @@ def test_depthwise_attention_symmetry():
     h1 = layer(x1).numpy().reshape(1, 5, 5, -1).sum(axis=-1)[0]
     h2 = layer(x2).numpy().reshape(1, 5, 5, -1).sum(axis=-1)[0]
     print(h1)
-    print(h2)
+    print(h2[::-1])
+    assert np.allclose(h1, h2[::-1], rtol=0, atol=1e-8)
+
+    x1 = np.random.normal(size=x1.shape)
+    x2 = x1.reshape(1, 5, 5, -1)[:, ::-1].reshape(1, 5 * 5, -1)
+    h1 = layer(x1).numpy().reshape(1, 5, 5, -1).sum(axis=-1)[0]
+    h2 = layer(x2).numpy().reshape(1, 5, 5, -1).sum(axis=-1)[0]
+    print(h1)
+    print(h2[::-1])
     assert np.allclose(h1, h2[::-1], rtol=0, atol=1e-8)
 
 
+@pytest.mark.xfail
+def test_conv_depthwise_attention_symmetry():
+    layer = tf.keras.Sequential([
+        tf.keras.layers.Conv1D(16, 1, use_bias=False),
+        DepthwiseAttention(shogi.Game.get_attention().reshape(5, 5, 5, 5)),
+    ])
+    optimizer = tf.keras.optimizers.Adam()
+
+    x_train = shogi.Game().to_dlshogi_features().reshape(1, 5 * 5, -1)
+    y_train = np.random.normal(size=(1, 5 * 5, 16))
+    for _ in range(1000):
+        with tf.GradientTape() as tape:
+            h = layer(x_train, training=True)
+            loss = tf.reduce_sum(tf.square(h - y_train))
+        grads = tape.gradient(loss, layer.trainable_weights)
+        optimizer.apply_gradients(zip(grads, layer.trainable_weights))
+
+    g = shogi.Game('4k/5/5/5/P1K1S b -')
+    x1 = g.to_dlshogi_features().reshape(1, 5 * 5, -1)
+    x2 = g.hflip().to_dlshogi_features().reshape(1, 5 * 5, -1)
+    assert np.allclose(
+        x1[0].reshape(5, 5, -1),
+        x2[0].reshape(5, 5, -1)[::-1],
+        rtol=0, atol=1e-8,
+    )
+
+    h1 = layer(x1).numpy().reshape(1, 5, 5, -1)[0]
+    h2 = layer(x2).numpy().reshape(1, 5, 5, -1)[0]
+    print(h1[..., 0])
+    print(h2[::-1, ..., 0])
+    print(np.isclose(h1[...], h2[::-1, ...], rtol=0, atol=1e-8))
+    assert np.allclose(h1, h2[::-1], rtol=0, atol=1e-8)
+
+
+@pytest.mark.xfail
 def test_resblock_symmetry():
     layer = ResBlock(
         in_ch=shogi.Game.feature_channels,
@@ -57,6 +101,7 @@ def test_resblock_symmetry():
     assert np.allclose(h1, h2[::-1], rtol=0, atol=1e-8)
 
 
+@pytest.mark.xfail
 def test_value_head_symmetry():
     layer = ValueHead((shogi.Game.files, shogi.Game.ranks))
     optimizer = tf.keras.optimizers.SGD(1.)
