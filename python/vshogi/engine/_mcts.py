@@ -248,7 +248,7 @@ class Mcts(Engine):
         if (temperature is None) or np.isclose(temperature, 0):
             return self._searcher.get_action_by_visit_max()
         else:
-            return self._searcher.get_action_by_q_distribution(temperature)
+            return self._searcher.get_action_by_visit_distribution(temperature)
 
     def _tree(
         self,

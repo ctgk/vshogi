@@ -60,7 +60,7 @@ class Args:
             'The rest of the actions are obtained by selecting the mode of the distribution.'
         ),
     )
-    mcts_temperature: float = config(type=float, default=0.02, help='Temperature parameter when selecting action by random.')
+    mcts_temperature: float = config(type=float, default=1., help='Temperature parameter when selecting action by random.')
     mcts_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in MCTS, default=4.')
     mcts_q_greedy_depth: int = config(type=int, default=1, help='Number of depth to select node greedily when computing Q-value of a node, by default=1')
     dfpn_search_root: int = config(type=int, default=10000, help='Number of DFPN searches at root node of MCTS tree. By default 10000.')
