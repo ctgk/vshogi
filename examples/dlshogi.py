@@ -53,7 +53,7 @@ class Args:
     mcts_kldgain_threshold: float = config(type=float, default=1e-4, help='KL divergence threshold to stop MCT-search')
     mcts_search: int = config(type=int, default=1000, help='# of searches in MCTS, default=1000. Alpha Zero used 800 simulations.')
     mcts_random_rate: float = config(
-        type=float, default=0.25,
+        type=float, default=0.5,
         help=(
             'Select action by random sample from distribution by MCTS '
             'for first `r * average_moves_until_game_end` moves. '
