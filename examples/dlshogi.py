@@ -49,6 +49,7 @@ class Args:
     nn_grad_accum: int = config(type=int, default=1, help='Gradient accumulation steps. By default 1.')
     nn_learning_rate: float = config(type=float, default=1e-2, help='Learning rate of NN weight update')
     nn_entropy_regularization: float = config(type=float, default=1e-2)
+    nn_load_previous_weights: int = config(type=int, default=0, help='Load previous weights if 1, else train network from scratch. By default 0.')
     discount_factor: float = config(type=float, default=0.99, help='Discount factor of reward supervision. By default 0.99.')
     mcts_kldgain_threshold: float = config(type=float, default=1e-4, help='KL divergence threshold to stop MCT-search')
     mcts_search: int = config(type=int, default=1000, help='# of searches in MCTS, default=1000. Alpha Zero used 800 simulations.')
@@ -417,7 +418,7 @@ def run_train(args: Args):
     )
     i = args.resume_rl_cycle_from
     weight_path = 'models/model_{:04d}.weights.h5'
-    if i > 1:
+    if i > 1 and args.nn_load_previous_weights:
         if os.path.exists(weight_path.format(i)):
             print(f"Loading {weight_path.format(i)}")
             network.load_weights(weight_path.format(i))
