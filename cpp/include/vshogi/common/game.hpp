@@ -335,7 +335,9 @@ public:
         }
     }
     static void attention_matrix(
-        float* const data, const std::vector<DirectionEnum>& directions)
+        float* const data,
+        const std::vector<DirectionEnum>& directions,
+        const bool& local = false)
     {
         std::fill_n(data, num_squares * num_squares, 0.f);
         for (auto sq : EnumIterator<Square, num_squares>()) {
@@ -345,6 +347,8 @@ public:
                 for (; *ptr_sq != C::SQ_NA; ++ptr_sq) {
                     const uint jj = static_cast<uint>(*ptr_sq);
                     data[ii * num_squares + jj] = 1.f;
+                    if (local)
+                        break;
                 }
             }
         }

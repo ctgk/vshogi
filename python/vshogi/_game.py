@@ -130,6 +130,22 @@ class Game(abc.ABC):
             cls.files, cls.ranks, cls.files, cls.ranks)
 
     @classmethod
+    def get_local_attentions(cls) -> np.ndarray:
+        """Return local attention matrices of the game.
+
+        Returns
+        -------
+        np.ndarray
+            Attention tensor whose size is (D, F, R, F, R) where D, F and R
+            are number of valid move directions, files, and ranks respectively.
+            A tensor `A[di]` has value 1 at (fi, ri, fj, rj) if there is a
+            minor piece that can move from (fi, ri) square to (fj, rj) square,
+            otherwise 0.
+        """
+        return cls._get_backend_game_class().get_local_attentions().reshape(
+            -1, cls.files, cls.ranks, cls.files, cls.ranks)
+
+    @classmethod
     def get_adjacent_attention(cls) -> np.ndarray:
         """Return adjacent attention matrix of the game.
 

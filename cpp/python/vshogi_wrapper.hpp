@@ -266,6 +266,22 @@ inline void export_game(pybind11::module& m)
                 return out;
             })
         .def_static(
+            "get_local_attentions",
+            []() {
+                constexpr uint num_dir = Parameters::num_dir;
+                const auto n = Game::num_squares;
+                const auto shape = std::vector<py::ssize_t>({num_dir, n, n});
+                auto out = py::array_t<float>(shape);
+                for (auto dir :
+                     vshogi::EnumIterator<vshogi::DirectionEnum, num_dir>()) {
+                    Game::attention_matrix(
+                        &out.mutable_at(static_cast<int>(dir), 0, 0),
+                        {dir},
+                        true);
+                }
+                return out;
+            })
+        .def_static(
             "get_adjacent_attention",
             []() {
                 const auto n = Game::num_squares;

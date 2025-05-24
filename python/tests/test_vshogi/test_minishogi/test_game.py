@@ -120,6 +120,31 @@ def test_get_attention():
     assert np.allclose(a[1].reshape(5, 5), expect)
 
 
+def test_get_local_attentions():
+    a = shogi.Game.get_local_attentions()
+    assert a.shape == (8, 5, 5, 5, 5)
+    expect = np.array([
+        [0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+    ])
+    assert np.allclose(a[0, 0, 1], expect)
+
+    a = a.sum(axis=0)
+    a = a.reshape(25, 25)
+    assert np.allclose(a.T, a)
+    expect = np.array([
+        [1, 0, 1, 0, 0],
+        [1, 1, 1, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+    ])
+    assert np.allclose(a[1].reshape(5, 5), expect)
+
+
 def test_get_adjacent_attention():
     a = shogi.Game.get_adjacent_attention()
     assert a.shape == (5, 5, 5, 5)
