@@ -102,27 +102,46 @@ class HorizontalSymmetry(tf.keras.constraints.Constraint):
         return tf.reshape(0.5 * (k + k[::-1]), w.shape)
 
 
+class Mask(tf.keras.constraints.Constraint):
+
+    def __init__(self, mask):
+        super().__init__()
+        self._mask = mask
+
+    def __call__(self, w):
+        return w * self._mask
+
+
 class DepthwiseAttention(tf.keras.layers.Layer):
 
     def __init__(self, attention_matrix: tf.Tensor, use_bias: bool = True):
         super().__init__()
-        self._attention_matrix = tf.reshape(
+        shape = attention_matrix.shape
+        attention_matrix = tf.reshape(
             tf.constant(attention_matrix, tf.float32),
             (
                 attention_matrix.shape[0] * attention_matrix.shape[1],
                 attention_matrix.shape[2] * attention_matrix.shape[3],
             ),
         )
+        self._attention_kernel = self.add_weight(
+            shape=attention_matrix.shape,
+            initializer='glorot_uniform',
+            name=self.name + '_kernel',
+            constraint=Mask(attention_matrix),
+            trainable=True,
+        )
         if use_bias:
             self.bias = self.add_weight(
-                shape=(self._attention_matrix.shape[-1],),
+                shape=(attention_matrix.shape[-1],),
                 initializer='zeros',
                 name=self.name + '_bias',
-                constraint=HorizontalSymmetry(attention_matrix.shape[:2]),
+                constraint=HorizontalSymmetry(shape[:2]),
+                trainable=True,
             )
 
     def call(self, x):
-        h = tf.matmul(x, self._attention_matrix, transpose_a=True)
+        h = tf.matmul(x, self._attention_kernel, transpose_a=True)
         if hasattr(self, 'bias'):
             h = h + self.bias
         return tf.transpose(h, perm=[0, 2, 1])
