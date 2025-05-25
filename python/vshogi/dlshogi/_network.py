@@ -138,11 +138,13 @@ class ResBlock(tf.keras.layers.Layer):
 
     def __init__(self, in_ch: int, hid_ch: int, attention_matrix: np.ndarray):
         super().__init__()
-        self._conv1 = tf.keras.layers.Conv1D(hid_ch // 2, 1)
-        self._conv2 = tf.keras.Sequential([
-            tf.keras.layers.Conv1D(hid_ch // 2, 1),
-            DepthwiseAttention(attention_matrix),
-        ])
+        self._convs = [
+            tf.keras.Sequential([
+                tf.keras.layers.Conv1D(hid_ch // 4, 1),
+                DepthwiseAttention(attention_matrix),
+            ])
+            for _ in range(4)
+        ]
         self._bn_conv = tf.keras.Sequential([
             tf.keras.layers.Conv1D(in_ch, 1, use_bias=False),
             tf.keras.layers.Dropout(0.1),
@@ -151,7 +153,7 @@ class ResBlock(tf.keras.layers.Layer):
 
     def call(self, x, training=None):
         h = tf.nn.leaky_relu(
-            tf.concat([self._conv1(x), self._conv2(x)], axis=-1),
+            tf.concat([c(x) for c in self._convs], axis=-1),
         )
         h = self._bn_conv(h, training=training)
         return tf.nn.leaky_relu(x + h)
