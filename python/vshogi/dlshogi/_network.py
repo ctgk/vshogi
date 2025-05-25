@@ -102,46 +102,33 @@ class HorizontalSymmetry(tf.keras.constraints.Constraint):
         return tf.reshape(0.5 * (k + k[::-1]), w.shape)
 
 
-class Mask(tf.keras.constraints.Constraint):
-
-    def __init__(self, mask):
-        super().__init__()
-        self._mask = mask
-
-    def __call__(self, w):
-        return w * self._mask
-
-
 class DepthwiseAttention(tf.keras.layers.Layer):
 
-    def __init__(self, attention_matrix: tf.Tensor, use_bias: bool = True):
+    def __init__(self, attention_maps: tf.Tensor, use_bias: bool = True):
         super().__init__()
-        shape = attention_matrix.shape
-        attention_matrix = tf.reshape(
-            tf.constant(attention_matrix, tf.float32),
-            (
-                attention_matrix.shape[0] * attention_matrix.shape[1],
-                attention_matrix.shape[2] * attention_matrix.shape[3],
-            ),
+        shape = attention_maps.shape
+        self._attention_maps = tf.reshape(
+            tf.constant(attention_maps, tf.float32),
+            (shape[0], shape[1] * shape[2], shape[3] * shape[4]),
         )
-        self._attention_kernel = self.add_weight(
-            shape=attention_matrix.shape,
+        self._kernel = self.add_weight(
+            shape=(shape[0], 1, 1),
             initializer='glorot_uniform',
             name=self.name + '_kernel',
-            constraint=Mask(attention_matrix),
             trainable=True,
         )
         if use_bias:
             self.bias = self.add_weight(
-                shape=(attention_matrix.shape[-1],),
+                shape=(shape[3] * shape[4],),
                 initializer='zeros',
                 name=self.name + '_bias',
-                constraint=HorizontalSymmetry(shape[:2]),
+                constraint=HorizontalSymmetry(shape[1:3]),
                 trainable=True,
             )
 
     def call(self, x):
-        h = tf.matmul(x, self._attention_kernel, transpose_a=True)
+        w = tf.reduce_sum(self._kernel * self._attention_maps, axis=0)
+        h = tf.matmul(x, w, transpose_a=True)
         if hasattr(self, 'bias'):
             h = h + self.bias
         return tf.transpose(h, perm=[0, 2, 1])
@@ -232,13 +219,15 @@ def build_policy_value_network(
     input_channels = game_class.feature_channels
     num_policy_per_square = (
         game_class._get_move_class()._num_policy_per_square())
-    attention_matrix = (
-        game_class.get_attention()
-        + np.eye(game_class.ranks * game_class.files).reshape(
+    attention_maps = np.concatenate((
+        np.eye(game_class.ranks * game_class.files).reshape(
+            1, game_class.files, game_class.ranks,
             game_class.files, game_class.ranks,
-            game_class.files, game_class.ranks,
-        )
-    )
+        ),
+        game_class.get_local_attentions(),
+        game_class.get_adjacent_attention()[None, ...],
+        game_class.get_diagonal_attention()[None, ...],
+    ), axis=0)
 
     x = tf.keras.Input(shape=(*input_size, input_channels))
     h = tf.keras.layers.Reshape(
@@ -248,7 +237,7 @@ def build_policy_value_network(
     h = tf.keras.layers.BatchNormalization(center=False, scale=False)(h)
     h = tf.keras.layers.ReLU()(h)
     for _ in range(num_backbone_blocks):
-        h = ResBlock(hidden_channels, bottleneck_channels, attention_matrix)(h)
+        h = ResBlock(hidden_channels, bottleneck_channels, attention_maps)(h)
 
     policy_logits = PolicyHead(num_policy_per_square)(h)
     value = ValueHead(input_size)(h)
