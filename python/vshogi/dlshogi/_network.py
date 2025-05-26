@@ -140,10 +140,10 @@ class ResBlock(tf.keras.layers.Layer):
         super().__init__()
         self._convs = [
             tf.keras.Sequential([
-                tf.keras.layers.Conv1D(hid_ch // 4, 1),
+                tf.keras.layers.Conv1D(hid_ch // 8, 1),
                 DepthwiseAttention(attention_matrix),
             ])
-            for _ in range(4)
+            for _ in range(8)
         ]
         self._bn_conv = tf.keras.Sequential([
             tf.keras.layers.Conv1D(in_ch, 1, use_bias=False),
