@@ -104,19 +104,22 @@ class HorizontalSymmetry(tf.keras.constraints.Constraint):
 
 class DepthwiseAttention(tf.keras.layers.Layer):
 
-    def __init__(self, attention_maps: tf.Tensor, use_bias: bool = True):
+    def __init__(
+        self,
+        attention_maps: tf.Tensor,
+        num_groups: int,
+        use_bias: bool = True,
+    ):
         super().__init__()
         shape = attention_maps.shape
-        self._attention_maps = tf.reshape(
+        self._num_groups = num_groups
+
+        # (H*W, H*W, D)
+        self._attention_maps = tf.transpose(tf.reshape(
             tf.constant(attention_maps, tf.float32),
             (shape[0], shape[1] * shape[2], shape[3] * shape[4]),
-        )
-        self._kernel = self.add_weight(
-            shape=(shape[0], 1, 1),
-            initializer='glorot_uniform',
-            name=self.name + '_kernel',
-            trainable=True,
-        )
+        ), perm=[1, 2, 0])
+
         if use_bias:
             self.bias = self.add_weight(
                 shape=(shape[3] * shape[4],),
@@ -126,9 +129,36 @@ class DepthwiseAttention(tf.keras.layers.Layer):
                 trainable=True,
             )
 
+    def build(self, input_shape):
+        assert input_shape[-1] % self._num_groups == 0, (
+            input_shape, self._num_groups)
+        self._ch_in_group = input_shape[-1] // self._num_groups
+        self._hw = input_shape[1]
+
+        # (D, G)
+        self._kernel = self.add_weight(
+            shape=(self._attention_maps.shape[2], self._num_groups),
+            initializer='glorot_uniform',
+            name=self.name + '_kernel',
+            trainable=True,
+        )
+
     def call(self, x):
-        w = tf.reduce_sum(self._kernel * self._attention_maps, axis=0)
-        h = tf.matmul(x, w, transpose_a=True)
+        # (B, H*W, C) -> (B, G, C/G, H*W)
+        h = tf.reshape(
+            tf.transpose(x, perm=[0, 2, 1]),
+            (-1, self._num_groups, self._ch_in_group, self._hw),
+        )
+
+        w = tf.matmul(self._attention_maps, self._kernel)  # (H*W, H*W, G)
+        w = tf.transpose(w, perm=[2, 0, 1])  # (G, H*W, H*W)
+
+        h = tf.matmul(h, w)  # (B, G, C/G, H*W)
+        h = tf.reshape(
+            h,
+            (-1, self._num_groups * self._ch_in_group, self._hw),
+        )  # (B, C, H*W)
+
         if hasattr(self, 'bias'):
             h = h + self.bias
         return tf.transpose(h, perm=[0, 2, 1])
@@ -138,13 +168,12 @@ class ResBlock(tf.keras.layers.Layer):
 
     def __init__(self, in_ch: int, hid_ch: int, attention_matrix: np.ndarray):
         super().__init__()
-        self._convs = [
-            tf.keras.Sequential([
-                tf.keras.layers.Conv1D(hid_ch // 8, 1),
-                DepthwiseAttention(attention_matrix),
-            ])
-            for _ in range(8)
-        ]
+        self._attention = tf.keras.Sequential([
+            tf.keras.layers.Conv1D(hid_ch, 1),
+            tf.keras.layers.LeakyReLU(),
+            DepthwiseAttention(attention_matrix, 8),
+            tf.keras.layers.LeakyReLU(),
+        ])
         self._bn_conv = tf.keras.Sequential([
             tf.keras.layers.Conv1D(in_ch, 1, use_bias=False),
             tf.keras.layers.Dropout(0.1),
@@ -152,9 +181,7 @@ class ResBlock(tf.keras.layers.Layer):
         ])
 
     def call(self, x, training=None):
-        h = tf.nn.leaky_relu(
-            tf.concat([c(x) for c in self._convs], axis=-1),
-        )
+        h = self._attention(x, training=training)
         h = self._bn_conv(h, training=training)
         return tf.nn.leaky_relu(x + h)
 
