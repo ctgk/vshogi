@@ -154,7 +154,7 @@ def play_game(
                 main_player.set_game(game)
             main_player.search(
                 dfpn_search_root=args.dfpn_search_root,
-                mcts_search=args.mcts_search - player.mcts_num_searched,
+                mcts_search=args.mcts_search - main_player.mcts_num_searched,
                 dfpn_search_leaf=args.dfpn_search_leaf,
                 kldgain_threshold=args.mcts_kldgain_threshold,
             )
