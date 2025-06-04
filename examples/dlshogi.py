@@ -254,6 +254,7 @@ def df_to_tfrecord(tfrecord_path: str, df: pd.DataFrame, args: Args, merger=None
                 s = sum(merger[row.state]['visits_total'].values())
                 visit_proba = {m: v / s for m, v in merger[row.state]['visits_total'].items()}
                 value01 = merger[row.state]['value01_total'] / merger[row.state]['count']
+                weight = 1 / merger[row.state]['count']
             else:
                 state = args._shogi.State(row.state)
                 visit_count = {args._shogi.Move(k): v for k, v in eval(row.visit_count).items()}
@@ -263,6 +264,7 @@ def df_to_tfrecord(tfrecord_path: str, df: pd.DataFrame, args: Args, merger=None
                 z_value = z_value * np.power(args.discount_factor, row.record_length - row.num_ply)
                 value = row.z_weight * z_value + (1 - row.z_weight) * row.q_value
                 value01 = np.clip((value + 1) / 2, 0., 1.)
+                weight = 1.
 
             x = state.to_dlshogi_features()
             policy = state.to_dlshogi_policy(visit_proba, default_value=-100000.)
@@ -270,6 +272,7 @@ def df_to_tfrecord(tfrecord_path: str, df: pd.DataFrame, args: Args, merger=None
                 'x': tf.train.Feature(float_list=tf.train.FloatList(value=x.ravel())),
                 'policy': tf.train.Feature(float_list=tf.train.FloatList(value=policy.ravel())),
                 'value': tf.train.Feature(float_list=tf.train.FloatList(value=[value01])),
+                'weight': tf.train.Feature(float_list=tf.train.FloatList(value=[weight])),
             })).SerializeToString()
             writer.write(record_bytes)
 
@@ -281,6 +284,7 @@ def df_to_tfrecord(tfrecord_path: str, df: pd.DataFrame, args: Args, merger=None
                 'x': tf.train.Feature(float_list=tf.train.FloatList(value=x.ravel())),
                 'policy': tf.train.Feature(float_list=tf.train.FloatList(value=policy.ravel())),
                 'value': tf.train.Feature(float_list=tf.train.FloatList(value=[value01])),
+                'weight': tf.train.Feature(float_list=tf.train.FloatList(value=[weight])),
             })).SerializeToString()
             writer.write(record_bytes)
 
@@ -381,8 +385,9 @@ def run_train(args: Args):
                 'x': tf.io.FixedLenFeature(x_shape, dtype=tf.float32),
                 'policy': tf.io.FixedLenFeature(p_shape, dtype=tf.float32),
                 'value': tf.io.FixedLenFeature([1], dtype=tf.float32),
+                'weight': tf.io.FixedLenFeature([1], dtype=tf.float32),
             })
-            return features['x'], (features['policy'], features['value'])
+            return features['x'], (features['policy'], features['value']), features['weight']
 
         dataset = tf.data.Dataset.from_tensor_slices(path_list).shuffle(
             buffer_size=50000,
