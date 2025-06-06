@@ -6,9 +6,24 @@ import vshogi.minishogi as shogi
 from vshogi.dlshogi._network import DepthwiseAttention, ResBlock, ValueHead
 
 
-@pytest.mark.xfail
-def test_depthwise_attention_symmetry():
-    layer = DepthwiseAttention(shogi.Game.get_attention().reshape(5, 5, 5, 5))
+@pytest.mark.parametrize('a, x', [
+    (
+        shogi.Game.get_attention().reshape(1, 5, 5, 5, 5),
+        shogi.Game('4k/5/5/5/2K2 b -').to_dlshogi_features(),
+    ),
+    pytest.param(
+        np.random.normal(size=(1, 5, 5, 5, 5)),
+        shogi.Game('4k/5/5/5/2K2 b -').to_dlshogi_features(),
+        marks=pytest.mark.xfail(reason='numerical instability'),
+    ),
+    pytest.param(
+        shogi.Game.get_local_attentions().reshape(-1, 5, 5, 5, 5),
+        shogi.Game('4k/5/5/5/2K2 b -').to_dlshogi_features(),
+        marks=pytest.mark.xfail(reason="local attentions are not symmetric"),
+    ),
+])
+def test_depthwise_attention_symmetry(a, x):
+    layer = DepthwiseAttention(a, 2)
     optimizer = tf.keras.optimizers.Adam()
 
     x_train = shogi.Game().to_dlshogi_features().reshape(1, 5 * 5, -1)
@@ -20,17 +35,8 @@ def test_depthwise_attention_symmetry():
         grads = tape.gradient(loss, layer.trainable_weights)
         optimizer.apply_gradients(zip(grads, layer.trainable_weights))
 
-    g = shogi.Game('4k/5/5/5/2K2 b -')
-    x1 = g.to_dlshogi_features().reshape(1, 5 * 5, -1)
-    x2 = g.hflip().to_dlshogi_features().reshape(1, 5 * 5, -1)
-    h1 = layer(x1).numpy().reshape(1, 5, 5, -1).sum(axis=-1)[0]
-    h2 = layer(x2).numpy().reshape(1, 5, 5, -1).sum(axis=-1)[0]
-    print(h1)
-    print(h2[::-1])
-    assert np.allclose(h1, h2[::-1], rtol=0, atol=1e-8)
-
-    x1 = np.random.normal(size=x1.shape)
-    x2 = x1.reshape(1, 5, 5, -1)[:, ::-1].reshape(1, 5 * 5, -1)
+    x1 = x.reshape(1, 5 * 5, -1)
+    x2 = x.reshape(1, 5, 5, -1)[:, ::-1].reshape(1, 5 * 5, -1)
     h1 = layer(x1).numpy().reshape(1, 5, 5, -1).sum(axis=-1)[0]
     h2 = layer(x2).numpy().reshape(1, 5, 5, -1).sum(axis=-1)[0]
     print(h1)
@@ -101,7 +107,6 @@ def test_resblock_symmetry():
     assert np.allclose(h1, h2[::-1], rtol=0, atol=1e-8)
 
 
-@pytest.mark.xfail
 def test_value_head_symmetry():
     layer = ValueHead((shogi.Game.files, shogi.Game.ranks))
     optimizer = tf.keras.optimizers.SGD(1.)
@@ -117,9 +122,10 @@ def test_value_head_symmetry():
         optimizer.apply_gradients(zip(grads, layer.trainable_weights))
 
     g_test = shogi.Game('4k/5/5/5/2K2 b -')
-    y1 = float(layer(g_test.to_dlshogi_features().reshape(1, 5 * 5, -1)))
-    y2 = float(
-        layer(g_test.hflip().to_dlshogi_features().reshape(1, 5 * 5, -1)))
+    y1 = layer(g_test.to_dlshogi_features().reshape(1, 5 * 5, -1))
+    y1 = y1.numpy().ravel()[0]
+    y2 = layer(g_test.hflip().to_dlshogi_features().reshape(1, 5 * 5, -1))
+    y2 = y2.numpy().ravel()[0]
     assert np.isclose(y1, y2, rtol=0, atol=1e-8)
 
 
