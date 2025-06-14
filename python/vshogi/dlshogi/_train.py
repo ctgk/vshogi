@@ -3,55 +3,64 @@ from tqdm import tqdm
 
 
 @tf.function
+def masked_log_softmax(logit, mask, axis: int = -1):
+    """Compute log softmax of logits given masks.
+
+    Parameters
+    ----------
+    logit : Tensor [..., C]
+        Input logits.
+    mask : Tensor [..., C]
+        Binary tensor, where true denotes valid logit.
+    axis : int, optional
+        Axis to compute softmax along, by default -1.
+
+    Returns
+    -------
+    Tensor
+        Masked log softmax.
+    """
+    # https://github.com/tensorflow/tensorflow/issues/24476
+    # In order to make this function work in CPU, remove `tf.where()`.
+    # masked out values should be -100000 here.
+    logit_masked = tf.where(mask, logit, -100000.)
+    # logit_masked = logit + tf.cast(~mask, dtype=tf.float32) * -100000.
+
+    logit_max = tf.reduce_max(
+        tf.stop_gradient(logit_masked), axis=axis, keepdims=True)
+    logit_subtracted = logit_masked - logit_max
+    logsumexp = tf.reduce_logsumexp(logit_subtracted, axis=axis, keepdims=True)
+    log_softmax = logit_subtracted - logsumexp
+    return log_softmax
+
+
+@tf.function
 def masked_softmax_cross_entropy(
-    y_true,
+    target,
     logit,
-    coeff_entropy_regularization,
-    weight,
+    coeff_entropy_regularization: float = 0.,
 ):
     """Return masked softmax cross entropy loss.
 
     Parameters
     ----------
-    y_true : Tensor
+    target : Tensor
         Ground truth. Negative values indicate masks.
     logit : Tensor
         Output logit
     coeff_entropy_regularization : float
         Coefficient of entropy regularization
-    weight : Tensor
-        Weight for each example.
 
     Returns
     -------
     Tensor
         Masked softmax cross entropy loss.
     """
-    # https://github.com/tensorflow/tensorflow/issues/24476
-    # In order to make this function work in CPU,
-    # the following consists without using `tf.where()`
-    y_true_masked = tf.clip_by_value(y_true, 0., 1.)
-    # masked out values should be -100000 here.
-    logit_masked = logit + tf.clip_by_value(y_true, -100000., 0.)
-
-    logit_max = tf.stop_gradient(
-        tf.reduce_max(logit_masked, axis=1, keepdims=True))
-
-    # masked out values should be -100000 here.
-    logit_subtracted = logit_masked - logit_max
-
-    logsumexp = tf.reduce_logsumexp(logit_subtracted, axis=1, keepdims=True)
-    log_softmax = logit_subtracted - logsumexp
-    return tf.reduce_mean(
-        weight * (
-            tf.reduce_sum(-y_true_masked * log_softmax, axis=1)
-            + (
-                coeff_entropy_regularization
-                * tf.reduce_sum(
-                    -tf.math.exp(log_softmax) * log_softmax, axis=1)
-            )
-        ),
-    )
+    t_masked = tf.clip_by_value(target, 0., 1.)
+    lnp = masked_log_softmax(logit, tf.greater_equal(target, 0), axis=-1)
+    cross_entropy = tf.reduce_sum(-t_masked * lnp, axis=-1, keepdims=True)
+    entropy = tf.reduce_sum(-tf.exp(lnp) * lnp, axis=-1, keepdims=True)
+    return cross_entropy + coeff_entropy_regularization * entropy
 
 
 def train(
@@ -84,10 +93,13 @@ def train(
     @tf.function
     def compute_losses(x, y_policy, y_value, w):
         p_logits, v_logits = model(x, training=True)
-        loss_policy = masked_softmax_cross_entropy(
-            y_policy, p_logits, coeff_entropy_regularization, w)
+
+        loss_policy = tf.reduce_mean(
+            w * masked_softmax_cross_entropy(
+                y_policy, p_logits, coeff_entropy_regularization))
         loss_value = tf.reduce_mean(
             tf.nn.sigmoid_cross_entropy_with_logits(y_value, v_logits) * w)
+
         loss = loss_policy + loss_value
         return loss, loss_policy, loss_value
 
