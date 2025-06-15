@@ -378,6 +378,25 @@ def run_train(args: Args):
 
     def get_dataset_from_tfrecord(path_list: tp.List[str]):
 
+        def parse_value(example):
+            features = tf.io.parse_example(example, {
+                'value': tf.io.FixedLenFeature([1], dtype=tf.float32),
+                'weight': tf.io.FixedLenFeature([1], dtype=tf.float32),
+            })
+            return features['value'], features['weight']
+
+        dataset = tf.data.Dataset.from_tensor_slices(path_list)
+        dataset = dataset.interleave(lambda filename: tf.data.TFRecordDataset(filename))
+        dataset = dataset.batch(args.nn_minibatch)
+        dataset = dataset.map(parse_value)
+        dataset = dataset.prefetch(2)
+
+        average_value = 0.
+        for count, (v, w) in enumerate(dataset, start=1):
+            average_value = average_value + (v * w).numpy().sum() / w.numpy().sum()
+        average_value = average_value / count
+        print(f'Average Value (0-1 scale) = {average_value:.3f}')
+
         def parse_example(example):
             x_shape = [args._shogi.Game.ranks, args._shogi.Game.files, args._shogi.Game.feature_channels]
             p_shape = [args._shogi.Game.num_dlshogi_policy]
@@ -387,7 +406,14 @@ def run_train(args: Args):
                 'value': tf.io.FixedLenFeature([1], dtype=tf.float32),
                 'weight': tf.io.FixedLenFeature([1], dtype=tf.float32),
             })
-            return features['x'], (features['policy'], features['value']), features['weight']
+            return (
+                features['x'],
+                (
+                    features['policy'],
+                    tf.clip_by_value(features['value'] - (average_value - 0.5), 0., 1.),
+                ),
+                features['weight'],
+            )
 
         dataset = tf.data.Dataset.from_tensor_slices(path_list).shuffle(
             buffer_size=50000,
