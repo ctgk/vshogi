@@ -116,6 +116,14 @@ public:
             return false;
         return SHelper::in_promotion_zone(m.source_square(), m_turn);
     }
+    bool is_declined_promotion(const MoveType& m) const
+    {
+        if (m.promote())
+            return false;
+        if (!in_promotion_zone(m))
+            return false;
+        return PHelper::is_promotion_fully_superior(m_board[m.source_square()]);
+    }
     void set_sfen(const std::string& sfen)
     {
         auto s = sfen.c_str();

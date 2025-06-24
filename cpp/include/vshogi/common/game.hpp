@@ -191,7 +191,8 @@ public:
         add_record_and_update_state(move);
         return *this;
     }
-    void update_result_dfpn(const uint max_repetitions_inclusive)
+    void update_result_dfpn(
+        const uint max_repetitions_inclusive, const bool is_offence_turn)
     {
         m_result = ONGOING;
         const auto turn = get_turn();
@@ -203,6 +204,8 @@ public:
         }
         if (can_declare_win_by_king_enter())
             m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
+        if ((!is_offence_turn) && had_two_consecutive_interposition_drops())
+            m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
     }
     Game& undo()
     {
@@ -467,6 +470,32 @@ protected:
             out += stand.count(pt) * PHelper::get_point(pt);
         }
         return out;
+    }
+    bool had_two_consecutive_interposition_drops() const
+    {
+        const uint n = record_length();
+        if (n < 4u)
+            return false;
+
+        // first sacrifice drop
+        const Move<Parameters> drop1st = get_record_action(n - 4u);
+        if (!drop1st.is_drop())
+            return false;
+
+        // capture first sacrifice drop
+        const Move<Parameters> capt1st = get_record_action(n - 3u);
+        if (drop1st.destination() != capt1st.destination())
+            return false;
+
+        // second sacrifice drop
+        const Move<Parameters> drop2nd = get_record_action(n - 2u);
+        if (!drop2nd.is_drop())
+            return false;
+
+        // capture second sacrifice drop
+        const Move<Parameters> capt2nd = get_record_action(n - 1u);
+        return (drop2nd.destination() == capt2nd.destination())
+               && (capt1st.destination() == capt2nd.source_square());
     }
 };
 
