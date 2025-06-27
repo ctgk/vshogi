@@ -116,6 +116,14 @@ public:
             return false;
         return SHelper::in_promotion_zone(m.source_square(), m_turn);
     }
+    bool is_declined_promotion(const MoveType& m) const
+    {
+        if (m.promote())
+            return false;
+        if (!in_promotion_zone(m))
+            return false;
+        return PHelper::is_promotion_fully_superior(m_board[m.source_square()]);
+    }
     void set_sfen(const std::string& sfen)
     {
         auto s = sfen.c_str();
@@ -222,14 +230,14 @@ public:
     {
         auto out = m_board.zobrist_hash();
         if (hash_stands)
-            out ^= m_stands.zobrist_hash();
+            out ^= m_stands.get_zobrist_hash();
         if (m_turn == WHITE)
             out ^= zobrist_hash_for_turn;
         return out;
     }
     std::uint64_t hash_stands() const
     {
-        return m_stands.zobrist_hash();
+        return m_stands.get_zobrist_hash();
     }
     BitBoardType find_pinned() const
     {
