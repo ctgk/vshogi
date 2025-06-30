@@ -116,14 +116,6 @@ public:
             return false;
         return SHelper::in_promotion_zone(m.source_square(), m_turn);
     }
-    bool is_declined_promotion(const MoveType& m) const
-    {
-        if (m.promote())
-            return false;
-        if (!in_promotion_zone(m))
-            return false;
-        return PHelper::is_promotion_fully_superior(m_board[m.source_square()]);
-    }
     void set_sfen(const std::string& sfen)
     {
         auto s = sfen.c_str();
@@ -258,6 +250,17 @@ public:
             movable &= ~m_board.get_attacks_by_nocheck(sq);
         }
         return m_board.compute_king_movable(m_turn, movable);
+    }
+    bool is_declined_promotion(const MoveType& move) const
+    {
+        if (move.is_drop())
+            return false;
+        if (move.promote())
+            return false;
+        if (!in_promotion_zone(move))
+            return false;
+        return PHelper::is_promotion_fully_superior(
+            m_board[move.source_square()]);
     }
 
 private:
