@@ -1019,9 +1019,6 @@ private:
         const Node<Parameters>* node_le = nullptr;
         const Node<Parameters>* node_ge = nullptr;
         m_table.look_up_le_ge_stand(game, &node_le, &node_ge);
-        if (node_le != &n) {
-            m_table.add(&n, game);
-        }
         if (node_le && node_le->found_conclusion()) {
             n.m_pn = node_le->pn();
             n.m_dn = node_le->dn();
@@ -1031,8 +1028,11 @@ private:
             n.m_dn = node_ge->dn();
             --searches;
         } else if (!n.has_child()) {
-            if (!n.simulate(game))
+            if (!n.simulate(game)) {
                 n.expand(game, node_ge, node_le);
+                if (node_le != &n)
+                    m_table.add(&n, game);
+            }
             --searches;
         }
     }
