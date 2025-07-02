@@ -9,12 +9,12 @@
 """
 
 import contextlib
-from datetime import datetime
 from glob import glob
 import os
 import random
 import subprocess
 import sys
+import tempfile
 import typing as tp
 
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
@@ -473,7 +473,13 @@ def run_train(args: Args):
         optimizer = tf.keras.optimizers.Adam(args.nn_learning_rate)
         load_data_and_train_network(network, i, optimizer)
         network.save_weights(weight_path.format(i))
-    vshogi.dlshogi.PolicyValueFunction(network).save_model_as_tflite(f'models/model_{i:04d}.tflite')
+    with tempfile.TemporaryDirectory() as td:
+        tf.saved_model.save(network, td)
+        network = tf.saved_model.load(td)
+    converter = tf.lite.TFLiteConverter.from_keras_model(network)
+    model_content = converter.convert()
+    with open(f'models/model_{i:04d}.tflite', 'wb') as f:
+        f.write(model_content)
 
 
 def run_rl_cycle(args: Args):

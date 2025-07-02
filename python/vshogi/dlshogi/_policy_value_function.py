@@ -1,8 +1,7 @@
-import tempfile
 import typing as tp
 
 import numpy as np
-import tensorflow as tf
+from ai_edge_litert.interpreter import Interpreter
 
 from vshogi._game import Game
 
@@ -10,33 +9,18 @@ from vshogi._game import Game
 class PolicyValueFunction:
     """Policy-value function class."""
 
-    def __init__(
-        self,
-        model: tp.Union[tf.keras.Model, str],
-        num_threads: int = 1,
-    ) -> None:
+    def __init__(self, model_path: str, num_threads: int = 1) -> None:
         """Construct policy-value function.
 
         Parameters
         ----------
-        model : tp.Union[tf.keras.Model, str]
-            Keras model or path to tflite model.
+        model_path : str
+            Path to tflite model.
         num_threads : int, optional
             Number of threads to use, by default 1
         """
-        if isinstance(model, str):
-            self._model_content = None
-            self._interpreter = tf.lite.Interpreter(
-                model_path=model, num_threads=num_threads)
-        else:
-            with tempfile.TemporaryDirectory() as td:
-                tf.saved_model.save(model, td)
-                model = tf.saved_model.load(td)
-            converter = tf.lite.TFLiteConverter.from_keras_model(model)
-            self._model_content = converter.convert()
-            self._interpreter = tf.lite.Interpreter(
-                model_content=self._model_content, num_threads=num_threads)
-
+        self._interpreter = Interpreter(
+            model_path=model_path, num_threads=num_threads)
         self._interpreter.allocate_tensors()
         input_details = self._interpreter.get_input_details()[0]
         self._input_placeholder = np.empty(
@@ -70,21 +54,3 @@ class PolicyValueFunction:
         value = self._interpreter.get_tensor(self._value_index).item()
         policy_logits = self._interpreter.get_tensor(self._policy_index)
         return policy_logits, value
-
-    def save_model_as_tflite(self, output_path: str):
-        """Save currently loaded model in tflite binary format.
-
-        Parameters
-        ----------
-        output_path : str
-            Path to dump tflite binary.
-
-        Raises
-        ------
-        ValueError
-            No model loaded currently.
-        """
-        if self._model_content is None:
-            raise ValueError('Cannot save tflite binary.')
-        with open(output_path, 'wb') as f:
-            f.write(self._model_content)

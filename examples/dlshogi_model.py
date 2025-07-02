@@ -1,3 +1,6 @@
+import tempfile
+
+import tensorflow as tf
 from tqdm import tqdm
 
 import vshogi
@@ -6,16 +9,24 @@ import vshogi
 if __name__ == '__main__':
     from vshogi.shogi import Game
 
-    network = vshogi.dlshogi.build_policy_value_network(
+    model = vshogi.dlshogi.build_policy_value_network(
         game_class=Game,
         hidden_channels=128,
         bottleneck_channels=64,
         num_backbone_blocks=10,
     )
-    network.summary()
+    model.summary()
+    with tempfile.TemporaryDirectory() as td:
+        tf.saved_model.save(model, td)
+        model = tf.saved_model.load(td)
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    with tempfile.NamedTemporaryFile(delete=True) as t:
+        with open(t.name, 'wb') as f:
+            f.write(converter.convert())
+        pv_func = vshogi.dlshogi.PolicyValueFunction(t.name)
     player = vshogi.engine.DfpnMcts(
         vshogi.engine.DfpnSearcher(),
-        vshogi.engine.Mcts(vshogi.dlshogi.PolicyValueFunction(network)),
+        vshogi.engine.Mcts(pv_func),
     )
 
     game = Game()
