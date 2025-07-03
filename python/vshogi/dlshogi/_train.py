@@ -1,6 +1,5 @@
 import typing as tp
 
-import tensorflow as tf
 import torch as th
 from tqdm import tqdm
 
@@ -64,9 +63,12 @@ def masked_softmax_cross_entropy(
     return cross_entropy + coeff_entropy_regularization * entropy
 
 
+NumpyIterable = tp.TypeVar('NumpyIterable')
+
+
 def train(
     model: th.nn.Module,
-    dataset: tf.data.Dataset,
+    dataset: NumpyIterable,
     optimizer: th.optim.Optimizer,
     epochs: int,
     coeff_entropy_regularization: tp.Optional[float] = None,
@@ -78,7 +80,7 @@ def train(
     ----------
     model : th.nn.Module
         Pytorch model to train
-    dataset : tf.data.Dataset
+    dataset : NumpyIterable
         Training dataset
     optimizer : th.nn.Optimizer
         Optimizer to update parameters in the model.
@@ -114,10 +116,10 @@ def train(
         loss_value_mean = 0.
         loss_mean = 0.
         for i, (x_mb, (p_mb, v_mb), w_mb) in pbar:
-            x_mb = th.from_numpy(x_mb.numpy()).to(device)
-            p_mb = th.from_numpy(p_mb.numpy()).to(device)
-            v_mb = th.from_numpy(v_mb.numpy()).to(device)
-            w_mb = th.from_numpy(w_mb.numpy()).to(device)
+            x_mb = th.tensor(x_mb, device=device)
+            p_mb = th.tensor(p_mb, device=device)
+            v_mb = th.tensor(v_mb, device=device)
+            w_mb = th.tensor(w_mb, device=device)
             if counter == 0:
                 optimizer.zero_grad()
             counter += 1

@@ -429,7 +429,16 @@ def run_train(args: Args):
         dataset = dataset.batch(args.nn_minibatch)
         dataset = dataset.map(parse_example)
         dataset = dataset.prefetch(2)
-        return dataset
+
+        class _NumpyIterable:
+
+            def __init__(self, dataset):
+                self.dataset = dataset
+
+            def __iter__(self):
+                return self.dataset.as_numpy_iterator()
+
+        return _NumpyIterable(dataset)
 
     def load_data_and_train_network(network: th.nn.Module, index: int, optimizer):
         num_tfrecord_max = 100000
