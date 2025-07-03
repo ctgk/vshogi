@@ -1,9 +1,15 @@
+import typing as tp
+
 import tensorflow as tf
+import torch as th
 from tqdm import tqdm
 
 
-@tf.function
-def masked_log_softmax(logit, mask, axis: int = -1):
+def masked_log_softmax(
+    logit: th.Tensor,
+    mask: th.Tensor,
+    axis: int = -1,
+) -> th.Tensor:
     """Compute log softmax of logits given masks.
 
     Parameters
@@ -17,106 +23,90 @@ def masked_log_softmax(logit, mask, axis: int = -1):
 
     Returns
     -------
-    Tensor
+    Tensor [..., C]
         Masked log softmax.
     """
-    # https://github.com/tensorflow/tensorflow/issues/24476
-    # In order to make this function work in CPU, remove `tf.where()`.
-    # masked out values should be -100000 here.
-    logit_masked = tf.where(mask, logit, -100000.)
-    # logit_masked = logit + tf.cast(~mask, dtype=tf.float32) * -100000.
-
-    logit_max = tf.reduce_max(
-        tf.stop_gradient(logit_masked), axis=axis, keepdims=True)
+    logit_masked = th.where(mask, logit, -100000.)
+    logit_max = th.max(logit_masked.detach(), dim=axis, keepdim=True).values
     logit_subtracted = logit_masked - logit_max
-    logsumexp = tf.reduce_logsumexp(logit_subtracted, axis=axis, keepdims=True)
+    logsumexp = th.logsumexp(logit_subtracted, dim=axis, keepdim=True)
     log_softmax = logit_subtracted - logsumexp
     return log_softmax
 
 
-@tf.function
 def masked_softmax_cross_entropy(
-    target,
-    logit,
-    coeff_entropy_regularization: float = 0.,
-):
+    target: th.Tensor,
+    logit: th.Tensor,
+    coeff_entropy_regularization: tp.Optional[float] = None,
+) -> th.Tensor:
     """Return masked softmax cross entropy loss.
 
     Parameters
     ----------
-    target : Tensor
+    target : Tensor [..., C]
         Ground truth. Negative values indicate masks.
-    logit : Tensor
+    logit : Tensor [..., C]
         Output logit
-    coeff_entropy_regularization : float
-        Coefficient of entropy regularization
+    coeff_entropy_regularization : tp.Optional[float]
+        Coefficient of entropy regularization, by default None.
 
     Returns
     -------
-    Tensor
+    Tensor [..., 1]
         Masked softmax cross entropy loss.
     """
-    t_masked = tf.clip_by_value(target, 0., 1.)
-    lnp = masked_log_softmax(logit, tf.greater_equal(target, 0), axis=-1)
-    cross_entropy = tf.reduce_sum(-t_masked * lnp, axis=-1, keepdims=True)
-    entropy = tf.reduce_sum(-tf.exp(lnp) * lnp, axis=-1, keepdims=True)
+    t_masked = th.clamp(target, 0, 1)
+    lnp = masked_log_softmax(logit, th.greater_equal(target, 0), axis=-1)
+    cross_entropy = th.sum(-t_masked * lnp, axis=-1, keepdims=True)
+    if coeff_entropy_regularization is None:
+        return cross_entropy
+    entropy = th.sum(-th.exp(lnp) * lnp, axis=-1, keepdims=True)
     return cross_entropy + coeff_entropy_regularization * entropy
 
 
 def train(
-    model: tf.keras.Model,
+    model: th.nn.Module,
     dataset: tf.data.Dataset,
-    optimizer,
+    optimizer: th.optim.Optimizer,
     epochs: int,
-    coeff_entropy_regularization: float,
+    coeff_entropy_regularization: tp.Optional[float] = None,
     gradient_accumulation_steps: int = 1,
 ) -> None:
     """Train a model given dataset.
 
     Parameters
     ----------
-    model : tf.keras.Model
-        Model to train
+    model : th.nn.Module
+        Pytorch model to train
     dataset : tf.data.Dataset
         Training dataset
+    optimizer : th.nn.Optimizer
+        Optimizer to update parameters in the model.
     epochs : int
         Number of epochs to train
-    learning_rate : float
-        Learning rate of weight updates
     coeff_entropy_regularization : float
         Coefficient of entropy regularization
     gradient_accumulation_steps : int, optional
         Steps to accumulate gradient computation, by default 1
     """
-    model.compile()
+    model.train()
+    device = next(model.parameters()).device
 
-    @tf.function
-    def compute_losses(x, y_policy, y_value, w):
-        p_logits, v_logits = model(x, training=True)
-
-        loss_policy = tf.reduce_mean(
+    def compute_losses_and_backward(x, y_policy, y_value, w):
+        p_logits, v_logits = model(x)
+        loss_policy = th.mean(
             w * masked_softmax_cross_entropy(
                 y_policy, p_logits, coeff_entropy_regularization))
-        loss_value = tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(y_value, v_logits) * w)
+        loss_policy.backward(retain_graph=True)
+        loss_value = th.nn.functional.binary_cross_entropy_with_logits(
+            v_logits, y_value, w, reduction='mean')
+        loss_value.backward()
 
+        loss_policy = loss_policy.item()
+        loss_value = loss_value.item()
         loss = loss_policy + loss_value
         return loss, loss_policy, loss_value
 
-    @tf.function
-    def compute_losses_grads(x, y_policy, y_value, w):
-        with tf.GradientTape() as tape:
-            loss, loss_policy, loss_value = compute_losses(
-                x, y_policy, y_value, w,
-            )
-        grads = tape.gradient(loss, model.trainable_weights)
-        return float(loss), float(loss_policy), float(loss_value), grads
-
-    @tf.function
-    def apply_gradients(grads):
-        optimizer.apply_gradients(zip(grads, model.trainable_weights))
-
-    accumulated_grads = None
     counter = 0
     for e in range(1, epochs + 1):
         pbar = tqdm(enumerate(dataset, start=1), ncols=80)
@@ -124,20 +114,20 @@ def train(
         loss_value_mean = 0.
         loss_mean = 0.
         for i, (x_mb, (p_mb, v_mb), w_mb) in pbar:
+            x_mb = th.from_numpy(x_mb.numpy()).to(device)
+            p_mb = th.from_numpy(p_mb.numpy()).to(device)
+            v_mb = th.from_numpy(v_mb.numpy()).to(device)
+            w_mb = th.from_numpy(w_mb.numpy()).to(device)
+            if counter == 0:
+                optimizer.zero_grad()
             counter += 1
-            loss, loss_policy, loss_value, grads = compute_losses_grads(
+            loss, loss_policy, loss_value = compute_losses_and_backward(
                 x_mb, p_mb, v_mb, w_mb)
-            if accumulated_grads is None:
-                accumulated_grads = grads
-            else:
-                accumulated_grads = [
-                    g1 + g2 for g1, g2 in zip(accumulated_grads, grads)
-                ]
-            if counter % gradient_accumulation_steps == 0:
-                apply_gradients([
-                    g / gradient_accumulation_steps for g in accumulated_grads
-                ])
-                accumulated_grads = None
+            if counter == gradient_accumulation_steps:
+                for p in model.parameters():
+                    p.grad /= gradient_accumulation_steps
+                optimizer.step()
+                counter = 0
 
             loss_policy_mean = ((i - 1) * loss_policy_mean + loss_policy) / i
             loss_value_mean = ((i - 1) * loss_value_mean + loss_value) / i
@@ -147,3 +137,5 @@ def train(
                 f'loss_policy={loss_policy_mean:f}, '
                 f'loss_value={loss_value_mean:f}',
             )
+
+    model.eval()

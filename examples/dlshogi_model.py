@@ -1,6 +1,7 @@
 import tempfile
 
-import tensorflow as tf
+import ai_edge_torch
+import torch as th
 from tqdm import tqdm
 
 import vshogi
@@ -9,20 +10,18 @@ import vshogi
 if __name__ == '__main__':
     from vshogi.shogi import Game
 
-    model = vshogi.dlshogi.build_policy_value_network(
+    model = vshogi.dlshogi.PolicyValueNetwork(
         game_class=Game,
         hidden_channels=128,
         bottleneck_channels=64,
         num_backbone_blocks=10,
-    )
-    model.summary()
-    with tempfile.TemporaryDirectory() as td:
-        tf.saved_model.save(model, td)
-        model = tf.saved_model.load(td)
-    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    ).eval()
+    print(model)
+    sample_input = (
+        th.randn(1, Game.files, Game.ranks, Game.feature_channels),)
+    edge_model = ai_edge_torch.convert(model, sample_input)
     with tempfile.NamedTemporaryFile(delete=True) as t:
-        with open(t.name, 'wb') as f:
-            f.write(converter.convert())
+        edge_model.export(t.name)
         pv_func = vshogi.dlshogi.PolicyValueFunction(t.name)
     player = vshogi.engine.DfpnMcts(
         vshogi.engine.DfpnSearcher(),

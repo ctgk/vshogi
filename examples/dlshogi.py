@@ -14,17 +14,18 @@ import os
 import random
 import subprocess
 import sys
-import tempfile
 import typing as tp
 
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
 
+import ai_edge_torch
 from classopt import classopt, config
 import joblib
 from joblib.parallel import Parallel, delayed
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import torch as th
 from tqdm import tqdm
 
 import vshogi
@@ -50,6 +51,7 @@ class Args:
     nn_learning_rate: float = config(type=float, default=1e-2, help='Learning rate of NN weight update')
     nn_entropy_regularization: float = config(type=float, default=1e-2)
     nn_load_previous_weights: int = config(type=int, default=1, help='Load previous weights if 1, else train network from scratch. By default 0.')
+    nn_train_device: str = config(type=str, default='cpu', choices=['cpu', 'gpu', 'mps'])
     discount_factor: float = config(type=float, default=0.99, help='Discount factor of reward supervision. By default 0.99.')
     mcts_kldgain_threshold: float = config(type=float, default=1e-4, help='KL divergence threshold to stop MCT-search')
     mcts_search: int = config(type=int, default=1000, help='# of searches in MCTS, default=1000. Alpha Zero used 800 simulations.')
@@ -429,7 +431,7 @@ def run_train(args: Args):
         dataset = dataset.prefetch(2)
         return dataset
 
-    def load_data_and_train_network(network, index: int, optimizer):
+    def load_data_and_train_network(network: th.nn.Module, index: int, optimizer):
         num_tfrecord_max = 100000
         tfrecord_list = []
         for i in range(index, 0, -1):
@@ -443,6 +445,7 @@ def run_train(args: Args):
         random.shuffle(tfrecord_list)
         print(f'#tfrecord = {len(tfrecord_list):,}')
         dataset = get_dataset_from_tfrecord(tfrecord_list)
+        network.to(th.device(args.nn_train_device))
         vshogi.dlshogi.train(
             network,
             dataset,
@@ -451,35 +454,33 @@ def run_train(args: Args):
             args.nn_entropy_regularization,
             args.nn_grad_accum,
         )
+        network.to(th.device('cpu'))
         return network
 
     shogi = args._shogi
-    network = vshogi.dlshogi.build_policy_value_network(
+    network = vshogi.dlshogi.PolicyValueNetwork(
         game_class=shogi.Game,
         hidden_channels=args.nn_hidden_channels,
         bottleneck_channels=args.nn_bottleneck_channels,
         num_backbone_blocks=args.nn_backbone_blocks,
     )
     i = args.resume_rl_cycle_from
-    weight_path = 'models/model_{:04d}.weights.h5'
+    weight_path = 'models/model_{:04d}.pth'
     if i > 1 and args.nn_load_previous_weights:
         if os.path.exists(weight_path.format(i)):
             print(f"Loading {weight_path.format(i)}")
-            network.load_weights(weight_path.format(i))
+            network.load_state_dict(th.load(weight_path.format(i), weights_only=True))
         elif os.path.exists(weight_path.format(i - 1)):
             print(f"Loading {weight_path.format(i - 1)}")
-            network.load_weights(weight_path.format(i - 1))
+            network.load_state_dict(th.load(weight_path.format(i - 1), weights_only=True))
     if i > 0:
-        optimizer = tf.keras.optimizers.Adam(args.nn_learning_rate)
+        optimizer = th.optim.AdamW(network.parameters(), args.nn_learning_rate)
         load_data_and_train_network(network, i, optimizer)
-        network.save_weights(weight_path.format(i))
-    with tempfile.TemporaryDirectory() as td:
-        tf.saved_model.save(network, td)
-        network = tf.saved_model.load(td)
-    converter = tf.lite.TFLiteConverter.from_keras_model(network)
-    model_content = converter.convert()
-    with open(f'models/model_{i:04d}.tflite', 'wb') as f:
-        f.write(model_content)
+        th.save(network.state_dict(), weight_path.format(i))
+
+    sample_inputs = (th.randn(1, shogi.Game.files, shogi.Game.ranks, shogi.Game.feature_channels),)
+    edge_model = ai_edge_torch.convert(network.eval(), sample_inputs)
+    edge_model.export(f'models/model_{i:04d}.tflite')
 
 
 def run_rl_cycle(args: Args):

@@ -1,8 +1,10 @@
 import numpy as np
 import pytest
-import tensorflow as tf
+import torch as th
 
-from vshogi.dlshogi._train import masked_softmax_cross_entropy
+from vshogi.dlshogi._train import (
+    masked_log_softmax, masked_softmax_cross_entropy,
+)
 
 
 @pytest.mark.parametrize('t, x, dx_expect', [
@@ -26,15 +28,36 @@ from vshogi.dlshogi._train import masked_softmax_cross_entropy
         ]),
     ),
 ])
+def test_masked_log_softmax(t, x, dx_expect):
+    t = th.tensor(t, dtype=th.float32)
+    x = th.tensor(x, dtype=th.float32, requires_grad=True)
+    lnp = masked_log_softmax(x, th.greater_equal(t, 0))
+    t_masked = th.clamp(t, 0, 1)
+    nll_for_each = th.sum(-t_masked * lnp, dim=-1)
+    nll_total = th.sum(nll_for_each)
+    nll_total.backward()
+    print(x.grad)
+    assert np.allclose(x.grad, dx_expect, rtol=0, atol=1e-2)
+
+
+@pytest.mark.parametrize('t, x, dx_expect', [
+    (
+        np.array([[0, 0, 0, 1], [1, -1, 0, -1]]),
+        np.array([[0, 0, 0, 0], [0, 10, 0, 10]]),
+        np.array([
+            [0.25, 0.25, 0.25, -0.75],
+            [-0.5, 0, 0.5, 0],
+        ]),
+    ),
+])
 def test_masked_softmax_cross_entropy(t, x, dx_expect):
-    t = tf.constant(t, dtype=tf.float32)
-    x = tf.constant(x, dtype=tf.float32)
-    with tf.GradientTape() as tape:
-        tape.watch(x)
-        loss = tf.reduce_sum(masked_softmax_cross_entropy(t, x))
-    dx = tape.gradient(loss, x)
-    print(dx)
-    assert np.allclose(dx.numpy(), dx_expect, rtol=0, atol=1e-2)
+    t = th.tensor(t, dtype=th.float32)
+    x = th.tensor(x, dtype=th.float32, requires_grad=True)
+    nll_for_each = masked_softmax_cross_entropy(t, x)
+    nll_total = th.sum(nll_for_each)
+    nll_total.backward()
+    print(x.grad)
+    assert np.allclose(x.grad, dx_expect, rtol=0, atol=1e-2)
 
 
 if __name__ == '__main__':

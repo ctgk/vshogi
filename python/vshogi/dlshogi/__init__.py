@@ -4,16 +4,16 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-from vshogi.dlshogi._network import build_policy_value_network
+from vshogi.dlshogi._network import PolicyValueNetwork
 from vshogi.dlshogi._policy_value_function import PolicyValueFunction
 from vshogi.dlshogi._train import train
 
 
 _classes = [
     PolicyValueFunction,
+    PolicyValueNetwork,
 ]
 _functions = [
-    build_policy_value_network,
     train,
 ]
 
