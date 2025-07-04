@@ -139,5 +139,3 @@ def train(
                 f'loss_policy={loss_policy_mean:f}, '
                 f'loss_value={loss_value_mean:f}',
             )
-
-    model.eval()

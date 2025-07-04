@@ -32,10 +32,22 @@ class _DepthwiseAttention(th.nn.Module):
 
         # (B, G, C/G, H*W)
         h = x.reshape(-1, self._groups, ch_in_group, x.shape[-1])
-        w = th.matmul(self._attentions, self._kernel)  # (H*W, H*W, G)
-        w = w.moveaxis(2, 0)  # (G, H*W, H*W)
+        if self.training:
+            w = th.matmul(self._attentions, self._kernel)  # (H*W, H*W, G)
+            w = w.moveaxis(2, 0)  # (G, H*W, H*W)
+        else:
+            w = self._w
         h = th.matmul(h, w)  # (B, G, C/G, H*W)
         if hasattr(self, '_bias'):
             h = h + self._bias
         h = h.reshape(-1, x.shape[1], x.shape[-1])  # (B, C, H*W)
         return h
+
+    def train(self, mode: bool = True):
+        if mode is False:
+            self.register_buffer(
+                '_w',
+                th.matmul(
+                    self._attentions, self._kernel.detach()).moveaxis(2, 0),
+            )
+        return super().train(mode)
