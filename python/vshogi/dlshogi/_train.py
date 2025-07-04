@@ -99,14 +99,14 @@ def train(
         loss_policy = th.mean(
             w * masked_softmax_cross_entropy(
                 y_policy, p_logits, coeff_entropy_regularization))
-        loss_policy.backward(retain_graph=True)
         loss_value = th.nn.functional.binary_cross_entropy_with_logits(
             v_logits, y_value, w, reduction='mean')
-        loss_value.backward()
+        loss = loss_policy + loss_value
+        loss.backward()
 
         loss_policy = loss_policy.item()
         loss_value = loss_value.item()
-        loss = loss_policy + loss_value
+        loss = loss.item()
         return loss, loss_policy, loss_value
 
     counter = 0

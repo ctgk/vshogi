@@ -10,7 +10,7 @@ from vshogi.dlshogi._policy_head import PolicyHead
 
 def test_export_policy_head_to_tflite():
     module = PolicyHead(32, 20)
-    sample_inputs = (th.randn(1, 32, 5 * 5),)
+    sample_inputs = (th.randn(1, 32, 5, 5),)
     edge_model = ai_edge_torch.convert(module.eval(), sample_inputs)
 
     with tempfile.NamedTemporaryFile(delete=True) as t:
@@ -19,8 +19,32 @@ def test_export_policy_head_to_tflite():
     interpreter.allocate_tensors()
     input_details = interpreter.get_input_details()[0]
     output_details = interpreter.get_output_details()[0]
-    assert tuple(input_details['shape']) == (1, 32, 5 * 5)
+    assert tuple(input_details['shape']) == (1, 32, 5, 5)
     assert tuple(output_details['shape']) == (1, 5 * 5 * 20)
+
+
+def test_policy_head_backward():
+    model = PolicyHead(32, 20)
+    x = th.tensor(th.randn(2, 32, 5, 5), dtype=th.float32, requires_grad=True)
+    y = model(x)
+    loss = th.sum(th.square(y - 1))
+    loss.backward()
+
+
+def test_policy_head_backward_mps():
+    if not th.backends.mps.is_available():
+        return
+    model = PolicyHead(32, 20)
+    model.to('mps')
+    x = th.tensor(
+        th.randn(2, 32, 5, 5),
+        dtype=th.float32,
+        device='mps',
+        requires_grad=True,
+    )
+    y = model(x)
+    loss = th.sum(th.square(y - 1))
+    loss.backward()
 
 
 if __name__ == '__main__':

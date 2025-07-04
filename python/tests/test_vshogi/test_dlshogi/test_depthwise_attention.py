@@ -14,7 +14,7 @@ def test_export_depthwise_attention_to_tflite():
     module = _DepthwiseAttention(attentions, groups=8, bias=False)
     num_param = sum(p.numel() for p in module.parameters() if p.requires_grad)
     assert (attentions.shape[0] * 8) == num_param
-    sample_inputs = (th.randn(1, 32, 5 * 5),)
+    sample_inputs = (th.randn(1, 32, 5, 5),)
     edge_model = ai_edge_torch.convert(module.eval(), sample_inputs)
 
     with tempfile.NamedTemporaryFile(delete=True) as t:
@@ -23,8 +23,34 @@ def test_export_depthwise_attention_to_tflite():
     interpreter.allocate_tensors()
     input_details = interpreter.get_input_details()[0]
     output_details = interpreter.get_output_details()[0]
-    assert tuple(input_details['shape']) == (1, 32, 5 * 5)
-    assert tuple(output_details['shape']) == (1, 32, 5 * 5)
+    assert tuple(input_details['shape']) == (1, 32, 5, 5)
+    assert tuple(output_details['shape']) == (1, 32, 5, 5)
+
+
+def test_depthwise_attention_backward():
+    attentions = Game.get_local_attentions()
+    model = _DepthwiseAttention(attentions, groups=8)
+    x = th.tensor(th.randn(2, 32, 5, 5), dtype=th.float32, requires_grad=True)
+    y = model(x)
+    loss = th.sum(th.square(y - 1))
+    loss.backward()
+
+
+def test_depthwise_attention_backward_mps():
+    if not th.backends.mps.is_available():
+        return
+    attentions = Game.get_local_attentions()
+    model = _DepthwiseAttention(attentions, groups=8)
+    model.to('mps')
+    x = th.tensor(
+        th.randn(2, 32, 5, 5),
+        dtype=th.float32,
+        device='mps',
+        requires_grad=True,
+    )
+    y = model(x)
+    loss = th.sum(th.square(y - 1))
+    loss.backward()
 
 
 if __name__ == '__main__':

@@ -5,7 +5,6 @@ import numpy as np
 import torch as th
 
 from vshogi._game import Game
-from vshogi.dlshogi._depthwise_attention import _DepthwiseAttention
 from vshogi.dlshogi._policy_head import PolicyHead
 from vshogi.dlshogi._residual_block import _ResidualBlock
 from vshogi.dlshogi._value_head import _ValueHead
@@ -42,22 +41,18 @@ class PolicyValueNetwork(th.nn.Module):
         """
         super().__init__()
         in_ch: int = game_class.feature_channels
-        num_squares = game_class.files * game_class.files
+        shape = (game_class.files, game_class.ranks)
         num_policy_per_square = (
             game_class._get_move_class()._num_policy_per_square())
         attentions = np.concatenate((
-            np.eye(num_squares).reshape(
-                1, game_class.files, game_class.ranks,
-                game_class.files, game_class.ranks,
-            ),
+            np.eye(shape[0] * shape[1]).reshape(1, *shape, *shape),
             game_class.get_local_attentions(),
             game_class.get_adjacent_attention()[None, ...],
             game_class.get_diagonal_attention()[None, ...],
         ), axis=0)
         self._backbone = th.nn.Sequential(
-            th.nn.Flatten(2, -1),
-            th.nn.Conv1d(in_ch, hidden_channels, kernel_size=1, bias=False),
-            th.nn.BatchNorm1d(hidden_channels, affine=False),
+            th.nn.Conv2d(in_ch, hidden_channels, kernel_size=1, bias=False),
+            th.nn.BatchNorm2d(hidden_channels),
             th.nn.LeakyReLU(inplace=True),
             *[
                 _ResidualBlock(
@@ -68,12 +63,15 @@ class PolicyValueNetwork(th.nn.Module):
             ],
         )
         self._policy_head = PolicyHead(hidden_channels, num_policy_per_square)
-        self._value_head = _ValueHead(hidden_channels, num_squares)
+        self._value_head = _ValueHead(hidden_channels, shape)
 
     def forward(self, x: th.Tensor) -> tp.Tuple[th.Tensor, th.Tensor]:
         # x: (B, H, W, C_in)
         x = x.moveaxis(-1, 1)  # (B, C_in, H, W)
-        x = self._backbone(x)  # (B, C_hid, H*W)
+        if x.is_mps:
+            # https://github.com/pytorch/pytorch/issues/131736
+            x = x.contiguous()
+        x = self._backbone(x)  # (B, C_hid, H, W)
         p = self._policy_head(x)
         v = self._value_head(x)
         return p, v

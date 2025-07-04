@@ -25,13 +25,13 @@ class _DepthwiseAttention(th.nn.Module):
                 th.zeros((groups, 1, attentions.shape[0])), requires_grad=True)
 
     def forward(self, x: th.Tensor):
-        # x: (B, C_in, H*W)
+        # x: (B, C_in, H, W)
         assert x.shape[1] % self._groups == 0, (
             f"x.shape[1]({x.shape[1]}) % groups({self._groups}) != 0")
         ch_in_group = x.shape[1] // self._groups
 
         # (B, G, C/G, H*W)
-        h = x.reshape(-1, self._groups, ch_in_group, x.shape[-1])
+        h = x.reshape(-1, self._groups, ch_in_group, x.shape[2] * x.shape[3])
         if self.training:
             w = th.matmul(self._attentions, self._kernel)  # (H*W, H*W, G)
             w = w.moveaxis(2, 0)  # (G, H*W, H*W)
@@ -40,7 +40,7 @@ class _DepthwiseAttention(th.nn.Module):
         h = th.matmul(h, w)  # (B, G, C/G, H*W)
         if hasattr(self, '_bias'):
             h = h + self._bias
-        h = h.reshape(-1, x.shape[1], x.shape[-1])  # (B, C, H*W)
+        h = h.reshape(-1, x.shape[1], x.shape[2], x.shape[3])  # (B, C, H, W)
         return h
 
     def train(self, mode: bool = True):
