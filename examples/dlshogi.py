@@ -15,10 +15,13 @@ import random
 import subprocess
 import sys
 import typing as tp
+import warnings
 
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore") # Or use action="ignore" for Python 3.11+
+    import ai_edge_torch
 
-import ai_edge_torch
 from classopt import classopt, config
 import joblib
 from joblib.parallel import Parallel, delayed
