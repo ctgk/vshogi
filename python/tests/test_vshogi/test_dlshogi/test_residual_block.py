@@ -1,6 +1,10 @@
 import tempfile
+import warnings
 
-import ai_edge_torch
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import ai_edge_torch
+
 import pytest
 import torch as th
 from ai_edge_litert.interpreter import Interpreter
@@ -29,7 +33,7 @@ def test_export_residual_block_to_tflite():
 def test_residual_block_backward():
     attentions = Game.get_local_attentions()
     model = _ResidualBlock(32, 8, attentions, attention_groups=8)
-    x = th.tensor(th.randn(2, 32, 5, 5), dtype=th.float32, requires_grad=True)
+    x = th.randn(2, 32, 5, 5).requires_grad_()
     y = model(x)
     loss = th.sum(th.square(y - 1))
     loss.backward()
@@ -39,14 +43,8 @@ def test_residual_block_backward_mps():
     if not th.backends.mps.is_available():
         return
     attentions = Game.get_local_attentions()
-    model = _ResidualBlock(32, 8, attentions, attention_groups=8)
-    model.to('mps')
-    x = th.tensor(
-        th.randn(2, 32, 5, 5),
-        dtype=th.float32,
-        device='mps',
-        requires_grad=True,
-    )
+    model = _ResidualBlock(32, 8, attentions, attention_groups=8).to('mps')
+    x = th.randn(2, 32, 5, 5).requires_grad_().to('mps')
     y = model(x)
     loss = th.sum(th.square(y - 1))
     loss.backward()

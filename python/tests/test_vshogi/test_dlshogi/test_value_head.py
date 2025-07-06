@@ -1,6 +1,10 @@
 import tempfile
+import warnings
 
-import ai_edge_torch
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import ai_edge_torch
+
 import pytest
 import torch as th
 from ai_edge_litert.interpreter import Interpreter
@@ -27,7 +31,7 @@ def test_export_value_head_to_tflite():
 
 def test_value_head_backward():
     model = _ValueHead(32, (5, 5))
-    x = th.tensor(th.randn(2, 32, 5, 5), dtype=th.float32, requires_grad=True)
+    x = th.randn(2, 32, 5, 5).requires_grad_()
     y = model(x)
     loss = th.sum(th.square(y - 1))
     loss.backward()
@@ -38,12 +42,7 @@ def test_value_head_backward_mps():
         return
     model = _ValueHead(32, (5, 5))
     model.to('mps')
-    x = th.tensor(
-        th.randn(2, 32, 5, 5),
-        dtype=th.float32,
-        device='mps',
-        requires_grad=True,
-    )
+    x = th.randn(2, 32, 5, 5).requires_grad_().to('mps')
     y = model(x)
     loss = th.sum(th.square(y - 1))
     loss.backward()
