@@ -1,6 +1,7 @@
 import tempfile
 
 import ai_edge_torch
+import pandas as pd
 import torch as th
 from tqdm import tqdm
 
@@ -16,13 +17,14 @@ if __name__ == '__main__':
         bottleneck_channels=64,
         num_backbone_blocks=10,
     ).eval()
-    print(model)
+    # print(model)
     sample_input = (
         th.randn(1, Game.files, Game.ranks, Game.feature_channels),)
     edge_model = ai_edge_torch.convert(model, sample_input)
     with tempfile.NamedTemporaryFile(delete=True) as t:
         edge_model.export(t.name)
         pv_func = vshogi.dlshogi.PolicyValueFunction(t.name)
+    print(pv_func.summary())
     player = vshogi.engine.DfpnMcts(
         vshogi.engine.DfpnSearcher(),
         vshogi.engine.Mcts(pv_func),

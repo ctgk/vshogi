@@ -1,6 +1,7 @@
 import typing as tp
 
 import numpy as np
+import pandas as pd
 from ai_edge_litert.interpreter import Interpreter
 
 from vshogi._game import Game
@@ -54,3 +55,39 @@ class PolicyValueFunction:
         value = self._interpreter.get_tensor(self._value_index).item()
         policy_logits = self._interpreter.get_tensor(self._policy_index)
         return policy_logits, value
+
+    def summary(self) -> str:
+        """Return model structure summary.
+
+        Returns
+        -------
+        str
+            Model structure summary.
+        """
+        tensor_details = self._interpreter.get_tensor_details()
+        data: list = []
+        for op in self._interpreter._get_ops_details():
+            if op['op_name'] == 'DELEGATE':
+                continue
+            data.append({
+                'Operation': op['op_name'],
+                'Input Indices': list(op['inputs']),
+                'Output Indices': list(op['outputs']),
+                'Output Shape': tensor_details[op['outputs'][0]]['shape'],
+                'Connected to': [],
+            })
+        for op_data in data:
+            for oi in op_data['Output Indices']:
+                for index in [
+                    j for j, op in enumerate(data)
+                    if oi in op['Input Indices']
+                ]:
+                    op_data['Connected to'].append(
+                        f'{index}:{data[index]["Operation"]}')
+
+        df = pd.DataFrame(data)
+        with pd.option_context(
+            'display.max_rows', None,
+            'display.max_columns', None,
+        ):
+            return str(df[['Operation', 'Output Shape', 'Connected to']])
