@@ -246,7 +246,17 @@ public:
         return true;
     }
 
-    void expand(
+    /**
+     * @brief Expand child nodes.
+     *
+     * @param game
+     * @param cousin_ge_stand
+     * @param cousin_le_stand
+     * @return true Full expansion.
+     * @return false Partial expansion, so that the node should not be added to
+     * a transposition table.
+     */
+    bool expand(
         const GameType& game,
         const Node<Parameters>* const cousin_ge_stand,
         const Node<Parameters>* const cousin_le_stand)
@@ -254,11 +264,9 @@ public:
         m_child_1st = nullptr;
         m_child_2nd = nullptr;
         if (m_attacker)
-            expand_at_offence(game, cousin_ge_stand, cousin_le_stand);
+            return expand_at_offence(game, cousin_ge_stand, cousin_le_stand);
         else
-            expand_at_defence(game, cousin_ge_stand, cousin_le_stand);
-        assert((pn() == 0u) ? (dn() == max_number) : (dn() != max_number));
-        assert((dn() == 0u) ? (pn() == max_number) : (pn() != max_number));
+            return expand_at_defence(game, cousin_ge_stand, cousin_le_stand);
     }
 
     void backprop_one()
@@ -312,7 +320,7 @@ private:
     }
 
 private:
-    void expand_at_offence(
+    bool expand_at_offence(
         const GameType& g,
         const Node<Parameters>* const cousin_ge_stand,
         const Node<Parameters>* const cousin_le_stand)
@@ -346,35 +354,46 @@ private:
             set_pndn_no_mate();
         else
             m_pn = m_child_1st->m_pn;
+        assert((pn() == 0u) ? (dn() == max_number) : (dn() != max_number));
+        assert((dn() == 0u) ? (pn() == max_number) : (pn() != max_number));
+        return true;
     }
-    void expand_at_defence(
+    bool expand_at_defence(
         const GameType& g,
         const Node<Parameters>* const cousin_ge_stand,
         const Node<Parameters>* const cousin_le_stand)
     {
         m_pn = zero;
         const auto& s = g.get_state();
+        bool fully_expanded = false;
         if (cousin_ge_stand) {
             assert(!cousin_ge_stand->found_conclusion());
             const Node<Parameters>* nibling = cousin_ge_stand->get_child();
             const auto next_child = expand_board_moves_at_defence(&nibling);
-            if (!had_two_consecutive_sacrifice_drops(g))
+            if (!had_two_consecutive_sacrifice_drops(g)) {
                 expand_drop_moves_at_defence(next_child, s, nibling);
+                fully_expanded = true;
+            }
         } else if (cousin_le_stand) {
             assert(!cousin_le_stand->found_conclusion());
             const Node<Parameters>* nibling = cousin_le_stand->get_child();
             const auto next_child = expand_board_moves_at_defence(&nibling);
-            if (!had_two_consecutive_sacrifice_drops(g))
+            if (!had_two_consecutive_sacrifice_drops(g)) {
                 expand_drop_moves_at_defence(next_child, s);
+                fully_expanded = true;
+            }
         } else {
             const auto next_child = expand_board_moves_at_defence(s);
-            if (!had_two_consecutive_sacrifice_drops(g))
+            if (!had_two_consecutive_sacrifice_drops(g)) {
                 expand_drop_moves_at_defence(next_child, s);
+                fully_expanded = true;
+            }
         }
         if (m_child_1st == nullptr)
             set_pndn_mate();
         else
             m_dn = m_child_1st->m_dn;
+        return fully_expanded;
     }
     void expand_board_moves_at_offence(
         std::unique_ptr<Node<Parameters>>* holder,
@@ -1028,11 +1047,9 @@ private:
             n.m_dn = node_ge->dn();
             --searches;
         } else if (!n.has_child()) {
-            if (!n.simulate(game)) {
-                n.expand(game, node_ge, node_le);
-                if (node_le != &n)
-                    m_table.add(&n, game);
-            }
+            if (!n.simulate(game) && n.expand(game, node_ge, node_le)
+                && (node_le != &n))
+                m_table.add(&n, game);
             --searches;
         }
     }
