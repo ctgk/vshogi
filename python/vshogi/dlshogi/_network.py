@@ -53,7 +53,7 @@ class PolicyValueNetwork(th.nn.Module):
         self._backbone = th.nn.Sequential(
             th.nn.Conv2d(in_ch, hidden_channels, kernel_size=1, bias=False),
             th.nn.BatchNorm2d(hidden_channels),
-            th.nn.LeakyReLU(inplace=True),
+            th.nn.ReLU(inplace=True),
             *[
                 _ResidualBlock(
                     hidden_channels, bottleneck_channels, attentions,

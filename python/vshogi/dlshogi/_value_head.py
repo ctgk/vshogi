@@ -13,7 +13,7 @@ class _ValueHead(th.nn.Module):
                 kernel_size=shape, groups=in_ch, bias=False,
             ),
             th.nn.BatchNorm2d(in_ch, affine=False),
-            th.nn.LeakyReLU(inplace=True),
+            th.nn.ReLU(inplace=True),
             th.nn.Flatten(),
             th.nn.Linear(in_ch, 1, bias=False),
         )

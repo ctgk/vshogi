@@ -18,11 +18,11 @@ class _ResidualBlock(th.nn.Module):
             # (B, C_in, H, W) -> (B, C_hid, H, W)
             th.nn.Conv2d(in_ch, hid_ch, kernel_size=1, bias=False),
             th.nn.BatchNorm2d(hid_ch),
-            th.nn.LeakyReLU(inplace=True),
+            th.nn.ReLU(inplace=True),
 
             # (B, C_hid, H, W) -> (B, C_hid, H, W)
             _DepthwiseAttention(attentions, attention_groups),
-            th.nn.LeakyReLU(inplace=True),
+            th.nn.ReLU(inplace=True),
 
             # (B, C_hid, H, W) -> (B, C_in, H, W)
             th.nn.Conv2d(hid_ch, in_ch, kernel_size=1, bias=False),
@@ -33,4 +33,4 @@ class _ResidualBlock(th.nn.Module):
     def forward(self, x: th.Tensor):
         # x: (B, C_in, H*W)
         x = x + self.layers(x)
-        return th.nn.functional.leaky_relu(x, inplace=True)
+        return th.nn.functional.relu(x, inplace=True)
