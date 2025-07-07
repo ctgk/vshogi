@@ -6,6 +6,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 from classopt import classopt, config
+import numpy as np
 from tqdm import tqdm
 
 import vshogi
@@ -109,16 +110,27 @@ def _get_results_of_single_pair(
         'wloss': 0,
     }
     iterator = range(num_games_each * 2)
+    show_mcts_search: bool = isinstance(search_args['mcts_search'], float)
+    p1_search_total = 0
+    p2_search_total = 0
     if show_pbar:
         iterator = tqdm(iterator, ncols=80)
         iterator.set_description(str({'p1': 0, 'draw': 0, 'p2': 0}))
     for i in iterator:
         if i % 2 == 0:
-            result = vshogi.play_game(
+            out = vshogi.play_game(
                 shogi.Game(), player1, player2,
                 search_args=search_args,
                 select_args=select_args,
-            ).result
+                _return_num_searched=isinstance(
+                    search_args['mcts_search'], float),
+            )
+            if isinstance(search_args['mcts_search'], float):
+                result = out[0].result
+                p1_search_total += np.nanmean(np.asarray(out[1][::2], float))
+                p2_search_total += np.nanmean(np.asarray(out[1][1::2], float))
+            else:
+                result = out.result
             if result == vshogi.BLACK_WIN:
                 results_of_p1['bwin'] += 1
             elif result == vshogi.WHITE_WIN:
@@ -126,11 +138,19 @@ def _get_results_of_single_pair(
             else:
                 results_of_p1['bdraw'] += 1
         else:
-            result = vshogi.play_game(
+            out = vshogi.play_game(
                 shogi.Game(), player2, player1,
                 search_args=search_args,
                 select_args=select_args,
-            ).result
+                _return_num_searched=isinstance(
+                    search_args['mcts_search'], float),
+            )
+            if isinstance(search_args['mcts_search'], float):
+                result = out[0].result
+                p2_search_total += np.nanmean(np.asarray(out[1][::2], float))
+                p1_search_total += np.nanmean(np.asarray(out[1][1::2], float))
+            else:
+                result = out.result
             if result == vshogi.BLACK_WIN:
                 results_of_p1['wloss'] += 1
             elif result == vshogi.WHITE_WIN:
@@ -143,6 +163,12 @@ def _get_results_of_single_pair(
                 'draw': results_of_p1['bdraw'] + results_of_p1['wdraw'],
                 'p2': results_of_p1['bloss'] + results_of_p1['wloss'],
             }))
+    if args.show_pbar and show_mcts_search:
+        print(
+            'Initial search counts:',
+            f'p1={p1_search_total / (num_games_each * 2):.2f},',
+            f'p2={p2_search_total / (num_games_each * 2):.2f}',
+        )
     return results_of_p1
 
 

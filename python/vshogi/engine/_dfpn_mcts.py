@@ -58,6 +58,11 @@ class DfpnMcts(Engine):
             self._mcts.apply(move)
         self._found_mate = False
 
+    def _get_num_searched(self):
+        if self.dfpn_found_mate:
+            return None
+        return self._mcts.num_searched
+
     @property
     def mcts_num_searched(self) -> int:
         """Return number of game positions searched so far by MCTS.

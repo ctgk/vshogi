@@ -108,15 +108,7 @@ class Mcts(Engine):
         if self._is_ready():
             self._searcher.apply(move)
 
-    @property
-    def num_searched(self) -> int:
-        """Return number of game positions searched so far.
-
-        Returns
-        -------
-        int
-            Number of game positions searched so far.
-        """
+    def _get_num_searched(self):
         if self._searcher is None:
             return 0
         return self._searcher.get_visit_count()

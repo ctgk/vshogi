@@ -11,6 +11,7 @@ def play_game(
     search_args: dict = {},
     select_args: dict = {},
     max_moves: int = 320,
+    _return_num_searched: bool = False,
 ) -> Game:
     """Make two players play the game until an end.
 
@@ -35,12 +36,17 @@ def play_game(
     Game
         The game the two players played.
     """
-    for _ in range(max_moves):
+    num_searched = []
+    for i in range(max_moves):
         if game.result != Result.ONGOING:
             break
         player = player_black if game.turn == Color.BLACK else player_white
         player.set_game(game)
         player.search(**search_args)
+        if _return_num_searched and (i < 2):
+            num_searched.append(player.num_searched)
         move = player.select(**select_args)
         game.apply(move)
+    if _return_num_searched:
+        return game, num_searched
     return game

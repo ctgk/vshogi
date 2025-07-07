@@ -51,6 +51,17 @@ class Engine(abc.ABC):
         """
         pass
 
+    @property
+    def num_searched(self) -> int:
+        """Return number of game positions searched so far.
+
+        Returns
+        -------
+        int
+            Number of game positions searched so far.
+        """
+        return self._get_num_searched()
+
     @abc.abstractmethod
     def _set_game(self, game: Game):
         pass
@@ -62,6 +73,9 @@ class Engine(abc.ABC):
     @abc.abstractmethod
     def _clear(self) -> None:
         pass
+
+    def _get_num_searched(self) -> int:
+        return 0
 
     def _raise_error_if_not_ready(self):
         method = f'{self.__class__.__name__}.set_game()'
