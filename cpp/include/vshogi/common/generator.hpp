@@ -1014,7 +1014,7 @@ private:
     }
 };
 
-template <class Parameters>
+template <class Parameters, bool Check = false>
 class LegalMoveGenerator
 {
 private:
@@ -1022,9 +1022,13 @@ private:
     using StateType = State<Parameters>;
 
 private:
-    KingMoveGenerator<Parameters> m_king_iter;
-    NonKingBoardMoveGenerator<Parameters> m_board_iter;
-    DropMoveGenerator<Parameters> m_drop_iter;
+    KingMoveGenerator<Parameters, Check> m_king_iter;
+    std::conditional_t<
+        Check,
+        SoldierMoveGenerator<Parameters, Check>,
+        NonKingBoardMoveGenerator<Parameters>>
+        m_board_iter;
+    DropMoveGenerator<Parameters, Check> m_drop_iter;
     uint m_index; //!< 0: king, 1: board, 2: drop, 3: end
 
 public:
@@ -1092,7 +1096,7 @@ public:
     }
     LegalMoveGenerator end()
     {
-        static const auto end_iter = LegalMoveGenerator(
+        static const auto end_iter = LegalMoveGenerator<Parameters, Check>(
             m_king_iter.end(), m_board_iter.end(), m_drop_iter.end(), 3u);
         return end_iter;
     }
@@ -1110,9 +1114,12 @@ public:
 
 private:
     LegalMoveGenerator(
-        const KingMoveGenerator<Parameters>& king_iter,
-        const NonKingBoardMoveGenerator<Parameters>& board_iter,
-        const DropMoveGenerator<Parameters>& drop_iter,
+        const KingMoveGenerator<Parameters, Check>& king_iter,
+        const std::conditional_t<
+            Check,
+            SoldierMoveGenerator<Parameters, Check>,
+            NonKingBoardMoveGenerator<Parameters>>& board_iter,
+        const DropMoveGenerator<Parameters, Check>& drop_iter,
         const uint index)
         : m_king_iter(king_iter), m_board_iter(board_iter),
           m_drop_iter(drop_iter), m_index(index)
