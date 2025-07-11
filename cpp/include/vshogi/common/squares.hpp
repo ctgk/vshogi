@@ -127,6 +127,13 @@ public:
             return DIR_NA;
         return direction_src_dst_table[src][dst];
     }
+    static uint chebyshev_distance(const Square& a, const Square& b)
+    {
+        const int af = to_file(a), bf = to_file(b);
+        const int ar = to_rank(a), br = to_rank(b);
+        return static_cast<uint>(
+            std::max(std::abs(af - bf), std::abs(ar - br)));
+    }
     constexpr static int direction_to_delta(const DirectionEnum& d)
     {
         constexpr int r = static_cast<int>(C::num_ranks);

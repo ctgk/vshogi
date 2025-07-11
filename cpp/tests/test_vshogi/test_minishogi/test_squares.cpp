@@ -140,6 +140,13 @@ TEST(test_minishogi_squares, get_direction)
     CHECK_EQUAL(vshogi::DIR_NE, Squares::get_direction(SQ_1A, SQ_4D));
 }
 
+TEST(test_minishogi_squares, chebyshev_distance)
+{
+    CHECK_EQUAL(1u, Squares::chebyshev_distance(SQ_1A, SQ_1B));
+    CHECK_EQUAL(2u, Squares::chebyshev_distance(SQ_3A, SQ_1A));
+    CHECK_EQUAL(3u, Squares::chebyshev_distance(SQ_1B, SQ_4D));
+}
+
 TEST(test_minishogi_squares, get_squares_along)
 {
     {
