@@ -118,6 +118,14 @@ public:
             out.emplace_back(m);
         return out;
     }
+    Square get_king_location() const
+    {
+        return m_current_state.get_board().get_king_location(get_turn());
+    }
+    Square get_king_location(const ColorEnum c) const
+    {
+        return m_current_state.get_board().get_king_location(c);
+    }
     Square get_checker_location(const uint index = 0u) const
     {
         return m_current_state.get_checker_location(index);

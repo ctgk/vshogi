@@ -54,24 +54,97 @@ namespace internal
 {
 
 template <class P>
-inline void append_for_defence(
-    std::list<Node<P>>& children,
-    const Node<P>& cousin,
-    const bool& stands_fewer)
+inline void emplace_back_with_clamped_pn_dn(
+    std::list<Node<P>>& children, const Node<P>& nibling)
 {
-    // note that the childs are offence node.
-    // - (0, inf), if offence cousin proved mate with fewer stands.
-    // - (inf, 0), if offence cousin proved no-mate with more stands.
-    children.emplace_back(cousin.m_action);
-    Node<P>& added = children.back();
-    if (stands_fewer) {
-        // - (0, inf), if offence cousin proved mate with fewer stands.
-        added.m_pn = std::min(cousin.pn(), kilo);
-        added.m_dn = std::max(cousin.dn(), unit);
-    } else {
-        // - (inf, 0), if offence cousin proved no-mate with more stands.
-        added.m_pn = std::max(cousin.pn(), unit);
-        added.m_dn = std::min(cousin.dn(), kilo);
+    // Parameter names are name from the point of view of
+    // the parent node.
+    // Note that nibling node may have ended up in proving mate or no-mate
+    // by special rules such as repetitions.
+    children.emplace_back(
+        nibling.offence(),
+        nibling.get_action(),
+        std::clamp(nibling.pn(), cent, kilo),
+        std::clamp(nibling.dn(), cent, kilo));
+}
+
+template <class P>
+inline void expand_children_at_offence_using_niblings(
+    std::list<Node<P>>& children,
+    const Game<P>& g,
+    const std::list<Node<P>>& niblings)
+{
+    const Stand<P>& stand = g.get_stand(g.get_turn());
+    for (const Node<P>& nibling : niblings) {
+        const Move<P> m = nibling.get_action();
+        if ((!m.is_drop()) || stand.exist(m.source_piece()))
+            emplace_back_with_clamped_pn_dn(children, nibling);
+    }
+}
+
+template <class P>
+inline void expand_children_at_offence_using_board_niblings(
+    std::list<Node<P>>& children, const std::list<Node<P>>& niblings)
+{
+    for (const Node<P>& nibling : niblings) {
+        if (!nibling.get_action().is_drop())
+            emplace_back_with_clamped_pn_dn(children, nibling);
+    }
+}
+
+template <class P>
+inline void
+expand_children_at_offence(std::list<Node<P>>& children, const Game<P>& g)
+{
+    const State<P>& s = g.get_state();
+    for (auto m : LegalMoveGenerator<P, true>(s)) {
+        if (s.is_declined_promotion(m))
+            children.emplace_back(false, m, kilo, cent);
+        else
+            children.emplace_back(false, m);
+    }
+}
+
+template <class P>
+inline void expand_children_at_offence(
+    std::list<Node<P>>& children,
+    const Game<P>& g,
+    const std::list<Node<P>>* const niblings_l,
+    const std::list<Node<P>>* const niblings_g)
+{
+    if (niblings_g)
+        expand_children_at_offence_using_niblings(children, g, *niblings_g);
+    else if (niblings_l) {
+        expand_children_at_offence_using_board_niblings(children, *niblings_l);
+        for (auto m : DropMoveGenerator<P, true>(g.get_state()))
+            children.emplace_back(false, m);
+    } else
+        expand_children_at_offence(children, g);
+}
+
+template <class P>
+inline void
+expand_children_at_defence_board(std::list<Node<P>>& children, const Game<P>& g)
+{
+    const State<P>& s = g.get_state();
+    for (Move<P> m : KingMoveGenerator<P>(s))
+        children.emplace_back(true, m);
+    for (Move<P> m : BlockMoveGenerator<P>(s))
+        children.emplace_back(true, m);
+}
+
+template <class P>
+inline void expand_children_at_defence_board(
+    std::list<Node<P>>& children,
+    const Game<P>& g,
+    const std::list<Node<P>>* const niblings_gl)
+{
+    if (niblings_gl == nullptr)
+        return expand_children_at_defence_board(children, g);
+    for (const Node<P>& nibling : (*niblings_gl)) {
+        if (nibling.get_action().is_drop())
+            continue;
+        emplace_back_with_clamped_pn_dn(children, nibling);
     }
 }
 
@@ -80,57 +153,67 @@ inline void
 expand_children_at_defence_drop(std::list<Node<P>>& children, const Game<P>& g)
 {
     for (Move<P> m : DropMoveGenerator<P>(g.get_state()))
-        children.emplace_back(false, m);
+        children.emplace_back(true, m);
 }
 
 template <class P>
 inline void expand_children_at_defence_drop(
     std::list<Node<P>>& children,
     const Game<P>& g,
-    const std::list<Node<P>>* const childs_g)
+    const std::list<Node<P>>* const niblings_g)
 {
-    if (childs_g == nullptr)
-        return extend_edges_at_defence_drop(children, g);
-    const State<P>& s = g.get_state();
+    if (niblings_g == nullptr)
+        return expand_children_at_defence_drop(children, g);
     const Stand<P>& stand = g.get_stand(g.get_turn());
-    for (const Node<P>& e : (*childs_g)) {
-        if (!e.m_action.is_drop())
-            continue;
-        if (!stand.exist(e.m_action.source_piece()))
-            continue;
-        append_for_defence(children, e);
+    for (const Node<P>& nibling : (*niblings_g)) {
+        const auto m = nibling.get_action();
+        if (m.is_drop() && stand.exist(m.source_piece()))
+            emplace_back_with_clamped_pn_dn(children, nibling);
     }
 }
 
-template <class P>
-inline uint expand_children_at_defence(
-    std::list<Node<P>>& children,
-    const Game<P>& g,
-    const std::list<Node<P>>* const edges_l,
-    const std::list<Node<P>>* const childs_g)
+template <class Parameters>
+bool had_two_consecutive_sacrifice_drops(const Game<Parameters>& g)
 {
-    uint total_pn = 0u;
-    increment_with_guard(
-        total_pn,
-        extend_edges_at_defence_board(
-            children, g, edges_l ? edges_l : childs_g));
-    increment_with_guard(
-        total_pn, extend_edges_at_defence_drop(children, g, childs_g));
-    return total_pn;
+    const uint n = g.record_length();
+    if (n < 4u)
+        return false;
+
+    // first sacrifice drop
+    const Move<Parameters> drop1st = g.get_record_action(n - 4u);
+    if (!drop1st.is_drop())
+        return false;
+
+    // capture first sacrifice drop
+    const Move<Parameters> capt1st = g.get_record_action(n - 3u);
+    if (drop1st.destination() != capt1st.destination())
+        return false;
+
+    // second sacrifice drop
+    const Move<Parameters> drop2nd = g.get_record_action(n - 2u);
+    if (!drop2nd.is_drop())
+        return false;
+
+    // capture second sacrifice drop
+    const Move<Parameters> capt2nd = g.get_record_action(n - 1u);
+    return (drop2nd.destination() == capt2nd.destination())
+           && (capt1st.destination() == capt2nd.source_square());
 }
 
 template <class P>
-inline void expand_children(
+inline bool expand_children_at_defence(
     std::list<Node<P>>& children,
     const Game<P>& g,
-    const bool offence,
-    const std::list<Node<P>>* const children_l = nullptr,
-    const std::list<Node<P>>* const children_g = nullptr)
+    const std::list<Node<P>>* const niblings_l = nullptr,
+    const std::list<Node<P>>* const niblings_g = nullptr)
 {
-    if (offence)
-        return expand_children_at_offence(children, g, children_l, children_g);
-    else
-        return expand_children_at_defence(children, g, children_l, children_g);
+    expand_children_at_defence_board(
+        children, g, niblings_l ? niblings_l : niblings_g);
+    if (!had_two_consecutive_sacrifice_drops(g)) {
+        expand_children_at_defence_drop(children, g, niblings_g);
+        return true;
+    }
+    return false;
 }
 
 } // namespace internal
@@ -140,12 +223,15 @@ class Node
 {
 private:
     using C = Configuration<Parameters>;
+    using SHelper = Squares<Parameters>;
     using GameType = Game<Parameters>;
     using MoveType = Move<Parameters>;
     using Square = typename C::Square;
 
     const bool m_offence;
     const MoveType m_action;
+    uint m_pn;
+    uint m_dn;
 
     /**
      * @brief The first two childs are the best and second best.
@@ -153,14 +239,9 @@ private:
      */
     std::list<Node> m_children;
 
-    /**
-     * @brief Total counter number, which is #D if offence otherwise #P.
-     */
-    uint m_total_cn;
-
 public:
     /**
-     * @brief Select a best edge to explore.
+     * @brief Select a best child to explore.
      * @note
      *
      * - Offence: argmin(#P of children).
@@ -229,12 +310,25 @@ public:
         const Node* node_l = nullptr,
         const Node* node_ge = nullptr)
     {
-        return internal::expand_children(
-            m_children,
-            g,
-            m_offence,
-            node_l ? &node_l->m_children : nullptr,
-            node_ge ? &node_ge->m_children : nullptr);
+        const auto niblings_l = node_l ? &node_l->m_children : nullptr;
+        const auto niblings_ge = node_ge ? &node_ge->m_children : nullptr;
+        if (m_offence) {
+            internal::expand_children_at_offence(
+                m_children, g, niblings_l, niblings_ge);
+            assert(std::all_of(
+                m_children.cbegin(), m_children.cend(), [](const Node& n) {
+                    return !n.offence();
+                }));
+            return true;
+        } else {
+            const bool out = internal::expand_children_at_defence(
+                m_children, g, niblings_l, niblings_ge);
+            assert(std::all_of(
+                m_children.cbegin(), m_children.cend(), [](const Node& n) {
+                    return n.offence();
+                }));
+            return out;
+        }
     }
 
     /**
@@ -247,15 +341,17 @@ public:
      *
      * @param checker_sq
      */
-    // void backprop(const Square& checker_sq)
-    // {
-    //     assert(m_edge_1st != nullptr);
-    //     m_total_cn = zero;
-    //     if (m_offence)
-    //         backprop_at_offence();
-    //     else
-    //         backprop_at_defence(checker_sq);
-    // }
+    void backprop(const Game<Parameters>& g)
+    {
+        if (m_children.size() == 1u) {
+            m_pn = m_children.front().pn();
+            m_dn = m_children.front().dn();
+        } else if (m_offence)
+            backprop_at_offence();
+        else
+            backprop_at_defence(
+                g.get_checker_location(), g.get_king_location());
+    }
 
 private:
     bool simulate_using_game(const GameType& g)
@@ -264,13 +360,20 @@ private:
         if (r == ONGOING)
             return false;
         if (r == DRAW) {
-            m_total_cn = zero;
+            m_pn = inf;
+            m_dn = zero;
             return true;
         }
 
         const auto winner = (r == BLACK_WIN) ? BLACK : WHITE;
         const auto turn = g.get_turn();
-        m_total_cn = (winner == turn) ? inf : zero;
+        if (m_offence == (winner == turn)) {
+            m_pn = zero;
+            m_dn = inf;
+        } else {
+            m_pn = inf;
+            m_dn = zero;
+        }
         return true;
     }
     bool simulate_using_cousins(
@@ -279,85 +382,155 @@ private:
         const Node* const node_g)
     {
         if (node_l && m_offence && node_l->proved_mate()) {
-            m_total_cn = inf; // (#P, #D) = (0, inf)
+            m_pn = zero;
+            m_dn = inf;
             return true;
         } else if (node_l && (!m_offence) && node_l->proved_no_mate()) {
-            m_total_cn = inf; // (#P, #D) = (inf, 0)
+            m_pn = inf;
+            m_dn = zero;
             return true;
         } else if (node_e && node_e->proved()) {
-            m_total_cn = node_e->m_total_cn;
+            m_pn = node_e->m_pn;
+            m_dn = node_e->m_dn;
             return true;
         } else if (node_g && m_offence && node_g->proved_no_mate()) {
-            m_total_cn = zero; // (#P, #D) = (inf, 0)
+            m_pn = inf;
+            m_dn = zero;
             return true;
         } else if (node_g && (!m_offence) && node_g->proved_mate()) {
-            m_total_cn = zero; // (#P, #D) = (0, inf)
+            m_pn = zero;
+            m_dn = inf;
             return true;
         }
         return false;
     }
-    // void backprop_at_offence()
-    // {
-    //     if (m_edge_1st->m_pn == zero) {
-    //         m_total_cn = inf;
-    //         return;
-    //     }
-    //     for (EdgeType& e : m_edges)
-    //         internal::increment_with_guard(
-    //             m_total_cn,
-    //             internal::update_edges_1st_2nd_for_offence(
-    //                 e, &m_edge_1st, &m_edge_2nd));
-    // }
-    // void backprop_at_defence(const Square& checker_sq)
-    // {
-    //     if (m_edge_1st->m_dn == zero) {
-    //         m_total_cn = inf;
-    //         return;
-    //     }
-    //     backprop_at_defence_board(checker_sq);
-    //     backprop_at_defence_drop(checker_sq);
-    // }
-    // void backprop_at_defence_board(const Square& checker_sq)
-    // {
-    //     for (EdgeType& e : m_edges) {
-    //         if (e.m_action.is_drop())
-    //             break;
-    //         internal::increment_with_guard(
-    //             m_total_cn,
-    //             internal::update_edges_1st_2nd_for_defence(
-    //                 e, &m_edge_1st, &m_edge_2nd, checker_sq));
-    //     }
-    // }
-    // void backprop_at_defence_drop(const Square& checker_sq)
-    // {
-    //     // https://komorinfo.com/blog/proof-number-double-count/
-    //     uint pn_max[C::num_squares] = {0u};
-    //     for (EdgeType& e : m_edges) {
-    //         if (!e.m_action.is_drop())
-    //             continue;
-    //         internal::update_edges_1st_2nd_for_defence(
-    //             e, &m_edge_1st, &m_edge_2nd, checker_sq);
-    //         const auto d = e.m_action.destination();
-    //         if (pn_max[d] < e.m_pn)
-    //             pn_max[d] = e.m_pn;
-    //     }
-    //     for (uint ii = C::num_squares; ii--;)
-    //         internal::increment_with_guard(m_total_cn, pn_max[ii]);
-    // }
+    void backprop_at_offence()
+    {
+        if (m_children.empty()) {
+            m_pn = inf;
+            m_dn = zero;
+            return;
+        }
+        if (m_children.front().m_pn == zero) {
+            m_pn = zero;
+            m_dn = inf;
+            return;
+        }
+        auto it_1st = m_children.end();
+        auto it_2nd = m_children.end();
+        m_dn = zero;
+        for (auto it = m_children.begin(); it != m_children.end(); ++it) {
+            assert(it->dn() != inf);
+            m_dn += it->dn();
+            if ((it_1st == m_children.end()) || it->is_better_than(*it_1st)) {
+                it_2nd = it_1st;
+                it_1st = it;
+            } else if (
+                (it_2nd == m_children.end()) || it->is_better_than(*it_2nd)) {
+                it_2nd = it;
+            }
+        }
+        if (it_2nd != m_children.begin())
+            m_children.splice(m_children.begin(), m_children, it_2nd);
+        if (it_1st != m_children.begin())
+            m_children.splice(m_children.begin(), m_children, it_1st);
+        m_pn = m_children.front().pn();
+    }
+    bool is_better_than(const Node& other) const
+    {
+        if (m_pn < other.m_pn)
+            return true;
+        if (m_pn > other.m_pn)
+            return false;
+        return m_action.is_drop() && (!other.m_action.is_drop());
+    }
+    void backprop_at_defence(const Square& checker_sq, const Square& king_sq)
+    {
+        if (m_children.empty()) {
+            m_pn = zero;
+            m_dn = inf;
+            return;
+        }
+        if (m_children.front().m_dn == zero) {
+            m_pn = inf;
+            m_dn = zero;
+            return;
+        }
+        auto it_1st = m_children.end();
+        auto it_2nd = m_children.end();
+        m_pn = zero;
+        uint pn_max_drop_at[C::num_squares] = {zero};
+        for (auto it = m_children.begin(); it != m_children.end(); ++it) {
+            assert(it->pn() != inf);
+            const auto m = it->get_action();
+            if (m.is_drop()) {
+                const auto d = m.destination();
+                if (pn_max_drop_at[d] < it->pn())
+                    pn_max_drop_at[d] = it->pn();
+            } else {
+                m_pn += it->pn();
+            }
+            if ((it_1st == m_children.end())
+                || it->is_better_than(*it_1st, checker_sq, king_sq)) {
+                it_2nd = it_1st;
+                it_1st = it;
+            } else if (
+                (it_2nd == m_children.end())
+                || it->is_better_than(*it_2nd, checker_sq, king_sq)) {
+                it_2nd = it;
+            }
+        }
+        for (uint ii = C::num_squares; ii--;)
+            m_pn += pn_max_drop_at[ii];
+        if (it_2nd != m_children.begin())
+            m_children.splice(m_children.begin(), m_children, it_2nd);
+        if (it_1st != m_children.begin())
+            m_children.splice(m_children.begin(), m_children, it_1st);
+        m_dn = m_children.front().dn();
+    }
+    bool is_better_than(
+        const Node& other,
+        const Square& checker_sq,
+        const Square& king_sq) const
+    {
+        if (m_dn < other.m_dn)
+            return true;
+        if (m_dn > other.m_dn)
+            return false;
+        const auto td = this->m_action.destination();
+        const auto od = other.m_action.destination();
+        if ((td == checker_sq) && (od != checker_sq))
+            return true;
+        if ((td != checker_sq) && (od == checker_sq))
+            return false;
+        return (
+            SHelper::chebyshev_distance(td, king_sq)
+            < SHelper::chebyshev_distance(od, king_sq));
+    }
 
 public: // utilities
-    Node() : m_offence(true), m_action(), m_children(), m_total_cn(unit)
+    Node() : m_offence(true), m_action(), m_pn(unit), m_dn(unit), m_children()
     {
     }
     Node(const bool offence, const Move<Parameters>& action)
-        : m_offence(offence), m_action(action), m_children(), m_total_cn(unit)
+        : m_offence(offence), m_action(action), m_pn(unit), m_dn(unit),
+          m_children()
+    {
+    }
+    Node(
+        const bool offence,
+        const Move<Parameters>& action,
+        const uint pn,
+        const uint dn)
+        : m_offence(offence), m_action(action), m_pn(pn), m_dn(dn)
     {
     }
     void init()
     {
         assert(m_offence);
         m_children.clear();
-        m_total_cn = unit;
+        m_pn = unit;
+        m_dn = unit;
     }
     bool offence() const
     {
@@ -369,7 +542,7 @@ public: // utilities
     }
     bool is_first_arrival() const
     {
-        return m_children.empty() && (m_total_cn == unit);
+        return m_children.empty() && (!proved());
     }
     uint num_children() const
     {
@@ -377,35 +550,23 @@ public: // utilities
     }
     uint pn() const
     {
-        if (m_offence) {
-            if (m_total_cn == inf)
-                return zero;
-            return (m_children.empty()) ? inf : get_child_1st()->pn();
-        } else {
-            return m_total_cn;
-        }
+        return m_pn;
     }
     uint dn() const
     {
-        if (m_offence) {
-            return m_total_cn;
-        } else {
-            if (m_total_cn == inf)
-                return zero;
-            return (m_children.empty()) ? inf : get_child_1st()->dn();
-        }
+        return m_dn;
     }
     bool proved_mate() const
     {
-        return m_total_cn == (m_offence ? inf : zero);
+        return m_pn == zero;
     }
     bool proved_no_mate() const
     {
-        return m_total_cn == (m_offence ? zero : inf);
+        return m_dn == zero;
     }
     bool proved() const
     {
-        return (m_total_cn == zero) || (m_total_cn == inf);
+        return (m_pn == zero) || (m_dn == zero);
     }
     const Node* get_child_1st() const
     {
@@ -418,6 +579,10 @@ public: // utilities
         if (m_children.size() < 2u)
             return nullptr;
         return &*std::next(m_children.cbegin());
+    }
+    const std::list<Node>& get_children() const
+    {
+        return m_children;
     }
 };
 
