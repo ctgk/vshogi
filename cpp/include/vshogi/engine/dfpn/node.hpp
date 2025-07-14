@@ -255,6 +255,24 @@ public:
     {
         return &m_children.front();
     }
+    uint compute_child_thpn(const uint thpn) const
+    {
+        if (!m_offence)
+            return thpn;
+        const Node* const c2 = get_child_2nd();
+        if ((c2 == nullptr) || (c2->m_pn == inf))
+            return thpn;
+        return std::min(thpn, c2->m_pn + 1u);
+    }
+    uint compute_child_thdn(const uint thdn) const
+    {
+        if (m_offence)
+            return thdn;
+        const Node* const c2 = get_child_2nd();
+        if ((c2 == nullptr) || (c2->m_dn == inf))
+            return thdn;
+        return std::min(thdn, c2->m_dn + 1u);
+    }
 
     /**
      * @brief Simulate the game position.

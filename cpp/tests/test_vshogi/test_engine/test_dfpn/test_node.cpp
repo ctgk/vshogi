@@ -372,6 +372,29 @@ TEST(dfpn_node_backprop, defence_preference)
     CHECK_EQUAL(Move(SQ_5D, FU).hash(), n.get_child_2nd()->get_action().hash());
 }
 
+TEST_GROUP (dfpn_node_compute_child_th) {
+};
+
+TEST(dfpn_node_compute_child_th, offence)
+{
+    auto g = Game("2B1k/5/5/5/5 b -");
+    auto n = Node();
+    n.expand_children(g);
+    n.backprop(g);
+    CHECK_EQUAL(unit, n.compute_child_thpn(unit));
+    CHECK_EQUAL(kilo + 1u, n.compute_child_thpn(10u * kilo));
+}
+
+TEST(dfpn_node_compute_child_th, defence)
+{
+    auto g = Game("4k/4P/5/5/5 w -");
+    auto n = Node(false, Move());
+    n.expand_children(g);
+    n.backprop(g);
+    CHECK_EQUAL(unit + 1u, n.compute_child_thdn(inf));
+    CHECK_EQUAL(cent, n.compute_child_thdn(cent));
+}
+
 TEST_GROUP (dfpn_expand_children_at_defence_drop) {
 };
 

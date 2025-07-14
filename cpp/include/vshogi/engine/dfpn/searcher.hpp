@@ -84,7 +84,7 @@ private:
             --searches;
         }
         while (searches) {
-            n.backprop(game.get_checker_location());
+            n.backprop(game);
             if ((n.pn() >= thpn) || (n.dn() >= thdn))
                 break;
             const uint thpn_ch = n.compute_child_thpn(thpn);
