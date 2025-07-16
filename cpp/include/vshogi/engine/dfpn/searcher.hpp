@@ -1,6 +1,7 @@
 #ifndef VSHOGI_ENGINE_DFPN_SEARCHER_HPP
 #define VSHOGI_ENGINE_DFPN_SEARCHER_HPP
 
+#include <map>
 #include <memory>
 
 #include "vshogi/common/game.hpp"
@@ -10,6 +11,126 @@
 
 namespace vshogi::engine::dfpn2
 {
+
+template <class Parameters>
+class Table
+{
+private:
+    using C = Configuration<Parameters>;
+    using BaseTypeStand = typename C::BaseTypeStand;
+    using StandNodeTable
+        = std::vector<std::pair<BaseTypeStand, const Node<Parameters>*>>;
+    using StandType = Stand<Parameters>;
+    using GameType = Game<Parameters>;
+    using MoveType = Move<Parameters>;
+    using NodeType = Node<Parameters>;
+
+private:
+    std::map<std::uint64_t, StandNodeTable> m_table;
+
+public:
+    Table() : m_table{}
+    {
+    }
+    void clear()
+    {
+        m_table.clear();
+    }
+
+    void add(const NodeType* const n, const GameType& g)
+    {
+        const std::uint64_t bt_hash = g.get_board_turn_hash();
+        const auto t = g.get_turn();
+        const auto s = g.get_stand(t).value();
+        auto it = m_table.find(bt_hash);
+        if (it == m_table.end()) {
+            m_table.emplace(bt_hash, StandNodeTable());
+            m_table[bt_hash].emplace_back(s, n);
+        } else {
+            for (auto&& pair : it->second) {
+                if (pair.first == s)
+                    return;
+            }
+            it->second.emplace_back(s, n);
+        }
+    }
+
+    void look_up_leg_stand_nodes(
+        const GameType& g,
+        const NodeType** const node_l,
+        const NodeType** const node_e,
+        const NodeType** const node_g) const
+    {
+        const std::uint64_t bt_hash = g.get_board_turn_hash();
+        auto it = m_table.find(bt_hash);
+        *node_l = nullptr;
+        *node_e = nullptr;
+        *node_g = nullptr;
+        if (it == m_table.end())
+            return;
+        return look_up_leg_stand_nodes(g, it->second, node_l, node_e, node_g);
+    }
+
+private:
+    void look_up_leg_stand_nodes(
+        const GameType& g,
+        const StandNodeTable& table,
+        const NodeType** const node_l,
+        const NodeType** const node_e,
+        const NodeType** const node_g) const
+    {
+        // - offence turn (`is_attacker == true`)
+        //     - Weaker offence stand, but mate (or #P <= #D)
+        //     - Stronger offence stand, but no-mate (#P > #D).
+        // - defence turn
+        //     - Weaker defence stand, but no-mate.
+        //     - Stronger defence stand, but mate.
+        const auto t = g.get_turn();
+        const auto s = g.get_stand(t);
+        Stand<Parameters> s_l = Stand<Parameters>();
+        Stand<Parameters> s_g
+            = Stand<Parameters>(static_cast<BaseTypeStand>(~0));
+        bool found_best_l = false;
+        bool found_best_g = false;
+        for (auto& it : table) {
+            const auto s_iter = Stand<Parameters>(it.first);
+            const NodeType* const n_iter = it.second;
+            const bool is_atk = n_iter->offence();
+            const bool is_mate = n_iter->proved_mate();
+            const bool is_no_mate = n_iter->proved_no_mate();
+            if (s_iter < s) {
+                if (is_atk ? is_mate : is_no_mate) {
+                    // weaker offence stand, but mate
+                    *node_l = n_iter;
+                    found_best_l = true;
+                } else if (
+                    (!found_best_l) && (is_atk ? (!is_no_mate) : (!is_mate))) {
+                    // exclude weaker offence stand, and no mate.
+                    if ((*node_l == nullptr) || (s_l < s_iter)) {
+                        s_l = s_iter;
+                        *node_l = n_iter;
+                    }
+                }
+            } else if (s_iter == s) {
+                *node_e = n_iter;
+                if (n_iter->proved())
+                    return;
+            } else {
+                if (is_atk ? is_no_mate : is_mate) {
+                    *node_g = n_iter;
+                    found_best_g = true;
+                } else if (
+                    (!found_best_g) && (is_atk ? (!is_mate) : (!is_no_mate))) {
+                    // exclude greater offence stand, and mate.
+                    if ((*node_g == nullptr) || (s_iter < s_g)) {
+                        s_g = s_iter;
+                        *node_g = n_iter;
+                    }
+                }
+            }
+        }
+    }
+};
 
 template <class Parameters, class Table>
 class Searcher
