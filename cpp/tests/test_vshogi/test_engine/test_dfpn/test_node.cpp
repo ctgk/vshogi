@@ -519,7 +519,7 @@ TEST(dfpn_expand_children_at_defence, using_niblings)
     dfpn::internal::expand_children_at_defence(
         actual,
         Game("3gk/5/4R/5/4K w p"),
-        (const std::list<Node>*)nullptr,
+        static_cast<const std::list<Node>*>(nullptr),
         &niblings);
     CHECK_EQUAL(2u, actual.size());
 
@@ -599,7 +599,7 @@ TEST(dfpn_expand_children_at_offence, niblings_g)
     dfpn::internal::expand_children_at_offence(
         actual,
         Game("2B1k/5/5/4K/4R b P"),
-        (const std::list<Node>*)nullptr,
+        static_cast<const std::list<Node>*>(nullptr),
         &niblings);
     CHECK_EQUAL(3u, actual.size());
 
@@ -635,7 +635,7 @@ TEST(dfpn_expand_children_at_offence, niblings_l)
         actual,
         Game("2B1k/5/5/4K/4R b P"),
         &niblings,
-        (const std::list<Node>*)nullptr);
+        static_cast<const std::list<Node>*>(nullptr));
     CHECK_EQUAL(3u, actual.size());
 
     auto it = actual.cbegin();

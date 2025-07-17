@@ -129,8 +129,10 @@ public:
     }
     static uint chebyshev_distance(const Square& a, const Square& b)
     {
-        const int af = to_file(a), bf = to_file(b);
-        const int ar = to_rank(a), br = to_rank(b);
+        const int af = static_cast<int>(to_file(a));
+        const int bf = static_cast<int>(to_file(b));
+        const int ar = static_cast<int>(to_rank(a));
+        const int br = static_cast<int>(to_rank(b));
         return static_cast<uint>(
             std::max(std::abs(af - bf), std::abs(ar - br)));
     }

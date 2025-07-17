@@ -551,7 +551,7 @@ public: // utilities
         const Move<Parameters>& action,
         const uint pn,
         const uint dn)
-        : m_offence(offence), m_action(action), m_pn(pn), m_dn(dn)
+        : m_offence(offence), m_action(action), m_pn(pn), m_dn(dn), m_children()
     {
     }
     void init()
@@ -575,7 +575,7 @@ public: // utilities
     }
     uint num_children() const
     {
-        return m_children.size();
+        return static_cast<uint>(m_children.size());
     }
     uint pn() const
     {
