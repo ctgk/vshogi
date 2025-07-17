@@ -257,21 +257,27 @@ public:
     }
     uint compute_child_thpn(const uint thpn) const
     {
-        if (!m_offence)
-            return thpn;
-        const Node* const c2 = get_child_2nd();
-        if ((c2 == nullptr) || (c2->m_pn == inf))
-            return thpn;
-        return std::min(thpn, c2->m_pn + 1u);
+        // https://webdocs.cs.ualberta.ca/~mmueller/ps/ICGA2012PNS.pdf pg6
+        if (m_offence) {
+            const auto c2 = get_child_2nd();
+            if ((c2 == nullptr) || (c2->m_pn == inf))
+                return thpn;
+            return std::min(thpn, c2->m_pn + 1u);
+        } else {
+            return thpn - m_pn + get_child_1st()->pn();
+        }
     }
     uint compute_child_thdn(const uint thdn) const
     {
-        if (m_offence)
-            return thdn;
-        const Node* const c2 = get_child_2nd();
-        if ((c2 == nullptr) || (c2->m_dn == inf))
-            return thdn;
-        return std::min(thdn, c2->m_dn + 1u);
+        // https://webdocs.cs.ualberta.ca/~mmueller/ps/ICGA2012PNS.pdf pg6
+        if (m_offence) {
+            return thdn - m_dn + get_child_1st()->dn();
+        } else {
+            const auto c2 = get_child_2nd();
+            if ((c2 == nullptr) || (c2->m_dn == inf))
+                return thdn;
+            return std::min(thdn, c2->m_dn + 1u);
+        }
     }
 
     /**
@@ -500,10 +506,15 @@ private:
         }
         for (uint ii = C::num_squares; ii--;)
             m_pn += pn_max_drop_at[ii];
-        if (it_2nd != m_children.begin())
-            m_children.splice(m_children.begin(), m_children, it_2nd);
-        if (it_1st != m_children.begin())
-            m_children.splice(m_children.begin(), m_children, it_1st);
+        if (m_pn == zero) {
+            m_children.splice(
+                m_children.begin(), m_children, std::prev(m_children.end()));
+        } else {
+            if (it_2nd != m_children.begin())
+                m_children.splice(m_children.begin(), m_children, it_2nd);
+            if (it_1st != m_children.begin())
+                m_children.splice(m_children.begin(), m_children, it_1st);
+        }
         m_dn = m_children.front().dn();
     }
     bool is_better_than(
