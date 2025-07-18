@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <list>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -656,7 +657,7 @@ private:
     using C = Configuration<Parameters>;
     using BaseTypeStand = typename C::BaseTypeStand;
     using StandNodeTable
-        = std::vector<std::pair<BaseTypeStand, const Node<Parameters>*>>;
+        = std::list<std::pair<BaseTypeStand, const Node<Parameters>*>>;
     using StandType = Stand<Parameters>;
     using GameType = Game<Parameters>;
     using MoveType = Move<Parameters>;
