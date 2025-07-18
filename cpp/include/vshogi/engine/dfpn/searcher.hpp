@@ -264,7 +264,7 @@ private:
     }
 
 public: // utility
-    Searcher() : m_table(), m_game(nullptr), m_num_searched(0u)
+    Searcher() : m_root(), m_table(), m_game(nullptr), m_num_searched(0u)
     {
     }
     bool is_ready() const
