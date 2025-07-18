@@ -511,7 +511,8 @@ private:
             next = &(ch->m_sibling);
         }
         for (uint ii = C::num_squares; ii--;) {
-            increment_with_guard(m_pn, pn_max[ii]);
+            assert(pn_max[ii] != max_number);
+            m_pn += pn_max[ii];
         }
     }
     void expand_drop_moves_at_defence(
@@ -544,7 +545,8 @@ private:
             next = &(ch->m_sibling);
         }
         for (uint ii = C::num_squares; ii--;) {
-            increment_with_guard(m_pn, pn_max[ii]);
+            assert(pn_max[ii] != max_number);
+            m_pn += pn_max[ii];
         }
     }
 
@@ -588,7 +590,8 @@ private:
                 pn_max[d] = ch->m_pn;
         }
         for (uint ii = C::num_squares; ii--;) {
-            increment_with_guard(m_pn, pn_max[ii]);
+            assert(pn_max[ii] != max_number);
+            m_pn += pn_max[ii];
         }
     }
 
@@ -611,7 +614,8 @@ private:
         } else if (ch->is_better_pn_choice_than(m_child_2nd)) {
             m_child_2nd = ch;
         }
-        increment_with_guard(m_dn, ch->m_dn);
+        assert(ch->m_dn != max_number);
+        m_dn += ch->m_dn;
     }
     bool is_better_pn_choice_than(const Node* const other) const
     {
@@ -628,7 +632,8 @@ private:
         } else if (ch->is_better_dn_choice_than(m_child_2nd, dst)) {
             m_child_2nd = ch;
         }
-        increment_with_guard(m_pn, ch->m_pn);
+        assert(ch->m_pn != max_number);
+        m_pn += ch->m_pn;
     }
     bool is_better_dn_choice_than(
         const Node* const other, const Square& dst_prev) const
@@ -641,13 +646,6 @@ private:
             return false;
         return (m_action.destination() == dst_prev)
                && (other->m_action.destination() != dst_prev);
-    }
-    static void increment_with_guard(uint& n, uint other)
-    {
-        if ((n == max_number) || (other == max_number))
-            n = max_number;
-        else
-            n += other;
     }
 };
 
