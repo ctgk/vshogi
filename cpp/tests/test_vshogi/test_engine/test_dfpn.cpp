@@ -22,10 +22,10 @@ TEST(dfpn_node_simulate, using_game_ongoing)
 {
     auto g = Game();
     auto n = Node();
-    CHECK_FALSE(n.found_conclusion());
+    CHECK_FALSE(n.proved());
 
     CHECK_FALSE(n.simulate(g));
-    CHECK_FALSE(n.found_conclusion());
+    CHECK_FALSE(n.proved());
 }
 
 TEST(dfpn_node_simulate, using_game_draw)
@@ -42,9 +42,9 @@ TEST(dfpn_node_simulate, using_game_draw)
     CHECK_TRUE(n.simulate(g));
     CHECK_EQUAL(inf, n.pn());
     CHECK_EQUAL(zero, n.dn());
-    CHECK_TRUE(n.found_conclusion());
-    CHECK_FALSE(n.found_mate());
-    CHECK_TRUE(n.found_no_mate());
+    CHECK_TRUE(n.proved());
+    CHECK_FALSE(n.proved_mate());
+    CHECK_TRUE(n.proved_no_mate());
 }
 
 TEST(dfpn_node_simulate, using_game_won_by_offence_at_offence_turn)
@@ -57,9 +57,9 @@ TEST(dfpn_node_simulate, using_game_won_by_offence_at_offence_turn)
     CHECK_TRUE(n.simulate(g));
     CHECK_EQUAL(zero, n.pn());
     CHECK_EQUAL(inf, n.dn());
-    CHECK_TRUE(n.found_conclusion());
-    CHECK_TRUE(n.found_mate());
-    CHECK_FALSE(n.found_no_mate());
+    CHECK_TRUE(n.proved());
+    CHECK_TRUE(n.proved_mate());
+    CHECK_FALSE(n.proved_no_mate());
 }
 
 TEST(dfpn_node_simulate, using_game_won_by_defence_at_offence_turn)
@@ -72,9 +72,9 @@ TEST(dfpn_node_simulate, using_game_won_by_defence_at_offence_turn)
     CHECK_TRUE(n.simulate(g));
     CHECK_EQUAL(inf, n.pn());
     CHECK_EQUAL(zero, n.dn());
-    CHECK_TRUE(n.found_conclusion());
-    CHECK_FALSE(n.found_mate());
-    CHECK_TRUE(n.found_no_mate());
+    CHECK_TRUE(n.proved());
+    CHECK_FALSE(n.proved_mate());
+    CHECK_TRUE(n.proved_no_mate());
 }
 
 TEST(dfpn_node_simulate, using_game_won_by_defence_at_defence_turn)
@@ -92,9 +92,9 @@ TEST(dfpn_node_simulate, using_game_won_by_defence_at_defence_turn)
     CHECK_TRUE(n.simulate(g));
     CHECK_EQUAL(inf, n.pn());
     CHECK_EQUAL(zero, n.dn());
-    CHECK_TRUE(n.found_conclusion());
-    CHECK_FALSE(n.found_mate());
-    CHECK_TRUE(n.found_no_mate());
+    CHECK_TRUE(n.proved());
+    CHECK_FALSE(n.proved_mate());
+    CHECK_TRUE(n.proved_no_mate());
 }
 
 TEST(dfpn_node_simulate, using_offence_cousin_l_mate)
@@ -108,9 +108,9 @@ TEST(dfpn_node_simulate, using_offence_cousin_l_mate)
     CHECK_TRUE(n.simulate(Game(), &node_l));
     CHECK_EQUAL(zero, n.pn());
     CHECK_EQUAL(inf, n.dn());
-    CHECK_TRUE(n.found_conclusion());
-    CHECK_TRUE(n.found_mate());
-    CHECK_FALSE(n.found_no_mate());
+    CHECK_TRUE(n.proved());
+    CHECK_TRUE(n.proved_mate());
+    CHECK_FALSE(n.proved_no_mate());
 }
 
 TEST(dfpn_node_simulate, using_offence_cousin_l_no_mate)
@@ -118,13 +118,13 @@ TEST(dfpn_node_simulate, using_offence_cousin_l_no_mate)
     auto node_l = Node();
     auto g = Game("5/5/3gk/5/4K w -").apply(Move(SQ_1D, SQ_2C));
     node_l.simulate(g);
-    CHECK_TRUE(node_l.found_no_mate());
+    CHECK_TRUE(node_l.proved_no_mate());
 
     auto n = Node();
     CHECK_FALSE(n.simulate(Game(), &node_l));
-    CHECK_FALSE(n.found_conclusion());
-    CHECK_FALSE(n.found_mate());
-    CHECK_FALSE(n.found_no_mate());
+    CHECK_FALSE(n.proved());
+    CHECK_FALSE(n.proved_mate());
+    CHECK_FALSE(n.proved_no_mate());
 }
 
 TEST(dfpn_node_simulate, using_defence_cousin_l_no_mate)
@@ -137,13 +137,13 @@ TEST(dfpn_node_simulate, using_defence_cousin_l_no_mate)
     g.update_result_dfpn(1u);
     auto node_l = Node(false, Move());
     node_l.simulate(g);
-    CHECK_TRUE(node_l.found_no_mate());
+    CHECK_TRUE(node_l.proved_no_mate());
 
     auto n = Node(false, Move());
     CHECK_TRUE(n.simulate(Game(), &node_l));
-    CHECK_TRUE(n.found_conclusion());
-    CHECK_FALSE(n.found_mate());
-    CHECK_TRUE(n.found_no_mate());
+    CHECK_TRUE(n.proved());
+    CHECK_FALSE(n.proved_mate());
+    CHECK_TRUE(n.proved_no_mate());
 }
 
 TEST(dfpn_node_simulate, using_defence_cousin_l_ongoing)
@@ -151,13 +151,13 @@ TEST(dfpn_node_simulate, using_defence_cousin_l_ongoing)
     auto g = Game("4k/4S/5/5/4K w -");
     auto node_l = Node(false, Move());
     node_l.simulate(g);
-    CHECK_FALSE(node_l.found_conclusion());
+    CHECK_FALSE(node_l.proved());
 
     auto n = Node(false, Move());
     CHECK_FALSE(n.simulate(Game(), &node_l));
-    CHECK_FALSE(n.found_conclusion());
-    CHECK_FALSE(n.found_mate());
-    CHECK_FALSE(n.found_no_mate());
+    CHECK_FALSE(n.proved());
+    CHECK_FALSE(n.proved_mate());
+    CHECK_FALSE(n.proved_no_mate());
 }
 
 TEST(dfpn_node_simulate, using_cousin_e_mate)
@@ -166,13 +166,13 @@ TEST(dfpn_node_simulate, using_cousin_e_mate)
     g.update_result_dfpn(1u);
     auto node_e = Node();
     node_e.simulate(g);
-    CHECK_TRUE(node_e.found_mate());
+    CHECK_TRUE(node_e.proved_mate());
 
     auto n = Node();
     CHECK_TRUE(n.simulate(Game(), nullptr, &node_e));
-    CHECK_TRUE(n.found_conclusion());
-    CHECK_TRUE(n.found_mate());
-    CHECK_FALSE(n.found_no_mate());
+    CHECK_TRUE(n.proved());
+    CHECK_TRUE(n.proved_mate());
+    CHECK_FALSE(n.proved_no_mate());
 }
 
 TEST(dfpn_node_simulate, using_cousin_e_no_mate)
@@ -185,13 +185,13 @@ TEST(dfpn_node_simulate, using_cousin_e_no_mate)
     g.update_result_dfpn(1u);
     auto node_e = Node();
     node_e.simulate(g);
-    CHECK_TRUE(node_e.found_no_mate());
+    CHECK_TRUE(node_e.proved_no_mate());
 
     auto n = Node();
     CHECK_TRUE(n.simulate(Game(), nullptr, &node_e));
-    CHECK_TRUE(n.found_conclusion());
-    CHECK_FALSE(n.found_mate());
-    CHECK_TRUE(n.found_no_mate());
+    CHECK_TRUE(n.proved());
+    CHECK_FALSE(n.proved_mate());
+    CHECK_TRUE(n.proved_no_mate());
 }
 
 TEST(dfpn_node_simulate, using_cousin_e_ongoing)
@@ -199,13 +199,13 @@ TEST(dfpn_node_simulate, using_cousin_e_ongoing)
     auto g = Game();
     auto node_e = Node();
     node_e.simulate(g);
-    CHECK_FALSE(node_e.found_conclusion());
+    CHECK_FALSE(node_e.proved());
 
     auto n = Node();
     CHECK_FALSE(n.simulate(Game(), nullptr, &node_e));
-    CHECK_FALSE(n.found_conclusion());
-    CHECK_FALSE(n.found_mate());
-    CHECK_FALSE(n.found_no_mate());
+    CHECK_FALSE(n.proved());
+    CHECK_FALSE(n.proved_mate());
+    CHECK_FALSE(n.proved_no_mate());
 }
 
 TEST(dfpn_node_simulate, using_offence_cousin_g_mate)
@@ -217,9 +217,9 @@ TEST(dfpn_node_simulate, using_offence_cousin_g_mate)
 
     auto n = Node();
     CHECK_FALSE(n.simulate(Game(), nullptr, nullptr, &node_g));
-    CHECK_FALSE(n.found_conclusion());
-    CHECK_FALSE(n.found_mate());
-    CHECK_FALSE(n.found_no_mate());
+    CHECK_FALSE(n.proved());
+    CHECK_FALSE(n.proved_mate());
+    CHECK_FALSE(n.proved_no_mate());
 }
 
 TEST(dfpn_node_simulate, using_offence_cousin_g_no_mate)
@@ -227,13 +227,13 @@ TEST(dfpn_node_simulate, using_offence_cousin_g_no_mate)
     auto node_g = Node();
     auto g = Game("5/5/3gk/5/4K w -").apply(Move(SQ_1D, SQ_2C));
     node_g.simulate(g);
-    CHECK_TRUE(node_g.found_no_mate());
+    CHECK_TRUE(node_g.proved_no_mate());
 
     auto n = Node();
     CHECK_TRUE(n.simulate(Game(), nullptr, nullptr, &node_g));
-    CHECK_TRUE(n.found_conclusion());
-    CHECK_FALSE(n.found_mate());
-    CHECK_TRUE(n.found_no_mate());
+    CHECK_TRUE(n.proved());
+    CHECK_FALSE(n.proved_mate());
+    CHECK_TRUE(n.proved_no_mate());
 }
 
 TEST(dfpn_node_simulate, using_defence_cousin_g_no_mate)
@@ -246,13 +246,13 @@ TEST(dfpn_node_simulate, using_defence_cousin_g_no_mate)
     g.update_result_dfpn(1u);
     auto node_g = Node(false, Move());
     node_g.simulate(g);
-    CHECK_TRUE(node_g.found_no_mate());
+    CHECK_TRUE(node_g.proved_no_mate());
 
     auto n = Node(false, Move());
     CHECK_FALSE(n.simulate(Game(), nullptr, nullptr, &node_g));
-    CHECK_FALSE(n.found_conclusion());
-    CHECK_FALSE(n.found_mate());
-    CHECK_FALSE(n.found_no_mate());
+    CHECK_FALSE(n.proved());
+    CHECK_FALSE(n.proved_mate());
+    CHECK_FALSE(n.proved_no_mate());
 }
 
 TEST(dfpn_node_simulate, using_defence_cousin_g_ongoing)
@@ -260,13 +260,13 @@ TEST(dfpn_node_simulate, using_defence_cousin_g_ongoing)
     auto g = Game("4k/4S/5/5/4K w -");
     auto node_g = Node(false, Move());
     node_g.simulate(g);
-    CHECK_FALSE(node_g.found_conclusion());
+    CHECK_FALSE(node_g.proved());
 
     auto n = Node(false, Move());
     CHECK_FALSE(n.simulate(Game(), nullptr, nullptr, &node_g));
-    CHECK_FALSE(n.found_conclusion());
-    CHECK_FALSE(n.found_mate());
-    CHECK_FALSE(n.found_no_mate());
+    CHECK_FALSE(n.proved());
+    CHECK_FALSE(n.proved_mate());
+    CHECK_FALSE(n.proved_no_mate());
 }
 
 } // namespace test_vshogi::test_engine::test_dfpn::test_node
@@ -325,7 +325,7 @@ TEST(dfpn_table, look_up_l_prefer_mate_at_offence)
     CHECK_TRUE(c1->simulate(g1));
     g1.undo();
     n1.backprop_one();
-    CHECK_TRUE(n1.found_mate());
+    CHECK_TRUE(n1.proved_mate());
 
     {
         Table t{};
@@ -364,10 +364,10 @@ TEST(dfpn_table, look_up_l_prefer_no_mate_at_defence)
     g1.apply_dfpn(c1->get_action());
     c1->expand(g1, nullptr, nullptr);
     c1->backprop_one();
-    CHECK_TRUE(c1->found_no_mate());
+    CHECK_TRUE(c1->proved_no_mate());
     g1.undo();
     n1.backprop_one();
-    CHECK_TRUE(n1.found_no_mate());
+    CHECK_TRUE(n1.proved_no_mate());
 
     {
         Table t{};
@@ -415,7 +415,7 @@ TEST(dfpn_table, look_up_g_prefer_no_mate_at_offence)
     auto g1 = Game("3rk/3gs/5/5/5 b PSG");
     n1.expand(g1, nullptr, nullptr);
     n1.backprop_one();
-    CHECK_TRUE(n1.found_no_mate());
+    CHECK_TRUE(n1.proved_no_mate());
     {
         Table t{};
         t.add(&n1, g1);
@@ -446,7 +446,7 @@ TEST(dfpn_table, look_up_g_prefer_mate_at_defence)
     auto n2 = Node(false, Move());
     auto g1 = Game("4k/4G/4P/5/5 w psg");
     n1.simulate(g1);
-    CHECK_TRUE(n1.found_mate());
+    CHECK_TRUE(n1.proved_mate());
     {
         Table t{};
         t.add(&n1, g1);
@@ -616,14 +616,14 @@ TEST(dfpn_node, expand_using_cousin)
         CHECK_EQUAL(unit, cousin.dn());
         cousin.get_child_1st()->simulate(
             Game("4K/5/5/5/+r+sg+bk w p")); // not mate
-        CHECK_TRUE(cousin.get_child_1st()->found_no_mate());
+        CHECK_TRUE(cousin.get_child_1st()->proved_no_mate());
 
         auto atk_node = Node();
         atk_node.expand(Game("3rk/3p1/3BP/5/4K b B"), &cousin, nullptr);
         CHECK_TRUE(atk_node.has_child());
 
         // stronger stand may lead to mate even if nibling is not mate.
-        CHECK_FALSE(atk_node.found_conclusion());
+        CHECK_FALSE(atk_node.proved());
         CHECK_EQUAL(kilo, atk_node.pn());
         CHECK_EQUAL(cent, atk_node.dn());
     }
@@ -636,17 +636,17 @@ TEST(dfpn_node, expand_using_cousin)
             // one child
             ch->expand(Game("3rk/3pb/4R/5/1B2K b g"), nullptr, nullptr);
             ch->get_child_1st()->simulate(Game("3rk/3pR/5/5/1B2K w Bg"));
-            CHECK_TRUE(ch->get_child_1st()->found_mate());
+            CHECK_TRUE(ch->get_child_1st()->proved_mate());
             ch->backprop_one();
         }
-        CHECK_TRUE(cousin.get_child_1st()->found_mate());
+        CHECK_TRUE(cousin.get_child_1st()->proved_mate());
 
         auto def_node = Node(false, Move(SQ_1A, SQ_1B));
         def_node.expand(Game("3rk/3pG/4R/2b2/1B2K w g"), &cousin, nullptr);
         CHECK_TRUE(def_node.has_child());
 
         // stronger stand may lead to no-mate even if nibling is mate.
-        CHECK_FALSE(def_node.found_conclusion());
+        CHECK_FALSE(def_node.proved());
         CHECK_EQUAL(cent, def_node.pn());
         CHECK_EQUAL(kilo, def_node.dn());
     }
@@ -694,13 +694,13 @@ TEST(dfpn_searcher, no_mate_no_check)
     // Black: -
     auto searcher = Searcher<Parameters>();
     searcher.set_game(Game("2k2/5/5/5/2K2 b -"));
-    CHECK_TRUE(searcher.found_conclusion());
-    CHECK_FALSE(searcher.found_mate());
-    CHECK_TRUE(searcher.found_no_mate());
+    CHECK_TRUE(searcher.proved());
+    CHECK_FALSE(searcher.proved_mate());
+    CHECK_TRUE(searcher.proved_no_mate());
     CHECK_FALSE(searcher.search(1u));
-    CHECK_TRUE(searcher.found_conclusion());
-    CHECK_FALSE(searcher.found_mate());
-    CHECK_TRUE(searcher.found_no_mate());
+    CHECK_TRUE(searcher.proved());
+    CHECK_FALSE(searcher.proved_mate());
+    CHECK_TRUE(searcher.proved_no_mate());
 }
 
 TEST(dfpn_searcher, minishogi_no_mate_1)
@@ -725,9 +725,9 @@ TEST(dfpn_searcher, minishogi_no_mate_1)
     searcher.set_game(Game("2k2/5/1+P3/5/5 b S"));
     searcher.search(100);
     const auto num_searched = searcher.get_search_count();
-    CHECK_TRUE(searcher.found_conclusion());
-    CHECK_FALSE(searcher.found_mate());
-    CHECK_TRUE(searcher.found_no_mate());
+    CHECK_TRUE(searcher.proved());
+    CHECK_FALSE(searcher.proved_mate());
+    CHECK_TRUE(searcher.proved_no_mate());
     CHECK_EQUAL(70, num_searched);
 }
 
@@ -755,9 +755,9 @@ TEST(dfpn_searcher, minishogi_no_mate_2)
     searcher.set_game(Game("2k2/5/1+P3/5/5 b 2S"));
     searcher.search(1100);
     const auto num_searched = searcher.get_search_count();
-    CHECK_TRUE(searcher.found_conclusion());
-    CHECK_FALSE(searcher.found_mate());
-    CHECK_TRUE(searcher.found_no_mate());
+    CHECK_TRUE(searcher.proved());
+    CHECK_FALSE(searcher.proved_mate());
+    CHECK_TRUE(searcher.proved_no_mate());
     CHECK_COMPARE(700, <, num_searched);
     CHECK_COMPARE(num_searched, <, 800);
 }
@@ -794,7 +794,7 @@ TEST(dfpn_searcher, no_mate_1)
     auto searcher = Searcher();
     searcher.set_game(g);
     CHECK_FALSE(searcher.search(5000));
-    CHECK_TRUE(searcher.found_no_mate());
+    CHECK_TRUE(searcher.proved_no_mate());
     CHECK_EQUAL(1286, searcher.get_search_count());
 }
 
@@ -838,7 +838,7 @@ TEST(dfpn_searcher, mate_in_one)
         // Black: -
         searcher.set_game(Game("2k2/5/2GB1/5/2K2 b -"));
         CHECK_TRUE(searcher.search(10u));
-        CHECK_TRUE(searcher.found_mate());
+        CHECK_TRUE(searcher.proved_mate());
         CHECK_EQUAL(Move(SQ_3B, SQ_3C).hash(), searcher.get_mate_move().hash());
         CHECK_TRUE(searcher.get_search_count() <= 10u);
     }
@@ -916,7 +916,7 @@ TEST(dfpn_searcher, mate_in_three_1)
     // Black: -
     searcher.set_game(Game("5/2p2/5/2K2/5 w 2g"));
     CHECK_TRUE(searcher.search(100));
-    CHECK_TRUE(searcher.found_mate());
+    CHECK_TRUE(searcher.proved_mate());
     CHECK_COMPARE(20, <, searcher.get_search_count());
     CHECK_COMPARE(searcher.get_search_count(), <, 30);
     CHECK_EQUAL(Move(SQ_3C, KI).hash(), searcher.get_mate_move().hash());
@@ -943,8 +943,8 @@ TEST(dfpn_searcher, mate_in_three_2)
     // Black: HI
     searcher.set_game(Game("2sgk/5/3RG/5/4K b R"));
     CHECK_TRUE(searcher.search(1000));
-    CHECK_TRUE(searcher.found_conclusion());
-    CHECK_TRUE(searcher.found_mate());
+    CHECK_TRUE(searcher.proved());
+    CHECK_TRUE(searcher.proved_mate());
     CHECK_EQUAL(Move(SQ_1B, SQ_1C).hash(), searcher.get_mate_move().hash());
     const auto num_searched = searcher.get_search_count();
     CHECK_EQUAL(231, num_searched);
@@ -974,7 +974,7 @@ TEST(dfpn_searcher, mate_in_three_3)
     auto g = Game("3sSr/6/3pkn/4Np/4+R1/6 b G");
     searcher.set_game(g);
     CHECK_TRUE(searcher.search(100u));
-    CHECK_TRUE(searcher.found_mate());
+    CHECK_TRUE(searcher.proved_mate());
     const auto mate_moves = searcher.get_mate_moves();
     for (auto&& m : mate_moves) {
         CHECK_EQUAL(vshogi::ONGOING, g.get_result());
@@ -1007,7 +1007,7 @@ TEST(dfpn_searcher, mate_in_three_4)
     auto g = Game("3sSr/6/3pkn/4Np/4+R1/6 b Gpgbr");
     searcher.set_game(g);
     CHECK_TRUE(searcher.search(100u));
-    CHECK_TRUE(searcher.found_mate());
+    CHECK_TRUE(searcher.proved_mate());
     const auto mate_moves = searcher.get_mate_moves();
     for (auto&& m : mate_moves) {
         CHECK_EQUAL(vshogi::ONGOING, g.get_result());
@@ -1041,8 +1041,8 @@ TEST(dfpn_searcher, mate_in_three_by_king_move)
         // Black: -
         searcher.set_game(Game("3Rnr/5k/1+b3p/3K2/2B2g/3g2 b p"));
         searcher.search(100);
-        CHECK_TRUE(searcher.found_conclusion());
-        CHECK_TRUE(searcher.found_mate());
+        CHECK_TRUE(searcher.proved());
+        CHECK_TRUE(searcher.proved_mate());
         CHECK_EQUAL(
             Move(SQ_3B, SQ_3A, true).hash(), searcher.get_mate_move().hash());
     }
@@ -1078,8 +1078,8 @@ TEST(dfpn_searcher, cache_for_mate)
     auto searcher = Searcher();
     searcher.set_game(Game("3r1/+BP1r1/1+BP2/4p/2G1k b G"));
     searcher.search(100);
-    CHECK_TRUE(searcher.found_conclusion());
-    CHECK_TRUE(searcher.found_mate());
+    CHECK_TRUE(searcher.proved());
+    CHECK_TRUE(searcher.proved_mate());
     CHECK_EQUAL(5, searcher.get_mate_moves().size());
 
     // It is 27 without cache table
@@ -1137,9 +1137,9 @@ TEST(dfpn_searcher, cache_for_no_mate)
     searcher.set_game(Game("kS1+BR/1b2p/5/5/5 b -"));
     searcher.search(100);
     const auto num_searched = searcher.get_search_count();
-    CHECK_TRUE(searcher.found_conclusion());
-    CHECK_FALSE(searcher.found_mate());
-    CHECK_TRUE(searcher.found_no_mate());
+    CHECK_TRUE(searcher.proved());
+    CHECK_FALSE(searcher.proved_mate());
+    CHECK_TRUE(searcher.proved_no_mate());
 
     // it is 8 without cache
     CHECK_EQUAL(num_searched, 6);
@@ -1232,7 +1232,7 @@ TEST(dfpn_searcher, king_entering_before_mate)
     auto searcher = Searcher();
     searcher.set_game(Game("6/6/3n2/6/P3g+r/1K1k+p+b w s"));
     CHECK_TRUE(searcher.search(100));
-    CHECK_TRUE(searcher.found_mate());
+    CHECK_TRUE(searcher.proved_mate());
     const auto actual = searcher.get_mate_moves();
     CHECK_EQUAL(2, actual.size());
     CHECK_TRUE(actual[0] == Move(SQ_4E, SQ_3C, true));
@@ -1277,7 +1277,7 @@ TEST(dfpn_searcher, avoid_consecutive_checks)
     auto ch = root->get_child();
     for (; ch; ch = ch->get_sibling()) {
         if (ch->get_action() == Move(SQ_3D, SQ_4E)) {
-            CHECK_TRUE(ch->found_no_mate());
+            CHECK_TRUE(ch->proved_no_mate());
             break;
         }
     }
@@ -1332,8 +1332,8 @@ TEST(dfpn_searcher, debug2)
     auto searcher = Searcher();
     searcher.set_game(g);
     searcher.search(100);
-    CHECK_TRUE(searcher.found_conclusion());
-    CHECK_TRUE(searcher.found_no_mate());
+    CHECK_TRUE(searcher.proved());
+    CHECK_TRUE(searcher.proved_no_mate());
 }
 
 TEST(dfpn_searcher, debug_tmp)
@@ -1347,8 +1347,8 @@ TEST(dfpn_searcher, debug_tmp)
     auto searcher = Searcher<Parameters>();
     searcher.set_game(g);
     searcher.search(100);
-    CHECK_TRUE(searcher.found_conclusion());
-    CHECK_TRUE(searcher.found_mate());
+    CHECK_TRUE(searcher.proved());
+    CHECK_TRUE(searcher.proved_mate());
     const auto mate_moves = searcher.get_mate_moves();
     for (auto&& m : mate_moves) {
         CHECK_EQUAL(vshogi::ONGOING, g.get_result());
@@ -1381,8 +1381,8 @@ TEST(dfpn_searcher, debug_tmp2)
     auto searcher = Searcher();
     searcher.set_game(g);
     searcher.search(10000);
-    CHECK_TRUE(searcher.found_conclusion());
-    CHECK_TRUE(searcher.found_mate());
+    CHECK_TRUE(searcher.proved());
+    CHECK_TRUE(searcher.proved_mate());
     const auto mate_moves = searcher.get_mate_moves();
     for (auto&& m : mate_moves) {
         CHECK_EQUAL(vshogi::ONGOING, g.get_result());
@@ -1416,8 +1416,8 @@ TEST(dfpn_searcher, minishogi_debug)
     searcher.set_game(g);
     searcher.search(10000u);
 
-    CHECK_TRUE(searcher.found_conclusion());
-    CHECK_TRUE(searcher.found_mate());
+    CHECK_TRUE(searcher.proved());
+    CHECK_TRUE(searcher.proved_mate());
     const auto mate_moves = searcher.get_mate_moves();
     for (auto&& m : mate_moves) {
         CHECK_EQUAL(vshogi::ONGOING, g.get_result());
@@ -1578,7 +1578,7 @@ TEST(dfpn_searcher, test_shogi_debug_4)
     auto searcher = Searcher();
     searcher.set_game(g);
     searcher.search(10000u);
-    CHECK_TRUE(searcher.found_mate());
+    CHECK_TRUE(searcher.proved_mate());
     const auto mate_moves = searcher.get_mate_moves();
     for (auto&& m : mate_moves) {
         CHECK_EQUAL(vshogi::ONGOING, g.get_result());

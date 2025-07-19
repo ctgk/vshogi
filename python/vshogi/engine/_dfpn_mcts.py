@@ -32,11 +32,11 @@ class DfpnMcts(Engine):
         """
         self._dfpn = dfpn
         self._mcts = mcts
-        self._found_mate: bool = False
+        self._proved_mate: bool = False
 
     def _set_game(self, game: Game):
         self._mcts._set_game(game)
-        self._found_mate = False
+        self._proved_mate = False
 
     def _is_ready(self) -> bool:
         return self._mcts._is_ready()
@@ -44,7 +44,7 @@ class DfpnMcts(Engine):
     def _clear(self):
         self._dfpn._clear()
         self._mcts._clear()
-        self._found_mate = False
+        self._proved_mate = False
 
     def apply(self, move: Move):
         """Apply a move on the game.
@@ -56,10 +56,10 @@ class DfpnMcts(Engine):
         """
         if self._is_ready():
             self._mcts.apply(move)
-        self._found_mate = False
+        self._proved_mate = False
 
     def _get_num_searched(self):
-        if self.dfpn_found_mate:
+        if self.dfpn_proved_mate:
             return None
         return self._mcts.num_searched
 
@@ -75,15 +75,15 @@ class DfpnMcts(Engine):
         return self._mcts.num_searched
 
     @property
-    def dfpn_found_mate(self) -> bool:
-        """Return true if DFPN found a mate-move otherwise false.
+    def dfpn_proved_mate(self) -> bool:
+        """Return true if DFPN proved a checkmate otherwise false.
 
         Returns
         -------
         bool
-            True if DFPN found a mate-move otherwise false.
+            True if DFPN proved a checkmate otherwise false.
         """
-        return self._found_mate
+        return self._proved_mate
 
     def search(
         self,
@@ -108,7 +108,7 @@ class DfpnMcts(Engine):
         """
         self._dfpn.set_game(self._mcts._game)
         if self._dfpn.search(dfpn_search_root):
-            self._found_mate = True
+            self._proved_mate = True
             return
 
         prev_visits = None
@@ -169,7 +169,7 @@ class DfpnMcts(Engine):
         Move
             Selected action.
         """
-        if self._found_mate:
+        if self._proved_mate:
             return self._dfpn.select()
         return self._mcts.select(temperature)
 
@@ -182,7 +182,7 @@ class DfpnMcts(Engine):
             Mate moves found. If a mate move is found yet,
             it returns an empty list.
         """
-        if self._found_mate:
+        if self._proved_mate:
             return self._dfpn.get_mate_moves()
         return []
 

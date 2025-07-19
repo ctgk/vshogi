@@ -37,7 +37,7 @@ class DfpnSearcher(Engine):
     >>> searcher.set_game(game)
     >>> searcher.search(n=4)
     False
-    >>> searcher.found_conclusion()
+    >>> searcher.proved()
     False
     >>>
     >>> # Finds mates by restarting from the searches of the previous call!
@@ -111,18 +111,18 @@ class DfpnSearcher(Engine):
         """
         return self._searcher.get_mate_move()
 
-    def found_conclusion(self) -> bool:
-        """Return true if there is a mate or no-mate for sure.
+    def proved(self) -> bool:
+        """Return true if there is a mate or no-mate proved.
 
         Returns
         -------
         bool
-            True if there is a mate or no-mate for sure.
+            True if there is a mate or no-mate proved.
         """
         self._raise_error_if_not_ready()
-        return self._searcher.found_conclusion()
+        return self._searcher.proved()
 
-    def found_mate(self) -> bool:
+    def proved_mate(self) -> bool:
         """Return true if there is a mate.
 
         Returns
@@ -131,18 +131,18 @@ class DfpnSearcher(Engine):
             True if there is a mate.
         """
         self._raise_error_if_not_ready()
-        return self._searcher.found_mate()
+        return self._searcher.proved_mate()
 
-    def found_no_mate(self) -> bool:
-        """Return true if there is no-mate for sure.
+    def proved_no_mate(self) -> bool:
+        """Return true if there is no-mate proved.
 
         Returns
         -------
         bool
-            True if there is no mate for sure.
+            True if there is no-mate proved.
         """
         self._raise_error_if_not_ready()
-        return self._searcher.found_no_mate()
+        return self._searcher.proved_no_mate()
 
     def get_search_count(self) -> int:
         self._raise_error_if_not_ready()

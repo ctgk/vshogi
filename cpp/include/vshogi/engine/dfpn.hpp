@@ -165,23 +165,23 @@ private:
         const Node* const node_e,
         const Node* const node_g)
     {
-        if (node_l && m_attacker && node_l->found_mate()) {
+        if (node_l && m_attacker && node_l->proved_mate()) {
             m_pn = zero;
             m_dn = max_number;
             return true;
-        } else if (node_l && (!m_attacker) && node_l->found_no_mate()) {
+        } else if (node_l && (!m_attacker) && node_l->proved_no_mate()) {
             m_pn = max_number;
             m_dn = zero;
             return true;
-        } else if (node_e && node_e->found_conclusion()) {
+        } else if (node_e && node_e->proved()) {
             m_pn = node_e->m_pn;
             m_dn = node_e->m_dn;
             return true;
-        } else if (node_g && m_attacker && node_g->found_no_mate()) {
+        } else if (node_g && m_attacker && node_g->proved_no_mate()) {
             m_pn = max_number;
             m_dn = zero;
             return true;
-        } else if (node_g && (!m_attacker) && node_g->found_mate()) {
+        } else if (node_g && (!m_attacker) && node_g->proved_mate()) {
             m_pn = zero;
             m_dn = max_number;
             return true;
@@ -276,17 +276,17 @@ public: // utility
     {
         return m_child_1st;
     }
-    bool found_mate() const
+    bool proved_mate() const
     {
         return (m_pn == zero) && (m_dn == max_number);
     }
-    bool found_no_mate() const
+    bool proved_no_mate() const
     {
         return (m_pn == max_number) && (m_dn == zero);
     }
-    bool found_conclusion() const
+    bool proved() const
     {
-        return (found_mate() || found_no_mate());
+        return (proved_mate() || proved_no_mate());
     }
 
     /**
@@ -316,10 +316,10 @@ public: // utility
     {
         // - Offence: #P = min(#P of children), #D = sum(#D of children)
         // - Defence: #P = sum(#P of children), #D = min(#D of children)
-        if (found_conclusion())
+        if (proved())
             return;
         if (m_attacker) {
-            if (m_child_1st->found_mate()) {
+            if (m_child_1st->proved_mate()) {
                 set_pndn_mate();
             } else {
                 m_child_1st = nullptr;
@@ -375,13 +375,13 @@ private:
             == PHelper::to_board_piece(~s.get_turn(), C::OU));
         m_dn = zero;
         if (cousin_ge_stand) {
-            assert(!cousin_ge_stand->found_conclusion());
+            assert(!cousin_ge_stand->proved());
             const Node<Parameters>* nibling = cousin_ge_stand->get_child();
             const auto next_child = expand_drop_moves_at_offence(
                 s.get_stand(s.get_turn()), &nibling);
             expand_board_moves_at_offence(next_child, nibling);
         } else if (cousin_le_stand) {
-            assert(!cousin_le_stand->found_conclusion());
+            assert(!cousin_le_stand->proved());
             const Node<Parameters>* nibling = cousin_le_stand->get_child();
             for (; nibling; nibling = nibling->get_sibling()) {
                 if (!nibling->get_action().is_drop())
@@ -410,7 +410,7 @@ private:
         const auto& s = g.get_state();
         bool fully_expanded = false;
         if (cousin_ge_stand) {
-            assert(!cousin_ge_stand->found_conclusion());
+            assert(!cousin_ge_stand->proved());
             const Node<Parameters>* nibling = cousin_ge_stand->get_child();
             const auto next_child = expand_board_moves_at_defence(&nibling);
             if (!had_two_consecutive_sacrifice_drops(g)) {
@@ -418,7 +418,7 @@ private:
                 fully_expanded = true;
             }
         } else if (cousin_le_stand) {
-            assert(!cousin_le_stand->found_conclusion());
+            assert(!cousin_le_stand->proved());
             const Node<Parameters>* nibling = cousin_le_stand->get_child();
             const auto next_child = expand_board_moves_at_defence(&nibling);
             if (!had_two_consecutive_sacrifice_drops(g)) {
@@ -596,7 +596,7 @@ private:
 private:
     void backprop_one_at_defence()
     {
-        if (m_child_1st->found_no_mate()) {
+        if (m_child_1st->proved_no_mate()) {
             set_pndn_no_mate();
         } else {
             m_child_1st = nullptr;
@@ -829,8 +829,8 @@ private:
             const auto s_iter = Stand<Parameters>(it.first);
             const NodeType* const n_iter = it.second;
             const bool is_atk = n_iter->is_attacker();
-            const bool is_mate = n_iter->found_mate();
-            const bool is_no_mate = n_iter->found_no_mate();
+            const bool is_mate = n_iter->proved_mate();
+            const bool is_no_mate = n_iter->proved_no_mate();
             if (s_iter < s) {
                 if (is_atk ? is_mate : is_no_mate) {
                     // weaker offence stand, but mate
@@ -846,7 +846,7 @@ private:
                 }
             } else if (s_iter == s) {
                 *node_e = n_iter;
-                if (n_iter->found_conclusion())
+                if (n_iter->proved())
                     return;
             } else if (s_iter > s) {
                 if (is_atk ? is_no_mate : is_mate) {
@@ -880,18 +880,18 @@ private:
             const auto s_iter = Stand<Parameters>(it.first);
             const NodeType* n_iter = it.second;
             const bool is_atk = n_iter->is_attacker();
-            const bool is_mate = n_iter->found_mate();
-            const bool is_no_mate = n_iter->found_no_mate();
+            const bool is_mate = n_iter->proved_mate();
+            const bool is_no_mate = n_iter->proved_no_mate();
             if (s_iter <= s) {
                 if (is_atk ? is_mate : is_no_mate) {
                     const NodeType* const ch1st = n_iter->get_child_1st();
-                    if (ch1st && ch1st->found_conclusion())
+                    if (ch1st && ch1st->proved())
                         return n_iter; // weaker offence stand, but mate
                     s_out = s_iter;
                     n_out = n_iter;
                 } else if (is_atk ? (!is_no_mate) : (!is_mate)) {
                     // exclude weaker offence stand, and no mate.
-                    if ((n_out == nullptr) || (!n_out->found_conclusion())
+                    if ((n_out == nullptr) || (!n_out->proved())
                         || (s_out < s_iter)) {
                         s_out = s_iter;
                         n_out = n_iter;
@@ -918,8 +918,8 @@ private:
             const auto s_iter = Stand<Parameters>(it.first);
             const NodeType* n_iter = it.second;
             const bool is_atk = n_iter->is_attacker();
-            const bool is_mate = n_iter->found_mate();
-            const bool is_no_mate = n_iter->found_no_mate();
+            const bool is_mate = n_iter->proved_mate();
+            const bool is_no_mate = n_iter->proved_no_mate();
             if (s <= s_iter) {
                 if (is_atk ? is_no_mate : is_mate)
                     return n_iter;
@@ -956,8 +956,8 @@ private:
             const auto s_iter = Stand<Parameters>(it.first);
             const NodeType* n_iter = it.second;
             const bool is_atk = n_iter->is_attacker();
-            const bool is_mate = n_iter->found_mate();
-            const bool is_no_mate = n_iter->found_no_mate();
+            const bool is_mate = n_iter->proved_mate();
+            const bool is_no_mate = n_iter->proved_no_mate();
             if (s_iter <= s) {
                 if (is_atk ? is_mate : is_no_mate) {
                     // weaker offence stand, but mate
@@ -1026,8 +1026,8 @@ public:
      * @brief Search for mate moves at given game state.
      *
      * @param n Number of nodes to explore.
-     * @return true Found mate moves.
-     * @return false No mate moves found but further searches may find ones.
+     * @return true Proved checkmate.
+     * @return false Checkmate not proved.
      */
     bool search(const uint n)
     {
@@ -1035,7 +1035,7 @@ public:
         GameType& game = *m_game;
         uint num = n;
         while (num) {
-            if (root->found_conclusion())
+            if (root->proved())
                 break;
             const uint thpn_ch = root->compute_thpn_for_child(max_number);
             const uint thdn_ch = root->compute_thdn_for_child(max_number);
@@ -1043,19 +1043,19 @@ public:
             root->backprop_one();
         }
         m_num_searched += n - num;
-        return root->found_mate();
+        return root->proved_mate();
     }
-    bool found_mate() const
+    bool proved_mate() const
     {
-        return m_table.get_root()->found_mate();
+        return m_table.get_root()->proved_mate();
     }
-    bool found_no_mate() const
+    bool proved_no_mate() const
     {
-        return m_table.get_root()->found_no_mate();
+        return m_table.get_root()->proved_no_mate();
     }
-    bool found_conclusion() const
+    bool proved() const
     {
-        return m_table.get_root()->found_conclusion();
+        return m_table.get_root()->proved();
     }
     uint get_search_count() const
     {
@@ -1126,7 +1126,7 @@ private:
         game.apply_nocheck(action);
         out.emplace_back(action);
         const Node<Parameters>* const ch1st = node->get_child_1st();
-        if ((ch1st != nullptr) && ch1st->found_mate()) {
+        if ((ch1st != nullptr) && ch1st->proved_mate()) {
             // The 1st child may not have mate value because
             // `search_inner()` can assign mate value on a node having children
             // with arbitrary #P and #D values by `m_table.look_up_fuzzy()`.
@@ -1158,9 +1158,9 @@ private:
         }
 
         const bool is_atk = n->is_attacker();
-        assert((!is_atk) || n->found_mate());
+        assert((!is_atk) || n->proved_mate());
         for (n = n->get_child(); n; n = n->get_sibling()) {
-            if (is_atk && (!n->found_mate()))
+            if (is_atk && (!n->proved_mate()))
                 continue;
             const MoveType action = n->get_action();
             if (!action.is_drop()) // legal for sure
