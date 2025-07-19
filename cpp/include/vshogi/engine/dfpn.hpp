@@ -137,6 +137,77 @@ private:
     uint m_dn;
 
 public:
+    /**
+     * @brief Simulate the current game position.
+     *
+     * - {winner: BLACK, turn: BLACK, node: Attacker}
+     *
+     * - Typical checkmate (winner!=turn && node!=Attacker): `set_pndn_mate`
+     *
+     * - King entering by opponent (winner==turn && node!=Attacker) `set_pndn_no_mate`
+     *
+     * @param game
+     */
+    bool simulate(
+        const GameType& game,
+        const Node<Parameters>* const node_l = nullptr,
+        const Node<Parameters>* const node_e = nullptr,
+        const Node<Parameters>* const node_g = nullptr)
+    {
+        if (simulate_using_cousins(node_l, node_e, node_g))
+            return true;
+        return simulate_using_game(game);
+    }
+
+private:
+    bool simulate_using_cousins(
+        const Node* const node_l,
+        const Node* const node_e,
+        const Node* const node_g)
+    {
+        if (node_l && m_attacker && node_l->found_mate()) {
+            m_pn = zero;
+            m_dn = max_number;
+            return true;
+        } else if (node_l && (!m_attacker) && node_l->found_no_mate()) {
+            m_pn = max_number;
+            m_dn = zero;
+            return true;
+        } else if (node_e && node_e->found_conclusion()) {
+            m_pn = node_e->m_pn;
+            m_dn = node_e->m_dn;
+            return true;
+        } else if (node_g && m_attacker && node_g->found_no_mate()) {
+            m_pn = max_number;
+            m_dn = zero;
+            return true;
+        } else if (node_g && (!m_attacker) && node_g->found_mate()) {
+            m_pn = zero;
+            m_dn = max_number;
+            return true;
+        }
+        return false;
+    }
+    bool simulate_using_game(const GameType& game)
+    {
+        const auto r = game.get_result();
+        if (r == ONGOING)
+            return false;
+        if (r == DRAW) {
+            set_pndn_no_mate();
+            return true;
+        }
+
+        const auto winner = (r == BLACK_WIN) ? BLACK : WHITE;
+        const auto turn = game.get_turn();
+        if ((winner == turn) == m_attacker)
+            set_pndn_mate();
+        else
+            set_pndn_no_mate();
+        return true;
+    }
+
+public: // utility
     Node()
         : m_attacker(true), m_action(), m_sibling(nullptr), m_child(nullptr),
           m_child_1st(nullptr), m_child_2nd(nullptr), m_pn(unit), m_dn(unit)
@@ -216,35 +287,6 @@ public:
     bool found_conclusion() const
     {
         return (found_mate() || found_no_mate());
-    }
-    /**
-     * @brief Simulate the current game position.
-     *
-     * - {winner: BLACK, turn: BLACK, node: Attacker}
-     *
-     * - Typical checkmate (winner!=turn && node!=Attacker): `set_pndn_mate`
-     *
-     * - King entering by opponent (winner==turn && node!=Attacker) `set_pndn_no_mate`
-     *
-     * @param game
-     */
-    bool simulate(const GameType& game)
-    {
-        const auto r = game.get_result();
-        if (r == ONGOING)
-            return false;
-        if (r == DRAW) {
-            set_pndn_no_mate();
-            return true;
-        }
-
-        const auto winner = (r == BLACK_WIN) ? BLACK : WHITE;
-        const auto turn = game.get_turn();
-        if ((winner == turn) == m_attacker)
-            set_pndn_mate();
-        else
-            set_pndn_no_mate();
-        return true;
     }
 
     /**
