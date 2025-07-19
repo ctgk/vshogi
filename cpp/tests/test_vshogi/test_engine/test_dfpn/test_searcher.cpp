@@ -13,10 +13,10 @@ namespace dfpn = vshogi::engine::dfpn2;
 using Table = dfpn::Table<Parameters>;
 using Node = dfpn::Node<Parameters>;
 
-TEST_GROUP (dfpn_table) {
+TEST_GROUP (dfpn2_table) {
 };
 
-TEST(dfpn_table, look_up_e)
+TEST(dfpn2_table, look_up_e)
 {
     auto t = Table();
     auto n = Node();
@@ -30,7 +30,7 @@ TEST(dfpn_table, look_up_e)
     CHECK_TRUE(nullptr == node_g);
 }
 
-TEST(dfpn_table, look_up_l)
+TEST(dfpn2_table, look_up_l)
 {
     auto t = Table();
     auto n = Node();
@@ -45,7 +45,7 @@ TEST(dfpn_table, look_up_l)
     CHECK_TRUE(nullptr == node_g);
 }
 
-TEST(dfpn_table, look_up_l_prefer_mate_at_offence)
+TEST(dfpn2_table, look_up_l_prefer_mate_at_offence)
 {
 
     auto n1 = Node();
@@ -87,7 +87,7 @@ TEST(dfpn_table, look_up_l_prefer_mate_at_offence)
     }
 }
 
-TEST(dfpn_table, look_up_l_prefer_no_mate_at_defence)
+TEST(dfpn2_table, look_up_l_prefer_no_mate_at_defence)
 {
     auto n1 = Node(false, Move());
     auto n2 = Node(false, Move());
@@ -127,7 +127,7 @@ TEST(dfpn_table, look_up_l_prefer_no_mate_at_defence)
     }
 }
 
-TEST(dfpn_table, look_up_g)
+TEST(dfpn2_table, look_up_g)
 {
     auto t = Table();
     auto n = Node();
@@ -142,7 +142,7 @@ TEST(dfpn_table, look_up_g)
     CHECK_TRUE(&n == node_g);
 }
 
-TEST(dfpn_table, look_up_g_prefer_no_mate_at_offence)
+TEST(dfpn2_table, look_up_g_prefer_no_mate_at_offence)
 {
     auto n1 = Node();
     auto n2 = Node();
@@ -174,7 +174,7 @@ TEST(dfpn_table, look_up_g_prefer_no_mate_at_offence)
     }
 }
 
-TEST(dfpn_table, look_up_g_prefer_mate_at_defence)
+TEST(dfpn2_table, look_up_g_prefer_mate_at_defence)
 {
     auto n1 = Node(false, Move());
     auto n2 = Node(false, Move());
