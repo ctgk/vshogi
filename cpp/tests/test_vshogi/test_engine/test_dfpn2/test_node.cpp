@@ -1,6 +1,6 @@
 #include <set>
 
-#include "vshogi/engine/dfpn/node.hpp"
+#include "vshogi/engine/dfpn2/node.hpp"
 #include "vshogi/variants/minishogi.hpp"
 
 #include <CppUTest/TestHarness.h>

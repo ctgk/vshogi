@@ -1,5 +1,5 @@
-#ifndef VSHOGI_ENGINE_DFPN_NODE_HPP
-#define VSHOGI_ENGINE_DFPN_NODE_HPP
+#ifndef VSHOGI_ENGINE_DFPN2_NODE_HPP
+#define VSHOGI_ENGINE_DFPN2_NODE_HPP
 
 #include <list>
 
@@ -617,4 +617,4 @@ public: // utilities
 
 } // namespace vshogi::engine::dfpn2
 
-#endif // VSHOGI_ENGINE_DFPN_NODE_HPP
+#endif // VSHOGI_ENGINE_DFPN2_NODE_HPP

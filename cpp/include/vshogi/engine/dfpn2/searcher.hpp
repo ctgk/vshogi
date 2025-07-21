@@ -1,5 +1,5 @@
-#ifndef VSHOGI_ENGINE_DFPN_SEARCHER_HPP
-#define VSHOGI_ENGINE_DFPN_SEARCHER_HPP
+#ifndef VSHOGI_ENGINE_DFPN2_SEARCHER_HPP
+#define VSHOGI_ENGINE_DFPN2_SEARCHER_HPP
 
 #include <map>
 #include <memory>
@@ -7,7 +7,7 @@
 #include "vshogi/common/game.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/pieces.hpp"
-#include "vshogi/engine/dfpn/node.hpp"
+#include "vshogi/engine/dfpn2/node.hpp"
 
 namespace vshogi::engine::dfpn2
 {
@@ -369,4 +369,4 @@ private:
 
 } // namespace vshogi::engine::dfpn2
 
-#endif // VSHOGI_ENGINE_DFPN_SEARCHER_HPP
+#endif // VSHOGI_ENGINE_DFPN2_SEARCHER_HPP
