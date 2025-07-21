@@ -495,7 +495,7 @@ inline void export_dfpn_node(pybind11::module& m)
     namespace py = pybind11;
     using Node = vshogi::engine::dfpn::Node<Parameters>;
     py::class_<Node>(m, "DfpnNode")
-        .def("is_attacker", &Node::is_attacker)
+        .def("offence", &Node::offence)
         .def("pn", &Node::pn)
         .def("dn", &Node::dn)
         .def("get_action", &Node::get_action)

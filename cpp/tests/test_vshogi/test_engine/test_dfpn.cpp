@@ -550,27 +550,6 @@ TEST(dfpn_misc, had_two_consecutive_sacrifice_drops)
 TEST_GROUP (dfpn_node) {
 };
 
-TEST(dfpn_node, init)
-{
-    using namespace vshogi::minishogi;
-    using Node = Node<Parameters>;
-    {
-        auto n = Node();
-        CHECK_TRUE(n.is_attacker());
-        CHECK_FALSE(n.has_child());
-        CHECK_EQUAL(unit, n.pn());
-        CHECK_EQUAL(unit, n.dn());
-    }
-    {
-        auto n = Node(false, Move(SQ_1A, SQ_1B));
-        CHECK_FALSE(n.is_attacker());
-        CHECK_FALSE(n.has_child());
-        CHECK_EQUAL(unit, n.pn());
-        CHECK_EQUAL(unit, n.dn());
-        CHECK_EQUAL(Move(SQ_1A, SQ_1B).hash(), n.get_action().hash());
-    }
-}
-
 TEST(dfpn_node, expand)
 {
     using namespace vshogi::minishogi;

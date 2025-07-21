@@ -169,7 +169,7 @@ private:
         const NodeType** const node_e,
         const NodeType** const node_g) const
     {
-        // - offence turn (`is_attacker == true`)
+        // - offence turn (`offence == true`)
         //     - Weaker offence stand, but mate (or #P <= #D)
         //     - Stronger offence stand, but no-mate (#P > #D).
         // - defence turn
@@ -185,16 +185,16 @@ private:
         for (auto& it : table) {
             const auto s_iter = Stand<Parameters>(it.first);
             const NodeType* const n_iter = it.second;
-            const bool is_atk = n_iter->is_attacker();
+            const bool offence = n_iter->offence();
             const bool is_mate = n_iter->proved_mate();
             const bool is_no_mate = n_iter->proved_no_mate();
             if (s_iter < s) {
-                if (is_atk ? is_mate : is_no_mate) {
+                if (offence ? is_mate : is_no_mate) {
                     // weaker offence stand, but mate
                     *node_l = n_iter;
                     found_best_l = true;
                 } else if (
-                    (!found_best_l) && (is_atk ? (!is_no_mate) : (!is_mate))) {
+                    (!found_best_l) && (offence ? (!is_no_mate) : (!is_mate))) {
                     // exclude weaker offence stand, and no mate.
                     if ((*node_l == nullptr) || (s_l < s_iter)) {
                         s_l = s_iter;
@@ -206,11 +206,11 @@ private:
                 if (n_iter->proved())
                     return;
             } else if (s_iter > s) {
-                if (is_atk ? is_no_mate : is_mate) {
+                if (offence ? is_no_mate : is_mate) {
                     *node_g = n_iter;
                     found_best_g = true;
                 } else if (
-                    (!found_best_g) && (is_atk ? (!is_mate) : (!is_no_mate))) {
+                    (!found_best_g) && (offence ? (!is_mate) : (!is_no_mate))) {
                     // exclude greater offence stand, and mate.
                     if ((*node_g == nullptr) || (s_iter < s_g)) {
                         s_g = s_iter;
@@ -223,7 +223,7 @@ private:
     const NodeType*
     look_up_le_stand(const GameType& g, const StandNodeTable& table) const
     {
-        // - offence turn (`is_attacker == true`)
+        // - offence turn (`offence == true`)
         //     - Weaker offence stand, but mate (or #P <= #D)
         //     - Stronger offence stand, but no-mate (#P > #D).
         // - defence turn
@@ -236,17 +236,17 @@ private:
         for (auto& it : table) {
             const auto s_iter = Stand<Parameters>(it.first);
             const NodeType* n_iter = it.second;
-            const bool is_atk = n_iter->is_attacker();
+            const bool offence = n_iter->offence();
             const bool is_mate = n_iter->proved_mate();
             const bool is_no_mate = n_iter->proved_no_mate();
             if (s_iter <= s) {
-                if (is_atk ? is_mate : is_no_mate) {
+                if (offence ? is_mate : is_no_mate) {
                     const NodeType* const ch1st = n_iter->get_child_1st();
                     if (ch1st && ch1st->proved())
                         return n_iter; // weaker offence stand, but mate
                     s_out = s_iter;
                     n_out = n_iter;
-                } else if (is_atk ? (!is_no_mate) : (!is_mate)) {
+                } else if (offence ? (!is_no_mate) : (!is_mate)) {
                     // exclude weaker offence stand, and no mate.
                     if ((n_out == nullptr) || (!n_out->proved())
                         || (s_out < s_iter)) {
@@ -261,7 +261,7 @@ private:
     const NodeType*
     look_up_ge_stand(const GameType& g, const StandNodeTable& table) const
     {
-        // - offence turn (`is_attacker == true`)
+        // - offence turn (`offence == true`)
         //     - Weaker offence stand, but mate (or #P <= #D)
         //     - Stronger offence stand, but no-mate (#P > #D).
         // - defence turn
@@ -274,13 +274,13 @@ private:
         for (auto& it : table) {
             const auto s_iter = Stand<Parameters>(it.first);
             const NodeType* n_iter = it.second;
-            const bool is_atk = n_iter->is_attacker();
+            const bool offence = n_iter->offence();
             const bool is_mate = n_iter->proved_mate();
             const bool is_no_mate = n_iter->proved_no_mate();
             if (s <= s_iter) {
-                if (is_atk ? is_no_mate : is_mate)
+                if (offence ? is_no_mate : is_mate)
                     return n_iter;
-                else if (is_atk ? (!is_mate) : (!is_no_mate)) {
+                else if (offence ? (!is_mate) : (!is_no_mate)) {
                     // exclude greater offence stand, and mate.
                     if ((n_out == nullptr) || (s_iter < s_out)) {
                         s_out = s_iter;
@@ -297,7 +297,7 @@ private:
         const NodeType** const node_le_stand,
         const NodeType** const node_ge_stand) const
     {
-        // - offence turn (`is_attacker == true`)
+        // - offence turn (`offence == true`)
         //     - Weaker offence stand, but mate (or #P <= #D)
         //     - Stronger offence stand, but no-mate (#P > #D).
         // - defence turn
@@ -312,16 +312,17 @@ private:
         for (auto& it : table) {
             const auto s_iter = Stand<Parameters>(it.first);
             const NodeType* n_iter = it.second;
-            const bool is_atk = n_iter->is_attacker();
+            const bool offence = n_iter->offence();
             const bool is_mate = n_iter->proved_mate();
             const bool is_no_mate = n_iter->proved_no_mate();
             if (s_iter <= s) {
-                if (is_atk ? is_mate : is_no_mate) {
+                if (offence ? is_mate : is_no_mate) {
                     // weaker offence stand, but mate
                     *node_le_stand = n_iter;
                     found_best_le = true;
                 } else if (
-                    (!found_best_le) && (is_atk ? (!is_no_mate) : (!is_mate))) {
+                    (!found_best_le)
+                    && (offence ? (!is_no_mate) : (!is_mate))) {
                     // exclude weaker offence stand, and no mate.
                     if ((*node_le_stand == nullptr) || (s_le < s_iter)) {
                         s_le = s_iter;
@@ -330,11 +331,12 @@ private:
                 }
             }
             if (s <= s_iter) {
-                if (is_atk ? is_no_mate : is_mate) {
+                if (offence ? is_no_mate : is_mate) {
                     *node_ge_stand = n_iter;
                     found_best_ge = true;
                 } else if (
-                    (!found_best_ge) && (is_atk ? (!is_mate) : (!is_no_mate))) {
+                    (!found_best_ge)
+                    && (offence ? (!is_mate) : (!is_no_mate))) {
                     // exclude greater offence stand, and mate.
                     if ((*node_ge_stand == nullptr) || (s_iter < s_ge)) {
                         s_ge = s_iter;
@@ -444,7 +446,7 @@ private:
         game.apply_dfpn(n.get_action());
         if (!n.has_child())
             game.update_result_dfpn(1u);
-        assert(n.is_attacker() || game.in_check());
+        assert(n.offence() || game.in_check());
         simulate_or_expand(n, game, searches);
         while (searches) {
             if ((n.pn() >= thpn) || (n.dn() >= thdn))
@@ -514,10 +516,10 @@ private:
             return *LegalMoveGenerator<Parameters>(game.get_state());
         }
 
-        const bool is_atk = n->is_attacker();
-        assert((!is_atk) || n->proved_mate());
+        const bool offence = n->offence();
+        assert((!offence) || n->proved_mate());
         for (n = n->get_child(); n; n = n->get_sibling()) {
-            if (is_atk && (!n->proved_mate()))
+            if (offence && (!n->proved_mate()))
                 continue;
             const MoveType action = n->get_action();
             if (!action.is_drop()) // legal for sure

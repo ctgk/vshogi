@@ -176,7 +176,7 @@ class DfpnSearcher(Engine):
         breadth: int = 3,
         pv_line: tp.List[Move] = [],
         *,
-        sort_key=lambda n: n.dn() if n.is_attacker() else n.pn(),
+        sort_key=lambda n: n.dn() if n.offence() else n.pn(),
     ):
         self._raise_error_if_not_ready()
         root = self._searcher.get_root()
@@ -211,5 +211,5 @@ def _tree(node, depth: int, breadth: int, sort_key: callable):
 
 
 def _repr_node(n) -> str:
-    name = 'OR' if n.is_attacker() else 'AND'
+    name = 'OR' if n.offence() else 'AND'
     return f'{name}(#P={n.pn()}, #D={n.dn()})'

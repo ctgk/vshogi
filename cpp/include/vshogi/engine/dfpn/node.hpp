@@ -85,12 +85,12 @@ private:
 
 private:
     /**
-     * @brief If true, `m_action` = defence move, turn of `m_game` = attacker.
+     * @brief If true, `m_action` = defence move, turn of `m_game` = offence.
      */
-    const bool m_attacker;
+    const bool m_offence;
     /**
-     * @brief If `m_attacker` is true, this should be a defence move.
-     * If `m_attacker` is false, this should be a check move.
+     * @brief If `m_offence` is true, this should be a defence move.
+     * If `m_offence` is false, this should be a check move.
      */
     const MoveType m_action;
 
@@ -143,9 +143,31 @@ public:
             return true;
         return simulate_using_game(game);
     }
+    /**
+     * @brief Expand child nodes.
+     *
+     * @param game
+     * @param cousin_ge_stand
+     * @param cousin_le_stand
+     * @return true Full expansion.
+     * @return false Partial expansion, so that the node should not be added to
+     * a transposition table.
+     */
+    bool expand(
+        const GameType& game,
+        const Node<Parameters>* const cousin_ge_stand = nullptr,
+        const Node<Parameters>* const cousin_le_stand = nullptr)
+    {
+        m_child_1st = nullptr;
+        m_child_2nd = nullptr;
+        if (m_offence)
+            return expand_at_offence(game, cousin_ge_stand, cousin_le_stand);
+        else
+            return expand_at_defence(game, cousin_ge_stand, cousin_le_stand);
+    }
     uint compute_thpn_for_child(const uint thpn) const
     {
-        if (m_attacker) {
+        if (m_offence) {
             return std::min(
                 thpn,
                 (m_child_2nd && (m_child_2nd->m_pn != max_number))
@@ -157,7 +179,7 @@ public:
     }
     uint compute_thdn_for_child(const uint thdn) const
     {
-        if (m_attacker) {
+        if (m_offence) {
             return thdn;
         } else {
             return std::min(
@@ -173,7 +195,7 @@ public:
         // - Defence: #P = sum(#P of children), #D = min(#D of children)
         if (proved())
             return;
-        if (m_attacker) {
+        if (m_offence) {
             if (m_child_1st->proved_mate()) {
                 set_pndn_mate();
             } else {
@@ -197,11 +219,11 @@ private:
         const Node* const node_e,
         const Node* const node_g)
     {
-        if (node_l && m_attacker && node_l->proved_mate()) {
+        if (node_l && m_offence && node_l->proved_mate()) {
             m_pn = zero;
             m_dn = max_number;
             return true;
-        } else if (node_l && (!m_attacker) && node_l->proved_no_mate()) {
+        } else if (node_l && (!m_offence) && node_l->proved_no_mate()) {
             m_pn = max_number;
             m_dn = zero;
             return true;
@@ -209,11 +231,11 @@ private:
             m_pn = node_e->m_pn;
             m_dn = node_e->m_dn;
             return true;
-        } else if (node_g && m_attacker && node_g->proved_no_mate()) {
+        } else if (node_g && m_offence && node_g->proved_no_mate()) {
             m_pn = max_number;
             m_dn = zero;
             return true;
-        } else if (node_g && (!m_attacker) && node_g->proved_mate()) {
+        } else if (node_g && (!m_offence) && node_g->proved_mate()) {
             m_pn = zero;
             m_dn = max_number;
             return true;
@@ -232,7 +254,7 @@ private:
 
         const auto winner = (r == BLACK_WIN) ? BLACK : WHITE;
         const auto turn = game.get_turn();
-        if ((winner == turn) == m_attacker)
+        if ((winner == turn) == m_offence)
             set_pndn_mate();
         else
             set_pndn_no_mate();
@@ -241,12 +263,12 @@ private:
 
 public: // utility
     Node()
-        : m_attacker(true), m_action(), m_sibling(nullptr), m_child(nullptr),
+        : m_offence(true), m_action(), m_sibling(nullptr), m_child(nullptr),
           m_child_1st(nullptr), m_child_2nd(nullptr), m_pn(unit), m_dn(unit)
     {
     }
-    Node(const bool attacker, const MoveType& action)
-        : m_attacker(attacker), m_action(action), m_sibling(nullptr),
+    Node(const bool offence, const MoveType& action)
+        : m_offence(offence), m_action(action), m_sibling(nullptr),
           m_child(nullptr), m_child_1st(nullptr), m_child_2nd(nullptr),
           m_pn(unit), m_dn(unit)
     {
@@ -268,9 +290,9 @@ public: // utility
         m_pn = unit;
         m_dn = unit;
     }
-    bool is_attacker() const
+    bool offence() const
     {
-        return m_attacker;
+        return m_offence;
     }
     uint pn() const
     {
@@ -319,29 +341,6 @@ public: // utility
     bool proved() const
     {
         return (proved_mate() || proved_no_mate());
-    }
-
-    /**
-     * @brief Expand child nodes.
-     *
-     * @param game
-     * @param cousin_ge_stand
-     * @param cousin_le_stand
-     * @return true Full expansion.
-     * @return false Partial expansion, so that the node should not be added to
-     * a transposition table.
-     */
-    bool expand(
-        const GameType& game,
-        const Node<Parameters>* const cousin_ge_stand,
-        const Node<Parameters>* const cousin_le_stand)
-    {
-        m_child_1st = nullptr;
-        m_child_2nd = nullptr;
-        if (m_attacker)
-            return expand_at_offence(game, cousin_ge_stand, cousin_le_stand);
-        else
-            return expand_at_defence(game, cousin_ge_stand, cousin_le_stand);
     }
 
 private:
@@ -427,7 +426,7 @@ private:
         for (; nibling; nibling = nibling->get_sibling()) {
             const auto m = nibling->get_action();
             assert(!m.is_drop());
-            *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            *holder = std::make_unique<Node<Parameters>>(!m_offence, m);
             Node<Parameters>* const ch = holder->get();
             ch->m_pn = std::clamp(nibling->pn(), cent, kilo);
             ch->m_dn = std::clamp(nibling->dn(), cent, kilo);
@@ -439,7 +438,7 @@ private:
         std::unique_ptr<Node<Parameters>>* holder, const State<Parameters>& s)
     {
         for (MoveType m : CheckBoardMoveGenerator<Parameters>(s)) {
-            *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            *holder = std::make_unique<Node<Parameters>>(!m_offence, m);
             Node<Parameters>* const ch = holder->get();
             if (s.is_declined_promotion(m)) {
                 ch->m_pn = kilo;
@@ -454,7 +453,7 @@ private:
     {
         std::unique_ptr<Node<Parameters>>* holder = &m_child;
         for (Move<Parameters> m : DropMoveGenerator<Parameters, true>(state)) {
-            *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            *holder = std::make_unique<Node<Parameters>>(!m_offence, m);
             Node<Parameters>* const ch = holder->get();
             update_offence_dn_ch1st_ch2nd(ch);
             holder = &(ch->m_sibling);
@@ -471,7 +470,7 @@ private:
                 break;
             if (!stand.exist(m.source_piece()))
                 continue;
-            *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            *holder = std::make_unique<Node<Parameters>>(!m_offence, m);
             Node<Parameters>* const ch = holder->get();
             ch->m_pn = std::clamp((*nibling)->pn(), cent, kilo);
             ch->m_dn = std::clamp((*nibling)->dn(), cent, kilo);
@@ -488,7 +487,7 @@ private:
             const auto m = (*nibling)->get_action();
             if (m.is_drop())
                 break;
-            *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            *holder = std::make_unique<Node<Parameters>>(!m_offence, m);
             Node<Parameters>* const ch = holder->get();
             ch->m_pn = std::clamp((*nibling)->pn(), cent, kilo);
             ch->m_dn = std::clamp((*nibling)->dn(), cent, kilo);
@@ -502,13 +501,13 @@ private:
     {
         std::unique_ptr<Node<Parameters>>* holder = &m_child;
         for (Move<Parameters> m : KingMoveGenerator<Parameters>(state)) {
-            *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            *holder = std::make_unique<Node<Parameters>>(!m_offence, m);
             Node<Parameters>* const ch = holder->get();
             update_defence_pn_ch1st_ch2nd(ch);
             holder = &(ch->m_sibling);
         }
         for (Move<Parameters> m : BlockMoveGenerator<Parameters>(state)) {
-            *holder = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            *holder = std::make_unique<Node<Parameters>>(!m_offence, m);
             Node<Parameters>* const ch = holder->get();
             update_defence_pn_ch1st_ch2nd(ch);
             holder = &(ch->m_sibling);
@@ -522,7 +521,7 @@ private:
         uint pn_max[C::num_squares] = {0u};
         const auto dst = m_action.destination();
         for (Move<Parameters> m : DropMoveGenerator<Parameters>(state)) {
-            *next = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            *next = std::make_unique<Node<Parameters>>(!m_offence, m);
             Node<Parameters>* const ch = next->get();
             if (ch->is_better_dn_choice_than(m_child_1st, dst)) {
                 m_child_2nd = m_child_1st;
@@ -554,7 +553,7 @@ private:
             assert(m.is_drop());
             if (!stand.exist(m.source_piece()))
                 continue;
-            *next = std::make_unique<Node<Parameters>>(!m_attacker, m);
+            *next = std::make_unique<Node<Parameters>>(!m_offence, m);
             Node<Parameters>* const ch = next->get();
             ch->m_pn = std::clamp(nibling->pn(), cent, kilo);
             ch->m_dn = std::clamp(nibling->dn(), cent, kilo);

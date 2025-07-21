@@ -82,7 +82,7 @@ private:
     const NodeType*
     look_up_le_stand_node(const GameType& g, const StandNodeTable& table) const
     {
-        // - offence turn (`is_attacker == true`)
+        // - offence turn (`offence == true`)
         //     - Weaker offence stand, but mate (or #P <= #D)
         //     - Stronger offence stand, but no-mate (#P > #D).
         // - defence turn
@@ -123,7 +123,7 @@ private:
         const NodeType** const node_e,
         const NodeType** const node_g) const
     {
-        // - offence turn (`is_attacker == true`)
+        // - offence turn (`offence == true`)
         //     - Weaker offence stand, but mate (or #P <= #D)
         //     - Stronger offence stand, but no-mate (#P > #D).
         // - defence turn
