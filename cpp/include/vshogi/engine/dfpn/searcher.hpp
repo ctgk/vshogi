@@ -132,21 +132,6 @@ public:
         return look_up_le_stand(g, it->second);
     }
 
-    /**
-     * @brief Prefer node with no-mate if offence turn else mate, and return it
-     *
-     * @param g
-     * @return const NodeType*
-     */
-    const NodeType* look_up_ge_stand(const GameType& g) const
-    {
-        const std::uint64_t bt_hash = g.get_board_turn_hash();
-        auto it = m_table.find(bt_hash);
-        if (it == m_table.end())
-            return nullptr;
-        return look_up_ge_stand(g, it->second);
-    }
-
     void look_up_le_ge_stand(
         const GameType& g,
         const NodeType** const node_le_stand,
@@ -250,39 +235,6 @@ private:
                     // exclude weaker offence stand, and no mate.
                     if ((n_out == nullptr) || (!n_out->proved())
                         || (s_out < s_iter)) {
-                        s_out = s_iter;
-                        n_out = n_iter;
-                    }
-                }
-            }
-        }
-        return n_out;
-    }
-    const NodeType*
-    look_up_ge_stand(const GameType& g, const StandNodeTable& table) const
-    {
-        // - offence turn (`offence == true`)
-        //     - Weaker offence stand, but mate (or #P <= #D)
-        //     - Stronger offence stand, but no-mate (#P > #D).
-        // - defence turn
-        //     - Weaker defence stand, but no-mate.
-        //     - Stronger defence stand, but mate.
-        const auto t = g.get_turn();
-        const auto s = g.get_stand(t);
-        Stand<Parameters> s_out = Stand<Parameters>();
-        const NodeType* n_out = nullptr;
-        for (auto& it : table) {
-            const auto s_iter = Stand<Parameters>(it.first);
-            const NodeType* n_iter = it.second;
-            const bool offence = n_iter->offence();
-            const bool is_mate = n_iter->proved_mate();
-            const bool is_no_mate = n_iter->proved_no_mate();
-            if (s <= s_iter) {
-                if (offence ? is_no_mate : is_mate)
-                    return n_iter;
-                else if (offence ? (!is_mate) : (!is_no_mate)) {
-                    // exclude greater offence stand, and mate.
-                    if ((n_out == nullptr) || (s_iter < s_out)) {
                         s_out = s_iter;
                         n_out = n_iter;
                     }
