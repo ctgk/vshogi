@@ -14,7 +14,7 @@ namespace dfpn = vshogi::engine::dfpn;
 using Node = dfpn::Node<Parameters>;
 
 constexpr uint zero = dfpn::zero;
-constexpr uint inf = dfpn::max_number;
+constexpr uint inf = dfpn::inf;
 
 TEST_GROUP (dfpn_node_simulate) {
 };
@@ -320,7 +320,7 @@ TEST(dfpn_table, look_up_l_prefer_mate_at_offence)
     auto g1 = Game("3rk/3p1/4P/5/5 b G");
     n1.expand(g1, nullptr, nullptr);
     n1.backprop();
-    Node* const c1 = n1.get_child_1st();
+    Node* const c1 = n1.select();
     g1.apply(c1->get_action());
     CHECK_EQUAL(vshogi::BLACK_WIN, g1.get_result());
     CHECK_TRUE(c1->simulate(g1));
@@ -361,7 +361,7 @@ TEST(dfpn_table, look_up_l_prefer_no_mate_at_defence)
     auto g1 = Game("4k/4P/5/5/5 w -");
     n1.expand(g1, nullptr, nullptr);
     n1.backprop();
-    Node* const c1 = n1.get_child_1st();
+    Node* const c1 = n1.select();
     g1.apply_dfpn(c1->get_action());
     c1->expand(g1, nullptr, nullptr);
     c1->backprop();
@@ -558,7 +558,7 @@ TEST(dfpn_node, expand)
         auto n = Node();
         n.expand(Game("k4/5/5/5/5 b -"), nullptr, nullptr);
         CHECK_FALSE(n.has_child());
-        CHECK_EQUAL(max_number, n.pn());
+        CHECK_EQUAL(inf, n.pn());
         CHECK_EQUAL(zero, n.dn());
     }
     {
@@ -594,8 +594,7 @@ TEST(dfpn_node, expand_using_cousin)
         cousin.expand(Game("3rk/3p1/3BP/5/4K b -"), nullptr, nullptr);
         CHECK_EQUAL(unit, cousin.pn());
         CHECK_EQUAL(unit, cousin.dn());
-        cousin.get_child_1st()->simulate(
-            Game("4K/5/5/5/+r+sg+bk w p")); // not mate
+        cousin.select()->simulate(Game("4K/5/5/5/+r+sg+bk w p")); // not mate
         CHECK_TRUE(cousin.get_child_1st()->proved_no_mate());
 
         auto atk_node = Node();
@@ -612,10 +611,10 @@ TEST(dfpn_node, expand_using_cousin)
         // one child
         cousin.expand(Game("3rk/3pG/4R/2b2/1B2K w -"), nullptr, nullptr);
         {
-            auto ch = cousin.get_child_1st();
+            Node* const ch = cousin.select();
             // one child
             ch->expand(Game("3rk/3pb/4R/5/1B2K b g"), nullptr, nullptr);
-            ch->get_child_1st()->simulate(Game("3rk/3pR/5/5/1B2K w Bg"));
+            ch->select()->simulate(Game("3rk/3pR/5/5/1B2K w Bg"));
             CHECK_TRUE(ch->get_child_1st()->proved_mate());
             ch->backprop();
         }

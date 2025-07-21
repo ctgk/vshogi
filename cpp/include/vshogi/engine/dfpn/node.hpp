@@ -43,7 +43,7 @@ static constexpr uint zero = 0u;
 static constexpr uint unit = 100u;
 static constexpr uint cent = 1u;
 static constexpr uint kilo = 1000u * unit;
-static constexpr uint max_number = std::numeric_limits<uint>::max();
+static constexpr uint inf = std::numeric_limits<uint>::max();
 
 template <class Parameters>
 bool had_two_consecutive_sacrifice_drops(const Game<Parameters>& g)
@@ -124,6 +124,24 @@ private:
     uint m_dn;
 
 public:
+    Node* select()
+    {
+        return m_child_1st;
+    }
+    Node* select(const uint thpn, const uint thdn, uint& thpn_ch, uint& thdn_ch)
+    {
+        if (m_offence) {
+            const uint pn2 = m_child_2nd ? m_child_2nd->m_pn : inf;
+            thpn_ch = std::min(thpn, (pn2 == inf) ? inf : pn2 + 1u);
+            thdn_ch = thdn;
+        } else {
+            const uint dn2 = m_child_2nd ? m_child_2nd->m_dn : inf;
+            thpn_ch = thpn;
+            thdn_ch = std::min(thdn, (dn2 == inf) ? inf : dn2 + 1u);
+        }
+        return m_child_1st;
+    }
+
     /**
      * @brief Simulate the current game position.
      *
@@ -145,6 +163,7 @@ public:
             return true;
         return simulate_using_game(game);
     }
+
     /**
      * @brief Expand child nodes.
      *
@@ -167,30 +186,7 @@ public:
         else
             return expand_at_defence(game, cousin_ge_stand, cousin_le_stand);
     }
-    uint compute_thpn_for_child(const uint thpn) const
-    {
-        if (m_offence) {
-            return std::min(
-                thpn,
-                (m_child_2nd && (m_child_2nd->m_pn != max_number))
-                    ? m_child_2nd->m_pn + 1u
-                    : max_number);
-        } else {
-            return thpn;
-        }
-    }
-    uint compute_thdn_for_child(const uint thdn) const
-    {
-        if (m_offence) {
-            return thdn;
-        } else {
-            return std::min(
-                thdn,
-                (m_child_2nd && (m_child_2nd->m_dn != max_number))
-                    ? m_child_2nd->m_dn + 1u
-                    : max_number);
-        }
-    }
+
     void backprop()
     {
         // - Offence: #P = min(#P of children), #D = sum(#D of children)
@@ -211,8 +207,8 @@ public:
         } else {
             backprop_at_defence();
         }
-        assert((m_pn == 0u) ? (m_dn == max_number) : (m_dn != max_number));
-        assert((m_dn == 0u) ? (m_pn == max_number) : (m_pn != max_number));
+        assert((m_pn == 0u) ? (m_dn == inf) : (m_dn != inf));
+        assert((m_dn == 0u) ? (m_pn == inf) : (m_pn != inf));
     }
 
 private:
@@ -223,10 +219,10 @@ private:
     {
         if (node_l && m_offence && node_l->proved_mate()) {
             m_pn = zero;
-            m_dn = max_number;
+            m_dn = inf;
             return true;
         } else if (node_l && (!m_offence) && node_l->proved_no_mate()) {
-            m_pn = max_number;
+            m_pn = inf;
             m_dn = zero;
             return true;
         } else if (node_e && node_e->proved()) {
@@ -234,12 +230,12 @@ private:
             m_dn = node_e->m_dn;
             return true;
         } else if (node_g && m_offence && node_g->proved_no_mate()) {
-            m_pn = max_number;
+            m_pn = inf;
             m_dn = zero;
             return true;
         } else if (node_g && (!m_offence) && node_g->proved_mate()) {
             m_pn = zero;
-            m_dn = max_number;
+            m_dn = inf;
             return true;
         }
         return false;
@@ -324,21 +320,17 @@ public: // utility
     {
         return m_sibling ? m_sibling.get() : nullptr;
     }
-    Node* get_child_1st()
-    {
-        return m_child_1st;
-    }
     const Node* get_child_1st() const
     {
         return m_child_1st;
     }
     bool proved_mate() const
     {
-        return (m_pn == zero) && (m_dn == max_number);
+        return (m_pn == zero) && (m_dn == inf);
     }
     bool proved_no_mate() const
     {
-        return (m_pn == max_number) && (m_dn == zero);
+        return (m_pn == inf) && (m_dn == zero);
     }
     bool proved() const
     {
@@ -380,8 +372,8 @@ private:
             set_pndn_no_mate();
         else
             m_pn = m_child_1st->m_pn;
-        assert((pn() == 0u) ? (dn() == max_number) : (dn() != max_number));
-        assert((dn() == 0u) ? (pn() == max_number) : (pn() != max_number));
+        assert((pn() == 0u) ? (dn() == inf) : (dn() != inf));
+        assert((dn() == 0u) ? (pn() == inf) : (pn() != inf));
         return true;
     }
     bool expand_at_defence(
@@ -537,7 +529,7 @@ private:
             next = &(ch->m_sibling);
         }
         for (uint ii = C::num_squares; ii--;) {
-            assert(pn_max[ii] != max_number);
+            assert(pn_max[ii] != inf);
             m_pn += pn_max[ii];
         }
     }
@@ -571,7 +563,7 @@ private:
             next = &(ch->m_sibling);
         }
         for (uint ii = C::num_squares; ii--;) {
-            assert(pn_max[ii] != max_number);
+            assert(pn_max[ii] != inf);
             m_pn += pn_max[ii];
         }
     }
@@ -616,7 +608,7 @@ private:
                 pn_max[d] = ch->m_pn;
         }
         for (uint ii = C::num_squares; ii--;) {
-            assert(pn_max[ii] != max_number);
+            assert(pn_max[ii] != inf);
             m_pn += pn_max[ii];
         }
     }
@@ -625,11 +617,11 @@ private:
     void set_pndn_mate()
     {
         m_pn = zero;
-        m_dn = max_number;
+        m_dn = inf;
     }
     void set_pndn_no_mate()
     {
-        m_pn = max_number;
+        m_pn = inf;
         m_dn = zero;
     }
     void update_offence_dn_ch1st_ch2nd(Node* const ch)
@@ -640,7 +632,7 @@ private:
         } else if (ch->is_better_pn_choice_than(m_child_2nd)) {
             m_child_2nd = ch;
         }
-        assert(ch->m_dn != max_number);
+        assert(ch->m_dn != inf);
         m_dn += ch->m_dn;
     }
     bool is_better_pn_choice_than(const Node* const other) const
@@ -658,7 +650,7 @@ private:
         } else if (ch->is_better_dn_choice_than(m_child_2nd, dst)) {
             m_child_2nd = ch;
         }
-        assert(ch->m_pn != max_number);
+        assert(ch->m_pn != inf);
         m_pn += ch->m_pn;
     }
     bool is_better_dn_choice_than(

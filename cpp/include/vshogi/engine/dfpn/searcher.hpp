@@ -306,6 +306,7 @@ class Searcher
 private:
     using GameType = Game<Parameters>;
     using MoveType = Move<Parameters>;
+    using NodeType = Node<Parameters>;
     using PHelper = Pieces<Parameters>;
 
 private:
@@ -345,12 +346,12 @@ public:
         Node<Parameters>* const root = m_table.get_root();
         GameType& game = *m_game;
         uint num = n;
+        uint thpn_ch = 0u, thdn_ch = 0u;
         while (num) {
             if (root->proved())
                 break;
-            const uint thpn_ch = root->compute_thpn_for_child(max_number);
-            const uint thdn_ch = root->compute_thdn_for_child(max_number);
-            search_inner(*root->get_child_1st(), game, num, thpn_ch, thdn_ch);
+            NodeType* const c1 = root->select(inf, inf, thpn_ch, thdn_ch);
+            search_inner(*c1, game, num, thpn_ch, thdn_ch);
             root->backprop();
         }
         m_num_searched += n - num;
@@ -400,13 +401,12 @@ private:
             game.update_result_dfpn(1u);
         assert(n.offence() || game.in_check());
         simulate_or_expand(n, game, searches);
+        uint thpn_ch = 0u, thdn_ch = 0u;
         while (searches) {
             if ((n.pn() >= thpn) || (n.dn() >= thdn))
                 break;
-            const uint thpn_ch = n.compute_thpn_for_child(thpn);
-            const uint thdn_ch = n.compute_thdn_for_child(thdn);
-            Node<Parameters>* const ch1st = n.get_child_1st();
-            search_inner(*ch1st, game, searches, thpn_ch, thdn_ch);
+            NodeType* const c1 = n.select(thpn, thdn, thpn_ch, thdn_ch);
+            search_inner(*c1, game, searches, thpn_ch, thdn_ch);
             n.backprop();
         }
         game.undo();
