@@ -167,6 +167,29 @@ public:
                     : max_number);
         }
     }
+    void backprop()
+    {
+        // - Offence: #P = min(#P of children), #D = sum(#D of children)
+        // - Defence: #P = sum(#P of children), #D = min(#D of children)
+        if (proved())
+            return;
+        if (m_attacker) {
+            if (m_child_1st->proved_mate()) {
+                set_pndn_mate();
+            } else {
+                m_child_1st = nullptr;
+                m_child_2nd = nullptr;
+                m_dn = 0u;
+                for (Node* ch = m_child.get(); ch; ch = ch->get_sibling())
+                    update_offence_dn_ch1st_ch2nd(ch);
+                m_pn = m_child_1st->m_pn;
+            }
+        } else {
+            backprop_at_defence();
+        }
+        assert((m_pn == 0u) ? (m_dn == max_number) : (m_dn != max_number));
+        assert((m_dn == 0u) ? (m_pn == max_number) : (m_pn != max_number));
+    }
 
 private:
     bool simulate_using_cousins(
@@ -319,30 +342,6 @@ public: // utility
             return expand_at_offence(game, cousin_ge_stand, cousin_le_stand);
         else
             return expand_at_defence(game, cousin_ge_stand, cousin_le_stand);
-    }
-
-    void backprop_one()
-    {
-        // - Offence: #P = min(#P of children), #D = sum(#D of children)
-        // - Defence: #P = sum(#P of children), #D = min(#D of children)
-        if (proved())
-            return;
-        if (m_attacker) {
-            if (m_child_1st->proved_mate()) {
-                set_pndn_mate();
-            } else {
-                m_child_1st = nullptr;
-                m_child_2nd = nullptr;
-                m_dn = 0u;
-                for (Node* ch = m_child.get(); ch; ch = ch->get_sibling())
-                    update_offence_dn_ch1st_ch2nd(ch);
-                m_pn = m_child_1st->m_pn;
-            }
-        } else {
-            backprop_one_at_defence();
-        }
-        assert((m_pn == 0u) ? (m_dn == max_number) : (m_dn != max_number));
-        assert((m_dn == 0u) ? (m_pn == max_number) : (m_pn != max_number));
     }
 
 private:
@@ -577,7 +576,7 @@ private:
     }
 
 private:
-    void backprop_one_at_defence()
+    void backprop_at_defence()
     {
         if (m_child_1st->proved_no_mate()) {
             set_pndn_no_mate();

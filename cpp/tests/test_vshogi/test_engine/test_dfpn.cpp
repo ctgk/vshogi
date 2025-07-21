@@ -319,13 +319,13 @@ TEST(dfpn_table, look_up_l_prefer_mate_at_offence)
     auto n2 = Node();
     auto g1 = Game("3rk/3p1/4P/5/5 b G");
     n1.expand(g1, nullptr, nullptr);
-    n1.backprop_one();
+    n1.backprop();
     Node* const c1 = n1.get_child_1st();
     g1.apply(c1->get_action());
     CHECK_EQUAL(vshogi::BLACK_WIN, g1.get_result());
     CHECK_TRUE(c1->simulate(g1));
     g1.undo();
-    n1.backprop_one();
+    n1.backprop();
     CHECK_TRUE(n1.proved_mate());
 
     {
@@ -360,14 +360,14 @@ TEST(dfpn_table, look_up_l_prefer_no_mate_at_defence)
     auto n2 = Node(false, Move());
     auto g1 = Game("4k/4P/5/5/5 w -");
     n1.expand(g1, nullptr, nullptr);
-    n1.backprop_one();
+    n1.backprop();
     Node* const c1 = n1.get_child_1st();
     g1.apply_dfpn(c1->get_action());
     c1->expand(g1, nullptr, nullptr);
-    c1->backprop_one();
+    c1->backprop();
     CHECK_TRUE(c1->proved_no_mate());
     g1.undo();
-    n1.backprop_one();
+    n1.backprop();
     CHECK_TRUE(n1.proved_no_mate());
 
     {
@@ -415,7 +415,7 @@ TEST(dfpn_table, look_up_g_prefer_no_mate_at_offence)
     auto n2 = Node();
     auto g1 = Game("3rk/3gs/5/5/5 b PSG");
     n1.expand(g1, nullptr, nullptr);
-    n1.backprop_one();
+    n1.backprop();
     CHECK_TRUE(n1.proved_no_mate());
     {
         Table t{};
@@ -638,7 +638,7 @@ TEST(dfpn_node, expand_using_cousin)
             ch->expand(Game("3rk/3pb/4R/5/1B2K b g"), nullptr, nullptr);
             ch->get_child_1st()->simulate(Game("3rk/3pR/5/5/1B2K w Bg"));
             CHECK_TRUE(ch->get_child_1st()->proved_mate());
-            ch->backprop_one();
+            ch->backprop();
         }
         CHECK_TRUE(cousin.get_child_1st()->proved_mate());
 

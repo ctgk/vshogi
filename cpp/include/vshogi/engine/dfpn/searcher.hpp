@@ -397,7 +397,7 @@ public:
             const uint thpn_ch = root->compute_thpn_for_child(max_number);
             const uint thdn_ch = root->compute_thdn_for_child(max_number);
             search_inner(*root->get_child_1st(), game, num, thpn_ch, thdn_ch);
-            root->backprop_one();
+            root->backprop();
         }
         m_num_searched += n - num;
         return root->proved_mate();
@@ -453,7 +453,7 @@ private:
             const uint thdn_ch = n.compute_thdn_for_child(thdn);
             Node<Parameters>* const ch1st = n.get_child_1st();
             search_inner(*ch1st, game, searches, thpn_ch, thdn_ch);
-            n.backprop_one();
+            n.backprop();
         }
         game.undo();
     }
