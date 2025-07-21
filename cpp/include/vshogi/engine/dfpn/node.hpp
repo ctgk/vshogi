@@ -1,6 +1,8 @@
 #ifndef VSHOGI_ENGINE_DFPN_NODE_HPP
 #define VSHOGI_ENGINE_DFPN_NODE_HPP
 
+#include <memory>
+
 #include "vshogi/common/game.hpp"
 
 /**
