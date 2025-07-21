@@ -12,7 +12,7 @@
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/result.hpp"
 #include "vshogi/common/utils.hpp"
-#include "vshogi/engine/dfpn.hpp"
+#include "vshogi/engine/dfpn/searcher.hpp"
 
 namespace vshogi::engine::mcts
 {

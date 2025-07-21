@@ -1,4 +1,4 @@
-#include "vshogi/engine/dfpn.hpp"
+#include "vshogi/engine/dfpn/searcher.hpp"
 #include "vshogi/engine/mcts.hpp"
 #include "vshogi/variants/minishogi.hpp"
 #include "vshogi/variants/shogi.hpp"

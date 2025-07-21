@@ -5,7 +5,7 @@
 #include <cmath>
 
 #include "vshogi/common/config.hpp"
-#include "vshogi/engine/dfpn.hpp"
+#include "vshogi/engine/dfpn/searcher.hpp"
 #include "vshogi/engine/mcts.hpp"
 #include "vshogi/engine/piece_value.hpp"
 
