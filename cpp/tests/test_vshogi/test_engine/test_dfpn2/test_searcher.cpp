@@ -51,7 +51,7 @@ TEST(dfpn2_table, look_up_l_prefer_mate_at_offence)
     auto n1 = Node();
     auto n2 = Node();
     auto g1 = Game("3rk/3p1/4P/5/5 b G");
-    n1.expand_children(g1);
+    n1.expand(g1);
     n1.backprop(g1);
     Node* const c1 = n1.select();
     g1.apply(c1->get_action());
@@ -92,11 +92,11 @@ TEST(dfpn2_table, look_up_l_prefer_no_mate_at_defence)
     auto n1 = Node(false, Move());
     auto n2 = Node(false, Move());
     auto g1 = Game("4k/4P/5/5/5 w -");
-    n1.expand_children(g1);
+    n1.expand(g1);
     n1.backprop(g1);
     Node* const c1 = n1.select();
     g1.apply_dfpn(c1->get_action());
-    c1->expand_children(g1);
+    c1->expand(g1);
     c1->backprop(g1);
     CHECK_TRUE(c1->proved_no_mate());
     g1.undo();
@@ -147,7 +147,7 @@ TEST(dfpn2_table, look_up_g_prefer_no_mate_at_offence)
     auto n1 = Node();
     auto n2 = Node();
     auto g1 = Game("3rk/3gs/5/5/5 b PSG");
-    n1.expand_children(g1);
+    n1.expand(g1);
     n1.backprop(g1);
     CHECK_TRUE(n1.proved_no_mate());
     {

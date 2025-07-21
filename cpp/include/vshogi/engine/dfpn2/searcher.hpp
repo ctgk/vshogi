@@ -243,7 +243,7 @@ private:
         }
         if (n.num_children() == 0u) {
             const bool fully_expanded
-                = n.expand_children(game, node_l, node_e ? node_e : node_g);
+                = n.expand(game, node_l, node_e ? node_e : node_g);
             if (fully_expanded && (node_e == nullptr))
                 m_table.add(&n, game);
             --searches;

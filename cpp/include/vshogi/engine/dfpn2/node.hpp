@@ -329,7 +329,7 @@ public:
      * @return true Full expansion.
      * @return false Partial expansion.
      */
-    bool expand_children(
+    bool expand(
         const Game<Parameters>& g,
         const Node* node_l = nullptr,
         const Node* node_ge = nullptr)

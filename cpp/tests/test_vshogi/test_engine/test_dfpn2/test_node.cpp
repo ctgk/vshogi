@@ -271,24 +271,24 @@ TEST(dfpn2_node_simulate, using_defence_cousin_g_ongoing)
     CHECK_FALSE(n.proved_no_mate());
 }
 
-TEST_GROUP (dfpn_node_backprop) {
+TEST_GROUP (dfpn2_node_backprop) {
 };
 
-TEST(dfpn_node_backprop, offence_single_child)
+TEST(dfpn2_node_backprop, offence_single_child)
 {
     auto g = Game("4k/5/5/5/5 b P");
     auto n = Node();
-    n.expand_children(g);
+    n.expand(g);
     n.backprop(g);
     CHECK_EQUAL(unit, n.pn());
     CHECK_EQUAL(unit, n.dn());
 }
 
-TEST(dfpn_node_backprop, offence_with_proved_child)
+TEST(dfpn2_node_backprop, offence_with_proved_child)
 {
     auto g = Game("3rk/3p1/4P/5/4K b G");
     auto n = Node();
-    n.expand_children(g);
+    n.expand(g);
     n.backprop(g);
     CHECK_FALSE(n.proved());
     CHECK_EQUAL(unit, n.pn());
@@ -307,11 +307,11 @@ TEST(dfpn_node_backprop, offence_with_proved_child)
     CHECK_EQUAL(inf, n.dn());
 }
 
-TEST(dfpn_node_backprop, offence_preference)
+TEST(dfpn2_node_backprop, offence_preference)
 {
     auto g = Game("2B1k/5/5/5/5 b P");
     auto n = Node();
-    n.expand_children(g);
+    n.expand(g);
     n.backprop(g);
     CHECK_EQUAL(unit, n.pn());
     CHECK_EQUAL(2u * unit + cent, n.dn());
@@ -325,22 +325,22 @@ TEST(dfpn_node_backprop, offence_preference)
         n.get_child_2nd()->get_action().hash());
 }
 
-TEST(dfpn_node_backprop, defence_single_child)
+TEST(dfpn2_node_backprop, defence_single_child)
 {
     auto g = Game("4k/4P/4G/5/5 w -");
     auto n = Node(false, Move());
-    n.expand_children(g);
+    n.expand(g);
     CHECK_EQUAL(1u, n.get_children().size());
     n.backprop(g);
     CHECK_EQUAL(unit, n.pn());
     CHECK_EQUAL(unit, n.dn());
 }
 
-TEST(dfpn_node_backprop, defence_with_proved_child)
+TEST(dfpn2_node_backprop, defence_with_proved_child)
 {
     auto g = Game("4k/4P/5/5/5 w -");
     auto n = Node(false, Move());
-    n.expand_children(g);
+    n.expand(g);
     CHECK_EQUAL(3u, n.num_children());
     n.backprop(g);
 
@@ -348,7 +348,7 @@ TEST(dfpn_node_backprop, defence_with_proved_child)
     CHECK_TRUE(ch->offence());
     CHECK_EQUAL(Move(SQ_1B, SQ_1A).hash(), ch->get_action().hash());
     g.apply_dfpn(ch->get_action());
-    ch->expand_children(g);
+    ch->expand(g);
     ch->backprop(g);
     CHECK_TRUE(ch->proved_no_mate());
     g.undo();
@@ -357,11 +357,11 @@ TEST(dfpn_node_backprop, defence_with_proved_child)
     CHECK_TRUE(ch->proved_no_mate());
 }
 
-TEST(dfpn_node_backprop, defence_preference)
+TEST(dfpn2_node_backprop, defence_preference)
 {
     auto g = Game("s4/RR3/5/5/k4 w p");
     auto n = Node(false, Move());
-    n.expand_children(g);
+    n.expand(g);
     n.backprop(g);
 
     // Prefer capture move
@@ -379,7 +379,7 @@ TEST(dfpn_node_compute_child_th, offence)
 {
     auto g = Game("2B1k/5/5/5/5 b -");
     auto n = Node();
-    n.expand_children(g);
+    n.expand(g);
     n.backprop(g);
     CHECK_EQUAL(unit, n.compute_child_thpn(unit));
     CHECK_EQUAL(kilo + 1u, n.compute_child_thpn(10u * kilo));
@@ -389,7 +389,7 @@ TEST(dfpn_node_compute_child_th, defence)
 {
     auto g = Game("4k/4P/5/5/5 w -");
     auto n = Node(false, Move());
-    n.expand_children(g);
+    n.expand(g);
     n.backprop(g);
     CHECK_EQUAL(unit + 1u, n.compute_child_thdn(inf));
     CHECK_EQUAL(cent, n.compute_child_thdn(cent));
