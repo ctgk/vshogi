@@ -49,14 +49,6 @@ judkins_shogi::BitBoard judkins_shogi::BitBoard::get_attacks_by(
 }
 
 template <>
-judkins_shogi::BitBoard
-judkins_shogi::Board::get_occupied_by_ranging(const ColorEnum& c) const
-{
-    using namespace judkins_shogi;
-    return get_occupied<KA, HI, UM, RY>(c);
-}
-
-template <>
 judkins_shogi::Move
 NonKingBoardMoveGenerator<judkins_shogi::Parameters>::random_select()
 {

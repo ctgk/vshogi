@@ -39,16 +39,18 @@ private:
     Square m_king_locations[num_colors];
     BitBoardType m_bb_color[num_colors];
     BitBoardType m_bb_piece[C::num_piece_types];
+    BitBoardType m_bb_ranger[num_colors];
 
 public:
     Board()
         : m_pieces(C::initial_position), m_king_locations{}, m_bb_color{},
-          m_bb_piece{}
+          m_bb_piece{}, m_bb_ranger{}
     {
         update_internals_based_on_pieces();
     }
     Board(const char* const sfen)
-        : m_pieces{}, m_king_locations{}, m_bb_color{}, m_bb_piece{}
+        : m_pieces{}, m_king_locations{}, m_bb_color{}, m_bb_piece{},
+          m_bb_ranger{}
     {
         set_sfen(sfen);
     }
@@ -116,12 +118,7 @@ public:
     }
     BitBoardType get_occupied_by_ranging(const ColorEnum& c) const
     {
-        BitBoardType out{};
-        for (PieceType pt : EnumIterator<PieceType, C::num_piece_types>()) {
-            if (FPTHelper::is_ranging(C::piece_types[pt]))
-                out |= (m_bb_color[c] & m_bb_piece[pt]);
-        }
-        return out;
+        return m_bb_ranger[c];
     }
     void append_sfen(std::string& out) const
     {
@@ -425,6 +422,7 @@ private:
         m_king_locations[WHITE] = C::SQ_NA;
         std::fill_n(m_bb_color, num_colors, BitBoardType());
         std::fill_n(m_bb_piece, C::num_piece_types, BitBoardType());
+        std::fill_n(m_bb_ranger, num_colors, BitBoardType());
         for (auto sq : EnumIterator<Square, C::num_squares>()) {
             const auto& p = m_pieces[sq];
             const auto c = PHelper::get_color(p);
@@ -435,6 +433,8 @@ private:
                 m_bb_color[c].toggle(sq);
                 m_bb_piece[pt].toggle(sq);
             }
+            if (PHelper::is_ranging_piece(pt))
+                m_bb_ranger[c].toggle(sq);
         }
     }
     void update_internals_by_placed(
@@ -454,6 +454,8 @@ private:
             m_king_locations[c] = sq;
         m_bb_color[c].toggle(sq);
         m_bb_piece[pt].toggle(sq);
+        if (PHelper::is_ranging_piece(pt))
+            m_bb_ranger[c].toggle(sq);
     }
     void update_internals_by_popped(
         const ColoredPiece& p,
@@ -471,6 +473,8 @@ private:
             m_king_locations[c] = C::SQ_NA;
         m_bb_color[c].toggle(sq);
         m_bb_piece[pt].toggle(sq);
+        if (PHelper::is_ranging_piece(pt))
+            m_bb_ranger[c].toggle(sq);
     }
     BitBoardType find_ranging_attack_blockers(
         const ColorEnum& attack_by,

@@ -52,13 +52,6 @@ shogi::BitBoard shogi::BitBoard::get_attacks_by(
 }
 
 template <>
-shogi::BitBoard shogi::Board::get_occupied_by_ranging(const ColorEnum& c) const
-{
-    using namespace shogi;
-    return get_occupied<KY, KA, HI, UM, RY>(c);
-}
-
-template <>
 shogi::Move NonKingBoardMoveGenerator<shogi::Parameters>::random_select()
 {
     using namespace shogi;

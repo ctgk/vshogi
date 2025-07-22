@@ -177,4 +177,26 @@ TEST(test_shogi_board, compute_droppable)
         ((bb_file2 | bb_file4 | bb_file6 | bb_file8) & ~bb_ranka) == actual);
 }
 
+TEST(test_shogi_board, get_occupied_by_ranging)
+{
+    {
+        const auto b = Board();
+        CHECK_TRUE(
+            (bb_1a | bb_9a | bb_2b | bb_8b)
+            == b.get_occupied_by_ranging(vshogi::WHITE));
+    }
+    {
+        auto b = Board("9/9/9/9/9/9/9/9/8L");
+        CHECK_TRUE(bb_1i == b.get_occupied_by_ranging(vshogi::BLACK));
+        b.apply(SQ_1A, SQ_1I, true);
+        CHECK_TRUE(bb_na == b.get_occupied_by_ranging(vshogi::BLACK));
+    }
+    {
+        auto b = Board("9/9/9/9/9/9/9/9/8L");
+        CHECK_TRUE(bb_1i == b.get_occupied_by_ranging(vshogi::BLACK));
+        b.apply(SQ_1D, SQ_1I, false);
+        CHECK_TRUE(bb_1d == b.get_occupied_by_ranging(vshogi::BLACK));
+    }
+}
+
 } // namespace test_vshogi::test_shogi

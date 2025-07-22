@@ -47,14 +47,6 @@ minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
 }
 
 template <>
-minishogi::BitBoard
-minishogi::Board::get_occupied_by_ranging(const ColorEnum& c) const
-{
-    using namespace minishogi;
-    return get_occupied<KA, HI, UM, RY>(c);
-}
-
-template <>
 minishogi::Move
 NonKingBoardMoveGenerator<minishogi::Parameters>::random_select()
 {

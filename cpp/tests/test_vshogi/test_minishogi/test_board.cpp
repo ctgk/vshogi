@@ -299,4 +299,13 @@ TEST(test_minishogi_board, compute_droppable)
     }
 }
 
+TEST(test_minishogi_board, get_occupied_by_ranging)
+{
+    {
+        const auto b = Board("4k/5/5/3S1/K3r");
+        CHECK_EQUAL(
+            bb_na.value(), b.get_occupied_by_ranging(vshogi::BLACK).value());
+    }
+}
+
 } // namespace test_vshogi::test_minishogi
