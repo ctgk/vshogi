@@ -33,6 +33,8 @@ private:
     static BitBoard attacks_table[C::num_colored_piece_types][C::num_squares];
     static BitBoard ray_table[C::num_squares][C::num_dir];
     static BitBoard line_segment_table[C::num_squares][C::num_squares];
+    static BitBoard neighbor_table[num_colors][C::num_squares];
+    static BitBoard neighbor_2nd_table[num_colors][C::num_squares];
 
     constexpr BitBoard(const UInt v_masked) : m_value(v_masked)
     {
@@ -275,26 +277,6 @@ public:
         else
             return (*this & rankmask[dir]) >> static_cast<uint>(-delta);
     }
-    static BitBoard compute_neighbor5x5(const Square& sq)
-    {
-        const auto base = BitBoard::from_square(sq);
-        auto out = base;
-        out |= get_attacks_by(PHelper::to_board_piece(BLACK, C::OU), sq);
-        out |= out.shift(DIR_W) | out.shift(DIR_E);
-        out |= out.shift(DIR_N) | out.shift(DIR_S);
-        return out;
-    }
-    static BitBoard
-    compute_2nd_neighbor_of(const Square& sq, const ColorEnum& c)
-    {
-        auto out = compute_neighbor5x5(sq);
-        if constexpr (C::num_dir > 8) {
-            const auto d = (c == BLACK) ? DIR_S : DIR_N;
-            out |= out.shift(d);
-            out |= out.shift(d);
-        }
-        return out;
-    }
     static BitBoard compute_droppable(const ColoredPiece& p)
     {
         constexpr BitBoard all = BitBoard(mask);
@@ -349,6 +331,18 @@ public:
             return BitBoard();
         return line_segment_table[a][b];
     }
+    static BitBoard get_neighbor_at(const Square& sq, const ColorEnum& c)
+    {
+        if (sq == C::SQ_NA)
+            return BitBoard();
+        return neighbor_table[c][sq];
+    }
+    static BitBoard get_neighbor_2nd_at(const Square& sq, const ColorEnum& c)
+    {
+        if (sq == C::SQ_NA)
+            return BitBoard();
+        return neighbor_2nd_table[c][sq];
+    }
     static BitBoard compute_ray_to(
         Square sq,
         const DirectionEnum dir,
@@ -387,6 +381,13 @@ public:
         for (auto sq1 : EnumIterator<Square, C::num_squares>()) {
             for (auto sq2 : EnumIterator<Square, C::num_squares>()) {
                 line_segment_table[sq1][sq2] = compute_line_segment(sq1, sq2);
+            }
+        }
+
+        for (auto c : {BLACK, WHITE}) {
+            for (auto sq : EnumIterator<Square, C::num_squares>()) {
+                neighbor_table[c][sq] = compute_neighbor_at(sq, c);
+                neighbor_2nd_table[c][sq] = compute_2nd_neighbor_of(sq, c);
             }
         }
     }
@@ -483,6 +484,46 @@ private:
             if (a == b)
                 break;
             out.set(a);
+        }
+        return out;
+    }
+
+private:
+    static BitBoard
+    compute_neighbor_at(const Square& sq, const ColorEnum& by_side)
+    {
+        auto out = BitBoard::from_square(sq);
+        out |= get_attacks_by(PHelper::to_board_piece(BLACK, C::OU), sq);
+        if constexpr (C::num_dir > 8) {
+            for (auto d : {DIR_SSE, DIR_SSW}) {
+                if (by_side == WHITE)
+                    d = rotate(d);
+                out |= BitBoard::from_square(sq).shift(d);
+            }
+        }
+        return out;
+    }
+    static BitBoard compute_neighbor5x5(const Square& sq)
+    {
+        const auto base = BitBoard::from_square(sq);
+        auto out = base;
+        out |= get_attacks_by(PHelper::to_board_piece(BLACK, C::OU), sq);
+        out |= out.shift(DIR_W) | out.shift(DIR_E);
+        out |= out.shift(DIR_N) | out.shift(DIR_S);
+        return out;
+    }
+    static BitBoard
+    compute_2nd_neighbor_of(const Square& sq, const ColorEnum& c)
+    {
+        auto out = compute_neighbor5x5(sq);
+        if constexpr (C::num_dir > 8) {
+            const auto d = (c == BLACK) ? DIR_S : DIR_N;
+            out |= out.shift(d);
+
+            BitBoard k = from_square(sq).shift(d).shift(d).shift(d).shift(d);
+            k |= k.shift(DIR_E).shift(DIR_E);
+            k |= k.shift(DIR_W).shift(DIR_W);
+            out |= k;
         }
         return out;
     }

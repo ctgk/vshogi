@@ -820,11 +820,11 @@ private:
         const auto king_sq = m_board.get_king_location(m_turn);
         const auto target = m_board.get_king_location(~m_turn);
         assert(target != C::SQ_NA);
-        const auto occ_pieces = m_board.get_occupied(m_turn).clear(king_sq);
-        const auto occ_ranger = m_board.get_occupied_by_ranging(m_turn);
-        const auto neighbor
-            = BitBoardType::compute_2nd_neighbor_of(target, m_turn);
-        const auto src_mask = occ_pieces & (occ_ranger | neighbor | m_cover);
+
+        BitBoardType src_mask = m_cover;
+        src_mask |= m_board.get_occupied_by_ranging(m_turn);
+        src_mask |= BitBoardType::get_neighbor_2nd_at(target, m_turn);
+        src_mask &= m_board.get_occupied(m_turn).clear(king_sq);
         m_src_iter = src_mask.square_iterator();
     }
     void init_dst_mask()

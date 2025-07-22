@@ -267,15 +267,14 @@ public:
         const ColorEnum& by_side,
         const BitBoardType& src_mask) const
     {
+        auto mask_ranging = get_occupied_by_ranging(by_side);
+        auto mask_melee = m_bb_color[by_side] ^ mask_ranging;
         const auto occ = get_occupied();
-        const auto mask_ranging = get_occupied_by_ranging(by_side);
-        const auto mask_8dir
-            = (Magic<Parameters>::get_adjacent_attack(dst, occ)
-               | Magic<Parameters>::get_diagonal_attack(dst, occ));
-        const auto mask_melee = (m_bb_color[by_side] ^ mask_ranging)
-                                & BitBoardType::compute_neighbor5x5(dst);
-        const auto candidates
-            = src_mask & ((mask_ranging & mask_8dir) ^ mask_melee);
+        mask_ranging
+            &= (Magic<Parameters>::get_adjacent_attack(dst, occ)
+                | Magic<Parameters>::get_diagonal_attack(dst, occ));
+        mask_melee &= BitBoardType::get_neighbor_at(dst, by_side);
+        const auto candidates = src_mask & (mask_ranging ^ mask_melee);
         BitBoardType out{};
         for (auto src : candidates.square_iterator()) {
             if (BitBoardType::get_attacks_by(m_pieces[src], src).is_one(dst))
@@ -508,11 +507,8 @@ private:
     {
         const BitBoardType occ_ranging = get_occupied_by_ranging(by_side);
         const BitBoardType occ_melee = m_bb_color[by_side] ^ occ_ranging;
-        const BitBoardType neighbor5x5
-            = BitBoardType::compute_neighbor5x5(m_king_locations[~by_side]);
-        const BitBoardType neighbor
-            = neighbor5x5
-              | neighbor5x5.shift((by_side == BLACK) ? DIR_S : DIR_N);
+        const BitBoardType neighbor = BitBoardType::get_neighbor_2nd_at(
+            m_king_locations[~by_side], by_side);
         const BitBoardType occ_atks = occ_ranging ^ (neighbor & occ_melee);
         for (auto sq : occ_atks.square_iterator()) {
             const auto& p = m_pieces[sq];

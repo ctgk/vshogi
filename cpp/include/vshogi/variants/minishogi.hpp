@@ -244,6 +244,16 @@ inline minishogi::BitBoard
     minishogi::BitBoard::line_segment_table[minishogi::Config::num_squares]
                                            [minishogi::Config::num_squares]
     = {};
+template <>
+inline minishogi::BitBoard
+    minishogi::BitBoard::neighbor_table[num_colors]
+                                       [minishogi::Config::num_squares]
+    = {};
+template <>
+inline minishogi::BitBoard
+    minishogi::BitBoard::neighbor_2nd_table[num_colors]
+                                           [minishogi::Config::num_squares]
+    = {};
 
 template <>
 inline std::uint64_t minishogi::Board::zobrist_table

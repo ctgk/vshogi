@@ -363,6 +363,14 @@ inline shogi::BitBoard
     shogi::BitBoard::line_segment_table[shogi::Config::num_squares]
                                        [shogi::Config::num_squares]
     = {};
+template <>
+inline shogi::BitBoard
+    shogi::BitBoard::neighbor_table[num_colors][shogi::Config::num_squares]
+    = {};
+template <>
+inline shogi::BitBoard
+    shogi::BitBoard::neighbor_2nd_table[num_colors][shogi::Config::num_squares]
+    = {};
 
 template <>
 inline const uint128 shogi::Magic::premask_north[shogi::Config::num_squares] = {

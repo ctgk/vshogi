@@ -289,6 +289,15 @@ template <>
 inline judkins_shogi::BitBoard judkins_shogi::BitBoard::line_segment_table
     [judkins_shogi::Config::num_squares][judkins_shogi::Config::num_squares]
     = {};
+template <>
+inline judkins_shogi::BitBoard
+    judkins_shogi::BitBoard::neighbor_table[num_colors]
+                                           [judkins_shogi::Config::num_squares]
+    = {};
+template <>
+inline judkins_shogi::BitBoard judkins_shogi::BitBoard::neighbor_2nd_table
+    [num_colors][judkins_shogi::Config::num_squares]
+    = {};
 
 template <>
 inline const std::uint64_t
