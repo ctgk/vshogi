@@ -330,11 +330,8 @@ private:
     void init_dst_iter()
     {
         const auto src = *m_src_iter;
-        const auto p = m_board[src];
-        auto movable
-            = BitBoardType::get_attacks_by(p, src, m_board.get_occupied());
         const auto king_sq = m_board.get_king_location(m_turn);
-
+        auto movable = m_board.get_attacks_by_nocheck(src);
         movable &= ~m_board.get_occupied(m_turn);
         if (!movable.any())
             goto ExitLabel;
@@ -526,11 +523,8 @@ private:
     void init_dst_iter()
     {
         const auto src = *m_src_iter;
-        const auto p = m_board[src];
-        auto movable
-            = BitBoardType::get_attacks_by(p, src, m_board.get_occupied());
         const auto king_sq = m_board.get_king_location(m_turn);
-
+        auto movable = m_board.get_attacks_by_nocheck(src);
         movable &= ~m_board.get_occupied(m_turn);
         if (!movable.any())
             goto ExitLabel;
@@ -830,11 +824,8 @@ private:
     void init_dst_mask()
     {
         const auto src = *m_src_iter;
-        const auto p = m_board[src];
         const auto king_sq = m_board.get_king_location(m_turn);
-
-        m_dst_mask
-            = BitBoardType::get_attacks_by(p, src, m_board.get_occupied());
+        m_dst_mask = m_board.get_attacks_by_nocheck(src);
         m_dst_mask &= ~m_board.get_occupied(m_turn);
         update_dst_mask_by_current_check(king_sq);
         update_dst_mask_by_counter_check(src, king_sq);

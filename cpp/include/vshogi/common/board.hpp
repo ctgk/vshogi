@@ -166,7 +166,10 @@ public:
     BitBoardType get_attacks_by_nocheck(const Square& sq) const
     {
         assert(sq < C::SQ_NA);
-        return BitBoardType::get_attacks_by(m_pieces[sq], sq, get_occupied());
+        const auto& p = m_pieces[sq];
+        if (PHelper::is_ranging_piece(p))
+            return BitBoardType::get_attacks_by(p, sq, get_occupied());
+        return BitBoardType::get_attacks_by(p, sq);
     }
     Square find_attacker(
         const ColorEnum& attacker_color,
@@ -481,17 +484,16 @@ private:
         const Square& target) const
     {
         BitBoardType out{};
-        const BitBoardType occ_full = m_bb_color[BLACK] | m_bb_color[WHITE];
-        const auto ranger = get_occupied_by_ranging(attack_by);
-        const auto mask_8dir = Magic<Parameters>::get_adjacent_attack(target)
-                               | Magic<Parameters>::get_diagonal_attack(target);
-        const auto mask_attackers = ranger & mask_8dir;
-        for (auto atk : mask_attackers.square_iterator()) {
+        auto attackers = get_occupied_by_ranging(attack_by);
+        attackers
+            &= (Magic<Parameters>::get_adjacent_attack(target)
+                | Magic<Parameters>::get_diagonal_attack(target));
+        for (auto atk : attackers.square_iterator()) {
             const auto king_dir = SHelper::get_direction(target, atk);
             if (!PHelper::is_ranging_to(m_pieces[atk], king_dir))
                 continue;
-            const auto segment = BitBoardType::get_line_segment(atk, target);
-            const BitBoardType blockers = occ_full & segment;
+            auto blockers = BitBoardType::get_line_segment(atk, target);
+            blockers &= (m_bb_color[BLACK] | m_bb_color[WHITE]);
             if (blockers.hamming_weight() != 1u)
                 continue;
             const auto blocker = *blockers.square_iterator();
@@ -505,11 +507,11 @@ private:
         const ColorEnum& by_side,
         const BitBoardType& occ_full_but_king) const
     {
-        const BitBoardType occ_ranging = get_occupied_by_ranging(by_side);
-        const BitBoardType occ_melee = m_bb_color[by_side] ^ occ_ranging;
-        const BitBoardType neighbor = BitBoardType::get_neighbor_2nd_at(
+        BitBoardType occ_atks = get_occupied_by_ranging(by_side);
+        BitBoardType occ_melee = m_bb_color[by_side] ^ occ_atks;
+        occ_melee &= BitBoardType::get_neighbor_2nd_at(
             m_king_locations[~by_side], by_side);
-        const BitBoardType occ_atks = occ_ranging ^ (neighbor & occ_melee);
+        occ_atks ^= occ_melee;
         for (auto sq : occ_atks.square_iterator()) {
             const auto& p = m_pieces[sq];
             if (PHelper::is_ranging_piece(p)
