@@ -290,11 +290,11 @@ TEST(dfpn_table, look_up_e)
     auto g = Game();
     t.add(&n, g);
 
-    const Node *node_l, *node_e, *node_g;
-    t.look_up_leg_stand_nodes(g, &node_l, &node_e, &node_g);
-    CHECK_TRUE(nullptr == node_l);
+    const Node *node_le, *node_e, *node_ge;
+    t.look_up_leg_stand_nodes(g, &node_le, &node_e, &node_ge);
+    CHECK_TRUE(&n == node_le);
     CHECK_TRUE(&n == node_e);
-    CHECK_TRUE(nullptr == node_g);
+    CHECK_TRUE(&n == node_ge);
 }
 
 TEST(dfpn_table, look_up_l)
@@ -774,7 +774,7 @@ TEST(dfpn_searcher, no_mate_1)
     searcher.set_game(g);
     CHECK_FALSE(searcher.search(5000));
     CHECK_TRUE(searcher.proved_no_mate());
-    CHECK_EQUAL(1286, searcher.get_search_count());
+    CHECK_EQUAL(1288, searcher.get_search_count());
 }
 
 TEST(dfpn_searcher, mate_in_one_straight_forward)
@@ -1218,44 +1218,49 @@ TEST(dfpn_searcher, king_entering_before_mate)
     CHECK_TRUE(actual[1] == Move(SQ_6F, SQ_5F));
 }
 
-TEST(dfpn_searcher, avoid_consecutive_checks)
+TEST(dfpn_searcher, no_mate_by_consecutive_checks)
 {
-    using namespace vshogi::minishogi;
+    using namespace vshogi::judkins_shogi;
     using Searcher = Searcher<Parameters>;
-    // Turn: WHITE
-    // White: HI,KI
-    //     5   4   3   2   1
-    //   +---+---+---+---+---+
-    // A |   |   |-GI|   |-OU|
-    //   +---+---+---+---+---+
-    // B |   |   |   |   |-FU|
-    //   +---+---+---+---+---+
-    // C |+GI|+OU|   |   |   |
-    //   +---+---+---+---+---+
-    // D |   |   |   |   |   |
-    //   +---+---+---+---+---+
-    // E |   |-UM|-KI|   |   |
-    //   +---+---+---+---+---+
-    // Black: FU,KA
-    auto g = Game("2s1k/4p/SK3/5/1+bg2 w BPrg 32");
-    g.apply(Move(SQ_3D, SQ_4E));
-    g.apply(Move(SQ_5D, SQ_4C));
-    g.apply(Move(SQ_4E, SQ_3D));
-    g.apply(Move(SQ_4C, SQ_5D));
+    // Turn: BLACK
+    // White: -
+    //     6   5   4   3   2   1
+    //   +---+---+---+---+---+---+
+    // A |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+
+    // B |   |   |   |-KI|-GI|-HI|
+    //   +---+---+---+---+---+---+
+    // C |   |   |   |-KA|   |-KI|
+    //   +---+---+---+---+---+---+
+    // D |   |   |   |+GI|+KA|-OU|
+    //   +---+---+---+---+---+---+
+    // E |   |   |   |+FU|   |   |
+    //   +---+---+---+---+---+---+
+    // F |   |   |   |   |+FU|+KE|
+    //   +---+---+---+---+---+---+
+    // Black: -
+    auto g = Game("6/3gsr/3b1g/3SBk/3P2/4PN b -");
     auto searcher = Searcher();
     searcher.set_game(g);
-    CHECK_TRUE(searcher.search(1000u));
-    const auto actual = searcher.get_mate_moves();
-    for (auto&& m : actual) {
-        CHECK_EQUAL(vshogi::ONGOING, g.get_result());
-        g.apply(m);
-    }
-    CHECK_EQUAL(vshogi::WHITE_WIN, g.get_result());
+    CHECK_FALSE(searcher.search(10u));
+    // OR(#P=4294967295, #D=0)
+    // +-- 3d2c -> AND(#P=4294967295, #D=0)
+    // |   +-- 1d2c -> OR(#P=4294967295, #D=0)
+    // |   +-- 1c2c -> OR(#P=100, #D=100)
+    // |   +-- 2b2c -> OR(#P=100, #D=100)
+    // |   +-- 3b2c -> OR(#P=100, #D=100)
+    // +-- 3d2e -> AND(#P=4294967295, #D=0)
+    //     +-- 1d2c -> OR(#P=4294967295, #D=0)
+    //         +-- 2e1d -> AND(#P=4294967295, #D=0)
+    //         |   +-- 2c1d -> OR(#P=4294967295, #D=0)
+    //         |   +-- 1c1d -> OR(#P=100, #D=100)
+    //         +-- 2e3d -> AND(#P=4294967295, #D=0)
+    //             +-- 2c1d -> OR(#P=4294967295, #D=0) # repetition
 
     auto root = searcher.get_root();
     auto ch = root->get_child();
     for (; ch; ch = ch->get_sibling()) {
-        if (ch->get_action() == Move(SQ_3D, SQ_4E)) {
+        if (ch->get_action() == Move(SQ_2E, SQ_3D)) {
             CHECK_TRUE(ch->proved_no_mate());
             break;
         }

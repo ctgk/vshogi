@@ -103,18 +103,18 @@ public:
     }
     void look_up_leg_stand_nodes(
         const GameType& g,
-        const NodeType** const node_l,
+        const NodeType** const node_le,
         const NodeType** const node_e,
-        const NodeType** const node_g) const
+        const NodeType** const node_ge) const
     {
         const std::uint64_t bt_hash = g.get_board_turn_hash();
         auto it = m_table.find(bt_hash);
-        *node_l = nullptr;
+        *node_le = nullptr;
         *node_e = nullptr;
-        *node_g = nullptr;
+        *node_ge = nullptr;
         if (it == m_table.end())
             return;
-        return look_up_leg_stand_nodes(g, it->second, node_l, node_e, node_g);
+        return look_up_leg_stand_nodes(g, it->second, node_le, node_e, node_ge);
     }
 
     void look_up_le_ge_stand(
@@ -150,9 +150,9 @@ private:
     void look_up_leg_stand_nodes(
         const GameType& g,
         const StandNodeTable& table,
-        const NodeType** const node_l,
+        const NodeType** const node_le,
         const NodeType** const node_e,
-        const NodeType** const node_g) const
+        const NodeType** const node_ge) const
     {
         // - offence turn (`offence == true`)
         //     - Weaker offence stand, but mate (or #P <= #D)
@@ -173,33 +173,35 @@ private:
             const bool offence = n_iter->offence();
             const bool is_mate = n_iter->proved_mate();
             const bool is_no_mate = n_iter->proved_no_mate();
-            if (s_iter < s) {
+            if (s_iter <= s) {
                 if (offence ? is_mate : is_no_mate) {
                     // weaker offence stand, but mate
-                    *node_l = n_iter;
+                    *node_le = n_iter;
                     found_best_l = true;
                 } else if (
                     (!found_best_l) && (offence ? (!is_no_mate) : (!is_mate))) {
                     // exclude weaker offence stand, and no mate.
-                    if ((*node_l == nullptr) || (s_l < s_iter)) {
+                    if ((*node_le == nullptr) || (s_l < s_iter)) {
                         s_l = s_iter;
-                        *node_l = n_iter;
+                        *node_le = n_iter;
                     }
                 }
-            } else if (s_iter == s) {
+            }
+            if (s_iter == s) {
                 *node_e = n_iter;
                 if (n_iter->proved())
                     return;
-            } else if (s_iter > s) {
+            }
+            if (s_iter >= s) {
                 if (offence ? is_no_mate : is_mate) {
-                    *node_g = n_iter;
+                    *node_ge = n_iter;
                     found_best_g = true;
                 } else if (
                     (!found_best_g) && (offence ? (!is_mate) : (!is_no_mate))) {
                     // exclude greater offence stand, and mate.
-                    if ((*node_g == nullptr) || (s_iter < s_g)) {
+                    if ((*node_ge == nullptr) || (s_iter < s_g)) {
                         s_g = s_iter;
-                        *node_g = n_iter;
+                        *node_ge = n_iter;
                     }
                 }
             }
@@ -329,8 +331,10 @@ public:
         m_game = std::make_unique<GameType>(g);
         const GameType& game = *m_game;
         Node<Parameters>* const root = m_table.get_root();
-        if (!root->simulate(game))
+        if (!root->simulate(game)) {
             root->expand(game, nullptr, nullptr);
+            m_table.add(root, game);
+        }
         m_num_searched = 0u;
     }
 
@@ -397,8 +401,6 @@ private:
         const uint thdn)
     {
         game.apply_dfpn(n.get_action());
-        if (!n.has_child())
-            game.update_result_dfpn(1u);
         assert(n.offence() || game.in_check());
         simulate_or_expand(n, game, searches);
         uint thpn_ch = 0u, thdn_ch = 0u;
@@ -411,17 +413,19 @@ private:
         }
         game.undo();
     }
-    void simulate_or_expand(
-        Node<Parameters>& n, const GameType& game, uint& searches)
+    void simulate_or_expand(Node<Parameters>& n, GameType& game, uint& searches)
     {
-        const Node<Parameters>* node_l = nullptr;
-        const Node<Parameters>* node_g = nullptr;
-        m_table.look_up_le_ge_stand(game, &node_l, &node_g);
-        if (n.simulate(game, node_l, nullptr, node_g)) {
+        const Node<Parameters>* node_le = nullptr;
+        const Node<Parameters>* node_e = nullptr;
+        const Node<Parameters>* node_ge = nullptr;
+        m_table.look_up_leg_stand_nodes(game, &node_le, &node_e, &node_ge);
+        if (!n.has_child())
+            game.update_result_dfpn(1u, node_e != nullptr);
+        if (n.simulate(game, node_le, node_e, node_ge)) {
             --searches;
         } else if (!n.has_child()) {
-            const bool fully_expanded = n.expand(game, node_g, node_l);
-            if (fully_expanded && (node_l != &n) && (node_g != &n))
+            const bool fully_expanded = n.expand(game, node_ge, node_le);
+            if (fully_expanded && (node_e != &n))
                 m_table.add(&n, game);
             --searches;
         }
