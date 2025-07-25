@@ -345,8 +345,9 @@ public:
      * @return true Proved checkmate.
      * @return false Checkmate not proved.
      */
-    bool search(const uint n)
+    Move<Parameters> search(const uint n)
     {
+        MoveType out{};
         Node<Parameters>* const root = m_table.get_root();
         GameType& game = *m_game;
         uint num = n;
@@ -355,11 +356,11 @@ public:
             if (root->proved())
                 break;
             NodeType* const c1 = root->select(inf, inf, thpn_ch, thdn_ch);
-            search_inner(*c1, game, num, thpn_ch, thdn_ch);
+            out = search_inner(*c1, game, num, thpn_ch, thdn_ch);
             root->backprop();
         }
         m_num_searched += n - num;
-        return root->proved_mate();
+        return out;
     }
     bool proved_mate() const
     {
@@ -393,25 +394,29 @@ public:
     }
 
 private:
-    void search_inner(
+    MoveType search_inner(
         Node<Parameters>& n,
         GameType& game,
         uint& searches,
         const uint thpn,
         const uint thdn)
     {
+        MoveType out{};
         game.apply_dfpn(n.get_action());
         assert(n.offence() || game.in_check());
         simulate_or_expand(n, game, searches);
+        if (searches == 0u)
+            out = n.get_action();
         uint thpn_ch = 0u, thdn_ch = 0u;
         while (searches) {
             if ((n.pn() >= thpn) || (n.dn() >= thdn))
                 break;
             NodeType* const c1 = n.select(thpn, thdn, thpn_ch, thdn_ch);
-            search_inner(*c1, game, searches, thpn_ch, thdn_ch);
+            out = search_inner(*c1, game, searches, thpn_ch, thdn_ch);
             n.backprop();
         }
         game.undo();
+        return out;
     }
     void simulate_or_expand(Node<Parameters>& n, GameType& game, uint& searches)
     {

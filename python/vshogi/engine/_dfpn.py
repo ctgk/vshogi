@@ -99,7 +99,8 @@ class DfpnSearcher(Engine):
         """
         if self._searcher is None:
             return False
-        return self._searcher.search(n)
+        self._searcher.search(n)
+        return self._searcher.proved_mate()
 
     def select(self) -> Move:
         """Get first action to mate.

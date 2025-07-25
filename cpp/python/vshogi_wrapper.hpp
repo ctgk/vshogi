@@ -373,7 +373,8 @@ inline void export_game(pybind11::module& m)
             [](const Game& self, const int num_dfpn_nodes) -> py::object {
                 vshogi::engine::dfpn::Searcher<Parameters> dfpn{};
                 dfpn.set_game(self);
-                if (dfpn.search(num_dfpn_nodes)) {
+                dfpn.search(num_dfpn_nodes);
+                if (dfpn.proved_mate()) {
                     return py::cast(dfpn.get_mate_moves());
                 } else {
                     return py::none();

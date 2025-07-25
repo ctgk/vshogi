@@ -38,7 +38,8 @@ TEST(test_minishogi_engine, test_random_playout_searcher)
                 continue;
 
             dfpn.set_game(g_copy);
-            if (dfpn.search(100))
+            dfpn.search(100);
+            if (dfpn.proved_mate())
                 n->simulate_mate_and_backprop();
             else
                 n->simulate_expand_and_backprop(
@@ -114,7 +115,8 @@ TEST(shogi_engine, mcts_with_dfpn)
                 continue;
 
             dfpn.set_game(g_copy);
-            if (dfpn.search(100))
+            dfpn.search(100);
+            if (dfpn.proved_mate())
                 n->simulate_mate_and_backprop();
             else
                 n->simulate_expand_and_backprop(
@@ -183,7 +185,8 @@ TEST(shogi_engine, random_playout_searcher)
                 continue;
 
             dfpn.set_game(g_copy);
-            if (dfpn.search(100))
+            dfpn.search(100);
+            if (dfpn.proved_mate())
                 n->simulate_mate_and_backprop();
             else
                 n->simulate_expand_and_backprop(

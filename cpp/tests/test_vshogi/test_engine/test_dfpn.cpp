@@ -676,7 +676,7 @@ TEST(dfpn_searcher, no_mate_no_check)
     CHECK_TRUE(searcher.proved());
     CHECK_FALSE(searcher.proved_mate());
     CHECK_TRUE(searcher.proved_no_mate());
-    CHECK_FALSE(searcher.search(1u));
+    searcher.search(1u);
     CHECK_TRUE(searcher.proved());
     CHECK_FALSE(searcher.proved_mate());
     CHECK_TRUE(searcher.proved_no_mate());
@@ -772,7 +772,7 @@ TEST(dfpn_searcher, no_mate_1)
                   "1NK1B2+rL w GSPsnl3p 134");
     auto searcher = Searcher();
     searcher.set_game(g);
-    CHECK_FALSE(searcher.search(5000));
+    searcher.search(5000);
     CHECK_TRUE(searcher.proved_no_mate());
     CHECK_EQUAL(1288, searcher.get_search_count());
 }
@@ -788,7 +788,7 @@ TEST(dfpn_searcher, mate_in_one_straight_forward)
     searcher.set_game(g);
     CHECK_TRUE(searcher.is_ready());
 
-    CHECK_TRUE(searcher.search(1u));
+    searcher.search(1u);
     CHECK_EQUAL(Move(SQ_1B, SQ_1C).hash(), searcher.get_mate_move().hash());
     CHECK_EQUAL(1, searcher.get_search_count());
 }
@@ -816,7 +816,7 @@ TEST(dfpn_searcher, mate_in_one)
         //   *---*---*---*---*---*
         // Black: -
         searcher.set_game(Game("2k2/5/2GB1/5/2K2 b -"));
-        CHECK_TRUE(searcher.search(10u));
+        searcher.search(10u);
         CHECK_TRUE(searcher.proved_mate());
         CHECK_EQUAL(Move(SQ_3B, SQ_3C).hash(), searcher.get_mate_move().hash());
         CHECK_TRUE(searcher.get_search_count() <= 10u);
@@ -840,7 +840,7 @@ TEST(dfpn_searcher, mate_in_one)
         //   *---*---*---*---*---*
         // Black: KI
         searcher.set_game(Game("3b1/2r1k/3pB/3gR/5 b G"));
-        CHECK_TRUE(searcher.search(50));
+        searcher.search(50);
         CHECK_TRUE(searcher.get_search_count() < 50u);
     }
 }
@@ -868,9 +868,12 @@ TEST(dfpn_searcher, mate_in_three_straight_forward)
     auto g = Game("3bk/3s1/3BP/4+R/4K b -");
     auto searcher = Searcher();
     searcher.set_game(g);
-    CHECK_FALSE(searcher.search(1u));
-    CHECK_FALSE(searcher.search(1u));
-    CHECK_TRUE(searcher.search(1u));
+    searcher.search(1u);
+    CHECK_FALSE(searcher.proved());
+    searcher.search(1u);
+    CHECK_FALSE(searcher.proved());
+    searcher.search(1u);
+    CHECK_TRUE(searcher.proved_mate());
     CHECK_EQUAL(Move(SQ_1B, SQ_1C).hash(), searcher.get_mate_move().hash());
 }
 
@@ -894,7 +897,7 @@ TEST(dfpn_searcher, mate_in_three_1)
     //   *---*---*---*---*---*
     // Black: -
     searcher.set_game(Game("5/2p2/5/2K2/5 w 2g"));
-    CHECK_TRUE(searcher.search(100));
+    searcher.search(100);
     CHECK_TRUE(searcher.proved_mate());
     CHECK_COMPARE(20, <, searcher.get_search_count());
     CHECK_COMPARE(searcher.get_search_count(), <, 30);
@@ -921,7 +924,7 @@ TEST(dfpn_searcher, mate_in_three_2)
     //   *---*---*---*---*---*
     // Black: HI
     searcher.set_game(Game("2sgk/5/3RG/5/4K b R"));
-    CHECK_TRUE(searcher.search(1000));
+    searcher.search(1000);
     CHECK_TRUE(searcher.proved());
     CHECK_TRUE(searcher.proved_mate());
     CHECK_EQUAL(Move(SQ_1B, SQ_1C).hash(), searcher.get_mate_move().hash());
@@ -952,7 +955,7 @@ TEST(dfpn_searcher, mate_in_three_3)
     // Black: KI
     auto g = Game("3sSr/6/3pkn/4Np/4+R1/6 b G");
     searcher.set_game(g);
-    CHECK_TRUE(searcher.search(100u));
+    searcher.search(100u);
     CHECK_TRUE(searcher.proved_mate());
     const auto mate_moves = searcher.get_mate_moves();
     for (auto&& m : mate_moves) {
@@ -985,7 +988,7 @@ TEST(dfpn_searcher, mate_in_three_4)
     // Black: KI
     auto g = Game("3sSr/6/3pkn/4Np/4+R1/6 b Gpgbr");
     searcher.set_game(g);
-    CHECK_TRUE(searcher.search(100u));
+    searcher.search(100u);
     CHECK_TRUE(searcher.proved_mate());
     const auto mate_moves = searcher.get_mate_moves();
     for (auto&& m : mate_moves) {
@@ -1046,7 +1049,8 @@ TEST(dfpn_searcher, mate_in_three_by_king_move)
         //   +---+---+---+---+---+---+
         // Black: -
         searcher.set_game(Game("3Rnr/5k/1+b3p/3K2/2B3/6 b n"));
-        CHECK_TRUE(searcher.search(100));
+        searcher.search(100);
+        CHECK_TRUE(searcher.proved_mate());
     }
 }
 
@@ -1155,8 +1159,10 @@ TEST(dfpn_searcher, mate_in_five_straight_forward)
     // Black: KA
     auto searcher = Searcher<Parameters>();
     searcher.set_game(Game("4pp/3pbk/3n1N/3P1P/2S1SR/3GRG b B"));
-    CHECK_FALSE(searcher.search(4u));
-    CHECK_TRUE(searcher.search(1u));
+    searcher.search(4u);
+    CHECK_FALSE(searcher.proved());
+    searcher.search(1u);
+    CHECK_TRUE(searcher.proved_mate());
     CHECK_EQUAL(Move(SQ_2C, KA).hash(), searcher.get_mate_move().hash());
 }
 
@@ -1181,7 +1187,8 @@ TEST(dfpn_searcher, mate_in_five)
     // Black: GIx2
     auto searcher = Searcher<Parameters>();
     searcher.set_game(Game("2pkb/4R/2+bG1/5/5 b 2S"));
-    CHECK_TRUE(searcher.search(5000));
+    searcher.search(5000);
+    CHECK_TRUE(searcher.proved_mate());
     CHECK_EQUAL(Move(SQ_2B, GI).hash(), searcher.get_mate_move().hash());
     const auto num_searched = searcher.get_search_count();
     CHECK_EQUAL(124, num_searched);
@@ -1210,7 +1217,7 @@ TEST(dfpn_searcher, king_entering_before_mate)
     // Black: -
     auto searcher = Searcher();
     searcher.set_game(Game("6/6/3n2/6/P3g+r/1K1k+p+b w s"));
-    CHECK_TRUE(searcher.search(100));
+    searcher.search(100);
     CHECK_TRUE(searcher.proved_mate());
     const auto actual = searcher.get_mate_moves();
     CHECK_EQUAL(2, actual.size());
@@ -1242,7 +1249,7 @@ TEST(dfpn_searcher, no_mate_by_consecutive_checks)
     auto g = Game("6/3gsr/3b1g/3SBk/3P2/4PN b -");
     auto searcher = Searcher();
     searcher.set_game(g);
-    CHECK_FALSE(searcher.search(10u));
+    searcher.search(10u);
     // OR(#P=4294967295, #D=0)
     // +-- 3d2c -> AND(#P=4294967295, #D=0)
     // |   +-- 1d2c -> OR(#P=4294967295, #D=0)
@@ -1256,7 +1263,7 @@ TEST(dfpn_searcher, no_mate_by_consecutive_checks)
     //         |   +-- 1c1d -> OR(#P=100, #D=100)
     //         +-- 2e3d -> AND(#P=4294967295, #D=0)
     //             +-- 2c1d -> OR(#P=4294967295, #D=0) # repetition
-
+    CHECK_TRUE(searcher.proved_no_mate());
     auto root = searcher.get_root();
     auto ch = root->get_child();
     for (; ch; ch = ch->get_sibling()) {
@@ -1570,6 +1577,40 @@ TEST(dfpn_searcher, test_shogi_debug_4)
     }
     CHECK_EQUAL(vshogi::WHITE_WIN, g.get_result());
 }
+
+// TEST(dfpn_searcher, test_minishogi_unnecessary_interposition)
+// {
+//     using namespace vshogi::minishogi;
+//     using Searcher = Searcher<Parameters>;
+//     // Turn: BLACK
+//     // White: FU,GI,KAx2,HI,KI
+//     //     5   4   3   2   1
+//     //   +---+---+---+---+---+
+//     // A |   |   |   |   |   |
+//     //   +---+---+---+---+---+
+//     // B |   |   |   |   |   |
+//     //   +---+---+---+---+---+
+//     // C |   |   |   |+KI|   |
+//     //   +---+---+---+---+---+
+//     // D |+HI|   |+GI|   |-FU|
+//     //   +---+---+---+---+---+
+//     // E |   |   |   |   |-OU|
+//     //   +---+---+---+---+---+
+//     // Black: -
+//     auto g = Game("5/5/3G1/R1S1p/4k b psg2br");
+//     auto g_hflip = g.hflip();
+//     auto searcher = Searcher();
+//     auto searcher_hflip = Searcher();
+//     searcher.set_game(g);
+//     searcher_hflip.set_game(g_hflip);
+//     for (int ii = 1000; ii--;){
+//         if (searcher.proved() || searcher_hflip.proved())
+//             break;
+//         const Move m1 = searcher.search(1u);
+//         const Move m2 = searcher_hflip.search(1u);
+//         CHECK_TRUE(m1.destination() == Squares::hflip(m2.destination()));
+//     }
+// }
 
 // TEST(dfpn_searcher, mate_moves_without_waste_moves)
 // {
