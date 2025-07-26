@@ -172,34 +172,6 @@ inline void expand_children_at_defence_drop(
     }
 }
 
-template <class Parameters>
-bool had_two_consecutive_sacrifice_drops(const Game<Parameters>& g)
-{
-    const uint n = g.record_length();
-    if (n < 4u)
-        return false;
-
-    // first sacrifice drop
-    const Move<Parameters> drop1st = g.get_record_action(n - 4u);
-    if (!drop1st.is_drop())
-        return false;
-
-    // capture first sacrifice drop
-    const Move<Parameters> capt1st = g.get_record_action(n - 3u);
-    if (drop1st.destination() != capt1st.destination())
-        return false;
-
-    // second sacrifice drop
-    const Move<Parameters> drop2nd = g.get_record_action(n - 2u);
-    if (!drop2nd.is_drop())
-        return false;
-
-    // capture second sacrifice drop
-    const Move<Parameters> capt2nd = g.get_record_action(n - 1u);
-    return (drop2nd.destination() == capt2nd.destination())
-           && (capt1st.destination() == capt2nd.source_square());
-}
-
 template <class P>
 inline bool expand_children_at_defence(
     std::list<Node<P>>& children,
@@ -209,7 +181,7 @@ inline bool expand_children_at_defence(
 {
     expand_children_at_defence_board(
         children, g, niblings_l ? niblings_l : niblings_g);
-    if (!had_two_consecutive_sacrifice_drops(g)) {
+    if (!g.had_two_consecutive_sacrifice_drops()) {
         expand_children_at_defence_drop(children, g, niblings_g);
         return true;
     }

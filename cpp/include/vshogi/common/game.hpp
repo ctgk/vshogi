@@ -251,6 +251,32 @@ public:
         }
         return false;
     }
+    bool had_two_consecutive_sacrifice_drops() const
+    {
+        const uint n = record_length();
+        if (n < 4u)
+            return false;
+
+        // first sacrifice drop
+        const Move<Parameters> drop1st = get_record_action(n - 4u);
+        if (!drop1st.is_drop())
+            return false;
+
+        // capture first sacrifice drop
+        const Move<Parameters> capt1st = get_record_action(n - 3u);
+        if (drop1st.destination() != capt1st.destination())
+            return false;
+
+        // second sacrifice drop
+        const Move<Parameters> drop2nd = get_record_action(n - 2u);
+        if (!drop2nd.is_drop())
+            return false;
+
+        // capture second sacrifice drop
+        const Move<Parameters> capt2nd = get_record_action(n - 1u);
+        return (drop2nd.destination() == capt2nd.destination())
+               && (capt1st.destination() == capt2nd.source_square());
+    }
 
     /**
      * @brief Whether current turn player's king is in check or not.

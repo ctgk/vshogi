@@ -46,34 +46,6 @@ static constexpr uint kilo = 1000u * unit;
 static constexpr uint inf = std::numeric_limits<uint>::max();
 
 template <class Parameters>
-bool had_two_consecutive_sacrifice_drops(const Game<Parameters>& g)
-{
-    const uint n = g.record_length();
-    if (n < 4u)
-        return false;
-
-    // first sacrifice drop
-    const Move<Parameters> drop1st = g.get_record_action(n - 4u);
-    if (!drop1st.is_drop())
-        return false;
-
-    // capture first sacrifice drop
-    const Move<Parameters> capt1st = g.get_record_action(n - 3u);
-    if (drop1st.destination() != capt1st.destination())
-        return false;
-
-    // second sacrifice drop
-    const Move<Parameters> drop2nd = g.get_record_action(n - 2u);
-    if (!drop2nd.is_drop())
-        return false;
-
-    // capture second sacrifice drop
-    const Move<Parameters> capt2nd = g.get_record_action(n - 1u);
-    return (drop2nd.destination() == capt2nd.destination())
-           && (capt1st.destination() == capt2nd.source_square());
-}
-
-template <class Parameters>
 class Node
 {
 private:
@@ -388,7 +360,7 @@ private:
             assert(!cousin_ge_stand->proved());
             const Node<Parameters>* nibling = cousin_ge_stand->get_child();
             const auto next_child = expand_board_moves_at_defence(&nibling);
-            if (!had_two_consecutive_sacrifice_drops(g)) {
+            if (!g.had_two_consecutive_sacrifice_drops()) {
                 expand_drop_moves_at_defence(next_child, s, nibling);
                 fully_expanded = true;
             }
@@ -396,13 +368,13 @@ private:
             assert(!cousin_le_stand->proved());
             const Node<Parameters>* nibling = cousin_le_stand->get_child();
             const auto next_child = expand_board_moves_at_defence(&nibling);
-            if (!had_two_consecutive_sacrifice_drops(g)) {
+            if (!g.had_two_consecutive_sacrifice_drops()) {
                 expand_drop_moves_at_defence(next_child, s);
                 fully_expanded = true;
             }
         } else {
             const auto next_child = expand_board_moves_at_defence(s);
-            if (!had_two_consecutive_sacrifice_drops(g)) {
+            if (!g.had_two_consecutive_sacrifice_drops()) {
                 expand_drop_moves_at_defence(next_child, s);
                 fully_expanded = true;
             }

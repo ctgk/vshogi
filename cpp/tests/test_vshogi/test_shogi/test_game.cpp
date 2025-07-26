@@ -216,4 +216,68 @@ TEST(test_shogi_game, to_jpn)
     }
 }
 
+TEST(test_shogi_game, had_two_consecutive_sacrifice_drops)
+{
+    {
+        auto g = Game("9/9/6k2/9/9/9/9/9/B8 w 8p");
+        g.apply_dfpn(Move(SQ_8H, FU));
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+        g.apply_dfpn(Move(SQ_8H, SQ_9I));
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+        g.apply_dfpn(Move(SQ_7G, FU));
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+        g.apply_dfpn(Move(SQ_7G, SQ_8H));
+        CHECK_TRUE(g.had_two_consecutive_sacrifice_drops());
+    }
+    {
+        auto g = Game("9/9/6k2/9/9/6N2/1p7/9/B5L2 w 8p");
+        g.apply_dfpn(Move(SQ_8H, SQ_8G));
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+        g.apply_dfpn(Move(SQ_8H, SQ_9I));
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+        g.apply_dfpn(Move(SQ_4D, FU));
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+        g.apply_dfpn(Move(SQ_4D, SQ_3F));
+        // false because 1st sacrifice is not a drop move.
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+    }
+    {
+        auto g = Game("9/9/6k2/9/9/6N2/9/9/B5L2 w 8p");
+        g.apply_dfpn(Move(SQ_8H, FU));
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+        g.apply_dfpn(Move(SQ_4D, SQ_3F));
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+        g.apply_dfpn(Move(SQ_3E, FU));
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+        g.apply_dfpn(Move(SQ_3E, SQ_3F));
+        // false because 1st sacrifice is not captured.
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+    }
+    {
+        auto g = Game("9/9/5pk2/9/9/9/9/9/B8 w 8p");
+        g.apply_dfpn(Move(SQ_8H, FU));
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+        g.apply_dfpn(Move(SQ_8H, SQ_9I));
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+        g.apply_dfpn(Move(SQ_4D, SQ_4C));
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+        g.apply_dfpn(Move(SQ_4D, SQ_8H));
+        // false because 2nd sacrifice is not a drop move.
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+    }
+    {
+        auto g = Game("9/9/6k2/9/9/6N2/9/9/B5L2 w 8p");
+        g.apply_dfpn(Move(SQ_8H, FU));
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+        g.apply_dfpn(Move(SQ_8H, SQ_9I));
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+        g.apply_dfpn(Move(SQ_4D, FU));
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+        g.apply_dfpn(Move(SQ_4D, SQ_3F));
+        // false because different pieces carried out
+        // the 1st ("9i8h") and the 2nd ("3f4d") captures.
+        CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
+    }
+}
+
 } // namespace test_vshogi::test_shogi
