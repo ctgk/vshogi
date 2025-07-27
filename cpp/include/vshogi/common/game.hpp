@@ -451,6 +451,8 @@ protected:
         if (can_declare_win_by_king_enter())
             m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
     }
+
+public:
     bool is_repetitions(const uint max_repetitions_inclusive)
     {
         m_num_fold = 1u;
@@ -492,6 +494,8 @@ protected:
         else
             return count_point_of(turn, piece_mask) >= C::initial_points;
     }
+
+private:
     uint count_point_of(const ColorEnum& c, const BitBoardType& mask) const
     {
         uint out = 0;
