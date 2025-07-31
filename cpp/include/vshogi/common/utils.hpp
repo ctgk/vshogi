@@ -116,51 +116,7 @@ inline void softmax(std::vector<float>& logits)
 template <class T>
 constexpr uint ntz(const T x)
 {
-    // https://stackoverflow.com/questions/45221914/how-do-you-efficiently-count-the-trailing-zero-bits-in-a-number
-
-    const std::uint64_t x64 = static_cast<std::uint64_t>(x);
-    // We return the number of trailing zeros in
-    // the binary representation of x.
-    //
-    // We have that 0 <= x < 2^64.
-    //
-    // We begin by applying a function sensitive only
-    // to the least significant bit (lsb) of x:
-    //
-    //   x -> x^(x-1)  e.g. 0b11001000 -> 0b00001111
-    //
-    // Observe that x^(x-1) == 2^(ntz(x)+1) - 1.
-
-    const std::uint64_t y = x64 ^ (x64 - 1);
-
-    // Next, we multiply by 0x03f79d71b4cb0a89,
-    // and then roll off the first 58 bits.
-
-    constexpr std::uint64_t debruijn = 0x03f79d71b4cb0a89;
-
-    const std::uint8_t z = static_cast<std::uint8_t>((debruijn * y) >> 58);
-
-    // What? Don't look at me like that.
-    //
-    // With 58 bits rolled off, only 6 bits remain,
-    // so we must have one of 0, 1, 2, ..., 63.
-    //
-    // It turns out this number was judiciously
-    // chosen to make it so each of the possible
-    // values for y were mapped into distinct slots.
-    //
-    // So we just use a look-up table of all 64
-    // possible answers, which have been precomputed in
-    // advance by the the sort of people who write
-    // chess engines in their spare time:
-
-    constexpr uint lookup[]
-        = {0,  47, 1,  56, 48, 27, 2,  60, 57, 49, 41, 37, 28, 16, 3,  61,
-           54, 58, 35, 52, 50, 42, 21, 44, 38, 32, 29, 23, 17, 11, 4,  62,
-           46, 55, 26, 59, 40, 36, 15, 53, 34, 51, 20, 43, 31, 22, 10, 45,
-           25, 39, 14, 33, 19, 30, 9,  24, 13, 18, 8,  12, 7,  6,  5,  63};
-
-    return lookup[z];
+    return static_cast<uint>(__builtin_ctzll(static_cast<std::uint64_t>(x)));
 }
 
 #ifdef __SIZEOF_INT128__
