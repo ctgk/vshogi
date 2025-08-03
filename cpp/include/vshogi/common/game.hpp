@@ -188,12 +188,6 @@ public:
         update_result(C::max_acceptable_repetitions);
         return *this;
     }
-    Game& apply_random_playout(const MoveType& move)
-    {
-        add_record_and_update_state(move);
-        update_result(1u);
-        return *this;
-    }
     Game& apply_dfpn(const MoveType& move)
     {
         add_record_and_update_state(move);
