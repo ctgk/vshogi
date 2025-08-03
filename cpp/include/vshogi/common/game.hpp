@@ -112,7 +112,7 @@ public:
         std::vector<MoveType> out{};
         if (m_result != ONGOING)
             return out;
-        for (auto m : CheckBoardMoveGenerator<Parameters>(m_current_state))
+        for (auto m : BoardMoveGenerator<Parameters, true>(m_current_state))
             out.emplace_back(m);
         for (auto m : DropMoveGenerator<Parameters, true>(m_current_state))
             out.emplace_back(m);
@@ -238,7 +238,7 @@ public:
             }
         } else {
             for (auto m :
-                 NonKingBoardMoveGenerator<Parameters>(m_current_state)) {
+                 SoldierMoveGenerator<Parameters, false>(m_current_state)) {
                 if (m == move)
                     return true;
             }

@@ -403,7 +403,7 @@ private:
     void expand_board_moves_at_offence(
         std::unique_ptr<Node<Parameters>>* holder, const State<Parameters>& s)
     {
-        for (MoveType m : CheckBoardMoveGenerator<Parameters>(s)) {
+        for (MoveType m : BoardMoveGenerator<Parameters, true>(s)) {
             *holder = std::make_unique<Node<Parameters>>(!m_offence, m);
             Node<Parameters>* const ch = holder->get();
             if (s.is_declined_promotion(m)) {

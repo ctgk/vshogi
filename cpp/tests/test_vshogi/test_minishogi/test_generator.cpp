@@ -192,24 +192,24 @@ TEST(test_minishogi_generator, drop_move_generator)
     }
 }
 
-TEST(test_minishogi_generator, non_king_board_move_generator)
+TEST(test_minishogi_generator, soldier_move_generator)
 {
     {
         // no piece to move
         const auto s = State("4k/5/5/5/K4 b -");
-        auto iter = vshogi::NonKingBoardMoveGenerator<Parameters>(s);
+        auto iter = vshogi::SoldierMoveGenerator<Parameters, false>(s);
         CHECK_FALSE(iter != iter.end());
     }
     {
         // in double check
         const auto s = State("4k/5/2P2/s4/K3r b -");
-        auto iter = vshogi::NonKingBoardMoveGenerator<Parameters>(s);
+        auto iter = vshogi::SoldierMoveGenerator<Parameters, false>(s);
         CHECK_FALSE(iter != iter.end());
     }
     {
         // in check
         const auto s = State("4k/5/5/3S1/K3r b -");
-        auto iter = vshogi::NonKingBoardMoveGenerator<Parameters>(s);
+        auto iter = vshogi::SoldierMoveGenerator<Parameters, false>(s);
         CHECK_TRUE(Move(SQ_1E, SQ_2D) == *iter);
         ++iter;
         CHECK_TRUE(Move(SQ_3E, SQ_2D) == *iter);
@@ -219,7 +219,7 @@ TEST(test_minishogi_generator, non_king_board_move_generator)
     {
         // in check
         const auto s = State("4k/P2bp/5/G4/K3P b -");
-        auto iter = vshogi::NonKingBoardMoveGenerator<Parameters>(s);
+        auto iter = vshogi::SoldierMoveGenerator<Parameters, false>(s);
         CHECK_TRUE(Move(SQ_4D, SQ_5D) == *iter);
         ++iter;
         CHECK_FALSE(iter != iter.end());
@@ -227,7 +227,7 @@ TEST(test_minishogi_generator, non_king_board_move_generator)
     {
         // pinned
         const auto s = State("+b3k/5/5/3S1/4K b -");
-        auto iter = vshogi::NonKingBoardMoveGenerator<Parameters>(s);
+        auto iter = vshogi::SoldierMoveGenerator<Parameters, false>(s);
         CHECK_TRUE(Move(SQ_3C, SQ_2D) == *iter);
         ++iter;
         CHECK_FALSE(iter != iter.end());
@@ -235,14 +235,14 @@ TEST(test_minishogi_generator, non_king_board_move_generator)
     }
     {
         const auto s = State("4k/5/2P2/5/K4 b -");
-        auto iter = vshogi::NonKingBoardMoveGenerator<Parameters>(s);
+        auto iter = vshogi::SoldierMoveGenerator<Parameters, false>(s);
         CHECK_TRUE(Move(SQ_3B, SQ_3C) == *iter);
         ++iter;
         CHECK_FALSE(iter != iter.end());
     }
     {
         const auto s = State("B3k/1p3/5/5/K4 b -");
-        auto iter = vshogi::NonKingBoardMoveGenerator<Parameters>(s);
+        auto iter = vshogi::SoldierMoveGenerator<Parameters, false>(s);
         CHECK_TRUE(Move(SQ_4B, SQ_5A, false) == *iter);
         ++iter;
         CHECK_TRUE(Move(SQ_4B, SQ_5A, true) == *iter);
@@ -251,7 +251,7 @@ TEST(test_minishogi_generator, non_king_board_move_generator)
     }
     {
         const auto s = State("B3k/1pP2/5/5/K4 b -");
-        auto iter = vshogi::NonKingBoardMoveGenerator<Parameters>(s);
+        auto iter = vshogi::SoldierMoveGenerator<Parameters, false>(s);
         CHECK_TRUE(Move(SQ_3A, SQ_3B, true) == *iter);
         ++iter;
         CHECK_TRUE(Move(SQ_4B, SQ_5A, false) == *iter);
@@ -270,11 +270,73 @@ TEST(test_minishogi_generator, non_king_board_move_generator)
         const auto& b = s.get_board();
         const auto src_mask = b.get_occupied<KA, HI, UM, RY>(vshogi::WHITE);
         CHECK_EQUAL(bb_2e.value(), src_mask.value());
-        auto iter = vshogi::NonKingBoardMoveGenerator<Parameters>(s, src_mask);
+        auto iter
+            = vshogi::SoldierMoveGenerator<Parameters, false>(s, src_mask);
         CHECK_TRUE(Move(SQ_1D, SQ_2E, false) == *iter);
         ++iter;
         CHECK_TRUE(Move(SQ_1D, SQ_2E, true) == *iter);
         ++iter;
+    }
+    {
+        const auto s = State("4k/5/5/5/K4 b -");
+        auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        const auto s = State("4k/5/2P2/5/K4 b -");
+        auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        const auto s = State("2B1k/5/5/5/K4 b -");
+        auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
+        CHECK_TRUE(Move(SQ_2B, SQ_3A, false) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_2B, SQ_3A, true) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        const auto s = State("B4/5/5/4k/K4 b -");
+        auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
+        CHECK_TRUE(Move(SQ_1E, SQ_5A, true) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_2D, SQ_5A, true) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        const auto s = State("B1S1k/5/5/5/K4 b -");
+        auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
+        CHECK_TRUE(Move(SQ_2B, SQ_3A, false) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_2B, SQ_3A, true) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_3C, SQ_5A, false) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_3C, SQ_5A, true) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        auto s = State("3b1/2r1k/3pB/3gR/5 b G");
+        s.apply(Move(SQ_2B, KI)).apply(Move(SQ_2B, SQ_3B));
+        auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
+        // discovered checks
+        CHECK_TRUE(Move(SQ_2B, SQ_1C) == *iter);
+        ++iter;
+        CHECK_TRUE(Move(SQ_2D, SQ_1C) == *iter);
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
+    }
+    {
+        auto s = State("5/4k/3P1/3R+B/K3R b -");
+        auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
+        CHECK_TRUE(Move(SQ_1C, SQ_1D) == *iter); // moved piece check
+        ++iter;
+        CHECK_TRUE(Move(SQ_2E, SQ_1D) == *iter); // discovered check
+        ++iter;
+        CHECK_FALSE(iter != iter.end());
     }
 }
 
@@ -345,71 +407,6 @@ TEST(test_minishogi_generator, block_move_generator)
         ++iter;
         CHECK_FALSE(iter != iter.end());
         CHECK_TRUE(iter.is_end());
-    }
-}
-
-TEST(test_minishogi_generator, soldier_move_generator)
-{
-    {
-        const auto s = State("4k/5/5/5/K4 b -");
-        auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
-        CHECK_FALSE(iter != iter.end());
-    }
-    {
-        const auto s = State("4k/5/2P2/5/K4 b -");
-        auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
-        CHECK_FALSE(iter != iter.end());
-    }
-    {
-        const auto s = State("2B1k/5/5/5/K4 b -");
-        auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
-        CHECK_TRUE(Move(SQ_2B, SQ_3A, false) == *iter);
-        ++iter;
-        CHECK_TRUE(Move(SQ_2B, SQ_3A, true) == *iter);
-        ++iter;
-        CHECK_FALSE(iter != iter.end());
-    }
-    {
-        const auto s = State("B4/5/5/4k/K4 b -");
-        auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
-        CHECK_TRUE(Move(SQ_1E, SQ_5A, true) == *iter);
-        ++iter;
-        CHECK_TRUE(Move(SQ_2D, SQ_5A, true) == *iter);
-        ++iter;
-        CHECK_FALSE(iter != iter.end());
-    }
-    {
-        const auto s = State("B1S1k/5/5/5/K4 b -");
-        auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
-        CHECK_TRUE(Move(SQ_2B, SQ_3A, false) == *iter);
-        ++iter;
-        CHECK_TRUE(Move(SQ_2B, SQ_3A, true) == *iter);
-        ++iter;
-        CHECK_TRUE(Move(SQ_3C, SQ_5A, false) == *iter);
-        ++iter;
-        CHECK_TRUE(Move(SQ_3C, SQ_5A, true) == *iter);
-        ++iter;
-        CHECK_FALSE(iter != iter.end());
-    }
-    {
-        auto s = State("3b1/2r1k/3pB/3gR/5 b G");
-        s.apply(Move(SQ_2B, KI)).apply(Move(SQ_2B, SQ_3B));
-        auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
-        // discovered checks
-        CHECK_TRUE(Move(SQ_2B, SQ_1C) == *iter);
-        ++iter;
-        CHECK_TRUE(Move(SQ_2D, SQ_1C) == *iter);
-        ++iter;
-        CHECK_FALSE(iter != iter.end());
-    }
-    {
-        auto s = State("5/4k/3P1/3R+B/K3R b -");
-        auto iter = vshogi::SoldierMoveGenerator<Parameters, true>(s);
-        CHECK_TRUE(Move(SQ_1C, SQ_1D) == *iter); // moved piece check
-        ++iter;
-        CHECK_TRUE(Move(SQ_2E, SQ_1D) == *iter); // discovered check
-        ++iter;
-        CHECK_FALSE(iter != iter.end());
     }
 }
 

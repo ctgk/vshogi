@@ -227,7 +227,7 @@ private:
     {
         if ((*nibling) == nullptr) {
             if (m_offence)
-                return expand_by_generator<CheckBoardMoveGenerator<P>>(c, s);
+                return expand_by_generator<BoardMoveGenerator<P, true>>(c, s);
             c = expand_by_generator<KingMoveGenerator<P>>(c, s);
             return expand_by_generator<BlockMoveGenerator<P>>(c, s);
         }
