@@ -46,47 +46,4 @@ minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
     }
 }
 
-template <>
-minishogi::Move
-NonKingBoardMoveGenerator<minishogi::Parameters>::random_select()
-{
-    using namespace minishogi;
-    const auto src_fugi = m_board.get_occupied<FU, GI>(m_turn);
-    const auto src_kahi = m_board.get_occupied<KA, HI>(m_turn);
-    const auto src_gold = m_board.get_occupied<KI, TO, NG>(m_turn);
-    const auto src_umry = m_board.get_occupied<UM, RY>(m_turn);
-    auto iter_fugi = NonKingBoardMoveGenerator(m_state, src_fugi, m_pinned);
-    auto iter_kahi = NonKingBoardMoveGenerator(m_state, src_kahi, m_pinned);
-    auto iter_gold
-        = NoPromoMoveGenerator<Parameters>(m_state, src_gold, m_pinned);
-    auto iter_umry
-        = NoPromoMoveGenerator<Parameters>(m_state, src_umry, m_pinned);
-    const auto num_fugi = iter_fugi.is_end()
-                              ? 0.f
-                              : static_cast<float>(src_fugi.hamming_weight());
-    const auto num_kahi = iter_kahi.is_end()
-                              ? 0.f
-                              : static_cast<float>(src_kahi.hamming_weight());
-    const auto num_gold = iter_gold.is_end()
-                              ? 0.f
-                              : static_cast<float>(src_gold.hamming_weight());
-    const auto num_umry = iter_umry.is_end()
-                              ? 0.f
-                              : static_cast<float>(src_umry.hamming_weight());
-    const auto num_src = num_fugi + num_kahi + num_gold + num_umry;
-    float r = dist01(random_engine);
-    const auto fraction_fugi = num_fugi / num_src;
-    if (r < fraction_fugi)
-        return iter_fugi.random_select_by_iterating_all();
-    r -= fraction_fugi;
-    const auto fraction_kahi = num_kahi / num_src;
-    if (r < fraction_kahi)
-        return iter_kahi.random_select_by_iterating_all();
-    r -= fraction_kahi;
-    const auto fraction_gold = num_gold / num_src;
-    if (r < fraction_gold)
-        return iter_gold.random_select();
-    return iter_umry.random_select();
-}
-
 } // namespace vshogi

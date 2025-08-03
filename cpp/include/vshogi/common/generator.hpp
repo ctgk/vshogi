@@ -86,17 +86,6 @@ public:
     {
         return m_iter.is_end();
     }
-    MoveType random_select()
-    {
-        MoveType out = operator*();
-        operator++();
-        for (uint ii = 2u; !is_end(); ++ii, operator++()) {
-            const auto r = dist01(random_engine);
-            if (static_cast<uint>(r * static_cast<float>(ii)) == 0u)
-                out = operator*();
-        }
-        return out;
-    }
 };
 
 template <class Parameters, bool Check = false>
@@ -165,17 +154,6 @@ public:
     {
         return m_sq_iter.is_end() && (m_pt_iter == C::num_stand_piece_types);
     }
-    MoveType random_select()
-    {
-        MoveType out = operator*();
-        operator++();
-        for (uint ii = 2u; !is_end(); ++ii, operator++()) {
-            const auto r = dist01(random_engine);
-            if (static_cast<uint>(r * static_cast<float>(ii)) == 0u)
-                out = operator*();
-        }
-        return out;
-    }
 
 private:
     DropMoveGenerator(const StateType& state, const PieceType pt)
@@ -215,152 +193,6 @@ private:
                && !m_stand.exist(m_pt_iter)) {
             m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
         }
-    }
-};
-
-template <class Parameters>
-class NoPromoMoveGenerator
-{
-private:
-    using C = Configuration<Parameters>;
-    using BitBoardType = BitBoard<Parameters>;
-    using BoardType = Board<Parameters>;
-    using MoveType = Move<Parameters>;
-    using StateType = State<Parameters>;
-    using Square = typename C::Square;
-    using PHelper = Pieces<Parameters>;
-    using SHelper = Squares<Parameters>;
-
-private:
-    const StateType& m_state;
-    const ColorEnum m_turn;
-    const BoardType& m_board;
-    const BitBoardType m_pinned;
-    typename BitBoardType::SquareIterator m_src_iter;
-    typename BitBoardType::SquareIterator m_dst_iter;
-
-public:
-    NoPromoMoveGenerator(const StateType& state)
-        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_pinned(state.find_pinned()), m_src_iter(), m_dst_iter()
-    {
-        if (m_state.in_double_check())
-            return;
-        init_src_iter();
-        while (!m_src_iter.is_end()) {
-            init_dst_iter();
-            if (m_dst_iter.is_end())
-                ++m_src_iter;
-            else
-                break;
-        }
-    }
-    NoPromoMoveGenerator(
-        const StateType& state,
-        const BitBoardType& src_mask,
-        const BitBoardType& pinned)
-        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_pinned(pinned), m_src_iter(), m_dst_iter()
-    {
-        if (m_state.in_double_check())
-            return;
-        init_src_iter(src_mask);
-        while (!m_src_iter.is_end()) {
-            init_dst_iter();
-            if (m_dst_iter.is_end())
-                ++m_src_iter;
-            else
-                break;
-        }
-    }
-    NoPromoMoveGenerator& operator++()
-    {
-        ++m_dst_iter;
-        if (!m_dst_iter.is_end())
-            return *this;
-
-        ++m_src_iter;
-        while (!m_src_iter.is_end()) {
-            init_dst_iter();
-            if (m_dst_iter.is_end())
-                ++m_src_iter;
-            else
-                return *this;
-        }
-        return *this;
-    }
-    MoveType operator*() const
-    {
-        return MoveType(*m_dst_iter, *m_src_iter, false);
-    }
-    NoPromoMoveGenerator begin() const
-    {
-        return *this;
-    }
-    NoPromoMoveGenerator end() const
-    {
-        static const auto end_iter
-            = NoPromoMoveGenerator(m_state, BitBoardType(), BitBoardType());
-        return end_iter;
-    }
-    bool operator!=(const NoPromoMoveGenerator& other) const
-    {
-        return (m_src_iter != other.m_src_iter)
-               || (m_dst_iter != other.m_dst_iter);
-    }
-    bool is_end() const
-    {
-        return m_src_iter.is_end();
-    }
-    MoveType random_select()
-    {
-        return random_select_by_iterating_all();
-    }
-
-private:
-    void init_src_iter()
-    {
-        const auto src_mask = m_board.get_occupied_by_non_promotable(m_turn);
-        m_src_iter = src_mask.square_iterator();
-    }
-    void init_src_iter(const BitBoardType& src_mask)
-    {
-        m_src_iter = src_mask.square_iterator();
-    }
-    void init_dst_iter()
-    {
-        const auto src = *m_src_iter;
-        const auto king_sq = m_board.get_king_location(m_turn);
-        auto movable = m_board.get_attacks_by_nocheck(src);
-        movable &= ~m_board.get_occupied(m_turn);
-        if (!movable.any())
-            goto ExitLabel;
-
-        if (m_state.in_check()) {
-            const auto checker_sq = m_state.get_checker_location();
-            movable &= BitBoardType::get_line_segment(checker_sq, king_sq)
-                           .set(checker_sq);
-            if (!movable.any())
-                goto ExitLabel;
-        }
-        if (m_pinned.is_one(src)) {
-            const auto dir = SHelper::get_direction(src, king_sq);
-            assert((dir < 8) || (dir == DIR_NA));
-            movable &= BitBoardType::get_ray_to(king_sq, dir);
-        }
-    ExitLabel:
-        m_dst_iter = movable.square_iterator();
-    }
-    MoveType random_select_by_iterating_all()
-    {
-        MoveType out = operator*();
-        operator++();
-        for (uint ii = 2u; !is_end(); ++ii, operator++()) {
-            const auto r = dist01(random_engine);
-            if (static_cast<uint>(r * static_cast<float>(ii)) == 0u)
-                out = operator*();
-        }
-        return out;
     }
 };
 
@@ -473,10 +305,6 @@ public:
     {
         return m_src_iter.is_end() && m_dst_iter.is_end();
     }
-    MoveType random_select()
-    {
-        return random_select_by_iterating_all();
-    }
 
 private:
     NonKingBoardMoveGenerator(
@@ -557,17 +385,6 @@ private:
         if (BitBoardType::get_attacks_by(p, *m_dst_iter).any())
             return;
         m_promote = true;
-    }
-    MoveType random_select_by_iterating_all()
-    {
-        MoveType out = operator*();
-        operator++();
-        for (uint ii = 2u; !is_end(); ++ii, operator++()) {
-            const auto r = dist01(random_engine);
-            if (static_cast<uint>(r * static_cast<float>(ii)) == 0u)
-                out = operator*();
-        }
-        return out;
     }
 };
 
