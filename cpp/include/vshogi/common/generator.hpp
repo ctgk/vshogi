@@ -15,6 +15,41 @@
 namespace vshogi
 {
 
+/**
+ * - source
+ * - destination
+ * - promotion
+ * - piece type (optional)
+ *
+ * DropMoveGenerator<Check=false>
+ * for (pt : piece_types)
+ *     for (dst : destinations)
+ *
+ * DropMoveGenerator<Check=true>
+ * for (pt : piece_types)
+ *     for (dst : destinations)
+ *
+ * SoldierMoveGenerator<Check=false>
+ * for (src : sources)
+ *     for (dst : destinations)
+ *         for (prm : promotions)
+ *
+ * SoldierMoveGenerator<Check=true>
+ * for (src : sources)
+ *     for (prm : promotions)
+ *         for (dst : destinations)
+ *
+ * SoldierMoveGenerator<Check=true>
+ * for (pt : piece_types)
+ *     for (src : sources)
+ *         for (dst : destinations)
+ *
+ * SoldierMoveGenerator<Check=true>
+ * for (pt : piece_types)
+ *     for (dst : destinations)
+ *         for (src : sources)  # cannot cope with discovered check
+ */
+
 template <class Parameters, bool Check = false>
 class KingMoveGenerator
 {
@@ -603,6 +638,64 @@ private:
         if (s.in_double_check())
             return BitBoardType();
         return s.get_board().find_cover(s.get_turn());
+    }
+};
+
+template <class P>
+class SoldierMoveGeneratorTSD
+{
+    using C = Configuration<P>;
+    using PieceType = typename C::PieceType;
+    using ColoredPiece = typename C::ColoredPiece;
+    using Square = typename C::Square;
+    using PHelper = Pieces<P>;
+
+private:
+    const ColorEnum m_turn;
+    const Board<P>& m_board;
+    const BitBoard<P> m_pinned;
+    const BitBoard<P> m_cover;
+    PieceType m_piece_type;
+    ColoredPiece m_colored_piece;
+    typename BitBoard<P>::SquareIterator m_src_iter;
+    typename BitBoard<P>::SquareIterator m_dst_iter;
+    BitBoard<P> m_dst_mask;
+
+public:
+    SoldierMoveGeneratorTSD(const State<P>& s)
+        : m_turn(s.get_turn()), m_board(s.get_board()),
+          m_pinned(s.find_pinned()),
+          m_cover(m_board.find_cover(m_turn)), m_piece_type{},
+          m_colored_piece{}, m_src_iter{}, m_dst_iter{}, m_dst_mask{}
+    {
+    }
+
+private:
+    void increment_destination()
+    {
+        ++m_dst_iter;
+        if (!m_dst_iter.is_end())
+            return;
+        increment_source();
+    }
+    void increment_source()
+    {
+        ++m_src_iter;
+        if (!m_src_iter.is_end()) {
+            m_dst_iter
+                = (m_dst_mask & m_board.get_attacks_by_nocheck(*m_src_iter))
+                      .square_iterator();
+            if (!m_dst_iter.is_end())
+                return;
+        }
+        increment_piece_type();
+    }
+    void increment_piece_type()
+    {
+        ++m_piece_type;
+        if (m_piece_type == C::NA)
+            return;
+        // todo
     }
 };
 
