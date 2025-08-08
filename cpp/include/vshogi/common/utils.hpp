@@ -113,12 +113,6 @@ inline void softmax(std::vector<float>& logits)
     }
 }
 
-template <class T>
-constexpr uint ntz(const T x)
-{
-    return static_cast<uint>(__builtin_ctzll(static_cast<std::uint64_t>(x)));
-}
-
 #ifdef __SIZEOF_INT128__
 using uint128 = __uint128_t;
 #else
@@ -246,14 +240,28 @@ private:
 using uint128 = UInt128;
 #endif
 
+template <class T>
+inline uint ntz(const T x);
+
 template <>
-constexpr uint ntz(const uint128 x)
+inline uint ntz(const std::uint32_t x)
+{
+    return static_cast<uint>(__builtin_ctz(x));
+}
+
+template <>
+inline uint ntz(const std::uint64_t x)
+{
+    return static_cast<uint>(__builtin_ctzll(x));
+}
+
+template <>
+inline uint ntz(const uint128 x)
 {
     std::uint64_t x64 = static_cast<std::uint64_t>(x);
     if (static_cast<bool>(x64))
         return ntz(x64);
-    x64 = static_cast<std::uint64_t>(x >> 64);
-    return ntz(x64) + 64u;
+    return ntz(static_cast<std::uint32_t>(x >> 64)) + 64u;
 }
 
 template <class UInt>
