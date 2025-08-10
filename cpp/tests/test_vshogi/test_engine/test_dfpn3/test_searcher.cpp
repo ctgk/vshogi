@@ -19,6 +19,8 @@ TEST_GROUP (dfpn3_table) {
 
 TEST(dfpn3_table, look_up_e)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     auto t = Table();
     auto n = Node();
     auto g = Game();
@@ -30,7 +32,7 @@ TEST(dfpn3_table, look_up_e)
     CHECK_TRUE(&n == node_e);
     CHECK_TRUE(nullptr == node_ge);
 
-    n.expand(g);
+    n.expand(next, g);
 
     t.look_up(g, &node_ge, &node_e, &node_le);
     CHECK_TRUE(&n == node_le);
@@ -40,6 +42,8 @@ TEST(dfpn3_table, look_up_e)
 
 TEST(dfpn3_table, look_up_l)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     auto t = Table();
     auto n = Node();
     auto g = Game("4k/5/4P/5/5 b G");
@@ -51,7 +55,7 @@ TEST(dfpn3_table, look_up_l)
     CHECK_TRUE(nullptr == node_e);
     CHECK_TRUE(nullptr == node_ge);
 
-    n.expand(g);
+    n.expand(next, g);
     t.look_up(Game("4k/5/4P/5/5 b SG"), &node_ge, &node_e, &node_le);
     CHECK_TRUE(&n == node_le);
     CHECK_TRUE(nullptr == node_e);
@@ -60,10 +64,11 @@ TEST(dfpn3_table, look_up_l)
 
 TEST(dfpn3_table, look_up_l_prefer_mate_at_offence)
 {
-
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     auto n1 = Node();
     auto g1 = Game("3rk/3p1/4P/5/5 b G");
-    n1.expand(g1);
+    n1.expand(next, g1);
     n1.backprop(SQ_1A);
     uint th_p_ch, th_d_ch;
     Node* const c1 = n1.select(inf, inf, th_p_ch, th_d_ch);
@@ -77,7 +82,7 @@ TEST(dfpn3_table, look_up_l_prefer_mate_at_offence)
 
     auto n2 = Node();
     auto g2 = Game("3rk/3p1/4P/5/5 b S");
-    n2.expand(g2);
+    n2.expand(next, g2);
     CHECK_TRUE(n2.fully_expanded());
     CHECK_FALSE(n2.proved());
     {
@@ -106,14 +111,17 @@ TEST(dfpn3_table, look_up_l_prefer_mate_at_offence)
 
 TEST(dfpn3_table, look_up_l_prefer_no_mate_at_defence)
 {
-    auto n1 = Node(false, Move());
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
+    auto n1 = Node();
+    n1.init(false, Move());
     auto g1 = Game("4k/4P/5/5/5 w -");
-    n1.expand(g1);
+    n1.expand(next, g1);
     n1.backprop(SQ_1A);
     uint th_p_ch, th_d_ch;
     Node* const c1 = n1.select(inf, inf, th_p_ch, th_d_ch);
     g1.apply_dfpn(c1->get_action());
-    c1->expand(g1);
+    c1->expand(next, g1);
     c1->backprop(SQ_1B);
     CHECK_TRUE(c1->proved_no_mate());
     g1.undo();
@@ -122,9 +130,10 @@ TEST(dfpn3_table, look_up_l_prefer_no_mate_at_defence)
     CHECK_TRUE(n1.proved_no_mate());
     CHECK_FALSE(n1.proved_by_repetitions());
 
-    auto n2 = Node(false, Move());
+    auto n2 = Node();
+    n2.init(false, Move());
     auto g2 = Game("4k/4P/5/5/5 w ps");
-    n2.expand(g2);
+    n2.expand(next, g2);
     CHECK_TRUE(n2.fully_expanded());
     CHECK_FALSE(n2.proved());
 
@@ -152,6 +161,8 @@ TEST(dfpn3_table, look_up_l_prefer_no_mate_at_defence)
 
 TEST(dfpn3_table, look_up_g)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     auto t = Table();
     auto n = Node();
     auto g = Game("4k/5/4P/5/5 b G");
@@ -162,7 +173,7 @@ TEST(dfpn3_table, look_up_g)
     CHECK_TRUE(nullptr == node_le);
     CHECK_TRUE(nullptr == node_e);
     CHECK_TRUE(nullptr == node_ge);
-    n.expand(g);
+    n.expand(next, g);
     t.look_up(Game("4k/5/4P/5/5 b -"), &node_ge, &node_e, &node_le);
     CHECK_TRUE(nullptr == node_le);
     CHECK_TRUE(nullptr == node_e);
@@ -171,14 +182,16 @@ TEST(dfpn3_table, look_up_g)
 
 TEST(dfpn3_table, look_up_g_prefer_no_mate_at_offence)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     auto n1 = Node();
     auto g1 = Game("3rk/3gs/5/5/5 b PSG");
-    n1.expand(g1);
+    n1.expand(next, g1);
     n1.backprop(SQ_1A);
     CHECK_TRUE(n1.proved_no_mate());
     auto n2 = Node();
     auto g2 = Game("3rk/3gs/5/5/5 b PS");
-    n2.expand(g2);
+    n2.expand(next, g2);
     CHECK_TRUE(n2.fully_expanded());
     CHECK_FALSE(n2.proved());
     {
@@ -205,15 +218,19 @@ TEST(dfpn3_table, look_up_g_prefer_no_mate_at_offence)
 
 TEST(dfpn3_table, look_up_g_prefer_mate_at_defence)
 {
-    auto n1 = Node(false, Move());
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
+    auto n1 = Node();
+    n1.init(false, Move());
     auto g1 = Game("4k/4G/4P/5/5 w psg");
-    n1.expand(g1);
+    n1.expand(next, g1);
     n1.backprop(SQ_1A);
     CHECK_TRUE(n1.fully_expanded());
     CHECK_TRUE(n1.proved_mate());
-    auto n2 = Node(false, Move());
+    auto n2 = Node();
+    n2.init(false, Move());
     auto g2 = Game("4k/4G/4P/5/5 w ps");
-    n2.expand(Game("4k/4S/4P/5/5 w ps")); // dummy
+    n2.expand(next, Game("4k/4S/4P/5/5 w ps")); // dummy
     CHECK_TRUE(n2.fully_expanded());
     CHECK_FALSE(n2.proved());
     {
@@ -293,6 +310,17 @@ namespace test_minishogi
 {
 
 using namespace vshogi::minishogi;
+
+TEST(test_dfpn3_searcher, test_small_num_nodes)
+{
+    auto g = Game("4k/5/3P1/5/5 b G");
+    auto searcher = dfpn::Searcher<Parameters>(1u);
+    searcher.set_game(g);
+    searcher.search(100u);
+    CHECK_FALSE(searcher.proved());
+    CHECK_EQUAL(0u, searcher.get_search_count());
+    CHECK_EQUAL(0u, searcher.get_num_nodes_remain());
+}
 
 TEST(test_dfpn3_searcher, test_minishogi_no_mate)
 {
@@ -533,7 +561,7 @@ TEST(test_dfpn3_searcher, test_minishogi_nply_mate)
         // E |   |   |   |-HI|   |
         //   +---+---+---+---+---+
         // Black: KI
-        {"2+B1k/3r1/3Sp/G1K2/3r1 w Gbsp 30", 2349u},
+        {"2+B1k/3r1/3Sp/G1K2/3r1 w Gbsp 30", 2228u},
 
         // Turn: BLACK
         // White: KI
@@ -550,7 +578,7 @@ TEST(test_dfpn3_searcher, test_minishogi_nply_mate)
         // E |+OU|   |   |   |+HI|
         //   +---+---+---+---+---+
         // Black: KA,KI
-        {"4k/r3p/2s2/P+B1S1/K3R b BGg 17", 4441u},
+        {"4k/r3p/2s2/P+B1S1/K3R b BGg 17", 4599u},
     };
 
     for (auto&& arg : args)
@@ -798,7 +826,7 @@ TEST(test_dfpn3_searcher, test_shogi_no_mate)
         // Black: FU,GI,KI
         {"l5g1l/6gk1/1p4np1/3+R1pp1p/2p1p2P1/p4NP1P/1P1S5/PG1SB1+p2/1NK1B2+rL "
          "w GSPsnl3p 134",
-         1514u},
+         1412u},
     };
 
     for (auto&& arg : args)
@@ -922,7 +950,7 @@ TEST(test_dfpn3_searcher, test_shogi_nply_mate)
         // Black: KE
         {"lnsgkgsnl/7b1/p+Pppppppp/9/5B3/5P1P1/P1PPPKP1P/3+rS3L/"
          "+rN4s2 w N2glp 44",
-         988u},
+         486u},
 
         // Turn: WHITE
         // White: FUx4,KE,KIx2
@@ -1007,7 +1035,7 @@ TEST(test_dfpn3_searcher, test_shogi_unnecessary_interposition)
         // I |   |   |   |   |   |   |   |   |   |
         //   +---+---+---+---+---+---+---+---+---+
         // Black: KE
-        {"7bk/8p/9/9/9/9/B8/9/9 b N10p4l3n4s4gb2r", 5915u},
+        {"7bk/8p/9/9/9/9/B8/9/9 b N10p4l3n4s4gb2r", 5596u},
     };
 
     for (auto&& arg : args)

@@ -110,7 +110,8 @@ template <class P>
 class Searcher
 {
 private:
-    Node<P> m_root;
+    std::vector<Node<P>> m_nodes; //!< The first one is the root node.
+    Node<P>* m_next;
     Table<P> m_table;
     std::unique_ptr<Game<P>> m_game;
     uint m_search_count;
@@ -119,24 +120,26 @@ private:
 public:
     void set_game(const Game<P>& g)
     {
-        m_root.init();
+        m_nodes[0].init();
+        m_nodes[m_nodes.size() - 1u].init(false, Move<P>());
+        m_next = std::next(m_nodes.data());
         m_table.clear();
         m_game = std::make_unique<Game<P>>(g);
         Game<P>& game = *m_game;
-        if (!m_root.simulate(game)) {
-            m_root.expand(game);
-            m_table.add(&m_root, game);
-            m_root.backprop(game.get_king_location(~game.get_turn()));
+        if (!m_nodes[0].simulate(game)) {
+            m_nodes[0].expand(m_next, game);
+            m_table.add(&m_nodes[0], game);
+            m_nodes[0].backprop(game.get_king_location(~game.get_turn()));
         }
         m_search_count = 0u;
     }
     Move<P> search(const uint n)
     {
-        if (m_root.proved())
+        if (m_nodes[0].proved())
             return Move<P>();
         Game<P>& g = *m_game;
         m_remaining_searches = n;
-        const auto out = multiple_iterative_deepning(m_root, g, inf, inf);
+        const auto out = multiple_iterative_deepning(m_nodes[0], g, inf, inf);
         m_search_count += n - m_remaining_searches;
         return out;
     }
@@ -157,15 +160,18 @@ private:
         const auto king_sq
             = g.get_king_location(n.offence() ? ~g.get_turn() : g.get_turn());
         if (!n.has_child()) {
-            n.expand(g, twin_ge, twin_le);
+            n.expand(m_next, g, twin_ge, twin_le);
             if (twin_e == nullptr)
                 m_table.add(&n, g);
             --m_remaining_searches;
             n.backprop(king_sq);
         }
+        if (m_next == nullptr)
+            return n.get_action();
         Move<P> out{};
         uint th_p_ch, th_d_ch;
-        while (m_remaining_searches && (n.phi() < th_p) && (n.delta() < th_d)) {
+        while (m_next && m_remaining_searches && (n.phi() < th_p)
+               && (n.delta() < th_d)) {
             Node<P>* const c = n.select(th_p, th_d, th_p_ch, th_d_ch);
             g.apply_dfpn(c->get_action());
             out = multiple_iterative_deepning(*c, g, th_p_ch, th_d_ch);
@@ -176,32 +182,56 @@ private:
     }
 
 public: // utility
-    Searcher()
-        : m_root(), m_table{}, m_game(nullptr), m_search_count(0u),
-          m_remaining_searches(0u)
+    Searcher(const uint num_nodes = 100000u)
+        : m_nodes(num_nodes + 1u), m_next(nullptr), m_table{}, m_game(nullptr),
+          m_search_count(0u), m_remaining_searches(0u)
     {
+    }
+
+    // Rules of 5
+    ~Searcher() = default; // 1/5 destructor
+    Searcher(const Searcher& other) = delete; // 2/5 copy constructor
+    Searcher& operator=(const Searcher& other) = delete; // 3/5 copy assignment
+    Searcher(Searcher&& other) = default; // 4/5 move constructor
+    Searcher& operator=(Searcher&& other) = default; // 5/5 move assignment
+
+    bool is_ready() const
+    {
+        return static_cast<bool>(m_game);
     }
     uint get_search_count() const
     {
         return m_search_count;
     }
+    uint get_num_nodes_remain() const
+    {
+        if (m_next == nullptr)
+            return 0u;
+        return static_cast<uint>(
+            static_cast<int>(m_nodes.size())
+            - static_cast<int>(m_next - m_nodes.data()));
+    }
     bool proved() const
     {
-        return m_root.proved();
+        return m_nodes[0].proved();
     }
     bool proved_mate() const
     {
-        return m_root.proved_mate();
+        return m_nodes[0].proved_mate();
     }
     bool proved_no_mate() const
     {
-        return m_root.proved_no_mate();
+        return m_nodes[0].proved_no_mate();
+    }
+    const Node<P>* get_root() const
+    {
+        return &m_nodes[0];
     }
     Move<P> get_mate_move() const
     {
-        if (!m_root.proved_mate())
+        if (!m_nodes[0].proved_mate())
             return Move<P>();
-        const auto c1 = m_root.get_child_1st();
+        const auto c1 = m_nodes[0].get_child_1st();
         if (c1 == nullptr)
             return Move<P>();
         return c1->get_action();
@@ -209,7 +239,7 @@ public: // utility
     std::vector<Move<P>> get_mate_moves() const
     {
         std::vector<Move<P>> out{};
-        const Node<P>* const c1 = m_root.get_child_1st();
+        const Node<P>* const c1 = m_nodes[0].get_child_1st();
         if (c1 && c1->proved_mate())
             append_mate_moves(out, *m_game, c1);
         return out;

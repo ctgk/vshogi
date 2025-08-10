@@ -64,7 +64,8 @@ TEST(dfpn3_node_simulate, offence_won_at_defence_turn)
 {
     const auto m = Move(SQ_1B, KI);
     auto g = Game("4k/5/4P/5/5 b G").apply(m);
-    auto n = Node(false, m);
+    auto n = Node();
+    n.init(false, m);
     CHECK_TRUE(n.simulate(g));
     CHECK_EQUAL(zero, n.pn());
     CHECK_EQUAL(inf, n.dn());
@@ -95,7 +96,8 @@ TEST(dfpn3_node_simulate, defence_won_at_defence_turn)
         .apply(Move(SQ_1A, SQ_2B))
         .apply(Move(SQ_1B, SQ_2C));
 
-    auto n = Node(false, Move());
+    auto n = Node();
+    n.init(false, Move());
     CHECK_TRUE(n.simulate(g, &n));
     CHECK_EQUAL(inf, n.pn());
     CHECK_EQUAL(zero, n.dn());
@@ -107,7 +109,8 @@ TEST(dfpn3_node_simulate, defence_won_at_defence_turn)
 
 TEST(dfpn3_node_simulate, using_offence_twin_l_mate)
 {
-    auto node_l = Node(true, Move(), zero, inf);
+    auto node_l = Node();
+    node_l.init(true, Move(), zero, inf);
     CHECK_TRUE(node_l.proved_mate());
     auto g = Game();
     auto n = Node();
@@ -122,7 +125,8 @@ TEST(dfpn3_node_simulate, using_offence_twin_l_mate)
 
 TEST(dfpn3_node_simulate, using_offence_twin_l_no_mate)
 {
-    auto node_l = Node(true, Move(), inf, zero);
+    auto node_l = Node();
+    node_l.init(true, Move(), inf, zero);
     CHECK_TRUE(node_l.proved_no_mate());
     auto g = Game();
     auto n = Node();
@@ -135,10 +139,12 @@ TEST(dfpn3_node_simulate, using_offence_twin_l_no_mate)
 
 TEST(dfpn3_node_simulate, using_defence_twin_l_mate)
 {
-    auto node_l = Node(false, Move(), inf, zero);
+    auto node_l = Node();
+    node_l.init(false, Move(), inf, zero);
     CHECK_TRUE(node_l.proved_mate());
     auto g = Game();
-    auto n = Node(false, Move());
+    auto n = Node();
+    n.init(false, Move());
     CHECK_FALSE(n.simulate(g, nullptr, nullptr, &node_l));
     CHECK_FALSE(n.proved());
     CHECK_FALSE(n.proved_mate());
@@ -148,10 +154,12 @@ TEST(dfpn3_node_simulate, using_defence_twin_l_mate)
 
 TEST(dfpn3_node_simulate, using_defence_twin_l_no_mate)
 {
-    auto node_l = Node(false, Move(), zero, inf);
+    auto node_l = Node();
+    node_l.init(false, Move(), zero, inf);
     CHECK_TRUE(node_l.proved_no_mate());
     auto g = Game();
-    auto n = Node(false, Move());
+    auto n = Node();
+    n.init(false, Move());
     CHECK_TRUE(n.simulate(g, nullptr, nullptr, &node_l));
     CHECK_TRUE(n.proved());
     CHECK_FALSE(n.proved_mate());
@@ -161,7 +169,8 @@ TEST(dfpn3_node_simulate, using_defence_twin_l_no_mate)
 
 TEST(dfpn3_node_simulate, using_offence_twin_g_mate)
 {
-    auto twin = Node(true, Move(), zero, inf);
+    auto twin = Node();
+    twin.init(true, Move(), zero, inf);
     CHECK_TRUE(twin.proved_mate());
     auto g = Game();
     auto n = Node();
@@ -174,7 +183,8 @@ TEST(dfpn3_node_simulate, using_offence_twin_g_mate)
 
 TEST(dfpn3_node_simulate, using_offence_twin_g_no_mate)
 {
-    auto twin = Node(true, Move(), inf, zero);
+    auto twin = Node();
+    twin.init(true, Move(), inf, zero);
     CHECK_TRUE(twin.proved_no_mate());
     auto g = Game();
     auto n = Node();
@@ -187,10 +197,12 @@ TEST(dfpn3_node_simulate, using_offence_twin_g_no_mate)
 
 TEST(dfpn3_node_simulate, using_defence_twin_g_mate)
 {
-    auto twin = Node(false, Move(), inf, zero);
+    auto twin = Node();
+    twin.init(false, Move(), inf, zero);
     CHECK_TRUE(twin.proved_mate());
     auto g = Game();
-    auto n = Node(false, Move());
+    auto n = Node();
+    n.init(false, Move());
     CHECK_TRUE(n.simulate(g, nullptr, &twin));
     CHECK_TRUE(n.proved());
     CHECK_TRUE(n.proved_mate());
@@ -200,10 +212,12 @@ TEST(dfpn3_node_simulate, using_defence_twin_g_mate)
 
 TEST(dfpn3_node_simulate, using_defence_twin_g_no_mate)
 {
-    auto twin = Node(false, Move(), zero, inf);
+    auto twin = Node();
+    twin.init(false, Move(), zero, inf);
     CHECK_TRUE(twin.proved_no_mate());
     auto g = Game();
-    auto n = Node(false, Move());
+    auto n = Node();
+    n.init(false, Move());
     CHECK_FALSE(n.simulate(g, nullptr, &twin));
     CHECK_FALSE(n.proved());
     CHECK_FALSE(n.proved_mate());
@@ -216,39 +230,64 @@ TEST_GROUP (dfpn3_node_expand) {
 
 TEST(dfpn3_node_expand, offence_no_twins)
 {
-    auto n = Node();
-    CHECK_FALSE(n.fully_expanded());
-    n.expand(Game("2B1k/5/3P1/3GK/4R b P"));
-    CHECK_TRUE(n.fully_expanded());
-    std::set<uint16_t> moves;
-    for (auto ch = n.get_child(); ch; ch = ch->get_sibling()) {
-        CHECK_FALSE(ch->offence());
-        moves.insert(ch->get_action().hash());
-        if (ch->get_action() == Move(SQ_2B, SQ_3A, false)) {
-            CHECK_EQUAL(kilo, ch->pn());
-            CHECK_EQUAL(cent, ch->dn());
-        } else {
-            CHECK_EQUAL(unit, ch->pn());
-            CHECK_EQUAL(unit, ch->dn());
+    {
+        auto buffer = std::vector<Node>(10);
+        auto next = buffer.data();
+        auto n = Node();
+        CHECK_FALSE(n.fully_expanded());
+        n.expand(next, Game("2B1k/5/3P1/3GK/4R b P"));
+        CHECK_TRUE(n.fully_expanded());
+        std::set<uint16_t> moves;
+        for (auto ch = n.get_child(); ch; ch = ch->get_sibling()) {
+            CHECK_FALSE(ch->offence());
+            moves.insert(ch->get_action().hash());
+            if (ch->get_action() == Move(SQ_2B, SQ_3A, false)) {
+                CHECK_EQUAL(kilo, ch->pn());
+                CHECK_EQUAL(cent, ch->dn());
+            } else {
+                CHECK_EQUAL(unit, ch->pn());
+                CHECK_EQUAL(unit, ch->dn());
+            }
         }
+        CHECK_TRUE(
+            std::set<uint16_t>({
+                Move(SQ_2E, SQ_1D).hash(), // king
+                Move(SQ_2B, SQ_3A, false).hash(), // soldier
+                Move(SQ_2B, SQ_3A, true).hash(), // soldier
+                Move(SQ_1B, FU).hash(), // drop
+            })
+            == moves);
     }
-    CHECK_TRUE(
-        std::set<uint16_t>({
-            Move(SQ_2E, SQ_1D).hash(), // king
-            Move(SQ_2B, SQ_3A, false).hash(), // soldier
-            Move(SQ_2B, SQ_3A, true).hash(), // soldier
-            Move(SQ_1B, FU).hash(), // drop
-        })
-        == moves);
+    {
+        auto buffer = std::vector<Node>(3);
+        buffer[2].init(false, Move());
+        auto next = buffer.data();
+        auto n = Node();
+        CHECK_FALSE(n.fully_expanded());
+        n.expand(next, Game("2B1k/5/3P1/3GK/4R b P"));
+        CHECK_FALSE(n.fully_expanded());
+    }
+    {
+        auto buffer = std::vector<Node>(4);
+        buffer[3].init(false, Move());
+        auto next = buffer.data();
+        auto n = Node();
+        CHECK_FALSE(n.fully_expanded());
+        n.expand(next, Game("2B1k/5/3P1/3GK/4R b P"));
+        CHECK_TRUE(n.fully_expanded());
+        CHECK_TRUE(next == nullptr);
+    }
 }
 
 TEST(dfpn3_node_expand, offence_twin_g)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     auto twin_g = Node();
-    twin_g.expand(Game("2B1k/5/4p/5/5 b RP"));
+    twin_g.expand(next, Game("2B1k/5/4p/5/5 b RP"));
     auto n = Node();
     CHECK_FALSE(n.fully_expanded());
-    n.expand(Game("2B1k/5/4p/5/5 b P"), &twin_g);
+    n.expand(next, Game("2B1k/5/4p/5/5 b P"), &twin_g);
     CHECK_TRUE(n.fully_expanded());
 
     std::set<uint16_t> moves;
@@ -267,11 +306,13 @@ TEST(dfpn3_node_expand, offence_twin_g)
 
 TEST(dfpn3_node_expand, offence_twin_l)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     auto twin_l = Node();
-    twin_l.expand(Game("2B1k/5/4p/5/5 b P"));
+    twin_l.expand(next, Game("2B1k/5/4p/5/5 b P"));
     auto n = Node();
     CHECK_FALSE(n.fully_expanded());
-    n.expand(Game("2B1k/5/4p/5/4R b SP"), nullptr, &twin_l);
+    n.expand(next, Game("2B1k/5/4p/5/4R b SP"), nullptr, &twin_l);
     CHECK_TRUE(n.fully_expanded());
 
     std::set<uint16_t> moves;
@@ -293,9 +334,12 @@ TEST(dfpn3_node_expand, offence_twin_l)
 
 TEST(dfpn3_node_expand, defence_no_twins)
 {
-    auto n = Node(false, Move());
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
+    auto n = Node();
+    n.init(false, Move());
     CHECK_FALSE(n.fully_expanded());
-    n.expand(Game("3gk/5/4R/5/4K w p"));
+    n.expand(next, Game("3gk/5/4R/5/4K w p"));
     CHECK_TRUE(n.fully_expanded());
 
     std::set<uint16_t> moves;
@@ -314,11 +358,15 @@ TEST(dfpn3_node_expand, defence_no_twins)
 
 TEST(dfpn3_node_expand, defence_twin_l)
 {
-    auto twin_l = Node(false, Move());
-    twin_l.expand(Game("3gk/5/4R/5/4K w p"));
-    auto n = Node(false, Move());
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
+    auto twin_l = Node();
+    twin_l.init(false, Move());
+    twin_l.expand(next, Game("3gk/5/4R/5/4K w p"));
+    auto n = Node();
+    n.init(false, Move());
     CHECK_FALSE(n.fully_expanded());
-    n.expand(Game("3gk/5/4R/5/4K w ps"), nullptr, &twin_l);
+    n.expand(next, Game("3gk/5/4R/5/4K w ps"), nullptr, &twin_l);
     CHECK_TRUE(n.fully_expanded());
     std::set<uint16_t> moves;
     for (auto ch = n.get_child(); ch; ch = ch->get_sibling()) {
@@ -337,11 +385,15 @@ TEST(dfpn3_node_expand, defence_twin_l)
 
 TEST(dfpn3_node_expand, defence_twin_g)
 {
-    auto twin_g = Node(false, Move());
-    twin_g.expand(Game("3gk/5/4R/5/4K w ps"));
-    auto n = Node(false, Move());
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
+    auto twin_g = Node();
+    twin_g.init(false, Move());
+    twin_g.expand(next, Game("3gk/5/4R/5/4K w ps"));
+    auto n = Node();
+    n.init(false, Move());
     CHECK_FALSE(n.fully_expanded());
-    n.expand(Game("3gk/5/4R/5/4K w s"), &twin_g);
+    n.expand(next, Game("3gk/5/4R/5/4K w s"), &twin_g);
     CHECK_TRUE(n.fully_expanded());
     std::set<uint16_t> moves;
     for (auto ch = n.get_child(); ch; ch = ch->get_sibling()) {
@@ -359,14 +411,17 @@ TEST(dfpn3_node_expand, defence_twin_g)
 
 TEST(dfpn3_node_expand, defence_partial_expansion)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     auto g = Game("3gk/5/5/5/4R w 2p2s")
                  .apply(Move(SQ_1D, FU))
                  .apply(Move(SQ_1D, SQ_1E))
                  .apply(Move(SQ_1C, FU))
                  .apply(Move(SQ_1C, SQ_1D));
-    auto n = Node(false, Move());
+    auto n = Node();
+    n.init(false, Move());
     CHECK_FALSE(n.fully_expanded());
-    n.expand(g);
+    n.expand(next, g);
     CHECK_FALSE(n.fully_expanded());
     std::set<uint16_t> moves;
     for (auto ch = n.get_child(); ch; ch = ch->get_sibling()) {
@@ -387,9 +442,11 @@ TEST_GROUP (dfpn3_node_backprop) {
 
 TEST(dfpn3_node_backprop, offence_preference)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     auto g = Game("2B1k/5/5/5/5 b P");
     auto n = Node();
-    n.expand(g);
+    n.expand(next, g);
     n.backprop(SQ_1A);
     CHECK_EQUAL(unit, n.pn());
     CHECK_EQUAL(2u * unit + cent, n.dn());
@@ -405,9 +462,11 @@ TEST(dfpn3_node_backprop, offence_preference)
 
 TEST(dfpn3_node_backprop, offence_with_proved_child)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     auto g = Game("3rk/3p1/4P/5/4K b G");
     auto n = Node();
-    n.expand(g);
+    n.expand(next, g);
     n.backprop(SQ_1A);
     CHECK_FALSE(n.proved());
     CHECK_EQUAL(unit, n.pn());
@@ -430,9 +489,12 @@ TEST(dfpn3_node_backprop, offence_with_proved_child)
 
 TEST(dfpn3_node_backprop, defence_preference)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     auto g = Game("s4/RR3/5/5/k4 w p");
-    auto n = Node(false, Move(SQ_5B, HI));
-    n.expand(g);
+    auto n = Node();
+    n.init(false, Move(SQ_5B, HI));
+    n.expand(next, g);
     n.backprop(g.get_king_location());
 
     // Prefer capture move
@@ -445,9 +507,12 @@ TEST(dfpn3_node_backprop, defence_preference)
 
 TEST(dfpn3_node_backprop, defence_with_proved_child)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     auto g = Game("4k/4P/5/5/5 w -");
-    auto n = Node(false, Move());
-    n.expand(g);
+    auto n = Node();
+    n.init(false, Move());
+    n.expand(next, g);
     n.backprop(SQ_1A);
 
     uint th_p_ch, th_d_ch;
@@ -455,7 +520,7 @@ TEST(dfpn3_node_backprop, defence_with_proved_child)
     CHECK_TRUE(ch->offence());
     CHECK_EQUAL(Move(SQ_1B, SQ_1A).hash(), ch->get_action().hash());
     g.apply_dfpn(ch->get_action());
-    ch->expand(g);
+    ch->expand(next, g);
     ch->backprop(SQ_1B);
     CHECK_TRUE(ch->proved_no_mate());
     g.undo();
@@ -466,6 +531,8 @@ TEST(dfpn3_node_backprop, defence_with_proved_child)
 
 TEST(dfpn3_node_backprop, offence_proved_by_repetitions)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     auto g = Game("4k/5/4S/5/5 b -");
     g.apply(Move(SQ_2B, SQ_1C))
         .apply(Move(SQ_1B, SQ_1A))
@@ -480,7 +547,7 @@ TEST(dfpn3_node_backprop, offence_proved_by_repetitions)
         .apply(Move(SQ_1C, SQ_2B))
         .apply(Move(SQ_1A, SQ_1B));
     auto n = Node();
-    n.expand(g);
+    n.expand(next, g);
     n.backprop(SQ_1A);
 
     uint th_p_ch, th_d_ch;
@@ -506,13 +573,16 @@ TEST(dfpn3_node_backprop, offence_proved_by_repetitions)
 
 TEST(dfpn3_node_backprop, defence_proved_by_repetitions)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     auto g = Game("4k/4S/4P/5/5 w -");
     g.apply(Move(SQ_2B, SQ_1A))
         .apply(Move(SQ_2C, SQ_1B))
         .apply(Move(SQ_1A, SQ_2B))
         .apply(Move(SQ_1B, SQ_2C));
-    auto n = Node(false, Move());
-    n.expand(g);
+    auto n = Node();
+    n.init(false, Move());
+    n.expand(next, g);
     n.backprop(SQ_1A);
 
     uint th_p_ch, th_d_ch;
@@ -532,9 +602,11 @@ TEST_GROUP (dfpn3_node_select) {
 
 TEST(dfpn3_node_select, offence_single_child)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     {
         auto n = Node();
-        n.expand(Game("4k/5/4P/5/5 b -"));
+        n.expand(next, Game("4k/5/4P/5/5 b -"));
         n.backprop(SQ_1A);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(inf, inf, th_p_ch, th_d_ch);
@@ -546,7 +618,7 @@ TEST(dfpn3_node_select, offence_single_child)
     }
     {
         auto n = Node();
-        n.expand(Game("4k/5/4P/5/5 b -"));
+        n.expand(next, Game("4k/5/4P/5/5 b -"));
         n.backprop(SQ_1A);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(25, 10, th_p_ch, th_d_ch);
@@ -560,9 +632,11 @@ TEST(dfpn3_node_select, offence_single_child)
 
 TEST(dfpn3_node_select, offence_multiple_child)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     {
         auto n = Node();
-        n.expand(Game("4k/5/5/5/5 b S"));
+        n.expand(next, Game("4k/5/5/5/5 b S"));
         n.backprop(SQ_1A);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(inf, inf, th_p_ch, th_d_ch);
@@ -575,15 +649,18 @@ TEST(dfpn3_node_select, offence_multiple_child)
 
 TEST(dfpn3_node_select, offence_with_disproved_child)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     auto g = Game("4k/5/4G/5/5 b -");
     auto n = Node();
-    n.expand(g);
+    n.expand(next, g);
     n.backprop(SQ_1A);
 
     uint th_p_ch, th_d_ch;
     auto c = n.select(inf, inf, th_p_ch, th_d_ch);
     g.apply_dfpn(c->get_action());
-    auto twin_l = Node(false, Move(), zero, inf);
+    auto twin_l = Node();
+    twin_l.init(false, Move(), zero, inf);
     c->simulate(g, nullptr, nullptr, &twin_l);
     CHECK_TRUE(c->proved_no_mate());
     g.undo();
@@ -596,9 +673,12 @@ TEST(dfpn3_node_select, offence_with_disproved_child)
 
 TEST(dfpn3_node_select, defence_single_child)
 {
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
     {
-        auto n = Node(false, Move());
-        n.expand(Game("4k/4G/5/5/5 w -"));
+        auto n = Node();
+        n.init(false, Move());
+        n.expand(next, Game("4k/4G/5/5/5 w -"));
         n.backprop(SQ_1A);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(inf, inf, th_p_ch, th_d_ch);
@@ -609,8 +689,9 @@ TEST(dfpn3_node_select, defence_single_child)
         CHECK_EQUAL(unit, c->delta());
     }
     {
-        auto n = Node(false, Move());
-        n.expand(Game("4k/4G/5/5/5 w -"));
+        auto n = Node();
+        n.init(false, Move());
+        n.expand(next, Game("4k/4G/5/5/5 w -"));
         n.backprop(SQ_1A);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(25, 10, th_p_ch, th_d_ch);
