@@ -22,5 +22,10 @@ def test_proved_no_mate():
     assert 700 < searcher.get_search_count() < 800
 
 
+def test_error():
+    with pytest.raises(ValueError):
+        DfpnSearcher(max_num_nodes=0)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

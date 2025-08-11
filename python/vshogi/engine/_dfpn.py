@@ -47,9 +47,14 @@ class DfpnSearcher(Engine):
     ['B*2c', '1b2c', '2e2d', '2c1b', '2d2c']
     """
 
-    def __init__(self) -> None:
+    def __init__(self, max_num_nodes: int = 100000) -> None:
         """Initialize DFPN mate-moves searcher object."""
+        if max_num_nodes <= 0:
+            raise ValueError(
+                '`max_num_nodes` should be larger than or equal to 1, '
+                f'but was {max_num_nodes}')
         self._searcher = None
+        self._max_num_nodes = max_num_nodes
 
     def _set_game(self, game: Game):
         try:
@@ -57,7 +62,7 @@ class DfpnSearcher(Engine):
         except:
             return
         if self._searcher is None:
-            self._searcher = cls_()
+            self._searcher = cls_(self._max_num_nodes)
         self._searcher.set_game(game._game)
 
     def _is_ready(self) -> bool:

@@ -7,18 +7,18 @@ from vshogi.engine import DfpnSearcher
 def test_mate():
     sfen_searches_pair_list = [
         # three-move mate
-        ('7p1/5l3/5pk2/6B+r1/5P1P1/6L2/9/9/9 b Rrb4g4s4n3l9p', 4141),
-        ('7bk/8p/9/9/9/9/B8/9/9 b N10p4l3n4s4gb2r', 5357),
+        ('7p1/5l3/5pk2/6B+r1/5P1P1/6L2/9/9/9 b Rrb4g4s4n3l9p', 3246),
+        ('7bk/8p/9/9/9/9/B8/9/9 b N10p4l3n4s4gb2r', 5596),
 
         # five-move mate
-        ('9/9/9/6l1+P/5n3/7ks/6R2/5B1Np/7P1 b R10p4l2n3s4gb', 298),
-        ('9/5+R3/6n2/6k+b1/8+B/5P3/9/9/9 b 2S10p4l3n2s4gr', 555),
-        ('4k4/5s+r2/3R1Ls2/3+B5/9/9/9/9/9 b B10p3l4n2s4g', 949),
-        ('8l/5+R3/4B1sNk/6G1p/9/9/9/9/9 b G10p3l3n3s2gbr', 1093),
-        ('5p+r1S/9/8k/5+B2p/7PN/9/9/9/9 b B10p4l3n3s4gr', 1024),
-        ('6+P2/8k/9/7SB/9/9/9/9/9 b P10p4g2r', 1844),
-        ('5+Pnk1/8P/4p1+rsS/9/9/9/9/9/9 b BGS10p4l3ns3gbr', 2985),
-        ('3R2l2/4r2+B1/5+Bnn1/8k/6G2/8P/7P1/9/9 b 10p3l2n4s4g', 10750),
+        ('9/9/9/6l1+P/5n3/7ks/6R2/5B1Np/7P1 b R10p4l2n3s4gb', 872),
+        ('9/5+R3/6n2/6k+b1/8+B/5P3/9/9/9 b 2S10p4l3n2s4gr', 452),
+        ('4k4/5s+r2/3R1Ls2/3+B5/9/9/9/9/9 b B10p3l4n2s4g', 1235),
+        ('8l/5+R3/4B1sNk/6G1p/9/9/9/9/9 b G10p3l3n3s2gbr', 473),
+        ('5p+r1S/9/8k/5+B2p/7PN/9/9/9/9 b B10p4l3n3s4gr', 348),
+        ('6+P2/8k/9/7SB/9/9/9/9/9 b P10p4g2r', 1860),
+        ('5+Pnk1/8P/4p1+rsS/9/9/9/9/9/9 b BGS10p4l3ns3gbr', 2024),
+        ('3R2l2/4r2+B1/5+Bnn1/8k/6G2/8P/7P1/9/9 b 10p3l2n4s4g', 4718),
     ]
 
     actual_total_searches = 0

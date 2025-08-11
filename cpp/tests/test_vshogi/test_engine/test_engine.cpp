@@ -1,4 +1,4 @@
-#include "vshogi/engine/dfpn/searcher.hpp"
+#include "vshogi/engine/dfpn3/searcher.hpp"
 #include "vshogi/engine/mcts.hpp"
 #include "vshogi/variants/minishogi.hpp"
 #include "vshogi/variants/shogi.hpp"
@@ -59,7 +59,7 @@ TEST(shogi_engine, mcts_with_dfpn)
     auto g = Game();
     auto mcts = vshogi::engine::mcts::Searcher<Parameters>(4.f, 3, 1);
     mcts.set_game(g, 0.f, zeros);
-    auto dfpn = vshogi::engine::dfpn::Searcher<Parameters>();
+    auto dfpn = vshogi::engine::dfpn3::Searcher<Parameters>();
     for (int ii = 0; ii < 167; ++ii) {
         if (g.get_result() != vshogi::ONGOING)
             break;
@@ -67,6 +67,7 @@ TEST(shogi_engine, mcts_with_dfpn)
         {
             dfpn.set_game(g);
             dfpn.search(10000);
+            CHECK_TRUE(dfpn.get_num_nodes_remain() > 0u);
         }
 
         for (int jj = (100 - mcts.get_visit_count()); jj--;) {
@@ -77,6 +78,7 @@ TEST(shogi_engine, mcts_with_dfpn)
 
             dfpn.set_game(g_copy);
             dfpn.search(100);
+            CHECK_TRUE(dfpn.get_num_nodes_remain() > 0u);
             if (dfpn.proved_mate())
                 n->simulate_mate_and_backprop();
             else
