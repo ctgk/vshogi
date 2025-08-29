@@ -71,6 +71,7 @@ def train(
     dataset: NumpyIterable,
     optimizer: th.optim.Optimizer,
     epochs: int,
+    coeff_policy_loss: float = 0.1,
     coeff_entropy_regularization: tp.Optional[float] = None,
     gradient_accumulation_steps: int = 1,
 ) -> None:
@@ -86,7 +87,10 @@ def train(
         Optimizer to update parameters in the model.
     epochs : int
         Number of epochs to train
-    coeff_entropy_regularization : float
+    coeff_policy_loss : float, optional
+        Coefficient of policy loss, by default 0.1.
+        `total_loss = value_loss + coeff_policy_loss * policy_loss`.
+    coeff_entropy_regularization : float, optional
         Coefficient of entropy regularization
     gradient_accumulation_steps : int, optional
         Steps to accumulate gradient computation, by default 1
@@ -99,6 +103,10 @@ def train(
         loss_policy = th.mean(
             w * masked_softmax_cross_entropy(
                 y_policy, p_logits, coeff_entropy_regularization))
+        loss_policy = (
+            coeff_policy_loss * loss_policy
+            + (1 - coeff_policy_loss) * loss_policy.detach()
+        )
         loss_value = th.nn.functional.binary_cross_entropy_with_logits(
             v_logits, y_value, w, reduction='mean')
         loss = loss_policy + loss_value

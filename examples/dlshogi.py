@@ -52,6 +52,7 @@ class Args:
     nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
     nn_grad_accum: int = config(type=int, default=1, help='Gradient accumulation steps. By default 1.')
     nn_learning_rate: float = config(type=float, default=1e-2, help='Learning rate of NN weight update')
+    nn_coeff_policy_loss: float = config(type=float, default=0.1, help='Coefficient of policy loss, by default 0.1')
     nn_entropy_regularization: float = config(type=float, default=1e-2)
     nn_load_previous_weights: int = config(type=int, default=1, help='Load previous weights if 1, else train network from scratch. By default 0.')
     nn_train_device: str = config(type=str, default='cpu', choices=['cpu', 'gpu', 'mps'])
@@ -463,6 +464,7 @@ def run_train(args: Args):
             dataset,
             optimizer,
             args.nn_epochs,
+            args.nn_coeff_policy_loss,
             args.nn_entropy_regularization,
             args.nn_grad_accum,
         )
