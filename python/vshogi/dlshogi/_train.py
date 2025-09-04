@@ -98,17 +98,26 @@ def train(
     model.train()
     device = next(model.parameters()).device
 
+    def scale_grad(x: th.Tensor, s):
+        return x * s + (1 - s) * x.detach()
+
     def compute_losses_and_backward(x, y_policy, y_value, w):
         p_logits, v_logits = model(x)
-        loss_policy = th.mean(
-            w * masked_softmax_cross_entropy(
-                y_policy, p_logits, coeff_entropy_regularization))
-        loss_policy = (
-            coeff_policy_loss * loss_policy
-            + (1 - coeff_policy_loss) * loss_policy.detach()
+        loss_policy_each = scale_grad(
+            masked_softmax_cross_entropy(
+                y_policy, p_logits, coeff_entropy_regularization,
+            ),
+            w,
         )
-        loss_value = th.nn.functional.binary_cross_entropy_with_logits(
-            v_logits, y_value, w, reduction='mean')
+        loss_value_each = scale_grad(
+            th.nn.functional.binary_cross_entropy_with_logits(
+                v_logits, y_value,
+            ),
+            w,
+        )
+
+        loss_policy = scale_grad(th.mean(loss_policy_each), coeff_policy_loss)
+        loss_value = th.mean(loss_value_each)
         loss = loss_policy + loss_value
         loss.backward()
 
