@@ -246,12 +246,23 @@ class Mcts(Engine):
         self,
         depth: int = 1,
         breadth: int = 3,
+        pv_line: tp.List[Move] = [],
         *,
         sort_key: callable = lambda n: -n.get_visit_count(),
         greedy_depth: int = 0,
     ) -> str:
+        node = self._searcher.get_root()
+        if node is None:
+            return None
+        for m in pv_line:
+            for a in node.get_actions():
+                if a == m:
+                    node = node.get_child(a)
+                    break
+            else:
+                raise ValueError(f'Cannot find child with action, {m}')
         return _tree(
-            self._searcher.get_root(),
+            node,
             depth,
             breadth,
             sort_key=sort_key,

@@ -69,7 +69,7 @@ class Args:
     )
     mcts_temperature: float = config(type=float, default=1., help='Temperature parameter when selecting action by random.')
     mcts_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in MCTS, default=4.')
-    mcts_q_greedy_depth: int = config(type=int, default=1, help='Number of depth to select node greedily when computing Q-value of a node, by default=1')
+    mcts_q_greedy_depth: int = config(type=int, default=3, help='Number of depth to select node greedily when computing Q-value of a node, by default=3')
     dfpn_search_root: int = config(type=int, default=10000, help='Number of DFPN searches at root node of MCTS tree. By default 10000.')
     dfpn_search_leaf: int = config(type=int, default=100, help='Number of DFPN searches at leaf node of MCTS tree. By default 100.')
     self_play: int = config(type=int, default=200, help='# of self-play in one RL cycle, default=200')
