@@ -515,7 +515,18 @@ def run_rl_cycle(args: Args):
             pbar = tqdm(range(args.validations), ncols=100)
             for n in pbar:
                 if n % 2 == 0:
-                    result = play_game_and_dump_record(player, player_prev, args, None, None)
+                    result = vshogi.play_game(
+                        args._shogi.Game(),
+                        player,
+                        player_prev,
+                        search_args={
+                            'dfpn_search_root': args.dfpn_search_root,
+                            'mcts_search': args.mcts_search,
+                            'dfpn_search_leaf': args.dfpn_search_leaf,
+                            'kldgain_threshold': args.mcts_kldgain_threshold,
+                        },
+                        select_args={'temperature': None},
+                    ).result
                     validation_results[{
                         vshogi.BLACK_WIN: 'win',
                         vshogi.WHITE_WIN: 'loss',
@@ -523,7 +534,18 @@ def run_rl_cycle(args: Args):
                         vshogi.ONGOING: 'draw',
                     }[result]] += 1
                 else:
-                    result = play_game_and_dump_record(player_prev, player, args, None, None)
+                    result = vshogi.play_game(
+                        args._shogi.Game(),
+                        player_prev,
+                        player,
+                        search_args={
+                            'dfpn_search_root': args.dfpn_search_root,
+                            'mcts_search': args.mcts_search,
+                            'dfpn_search_leaf': args.dfpn_search_leaf,
+                            'kldgain_threshold': args.mcts_kldgain_threshold,
+                        },
+                        select_args={'temperature': None},
+                    ).result
                     validation_results[{
                         vshogi.BLACK_WIN: 'loss',
                         vshogi.WHITE_WIN: 'win',
@@ -561,21 +583,43 @@ def run_rl_cycle(args: Args):
             if (point_of_current(results) >= win_threshold) or (point_of_best(results) > loss_threshold):
                 break
             if n % 2 == 0:
-                game = play_game(player_curr, player_best, args)
+                result = vshogi.play_game(
+                    args._shogi.Game(),
+                    player_curr,
+                    player_best,
+                    search_args={
+                        'dfpn_search_root': args.dfpn_search_root,
+                        'mcts_search': args.mcts_search,
+                        'dfpn_search_leaf': args.dfpn_search_leaf,
+                        'kldgain_threshold': args.mcts_kldgain_threshold,
+                    },
+                    select_args={'temperature': None},
+                ).result
                 results[{
                     vshogi.BLACK_WIN: 'win',
                     vshogi.WHITE_WIN: 'loss',
                     vshogi.DRAW: 'draw_b',
                     vshogi.ONGOING: 'draw_b',
-                }[game.result]] += 1
+                }[result]] += 1
             else:
-                game = play_game(player_best, player_curr, args)
+                result = vshogi.play_game(
+                    args._shogi.Game(),
+                    player_best,
+                    player_curr,
+                    search_args={
+                        'dfpn_search_root': args.dfpn_search_root,
+                        'mcts_search': args.mcts_search,
+                        'dfpn_search_leaf': args.dfpn_search_leaf,
+                        'kldgain_threshold': args.mcts_kldgain_threshold,
+                    },
+                    select_args={'temperature': None},
+                ).result
                 results[{
                     vshogi.BLACK_WIN: 'loss',
                     vshogi.WHITE_WIN: 'win',
                     vshogi.DRAW: 'draw_w',
                     vshogi.ONGOING: 'draw_w',
-                }[game.result]] += 1
+                }[result]] += 1
             pbar.set_description(f'{current} vs {best}: {results}')
         return current if point_of_current(results) >= win_threshold else best
 
