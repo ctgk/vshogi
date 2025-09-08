@@ -85,7 +85,7 @@ def _get_results_of_single_pair(
     mcts_init_args: dict,
     search_args: dict,
     select_args: dict,
-) -> dict:
+) -> vshogi.Record:
     shogi = getattr(vshogi, shogi_variant)
     player1 = vshogi.engine.DfpnMcts(
         vshogi.engine.DfpnSearcher(),
@@ -101,14 +101,7 @@ def _get_results_of_single_pair(
             **mcts_init_args,
         ),
     )
-    results_of_p1 = {
-        'bwin': 0,
-        'bdraw': 0,
-        'bloss': 0,
-        'wwin': 0,
-        'wdraw': 0,
-        'wloss': 0,
-    }
+    record_of_p1 = vshogi.Record(0, 0, 0, 0, 0, 0)
     iterator = range(num_games_each * 2)
     show_mcts_search: bool = isinstance(search_args['mcts_search'], float)
     p1_search_total = 0
@@ -131,12 +124,7 @@ def _get_results_of_single_pair(
                 p2_search_total += np.nanmean(np.asarray(out[1][1::2], float))
             else:
                 result = out.result
-            if result == vshogi.BLACK_WIN:
-                results_of_p1['bwin'] += 1
-            elif result == vshogi.WHITE_WIN:
-                results_of_p1['bloss'] += 1
-            else:
-                results_of_p1['bdraw'] += 1
+            record_of_p1 += vshogi.Record.from_black_result(result)
         else:
             out = vshogi.play_game(
                 shogi.Game(), player2, player1,
@@ -151,17 +139,12 @@ def _get_results_of_single_pair(
                 p1_search_total += np.nanmean(np.asarray(out[1][1::2], float))
             else:
                 result = out.result
-            if result == vshogi.BLACK_WIN:
-                results_of_p1['wloss'] += 1
-            elif result == vshogi.WHITE_WIN:
-                results_of_p1['wwin'] += 1
-            else:
-                results_of_p1['wdraw'] += 1
+            record_of_p1 += vshogi.Record.from_white_result(result)
         if args.show_pbar:
             iterator.set_description(str({
-                'p1': results_of_p1['bwin'] + results_of_p1['wwin'],
-                'draw': results_of_p1['bdraw'] + results_of_p1['wdraw'],
-                'p2': results_of_p1['bloss'] + results_of_p1['wloss'],
+                'p1': record_of_p1.wins_total,
+                'draw': record_of_p1.draws_total,
+                'p2': record_of_p1.losses_total,
             }))
     if args.show_pbar and show_mcts_search:
         print(
@@ -169,41 +152,41 @@ def _get_results_of_single_pair(
             f'p1={p1_search_total / (num_games_each * 2):.2f},',
             f'p2={p2_search_total / (num_games_each * 2):.2f}',
         )
-    return results_of_p1
+    return record_of_p1
 
 
-def _print_results(results: dict):
+def _print_results(record: vshogi.Record):
     print(MESSAGE_TEMPLATE.format(
-        results['bwin'] + results['wwin'],
-        results['bwin'],
-        results['wwin'],
-        results['bdraw'] + results['wdraw'],
-        results['bdraw'],
-        results['wdraw'],
-        results['bloss'] + results['wloss'],
-        results['bloss'],
-        results['wloss'],
-        results['bloss'] + results['wloss'],
-        results['wloss'],
-        results['bloss'],
-        results['bdraw'] + results['wdraw'],
-        results['wdraw'],
-        results['bdraw'],
-        results['bwin'] + results['wwin'],
-        results['wwin'],
-        results['bwin'],
+        record.wins_total,
+        record.wins_black,
+        record.wins_white,
+        record.draws_total,
+        record.draws_black,
+        record.draws_white,
+        record.losses_total,
+        record.losses_black,
+        record.losses_white,
+        record.losses_total,
+        record.losses_black,
+        record.losses_white,
+        record.draws_total,
+        record.draws_black,
+        record.draws_white,
+        record.wins_total,
+        record.wins_black,
+        record.wins_white,
     ))
 
 
 if __name__ == "__main__":
     args = Args.from_args()
 
-    results_of_p1_accumulated = {}
+    record_of_p1_group = vshogi.Record(0, 0, 0, 0, 0, 0)
     for p1, p2 in itertools.product(args.player1, args.player2):
         if args.show_pbar:
             print(f'player1: {p1}')
             print(f'player2: {p2}')
-        results_of_p1 = _get_results_of_single_pair(
+        record_of_p1 = _get_results_of_single_pair(
             args.shogi_variant,
             p1, p2, args.num_games_each, args.show_pbar,
             mcts_init_args = {
@@ -221,16 +204,12 @@ if __name__ == "__main__":
                 'temperature': args.mcts_temperature,
             },
         )
-        for key, value in results_of_p1.items():
-            if key not in results_of_p1_accumulated:
-                results_of_p1_accumulated[key] = value
-            else:
-                results_of_p1_accumulated[key] += value
+        record_of_p1_group += record_of_p1
 
         if args.show_pbar:
-            _print_results(results_of_p1)
+            _print_results(record_of_p1)
 
     if (not args.show_pbar) or (len(args.player1) > 1) or (len(args.player2) > 1):
         print(f'player1: {args.player1}')
         print(f'player2: {args.player2}')
-        _print_results(results_of_p1_accumulated)
+        _print_results(record_of_p1_group)
