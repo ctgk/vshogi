@@ -535,7 +535,7 @@ def run_rl_cycle(args: Args):
                         select_args={'temperature': None},
                     ).result
                     record += vshogi.Record.from_white_result(result)
-                pbar.set_description(f'{player.name} vs {p_prev.name}: {record.wins_total}W-{record.draws_total}D-{record.losses_total}L')
+                pbar.set_description(f'{player.name} vs {p_prev.name}: {record.wdl()}')
             validation_result_list.append(record)
         win_point_list = [r.wins_total - r.losses_total for r in validation_result_list]
         indices_for_sort = np.argsort(win_point_list)
@@ -593,7 +593,7 @@ def run_rl_cycle(args: Args):
                     select_args={'temperature': None},
                 ).result
                 record += vshogi.Record.from_white_result(result)
-            pbar.set_description(f'{current} vs {best}: {record.wins_total}W-{record.draws_total}D-{record.losses_total}L')
+            pbar.set_description(f'{current} vs {best}: {record.wdl()}')
         return current if point_of_current(record) >= win_threshold else best
 
     def keep_only_end_games_in_previous_tfrecord(index: int, args: Args):

@@ -125,6 +125,16 @@ class Record:
             return Record(0, 0, 0, 1, 0, 0)
         return Record(0, 0, 0, 0, 0, 0)
 
+    def wdl(self) -> str:
+        """Return Wins-Draws-Losses representation of the record.
+
+        Returns
+        -------
+        str
+            Wins-Draws-Losses representation of the record.
+        """
+        return f'{self.wins_total}W-{self.draws_total}D-{self.losses_total}L'
+
 
 if __name__ == '__main__':
     r1 = Record(1, 0, 0, 0, 0, 1)
