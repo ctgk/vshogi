@@ -11,6 +11,16 @@ Move = tp.TypeVar('Move')
 class Engine(abc.ABC):
     """Base Shogi engine class."""
 
+    def __init__(self, name: tp.Optional[str] = None):
+        """Initialize engine.
+
+        Parameters
+        ----------
+        name : tp.Optional[str], optional
+            Name of the engine, by default None
+        """
+        self._name = name
+
     def set_game(self, game: Game) -> None:
         """Set game to run engine on.
 
@@ -50,6 +60,17 @@ class Engine(abc.ABC):
             Selected action
         """
         pass
+
+    @property
+    def name(self) -> tp.Union[str, None]:
+        """Return name of the engine.
+
+        Returns
+        -------
+        tp.Union[str, None]
+            Name of the engine.
+        """
+        return self._name
 
     @property
     def num_searched(self) -> int:

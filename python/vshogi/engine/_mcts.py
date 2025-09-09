@@ -59,6 +59,7 @@ class Mcts(Engine):
         coeff_puct: float = 1.,
         non_random_ratio: int = 3,
         random_depth: int = 1,
+        name: tp.Optional[str] = None,
     ) -> None:
         """Initialize MCT searcher.
 
@@ -75,7 +76,10 @@ class Mcts(Engine):
         random_depth : int, optional
             Default depth of explorations to select action in a random manner,
             by default 1.
+        name : tp.Optional[str], optional
+            Name of the engine, by default None
         """
+        super().__init__(name=name)
         self._policy_value_func = policy_value_func
         self._searcher = None
 

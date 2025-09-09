@@ -198,22 +198,15 @@ def play_game(
     return game
 
 
-def load_player_of(index_path_or_network) -> vshogi.engine.DfpnMcts:
-    if isinstance(index_path_or_network, int):
-        i = index_path_or_network
-        mcts = vshogi.engine.Mcts(
-            (
-                vshogi.dlshogi.PolicyValueFunction(f'models/model_{i:04d}.tflite')
-                if i != 0 else lambda g: (np.zeros(g.num_dlshogi_policy, dtype=np.float32), vshogi.engine.piece_value_func(g))
-            ),
-            coeff_puct=args.mcts_coeff_puct,
-        )
-    else:
-        mcts = vshogi.engine.Mcts(
-            vshogi.dlshogi.PolicyValueFunction(index_path_or_network),
-            coeff_puct=args.mcts_coeff_puct,
-        )
-    return vshogi.engine.DfpnMcts(vshogi.engine.DfpnSearcher(), mcts)
+def load_player_of(index: int) -> vshogi.engine.DfpnMcts:
+    mcts = vshogi.engine.Mcts(
+        (
+            vshogi.dlshogi.PolicyValueFunction(f'models/model_{index:04d}.tflite')
+            if index != 0 else lambda g: (np.zeros(g.num_dlshogi_policy, dtype=np.float32), vshogi.engine.piece_value_func(g))
+        ),
+        coeff_puct=args.mcts_coeff_puct,
+    )
+    return vshogi.engine.DfpnMcts(vshogi.engine.DfpnSearcher(), mcts, name=str(index))
 
 
 def play_game_and_dump_record(
@@ -508,17 +501,17 @@ def run_rl_cycle(args: Args):
             p = p / np.sum(p)
             indices_prev = np.random.choice(indices_prev, size=n, replace=False, p=p)
             indices_prev = np.sort(indices_prev)[::-1]
+        players_prev = [load_player_of(int(i)) for i in indices_prev]
         validation_result_list = []
-        for i_prev in indices_prev:
-            player_prev = load_player_of(int(i_prev))
-            validation_results = {'win': 0, 'loss': 0, 'draw': 0}
+        for p_prev in players_prev:
+            record = vshogi.Record(0, 0, 0, 0, 0, 0)
             pbar = tqdm(range(args.validations), ncols=100)
             for n in pbar:
                 if n % 2 == 0:
                     result = vshogi.play_game(
                         args._shogi.Game(),
                         player,
-                        player_prev,
+                        p_prev,
                         search_args={
                             'dfpn_search_root': args.dfpn_search_root,
                             'mcts_search': args.mcts_search,
@@ -527,16 +520,11 @@ def run_rl_cycle(args: Args):
                         },
                         select_args={'temperature': None},
                     ).result
-                    validation_results[{
-                        vshogi.BLACK_WIN: 'win',
-                        vshogi.WHITE_WIN: 'loss',
-                        vshogi.DRAW: 'draw',
-                        vshogi.ONGOING: 'draw',
-                    }[result]] += 1
+                    record += vshogi.Record.from_black_result(result)
                 else:
                     result = vshogi.play_game(
                         args._shogi.Game(),
-                        player_prev,
+                        p_prev,
                         player,
                         search_args={
                             'dfpn_search_root': args.dfpn_search_root,
@@ -546,15 +534,10 @@ def run_rl_cycle(args: Args):
                         },
                         select_args={'temperature': None},
                     ).result
-                    validation_results[{
-                        vshogi.BLACK_WIN: 'loss',
-                        vshogi.WHITE_WIN: 'win',
-                        vshogi.DRAW: 'draw',
-                        vshogi.ONGOING: 'draw',
-                    }[result]] += 1
-                pbar.set_description(f'{index} vs {i_prev}: {validation_results}')
-            validation_result_list.append(validation_results)
-        win_point_list = [r['win'] - r['loss'] for r in validation_result_list]
+                    record += vshogi.Record.from_white_result(result)
+                pbar.set_description(f'{player.name} vs {p_prev.name}: {record.wins_total}W-{record.draws_total}D-{record.losses_total}L')
+            validation_result_list.append(record)
+        win_point_list = [r.wins_total - r.losses_total for r in validation_result_list]
         indices_for_sort = np.argsort(win_point_list)
         indices_prev = np.asarray(indices_prev)[indices_for_sort]
         win_point_list = np.asarray(win_point_list)[indices_for_sort]
@@ -565,14 +548,14 @@ def run_rl_cycle(args: Args):
         )
 
     def get_best_player_index(current: int, best: int):
-        results = {'win': 0, 'loss': 0, 'draw_b': 0, 'draw_w': 0}
 
-        def point_of_current(r):
-            return r['win'] + 0.4 * r['draw_b'] + 0.6 * r['draw_w']
+        def point_of_current(r: vshogi.Record):
+            return r.wins_total + 0.4 * r.draws_black + 0.6 * r.draws_white
 
-        def point_of_best(r):
-            return r['loss'] + 0.4 * r['draw_w'] + 0.6 * r['draw_b']
+        def point_of_best(r: vshogi.Record):
+            return r.losses_total + 0.4 * r.draws_white + 0.6 * r.draws_black
 
+        record = vshogi.Record(0, 0, 0, 0, 0, 0)
         player_curr = load_player_of(current)
         player_best = load_player_of(best)
         num_play = 40
@@ -580,7 +563,7 @@ def run_rl_cycle(args: Args):
         loss_threshold = num_play * (1 - args.win_ratio_threshold)
         pbar = tqdm(range(num_play), ncols=100)
         for n in pbar:
-            if (point_of_current(results) >= win_threshold) or (point_of_best(results) > loss_threshold):
+            if (point_of_current(record) >= win_threshold) or (point_of_best(record) > loss_threshold):
                 break
             if n % 2 == 0:
                 result = vshogi.play_game(
@@ -595,12 +578,7 @@ def run_rl_cycle(args: Args):
                     },
                     select_args={'temperature': None},
                 ).result
-                results[{
-                    vshogi.BLACK_WIN: 'win',
-                    vshogi.WHITE_WIN: 'loss',
-                    vshogi.DRAW: 'draw_b',
-                    vshogi.ONGOING: 'draw_b',
-                }[result]] += 1
+                record += vshogi.Record.from_black_result(result)
             else:
                 result = vshogi.play_game(
                     args._shogi.Game(),
@@ -614,14 +592,9 @@ def run_rl_cycle(args: Args):
                     },
                     select_args={'temperature': None},
                 ).result
-                results[{
-                    vshogi.BLACK_WIN: 'loss',
-                    vshogi.WHITE_WIN: 'win',
-                    vshogi.DRAW: 'draw_w',
-                    vshogi.ONGOING: 'draw_w',
-                }[result]] += 1
-            pbar.set_description(f'{current} vs {best}: {results}')
-        return current if point_of_current(results) >= win_threshold else best
+                record += vshogi.Record.from_white_result(result)
+            pbar.set_description(f'{current} vs {best}: {record.wins_total}W-{record.draws_total}D-{record.losses_total}L')
+        return current if point_of_current(record) >= win_threshold else best
 
     def keep_only_end_games_in_previous_tfrecord(index: int, args: Args):
         for i, f in zip(range(index, 0, -1), (args.nn_train_fraction ** i for i in range(index))):

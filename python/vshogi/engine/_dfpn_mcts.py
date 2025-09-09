@@ -18,6 +18,7 @@ class DfpnMcts(Engine):
         self,
         dfpn: DfpnSearcher,
         mcts: Mcts,
+        name: tp.Optional[str] = None,
     ) -> None:
         """Initialize DFPN+MCTS search engine.
 
@@ -27,9 +28,10 @@ class DfpnMcts(Engine):
             Searcher based on DFPN algorithm.
         mcts : Mcts
             Monte-Carlo tree searcher.
-        mcts_endgame : tp.Optional[Mcts]
-            Monte-Carlo tree searcher for end-game, by default None.
+        name : tp.Optional[str], optional
+            Name of the engine, by default None
         """
+        super().__init__(name=name)
         self._dfpn = dfpn
         self._mcts = mcts
         self._proved_mate: bool = False

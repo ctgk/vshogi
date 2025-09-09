@@ -47,8 +47,21 @@ class DfpnSearcher(Engine):
     ['B*2c', '1b2c', '2e2d', '2c1b', '2d2c']
     """
 
-    def __init__(self, max_num_nodes: int = 100000) -> None:
-        """Initialize DFPN mate-moves searcher object."""
+    def __init__(
+        self,
+        max_num_nodes: int = 100000,
+        name: tp.Optional[str] = None,
+    ) -> None:
+        """Initialize DFPN mate-moves searcher object.
+
+        Parameters
+        ----------
+        max_num_nodes : int
+            Maximum number of nodes to search, by default 100000
+        name : tp.Optional[str], optional
+            Name of the engine, by default None
+        """
+        super().__init__(name=name)
         if max_num_nodes <= 0:
             raise ValueError(
                 '`max_num_nodes` should be larger than or equal to 1, '
