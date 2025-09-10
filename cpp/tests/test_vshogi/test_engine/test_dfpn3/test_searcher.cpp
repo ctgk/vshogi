@@ -311,6 +311,17 @@ namespace test_minishogi
 
 using namespace vshogi::minishogi;
 
+TEST(test_dfpn3_searcher, test_init)
+{
+    auto g = Game("4k/5/3P1/5/5 b G");
+    auto searcher = dfpn::Searcher<Parameters>();
+    searcher.set_game(g);
+    searcher.search(1000u);
+    CHECK_TRUE(searcher.proved());
+    searcher.init();
+    CHECK_FALSE(searcher.proved());
+}
+
 TEST(test_dfpn3_searcher, test_small_num_nodes)
 {
     auto g = Game("4k/5/3P1/5/5 b G");

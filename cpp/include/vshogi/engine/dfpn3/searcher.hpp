@@ -120,10 +120,7 @@ private:
 public:
     void set_game(const Game<P>& g)
     {
-        m_nodes[0].init();
-        m_nodes[m_nodes.size() - 1u].init(false, Move<P>());
-        m_next = std::next(m_nodes.data());
-        m_table.clear();
+        init();
         m_game = std::make_unique<Game<P>>(g);
         Game<P>& game = *m_game;
         if (!m_nodes[0].simulate(game)) {
@@ -131,7 +128,6 @@ public:
             m_table.add(&m_nodes[0], game);
             m_nodes[0].backprop(game.get_king_location(~game.get_turn()));
         }
-        m_search_count = 0u;
     }
     Move<P> search(const uint n)
     {
@@ -195,6 +191,15 @@ public: // utility
     Searcher(Searcher&& other) = default; // 4/5 move constructor
     Searcher& operator=(Searcher&& other) = default; // 5/5 move assignment
 
+    void init()
+    {
+        m_nodes[0].init();
+        m_nodes[m_nodes.size() - 1u].init(false, Move<P>());
+        m_next = std::next(m_nodes.data());
+        m_table.clear();
+        m_game.reset();
+        m_search_count = 0u;
+    }
     bool is_ready() const
     {
         return static_cast<bool>(m_game);
