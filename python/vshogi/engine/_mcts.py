@@ -3,6 +3,7 @@ import typing as tp
 import numpy as np
 
 from vshogi._game import Game
+from vshogi.engine._dfpn import DfpnSearcher
 from vshogi.engine._engine import Engine
 
 
@@ -59,6 +60,9 @@ class Mcts(Engine):
         coeff_puct: float = 1.,
         non_random_ratio: int = 3,
         random_depth: int = 1,
+        kldgain_threshold: tp.Optional[float] = None,
+        dfpn_search_root: int = 0,
+        dfpn_search_leaf: int = 0,
         name: tp.Optional[str] = None,
     ) -> None:
         """Initialize MCT searcher.
@@ -76,29 +80,58 @@ class Mcts(Engine):
         random_depth : int, optional
             Default depth of explorations to select action in a random manner,
             by default 1.
+        kldgain_threshold : float, optional
+            KL divergence threshold to stop MCTS, by default None.
+        dfpn_search_root : int, optional
+            Number of searches by DFPN at root node, by default 0
+        dfpn_search_leaf : int, optional
+            Number of searches by DFPN at leaf node, by default 0
         name : tp.Optional[str], optional
             Name of the engine, by default None
         """
         super().__init__(name=name)
         self._policy_value_func = policy_value_func
         self._searcher = None
+        self._dfpn = None
 
         self._coeff_puct = coeff_puct
         self._non_random_ratio = non_random_ratio
         self._random_depth = random_depth
+        self._kldgain_threshold = kldgain_threshold
+        self._dfpn_search_root = dfpn_search_root
+        self._dfpn_search_leaf = dfpn_search_leaf
 
     def _set_game(self, game: Game):
         policy_logits, value = self._policy_value_func(game)
+        self._game = game.copy()
         self._searcher = game._get_mcts_searcher_class()(
             self._coeff_puct, self._non_random_ratio, self._random_depth)
+        if self._dfpn_search_root:
+            self._dfpn = DfpnSearcher(max_num_nodes=max(
+                self._dfpn_search_root or 0, self._dfpn_search_leaf or 0))
+            self._dfpn.set_game(game)
+            self._dfpn.search(self._dfpn_search_root)
+            if self._dfpn.proved_mate():
+                return
         self._searcher.set_game(game._game, value, policy_logits)
-        self._game = game
 
     def _is_ready(self) -> bool:
         return self._searcher is not None
 
+    @property
+    def dfpn_proved_mate(self) -> bool:
+        """Return true if DFPN proved a checkmate otherwise false.
+
+        Returns
+        -------
+        bool
+            True if DFPN proved a checkmate otherwise false.
+        """
+        return self._dfpn is not None and self._dfpn.proved_mate()
+
     def _clear(self) -> None:
         self._searcher = None
+        self._dfpn = None
         self._game = None
 
     def apply(self, move: Move):
@@ -110,7 +143,11 @@ class Mcts(Engine):
             Move to apply
         """
         if self._is_ready():
+            self._game.apply(move)
             self._searcher.apply(move)
+            if self._dfpn_search_root:
+                self._dfpn.set_game(self._game)
+                self._dfpn.search(self._dfpn_search_root)
 
     def _get_num_searched(self):
         if self._searcher is None:
@@ -126,13 +163,52 @@ class Mcts(Engine):
             Number of game positions to search or period of time to search
             in second, by default 0.01
         """
-        for _ in self._count(n_or_t=n_or_t):
+        if self.dfpn_proved_mate:
+            return
+        prev_visits = None
+        kldgain_steps = 100
+        for ii in self._count(n_or_t=n_or_t):
+            if (self._kldgain_threshold and (ii % kldgain_steps == 0)):
+                if prev_visits is None:
+                    prev_visits = self.get_visit_counts()
+                else:
+                    kldgain = self._kldgain(prev_visits)
+                    if kldgain < self._kldgain_threshold * kldgain_steps:
+                        break
             game = self._game.copy()
             node = self._searcher.search(game._game)
             if node is None:
                 continue
+            if self._dfpn_search_leaf:
+                dfpn = DfpnSearcher(max_num_nodes=self._dfpn_search_leaf * 10)
+                dfpn.set_game(game)
+                if dfpn.search(self._dfpn_search_leaf):
+                    node.simulate_mate_and_backprop()
+                    continue
             policy_logits, value = self._policy_value_func(game)
             node.simulate_expand_and_backprop(game._game, value, policy_logits)
+
+    def _kldgain(self, prev_visits: tp.Dict[Move, int]) -> float:
+        prev_visits_added = {m: v + 1 for m, v in prev_visits.items()}
+        prev_visits_sum = sum(prev_visits_added.values())
+        prev_probas = {
+            m: prev_visits_added[m] / prev_visits_sum
+            for m in prev_visits_added.keys()
+        }
+        curr_visits = self.get_visit_counts()
+        curr_visits_added = {m: v + 1 for m, v in curr_visits.items()}
+        curr_visits_sum = sum(curr_visits_added.values())
+        curr_probas = {
+            m: curr_visits_added[m] / curr_visits_sum
+            for m in curr_visits_added.keys()
+        }
+        kldgain = sum(
+            curr_probas[m] * np.log(curr_probas[m] / prev_probas[m])
+            for m in prev_probas.keys()
+        )
+        for m in prev_visits.keys():
+            prev_visits[m] = curr_visits[m]
+        return kldgain
 
     def get_value(self) -> float:
         """Return raw value estimate of the current game position.
@@ -168,6 +244,8 @@ class Mcts(Engine):
         tp.Dict[Move, float]
             Raw probabilities of selecting actions by `policy_value_func`.
         """
+        if self.dfpn_proved_mate:
+            return {}
         root = self._searcher.get_root()
         move_proba_pair_list = [
             (m, root.get_child(m).get_proba())
@@ -190,6 +268,8 @@ class Mcts(Engine):
         tp.Dict[Move, float]
             Q value of each action.
         """
+        if self.dfpn_proved_mate:
+            return {}
         root = self._searcher.get_root()
         move_q_pair_list = [
             (m, -root.get_child(m).get_q_value(greedy_depth))
@@ -214,6 +294,8 @@ class Mcts(Engine):
         tp.Dict[Move, int]
             Visit counts of each action.
         """
+        if self.dfpn_proved_mate:
+            return {}
         root = self._searcher.get_root()
         move_visit_count_pair_list = [
             (
@@ -241,6 +323,8 @@ class Mcts(Engine):
         Move
             Selected action.
         """
+        if self.dfpn_proved_mate:
+            return self._dfpn.select()
         if (temperature is None) or np.isclose(temperature, 0):
             return self._searcher.get_action_by_visit_max()
         else:

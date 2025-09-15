@@ -1,7 +1,6 @@
 """Module for Shogi engine."""
 
 from vshogi.engine._dfpn import DfpnSearcher
-from vshogi.engine._dfpn_mcts import DfpnMcts
 from vshogi.engine._engine import Engine
 from vshogi.engine._mcts import Mcts
 from vshogi.engine._piece_value_func import piece_value_func
@@ -9,7 +8,6 @@ from vshogi.engine._search_nply_mate import search_nply_mate
 
 
 _classes = [
-    DfpnMcts,
     DfpnSearcher,
     Engine,
     Mcts,

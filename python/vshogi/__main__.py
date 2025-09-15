@@ -87,23 +87,17 @@ def _get_results_of_single_pair(
     select_args: dict,
 ) -> vshogi.Record:
     shogi = getattr(vshogi, shogi_variant)
-    player1 = vshogi.engine.DfpnMcts(
-        vshogi.engine.DfpnSearcher(),
-        vshogi.engine.Mcts(
-            vshogi.dlshogi.PolicyValueFunction(player1),
-            **mcts_init_args,
-        ),
+    player1 = vshogi.engine.Mcts(
+        vshogi.dlshogi.PolicyValueFunction(player1),
+        **mcts_init_args,
     )
-    player2 = vshogi.engine.DfpnMcts(
-        vshogi.engine.DfpnSearcher(),
-        vshogi.engine.Mcts(
-            vshogi.dlshogi.PolicyValueFunction(player2),
-            **mcts_init_args,
-        ),
+    player2 = vshogi.engine.Mcts(
+        vshogi.dlshogi.PolicyValueFunction(player2),
+        **mcts_init_args,
     )
     record_of_p1 = vshogi.Record(0, 0, 0, 0, 0, 0)
     iterator = range(num_games_each * 2)
-    show_mcts_search: bool = isinstance(search_args['mcts_search'], float)
+    show_mcts_search: bool = isinstance(search_args['n_or_t'], float)
     p1_search_total = 0
     p2_search_total = 0
     if show_pbar:
@@ -116,9 +110,9 @@ def _get_results_of_single_pair(
                 search_args=search_args,
                 select_args=select_args,
                 _return_num_searched=isinstance(
-                    search_args['mcts_search'], float),
+                    search_args['n_or_t'], float),
             )
-            if isinstance(search_args['mcts_search'], float):
+            if isinstance(search_args['n_or_t'], float):
                 result = out[0].result
                 p1_search_total += np.nanmean(np.asarray(out[1][::2], float))
                 p2_search_total += np.nanmean(np.asarray(out[1][1::2], float))
@@ -131,9 +125,9 @@ def _get_results_of_single_pair(
                 search_args=search_args,
                 select_args=select_args,
                 _return_num_searched=isinstance(
-                    search_args['mcts_search'], float),
+                    search_args['n_or_t'], float),
             )
-            if isinstance(search_args['mcts_search'], float):
+            if isinstance(search_args['n_or_t'], float):
                 result = out[0].result
                 p2_search_total += np.nanmean(np.asarray(out[1][::2], float))
                 p1_search_total += np.nanmean(np.asarray(out[1][1::2], float))
@@ -191,14 +185,12 @@ if __name__ == "__main__":
             p1, p2, args.num_games_each, args.show_pbar,
             mcts_init_args = {
                 'coeff_puct': args.mcts_coeff_puct,
-            },
-            search_args={
                 'dfpn_search_root': args.dfpn_search_root,
-                'mcts_search': (
-                    args.mcts_search_count or args.mcts_search_second
-                ),
                 'dfpn_search_leaf': args.dfpn_search_leaf,
                 'kldgain_threshold': args.mcts_kldgain_threshold,
+            },
+            search_args={
+                'n_or_t': args.mcts_search_count or args.mcts_search_second,
             },
             select_args={
                 'temperature': args.mcts_temperature,

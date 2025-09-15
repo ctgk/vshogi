@@ -109,19 +109,19 @@ def dump_game_records_and_convert_to_tfrecord(
 
 
 def play_game(
-    player_black: vshogi.engine.DfpnMcts,
-    player_white: vshogi.engine.DfpnMcts,
+    player_black: vshogi.engine.Mcts,
+    player_white: vshogi.engine.Mcts,
     args: Args,
     max_moves: int = 320,
-    main_player: tp.Optional[vshogi.engine.DfpnMcts] = None,
+    main_player: tp.Optional[vshogi.engine.Mcts] = None,
 ) -> vshogi.Game:
     """Make two players play the game until an end.
 
     Parameters
     ----------
-    player_black : vshogi.engine.DfpnMcts
+    player_black : vshogi.engine.Mcts
         First player
-    player_white : vshogi.engine.DfpnMcts
+    player_white : vshogi.engine.Mcts
         Second player
     max_moves : int
         Maximum number of moves to apply to the game.
@@ -149,21 +149,11 @@ def play_game(
         if not player.is_ready():
             player.set_game(game)
 
-        player.search(
-            dfpn_search_root=args.dfpn_search_root,
-            mcts_search=args.mcts_search - player.mcts_num_searched,
-            dfpn_search_leaf=args.dfpn_search_leaf,
-            kldgain_threshold=args.mcts_kldgain_threshold,
-        )
+        player.search(args.mcts_search - player.num_searched)
         if (main_player is not None) and (main_player is not player):
             if not main_player.is_ready():
                 main_player.set_game(game)
-            main_player.search(
-                dfpn_search_root=args.dfpn_search_root,
-                mcts_search=args.mcts_search - main_player.mcts_num_searched,
-                dfpn_search_leaf=args.dfpn_search_leaf,
-                kldgain_threshold=args.mcts_kldgain_threshold,
-            )
+            main_player.search(args.mcts_search - main_player.num_searched)
 
         if player.dfpn_proved_mate:
             move = player.select()
@@ -198,15 +188,17 @@ def play_game(
     return game
 
 
-def load_player_of(index: int) -> vshogi.engine.DfpnMcts:
-    mcts = vshogi.engine.Mcts(
+def load_player_of(index: int) -> vshogi.engine.Mcts:
+    return vshogi.engine.Mcts(
         (
             vshogi.dlshogi.PolicyValueFunction(f'models/model_{index:04d}.tflite')
             if index != 0 else lambda g: (np.zeros(g.num_dlshogi_policy, dtype=np.float32), vshogi.engine.piece_value_func(g))
         ),
         coeff_puct=args.mcts_coeff_puct,
+        kldgain_threshold=args.mcts_kldgain_threshold,
+        dfpn_search_root=args.dfpn_search_root,
+        dfpn_search_leaf=args.dfpn_search_leaf,
     )
-    return vshogi.engine.DfpnMcts(vshogi.engine.DfpnSearcher(), mcts, name=str(index))
 
 
 def play_game_and_dump_record(
@@ -512,12 +504,7 @@ def run_rl_cycle(args: Args):
                         args._shogi.Game(),
                         player,
                         p_prev,
-                        search_args={
-                            'dfpn_search_root': args.dfpn_search_root,
-                            'mcts_search': args.mcts_search,
-                            'dfpn_search_leaf': args.dfpn_search_leaf,
-                            'kldgain_threshold': args.mcts_kldgain_threshold,
-                        },
+                        search_args={'n_or_t': args.mcts_search},
                         select_args={'temperature': None},
                     ).result
                     record += vshogi.Record.from_black_result(result)
@@ -526,12 +513,7 @@ def run_rl_cycle(args: Args):
                         args._shogi.Game(),
                         p_prev,
                         player,
-                        search_args={
-                            'dfpn_search_root': args.dfpn_search_root,
-                            'mcts_search': args.mcts_search,
-                            'dfpn_search_leaf': args.dfpn_search_leaf,
-                            'kldgain_threshold': args.mcts_kldgain_threshold,
-                        },
+                        search_args={'n_or_t': args.mcts_search},
                         select_args={'temperature': None},
                     ).result
                     record += vshogi.Record.from_white_result(result)
@@ -570,12 +552,7 @@ def run_rl_cycle(args: Args):
                     args._shogi.Game(),
                     player_curr,
                     player_best,
-                    search_args={
-                        'dfpn_search_root': args.dfpn_search_root,
-                        'mcts_search': args.mcts_search,
-                        'dfpn_search_leaf': args.dfpn_search_leaf,
-                        'kldgain_threshold': args.mcts_kldgain_threshold,
-                    },
+                    search_args={'n_or_t': args.mcts_search},
                     select_args={'temperature': None},
                 ).result
                 record += vshogi.Record.from_black_result(result)
@@ -584,12 +561,7 @@ def run_rl_cycle(args: Args):
                     args._shogi.Game(),
                     player_best,
                     player_curr,
-                    search_args={
-                        'dfpn_search_root': args.dfpn_search_root,
-                        'mcts_search': args.mcts_search,
-                        'dfpn_search_leaf': args.dfpn_search_leaf,
-                        'kldgain_threshold': args.mcts_kldgain_threshold,
-                    },
+                    search_args={'n_or_t': args.mcts_search},
                     select_args={'temperature': None},
                 ).result
                 record += vshogi.Record.from_white_result(result)

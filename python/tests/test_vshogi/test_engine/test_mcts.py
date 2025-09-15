@@ -134,5 +134,63 @@ def test_greedy_q_value():
     searcher._tree(depth=2, breadth=-1)
 
 
+def test_dfpn_root():
+    mcts = Mcts(
+        lambda g: (g.to_dlshogi_policy({}), 0.),
+        random_depth=0,
+        dfpn_search_root=10000,
+    )
+
+    # Turn: BLACK
+    # White: -
+    #     5   4   3   2   1
+    #   *---*---*---*---*---*
+    # A |   |   |-HI|-KA|-OU|
+    #   *---*---*---*---*---*
+    # B |   |   |-FU|   |-FU|
+    #   *---*---*---*---*---*
+    # C |   |   |+FU|   |+FU|
+    #   *---*---*---*---*---*
+    # D |   |   |   |+KI|   |
+    #   *---*---*---*---*---*
+    # E |   |   |   |+HI|   |
+    #   *---*---*---*---*---*
+    # Black: KA
+    game = shogi.Game("2rbk/2p1p/2P1P/3G1/3R1 b B")
+    mcts.set_game(game)
+    mcts.search(n_or_t=0)
+    assert shogi.Move("B*2b") == mcts.select()
+
+
+def test_dfpn_vertex():
+    mcts = Mcts(
+        lambda g: (g.to_dlshogi_policy({}), 0.),
+        random_depth=0,
+        dfpn_search_root=0,
+        dfpn_search_leaf=100,
+    )
+
+    # Turn: BLACK
+    # White: -
+    #     5   4   3   2   1
+    #   *---*---*---*---*---*
+    # A |   |   |-OU|   |   |
+    #   *---*---*---*---*---*
+    # B |   |   |   |   |   |
+    #   *---*---*---*---*---*
+    # C |   |   |-KI|-FU|   |
+    #   *---*---*---*---*---*
+    # D |   |   |   |   |   |
+    #   *---*---*---*---*---*
+    # E |   |   |+OU|   |   |
+    #   *---*---*---*---*---*
+    # Black: -
+    g = shogi.Game("2k2/5/2gp1/5/2K2 b -")
+    mcts.set_game(g)
+    mcts.search(n_or_t=2)
+    print(mcts._tree(depth=5, breadth=5))
+    assert shogi.Move("3e4e") == mcts.select()
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
