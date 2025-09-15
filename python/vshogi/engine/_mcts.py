@@ -128,7 +128,7 @@ class Mcts(Engine):
         """
         for _ in self._count(n_or_t=n_or_t):
             game = self._game.copy()
-            node = self._searcher.select(game._game)
+            node = self._searcher.search(game._game)
             if node is None:
                 continue
             policy_logits, value = self._policy_value_func(game)

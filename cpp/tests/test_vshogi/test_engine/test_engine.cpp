@@ -72,7 +72,7 @@ TEST(shogi_engine, mcts_with_dfpn)
 
         for (int jj = (100 - mcts.get_visit_count()); jj--;) {
             auto g_copy = Game(g);
-            const auto n = mcts.select(g_copy);
+            const auto n = mcts.search(g_copy);
             if (n == nullptr)
                 continue;
 

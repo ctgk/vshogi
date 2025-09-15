@@ -257,7 +257,7 @@ TEST(minishogi_node, explore_after_apply)
     mcts.set_game(g, 0.f, zeros);
     for (int ii = 100; ii--;) {
         auto g_copy = Game(g);
-        const auto n = mcts.select(g_copy);
+        const auto n = mcts.search(g_copy);
         if (n != nullptr)
             n->simulate_expand_and_backprop(
                 g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
@@ -270,7 +270,7 @@ TEST(minishogi_node, explore_after_apply)
     CHECK_TRUE(current_visit_count > 0);
     for (int ii = 100; ii--;) {
         auto g_copy = Game(g);
-        const auto n = mcts.select(g_copy);
+        const auto n = mcts.search(g_copy);
         if (n != nullptr)
             n->simulate_expand_and_backprop(
                 g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
@@ -288,7 +288,7 @@ TEST(minishogi_node, explore_until_game_end)
             break;
         for (int ii = (100 - mcts.get_visit_count()); ii--;) {
             auto g_copy = Game(g);
-            const auto n = mcts.select(g_copy);
+            const auto n = mcts.search(g_copy);
             if (n != nullptr)
                 n->simulate_expand_and_backprop(
                     g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
@@ -326,7 +326,7 @@ TEST(judkins_shogi_node, explore_until_game_end)
             break;
         for (int ii = (100 - mcts.get_visit_count()); ii--;) {
             auto g_copy = Game(g);
-            const auto n = mcts.select(g_copy);
+            const auto n = mcts.search(g_copy);
             if (n != nullptr)
                 n->simulate_expand_and_backprop(
                     g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
@@ -361,7 +361,7 @@ TEST(shogi_node, explore_until_game_end)
             break;
         for (int ii = (100 - mcts.get_visit_count()); ii--;) {
             auto g_copy = Game(g);
-            const auto n = mcts.select(g_copy);
+            const auto n = mcts.search(g_copy);
             if (n != nullptr)
                 n->simulate_expand_and_backprop(
                     g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);

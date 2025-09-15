@@ -124,7 +124,7 @@ class DfpnMcts(Engine):
                     if kldgain < kldgain_threshold * kldgain_steps:
                         break
             game = self._mcts._game.copy()
-            node = self._mcts._searcher.select(game._game)
+            node = self._mcts._searcher.search(game._game)
             if node is None:
                 continue
 

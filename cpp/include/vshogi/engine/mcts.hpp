@@ -581,7 +581,7 @@ public:
     {
         return m_root->get_visit_count();
     }
-    Node<Parameters>* select(GameType& game)
+    Node<Parameters>* search(GameType& game)
     {
         Node<Parameters>* node = m_root.get();
         int random_depth = m_random_depth;

@@ -461,9 +461,9 @@ inline void export_mcts_searcher(pybind11::module& m)
                 self.set_game(g, v, nullptr);
             })
         .def(
-            "select",
+            "search",
             [](Searcher& self, Game& game) -> py::object {
-                const auto out = self.select(game);
+                const auto out = self.search(game);
                 if (out == nullptr)
                     return py::none();
                 return py::cast(*out, py::return_value_policy::reference);
