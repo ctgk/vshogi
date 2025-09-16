@@ -27,10 +27,8 @@ if __name__ == '__main__':
         edge_model.export(t.name)
         pv_func = vshogi.dlshogi.PolicyValueFunction(t.name)
     print(pv_func.summary())
-    player = vshogi.engine.DfpnMcts(
-        vshogi.engine.DfpnSearcher(),
-        vshogi.engine.Mcts(pv_func),
-    )
+    player = vshogi.engine.Mcts(
+        pv_func, dfpn_search_root=10000, dfpn_search_leaf=100)
 
     game = Game()
     kifu = [
