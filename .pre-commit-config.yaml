@@ -58,3 +58,10 @@ repos:
         types: [text]
         files: '\.(c|h|cpp|hpp|py)$'
         pass_filenames: false
+    -   id: python-profile
+        name: Run Python profiling script
+        language: system
+        entry: python examples/dlshogi_model.py
+        types: [text]
+        files: '\.(c|h|cpp|hpp|py)$'
+        pass_filenames: false

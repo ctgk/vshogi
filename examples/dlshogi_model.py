@@ -28,7 +28,11 @@ if __name__ == '__main__':
         pv_func = vshogi.dlshogi.PolicyValueFunction(t.name)
     print(pv_func.summary())
     player = vshogi.engine.Mcts(
-        pv_func, dfpn_search_root=10000, dfpn_search_leaf=100)
+        pv_func,
+        kldgain_threshold=1e-4,
+        dfpn_search_root=10000,
+        dfpn_search_leaf=100,
+    )
 
     game = Game()
     kifu = [
@@ -58,5 +62,5 @@ if __name__ == '__main__':
         if game.result != vshogi.Result.ONGOING:
             break
         player.set_game(game)
-        player.search(mcts_search=1000, kldgain_threshold=1e-4)
+        player.search(n_or_t=1000)
         game.apply(move)
