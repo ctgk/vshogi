@@ -2,7 +2,7 @@ from vshogi._game import Game as BaseGame
 from vshogi._vshogi.shogi import (
     BoardPiece,
     DfpnSearcher,
-    MCTS,
+    Mcts,
     MctsNode,
     Move,
     _Game as _ShogiGame,
@@ -71,7 +71,7 @@ LNSGKGSNL w - 2")
 
     @classmethod
     def _get_mcts_searcher_class(cls) -> type:
-        return MCTS
+        return Mcts
 
     @classmethod
     def _get_dfpn_searcher_class(cls) -> type:

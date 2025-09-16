@@ -188,8 +188,8 @@ public: // utility
     ~Searcher() = default; // 1/5 destructor
     Searcher(const Searcher& other) = delete; // 2/5 copy constructor
     Searcher& operator=(const Searcher& other) = delete; // 3/5 copy assignment
-    Searcher(Searcher&& other) = default; // 4/5 move constructor
-    Searcher& operator=(Searcher&& other) = default; // 5/5 move assignment
+    Searcher(Searcher&& other) = delete; // 4/5 move constructor
+    Searcher& operator=(Searcher&& other) = delete; // 5/5 move assignment
 
     void init()
     {

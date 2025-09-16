@@ -105,10 +105,11 @@ class Mcts(Engine):
         policy_logits, value = self._policy_value_func(game)
         self._game = game.copy()
         self._searcher = game._get_mcts_searcher_class()(
-            self._coeff_puct, self._non_random_ratio, self._random_depth)
+            self._coeff_puct, self._non_random_ratio, self._random_depth,
+            self._dfpn_search_leaf,
+        )
         if self._dfpn_search_root:
-            self._dfpn = DfpnSearcher(max_num_nodes=max(
-                self._dfpn_search_root or 0, self._dfpn_search_leaf or 0))
+            self._dfpn = DfpnSearcher(self._dfpn_search_root * 10)
             self._dfpn.set_game(game)
             self._dfpn.search(self._dfpn_search_root)
             if self._dfpn.proved_mate():
@@ -179,12 +180,6 @@ class Mcts(Engine):
             node = self._searcher.search(game._game)
             if node is None:
                 continue
-            if self._dfpn_search_leaf:
-                dfpn = DfpnSearcher(max_num_nodes=self._dfpn_search_leaf * 10)
-                dfpn.set_game(game)
-                if dfpn.search(self._dfpn_search_leaf):
-                    node.simulate_mate_and_backprop()
-                    continue
             policy_logits, value = self._policy_value_func(game)
             node.simulate_expand_and_backprop(game._game, value, policy_logits)
 

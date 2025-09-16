@@ -198,6 +198,7 @@ def load_player_of(index: int) -> vshogi.engine.Mcts:
         kldgain_threshold=args.mcts_kldgain_threshold,
         dfpn_search_root=args.dfpn_search_root,
         dfpn_search_leaf=args.dfpn_search_leaf,
+        name=str(index),
     )
 
 

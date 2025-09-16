@@ -12,9 +12,12 @@
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/result.hpp"
 #include "vshogi/common/utils.hpp"
+#include "vshogi/engine/dfpn3/searcher.hpp"
 
 namespace vshogi::engine::mcts
 {
+
+namespace dfpn = vshogi::engine::dfpn3;
 
 template <class Parameters>
 class Node
@@ -559,17 +562,21 @@ private:
 
 private:
     std::unique_ptr<Node<Parameters>> m_root;
+    dfpn::Searcher<Parameters> m_dfpn;
     const float m_coeff_puct;
     const int m_non_random_ratio;
     const int m_random_depth;
+    const uint m_dfpn_search_leaf;
 
 public:
     Searcher(
         const float coeff_puct,
         const int non_random_ratio,
-        const int random_depth)
-        : m_root{}, m_coeff_puct(coeff_puct),
-          m_non_random_ratio(non_random_ratio), m_random_depth(random_depth)
+        const int random_depth,
+        const uint dfpn_search_leaf = 0u)
+        : m_root{}, m_dfpn{dfpn_search_leaf * 10u}, m_coeff_puct(coeff_puct),
+          m_non_random_ratio(non_random_ratio), m_random_depth(random_depth),
+          m_dfpn_search_leaf(dfpn_search_leaf)
     {
     }
     void set_game(const GameType& g, const float v, const float* const p_logits)
@@ -590,7 +597,18 @@ public:
             node = node->select_at_internal_vertex(
                 game, m_coeff_puct, m_non_random_ratio, random_depth--);
         }
-        return node->select_at_leaf(game);
+        node = node->select_at_leaf(game);
+        if (node == nullptr)
+            return nullptr;
+        if (m_dfpn_search_leaf) {
+            m_dfpn.set_game(game);
+            m_dfpn.search(m_dfpn_search_leaf);
+            if (m_dfpn.proved_mate()) {
+                node->simulate_mate_and_backprop();
+                return nullptr;
+            }
+        }
+        return node;
     }
     Searcher<Parameters>& apply(const MoveType& action)
     {

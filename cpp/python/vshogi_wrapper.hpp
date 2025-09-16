@@ -445,8 +445,8 @@ inline void export_mcts_searcher(pybind11::module& m)
     using Game = vshogi::Game<Parameters>;
     using Searcher = vshogi::engine::mcts::Searcher<Parameters>;
 
-    py::class_<Searcher>(m, "MCTS")
-        .def(py::init<const float, const int, const int>())
+    py::class_<Searcher>(m, "Mcts")
+        .def(py::init<const float, const int, const int, const uint>())
         .def(
             "set_game",
             [](Searcher& self,
