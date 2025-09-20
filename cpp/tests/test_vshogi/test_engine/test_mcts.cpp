@@ -29,7 +29,8 @@ TEST(minishogi_node, init_default)
 
 TEST(minishogi_node, init_with_args)
 {
-    auto root = Node({}, vshogi::BLACK, -1.f, zeros);
+    auto root = Node();
+    root.simulate_expand_and_backprop({}, vshogi::BLACK, -1.f, zeros);
     CHECK_EQUAL(1, root.get_visit_count());
     DOUBLES_EQUAL(-1.f, root.get_value(), 1e-2f);
     DOUBLES_EQUAL(-1.f, root.get_q_value(), 1e-2f);
@@ -38,7 +39,9 @@ TEST(minishogi_node, init_with_args)
 TEST(minishogi_node, explore_no_child)
 {
     auto g = Game("5/5/5/5/5 b -");
-    auto root = Node(g.get_legal_moves(), g.get_turn(), 1.f, zeros);
+    auto root = Node();
+    root.simulate_expand_and_backprop(
+        g.get_legal_moves(), g.get_turn(), 1.f, zeros);
 
     const auto actual = root.select(g, 1.f, 1, 1);
 
@@ -49,7 +52,9 @@ TEST(minishogi_node, explore_no_child)
 TEST(minishogi_node, explore_game_end)
 {
     auto g = Game("b2pk/3b1/4P/2gRR/4K b -");
-    auto root = Node(g.get_legal_moves(), g.get_turn(), 0.f, zeros);
+    auto root = Node();
+    root.simulate_expand_and_backprop(
+        g.get_legal_moves(), g.get_turn(), 0.f, zeros);
     DOUBLES_EQUAL(0.f, root.get_q_value(), 1e-2f);
     const auto actual = root.select(g, 1.f, 0.f, 0); // 1b1c
     CHECK_TRUE(nullptr == actual);
@@ -60,17 +65,20 @@ TEST(minishogi_node, explore_game_end)
 TEST(minishogi_node, explore_one_action)
 {
     auto g = Game("4k/5/4P/5/5 b -");
-    auto root = Node(g.get_legal_moves(), g.get_turn(), 0.1f, zeros);
+    auto root = Node();
+    root.simulate_expand_and_backprop(
+        g.get_legal_moves(), g.get_turn(), 0.1f, zeros);
     DOUBLES_EQUAL(0.1f, root.get_q_value(100), 1e-2f);
 
     const auto actual = root.select(g, 1.f, 0.f, 0);
     {
         STRCMP_EQUAL("4k/4P/5/5/5 w - 2", g.to_sfen().c_str());
 
-        CHECK_EQUAL(2, root.get_visit_count());
+        CHECK_EQUAL(1, root.get_visit_count());
         DOUBLES_EQUAL(0.1f, root.get_value(), 1e-2f);
         DOUBLES_EQUAL(0.1f, root.get_q_value(), 1e-2f);
 
+        CHECK_EQUAL(0, actual->get_visit_count());
         CHECK_TRUE(actual != nullptr);
         CHECK_TRUE(actual != &root);
     }
@@ -135,7 +143,8 @@ TEST(minishogi_node, explore_two_action)
     logits[Move(SQ_1D, SQ_1E).to_dlshogi_policy_index()] = 0.202f;
     logits[Move(SQ_2D, SQ_1E).to_dlshogi_policy_index()] = -0.202f;
     auto g = Game("4k/5/5/5/4S b -");
-    auto root = Node(
+    auto root = Node();
+    root.simulate_expand_and_backprop(
         {Move(SQ_1D, SQ_1E), Move(SQ_2D, SQ_1E)}, vshogi::BLACK, 0.f, logits);
 
     for (std::size_t ii = 0; ii < 3; ++ii) {
@@ -194,7 +203,8 @@ TEST(minishogi_node, explore_two_layer)
     logits[Move(SQ_1D, SQ_1E).to_dlshogi_policy_index()] = 1.099f;
     logits[Move(SQ_2D, SQ_1E).to_dlshogi_policy_index()] = -1.099f;
     auto g = Game("s4/5/5/5/4S b -");
-    auto root = Node(
+    auto root = Node();
+    root.simulate_expand_and_backprop(
         {Move(SQ_1D, SQ_1E), Move(SQ_2D, SQ_1E)}, vshogi::BLACK, 0.f, logits);
 
     {

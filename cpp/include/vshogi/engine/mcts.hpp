@@ -62,7 +62,7 @@ private:
      */
     int m_visit_count;
 
-    int m_visit_count_excluding_random;
+    int m_visit_count_by_random;
 
     /**
      * @brief result of `std::sqrt(static_cast<float>(m_visit_count))`.
@@ -97,28 +97,16 @@ private:
 public:
     Node()
         : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr), m_action(),
-          m_proba(0.f), m_visit_count(0), m_visit_count_excluding_random(0),
+          m_proba(0.f), m_visit_count(0), m_visit_count_by_random(0),
           m_sqrt_visit_count(0.f), m_value(0.f), m_q_value(0.f),
           m_is_mate(false), m_most_visited_child(nullptr)
     {
     }
-    Node(
-        const std::vector<MoveType>& actions,
-        const ColorEnum& turn,
-        const float value,
-        const float* const policy_logits)
-        : Node()
-    {
-        m_visit_count = 1;
-        m_visit_count_excluding_random = 1;
-        simulate_expand_and_backprop(actions, turn, value, policy_logits);
-    }
     Node(const MoveType action, const float proba) noexcept
         : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr),
           m_action(action), m_proba(proba), m_visit_count(0),
-          m_visit_count_excluding_random(0), m_sqrt_visit_count(0.f),
-          m_value(0.f), m_q_value(0.f), m_is_mate(false),
-          m_most_visited_child(nullptr)
+          m_visit_count_by_random(0), m_sqrt_visit_count(0.f), m_value(0.f),
+          m_q_value(0.f), m_is_mate(false), m_most_visited_child(nullptr)
     {
     }
 
@@ -135,7 +123,7 @@ public:
     }
     int get_visit_count_excluding_random() const
     {
-        return m_visit_count_excluding_random;
+        return m_visit_count - m_visit_count_by_random;
     }
     float get_value() const
     {
@@ -199,11 +187,6 @@ public:
     {
         return m_most_visited_child;
     }
-    void increment_visit_counts()
-    {
-        ++m_visit_count;
-        ++m_visit_count_excluding_random;
-    }
 
     /**
      * @brief Select a leaf node using PUCT algorithm.
@@ -229,7 +212,6 @@ public:
         const int non_random_ratio,
         int random_depth)
     {
-        increment_visit_counts();
         Node* node = this;
         while (node->has_child()) {
             node = node->select_at_internal_vertex(
@@ -253,7 +235,7 @@ public:
         if (game.get_result() == ResultEnum::ONGOING) {
             return this;
         }
-        if (m_visit_count == 1)
+        if (m_visit_count == 0)
             simulate_end_game(game);
         backprop_leaf();
         return nullptr;
@@ -292,8 +274,7 @@ public:
                 m_action = ch->m_action;
                 m_proba = ch->m_proba;
                 m_visit_count = ch->m_visit_count;
-                m_visit_count_excluding_random
-                    = ch->m_visit_count_excluding_random;
+                m_visit_count_by_random = ch->m_visit_count_by_random;
                 m_sqrt_visit_count = ch->m_sqrt_visit_count;
                 m_value = ch->m_value;
                 m_q_value = ch->m_q_value;
@@ -306,7 +287,7 @@ public:
 
         m_child = nullptr;
         m_visit_count = 0;
-        m_visit_count_excluding_random = 0;
+        m_visit_count_by_random = 0;
         m_sqrt_visit_count = 0.f;
         m_value = 0.f;
         m_q_value = 0.f;
@@ -334,11 +315,10 @@ private:
         Node* ch = nullptr;
         if (use_random(non_random_ratio, random_depth)) {
             ch = select_random();
+            ++(ch->m_visit_count_by_random);
         } else {
             ch = select_max_puct(coeff_puct);
-            ++(ch->m_visit_count_excluding_random);
         }
-        ++(ch->m_visit_count);
         return ch;
     }
     bool use_random(const int non_random_ratio, const int random_depth) const
@@ -481,6 +461,7 @@ private:
 private:
     void backprop_at_internal_vertex(const float v)
     {
+        m_visit_count += 1u;
         const auto count_before = static_cast<float>(m_visit_count - 1);
         const auto count_after = static_cast<float>(m_visit_count);
         m_sqrt_visit_count = std::sqrt(count_after);
@@ -495,6 +476,7 @@ private:
     }
     void backprop_mate_at_internal_vertex(const float v)
     {
+        m_visit_count += 1u;
         const auto count_before = static_cast<float>(m_visit_count - 1);
         const auto count_after = static_cast<float>(m_visit_count);
         m_sqrt_visit_count = std::sqrt(count_after);
@@ -527,6 +509,7 @@ private:
     }
     void backprop_leaf()
     {
+        m_visit_count += 1u;
         // skip updating `m_q_value` because there should be no value change.
         m_sqrt_visit_count = std::sqrt(static_cast<float>(m_visit_count));
         if (m_parent != nullptr) {
@@ -542,12 +525,12 @@ private:
         if (m_most_visited_child == nullptr)
             m_most_visited_child = candidate;
         else if (
-            candidate->m_visit_count_excluding_random
-            > m_most_visited_child->m_visit_count_excluding_random)
+            candidate->get_visit_count_excluding_random()
+            > m_most_visited_child->get_visit_count_excluding_random())
             m_most_visited_child = candidate;
         else if (
-            (candidate->m_visit_count_excluding_random
-             == m_most_visited_child->m_visit_count_excluding_random)
+            (candidate->get_visit_count_excluding_random()
+             == m_most_visited_child->get_visit_count_excluding_random())
             && (candidate->m_q_value < m_most_visited_child->m_q_value))
             m_most_visited_child = candidate;
     }
@@ -581,7 +564,8 @@ public:
     }
     void set_game(const GameType& g, const float v, const float* const p_logits)
     {
-        m_root = std::make_unique<Node<Parameters>>(
+        m_root = std::make_unique<Node<Parameters>>();
+        m_root->simulate_expand_and_backprop(
             g.get_legal_moves(), g.get_turn(), v, p_logits);
     }
     int get_visit_count() const
@@ -592,7 +576,6 @@ public:
     {
         Node<Parameters>* node = m_root.get();
         int random_depth = m_random_depth;
-        node->increment_visit_counts();
         while (node->has_child()) {
             node = node->select_at_internal_vertex(
                 game, m_coeff_puct, m_non_random_ratio, random_depth--);
