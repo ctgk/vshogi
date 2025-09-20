@@ -10,9 +10,9 @@ jobs:
     strategy:
       matrix:
         game: [
-          {name: minishogi, rl_cycle: 4, nn_backbone_blocks: 3},
-          {name: judkins_shogi, rl_cycle: 3, nn_backbone_blocks: 3},
-          {name: shogi, rl_cycle: 1, nn_backbone_blocks: 2},
+          {name: minishogi, rl_cycle: 8, nn_backbone_blocks: 3},
+          {name: judkins_shogi, rl_cycle: 6, nn_backbone_blocks: 3},
+          {name: shogi, rl_cycle: 2, nn_backbone_blocks: 2},
         ]
       fail-fast: false
 
@@ -31,7 +31,7 @@ jobs:
         NAME: ${{ matrix.game.name }}
         CYCLE: ${{ matrix.game.rl_cycle }}
         BACKBONES: ${{ matrix.game.nn_backbone_blocks }}
-      run: python examples/dlshogi.py rl $NAME --rl_cycle $CYCLE --nn_backbone_blocks $BACKBONES --mcts_search 200 --self_play 100 --win_ratio_threshold 0.1
+      run: python examples/dlshogi.py rl $NAME --rl_cycle $CYCLE --nn_backbone_blocks $BACKBONES --mcts_search 100 --self_play 50 --nn_epochs 5 --win_ratio_threshold 0.1
     - name: Evaluate model
       env:
         NAME: ${{ matrix.game.name }}
