@@ -58,7 +58,6 @@ TEST(shogi_engine, mcts_with_dfpn)
 
     auto g = Game();
     auto mcts = vshogi::engine::mcts::Searcher<Parameters>(4.f, 3, 1);
-    mcts.set_game(g, 0.f, zeros);
     auto dfpn = vshogi::engine::dfpn3::Searcher<Parameters>();
     for (int ii = 0; ii < 167; ++ii) {
         if (g.get_result() != vshogi::ONGOING)

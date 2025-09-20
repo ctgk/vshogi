@@ -102,19 +102,17 @@ class Mcts(Engine):
         self._dfpn_search_leaf = dfpn_search_leaf
 
     def _set_game(self, game: Game):
-        policy_logits, value = self._policy_value_func(game)
-        self._game = game.copy()
-        self._searcher = game._get_mcts_searcher_class()(
-            self._coeff_puct, self._non_random_ratio, self._random_depth,
-            self._dfpn_search_leaf,
-        )
         if self._dfpn_search_root:
             self._dfpn = DfpnSearcher(self._dfpn_search_root * 10)
             self._dfpn.set_game(game)
             self._dfpn.search(self._dfpn_search_root)
             if self._dfpn.proved_mate():
                 return
-        self._searcher.set_game(game._game, value, policy_logits)
+        self._game = game.copy()
+        self._searcher = game._get_mcts_searcher_class()(
+            self._coeff_puct, self._non_random_ratio, self._random_depth,
+            self._dfpn_search_leaf,
+        )
 
     def _is_ready(self) -> bool:
         return self._searcher is not None

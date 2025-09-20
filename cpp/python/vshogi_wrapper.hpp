@@ -447,19 +447,7 @@ inline void export_mcts_searcher(pybind11::module& m)
 
     py::class_<Searcher>(m, "Mcts")
         .def(py::init<const float, const int, const int, const uint>())
-        .def(
-            "set_game",
-            [](Searcher& self,
-               const Game& g,
-               const float v,
-               const py::array_t<float>& logits) {
-                self.set_game(g, v, logits.data());
-            })
-        .def(
-            "set_game",
-            [](Searcher& self, const Game& g, const float v) {
-                self.set_game(g, v, nullptr);
-            })
+        .def("init_root", &Searcher::init_root)
         .def(
             "search",
             [](Searcher& self, Game& game) -> py::object {

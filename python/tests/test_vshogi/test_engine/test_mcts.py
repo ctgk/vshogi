@@ -22,7 +22,7 @@ def test_num_searched():
     searcher = Mcts(uniform_pv_func)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
-    assert searcher.num_searched == 100 + 1
+    assert searcher.num_searched == 100
 
 
 # def test_apply():
@@ -187,7 +187,7 @@ def test_dfpn_vertex():
     # Black: -
     g = shogi.Game("2k2/5/2gp1/5/2K2 b -")
     mcts.set_game(g)
-    mcts.search(n_or_t=2)
+    mcts.search(n_or_t=3)
     print(mcts._tree(depth=5, breadth=5))
     assert shogi.Move("3e4e") == mcts.select()
 

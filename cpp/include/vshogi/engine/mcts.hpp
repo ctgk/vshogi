@@ -557,16 +557,15 @@ public:
         const int non_random_ratio,
         const int random_depth,
         const uint dfpn_search_leaf = 0u)
-        : m_root{}, m_dfpn{dfpn_search_leaf * 10u}, m_coeff_puct(coeff_puct),
+        : m_root(std::make_unique<Node<Parameters>>()),
+          m_dfpn{dfpn_search_leaf * 10u}, m_coeff_puct(coeff_puct),
           m_non_random_ratio(non_random_ratio), m_random_depth(random_depth),
           m_dfpn_search_leaf(dfpn_search_leaf)
     {
     }
-    void set_game(const GameType& g, const float v, const float* const p_logits)
+    void init_root()
     {
         m_root = std::make_unique<Node<Parameters>>();
-        m_root->simulate_expand_and_backprop(
-            g.get_legal_moves(), g.get_turn(), v, p_logits);
     }
     int get_visit_count() const
     {

@@ -264,7 +264,6 @@ TEST(minishogi_node, explore_after_apply)
 {
     auto g = Game();
     auto mcts = Searcher(4.f, 3, 1);
-    mcts.set_game(g, 0.f, zeros);
     for (int ii = 100; ii--;) {
         auto g_copy = Game(g);
         const auto n = mcts.search(g_copy);
@@ -292,7 +291,6 @@ TEST(minishogi_node, explore_until_game_end)
 {
     auto g = Game();
     auto mcts = Searcher(4.f, 3, 1);
-    mcts.set_game(g, 0.f, zeros);
     while (true) {
         if (g.get_result() != vshogi::ONGOING)
             break;
@@ -330,7 +328,6 @@ TEST(judkins_shogi_node, explore_until_game_end)
 {
     auto g = Game();
     auto mcts = Searcher(4.f, 3, 1);
-    mcts.set_game(g, 0.f, zeros);
     while (true) {
         if (g.get_result() != vshogi::ONGOING)
             break;
@@ -365,7 +362,6 @@ TEST(shogi_node, explore_until_game_end)
 {
     auto g = Game();
     auto mcts = Searcher(4.f, 3, 1);
-    mcts.set_game(g, 0.f, zeros);
     while (true) {
         if (g.get_result() != vshogi::ONGOING)
             break;
