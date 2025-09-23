@@ -599,7 +599,8 @@ def run_rl_cycle(args: Args):
                 count = 1
 
                 if row.state in data_deduped:
-                    assert set(data_deduped[row.state]['visits_total'].keys()) == set(visits.keys()), row.state
+                    if set(data_deduped[row.state]['visits_total'].keys()) != set(visits.keys()):
+                        raise ValueError(f'Mismatching keys at SFEN="{row.state}": {set(data_deduped[row.state]["visits_total"].keys())} != {set(visits.keys())}')
                     visits = {
                         m: data_deduped[row.state]['visits_total'][m] + visits[m]
                         for m in visits.keys()
