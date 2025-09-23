@@ -58,7 +58,7 @@ class Mcts(Engine):
         self,
         policy_value_func: tp.Callable[[Game], tp.Tuple[Policy, Value]],
         coeff_puct: float = 1.,
-        non_random_ratio: int = 3,
+        random_rate: float = 0.25,
         random_depth: int = 1,
         kldgain_threshold: tp.Optional[float] = None,
         dfpn_search_root: int = 0,
@@ -74,9 +74,8 @@ class Mcts(Engine):
         coeff_puct : float, optional
             Default coefficient used to compute PUCT score. Higher the value
             is, the more weight on action policy than state value.
-        non_random_ratio : int, optional
-            Default ratio of selecting action in a non-random manner,
-            by default 3.
+        random_rate : float, optional
+            Probability of exploring nodes in a random manner, by default 0.25
         random_depth : int, optional
             Default depth of explorations to select action in a random manner,
             by default 1.
@@ -95,7 +94,7 @@ class Mcts(Engine):
         self._dfpn = None
 
         self._coeff_puct = coeff_puct
-        self._non_random_ratio = non_random_ratio
+        self._random_rate = random_rate
         self._random_depth = random_depth
         self._kldgain_threshold = kldgain_threshold
         self._dfpn_search_root = dfpn_search_root
@@ -110,7 +109,7 @@ class Mcts(Engine):
                 return
         self._game = game.copy()
         self._searcher = game._get_mcts_searcher_class()(
-            self._coeff_puct, self._non_random_ratio, self._random_depth,
+            self._coeff_puct, self._random_rate, self._random_depth,
             self._dfpn_search_leaf,
         )
 

@@ -95,6 +95,97 @@ private:
     Node* m_most_visited_child;
 
 public:
+    Node* select(
+        Game<Parameters>& game, const float coeff_puct, const float random_rate)
+    {
+        assert(has_child());
+        Node* const ch = select_best_or_random_child(coeff_puct, random_rate);
+        ch->m_parent = this;
+        game.apply_nocheck(ch->m_action);
+        return ch;
+    }
+    void simulate(const Game<Parameters>& game)
+    {
+        if (m_visit_count)
+            return; // this node should have previous simulation result.
+        const auto result = game.get_result();
+        if ((result == ONGOING) || (result == DRAW))
+            return; // skip, no value changes.
+
+        const auto turn = game.get_turn();
+        const auto winner = (result == BLACK_WIN) ? BLACK : WHITE;
+        const auto value = (winner == turn) ? 1.f : -1.f;
+        m_value = value;
+        m_q_value = value;
+        m_is_mate = true;
+    }
+    void backprop_to_root()
+    {
+        assert(!has_child()); // this node should be a leaf node.
+        backprop_leaf();
+    }
+
+private: // select
+    Node*
+    select_best_or_random_child(const float coeff_puct, const float random_rate)
+    {
+        if (select_best_over_random(random_rate))
+            return select_best_child(coeff_puct);
+        return select_random_child();
+    }
+    bool select_best_over_random(const float random_rate)
+    {
+        if (m_is_mate || has_mate_to_win())
+            return true;
+        constexpr float eps = 1e-3f;
+        if (random_rate < eps)
+            return true;
+        const float s = dist01(random_engine);
+        return s > random_rate;
+    }
+    Node* select_best_child(const float coeff_puct)
+    {
+        Node* ch = m_child.get();
+        Node* out = ch;
+        float max_puct_score = ch->puct_score_from_parent_view(
+            coeff_puct, m_sqrt_visit_count, m_q_value);
+
+        ch = ch->m_sibling.get();
+        for (; ch != nullptr;) {
+            const float score = ch->puct_score_from_parent_view(
+                coeff_puct, m_sqrt_visit_count, m_q_value);
+            if (score > max_puct_score) {
+                max_puct_score = score;
+                out = ch;
+            }
+            ch = ch->m_sibling.get();
+        }
+        return out;
+    }
+    Node* select_random_child()
+    {
+        constexpr uint num_max_try = 3u;
+        const uint num = get_num_child();
+        const float p = 1.f / static_cast<float>(num);
+        Node* ch = nullptr;
+        for (uint ii = num_max_try; ii--;) {
+            float s = dist01(random_engine);
+            for (ch = m_child.get(); ch != nullptr; ch = ch->m_sibling.get()) {
+                if (s < p) {
+                    if (!ch->is_mate_to_win())
+                        return ch;
+                    else
+                        break;
+                }
+                s -= p;
+            }
+        }
+        assert(ch != nullptr);
+        ++(ch->m_visit_count_by_random);
+        return ch;
+    }
+
+public: // utility
     Node()
         : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr), m_action(),
           m_proba(0.f), m_visit_count(0), m_visit_count_by_random(0),
@@ -187,58 +278,9 @@ public:
     {
         return m_most_visited_child;
     }
-
-    /**
-     * @brief Select a leaf node using PUCT algorithm.
-     * @note https://en.wikipedia.org/wiki/Monte_Carlo_tree_search#Principle_of_operation
-     *
-     * @param [in,out] game The game position of the node. After the end, the
-     * position corresponds to the leaf node.
-     * @param [in] coeff_puct Coefficient of PUCT algorithm. Higher the value is,
-     * stronger the exploration is.
-     * @param [in] non_random_ratio Ratio of selecting actions in non-random manner.
-     * `proba_of_random : proba_of_non_random = 1 : non_random_ratio`.
-     * If the value is negative, no random selection.
-     * @param [in] random_depth Depth of nodes to explore in random manner.
-     * e.g. If `random_depth == 2`, `non_random_ratio` takes effect when
-     * selecting child nodes from root node and from nodes beneath the root
-     * node. `non_random_ratio` takes no effect for the nodes further below.
-     * @return Node Leaf node selected by PUCT algorithm.
-     * If it is game end, then output is null pointer.
-     */
-    Node* select(
-        GameType& game,
-        const float coeff_puct,
-        const int non_random_ratio,
-        int random_depth)
+    const Node* get_parent() const
     {
-        Node* node = this;
-        while (node->has_child()) {
-            node = node->select_at_internal_vertex(
-                game, coeff_puct, non_random_ratio, random_depth--);
-        }
-        return node->select_at_leaf(game);
-    }
-    Node* select_at_internal_vertex(
-        GameType& game,
-        const float coeff_puct,
-        const int non_random_ratio,
-        const int random_depth)
-    {
-        Node* ch = select_child(coeff_puct, non_random_ratio, random_depth);
-        ch->m_parent = this; // In order to cope with move operations.
-        game.apply_nocheck(ch->m_action);
-        return ch;
-    }
-    Node* select_at_leaf(const GameType& game)
-    {
-        if (game.get_result() == ResultEnum::ONGOING) {
-            return this;
-        }
-        if (m_visit_count == 0)
-            simulate_end_game(game);
-        backprop_leaf();
-        return nullptr;
+        return m_parent;
     }
 
     /**
@@ -307,32 +349,6 @@ private:
         }
         return node;
     }
-    Node* select_child(
-        const float coeff_puct,
-        const int non_random_ratio,
-        const int random_depth)
-    {
-        Node* ch = nullptr;
-        if (use_random(non_random_ratio, random_depth)) {
-            ch = select_random();
-            ++(ch->m_visit_count_by_random);
-        } else {
-            ch = select_max_puct(coeff_puct);
-        }
-        return ch;
-    }
-    bool use_random(const int non_random_ratio, const int random_depth) const
-    {
-        if (random_depth <= 0)
-            return false;
-        const float u = dist01(random_engine);
-        const float p_random = 1.f / static_cast<float>(1 + non_random_ratio);
-        if (u > p_random)
-            return false;
-        if (has_mate_to_win())
-            return false;
-        return true;
-    }
     bool has_mate_to_win() const
     {
         const Node* ch = m_child.get();
@@ -355,45 +371,6 @@ private:
         const Node* const child = get_child(index);
         return child->m_is_mate && (child->m_q_value > 0);
     }
-    Node* select_random()
-    {
-        constexpr std::size_t num_max_try = 3;
-        const std::size_t num = get_num_child();
-        const float p = 1.f / static_cast<float>(num);
-        Node* ch = nullptr;
-        for (std::size_t ii = num_max_try; ii--;) {
-            float s = dist01(random_engine);
-            for (ch = m_child.get(); ch != nullptr; ch = ch->m_sibling.get()) {
-                if (p > s) {
-                    if (!ch->is_mate_to_win())
-                        return ch;
-                    else
-                        break;
-                }
-                s -= p;
-            }
-        }
-        return ch;
-    }
-    Node* select_max_puct(const float coeff_puct) const
-    {
-        Node* ch = m_child.get();
-        Node* out = ch;
-        float max_puct_score = ch->puct_score_from_parent_view(
-            coeff_puct, m_sqrt_visit_count, m_q_value);
-
-        ch = ch->m_sibling.get();
-        for (; ch != nullptr;) {
-            const float score = ch->puct_score_from_parent_view(
-                coeff_puct, m_sqrt_visit_count, m_q_value);
-            if (score > max_puct_score) {
-                max_puct_score = score;
-                out = ch;
-            }
-            ch = ch->m_sibling.get();
-        }
-        return out;
-    }
     float puct_score_from_parent_view(
         const float coeff_puct,
         const float sqrt_visit_count_of_parent,
@@ -415,19 +392,6 @@ private:
     {
         m_value = value;
         m_q_value = value;
-    }
-    void simulate_end_game(const GameType& game)
-    {
-        const auto result = game.get_result();
-        if (result == ResultEnum::DRAW)
-            return; // Skip simulation as no change from initial values.
-
-        const auto turn = game.get_turn();
-        const auto winner = (result == BLACK_WIN) ? BLACK : WHITE;
-        const auto value = (winner == turn) ? 1.f : -1.f;
-        m_value = value;
-        m_q_value = value;
-        m_is_mate = true;
     }
 
 private:
@@ -461,7 +425,7 @@ private:
 private:
     void backprop_at_internal_vertex(const float v)
     {
-        m_visit_count += 1u;
+        m_visit_count += 1;
         const auto count_before = static_cast<float>(m_visit_count - 1);
         const auto count_after = static_cast<float>(m_visit_count);
         m_sqrt_visit_count = std::sqrt(count_after);
@@ -476,7 +440,7 @@ private:
     }
     void backprop_mate_at_internal_vertex(const float v)
     {
-        m_visit_count += 1u;
+        m_visit_count += 1;
         const auto count_before = static_cast<float>(m_visit_count - 1);
         const auto count_after = static_cast<float>(m_visit_count);
         m_sqrt_visit_count = std::sqrt(count_after);
@@ -509,7 +473,7 @@ private:
     }
     void backprop_leaf()
     {
-        m_visit_count += 1u;
+        m_visit_count += 1;
         // skip updating `m_q_value` because there should be no value change.
         m_sqrt_visit_count = std::sqrt(static_cast<float>(m_visit_count));
         if (m_parent != nullptr) {
@@ -547,19 +511,19 @@ private:
     std::unique_ptr<Node<Parameters>> m_root;
     dfpn::Searcher<Parameters> m_dfpn;
     const float m_coeff_puct;
-    const int m_non_random_ratio;
+    const float m_random_rate;
     const int m_random_depth;
     const uint m_dfpn_search_leaf;
 
 public:
     Searcher(
         const float coeff_puct,
-        const int non_random_ratio,
+        const float random_rate,
         const int random_depth,
         const uint dfpn_search_leaf = 0u)
         : m_root(std::make_unique<Node<Parameters>>()),
           m_dfpn{dfpn_search_leaf * 10u}, m_coeff_puct(coeff_puct),
-          m_non_random_ratio(non_random_ratio), m_random_depth(random_depth),
+          m_random_rate(random_rate), m_random_depth(random_depth),
           m_dfpn_search_leaf(dfpn_search_leaf)
     {
     }
@@ -571,26 +535,24 @@ public:
     {
         return m_root->get_visit_count();
     }
-    Node<Parameters>* search(GameType& game)
+    Node<Parameters>* search(Game<Parameters>& game)
     {
-        Node<Parameters>* node = m_root.get();
-        int random_depth = m_random_depth;
-        while (node->has_child()) {
-            node = node->select_at_internal_vertex(
-                game, m_coeff_puct, m_non_random_ratio, random_depth--);
-        }
-        node = node->select_at_leaf(game);
-        if (node == nullptr)
+        Node<Parameters>* const leaf = select_a_leaf_node(game);
+        assert(leaf != nullptr);
+        if (game.get_result() != ONGOING) {
+            leaf->simulate(game);
+            leaf->backprop_to_root();
             return nullptr;
+        }
         if (m_dfpn_search_leaf) {
             m_dfpn.set_game(game);
             m_dfpn.search(m_dfpn_search_leaf);
             if (m_dfpn.proved_mate()) {
-                node->simulate_mate_and_backprop();
+                leaf->simulate_mate_and_backprop();
                 return nullptr;
             }
         }
-        return node;
+        return leaf;
     }
     Searcher<Parameters>& apply(const MoveType& action)
     {
@@ -650,6 +612,22 @@ public:
             s -= p;
         }
         return ch->get_action(); // For numerical instability.
+    }
+
+private:
+    Node<Parameters>* select_a_leaf_node(Game<Parameters>& game)
+    {
+        Node<Parameters>* n = m_root.get();
+        for (int depth = 0; n->has_child(); ++depth) {
+            Node<Parameters>* const child = n->select(
+                game,
+                m_coeff_puct,
+                (depth < m_random_depth) ? m_random_rate : 0.f);
+            assert(child != nullptr);
+            assert(child->get_parent() == n);
+            n = child;
+        }
+        return n;
     }
 };
 

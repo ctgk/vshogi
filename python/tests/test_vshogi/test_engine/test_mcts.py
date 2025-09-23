@@ -105,7 +105,7 @@ def test_visit_count_by_random():
 
     searcher = Mcts(
         lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.),
-        random_depth=1, non_random_ratio=0)
+        random_depth=1, random_rate=0.25)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
     visit_count_with_noise = searcher.get_visit_counts()[m]
