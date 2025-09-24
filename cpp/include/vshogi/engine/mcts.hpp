@@ -119,9 +119,64 @@ public:
         m_q_value = value;
         m_is_mate = true;
     }
+    void expand(
+        const std::vector<MoveType>& actions,
+        const ColorEnum& turn,
+        const float* const policy_logits)
+    {
+        const auto num = actions.size();
+        if (num == 0)
+            return;
+        auto probas = std::vector<float>(num);
+        const auto is_black_turn = (turn == ColorEnum::BLACK);
+        for (std::size_t ii = num; ii--;) {
+            const auto index
+                = (is_black_turn)
+                      ? actions[ii].to_dlshogi_policy_index()
+                      : actions[ii].rotate().to_dlshogi_policy_index();
+            probas[ii] = (policy_logits) ? policy_logits[index] : 0.f;
+        }
+        softmax(probas);
+
+        m_child = std::make_unique<Node>(actions[0], probas[0]);
+        Node* child = m_child.get();
+        for (std::size_t ii = 1; ii < num; ++ii) {
+            child->m_sibling = std::make_unique<Node>(actions[ii], probas[ii]);
+            child = child->m_sibling.get();
+        }
+    }
     void backprop_to_root()
     {
-        assert(!has_child()); // this node should be a leaf node.
+        backprop_leaf();
+    }
+    void simulate_mate_and_backprop(const Move<Parameters>& a)
+    {
+        m_value = 1.f;
+        m_q_value = 1.f;
+        m_is_mate = true;
+        m_child = std::make_unique<Node<Parameters>>(a, 1.f);
+        m_most_visited_child = m_child.get();
+        m_most_visited_child->m_value = -1.f;
+        m_most_visited_child->m_q_value = -1.f;
+        m_most_visited_child->m_is_mate = true;
+        backprop_leaf(); // Increment `m_visit_count`.
+    }
+    /**
+     * @note https://en.wikipedia.org/wiki/Monte_Carlo_tree_search#Principle_of_operation
+     *
+     * @param actions
+     * @param turn
+     * @param value
+     * @param policy_logits
+     */
+    void simulate_expand_and_backprop(
+        const std::vector<MoveType>& actions,
+        const ColorEnum& turn,
+        const float value,
+        const float* const policy_logits)
+    {
+        simulate_ongoing_game(value);
+        expand(actions, turn, policy_logits);
         backprop_leaf();
     }
 
@@ -282,31 +337,17 @@ public: // utility
     {
         return m_parent;
     }
-
-    /**
-     * @note https://en.wikipedia.org/wiki/Monte_Carlo_tree_search#Principle_of_operation
-     *
-     * @param actions
-     * @param turn
-     * @param value
-     * @param policy_logits
-     */
-    void simulate_expand_and_backprop(
-        const std::vector<MoveType>& actions,
-        const ColorEnum& turn,
-        const float value,
-        const float* const policy_logits)
+    bool is_mate() const
     {
-        simulate_ongoing_game(value);
-        expand(actions, turn, policy_logits);
-        backprop_leaf();
+        return m_is_mate;
     }
-    void simulate_mate_and_backprop()
+    bool is_mate_to_win() const
     {
-        m_value = 1.f;
-        m_q_value = 1.f;
-        m_is_mate = true;
-        backprop_leaf(); // Increment `m_visit_count`.
+        return m_is_mate && (m_q_value > 0);
+    }
+    bool is_mate_to_lose() const
+    {
+        return m_is_mate && (m_q_value < 0);
     }
     Node& apply(const MoveType& action)
     {
@@ -358,14 +399,6 @@ private:
         }
         return false;
     }
-    bool is_mate_to_win() const
-    {
-        return m_is_mate && (m_q_value > 0);
-    }
-    bool is_mate_to_lose() const
-    {
-        return m_is_mate && (m_q_value < 0);
-    }
     bool is_mate_to_lose(const std::size_t& index) const
     {
         const Node* const child = get_child(index);
@@ -392,34 +425,6 @@ private:
     {
         m_value = value;
         m_q_value = value;
-    }
-
-private:
-    void expand(
-        const std::vector<MoveType>& actions,
-        const ColorEnum& turn,
-        const float* const policy_logits)
-    {
-        const auto num = actions.size();
-        if (num == 0)
-            return;
-        auto probas = std::vector<float>(num);
-        const auto is_black_turn = (turn == ColorEnum::BLACK);
-        for (std::size_t ii = num; ii--;) {
-            const auto index
-                = (is_black_turn)
-                      ? actions[ii].to_dlshogi_policy_index()
-                      : actions[ii].rotate().to_dlshogi_policy_index();
-            probas[ii] = (policy_logits) ? policy_logits[index] : 0.f;
-        }
-        softmax(probas);
-
-        m_child = std::make_unique<Node>(actions[0], probas[0]);
-        Node* child = m_child.get();
-        for (std::size_t ii = 1; ii < num; ++ii) {
-            child->m_sibling = std::make_unique<Node>(actions[ii], probas[ii]);
-            child = child->m_sibling.get();
-        }
     }
 
 private:
@@ -539,16 +544,23 @@ public:
     {
         Node<Parameters>* const leaf = select_a_leaf_node(game);
         assert(leaf != nullptr);
+        assert(!leaf->has_child());
         if (game.get_result() != ONGOING) {
             leaf->simulate(game);
             leaf->backprop_to_root();
             return nullptr;
         }
+        if (leaf->is_mate_to_lose()) {
+            leaf->expand(game.get_legal_moves(), game.get_turn(), nullptr);
+            leaf->backprop_to_root();
+            return nullptr;
+        }
+        assert(!leaf->is_mate_to_win());
         if (m_dfpn_search_leaf) {
             m_dfpn.set_game(game);
             m_dfpn.search(m_dfpn_search_leaf);
             if (m_dfpn.proved_mate()) {
-                leaf->simulate_mate_and_backprop();
+                leaf->simulate_mate_and_backprop(m_dfpn.get_mate_move());
                 return nullptr;
             }
         }

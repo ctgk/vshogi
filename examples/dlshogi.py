@@ -155,7 +155,7 @@ def play_game(
                 main_player.set_game(game)
             main_player.search(args.mcts_search - main_player.num_searched)
 
-        if player.dfpn_proved_mate:
+        if player.proved_mate():
             move = player.select()
             game.z_weight_record.append(1.)
         elif game.record_length < num_random_moves:
@@ -167,14 +167,14 @@ def play_game(
                 0.5 if (main_player is None) or (main_player is player) else 0.)
 
         player_dump = main_player or player
-        visit_count = {} if player_dump.dfpn_proved_mate else {
+        visit_count = {} if player_dump.proved_mate() else {
             m.to_sfen(): v + 1  # +1 for smoothing
             for m, v in
             player_dump.get_visit_counts(include_random=False).items()
         }
         game.v_value_record.append(player_dump.get_value())
         game.q_value_record.append(
-            1 if player_dump.dfpn_proved_mate else
+            1 if player_dump.proved_mate() else
             player_dump.get_q_value(greedy_depth=args.mcts_q_greedy_depth))
         game.visit_count_record.append(visit_count)
 

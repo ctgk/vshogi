@@ -116,16 +116,19 @@ class Mcts(Engine):
     def _is_ready(self) -> bool:
         return self._searcher is not None
 
-    @property
-    def dfpn_proved_mate(self) -> bool:
-        """Return true if DFPN proved a checkmate otherwise false.
+    def proved_mate(self) -> bool:
+        """Return true if the engine proved a checkmate, otherwise false.
 
         Returns
         -------
         bool
-            True if DFPN proved a checkmate otherwise false.
+            True if there is a checkmate, otherwise false.
         """
-        return self._dfpn is not None and self._dfpn.proved_mate()
+        if (self._dfpn is not None) and self._dfpn.proved_mate():
+            return True
+        if (self._searcher is not None) and self._searcher.proved_mate():
+            return True
+        return False
 
     def _clear(self) -> None:
         self._searcher = None
@@ -161,7 +164,7 @@ class Mcts(Engine):
             Number of game positions to search or period of time to search
             in second, by default 0.01
         """
-        if self.dfpn_proved_mate:
+        if (self._dfpn is not None) and self._dfpn.proved_mate():
             return
         prev_visits = None
         kldgain_steps = 100
@@ -236,7 +239,7 @@ class Mcts(Engine):
         tp.Dict[Move, float]
             Raw probabilities of selecting actions by `policy_value_func`.
         """
-        if self.dfpn_proved_mate:
+        if self._searcher is None:
             return {}
         root = self._searcher.get_root()
         move_proba_pair_list = [
@@ -260,7 +263,7 @@ class Mcts(Engine):
         tp.Dict[Move, float]
             Q value of each action.
         """
-        if self.dfpn_proved_mate:
+        if self._searcher is None:
             return {}
         root = self._searcher.get_root()
         move_q_pair_list = [
@@ -286,7 +289,7 @@ class Mcts(Engine):
         tp.Dict[Move, int]
             Visit counts of each action.
         """
-        if self.dfpn_proved_mate:
+        if self._searcher is None:
             return {}
         root = self._searcher.get_root()
         move_visit_count_pair_list = [
@@ -315,7 +318,7 @@ class Mcts(Engine):
         Move
             Selected action.
         """
-        if self.dfpn_proved_mate:
+        if (self._dfpn is not None) and self._dfpn.proved_mate():
             return self._dfpn.select()
         if (temperature is None) or np.isclose(temperature, 0):
             return self._searcher.get_action_by_visit_max()

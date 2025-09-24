@@ -58,6 +58,7 @@ def test_q_values_mate_in_one():
     searcher.set_game(game)
     searcher.search(n_or_t=100)
     actual = searcher.get_q_values()
+    print(searcher._tree())
     print(actual)
     assert np.isclose(actual[m], 1, rtol=0, atol=1e-2)
 
@@ -190,6 +191,9 @@ def test_dfpn_vertex():
     mcts.search(n_or_t=3)
     print(mcts._tree(depth=5, breadth=5))
     assert shogi.Move("3e4e") == mcts.select()
+
+    mcts.apply(shogi.Move("3e2e"))
+    assert shogi.Move("3c2d") == mcts.select()
 
 
 if __name__ == '__main__':

@@ -398,6 +398,51 @@ TEST(minishogi_searcher, test_mate_in_three)
         expected_visits, mcts.get_root()->get_child(m)->get_visit_count());
 }
 
+TEST(minishogi_searcher, test_dfpn_vertex)
+{
+    // Turn: BLACK
+    // White: -
+    //     5   4   3   2   1
+    //   *---*---*---*---*---*
+    // A |   |   |-OU|   |   |
+    //   *---*---*---*---*---*
+    // B |   |   |   |   |   |
+    //   *---*---*---*---*---*
+    // C |   |   |-KI|-FU|   |
+    //   *---*---*---*---*---*
+    // D |   |   |   |   |   |
+    //   *---*---*---*---*---*
+    // E |   |   |+OU|   |   |
+    //   *---*---*---*---*---*
+    // Black: -
+    auto mcts = Searcher(4.f, 0.f, 0, 100u);
+    for (int ii = 3; ii--;) {
+        auto g = Game("2k2/2rg1/2sp1/5/2K2 b -");
+        Node* const n = mcts.search(g);
+        if (n)
+            n->simulate_expand_and_backprop(
+                g.get_legal_moves(), g.get_turn(), 0.f, nullptr);
+    }
+    CHECK_EQUAL(Move("3e4e").hash(), mcts.get_action_by_visit_max().hash());
+    mcts.apply(Move("3e2e"));
+    DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
+    for (int ii = 2; ii--;) {
+        auto g = Game("2k2/2rg1/2sp1/5/3K1 w -");
+        Node* const n = mcts.search(g);
+        CHECK_TRUE(g.get_result() == vshogi::ONGOING);
+        CHECK_EQUAL(nullptr, n);
+        DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
+    }
+    {
+        auto g = Game("2k2/2rg1/2sp1/5/3K1 w -");
+        Node* const n = mcts.search(g);
+        CHECK_TRUE(g.get_result() == vshogi::WHITE_WIN);
+        CHECK_EQUAL(nullptr, n);
+        DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
+    }
+    CHECK_EQUAL(Move("3c2d").hash(), mcts.get_action_by_visit_max().hash());
+}
+
 } // namespace test_minishogi
 
 namespace test_judkins_shogi

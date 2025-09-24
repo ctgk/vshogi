@@ -465,6 +465,14 @@ inline void export_mcts_searcher(pybind11::module& m)
                     return py::none();
                 return py::cast(*out, py::return_value_policy::reference);
             })
+        .def(
+            "proved_mate",
+            [](const Searcher& self) -> bool {
+                const auto root = self.get_root();
+                if (root == nullptr)
+                    return false;
+                return root->is_mate();
+            })
         .def("get_visit_count", &Searcher::get_visit_count)
         .def("get_action_by_visit_max", &Searcher::get_action_by_visit_max)
         .def(

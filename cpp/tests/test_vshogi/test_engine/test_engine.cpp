@@ -57,7 +57,7 @@ TEST(shogi_engine, mcts_with_dfpn)
     };
 
     auto g = Game();
-    auto mcts = vshogi::engine::mcts::Searcher<Parameters>(4.f, 3, 1);
+    auto mcts = vshogi::engine::mcts::Searcher<Parameters>(4.f, 3, 1, 100u);
     auto dfpn = vshogi::engine::dfpn3::Searcher<Parameters>();
     for (int ii = 0; ii < 167; ++ii) {
         if (g.get_result() != vshogi::ONGOING)
@@ -74,15 +74,8 @@ TEST(shogi_engine, mcts_with_dfpn)
             const auto n = mcts.search(g_copy);
             if (n == nullptr)
                 continue;
-
-            dfpn.set_game(g_copy);
-            dfpn.search(100);
-            CHECK_TRUE(dfpn.get_num_nodes_remain() > 0u);
-            if (dfpn.proved_mate())
-                n->simulate_mate_and_backprop();
-            else
-                n->simulate_expand_and_backprop(
-                    g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
+            n->simulate_expand_and_backprop(
+                g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
         }
 
         mcts.get_action_by_visit_max();
