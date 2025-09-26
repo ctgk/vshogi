@@ -575,6 +575,17 @@ public:
         }
         return leaf;
     }
+    void simulate_expand_backprop(
+        Node<Parameters>* const leaf,
+        const Game<Parameters>& game,
+        const float value,
+        const float* const policy_logits = nullptr)
+    {
+        if (leaf == nullptr)
+            return;
+        leaf->simulate_expand_and_backprop(
+            game.get_legal_moves(), game.get_turn(), value, policy_logits);
+    }
     Searcher<Parameters>& apply(const MoveType& action)
     {
         m_root->apply(action);

@@ -181,7 +181,8 @@ class Mcts(Engine):
             if node is None:
                 continue
             policy_logits, value = self._policy_value_func(game)
-            node.simulate_expand_and_backprop(game._game, value, policy_logits)
+            self._searcher.simulate_expand_backprop(
+                node, game._game, value, policy_logits)
 
     def _kldgain(self, prev_visits: tp.Dict[Move, int]) -> float:
         prev_visits_added = {m: v + 1 for m, v in prev_visits.items()}

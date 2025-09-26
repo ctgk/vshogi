@@ -411,24 +411,12 @@ inline void export_mcts_node(pybind11::module& m)
                 return out;
             })
         .def("get_proba", &Node::get_proba)
-        .def(
-            "get_child",
-            [](Node& node, const Move& action) -> py::object {
-                const auto out = node.get_child(action);
-                if (out == nullptr)
-                    return py::none();
-                return py::cast(*out, py::return_value_policy::reference);
-            })
-        .def(
-            "simulate_expand_and_backprop",
-            [](Node& self,
-               const Game& game,
-               const float value,
-               const py::array_t<float>& policy_logits) {
-                const auto data = policy_logits.data();
-                self.simulate_expand_and_backprop(
-                    game.get_legal_moves(), game.get_turn(), value, data);
-            });
+        .def("get_child", [](Node& node, const Move& action) -> py::object {
+            const auto out = node.get_child(action);
+            if (out == nullptr)
+                return py::none();
+            return py::cast(*out, py::return_value_policy::reference);
+        });
 }
 
 template <class Parameters>
@@ -436,6 +424,7 @@ inline void export_mcts_searcher(pybind11::module& m)
 {
     namespace py = pybind11;
     using Game = vshogi::Game<Parameters>;
+    using Node = vshogi::engine::mcts::Node<Parameters>;
     using Searcher = vshogi::engine::mcts::Searcher<Parameters>;
 
     py::class_<Searcher>(m, "Mcts")
@@ -448,6 +437,16 @@ inline void export_mcts_searcher(pybind11::module& m)
                 if (out == nullptr)
                     return py::none();
                 return py::cast(*out, py::return_value_policy::reference);
+            })
+        .def(
+            "simulate_expand_backprop",
+            [](Searcher& self,
+               Node* const leaf,
+               const Game& game,
+               const float value,
+               const py::array_t<float>& policy_logits) {
+                self.simulate_expand_backprop(
+                    leaf, game, value, policy_logits.data());
             })
         .def("apply", &Searcher::apply)
         .def(
