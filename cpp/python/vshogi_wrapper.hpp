@@ -428,14 +428,7 @@ inline void export_mcts_node(pybind11::module& m)
                 const auto data = policy_logits.data();
                 self.simulate_expand_and_backprop(
                     game.get_legal_moves(), game.get_turn(), value, data);
-            })
-        .def(
-            "simulate_expand_and_backprop",
-            [](Node& self, const Game& game, const float value) {
-                self.simulate_expand_and_backprop(
-                    game.get_legal_moves(), game.get_turn(), value, nullptr);
-            })
-        .def("simulate_mate_and_backprop", &Node::simulate_mate_and_backprop);
+            });
 }
 
 template <class Parameters>
