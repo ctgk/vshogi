@@ -95,7 +95,16 @@ private:
     Node* m_most_visited_child;
 
 public:
-    Node* select(
+    /**
+     * @brief Select a best or random child node.
+     * @note Users must check that the node has at least one child node.
+     *
+     * @param game Corresponding game object to apply the selected move on.
+     * @param coeff_puct Coefficient of PUCT computation.
+     * @param random_rate Probability of select a child in random manner.
+     * @return Node* A best or random child node.
+     */
+    Node* select_nocheck(
         Game<Parameters>& game, const float coeff_puct, const float random_rate)
     {
         assert(has_child());
@@ -631,7 +640,7 @@ private:
     {
         Node<Parameters>* n = m_root.get();
         for (int depth = 0; n->has_child(); ++depth) {
-            Node<Parameters>* const child = n->select(
+            Node<Parameters>* const child = n->select_nocheck(
                 game,
                 m_coeff_puct,
                 (depth < m_random_depth) ? m_random_rate : 0.f);
