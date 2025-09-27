@@ -154,11 +154,7 @@ public:
             child = child->m_sibling.get();
         }
     }
-    void backprop_to_root()
-    {
-        backprop_leaf();
-    }
-    void simulate_mate_and_backprop(const Move<Parameters>& a)
+    void simulate_mate_and_expand(const Move<Parameters>& a)
     {
         m_value = 1.f;
         m_q_value = 1.f;
@@ -168,7 +164,6 @@ public:
         m_most_visited_child->m_value = -1.f;
         m_most_visited_child->m_q_value = -1.f;
         m_most_visited_child->m_is_mate = true;
-        backprop_leaf(); // Increment `m_visit_count`.
     }
     /**
      * @note https://en.wikipedia.org/wiki/Monte_Carlo_tree_search#Principle_of_operation
@@ -178,7 +173,7 @@ public:
      * @param value
      * @param policy_logits
      */
-    void simulate_expand_and_backprop(
+    void simulate_ongoing_and_expand(
         const std::vector<MoveType>& actions,
         const ColorEnum& turn,
         const float value,
@@ -186,7 +181,21 @@ public:
     {
         simulate_ongoing_game(value);
         expand(actions, turn, policy_logits);
-        backprop_leaf();
+    }
+    Node* backprop(const float v, Node* const child)
+    {
+        const auto count_before = static_cast<float>(m_visit_count++);
+        const auto count_after = static_cast<float>(m_visit_count);
+        m_sqrt_visit_count = std::sqrt(static_cast<float>(m_visit_count));
+        update_most_visited_child(child);
+        if ((m_most_visited_child && m_most_visited_child->is_mate_to_lose())
+            || all_childs_are_mate_to_win()) {
+            m_is_mate = true;
+            m_q_value = v;
+        } else {
+            m_q_value = (v + count_before * m_q_value) / count_after;
+        }
+        return m_parent;
     }
 
 private: // select
@@ -247,6 +256,68 @@ private: // select
         assert(ch != nullptr);
         ++(ch->m_visit_count_by_random);
         return ch;
+    }
+
+private: // simulate
+    void simulate_ongoing_game(const float value)
+    {
+        m_value = value;
+        m_q_value = value;
+    }
+
+private: // backprop
+    void update_most_visited_child(Node* const candidate)
+    {
+        // |   candidate(c)  |                m_most_visited_child(m)             |
+        // |                 | nullptr | is_mate_to_win | is_mate_to_lose | other |
+        // |         nullptr |    #    |       (m)      |       (m)       |  (m)  |
+        // |  is_mate_to_win |   (c)   |        #       |        x        |  (m)  |
+        // | is_mate_to_lose |   (c)   |       (c)      |        #        |  (c)  |
+        // |           other |   (c)   |       (c)      |        x        |   ?   |
+        // #: don't care
+        // x: impossible to happen.
+
+        if (m_most_visited_child == nullptr) {
+            m_most_visited_child = candidate;
+            return;
+        }
+        if (candidate == nullptr) {
+            return;
+        }
+        assert(
+            candidate->is_mate_to_win()
+                ? !m_most_visited_child->is_mate_to_lose()
+                : true);
+        if (candidate->is_mate_to_lose()
+            || m_most_visited_child->is_mate_to_win()) {
+            m_most_visited_child = candidate;
+            return;
+        }
+        if (candidate->get_visit_count_excluding_random()
+            > m_most_visited_child->get_visit_count_excluding_random())
+            m_most_visited_child = candidate;
+        else if (
+            (candidate->get_visit_count_excluding_random()
+             == m_most_visited_child->get_visit_count_excluding_random())
+            && (candidate->m_q_value < m_most_visited_child->m_q_value))
+            m_most_visited_child = candidate;
+    }
+    /**
+     * @brief `all(c->is_mate_to_win() for c in children)`
+     *
+     * @return true All childs are mate to win, which means mate to lose for
+     * this node.
+     * @return false There exists at least one child that is not mate to win,
+     * which means this node is not mate to lose.
+     */
+    bool all_childs_are_mate_to_win() const
+    {
+        for (const Node* c = m_child.get(); c != nullptr;
+             c = c->get_sibling()) {
+            if (!c->is_mate_to_win())
+                return false;
+        }
+        return true;
     }
 
 public: // utility
@@ -408,11 +479,6 @@ private:
         }
         return false;
     }
-    bool is_mate_to_lose(const std::size_t& index) const
-    {
-        const Node* const child = get_child(index);
-        return child->m_is_mate && (child->m_q_value > 0);
-    }
     float puct_score_from_parent_view(
         const float coeff_puct,
         const float sqrt_visit_count_of_parent,
@@ -427,90 +493,6 @@ private:
         const float u = m_proba * sqrt_visit_count_of_parent
                         / static_cast<float>(1 + m_visit_count);
         return q + u * coeff_puct;
-    }
-
-private:
-    void simulate_ongoing_game(const float value)
-    {
-        m_value = value;
-        m_q_value = value;
-    }
-
-private:
-    void backprop_at_internal_vertex(const float v)
-    {
-        m_visit_count += 1;
-        const auto count_before = static_cast<float>(m_visit_count - 1);
-        const auto count_after = static_cast<float>(m_visit_count);
-        m_sqrt_visit_count = std::sqrt(count_after);
-
-        m_q_value *= count_before / count_after;
-        m_q_value += v / count_after;
-
-        if (m_parent != nullptr) {
-            m_parent->update_most_visited_child(this);
-            m_parent->backprop_at_internal_vertex(-v);
-        }
-    }
-    void backprop_mate_at_internal_vertex(const float v)
-    {
-        m_visit_count += 1;
-        const auto count_before = static_cast<float>(m_visit_count - 1);
-        const auto count_after = static_cast<float>(m_visit_count);
-        m_sqrt_visit_count = std::sqrt(count_after);
-
-        if ((!m_is_mate) && (v < 0) && has_non_mate_child()) {
-            m_is_mate = false;
-            m_q_value *= count_before / count_after;
-            m_q_value += v / count_after;
-            if (m_parent != nullptr) {
-                m_parent->update_most_visited_child(this);
-                m_parent->backprop_at_internal_vertex(-v);
-            }
-        } else {
-            m_is_mate = true;
-            m_q_value = v;
-            if (m_parent != nullptr) {
-                m_parent->update_most_visited_child(this);
-                m_parent->backprop_mate_at_internal_vertex(-v);
-            }
-        }
-    }
-    bool has_non_mate_child() const
-    {
-        const Node* ch = m_child.get();
-        for (; ch != nullptr; ch = ch->m_sibling.get()) {
-            if (!ch->m_is_mate)
-                return true;
-        }
-        return false;
-    }
-    void backprop_leaf()
-    {
-        m_visit_count += 1;
-        // skip updating `m_q_value` because there should be no value change.
-        m_sqrt_visit_count = std::sqrt(static_cast<float>(m_visit_count));
-        if (m_parent != nullptr) {
-            m_parent->update_most_visited_child(this);
-            if (m_is_mate)
-                m_parent->backprop_mate_at_internal_vertex(-m_q_value);
-            else
-                m_parent->backprop_at_internal_vertex(-m_q_value);
-        }
-    }
-    void update_most_visited_child(Node* const candidate)
-    {
-        if (m_most_visited_child == nullptr)
-            m_most_visited_child = candidate;
-        else if (
-            candidate->get_visit_count_excluding_random()
-            > m_most_visited_child->get_visit_count_excluding_random())
-            m_most_visited_child = candidate;
-        else if (
-            (candidate->get_visit_count_excluding_random()
-             == m_most_visited_child->get_visit_count_excluding_random())
-            && (candidate->m_q_value < m_most_visited_child->m_q_value))
-            m_most_visited_child = candidate;
     }
 };
 
@@ -556,12 +538,12 @@ public:
         assert(!leaf->has_child());
         if (game.get_result() != ONGOING) {
             leaf->simulate(game);
-            leaf->backprop_to_root();
+            backprop_to_root(leaf);
             return nullptr;
         }
         if (leaf->is_mate_to_lose()) {
             leaf->expand(game.get_legal_moves(), game.get_turn(), nullptr);
-            leaf->backprop_to_root();
+            backprop_to_root(leaf);
             return nullptr;
         }
         assert(!leaf->is_mate_to_win());
@@ -569,7 +551,8 @@ public:
             m_dfpn.set_game(game);
             m_dfpn.search(m_dfpn_search_leaf);
             if (m_dfpn.proved_mate()) {
-                leaf->simulate_mate_and_backprop(m_dfpn.get_mate_move());
+                leaf->simulate_mate_and_expand(m_dfpn.get_mate_move());
+                backprop_to_root(leaf);
                 return nullptr;
             }
         }
@@ -583,8 +566,9 @@ public:
     {
         if (leaf == nullptr)
             return;
-        leaf->simulate_expand_and_backprop(
+        leaf->simulate_ongoing_and_expand(
             game.get_legal_moves(), game.get_turn(), value, policy_logits);
+        backprop_to_root(leaf);
     }
     Searcher<Parameters>& apply(const MoveType& action)
     {
@@ -660,6 +644,16 @@ private:
             n = child;
         }
         return n;
+    }
+    void backprop_to_root(Node<Parameters>* const leaf)
+    {
+        using NodeType = Node<Parameters>;
+        float v = leaf->get_value();
+        for (NodeType *n = leaf, *prev = nullptr; n; v = -v) {
+            NodeType* const p = n->backprop(v, prev);
+            prev = n;
+            n = p;
+        }
     }
 };
 

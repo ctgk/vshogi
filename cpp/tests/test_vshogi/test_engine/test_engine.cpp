@@ -74,8 +74,7 @@ TEST(shogi_engine, mcts_with_dfpn)
             const auto n = mcts.search(g_copy);
             if (n == nullptr)
                 continue;
-            n->simulate_expand_and_backprop(
-                g_copy.get_legal_moves(), g_copy.get_turn(), 0.f, zeros);
+            mcts.simulate_expand_backprop(n, g_copy, 0.f, zeros);
         }
 
         mcts.get_action_by_visit_max();
