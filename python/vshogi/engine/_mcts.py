@@ -3,7 +3,6 @@ import typing as tp
 import numpy as np
 
 from vshogi._game import Game
-from vshogi.engine._dfpn import DfpnSearcher
 from vshogi.engine._engine import Engine
 
 
@@ -57,6 +56,7 @@ class Mcts(Engine):
     def __init__(
         self,
         policy_value_func: tp.Callable[[Game], tp.Tuple[Policy, Value]],
+        *,
         coeff_puct: float = 1.,
         random_rate: float = 0.25,
         random_depth: int = 1,
@@ -91,7 +91,6 @@ class Mcts(Engine):
         super().__init__(name=name)
         self._policy_value_func = policy_value_func
         self._searcher = None
-        self._dfpn = None
 
         self._coeff_puct = coeff_puct
         self._random_rate = random_rate
@@ -101,16 +100,10 @@ class Mcts(Engine):
         self._dfpn_search_leaf = dfpn_search_leaf
 
     def _set_game(self, game: Game):
-        if self._dfpn_search_root:
-            self._dfpn = DfpnSearcher(self._dfpn_search_root * 10)
-            self._dfpn.set_game(game)
-            self._dfpn.search(self._dfpn_search_root)
-            if self._dfpn.proved_mate():
-                return
         self._game = game.copy()
         self._searcher = game._get_mcts_searcher_class()(
             self._coeff_puct, self._random_rate, self._random_depth,
-            self._dfpn_search_leaf,
+            self._dfpn_search_root, self._dfpn_search_leaf,
         )
 
     def _is_ready(self) -> bool:
@@ -124,15 +117,10 @@ class Mcts(Engine):
         bool
             True if there is a checkmate, otherwise false.
         """
-        if (self._dfpn is not None) and self._dfpn.proved_mate():
-            return True
-        if (self._searcher is not None) and self._searcher.proved_mate():
-            return True
-        return False
+        return (self._searcher is not None) and self._searcher.proved_mate()
 
     def _clear(self) -> None:
         self._searcher = None
-        self._dfpn = None
         self._game = None
 
     def apply(self, move: Move):
@@ -144,11 +132,7 @@ class Mcts(Engine):
             Move to apply
         """
         if self._is_ready():
-            self._game.apply(move)
-            self._searcher.apply(move)
-            if self._dfpn_search_root:
-                self._dfpn.set_game(self._game)
-                self._dfpn.search(self._dfpn_search_root)
+            self._searcher.apply(self._game._game, move)
 
     def _get_num_searched(self):
         if self._searcher is None:
@@ -164,8 +148,6 @@ class Mcts(Engine):
             Number of game positions to search or period of time to search
             in second, by default 0.01
         """
-        if (self._dfpn is not None) and self._dfpn.proved_mate():
-            return
         prev_visits = None
         kldgain_steps = 100
         for ii in self._count(n_or_t=n_or_t):
@@ -319,8 +301,6 @@ class Mcts(Engine):
         Move
             Selected action.
         """
-        if (self._dfpn is not None) and self._dfpn.proved_mate():
-            return self._dfpn.select()
         if (temperature is None) or np.isclose(temperature, 0):
             return self._searcher.get_action_by_visit_max()
         else:

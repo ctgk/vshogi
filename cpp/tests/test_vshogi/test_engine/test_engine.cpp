@@ -1,4 +1,3 @@
-#include "vshogi/engine/dfpn3/searcher.hpp"
 #include "vshogi/engine/mcts.hpp"
 #include "vshogi/variants/minishogi.hpp"
 #include "vshogi/variants/shogi.hpp"
@@ -57,18 +56,11 @@ TEST(shogi_engine, mcts_with_dfpn)
     };
 
     auto g = Game();
-    auto mcts = vshogi::engine::mcts::Searcher<Parameters>(4.f, 3, 1, 100u);
-    auto dfpn = vshogi::engine::dfpn3::Searcher<Parameters>();
+    auto mcts = vshogi::engine::mcts::Searcher<Parameters>(
+        4.f, 0.25f, 1, 10000u, 100u);
     for (int ii = 0; ii < 167; ++ii) {
         if (g.get_result() != vshogi::ONGOING)
             break;
-
-        {
-            dfpn.set_game(g);
-            dfpn.search(10000);
-            CHECK_TRUE(dfpn.get_num_nodes_remain() > 0u);
-        }
-
         for (int jj = (100 - mcts.get_visit_count()); jj--;) {
             auto g_copy = Game(g);
             const auto n = mcts.search(g_copy);
@@ -79,8 +71,7 @@ TEST(shogi_engine, mcts_with_dfpn)
 
         mcts.get_action_by_visit_max();
         const auto m = Move(kifu[ii]);
-        g.apply(m);
-        mcts.apply(m);
+        mcts.apply(g, m);
 
         if (ii == 166) {
             CHECK_TRUE(g.get_result() == vshogi::BLACK_WIN);

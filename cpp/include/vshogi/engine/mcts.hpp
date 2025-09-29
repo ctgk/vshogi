@@ -83,7 +83,6 @@ private:
     /**
      * @brief Average of `m_value` of all the nodes below this including this
      * one weighted by their `m_visit_count`.
-     * @note `m_q_arctanh = atanh(m_q_value)` does not necessarily hold.
      */
     float m_q_value;
 
@@ -159,8 +158,20 @@ public:
         m_value = 1.f;
         m_q_value = 1.f;
         m_is_mate = true;
-        m_child = std::make_unique<Node<Parameters>>(a, 1.f);
-        m_most_visited_child = m_child.get();
+        if (has_child()) {
+            Node* c = m_child.get();
+            for (; c; c = c->m_sibling.get()) {
+                if (c->get_action() == a) {
+                    m_most_visited_child = c;
+                    break;
+                }
+            }
+            if (c == nullptr)
+                throw std::invalid_argument("Given action not found.");
+        } else {
+            m_child = std::make_unique<Node<Parameters>>(a, 1.f);
+            m_most_visited_child = m_child.get();
+        }
         m_most_visited_child->m_value = -1.f;
         m_most_visited_child->m_q_value = -1.f;
         m_most_visited_child->m_is_mate = true;
@@ -188,11 +199,15 @@ public:
         const auto count_after = static_cast<float>(m_visit_count);
         m_sqrt_visit_count = std::sqrt(static_cast<float>(m_visit_count));
         update_most_visited_child(child);
-        if ((m_most_visited_child && m_most_visited_child->is_mate_to_lose())
+        if (m_is_mate) {
+            // preserve `m_q_value` if it is already found to be mate.
+        } else if (
+            (m_most_visited_child && m_most_visited_child->is_mate_to_lose())
             || all_childs_are_mate_to_win()) {
             m_is_mate = true;
+            assert((0.99f < std::abs(v)) && (std::abs(v) < 1.01f));
             m_q_value = v;
-        } else {
+        } else if (!m_is_mate) {
             m_q_value = (v + count_before * m_q_value) / count_after;
         }
         return m_parent;
@@ -357,7 +372,8 @@ public: // utility
     }
     float get_q_value(const uint greedy_depth = 0u) const
     {
-        if ((m_most_visited_child == nullptr) || (greedy_depth == 0u))
+        if (m_is_mate || (m_most_visited_child == nullptr)
+            || (greedy_depth == 0u))
             return m_q_value;
         else
             return -m_most_visited_child->get_q_value(greedy_depth - 1u);
@@ -509,6 +525,7 @@ private:
     const float m_coeff_puct;
     const float m_random_rate;
     const int m_random_depth;
+    const uint m_dfpn_search_root;
     const uint m_dfpn_search_leaf;
 
 public:
@@ -516,10 +533,12 @@ public:
         const float coeff_puct,
         const float random_rate,
         const int random_depth,
+        const uint dfpn_search_root = 0u,
         const uint dfpn_search_leaf = 0u)
         : m_root(std::make_unique<Node<Parameters>>()),
-          m_dfpn{dfpn_search_leaf * 10u}, m_coeff_puct(coeff_puct),
-          m_random_rate(random_rate), m_random_depth(random_depth),
+          m_dfpn{std::max(dfpn_search_root, dfpn_search_leaf) * 10u},
+          m_coeff_puct(coeff_puct), m_random_rate(random_rate),
+          m_random_depth(random_depth), m_dfpn_search_root(dfpn_search_root),
           m_dfpn_search_leaf(dfpn_search_leaf)
     {
     }
@@ -530,6 +549,10 @@ public:
     int get_visit_count() const
     {
         return m_root->get_visit_count();
+    }
+    bool proved_mate() const
+    {
+        return m_root->is_mate();
     }
     Node<Parameters>* search(Game<Parameters>& game)
     {
@@ -547,15 +570,8 @@ public:
             return nullptr;
         }
         assert(!leaf->is_mate_to_win());
-        if (m_dfpn_search_leaf) {
-            m_dfpn.set_game(game);
-            m_dfpn.search(m_dfpn_search_leaf);
-            if (m_dfpn.proved_mate()) {
-                leaf->simulate_mate_and_expand(m_dfpn.get_mate_move());
-                backprop_to_root(leaf);
-                return nullptr;
-            }
-        }
+        if (dfpn_proved_mate(game, leaf))
+            return nullptr;
         return leaf;
     }
     void simulate_expand_backprop(
@@ -570,9 +586,11 @@ public:
             game.get_legal_moves(), game.get_turn(), value, policy_logits);
         backprop_to_root(leaf);
     }
-    Searcher<Parameters>& apply(const MoveType& action)
+    Searcher<Parameters>& apply(Game<Parameters>& game, const MoveType& action)
     {
         m_root->apply(action);
+        game.apply(action);
+        dfpn_proved_mate(game, m_root.get());
         return *this;
     }
     const Node<Parameters>* get_root() const
@@ -582,9 +600,10 @@ public:
     MoveType get_action_by_visit_max() const
     {
         const Node<Parameters>* const ch = m_root->get_most_visited_child();
-        if (ch == nullptr)
+        if (ch == nullptr) {
+            assert(!m_root->has_child());
             return MoveType();
-        else
+        } else
             return ch->get_action();
     }
     MoveType get_action_by_visit_distribution(const float temperature) const
@@ -654,6 +673,21 @@ private:
             prev = n;
             n = p;
         }
+    }
+    bool dfpn_proved_mate(const GameType& game, Node<Parameters>* const node)
+    {
+        const uint search_count
+            = (node == m_root.get()) ? m_dfpn_search_root : m_dfpn_search_leaf;
+        if (search_count == 0u)
+            return false;
+        m_dfpn.set_game(game);
+        m_dfpn.search(search_count);
+        if (m_dfpn.proved_mate()) {
+            node->simulate_mate_and_expand(m_dfpn.get_mate_move());
+            backprop_to_root(node);
+            return true;
+        }
+        return false;
     }
 };
 

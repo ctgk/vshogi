@@ -428,7 +428,12 @@ inline void export_mcts_searcher(pybind11::module& m)
     using Searcher = vshogi::engine::mcts::Searcher<Parameters>;
 
     py::class_<Searcher>(m, "Mcts")
-        .def(py::init<const float, const float, const int, const uint>())
+        .def(py::init<
+             const float,
+             const float,
+             const int,
+             const uint,
+             const uint>())
         .def("init_root", &Searcher::init_root)
         .def(
             "search",
@@ -457,14 +462,7 @@ inline void export_mcts_searcher(pybind11::module& m)
                     return py::none();
                 return py::cast(*out, py::return_value_policy::reference);
             })
-        .def(
-            "proved_mate",
-            [](const Searcher& self) -> bool {
-                const auto root = self.get_root();
-                if (root == nullptr)
-                    return false;
-                return root->is_mate();
-            })
+        .def("proved_mate", &Searcher::proved_mate)
         .def("get_visit_count", &Searcher::get_visit_count)
         .def("get_action_by_visit_max", &Searcher::get_action_by_visit_max)
         .def(

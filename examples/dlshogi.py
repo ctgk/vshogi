@@ -165,6 +165,10 @@ def play_game(
             move = player.select()
             game.z_weight_record.append(
                 0.5 if (main_player is None) or (main_player is player) else 0.)
+        if (move == args._shogi.Move("1a1a")):
+            raise ValueError(
+                f"Invalid move ({move}) selected at the game, "
+                f"{game.to_sfen()}.\n{player._tree(depth=2)}")
 
         player_dump = main_player or player
         visit_count = {} if player_dump.proved_mate() else {
@@ -174,7 +178,6 @@ def play_game(
         }
         game.v_value_record.append(player_dump.get_value())
         game.q_value_record.append(
-            1 if player_dump.proved_mate() else
             player_dump.get_q_value(greedy_depth=args.mcts_q_greedy_depth))
         game.visit_count_record.append(visit_count)
 

@@ -349,8 +349,7 @@ TEST(minishogi_searcher, explore_after_apply)
     }
 
     const auto move = mcts.get_action_by_visit_max();
-    mcts.apply(move);
-    g.apply(move);
+    mcts.apply(g, move);
     const auto current_visit_count = mcts.get_visit_count();
     CHECK_TRUE(current_visit_count > 0);
     for (int ii = 100; ii--;) {
@@ -403,48 +402,105 @@ TEST(minishogi_searcher, test_mate_in_three)
         expected_visits, mcts.get_root()->get_child(m)->get_visit_count());
 }
 
+TEST(minishogi_searcher, test_dfpn_root)
+{
+    auto mcts = Searcher(4.f, 0.f, 0, 10000u, 0u);
+    {
+        auto g = Game("5/4k/5/4P/4K b 2G");
+        mcts.search(g);
+        CHECK_TRUE(mcts.proved_mate());
+        CHECK_EQUAL(Move("G*1c").hash(), mcts.get_action_by_visit_max().hash());
+    }
+    {
+        mcts.init_root();
+        auto game = Game("5/5/4k/4P/4K w 2G");
+        for (int ii = 100; ii--;) {
+            auto g = Game(game);
+            const auto leaf = mcts.search(g);
+            if (leaf)
+                mcts.simulate_expand_backprop(leaf, g, 0.f, nullptr);
+        }
+        CHECK_FALSE(mcts.proved_mate());
+        CHECK_FALSE(mcts.get_root()->get_child(Move("1c1b"))->is_mate());
+        mcts.apply(game, Move("1c1b"));
+        CHECK_TRUE(mcts.proved_mate());
+        CHECK_EQUAL(Move("G*1c").hash(), mcts.get_action_by_visit_max().hash());
+    }
+}
+
 TEST(minishogi_searcher, test_dfpn_vertex)
 {
     // Turn: BLACK
     // White: -
     //     5   4   3   2   1
-    //   *---*---*---*---*---*
+    //   +---+---+---+---+---+
     // A |   |   |-OU|   |   |
-    //   *---*---*---*---*---*
-    // B |   |   |   |   |   |
-    //   *---*---*---*---*---*
-    // C |   |   |-KI|-FU|   |
-    //   *---*---*---*---*---*
+    //   +---+---+---+---+---+
+    // B |   |   |-HI|-KI|   |
+    //   +---+---+---+---+---+
+    // C |   |   |-GI|-FU|   |
+    //   +---+---+---+---+---+
     // D |   |   |   |   |   |
-    //   *---*---*---*---*---*
+    //   +---+---+---+---+---+
     // E |   |   |+OU|   |   |
-    //   *---*---*---*---*---*
+    //   +---+---+---+---+---+
     // Black: -
-    auto mcts = Searcher(4.f, 0.f, 0, 100u);
+    auto game = Game("2k2/2rg1/2sp1/5/2K2 b -");
+    auto mcts = Searcher(4.f, 0.f, 0, 0u, 100u);
     for (int ii = 3; ii--;) {
-        auto g = Game("2k2/2rg1/2sp1/5/2K2 b -");
+        auto g = Game(game);
         Node* const n = mcts.search(g);
         if (n)
             mcts.simulate_expand_backprop(n, g, 0.f, nullptr);
     }
     CHECK_EQUAL(Move("3e4e").hash(), mcts.get_action_by_visit_max().hash());
-    mcts.apply(Move("3e2e"));
+    mcts.apply(game, Move("3e2e"));
+    CHECK_EQUAL(1u, game.record_length());
     DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
     for (int ii = 2; ii--;) {
-        auto g = Game("2k2/2rg1/2sp1/5/3K1 w -");
+        auto g = Game(game);
         Node* const n = mcts.search(g);
         CHECK_TRUE(g.get_result() == vshogi::ONGOING);
         CHECK_EQUAL(nullptr, n);
         DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
     }
     {
-        auto g = Game("2k2/2rg1/2sp1/5/3K1 w -");
+        auto g = Game(game);
         Node* const n = mcts.search(g);
         CHECK_TRUE(g.get_result() == vshogi::WHITE_WIN);
         CHECK_EQUAL(nullptr, n);
         DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
     }
     CHECK_EQUAL(Move("3c2d").hash(), mcts.get_action_by_visit_max().hash());
+}
+
+TEST(minishogi_searcher, test_dfpn_root_vertex)
+{
+    // Turn: WHITE
+    // White: GI,KI
+    //     5   4   3   2   1
+    //   +---+---+---+---+---+
+    // A |-HI|   |   |   |   |
+    //   +---+---+---+---+---+
+    // B |   |   |-OU|   |   |
+    //   +---+---+---+---+---+
+    // C |   |   |-UM|   |+FU|
+    //   +---+---+---+---+---+
+    // D |+FU|+KI|+KA|   |   |
+    //   +---+---+---+---+---+
+    // E |+OU|   |+GI|   |   |
+    //   +---+---+---+---+---+
+    // Black: HI
+    auto game = Game("r4/2k2/2+b1P/PGB2/K1S2 w Rgs 22");
+    auto mcts = Searcher(4.f, 0.f, 0, 10000u, 100u);
+    for (int ii = 4; ii--;) {
+        auto g = Game(game);
+        const auto leaf = mcts.search(g);
+        if (leaf)
+            mcts.simulate_expand_backprop(leaf, g, 0.f, nullptr);
+    }
+    CHECK_TRUE(mcts.proved_mate());
+    DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
 }
 
 TEST(minishogi_searcher, explore_until_game_end)
@@ -462,8 +518,7 @@ TEST(minishogi_searcher, explore_until_game_end)
         }
 
         const auto action = mcts.get_action_by_visit_max();
-        g.apply(action);
-        mcts.apply(action);
+        mcts.apply(g, action);
     }
 }
 
@@ -499,8 +554,7 @@ TEST(judkins_shogi_searcher, explore_until_game_end)
         }
 
         const auto action = mcts.get_action_by_visit_max();
-        g.apply(action);
-        mcts.apply(action);
+        mcts.apply(g, action);
     }
 }
 
@@ -532,8 +586,7 @@ TEST(shogi_searcher, explore_until_game_end)
         }
 
         const auto action = mcts.get_action_by_visit_max();
-        g.apply(action);
-        mcts.apply(action);
+        mcts.apply(g, action);
     }
 }
 

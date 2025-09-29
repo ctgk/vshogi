@@ -159,7 +159,7 @@ def test_dfpn_root():
     # Black: KA
     game = shogi.Game("2rbk/2p1p/2P1P/3G1/3R1 b B")
     mcts.set_game(game)
-    mcts.search(n_or_t=0)
+    mcts.search(n_or_t=1)
     assert shogi.Move("B*2b") == mcts.select()
 
 
@@ -194,6 +194,119 @@ def test_dfpn_vertex():
 
     mcts.apply(shogi.Move("3e2e"))
     assert shogi.Move("3c2d") == mcts.select()
+
+
+def test_dfpn_vertex_2():
+    mcts = Mcts(
+        lambda g: (g.to_dlshogi_policy({}), 0.),
+        random_depth=0,
+        dfpn_search_root=0,
+        dfpn_search_leaf=100,
+    )
+    # Turn: BLACK
+    # White: -
+    #     5   4   3   2   1
+    #   +---+---+---+---+---+
+    # A |   |   |-OU|   |   |
+    #   +---+---+---+---+---+
+    # B |   |   |-HI|-KI|   |
+    #   +---+---+---+---+---+
+    # C |   |   |-GI|-FU|   |
+    #   +---+---+---+---+---+
+    # D |   |   |   |   |   |
+    #   +---+---+---+---+---+
+    # E |   |   |+OU|   |   |
+    #   +---+---+---+---+---+
+    # Black: -
+    g = shogi.Game("2k2/2rg1/2sp1/5/2K2 b -")
+    mcts.set_game(g)
+    mcts.search(n_or_t=3)
+    print(mcts._tree(depth=2))
+    assert shogi.Move("3e4e") == mcts.select()
+    mcts.apply(shogi.Move("3e2e"))
+    g.apply(shogi.Move("3e2e"))
+
+    mcts.search(n_or_t=1)
+    print(mcts._tree(depth=2))
+    assert shogi.Move("3c2d") == mcts.select()
+    mcts.apply(shogi.Move("3c2d"))
+    g.apply(shogi.Move("3c2d"))
+
+    mcts.search(n_or_t=1)
+    print(mcts._tree(depth=2))
+    assert mcts.select() in g.get_legal_moves(), (
+        mcts.select(), g.get_legal_moves())
+
+
+def test_dfpn_root_vertex():
+    mcts = Mcts(
+        lambda g: (g.to_dlshogi_policy({}), 0.),
+        random_depth=0,
+        dfpn_search_root=10000,
+        dfpn_search_leaf=100,
+    )
+    # Turn: BLACK
+    # White: -
+    #     5   4   3   2   1
+    #   +---+---+---+---+---+
+    # A |-HI|-KA|-GI|   |   |
+    #   +---+---+---+---+---+
+    # B |   |   |   |-OU|   |
+    #   +---+---+---+---+---+
+    # C |   |+HI|-KI|   |   |
+    #   +---+---+---+---+---+
+    # D |+FU|+KI|+GI|   |   |
+    #   +---+---+---+---+---+
+    # E |+OU|   |   |+KA|   |
+    #   +---+---+---+---+---+
+    # Black: FU
+    g = shogi.Game("rbs2/3k1/1Rg2/PGS2/K2B1 b P 9")
+    mcts.set_game(g)
+    mcts.search(100)
+    assert mcts.proved_mate()
+    assert np.isclose(mcts.get_q_value(), 1., rtol=0, atol=1e-3)
+
+    assert shogi.Move("4d3c") == mcts.select()
+    g.apply(mcts.select())
+    mcts.apply(mcts.select())
+
+    print(mcts._tree())
+    assert np.isclose(mcts.get_q_value(), -1., rtol=0, atol=1e-3)
+    mcts.search(100)
+    assert mcts.proved_mate()
+    assert np.isclose(mcts.get_q_value(), -1., rtol=0, atol=1e-3)
+
+
+def test_debug():
+    mcts = Mcts(
+        lambda g: (g.to_dlshogi_policy({}), 0.),
+        random_depth=0,
+        dfpn_search_root=10000,
+        dfpn_search_leaf=100,
+    )
+    # Turn: WHITE
+    # White: GI,KI
+    #     5   4   3   2   1
+    #   +---+---+---+---+---+
+    # A |-HI|   |   |   |   |
+    #   +---+---+---+---+---+
+    # B |   |   |-OU|   |   |
+    #   +---+---+---+---+---+
+    # C |   |   |-UM|   |+FU|
+    #   +---+---+---+---+---+
+    # D |+FU|+KI|+KA|   |   |
+    #   +---+---+---+---+---+
+    # E |+OU|   |+GI|   |   |
+    #   +---+---+---+---+---+
+    # Black: HI
+    g = shogi.Game("r4/2k2/2+b1P/PGB2/K1S2 w Rgs 22")
+    mcts.set_game(g)
+    mcts.search(3)
+    print(mcts._tree(depth=2))
+    mcts.search(1)
+    print(mcts._tree(depth=2))
+    assert mcts.proved_mate()
+    assert np.isclose(mcts.get_q_value(), 1.)
 
 
 if __name__ == '__main__':
