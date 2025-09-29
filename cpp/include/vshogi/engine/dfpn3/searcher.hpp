@@ -149,7 +149,7 @@ private:
         const Node<P>* twin_e = nullptr;
         const Node<P>* twin_le = nullptr;
         m_table.look_up(g, &twin_ge, &twin_e, &twin_le);
-        if (n.simulate(g, twin_e, twin_ge, twin_le)) {
+        if (n.simulate(g, twin_ge, twin_le)) {
             --m_remaining_searches;
             return n.get_action();
         }

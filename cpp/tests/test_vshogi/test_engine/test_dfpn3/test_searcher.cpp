@@ -1053,6 +1053,45 @@ TEST(test_dfpn3_searcher, test_shogi_unnecessary_interposition)
         search_mate<Parameters>(std::get<0>(arg), std::get<1>(arg));
 }
 
+TEST(test_dfpn3_searcher, test_shogi_avoid_consecutive_checks)
+{
+    // Turn: WHITE
+    // White: GI
+    //     9   8   7   6   5   4   3   2   1
+    //   +---+---+---+---+---+---+---+---+---+
+    // A |   |   |   |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // B |   |   |   |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // C |-FU|-FU|   |   |+KA|-OU|   |-FU|+FU|
+    //   +---+---+---+---+---+---+---+---+---+
+    // D |   |   |   |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // E |   |   |   |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // F |   |   |   |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // G |+FU|+FU|   |+FU|+FU|+FU|+FU|+GI|+KY|
+    //   +---+---+---+---+---+---+---+---+---+
+    // H |+KY|   |-UM|   |   |+OU|+KI|   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // I |   |+KE|   |-HI|-KI|   |   |+KE|   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // Black: FUx3
+    auto g = Game("9/9/pp2Bk1pP/9/9/9/PP1PPPPSL/L1+b3G2/1N3K1N1 w 3Prgs 44");
+    g.apply(Move("R*6i"))
+        .apply(Move("4i4h"))
+        .apply(Move("G*4i"))
+        .apply(Move("4h5h"))
+        .apply(Move("4i5i"))
+        .apply(Move("5h4h"));
+    auto searcher = dfpn::Searcher<Parameters>();
+    searcher.set_game(g);
+    searcher.search(10000);
+    CHECK_TRUE(searcher.proved_mate());
+    CHECK_EQUAL(Move("5i5h").hash(), searcher.get_mate_move().hash());
+}
+
 } // namespace test_shogi
 
 } // namespace test_vshogi::test_engine::test_dfpn

@@ -39,7 +39,7 @@ TEST(dfpn3_node_simulate, using_game_draw)
         .apply(Move(SQ_1A, SQ_1B));
 
     auto n = Node();
-    CHECK_TRUE(n.simulate(g, &n));
+    CHECK_TRUE(n.simulate(g));
     CHECK_EQUAL(inf, n.pn());
     CHECK_EQUAL(zero, n.dn());
     CHECK_TRUE(n.proved());
@@ -98,7 +98,7 @@ TEST(dfpn3_node_simulate, defence_won_at_defence_turn)
 
     auto n = Node();
     n.init(false, Move());
-    CHECK_TRUE(n.simulate(g, &n));
+    CHECK_TRUE(n.simulate(g));
     CHECK_EQUAL(inf, n.pn());
     CHECK_EQUAL(zero, n.dn());
     CHECK_TRUE(n.proved());
@@ -114,7 +114,7 @@ TEST(dfpn3_node_simulate, using_offence_twin_l_mate)
     CHECK_TRUE(node_l.proved_mate());
     auto g = Game();
     auto n = Node();
-    CHECK_TRUE(n.simulate(g, nullptr, nullptr, &node_l));
+    CHECK_TRUE(n.simulate(g, nullptr, &node_l));
     CHECK_EQUAL(zero, n.pn());
     CHECK_EQUAL(inf, n.dn());
     CHECK_TRUE(n.proved());
@@ -130,7 +130,7 @@ TEST(dfpn3_node_simulate, using_offence_twin_l_no_mate)
     CHECK_TRUE(node_l.proved_no_mate());
     auto g = Game();
     auto n = Node();
-    CHECK_FALSE(n.simulate(g, nullptr, nullptr, &node_l));
+    CHECK_FALSE(n.simulate(g, nullptr, &node_l));
     CHECK_FALSE(n.proved());
     CHECK_FALSE(n.proved_mate());
     CHECK_FALSE(n.proved_no_mate());
@@ -145,7 +145,7 @@ TEST(dfpn3_node_simulate, using_defence_twin_l_mate)
     auto g = Game();
     auto n = Node();
     n.init(false, Move());
-    CHECK_FALSE(n.simulate(g, nullptr, nullptr, &node_l));
+    CHECK_FALSE(n.simulate(g, nullptr, &node_l));
     CHECK_FALSE(n.proved());
     CHECK_FALSE(n.proved_mate());
     CHECK_FALSE(n.proved_no_mate());
@@ -160,7 +160,7 @@ TEST(dfpn3_node_simulate, using_defence_twin_l_no_mate)
     auto g = Game();
     auto n = Node();
     n.init(false, Move());
-    CHECK_TRUE(n.simulate(g, nullptr, nullptr, &node_l));
+    CHECK_TRUE(n.simulate(g, nullptr, &node_l));
     CHECK_TRUE(n.proved());
     CHECK_FALSE(n.proved_mate());
     CHECK_TRUE(n.proved_no_mate());
@@ -174,7 +174,7 @@ TEST(dfpn3_node_simulate, using_offence_twin_g_mate)
     CHECK_TRUE(twin.proved_mate());
     auto g = Game();
     auto n = Node();
-    CHECK_FALSE(n.simulate(g, nullptr, &twin));
+    CHECK_FALSE(n.simulate(g, &twin, nullptr));
     CHECK_FALSE(n.proved());
     CHECK_FALSE(n.proved_mate());
     CHECK_FALSE(n.proved_no_mate());
@@ -188,7 +188,7 @@ TEST(dfpn3_node_simulate, using_offence_twin_g_no_mate)
     CHECK_TRUE(twin.proved_no_mate());
     auto g = Game();
     auto n = Node();
-    CHECK_TRUE(n.simulate(g, nullptr, &twin));
+    CHECK_TRUE(n.simulate(g, &twin, nullptr));
     CHECK_TRUE(n.proved());
     CHECK_FALSE(n.proved_mate());
     CHECK_TRUE(n.proved_no_mate());
@@ -203,7 +203,7 @@ TEST(dfpn3_node_simulate, using_defence_twin_g_mate)
     auto g = Game();
     auto n = Node();
     n.init(false, Move());
-    CHECK_TRUE(n.simulate(g, nullptr, &twin));
+    CHECK_TRUE(n.simulate(g, &twin, nullptr));
     CHECK_TRUE(n.proved());
     CHECK_TRUE(n.proved_mate());
     CHECK_FALSE(n.proved_no_mate());
@@ -218,7 +218,7 @@ TEST(dfpn3_node_simulate, using_defence_twin_g_no_mate)
     auto g = Game();
     auto n = Node();
     n.init(false, Move());
-    CHECK_FALSE(n.simulate(g, nullptr, &twin));
+    CHECK_FALSE(n.simulate(g, &twin, nullptr));
     CHECK_FALSE(n.proved());
     CHECK_FALSE(n.proved_mate());
     CHECK_FALSE(n.proved_no_mate());
@@ -553,7 +553,7 @@ TEST(dfpn3_node_backprop, offence_proved_by_repetitions)
     uint th_p_ch, th_d_ch;
     auto c = n.select(inf, inf, th_p_ch, th_d_ch);
     g.apply_dfpn(c->get_action());
-    CHECK_TRUE(c->simulate(g, c)); // repetition
+    CHECK_TRUE(c->simulate(g)); // repetition
     CHECK_TRUE(c->proved_no_mate());
     CHECK_TRUE(c->proved_by_repetitions());
     g.undo();
@@ -562,7 +562,7 @@ TEST(dfpn3_node_backprop, offence_proved_by_repetitions)
     CHECK_FALSE(n.proved_by_repetitions());
     c = n.select(inf, inf, th_p_ch, th_d_ch);
     g.apply_dfpn(c->get_action());
-    CHECK_TRUE(c->simulate(g, c)); // repetition
+    CHECK_TRUE(c->simulate(g)); // repetition
     CHECK_TRUE(c->proved_no_mate());
     CHECK_TRUE(c->proved_by_repetitions());
     g.undo();
@@ -588,7 +588,7 @@ TEST(dfpn3_node_backprop, defence_proved_by_repetitions)
     uint th_p_ch, th_d_ch;
     auto c = n.select(inf, inf, th_p_ch, th_d_ch);
     g.apply_dfpn(c->get_action());
-    CHECK_TRUE(c->simulate(g, c)); // repetition
+    CHECK_TRUE(c->simulate(g)); // repetition
     CHECK_TRUE(c->proved_no_mate());
     CHECK_TRUE(c->proved_by_repetitions());
     g.undo();
@@ -661,7 +661,7 @@ TEST(dfpn3_node_select, offence_with_disproved_child)
     g.apply_dfpn(c->get_action());
     auto twin_l = Node();
     twin_l.init(false, Move(), zero, inf);
-    c->simulate(g, nullptr, nullptr, &twin_l);
+    c->simulate(g, nullptr, &twin_l);
     CHECK_TRUE(c->proved_no_mate());
     g.undo();
 

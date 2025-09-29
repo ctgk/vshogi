@@ -52,5 +52,41 @@ def test_mate():
     assert actual_total_searches == expect_total_searches
 
 
+def test_debug():
+    # Turn: WHITE
+    # White: GI
+    #     9   8   7   6   5   4   3   2   1
+    #   +---+---+---+---+---+---+---+---+---+
+    # A |   |   |   |   |   |   |   |   |   |
+    #   +---+---+---+---+---+---+---+---+---+
+    # B |   |   |   |   |   |   |   |   |   |
+    #   +---+---+---+---+---+---+---+---+---+
+    # C |-FU|-FU|   |   |+KA|-OU|   |-FU|+FU|
+    #   +---+---+---+---+---+---+---+---+---+
+    # D |   |   |   |   |   |   |   |   |   |
+    #   +---+---+---+---+---+---+---+---+---+
+    # E |   |   |   |   |   |   |   |   |   |
+    #   +---+---+---+---+---+---+---+---+---+
+    # F |   |   |   |   |   |   |   |   |   |
+    #   +---+---+---+---+---+---+---+---+---+
+    # G |+FU|+FU|   |+FU|+FU|+FU|+FU|+GI|+KY|
+    #   +---+---+---+---+---+---+---+---+---+
+    # H |+KY|   |-UM|   |   |+OU|+KI|   |   |
+    #   +---+---+---+---+---+---+---+---+---+
+    # I |   |+KE|   |-HI|-KI|   |   |+KE|   |
+    #   +---+---+---+---+---+---+---+---+---+
+    # Black: FUx3
+    g = shogi.Game(
+        "9/9/pp2Bk1pP/9/9/9/PP1PPPPSL/L1+b3G2/1N3K1N1 w 3Prgs 44",
+    ).apply("R*6i").apply("4i4h").apply("G*4i").apply("4h5h").apply(
+        "4i5i").apply("5h4h")
+    searcher = DfpnSearcher()
+    searcher.set_game(g)
+    searcher.search(10000)
+    print([m.to_sfen() for m in searcher.get_mate_moves()])
+    assert searcher.proved_mate()
+    assert searcher.get_mate_move() == shogi.Move("5i5h")
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

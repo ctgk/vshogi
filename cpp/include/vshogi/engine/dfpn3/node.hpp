@@ -55,7 +55,6 @@ private:
 public:
     bool simulate(
         Game<P>& g,
-        const Node* const twin_e = nullptr,
         const Node* const twin_ge = nullptr,
         const Node* const twin_le = nullptr)
     {
@@ -63,7 +62,7 @@ public:
             return true;
         if (has_child())
             return false;
-        return simulate_using_game(g, twin_e != nullptr);
+        return simulate_using_game(g);
     }
     void expand(
         Node<P>*& next,
@@ -193,11 +192,11 @@ private:
             m_delta = inf;
         }
     }
-    bool simulate_using_game(Game<P>& g, const bool check_repetition)
+    bool simulate_using_game(Game<P>& g)
     {
         const auto turn = g.get_turn();
         auto result = g.get_result(); // this is usually ONGOING
-        if ((check_repetition && g.is_repetitions(1u))) {
+        if (g.is_repetitions(1u)) {
             m_proved_by_repetition = true;
             if (g.in_check())
                 result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
