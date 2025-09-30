@@ -340,7 +340,7 @@ TEST_GROUP (minishogi_searcher) {
 TEST(minishogi_searcher, explore_after_apply)
 {
     auto g = Game();
-    auto mcts = Searcher(4.f, 3, 1);
+    auto mcts = Searcher(4.f, 1.f);
     for (int ii = 100; ii--;) {
         auto g_copy = Game(g);
         const auto n = mcts.search(g_copy);
@@ -378,7 +378,7 @@ TEST(minishogi_searcher, test_mate_in_three)
     // E |   |   |   |   |   |
     //   +---+---+---+---+---+
     // Black: -
-    auto mcts = Searcher(4.f, 0.f, 0);
+    auto mcts = Searcher(4.f, 0.f);
     for (int ii = 100; ii--;) {
         auto g = Game("1r3/2k1G/5/2PG1/5 b -");
         Node* const n = mcts.search(g);
@@ -404,7 +404,7 @@ TEST(minishogi_searcher, test_mate_in_three)
 
 TEST(minishogi_searcher, test_dfpn_root)
 {
-    auto mcts = Searcher(4.f, 0.f, 0, 10000u, 0u);
+    auto mcts = Searcher(4.f, 0.f, 10000u, 0u);
     {
         auto g = Game("5/4k/5/4P/4K b 2G");
         mcts.search(g);
@@ -446,7 +446,7 @@ TEST(minishogi_searcher, test_dfpn_vertex)
     //   +---+---+---+---+---+
     // Black: -
     auto game = Game("2k2/2rg1/2sp1/5/2K2 b -");
-    auto mcts = Searcher(4.f, 0.f, 0, 0u, 100u);
+    auto mcts = Searcher(4.f, 0.f, 0u, 100u);
     for (int ii = 3; ii--;) {
         auto g = Game(game);
         Node* const n = mcts.search(g);
@@ -492,7 +492,7 @@ TEST(minishogi_searcher, test_dfpn_root_vertex)
     //   +---+---+---+---+---+
     // Black: HI
     auto game = Game("r4/2k2/2+b1P/PGB2/K1S2 w Rgs 22");
-    auto mcts = Searcher(4.f, 0.f, 0, 10000u, 100u);
+    auto mcts = Searcher(4.f, 0.f, 10000u, 100u);
     for (int ii = 4; ii--;) {
         auto g = Game(game);
         const auto leaf = mcts.search(g);
@@ -506,7 +506,7 @@ TEST(minishogi_searcher, test_dfpn_root_vertex)
 TEST(minishogi_searcher, explore_until_game_end)
 {
     auto g = Game();
-    auto mcts = Searcher(4.f, 3, 1);
+    auto mcts = Searcher(4.f, 1.f);
     while (true) {
         if (g.get_result() != vshogi::ONGOING)
             break;
@@ -538,7 +538,7 @@ TEST_GROUP (judkins_shogi_searcher) {
 TEST(judkins_shogi_searcher, explore_until_game_end)
 {
     auto g = Game();
-    auto mcts = Searcher(4.f, 0.25f, 1);
+    auto mcts = Searcher(4.f, 0.25f);
     while (true) {
         if (g.get_result() != vshogi::ONGOING)
             break;
@@ -574,7 +574,7 @@ TEST_GROUP (shogi_searcher) {
 TEST(shogi_searcher, explore_until_game_end)
 {
     auto g = Game();
-    auto mcts = Searcher(4.f, 0.25f, 1);
+    auto mcts = Searcher(4.f, 0.25f);
     while (true) {
         if (g.get_result() != vshogi::ONGOING)
             break;

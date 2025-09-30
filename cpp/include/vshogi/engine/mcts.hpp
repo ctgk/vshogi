@@ -518,13 +518,13 @@ class Searcher
 private:
     using GameType = Game<Parameters>;
     using MoveType = Move<Parameters>;
+    using NodeType = Node<Parameters>;
 
 private:
     std::unique_ptr<Node<Parameters>> m_root;
     dfpn::Searcher<Parameters> m_dfpn;
     const float m_coeff_puct;
     const float m_random_rate;
-    const int m_random_depth;
     const uint m_dfpn_search_root;
     const uint m_dfpn_search_leaf;
 
@@ -532,13 +532,12 @@ public:
     Searcher(
         const float coeff_puct,
         const float random_rate,
-        const int random_depth,
         const uint dfpn_search_root = 0u,
         const uint dfpn_search_leaf = 0u)
         : m_root(std::make_unique<Node<Parameters>>()),
           m_dfpn{std::max(dfpn_search_root, dfpn_search_leaf) * 10u},
           m_coeff_puct(coeff_puct), m_random_rate(random_rate),
-          m_random_depth(random_depth), m_dfpn_search_root(dfpn_search_root),
+          m_dfpn_search_root(dfpn_search_root),
           m_dfpn_search_leaf(dfpn_search_leaf)
     {
     }
@@ -650,14 +649,12 @@ public:
     }
 
 private:
-    Node<Parameters>* select_a_leaf_node(Game<Parameters>& game)
+    NodeType* select_a_leaf_node(Game<Parameters>& game)
     {
-        Node<Parameters>* n = m_root.get();
-        for (int depth = 0; n->has_child(); ++depth) {
-            Node<Parameters>* const child = n->select_nocheck(
-                game,
-                m_coeff_puct,
-                (depth < m_random_depth) ? m_random_rate : 0.f);
+        NodeType* n = m_root.get();
+        while (n->has_child()) {
+            NodeType* const child = n->select_nocheck(
+                game, m_coeff_puct, (n == m_root.get()) ? m_random_rate : 0.f);
             assert(child != nullptr);
             assert(child->get_parent() == n);
             n = child;
@@ -666,7 +663,6 @@ private:
     }
     void backprop_to_root(Node<Parameters>* const leaf)
     {
-        using NodeType = Node<Parameters>;
         float v = leaf->get_value();
         for (NodeType *n = leaf, *prev = nullptr; n; v = -v) {
             NodeType* const p = n->backprop(v, prev);

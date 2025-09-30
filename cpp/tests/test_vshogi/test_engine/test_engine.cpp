@@ -56,8 +56,8 @@ TEST(shogi_engine, mcts_with_dfpn)
     };
 
     auto g = Game();
-    auto mcts = vshogi::engine::mcts::Searcher<Parameters>(
-        4.f, 0.25f, 1, 10000u, 100u);
+    auto mcts
+        = vshogi::engine::mcts::Searcher<Parameters>(4.f, 0.25f, 10000u, 100u);
     for (int ii = 0; ii < 167; ++ii) {
         if (g.get_result() != vshogi::ONGOING)
             break;

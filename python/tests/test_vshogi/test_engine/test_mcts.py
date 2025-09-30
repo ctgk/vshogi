@@ -54,7 +54,7 @@ def test_q_values_mate_in_one():
     game = shogi.Game("b2pk/3b1/4P/2gRR/4K b -")
     m = shogi.Move(shogi.SQ_1B, shogi.SQ_1C)
 
-    searcher = Mcts(uniform_pv_func, random_depth=0)
+    searcher = Mcts(uniform_pv_func, random_rate=0.)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
     actual = searcher.get_q_values()
@@ -78,7 +78,7 @@ def test_mate_in_three():
     game = shogi.Game('1r3/2k1G/5/2PG1/5 b -')
     m = shogi.Move(shogi.SQ_3C, shogi.SQ_2D)
 
-    searcher = Mcts(uniform_pv_func, random_depth=0)
+    searcher = Mcts(uniform_pv_func, random_rate=0)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
 
@@ -98,7 +98,7 @@ def test_visit_count_by_random():
     m = shogi.Move(shogi.SQ_1B, shogi.SQ_1E)
 
     searcher = Mcts(
-        lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.), random_depth=0)
+        lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.), random_rate=0)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
     visit_count = searcher.get_visit_counts()[m]
@@ -106,7 +106,7 @@ def test_visit_count_by_random():
 
     searcher = Mcts(
         lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.),
-        random_depth=1, random_rate=0.25)
+        random_rate=0.25)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
     visit_count_with_noise = searcher.get_visit_counts()[m]
@@ -138,7 +138,7 @@ def test_greedy_q_value():
 def test_dfpn_root():
     mcts = Mcts(
         lambda g: (g.to_dlshogi_policy({}), 0.),
-        random_depth=0,
+        random_rate=0,
         dfpn_search_root=10000,
     )
 
@@ -166,7 +166,7 @@ def test_dfpn_root():
 def test_dfpn_vertex():
     mcts = Mcts(
         lambda g: (g.to_dlshogi_policy({}), 0.),
-        random_depth=0,
+        random_rate=0,
         dfpn_search_root=0,
         dfpn_search_leaf=100,
     )
@@ -199,7 +199,7 @@ def test_dfpn_vertex():
 def test_dfpn_vertex_2():
     mcts = Mcts(
         lambda g: (g.to_dlshogi_policy({}), 0.),
-        random_depth=0,
+        random_rate=0,
         dfpn_search_root=0,
         dfpn_search_leaf=100,
     )
@@ -241,7 +241,7 @@ def test_dfpn_vertex_2():
 def test_dfpn_root_vertex():
     mcts = Mcts(
         lambda g: (g.to_dlshogi_policy({}), 0.),
-        random_depth=0,
+        random_rate=0,
         dfpn_search_root=10000,
         dfpn_search_leaf=100,
     )
@@ -280,7 +280,7 @@ def test_dfpn_root_vertex():
 def test_debug():
     mcts = Mcts(
         lambda g: (g.to_dlshogi_policy({}), 0.),
-        random_depth=0,
+        random_rate=0,
         dfpn_search_root=10000,
         dfpn_search_leaf=100,
     )

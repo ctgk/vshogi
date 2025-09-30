@@ -61,7 +61,6 @@ class Mcts(Engine):
         *,
         coeff_puct: float = 1.,
         random_rate: float = 0.25,
-        random_depth: int = 1,
         kldgain_threshold: tp.Optional[float] = None,
         dfpn_search_root: int = 0,
         dfpn_search_leaf: int = 0,
@@ -78,11 +77,8 @@ class Mcts(Engine):
             Coefficient used the PUCT formula. Higher values put more weight on
             the policy prior relative to the value estimate. Default is 1.0.
         random_rate : float, optional
-            Probability of selecting nodes randomly during exploration.
+            Probability of selecting a random node at root during exploration.
             Default is 0.25.
-        random_depth : int, optional
-            Maximum depth at which random exploration is applied.
-            Default is 1.
         kldgain_threshold : float, optional
             KL divergence threshold for early stopping of MCTS.
             Default is None.
@@ -99,7 +95,6 @@ class Mcts(Engine):
 
         self._coeff_puct = coeff_puct
         self._random_rate = random_rate
-        self._random_depth = random_depth
         self._kldgain_threshold = kldgain_threshold
         self._dfpn_search_root = dfpn_search_root
         self._dfpn_search_leaf = dfpn_search_leaf
@@ -107,7 +102,7 @@ class Mcts(Engine):
     def _set_game(self, game: Game):
         self._game = game.copy()
         self._searcher = game._get_mcts_searcher_class()(
-            self._coeff_puct, self._random_rate, self._random_depth,
+            self._coeff_puct, self._random_rate,
             self._dfpn_search_root, self._dfpn_search_leaf,
         )
 
