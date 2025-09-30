@@ -7,7 +7,7 @@ from vshogi.engine._engine import Engine
 
 
 Move = tp.TypeVar('Move')
-Policy = tp.Dict[Move, float]
+Policy = np.ndarray
 Value = float
 
 
@@ -55,7 +55,9 @@ class Mcts(Engine):
 
     def __init__(
         self,
-        policy_value_func: tp.Callable[[Game], tp.Tuple[Policy, Value]],
+        policy_value_func: tp.Callable[
+            [Game], tp.Tuple[Policy, Value],
+        ] = lambda g: (g.to_dlshogi_policy({}), 0.),
         *,
         coeff_puct: float = 1.,
         random_rate: float = 0.25,
@@ -65,28 +67,31 @@ class Mcts(Engine):
         dfpn_search_leaf: int = 0,
         name: tp.Optional[str] = None,
     ) -> None:
-        """Initialize MCT searcher.
+        """Initialize a Monte Carlo Tree Searcher.
 
         Parameters
         ----------
         policy_value_func : tp.Callable[[Game], tp.Tuple[Policy, Value]]
-            Function to return policy and value given a game.
+            Function that computes the policy distribution and state value for
+            a given game position.
         coeff_puct : float, optional
-            Default coefficient used to compute PUCT score. Higher the value
-            is, the more weight on action policy than state value.
+            Coefficient used the PUCT formula. Higher values put more weight on
+            the policy prior relative to the value estimate. Default is 1.0.
         random_rate : float, optional
-            Probability of exploring nodes in a random manner, by default 0.25
+            Probability of selecting nodes randomly during exploration.
+            Default is 0.25.
         random_depth : int, optional
-            Default depth of explorations to select action in a random manner,
-            by default 1.
+            Maximum depth at which random exploration is applied.
+            Default is 1.
         kldgain_threshold : float, optional
-            KL divergence threshold to stop MCTS, by default None.
+            KL divergence threshold for early stopping of MCTS.
+            Default is None.
         dfpn_search_root : int, optional
-            Number of searches by DFPN at root node, by default 0
+            Number of DFPN searches to run at the root node. Default is 0.
         dfpn_search_leaf : int, optional
-            Number of searches by DFPN at leaf node, by default 0
+            Number of DFPN searches to run at leaf nodes. Default is 0.
         name : tp.Optional[str], optional
-            Name of the engine, by default None
+            Name of the search engine instance. Default is None.
         """
         super().__init__(name=name)
         self._policy_value_func = policy_value_func
