@@ -84,7 +84,7 @@ class Args:
 def dump_game_records(file_, game: vshogi.Game, color_filter: vshogi.Color = None) -> None:
     game.dump_records(
         (
-            lambda g, i: g.get_sfen_at(i, include_move_count=True),
+            lambda g, i: g.get_sfen_at(i, include_move_count=False),
             lambda g, i: g.get_move_at(i).to_sfen(),
             lambda g, _: g.result,
             lambda g, i: g.v_value_record[i],
