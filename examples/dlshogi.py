@@ -157,7 +157,10 @@ def play_game(
 
         if player.proved_mate():
             move = player.select()
-            game.z_weight_record.append(1.)
+            # Setting z_weight = 0, because the result can be independent of
+            # this proof when the player fails to prove a checkmate in the
+            # following game position.
+            game.z_weight_record.append(0.)
         elif game.record_length < num_random_moves:
             move = player.select(temperature=args.mcts_temperature)
             game.z_weight_record.append(0.)
