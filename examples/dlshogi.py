@@ -53,6 +53,7 @@ class Args:
     nn_grad_accum: int = config(type=int, default=1, help='Gradient accumulation steps. By default 1.')
     nn_learning_rate: float = config(type=float, default=1e-2, help='Learning rate of NN weight update')
     nn_coeff_policy_loss: float = config(type=float, default=0.1, help='Coefficient of policy loss, by default 0.1')
+    nn_data_importance_decay: float = config(type=float, default=0.7)
     nn_entropy_regularization: float = config(type=float, default=1e-2)
     nn_load_previous_weights: int = config(type=int, default=1, help='Load previous weights if 1, else train network from scratch. By default 0.')
     nn_train_device: str = config(type=str, default='cpu', choices=['cpu', 'gpu', 'mps'])
@@ -166,8 +167,7 @@ def play_game(
             game.z_weight_record.append(0.)
         else:
             move = player.select()
-            game.z_weight_record.append(
-                0.5 if (main_player is None) or (main_player is player) else 0.)
+            game.z_weight_record.append(0.5 if (main_player is None) else 0.)
         if (move == args._shogi.Move("1a1a")):
             raise ValueError(
                 f"Invalid move ({move}) selected at the game, "
@@ -227,7 +227,11 @@ def play_game_and_dump_record(
     return game.result
 
 
-def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
+def read_kifu(
+    tsv_path: str,
+    fraction: float = None,
+    importance_decay: float = 1.,
+) -> pd.DataFrame:
     df = pd.read_csv(
         tsv_path, sep='\t',
         usecols=['state', 'result', 'q_value', 'visit_count', 'z_weight'],
@@ -236,6 +240,18 @@ def read_kifu(tsv_path: str, fraction: float = None) -> pd.DataFrame:
     record_length = len(df)
     df['record_length'] = [record_length] * record_length
     df['num_ply'] = list(range(record_length))
+    dq = (
+        df['q_value'].values[:-2] - df['q_value'].values[2:]
+    ).tolist() + [0., 0.]
+    large_dq = [np.abs(d) > 0.5 for d in dq]
+    df['weight'] = np.maximum(
+        np.power(
+            importance_decay,
+            np.maximum(np.cumsum(large_dq[::-1]) - 2, 0),
+        )[::-1],
+        0.1,
+    )
+
     if fraction is None:
         return df
     n = int(len(df) * fraction)
@@ -252,7 +268,7 @@ def df_to_tfrecord(tfrecord_path: str, df: pd.DataFrame, args: Args, merger=None
                 s = sum(merger[row.state]['visits_total'].values())
                 visit_proba = {m: v / s for m, v in merger[row.state]['visits_total'].items()}
                 value01 = merger[row.state]['value01_total'] / merger[row.state]['count']
-                weight = 1 / merger[row.state]['count']
+                weight = row.weight
             else:
                 state = args._shogi.State(row.state)
                 visit_count = {args._shogi.Move(k): v for k, v in eval(row.visit_count).items()}
@@ -262,7 +278,7 @@ def df_to_tfrecord(tfrecord_path: str, df: pd.DataFrame, args: Args, merger=None
                 z_value = z_value * np.power(args.discount_factor, row.record_length - row.num_ply)
                 value = row.z_weight * z_value + (1 - row.z_weight) * row.q_value
                 value01 = np.clip((value + 1) / 2, 0., 1.)
-                weight = 1.
+                weight = row.weight
 
             x = state.to_dlshogi_features()
             policy = state.to_dlshogi_policy(visit_proba, default_value=-100000.)
@@ -294,7 +310,11 @@ def kifu_to_tfrecord(
     fraction: float = None,
     merger=None,
 ):
-    df = read_kifu(kifu_path, fraction=fraction)
+    df = read_kifu(
+        kifu_path,
+        fraction=fraction,
+        importance_decay=args.nn_data_importance_decay,
+    )
     df_to_tfrecord(tfrecord_path, df, args, merger=merger)
 
 
