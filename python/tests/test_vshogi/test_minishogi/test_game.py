@@ -342,6 +342,7 @@ def test_get_mate_moves_if_any():
     g = shogi.Game("r1s1k/b1g1p/5/PK3/1G2R w Bs 10")
     mate_moves = g.get_mate_moves_if_any()
     for m in mate_moves:
+        assert g.result == shogi.ONGOING
         g.apply(m)
     assert g.result == shogi.WHITE_WIN
 

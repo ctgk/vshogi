@@ -144,6 +144,7 @@ private:
     Move<P> multiple_iterative_deepning(
         Node<P>& n, Game<P>& g, const uint th_p, const uint th_d)
     {
+        Move<P> out{};
         assert(n.offence() || g.in_check());
         const Node<P>* twin_ge = nullptr;
         const Node<P>* twin_e = nullptr;
@@ -160,17 +161,17 @@ private:
             if (twin_e == nullptr)
                 m_table.add(&n, g);
             --m_remaining_searches;
+            out = n.get_action();
             n.backprop(king_sq);
         }
         if (m_next == nullptr)
             return n.get_action();
-        Move<P> out{};
         uint th_p_ch, th_d_ch;
         while (m_next && m_remaining_searches && (n.phi() < th_p)
                && (n.delta() < th_d)) {
-            Node<P>* const c = n.select(th_p, th_d, th_p_ch, th_d_ch);
-            g.apply_dfpn(c->get_action());
-            out = multiple_iterative_deepning(*c, g, th_p_ch, th_d_ch);
+            Node<P>* const child = n.select(th_p, th_d, th_p_ch, th_d_ch);
+            g.apply_dfpn(child->get_action());
+            out = multiple_iterative_deepning(*child, g, th_p_ch, th_d_ch);
             g.undo();
             n.backprop(king_sq);
         }
@@ -266,46 +267,23 @@ private: // utility
             // with arbitrary #P and #D values by `m_table.look_up_fuzzy()`.
             append_mate_moves(out, game, ch1st);
         } else if (game.get_result() == ONGOING) {
-            append_mate_moves(out, game);
+            if (!node->offence()) { // applied action was offence move.
+                const auto m = game.get_legal_moves()[0];
+                game.apply_nocheck(m); // defence move
+                out.emplace_back(m);
+            }
+            Searcher<P> searcher{static_cast<uint>(m_nodes.size() - 1u)};
+            searcher.set_game(game);
+            searcher.search(m_search_count);
+            if (searcher.proved_mate()) {
+                const Node<P>* const c1 = searcher.m_nodes[0].get_child_1st();
+                if (c1 && c1->proved_mate())
+                    searcher.append_mate_moves(out, game, c1);
+            }
+            if (!node->offence())
+                game.undo();
         }
         game.undo();
-    }
-    void append_mate_moves(std::vector<Move<P>>& out, Game<P>& game) const
-    {
-        const Move<P> action = find_action_from_transposition_table(game);
-        if (action.hash() == 0u)
-            return;
-        game.apply_nocheck(action);
-        out.emplace_back(action);
-        if (game.get_result() == ONGOING)
-            append_mate_moves(out, game);
-        game.undo();
-    }
-    Move<P> find_action_from_transposition_table(const Game<P>& game) const
-    {
-        const ColorEnum t = game.get_turn();
-        const Stand<P>& stand = game.get_stand(t);
-        const Node<P>*n, *node_e, *node_ge;
-        m_table.look_up(game, &node_ge, &node_e, &n);
-        if (n == nullptr) {
-            assert(game.in_check()); // assert defence turn
-            return *LegalMoveGenerator<P>(game.get_state());
-        }
-
-        const bool offence = n->offence();
-        assert((!offence) || n->proved_mate());
-        for (n = n->get_child(); n; n = n->get_sibling()) {
-            if (offence && (!n->proved_mate()))
-                continue;
-            const Move<P> action = n->get_action();
-            if (!action.is_drop()) // legal for sure
-                return action;
-            const auto pt = action.source_piece();
-            if (stand.exist(pt))
-                return action;
-        }
-        assert(false);
-        return Move<P>();
     }
 };
 

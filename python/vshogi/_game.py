@@ -1,5 +1,4 @@
 import abc
-import random
 import sys
 import typing as tp
 
@@ -882,22 +881,7 @@ class Game(abc.ABC):
         >>> g.get_mate_moves_if_any() # doctest: +ELLIPSIS
         [Move(dst=SQ_3C, src=KI), ...]
         """
-        turn = self.turn
         mate_moves = self._game.get_mate_moves_if_any(num_dfpn_nodes)
-        if mate_moves is None:
-            return None
-        for m in mate_moves:
-            self.apply(m)
-        num_moves_applied = len(mate_moves)
-        if self.result == Result.ONGOING:
-            if self.turn != turn:
-                self.apply(random.choice(self.get_legal_moves()))
-            extended_moves = self.get_mate_moves_if_any(num_dfpn_nodes)
-            if extended_moves is None:
-                mate_moves = None
-            mate_moves.extend(extended_moves)
-        for _ in range(num_moves_applied):
-            self.undo()
         return mate_moves
 
     @abc.abstractmethod

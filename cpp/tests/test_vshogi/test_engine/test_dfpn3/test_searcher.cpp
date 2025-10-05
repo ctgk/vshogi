@@ -1053,7 +1053,7 @@ TEST(test_dfpn3_searcher, test_shogi_unnecessary_interposition)
         search_mate<Parameters>(std::get<0>(arg), std::get<1>(arg));
 }
 
-TEST(test_dfpn3_searcher, test_shogi_avoid_consecutive_checks)
+TEST(test_dfpn3_searcher, test_shogi_avoid_consecutive_checks_1)
 {
     // Turn: WHITE
     // White: GI
@@ -1090,6 +1090,45 @@ TEST(test_dfpn3_searcher, test_shogi_avoid_consecutive_checks)
     searcher.search(10000);
     CHECK_TRUE(searcher.proved_mate());
     CHECK_EQUAL(Move("5i5h").hash(), searcher.get_mate_move().hash());
+}
+
+TEST(test_dfpn3_searcher, test_shogi_avoid_consecutive_checks_2)
+{
+    // Turn: WHITE
+    // White: FU,HI
+    //     9   8   7   6   5   4   3   2   1
+    //   +---+---+---+---+---+---+---+---+---+
+    // A |   |-KE|-GI|   |   |-OU|   |-KE|   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // B |   |   |   |   |   |-KA|   |-KE|-KY|
+    //   +---+---+---+---+---+---+---+---+---+
+    // C |   |   |   |   |   |-FU|   |   |-FU|
+    //   +---+---+---+---+---+---+---+---+---+
+    // D |+KI|   |   |   |   |   |-KI|   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // E |+FU|+FU|   |-FU|-FU|+FU|-FU|+FU|-GI|
+    //   +---+---+---+---+---+---+---+---+---+
+    // F |   |   |   |+FU|+FU|+GI|+FU|+KY|+FU|
+    //   +---+---+---+---+---+---+---+---+---+
+    // G |   |   |+KI|   |   |   |+KE|   |+KI|
+    //   +---+---+---+---+---+---+---+---+---+
+    // H |+KY|-NG|   |   |+OU|   |   |   |+KY|
+    //   +---+---+---+---+---+---+---+---+---+
+    // I |   |   |-RY|   |   |   |   |   |+KA|
+    //   +---+---+---+---+---+---+---+---+---+
+    // Black: FUx4
+    auto g = Game("1ns2k1n1/5b1nl/5p2p/G5g2/PP1ppPpPs/3PPSPLP/2G3N1G/L+s2K3L/"
+                  "2+r5B w 4Prp");
+    auto searcher = dfpn::Searcher<Parameters>();
+    searcher.set_game(g);
+    searcher.search(100u);
+    CHECK_TRUE(searcher.proved_mate());
+    const auto moves = searcher.get_mate_moves();
+    for (auto&& m : moves) {
+        CHECK_EQUAL(vshogi::ONGOING, g.get_result());
+        g.apply(m);
+    }
+    CHECK_EQUAL(vshogi::WHITE_WIN, g.get_result());
 }
 
 } // namespace test_shogi
