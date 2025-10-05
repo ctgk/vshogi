@@ -86,6 +86,12 @@ public:
         SHelper::to_sfen(sfen + 2, destination());
         sfen[4] = (promote()) ? '+' : '\0';
     }
+    std::string to_sfen() const
+    {
+        std::string out("     ");
+        to_sfen(out.data());
+        return out;
+    }
     bool operator==(const Move& other) const
     {
         return m_value == other.m_value;
