@@ -56,7 +56,7 @@ class Args:
     nn_data_importance_decay: float = config(type=float, default=0.7)
     nn_entropy_regularization: float = config(type=float, default=1e-2)
     nn_load_previous_weights: int = config(type=int, default=1, help='Load previous weights if 1, else train network from scratch. By default 0.')
-    nn_train_device: str = config(type=str, default='cpu', choices=['cpu', 'gpu', 'mps'])
+    nn_train_device: str = config(type=str, default='cpu', choices=['cpu', 'cuda', 'mps'])
     discount_factor: float = config(type=float, default=0.99, help='Discount factor of reward supervision. By default 0.99.')
     mcts_kldgain_threshold: float = config(type=float, default=1e-4, help='KL divergence threshold to stop MCT-search')
     mcts_search: int = config(type=int, default=1000, help='# of searches in MCTS, default=1000. Alpha Zero used 800 simulations.')
@@ -632,12 +632,13 @@ def run_rl_cycle(args: Args):
                     'value01_total': value01,
                     'visits_total': visits,
                 }
+        data_deduped = {k: v for k, v in data_deduped.items() if v['count'] > 1}
         df_deduped = pd.DataFrame([
             {'sfen': s, 'count': data['count'], 'value01_total': data['value01_total'], 'visits_total': data['visits_total']}
             for s, data in data_deduped.items()
         ])
         df_deduped['value'] = (df_deduped['value01_total'] / df_deduped['count']) * 2 - 1
-        print(df_deduped.sort_values(by='count', ascending=False).head()[['sfen', 'value']])
+        print(df_deduped.sort_values(by='count', ascending=False).head()[['sfen', 'value', 'count']])
 
         if args.jobs == 1:
             for kifu_path in kifu_list:
