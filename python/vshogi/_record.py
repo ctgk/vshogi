@@ -7,12 +7,12 @@ from vshogi._vshogi import Result
 class Record:
     """Aggregated results of a player."""
 
-    wins_black: int
-    wins_white: int
-    draws_black: int
-    draws_white: int
-    losses_black: int
-    losses_white: int
+    wins_black: int = 0
+    wins_white: int = 0
+    draws_black: int = 0
+    draws_white: int = 0
+    losses_black: int = 0
+    losses_white: int = 0
 
     @property
     def wins_total(self) -> int:
@@ -58,6 +58,29 @@ class Record:
             Number of losses in total.
         """
         return self.losses_black + self.losses_white
+
+    def __invert__(self) -> 'Record':
+        """Return a record from opponent's perspective.
+
+        Returns
+        -------
+        Record
+            A new record representing the same results viewed from the
+            opponent's side.
+
+        Examples
+        --------
+        >>> ~Record(2, 0, 0, 1, 1, 0)  # doctest: +ELLIPSIS
+        Record(wins_black=0, wins_white=1, draws_black=1, ...
+        """
+        return Record(
+            wins_black=self.losses_white,
+            wins_white=self.losses_black,
+            draws_black=self.draws_white,
+            draws_white=self.draws_black,
+            losses_black=self.wins_white,
+            losses_white=self.wins_black,
+        )
 
     def __add__(self, other: 'Record') -> 'Record':
         """Add two records and return the result.
@@ -134,6 +157,33 @@ class Record:
             Wins-Draws-Losses representation of the record.
         """
         return f'{self.wins_total}W-{self.draws_total}D-{self.losses_total}L'
+
+    def score(self) -> float:
+        """Compute the total score for this record.
+
+        Scoring rules:
+        - Win: 1.0 point
+        - Draw as Black: 0.4 points
+        - Draw as White: 0.6 points
+        - Loss: 0 points
+
+        Returns
+        -------
+        float
+            Total score based on the record.
+
+        Examples
+        --------
+        >>> Record(2, 1, 1, 0, 1, 0).score()
+        3.4
+        >>> Record(0, 0, 0, 2, 0, 0).score()
+        1.2
+        """
+        return (
+            self.wins_total
+            + 0.4 * self.draws_black
+            + 0.6 * self.draws_white
+        )
 
 
 if __name__ == '__main__':

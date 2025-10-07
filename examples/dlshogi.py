@@ -544,7 +544,7 @@ def run_rl_cycle(args: Args):
                         select_args={'temperature': None},
                     ).result
                     record += vshogi.Record.from_white_result(result)
-                pbar.set_description(f'{player.name} vs {p_prev.name}: {record.wdl()}')
+                pbar.set_description(f'{player.name} vs {p_prev.name} = {record.wdl()}')
             validation_result_list.append(record)
         win_point_list = [r.wins_total - r.losses_total for r in validation_result_list]
         indices_for_sort = np.argsort(win_point_list)
@@ -557,14 +557,7 @@ def run_rl_cycle(args: Args):
         )
 
     def get_best_player_index(current: int, best: int):
-
-        def point_of_current(r: vshogi.Record):
-            return r.wins_total + 0.4 * r.draws_black + 0.6 * r.draws_white
-
-        def point_of_best(r: vshogi.Record):
-            return r.losses_total + 0.4 * r.draws_white + 0.6 * r.draws_black
-
-        record = vshogi.Record(0, 0, 0, 0, 0, 0)
+        record_curr = vshogi.Record()
         player_curr = load_player_of(current)
         player_best = load_player_of(best)
         num_play = 40
@@ -572,7 +565,7 @@ def run_rl_cycle(args: Args):
         loss_threshold = num_play * (1 - args.win_ratio_threshold)
         pbar = tqdm(range(num_play), ncols=100)
         for n in pbar:
-            if (point_of_current(record) >= win_threshold) or (point_of_best(record) > loss_threshold):
+            if (record_curr.score() >= win_threshold) or ((~record_curr).score() > loss_threshold):
                 break
             if n % 2 == 0:
                 result = vshogi.play_game(
@@ -582,7 +575,7 @@ def run_rl_cycle(args: Args):
                     search_args={'n_or_t': args.mcts_search},
                     select_args={'temperature': None},
                 ).result
-                record += vshogi.Record.from_black_result(result)
+                record_curr += vshogi.Record.from_black_result(result)
             else:
                 result = vshogi.play_game(
                     args._shogi.Game(),
@@ -591,9 +584,9 @@ def run_rl_cycle(args: Args):
                     search_args={'n_or_t': args.mcts_search},
                     select_args={'temperature': None},
                 ).result
-                record += vshogi.Record.from_white_result(result)
-            pbar.set_description(f'{current} vs {best}: {record.wdl()}')
-        return current if point_of_current(record) >= win_threshold else best
+                record_curr += vshogi.Record.from_white_result(result)
+            pbar.set_description(f'{current} vs {best} = {record_curr.wdl()}')
+        return current if record_curr.score() >= win_threshold else best
 
     def keep_only_end_games_in_previous_tfrecord(index: int, args: Args):
         for i, f in zip(range(index, 0, -1), (args.nn_train_fraction ** i for i in range(index))):
