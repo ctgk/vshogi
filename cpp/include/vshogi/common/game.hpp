@@ -210,6 +210,7 @@ public:
     }
     Game& undo()
     {
+        assert(record_length() > 0u);
         const auto n = record_length() - 1u;
         std::uint32_t v = m_captured_move_list[n];
         const auto move = MoveType(static_cast<std::uint16_t>(v & 0x0ffffu));

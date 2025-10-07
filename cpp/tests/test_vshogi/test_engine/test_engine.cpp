@@ -58,22 +58,22 @@ TEST(shogi_engine, mcts_with_dfpn)
     auto g = Game();
     auto mcts
         = vshogi::engine::mcts::Searcher<Parameters>(4.f, 0.25f, 10000u, 100u);
-    for (int ii = 0; ii < 167; ++ii) {
+    for (uint ii = 0u; ii < 167u; ++ii) {
         if (g.get_result() != vshogi::ONGOING)
             break;
         for (int jj = (100 - mcts.get_visit_count()); jj--;) {
-            auto g_copy = Game(g);
-            const auto n = mcts.search(g_copy);
+            const auto n = mcts.search(g);
             if (n == nullptr)
                 continue;
-            mcts.simulate_expand_backprop(n, g_copy, 0.f, zeros);
+            mcts.simulate_expand_backprop(n, g, 0.f, zeros);
+            CHECK_EQUAL(ii, g.record_length());
         }
 
         mcts.get_action_by_visit_max();
         const auto m = Move(kifu[ii]);
         mcts.apply(g, m);
 
-        if (ii == 166) {
+        if (ii == 166u) {
             CHECK_TRUE(g.get_result() == vshogi::BLACK_WIN);
         } else {
             CHECK_TRUE(g.get_result() == vshogi::ONGOING);

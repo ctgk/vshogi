@@ -560,12 +560,12 @@ public:
         assert(!leaf->has_child());
         if (game.get_result() != ONGOING) {
             leaf->simulate(game);
-            backprop_to_root(leaf);
+            backprop_to_root(game, leaf);
             return nullptr;
         }
         if (leaf->is_mate_to_lose()) {
             leaf->expand(game.get_legal_moves(), game.get_turn(), nullptr);
-            backprop_to_root(leaf);
+            backprop_to_root(game, leaf);
             return nullptr;
         }
         assert(!leaf->is_mate_to_win());
@@ -575,7 +575,7 @@ public:
     }
     void simulate_expand_backprop(
         Node<Parameters>* const leaf,
-        const Game<Parameters>& game,
+        Game<Parameters>& game,
         const float value,
         const float* const policy_logits = nullptr)
     {
@@ -583,7 +583,7 @@ public:
             return;
         leaf->simulate_ongoing_and_expand(
             game.get_legal_moves(), game.get_turn(), value, policy_logits);
-        backprop_to_root(leaf);
+        backprop_to_root(game, leaf);
     }
     Searcher<Parameters>& apply(Game<Parameters>& game, const MoveType& action)
     {
@@ -661,16 +661,19 @@ private:
         }
         return n;
     }
-    void backprop_to_root(Node<Parameters>* const leaf)
+    void backprop_to_root(GameType& game, NodeType* const leaf)
     {
         float v = leaf->get_value();
-        for (NodeType *n = leaf, *prev = nullptr; n; v = -v) {
+        for (NodeType *n = leaf, *prev = nullptr;; v = -v) {
             NodeType* const p = n->backprop(v, prev);
             prev = n;
             n = p;
+            if (n == nullptr) // `n` was root node.
+                break;
+            game.undo();
         }
     }
-    bool dfpn_proved_mate(const GameType& game, Node<Parameters>* const node)
+    bool dfpn_proved_mate(GameType& game, NodeType* const node)
     {
         const uint search_count
             = (node == m_root.get()) ? m_dfpn_search_root : m_dfpn_search_leaf;
@@ -680,7 +683,7 @@ private:
         m_dfpn.search(search_count);
         if (m_dfpn.proved_mate()) {
             node->simulate_mate_and_expand(m_dfpn.get_mate_move());
-            backprop_to_root(node);
+            backprop_to_root(game, node);
             return true;
         }
         return false;

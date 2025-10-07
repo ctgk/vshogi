@@ -158,13 +158,12 @@ class Mcts(Engine):
                     kldgain = self._kldgain(prev_visits)
                     if kldgain < self._kldgain_threshold * kldgain_steps:
                         break
-            game = self._game.copy()
-            node = self._searcher.search(game._game)
+            node = self._searcher.search(self._game._game)
             if node is None:
                 continue
-            policy_logits, value = self._policy_value_func(game)
+            policy_logits, value = self._policy_value_func(self._game)
             self._searcher.simulate_expand_backprop(
-                node, game._game, value, policy_logits)
+                node, self._game._game, value, policy_logits)
 
     def _kldgain(self, prev_visits: tp.Dict[Move, int]) -> float:
         prev_visits_added = {m: v + 1 for m, v in prev_visits.items()}

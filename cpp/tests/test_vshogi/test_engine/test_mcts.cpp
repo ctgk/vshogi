@@ -342,10 +342,11 @@ TEST(minishogi_searcher, explore_after_apply)
     auto g = Game();
     auto mcts = Searcher(4.f, 1.f);
     for (int ii = 100; ii--;) {
-        auto g_copy = Game(g);
-        const auto n = mcts.search(g_copy);
-        if (n != nullptr)
-            mcts.simulate_expand_backprop(n, g_copy, 0.f, zeros);
+        const auto n = mcts.search(g);
+        if (n != nullptr) {
+            mcts.simulate_expand_backprop(n, g, 0.f, zeros);
+        }
+        CHECK_EQUAL(0u, g.record_length());
     }
 
     const auto move = mcts.get_action_by_visit_max();
@@ -353,10 +354,12 @@ TEST(minishogi_searcher, explore_after_apply)
     const auto current_visit_count = mcts.get_visit_count();
     CHECK_TRUE(current_visit_count > 0);
     for (int ii = 100; ii--;) {
-        auto g_copy = Game(g);
-        const auto n = mcts.search(g_copy);
-        if (n != nullptr)
-            mcts.simulate_expand_backprop(n, g_copy, 0.f, zeros);
+        const auto n = mcts.search(g);
+        if (n != nullptr) {
+            CHECK_COMPARE(1u, <=, g.record_length());
+            mcts.simulate_expand_backprop(n, g, 0.f, zeros);
+        }
+        CHECK_EQUAL(1u, g.record_length());
     }
     CHECK_EQUAL(current_visit_count + 100, mcts.get_visit_count());
 }
@@ -378,9 +381,9 @@ TEST(minishogi_searcher, test_mate_in_three)
     // E |   |   |   |   |   |
     //   +---+---+---+---+---+
     // Black: -
+    auto g = Game("1r3/2k1G/5/2PG1/5 b -");
     auto mcts = Searcher(4.f, 0.f);
     for (int ii = 100; ii--;) {
-        auto g = Game("1r3/2k1G/5/2PG1/5 b -");
         Node* const n = mcts.search(g);
         if (n)
             mcts.simulate_expand_backprop(n, g, 0.f, nullptr);
@@ -393,7 +396,6 @@ TEST(minishogi_searcher, test_mate_in_three)
         = mcts.get_root()->get_child(m)->get_visit_count() + 100;
 
     for (int ii = 100; ii--;) {
-        auto g = Game("1r3/2k1G/5/2PG1/5 b -");
         Node* const n = mcts.search(g);
         if (n)
             mcts.simulate_expand_backprop(n, g, 0.f, nullptr);
@@ -448,26 +450,24 @@ TEST(minishogi_searcher, test_dfpn_vertex)
     auto game = Game("2k2/2rg1/2sp1/5/2K2 b -");
     auto mcts = Searcher(4.f, 0.f, 0u, 100u);
     for (int ii = 3; ii--;) {
-        auto g = Game(game);
-        Node* const n = mcts.search(g);
+        Node* const n = mcts.search(game);
         if (n)
-            mcts.simulate_expand_backprop(n, g, 0.f, nullptr);
+            mcts.simulate_expand_backprop(n, game, 0.f, nullptr);
+        CHECK_EQUAL(0u, game.record_length());
     }
     CHECK_EQUAL(Move("3e4e").hash(), mcts.get_action_by_visit_max().hash());
     mcts.apply(game, Move("3e2e"));
     CHECK_EQUAL(1u, game.record_length());
     DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
     for (int ii = 2; ii--;) {
-        auto g = Game(game);
-        Node* const n = mcts.search(g);
-        CHECK_TRUE(g.get_result() == vshogi::ONGOING);
+        Node* const n = mcts.search(game);
+        CHECK_EQUAL(1u, game.record_length());
         CHECK_EQUAL(nullptr, n);
         DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
     }
     {
-        auto g = Game(game);
-        Node* const n = mcts.search(g);
-        CHECK_TRUE(g.get_result() == vshogi::WHITE_WIN);
+        Node* const n = mcts.search(game);
+        CHECK_EQUAL(1u, game.record_length());
         CHECK_EQUAL(nullptr, n);
         DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
     }
@@ -494,10 +494,10 @@ TEST(minishogi_searcher, test_dfpn_root_vertex)
     auto game = Game("r4/2k2/2+b1P/PGB2/K1S2 w Rgs 22");
     auto mcts = Searcher(4.f, 0.f, 10000u, 100u);
     for (int ii = 4; ii--;) {
-        auto g = Game(game);
-        const auto leaf = mcts.search(g);
+        const auto leaf = mcts.search(game);
         if (leaf)
-            mcts.simulate_expand_backprop(leaf, g, 0.f, nullptr);
+            mcts.simulate_expand_backprop(leaf, game, 0.f, nullptr);
+        CHECK_EQUAL(0u, game.record_length());
     }
     CHECK_TRUE(mcts.proved_mate());
     DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
@@ -507,14 +507,16 @@ TEST(minishogi_searcher, explore_until_game_end)
 {
     auto g = Game();
     auto mcts = Searcher(4.f, 1.f);
-    while (true) {
+    for (uint num_ply = 0u;; ++num_ply) {
         if (g.get_result() != vshogi::ONGOING)
             break;
         for (int ii = (100 - mcts.get_visit_count()); ii--;) {
-            auto g_copy = Game(g);
-            const auto n = mcts.search(g_copy);
-            if (n != nullptr)
-                mcts.simulate_expand_backprop(n, g_copy, 0.f, zeros);
+            const auto n = mcts.search(g);
+            if (n != nullptr) {
+                CHECK_COMPARE(num_ply, <=, g.record_length());
+                mcts.simulate_expand_backprop(n, g, 0.f, zeros);
+            }
+            CHECK_EQUAL(num_ply, g.record_length());
         }
 
         const auto action = mcts.get_action_by_visit_max();
@@ -539,20 +541,15 @@ TEST(judkins_shogi_searcher, explore_until_game_end)
 {
     auto g = Game();
     auto mcts = Searcher(4.f, 0.25f);
-    while (true) {
-        if (g.get_result() != vshogi::ONGOING)
-            break;
+    for (uint num_ply = 0u; g.get_result() == vshogi::ONGOING; ++num_ply) {
         for (int ii = (100 - mcts.get_visit_count()); ii--;) {
-            auto g_copy = Game(g);
-            const auto n = mcts.search(g_copy);
-            if (g.record_length() == g_copy.record_length())
-                CHECK_TRUE((n == nullptr) || (n == mcts.get_root()));
+            const auto n = mcts.search(g);
             if (n != nullptr) {
-                CHECK_COMPARE(g_copy.get_legal_moves().size(), >, 0);
-                mcts.simulate_expand_backprop(n, g_copy, 0.f, zeros);
+                CHECK_COMPARE(num_ply, <=, g.record_length());
+                mcts.simulate_expand_backprop(n, g, 0.f, zeros);
             }
+            CHECK_EQUAL(num_ply, g.record_length());
         }
-
         const auto action = mcts.get_action_by_visit_max();
         mcts.apply(g, action);
     }
@@ -575,14 +572,16 @@ TEST(shogi_searcher, explore_until_game_end)
 {
     auto g = Game();
     auto mcts = Searcher(4.f, 0.25f);
-    while (true) {
+    for (uint num_ply = 0u; g.get_result() == vshogi::ONGOING; ++num_ply) {
         if (g.get_result() != vshogi::ONGOING)
             break;
         for (int ii = (100 - mcts.get_visit_count()); ii--;) {
-            auto g_copy = Game(g);
-            const auto n = mcts.search(g_copy);
-            if (n != nullptr)
-                mcts.simulate_expand_backprop(n, g_copy, 0.f, zeros);
+            const auto n = mcts.search(g);
+            if (n != nullptr) {
+                CHECK_COMPARE(num_ply, <=, g.record_length());
+                mcts.simulate_expand_backprop(n, g, 0.f, zeros);
+            }
+            CHECK_EQUAL(num_ply, g.record_length());
         }
 
         const auto action = mcts.get_action_by_visit_max();

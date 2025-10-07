@@ -442,7 +442,7 @@ inline void export_mcts_searcher(pybind11::module& m)
             "simulate_expand_backprop",
             [](Searcher& self,
                Node* const leaf,
-               const Game& game,
+               Game& game,
                const float value,
                const py::array_t<float>& policy_logits) {
                 self.simulate_expand_backprop(
