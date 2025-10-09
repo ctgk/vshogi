@@ -638,6 +638,7 @@ def run_rl_cycle(args: Args):
             for s, data in data_deduped.items()
         ])
         df_deduped['value'] = (df_deduped['value01_total'] / df_deduped['count']) * 2 - 1
+        pd.options.display.width = 100
         pd.options.display.max_colwidth = 9 * 9 * 2
         print(df_deduped.sort_values(by='count', ascending=False).head()[['sfen', 'value', 'count']])
 
