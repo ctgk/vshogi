@@ -271,8 +271,7 @@ TEST_GROUP (test_dfpn3_searcher) {
     {
         auto g = vshogi::Game<P>(sfen);
         auto searcher = dfpn::Searcher<P>();
-        searcher.set_game(g);
-        searcher.search((expect_search_count + 10u) * 2u);
+        searcher.search(g, (expect_search_count + 10u) * 2u);
         CHECK_TRUE(searcher.proved());
         CHECK_TRUE(searcher.proved_mate());
         CHECK_FALSE(searcher.proved_no_mate());
@@ -281,7 +280,8 @@ TEST_GROUP (test_dfpn3_searcher) {
         const auto expect_result = (g.get_turn() == vshogi::BLACK)
                                        ? vshogi::BLACK_WIN
                                        : vshogi::WHITE_WIN;
-        const auto mate_moves = searcher.get_mate_moves();
+        const auto mate_moves = searcher.get_mate_moves(g);
+        CHECK_EQUAL(0u, g.record_length());
         if (expect_mate_length > 0)
             CHECK_EQUAL(expect_mate_length, mate_moves.size());
         for (auto&& m : mate_moves) {
@@ -295,14 +295,13 @@ TEST_GROUP (test_dfpn3_searcher) {
     {
         auto g = vshogi::Game<P>(sfen);
         auto searcher = dfpn::Searcher<P>();
-        searcher.set_game(g);
-        searcher.search((expect_search_count + 10u) * 2u);
+        searcher.search(g, (expect_search_count + 10u) * 2u);
         CHECK_TRUE(searcher.proved());
         CHECK_FALSE(searcher.proved_mate());
         CHECK_TRUE(searcher.proved_no_mate());
         CHECK_EQUAL(expect_search_count, searcher.get_search_count());
         CHECK_EQUAL(0u, searcher.get_mate_move().hash());
-        CHECK_EQUAL(0u, searcher.get_mate_moves().size());
+        CHECK_EQUAL(0u, searcher.get_mate_moves(g).size());
     }
 };
 
@@ -315,8 +314,7 @@ TEST(test_dfpn3_searcher, test_init)
 {
     auto g = Game("4k/5/3P1/5/5 b G");
     auto searcher = dfpn::Searcher<Parameters>();
-    searcher.set_game(g);
-    searcher.search(1000u);
+    searcher.search(g, 1000u);
     CHECK_TRUE(searcher.proved());
     searcher.init();
     CHECK_FALSE(searcher.proved());
@@ -326,8 +324,7 @@ TEST(test_dfpn3_searcher, test_small_num_nodes)
 {
     auto g = Game("4k/5/3P1/5/5 b G");
     auto searcher = dfpn::Searcher<Parameters>(1u);
-    searcher.set_game(g);
-    searcher.search(100u);
+    searcher.search(g, 100u);
     CHECK_FALSE(searcher.proved());
     CHECK_EQUAL(0u, searcher.get_search_count());
     CHECK_EQUAL(0u, searcher.get_num_nodes_remain());
@@ -1086,8 +1083,7 @@ TEST(test_dfpn3_searcher, test_shogi_avoid_consecutive_checks_1)
         .apply(Move("4i5i"))
         .apply(Move("5h4h"));
     auto searcher = dfpn::Searcher<Parameters>();
-    searcher.set_game(g);
-    searcher.search(10000);
+    searcher.search(g, 10000);
     CHECK_TRUE(searcher.proved_mate());
     CHECK_EQUAL(Move("5i5h").hash(), searcher.get_mate_move().hash());
 }
@@ -1120,10 +1116,9 @@ TEST(test_dfpn3_searcher, test_shogi_avoid_consecutive_checks_2)
     auto g = Game("1ns2k1n1/5b1nl/5p2p/G5g2/PP1ppPpPs/3PPSPLP/2G3N1G/L+s2K3L/"
                   "2+r5B w 4Prp");
     auto searcher = dfpn::Searcher<Parameters>();
-    searcher.set_game(g);
-    searcher.search(100u);
+    searcher.search(g, 100u);
     CHECK_TRUE(searcher.proved_mate());
-    const auto moves = searcher.get_mate_moves();
+    const auto moves = searcher.get_mate_moves(g);
     for (auto&& m : moves) {
         CHECK_EQUAL(vshogi::ONGOING, g.get_result());
         g.apply(m);

@@ -53,7 +53,6 @@ private:
     ZobristHashType m_hash;
     std::vector<ZobristHashType> m_hash_list;
     std::vector<std::uint32_t> m_captured_move_list;
-    uint m_num_fold;
 
 public:
     Game() : Game(StateType())
@@ -136,7 +135,13 @@ public:
     }
     uint get_num_fold() const
     {
-        return m_num_fold;
+        uint num_fold = 1u;
+        const int n = static_cast<int>(m_hash_list.size());
+        for (int ii = n - 4; ii >= 0; ii -= 2) {
+            const uint index = static_cast<uint>(ii);
+            num_fold += (m_hash == m_hash_list[index]);
+        }
+        return num_fold;
     }
     ZobristHashType get_zobrist_hash() const
     {
@@ -221,7 +226,6 @@ public:
         m_hash = m_hash_list[n];
         m_hash_list.pop_back();
         m_captured_move_list.pop_back();
-        m_num_fold = 0u;
         return *this;
     }
     bool is_legal(const MoveType move) const
@@ -389,7 +393,7 @@ protected:
     Game(const StateType& s)
         : m_current_state(s), m_result(ONGOING),
           m_hash(m_current_state.zobrist_hash()), m_hash_list{},
-          m_captured_move_list{}, m_num_fold(1u)
+          m_captured_move_list{}
     {
         m_hash_list.reserve(256);
         update_result(C::max_acceptable_repetitions);
@@ -448,14 +452,14 @@ protected:
     }
 
 public:
-    bool is_repetitions(const uint max_repetitions_inclusive)
+    bool is_repetitions(const uint max_repetitions_inclusive) const
     {
-        m_num_fold = 1u;
+        uint num_fold = 1u;
         const int n = static_cast<int>(m_hash_list.size());
         for (int ii = n - 4; ii >= 0; ii -= 2) {
             const uint index = static_cast<uint>(ii);
-            m_num_fold += (m_hash == m_hash_list[index]);
-            if (m_num_fold > max_repetitions_inclusive)
+            num_fold += (m_hash == m_hash_list[index]);
+            if (num_fold > max_repetitions_inclusive)
                 return true;
         }
         return false;

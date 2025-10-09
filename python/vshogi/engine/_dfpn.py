@@ -76,10 +76,11 @@ class DfpnSearcher(Engine):
             return
         if self._searcher is None:
             self._searcher = cls_(self._max_num_nodes)
-        self._searcher.set_game(game._game)
+        self._searcher.init()
+        self._game = game.copy()
 
     def _is_ready(self) -> bool:
-        return (self._searcher is not None) and (self._searcher.is_ready())
+        return self._searcher is not None
 
     def _clear(self) -> None:
         self._searcher = None
@@ -117,7 +118,12 @@ class DfpnSearcher(Engine):
         """
         if self._searcher is None:
             return False
-        self._searcher.search(n)
+        sfen = self._game.to_sfen()
+        record_length = self._game.record_length
+        self._searcher.search(self._game._game, n)
+        if self._game.record_length != record_length:
+            raise ValueError(
+                f"Failed to run DFPN searches on the game position: {sfen}")
         return self._searcher.proved_mate()
 
     def select(self) -> Move:
@@ -187,7 +193,13 @@ class DfpnSearcher(Engine):
             Mate moves found.
         """
         self._raise_error_if_not_ready()
-        return self._searcher.get_mate_moves()
+        sfen = self._game.to_sfen()
+        record_length = self._game.record_length
+        mate_moves = self._searcher.get_mate_moves(self._game._game)
+        if self._game.record_length != record_length:
+            raise ValueError(
+                f"Failed to run DFPN searches on the game position: {sfen}")
+        return mate_moves
 
     def _tree(
         self,

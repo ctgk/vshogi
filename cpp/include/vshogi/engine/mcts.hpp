@@ -679,8 +679,8 @@ private:
             = (node == m_root.get()) ? m_dfpn_search_root : m_dfpn_search_leaf;
         if (search_count == 0u)
             return false;
-        m_dfpn.set_game(game);
-        m_dfpn.search(search_count);
+        m_dfpn.init();
+        m_dfpn.search(game, search_count);
         if (m_dfpn.proved_mate()) {
             node->simulate_mate_and_expand(m_dfpn.get_mate_move());
             backprop_to_root(game, node);

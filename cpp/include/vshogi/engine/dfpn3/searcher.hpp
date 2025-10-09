@@ -113,27 +113,22 @@ private:
     std::vector<Node<P>> m_nodes; //!< The first one is the root node.
     Node<P>* m_next;
     Table<P> m_table;
-    std::unique_ptr<Game<P>> m_game;
     uint m_search_count;
     uint m_remaining_searches;
 
 public:
-    void set_game(const Game<P>& g)
+    Move<P> search(Game<P>& g, const uint n)
     {
-        init();
-        m_game = std::make_unique<Game<P>>(g);
-        Game<P>& game = *m_game;
-        if (!m_nodes[0].simulate(game)) {
-            m_nodes[0].expand(m_next, game);
-            m_table.add(&m_nodes[0], game);
-            m_nodes[0].backprop(game.get_king_location(~game.get_turn()));
+        if (m_search_count == 0u) {
+            m_next = std::next(m_nodes.data());
+            if (!m_nodes[0].simulate(g)) {
+                m_nodes[0].expand(m_next, g);
+                m_table.add(&m_nodes[0], g);
+                m_nodes[0].backprop(g.get_king_location(~g.get_turn()));
+            }
         }
-    }
-    Move<P> search(const uint n)
-    {
         if (m_nodes[0].proved())
             return Move<P>();
-        Game<P>& g = *m_game;
         m_remaining_searches = n;
         const auto out = multiple_iterative_deepning(m_nodes[0], g, inf, inf);
         m_search_count += n - m_remaining_searches;
@@ -180,9 +175,10 @@ private:
 
 public: // utility
     Searcher(const uint num_nodes = 100000u)
-        : m_nodes(num_nodes + 1u), m_next(nullptr), m_table{}, m_game(nullptr),
+        : m_nodes(num_nodes + 1u), m_next(nullptr), m_table{},
           m_search_count(0u), m_remaining_searches(0u)
     {
+        init();
     }
 
     // Rules of 5
@@ -196,14 +192,9 @@ public: // utility
     {
         m_nodes[0].init();
         m_nodes[m_nodes.size() - 1u].init(false, Move<P>());
-        m_next = std::next(m_nodes.data());
+        m_next = nullptr;
         m_table.clear();
-        m_game.reset();
         m_search_count = 0u;
-    }
-    bool is_ready() const
-    {
-        return static_cast<bool>(m_game);
     }
     uint get_search_count() const
     {
@@ -242,12 +233,12 @@ public: // utility
             return Move<P>();
         return c1->get_action();
     }
-    std::vector<Move<P>> get_mate_moves() const
+    std::vector<Move<P>> get_mate_moves(Game<P>& game) const
     {
         std::vector<Move<P>> out{};
         const Node<P>* const c1 = m_nodes[0].get_child_1st();
         if (c1 && c1->proved_mate())
-            append_mate_moves(out, *m_game, c1);
+            append_mate_moves(out, game, c1);
         return out;
     }
 
@@ -273,8 +264,7 @@ private: // utility
                 out.emplace_back(m);
             }
             Searcher<P> searcher{static_cast<uint>(m_nodes.size() - 1u)};
-            searcher.set_game(game);
-            searcher.search(m_search_count);
+            searcher.search(game, m_search_count);
             if (searcher.proved_mate()) {
                 const Node<P>* const c1 = searcher.m_nodes[0].get_child_1st();
                 if (c1 && c1->proved_mate())

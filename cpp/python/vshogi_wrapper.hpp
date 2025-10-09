@@ -370,12 +370,11 @@ inline void export_game(pybind11::module& m)
             })
         .def(
             "get_mate_moves_if_any",
-            [](const Game& self, const int num_dfpn_nodes) -> py::object {
+            [](Game& self, const int num_dfpn_nodes) -> py::object {
                 vshogi::engine::dfpn3::Searcher<Parameters> dfpn{};
-                dfpn.set_game(self);
-                dfpn.search(num_dfpn_nodes);
+                dfpn.search(self, num_dfpn_nodes);
                 if (dfpn.proved_mate()) {
-                    return py::cast(dfpn.get_mate_moves());
+                    return py::cast(dfpn.get_mate_moves(self));
                 } else {
                     return py::none();
                 }
@@ -513,8 +512,7 @@ inline void export_dfpn_searcher(pybind11::module& m)
 
     py::class_<Searcher>(m, "DfpnSearcher")
         .def(py::init<const uint>())
-        .def("is_ready", &Searcher::is_ready)
-        .def("set_game", &Searcher::set_game)
+        .def("init", &Searcher::init)
         .def("search", &Searcher::search)
         .def("proved_mate", &Searcher::proved_mate)
         .def("proved_no_mate", &Searcher::proved_no_mate)
