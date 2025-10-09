@@ -343,12 +343,13 @@ public: // utility
           m_is_mate(false), m_most_visited_child(nullptr)
     {
     }
-    Node(const MoveType action, const float proba) noexcept
+    Node(const MoveType action, const float proba)
         : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr),
           m_action(action), m_proba(proba), m_visit_count(0),
           m_visit_count_by_random(0), m_sqrt_visit_count(0.f), m_value(0.f),
           m_q_value(0.f), m_is_mate(false), m_most_visited_child(nullptr)
     {
+        assert(action.hash() != 0u);
     }
 
     // Rules of 5
@@ -682,9 +683,12 @@ private:
         m_dfpn.init();
         m_dfpn.search(game, search_count);
         if (m_dfpn.proved_mate()) {
-            node->simulate_mate_and_expand(m_dfpn.get_mate_move());
-            backprop_to_root(game, node);
-            return true;
+            const MoveType m = m_dfpn.get_mate_move();
+            if (m.hash() != 0u) {
+                node->simulate_mate_and_expand(m_dfpn.get_mate_move());
+                backprop_to_root(game, node);
+                return true;
+            }
         }
         return false;
     }

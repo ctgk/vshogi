@@ -165,7 +165,7 @@ TEST(minishogi_node, explore_two_action)
         auto g_copy = Game(g);
         const auto actual = root.select_nocheck(g_copy, 1.f, 0.f);
         actual->simulate_ongoing_and_expand(
-            {Move()}, // dummy action to prevent mate
+            {Move(SQ_1A, SQ_1B)}, // dummy action to prevent mate
             vshogi::WHITE,
             input_value[ii],
             zeros);
