@@ -116,6 +116,7 @@ inline void export_move(pybind11::module& m)
             py::init<const Square, const PieceType>(),
             py::arg("dst"),
             py::arg("src"))
+        .def(py::init<const std::uint16_t>(), py::arg("value"))
         .def(
             py::init(
                 [](const std::string& sfen) { return Move(sfen.c_str()); }),
