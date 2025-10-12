@@ -234,25 +234,24 @@ class Game(abc.ABC):
         """
         return self._game.get_result()
 
-    @property
-    def record_length(self) -> int:
-        """Return length of the game record.
+    def ply(self) -> int:
+        """Return the number of moves since the start of the game.
 
         Returns
         -------
         int
-            Length of the game record.
+            Number of moves since the start of the game.
 
         Examples
         --------
         >>> import vshogi.minishogi as shogi
         >>> game = shogi.Game()
-        >>> game.record_length
+        >>> game.ply()
         0
-        >>> game.apply(shogi.D3, shogi.E2).record_length
+        >>> game.apply(shogi.D3, shogi.E2).ply()
         1
         """
-        return self._game.record_length()
+        return self._game.ply()
 
     @property
     def zobrist_hash(self) -> int:
@@ -493,7 +492,7 @@ class Game(abc.ABC):
         'rbsgk/4p/5/P1B2/KGS1R w - 2'
         """
         if n < 0:
-            n = self.record_length + n
+            n = self.ply() + n
         if include_move_count:
             return self._sfen_list[n] + f' {n + 1}'
         else:
@@ -597,7 +596,7 @@ class Game(abc.ABC):
             print(*names, file=file_, sep=sep)
         if callable(getters):
             getters = (getters,)
-        for i in range(self.record_length):
+        for i in range(self.ply()):
             if (color_filter == Color.WHITE) and (i % 2 == 0):
                 continue
             elif (color_filter == Color.BLACK) and (i % 2 == 1):
@@ -652,9 +651,9 @@ class Game(abc.ABC):
         E |+HI|+KA|+GI|+KI|+OU|
           +---+---+---+---+---+
         Black: -
-        >>> g.record_length
+        >>> g.ply()
         1
-        >>> g_hflip.record_length
+        >>> g_hflip.ply()
         0
         """
         return self.__class__(self._game.hflip())
@@ -704,9 +703,9 @@ class Game(abc.ABC):
         E |+OU|+KI|+GI|+KA|+HI|
           +---+---+---+---+---+
         Black: -
-        >>> g.record_length
+        >>> g.ply()
         1
-        >>> g_rotated.record_length
+        >>> g_rotated.ply()
         0
         """
         sfen = self.to_sfen(include_move_count=False)
@@ -941,6 +940,6 @@ class Game(abc.ABC):
             SVG representation of the game position.
         """
         from vshogi._to_svg import _to_svg
-        lastmove = self.get_move_at(-1) if self.record_length > 0 else None
+        lastmove = self.get_move_at(-1) if self.ply() > 0 else None
         return _to_svg(
             self, lastmove, scale, skip_white_stand=skip_white_stand)

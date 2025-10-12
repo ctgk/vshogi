@@ -15,14 +15,14 @@ TEST(test_minishogi_game, num_dlshogi_policy)
     CHECK_EQUAL(5 * 5 * (2 * 8 + 5), Game::num_dlshogi_policy());
 }
 
-TEST(test_minishogi_game, record_length)
+TEST(test_minishogi_game, ply)
 {
     auto game = Game();
-    CHECK_EQUAL(0, game.record_length());
+    CHECK_EQUAL(0, game.ply());
     game.apply(Move(SQ_3D, SQ_2E))
         .apply(Move(SQ_3B, SQ_2A))
         .apply(Move(SQ_1B, SQ_1E));
-    CHECK_EQUAL(3, game.record_length());
+    CHECK_EQUAL(3, game.ply());
 }
 
 TEST(test_minishogi_game, get_board_turn_hash)
@@ -48,9 +48,9 @@ TEST(test_minishogi_game, undo)
         // no promotion no capturing
         auto game = Game();
         game.apply(Move(SQ_3D, SQ_4E));
-        CHECK_EQUAL(1, game.record_length());
+        CHECK_EQUAL(1, game.ply());
         game.undo();
-        CHECK_EQUAL(0, game.record_length());
+        CHECK_EQUAL(0, game.ply());
         STRCMP_EQUAL("rbsgk/4p/5/P4/KGSBR b - 1", game.to_sfen().c_str());
     }
     {

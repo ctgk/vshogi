@@ -162,7 +162,7 @@ def play_game(
             # this proof when the player fails to prove a checkmate in the
             # following game position.
             game.z_weight_record.append(0.)
-        elif game.record_length < num_random_moves:
+        elif game.ply() < num_random_moves:
             move = player.select(temperature=args.mcts_temperature)
             game.z_weight_record.append(0.)
         else:
@@ -237,9 +237,9 @@ def read_kifu(
         usecols=['state', 'result', 'q_value', 'visit_count', 'z_weight'],
         dtype={'state': str, 'result': str, 'q_value': float, 'visit_count': str, 'z_weight': float},
     )
-    record_length = len(df)
-    df['record_length'] = [record_length] * record_length
-    df['num_ply'] = list(range(record_length))
+    total_ply = len(df)
+    df['total_ply'] = [total_ply] * total_ply
+    df['ply'] = list(range(total_ply))
     dq = (
         df['q_value'].values[:-2] - df['q_value'].values[2:]
     ).tolist() + [0., 0.]
@@ -275,7 +275,7 @@ def df_to_tfrecord(tfrecord_path: str, df: pd.DataFrame, args: Args, merger=None
                 s = sum(visit_count.values())
                 visit_proba = {m: v / s for m, v in visit_count.items()}
                 z_value = 0 if ('DRAW' in row.result) else 2 * int(('BLACK' in row.result) == ('b' == row.state.split()[1])) - 1
-                z_value = z_value * np.power(args.discount_factor, row.record_length - row.num_ply)
+                z_value = z_value * np.power(args.discount_factor, row.total_ply - row.ply)
                 value = row.z_weight * z_value + (1 - row.z_weight) * row.q_value
                 value01 = np.clip((value + 1) / 2, 0., 1.)
                 weight = row.weight
@@ -612,7 +612,7 @@ def run_rl_cycle(args: Args):
                 row = df.iloc[i]
                 visits = {args._shogi.Move(k): v for k, v in eval(row.visit_count).items()}
                 z_value = 0 if ('DRAW' in row.result) else 2 * int(('BLACK' in row.result) == ('b' == row.state.split()[1])) - 1
-                z_value = z_value * np.power(args.discount_factor, row.record_length - row.num_ply)
+                z_value = z_value * np.power(args.discount_factor, row.total_ply - row.ply)
                 value = row.z_weight * z_value + (1 - row.z_weight) * row.q_value
                 value01 = np.clip((value + 1) / 2, 0., 1.)
                 count = 1

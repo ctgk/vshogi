@@ -119,9 +119,9 @@ class DfpnSearcher(Engine):
         if self._searcher is None:
             return False
         sfen = self._game.to_sfen()
-        record_length = self._game.record_length
+        ply = self._game.ply()
         self._searcher.search(self._game._game, n)
-        if self._game.record_length != record_length:
+        if self._game.ply() != ply:
             raise ValueError(
                 f"Failed to run DFPN searches on the game position: {sfen}")
         return self._searcher.proved_mate()
@@ -194,9 +194,9 @@ class DfpnSearcher(Engine):
         """
         self._raise_error_if_not_ready()
         sfen = self._game.to_sfen()
-        record_length = self._game.record_length
+        ply = self._game.ply()
         mate_moves = self._searcher.get_mate_moves(self._game._game)
-        if self._game.record_length != record_length:
+        if self._game.ply() != ply:
             raise ValueError(
                 f"Failed to run DFPN searches on the game position: {sfen}")
         return mate_moves

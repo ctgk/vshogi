@@ -159,8 +159,16 @@ public:
         else
             return m_current_state.to_sfen();
     }
-    uint record_length() const
+
+    /**
+     * @brief Return the number of moves since the start of the game.
+     * @note In conformance with `ply()` in
+     * https://github.com/niklasf/python-chess
+     * @return uint Number of moves since the start of the game.
+     */
+    uint ply() const
     {
+        assert(m_captured_move_list.size() == m_hash_list.size());
         return static_cast<uint>(m_captured_move_list.size());
     }
 
@@ -215,8 +223,8 @@ public:
     }
     Game& undo()
     {
-        assert(record_length() > 0u);
-        const auto n = record_length() - 1u;
+        assert(ply() > 0u);
+        const auto n = ply() - 1u;
         std::uint32_t v = m_captured_move_list[n];
         const auto move = MoveType(static_cast<std::uint16_t>(v & 0x0ffffu));
         const auto captured = static_cast<ColoredPiece>((v >> 16u) & 0x0ffu);
@@ -252,7 +260,7 @@ public:
     }
     bool had_two_consecutive_sacrifice_drops() const
     {
-        const uint n = record_length();
+        const uint n = ply();
         if (n < 4u)
             return false;
 
@@ -330,7 +338,7 @@ public:
             const auto pt_jpn = PHelper::to_jpn(pt, false);
             const auto unique_identifier_jpn = b.unique_identifier_jpn(move, t);
             const auto promotion_jpn = move.promotion_to_jpn(pt, t);
-            const uint n = record_length();
+            const uint n = ply();
             const auto dst_jpn = move.destination_to_jpn(
                 (n > 0u) ? get_record_action(n - 1u).destination() : C::SQ_NA);
             return dst_jpn + pt_jpn + unique_identifier_jpn + promotion_jpn;

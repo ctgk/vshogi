@@ -248,10 +248,10 @@ TEST(minishogi_node, explore_two_layer)
     {
         auto g_copy = Game("s4/5/5/5/4S b -");
         Node* const child = root.select_nocheck(g_copy, 1.f, 0.f);
-        CHECK_EQUAL(1u, g_copy.record_length());
+        CHECK_EQUAL(1u, g_copy.ply());
         CHECK_EQUAL(root.get_child(Move(SQ_1D, SQ_1E)), child);
         Node* const grand_child = child->select_nocheck(g_copy, 1.f, 0.f);
-        CHECK_EQUAL(2u, g_copy.record_length());
+        CHECK_EQUAL(2u, g_copy.ply());
         CHECK_EQUAL(
             root.get_child(Move(SQ_1D, SQ_1E))->get_child(Move(SQ_5B, SQ_5A)),
             grand_child);
@@ -346,7 +346,7 @@ TEST(minishogi_searcher, explore_after_apply)
         if (n != nullptr) {
             mcts.simulate_expand_backprop(n, g, 0.f, zeros);
         }
-        CHECK_EQUAL(0u, g.record_length());
+        CHECK_EQUAL(0u, g.ply());
     }
 
     const auto move = mcts.get_action_by_visit_max();
@@ -356,10 +356,10 @@ TEST(minishogi_searcher, explore_after_apply)
     for (int ii = 100; ii--;) {
         const auto n = mcts.search(g);
         if (n != nullptr) {
-            CHECK_COMPARE(1u, <=, g.record_length());
+            CHECK_COMPARE(1u, <=, g.ply());
             mcts.simulate_expand_backprop(n, g, 0.f, zeros);
         }
-        CHECK_EQUAL(1u, g.record_length());
+        CHECK_EQUAL(1u, g.ply());
     }
     CHECK_EQUAL(current_visit_count + 100, mcts.get_visit_count());
 }
@@ -453,21 +453,21 @@ TEST(minishogi_searcher, test_dfpn_vertex)
         Node* const n = mcts.search(game);
         if (n)
             mcts.simulate_expand_backprop(n, game, 0.f, nullptr);
-        CHECK_EQUAL(0u, game.record_length());
+        CHECK_EQUAL(0u, game.ply());
     }
     CHECK_EQUAL(Move("3e4e").hash(), mcts.get_action_by_visit_max().hash());
     mcts.apply(game, Move("3e2e"));
-    CHECK_EQUAL(1u, game.record_length());
+    CHECK_EQUAL(1u, game.ply());
     DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
     for (int ii = 2; ii--;) {
         Node* const n = mcts.search(game);
-        CHECK_EQUAL(1u, game.record_length());
+        CHECK_EQUAL(1u, game.ply());
         CHECK_EQUAL(nullptr, n);
         DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
     }
     {
         Node* const n = mcts.search(game);
-        CHECK_EQUAL(1u, game.record_length());
+        CHECK_EQUAL(1u, game.ply());
         CHECK_EQUAL(nullptr, n);
         DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
     }
@@ -497,7 +497,7 @@ TEST(minishogi_searcher, test_dfpn_root_vertex)
         const auto leaf = mcts.search(game);
         if (leaf)
             mcts.simulate_expand_backprop(leaf, game, 0.f, nullptr);
-        CHECK_EQUAL(0u, game.record_length());
+        CHECK_EQUAL(0u, game.ply());
     }
     CHECK_TRUE(mcts.proved_mate());
     DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
@@ -513,10 +513,10 @@ TEST(minishogi_searcher, explore_until_game_end)
         for (int ii = (100 - mcts.get_visit_count()); ii--;) {
             const auto n = mcts.search(g);
             if (n != nullptr) {
-                CHECK_COMPARE(num_ply, <=, g.record_length());
+                CHECK_COMPARE(num_ply, <=, g.ply());
                 mcts.simulate_expand_backprop(n, g, 0.f, zeros);
             }
-            CHECK_EQUAL(num_ply, g.record_length());
+            CHECK_EQUAL(num_ply, g.ply());
         }
 
         const auto action = mcts.get_action_by_visit_max();
@@ -545,10 +545,10 @@ TEST(judkins_shogi_searcher, explore_until_game_end)
         for (int ii = (100 - mcts.get_visit_count()); ii--;) {
             const auto n = mcts.search(g);
             if (n != nullptr) {
-                CHECK_COMPARE(num_ply, <=, g.record_length());
+                CHECK_COMPARE(num_ply, <=, g.ply());
                 mcts.simulate_expand_backprop(n, g, 0.f, zeros);
             }
-            CHECK_EQUAL(num_ply, g.record_length());
+            CHECK_EQUAL(num_ply, g.ply());
         }
         const auto action = mcts.get_action_by_visit_max();
         mcts.apply(g, action);
@@ -578,10 +578,10 @@ TEST(shogi_searcher, explore_until_game_end)
         for (int ii = (100 - mcts.get_visit_count()); ii--;) {
             const auto n = mcts.search(g);
             if (n != nullptr) {
-                CHECK_COMPARE(num_ply, <=, g.record_length());
+                CHECK_COMPARE(num_ply, <=, g.ply());
                 mcts.simulate_expand_backprop(n, g, 0.f, zeros);
             }
-            CHECK_EQUAL(num_ply, g.record_length());
+            CHECK_EQUAL(num_ply, g.ply());
         }
 
         const auto action = mcts.get_action_by_visit_max();

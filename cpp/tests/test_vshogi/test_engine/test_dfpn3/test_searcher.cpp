@@ -281,7 +281,7 @@ TEST_GROUP (test_dfpn3_searcher) {
                                        ? vshogi::BLACK_WIN
                                        : vshogi::WHITE_WIN;
         const auto mate_moves = searcher.get_mate_moves(g);
-        CHECK_EQUAL(0u, g.record_length());
+        CHECK_EQUAL(0u, g.ply());
         if (expect_mate_length > 0)
             CHECK_EQUAL(expect_mate_length, mate_moves.size());
         for (auto&& m : mate_moves) {

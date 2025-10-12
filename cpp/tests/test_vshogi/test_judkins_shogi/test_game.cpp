@@ -15,12 +15,12 @@ TEST(judkins_shogi_game, num_dlshogi_policy)
     CHECK_EQUAL(6 * 6 * (2 * 10 + 6), Game::num_dlshogi_policy());
 }
 
-TEST(judkins_shogi_game, record_length)
+TEST(judkins_shogi_game, ply)
 {
     auto game = Game();
-    CHECK_EQUAL(0, game.record_length());
+    CHECK_EQUAL(0, game.ply());
     game.apply(Move(SQ_1B, SQ_1F));
-    CHECK_EQUAL(1, game.record_length());
+    CHECK_EQUAL(1, game.ply());
 }
 
 TEST(judkins_shogi_game, result)

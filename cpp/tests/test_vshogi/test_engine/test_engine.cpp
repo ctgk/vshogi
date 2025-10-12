@@ -66,7 +66,7 @@ TEST(shogi_engine, mcts_with_dfpn)
             if (n == nullptr)
                 continue;
             mcts.simulate_expand_backprop(n, g, 0.f, zeros);
-            CHECK_EQUAL(ii, g.record_length());
+            CHECK_EQUAL(ii, g.ply());
         }
 
         mcts.get_action_by_visit_max();

@@ -20,12 +20,12 @@ TEST(test_shogi_game, num_dlshogi_policy)
     CHECK_EQUAL(9 * 9 * (2 * 10 + 7), Game::num_dlshogi_policy());
 }
 
-TEST(test_shogi_game, record_length)
+TEST(test_shogi_game, ply)
 {
     auto game = Game();
-    CHECK_EQUAL(0, game.record_length());
+    CHECK_EQUAL(0, game.ply());
     game.apply(Move(SQ_2F, SQ_2G));
-    CHECK_EQUAL(1, game.record_length());
+    CHECK_EQUAL(1, game.ply());
 }
 
 TEST(test_shogi_game, apply)
