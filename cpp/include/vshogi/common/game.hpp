@@ -396,6 +396,7 @@ protected:
           m_captured_move_list{}
     {
         m_hash_list.reserve(256);
+        m_captured_move_list.reserve(256);
         update_result(C::max_acceptable_repetitions);
     }
     static uint num_pieces(const StateType& s, const ColorEnum& c)
