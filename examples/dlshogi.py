@@ -47,7 +47,7 @@ class Args:
     nn_hidden_channels: int = config(type=int, default=None, help='# of hidden channels in NN. Default value varies in shogi games.')
     nn_bottleneck_channels: int = config(type=int, default=None, help='# of bottleneck channels in NN. Default value varies in shogi games.')
     nn_backbone_blocks: int = config(type=int, default=None, help='# of backbone res-blocks in NN. Default value varies in shogi games.')
-    nn_train_fraction: float = config(type=float, default=0.8, help='Fraction of game record by former models to use to train current one. By default 0.8')
+    nn_train_fraction: float = config(type=float, default=0.8, help='Fraction of game log by former models to use to train current one. By default 0.8')
     nn_epochs: int = config(type=int, default=5, help='# of epochs in NN training. By default 5.')
     nn_minibatch: int = config(type=int, default=32, help='Minibatch size in NN training. By default 32.')
     nn_grad_accum: int = config(type=int, default=1, help='Gradient accumulation steps. By default 1.')
@@ -82,16 +82,16 @@ class Args:
     output: str = config(short=True, type=str, help='Output path of self-play datasets and trained NN models, default=`shogi`')
 
 
-def dump_game_records(file_, game: vshogi.Game, color_filter: vshogi.Color = None) -> None:
-    game.dump_records(
+def dump_game_log(file_, game: vshogi.Game, color_filter: vshogi.Color = None) -> None:
+    game.dump_log(
         (
             lambda g, i: g.get_sfen_at(i, include_move_count=False),
             lambda g, i: g.get_move_at(i).to_sfen(),
             lambda g, _: g.result,
-            lambda g, i: g.v_value_record[i],
-            lambda g, i: g.q_value_record[i],
-            lambda g, i: g.visit_count_record[i],
-            lambda g, i: g.z_weight_record[i],
+            lambda g, i: g.v_value_log[i],
+            lambda g, i: g.q_value_log[i],
+            lambda g, i: g.visit_count_log[i],
+            lambda g, i: g.z_weight_log[i],
         ),
         names=('state', 'move', 'result', 'v_value', 'q_value', 'visit_count', 'z_weight'),
         file_=file_,
@@ -99,13 +99,13 @@ def dump_game_records(file_, game: vshogi.Game, color_filter: vshogi.Color = Non
     )
 
 
-def dump_game_records_and_convert_to_tfrecord(
+def dump_game_log_and_convert_to_tfrecord(
     kifu_path: str,
     game: vshogi.Game,
     args: Args,
 ) -> None:
     with open(kifu_path, 'w') as f:
-        dump_game_records(f, game)
+        dump_game_log(f, game)
     kifu_to_tfrecord(kifu_path.replace('.tsv', '.tfrecord'), kifu_path, args)
 
 
@@ -134,10 +134,10 @@ def play_game(
         The game the two players played.
     """
     game = args._shogi.Game()
-    game.v_value_record = []
-    game.q_value_record = []
-    game.visit_count_record = []
-    game.z_weight_record = []
+    game.v_value_log = []
+    game.q_value_log = []
+    game.visit_count_log = []
+    game.z_weight_log = []
     num_random_moves = (
         np.random.choice(args._num_random_moves + 1)
         if np.isfinite(args._num_random_moves) else args._num_random_moves
@@ -161,13 +161,13 @@ def play_game(
             # Setting z_weight = 0, because the result can be independent of
             # this proof when the player fails to prove a checkmate in the
             # following game position.
-            game.z_weight_record.append(0.)
+            game.z_weight_log.append(0.)
         elif game.ply() < num_random_moves:
             move = player.select(temperature=args.mcts_temperature)
-            game.z_weight_record.append(0.)
+            game.z_weight_log.append(0.)
         else:
             move = player.select()
-            game.z_weight_record.append(0.5 if (main_player is None) else 0.)
+            game.z_weight_log.append(0.5 if (main_player is None) else 0.)
         if (move == args._shogi.Move("1a1a")):
             raise ValueError(
                 f"Invalid move ({move}) selected at the game, "
@@ -179,10 +179,10 @@ def play_game(
             for m, v in
             player_dump.get_visit_counts(include_random=False).items()
         }
-        game.v_value_record.append(player_dump.get_value())
-        game.q_value_record.append(
+        game.v_value_log.append(player_dump.get_value())
+        game.q_value_log.append(
             player_dump.get_q_value(greedy_depth=args.mcts_q_greedy_depth))
-        game.visit_count_record.append(visit_count)
+        game.visit_count_log.append(visit_count)
 
         game.apply(move)
         player_black.apply(move)
@@ -208,7 +208,7 @@ def load_player_of(index: int) -> vshogi.engine.Mcts:
     )
 
 
-def play_game_and_dump_record(
+def play_game_and_dump_log(
     black,
     white,
     args: Args,
@@ -221,9 +221,9 @@ def play_game_and_dump_record(
         if game.result != vshogi.ONGOING:
             break
     if (index is not None) and (suffix is not None):
-        path = f'datasets/dataset_{index:04d}/record_{suffix}.tsv'
+        path = f'datasets/dataset_{index:04d}/kifu_{suffix}.tsv'
         with open(path, 'w') as f:
-            dump_game_records(f, game)
+            dump_game_log(f, game)
     return game.result
 
 
@@ -337,37 +337,37 @@ def tqdm_joblib(tqdm_object):
 
 def run_self_play(args: Args):
 
-    def _self_play_and_dump_record(player, index, nth_game: int):
-        play_game_and_dump_record(player, player, args, index, f'{nth_game:05d}')
+    def _self_play_and_dump_log(player, index, nth_game: int):
+        play_game_and_dump_log(player, player, args, index, f'{nth_game:05d}')
 
-    def _play_game_and_dump_record(player, player_another, index, index_another, nth_game: int):
+    def _play_game_and_dump_log(player, player_another, index, index_another, nth_game: int):
         if (nth_game // 10) % 2 == 0:
-            play_game_and_dump_record(player, player_another, args, index, f'{nth_game:05d}_B{index-1:02d}vsW{index_another:02d}', main_player=player)
+            play_game_and_dump_log(player, player_another, args, index, f'{nth_game:05d}_B{index-1:02d}vsW{index_another:02d}', main_player=player)
         else:
-            play_game_and_dump_record(player_another, player, args, index, f'{nth_game:05d}_B{index_another:02d}vsW{index-1:02d}', main_player=player)
+            play_game_and_dump_log(player_another, player, args, index, f'{nth_game:05d}_B{index_another:02d}vsW{index-1:02d}', main_player=player)
 
-    def self_play_and_dump_records_in_parallel(index: int, index_another: int, n_jobs: int):
+    def self_play_and_dump_logs_in_parallel(index: int, index_another: int, n_jobs: int):
 
-        def _self_play_and_dump_record_n_times(index, index_another, nth_game: list):
+        def _self_play_and_dump_log_n_times(index, index_another, nth_game: list):
             player = load_player_of(index - 1)
             for i in nth_game:
                 if index_another[i % len(index_another)] is not None:
                     player_another = load_player_of(index_another[i % len(index_another)])
-                    _play_game_and_dump_record(player, player_another, index, index_another[i % len(index_another)], i)
+                    _play_game_and_dump_log(player, player_another, index, index_another[i % len(index_another)], i)
                 else:
-                    _self_play_and_dump_record(player, index, i)
+                    _self_play_and_dump_log(player, index, i)
 
         group_size = 5
         with tqdm_joblib(tqdm(total=args.self_play // group_size, ncols=100, desc=f'{index-1} vs {index-1}')):
             Parallel(n_jobs=n_jobs)(
-                delayed(_self_play_and_dump_record_n_times)(
+                delayed(_self_play_and_dump_log_n_times)(
                     index, index_another, list(range(i, i + group_size)),
                 )
                 for i in range(args.self_play_index_from, args.self_play_index_from + args.self_play, group_size)
             )
 
 
-    def self_play_and_dump_records(index: int, index_another: tp.List[int]):
+    def self_play_and_dump_logs(index: int, index_another: tp.List[int]):
         if args.jobs == 1:
             player = load_player_of(index - 1)
             player_another = [None if i is None else load_player_of(i) for i in index_another]
@@ -376,20 +376,20 @@ def run_self_play(args: Args):
                 ncols=100, desc=f'{index-1} vs {index-1}',
             ):
                 if index_another[i % len(index_another)] is not None:
-                    _play_game_and_dump_record(
+                    _play_game_and_dump_log(
                         player, player_another[i % len(index_another)],
                         index, index_another[i % len(index_another)], i)
                 else:
-                    _self_play_and_dump_record(player, index, i)
+                    _self_play_and_dump_log(player, index, i)
         else:
-            self_play_and_dump_records_in_parallel(index, index_another, args.jobs)
+            self_play_and_dump_logs_in_parallel(index, index_another, args.jobs)
 
     i = args.resume_rl_cycle_from
     if not os.path.isdir(f'datasets/dataset_{i:04d}'):
         os.makedirs(f'datasets/dataset_{i:04d}')
 
     args.another_player = [None] * (10 - len(args.another_player)) + args.another_player
-    self_play_and_dump_records(i, args.another_player)
+    self_play_and_dump_logs(i, args.another_player)
 
 
 def run_train(args: Args):
@@ -673,7 +673,7 @@ def run_rl_cycle(args: Args):
             args._num_random_moves = np.inf
         else:
             line_length_list = []
-            for path in glob(f'datasets/dataset_{i-1:04d}/record_*.tsv'):
+            for path in glob(f'datasets/dataset_{i-1:04d}/kifu_*.tsv'):
                 if 'vs' in path:
                     continue
                 with open(path, 'rb') as f:
@@ -759,7 +759,7 @@ def parse_args() -> Args:
         args._num_random_moves = np.inf
     else:
         line_length_list = []
-        for path in glob(f'datasets/dataset_{i-1:04d}/record_*.tsv'):
+        for path in glob(f'datasets/dataset_{i-1:04d}/kifu_*.tsv'):
             if 'vs' in path:
                 continue
             with open(path, 'rb') as f:

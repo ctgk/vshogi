@@ -530,7 +530,7 @@ class Game(abc.ABC):
         move = self._get_move(move, *args, **kwargs)
         return self._game.to_eng(move)
 
-    def dump_records(
+    def dump_log(
         self,
         getters: tp.Tuple[
             tp.Callable[['Game', int], object],
@@ -541,7 +541,7 @@ class Game(abc.ABC):
         file_: tp.TextIO = sys.stdout,
         color_filter: tp.Optional[Color] = None,
     ) -> None:
-        r"""Dump game records.
+        r"""Dump game log.
 
         Parameters
         ----------
@@ -564,7 +564,7 @@ class Game(abc.ABC):
         >>> for m in moves:
         ...     game = game.apply(m)
         >>> with io.StringIO() as f:
-        ...     game.dump_records(file_=f)
+        ...     game.dump_log(file_=f)
         ...     _ = f.seek(0)
         ...     print(f.read())
         rbsgk/4p/5/P4/KGSBR b - 1
@@ -574,7 +574,7 @@ class Game(abc.ABC):
         rbs1k/4p/1g1G1/P4/K1SBR b - 5
         <BLANKLINE>
         >>> with io.StringIO() as f:
-        ...     game.dump_records(
+        ...     game.dump_log(
         ...         (
         ...             lambda g, i: g.get_sfen_at(i),
         ...             lambda g, i: g.get_move_at(i).to_sfen(),
