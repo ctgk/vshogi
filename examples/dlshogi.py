@@ -632,7 +632,12 @@ def run_rl_cycle(args: Args):
                     'value01_total': value01,
                     'visits_total': visits,
                 }
-        data_deduped = {k: v for k, v in data_deduped.items() if v['count'] > 1}
+        print(f"Number of duplicating game positions: {len(data_deduped)}")
+        threshold = 1
+        while len(data_deduped) > 5000:
+            data_deduped = {k: v for k, v in data_deduped.items() if v['count'] > threshold}
+            threshold += 1
+        print(f"Number of duplicating game positions after removal: {len(data_deduped)}")
         df_deduped = pd.DataFrame([
             {'sfen': s, 'count': data['count'], 'value01_total': data['value01_total'], 'visits_total': data['visits_total']}
             for s, data in data_deduped.items()
