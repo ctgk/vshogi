@@ -58,6 +58,12 @@ repos:
         types: [text]
         files: '\.(c|h|cpp|hpp|py)$'
         pass_filenames: false
+    -   id: python-readme
+        name: Run README examples
+        entry: python -m doctest README.md
+        language: system
+        files: '(\.(c|h|cpp|hpp|py)$|README.md)'
+        pass_filenames: false
     -   id: python-profile
         name: Run Python profiling script
         language: system
