@@ -664,16 +664,17 @@ def run_rl_cycle(args: Args):
     os.system(f"cp {__file__} ./")
 
     if args.resume_rl_cycle_from == 1:
-        subprocess.call([
-            sys.executable, "dlshogi.py", "train", args.shogi_variant,
-            "--resume_rl_cycle_from", str(0),
-        ] + ' '.join([
-            f'--{k} {v}' for k, v in args.to_dict().items()
-            if (
-                (k not in ('run', 'shogi_variant', 'resume_rl_cycle_from', 'another_player'))
-                and (v is not None)
-            )
-        ]).split())
+        with open('errors.txt', 'a') as f:
+            subprocess.call([
+                sys.executable, "dlshogi.py", "train", args.shogi_variant,
+                "--resume_rl_cycle_from", str(0),
+            ] + ' '.join([
+                f'--{k} {v}' for k, v in args.to_dict().items()
+                if (
+                    (k not in ('run', 'shogi_variant', 'resume_rl_cycle_from', 'another_player'))
+                    and (v is not None)
+                )
+            ]).split(), stderr=f)
 
     for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
         if i == 1:
@@ -720,17 +721,18 @@ def run_rl_cycle(args: Args):
 
             c = max(len(glob(pattern)) // args.self_play, 1)
             # Train NN!
-            subprocess.call([
-                sys.executable, "dlshogi.py", "train", args.shogi_variant,
-                "--resume_rl_cycle_from", str(i),
-                "--nn_grad_accum", str(args.nn_grad_accum * c),
-            ] + ' '.join([
-                f'--{k} {v}' for k, v in args.to_dict().items()
-                if (
-                    (k not in ('run', 'shogi_variant', 'resume_rl_cycle_from', 'another_player', 'nn_grad_accum'))
-                    and (v is not None)
-                )
-            ]).split())
+            with open('errors.txt', 'a') as f:
+                subprocess.call([
+                    sys.executable, "dlshogi.py", "train", args.shogi_variant,
+                    "--resume_rl_cycle_from", str(i),
+                    "--nn_grad_accum", str(args.nn_grad_accum * c),
+                ] + ' '.join([
+                    f'--{k} {v}' for k, v in args.to_dict().items()
+                    if (
+                        (k not in ('run', 'shogi_variant', 'resume_rl_cycle_from', 'another_player', 'nn_grad_accum'))
+                        and (v is not None)
+                    )
+                ]).split(), stderr=f)
 
             if (i == 1) or (get_best_player_index(i, i - 1) == i):
                 break

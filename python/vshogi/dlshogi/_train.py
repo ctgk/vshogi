@@ -1,3 +1,4 @@
+import sys
 import typing as tp
 
 import torch as th
@@ -128,7 +129,7 @@ def train(
 
     counter = 0
     for e in range(1, epochs + 1):
-        pbar = tqdm(enumerate(dataset, start=1), ncols=80)
+        pbar = tqdm(enumerate(dataset, start=1), ncols=80, file=sys.stdout)
         loss_policy_mean = 0.
         loss_value_mean = 0.
         loss_mean = 0.
