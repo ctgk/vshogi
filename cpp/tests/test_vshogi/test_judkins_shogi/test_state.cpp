@@ -58,15 +58,15 @@ TEST(state, apply)
         auto s = State();
         CHECK_EQUAL(VOID, s.get_board()[SQ_6D]);
         CHECK_EQUAL(B_FU, s.get_board()[SQ_6E]);
-        s.apply(Move(SQ_6D, SQ_6E));
+        s.apply(Move(SQ_6E, SQ_6D));
         CHECK_EQUAL(B_FU, s.get_board()[SQ_6D]);
         CHECK_EQUAL(VOID, s.get_board()[SQ_6E]);
     }
     {
         auto s = State()
-                     .apply(Move(SQ_4D, SQ_3F))
-                     .apply(Move(SQ_1C, SQ_1B))
-                     .apply(Move(SQ_5B, SQ_4D, true));
+                     .apply(Move(SQ_3F, SQ_4D))
+                     .apply(Move(SQ_1B, SQ_1C))
+                     .apply(Move(SQ_4D, SQ_5B, true));
         CHECK_EQUAL(B_NK, s.get_board()[SQ_5B]);
     }
 }

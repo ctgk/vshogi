@@ -317,7 +317,7 @@ class Game(abc.ABC):
         --------
         >>> import vshogi.minishogi as shogi
         >>> game = shogi.Game()
-        >>> game.apply(shogi.Move(shogi.D3, shogi.E2))
+        >>> game.apply(shogi.Move(shogi.E2, shogi.D3))
         Game(sfen="rbsgk/4p/5/P1B2/KGS1R w - 2")
         >>> game.apply('3a2b')
         Game(sfen="rb1gk/3sp/5/P1B2/KGS1R b - 3")
@@ -457,11 +457,11 @@ class Game(abc.ABC):
         >>> game.apply(["2e3d", "3a2b"])
         Game(sfen="rb1gk/3sp/5/P1B2/KGS1R b - 3")
         >>> game.get_move_at(0)
-        Move(dst=SQ_3D, src=SQ_2E)
+        Move(src=SQ_2E, dst=SQ_3D)
         >>> game.get_move_at(1)
-        Move(dst=SQ_2B, src=SQ_3A)
+        Move(src=SQ_3A, dst=SQ_2B)
         >>> game.get_move_at(-1)
-        Move(dst=SQ_2B, src=SQ_3A)
+        Move(src=SQ_3A, dst=SQ_2B)
         """
         return self._move_list[n]
 
@@ -880,7 +880,7 @@ class Game(abc.ABC):
         >>> import vshogi.minishogi as shogi
         >>> g = shogi.Game("5/2k2/5/2P2/2K2 b 2G")
         >>> g.get_mate_moves_if_any() # doctest: +ELLIPSIS
-        [Move(dst=SQ_3C, src=KI), ...]
+        [Move(src=KI, dst=SQ_3C), ...]
         """
         mate_moves = self._game.get_mate_moves_if_any(num_dfpn_nodes)
         return mate_moves

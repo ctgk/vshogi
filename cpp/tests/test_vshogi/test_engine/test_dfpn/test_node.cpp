@@ -24,7 +24,7 @@ TEST(dfpn_node_select, offence_single_child)
     n.expand(g);
     uint thpn_ch, thdn_ch;
     Node* const c1 = n.select(inf, inf, thpn_ch, thdn_ch);
-    CHECK_EQUAL(Move(SQ_1B, FU).hash(), c1->get_action().hash());
+    CHECK_EQUAL(Move(FU, SQ_1B).hash(), c1->get_action().hash());
     CHECK_EQUAL(inf, thpn_ch);
     CHECK_EQUAL(inf, thdn_ch);
 }
@@ -36,7 +36,7 @@ TEST(dfpn_node_select, offence_prefer_promotion)
     n.expand(g);
     uint thpn_ch, thdn_ch;
     Node* const c1 = n.select(inf, inf, thpn_ch, thdn_ch);
-    CHECK_EQUAL(Move(SQ_2B, SQ_3A, true).hash(), c1->get_action().hash());
+    CHECK_EQUAL(Move(SQ_3A, SQ_2B, true).hash(), c1->get_action().hash());
     CHECK_EQUAL(kilo + 1u, thpn_ch);
     CHECK_EQUAL(inf, thdn_ch);
 }
@@ -52,7 +52,7 @@ TEST(dfpn_node_select, defence_prefer_capture)
     n->expand(g);
     Node* const c1 = n->select(inf, inf, thpn_ch, thdn_ch);
     CHECK_EQUAL(SQ_5C, c1->get_action().destination());
-    CHECK_EQUAL(Move(SQ_5C, SQ_4C).hash(), c1->get_action().hash());
+    CHECK_EQUAL(Move(SQ_4C, SQ_5C).hash(), c1->get_action().hash());
     CHECK_EQUAL(inf, thpn_ch);
     CHECK_EQUAL(unit + 1u, thdn_ch);
 }
@@ -79,9 +79,9 @@ TEST(dfpn_node_backprop, offence_with_proved_child)
     CHECK_EQUAL(unit, n.pn());
     CHECK_EQUAL(2u * unit, n.dn());
 
-    auto ch = n.select(); // Move(SQ_1B, KI)
+    auto ch = n.select(); // Move(KI, SQ_1B)
     CHECK_FALSE(ch->offence());
-    g.apply(Move(SQ_1B, KI));
+    g.apply(Move(KI, SQ_1B));
     CHECK_EQUAL(vshogi::BLACK_WIN, g.get_result());
     ch->simulate(g);
     CHECK_TRUE(ch->proved_mate());

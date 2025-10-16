@@ -12,24 +12,24 @@ TEST(minishogi_king_entering, from_default_start_position)
 {
     using namespace vshogi::minishogi;
     auto game = Game();
-    game.apply(Move(SQ_1B, SQ_1E));
-    game.apply(Move(SQ_1B, SQ_1A));
-    game.apply(Move(SQ_5B, SQ_2E));
-    game.apply(Move(SQ_5B, SQ_4A));
-    game.apply(Move(SQ_5C, SQ_5D));
-    game.apply(Move(SQ_2E, SQ_5B, true));
-    game.apply(Move(SQ_5B, SQ_5C));
-    game.apply(Move(SQ_1C, SQ_1B));
-    game.apply(Move(SQ_5A, SQ_5B, true));
-    game.apply(Move(SQ_1D, SQ_1C));
-    game.apply(Move(SQ_5D, SQ_5E));
-    game.apply(Move(SQ_1E, SQ_1D));
-    game.apply(Move(SQ_4D, SQ_3E));
-    game.apply(Move(SQ_3E, KA));
-    game.apply(Move(SQ_5C, SQ_5D));
-    game.apply(Move(SQ_5E, HI));
+    game.apply(Move(SQ_1E, SQ_1B));
+    game.apply(Move(SQ_1A, SQ_1B));
+    game.apply(Move(SQ_2E, SQ_5B));
+    game.apply(Move(SQ_4A, SQ_5B));
+    game.apply(Move(SQ_5D, SQ_5C));
+    game.apply(Move(SQ_5B, SQ_2E, true));
+    game.apply(Move(SQ_5C, SQ_5B));
+    game.apply(Move(SQ_1B, SQ_1C));
+    game.apply(Move(SQ_5B, SQ_5A, true));
+    game.apply(Move(SQ_1C, SQ_1D));
+    game.apply(Move(SQ_5E, SQ_5D));
+    game.apply(Move(SQ_1D, SQ_1E));
+    game.apply(Move(SQ_3E, SQ_4D));
+    game.apply(Move(KA, SQ_3E));
+    game.apply(Move(SQ_5D, SQ_5C));
+    game.apply(Move(HI, SQ_5E));
     CHECK_EQUAL(vshogi::ONGOING, game.get_result());
-    game.apply(Move(SQ_5D, SQ_4E));
+    game.apply(Move(SQ_4E, SQ_5D));
 
     // Turn: WHITE
     // White: -
@@ -54,11 +54,11 @@ TEST(minishogi_king_entering, black_win)
     using namespace vshogi::minishogi;
     auto game = Game("KgBGS/1R3/5/5/k4 b Prbsp");
     CHECK_EQUAL(vshogi::ONGOING, game.get_result());
-    game.apply(Move(SQ_4A, SQ_4B));
+    game.apply(Move(SQ_4B, SQ_4A));
     CHECK_EQUAL(vshogi::ONGOING, game.get_result());
 
-    CHECK_TRUE(game.is_legal(Move(SQ_5D, SQ_5E)));
-    game.apply(Move(SQ_5D, SQ_5E));
+    CHECK_TRUE(game.is_legal(Move(SQ_5E, SQ_5D)));
+    game.apply(Move(SQ_5E, SQ_5D));
     CHECK_EQUAL(vshogi::BLACK_WIN, game.get_result());
 }
 
@@ -81,7 +81,7 @@ TEST(minishogi_king_entering, white_win)
     //   *---*---*---*---*---*
     // Black: FU
     const auto sfen = "K1BGS/1R3/5/5/krbs+p b Pg";
-    const auto move = Move(SQ_4A, SQ_4B);
+    const auto move = Move(SQ_4B, SQ_4A);
 
     auto game = Game(sfen);
     CHECK_EQUAL(vshogi::ONGOING, game.get_result());
@@ -109,7 +109,7 @@ TEST(minishogi_king_entering, ongoing_because_of_check)
     //   *---*---*---*---*---*
     // Black: FU
     const auto sfen = "K1BGS/1R3/5/5/krbs+p b Pg";
-    const auto move = Move(SQ_5B, SQ_4B);
+    const auto move = Move(SQ_4B, SQ_5B);
 
     auto game = Game(sfen);
     CHECK_EQUAL(vshogi::ONGOING, game.get_result());
@@ -137,7 +137,7 @@ TEST(minishogi_king_entering, ongoing_because_of_king_location)
     //   *---*---*---*---*---*
     // Black: FU
     const auto sfen = "K1BGS/1R3/5/k4/1rbs+p b Pg";
-    const auto move = Move(SQ_4A, SQ_4B);
+    const auto move = Move(SQ_4B, SQ_4A);
 
     auto game = Game(sfen);
     CHECK_EQUAL(vshogi::ONGOING, game.get_result());
@@ -165,7 +165,7 @@ TEST(minishogi_king_entering, ongoing_because_of_num_pieces_in_the_zone)
     //   *---*---*---*---*---*
     // Black: FU
     const auto sfen = "K1BGS/1R3/5/5/krb2 b Pgsp";
-    const auto move = Move(SQ_4A, SQ_4B);
+    const auto move = Move(SQ_4B, SQ_4A);
 
     auto game = Game(sfen);
     CHECK_EQUAL(vshogi::ONGOING, game.get_result());
@@ -193,7 +193,7 @@ TEST(minishogi_king_entering, ongoing_because_of_point)
     //   *---*---*---*---*---*
     // Black: FU
     const auto sfen = "KgBGS/1R3/5/5/krbs+p b P";
-    const auto move = Move(SQ_4A, SQ_4B);
+    const auto move = Move(SQ_4B, SQ_4A);
 
     auto game = Game(sfen);
     CHECK_EQUAL(vshogi::ONGOING, game.get_result());
@@ -220,7 +220,7 @@ TEST(minishogi_resign, white_resign)
 {
     using namespace vshogi::minishogi;
     auto g = Game();
-    g.apply(Move(SQ_5C, SQ_5D));
+    g.apply(Move(SQ_5D, SQ_5C));
     CHECK_EQUAL(vshogi::ONGOING, g.get_result());
     CHECK_EQUAL(vshogi::WHITE, g.get_turn());
 

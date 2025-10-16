@@ -56,7 +56,7 @@ def test_board():
 
 
 def test_to_sfen():
-    game = shogi.Game().apply(shogi.Move(shogi.SQ_1B, shogi.SQ_1E))
+    game = shogi.Game().apply(shogi.Move(shogi.SQ_1E, shogi.SQ_1B))
 
     actual = shogi.Game(game.to_sfen())
     assert shogi.B_HI == actual.board[shogi.SQ_1B]
@@ -72,14 +72,14 @@ def test_to_sfen():
 def test_shallow_copy():
     g1 = shogi.Game()
     g2 = copy(g1)
-    g1.apply(shogi.Move(shogi.SQ_5C, shogi.SQ_5D))
+    g1.apply(shogi.Move(shogi.SQ_5D, shogi.SQ_5C))
     assert g1.board[shogi.SQ_5C] == g2.board[shogi.SQ_5C]
 
 
 def test_copy():
     g1 = shogi.Game()
     g2 = g1.copy()
-    g1.apply(shogi.Move(shogi.SQ_5C, shogi.SQ_5D))
+    g1.apply(shogi.Move(shogi.SQ_5D, shogi.SQ_5C))
     assert g1.board[shogi.SQ_5C] != g2.board[shogi.SQ_5C]
 
 
@@ -210,7 +210,7 @@ def test_array_black():
 
 def test_array_white():
     game = shogi.Game()
-    game.apply(shogi.Move(shogi.SQ_1B, shogi.SQ_1E))
+    game.apply(shogi.Move(shogi.SQ_1E, shogi.SQ_1B))
     # Turn: WHITE
     # White: -
     #     5   4   3   2   1
@@ -316,7 +316,7 @@ def test_to_dlshogi_policy():
     #   *---*---*---*---*---*
     # Black: -
     game = shogi.Game("1bsgk/4p/5/P4/KGSBR w - 1")
-    a = shogi.Move(shogi.C1, shogi.B1)
+    a = shogi.Move(shogi.B1, shogi.C1)
     actual = game.to_dlshogi_policy({
         m: 0.5 if m == a else 0.05 for m in game.get_legal_moves()
     }, default_value=-1.)

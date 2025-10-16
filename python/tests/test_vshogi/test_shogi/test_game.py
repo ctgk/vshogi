@@ -455,12 +455,12 @@ def test_array_white():
 @pytest.mark.parametrize('game, move, expected', [
     (
         shogi.Game(),
-        shogi.Move(shogi.F2, shogi.G2),
+        shogi.Move(shogi.G2, shogi.F2),
         np.eye(2187)[int(shogi.F2) * (10 * 2 + 7) + 6],
     ),
     (
         shogi.Game('9/9/1k7/9/9/9/9/9/8K w -'),
-        shogi.Move(shogi.D8, shogi.C8),
+        shogi.Move(shogi.C8, shogi.D8),
         np.eye(2187)[int(shogi.F2) * (10 * 2 + 7) + 6],
     ),
     (

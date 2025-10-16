@@ -52,21 +52,21 @@ public:
     {
     }
     Move(
-        const Square dst, const Square src, const bool promote = false) noexcept
-        : Move(dst, static_cast<uint>(src), promote)
+        const Square src, const Square dst, const bool promote = false) noexcept
+        : Move(static_cast<uint>(src), dst, promote)
     {
     }
-    Move(const Square dst, const PieceType src) noexcept
-        : Move(dst, static_cast<uint>(src) + C::num_squares)
+    Move(const PieceType src, const Square dst) noexcept
+        : Move(static_cast<uint>(src) + C::num_squares, dst)
     {
     }
     explicit Move(const char sfen[5])
         : Move(
-            SHelper::to_square(sfen + 2),
             (sfen[1] == '*')
                 ? static_cast<uint>(PHelper::to_piece_type(sfen[0]))
                       + C::num_squares
                 : static_cast<uint>(SHelper::to_square(sfen)),
+            SHelper::to_square(sfen + 2),
             sfen[4] == '+')
     {
     }
@@ -125,17 +125,17 @@ public:
     {
         const auto dst_rotated = rotate_square(destination());
         if (is_drop())
-            return Move(dst_rotated, source_piece());
+            return Move(source_piece(), dst_rotated);
         const auto src_rotated = rotate_square(source_square());
-        return Move(dst_rotated, src_rotated, promote());
+        return Move(src_rotated, dst_rotated, promote());
     }
     Move hflip() const
     {
         const auto dst_hflipped = SHelper::hflip(destination());
         if (is_drop())
-            return Move(dst_hflipped, source_piece());
+            return Move(source_piece(), dst_hflipped);
         const auto src_hflipped = SHelper::hflip(source_square());
-        return Move(dst_hflipped, src_hflipped, promote());
+        return Move(src_hflipped, dst_hflipped, promote());
     }
     uint to_dlshogi_policy_index() const
     {
@@ -176,7 +176,7 @@ public:
     }
 
 private:
-    Move(const Square dst, const uint src, const bool promote = false)
+    Move(const uint src, const Square dst, const bool promote = false)
         : m_value(static_cast<std::uint16_t>(
             (src << source_shift)
             | static_cast<uint>(promote << promotion_shift) | dst))

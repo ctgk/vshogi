@@ -56,15 +56,15 @@ TEST(test_minishogi_state, apply)
         auto s = State();
         CHECK_EQUAL(VOID, s.get_board()[SQ_5C]);
         CHECK_EQUAL(B_FU, s.get_board()[SQ_5D]);
-        s.apply(Move(SQ_5C, SQ_5D));
+        s.apply(Move(SQ_5D, SQ_5C));
         CHECK_EQUAL(B_FU, s.get_board()[SQ_5C]);
         CHECK_EQUAL(VOID, s.get_board()[SQ_5D]);
     }
     {
         auto s = State();
-        s.apply(Move(SQ_4C, SQ_2E));
-        s.apply(Move(SQ_1C, SQ_1B));
-        s.apply(Move(SQ_2A, SQ_4C, true));
+        s.apply(Move(SQ_2E, SQ_4C));
+        s.apply(Move(SQ_1B, SQ_1C));
+        s.apply(Move(SQ_4C, SQ_2A, true));
         CHECK_EQUAL(B_UM, s.get_board()[SQ_2A]);
     }
 }
@@ -85,7 +85,7 @@ TEST(test_minishogi_state, check)
         auto s = State("4k/5/4B/5/K3R b -");
         CHECK_FALSE(s.in_check());
         CHECK_FALSE(s.in_double_check());
-        s.apply(Move(SQ_2B, SQ_1C));
+        s.apply(Move(SQ_1C, SQ_2B));
         CHECK_TRUE(s.in_check());
         CHECK_TRUE(s.in_double_check());
         CHECK_EQUAL(SQ_2B, s.get_checker_location());
@@ -95,7 +95,7 @@ TEST(test_minishogi_state, check)
         auto s = State("4k/5/5/5/K4 b R");
         CHECK_FALSE(s.in_check());
         CHECK_FALSE(s.in_double_check());
-        s.apply(Move(SQ_1B, HI));
+        s.apply(Move(HI, SQ_1B));
         CHECK_TRUE(s.in_check());
         CHECK_FALSE(s.in_double_check());
         CHECK_EQUAL(SQ_1B, s.get_checker_location());
@@ -115,7 +115,7 @@ TEST(test_minishogi_state, zobrist_hash)
         auto s2 = State("3k1/5/P4/5/K4 w -");
         auto hash_s2 = s2.zobrist_hash();
         CHECK_TRUE(s1.zobrist_hash() != hash_s2);
-        s2.apply(Move(SQ_1A, SQ_2A), &hash_s2);
+        s2.apply(Move(SQ_2A, SQ_1A), &hash_s2);
         CHECK_EQUAL(s1.zobrist_hash(), hash_s2);
     }
 }

@@ -19,7 +19,7 @@ TEST(judkins_shogi_game, ply)
 {
     auto game = Game();
     CHECK_EQUAL(0, game.ply());
-    game.apply(Move(SQ_1B, SQ_1F));
+    game.apply(Move(SQ_1F, SQ_1B));
     CHECK_EQUAL(1, game.ply());
 }
 
@@ -45,39 +45,39 @@ TEST(judkins_shogi_game, get_legal_moves)
         auto g = Game();
         const auto& actual = g.get_legal_moves();
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_6D, SQ_6E))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_6E, SQ_6D))
             != actual.cend());
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_4D, SQ_3F))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_3F, SQ_4D))
             != actual.cend());
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_1A, SQ_1F))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_1F, SQ_1A))
             != actual.cend());
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_4D, SQ_3F, true))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_3F, SQ_4D, true))
             != actual.cend());
     }
     {
         auto game = Game();
-        game.apply(Move(SQ_4D, SQ_2F));
+        game.apply(Move(SQ_2F, SQ_4D));
         CHECK_EQUAL(4, game.get_legal_moves().size());
     }
     {
         auto game = Game("4gk/5p/6/6/P5/KGSNBR b rbns");
-        game.apply(Move(SQ_4D, SQ_2F));
+        game.apply(Move(SQ_2F, SQ_4D));
         CHECK_EQUAL(9, game.get_legal_moves().size());
-        game.apply(Move(SQ_2B, GI));
-        game.apply(Move(SQ_2B, SQ_4D, true));
+        game.apply(Move(GI, SQ_2B));
+        game.apply(Move(SQ_4D, SQ_2B, true));
         CHECK_EQUAL(2, game.get_legal_moves().size());
     }
     {
         auto game = Game("6/4gk/6/5B/6/K4R b p");
-        game.apply(Move(SQ_2C, SQ_1D));
+        game.apply(Move(SQ_1D, SQ_2C));
         CHECK_EQUAL(2, game.get_legal_moves().size());
     }
     {
         auto game = Game("6/4gk/6/5B/6/K4R b p");
-        game.apply(Move(SQ_3B, SQ_1D, true));
+        game.apply(Move(SQ_1D, SQ_3B, true));
         CHECK_EQUAL(4, game.get_legal_moves().size());
     }
     {
@@ -99,23 +99,23 @@ TEST(judkins_shogi_game, get_legal_moves)
         auto g = Game("2rG1k/2R3/2K3/6/6/6 b P");
         const auto& actual = g.get_legal_moves();
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_1C, FU))
+            std::find(actual.cbegin(), actual.cend(), Move(FU, SQ_1C))
             != actual.cend());
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_1B, FU))
+            std::find(actual.cbegin(), actual.cend(), Move(FU, SQ_1B))
             != actual.cend()); // drop pawn mate
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_6A, FU))
+            std::find(actual.cbegin(), actual.cend(), Move(FU, SQ_6A))
             != actual.cend()); // unmovable
 
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_4A, SQ_4B))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_4B, SQ_4A))
             != actual.cend());
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_4A, SQ_4B, true))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_4B, SQ_4A, true))
             != actual.cend());
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_1B, SQ_4B))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_4B, SQ_1B))
             != actual.cend()); // pinned
     }
     {
@@ -137,40 +137,40 @@ TEST(judkins_shogi_game, get_legal_moves)
         auto g = Game("5k/6/2n3/6/2p1+rb/K5 w -");
         const auto& actual = g.get_legal_moves();
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_5A, SQ_1E))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_1E, SQ_5A))
             != actual.cend());
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_5A, SQ_1E, true))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_1E, SQ_5A, true))
             != actual.cend());
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_2F, SQ_1E))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_1E, SQ_2F))
             != actual.cend());
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_2F, SQ_1E, true))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_1E, SQ_2F, true))
             != actual.cend());
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_2A, SQ_2E))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_2E, SQ_2A))
             != actual.cend());
         // promotion of promoted piece
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_2A, SQ_2E, true))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_2E, SQ_2A, true))
             != actual.cend());
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_1E, SQ_2E))
-            != actual.cend());
-
-        CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_3E, SQ_4C))
-            != actual.cend()); // unmovable
-        CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_3E, SQ_4C, true))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_2E, SQ_1E))
             != actual.cend());
 
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_4F, SQ_4E))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_4C, SQ_3E))
             != actual.cend()); // unmovable
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_4F, SQ_4E, true))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_4C, SQ_3E, true))
+            != actual.cend());
+
+        CHECK_FALSE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_4E, SQ_4F))
+            != actual.cend()); // unmovable
+        CHECK_TRUE(
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_4E, SQ_4F, true))
             != actual.cend());
     }
     {
@@ -192,7 +192,7 @@ TEST(judkins_shogi_game, get_legal_moves)
         auto g = Game("6/5P/6/6/6/6 b -");
         const auto& actual = g.get_legal_moves();
         CHECK_EQUAL(1, actual.size());
-        CHECK_TRUE(Move(SQ_1A, SQ_1B, true) == actual[0]);
+        CHECK_TRUE(Move(SQ_1B, SQ_1A, true) == actual[0]);
     }
     {
         // W: KE
@@ -237,7 +237,7 @@ TEST(judkins_shogi_game, get_legal_moves)
         const auto g = Game("rbns1+r/4g1/6/P3Nk/2K1P1/1GS1+B1 b -");
         const auto& actual = g.get_legal_moves();
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_1D, SQ_2F))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_2F, SQ_1D))
             != actual.cend());
     }
 }

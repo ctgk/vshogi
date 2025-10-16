@@ -50,16 +50,13 @@ namespace vshogi
  *         for (src : sources)  # cannot cope with discovered check
  */
 
-template <class Parameters, bool Check = false>
+template <class P, bool Check = false>
 class KingMoveGenerator
 {
 private:
-    using C = Configuration<Parameters>;
-    using SHelper = Squares<Parameters>;
-    using BitBoardType = BitBoard<Parameters>;
-    using MoveType = Move<Parameters>;
-    using StateType = State<Parameters>;
-    using SquareIterator = typename BitBoard<Parameters>::SquareIterator;
+    using C = Configuration<P>;
+    using SHelper = Squares<P>;
+    using SquareIterator = typename BitBoard<P>::SquareIterator;
     using Square = typename C::Square;
 
 private:
@@ -71,7 +68,7 @@ private:
     }
 
 public:
-    KingMoveGenerator(const StateType& state)
+    KingMoveGenerator(const State<P>& state)
         : m_src(state.get_board().get_king_location(state.get_turn())), m_iter()
     {
         if constexpr (Check) {
@@ -87,7 +84,7 @@ public:
             } else {
                 m_iter
                     = state
-                          .compute_king_movable(~BitBoardType::get_line_segment(
+                          .compute_king_movable(~BitBoard<P>::get_line_segment(
                               checker_sq, enemy_king_sq))
                           .square_iterator();
             }
@@ -100,9 +97,9 @@ public:
         ++m_iter;
         return *this;
     }
-    MoveType operator*() const
+    Move<P> operator*() const
     {
-        return MoveType(*m_iter, m_src, false);
+        return Move<P>(m_src, *m_iter, false);
     }
     KingMoveGenerator begin() const
     {
@@ -123,28 +120,24 @@ public:
     }
 };
 
-template <class Parameters, bool Check = false>
+template <class P, bool Check = false>
 class DropMoveGenerator
 {
 private:
-    using C = Configuration<Parameters>;
-    using SquareIterator = typename BitBoard<Parameters>::SquareIterator;
-    using BitBoardType = BitBoard<Parameters>;
-    using MoveType = Move<Parameters>;
-    using StateType = State<Parameters>;
-    using StandType = Stand<Parameters>;
+    using C = Configuration<P>;
+    using SquareIterator = typename BitBoard<P>::SquareIterator;
     using PieceType = typename C::PieceType;
-    using PHelper = Pieces<Parameters>;
+    using PHelper = Pieces<P>;
 
 private:
-    const StateType& m_state;
+    const State<P>& m_state;
     const ColorEnum m_turn;
-    const StandType& m_stand;
+    const Stand<P>& m_stand;
     SquareIterator m_sq_iter;
     PieceType m_pt_iter;
 
 public:
-    DropMoveGenerator(const StateType& state)
+    DropMoveGenerator(const State<P>& state)
         : m_state(state), m_turn(state.get_turn()),
           m_stand(state.get_stand(m_turn)), m_sq_iter{}, m_pt_iter{}
     {
@@ -167,9 +160,9 @@ public:
         increment_piece_type_while_no_dst();
         return *this;
     }
-    MoveType operator*() const
+    Move<P> operator*() const
     {
-        return MoveType(*m_sq_iter, m_pt_iter);
+        return Move<P>(m_pt_iter, *m_sq_iter);
     }
     DropMoveGenerator begin()
     {
@@ -191,7 +184,7 @@ public:
     }
 
 private:
-    DropMoveGenerator(const StateType& state, const PieceType pt)
+    DropMoveGenerator(const State<P>& state, const PieceType pt)
         : m_state(state), m_turn(state.get_turn()),
           m_stand(state.get_stand(m_turn)), m_sq_iter(), m_pt_iter(pt)
     {
@@ -203,7 +196,7 @@ private:
         if (m_state.in_check()) {
             m_sq_iter = b.template compute_droppable<Check>(
                              p,
-                             BitBoardType::get_line_segment(
+                             BitBoard<P>::get_line_segment(
                                  m_state.get_checker_location(),
                                  b.get_king_location(m_turn)))
                             .square_iterator();
@@ -231,33 +224,29 @@ private:
     }
 };
 
-template <class Parameters, bool Check>
+template <class P, bool Check>
 class SoldierMoveGenerator;
 
-template <class Parameters>
-class SoldierMoveGenerator<Parameters, false>
+template <class P>
+class SoldierMoveGenerator<P, false>
 {
 private:
-    using C = Configuration<Parameters>;
-    using BitBoardType = BitBoard<Parameters>;
-    using BoardType = Board<Parameters>;
-    using MoveType = Move<Parameters>;
-    using StateType = State<Parameters>;
+    using C = Configuration<P>;
     using Square = typename C::Square;
-    using PHelper = Pieces<Parameters>;
-    using SHelper = Squares<Parameters>;
+    using PHelper = Pieces<P>;
+    using SHelper = Squares<P>;
 
 private:
-    const StateType& m_state;
+    const State<P>& m_state;
     const ColorEnum m_turn;
-    const BoardType& m_board;
-    const BitBoardType m_pinned;
-    typename BitBoardType::SquareIterator m_src_iter;
-    typename BitBoardType::SquareIterator m_dst_iter;
+    const Board<P>& m_board;
+    const BitBoard<P> m_pinned;
+    typename BitBoard<P>::SquareIterator m_src_iter;
+    typename BitBoard<P>::SquareIterator m_dst_iter;
     bool m_promote;
 
 public:
-    SoldierMoveGenerator(const StateType& state)
+    SoldierMoveGenerator(const State<P>& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(m_state.find_pinned()), m_src_iter(), m_dst_iter(),
           m_promote(true)
@@ -266,7 +255,7 @@ public:
             return;
         init_no_check();
     }
-    SoldierMoveGenerator(const StateType& state, const BitBoardType& src_mask)
+    SoldierMoveGenerator(const State<P>& state, const BitBoard<P>& src_mask)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(state.find_pinned()), m_src_iter(), m_dst_iter(),
           m_promote(true)
@@ -318,9 +307,9 @@ public:
         m_promote = true;
         return *this;
     }
-    MoveType operator*() const
+    Move<P> operator*() const
     {
-        return MoveType(*m_dst_iter, *m_src_iter, m_promote);
+        return Move<P>(*m_src_iter, *m_dst_iter, m_promote);
     }
     SoldierMoveGenerator begin()
     {
@@ -329,7 +318,7 @@ public:
     SoldierMoveGenerator end()
     {
         static const auto end_iter
-            = SoldierMoveGenerator(m_state, BitBoardType());
+            = SoldierMoveGenerator(m_state, BitBoard<P>());
         return end_iter;
     }
     bool operator!=(const SoldierMoveGenerator& other) const
@@ -345,9 +334,9 @@ public:
 
 private:
     SoldierMoveGenerator(
-        const StateType& state,
-        const BitBoardType& src_mask,
-        const BitBoardType& pinned)
+        const State<P>& state,
+        const BitBoard<P>& src_mask,
+        const BitBoard<P>& pinned)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(pinned), m_src_iter(), m_dst_iter(), m_promote(true)
     {
@@ -381,7 +370,7 @@ private:
         const auto src_mask = m_board.get_occupied(m_turn).clear(king_sq);
         m_src_iter = src_mask.square_iterator();
     }
-    void init_src_iter(const BitBoardType& src_mask)
+    void init_src_iter(const BitBoard<P>& src_mask)
     {
         m_src_iter = src_mask.square_iterator();
     }
@@ -396,7 +385,7 @@ private:
 
         if (m_state.in_check()) {
             const auto checker_sq = m_state.get_checker_location();
-            movable &= BitBoardType::get_line_segment(checker_sq, king_sq)
+            movable &= BitBoard<P>::get_line_segment(checker_sq, king_sq)
                            .set(checker_sq);
             if (!movable.any())
                 goto ExitLabel;
@@ -404,7 +393,7 @@ private:
         if (m_pinned.is_one(src)) {
             const auto dir = SHelper::get_direction(src, king_sq);
             assert((dir < 8) || (dir == DIR_NA));
-            movable &= BitBoardType::get_ray_to(king_sq, dir);
+            movable &= BitBoard<P>::get_ray_to(king_sq, dir);
         }
     ExitLabel:
         m_dst_iter = movable.square_iterator();
@@ -419,39 +408,35 @@ private:
         m_promote = false;
         const auto src = *m_src_iter;
         const auto p = m_board[src];
-        if (BitBoardType::get_attacks_by(p, *m_dst_iter).any())
+        if (BitBoard<P>::get_attacks_by(p, *m_dst_iter).any())
             return;
         m_promote = true;
     }
 };
 
-template <class Parameters>
-class SoldierMoveGenerator<Parameters, true>
+template <class P>
+class SoldierMoveGenerator<P, true>
 {
 private:
-    using C = Configuration<Parameters>;
-    using BitBoardType = BitBoard<Parameters>;
-    using BoardType = Board<Parameters>;
-    using MoveType = Move<Parameters>;
-    using StateType = State<Parameters>;
+    using C = Configuration<P>;
     using ColoredPiece = typename C::ColoredPiece;
     using Square = typename C::Square;
-    using PHelper = Pieces<Parameters>;
-    using SHelper = Squares<Parameters>;
+    using PHelper = Pieces<P>;
+    using SHelper = Squares<P>;
 
 private:
-    const StateType& m_state;
+    const State<P>& m_state;
     const ColorEnum m_turn;
-    const BoardType& m_board;
-    const BitBoardType m_pinned;
-    const BitBoardType m_cover;
-    typename BitBoardType::SquareIterator m_src_iter;
-    typename BitBoardType::SquareIterator m_dst_iter;
+    const Board<P>& m_board;
+    const BitBoard<P> m_pinned;
+    const BitBoard<P> m_cover;
+    typename BitBoard<P>::SquareIterator m_src_iter;
+    typename BitBoard<P>::SquareIterator m_dst_iter;
     bool m_promote;
-    BitBoardType m_dst_mask;
+    BitBoard<P> m_dst_mask;
 
 public:
-    SoldierMoveGenerator(const StateType& state)
+    SoldierMoveGenerator(const State<P>& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(state.find_pinned()), m_cover(compute_cover(state)),
           m_src_iter(), m_dst_iter(), m_promote(true), m_dst_mask()
@@ -504,9 +489,9 @@ public:
         }
         return *this;
     }
-    MoveType operator*() const
+    Move<P> operator*() const
     {
-        return MoveType(*m_dst_iter, *m_src_iter, m_promote);
+        return Move<P>(*m_src_iter, *m_dst_iter, m_promote);
     }
     SoldierMoveGenerator begin()
     {
@@ -529,7 +514,7 @@ public:
     }
 
 private:
-    SoldierMoveGenerator(const StateType& state, const BoardType& board)
+    SoldierMoveGenerator(const State<P>& state, const Board<P>& board)
         : m_state(state), m_turn(), m_board(board), m_pinned(), m_cover(),
           m_src_iter(), m_dst_iter(), m_promote(true), m_dst_mask()
     {
@@ -540,9 +525,9 @@ private:
         const auto target = m_board.get_king_location(~m_turn);
         assert(target != C::SQ_NA);
 
-        BitBoardType src_mask = m_cover;
+        BitBoard<P> src_mask = m_cover;
         src_mask |= m_board.get_occupied_by_ranging(m_turn);
-        src_mask |= BitBoardType::get_neighbor_2nd_at(target, m_turn);
+        src_mask |= BitBoard<P>::get_neighbor_2nd_at(target, m_turn);
         src_mask &= m_board.get_occupied(m_turn).clear(king_sq);
         m_src_iter = src_mask.square_iterator();
     }
@@ -577,32 +562,32 @@ private:
         assert(!m_promote);
         const auto src = *m_src_iter;
         const auto p = m_board[src];
-        BitBoardType movable = m_dst_mask;
+        BitBoard<P> movable = m_dst_mask;
         update_mask_by_forcing_check(movable, p, src);
         if (movable.any()) {
             update_mask_by_nopromo(movable, p);
         }
         m_dst_iter = movable.square_iterator();
     }
-    bool update_mask_by_promotion(BitBoardType& mask, const Square src)
+    bool update_mask_by_promotion(BitBoard<P>& mask, const Square src)
     {
         assert(m_promote);
         if (!SHelper::in_promotion_zone(src, m_turn)) {
-            mask &= BitBoardType::get_promotion_zone(m_turn);
+            mask &= BitBoard<P>::get_promotion_zone(m_turn);
             return true;
         }
         return false;
     }
-    void update_mask_by_nopromo(BitBoardType& mask, const ColoredPiece p)
+    void update_mask_by_nopromo(BitBoard<P>& mask, const ColoredPiece p)
     {
-        mask &= BitBoardType::compute_droppable(p);
+        mask &= BitBoard<P>::compute_droppable(p);
     }
     void update_dst_mask_by_current_check(const Square king_sq)
     {
         if (m_state.in_check()) {
             const auto checker_sq = m_state.get_checker_location();
             assert(checker_sq != C::SQ_NA);
-            m_dst_mask &= BitBoardType::get_line_segment(checker_sq, king_sq)
+            m_dst_mask &= BitBoard<P>::get_line_segment(checker_sq, king_sq)
                               .set(checker_sq);
         }
     }
@@ -612,31 +597,31 @@ private:
         if (m_pinned.is_one(src)) {
             const auto dir = SHelper::get_direction(src, king_sq);
             assert((dir < 8) || (dir == DIR_NA));
-            m_dst_mask &= BitBoardType::get_ray_to(king_sq, dir);
+            m_dst_mask &= BitBoard<P>::get_ray_to(king_sq, dir);
         }
     }
     void update_mask_by_forcing_check(
-        BitBoardType& mask, const ColoredPiece p, const Square& src)
+        BitBoard<P>& mask, const ColoredPiece p, const Square& src)
     {
         const auto enemy_king_sq = m_board.get_king_location(~m_turn);
         auto pt = PHelper::to_piece_type(p);
         if (m_promote)
             pt = PHelper::promote_nocheck(pt);
-        const auto atk = BitBoardType::get_attacks_by(
+        const auto atk = BitBoard<P>::get_attacks_by(
             PHelper::to_board_piece(~m_turn, pt),
             enemy_king_sq,
             m_board.get_occupied());
         if (m_cover.is_one(src)) {
             const auto dir = SHelper::get_direction(src, enemy_king_sq);
-            mask &= atk | (~BitBoardType::get_ray_to(enemy_king_sq, dir));
+            mask &= atk | (~BitBoard<P>::get_ray_to(enemy_king_sq, dir));
         } else {
             mask &= atk;
         }
     }
-    static BitBoardType compute_cover(const StateType& s)
+    static BitBoard<P> compute_cover(const State<P>& s)
     {
         if (s.in_double_check())
-            return BitBoardType();
+            return BitBoard<P>();
         return s.get_board().find_cover(s.get_turn());
     }
 };
@@ -699,29 +684,25 @@ private:
     }
 };
 
-template <class Parameters>
+template <class P>
 class BlockMoveGenerator
 {
 private:
-    using C = Configuration<Parameters>;
-    using BitBoardType = BitBoard<Parameters>;
-    using BoardType = Board<Parameters>;
-    using MoveType = Move<Parameters>;
-    using PHelper = Pieces<Parameters>;
-    using SHelper = Squares<Parameters>;
-    using StateType = State<Parameters>;
+    using C = Configuration<P>;
+    using PHelper = Pieces<P>;
+    using SHelper = Squares<P>;
     using Square = typename C::Square;
-    using SquareIterator = typename BitBoardType::SquareIterator;
+    using SquareIterator = typename BitBoard<P>::SquareIterator;
 
-    const BoardType& m_board;
+    const Board<P>& m_board;
     const ColorEnum m_turn;
-    const BitBoardType m_not_pinned;
+    const BitBoard<P> m_not_pinned;
     SquareIterator m_dst_iter;
     SquareIterator m_src_iter;
     bool m_promote;
 
 public:
-    BlockMoveGenerator(const StateType& state)
+    BlockMoveGenerator(const State<P>& state)
         : m_board(state.get_board()), m_turn(state.get_turn()),
           m_not_pinned(
               ~(state.find_pinned().set(m_board.get_king_location(m_turn)))),
@@ -746,7 +727,7 @@ public:
         if (m_promote) {
             const auto dst = *m_dst_iter;
             const auto& p = m_board[*m_src_iter];
-            if (BitBoardType::get_attacks_by(p, dst).any()) {
+            if (BitBoard<P>::get_attacks_by(p, dst).any()) {
                 m_promote = false;
                 return *this;
             }
@@ -769,9 +750,9 @@ public:
         init_promote();
         return *this;
     }
-    MoveType operator*() const
+    Move<P> operator*() const
     {
-        return MoveType(*m_dst_iter, *m_src_iter, m_promote);
+        return Move<P>(*m_src_iter, *m_dst_iter, m_promote);
     }
     BlockMoveGenerator begin()
     {
@@ -794,7 +775,7 @@ public:
     }
 
 private:
-    BlockMoveGenerator(const BoardType& b)
+    BlockMoveGenerator(const Board<P>& b)
         : m_board(b), m_turn(), m_not_pinned(), m_dst_iter(), m_src_iter(),
           m_promote()
     {
@@ -802,7 +783,7 @@ private:
     void init_dst_iter(const Square& checker_sq)
     {
         const auto& king = m_board.get_king_location(m_turn);
-        m_dst_iter = BitBoardType::get_line_segment(checker_sq, king)
+        m_dst_iter = BitBoard<P>::get_line_segment(checker_sq, king)
                          .set(checker_sq)
                          .square_iterator();
     }
@@ -827,20 +808,16 @@ private:
     }
 };
 
-template <class Parameters, bool Check = false>
+template <class P, bool Check = false>
 class BoardMoveGenerator
 {
 private:
-    using MoveType = Move<Parameters>;
-    using StateType = State<Parameters>;
-
-private:
-    KingMoveGenerator<Parameters, Check> m_king_iter;
-    SoldierMoveGenerator<Parameters, Check> m_board_iter;
+    KingMoveGenerator<P, Check> m_king_iter;
+    SoldierMoveGenerator<P, Check> m_board_iter;
     uint m_index; //!< 0: king, 1: board, 2: end
 
 public:
-    BoardMoveGenerator(const StateType& s)
+    BoardMoveGenerator(const State<P>& s)
         : m_king_iter(s), m_board_iter(s), m_index(0u)
     {
         if (m_king_iter.is_end()) {
@@ -873,7 +850,7 @@ public:
         }
         return *this;
     }
-    MoveType operator*() const
+    Move<P> operator*() const
     {
         switch (m_index) {
         case 0u:
@@ -883,7 +860,7 @@ public:
         default:
             break;
         }
-        return MoveType();
+        return Move<P>();
     }
     BoardMoveGenerator begin()
     {
@@ -908,29 +885,25 @@ public:
 
 private:
     BoardMoveGenerator(
-        const KingMoveGenerator<Parameters, Check>& king_iter,
-        const SoldierMoveGenerator<Parameters, Check>& board_iter,
+        const KingMoveGenerator<P, Check>& king_iter,
+        const SoldierMoveGenerator<P, Check>& board_iter,
         const uint index)
         : m_king_iter(king_iter), m_board_iter(board_iter), m_index(index)
     {
     }
 };
 
-template <class Parameters, bool Check = false>
+template <class P, bool Check = false>
 class LegalMoveGenerator
 {
 private:
-    using MoveType = Move<Parameters>;
-    using StateType = State<Parameters>;
-
-private:
-    KingMoveGenerator<Parameters, Check> m_king_iter;
-    SoldierMoveGenerator<Parameters, Check> m_board_iter;
-    DropMoveGenerator<Parameters, Check> m_drop_iter;
+    KingMoveGenerator<P, Check> m_king_iter;
+    SoldierMoveGenerator<P, Check> m_board_iter;
+    DropMoveGenerator<P, Check> m_drop_iter;
     uint m_index; //!< 0: king, 1: board, 2: drop, 3: end
 
 public:
-    LegalMoveGenerator(const StateType& s)
+    LegalMoveGenerator(const State<P>& s)
         : m_king_iter(s), m_board_iter(s), m_drop_iter(s), m_index(0u)
     {
         if (m_king_iter.is_end()) {
@@ -974,7 +947,7 @@ public:
         }
         return *this;
     }
-    MoveType operator*() const
+    Move<P> operator*() const
     {
         switch (m_index) {
         case 0u:
@@ -986,7 +959,7 @@ public:
         default:
             break;
         }
-        return MoveType();
+        return Move<P>();
     }
     LegalMoveGenerator begin()
     {
@@ -994,7 +967,7 @@ public:
     }
     LegalMoveGenerator end()
     {
-        static const auto end_iter = LegalMoveGenerator<Parameters, Check>(
+        static const auto end_iter = LegalMoveGenerator<P, Check>(
             m_king_iter.end(), m_board_iter.end(), m_drop_iter.end(), 3u);
         return end_iter;
     }
@@ -1012,9 +985,9 @@ public:
 
 private:
     LegalMoveGenerator(
-        const KingMoveGenerator<Parameters, Check>& king_iter,
-        const SoldierMoveGenerator<Parameters, Check>& board_iter,
-        const DropMoveGenerator<Parameters, Check>& drop_iter,
+        const KingMoveGenerator<P, Check>& king_iter,
+        const SoldierMoveGenerator<P, Check>& board_iter,
+        const DropMoveGenerator<P, Check>& drop_iter,
         const uint index)
         : m_king_iter(king_iter), m_board_iter(board_iter),
           m_drop_iter(drop_iter), m_index(index)

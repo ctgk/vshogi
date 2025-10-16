@@ -109,13 +109,13 @@ inline void export_move(pybind11::module& m)
     py::class_<Move>(m, "Move")
         .def(
             py::init<const Square, const Square, const bool>(),
-            py::arg("dst"),
             py::arg("src"),
+            py::arg("dst"),
             py::arg("promote") = false)
         .def(
-            py::init<const Square, const PieceType>(),
-            py::arg("dst"),
-            py::arg("src"))
+            py::init<const PieceType, const Square>(),
+            py::arg("src"),
+            py::arg("dst"))
         .def(py::init<const std::uint16_t>(), py::arg("value"))
         .def(
             py::init(

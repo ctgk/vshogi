@@ -106,7 +106,7 @@ TEST(minishogi_node, explore_one_action)
         DOUBLES_EQUAL(-0.8f, actual->get_value(), 1e-2f);
         DOUBLES_EQUAL(-0.8f, actual->get_q_value(), 1e-2f);
 
-        const auto ch = root.get_child(Move(SQ_1B, SQ_1C));
+        const auto ch = root.get_child(Move(SQ_1C, SQ_1B));
         CHECK_TRUE(actual == ch);
     }
     DOUBLES_EQUAL(0.8f, root.get_q_value(100), 1e-2f);
@@ -126,46 +126,46 @@ TEST(minishogi_node, explore_two_action)
      *
      * PUCT scores (Q + U * c)
      * - step1
-     *     - Move(SQ_1D, SQ_1E): 0 + 0.6 * 1 = 0.6 <-
-     *     - Move(SQ_2D, SQ_1E): 0 + 0.4 * 1 = 0.4
+     *     - Move(SQ_1E, SQ_1D): 0 + 0.6 * 1 = 0.6 <-
+     *     - Move(SQ_1E, SQ_2D): 0 + 0.4 * 1 = 0.4
      * - step2
-     *     - Move(SQ_1D, SQ_1E): -0.3 + (0.6 * sqrt(2) / 2) * 1 = 0.124
-     *     - Move(SQ_2D, SQ_1E): -0.15 + (0.4 * sqrt(2) / 1) * 1 = 0.416 <-
+     *     - Move(SQ_1E, SQ_1D): -0.3 + (0.6 * sqrt(2) / 2) * 1 = 0.124
+     *     - Move(SQ_1E, SQ_2D): -0.15 + (0.4 * sqrt(2) / 1) * 1 = 0.416 <-
      * - step3
-     *     - Move(SQ_1D, SQ_1E): -0.3 + (0.6 * sqrt(3) / 2) * 1 = 0.220
-     *     - Move(SQ_2D, SQ_1E): 0.8 + (0.4 * sqrt(3) / 2) * 1 = 1.15 <-
+     *     - Move(SQ_1E, SQ_1D): -0.3 + (0.6 * sqrt(3) / 2) * 1 = 0.220
+     *     - Move(SQ_1E, SQ_2D): 0.8 + (0.4 * sqrt(3) / 2) * 1 = 1.15 <-
      */
 
     std::vector<float> input_value = {0.3f, -0.8f, -0.8f};
     const Move moves[]
-        = {Move(SQ_1D, SQ_1E), Move(SQ_2D, SQ_1E), Move(SQ_2D, SQ_1E)};
+        = {Move(SQ_1E, SQ_1D), Move(SQ_1E, SQ_2D), Move(SQ_1E, SQ_2D)};
     std::vector<float> expected_q_value = {
-        // At first, Move(SQ_1D, SQ_1E) is selected due to higher probability
+        // At first, Move(SQ_1E, SQ_1D) is selected due to higher probability
         // clang-format off
-        (0.f + -0.3f) / 2.f,                // Move(SQ_1D, SQ_1E) selected
-        (0.f + -0.3f + 0.8f) / 3.f,         // Move(SQ_2D, SQ_1E) selected
-        (0.f + -0.3f + 0.8f + 0.8f) / 4.f,  // Move(SQ_2D, SQ_1E) selected
+        (0.f + -0.3f) / 2.f,                // Move(SQ_1E, SQ_1D) selected
+        (0.f + -0.3f + 0.8f) / 3.f,         // Move(SQ_1E, SQ_2D) selected
+        (0.f + -0.3f + 0.8f + 0.8f) / 4.f,  // Move(SQ_1E, SQ_2D) selected
         // clang-format on
     };
     std::vector<Move> expected_most_selected_moves
-        = {Move(SQ_1D, SQ_1E), Move(SQ_2D, SQ_1E), Move(SQ_2D, SQ_1E)};
+        = {Move(SQ_1E, SQ_1D), Move(SQ_1E, SQ_2D), Move(SQ_1E, SQ_2D)};
     const float expected_greedy_q_values[] = {-0.3f, 0.8f, 0.8f};
 
     // softmax([-0.202, 0.202]) -> [0.5996, 0.4003]
     float logits[Game::num_dlshogi_policy()] = {0.f};
-    logits[Move(SQ_1D, SQ_1E).to_dlshogi_policy_index()] = 0.202f;
-    logits[Move(SQ_2D, SQ_1E).to_dlshogi_policy_index()] = -0.202f;
+    logits[Move(SQ_1E, SQ_1D).to_dlshogi_policy_index()] = 0.202f;
+    logits[Move(SQ_1E, SQ_2D).to_dlshogi_policy_index()] = -0.202f;
     auto g = Game("4k/5/5/5/4S b -");
     auto root = Node();
     root.simulate_ongoing_and_expand(
-        {Move(SQ_1D, SQ_1E), Move(SQ_2D, SQ_1E)}, vshogi::BLACK, 0.f, logits);
+        {Move(SQ_1E, SQ_1D), Move(SQ_1E, SQ_2D)}, vshogi::BLACK, 0.f, logits);
     CHECK_EQUAL(nullptr, root.backprop(root.get_value(), nullptr));
 
     for (std::size_t ii = 0; ii < 3; ++ii) {
         auto g_copy = Game(g);
         const auto actual = root.select_nocheck(g_copy, 1.f, 0.f);
         actual->simulate_ongoing_and_expand(
-            {Move(SQ_1A, SQ_1B)}, // dummy action to prevent mate
+            {Move(SQ_1B, SQ_1A)}, // dummy action to prevent mate
             vshogi::WHITE,
             input_value[ii],
             zeros);
@@ -203,15 +203,15 @@ TEST(minishogi_node, explore_two_layer)
      * PUCT scores (Q + U * c)
      * - step1
      *     - Layer1
-     *         - Move(SQ_1D, SQ_1E): 0 + 0.9 * 1 = 0.9 <-
-     *         - Move(SQ_2D, SQ_1E): 0 + 0.1 * 1 = 0.1
+     *         - Move(SQ_1E, SQ_1D): 0 + 0.9 * 1 = 0.9 <-
+     *         - Move(SQ_1E, SQ_2D): 0 + 0.1 * 1 = 0.1
      * - step2
      *     - Layer1
-     *         - Move(SQ_1D, SQ_1E): 0.9 + (0.9 * sqrt(2) / 2) * 1 = 1.536 <-
-     *         - Move(SQ_2D, SQ_1E): 0 + (0.1 * sqrt(2) / 1) * 1 = 0.141
+     *         - Move(SQ_1E, SQ_1D): 0.9 + (0.9 * sqrt(2) / 2) * 1 = 1.536 <-
+     *         - Move(SQ_1E, SQ_2D): 0 + (0.1 * sqrt(2) / 1) * 1 = 0.141
      *     - Layer2
-     *         - Move(SQ_5B, SQ_5A): 0 + 0.9 * 1 <-
-     *         - Move(SQ_4B, SQ_5A): 0 + 0.1 * 1
+     *         - Move(SQ_5A, SQ_5B): 0 + 0.9 * 1 <-
+     *         - Move(SQ_5A, SQ_4B): 0 + 0.1 * 1
      */
 
     std::vector<float> input_value = {-0.9f, -0.5f};
@@ -219,24 +219,24 @@ TEST(minishogi_node, explore_two_layer)
 
     // softmax([-1.099, 1.099]) -> [0.09993023, 0.90006977]
     float logits[Game::num_dlshogi_policy()] = {0.f};
-    logits[Move(SQ_1D, SQ_1E).to_dlshogi_policy_index()] = 1.099f;
-    logits[Move(SQ_2D, SQ_1E).to_dlshogi_policy_index()] = -1.099f;
+    logits[Move(SQ_1E, SQ_1D).to_dlshogi_policy_index()] = 1.099f;
+    logits[Move(SQ_1E, SQ_2D).to_dlshogi_policy_index()] = -1.099f;
     auto g = Game("s4/5/5/5/4S b -");
     auto root = Node();
     root.simulate_ongoing_and_expand(
-        {Move(SQ_1D, SQ_1E), Move(SQ_2D, SQ_1E)}, vshogi::BLACK, 0.f, logits);
+        {Move(SQ_1E, SQ_1D), Move(SQ_1E, SQ_2D)}, vshogi::BLACK, 0.f, logits);
     CHECK_EQUAL(nullptr, root.backprop(root.get_value(), nullptr));
 
     {
         auto g_copy = Game(g);
         const auto actual = root.select_nocheck(g_copy, 1.f, 0.f);
-        CHECK_EQUAL(root.get_child(Move(SQ_1D, SQ_1E)), actual);
+        CHECK_EQUAL(root.get_child(Move(SQ_1E, SQ_1D)), actual);
         STRCMP_EQUAL("s4/5/5/4S/5 w - 2", g_copy.to_sfen().c_str());
         float policy[Game::num_dlshogi_policy()] = {0.f};
-        policy[Move(SQ_5B, SQ_5A).rotate().to_dlshogi_policy_index()] = 1.099f;
-        policy[Move(SQ_4B, SQ_5A).rotate().to_dlshogi_policy_index()] = -1.099f;
+        policy[Move(SQ_5A, SQ_5B).rotate().to_dlshogi_policy_index()] = 1.099f;
+        policy[Move(SQ_5A, SQ_4B).rotate().to_dlshogi_policy_index()] = -1.099f;
         actual->simulate_ongoing_and_expand(
-            {Move(SQ_5B, SQ_5A), Move(SQ_4B, SQ_5A)},
+            {Move(SQ_5A, SQ_5B), Move(SQ_5A, SQ_4B)},
             vshogi::WHITE,
             -0.9f,
             policy);
@@ -249,11 +249,11 @@ TEST(minishogi_node, explore_two_layer)
         auto g_copy = Game("s4/5/5/5/4S b -");
         Node* const child = root.select_nocheck(g_copy, 1.f, 0.f);
         CHECK_EQUAL(1u, g_copy.ply());
-        CHECK_EQUAL(root.get_child(Move(SQ_1D, SQ_1E)), child);
+        CHECK_EQUAL(root.get_child(Move(SQ_1E, SQ_1D)), child);
         Node* const grand_child = child->select_nocheck(g_copy, 1.f, 0.f);
         CHECK_EQUAL(2u, g_copy.ply());
         CHECK_EQUAL(
-            root.get_child(Move(SQ_1D, SQ_1E))->get_child(Move(SQ_5B, SQ_5A)),
+            root.get_child(Move(SQ_1E, SQ_1D))->get_child(Move(SQ_5A, SQ_5B)),
             grand_child);
         STRCMP_EQUAL("5/s4/5/4S/5 b - 3", g_copy.to_sfen().c_str());
         grand_child->simulate_ongoing_and_expand(
@@ -265,7 +265,7 @@ TEST(minishogi_node, explore_two_layer)
         CHECK_EQUAL(nullptr, root.backprop(grand_child->get_value(), child));
         DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(), 1e-3f);
         CHECK_TRUE(
-            root.get_most_visited_child()->get_action() == Move(SQ_1D, SQ_1E));
+            root.get_most_visited_child()->get_action() == Move(SQ_1E, SQ_1D));
         DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(0), 1e-2f);
         DOUBLES_EQUAL((0.9f + -0.5f) / 2.f, root.get_q_value(1), 1e-2f);
         DOUBLES_EQUAL(-0.5f, root.get_q_value(2), 1e-2f);
@@ -274,17 +274,17 @@ TEST(minishogi_node, explore_two_layer)
     {
         CHECK_EQUAL(3, root.get_visit_count());
         DOUBLES_EQUAL(0.f, root.get_value(), 1e-2f);
-        root.apply(Move(SQ_1D, SQ_1E));
+        root.apply(Move(SQ_1E, SQ_1D));
         CHECK_EQUAL(2, root.get_visit_count());
         DOUBLES_EQUAL(-0.9f, root.get_value(), 1e-2f);
 
         DOUBLES_EQUAL(
-            0.9f, root.get_child(Move(SQ_5B, SQ_5A))->get_proba(), 1e-2f);
+            0.9f, root.get_child(Move(SQ_5A, SQ_5B))->get_proba(), 1e-2f);
         DOUBLES_EQUAL(
-            0.1f, root.get_child(Move(SQ_4B, SQ_5A))->get_proba(), 1e-2f);
+            0.1f, root.get_child(Move(SQ_5A, SQ_4B))->get_proba(), 1e-2f);
         DOUBLES_EQUAL((-0.9f + 0.5f) / 2.f, root.get_q_value(), 1e-3f);
         CHECK_TRUE(
-            root.get_most_visited_child()->get_action() == Move(SQ_5B, SQ_5A));
+            root.get_most_visited_child()->get_action() == Move(SQ_5A, SQ_5B));
         DOUBLES_EQUAL((-0.9f + 0.5f) / 2.f, root.get_q_value(0), 1e-2f);
         DOUBLES_EQUAL(0.5f, root.get_q_value(1), 1e-2f);
         DOUBLES_EQUAL(0.5f, root.get_q_value(100), 1e-2f);
@@ -389,7 +389,7 @@ TEST(minishogi_searcher, test_mate_in_three)
             mcts.simulate_expand_backprop(n, g, 0.f, nullptr);
     }
 
-    const auto m = Move(SQ_3C, SQ_2D);
+    const auto m = Move(SQ_2D, SQ_3C);
     CHECK_EQUAL(m.hash(), mcts.get_action_by_visit_max().hash());
     DOUBLES_EQUAL(-1.f, mcts.get_root()->get_child(m)->get_q_value(), 1e-3f);
     const int expected_visits

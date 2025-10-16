@@ -153,7 +153,7 @@ def search_nply_mate(
     >>> import vshogi.minishogi as shogi
     >>> g = shogi.Game('3pk/5/3G1/5/R4 b psgbr')
     >>> search_nply_mate(g, 1)
-    [(Move(dst=SQ_1E, src=SQ_5E),)]
+    [(Move(src=SQ_5E, dst=SQ_1E),)]
     """
     start = time()
     if num_ply not in (1, 3, 5):

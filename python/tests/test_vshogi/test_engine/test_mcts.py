@@ -25,21 +25,6 @@ def test_num_searched():
     assert searcher.num_searched == 100
 
 
-# def test_apply():
-#     game = shogi.Game()
-#     searcher = Mcts(uniform_pv_func)
-#     searcher.set_game(game)
-#     searcher.search(n_or_t=1000)
-#     m = shogi.Move(shogi.B2, shogi.B3)
-#     assert searcher.num_explored == 1000 + 1
-
-#     expected = searcher._root.get_child(m).get_visit_count()
-
-#     searcher.apply(m)
-
-#     assert searcher.num_explored == expected
-
-
 def test_clear():
     game = shogi.Game()
     searcher = Mcts(uniform_pv_func)
@@ -52,7 +37,7 @@ def test_clear():
 
 def test_q_values_mate_in_one():
     game = shogi.Game("b2pk/3b1/4P/2gRR/4K b -")
-    m = shogi.Move(shogi.SQ_1B, shogi.SQ_1C)
+    m = shogi.Move(shogi.SQ_1C, shogi.SQ_1B)
 
     searcher = Mcts(uniform_pv_func, random_rate=0.)
     searcher.set_game(game)
@@ -76,7 +61,7 @@ def test_q_values_initial():
 
 def test_mate_in_three():
     game = shogi.Game('1r3/2k1G/5/2PG1/5 b -')
-    m = shogi.Move(shogi.SQ_3C, shogi.SQ_2D)
+    m = shogi.Move(shogi.SQ_2D, shogi.SQ_3C)
 
     searcher = Mcts(uniform_pv_func, random_rate=0)
     searcher.set_game(game)
@@ -95,7 +80,7 @@ def test_mate_in_three():
 
 def test_visit_count_by_random():
     game = shogi.Game()
-    m = shogi.Move(shogi.SQ_1B, shogi.SQ_1E)
+    m = shogi.Move(shogi.SQ_1E, shogi.SQ_1B)
 
     searcher = Mcts(
         lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.), random_rate=0)

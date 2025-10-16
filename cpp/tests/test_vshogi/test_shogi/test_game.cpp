@@ -24,7 +24,7 @@ TEST(test_shogi_game, ply)
 {
     auto game = Game();
     CHECK_EQUAL(0, game.ply());
-    game.apply(Move(SQ_2F, SQ_2G));
+    game.apply(Move(SQ_2G, SQ_2F));
     CHECK_EQUAL(1, game.ply());
 }
 
@@ -32,7 +32,7 @@ TEST(test_shogi_game, apply)
 {
     {
         auto game = Game();
-        game.apply(Move(SQ_2F, SQ_2G)).apply(Move(SQ_8D, SQ_8C));
+        game.apply(Move(SQ_2G, SQ_2F)).apply(Move(SQ_8C, SQ_8D));
         STRCMP_EQUAL(
             "lnsgkgsnl/1r5b1/p1ppppppp/1p7/9/7P1/PPPPPPP1P/1B5R1/LNSGKGSNL b - "
             "3",
@@ -52,19 +52,19 @@ TEST(test_shogi_game, result)
     }
     {
         auto game = Game();
-        game.apply(Move(SQ_5H, SQ_5I))
-            .apply(Move(SQ_5B, SQ_5A))
-            .apply(Move(SQ_5I, SQ_5H))
-            .apply(Move(SQ_5A, SQ_5B)); // #repeat=2
-        game.apply(Move(SQ_5H, SQ_5I))
-            .apply(Move(SQ_5B, SQ_5A))
-            .apply(Move(SQ_5I, SQ_5H))
-            .apply(Move(SQ_5A, SQ_5B)); // #repeat=3
+        game.apply(Move(SQ_5I, SQ_5H))
+            .apply(Move(SQ_5A, SQ_5B))
+            .apply(Move(SQ_5H, SQ_5I))
+            .apply(Move(SQ_5B, SQ_5A)); // #repeat=2
+        game.apply(Move(SQ_5I, SQ_5H))
+            .apply(Move(SQ_5A, SQ_5B))
+            .apply(Move(SQ_5H, SQ_5I))
+            .apply(Move(SQ_5B, SQ_5A)); // #repeat=3
         CHECK_EQUAL(vshogi::ONGOING, game.get_result());
-        game.apply(Move(SQ_5H, SQ_5I))
-            .apply(Move(SQ_5B, SQ_5A))
-            .apply(Move(SQ_5I, SQ_5H))
-            .apply(Move(SQ_5A, SQ_5B)); // #repeat=4
+        game.apply(Move(SQ_5I, SQ_5H))
+            .apply(Move(SQ_5A, SQ_5B))
+            .apply(Move(SQ_5H, SQ_5I))
+            .apply(Move(SQ_5B, SQ_5A)); // #repeat=4
         CHECK_EQUAL(4, game.get_num_fold());
         CHECK_EQUAL(vshogi::DRAW, game.get_result());
     }
@@ -96,7 +96,7 @@ TEST(test_shogi_game, is_legal)
     //   +---+---+---+---+---+---+---+---+---+
     // Black: -
     auto g = Game("3k5/9/9/9/9/9/7g1/9/5rPKL w p");
-    CHECK_FALSE(g.is_legal(Move(SQ_2H, FU)));
+    CHECK_FALSE(g.is_legal(Move(FU, SQ_2H)));
 }
 
 TEST(test_shogi_game, get_legal_moves)
@@ -105,13 +105,13 @@ TEST(test_shogi_game, get_legal_moves)
         auto g = Game("8+L/8g/9/9/4k4/9/9/2K6/9 w 2br10PR");
         const auto& actual = g.get_legal_moves();
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_1A, SQ_1B))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_1B, SQ_1A))
             != actual.cend());
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_2A, KA))
+            std::find(actual.cbegin(), actual.cend(), Move(KA, SQ_2A))
             != actual.cend());
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_1A, KA))
+            std::find(actual.cbegin(), actual.cend(), Move(KA, SQ_1A))
             != actual.cend());
     }
     {
@@ -141,16 +141,16 @@ TEST(test_shogi_game, get_legal_moves)
         auto g = Game("8k/8p/9/9/9/9/9/4+p4/K8 w 10p");
         const auto& actual = g.get_legal_moves();
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_1F, FU))
+            std::find(actual.cbegin(), actual.cend(), Move(FU, SQ_1F))
             != actual.cend()); // two pawns on the same file
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_2F, FU))
+            std::find(actual.cbegin(), actual.cend(), Move(FU, SQ_2F))
             != actual.cend());
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_2I, FU))
+            std::find(actual.cbegin(), actual.cend(), Move(FU, SQ_2I))
             != actual.cend()); // unmovable after drop
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_5G, FU))
+            std::find(actual.cbegin(), actual.cend(), Move(FU, SQ_5G))
             != actual.cend());
     }
     {
@@ -187,7 +187,7 @@ TEST(test_shogi_game, get_legal_moves)
         auto g = Game(sfen);
         const auto& actual = g.get_legal_moves();
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_5G, SQ_4H))
+            std::find(actual.cbegin(), actual.cend(), Move(SQ_4H, SQ_5G))
             != actual.cend());
     }
 }
@@ -220,60 +220,60 @@ TEST(test_shogi_game, had_two_consecutive_sacrifice_drops)
 {
     {
         auto g = Game("9/9/6k2/9/9/9/9/9/B8 w 8p");
-        g.apply_dfpn(Move(SQ_8H, FU));
+        g.apply_dfpn(Move(FU, SQ_8H));
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
-        g.apply_dfpn(Move(SQ_8H, SQ_9I));
+        g.apply_dfpn(Move(SQ_9I, SQ_8H));
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
-        g.apply_dfpn(Move(SQ_7G, FU));
+        g.apply_dfpn(Move(FU, SQ_7G));
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
-        g.apply_dfpn(Move(SQ_7G, SQ_8H));
+        g.apply_dfpn(Move(SQ_8H, SQ_7G));
         CHECK_TRUE(g.had_two_consecutive_sacrifice_drops());
     }
     {
         auto g = Game("9/9/6k2/9/9/6N2/1p7/9/B5L2 w 8p");
-        g.apply_dfpn(Move(SQ_8H, SQ_8G));
+        g.apply_dfpn(Move(SQ_8G, SQ_8H));
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
-        g.apply_dfpn(Move(SQ_8H, SQ_9I));
+        g.apply_dfpn(Move(SQ_9I, SQ_8H));
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
-        g.apply_dfpn(Move(SQ_4D, FU));
+        g.apply_dfpn(Move(FU, SQ_4D));
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
-        g.apply_dfpn(Move(SQ_4D, SQ_3F));
+        g.apply_dfpn(Move(SQ_3F, SQ_4D));
         // false because 1st sacrifice is not a drop move.
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
     }
     {
         auto g = Game("9/9/6k2/9/9/6N2/9/9/B5L2 w 8p");
-        g.apply_dfpn(Move(SQ_8H, FU));
+        g.apply_dfpn(Move(FU, SQ_8H));
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
-        g.apply_dfpn(Move(SQ_4D, SQ_3F));
+        g.apply_dfpn(Move(SQ_3F, SQ_4D));
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
-        g.apply_dfpn(Move(SQ_3E, FU));
+        g.apply_dfpn(Move(FU, SQ_3E));
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
-        g.apply_dfpn(Move(SQ_3E, SQ_3F));
+        g.apply_dfpn(Move(SQ_3F, SQ_3E));
         // false because 1st sacrifice is not captured.
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
     }
     {
         auto g = Game("9/9/5pk2/9/9/9/9/9/B8 w 8p");
-        g.apply_dfpn(Move(SQ_8H, FU));
+        g.apply_dfpn(Move(FU, SQ_8H));
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
-        g.apply_dfpn(Move(SQ_8H, SQ_9I));
+        g.apply_dfpn(Move(SQ_9I, SQ_8H));
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
-        g.apply_dfpn(Move(SQ_4D, SQ_4C));
+        g.apply_dfpn(Move(SQ_4C, SQ_4D));
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
-        g.apply_dfpn(Move(SQ_4D, SQ_8H));
+        g.apply_dfpn(Move(SQ_8H, SQ_4D));
         // false because 2nd sacrifice is not a drop move.
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
     }
     {
         auto g = Game("9/9/6k2/9/9/6N2/9/9/B5L2 w 8p");
-        g.apply_dfpn(Move(SQ_8H, FU));
+        g.apply_dfpn(Move(FU, SQ_8H));
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
-        g.apply_dfpn(Move(SQ_8H, SQ_9I));
+        g.apply_dfpn(Move(SQ_9I, SQ_8H));
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
-        g.apply_dfpn(Move(SQ_4D, FU));
+        g.apply_dfpn(Move(FU, SQ_4D));
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());
-        g.apply_dfpn(Move(SQ_4D, SQ_3F));
+        g.apply_dfpn(Move(SQ_3F, SQ_4D));
         // false because different pieces carried out
         // the 1st ("9i8h") and the 2nd ("3f4d") captures.
         CHECK_FALSE(g.had_two_consecutive_sacrifice_drops());

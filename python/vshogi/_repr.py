@@ -7,7 +7,7 @@ def _repr_enum(self) -> str:
 
 def _repr_move(m) -> str:
     return (
-        f'{m.__class__.__name__}(dst={m.destination.name}, src={m.source.name}'
+        f'{m.__class__.__name__}(src={m.source.name}, dst={m.destination.name}'
         + (', promote=True' if getattr(m, 'promote', False) else '')
         + ')'
     )

@@ -47,7 +47,7 @@ TEST(state, apply)
         CHECK_EQUAL(0, s.get_stand(vshogi::WHITE).count(KY));
         CHECK_EQUAL(W_KI, s.get_board()[SQ_1B]);
         CHECK_EQUAL(B_NY, s.get_board()[SQ_1A]);
-        s.apply(Move(SQ_1A, SQ_1B));
+        s.apply(Move(SQ_1B, SQ_1A));
         CHECK_EQUAL(1, s.get_stand(vshogi::WHITE).count(KY));
         CHECK_EQUAL(VOID, s.get_board()[SQ_1B]);
         CHECK_EQUAL(W_KI, s.get_board()[SQ_1A]);
