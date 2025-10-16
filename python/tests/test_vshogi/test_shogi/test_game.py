@@ -174,7 +174,7 @@ def test_stand(game, expected):
         shogi.Game(
             '1nkg3+R1/2s1g3l/Ppppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/'
             '1NG1G3+b b BP2l4p',
-        ).apply(shogi.SQ_9B, shogi.SQ_9C, True).apply(shogi.D7, shogi.C7),
+        ).apply(['9c9b+', '7c7d']),
         0,
         '1nkg3+R1/2s1g3l/Ppppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/1NG1G3+b b '
         'BP2l4p',
@@ -183,7 +183,7 @@ def test_stand(game, expected):
         shogi.Game(
             '1nkg3+R1/2s1g3l/Ppppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/'
             '1NG1G3+b b BP2l4p',
-        ).apply(shogi.SQ_9B, shogi.SQ_9C, True).apply(shogi.D7, shogi.C7),
+        ).apply(['9c9b+', '7c7d']),
         1,
         '1nkg3+R1/+P1s1g3l/1pppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/1NG1G3+b w'
         ' BP2l4p',
@@ -192,7 +192,7 @@ def test_stand(game, expected):
         shogi.Game(
             '1nkg3+R1/2s1g3l/Ppppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/'
             '1NG1G3+b b BP2l4p',
-        ).apply(shogi.SQ_9B, shogi.SQ_9C, True).apply(shogi.D7, shogi.C7),
+        ).apply(['9c9b+', '7c7d']),
         -1,
         '1nkg3+R1/+P1s1g3l/1pppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/1NG1G3+b w'
         ' BP2l4p',

@@ -248,7 +248,7 @@ class Game(abc.ABC):
         >>> game = shogi.Game()
         >>> game.ply()
         0
-        >>> game.apply(shogi.D3, shogi.E2).ply()
+        >>> game.apply("2e3d").ply()
         1
         """
         return self._game.ply()
@@ -291,7 +291,7 @@ class Game(abc.ABC):
         return self._game.in_check()
 
     @classmethod
-    def _get_move(cls, move=None, *arg, **kwargs) -> Move:
+    def _to_move(cls, move=None, *arg, **kwargs) -> Move:
         if not (arg or kwargs):
             if isinstance(move, str):
                 return cls._get_move_class()(move)
@@ -300,20 +300,18 @@ class Game(abc.ABC):
             return cls._get_move_class()(*arg, **kwargs)
         return cls._get_move_class()(move, *arg, **kwargs)
 
-    def apply(self, move=None, *arg, **kwargs) -> 'Game':
+    def apply(self, move: tp.Union['Move', str, list]) -> 'Game':
         """Apply a move.
 
         Parameters
         ----------
-        move : Move
-            Move to apply to the current state.
-            But if there are multiple arguments, they are treated as parameters
-            of move class initialization and converted automatically.
+        move : tp.Union['Move', str, list]
+            Move or list of moves to apply to the current state.
 
         Returns
         -------
         Game
-            Game with the move applied.
+            Game with the move(s) applied.
 
         Examples
         --------
@@ -321,14 +319,18 @@ class Game(abc.ABC):
         >>> game = shogi.Game()
         >>> game.apply(shogi.Move(shogi.D3, shogi.E2))
         Game(sfen="rbsgk/4p/5/P1B2/KGS1R w - 2")
-        >>> game.apply(shogi.B2, shogi.A3)
+        >>> game.apply('3a2b')
         Game(sfen="rb1gk/3sp/5/P1B2/KGS1R b - 3")
-        >>> game.apply(dst=shogi.D2, src=shogi.E3)
-        Game(sfen="rb1gk/3sp/5/P1BS1/KG2R w - 4")
-        >>> game.apply('4a3b').apply('4e4d')
+        >>> game.apply(['3e2d', '4a3b', '4e4d'])
         Game(sfen="r2gk/2bsp/5/PGBS1/K3R w - 6")
         """
-        move = self._get_move(move, *arg, **kwargs)
+        if not isinstance(move, list):
+            move = [self._to_move(move)]
+        for m in move:
+            self._apply(self._to_move(m))
+        return self
+
+    def _apply(self, move: 'Move') -> 'Game':
         self._move_list.append(move)
         self._sfen_list.append(self.to_sfen(False))
         self._game.apply(move)
@@ -380,7 +382,7 @@ class Game(abc.ABC):
         bool
             True if the move is legal, otherwise false.
         """
-        move = self._get_move(move, *arg, **kwargs)
+        move = self._to_move(move, *arg, **kwargs)
         return self._game.is_legal(move)
 
     def is_valid_piece_count(self, ignore=None) -> bool:
@@ -452,7 +454,7 @@ class Game(abc.ABC):
         --------
         >>> import vshogi.minishogi as shogi
         >>> game = shogi.Game()
-        >>> game.apply(shogi.D3, shogi.E2).apply(shogi.B2, shogi.A3)
+        >>> game.apply(["2e3d", "3a2b"])
         Game(sfen="rb1gk/3sp/5/P1B2/KGS1R b - 3")
         >>> game.get_move_at(0)
         Move(dst=SQ_3D, src=SQ_2E)
@@ -482,7 +484,7 @@ class Game(abc.ABC):
         --------
         >>> import vshogi.minishogi as shogi
         >>> game = shogi.Game()
-        >>> game.apply(shogi.D3, shogi.E2).apply(shogi.B2, shogi.A3)
+        >>> game.apply(["2e3d", "3a2b"])
         Game(sfen="rb1gk/3sp/5/P1B2/KGS1R b - 3")
         >>> game.get_sfen_at(0)
         'rbsgk/4p/5/P4/KGSBR b - 1'
@@ -511,7 +513,7 @@ class Game(abc.ABC):
         str
             Japanese notation of the move at the current game position.
         """
-        move = self._get_move(move, *args, **kwargs)
+        move = self._to_move(move, *args, **kwargs)
         return self._game.to_jpn(move)
 
     def to_eng(self, move=None, *args, **kwargs) -> str:
@@ -527,7 +529,7 @@ class Game(abc.ABC):
         str
             English notation of the move at the current game position.
         """
-        move = self._get_move(move, *args, **kwargs)
+        move = self._to_move(move, *args, **kwargs)
         return self._game.to_eng(move)
 
     def dump_log(

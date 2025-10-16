@@ -83,12 +83,18 @@ def test_copy():
     assert g1.board[shogi.SQ_5C] != g2.board[shogi.SQ_5C]
 
 
-def test_play():
+def test_apply():
     game = shogi.Game()
     moves = ["4e3d", "2a3b", "3d2c", "3b4c", "2c1b"]
     for m in moves:
         assert shogi.ONGOING == game.result
         game.apply(m)
+    assert shogi.BLACK_WIN == game.result
+    sfen = game.to_sfen()
+
+    game = shogi.Game()
+    game.apply(moves)
+    assert sfen == game.to_sfen()
     assert shogi.BLACK_WIN == game.result
 
 
@@ -191,8 +197,8 @@ def test_array_black():
     # E |+OU|+KI|+GI|   |+HI|
     #   *---*---*---*---*---*
     # Black: KI
-    game = shogi.Game().apply(shogi.C4, shogi.E2).apply(shogi.B5, shogi.A5)
-    game.apply(shogi.A2, shogi.C4, True).apply(shogi.A2, shogi.A1)
+    game = shogi.Game().apply("2e4c").apply("5a5b")
+    game.apply("4c2a+").apply("1a2a")
 
     actual = game.to_dlshogi_features()
     assert np.allclose(actual[0, ..., 0], 0)  # white's captured pawn
@@ -325,10 +331,10 @@ def test_to_dlshogi_policy():
 
 
 def test_get_sfen_at():
-    actual = shogi.Game().apply(shogi.C5, shogi.D5).get_sfen_at(0)
+    actual = shogi.Game().apply("5d5c").get_sfen_at(0)
     assert "rbsgk/4p/5/P4/KGSBR b - 1" == actual
 
-    actual = shogi.Game().apply(shogi.C5, shogi.D5).get_sfen_at(
+    actual = shogi.Game().apply("5d5c").get_sfen_at(
         0, include_move_count=False)
     assert "rbsgk/4p/5/P4/KGSBR b -" == actual
 

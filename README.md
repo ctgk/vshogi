@@ -99,11 +99,11 @@ H |   |+KA|   |   |   |   |   |+HI|   |
 I |+KY|+KE|+GI|+KI|+OU|+KI|+GI|+KE|+KY|
   +---+---+---+---+---+---+---+---+---+
 Black: -
->>> game.apply(F7, G7).apply(D5, C5).apply(F5, G5).apply(D8, C8).apply(H5, H2)
+>>> game.apply(["7g7f", "5c5d", "5g5f", "8c8d", "2h5h"])
 Game(sfen="lnsgkgsnl/1r5b1/p1pp1pppp/1p2p4/9/2P1P4/PP1P1PPPP/1B2R4/LNSGKGSNL w - 6")
->>> game.apply(E8, D8).apply(E5, F5).apply(E5, D5).apply(E5, H8).apply(B6, A7)
+>>> game.apply(["8d8e", "5f5e", "5d5e", "8h5e", "7a6b"])
 Game(sfen="ln1gkgsnl/1r1s3b1/p1pp1pppp/9/1p2B4/2P6/PP1P1PPPP/4R4/LNSGKGSNL b Pp 11")
->>> game.apply(C3, E5, promote=True)
+>>> game.apply("5e3c+")
 Game(sfen="ln1gkgsnl/1r1s3b1/p1pp1p+Bpp/9/1p7/2P6/PP1P1PPPP/4R4/LNSGKGSNL w 2Pp 12")
 >>> print(game)
 BLACK_WIN

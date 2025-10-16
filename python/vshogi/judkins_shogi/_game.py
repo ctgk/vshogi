@@ -41,7 +41,7 @@ class Game(BaseGame):
     F |+OU|+KI|+GI|+KE|+KA|+HI|
       +---+---+---+---+---+---+
     Black: -
-    >>> game.apply(SQ_6D, SQ_6E)
+    >>> game.apply('6e6d')
     Game(sfen="rbnsgk/5p/6/P5/6/KGSNBR w - 2")
     """
 

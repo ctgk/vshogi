@@ -39,7 +39,7 @@ class Game(BaseGame):
     E |+OU|+KI|+GI|+KA|+HI|
       +---+---+---+---+---+
     Black: -
-    >>> game.apply(SQ_4C, SQ_2E)
+    >>> game.apply('2e4c')
     Game(sfen="rbsgk/4p/1B3/P4/KGS1R w - 2")
     """
 

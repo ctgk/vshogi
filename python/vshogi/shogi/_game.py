@@ -48,7 +48,7 @@ LNSGKGSNL b - 1")'
     I |+KY|+KE|+GI|+KI|+OU|+KI|+GI|+KE|+KY|
       +---+---+---+---+---+---+---+---+---+
     Black: -
-    >>> game.apply(SQ_2F, SQ_2G)
+    >>> game.apply("2g2f")
     Game(sfen="lnsgkgsnl/1r5b1/ppppppppp/9/9/7P1/PPPPPPP1P/1B5R1/\
 LNSGKGSNL w - 2")
     """
