@@ -358,7 +358,7 @@ def run_self_play(args: Args):
                     _self_play_and_dump_log(player, index, i)
 
         group_size = 5
-        with tqdm_joblib(tqdm(total=args.self_play // group_size, ncols=100, desc=f'{index-1} vs {index-1}')):
+        with tqdm_joblib(tqdm(total=args.self_play // group_size, ncols=100, desc=f'{index-1} vs {index-1}', file=sys.stdout)):
             Parallel(n_jobs=n_jobs)(
                 delayed(_self_play_and_dump_log_n_times)(
                     index, index_another, list(range(i, i + group_size)),
@@ -374,6 +374,7 @@ def run_self_play(args: Args):
             for i in tqdm(
                 range(args.self_play_index_from, args.self_play_index_from + args.self_play),
                 ncols=100, desc=f'{index-1} vs {index-1}',
+                file=sys.stdout,
             ):
                 if index_another[i % len(index_another)] is not None:
                     _play_game_and_dump_log(
@@ -704,18 +705,19 @@ def run_rl_cycle(args: Args):
             pattern = f'datasets/dataset_{i:04d}/*.tsv'
             self_play_index_from = len(glob(pattern))
             # Self-play!
-            subprocess.call([
-                sys.executable, "dlshogi.py", "self-play", args.shogi_variant,
-                "--resume_rl_cycle_from", str(i),
-                "--self_play_index_from", str(self_play_index_from),
-                "--another_player", *[str(a) for a in best_past_players],
-            ] + ' '.join([
-                f'--{k} {v}' for k, v in args.to_dict().items()
-                if (k not in (
-                    'run', 'shogi_variant', "another_player",
-                    'resume_rl_cycle_from', 'self_play_index_from',
-                ) and (v is not None))
-            ]).split())
+            with open('errors.txt', 'a') as f:
+                subprocess.call([
+                    sys.executable, "dlshogi.py", "self-play", args.shogi_variant,
+                    "--resume_rl_cycle_from", str(i),
+                    "--self_play_index_from", str(self_play_index_from),
+                    "--another_player", *[str(a) for a in best_past_players],
+                ] + ' '.join([
+                    f'--{k} {v}' for k, v in args.to_dict().items()
+                    if (k not in (
+                        'run', 'shogi_variant', "another_player",
+                        'resume_rl_cycle_from', 'self_play_index_from',
+                    ) and (v is not None))
+                ]).split(), stderr=f)
 
             kifu_to_tfrecord_with_deduplication(i, args)
 
