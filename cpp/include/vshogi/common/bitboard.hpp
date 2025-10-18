@@ -26,10 +26,14 @@ private:
     using SHelper = Squares<Parameters>;
     using PHelper = Pieces<Parameters>;
 
+    static constexpr UInt ones(const uint num_ones)
+    {
+        return ~(~UInt() << num_ones);
+    }
+
     UInt m_value;
 
-    static constexpr UInt mask
-        = (static_cast<UInt>(1) << C::num_squares) - static_cast<UInt>(1);
+    static constexpr UInt mask = ones(C::num_squares);
     static BitBoard attacks_table[C::num_colored_piece_types][C::num_squares];
     static BitBoard ray_table[C::num_squares][C::num_dir];
     static BitBoard line_segment_table[C::num_squares][C::num_squares];
@@ -222,13 +226,13 @@ public:
      */
     static constexpr BitBoard from_file(const File& f)
     {
-        return BitBoard(static_cast<UInt>(1u << C::num_ranks) - 1u)
-               << (static_cast<uint>(f) * C::num_ranks);
+        constexpr auto file_a = ones(C::num_ranks);
+        return BitBoard(
+            mask & (file_a << (static_cast<uint>(f) * C::num_ranks)));
     }
     static BitBoard from_file_right(const File f)
     {
-        return BitBoard(static_cast<UInt>(
-            (static_cast<UInt>(1u) << (C::num_ranks * f)) - 1u));
+        return BitBoard(ones(C::num_ranks * f));
     }
     static BitBoard from_file_left(const File f)
     {
