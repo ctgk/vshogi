@@ -41,4 +41,4 @@ jobs:
       env:
         NAME: ${{ matrix.game.name }}
         CYCLE: ${{ matrix.game.rl_cycle }}
-      run: for tsv in `ls $NAME/datasets/dataset_*/record_*.tsv`; do echo $tsv; cat $tsv; python .github/workflows/check_selfplay_dataset.py $tsv; done
+      run: for tsv in `ls $NAME/datasets/dataset_*/kifu_*.tsv`; do echo $tsv; cat $tsv; python .github/workflows/check_selfplay_dataset.py $tsv; done
