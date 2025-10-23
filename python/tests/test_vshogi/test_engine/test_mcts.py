@@ -146,6 +146,32 @@ def test_dfpn_root():
     mcts.set_game(game)
     mcts.search(n_or_t=1)
     assert shogi.Move("B*2b") == mcts.select()
+    assert len(mcts.get_visit_counts()) > 10
+
+
+def test_mating_net():
+    # Turn: WHITE
+    # White: KI
+    #     5   4   3   2   1
+    #   +---+---+---+---+---+
+    # A |   |   |   |   |-OU|
+    #   +---+---+---+---+---+
+    # B |   |   |   |-KI|   |
+    #   +---+---+---+---+---+
+    # C |   |   |   |   |   |
+    #   +---+---+---+---+---+
+    # D |   |   |   |   |   |
+    #   +---+---+---+---+---+
+    # E |   |   |+OU|   |   |
+    #   +---+---+---+---+---+
+    # Black: -
+    g = shogi.Game("4k/3g1/5/5/2K2 w g")
+    mcts = Mcts(dfpn_search_root=0, dfpn_search_leaf=100)
+    mcts.set_game(g)
+    mcts.search(n_or_t=10000)
+    assert mcts.proved_mate()
+    assert shogi.Move("2b3c") == mcts.select()
+    assert set(mcts.get_visit_counts().keys()) == set(g.get_legal_moves())
 
 
 def test_dfpn_vertex():

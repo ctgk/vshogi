@@ -157,6 +157,20 @@ def play_game(
             main_player.search(args.mcts_search - main_player.num_searched)
 
         if player.proved_mate():
+            if player.get_q_value() > 0:
+                mate_moves = game.get_mate_moves_if_any(args.dfpn_search_root)
+                if mate_moves is not None:
+                    for i, m in enumerate(mate_moves):
+                        game.apply(m)
+                        game.v_value_log.append(1. if i % 2 == 0 else -1.)
+                        game.q_value_log.append(1. if i % 2 == 0 else -1.)
+                        game.visit_count_log.append({})
+                        game.z_weight_log.append(0.)
+                    if game.result != vshogi.Result.ONGOING:
+                        break
+                    else:
+                        for _ in mate_moves:
+                            game.undo()
             move = player.select()
             # Setting z_weight = 0, because the result can be independent of
             # this proof when the player fails to prove a checkmate in the
@@ -174,7 +188,7 @@ def play_game(
                 f"{game.to_sfen()}.\n{player._tree(depth=2)}")
 
         player_dump = main_player or player
-        visit_count = {} if player_dump.proved_mate() else {
+        visit_count = {
             m.to_sfen(): v + 1  # +1 for smoothing
             for m, v in
             player_dump.get_visit_counts(include_random=False).items()

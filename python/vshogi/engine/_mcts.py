@@ -283,6 +283,10 @@ class Mcts(Engine):
             )
             for m in root.get_actions()
         ]
+        move_visit_count_pair_list.extend([
+            (m, 0) for m in self._game.get_legal_moves()
+            if m not in [t[0] for t in move_visit_count_pair_list]
+        ])
         move_visit_count_pair_list.sort(key=lambda a: a[1], reverse=True)
         return {m: v for m, v in move_visit_count_pair_list}
 

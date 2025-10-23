@@ -27,13 +27,20 @@ if __name__ == '__main__':
     if len(df) == 0:
         raise ValueError(f"Empty kifu, {args.kifu}")
 
+    in_mate_sequence: bool = False
     for i in range(len(df)):
         row = df.iloc[i]
         visit_count: dict = eval(row.visit_count)
+        state = row.state
         if visit_count != {}:
+            if in_mate_sequence:
+                raise ValueError(
+                    f"'{state}': there should be empty visit_count "
+                    f"once a checkmate is proved, but was {visit_count}"
+                )
             continue
 
-        state = row.state
+        in_mate_sequence = True
         turn: tp.Union[tp.Literal['b'], tp.Literal['w']] = state.split(' ')[1]
         if not np.isclose(abs(row.q_value), 1):
             raise ValueError(
