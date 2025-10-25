@@ -54,7 +54,7 @@ private:
 
 public:
     bool simulate(
-        Game<P>& g,
+        const Game<P>& g,
         const Node* const twin_ge = nullptr,
         const Node* const twin_le = nullptr)
     {
@@ -192,7 +192,7 @@ private:
             m_delta = inf;
         }
     }
-    bool simulate_using_game(Game<P>& g)
+    bool simulate_using_game(const Game<P>& g)
     {
         const auto turn = g.get_turn();
         auto result = g.get_result(); // this is usually ONGOING

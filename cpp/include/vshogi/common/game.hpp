@@ -258,6 +258,13 @@ public:
         }
         return false;
     }
+    void swap_log(
+        std::vector<ZobristHashType>& hash_list,
+        std::vector<std::uint32_t>& captured_move_list)
+    {
+        m_hash_list.swap(hash_list);
+        m_captured_move_list.swap(captured_move_list);
+    }
     bool had_two_consecutive_sacrifice_drops() const
     {
         const uint n = ply();

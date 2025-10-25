@@ -65,6 +65,7 @@ TEST(shogi_engine, mcts_with_dfpn)
             const auto n = mcts.search(g);
             if (n == nullptr)
                 continue;
+            CHECK_TRUE((n == mcts.get_root()) || (g.ply() > ii));
             mcts.simulate_expand_backprop(n, g, 0.f, zeros);
             CHECK_EQUAL(ii, g.ply());
         }

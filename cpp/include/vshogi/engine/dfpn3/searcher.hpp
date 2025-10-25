@@ -119,6 +119,12 @@ private:
 public:
     Move<P> search(Game<P>& g, const uint n)
     {
+        std::vector<ZobristHashType> hash_list{};
+        std::vector<std::uint32_t> captured_move_list{};
+        hash_list.reserve(32u);
+        captured_move_list.reserve(32u);
+        g.swap_log(hash_list, captured_move_list);
+
         if (m_search_count == 0u) {
             m_next = std::next(m_nodes.data());
             if (!m_nodes[0].simulate(g)) {
@@ -127,11 +133,14 @@ public:
                 m_nodes[0].backprop(g.get_king_location(~g.get_turn()));
             }
         }
-        if (m_nodes[0].proved())
+        if (m_nodes[0].proved()) {
+            g.swap_log(hash_list, captured_move_list);
             return Move<P>();
+        }
         m_remaining_searches = n;
         const auto out = multiple_iterative_deepning(m_nodes[0], g, inf, inf);
         m_search_count += n - m_remaining_searches;
+        g.swap_log(hash_list, captured_move_list);
         return out;
     }
 

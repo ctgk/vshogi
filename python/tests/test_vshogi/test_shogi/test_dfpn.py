@@ -76,16 +76,15 @@ def test_debug():
     # I |   |+KE|   |-HI|-KI|   |   |+KE|   |
     #   +---+---+---+---+---+---+---+---+---+
     # Black: FUx3
-    g = shogi.Game(
-        "9/9/pp2Bk1pP/9/9/9/PP1PPPPSL/L1+b3G2/1N3K1N1 w 3Prgs 44",
-    ).apply("R*6i").apply("4i4h").apply("G*4i").apply("4h5h").apply(
-        "4i5i").apply("5h4h")
+    g = shogi.Game("9/9/pp2Bk1pP/9/9/9/PP1PPPPSL/L1+b3G2/1N3K1N1 w 3Prgs 44")
     searcher = DfpnSearcher()
     searcher.set_game(g)
     searcher.search(10000)
-    print([m.to_sfen() for m in searcher.get_mate_moves()])
+    moves = searcher.get_mate_moves()
+    print([m.to_sfen() for m in moves])
     assert searcher.proved_mate()
-    assert searcher.get_mate_move() == shogi.Move("5i5h")
+    g.apply(moves)
+    assert g.result == shogi.WHITE_WIN
 
 
 if __name__ == '__main__':

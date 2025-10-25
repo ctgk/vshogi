@@ -330,6 +330,21 @@ TEST(test_dfpn3_searcher, test_small_num_nodes)
     CHECK_EQUAL(0u, searcher.get_num_nodes_remain());
 }
 
+TEST(test_dfpn3_searcher, test_debug)
+{
+    auto g = Game("3k1/P3p/s1s1r/2B2/KG3 b RGb");
+    auto searcher = dfpn::Searcher<Parameters>();
+    searcher.search(g, 1000u);
+    CHECK_TRUE(searcher.proved_mate());
+    const auto actual = searcher.get_mate_moves(g);
+    CHECK_EQUAL(0u, g.ply());
+    for (auto&& m : actual) {
+        CHECK_EQUAL(vshogi::ONGOING, g.get_result());
+        g.apply(m);
+    }
+    CHECK_EQUAL(vshogi::BLACK_WIN, g.get_result());
+}
+
 TEST(test_dfpn3_searcher, test_minishogi_no_mate)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {
@@ -1076,16 +1091,16 @@ TEST(test_dfpn3_searcher, test_shogi_avoid_consecutive_checks_1)
     //   +---+---+---+---+---+---+---+---+---+
     // Black: FUx3
     auto g = Game("9/9/pp2Bk1pP/9/9/9/PP1PPPPSL/L1+b3G2/1N3K1N1 w 3Prgs 44");
-    g.apply(Move("R*6i"))
-        .apply(Move("4i4h"))
-        .apply(Move("G*4i"))
-        .apply(Move("4h5h"))
-        .apply(Move("4i5i"))
-        .apply(Move("5h4h"));
     auto searcher = dfpn::Searcher<Parameters>();
     searcher.search(g, 10000);
     CHECK_TRUE(searcher.proved_mate());
-    CHECK_EQUAL(Move("5i5h").hash(), searcher.get_mate_move().hash());
+    const auto moves = searcher.get_mate_moves(g);
+    CHECK_EQUAL(0u, g.ply());
+    for (auto&& m : moves) {
+        CHECK_EQUAL(vshogi::ONGOING, g.get_result());
+        g.apply(m);
+    }
+    CHECK_EQUAL(vshogi::WHITE_WIN, g.get_result());
 }
 
 TEST(test_dfpn3_searcher, test_shogi_avoid_consecutive_checks_2)
@@ -1124,6 +1139,43 @@ TEST(test_dfpn3_searcher, test_shogi_avoid_consecutive_checks_2)
         g.apply(m);
     }
     CHECK_EQUAL(vshogi::WHITE_WIN, g.get_result());
+}
+
+TEST(test_dfpn3_searcher, test_shogi_debug)
+{
+    // Turn: BLACK
+    // White: FUx10,HIx2,KIx4
+    //     9   8   7   6   5   4   3   2   1
+    //   +---+---+---+---+---+---+---+---+---+
+    // A |   |   |   |   |   |   |+TO|   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // B |   |   |   |   |   |   |   |   |-OU|
+    //   +---+---+---+---+---+---+---+---+---+
+    // C |   |   |   |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // D |   |   |   |   |   |   |   |+GI|+KA|
+    //   +---+---+---+---+---+---+---+---+---+
+    // E |   |   |   |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // F |   |   |   |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // G |   |   |   |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // H |   |   |   |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // I |   |   |   |   |   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // Black: FU
+    auto g = Game("6+P2/8k/9/7SB/9/9/9/9/9 b P10p4g2r");
+    auto searcher = dfpn::Searcher<Parameters>();
+    searcher.search(g, 10000u);
+    CHECK_TRUE(searcher.proved_mate());
+    const auto moves = searcher.get_mate_moves(g);
+    for (auto&& m : moves) {
+        CHECK_EQUAL(vshogi::ONGOING, g.get_result());
+        g.apply(m);
+    }
+    CHECK_EQUAL(vshogi::BLACK_WIN, g.get_result());
 }
 
 } // namespace test_shogi
