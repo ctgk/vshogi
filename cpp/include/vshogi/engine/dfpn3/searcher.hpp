@@ -140,14 +140,14 @@ public:
             return Move<P>();
         }
         m_remaining_searches = n;
-        const auto out = multiple_iterative_deepning(m_nodes[0], g, inf, inf);
+        const auto out = multiple_iterative_deepening(m_nodes[0], g, inf, inf);
         m_search_count += n - m_remaining_searches;
         g.swap_log(hash_list, captured_move_list);
         return out;
     }
 
 private:
-    Move<P> multiple_iterative_deepning(
+    Move<P> multiple_iterative_deepening(
         Node<P>& n, Game<P>& g, const uint th_p, const uint th_d)
     {
         Move<P> out{};
@@ -178,7 +178,7 @@ private:
                && (n.delta() < th_d)) {
             Node<P>* const child = n.select(th_p, th_d, th_p_ch, th_d_ch);
             g.apply_dfpn(child->get_action());
-            out = multiple_iterative_deepning(*child, g, th_p_ch, th_d_ch);
+            out = multiple_iterative_deepening(*child, g, th_p_ch, th_d_ch);
             g.undo();
             n.backprop(king_sq, checker_sq);
         }
