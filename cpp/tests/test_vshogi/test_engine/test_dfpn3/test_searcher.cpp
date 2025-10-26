@@ -69,14 +69,14 @@ TEST(dfpn3_table, look_up_l_prefer_mate_at_offence)
     auto n1 = Node();
     auto g1 = Game("3rk/3p1/4P/5/5 b G");
     n1.expand(next, g1);
-    n1.backprop(SQ_1A);
+    n1.backprop(SQ_1A, SQ_NA);
     uint th_p_ch, th_d_ch;
     Node* const c1 = n1.select(inf, inf, th_p_ch, th_d_ch);
     g1.apply(c1->get_action());
     CHECK_EQUAL(vshogi::BLACK_WIN, g1.get_result());
     CHECK_TRUE(c1->simulate(g1));
     g1.undo();
-    n1.backprop(SQ_1A);
+    n1.backprop(SQ_1A, g1.get_checker_location());
     CHECK_TRUE(n1.fully_expanded());
     CHECK_TRUE(n1.proved_mate());
 
@@ -117,15 +117,15 @@ TEST(dfpn3_table, look_up_l_prefer_no_mate_at_defence)
     n1.init(false, Move());
     auto g1 = Game("4k/4P/5/5/5 w -");
     n1.expand(next, g1);
-    n1.backprop(SQ_1A);
+    n1.backprop(SQ_1A, g1.get_checker_location());
     uint th_p_ch, th_d_ch;
     Node* const c1 = n1.select(inf, inf, th_p_ch, th_d_ch);
     g1.apply_dfpn(c1->get_action());
     c1->expand(next, g1);
-    c1->backprop(SQ_1B);
+    c1->backprop(SQ_1B, g1.get_checker_location());
     CHECK_TRUE(c1->proved_no_mate());
     g1.undo();
-    n1.backprop(SQ_1A);
+    n1.backprop(SQ_1A, g1.get_checker_location());
     CHECK_TRUE(n1.fully_expanded());
     CHECK_TRUE(n1.proved_no_mate());
     CHECK_FALSE(n1.proved_by_repetitions());
@@ -187,7 +187,7 @@ TEST(dfpn3_table, look_up_g_prefer_no_mate_at_offence)
     auto n1 = Node();
     auto g1 = Game("3rk/3gs/5/5/5 b PSG");
     n1.expand(next, g1);
-    n1.backprop(SQ_1A);
+    n1.backprop(SQ_1A, g1.get_checker_location());
     CHECK_TRUE(n1.proved_no_mate());
     auto n2 = Node();
     auto g2 = Game("3rk/3gs/5/5/5 b PS");
@@ -224,7 +224,7 @@ TEST(dfpn3_table, look_up_g_prefer_mate_at_defence)
     n1.init(false, Move());
     auto g1 = Game("4k/4G/4P/5/5 w psg");
     n1.expand(next, g1);
-    n1.backprop(SQ_1A);
+    n1.backprop(SQ_1A, g1.get_checker_location());
     CHECK_TRUE(n1.fully_expanded());
     CHECK_TRUE(n1.proved_mate());
     auto n2 = Node();
@@ -615,6 +615,32 @@ namespace test_judkins_shogi
 
 using namespace vshogi::judkins_shogi;
 
+TEST(test_dfpn3_searcher, test_judkins_shogi_no_mate)
+{
+    const std::vector<std::tuple<std::string, vshogi::uint>> args = {
+        // Turn: BLACK
+        // White: -
+        //     6   5   4   3   2   1
+        //   +---+---+---+---+---+---+
+        // A |   |   |   |   |   |   |
+        //   +---+---+---+---+---+---+
+        // B |   |   |   |-KI|-GI|-HI|
+        //   +---+---+---+---+---+---+
+        // C |   |   |   |-KA|   |-KI|
+        //   +---+---+---+---+---+---+
+        // D |   |   |   |+GI|+KA|-OU|
+        //   +---+---+---+---+---+---+
+        // E |   |   |   |+FU|   |   |
+        //   +---+---+---+---+---+---+
+        // F |   |   |   |   |+FU|+KE|
+        //   +---+---+---+---+---+---+
+        // Black: -
+        {"6/3gsr/3b1g/3SBk/3P2/4PN b -", 8u},
+    };
+    for (auto&& arg : args)
+        search_no_mate<Parameters>(std::get<0>(arg), std::get<1>(arg));
+}
+
 TEST(test_dfpn3_searcher, test_judkins_shogi_3ply_mate)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {
@@ -885,6 +911,30 @@ TEST(test_dfpn3_searcher, test_shogi_1ply_mate)
         {"1b1n4k/l1s3p1s/prp2pn2/1p1+Bp3R/4P4/6Gp1/PPPP1PN2/4KGS2/"
          "LNS2G2L b L2Pg3p",
          1u},
+        // Turn: BLACK
+        // White: KE,GI,KA,HI,KI
+        //     9   8   7   6   5   4   3   2   1
+        //   +---+---+---+---+---+---+---+---+---+
+        // A |   |   |   |   |   |   |   |-KA|-OU|
+        //   +---+---+---+---+---+---+---+---+---+
+        // B |   |   |   |   |   |   |   |-FU|-FU|
+        //   +---+---+---+---+---+---+---+---+---+
+        // C |   |   |   |   |   |   |   |   |   |
+        //   +---+---+---+---+---+---+---+---+---+
+        // D |   |   |   |   |   |   |   |   |   |
+        //   +---+---+---+---+---+---+---+---+---+
+        // E |   |   |   |   |+KA|   |   |   |   |
+        //   +---+---+---+---+---+---+---+---+---+
+        // F |   |   |   |   |   |   |   |   |   |
+        //   +---+---+---+---+---+---+---+---+---+
+        // G |   |   |   |   |   |   |   |   |   |
+        //   +---+---+---+---+---+---+---+---+---+
+        // H |   |   |   |   |   |   |   |   |   |
+        //   +---+---+---+---+---+---+---+---+---+
+        // I |   |   |   |   |   |   |   |   |   |
+        //   +---+---+---+---+---+---+---+---+---+
+        // Black: KY,KE
+        {"7bk/7pp/9/9/4B4/9/9/9/9 b NLrbgsn", 1u},
     };
 
     for (auto&& arg : args)

@@ -97,15 +97,15 @@ public:
         th_d_ch = std::min(th_p, std::min(d2, d2_max) + 1u);
         return m_child_1st;
     }
-    void backprop(const Square& king_sq)
+    void backprop(const Square& king_sq, const Square& checker_sq)
     {
+        assert(offence() || (checker_sq != C::SQ_NA));
         if (m_child_1st && (m_child_1st->m_delta == zero)) {
             m_phi = zero;
             m_delta = inf;
             m_proved_by_repetition = m_child_1st->proved_by_repetitions();
             return;
         }
-        const auto dst = m_action.destination();
         uint delta_max[C::num_squares] = {zero};
         m_delta = zero;
         m_child_1st = nullptr;
@@ -120,10 +120,11 @@ public:
                 const auto cd = ch->m_action.destination();
                 delta_max[cd] = std::max(delta_max[cd], ch->m_phi);
             }
-            if (ch->is_better_child_than(m_child_1st, dst, king_sq)) {
+            if (ch->is_better_child_than(m_child_1st, checker_sq, king_sq)) {
                 m_child_2nd = m_child_1st;
                 m_child_1st = ch;
-            } else if (ch->is_better_child_than(m_child_2nd, dst, king_sq)) {
+            } else if (ch->is_better_child_than(
+                           m_child_2nd, checker_sq, king_sq)) {
                 m_child_2nd = ch;
             }
         }

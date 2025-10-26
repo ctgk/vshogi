@@ -130,7 +130,9 @@ public:
             if (!m_nodes[0].simulate(g)) {
                 m_nodes[0].expand(m_next, g);
                 m_table.add(&m_nodes[0], g);
-                m_nodes[0].backprop(g.get_king_location(~g.get_turn()));
+                m_nodes[0].backprop(
+                    g.get_king_location(~g.get_turn()),
+                    g.get_checker_location());
             }
         }
         if (m_nodes[0].proved()) {
@@ -160,13 +162,14 @@ private:
         }
         const auto king_sq
             = g.get_king_location(n.offence() ? ~g.get_turn() : g.get_turn());
+        const auto checker_sq = g.get_checker_location();
         if (!n.has_child()) {
             n.expand(m_next, g, twin_ge, twin_le);
             if (twin_e == nullptr)
                 m_table.add(&n, g);
             --m_remaining_searches;
             out = n.get_action();
-            n.backprop(king_sq);
+            n.backprop(king_sq, checker_sq);
         }
         if (m_next == nullptr)
             return n.get_action();
@@ -177,7 +180,7 @@ private:
             g.apply_dfpn(child->get_action());
             out = multiple_iterative_deepning(*child, g, th_p_ch, th_d_ch);
             g.undo();
-            n.backprop(king_sq);
+            n.backprop(king_sq, checker_sq);
         }
         return out;
     }
