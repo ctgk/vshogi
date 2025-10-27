@@ -1,5 +1,5 @@
-#ifndef VSHOGI_ENGINE_DFPN3_NODE_HPP
-#define VSHOGI_ENGINE_DFPN3_NODE_HPP
+#ifndef VSHOGI_ENGINE_DFPN_NODE_HPP
+#define VSHOGI_ENGINE_DFPN_NODE_HPP
 
 #include <memory>
 
@@ -15,7 +15,7 @@
  *
  * https://webdocs.cs.ualberta.ca/~mmueller/ps/ICGA2012PNS.pdf
  */
-namespace vshogi::engine::dfpn3
+namespace vshogi::engine::dfpn
 {
 
 static constexpr uint zero = 0u;
@@ -488,6 +488,6 @@ public: // utility
     }
 };
 
-} // namespace vshogi::engine::dfpn3
+} // namespace vshogi::engine::dfpn
 
-#endif // VSHOGI_ENGINE_DFPN3_NODE_HPP
+#endif // VSHOGI_ENGINE_DFPN_NODE_HPP

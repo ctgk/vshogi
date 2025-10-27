@@ -12,12 +12,12 @@
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/result.hpp"
 #include "vshogi/common/utils.hpp"
-#include "vshogi/engine/dfpn3/searcher.hpp"
+#include "vshogi/engine/dfpn/searcher.hpp"
 
 namespace vshogi::engine::mcts
 {
 
-namespace dfpn = vshogi::engine::dfpn3;
+namespace dfpn = vshogi::engine::dfpn;
 
 template <class Parameters>
 class Node

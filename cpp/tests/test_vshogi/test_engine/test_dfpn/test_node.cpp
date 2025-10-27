@@ -1,6 +1,6 @@
 #include <set>
 
-#include "vshogi/engine/dfpn3/node.hpp"
+#include "vshogi/engine/dfpn/node.hpp"
 #include "vshogi/variants/minishogi.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -9,7 +9,7 @@ namespace test_vshogi::test_engine::test_dfpn::test_node
 {
 
 using namespace vshogi::minishogi;
-namespace dfpn = vshogi::engine::dfpn3;
+namespace dfpn = vshogi::engine::dfpn;
 using Node = dfpn::Node<Parameters>;
 constexpr uint zero = dfpn::zero;
 constexpr uint cent = dfpn::cent;
@@ -17,10 +17,10 @@ constexpr uint unit = dfpn::unit;
 constexpr uint kilo = dfpn::kilo;
 constexpr uint inf = dfpn::inf;
 
-TEST_GROUP (dfpn3_node_simulate) {
+TEST_GROUP (dfpn_node_simulate) {
 };
 
-TEST(dfpn3_node_simulate, using_game_ongoing)
+TEST(dfpn_node_simulate, using_game_ongoing)
 {
     auto g = Game();
     auto n = Node();
@@ -30,7 +30,7 @@ TEST(dfpn3_node_simulate, using_game_ongoing)
     CHECK_FALSE(n.proved());
 }
 
-TEST(dfpn3_node_simulate, using_game_draw)
+TEST(dfpn_node_simulate, using_game_draw)
 {
     auto g = Game("4k/5/5/5/4K b -");
     g.apply(Move(SQ_1E, SQ_1D))
@@ -47,7 +47,7 @@ TEST(dfpn3_node_simulate, using_game_draw)
     CHECK_TRUE(n.proved_no_mate());
 }
 
-TEST(dfpn3_node_simulate, offence_won_at_offence_turn)
+TEST(dfpn_node_simulate, offence_won_at_offence_turn)
 {
     auto g = Game("BRBRK/5/5/5/4k b 2P2S2G");
 
@@ -60,7 +60,7 @@ TEST(dfpn3_node_simulate, offence_won_at_offence_turn)
     CHECK_FALSE(n.proved_no_mate());
 }
 
-TEST(dfpn3_node_simulate, offence_won_at_defence_turn)
+TEST(dfpn_node_simulate, offence_won_at_defence_turn)
 {
     const auto m = Move(KI, SQ_1B);
     auto g = Game("4k/5/4P/5/5 b G").apply(m);
@@ -74,7 +74,7 @@ TEST(dfpn3_node_simulate, offence_won_at_defence_turn)
     CHECK_FALSE(n.proved_no_mate());
 }
 
-TEST(dfpn3_node_simulate, defence_won_at_offence_turn)
+TEST(dfpn_node_simulate, defence_won_at_offence_turn)
 {
     auto g = Game("5/5/3gk/4P/4K w -").apply(Move(SQ_2C, SQ_1D));
     auto n = Node();
@@ -88,7 +88,7 @@ TEST(dfpn3_node_simulate, defence_won_at_offence_turn)
     CHECK_FALSE(n.proved_by_repetitions());
 }
 
-TEST(dfpn3_node_simulate, defence_won_at_defence_turn)
+TEST(dfpn_node_simulate, defence_won_at_defence_turn)
 {
     auto g = Game("4k/4S/5/5/4K w -");
     g.apply(Move(SQ_1A, SQ_2B))
@@ -107,7 +107,7 @@ TEST(dfpn3_node_simulate, defence_won_at_defence_turn)
     CHECK_TRUE(n.proved_by_repetitions());
 }
 
-TEST(dfpn3_node_simulate, using_offence_twin_l_mate)
+TEST(dfpn_node_simulate, using_offence_twin_l_mate)
 {
     auto node_l = Node();
     node_l.init(true, Move(), zero, inf);
@@ -123,7 +123,7 @@ TEST(dfpn3_node_simulate, using_offence_twin_l_mate)
     CHECK_FALSE(n.proved_by_repetitions());
 }
 
-TEST(dfpn3_node_simulate, using_offence_twin_l_no_mate)
+TEST(dfpn_node_simulate, using_offence_twin_l_no_mate)
 {
     auto node_l = Node();
     node_l.init(true, Move(), inf, zero);
@@ -137,7 +137,7 @@ TEST(dfpn3_node_simulate, using_offence_twin_l_no_mate)
     CHECK_FALSE(n.proved_by_repetitions());
 }
 
-TEST(dfpn3_node_simulate, using_defence_twin_l_mate)
+TEST(dfpn_node_simulate, using_defence_twin_l_mate)
 {
     auto node_l = Node();
     node_l.init(false, Move(), inf, zero);
@@ -152,7 +152,7 @@ TEST(dfpn3_node_simulate, using_defence_twin_l_mate)
     CHECK_FALSE(n.proved_by_repetitions());
 }
 
-TEST(dfpn3_node_simulate, using_defence_twin_l_no_mate)
+TEST(dfpn_node_simulate, using_defence_twin_l_no_mate)
 {
     auto node_l = Node();
     node_l.init(false, Move(), zero, inf);
@@ -167,7 +167,7 @@ TEST(dfpn3_node_simulate, using_defence_twin_l_no_mate)
     CHECK_FALSE(n.proved_by_repetitions());
 }
 
-TEST(dfpn3_node_simulate, using_offence_twin_g_mate)
+TEST(dfpn_node_simulate, using_offence_twin_g_mate)
 {
     auto twin = Node();
     twin.init(true, Move(), zero, inf);
@@ -181,7 +181,7 @@ TEST(dfpn3_node_simulate, using_offence_twin_g_mate)
     CHECK_FALSE(n.proved_by_repetitions());
 }
 
-TEST(dfpn3_node_simulate, using_offence_twin_g_no_mate)
+TEST(dfpn_node_simulate, using_offence_twin_g_no_mate)
 {
     auto twin = Node();
     twin.init(true, Move(), inf, zero);
@@ -195,7 +195,7 @@ TEST(dfpn3_node_simulate, using_offence_twin_g_no_mate)
     CHECK_FALSE(n.proved_by_repetitions());
 }
 
-TEST(dfpn3_node_simulate, using_defence_twin_g_mate)
+TEST(dfpn_node_simulate, using_defence_twin_g_mate)
 {
     auto twin = Node();
     twin.init(false, Move(), inf, zero);
@@ -210,7 +210,7 @@ TEST(dfpn3_node_simulate, using_defence_twin_g_mate)
     CHECK_FALSE(n.proved_by_repetitions());
 }
 
-TEST(dfpn3_node_simulate, using_defence_twin_g_no_mate)
+TEST(dfpn_node_simulate, using_defence_twin_g_no_mate)
 {
     auto twin = Node();
     twin.init(false, Move(), zero, inf);
@@ -225,10 +225,10 @@ TEST(dfpn3_node_simulate, using_defence_twin_g_no_mate)
     CHECK_FALSE(n.proved_by_repetitions());
 }
 
-TEST_GROUP (dfpn3_node_expand) {
+TEST_GROUP (dfpn_node_expand) {
 };
 
-TEST(dfpn3_node_expand, offence_no_twins)
+TEST(dfpn_node_expand, offence_no_twins)
 {
     {
         auto buffer = std::vector<Node>(10);
@@ -279,7 +279,7 @@ TEST(dfpn3_node_expand, offence_no_twins)
     }
 }
 
-TEST(dfpn3_node_expand, offence_twin_g)
+TEST(dfpn_node_expand, offence_twin_g)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -304,7 +304,7 @@ TEST(dfpn3_node_expand, offence_twin_g)
         == moves);
 }
 
-TEST(dfpn3_node_expand, offence_twin_l)
+TEST(dfpn_node_expand, offence_twin_l)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -332,7 +332,7 @@ TEST(dfpn3_node_expand, offence_twin_l)
         == moves);
 }
 
-TEST(dfpn3_node_expand, defence_no_twins)
+TEST(dfpn_node_expand, defence_no_twins)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -356,7 +356,7 @@ TEST(dfpn3_node_expand, defence_no_twins)
         == moves);
 }
 
-TEST(dfpn3_node_expand, defence_twin_l)
+TEST(dfpn_node_expand, defence_twin_l)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -383,7 +383,7 @@ TEST(dfpn3_node_expand, defence_twin_l)
         == moves);
 }
 
-TEST(dfpn3_node_expand, defence_twin_g)
+TEST(dfpn_node_expand, defence_twin_g)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -409,7 +409,7 @@ TEST(dfpn3_node_expand, defence_twin_g)
         == moves);
 }
 
-TEST(dfpn3_node_expand, defence_partial_expansion)
+TEST(dfpn_node_expand, defence_partial_expansion)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -437,10 +437,10 @@ TEST(dfpn3_node_expand, defence_partial_expansion)
         == moves);
 }
 
-TEST_GROUP (dfpn3_node_backprop) {
+TEST_GROUP (dfpn_node_backprop) {
 };
 
-TEST(dfpn3_node_backprop, offence_preference)
+TEST(dfpn_node_backprop, offence_preference)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -460,7 +460,7 @@ TEST(dfpn3_node_backprop, offence_preference)
         n.get_child_2nd()->get_action().hash());
 }
 
-TEST(dfpn3_node_backprop, offence_with_proved_child)
+TEST(dfpn_node_backprop, offence_with_proved_child)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -487,7 +487,7 @@ TEST(dfpn3_node_backprop, offence_with_proved_child)
     CHECK_EQUAL(inf, n.dn());
 }
 
-TEST(dfpn3_node_backprop, defence_preference)
+TEST(dfpn_node_backprop, defence_preference)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -505,7 +505,7 @@ TEST(dfpn3_node_backprop, defence_preference)
     CHECK_EQUAL(Move(FU, SQ_5D).hash(), n.get_child_2nd()->get_action().hash());
 }
 
-TEST(dfpn3_node_backprop, defence_with_proved_child)
+TEST(dfpn_node_backprop, defence_with_proved_child)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -529,7 +529,7 @@ TEST(dfpn3_node_backprop, defence_with_proved_child)
     CHECK_TRUE(ch->proved_no_mate());
 }
 
-TEST(dfpn3_node_backprop, offence_proved_by_repetitions)
+TEST(dfpn_node_backprop, offence_proved_by_repetitions)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -571,7 +571,7 @@ TEST(dfpn3_node_backprop, offence_proved_by_repetitions)
     CHECK_TRUE(n.proved_by_repetitions());
 }
 
-TEST(dfpn3_node_backprop, defence_proved_by_repetitions)
+TEST(dfpn_node_backprop, defence_proved_by_repetitions)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -597,10 +597,10 @@ TEST(dfpn3_node_backprop, defence_proved_by_repetitions)
     CHECK_TRUE(n.proved_by_repetitions());
 }
 
-TEST_GROUP (dfpn3_node_select) {
+TEST_GROUP (dfpn_node_select) {
 };
 
-TEST(dfpn3_node_select, offence_single_child)
+TEST(dfpn_node_select, offence_single_child)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -630,7 +630,7 @@ TEST(dfpn3_node_select, offence_single_child)
     }
 }
 
-TEST(dfpn3_node_select, offence_multiple_child)
+TEST(dfpn_node_select, offence_multiple_child)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -656,7 +656,7 @@ TEST(dfpn3_node_select, offence_multiple_child)
     }
 }
 
-TEST(dfpn3_node_select, offence_with_disproved_child)
+TEST(dfpn_node_select, offence_with_disproved_child)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -680,7 +680,7 @@ TEST(dfpn3_node_select, offence_with_disproved_child)
     CHECK_EQUAL(inf, th_d_ch);
 }
 
-TEST(dfpn3_node_select, defence_single_child)
+TEST(dfpn_node_select, defence_single_child)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -712,7 +712,7 @@ TEST(dfpn3_node_select, defence_single_child)
     }
 }
 
-TEST(dfpn3_node_select, defence_multiple_child)
+TEST(dfpn_node_select, defence_multiple_child)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();

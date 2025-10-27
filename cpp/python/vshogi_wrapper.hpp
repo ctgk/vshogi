@@ -5,7 +5,7 @@
 #include <cmath>
 
 #include "vshogi/common/config.hpp"
-#include "vshogi/engine/dfpn3/searcher.hpp"
+#include "vshogi/engine/dfpn/searcher.hpp"
 #include "vshogi/engine/mcts.hpp"
 #include "vshogi/engine/piece_value.hpp"
 
@@ -372,7 +372,7 @@ inline void export_game(pybind11::module& m)
         .def(
             "get_mate_moves_if_any",
             [](Game& self, const int num_dfpn_nodes) -> py::object {
-                vshogi::engine::dfpn3::Searcher<Parameters> dfpn{};
+                vshogi::engine::dfpn::Searcher<Parameters> dfpn{};
                 dfpn.search(self, num_dfpn_nodes);
                 if (dfpn.proved_mate()) {
                     return py::cast(dfpn.get_mate_moves(self));
@@ -472,7 +472,7 @@ template <class Parameters>
 inline void export_dfpn_node(pybind11::module& m)
 {
     namespace py = pybind11;
-    using Node = vshogi::engine::dfpn3::Node<Parameters>;
+    using Node = vshogi::engine::dfpn::Node<Parameters>;
     py::class_<Node>(m, "DfpnNode")
         .def("offence", &Node::offence)
         .def("pn", &Node::pn)
@@ -509,7 +509,7 @@ template <class Parameters>
 inline void export_dfpn_searcher(pybind11::module& m)
 {
     namespace py = pybind11;
-    using Searcher = vshogi::engine::dfpn3::Searcher<Parameters>;
+    using Searcher = vshogi::engine::dfpn::Searcher<Parameters>;
 
     py::class_<Searcher>(m, "DfpnSearcher")
         .def(py::init<const uint>())

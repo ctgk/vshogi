@@ -1,4 +1,4 @@
-#include "vshogi/engine/dfpn3/searcher.hpp"
+#include "vshogi/engine/dfpn/searcher.hpp"
 #include "vshogi/variants/judkins_shogi.hpp"
 #include "vshogi/variants/minishogi.hpp"
 #include "vshogi/variants/shogi.hpp"
@@ -9,15 +9,15 @@ namespace test_vshogi::test_engine::test_dfpn::test_table
 {
 
 using namespace vshogi::minishogi;
-namespace dfpn = vshogi::engine::dfpn3;
+namespace dfpn = vshogi::engine::dfpn;
 using Table = dfpn::Table<Parameters>;
 using Node = dfpn::Node<Parameters>;
 constexpr uint inf = dfpn::inf;
 
-TEST_GROUP (dfpn3_table) {
+TEST_GROUP (dfpn_table) {
 };
 
-TEST(dfpn3_table, look_up_e)
+TEST(dfpn_table, look_up_e)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -40,7 +40,7 @@ TEST(dfpn3_table, look_up_e)
     CHECK_TRUE(&n == node_ge);
 }
 
-TEST(dfpn3_table, look_up_l)
+TEST(dfpn_table, look_up_l)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -62,7 +62,7 @@ TEST(dfpn3_table, look_up_l)
     CHECK_TRUE(nullptr == node_ge);
 }
 
-TEST(dfpn3_table, look_up_l_prefer_mate_at_offence)
+TEST(dfpn_table, look_up_l_prefer_mate_at_offence)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -109,7 +109,7 @@ TEST(dfpn3_table, look_up_l_prefer_mate_at_offence)
     }
 }
 
-TEST(dfpn3_table, look_up_l_prefer_no_mate_at_defence)
+TEST(dfpn_table, look_up_l_prefer_no_mate_at_defence)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -159,7 +159,7 @@ TEST(dfpn3_table, look_up_l_prefer_no_mate_at_defence)
     }
 }
 
-TEST(dfpn3_table, look_up_g)
+TEST(dfpn_table, look_up_g)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -180,7 +180,7 @@ TEST(dfpn3_table, look_up_g)
     CHECK_TRUE(&n == node_ge);
 }
 
-TEST(dfpn3_table, look_up_g_prefer_no_mate_at_offence)
+TEST(dfpn_table, look_up_g_prefer_no_mate_at_offence)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -216,7 +216,7 @@ TEST(dfpn3_table, look_up_g_prefer_no_mate_at_offence)
     }
 }
 
-TEST(dfpn3_table, look_up_g_prefer_mate_at_defence)
+TEST(dfpn_table, look_up_g_prefer_mate_at_defence)
 {
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
@@ -260,9 +260,9 @@ TEST(dfpn3_table, look_up_g_prefer_mate_at_defence)
 namespace test_vshogi::test_engine::test_dfpn
 {
 
-namespace dfpn = vshogi::engine::dfpn3;
+namespace dfpn = vshogi::engine::dfpn;
 
-TEST_GROUP (test_dfpn3_searcher) {
+TEST_GROUP (test_dfpn_searcher) {
     template <class P>
     void search_mate(
         const std::string& sfen,
@@ -310,7 +310,7 @@ namespace test_minishogi
 
 using namespace vshogi::minishogi;
 
-TEST(test_dfpn3_searcher, test_init)
+TEST(test_dfpn_searcher, test_init)
 {
     auto g = Game("4k/5/3P1/5/5 b G");
     auto searcher = dfpn::Searcher<Parameters>();
@@ -320,7 +320,7 @@ TEST(test_dfpn3_searcher, test_init)
     CHECK_FALSE(searcher.proved());
 }
 
-TEST(test_dfpn3_searcher, test_small_num_nodes)
+TEST(test_dfpn_searcher, test_small_num_nodes)
 {
     auto g = Game("4k/5/3P1/5/5 b G");
     auto searcher = dfpn::Searcher<Parameters>(1u);
@@ -330,7 +330,7 @@ TEST(test_dfpn3_searcher, test_small_num_nodes)
     CHECK_EQUAL(0u, searcher.get_num_nodes_remain());
 }
 
-TEST(test_dfpn3_searcher, test_debug)
+TEST(test_dfpn_searcher, test_debug)
 {
     auto g = Game("3k1/P3p/s1s1r/2B2/KG3 b RGb");
     auto searcher = dfpn::Searcher<Parameters>();
@@ -345,7 +345,7 @@ TEST(test_dfpn3_searcher, test_debug)
     CHECK_EQUAL(vshogi::BLACK_WIN, g.get_result());
 }
 
-TEST(test_dfpn3_searcher, test_minishogi_no_mate)
+TEST(test_dfpn_searcher, test_minishogi_no_mate)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {
         // Turn: BLACK
@@ -422,7 +422,7 @@ TEST(test_dfpn3_searcher, test_minishogi_no_mate)
         search_no_mate<Parameters>(std::get<0>(arg), std::get<1>(arg));
 }
 
-TEST(test_dfpn3_searcher, test_minishogi_1ply_mate)
+TEST(test_dfpn_searcher, test_minishogi_1ply_mate)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {
         // Turn: BLACK
@@ -464,7 +464,7 @@ TEST(test_dfpn3_searcher, test_minishogi_1ply_mate)
         search_mate<Parameters>(std::get<0>(arg), std::get<1>(arg), 1u);
 }
 
-TEST(test_dfpn3_searcher, test_minishogi_3ply_mate)
+TEST(test_dfpn_searcher, test_minishogi_3ply_mate)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {
         // Turn: BLACK
@@ -523,7 +523,7 @@ TEST(test_dfpn3_searcher, test_minishogi_3ply_mate)
         search_mate<Parameters>(std::get<0>(arg), std::get<1>(arg), 3u);
 }
 
-TEST(test_dfpn3_searcher, test_minishogi_5ply_mate)
+TEST(test_dfpn_searcher, test_minishogi_5ply_mate)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {
         // DISCOVERED CHECK
@@ -566,7 +566,7 @@ TEST(test_dfpn3_searcher, test_minishogi_5ply_mate)
         search_mate<Parameters>(std::get<0>(arg), std::get<1>(arg), 5u);
 }
 
-TEST(test_dfpn3_searcher, test_minishogi_nply_mate)
+TEST(test_dfpn_searcher, test_minishogi_nply_mate)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {
         // Turn: WHITE
@@ -615,7 +615,7 @@ namespace test_judkins_shogi
 
 using namespace vshogi::judkins_shogi;
 
-TEST(test_dfpn3_searcher, test_judkins_shogi_no_mate)
+TEST(test_dfpn_searcher, test_judkins_shogi_no_mate)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {
         // Turn: BLACK
@@ -641,7 +641,7 @@ TEST(test_dfpn3_searcher, test_judkins_shogi_no_mate)
         search_no_mate<Parameters>(std::get<0>(arg), std::get<1>(arg));
 }
 
-TEST(test_dfpn3_searcher, test_judkins_shogi_3ply_mate)
+TEST(test_dfpn_searcher, test_judkins_shogi_3ply_mate)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {
         // Turn: BLACK
@@ -687,7 +687,7 @@ TEST(test_dfpn3_searcher, test_judkins_shogi_3ply_mate)
         search_mate<Parameters>(std::get<0>(arg), std::get<1>(arg), 3u);
 }
 
-TEST(test_dfpn3_searcher, test_judkins_shogi_3ply_mate_by_king_move)
+TEST(test_dfpn_searcher, test_judkins_shogi_3ply_mate_by_king_move)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {
         // Turn: BLACK
@@ -734,7 +734,7 @@ TEST(test_dfpn3_searcher, test_judkins_shogi_3ply_mate_by_king_move)
         search_mate<Parameters>(std::get<0>(arg), std::get<1>(arg), 3u);
 }
 
-TEST(test_dfpn3_searcher, test_judkins_shogi_5ply_mate)
+TEST(test_dfpn_searcher, test_judkins_shogi_5ply_mate)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {
         // Turn: BLACK
@@ -761,7 +761,7 @@ TEST(test_dfpn3_searcher, test_judkins_shogi_5ply_mate)
         search_mate<Parameters>(std::get<0>(arg), std::get<1>(arg), 5u);
 }
 
-TEST(test_dfpn3_searcher, test_judkins_shogi_2ply_mate_by_king_entering)
+TEST(test_dfpn_searcher, test_judkins_shogi_2ply_mate_by_king_entering)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {
         // Turn: WHITE
@@ -795,7 +795,7 @@ namespace test_shogi
 
 using namespace vshogi::shogi;
 
-TEST(test_dfpn3_searcher, test_shogi_no_mate)
+TEST(test_dfpn_searcher, test_shogi_no_mate)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {
         // Turn: BLACK
@@ -882,7 +882,7 @@ TEST(test_dfpn3_searcher, test_shogi_no_mate)
         search_no_mate<Parameters>(std::get<0>(arg), std::get<1>(arg));
 }
 
-TEST(test_dfpn3_searcher, test_shogi_1ply_mate)
+TEST(test_dfpn_searcher, test_shogi_1ply_mate)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {
         // Turn: BLACK
@@ -941,7 +941,7 @@ TEST(test_dfpn3_searcher, test_shogi_1ply_mate)
         search_mate<Parameters>(std::get<0>(arg), std::get<1>(arg), 1u);
 }
 
-TEST(test_dfpn3_searcher, test_shogi_nply_mate)
+TEST(test_dfpn_searcher, test_shogi_nply_mate)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {
         // Turn: WHITE
@@ -1057,7 +1057,7 @@ TEST(test_dfpn3_searcher, test_shogi_nply_mate)
         search_mate<Parameters>(std::get<0>(arg), std::get<1>(arg));
 }
 
-TEST(test_dfpn3_searcher, test_shogi_unnecessary_interposition)
+TEST(test_dfpn_searcher, test_shogi_unnecessary_interposition)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {
         // Turn: BLACK
@@ -1115,7 +1115,7 @@ TEST(test_dfpn3_searcher, test_shogi_unnecessary_interposition)
         search_mate<Parameters>(std::get<0>(arg), std::get<1>(arg));
 }
 
-TEST(test_dfpn3_searcher, test_shogi_avoid_consecutive_checks_1)
+TEST(test_dfpn_searcher, test_shogi_avoid_consecutive_checks_1)
 {
     // Turn: WHITE
     // White: GI
@@ -1153,7 +1153,7 @@ TEST(test_dfpn3_searcher, test_shogi_avoid_consecutive_checks_1)
     CHECK_EQUAL(vshogi::WHITE_WIN, g.get_result());
 }
 
-TEST(test_dfpn3_searcher, test_shogi_avoid_consecutive_checks_2)
+TEST(test_dfpn_searcher, test_shogi_avoid_consecutive_checks_2)
 {
     // Turn: WHITE
     // White: FU,HI
@@ -1191,7 +1191,7 @@ TEST(test_dfpn3_searcher, test_shogi_avoid_consecutive_checks_2)
     CHECK_EQUAL(vshogi::WHITE_WIN, g.get_result());
 }
 
-TEST(test_dfpn3_searcher, test_shogi_debug)
+TEST(test_dfpn_searcher, test_shogi_debug)
 {
     // Turn: BLACK
     // White: FUx10,HIx2,KIx4
