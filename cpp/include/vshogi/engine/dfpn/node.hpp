@@ -115,6 +115,7 @@ public:
             m_proved_by_repetition = m_child_1st->proved_by_repetitions();
             return;
         }
+        uint cd_max = 0u;
         uint delta_max[C::num_squares] = {zero};
         m_delta = zero;
         m_child_1st = nullptr;
@@ -128,6 +129,7 @@ public:
             else {
                 const auto cd = ch->m_action.destination();
                 delta_max[cd] = std::max(delta_max[cd], ch->m_phi);
+                cd_max = std::max(cd_max, static_cast<uint>(cd));
             }
             if (ch->is_better_child_than(
                     !offence, m_child_1st, checker_sq, king_sq)) {
@@ -138,7 +140,7 @@ public:
                 m_child_2nd = ch;
             }
         }
-        for (uint ii = C::num_squares; ii--;)
+        for (uint ii = cd_max + 1u; ii--;)
             m_delta += delta_max[ii];
         m_phi = m_child_1st ? m_child_1st->m_delta : inf;
     }
