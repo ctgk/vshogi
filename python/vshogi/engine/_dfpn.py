@@ -213,6 +213,7 @@ class DfpnSearcher(Engine):
         root = self._searcher.get_root()
         if root is None:
             return None
+        root_offence: bool = True
         for m in pv_line:
             for child in root.get_children():
                 if child.get_action() == m:
@@ -220,11 +221,12 @@ class DfpnSearcher(Engine):
                     break
             else:
                 raise ValueError(f'Cannot find child with action, {m}')
-        return _tree(root, depth, breadth, sort_key)
+            root_offence = not root_offence
+        return _tree(root_offence, root, depth, breadth, sort_key)
 
 
-def _tree(node, depth: int, breadth: int, sort_key: callable):
-    out = _repr_node(node)
+def _tree(offence, node, depth: int, breadth: int, sort_key: callable):
+    out = _repr_node(offence, node)
     if depth == 0:
         return out
     children = node.get_children()
@@ -232,7 +234,7 @@ def _tree(node, depth: int, breadth: int, sort_key: callable):
     if breadth >= 0:
         children = children[:breadth]
     for i, child in enumerate(children):
-        s = _tree(child, depth - 1, breadth, sort_key)
+        s = _tree(offence, child, depth - 1, breadth, sort_key)
         if i == len(children) - 1:
             s = s.replace('\n', '\n    ')
         else:
@@ -241,6 +243,6 @@ def _tree(node, depth: int, breadth: int, sort_key: callable):
     return out
 
 
-def _repr_node(n) -> str:
-    name = 'OR' if n.offence() else 'AND'
-    return f'{name}(#P={n.pn()}, #D={n.dn()})'
+def _repr_node(offence: bool, n) -> str:
+    name = 'OR' if offence else 'AND'
+    return f'{name}(#P={n.pn(offence)}, #D={n.dn(offence)})'

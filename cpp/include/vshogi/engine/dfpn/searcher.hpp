@@ -109,6 +109,8 @@ private:
 template <class P>
 class Searcher
 {
+    using C = Configuration<P>;
+
 private:
     std::vector<Node<P>> m_nodes; //!< The first one is the root node.
     Node<P>* m_next;
@@ -127,12 +129,11 @@ public:
 
         if (m_search_count == 0u) {
             m_next = std::next(m_nodes.data());
-            if (!m_nodes[0].simulate(g)) {
-                m_nodes[0].expand(m_next, g);
+            if (!m_nodes[0].simulate(true, g)) {
+                m_nodes[0].expand(true, m_next, g);
                 m_table.add(&m_nodes[0], g);
                 m_nodes[0].backprop(
-                    g.get_king_location(~g.get_turn()),
-                    g.get_checker_location());
+                    g.get_king_location(~g.get_turn()), C::SQ_NA);
             }
         }
         if (m_nodes[0].proved()) {
@@ -140,7 +141,8 @@ public:
             return Move<P>();
         }
         m_remaining_searches = n;
-        const auto out = multiple_iterative_deepening(m_nodes[0], g, inf, inf);
+        const auto out
+            = multiple_iterative_deepening(true, m_nodes[0], g, inf, inf);
         m_search_count += n - m_remaining_searches;
         g.swap_log(hash_list, captured_move_list);
         return out;
@@ -148,23 +150,27 @@ public:
 
 private:
     Move<P> multiple_iterative_deepening(
-        Node<P>& n, Game<P>& g, const uint th_p, const uint th_d)
+        const bool offence,
+        Node<P>& n,
+        Game<P>& g,
+        const uint th_p,
+        const uint th_d)
     {
         Move<P> out{};
-        assert(n.offence() || g.in_check());
+        assert(offence || g.in_check());
         const Node<P>* twin_ge = nullptr;
         const Node<P>* twin_e = nullptr;
         const Node<P>* twin_le = nullptr;
         m_table.look_up(g, &twin_ge, &twin_e, &twin_le);
-        if (n.simulate(g, twin_ge, twin_le)) {
+        if (n.simulate(offence, g, twin_ge, twin_le)) {
             --m_remaining_searches;
             return n.get_action();
         }
         const auto king_sq
-            = g.get_king_location(n.offence() ? ~g.get_turn() : g.get_turn());
-        const auto checker_sq = g.get_checker_location();
+            = g.get_king_location(offence ? ~g.get_turn() : g.get_turn());
+        const auto checker_sq = offence ? C::SQ_NA : g.get_checker_location();
         if (!n.has_child()) {
-            n.expand(m_next, g, twin_ge, twin_le);
+            n.expand(offence, m_next, g, twin_ge, twin_le);
             if (twin_e == nullptr)
                 m_table.add(&n, g);
             --m_remaining_searches;
@@ -178,7 +184,8 @@ private:
                && (n.delta() < th_d)) {
             Node<P>* const child = n.select(th_p, th_d, th_p_ch, th_d_ch);
             g.apply_dfpn(child->get_action());
-            out = multiple_iterative_deepening(*child, g, th_p_ch, th_d_ch);
+            out = multiple_iterative_deepening(
+                !offence, *child, g, th_p_ch, th_d_ch);
             g.undo();
             n.backprop(king_sq, checker_sq);
         }
@@ -203,7 +210,7 @@ public: // utility
     void init()
     {
         m_nodes[0].init();
-        m_nodes[m_nodes.size() - 1u].init(false, Move<P>());
+        m_nodes[m_nodes.size() - 1u].init(Move<P>(C::SQ_NA, C::SQ_NA));
         m_next = nullptr;
         m_table.clear();
         m_search_count = 0u;
@@ -226,11 +233,11 @@ public: // utility
     }
     bool proved_mate() const
     {
-        return m_nodes[0].proved_mate();
+        return m_nodes[0].proved_mate(true);
     }
     bool proved_no_mate() const
     {
-        return m_nodes[0].proved_no_mate();
+        return m_nodes[0].proved_no_mate(true);
     }
     const Node<P>* get_root() const
     {
@@ -238,7 +245,7 @@ public: // utility
     }
     Move<P> get_mate_move() const
     {
-        if (!m_nodes[0].proved_mate())
+        if (!m_nodes[0].proved_mate(true))
             return Move<P>();
         const auto c1 = m_nodes[0].get_child_1st();
         if (c1 == nullptr)
@@ -249,13 +256,14 @@ public: // utility
     {
         std::vector<Move<P>> out{};
         const Node<P>* const c1 = m_nodes[0].get_child_1st();
-        if (c1 && c1->proved_mate())
-            append_mate_moves(out, game, c1);
+        if (c1 && c1->proved_mate(false))
+            append_mate_moves(false, out, game, c1);
         return out;
     }
 
 private: // utility
     void append_mate_moves(
+        const bool offence,
         std::vector<Move<P>>& out,
         Game<P>& game,
         const Node<P>* const node) const
@@ -264,13 +272,13 @@ private: // utility
         game.apply_nocheck(action);
         out.emplace_back(action);
         const Node<P>* const ch1st = node->get_child_1st();
-        if ((ch1st != nullptr) && ch1st->proved_mate()) {
+        if ((ch1st != nullptr) && ch1st->proved_mate(!offence)) {
             // The 1st child may not have mate value because
             // `search_inner()` can assign mate value on a node having children
             // with arbitrary #P and #D values by `m_table.look_up_fuzzy()`.
-            append_mate_moves(out, game, ch1st);
+            append_mate_moves(!offence, out, game, ch1st);
         } else if (game.get_result() == ONGOING) {
-            if (!node->offence()) { // applied action was offence move.
+            if (!offence) { // applied action was offence move.
                 const auto m = game.get_legal_moves()[0];
                 game.apply_nocheck(m); // defence move
                 out.emplace_back(m);
@@ -279,10 +287,10 @@ private: // utility
             searcher.search(game, m_search_count);
             if (searcher.proved_mate()) {
                 const Node<P>* const c1 = searcher.m_nodes[0].get_child_1st();
-                if (c1 && c1->proved_mate())
-                    searcher.append_mate_moves(out, game, c1);
+                if (c1 && c1->proved_mate(false))
+                    searcher.append_mate_moves(false, out, game, c1);
             }
-            if (!node->offence())
+            if (!offence)
                 game.undo();
         }
         game.undo();

@@ -32,7 +32,7 @@ TEST(dfpn_table, look_up_e)
     CHECK_TRUE(&n == node_e);
     CHECK_TRUE(nullptr == node_ge);
 
-    n.expand(next, g);
+    n.expand(true, next, g);
 
     t.look_up(g, &node_ge, &node_e, &node_le);
     CHECK_TRUE(&n == node_le);
@@ -55,7 +55,7 @@ TEST(dfpn_table, look_up_l)
     CHECK_TRUE(nullptr == node_e);
     CHECK_TRUE(nullptr == node_ge);
 
-    n.expand(next, g);
+    n.expand(true, next, g);
     t.look_up(Game("4k/5/4P/5/5 b SG"), &node_ge, &node_e, &node_le);
     CHECK_TRUE(&n == node_le);
     CHECK_TRUE(nullptr == node_e);
@@ -68,21 +68,21 @@ TEST(dfpn_table, look_up_l_prefer_mate_at_offence)
     auto next = buffer.data();
     auto n1 = Node();
     auto g1 = Game("3rk/3p1/4P/5/5 b G");
-    n1.expand(next, g1);
+    n1.expand(true, next, g1);
     n1.backprop(SQ_1A, SQ_NA);
     uint th_p_ch, th_d_ch;
     Node* const c1 = n1.select(inf, inf, th_p_ch, th_d_ch);
     g1.apply(c1->get_action());
     CHECK_EQUAL(vshogi::BLACK_WIN, g1.get_result());
-    CHECK_TRUE(c1->simulate(g1));
+    CHECK_TRUE(c1->simulate(false, g1));
     g1.undo();
     n1.backprop(SQ_1A, g1.get_checker_location());
     CHECK_TRUE(n1.fully_expanded());
-    CHECK_TRUE(n1.proved_mate());
+    CHECK_TRUE(n1.proved_mate(true));
 
     auto n2 = Node();
     auto g2 = Game("3rk/3p1/4P/5/5 b S");
-    n2.expand(next, g2);
+    n2.expand(true, next, g2);
     CHECK_TRUE(n2.fully_expanded());
     CHECK_FALSE(n2.proved());
     {
@@ -114,26 +114,26 @@ TEST(dfpn_table, look_up_l_prefer_no_mate_at_defence)
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
     auto n1 = Node();
-    n1.init(false, Move());
+    n1.init(Move());
     auto g1 = Game("4k/4P/5/5/5 w -");
-    n1.expand(next, g1);
-    n1.backprop(SQ_1A, g1.get_checker_location());
+    n1.expand(false, next, g1);
+    n1.backprop(SQ_1A, SQ_1B);
     uint th_p_ch, th_d_ch;
     Node* const c1 = n1.select(inf, inf, th_p_ch, th_d_ch);
     g1.apply_dfpn(c1->get_action());
-    c1->expand(next, g1);
-    c1->backprop(SQ_1B, g1.get_checker_location());
-    CHECK_TRUE(c1->proved_no_mate());
+    c1->expand(true, next, g1);
+    c1->backprop(SQ_1B, SQ_NA);
+    CHECK_TRUE(c1->proved_no_mate(true));
     g1.undo();
     n1.backprop(SQ_1A, g1.get_checker_location());
     CHECK_TRUE(n1.fully_expanded());
-    CHECK_TRUE(n1.proved_no_mate());
+    CHECK_TRUE(n1.proved_no_mate(false));
     CHECK_FALSE(n1.proved_by_repetitions());
 
     auto n2 = Node();
-    n2.init(false, Move());
+    n2.init(Move());
     auto g2 = Game("4k/4P/5/5/5 w ps");
-    n2.expand(next, g2);
+    n2.expand(false, next, g2);
     CHECK_TRUE(n2.fully_expanded());
     CHECK_FALSE(n2.proved());
 
@@ -173,7 +173,7 @@ TEST(dfpn_table, look_up_g)
     CHECK_TRUE(nullptr == node_le);
     CHECK_TRUE(nullptr == node_e);
     CHECK_TRUE(nullptr == node_ge);
-    n.expand(next, g);
+    n.expand(true, next, g);
     t.look_up(Game("4k/5/4P/5/5 b -"), &node_ge, &node_e, &node_le);
     CHECK_TRUE(nullptr == node_le);
     CHECK_TRUE(nullptr == node_e);
@@ -186,12 +186,12 @@ TEST(dfpn_table, look_up_g_prefer_no_mate_at_offence)
     auto next = buffer.data();
     auto n1 = Node();
     auto g1 = Game("3rk/3gs/5/5/5 b PSG");
-    n1.expand(next, g1);
+    n1.expand(true, next, g1);
     n1.backprop(SQ_1A, g1.get_checker_location());
-    CHECK_TRUE(n1.proved_no_mate());
+    CHECK_TRUE(n1.proved_no_mate(true));
     auto n2 = Node();
     auto g2 = Game("3rk/3gs/5/5/5 b PS");
-    n2.expand(next, g2);
+    n2.expand(true, next, g2);
     CHECK_TRUE(n2.fully_expanded());
     CHECK_FALSE(n2.proved());
     {
@@ -221,16 +221,16 @@ TEST(dfpn_table, look_up_g_prefer_mate_at_defence)
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
     auto n1 = Node();
-    n1.init(false, Move());
+    n1.init(Move());
     auto g1 = Game("4k/4G/4P/5/5 w psg");
-    n1.expand(next, g1);
+    n1.expand(false, next, g1);
     n1.backprop(SQ_1A, g1.get_checker_location());
     CHECK_TRUE(n1.fully_expanded());
-    CHECK_TRUE(n1.proved_mate());
+    CHECK_TRUE(n1.proved_mate(false));
     auto n2 = Node();
-    n2.init(false, Move());
+    n2.init(Move());
     auto g2 = Game("4k/4G/4P/5/5 w ps");
-    n2.expand(next, Game("4k/4S/4P/5/5 w ps")); // dummy
+    n2.expand(false, next, Game("4k/4S/4P/5/5 w ps")); // dummy
     CHECK_TRUE(n2.fully_expanded());
     CHECK_FALSE(n2.proved());
     {

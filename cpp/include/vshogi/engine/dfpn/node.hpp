@@ -32,7 +32,6 @@ class Node
     using SHelper = Squares<P>;
 
 private:
-    bool m_offence;
     Move<P> m_action;
 
     /**
@@ -54,6 +53,7 @@ private:
 
 public:
     bool simulate(
+        const bool offence,
         const Game<P>& g,
         const Node* const twin_ge = nullptr,
         const Node* const twin_le = nullptr)
@@ -62,9 +62,10 @@ public:
             return true;
         if (has_child())
             return false;
-        return simulate_using_game(g);
+        return simulate_using_game(offence, g);
     }
     void expand(
+        const bool offence,
         Node<P>*& next,
         const Game<P>& g,
         const Node* const twin_ge = nullptr,
@@ -79,11 +80,11 @@ public:
 
         m_fully_expanded = false;
         m_child = next;
-        expand_board_moves(next, s, &nibling);
-        if (m_offence || (!g.had_two_consecutive_sacrifice_drops())) {
+        expand_board_moves(offence, next, s, &nibling);
+        if (offence || (!g.had_two_consecutive_sacrifice_drops())) {
             if (twin_ge == nullptr)
                 nibling = nullptr;
-            m_fully_expanded = expand_drop_moves(next, s, &nibling);
+            m_fully_expanded = expand_drop_moves(offence, next, s, &nibling);
         }
         if (m_child == next)
             m_child = nullptr;
@@ -97,9 +98,17 @@ public:
         th_d_ch = std::min(th_p, std::min(d2, d2_max) + 1u);
         return m_child_1st;
     }
+
+    /**
+     * @brief Update #P and #D based on the values of child nodes.
+     *
+     * @param king_sq Location of target king to checkmate.
+     * @param checker_sq Location of checker piece attacking the target king.
+     * Make sure to pass `SQ_NA` if the node is an offence node.
+     */
     void backprop(const Square& king_sq, const Square& checker_sq)
     {
-        assert(offence() || (checker_sq != C::SQ_NA));
+        const bool offence = (checker_sq == C::SQ_NA);
         if (m_child_1st && (m_child_1st->m_delta == zero)) {
             m_phi = zero;
             m_delta = inf;
@@ -114,17 +123,18 @@ public:
         for (Node* ch = child(); ch; ch = ch->sibling()) {
             assert(ch->m_phi != inf);
             m_proved_by_repetition &= ch->proved_by_repetitions();
-            if (m_offence || (!ch->m_action.is_drop()))
+            if (offence || (!ch->m_action.is_drop()))
                 m_delta += ch->m_phi;
             else {
                 const auto cd = ch->m_action.destination();
                 delta_max[cd] = std::max(delta_max[cd], ch->m_phi);
             }
-            if (ch->is_better_child_than(m_child_1st, checker_sq, king_sq)) {
+            if (ch->is_better_child_than(
+                    !offence, m_child_1st, checker_sq, king_sq)) {
                 m_child_2nd = m_child_1st;
                 m_child_1st = ch;
             } else if (ch->is_better_child_than(
-                           m_child_2nd, checker_sq, king_sq)) {
+                           !offence, m_child_2nd, checker_sq, king_sq)) {
                 m_child_2nd = ch;
             }
         }
@@ -140,7 +150,6 @@ private:
         // proved_no_mate_at_offence() == (dn() == zero) == (delta == zero)
         // proved_mate_at_defence() == (pn() == zero) == (delta == zero)
         if (twin_ge && (twin_ge->m_delta == zero)) {
-            assert(m_offence == twin_ge->m_offence);
             assert(!twin_ge->proved_by_repetitions());
             m_phi = inf;
             m_delta = zero;
@@ -150,7 +159,6 @@ private:
         // proved_mate_at_offence() == (pn() == zero) == (phi == zero)
         // proved_no_mate_at_defence() == (dn() == zero) == (phi == zero)
         if (twin_le && (twin_le->m_phi == zero)) {
-            assert(m_offence == twin_le->m_offence);
             assert(!twin_le->proved_by_repetitions());
             m_phi = zero;
             m_delta = inf;
@@ -158,9 +166,9 @@ private:
         }
         return false;
     }
-    void set_mate()
+    void set_mate(const bool offence)
     {
-        if (m_offence) {
+        if (offence) {
             m_phi = zero;
             m_delta = inf;
         } else {
@@ -168,9 +176,9 @@ private:
             m_delta = zero;
         }
     }
-    void set_no_mate()
+    void set_no_mate(const bool offence)
     {
-        if (m_offence) {
+        if (offence) {
             m_phi = inf;
             m_delta = zero;
         } else {
@@ -178,7 +186,7 @@ private:
             m_delta = inf;
         }
     }
-    bool simulate_using_game(const Game<P>& g)
+    bool simulate_using_game(const bool offence, const Game<P>& g)
     {
         const auto turn = g.get_turn();
         auto result = g.get_result(); // this is usually ONGOING
@@ -194,14 +202,14 @@ private:
         if (result == ONGOING)
             return false;
         if (result == DRAW) {
-            set_no_mate();
+            set_no_mate(offence);
             return true;
         }
         const auto winner = (result == BLACK_WIN) ? BLACK : WHITE;
-        if (m_offence == (winner == turn)) {
-            set_mate();
+        if (offence == (winner == turn)) {
+            set_mate(offence);
         } else {
-            set_no_mate();
+            set_no_mate(offence);
         }
         return true;
     }
@@ -218,12 +226,11 @@ private:
         for (Move<P> m : Generator(s)) {
             if (next == nullptr)
                 return false;
-            const bool is_last
-                = (!next->m_offence) && (next->get_action().hash() == 0u);
+            const bool is_last = (next->get_action().destination() == C::SQ_NA);
             if (s.is_declined_promotion(m))
-                next->init(!m_offence, m, cent, kilo);
+                next->init(m, cent, kilo);
             else
-                next->init(!m_offence, m);
+                next->init(m);
             if (m_child != next) {
                 auto prev = next - 1;
                 prev->m_sibling = next;
@@ -237,11 +244,14 @@ private:
         return true;
     }
     bool expand_board_moves(
-        Node<P>*& next, const State<P>& s, const Node** const nibling)
+        const bool offence,
+        Node<P>*& next,
+        const State<P>& s,
+        const Node** const nibling)
     {
         if ((*nibling) != nullptr)
             return expand_board_moves(next, nibling);
-        if (m_offence)
+        if (offence)
             return expand_by_generator<BoardMoveGenerator<P, true>>(next, s);
         expand_by_generator<KingMoveGenerator<P>>(next, s);
         return expand_by_generator<BlockMoveGenerator<P>>(next, s);
@@ -253,8 +263,7 @@ private:
                 return false;
             if ((*nibling)->get_action().is_drop())
                 break;
-            const bool end
-                = (!next->m_offence) && (next->get_action().hash() == 0u);
+            const bool end = (next->get_action().destination() == C::SQ_NA);
             init_from_nibling(*next, **nibling);
             if (m_child != next) {
                 auto prev = next - 1;
@@ -269,10 +278,13 @@ private:
         return true;
     }
     bool expand_drop_moves(
-        Node<P>*& next, const State<P>& s, const Node** const nibling)
+        const bool offence,
+        Node<P>*& next,
+        const State<P>& s,
+        const Node** const nibling)
     {
         if ((*nibling) == nullptr) {
-            if (m_offence)
+            if (offence)
                 return expand_by_generator<DropMoveGenerator<P, true>>(next, s);
             return expand_by_generator<DropMoveGenerator<P, false>>(next, s);
         }
@@ -287,8 +299,7 @@ private:
             assert((*nibling)->get_action().is_drop());
             if (!s.exist((*nibling)->get_action().source_piece()))
                 continue;
-            const bool end
-                = (!next->m_offence) && (next->get_action().hash() == 0u);
+            const bool end = (next->get_action().destination() == C::SQ_NA);
             init_from_nibling(*next, **nibling);
             if (m_child != next) {
                 auto prev = next - 1;
@@ -306,12 +317,12 @@ private:
     void init_from_nibling(Node<P>& n, const Node& nibling)
     {
         n.init(
-            nibling.offence(),
             nibling.get_action(),
             std::clamp(nibling.phi(), cent, kilo),
             std::clamp(nibling.delta(), cent, kilo));
     }
     bool is_better_child_than(
+        const bool offence,
         const Node* const other,
         const Square& dst_prev,
         const Square& king_sq) const
@@ -327,13 +338,13 @@ private:
         const auto td = m_action.destination();
         const auto od = other->m_action.destination();
 
-        if (m_offence && ((td == dst_prev) != (od == dst_prev)))
+        if (offence && ((td == dst_prev) != (od == dst_prev)))
             return (td == dst_prev) && (od != dst_prev); // defence at parent
-        if (!m_offence && (m_action.is_drop() != other->m_action.is_drop()))
+        if (!offence && (m_action.is_drop() != other->m_action.is_drop()))
             return m_action.is_drop()
                    && !other->m_action.is_drop(); // offence at parent
 
-        const int offset = m_offence ? 10 : 19;
+        const int offset = offence ? 10 : 19;
         const int tcd
             = static_cast<int>(SHelper::chebyshev_distance(td, king_sq));
         const int ocd
@@ -351,9 +362,9 @@ private:
 
 public: // utility
     Node()
-        : m_offence(true), m_action(), m_phi(inf), m_delta(inf),
-          m_proved_by_repetition(false), m_sibling(nullptr), m_child(nullptr),
-          m_fully_expanded(false), m_child_1st(nullptr), m_child_2nd(nullptr)
+        : m_action(), m_phi(inf), m_delta(inf), m_proved_by_repetition(false),
+          m_sibling(nullptr), m_child(nullptr), m_fully_expanded(false),
+          m_child_1st(nullptr), m_child_2nd(nullptr)
 
     {
     }
@@ -367,7 +378,6 @@ public: // utility
 
     void init()
     {
-        m_offence = true;
         m_phi = inf;
         m_delta = inf;
         m_proved_by_repetition = false;
@@ -377,9 +387,8 @@ public: // utility
         m_child_1st = nullptr;
         m_child_2nd = nullptr;
     }
-    void init(const bool offence, const Move<P>& action)
+    void init(const Move<P>& action)
     {
-        m_offence = offence;
         m_action = action;
         m_phi = unit;
         m_delta = unit;
@@ -390,13 +399,8 @@ public: // utility
         m_child_1st = nullptr;
         m_child_2nd = nullptr;
     }
-    void init(
-        const bool offence,
-        const Move<P>& action,
-        const uint phi,
-        const uint delta)
+    void init(const Move<P>& action, const uint phi, const uint delta)
     {
-        m_offence = offence;
         m_action = action;
         m_phi = phi;
         m_delta = delta;
@@ -406,10 +410,6 @@ public: // utility
         m_fully_expanded = false;
         m_child_1st = nullptr;
         m_child_2nd = nullptr;
-    }
-    bool offence() const
-    {
-        return m_offence;
     }
     Move<P> get_action() const
     {
@@ -423,25 +423,25 @@ public: // utility
     {
         return m_delta;
     }
-    uint pn() const
+    uint pn(const bool offence) const
     {
-        return m_offence ? m_phi : m_delta;
+        return offence ? m_phi : m_delta;
     }
-    uint dn() const
+    uint dn(const bool offence) const
     {
-        return m_offence ? m_delta : m_phi;
+        return offence ? m_delta : m_phi;
     }
     bool proved() const
     {
         return (m_phi == zero) || (m_delta == zero);
     }
-    bool proved_mate() const
+    bool proved_mate(const bool offence) const
     {
-        return pn() == zero;
+        return pn(offence) == zero;
     }
-    bool proved_no_mate() const
+    bool proved_no_mate(const bool offence) const
     {
-        return dn() == zero;
+        return dn(offence) == zero;
     }
     bool has_child() const
     {
