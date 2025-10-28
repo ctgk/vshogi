@@ -134,37 +134,22 @@ public:
     }
 
 private:
-    bool proved_mate_at_offence() const
-    {
-        return m_offence && proved_mate();
-    }
-    bool proved_mate_at_defence() const
-    {
-        return (!m_offence) && proved_mate();
-    }
-    bool proved_no_mate_at_offence() const
-    {
-        return m_offence && proved_no_mate();
-    }
-    bool proved_no_mate_at_defence() const
-    {
-        return (!m_offence) && proved_no_mate();
-    }
     bool
     simulate_using_twins(const Node* const twin_ge, const Node* const twin_le)
     {
-        if (twin_ge
-            && (twin_ge->proved_no_mate_at_offence()
-                || twin_ge->proved_mate_at_defence())) {
+        // proved_no_mate_at_offence() == (dn() == zero) == (delta == zero)
+        // proved_mate_at_defence() == (pn() == zero) == (delta == zero)
+        if (twin_ge && (twin_ge->m_delta == zero)) {
             assert(m_offence == twin_ge->m_offence);
             assert(!twin_ge->proved_by_repetitions());
             m_phi = inf;
             m_delta = zero;
             return true;
         }
-        if (twin_le
-            && (twin_le->proved_mate_at_offence()
-                || twin_le->proved_no_mate_at_defence())) {
+
+        // proved_mate_at_offence() == (pn() == zero) == (phi == zero)
+        // proved_no_mate_at_defence() == (dn() == zero) == (phi == zero)
+        if (twin_le && (twin_le->m_phi == zero)) {
             assert(m_offence == twin_le->m_offence);
             assert(!twin_le->proved_by_repetitions());
             m_phi = zero;
