@@ -117,7 +117,7 @@ def test_greedy_q_value():
 
     searcher._tree(depth=2, breadth=3)
     searcher._tree(depth=2, breadth=5)
-    searcher._tree(depth=2, breadth=-1)
+    searcher._tree(depth=2, breadth=-1, pv_line=["3e4d"])
 
 
 def test_dfpn_root():

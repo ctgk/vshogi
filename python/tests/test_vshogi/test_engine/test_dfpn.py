@@ -9,6 +9,7 @@ def test_proved_mate():
     searcher = DfpnSearcher()
     searcher.set_game(g)
     searcher.search()
+    print(searcher._tree(pv_line=["G*1b"]))
     assert searcher.proved_mate() is True
 
 

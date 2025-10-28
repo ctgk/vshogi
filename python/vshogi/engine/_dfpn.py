@@ -205,7 +205,7 @@ class DfpnSearcher(Engine):
         self,
         depth: int = 1,
         breadth: int = 3,
-        pv_line: tp.List[Move] = [],
+        pv_line: tp.List[tp.Union[Move, str]] = [],
         *,
         sort_key=lambda n: n.dn() if n.offence() else n.pn(),
     ):
@@ -214,6 +214,10 @@ class DfpnSearcher(Engine):
         if root is None:
             return None
         root_offence: bool = True
+        pv_line = [
+            self._game._get_move_class()(m) if isinstance(m, str) else m
+            for m in pv_line
+        ]
         for m in pv_line:
             for child in root.get_children():
                 if child.get_action() == m:

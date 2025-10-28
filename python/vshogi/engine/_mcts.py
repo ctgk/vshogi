@@ -313,7 +313,7 @@ class Mcts(Engine):
         self,
         depth: int = 1,
         breadth: int = 3,
-        pv_line: tp.List[Move] = [],
+        pv_line: tp.List[tp.Union[Move, str]] = [],
         *,
         sort_key: callable = lambda n: -n.get_visit_count(),
         greedy_depth: int = 0,
@@ -321,6 +321,10 @@ class Mcts(Engine):
         node = self._searcher.get_root()
         if node is None:
             return None
+        pv_line = [
+            self._game._get_move_class()(m) if isinstance(m, str) else m
+            for m in pv_line
+        ]
         for m in pv_line:
             for a in node.get_actions():
                 if a == m:
