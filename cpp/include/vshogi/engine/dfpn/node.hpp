@@ -44,10 +44,11 @@ private:
      */
     uint m_delta;
     bool m_proved_by_repetition;
+    bool m_fully_expanded; //!< Omitted drop moves if false.
+    std::uint8_t m_chebyshev;
 
     Node* m_sibling;
     Node* m_child;
-    bool m_fully_expanded; //!< Omitted drop moves if false.
     Node* m_child_1st;
     Node* m_child_2nd;
 
@@ -88,6 +89,16 @@ public:
         }
         if (m_child == next)
             m_child = nullptr;
+
+        const int offset = offence ? 19 : 10;
+        const Square king_sq
+            = g.get_king_location(offence ? ~g.get_turn() : g.get_turn());
+        for (Node* c = m_child; c; c = c->sibling()) {
+            const auto cd = static_cast<int>(SHelper::chebyshev_distance(
+                c->get_action().destination(), king_sq));
+            c->m_chebyshev
+                = static_cast<std::uint8_t>(std::abs(10 * cd - offset));
+        }
     }
     Node* select(const uint th_p, const uint th_d, uint& th_p_ch, uint& th_d_ch)
     {
@@ -102,11 +113,10 @@ public:
     /**
      * @brief Update #P and #D based on the values of child nodes.
      *
-     * @param king_sq Location of target king to checkmate.
      * @param checker_sq Location of checker piece attacking the target king.
      * Make sure to pass `SQ_NA` if the node is an offence node.
      */
-    void backprop(const Square& king_sq, const Square& checker_sq)
+    void backprop(const Square& checker_sq)
     {
         const bool offence = (checker_sq == C::SQ_NA);
         if (m_child_1st && (m_child_1st->m_delta == zero)) {
@@ -131,12 +141,11 @@ public:
                 delta_max[cd] = std::max(delta_max[cd], ch->m_phi);
                 cd_max = std::max(cd_max, static_cast<uint>(cd));
             }
-            if (ch->is_better_child_than(
-                    !offence, m_child_1st, checker_sq, king_sq)) {
+            if (ch->is_better_child_than(!offence, m_child_1st, checker_sq)) {
                 m_child_2nd = m_child_1st;
                 m_child_1st = ch;
             } else if (ch->is_better_child_than(
-                           !offence, m_child_2nd, checker_sq, king_sq)) {
+                           !offence, m_child_2nd, checker_sq)) {
                 m_child_2nd = ch;
             }
         }
@@ -326,8 +335,7 @@ private:
     bool is_better_child_than(
         const bool offence,
         const Node* const other,
-        const Square& dst_prev,
-        const Square& king_sq) const
+        const Square& dst_prev) const
     {
         if (other == nullptr)
             return true;
@@ -345,13 +353,7 @@ private:
         if (!offence && (m_action.is_drop() != other->m_action.is_drop()))
             return m_action.is_drop()
                    && !other->m_action.is_drop(); // offence at parent
-
-        const int offset = offence ? 10 : 19;
-        const int tcd
-            = static_cast<int>(SHelper::chebyshev_distance(td, king_sq));
-        const int ocd
-            = static_cast<int>(SHelper::chebyshev_distance(od, king_sq));
-        return std::abs(10 * tcd - offset) < std::abs(10 * ocd - offset);
+        return m_chebyshev < other->m_chebyshev;
     }
     Node* child()
     {
@@ -365,8 +367,8 @@ private:
 public: // utility
     Node()
         : m_action(), m_phi(inf), m_delta(inf), m_proved_by_repetition(false),
-          m_sibling(nullptr), m_child(nullptr), m_fully_expanded(false),
-          m_child_1st(nullptr), m_child_2nd(nullptr)
+          m_fully_expanded(false), m_chebyshev{}, m_sibling(nullptr),
+          m_child(nullptr), m_child_1st(nullptr), m_child_2nd(nullptr)
 
     {
     }
@@ -383,9 +385,10 @@ public: // utility
         m_phi = inf;
         m_delta = inf;
         m_proved_by_repetition = false;
+        m_fully_expanded = false;
+        m_chebyshev = 0u;
         m_sibling = nullptr;
         m_child = nullptr;
-        m_fully_expanded = false;
         m_child_1st = nullptr;
         m_child_2nd = nullptr;
     }
@@ -395,9 +398,10 @@ public: // utility
         m_phi = unit;
         m_delta = unit;
         m_proved_by_repetition = false;
+        m_fully_expanded = false;
+        m_chebyshev = 0u;
         m_sibling = nullptr;
         m_child = nullptr;
-        m_fully_expanded = false;
         m_child_1st = nullptr;
         m_child_2nd = nullptr;
     }
@@ -407,9 +411,10 @@ public: // utility
         m_phi = phi;
         m_delta = delta;
         m_proved_by_repetition = false;
+        m_fully_expanded = false;
+        m_chebyshev = 0u;
         m_sibling = nullptr;
         m_child = nullptr;
-        m_fully_expanded = false;
         m_child_1st = nullptr;
         m_child_2nd = nullptr;
     }

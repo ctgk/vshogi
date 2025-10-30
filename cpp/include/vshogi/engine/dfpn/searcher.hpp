@@ -132,8 +132,7 @@ public:
             if (!m_nodes[0].simulate(true, g)) {
                 m_nodes[0].expand(true, m_next, g);
                 m_table.add(&m_nodes[0], g);
-                m_nodes[0].backprop(
-                    g.get_king_location(~g.get_turn()), C::SQ_NA);
+                m_nodes[0].backprop(C::SQ_NA);
             }
         }
         if (m_nodes[0].proved()) {
@@ -166,8 +165,6 @@ private:
             --m_remaining_searches;
             return n.get_action();
         }
-        const auto king_sq
-            = g.get_king_location(offence ? ~g.get_turn() : g.get_turn());
         const auto checker_sq = offence ? C::SQ_NA : g.get_checker_location();
         if (!n.has_child()) {
             n.expand(offence, m_next, g, twin_ge, twin_le);
@@ -175,7 +172,7 @@ private:
                 m_table.add(&n, g);
             --m_remaining_searches;
             out = n.get_action();
-            n.backprop(king_sq, checker_sq);
+            n.backprop(checker_sq);
         }
         if (m_next == nullptr)
             return n.get_action();
@@ -187,7 +184,7 @@ private:
             out = multiple_iterative_deepening(
                 !offence, *child, g, th_p_ch, th_d_ch);
             g.undo();
-            n.backprop(king_sq, checker_sq);
+            n.backprop(checker_sq);
         }
         return out;
     }
