@@ -795,6 +795,46 @@ namespace test_shogi
 
 using namespace vshogi::shogi;
 
+TEST(test_dfpn_searcher, test_shogi_debug_2)
+{
+    // Turn: WHITE
+    // White: FU,KE,GI,HI
+    //     9   8   7   6   5   4   3   2   1
+    //   +---+---+---+---+---+---+---+---+---+
+    // A |   |   |-KI|   |   |   |   |+UM|   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // B |   |   |   |-FU|-OU|   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // C |-FU|   |-FU|   |   |-FU|   |-FU|-FU|
+    //   +---+---+---+---+---+---+---+---+---+
+    // D |   |   |   |   |+GI|   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // E |   |   |   |-KE|   |   |   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // F |   |   |+FU|   |   |+GI|-FU|   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // G |+FU|+FU|+KE|+FU|   |+FU|   |   |+FU|
+    //   +---+---+---+---+---+---+---+---+---+
+    // H |   |   |   |-NK|+FU|-UM|   |   |   |
+    //   +---+---+---+---+---+---+---+---+---+
+    // I |+KY|+OU|   |   |   |   |   |   |+KY|
+    //   +---+---+---+---+---+---+---+---+---+
+    // Black: FUx3,KYx2,GI,HI,KIx3
+    auto g = Game("2g4+B1/3pk4/p1p2p1pp/4S4/3n5/2P2Sp2/PPNP1P2P/3+nP+b3/LK6L w "
+                  "R3GS2L3Prsnp");
+    auto searcher = dfpn::Searcher<Parameters>();
+    searcher.search(g, 10000u);
+    CHECK_TRUE(searcher.proved_mate());
+    const auto moves = searcher.get_mate_moves(g);
+    if (moves.empty())
+        return;
+    for (auto&& m : moves) {
+        CHECK_EQUAL(vshogi::ONGOING, g.get_result());
+        g.apply(m);
+    }
+    CHECK_EQUAL(vshogi::WHITE_WIN, g.get_result());
+}
+
 TEST(test_dfpn_searcher, test_shogi_no_mate)
 {
     const std::vector<std::tuple<std::string, vshogi::uint>> args = {

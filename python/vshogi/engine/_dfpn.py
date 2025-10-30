@@ -206,8 +206,6 @@ class DfpnSearcher(Engine):
         depth: int = 1,
         breadth: int = 3,
         pv_line: tp.List[tp.Union[Move, str]] = [],
-        *,
-        sort_key=lambda n: n.dn() if n.offence() else n.pn(),
     ):
         self._raise_error_if_not_ready()
         root = self._searcher.get_root()
@@ -226,19 +224,19 @@ class DfpnSearcher(Engine):
             else:
                 raise ValueError(f'Cannot find child with action, {m}')
             root_offence = not root_offence
-        return _tree(root_offence, root, depth, breadth, sort_key)
+        return _tree(root_offence, root, depth, breadth)
 
 
-def _tree(offence, node, depth: int, breadth: int, sort_key: callable):
+def _tree(offence, node, depth: int, breadth: int):
     out = _repr_node(offence, node)
     if depth == 0:
         return out
     children = node.get_children()
-    children.sort(key=sort_key)
+    children.sort(key=lambda n: n.dn(offence) if offence else n.pn(offence))
     if breadth >= 0:
         children = children[:breadth]
     for i, child in enumerate(children):
-        s = _tree(offence, child, depth - 1, breadth, sort_key)
+        s = _tree(offence, child, depth - 1, breadth)
         if i == len(children) - 1:
             s = s.replace('\n', '\n    ')
         else:

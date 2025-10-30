@@ -375,10 +375,11 @@ inline void export_game(pybind11::module& m)
                 vshogi::engine::dfpn::Searcher<Parameters> dfpn{};
                 dfpn.search(self, num_dfpn_nodes);
                 if (dfpn.proved_mate()) {
-                    return py::cast(dfpn.get_mate_moves(self));
-                } else {
-                    return py::none();
+                    const auto moves = dfpn.get_mate_moves(self);
+                    if (moves.size() > 0u)
+                        return py::cast(moves);
                 }
+                return py::none();
             },
             py::arg("num_dfpn_nodes"))
         .def("copy", [](const Game& self) { return Game(self); });

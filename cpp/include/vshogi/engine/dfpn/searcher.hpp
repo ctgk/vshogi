@@ -289,7 +289,10 @@ private: // utility
                 const Node<P>* const c1 = searcher.m_nodes[0].get_child_1st();
                 if (c1 && c1->proved_mate(false))
                     searcher.append_mate_moves(false, out, game, c1);
-            }
+                else
+                    out.clear();
+            } else
+                out.clear();
             if (!offence)
                 game.undo();
         }
