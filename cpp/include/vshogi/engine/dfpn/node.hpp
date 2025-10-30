@@ -83,7 +83,7 @@ public:
         m_child = next;
         expand_board_moves(offence, next, s, &nibling);
         if (offence || (!g.had_two_consecutive_sacrifice_drops())) {
-            if (twin_ge == nullptr)
+            if ((twin_ge == nullptr) || (!twin_ge->fully_expanded()))
                 nibling = nullptr;
             m_fully_expanded = expand_drop_moves(offence, next, s, &nibling);
         }
@@ -160,8 +160,8 @@ private:
     {
         // proved_no_mate_at_offence() == (dn() == zero) == (delta == zero)
         // proved_mate_at_defence() == (pn() == zero) == (delta == zero)
-        if (twin_ge && (twin_ge->m_delta == zero)) {
-            assert(!twin_ge->proved_by_repetitions());
+        if (twin_ge && (twin_ge->m_delta == zero)
+            && (!twin_ge->proved_by_repetitions())) {
             m_phi = inf;
             m_delta = zero;
             return true;
@@ -169,8 +169,8 @@ private:
 
         // proved_mate_at_offence() == (pn() == zero) == (phi == zero)
         // proved_no_mate_at_defence() == (dn() == zero) == (phi == zero)
-        if (twin_le && (twin_le->m_phi == zero)) {
-            assert(!twin_le->proved_by_repetitions());
+        if (twin_le && (twin_le->m_phi == zero)
+            && (!twin_le->proved_by_repetitions())) {
             m_phi = zero;
             m_delta = inf;
             return true;

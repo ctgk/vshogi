@@ -41,8 +41,10 @@ public:
             m_table[bt_hash].emplace_back(s, n);
         } else {
             for (auto&& pair : it->second) {
-                if (pair.first == s)
-                    return; // already added
+                if (pair.first == s) {
+                    pair.second = n;
+                    return;
+                }
             }
             it->second.emplace_back(s, n);
         }
@@ -82,22 +84,32 @@ private:
             if (s_iter == s) {
                 *node_e = n_iter;
             }
-            if (n_iter->proved_by_repetitions() || (!n_iter->fully_expanded()))
-                continue;
             if (!found_best_l && (s_iter <= s)) {
-                if (n_iter->phi() == zero) {
+                if ((n_iter->phi() == zero) && n_iter->fully_expanded()
+                    && (!n_iter->proved_by_repetitions())) {
                     *node_le = n_iter;
                     found_best_l = true;
-                } else if ((*node_le == nullptr) || (s_l < s_iter)) {
+                } else if (
+                    (*node_le == nullptr)
+                    || ((*node_le)->fully_expanded() < n_iter->fully_expanded())
+                    || (((*node_le)->fully_expanded()
+                         == n_iter->fully_expanded())
+                        && (s_l < s_iter))) {
                     s_l = s_iter;
                     *node_le = n_iter;
                 }
             }
             if (!found_best_g && (s_iter >= s)) {
-                if (n_iter->delta() == zero) {
+                if ((n_iter->delta() == zero) && n_iter->fully_expanded()
+                    && (!n_iter->proved_by_repetitions())) {
                     *node_ge = n_iter;
                     found_best_g = true;
-                } else if ((*node_ge == nullptr) || (s_iter < s_g)) {
+                } else if (
+                    (*node_ge == nullptr)
+                    || ((*node_ge)->fully_expanded() < n_iter->fully_expanded())
+                    || (((*node_ge)->fully_expanded()
+                         == n_iter->fully_expanded())
+                        && (s_iter < s_g))) {
                     s_g = s_iter;
                     *node_ge = n_iter;
                 }
@@ -168,7 +180,8 @@ private:
         const auto checker_sq = offence ? C::SQ_NA : g.get_checker_location();
         if (!n.has_child()) {
             n.expand(offence, m_next, g, twin_ge, twin_le);
-            if (twin_e == nullptr)
+            if ((twin_e == nullptr) || twin_e->proved_by_repetitions()
+                || (!twin_e->fully_expanded()))
                 m_table.add(&n, g);
             --m_remaining_searches;
             out = n.get_action();

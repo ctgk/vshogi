@@ -28,9 +28,9 @@ TEST(dfpn_table, look_up_e)
 
     const Node *node_ge, *node_e, *node_le;
     t.look_up(g, &node_ge, &node_e, &node_le);
-    CHECK_TRUE(nullptr == node_le);
+    CHECK_TRUE(&n == node_le); // looked up unexpanded node
     CHECK_TRUE(&n == node_e);
-    CHECK_TRUE(nullptr == node_ge);
+    CHECK_TRUE(&n == node_ge); // looked up unexpanded node
 
     n.expand(true, next, g);
 
@@ -38,6 +38,33 @@ TEST(dfpn_table, look_up_e)
     CHECK_TRUE(&n == node_le);
     CHECK_TRUE(&n == node_e);
     CHECK_TRUE(&n == node_ge);
+}
+
+TEST(dfpn_table, look_up_l_prefer_fully_expanded)
+{
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
+    auto n1 = Node();
+    auto g1 = Game("3rk/3p1/4P/5/5 b G");
+    CHECK_FALSE(n1.fully_expanded());
+    CHECK_FALSE(n1.proved());
+
+    auto n2 = Node();
+    auto g2 = Game("3rk/3p1/4P/5/5 b S");
+    n2.expand(true, next, g2);
+    CHECK_TRUE(n2.fully_expanded());
+    CHECK_FALSE(n2.proved());
+    {
+        Table t{};
+        t.add(&n1, g1);
+        t.add(&n2, g2);
+
+        const Node *node_le, *node_e, *node_ge;
+        t.look_up(Game("3rk/3p1/4P/5/5 b GS"), &node_ge, &node_e, &node_le);
+        CHECK_TRUE(&n2 == node_le);
+        CHECK_TRUE(nullptr == node_e);
+        CHECK_TRUE(nullptr == node_ge);
+    }
 }
 
 TEST(dfpn_table, look_up_l)
@@ -51,7 +78,7 @@ TEST(dfpn_table, look_up_l)
 
     const Node *node_ge, *node_e, *node_le;
     t.look_up(Game("4k/5/4P/5/5 b SG"), &node_ge, &node_e, &node_le);
-    CHECK_TRUE(nullptr == node_le);
+    CHECK_TRUE(&n == node_le); // looked up unexpanded node
     CHECK_TRUE(nullptr == node_e);
     CHECK_TRUE(nullptr == node_ge);
 
@@ -159,6 +186,30 @@ TEST(dfpn_table, look_up_l_prefer_no_mate_at_defence)
     }
 }
 
+TEST(dfpn_table, look_up_g_prefer_fully_expanded)
+{
+    auto buffer = std::vector<Node>(100);
+    auto next = buffer.data();
+    auto n1 = Node();
+    auto g1 = Game("3rk/3gs/5/5/5 b PSG");
+    CHECK_FALSE(n1.fully_expanded());
+    auto n2 = Node();
+    auto g2 = Game("3rk/3gs/5/5/5 b PS");
+    n2.expand(true, next, g2);
+    CHECK_TRUE(n2.fully_expanded());
+    CHECK_FALSE(n2.proved());
+    {
+        Table t{};
+        t.add(&n1, g1);
+        t.add(&n2, g2);
+        const Node *node_le, *node_e, *node_ge;
+        t.look_up(Game("3rk/3gs/5/5/5 b P"), &node_ge, &node_e, &node_le);
+        CHECK_TRUE(nullptr == node_le);
+        CHECK_TRUE(nullptr == node_e);
+        CHECK_TRUE(&n2 == node_ge);
+    }
+}
+
 TEST(dfpn_table, look_up_g)
 {
     auto buffer = std::vector<Node>(100);
@@ -172,7 +223,7 @@ TEST(dfpn_table, look_up_g)
     t.look_up(Game("4k/5/4P/5/5 b -"), &node_ge, &node_e, &node_le);
     CHECK_TRUE(nullptr == node_le);
     CHECK_TRUE(nullptr == node_e);
-    CHECK_TRUE(nullptr == node_ge);
+    CHECK_TRUE(&n == node_ge); // looked up unexpanded node
     n.expand(true, next, g);
     t.look_up(Game("4k/5/4P/5/5 b -"), &node_ge, &node_e, &node_le);
     CHECK_TRUE(nullptr == node_le);
