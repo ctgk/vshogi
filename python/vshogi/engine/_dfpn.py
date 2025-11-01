@@ -231,8 +231,10 @@ def _tree(offence, node, depth: int, breadth: int):
     out = _repr_node(offence, node)
     if depth == 0:
         return out
+
+    offence = not offence
     children = node.get_children()
-    children.sort(key=lambda n: n.dn(offence) if offence else n.pn(offence))
+    children.sort(key=lambda c: c.dn(offence) if offence else c.pn(offence))
     if breadth >= 0:
         children = children[:breadth]
     for i, child in enumerate(children):

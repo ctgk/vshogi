@@ -264,49 +264,86 @@ public: // utility
     }
     std::vector<Move<P>> get_mate_moves(Game<P>& game) const
     {
+        std::vector<ZobristHashType> hash_list{};
+        std::vector<std::uint32_t> captured_move_list{};
+        hash_list.reserve(32u);
+        captured_move_list.reserve(32u);
+        game.swap_log(hash_list, captured_move_list);
+
         std::vector<Move<P>> out{};
-        const Node<P>* const c1 = m_nodes[0].get_child_1st();
-        if (c1 && c1->proved_mate(false))
-            append_mate_moves(false, out, game, c1);
+        if (m_nodes[0].proved_mate(true))
+            append_mate_moves_with_table(out, game, true, &m_nodes[0]);
+
+        assert(game.ply() == 0u);
+        game.swap_log(hash_list, captured_move_list);
         return out;
     }
 
 private: // utility
-    void append_mate_moves(
-        const bool offence,
+    bool append_mate_moves_with_table(
         std::vector<Move<P>>& out,
         Game<P>& game,
+        const bool offence,
         const Node<P>* const node) const
     {
-        const Move<P> action = node->get_action();
-        game.apply_nocheck(action);
-        out.emplace_back(action);
-        const Node<P>* const ch1st = node->get_child_1st();
-        if ((ch1st != nullptr) && ch1st->proved_mate(!offence)) {
-            // The 1st child may not have mate value because
-            // `search_inner()` can assign mate value on a node having children
-            // with arbitrary #P and #D values by `m_table.look_up_fuzzy()`.
-            append_mate_moves(!offence, out, game, ch1st);
-        } else if (game.get_result() == ONGOING) {
-            if (!offence) { // applied action was offence move.
-                const auto m = game.get_legal_moves()[0];
-                game.apply_nocheck(m); // defence move
-                out.emplace_back(m);
-            }
-            Searcher<P> searcher{static_cast<uint>(m_nodes.size() - 1u)};
-            searcher.search(game, m_search_count);
-            if (searcher.proved_mate()) {
-                const Node<P>* const c1 = searcher.m_nodes[0].get_child_1st();
-                if (c1 && c1->proved_mate(false))
-                    searcher.append_mate_moves(false, out, game, c1);
-                else
-                    out.clear();
-            } else
-                out.clear();
-            if (!offence)
-                game.undo();
+        const auto r = game.get_result();
+        if (r != ONGOING) {
+            if (r == DRAW)
+                return false;
+            const auto turn = game.get_turn();
+            const auto winner = (r == BLACK_WIN) ? BLACK : WHITE;
+            return offence ? (turn == winner) : (turn != winner);
         }
-        game.undo();
+        const Node<P>* c = node->get_child_1st();
+        if (c && c->proved_mate(!offence)) {
+            const auto m = c->get_action();
+            out.emplace_back(m);
+            const auto is_mate = append_mate_moves_with_table(
+                out, game.apply_nocheck(m), !offence, c);
+            game.undo();
+            if (is_mate)
+                return true;
+            out.pop_back();
+        }
+        if (offence) {
+            for (c = node->get_child(); c; c = c->get_sibling()) {
+                if (c == node->get_child_1st())
+                    continue;
+                const auto m = c->get_action();
+                out.emplace_back(m);
+                game.apply_nocheck(m);
+                const Node<P>*nibling_ge{}, *nibling_e{}, *nibling_le{};
+                m_table.look_up(game, &nibling_ge, &nibling_e, &nibling_le);
+                if (nibling_ge && nibling_ge->proved_mate(false)
+                    && append_mate_moves_with_table(
+                        out, game, false, nibling_ge)) {
+                    game.undo();
+                    return true;
+                } else {
+                    game.undo();
+                    out.pop_back();
+                }
+            }
+            return false;
+        } else {
+            const auto moves = game.get_legal_moves();
+            for (auto&& m : moves) {
+                out.emplace_back(m);
+                game.apply_nocheck(m);
+                const Node<P>*nibling_ge{}, *nibling_e{}, *nibling_le{};
+                m_table.look_up(game, &nibling_ge, &nibling_e, &nibling_le);
+                if (nibling_le && nibling_le->proved_mate(true)
+                    && append_mate_moves_with_table(
+                        out, game, true, nibling_le)) {
+                    game.undo();
+                    return true;
+                } else {
+                    game.undo();
+                    out.pop_back();
+                }
+            }
+            return false;
+        }
     }
 };
 

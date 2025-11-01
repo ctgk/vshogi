@@ -7,6 +7,7 @@ from vshogi.engine import DfpnSearcher
 def test_mate():
     sfen_searches_pair_list = [
         # three-move mate
+        ("1+rg2+L2R/4k4/1Sppppsp1/1P7/9/9/9/9/9 b GSN3L2P2bg3p", 176),
         ('7p1/5l3/5pk2/6B+r1/5P1P1/6L2/9/9/9 b Rrb4g4s4n3l9p', 3246),
         ('7bk/8p/9/9/9/9/B8/9/9 b N10p4l3n4s4gb2r', 5596),
 

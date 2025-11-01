@@ -877,8 +877,7 @@ TEST(test_dfpn_searcher, test_shogi_debug_2)
     searcher.search(g, 10000u);
     CHECK_TRUE(searcher.proved_mate());
     const auto moves = searcher.get_mate_moves(g);
-    if (moves.empty())
-        return;
+    CHECK_EQUAL(0u, g.ply());
     for (auto&& m : moves) {
         CHECK_EQUAL(vshogi::ONGOING, g.get_result());
         g.apply(m);

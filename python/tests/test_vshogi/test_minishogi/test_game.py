@@ -353,6 +353,14 @@ def test_get_mate_moves_if_any():
     assert g.result == shogi.WHITE_WIN
 
 
+def test_get_mate_moves_if_any_2():
+    g = shogi.Game("3k1/P3p/s1s1r/2B2/KG3 b RGb")
+    moves1 = g.get_mate_moves_if_any(10000)
+    assert g.to_sfen(include_move_count=False) == "3k1/P3p/s1s1r/2B2/KG3 b RGb"
+    moves2 = g.get_mate_moves_if_any(10000)
+    assert moves1 == moves2
+
+
 def test_to_svg():
     actual = shogi.Game().to_svg()
     expect = (
