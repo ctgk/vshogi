@@ -32,6 +32,10 @@ jobs:
         CYCLE: ${{ matrix.game.rl_cycle }}
         BACKBONES: ${{ matrix.game.nn_backbone_blocks }}
       run: python examples/dlshogi.py rl $NAME --rl_cycle $CYCLE --nn_backbone_blocks $BACKBONES --mcts_search 100 --self_play 50 --nn_epochs 5 --win_ratio_threshold 0.1
+    - name: Check errors
+      env:
+        NAME: ${{ matrix.game.name }}
+      run: cat $NAME/errors.txt
     - name: Evaluate model
       env:
         NAME: ${{ matrix.game.name }}

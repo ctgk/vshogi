@@ -449,7 +449,7 @@ def run_train(args: Args):
         df_deduped = pd.DataFrame([
             {'sfen': s, 'count': data['count'], 'value01_total': data['value01_total'], 'visits_total': data['visits_total']}
             for s, data in data_deduped.items()
-        ])
+        ], columns=['sfen', 'count', 'value01_total', 'visits_total'])
         df_deduped['value'] = (df_deduped['value01_total'] / df_deduped['count']) * 2 - 1
         pd.options.display.width = 100
         pd.options.display.max_colwidth = 9 * 9 * 2
@@ -459,7 +459,7 @@ def run_train(args: Args):
             for kifu_path in kifu_list:
                 kifu_to_tfrecord(kifu_path.replace('.tsv', '.tfrecord'), kifu_path, args, merger=data_deduped)
         else:
-            with tqdm_joblib(tqdm(total=len(kifu_list), desc=f'Dataset_{index:04d}', ncols=100)):
+            with tqdm_joblib(tqdm(total=len(kifu_list), desc=f'Dataset_{index:04d}', ncols=100, file=sys.stdout)):
                 Parallel(n_jobs=args.jobs)(
                     delayed(kifu_to_tfrecord)(p.replace('.tsv', '.tfrecord'), p, args, merger=data_deduped)
                     for p in kifu_list
