@@ -409,6 +409,62 @@ def run_self_play(args: Args):
 
 def run_train(args: Args):
 
+    def kifu_to_tfrecord_with_deduplication(index: int, args: Args):
+        data_deduped: tp.Dict[str, tp.Dict[str, tp.Any]] = {}
+        kifu_list = glob(f'datasets/dataset_{index:04d}/*.tsv')
+        for kifu_path in kifu_list:
+            df = read_kifu(kifu_path)
+            for i in range(len(df)):
+                row = df.iloc[i]
+                visits = {args._shogi.Move(k): v for k, v in eval(row.visit_count).items()}
+                z_value = 0 if ('DRAW' in row.result) else 2 * int(('BLACK' in row.result) == ('b' == row.state.split()[1])) - 1
+                z_value = z_value * np.power(args.discount_factor, row.total_ply - row.ply)
+                value = row.z_weight * z_value + (1 - row.z_weight) * row.q_value
+                value01 = np.clip((value + 1) / 2, 0., 1.)
+                count = 1
+
+                if row.state in data_deduped:
+                    if set(data_deduped[row.state]['visits_total'].keys()) != set(visits.keys()):
+                        raise ValueError(f'Mismatching keys at SFEN="{row.state}": {set(data_deduped[row.state]["visits_total"].keys())} != {set(visits.keys())}')
+                    visits = {
+                        m: data_deduped[row.state]['visits_total'][m] + visits[m]
+                        for m in visits.keys()
+                    }
+                    value01 = value01 + data_deduped[row.state]['value01_total']
+                    count = count + data_deduped[row.state]['count']
+
+                data_deduped[row.state] = {
+                    'count': count,
+                    'value01_total': value01,
+                    'visits_total': visits,
+                }
+        data_deduped = {k: v for k, v in data_deduped.items() if v['count'] > 1}
+        print(f"Number of duplicating game positions: {len(data_deduped)}")
+        threshold = 2
+        while len(data_deduped) > 1000:
+            data_deduped = {k: v for k, v in data_deduped.items() if v['count'] > threshold}
+            threshold += 1
+        if threshold != 2:
+            print(f"Number of duplicating game positions after removal: {len(data_deduped)}")
+        df_deduped = pd.DataFrame([
+            {'sfen': s, 'count': data['count'], 'value01_total': data['value01_total'], 'visits_total': data['visits_total']}
+            for s, data in data_deduped.items()
+        ])
+        df_deduped['value'] = (df_deduped['value01_total'] / df_deduped['count']) * 2 - 1
+        pd.options.display.width = 100
+        pd.options.display.max_colwidth = 9 * 9 * 2
+        print(df_deduped.sort_values(by='count', ascending=False).head(n=10)[['sfen', 'value', 'count']])
+
+        if args.jobs == 1:
+            for kifu_path in kifu_list:
+                kifu_to_tfrecord(kifu_path.replace('.tsv', '.tfrecord'), kifu_path, args, merger=data_deduped)
+        else:
+            with tqdm_joblib(tqdm(total=len(kifu_list), desc=f'Dataset_{index:04d}', ncols=100)):
+                Parallel(n_jobs=args.jobs)(
+                    delayed(kifu_to_tfrecord)(p.replace('.tsv', '.tfrecord'), p, args, merger=data_deduped)
+                    for p in kifu_list
+                )
+
     def get_dataset_from_tfrecord(path_list: tp.List[str]):
 
         def parse_value(example):
@@ -498,6 +554,8 @@ def run_train(args: Args):
         network.to(th.device('cpu'))
         return network
 
+    i = args.resume_rl_cycle_from
+    kifu_to_tfrecord_with_deduplication(i, args)
     shogi = args._shogi
     network = vshogi.dlshogi.PolicyValueNetwork(
         game_class=shogi.Game,
@@ -505,7 +563,6 @@ def run_train(args: Args):
         bottleneck_channels=args.nn_bottleneck_channels,
         num_backbone_blocks=args.nn_backbone_blocks,
     )
-    i = args.resume_rl_cycle_from
     weight_path = 'models/model_{:04d}.pth'
     if i > 1 and args.nn_load_previous_weights:
         if os.path.exists(weight_path.format(i)):
@@ -522,7 +579,6 @@ def run_train(args: Args):
     sample_inputs = (th.randn(1, shogi.Game.files, shogi.Game.ranks, shogi.Game.feature_channels),)
     edge_model = ai_edge_torch.convert(network.eval(), sample_inputs)
     edge_model.export(f'models/model_{i:04d}.tflite')
-
 
 def run_rl_cycle(args: Args):
 
@@ -607,6 +663,9 @@ def run_rl_cycle(args: Args):
         for i, f in zip(range(index, 0, -1), (args.nn_train_fraction ** i for i in range(index))):
             if i == index:
                 continue
+            os.system(f"rm -f datasets/dataset_{i:04d}/*.tfrecord")
+            if f < 0.01:
+                continue
             kifu_list = glob(f'datasets/dataset_{i:04d}/*.tsv')
             if args.jobs == 1:
                 for kifu_path in tqdm(kifu_list, desc=f'Dataset_{i:04d}', ncols=100):
@@ -617,62 +676,6 @@ def run_rl_cycle(args: Args):
                         delayed(kifu_to_tfrecord)(p.replace('.tsv', '.tfrecord'), p, args, f)
                         for p in kifu_list
                     )
-
-    def kifu_to_tfrecord_with_deduplication(index: int, args: Args):
-        data_deduped: tp.Dict[str, tp.Dict[str, tp.Any]] = {}
-        kifu_list = glob(f'datasets/dataset_{index:04d}/*.tsv')
-        for kifu_path in kifu_list:
-            df = read_kifu(kifu_path)
-            for i in range(len(df)):
-                row = df.iloc[i]
-                visits = {args._shogi.Move(k): v for k, v in eval(row.visit_count).items()}
-                z_value = 0 if ('DRAW' in row.result) else 2 * int(('BLACK' in row.result) == ('b' == row.state.split()[1])) - 1
-                z_value = z_value * np.power(args.discount_factor, row.total_ply - row.ply)
-                value = row.z_weight * z_value + (1 - row.z_weight) * row.q_value
-                value01 = np.clip((value + 1) / 2, 0., 1.)
-                count = 1
-
-                if row.state in data_deduped:
-                    if set(data_deduped[row.state]['visits_total'].keys()) != set(visits.keys()):
-                        raise ValueError(f'Mismatching keys at SFEN="{row.state}": {set(data_deduped[row.state]["visits_total"].keys())} != {set(visits.keys())}')
-                    visits = {
-                        m: data_deduped[row.state]['visits_total'][m] + visits[m]
-                        for m in visits.keys()
-                    }
-                    value01 = value01 + data_deduped[row.state]['value01_total']
-                    count = count + data_deduped[row.state]['count']
-
-                data_deduped[row.state] = {
-                    'count': count,
-                    'value01_total': value01,
-                    'visits_total': visits,
-                }
-        data_deduped = {k: v for k, v in data_deduped.items() if v['count'] > 1}
-        print(f"Number of duplicating game positions: {len(data_deduped)}")
-        threshold = 2
-        while len(data_deduped) > 1000:
-            data_deduped = {k: v for k, v in data_deduped.items() if v['count'] > threshold}
-            threshold += 1
-        if threshold != 2:
-            print(f"Number of duplicating game positions after removal: {len(data_deduped)}")
-        df_deduped = pd.DataFrame([
-            {'sfen': s, 'count': data['count'], 'value01_total': data['value01_total'], 'visits_total': data['visits_total']}
-            for s, data in data_deduped.items()
-        ])
-        df_deduped['value'] = (df_deduped['value01_total'] / df_deduped['count']) * 2 - 1
-        pd.options.display.width = 100
-        pd.options.display.max_colwidth = 9 * 9 * 2
-        print(df_deduped.sort_values(by='count', ascending=False).head()[['sfen', 'value', 'count']])
-
-        if args.jobs == 1:
-            for kifu_path in kifu_list:
-                kifu_to_tfrecord(kifu_path.replace('.tsv', '.tfrecord'), kifu_path, args, merger=data_deduped)
-        else:
-            with tqdm_joblib(tqdm(total=len(kifu_list), desc=f'Dataset_{index:04d}', ncols=100)):
-                Parallel(n_jobs=args.jobs)(
-                    delayed(kifu_to_tfrecord)(p.replace('.tsv', '.tfrecord'), p, args, merger=data_deduped)
-                    for p in kifu_list
-                )
 
     with open('command.txt', 'w') as f:
         f.write(f'python {" ".join(sys.argv)}')
@@ -733,7 +736,6 @@ def run_rl_cycle(args: Args):
                     ) and (v is not None))
                 ]).split(), stderr=f)
 
-            kifu_to_tfrecord_with_deduplication(i, args)
 
             c = max(len(glob(pattern)) // args.self_play, 1)
             # Train NN!
