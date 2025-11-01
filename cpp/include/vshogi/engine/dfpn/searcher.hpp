@@ -119,6 +119,27 @@ private:
 };
 
 template <class P>
+class ScopedGame
+{
+private:
+    Game<P>& m_game;
+    std::vector<ZobristHashType> m_hash_list{};
+    std::vector<std::uint32_t> m_captured_move_list{};
+
+public:
+    ScopedGame(Game<P>& g) : m_game(g)
+    {
+        m_hash_list.reserve(32u);
+        m_captured_move_list.reserve(32u);
+        m_game.swap_log(m_hash_list, m_captured_move_list);
+    }
+    ~ScopedGame()
+    {
+        m_game.swap_log(m_hash_list, m_captured_move_list);
+    }
+};
+
+template <class P>
 class Searcher
 {
     using C = Configuration<P>;
@@ -133,12 +154,7 @@ private:
 public:
     Move<P> search(Game<P>& g, const uint n)
     {
-        std::vector<ZobristHashType> hash_list{};
-        std::vector<std::uint32_t> captured_move_list{};
-        hash_list.reserve(32u);
-        captured_move_list.reserve(32u);
-        g.swap_log(hash_list, captured_move_list);
-
+        ScopedGame scope{g};
         if (m_search_count == 0u) {
             m_next = std::next(m_nodes.data());
             if (!m_nodes[0].simulate(true, g)) {
@@ -148,14 +164,12 @@ public:
             }
         }
         if (m_nodes[0].proved()) {
-            g.swap_log(hash_list, captured_move_list);
             return Move<P>();
         }
         m_remaining_searches = n;
         const auto out
             = multiple_iterative_deepening(true, m_nodes[0], g, inf, inf);
         m_search_count += n - m_remaining_searches;
-        g.swap_log(hash_list, captured_move_list);
         return out;
     }
 
@@ -169,9 +183,7 @@ private:
     {
         Move<P> out{};
         assert(offence || g.in_check());
-        const Node<P>* twin_ge = nullptr;
-        const Node<P>* twin_e = nullptr;
-        const Node<P>* twin_le = nullptr;
+        const Node<P>*twin_ge{}, *twin_e{}, *twin_le{};
         m_table.look_up(g, &twin_ge, &twin_e, &twin_le);
         if (n.simulate(offence, g, twin_ge, twin_le)) {
             --m_remaining_searches;
@@ -233,9 +245,8 @@ public: // utility
     {
         if (m_next == nullptr)
             return 0u;
-        return static_cast<uint>(
-            static_cast<int>(m_nodes.size())
-            - static_cast<int>(m_next - m_nodes.data()));
+        return static_cast<uint>(m_nodes.size())
+               - static_cast<uint>(m_next - m_nodes.data());
     }
     bool proved() const
     {
@@ -264,12 +275,7 @@ public: // utility
     }
     std::vector<Move<P>> get_mate_moves(Game<P>& game) const
     {
-        std::vector<ZobristHashType> hash_list{};
-        std::vector<std::uint32_t> captured_move_list{};
-        hash_list.reserve(32u);
-        captured_move_list.reserve(32u);
-        game.swap_log(hash_list, captured_move_list);
-
+        ScopedGame scope{game};
         follow_line(game, false, m_nodes[0].get_child_1st());
         std::vector<Move<P>> out{};
         if (game.ply() > 0u) {
@@ -279,7 +285,6 @@ public: // utility
                 game.undo();
         }
         assert(game.ply() == 0u);
-        game.swap_log(hash_list, captured_move_list);
         return out;
     }
 
