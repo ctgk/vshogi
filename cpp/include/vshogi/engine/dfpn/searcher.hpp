@@ -270,80 +270,61 @@ public: // utility
         captured_move_list.reserve(32u);
         game.swap_log(hash_list, captured_move_list);
 
+        follow_line(game, false, m_nodes[0].get_child_1st());
         std::vector<Move<P>> out{};
-        if (m_nodes[0].proved_mate(true))
-            append_mate_moves_with_table(out, game, true, &m_nodes[0]);
-
+        if (game.ply() > 0u) {
+            for (uint ii = 0u; ii < game.ply(); ++ii)
+                out.emplace_back(game.get_record_action(ii));
+            for (uint ii = game.ply(); ii--;)
+                game.undo();
+        }
         assert(game.ply() == 0u);
         game.swap_log(hash_list, captured_move_list);
         return out;
     }
 
 private: // utility
-    bool append_mate_moves_with_table(
-        std::vector<Move<P>>& out,
-        Game<P>& game,
-        const bool offence,
-        const Node<P>* const node) const
+    bool
+    follow_line(Game<P>& game, const bool offence, const Node<P>* node) const
     {
-        const auto r = game.get_result();
-        if (r != ONGOING) {
-            if (r == DRAW)
-                return false;
-            const auto turn = game.get_turn();
-            const auto winner = (r == BLACK_WIN) ? BLACK : WHITE;
-            return offence ? (turn == winner) : (turn != winner);
-        }
-        const Node<P>* c = node->get_child_1st();
-        if (c && c->proved_mate(!offence)) {
-            const auto m = c->get_action();
-            out.emplace_back(m);
-            const auto is_mate = append_mate_moves_with_table(
-                out, game.apply_nocheck(m), !offence, c);
-            game.undo();
-            if (is_mate)
+        if (node == nullptr)
+            return false;
+        game.apply_nocheck(node->get_action());
+        if (is_mate_end(game, offence))
+            return true;
+        if (!node->proved_mate(offence))
+            node = lookup_in_table(game, offence);
+        if (node) {
+            const Node<P>* c = node->get_child_1st();
+            if (follow_line(game, !offence, c))
                 return true;
-            out.pop_back();
-        }
-        if (offence) {
             for (c = node->get_child(); c; c = c->get_sibling()) {
                 if (c == node->get_child_1st())
                     continue;
-                const auto m = c->get_action();
-                out.emplace_back(m);
-                game.apply_nocheck(m);
-                const Node<P>*nibling_ge{}, *nibling_e{}, *nibling_le{};
-                m_table.look_up(game, &nibling_ge, &nibling_e, &nibling_le);
-                if (nibling_ge && nibling_ge->proved_mate(false)
-                    && append_mate_moves_with_table(
-                        out, game, false, nibling_ge)) {
-                    game.undo();
+                if (follow_line(game, !offence, c))
                     return true;
-                } else {
-                    game.undo();
-                    out.pop_back();
-                }
             }
-            return false;
-        } else {
-            const auto moves = game.get_legal_moves();
-            for (auto&& m : moves) {
-                out.emplace_back(m);
-                game.apply_nocheck(m);
-                const Node<P>*nibling_ge{}, *nibling_e{}, *nibling_le{};
-                m_table.look_up(game, &nibling_ge, &nibling_e, &nibling_le);
-                if (nibling_le && nibling_le->proved_mate(true)
-                    && append_mate_moves_with_table(
-                        out, game, true, nibling_le)) {
-                    game.undo();
-                    return true;
-                } else {
-                    game.undo();
-                    out.pop_back();
-                }
-            }
-            return false;
         }
+        game.undo();
+        return false;
+    }
+    static bool is_mate_end(const Game<P>& game, const bool offence)
+    {
+        const auto r = game.get_result();
+        if ((r == ONGOING) || (r == DRAW))
+            return false;
+        const auto turn = game.get_turn();
+        const auto winner = (r == BLACK_WIN) ? BLACK : WHITE;
+        return offence ? (turn == winner) : (turn != winner);
+    }
+    const Node<P>* lookup_in_table(Game<P>& game, const bool offence) const
+    {
+        const Node<P>*node_ge{}, *node_e{}, *node_le{};
+        m_table.look_up(game, &node_ge, &node_e, &node_le);
+        const Node<P>* const node = (offence) ? node_le : node_ge;
+        if (node && node->proved_mate(offence))
+            return node;
+        return nullptr;
     }
 };
 
