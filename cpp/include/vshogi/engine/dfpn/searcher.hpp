@@ -292,9 +292,13 @@ private: // utility
     bool
     follow_line(Game<P>& game, const bool offence, const Node<P>* node) const
     {
-        if (node == nullptr)
+        if ((node == nullptr) || (!game.is_legal(node->get_action())))
             return false;
         game.apply_nocheck(node->get_action());
+        if ((game.get_num_fold() > 1u) || (game.ply() > 31u)) {
+            game.undo();
+            return false;
+        }
         if (is_mate_end(game, offence))
             return true;
         if (!node->proved_mate(offence))

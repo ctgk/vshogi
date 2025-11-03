@@ -361,6 +361,24 @@ namespace test_minishogi
 
 using namespace vshogi::minishogi;
 
+TEST(test_dfpn_searcher, test_debug_get_mate_moves)
+{
+    auto g = Game("1bg1k/p3p/1Bs2/K2SR/2G2 w r 12");
+    auto searcher = dfpn::Searcher<Parameters>();
+    searcher.search(g, 10000u);
+    CHECK_EQUAL(0u, g.ply());
+    STRCMP_EQUAL("1bg1k/p3p/1Bs2/K2SR/2G2 w r", g.to_sfen(false).c_str());
+    CHECK_TRUE(searcher.proved_mate());
+    const auto actual = searcher.get_mate_moves(g);
+    CHECK_EQUAL(0u, g.ply());
+    STRCMP_EQUAL("1bg1k/p3p/1Bs2/K2SR/2G2 w r", g.to_sfen(false).c_str());
+    for (auto&& m : actual) {
+        CHECK_EQUAL(vshogi::ONGOING, g.get_result());
+        g.apply(m);
+    }
+    CHECK_EQUAL(vshogi::WHITE_WIN, g.get_result());
+}
+
 TEST(test_dfpn_searcher, test_init)
 {
     auto g = Game("4k/5/3P1/5/5 b G");
