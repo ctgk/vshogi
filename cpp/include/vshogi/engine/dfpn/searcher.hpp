@@ -295,7 +295,7 @@ private: // utility
         if ((node == nullptr) || (!game.is_legal(node->get_action())))
             return false;
         game.apply_nocheck(node->get_action());
-        if ((game.get_num_fold() > 1u) || (game.ply() > 31u)) {
+        if ((game.count_repetitions() > 1u) || (game.ply() > 31u)) {
             game.undo();
             return false;
         }

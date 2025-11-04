@@ -253,6 +253,31 @@ class Game(abc.ABC):
         """
         return self._game.ply()
 
+    def count_repetitions(self) -> int:
+        """Return number of repetitions of the current game position.
+
+        Notes
+        -----
+        The current position itself counts as one occurrence.
+
+        Returns
+        -------
+        int
+            Number of repetitions of the current game position.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> game = shogi.Game()
+        >>>
+        >>> # The current position itself counts as one occurrence.
+        >>> game.count_repetitions()
+        1
+        >>> game.apply(["1e1d", "5a5b", "1d1e", "5b5a"]).count_repetitions()
+        2
+        """
+        return self._game.count_repetitions()
+
     @property
     def zobrist_hash(self) -> int:
         """Return zobrist hash of the current game position.

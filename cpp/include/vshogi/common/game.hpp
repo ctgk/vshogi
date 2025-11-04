@@ -133,16 +133,23 @@ public:
     {
         return m_result;
     }
-    uint get_num_fold() const
+
+    /**
+     * @brief Count repetitions of the current game position.
+     * @note The current position itself counts as one occurrence.
+     * @return uint Repetitions of the current game position.
+     */
+    uint count_repetitions() const
     {
-        uint num_fold = 1u;
+        uint count = 1u;
         const int n = static_cast<int>(m_hash_list.size());
         for (int ii = n - 4; ii >= 0; ii -= 2) {
             const uint index = static_cast<uint>(ii);
-            num_fold += (m_hash == m_hash_list[index]);
+            count += (m_hash == m_hash_list[index]);
         }
-        return num_fold;
+        return count;
     }
+
     ZobristHashType get_zobrist_hash() const
     {
         return m_hash;

@@ -79,7 +79,7 @@ TEST(shogi_engine, mcts_with_dfpn)
         } else {
             CHECK_TRUE(g.get_result() == vshogi::ONGOING);
         }
-        CHECK_EQUAL(1, g.get_num_fold());
+        CHECK_EQUAL(1, g.count_repetitions());
     }
 }
 

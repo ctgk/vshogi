@@ -65,7 +65,7 @@ TEST(test_shogi_game, result)
             .apply(Move(SQ_5A, SQ_5B))
             .apply(Move(SQ_5H, SQ_5I))
             .apply(Move(SQ_5B, SQ_5A)); // #repeat=4
-        CHECK_EQUAL(4, game.get_num_fold());
+        CHECK_EQUAL(4, game.count_repetitions());
         CHECK_EQUAL(vshogi::DRAW, game.get_result());
     }
 }

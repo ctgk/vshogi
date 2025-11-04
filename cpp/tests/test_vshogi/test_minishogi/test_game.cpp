@@ -475,7 +475,7 @@ TEST(test_minishogi_game, result)
             .apply(Move(SQ_1D, SQ_1E));
         CHECK_EQUAL(vshogi::ONGOING, game.get_result());
         game.apply(Move(SQ_5B, SQ_5A)); // #repeat = 4
-        CHECK_EQUAL(4, game.get_num_fold());
+        CHECK_EQUAL(4, game.count_repetitions());
         CHECK_EQUAL(vshogi::DRAW, game.get_result());
     }
     {
