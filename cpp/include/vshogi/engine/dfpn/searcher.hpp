@@ -157,8 +157,8 @@ public:
         ScopedGame scope{g};
         if (m_search_count == 0u) {
             m_next = std::next(m_nodes.data());
-            if (!m_nodes[0].simulate(true, g)) {
-                m_nodes[0].expand(true, m_next, g);
+            if (!m_nodes[0].simulate(g)) {
+                m_nodes[0].expand(m_next, g);
                 m_table.add(&m_nodes[0], g);
                 m_nodes[0].backprop(C::SQ_NA);
             }
@@ -167,47 +167,41 @@ public:
             return Move<P>();
         }
         m_remaining_searches = n;
-        const auto out
-            = multiple_iterative_deepening(true, m_nodes[0], g, inf, inf);
+        const auto out = multiple_iterative_deepening(m_nodes[0], g, inf, inf);
         m_search_count += n - m_remaining_searches;
         return out;
     }
 
 private:
     Move<P> multiple_iterative_deepening(
-        const bool offence,
-        Node<P>& n,
-        Game<P>& g,
-        const uint th_p,
-        const uint th_d)
+        Node<P>& n, Game<P>& g, const uint th_p, const uint th_d)
     {
-        Move<P> out{};
+        const bool offence = (g.ply() % 2u == 0u);
+        Move<P> out = n.get_action();
         assert(offence || g.in_check());
         const Node<P>*twin_ge{}, *twin_e{}, *twin_le{};
         m_table.look_up(g, &twin_ge, &twin_e, &twin_le);
-        if (n.simulate(offence, g, twin_ge, twin_le)) {
+        if (n.simulate(g, twin_ge, twin_le)) {
             --m_remaining_searches;
-            return n.get_action();
+            return out;
         }
         const auto checker_sq = offence ? C::SQ_NA : g.get_checker_location();
         if (!n.has_child()) {
-            n.expand(offence, m_next, g, twin_ge, twin_le);
+            n.expand(m_next, g, twin_ge, twin_le);
             if ((twin_e == nullptr) || twin_e->proved_by_repetitions()
                 || (!twin_e->fully_expanded()))
                 m_table.add(&n, g);
             --m_remaining_searches;
-            out = n.get_action();
             n.backprop(checker_sq);
         }
         if (m_next == nullptr)
-            return n.get_action();
-        uint th_p_ch, th_d_ch;
+            return out;
         while (m_next && m_remaining_searches && (n.phi() < th_p)
                && (n.delta() < th_d)) {
+            uint th_p_ch, th_d_ch;
             Node<P>* const child = n.select(th_p, th_d, th_p_ch, th_d_ch);
             g.apply_dfpn(child->get_action());
-            out = multiple_iterative_deepening(
-                !offence, *child, g, th_p_ch, th_d_ch);
+            out = multiple_iterative_deepening(*child, g, th_p_ch, th_d_ch);
             g.undo();
             n.backprop(checker_sq);
         }
@@ -276,7 +270,7 @@ public: // utility
     std::vector<Move<P>> get_mate_moves(Game<P>& game) const
     {
         ScopedGame scope{game};
-        follow_line(game, false, m_nodes[0].get_child_1st());
+        follow_line(game, m_nodes[0].get_child_1st());
         std::vector<Move<P>> out{};
         if (game.ply() > 0u) {
             for (uint ii = 0u; ii < game.ply(); ++ii)
@@ -289,8 +283,7 @@ public: // utility
     }
 
 private: // utility
-    bool
-    follow_line(Game<P>& game, const bool offence, const Node<P>* node) const
+    bool follow_line(Game<P>& game, const Node<P>* node) const
     {
         if ((node == nullptr) || (!game.is_legal(node->get_action())))
             return false;
@@ -299,26 +292,28 @@ private: // utility
             game.undo();
             return false;
         }
-        if (is_mate_end(game, offence))
+        const bool offence = (game.ply() % 2u == 0u);
+        if (is_mate_end(game))
             return true;
         if (!node->proved_mate(offence))
-            node = lookup_in_table(game, offence);
+            node = lookup_in_table(game);
         if (node) {
             const Node<P>* c = node->get_child_1st();
-            if (follow_line(game, !offence, c))
+            if (follow_line(game, c))
                 return true;
             for (c = node->get_child(); c; c = c->get_sibling()) {
                 if (c == node->get_child_1st())
                     continue;
-                if (follow_line(game, !offence, c))
+                if (follow_line(game, c))
                     return true;
             }
         }
         game.undo();
         return false;
     }
-    static bool is_mate_end(const Game<P>& game, const bool offence)
+    static bool is_mate_end(const Game<P>& game)
     {
+        const bool offence = (game.ply() % 2u == 0u);
         const auto r = game.get_result();
         if ((r == ONGOING) || (r == DRAW))
             return false;
@@ -326,8 +321,9 @@ private: // utility
         const auto winner = (r == BLACK_WIN) ? BLACK : WHITE;
         return offence ? (turn == winner) : (turn != winner);
     }
-    const Node<P>* lookup_in_table(Game<P>& game, const bool offence) const
+    const Node<P>* lookup_in_table(Game<P>& game) const
     {
+        const bool offence = (game.ply() % 2u == 0u);
         const Node<P>*node_ge{}, *node_e{}, *node_le{};
         m_table.look_up(game, &node_ge, &node_e, &node_le);
         const Node<P>* const node = (offence) ? node_le : node_ge;

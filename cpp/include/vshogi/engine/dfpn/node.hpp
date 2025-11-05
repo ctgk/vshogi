@@ -54,7 +54,6 @@ private:
 
 public:
     bool simulate(
-        const bool offence,
         const Game<P>& g,
         const Node* const twin_ge = nullptr,
         const Node* const twin_le = nullptr)
@@ -63,15 +62,15 @@ public:
             return true;
         if (has_child())
             return false;
-        return simulate_using_game(offence, g);
+        return simulate_using_game(g);
     }
     void expand(
-        const bool offence,
         Node<P>*& next,
         const Game<P>& g,
         const Node* const twin_ge = nullptr,
         const Node* const twin_le = nullptr)
     {
+        const bool offence = (g.ply() % 2u == 0u);
         const State<P>& s = g.get_state();
         const Node* nibling = nullptr;
         if (twin_ge)
@@ -197,8 +196,9 @@ private:
             m_delta = inf;
         }
     }
-    bool simulate_using_game(const bool offence, const Game<P>& g)
+    bool simulate_using_game(const Game<P>& g)
     {
+        const bool offence = (g.ply() % 2u == 0u);
         const auto turn = g.get_turn();
         auto result = g.get_result(); // this is usually ONGOING
         if (g.is_repetitions(1u)) {
