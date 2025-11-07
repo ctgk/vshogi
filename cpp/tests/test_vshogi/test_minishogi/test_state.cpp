@@ -88,8 +88,8 @@ TEST(test_minishogi_state, check)
         s.apply(Move(SQ_1C, SQ_2B));
         CHECK_TRUE(s.in_check());
         CHECK_TRUE(s.in_double_check());
-        CHECK_EQUAL(SQ_2B, s.get_checker_location());
-        CHECK_EQUAL(SQ_1E, s.get_checker_location(1));
+        CHECK_EQUAL(SQ_2B, s.get_checker_square());
+        CHECK_EQUAL(SQ_1E, s.get_checker_square(1));
     }
     {
         auto s = State("4k/5/5/5/K4 b R");
@@ -98,8 +98,8 @@ TEST(test_minishogi_state, check)
         s.apply(Move(HI, SQ_1B));
         CHECK_TRUE(s.in_check());
         CHECK_FALSE(s.in_double_check());
-        CHECK_EQUAL(SQ_1B, s.get_checker_location());
-        CHECK_EQUAL(SQ_NA, s.get_checker_location(1));
+        CHECK_EQUAL(SQ_1B, s.get_checker_square());
+        CHECK_EQUAL(SQ_NA, s.get_checker_square(1));
     }
 }
 

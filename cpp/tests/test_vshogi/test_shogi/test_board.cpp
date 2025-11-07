@@ -16,7 +16,7 @@ TEST(test_shogi_board, get)
     CHECK_EQUAL(VOID, b[SQ_5E]);
     CHECK_EQUAL(W_GI, b[SQ_3A]);
     CHECK_EQUAL(B_KA, b[SQ_8H]);
-    CHECK_EQUAL(SQ_5A, b.get_king_location(vshogi::WHITE));
+    CHECK_EQUAL(SQ_5A, b.get_king_square(vshogi::WHITE));
 }
 
 TEST(test_shogi_board, set)
@@ -28,9 +28,9 @@ TEST(test_shogi_board, set)
     CHECK_EQUAL(B_HI, b[SQ_5E]);
     CHECK_EQUAL(VOID, b[SQ_3A]);
     CHECK_EQUAL(W_UM, b[SQ_8H]);
-    CHECK_EQUAL(SQ_5I, b.get_king_location(vshogi::BLACK));
+    CHECK_EQUAL(SQ_5I, b.get_king_square(vshogi::BLACK));
     b.apply(SQ_4H, SQ_5I);
-    CHECK_EQUAL(SQ_4H, b.get_king_location(vshogi::BLACK));
+    CHECK_EQUAL(SQ_4H, b.get_king_square(vshogi::BLACK));
 }
 
 TEST(test_shogi_board, set_sfen)
@@ -44,7 +44,7 @@ TEST(test_shogi_board, set_sfen)
     CHECK_EQUAL(W_OU, b[SQ_1A]);
     CHECK_EQUAL(B_OU, b[SQ_5H]);
     CHECK_EQUAL(VOID, b[SQ_5I]);
-    CHECK_EQUAL(SQ_5H, b.get_king_location(vshogi::BLACK));
+    CHECK_EQUAL(SQ_5H, b.get_king_square(vshogi::BLACK));
 }
 
 TEST(test_shogi_board, append_sfen)

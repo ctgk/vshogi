@@ -62,7 +62,7 @@ public:
     {
         const auto t = get_turn();
         const BoardType& b = get_board();
-        const auto enemy_king_sq = b.get_king_location(~t);
+        const auto enemy_king_sq = b.get_king_square(~t);
         if (enemy_king_sq == C::SQ_NA)
             return;
         for (auto src : b.get_occupied(t).square_iterator()) {
@@ -121,17 +121,17 @@ public:
             out.emplace_back(m);
         return out;
     }
-    Square get_king_location() const
+    Square get_king_square() const
     {
-        return m_current_state.get_board().get_king_location(get_turn());
+        return m_current_state.get_board().get_king_square(get_turn());
     }
-    Square get_king_location(const ColorEnum c) const
+    Square get_king_square(const ColorEnum c) const
     {
-        return m_current_state.get_board().get_king_location(c);
+        return m_current_state.get_board().get_king_square(c);
     }
-    Square get_checker_location(const uint index = 0u) const
+    Square get_checker_square(const uint index = 0u) const
     {
-        return m_current_state.get_checker_location(index);
+        return m_current_state.get_checker_square(index);
     }
     ResultEnum get_result() const
     {
@@ -255,7 +255,7 @@ public:
                     return true;
             }
         } else if (
-            move.source_square() == get_board().get_king_location(get_turn())) {
+            move.source_square() == get_board().get_king_square(get_turn())) {
             for (auto m : KingMoveGenerator<Parameters>(m_current_state)) {
                 if (m == move)
                     return true;
@@ -450,7 +450,7 @@ protected:
     void add_record_and_update_state(const MoveType& move)
     {
         const auto captured = m_current_state.get_board()[move.destination()];
-        const auto checker_sq = m_current_state.get_checker_location();
+        const auto checker_sq = m_current_state.get_checker_square();
         m_hash_list.emplace_back(m_hash);
         static_assert(sizeof(MoveType) == sizeof(std::uint16_t));
         static_assert(sizeof(captured) == sizeof(std::uint8_t));
@@ -501,7 +501,7 @@ public:
         const auto turn = get_turn();
         const BoardType& board = get_board();
         // (1) The King of the declaring side is in the third rank or beyond.
-        if (!SHelper::in_promotion_zone(board.get_king_location(turn), turn))
+        if (!SHelper::in_promotion_zone(board.get_king_square(turn), turn))
             return false;
 
         const auto promo_zone_mask = BitBoardType::get_promotion_zone(turn);

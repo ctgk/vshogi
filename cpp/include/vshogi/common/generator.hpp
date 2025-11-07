@@ -69,12 +69,12 @@ private:
 
 public:
     KingMoveGenerator(const State<P>& state)
-        : m_src(state.get_board().get_king_location(state.get_turn())), m_iter()
+        : m_src(state.get_board().get_king_square(state.get_turn())), m_iter()
     {
         if constexpr (Check) {
             const auto t = state.get_turn();
             const auto& b = state.get_board();
-            const auto enemy_king_sq = b.get_king_location(~t);
+            const auto enemy_king_sq = b.get_king_square(~t);
             const auto checker_dir
                 = SHelper::get_direction(m_src, enemy_king_sq);
             const auto checker_sq
@@ -144,7 +144,7 @@ public:
         if (state.in_double_check()
             || (state.in_check()
                 && !PHelper::is_ranging_piece(
-                    state.get_board()[state.get_checker_location()]))) {
+                    state.get_board()[state.get_checker_square()]))) {
             m_pt_iter = static_cast<PieceType>(C::num_stand_piece_types);
             return;
         }
@@ -197,8 +197,8 @@ private:
             m_sq_iter = b.template compute_droppable<Check>(
                              p,
                              BitBoard<P>::get_line_segment(
-                                 m_state.get_checker_location(),
-                                 b.get_king_location(m_turn)))
+                                 m_state.get_checker_square(),
+                                 b.get_king_square(m_turn)))
                             .square_iterator();
         } else {
             m_sq_iter
@@ -366,7 +366,7 @@ private:
     }
     void init_src_iter()
     {
-        const auto king_sq = m_board.get_king_location(m_turn);
+        const auto king_sq = m_board.get_king_square(m_turn);
         const auto src_mask = m_board.get_occupied(m_turn).clear(king_sq);
         m_src_iter = src_mask.square_iterator();
     }
@@ -377,14 +377,14 @@ private:
     void init_dst_iter()
     {
         const auto src = *m_src_iter;
-        const auto king_sq = m_board.get_king_location(m_turn);
+        const auto king_sq = m_board.get_king_square(m_turn);
         auto movable = m_board.get_attacks_by_nocheck(src);
         movable &= ~m_board.get_occupied(m_turn);
         if (!movable.any())
             goto ExitLabel;
 
         if (m_state.in_check()) {
-            const auto checker_sq = m_state.get_checker_location();
+            const auto checker_sq = m_state.get_checker_square();
             movable &= BitBoard<P>::get_line_segment(checker_sq, king_sq)
                            .set(checker_sq);
             if (!movable.any())
@@ -521,8 +521,8 @@ private:
     }
     void init_src_iter()
     {
-        const auto king_sq = m_board.get_king_location(m_turn);
-        const auto target = m_board.get_king_location(~m_turn);
+        const auto king_sq = m_board.get_king_square(m_turn);
+        const auto target = m_board.get_king_square(~m_turn);
         assert(target != C::SQ_NA);
 
         BitBoard<P> src_mask = m_cover;
@@ -534,7 +534,7 @@ private:
     void init_dst_mask()
     {
         const auto src = *m_src_iter;
-        const auto king_sq = m_board.get_king_location(m_turn);
+        const auto king_sq = m_board.get_king_square(m_turn);
         m_dst_mask = m_board.get_attacks_by_nocheck(src);
         m_dst_mask &= ~m_board.get_occupied(m_turn);
         update_dst_mask_by_current_check(king_sq);
@@ -585,7 +585,7 @@ private:
     void update_dst_mask_by_current_check(const Square king_sq)
     {
         if (m_state.in_check()) {
-            const auto checker_sq = m_state.get_checker_location();
+            const auto checker_sq = m_state.get_checker_square();
             assert(checker_sq != C::SQ_NA);
             m_dst_mask &= BitBoard<P>::get_line_segment(checker_sq, king_sq)
                               .set(checker_sq);
@@ -603,7 +603,7 @@ private:
     void update_mask_by_forcing_check(
         BitBoard<P>& mask, const ColoredPiece p, const Square& src)
     {
-        const auto enemy_king_sq = m_board.get_king_location(~m_turn);
+        const auto enemy_king_sq = m_board.get_king_square(~m_turn);
         auto pt = PHelper::to_piece_type(p);
         if (m_promote)
             pt = PHelper::promote_nocheck(pt);
@@ -705,14 +705,14 @@ public:
     BlockMoveGenerator(const State<P>& state)
         : m_board(state.get_board()), m_turn(state.get_turn()),
           m_not_pinned(
-              ~(state.find_pinned().set(m_board.get_king_location(m_turn)))),
+              ~(state.find_pinned().set(m_board.get_king_square(m_turn)))),
           m_dst_iter(), m_src_iter(), m_promote()
     {
         if (state.in_double_check())
             return;
         if (!state.in_check())
             return;
-        init_dst_iter(state.get_checker_location());
+        init_dst_iter(state.get_checker_square());
         while (!m_dst_iter.is_end()) {
             init_src_iter();
             if (m_src_iter.is_end())
@@ -782,7 +782,7 @@ private:
     }
     void init_dst_iter(const Square& checker_sq)
     {
-        const auto& king = m_board.get_king_location(m_turn);
+        const auto& king = m_board.get_king_square(m_turn);
         m_dst_iter = BitBoard<P>::get_line_segment(checker_sq, king)
                          .set(checker_sq)
                          .square_iterator();

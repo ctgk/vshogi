@@ -36,21 +36,20 @@ private:
 
 private:
     std::array<ColoredPiece, C::num_squares> m_pieces;
-    Square m_king_locations[num_colors];
+    Square m_kings[num_colors];
     BitBoardType m_bb_color[num_colors];
     BitBoardType m_bb_piece[C::num_piece_types];
     BitBoardType m_bb_ranger[num_colors];
 
 public:
     Board()
-        : m_pieces(C::initial_position), m_king_locations{}, m_bb_color{},
-          m_bb_piece{}, m_bb_ranger{}
+        : m_pieces(C::initial_position), m_kings{}, m_bb_color{}, m_bb_piece{},
+          m_bb_ranger{}
     {
         update_internals_based_on_pieces();
     }
     Board(const char* const sfen)
-        : m_pieces{}, m_king_locations{}, m_bb_color{}, m_bb_piece{},
-          m_bb_ranger{}
+        : m_pieces{}, m_kings{}, m_bb_color{}, m_bb_piece{}, m_bb_ranger{}
     {
         set_sfen(sfen);
     }
@@ -69,9 +68,9 @@ public:
         assert(sq != C::SQ_NA);
         return (m_pieces[sq] == C::VOID);
     }
-    Square get_king_location(const ColorEnum& c) const
+    Square get_king_square(const ColorEnum& c) const
     {
-        return m_king_locations[c];
+        return m_kings[c];
     }
     BitBoardType get_occupied() const
     {
@@ -239,14 +238,14 @@ public:
     }
     BitBoardType find_pinned(const ColorEnum& c) const
     {
-        const Square& ally_king = m_king_locations[c];
+        const Square& ally_king = m_kings[c];
         if (ally_king == C::SQ_NA)
             return BitBoardType();
         return find_ranging_attack_blockers(~c, c, ally_king);
     }
     BitBoardType find_cover(const ColorEnum& c) const
     {
-        const Square& enemy_king = m_king_locations[~c];
+        const Square& enemy_king = m_kings[~c];
         if (enemy_king == C::SQ_NA)
             return BitBoardType();
         return find_ranging_attack_blockers(c, c, enemy_king);
@@ -254,7 +253,7 @@ public:
     BitBoardType compute_king_movable(
         const ColorEnum& by_side, const BitBoardType& movable) const
     {
-        const auto src = m_king_locations[by_side];
+        const auto src = m_kings[by_side];
         if (src == C::SQ_NA)
             return BitBoardType();
         assert(m_pieces[src] == PHelper::to_board_piece(by_side, C::OU));
@@ -420,8 +419,8 @@ private:
     }
     void update_internals_based_on_pieces()
     {
-        m_king_locations[BLACK] = C::SQ_NA;
-        m_king_locations[WHITE] = C::SQ_NA;
+        m_kings[BLACK] = C::SQ_NA;
+        m_kings[WHITE] = C::SQ_NA;
         std::fill_n(m_bb_color, num_colors, BitBoardType());
         std::fill_n(m_bb_piece, C::num_piece_types, BitBoardType());
         std::fill_n(m_bb_ranger, num_colors, BitBoardType());
@@ -430,7 +429,7 @@ private:
             const auto c = PHelper::get_color(p);
             const auto pt = PHelper::to_piece_type(p);
             if (pt == C::OU)
-                m_king_locations[c] = sq;
+                m_kings[c] = sq;
             if (p != C::VOID) {
                 m_bb_color[c].toggle(sq);
                 m_bb_piece[pt].toggle(sq);
@@ -453,7 +452,7 @@ private:
         const auto c = PHelper::get_color(p);
         const auto pt = PHelper::to_piece_type(p);
         if (pt == C::OU)
-            m_king_locations[c] = sq;
+            m_kings[c] = sq;
         m_bb_color[c].toggle(sq);
         m_bb_piece[pt].toggle(sq);
         if (PHelper::is_ranging_piece(pt))
@@ -472,7 +471,7 @@ private:
         const auto c = PHelper::get_color(p);
         const auto pt = PHelper::to_piece_type(p);
         if (pt == C::OU)
-            m_king_locations[c] = C::SQ_NA;
+            m_kings[c] = C::SQ_NA;
         m_bb_color[c].toggle(sq);
         m_bb_piece[pt].toggle(sq);
         if (PHelper::is_ranging_piece(pt))
@@ -509,8 +508,8 @@ private:
     {
         BitBoardType occ_atks = get_occupied_by_ranging(by_side);
         BitBoardType occ_melee = m_bb_color[by_side] ^ occ_atks;
-        occ_melee &= BitBoardType::get_neighbor_2nd_at(
-            m_king_locations[~by_side], by_side);
+        occ_melee
+            &= BitBoardType::get_neighbor_2nd_at(m_kings[~by_side], by_side);
         occ_atks ^= occ_melee;
         for (auto sq : occ_atks.square_iterator()) {
             const auto& p = m_pieces[sq];
@@ -533,7 +532,7 @@ private:
         if constexpr (Check) {
             const auto pt = PHelper::to_piece_type(p);
             const auto c = PHelper::get_color(p);
-            const Square& target = m_king_locations[~c];
+            const Square& target = m_kings[~c];
             droppable &= BitBoardType::get_attacks_by(
                 PHelper::to_board_piece(~c, pt), target, occ_full);
             if (pt == C::FU) {
@@ -568,7 +567,7 @@ private:
     bool can_drop_pawn_mate(const ColorEnum& by_side) const
     {
         const Square dst = SHelper::shift(
-            m_king_locations[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
+            m_kings[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
         if (dst == C::SQ_NA)
             return false;
         if (king_can_avoid_a_pawn_attack(~by_side))
@@ -581,7 +580,7 @@ private:
     exclude_drop_pawn_mate(BitBoardType& occ, const ColorEnum& by_side) const
     {
         const Square dst = SHelper::shift(
-            m_king_locations[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
+            m_kings[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
         if (dst == C::SQ_NA)
             return;
         if (!occ.is_one(dst))
@@ -595,7 +594,7 @@ private:
     bool is_pawn_attacking_to_enemy_king(
         const Square& sq, const ColorEnum& by_side) const
     {
-        const auto enemy_king_sq = m_king_locations[~by_side];
+        const auto enemy_king_sq = m_kings[~by_side];
         if (enemy_king_sq == C::SQ_NA)
             return false;
         return enemy_king_sq
@@ -608,7 +607,7 @@ private:
     bool enemy_can_capture_the_drop_pawn(
         const Square& dst, const ColorEnum& by_side) const
     {
-        const auto enemy_king_sq = m_king_locations[~by_side];
+        const auto enemy_king_sq = m_kings[~by_side];
         const auto enemy_king_dir = (by_side == BLACK) ? DIR_N : DIR_S;
         for (auto dir : EnumIterator<DirectionEnum, C::num_dir>()) {
             if (dir == enemy_king_dir)

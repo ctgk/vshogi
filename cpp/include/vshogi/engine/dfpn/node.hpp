@@ -91,7 +91,7 @@ public:
 
         const int offset = offence ? 19 : 10;
         const Square king_sq
-            = g.get_king_location(offence ? ~g.get_turn() : g.get_turn());
+            = g.get_king_square(offence ? ~g.get_turn() : g.get_turn());
         for (Node* c = m_child; c; c = c->sibling()) {
             const auto cd = static_cast<int>(SHelper::chebyshev_distance(
                 c->get_action().destination(), king_sq));
