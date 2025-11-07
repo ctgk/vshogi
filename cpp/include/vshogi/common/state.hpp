@@ -17,22 +17,19 @@
 namespace vshogi
 {
 
-template <class Parameters>
+template <class P>
 class State
 {
 private:
-    using C = Configuration<Parameters>;
+    using C = Configuration<P>;
     using PieceType = typename C::PieceType;
     using ColoredPiece = typename C::ColoredPiece;
     using Rank = typename C::Rank;
     using Square = typename C::Square;
-    using PHelper = Pieces<Parameters>;
-    using SHelper = Squares<Parameters>;
-    using BitBoardType = BitBoard<Parameters>;
-    using BoardType = Board<Parameters>;
-    using MoveType = Move<Parameters>;
-    using Stands = BlackWhiteStands<Parameters>;
-    using StandType = Stand<Parameters>;
+    using PHelper = Pieces<P>;
+    using SHelper = Squares<P>;
+    using BitBoardType = BitBoard<P>;
+    using Stands = BlackWhiteStands<P>;
     static constexpr uint max_stand_piece_count = C::max_stand_piece_count;
     static constexpr uint num_piece_types = C::num_piece_types;
     static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
@@ -46,7 +43,7 @@ public:
     static constexpr uint num_squares = C::num_squares;
 
 private:
-    BoardType m_board;
+    Board<P> m_board;
     Stands m_stands;
     ColorEnum m_turn; //!< Player to make a move in the current state.
     Square m_checker_locations[2]; //!< Checkers attacking turn player's king.
@@ -68,7 +65,7 @@ public:
     }
     static constexpr uint num_dlshogi_policy()
     {
-        return num_squares * MoveType::num_policy_per_square();
+        return num_squares * Move<P>::num_policy_per_square();
     }
     bool operator==(const State& other) const
     {
@@ -80,11 +77,15 @@ public:
         return (m_board != other.m_board) || (m_stands != other.m_stands)
                || (m_turn != other.m_turn);
     }
-    const BoardType& get_board() const
+    const Board<P>& get_board() const
     {
         return m_board;
     }
-    const StandType& get_stand(const ColorEnum c) const
+    const Stand<P>& get_stand() const
+    {
+        return get_stand(m_turn);
+    }
+    const Stand<P>& get_stand(const ColorEnum c) const
     {
         return m_stands[c];
     }
@@ -108,7 +109,7 @@ public:
     {
         return (m_checker_locations[0] == sq) || (m_checker_locations[1] == sq);
     }
-    bool in_promotion_zone(const MoveType& m) const
+    bool in_promotion_zone(const Move<P>& m) const
     {
         if (SHelper::in_promotion_zone(m.destination(), m_turn))
             return true;
@@ -141,7 +142,7 @@ public:
     {
         return State(m_board.hflip(), m_stands, m_turn);
     }
-    State& apply(const MoveType& move, std::uint64_t* const hash = nullptr)
+    State& apply(const Move<P>& move, std::uint64_t* const hash = nullptr)
     {
         const Square dst = move.destination();
         if (move.is_drop()) {
@@ -161,7 +162,7 @@ public:
         return *this;
     }
     State& undo(
-        const MoveType& move,
+        const Move<P>& move,
         const ColoredPiece& captured,
         const Square& checker_sq)
     {
@@ -251,7 +252,7 @@ public:
         }
         return m_board.compute_king_movable(m_turn, movable);
     }
-    bool is_declined_promotion(const MoveType& move) const
+    bool is_declined_promotion(const Move<P>& move) const
     {
         if (move.is_drop())
             return false;
@@ -264,7 +265,7 @@ public:
     }
 
 private:
-    State(const BoardType& b, const Stands& s, const ColorEnum& turn)
+    State(const Board<P>& b, const Stands& s, const ColorEnum& turn)
         : m_board(b), m_stands(s), m_turn(turn)
     {
         update_checkers();
@@ -347,7 +348,7 @@ private:
                     .any();
     }
     static void fill_ms24b_with(
-        std::uint64_t* const hash, const ColoredPiece& p, const MoveType& m)
+        std::uint64_t* const hash, const ColoredPiece& p, const Move<P>& m)
     {
         if (hash == nullptr)
             return;
@@ -355,7 +356,7 @@ private:
         *hash >>= 24u;
 
         static_assert(sizeof(ColoredPiece) == sizeof(std::uint8_t));
-        static_assert(sizeof(MoveType) == sizeof(std::uint16_t));
+        static_assert(sizeof(Move<P>) == sizeof(std::uint16_t));
         *hash ^= static_cast<std::uint64_t>(p) << (64u - 8u);
         *hash ^= static_cast<std::uint64_t>(m.hash()) << (64u - 24u);
     }

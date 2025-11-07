@@ -139,7 +139,7 @@ private:
 public:
     DropMoveGenerator(const State<P>& state)
         : m_state(state), m_turn(state.get_turn()),
-          m_stand(state.get_stand(m_turn)), m_sq_iter{}, m_pt_iter{}
+          m_stand(state.get_stand()), m_sq_iter{}, m_pt_iter{}
     {
         if (state.in_double_check()
             || (state.in_check()
@@ -185,8 +185,8 @@ public:
 
 private:
     DropMoveGenerator(const State<P>& state, const PieceType pt)
-        : m_state(state), m_turn(state.get_turn()),
-          m_stand(state.get_stand(m_turn)), m_sq_iter(), m_pt_iter(pt)
+        : m_state(state), m_turn(state.get_turn()), m_stand(state.get_stand()),
+          m_sq_iter(), m_pt_iter(pt)
     {
     }
     void init_sq_iter()

@@ -33,8 +33,7 @@ public:
     void add(Node<P>* const n, const Game<P>& g)
     {
         const std::uint64_t bt_hash = g.get_board_turn_hash();
-        const auto t = g.get_turn();
-        const auto s = g.get_stand(t).value();
+        const auto s = g.get_stand().value();
         auto it = m_table.find(bt_hash);
         if (it == m_table.end()) {
             m_table.emplace(bt_hash, StandNodePairs());
@@ -73,7 +72,7 @@ private:
         const Node<P>** const node_e,
         const Node<P>** const node_le) const
     {
-        const auto s = g.get_stand(g.get_turn());
+        const auto& s = g.get_stand();
         Stand<P> s_l{};
         Stand<P> s_g{static_cast<BaseTypeStand>(~0)};
         bool found_best_l = false;

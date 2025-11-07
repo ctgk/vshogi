@@ -237,7 +237,10 @@ inline void export_game(pybind11::module& m)
         .def(py::init<const std::string&>())
         .def("get_turn", &Game::get_turn)
         .def("get_board", &Game::get_board)
-        .def("get_stand", &Game::get_stand)
+        .def(
+            "get_stand",
+            py::overload_cast<const vshogi::ColorEnum>(
+                &Game::get_stand, py::const_))
         .def("get_result", &Game::get_result)
         .def("get_zobrist_hash", &Game::get_zobrist_hash)
         .def("ply", &Game::ply)

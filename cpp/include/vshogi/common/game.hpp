@@ -93,6 +93,10 @@ public:
     {
         return m_current_state.get_board();
     }
+    const StandType& get_stand() const
+    {
+        return m_current_state.get_stand();
+    }
     const StandType& get_stand(const ColorEnum c) const
     {
         return m_current_state.get_stand(c);
