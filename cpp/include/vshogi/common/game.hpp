@@ -256,7 +256,7 @@ public:
             }
         } else if (
             move.source_square() == get_board().get_king_square(get_turn())) {
-            for (auto m : KingMoveGenerator<Parameters>(m_current_state)) {
+            for (auto m : KingMoveIterator<Parameters>(m_current_state)) {
                 if (m == move)
                     return true;
             }

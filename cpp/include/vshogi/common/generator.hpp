@@ -6,6 +6,7 @@
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
+#include "vshogi/common/iterator/king.hpp"
 #include "vshogi/common/magic.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/squares.hpp"
@@ -49,76 +50,6 @@ namespace vshogi
  *     for (dst : destinations)
  *         for (src : sources)  # cannot cope with discovered check
  */
-
-template <class P, bool Check = false>
-class KingMoveGenerator
-{
-private:
-    using C = Configuration<P>;
-    using SHelper = Squares<P>;
-    using SquareIterator = typename BitBoard<P>::SquareIterator;
-    using Square = typename C::Square;
-
-private:
-    const Square m_src; //!< King square
-    SquareIterator m_iter;
-
-    KingMoveGenerator() : m_src(C::SQ_NA), m_iter()
-    {
-    }
-
-public:
-    KingMoveGenerator(const State<P>& state)
-        : m_src(state.get_board().get_king_square(state.get_turn())), m_iter()
-    {
-        if constexpr (Check) {
-            const auto t = state.get_turn();
-            const auto& b = state.get_board();
-            const auto enemy_king_sq = b.get_king_square(~t);
-            const auto checker_dir
-                = SHelper::get_direction(m_src, enemy_king_sq);
-            const auto checker_sq
-                = b.find_ranging_attacker(t, enemy_king_sq, checker_dir, m_src);
-            if (checker_sq == C::SQ_NA) {
-                return;
-            } else {
-                m_iter
-                    = state
-                          .compute_king_movable(~BitBoard<P>::get_line_segment(
-                              checker_sq, enemy_king_sq))
-                          .square_iterator();
-            }
-        } else {
-            m_iter = state.compute_king_movable().square_iterator();
-        }
-    }
-    KingMoveGenerator& operator++()
-    {
-        ++m_iter;
-        return *this;
-    }
-    Move<P> operator*() const
-    {
-        return Move<P>(m_src, *m_iter, false);
-    }
-    KingMoveGenerator begin() const
-    {
-        return *this;
-    }
-    KingMoveGenerator end() const
-    {
-        static const auto end_iter = KingMoveGenerator();
-        return end_iter;
-    }
-    bool operator!=(const KingMoveGenerator& other) const
-    {
-        return m_iter != other.m_iter;
-    }
-    bool is_end() const
-    {
-        return m_iter.is_end();
-    }
-};
 
 template <class P, bool Check = false>
 class DropMoveGenerator
@@ -812,7 +743,7 @@ template <class P, bool Check = false>
 class BoardMoveGenerator
 {
 private:
-    KingMoveGenerator<P, Check> m_king_iter;
+    KingMoveIterator<P, Check> m_king_iter;
     SoldierMoveGenerator<P, Check> m_board_iter;
     uint m_index; //!< 0: king, 1: board, 2: end
 
@@ -885,7 +816,7 @@ public:
 
 private:
     BoardMoveGenerator(
-        const KingMoveGenerator<P, Check>& king_iter,
+        const KingMoveIterator<P, Check>& king_iter,
         const SoldierMoveGenerator<P, Check>& board_iter,
         const uint index)
         : m_king_iter(king_iter), m_board_iter(board_iter), m_index(index)
@@ -897,7 +828,7 @@ template <class P, bool Check = false>
 class LegalMoveGenerator
 {
 private:
-    KingMoveGenerator<P, Check> m_king_iter;
+    KingMoveIterator<P, Check> m_king_iter;
     SoldierMoveGenerator<P, Check> m_board_iter;
     DropMoveGenerator<P, Check> m_drop_iter;
     uint m_index; //!< 0: king, 1: board, 2: drop, 3: end
@@ -985,7 +916,7 @@ public:
 
 private:
     LegalMoveGenerator(
-        const KingMoveGenerator<P, Check>& king_iter,
+        const KingMoveIterator<P, Check>& king_iter,
         const SoldierMoveGenerator<P, Check>& board_iter,
         const DropMoveGenerator<P, Check>& drop_iter,
         const uint index)

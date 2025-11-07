@@ -264,7 +264,7 @@ private:
             return expand_board_moves(next, nibling);
         if (offence)
             return expand_by_generator<BoardMoveGenerator<P, true>>(next, s);
-        expand_by_generator<KingMoveGenerator<P>>(next, s);
+        expand_by_generator<KingMoveIterator<P>>(next, s);
         return expand_by_generator<BlockMoveGenerator<P>>(next, s);
     }
     bool expand_board_moves(Node<P>*& next, const Node** const nibling)

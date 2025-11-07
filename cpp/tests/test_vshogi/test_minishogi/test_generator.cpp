@@ -14,13 +14,13 @@ TEST(test_minishogi_generator, king_move_generator)
 {
     {
         const auto s = State("5/5/5/5/5 b -");
-        auto iter = vshogi::KingMoveGenerator<Parameters>(s);
+        auto iter = vshogi::KingMoveIterator<Parameters>(s);
         CHECK_FALSE(iter != iter.end());
         CHECK_TRUE(iter.is_end());
     }
     {
         const auto s = State("5/2k2/5/2K2/5 b -");
-        auto iter = vshogi::KingMoveGenerator<Parameters>(s);
+        auto iter = vshogi::KingMoveIterator<Parameters>(s);
         CHECK_TRUE(Move(SQ_3D, SQ_2D) == *iter);
         ++iter;
         CHECK_TRUE(Move(SQ_3D, SQ_2E) == *iter);
@@ -50,7 +50,7 @@ TEST(test_minishogi_generator, king_move_generator)
         //   *---*---*---*---*---*
         // Black: -
         const auto s = State("R1+S2/4k/S2+bg/PK3/3B1 w r 40");
-        auto iter = vshogi::KingMoveGenerator<Parameters>(s);
+        auto iter = vshogi::KingMoveIterator<Parameters>(s);
         CHECK_TRUE(Move(SQ_1B, SQ_1A) == *iter);
         ++iter;
         CHECK_TRUE(Move(SQ_1B, SQ_2B) == *iter);
@@ -60,18 +60,18 @@ TEST(test_minishogi_generator, king_move_generator)
     }
     {
         const auto s = State("5/5/5/5/5 b -");
-        auto iter = vshogi::KingMoveGenerator<Parameters, true>(s);
+        auto iter = vshogi::KingMoveIterator<Parameters, true>(s);
         CHECK_FALSE(iter != iter.end());
         CHECK_TRUE(iter.is_end());
     }
     {
         const auto s = State("4k/5/2K2/5/5 b -");
-        auto iter = vshogi::KingMoveGenerator<Parameters, true>(s);
+        auto iter = vshogi::KingMoveIterator<Parameters, true>(s);
         CHECK_FALSE(iter != iter.end());
     }
     {
         const auto s = State("4k/5/2K2/5/B4 b -");
-        auto iter = vshogi::KingMoveGenerator<Parameters, true>(s);
+        auto iter = vshogi::KingMoveIterator<Parameters, true>(s);
         CHECK_TRUE(Move(SQ_3C, SQ_2C) == *iter);
         ++iter;
         CHECK_TRUE(Move(SQ_3C, SQ_2D) == *iter);
