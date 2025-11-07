@@ -4,18 +4,8 @@
 
 #include <CppUTest/TestHarness.h>
 
-namespace test_vshogi::test_engine
+namespace test_vshogi::test_profile
 {
-
-namespace test_minishogi
-{
-
-using namespace vshogi::minishogi;
-
-TEST_GROUP (test_minishogi_engine) {
-};
-
-} // namespace test_minishogi
 
 namespace test_shogi
 {
@@ -24,12 +14,8 @@ using namespace vshogi::shogi;
 using Node = vshogi::engine::mcts::Node<Parameters>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
-TEST_GROUP (shogi_engine) {
-};
-
-TEST(shogi_engine, mcts_with_dfpn)
-{
-    const char kifu[][6] = {
+TEST_GROUP (shogi_profile) {
+    const char kifu[167][6] = {
         // clang-format off
         "7g7f" , "3c3d" , "2g2f" , "4a3b" , "2f2e" , "2b3c" , "3i4h" , "3a2b" ,
         "6i7h" , "7a6b" , "6g6f" , "6c6d" , "7i6h" , "6b6c" , "6h6g" , "6c5d" ,
@@ -54,7 +40,10 @@ TEST(shogi_engine, mcts_with_dfpn)
         "6h5i" , "4h5h" , "4b3a" , "2a3a" , "S*2b" , "3a4a" , "L*4b" ,
         // clang-format on
     };
+};
 
+TEST(shogi_profile, mcts_with_dfpn)
+{
     auto g = Game();
     auto mcts
         = vshogi::engine::mcts::Searcher<Parameters>(4.f, 0.25f, 10000u, 100u);
@@ -83,6 +72,31 @@ TEST(shogi_engine, mcts_with_dfpn)
     }
 }
 
+TEST(shogi_profile, generator)
+{
+    for (int jj = 1000; jj--;) {
+        auto g = Game();
+        for (uint ii = 0u; ii < 167u; ++ii) {
+            if (g.get_result() != vshogi::ONGOING)
+                break;
+            const auto move = Move(kifu[ii]);
+            int num_legal_moves = 0;
+            for (auto it = LegalMoveGenerator(g.get_state()); !it.is_end();
+                 ++it)
+                ++num_legal_moves;
+            CHECK_COMPARE(num_legal_moves, >, 0);
+            int num_check_moves = 0;
+            for (auto it
+                 = vshogi::LegalMoveGenerator<Parameters, true>(g.get_state());
+                 !it.is_end();
+                 ++it)
+                ++num_check_moves;
+            CHECK_COMPARE(num_check_moves, <=, num_legal_moves);
+            g.apply(move);
+        }
+    }
+}
+
 } // namespace test_shogi
 
-} // namespace test_vshogi::test_engine
+} // namespace test_vshogi::test_profile
