@@ -6,6 +6,7 @@
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/game.hpp"
 #include "vshogi/common/generator.hpp"
+#include "vshogi/common/iterator/drop.hpp"
 #include "vshogi/common/squares.hpp"
 #include "vshogi/common/state.hpp"
 #include "vshogi/common/utils.hpp"
@@ -297,7 +298,7 @@ private:
         if ((*nibling) == nullptr) {
             if (offence)
                 return expand_by_generator<DropMoveGenerator<P, true>>(next, s);
-            return expand_by_generator<DropMoveGenerator<P, false>>(next, s);
+            return expand_by_generator<DropEvasionIterator<P>>(next, s);
         }
         return expand_drop_moves(next, nibling, s.get_stand(s.get_turn()));
     }

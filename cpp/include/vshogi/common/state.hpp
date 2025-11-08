@@ -92,6 +92,14 @@ public:
     {
         return m_turn;
     }
+    Square get_king_square() const
+    {
+        return get_king_square(m_turn);
+    }
+    Square get_king_square(const ColorEnum c) const
+    {
+        return m_board.get_king_square(c);
+    }
     Square get_checker_square(const uint i = 0u) const
     {
         return m_checkers[i];

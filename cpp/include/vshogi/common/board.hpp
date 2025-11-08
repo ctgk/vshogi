@@ -301,6 +301,22 @@ public:
         update_droppable<Check>(droppable, p, occ_full);
         return droppable;
     }
+    bool has_pawn_in_file(const File& f, const ColorEnum& by_side) const
+    {
+        const BitBoardType occ = get_occupied<C::FU>(by_side);
+        return (BitBoardType::from_file(f) & occ).any();
+    }
+    bool
+    is_drop_pawn_mate_square(const Square dst, const ColorEnum by_side) const
+    {
+        const Square sq = SHelper::shift(
+            m_kings[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
+        if ((sq == C::SQ_NA) || (sq != dst)
+            || king_can_avoid_a_pawn_attack(~by_side)
+            || enemy_can_capture_the_drop_pawn(sq, by_side))
+            return false;
+        return true;
+    }
     Board hflip() const
     {
         Board out;
@@ -558,11 +574,6 @@ private:
             if (has_pawn_in_file(f, by_side))
                 occ &= ~BitBoardType::from_file(f);
         }
-    }
-    bool has_pawn_in_file(const File& f, const ColorEnum& by_side) const
-    {
-        const BitBoardType occ = get_occupied<C::FU>(by_side);
-        return (BitBoardType::from_file(f) & occ).any();
     }
     bool can_drop_pawn_mate(const ColorEnum& by_side) const
     {
