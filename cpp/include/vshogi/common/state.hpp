@@ -104,6 +104,16 @@ public:
     {
         return m_checkers[1] != C::SQ_NA;
     }
+    bool can_apply_drop_move(const PieceType pt = C::NA) const
+    {
+        if (in_double_check())
+            return false;
+        if ((pt != C::NA) && (!m_stands[m_turn].exist(pt)))
+            return false;
+        if (in_check() && (!PHelper::is_ranging_piece(m_board[m_checkers[0]])))
+            return false;
+        return true;
+    }
     bool in_promotion_zone(const Move<P>& m) const
     {
         if (SHelper::in_promotion_zone(m.destination(), m_turn))

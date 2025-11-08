@@ -72,10 +72,7 @@ public:
         : m_state(state), m_turn(state.get_turn()),
           m_stand(state.get_stand()), m_sq_iter{}, m_pt_iter{}
     {
-        if (state.in_double_check()
-            || (state.in_check()
-                && !PHelper::is_ranging_piece(
-                    state.get_board()[state.get_checker_square()]))) {
+        if (!state.can_apply_drop_move()) {
             m_pt_iter = static_cast<PieceType>(C::num_stand_piece_types);
             return;
         }
