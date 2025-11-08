@@ -6,6 +6,7 @@
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
+#include "vshogi/common/iterator/chained_iterator.hpp"
 #include "vshogi/common/iterator/king.hpp"
 #include "vshogi/common/magic.hpp"
 #include "vshogi/common/move.hpp"
@@ -737,191 +738,17 @@ private:
 };
 
 template <class P, bool Check = false>
-class BoardMoveGenerator
-{
-private:
-    KingMoveIterator<P, Check> m_king_iter;
-    SoldierMoveGenerator<P, Check> m_board_iter;
-    uint m_index; //!< 0: king, 1: board, 2: end
-
-public:
-    BoardMoveGenerator(const State<P>& s)
-        : m_king_iter(s), m_board_iter(s), m_index(0u)
-    {
-        if (m_king_iter.is_end()) {
-            ++m_index;
-            if (m_board_iter.is_end()) {
-                ++m_index;
-            }
-        }
-    }
-    BoardMoveGenerator& operator++()
-    {
-        switch (m_index) {
-        case 0u:
-            ++m_king_iter;
-            if (m_king_iter.is_end()) {
-                ++m_index;
-                if (m_board_iter.is_end()) {
-                    ++m_index;
-                }
-            }
-            break;
-        case 1u:
-            ++m_board_iter;
-            if (m_board_iter.is_end()) {
-                ++m_index;
-            }
-            break;
-        default:
-            break;
-        }
-        return *this;
-    }
-    Move<P> operator*() const
-    {
-        switch (m_index) {
-        case 0u:
-            return *m_king_iter;
-        case 1u:
-            return *m_board_iter;
-        default:
-            break;
-        }
-        return Move<P>();
-    }
-    BoardMoveGenerator begin()
-    {
-        return *this;
-    }
-    BoardMoveGenerator end()
-    {
-        static const auto end_iter
-            = BoardMoveGenerator(m_king_iter.end(), m_board_iter.end(), 2u);
-        return end_iter;
-    }
-    bool operator!=(const BoardMoveGenerator& other) const
-    {
-        return (m_king_iter != other.m_king_iter)
-               || (m_board_iter != other.m_board_iter)
-               || (m_index != other.m_index);
-    }
-    bool is_end() const
-    {
-        return (m_index == 2u);
-    }
-
-private:
-    BoardMoveGenerator(
-        const KingMoveIterator<P, Check>& king_iter,
-        const SoldierMoveGenerator<P, Check>& board_iter,
-        const uint index)
-        : m_king_iter(king_iter), m_board_iter(board_iter), m_index(index)
-    {
-    }
-};
+using BoardMoveGenerator = ChainedIterator<
+    P,
+    KingMoveIterator<P, Check>,
+    SoldierMoveGenerator<P, Check>>;
 
 template <class P, bool Check = false>
-class LegalMoveGenerator
-{
-private:
-    KingMoveIterator<P, Check> m_king_iter;
-    SoldierMoveGenerator<P, Check> m_board_iter;
-    DropMoveGenerator<P, Check> m_drop_iter;
-    uint m_index; //!< 0: king, 1: board, 2: drop, 3: end
-
-public:
-    LegalMoveGenerator(const State<P>& s)
-        : m_king_iter(s), m_board_iter(s), m_drop_iter(s), m_index(0u)
-    {
-        if (m_king_iter.is_end()) {
-            ++m_index;
-            if (m_board_iter.is_end()) {
-                ++m_index;
-                if (m_drop_iter.is_end())
-                    ++m_index;
-            }
-        }
-    }
-    LegalMoveGenerator& operator++()
-    {
-        switch (m_index) {
-        case 0u:
-            ++m_king_iter;
-            if (m_king_iter.is_end()) {
-                ++m_index;
-                if (m_board_iter.is_end()) {
-                    ++m_index;
-                    if (m_drop_iter.is_end())
-                        ++m_index;
-                }
-            }
-            break;
-        case 1u:
-            ++m_board_iter;
-            if (m_board_iter.is_end()) {
-                ++m_index;
-                if (m_drop_iter.is_end())
-                    ++m_index;
-            }
-            break;
-        case 2u:
-            ++m_drop_iter;
-            if (m_drop_iter.is_end())
-                ++m_index;
-            break;
-        default:
-            break;
-        }
-        return *this;
-    }
-    Move<P> operator*() const
-    {
-        switch (m_index) {
-        case 0u:
-            return *m_king_iter;
-        case 1u:
-            return *m_board_iter;
-        case 2u:
-            return *m_drop_iter;
-        default:
-            break;
-        }
-        return Move<P>();
-    }
-    LegalMoveGenerator begin()
-    {
-        return *this;
-    }
-    LegalMoveGenerator end()
-    {
-        static const auto end_iter = LegalMoveGenerator<P, Check>(
-            m_king_iter.end(), m_board_iter.end(), m_drop_iter.end(), 3u);
-        return end_iter;
-    }
-    bool operator!=(const LegalMoveGenerator& other) const
-    {
-        return (m_king_iter != other.m_king_iter)
-               || (m_board_iter != other.m_board_iter)
-               || (m_drop_iter != other.m_drop_iter)
-               || (m_index != other.m_index);
-    }
-    bool is_end() const
-    {
-        return (m_index == 3u);
-    }
-
-private:
-    LegalMoveGenerator(
-        const KingMoveIterator<P, Check>& king_iter,
-        const SoldierMoveGenerator<P, Check>& board_iter,
-        const DropMoveGenerator<P, Check>& drop_iter,
-        const uint index)
-        : m_king_iter(king_iter), m_board_iter(board_iter),
-          m_drop_iter(drop_iter), m_index(index)
-    {
-    }
-};
+using LegalMoveGenerator = ChainedIterator<
+    P,
+    KingMoveIterator<P, Check>,
+    SoldierMoveGenerator<P, Check>,
+    DropMoveGenerator<P, Check>>;
 
 } // namespace vshogi
 
