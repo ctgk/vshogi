@@ -297,8 +297,10 @@ private:
     {
         if ((*nibling) == nullptr) {
             if (offence)
-                return expand_by_generator<DropMoveGenerator<P, true>>(next, s);
-            return expand_by_generator<DropEvasionIterator<P>>(next, s);
+                return expand_by_generator<
+                    DropMoveIterator<P, IterEnum::CHECK>>(next, s);
+            return expand_by_generator<DropMoveIterator<P, IterEnum::EVADE>>(
+                next, s);
         }
         return expand_drop_moves(next, nibling, s.get_stand(s.get_turn()));
     }

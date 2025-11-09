@@ -115,9 +115,8 @@ public:
         std::vector<MoveType> out{};
         if (m_result != ONGOING)
             return out;
-        for (auto m : BoardMoveGenerator<Parameters, true>(m_current_state))
-            out.emplace_back(m);
-        for (auto m : DropMoveGenerator<Parameters, true>(m_current_state))
+        for (auto m :
+             LegalMoveGenerator<Parameters, IterEnum::CHECK>(m_current_state))
             out.emplace_back(m);
         return out;
     }
@@ -250,7 +249,7 @@ public:
     bool is_legal(const MoveType move) const
     {
         if (move.is_drop()) {
-            for (auto m : DropMoveGenerator<Parameters>(m_current_state)) {
+            for (auto m : DropMoveIterator<Parameters>(m_current_state)) {
                 if (m == move)
                     return true;
             }

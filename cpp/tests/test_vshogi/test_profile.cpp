@@ -86,8 +86,9 @@ TEST(shogi_profile, generator)
                 ++num_legal_moves;
             CHECK_COMPARE(num_legal_moves, >, 0);
             int num_check_moves = 0;
-            for (auto it
-                 = vshogi::LegalMoveGenerator<Parameters, true>(g.get_state());
+            for (auto it = vshogi::
+                     LegalMoveGenerator<Parameters, vshogi::IterEnum::CHECK>(
+                         g.get_state());
                  !it.is_end();
                  ++it)
                 ++num_check_moves;

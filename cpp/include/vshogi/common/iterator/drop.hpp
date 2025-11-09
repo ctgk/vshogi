@@ -3,6 +3,7 @@
 
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/config.hpp"
+#include "vshogi/common/iterator/iterator.hpp"
 #include "vshogi/common/pieces.hpp"
 #include "vshogi/common/squares.hpp"
 #include "vshogi/common/state.hpp"
@@ -10,8 +11,126 @@
 namespace vshogi
 {
 
+/**
+ *
+ * DropMoveIterator<LEGAL>
+ * for (pt : piece_types)
+ *     for (dst : destinations)
+ *
+ * DropMoveIterator<CHECK>
+ * for (pt : piece_types)
+ *     for (dst : destinations)
+ *
+ * DropMoveIterator<EVADE>
+ * for (dst : destinations)
+ *     for (pt : piece_types)
+ */
+
+template <class P, IterEnum IterType = IterEnum::LEGAL>
+class DropMoveIterator
+{
+private:
+    using C = Configuration<P>;
+    using SquareIterator = typename BitBoard<P>::SquareIterator;
+    using PieceType = typename C::PieceType;
+    using PHelper = Pieces<P>;
+
+private:
+    const State<P>& m_state;
+    const ColorEnum m_turn;
+    const Stand<P>& m_stand;
+    SquareIterator m_sq_iter;
+    PieceType m_pt_iter;
+
+public:
+    DropMoveIterator(const State<P>& state)
+        : m_state(state), m_turn(state.get_turn()),
+          m_stand(state.get_stand()), m_sq_iter{}, m_pt_iter{}
+    {
+        if (!state.can_apply_drop_move()) {
+            m_pt_iter = static_cast<PieceType>(C::num_stand_piece_types);
+            return;
+        }
+        increment_piece_type_unless_in_stand();
+        if (m_pt_iter == C::num_stand_piece_types)
+            return;
+        init_sq_iter();
+        increment_piece_type_while_no_dst();
+    }
+    DropMoveIterator& operator++()
+    {
+        ++m_sq_iter;
+        increment_piece_type_while_no_dst();
+        return *this;
+    }
+    Move<P> operator*() const
+    {
+        return Move<P>(m_pt_iter, *m_sq_iter);
+    }
+    DropMoveIterator begin()
+    {
+        return *this;
+    }
+    DropMoveIterator end()
+    {
+        static const auto end_iter = DropMoveIterator(
+            m_state, static_cast<PieceType>(C::num_stand_piece_types));
+        return end_iter;
+    }
+    bool operator!=(const DropMoveIterator& other) const
+    {
+        return (m_sq_iter != other.m_sq_iter) || (m_pt_iter != other.m_pt_iter);
+    }
+    bool is_end() const
+    {
+        return m_sq_iter.is_end() && (m_pt_iter == C::num_stand_piece_types);
+    }
+
+private:
+    DropMoveIterator(const State<P>& state, const PieceType pt)
+        : m_state(state), m_turn(state.get_turn()), m_stand(state.get_stand()),
+          m_sq_iter(), m_pt_iter(pt)
+    {
+    }
+    void init_sq_iter()
+    {
+        const auto& b = m_state.get_board();
+        const auto p = PHelper::to_board_piece(m_turn, m_pt_iter);
+        if (m_state.in_check()) {
+            m_sq_iter
+                = b.template compute_droppable<IterType == IterEnum::CHECK>(
+                       p,
+                       BitBoard<P>::get_line_segment(
+                           m_state.get_checker_square(),
+                           b.get_king_square(m_turn)))
+                      .square_iterator();
+        } else {
+            m_sq_iter
+                = b.template compute_droppable<IterType == IterEnum::CHECK>(p)
+                      .square_iterator();
+        }
+    }
+    void increment_piece_type_while_no_dst()
+    {
+        while (m_sq_iter.is_end()) {
+            m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
+            increment_piece_type_unless_in_stand();
+            if (m_pt_iter >= C::num_stand_piece_types)
+                break;
+            init_sq_iter();
+        }
+    }
+    void increment_piece_type_unless_in_stand()
+    {
+        while ((m_pt_iter < C::num_stand_piece_types)
+               && !m_stand.exist(m_pt_iter)) {
+            m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
+        }
+    }
+};
+
 template <class P>
-class DropEvasionIterator
+class DropMoveIterator<P, IterEnum::EVADE>
 {
 private:
     using C = Configuration<P>;
@@ -28,7 +147,7 @@ private:
     PieceType m_pt_iter; //!< inner loop
 
 public:
-    DropEvasionIterator(const State<P>& state)
+    DropMoveIterator(const State<P>& state)
         : m_state{state}, m_sq_end{state.get_checker_square()}, m_sq_iter{},
           m_pt_iter{pt_end}
     {
@@ -54,7 +173,7 @@ public:
         assert(m_sq_iter != nullptr);
         return Move<P>(m_pt_iter, *m_sq_iter);
     }
-    DropEvasionIterator& operator++()
+    DropMoveIterator& operator++()
     {
         m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
         while (true) {
@@ -64,17 +183,17 @@ public:
         }
         return *this;
     }
-    DropEvasionIterator begin()
+    DropMoveIterator begin()
     {
         return *this;
     }
-    DropEvasionIterator end()
+    DropMoveIterator end()
     {
         const auto end_iter
-            = DropEvasionIterator(m_state, m_sq_end, m_sq_iter, pt_end);
+            = DropMoveIterator(m_state, m_sq_end, m_sq_iter, pt_end);
         return end_iter;
     }
-    bool operator!=(const DropEvasionIterator& other) const
+    bool operator!=(const DropMoveIterator& other) const
     {
         return (m_sq_iter != other.m_sq_iter) || (m_pt_iter != other.m_pt_iter);
     }
@@ -85,7 +204,7 @@ public:
     }
 
 private:
-    DropEvasionIterator(
+    DropMoveIterator(
         const State<P>& state,
         const Square sq_end,
         const Square* const sq_iter,

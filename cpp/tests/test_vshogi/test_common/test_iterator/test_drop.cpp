@@ -1,3 +1,6 @@
+#include <string>
+#include <vector>
+
 #include "vshogi/common/iterator/drop.hpp"
 #include "vshogi/variants/judkins_shogi.hpp"
 #include "vshogi/variants/minishogi.hpp"
@@ -5,143 +8,177 @@
 
 #include <CppUTest/TestHarness.h>
 
-namespace test_vshogi::test_minishogi
+namespace test_vshogi
 {
 
-using namespace vshogi::minishogi;
-
-TEST_GROUP (test_drop_evasion_iterator_minishogi) {
+TEST_GROUP (drop_move_iterator) {
+    template <vshogi::IterEnum IterType, class P>
+    void compare_moves(
+        const std::string& sfen, const std::vector<std::string>& expect)
+    {
+        const auto s = vshogi::State<P>(sfen);
+        auto iter = vshogi::DropMoveIterator<P, IterType>(s);
+        for (unsigned int ii = 0u; ii < expect.size(); ++ii) {
+            const auto a = *iter;
+            const auto e = vshogi::Move<P>(expect[ii].c_str());
+            CHECK_EQUAL(e.hash(), a.hash());
+            ++iter;
+        }
+        CHECK_FALSE(iter != iter.end());
+        CHECK_TRUE(iter.is_end());
+    }
 };
 
-TEST(test_drop_evasion_iterator_minishogi, neighboring_ranging_checker)
+TEST(drop_move_iterator, minishogi_legal)
 {
-    const auto s = State("r4/2k2/4P/P+bB2/K1S2 b R2gs");
-    auto iter = vshogi::DropEvasionIterator<Parameters>(s);
-    CHECK_FALSE(iter != iter.end());
-    CHECK_TRUE(iter.is_end());
-}
+    auto compare = [this](
+                       const std::string& sfen,
+                       const std::vector<std::string>& expect) {
+        compare_moves<vshogi::IterEnum::LEGAL, vshogi::minishogi::Parameters>(
+            sfen, expect);
+    };
 
-TEST(test_drop_evasion_iterator_minishogi, immobile_pawn)
-{
-    const auto s = State("r3K/5/5/5/5 b P");
-    auto iter = vshogi::DropEvasionIterator<Parameters>(s);
-    CHECK_FALSE(iter != iter.end());
-    CHECK_TRUE(iter.is_end());
-}
+    // empty stand
+    compare("5/5/5/5/5 b -", {});
 
-TEST(test_drop_evasion_iterator_minishogi, drop_pawn_mate)
-{
-    const auto s = State("G1kb+R/5/2G2/K4/5 b P");
-    auto iter = vshogi::DropEvasionIterator<Parameters>(s);
-    CHECK_TRUE(Move(FU, SQ_4C) == *iter);
-    ++iter;
-    // CHECK_TRUE(Move(FU, SQ_3B) == *iter);  <- Drop pawn mate
-    CHECK_FALSE(iter != iter.end());
-    CHECK_TRUE(iter.is_end());
-}
+    // in check by adjacent piece
+    compare("4k/4G/5/5/5 w p", {});
 
-TEST(test_drop_evasion_iterator_minishogi, nominal_case)
-{
-    const auto s = State("4k/5/5/5/B4 w ps");
-    auto iter = vshogi::DropEvasionIterator<Parameters>(s);
-    CHECK_TRUE(Move(FU, SQ_2B) == *iter);
-    ++iter;
-    CHECK_TRUE(Move(GI, SQ_2B) == *iter);
-    ++iter;
-    CHECK_TRUE(Move(FU, SQ_3C) == *iter);
-    ++iter;
-    CHECK_TRUE(Move(GI, SQ_3C) == *iter);
-    ++iter;
-    CHECK_TRUE(Move(FU, SQ_4D) == *iter);
-    ++iter;
-    CHECK_TRUE(Move(GI, SQ_4D) == *iter);
-    ++iter;
-    CHECK_FALSE(iter != iter.end());
-}
+    // in check by sliding piece
+    compare("4k/5/5/1B3/5 w ps", {"P*2b", "P*3c", "S*2b", "S*3c"});
 
-TEST(test_drop_evasion_iterator_minishogi, non_ranging_checker)
-{
-    const auto s = State("4k/4G/5/5/5 w p");
-    auto iter = vshogi::DropEvasionIterator<Parameters>(s);
-    CHECK_FALSE(iter != iter.end());
-}
+    // in double check
+    compare("3kb/5/5/5/K3r b R", {});
+    compare("r3k/5/5/5/K3r b PSG", {});
 
-TEST(test_drop_evasion_iterator_minishogi, in_double_check)
-{
-    const auto s = State("r3k/5/5/5/K3r b PSG");
-    auto iter = vshogi::DropEvasionIterator<Parameters>(s);
-    CHECK_FALSE(iter != iter.end());
-    CHECK_TRUE(iter.is_end());
-}
-
-} // namespace test_vshogi::test_minishogi
-
-namespace test_vshogi::test_judkins_shogi
-{
-
-using namespace vshogi::judkins_shogi;
-
-TEST_GROUP (test_drop_evasion_iterator_judkins_shogi) {
-};
-
-TEST(test_drop_evasion_iterator_judkins_shogi, immobile_knight)
-{
-    const auto s = State("5K/6/6/2b3/6/6 b N");
-    auto iter = vshogi::DropEvasionIterator<Parameters>(s);
-    // CHECK_TRUE(Move(KE, SQ_2B) == *iter); immobile knight
-    CHECK_TRUE(Move(KE, SQ_3C) == *iter);
-    ++iter;
-    CHECK_FALSE(iter != iter.end());
-    CHECK_TRUE(iter.is_end());
-}
-
-} // namespace test_vshogi::test_judkins_shogi
-
-namespace test_vshogi::test_shogi
-{
-
-using namespace vshogi::shogi;
-
-TEST_GROUP (test_drop_evasion_iterator_shogi) {
-};
-
-TEST(test_drop_evasion_iterator_shogi, two_pawns_in_a_file)
-{
     // two pawns in a file
-    const auto s = State("9/9/9/9/9/9/3PpP3/9/+r7K b P");
-    auto iter = vshogi::DropEvasionIterator<Parameters>(s);
-    CHECK_TRUE(Move(FU, SQ_2I) == *iter);
-    ++iter;
-    CHECK_TRUE(Move(FU, SQ_3I) == *iter);
-    ++iter;
-    // CHECK_TRUE(Move(FU, SQ_4I) == *iter); two pawns in a file
-    CHECK_TRUE(Move(FU, SQ_5I) == *iter);
-    ++iter;
-    // CHECK_TRUE(Move(FU, SQ_6I) == *iter); two pawns in a file
-    CHECK_TRUE(Move(FU, SQ_7I) == *iter);
-    ++iter;
-    CHECK_TRUE(Move(FU, SQ_8I) == *iter);
-    ++iter;
-    CHECK_FALSE(iter != iter.end());
-    CHECK_TRUE(iter.is_end());
+    compare("3rk/R4/5/P4/KPPP1 b P", {"P*1c", "P*1d", "P*1e"});
+
+    // pawn final rank
+    compare("sssss/sssss/sssss/ssss1/ssss1 w pg", {"P*1d", "G*1d", "G*1e"});
 }
 
-TEST(test_drop_evasion_iterator_shogi, immobile_lance)
+TEST(drop_move_iterator, minishogi_check)
 {
-    {
-        const auto s = State("r1K6/9/9/9/9/9/9/9/9 b L");
-        auto iter = vshogi::DropEvasionIterator<Parameters>(s);
-        CHECK_FALSE(iter != iter.end());
-        CHECK_TRUE(iter.is_end());
-    }
-    {
-        const auto s = State("9/r1K6/9/9/9/9/9/9/9 b L");
-        auto iter = vshogi::DropEvasionIterator<Parameters>(s);
-        CHECK_TRUE(Move(KY, SQ_8B) == *iter);
-        ++iter;
-        CHECK_FALSE(iter != iter.end());
-        CHECK_TRUE(iter.is_end());
-    }
+    auto compare = [this](
+                       const std::string& sfen,
+                       const std::vector<std::string>& expect) {
+        compare_moves<vshogi::IterEnum::CHECK, vshogi::minishogi::Parameters>(
+            sfen, expect);
+    };
+
+    // empty stand
+    compare("5/5/5/5/5 b -", {});
+
+    // in check by adjacent piece
+    compare("4k/4G/5/5/4K w p", {});
+
+    // in double check
+    compare("3kb/5/5/5/K3r b R", {});
+
+    // nominal case
+    compare("4k/5/5/5/5 b P", {"P*1b"});
+    compare("4k/5/5/1P3/5 b BP", {"P*1b", "B*2b", "B*3c"});
+
+    // two pawns in a file
+    compare("4k/5/5/5/4P b P", {});
+
+    // drop pawn mate
+    compare("3pk/5/4S/5/5 b RP", {"R*1b"});
 }
 
-} // namespace test_vshogi::test_shogi
+TEST(drop_move_iterator, minishogi_evade)
+{
+    auto compare = [this](
+                       const std::string& sfen,
+                       const std::vector<std::string>& expect) {
+        compare_moves<vshogi::IterEnum::EVADE, vshogi::minishogi::Parameters>(
+            sfen, expect);
+    };
+
+    // empty stand
+    compare("4k/5/5/1B3/5 w -", {});
+
+    // in check by adjacent piece
+    compare("r4/2k2/4P/P+bB2/K1S2 b R2gs", {});
+    compare("4k/4G/5/5/5 w p", {});
+
+    // in double check
+    compare("r3k/5/5/5/K3r b PSG", {});
+
+    // nominal case
+    compare("4k/5/5/1B3/5 w ps", {"P*2b", "S*2b", "P*3c", "S*3c"});
+
+    // two pawns in a file
+    compare("3pk/5/5/1B3/5 w p", {"P*3c"}); // note skipping "P*2b"
+
+    // immobile pawn
+    compare("r3K/5/5/5/5 b P", {});
+
+    // drop pawn mate
+    compare("G1kb+R/5/2G2/K4/5 b P", {"P*4c"}); // note skipping "P*3b"
+}
+
+TEST(drop_move_iterator, judkins_shogi_evade)
+{
+    auto compare
+        = [this](
+              const std::string& sfen, const std::vector<std::string>& expect) {
+              compare_moves<
+                  vshogi::IterEnum::EVADE,
+                  vshogi::judkins_shogi::Parameters>(sfen, expect);
+          };
+    // empty stand
+    // in check by adjacent piece
+    // in double check
+    // nominal case
+    // two pawns in a file
+    // immobile pawn
+    // immobile knight
+    compare("5K/6/6/2b3/6/6 b N", {"N*3c"}); // skipping N*2b
+    // drop pawn mate
+}
+
+TEST(drop_move_iterator, standard_shogi_check)
+{
+    auto compare
+        = [this](
+              const std::string& sfen, const std::vector<std::string>& expect) {
+              compare_moves<vshogi::IterEnum::CHECK, vshogi::shogi::Parameters>(
+                  sfen, expect);
+          };
+
+    // empty stand
+    // in check by adjacent piece
+    // in double check
+    // nominal case
+    // two pawns in a file
+    compare("3k5/9/9/9/9/9/7g1/9/5rPKL w p", {}); // drop pawn mate
+}
+
+TEST(drop_move_iterator, standard_shogi_evade)
+{
+    auto compare
+        = [this](
+              const std::string& sfen, const std::vector<std::string>& expect) {
+              compare_moves<vshogi::IterEnum::EVADE, vshogi::shogi::Parameters>(
+                  sfen, expect);
+          };
+    // empty stand
+    // in check by adjacent piece
+    // in double check
+    // nominal case
+    // two pawns in a file
+    compare("9/9/9/9/9/9/1PpPpPpP1/9/+r7K b P", {"P*3i", "P*5i", "P*7i"});
+    // immobile pawn
+
+    {
+        compare("r1K6/9/9/9/9/9/9/9/9 b L", {}); // immobile lance
+        compare("9/r1K6/9/9/9/9/9/9/9 b L", {"L*8b"});
+    }
+
+    // immobile knight
+    // drop pawn mate
+}
+
+} // namespace test_vshogi

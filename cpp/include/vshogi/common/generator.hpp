@@ -7,6 +7,8 @@
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/iterator/chained_iterator.hpp"
+#include "vshogi/common/iterator/drop.hpp"
+#include "vshogi/common/iterator/iterator.hpp"
 #include "vshogi/common/iterator/king.hpp"
 #include "vshogi/common/magic.hpp"
 #include "vshogi/common/move.hpp"
@@ -22,14 +24,6 @@ namespace vshogi
  * - destination
  * - promotion
  * - piece type (optional)
- *
- * DropMoveGenerator<Check=false>
- * for (pt : piece_types)
- *     for (dst : destinations)
- *
- * DropMoveGenerator<Check=true>
- * for (pt : piece_types)
- *     for (dst : destinations)
  *
  * SoldierMoveGenerator<Check=false>
  * for (src : sources)
@@ -51,107 +45,6 @@ namespace vshogi
  *     for (dst : destinations)
  *         for (src : sources)  # cannot cope with discovered check
  */
-
-template <class P, bool Check = false>
-class DropMoveGenerator
-{
-private:
-    using C = Configuration<P>;
-    using SquareIterator = typename BitBoard<P>::SquareIterator;
-    using PieceType = typename C::PieceType;
-    using PHelper = Pieces<P>;
-
-private:
-    const State<P>& m_state;
-    const ColorEnum m_turn;
-    const Stand<P>& m_stand;
-    SquareIterator m_sq_iter;
-    PieceType m_pt_iter;
-
-public:
-    DropMoveGenerator(const State<P>& state)
-        : m_state(state), m_turn(state.get_turn()),
-          m_stand(state.get_stand()), m_sq_iter{}, m_pt_iter{}
-    {
-        if (!state.can_apply_drop_move()) {
-            m_pt_iter = static_cast<PieceType>(C::num_stand_piece_types);
-            return;
-        }
-        increment_piece_type_unless_in_stand();
-        if (m_pt_iter == C::num_stand_piece_types)
-            return;
-        init_sq_iter();
-        increment_piece_type_while_no_dst();
-    }
-    DropMoveGenerator& operator++()
-    {
-        ++m_sq_iter;
-        increment_piece_type_while_no_dst();
-        return *this;
-    }
-    Move<P> operator*() const
-    {
-        return Move<P>(m_pt_iter, *m_sq_iter);
-    }
-    DropMoveGenerator begin()
-    {
-        return *this;
-    }
-    DropMoveGenerator end()
-    {
-        static const auto end_iter = DropMoveGenerator(
-            m_state, static_cast<PieceType>(C::num_stand_piece_types));
-        return end_iter;
-    }
-    bool operator!=(const DropMoveGenerator& other) const
-    {
-        return (m_sq_iter != other.m_sq_iter) || (m_pt_iter != other.m_pt_iter);
-    }
-    bool is_end() const
-    {
-        return m_sq_iter.is_end() && (m_pt_iter == C::num_stand_piece_types);
-    }
-
-private:
-    DropMoveGenerator(const State<P>& state, const PieceType pt)
-        : m_state(state), m_turn(state.get_turn()), m_stand(state.get_stand()),
-          m_sq_iter(), m_pt_iter(pt)
-    {
-    }
-    void init_sq_iter()
-    {
-        const auto& b = m_state.get_board();
-        const auto p = PHelper::to_board_piece(m_turn, m_pt_iter);
-        if (m_state.in_check()) {
-            m_sq_iter = b.template compute_droppable<Check>(
-                             p,
-                             BitBoard<P>::get_line_segment(
-                                 m_state.get_checker_square(),
-                                 b.get_king_square(m_turn)))
-                            .square_iterator();
-        } else {
-            m_sq_iter
-                = b.template compute_droppable<Check>(p).square_iterator();
-        }
-    }
-    void increment_piece_type_while_no_dst()
-    {
-        while (m_sq_iter.is_end()) {
-            m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
-            increment_piece_type_unless_in_stand();
-            if (m_pt_iter >= C::num_stand_piece_types)
-                break;
-            init_sq_iter();
-        }
-    }
-    void increment_piece_type_unless_in_stand()
-    {
-        while ((m_pt_iter < C::num_stand_piece_types)
-               && !m_stand.exist(m_pt_iter)) {
-            m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
-        }
-    }
-};
 
 template <class P, bool Check>
 class SoldierMoveGenerator;
@@ -743,12 +636,12 @@ using BoardMoveGenerator = ChainedIterator<
     KingMoveIterator<P, Check>,
     SoldierMoveGenerator<P, Check>>;
 
-template <class P, bool Check = false>
+template <class P, IterEnum IterType = IterEnum::LEGAL>
 using LegalMoveGenerator = ChainedIterator<
     P,
-    KingMoveIterator<P, Check>,
-    SoldierMoveGenerator<P, Check>,
-    DropMoveGenerator<P, Check>>;
+    KingMoveIterator<P, IterType == IterEnum::CHECK>,
+    SoldierMoveGenerator<P, IterType == IterEnum::CHECK>,
+    DropMoveIterator<P, IterType>>;
 
 } // namespace vshogi
 
