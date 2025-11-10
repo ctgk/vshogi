@@ -264,7 +264,8 @@ private:
         if ((*nibling) != nullptr)
             return expand_board_moves(next, nibling);
         if (offence)
-            return expand_by_generator<BoardMoveGenerator<P, true>>(next, s);
+            return expand_by_generator<BoardMoveGenerator<P, IterEnum::CHECK>>(
+                next, s);
         expand_by_generator<KingMoveIterator<P>>(next, s);
         return expand_by_generator<BlockMoveGenerator<P>>(next, s);
     }

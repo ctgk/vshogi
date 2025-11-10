@@ -5,13 +5,14 @@
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/config.hpp"
+#include "vshogi/common/iterator/iterator.hpp"
 #include "vshogi/common/squares.hpp"
 #include "vshogi/common/state.hpp"
 
 namespace vshogi
 {
 
-template <class P, bool Check = false>
+template <class P, IterEnum IterType = IterEnum::LEGAL>
 class KingMoveIterator
 {
 private:
@@ -32,7 +33,7 @@ public:
     KingMoveIterator(const State<P>& state)
         : m_src(state.get_board().get_king_square(state.get_turn())), m_iter()
     {
-        if constexpr (Check) {
+        if constexpr (IterType == IterEnum::CHECK) {
             const auto t = state.get_turn();
             const auto& b = state.get_board();
             const auto enemy_king_sq = b.get_king_square(~t);

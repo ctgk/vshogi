@@ -630,16 +630,16 @@ private:
     }
 };
 
-template <class P, bool Check = false>
+template <class P, IterEnum IterType = IterEnum::LEGAL>
 using BoardMoveGenerator = ChainedIterator<
     P,
-    KingMoveIterator<P, Check>,
-    SoldierMoveGenerator<P, Check>>;
+    KingMoveIterator<P, IterType>,
+    SoldierMoveGenerator<P, IterType == IterEnum::CHECK>>;
 
 template <class P, IterEnum IterType = IterEnum::LEGAL>
 using LegalMoveGenerator = ChainedIterator<
     P,
-    KingMoveIterator<P, IterType == IterEnum::CHECK>,
+    KingMoveIterator<P, IterType>,
     SoldierMoveGenerator<P, IterType == IterEnum::CHECK>,
     DropMoveIterator<P, IterType>>;
 
