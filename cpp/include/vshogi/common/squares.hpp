@@ -121,7 +121,15 @@ public:
     {
         return (d == DIR_NA || sq == C::SQ_NA) ? C::SQ_NA : shift_table[sq][d];
     }
-    static DirectionEnum get_direction(const Square& dst, const Square& src)
+
+    /**
+     * @brief Estimate direction for source to destination.
+     *
+     * @param src Source square
+     * @param dst Destination square
+     * @return DirectionEnum
+     */
+    static DirectionEnum direction(const Square& src, const Square& dst)
     {
         if ((dst == C::SQ_NA) || (src == C::SQ_NA))
             return DIR_NA;
@@ -150,12 +158,20 @@ public:
         };
         return table[d];
     }
+
+    /**
+     * @brief Get array of squares from the given source to the given direction.
+     *
+     * @param src exclusive source square.
+     * @param direction direction of the ray.
+     * @return const Square*
+     */
     static const Square*
-    get_squares_along(const DirectionEnum& direction, const Square& location)
+    ray_from(const Square& src, const DirectionEnum& direction)
     {
-        if ((direction == DIR_NA) || (location == C::SQ_NA))
+        if ((direction == DIR_NA) || (src == C::SQ_NA))
             return nullptr;
-        return ranging_squares_to[location][direction];
+        return ranging_squares_to[src][direction];
     }
 
 private:

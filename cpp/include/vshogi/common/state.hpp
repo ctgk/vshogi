@@ -318,9 +318,9 @@ private:
             m_checkers[1] = C::SQ_NA;
             return;
         }
-        const auto dst_dir = SHelper::get_direction(dst, enemy_king_sq);
+        const auto dst_dir = SHelper::direction(enemy_king_sq, dst);
         const auto discovered_checker_sq = find_discovered_checker_square(
-            enemy_king_sq, dst_dir, SHelper::get_direction(src, enemy_king_sq));
+            enemy_king_sq, dst_dir, SHelper::direction(enemy_king_sq, src));
 
         const bool check_by_discovered = (discovered_checker_sq != C::SQ_NA);
         const bool check_by_moved = is_check_by_moved(enemy_king_sq, dst);

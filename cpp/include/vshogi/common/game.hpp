@@ -386,7 +386,7 @@ public:
         for (auto sq : EnumIterator<Square, num_squares>()) {
             const uint ii = static_cast<uint>(sq);
             for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
-                auto ptr_sq = SHelper::get_squares_along(dir, sq);
+                auto ptr_sq = SHelper::ray_from(sq, dir);
                 for (; *ptr_sq != C::SQ_NA; ++ptr_sq) {
                     const uint jj = static_cast<uint>(*ptr_sq);
                     data[ii * num_squares + jj] = 1.f;
@@ -403,7 +403,7 @@ public:
         for (auto sq : EnumIterator<Square, num_squares>()) {
             const uint ii = static_cast<uint>(sq);
             for (auto dir : directions) {
-                auto ptr_sq = SHelper::get_squares_along(dir, sq);
+                auto ptr_sq = SHelper::ray_from(sq, dir);
                 for (; *ptr_sq != C::SQ_NA; ++ptr_sq) {
                     const uint jj = static_cast<uint>(*ptr_sq);
                     data[ii * num_squares + jj] = 1.f;

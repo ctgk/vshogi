@@ -213,7 +213,7 @@ private:
                 goto ExitLabel;
         }
         if (m_pinned.is_one(src)) {
-            const auto dir = SHelper::get_direction(src, king_sq);
+            const auto dir = SHelper::direction(king_sq, src);
             assert((dir < 8) || (dir == DIR_NA));
             movable &= BitBoard<P>::get_ray_to(king_sq, dir);
         }
@@ -417,7 +417,7 @@ private:
     update_dst_mask_by_counter_check(const Square src, const Square king_sq)
     {
         if (m_pinned.is_one(src)) {
-            const auto dir = SHelper::get_direction(src, king_sq);
+            const auto dir = SHelper::direction(king_sq, src);
             assert((dir < 8) || (dir == DIR_NA));
             m_dst_mask &= BitBoard<P>::get_ray_to(king_sq, dir);
         }
@@ -434,7 +434,7 @@ private:
             enemy_king_sq,
             m_board.get_occupied());
         if (m_cover.is_one(src)) {
-            const auto dir = SHelper::get_direction(src, enemy_king_sq);
+            const auto dir = SHelper::direction(enemy_king_sq, src);
             mask &= atk | (~BitBoard<P>::get_ray_to(enemy_king_sq, dir));
         } else {
             mask &= atk;

@@ -155,7 +155,7 @@ public:
         if (!state.can_apply_drop_move())
             return;
         const auto k = state.get_king_square();
-        m_sq_iter = S::get_squares_along(S::get_direction(m_sq_end, k), k);
+        m_sq_iter = S::ray_from(k, S::direction(k, m_sq_end));
         assert(m_sq_iter != nullptr);
         if (*m_sq_iter == m_sq_end) {
             m_pt_iter = pt_end;

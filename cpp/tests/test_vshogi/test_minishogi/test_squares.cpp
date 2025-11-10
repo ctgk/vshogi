@@ -130,14 +130,14 @@ TEST(test_minishogi_squares, in_promotion_zone)
     CHECK_TRUE(Squares::in_promotion_zone(RANK5, vshogi::WHITE));
 }
 
-TEST(test_minishogi_squares, get_direction)
+TEST(test_minishogi_squares, direction)
 {
-    CHECK_EQUAL(vshogi::DIR_NW, Squares::get_direction(SQ_5A, SQ_3C));
+    CHECK_EQUAL(vshogi::DIR_NW, Squares::direction(SQ_3C, SQ_5A));
 
     // note that there is no knight move in Minishogi.
-    CHECK_EQUAL(vshogi::DIR_NA, Squares::get_direction(SQ_5A, SQ_4C));
+    CHECK_EQUAL(vshogi::DIR_NA, Squares::direction(SQ_4C, SQ_5A));
 
-    CHECK_EQUAL(vshogi::DIR_NE, Squares::get_direction(SQ_1A, SQ_4D));
+    CHECK_EQUAL(vshogi::DIR_NE, Squares::direction(SQ_4D, SQ_1A));
 }
 
 TEST(test_minishogi_squares, chebyshev_distance)
@@ -147,26 +147,26 @@ TEST(test_minishogi_squares, chebyshev_distance)
     CHECK_EQUAL(3u, Squares::chebyshev_distance(SQ_1B, SQ_4D));
 }
 
-TEST(test_minishogi_squares, get_squares_along)
+TEST(test_minishogi_squares, ray_from)
 {
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_NA, SQ_NA);
+        const auto actual = Squares::ray_from(SQ_NA, vshogi::DIR_NA);
         CHECK_EQUAL(nullptr, actual);
     }
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_NA, SQ_1A);
+        const auto actual = Squares::ray_from(SQ_1A, vshogi::DIR_NA);
         CHECK_EQUAL(nullptr, actual);
     }
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_S, SQ_NA);
+        const auto actual = Squares::ray_from(SQ_NA, vshogi::DIR_S);
         CHECK_EQUAL(nullptr, actual);
     }
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_E, SQ_1A);
+        const auto actual = Squares::ray_from(SQ_1A, vshogi::DIR_E);
         CHECK_EQUAL(SQ_NA, actual[0]);
     }
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_S, SQ_1D);
+        const auto actual = Squares::ray_from(SQ_1D, vshogi::DIR_S);
         CHECK_EQUAL(SQ_1E, actual[0]);
         CHECK_EQUAL(SQ_NA, actual[1]);
     }

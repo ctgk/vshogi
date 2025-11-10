@@ -166,54 +166,54 @@ TEST(test_judkins_shogi_squares, in_promotion_zone)
     CHECK_TRUE(Squares::in_promotion_zone(RANK6, vshogi::WHITE));
 }
 
-TEST(test_judkins_shogi_squares, get_direction)
+TEST(test_judkins_shogi_squares, direction)
 {
     // Note that result will be different in Minishogi.
-    CHECK_EQUAL(vshogi::DIR_NNW, Squares::get_direction(SQ_5A, SQ_4C));
+    CHECK_EQUAL(vshogi::DIR_NNW, Squares::direction(SQ_4C, SQ_5A));
 
-    CHECK_EQUAL(vshogi::DIR_NW, Squares::get_direction(SQ_2A, SQ_1B));
-    CHECK_EQUAL(vshogi::DIR_N, Squares::get_direction(SQ_6B, SQ_6F));
-    CHECK_EQUAL(vshogi::DIR_NE, Squares::get_direction(SQ_1A, SQ_6F));
-    CHECK_EQUAL(vshogi::DIR_W, Squares::get_direction(SQ_4D, SQ_1D));
-    CHECK_EQUAL(vshogi::DIR_E, Squares::get_direction(SQ_1D, SQ_3D));
-    CHECK_EQUAL(vshogi::DIR_SW, Squares::get_direction(SQ_4B, SQ_3A));
-    CHECK_EQUAL(vshogi::DIR_S, Squares::get_direction(SQ_1E, SQ_1A));
-    CHECK_EQUAL(vshogi::DIR_SE, Squares::get_direction(SQ_1F, SQ_6A));
-    CHECK_EQUAL(vshogi::DIR_SSW, Squares::get_direction(SQ_6C, SQ_5A));
-    CHECK_EQUAL(vshogi::DIR_SSE, Squares::get_direction(SQ_2D, SQ_3B));
-    CHECK_EQUAL(vshogi::DIR_NA, Squares::get_direction(SQ_6A, SQ_1B));
+    CHECK_EQUAL(vshogi::DIR_NW, Squares::direction(SQ_1B, SQ_2A));
+    CHECK_EQUAL(vshogi::DIR_N, Squares::direction(SQ_6F, SQ_6B));
+    CHECK_EQUAL(vshogi::DIR_NE, Squares::direction(SQ_6F, SQ_1A));
+    CHECK_EQUAL(vshogi::DIR_W, Squares::direction(SQ_1D, SQ_4D));
+    CHECK_EQUAL(vshogi::DIR_E, Squares::direction(SQ_3D, SQ_1D));
+    CHECK_EQUAL(vshogi::DIR_SW, Squares::direction(SQ_3A, SQ_4B));
+    CHECK_EQUAL(vshogi::DIR_S, Squares::direction(SQ_1A, SQ_1E));
+    CHECK_EQUAL(vshogi::DIR_SE, Squares::direction(SQ_6A, SQ_1F));
+    CHECK_EQUAL(vshogi::DIR_SSW, Squares::direction(SQ_5A, SQ_6C));
+    CHECK_EQUAL(vshogi::DIR_SSE, Squares::direction(SQ_3B, SQ_2D));
+    CHECK_EQUAL(vshogi::DIR_NA, Squares::direction(SQ_1B, SQ_6A));
 }
 
-TEST(test_judkins_shogi_squares, get_squares_along)
+TEST(test_judkins_shogi_squares, ray_from)
 {
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_NA, SQ_NA);
+        const auto actual = Squares::ray_from(SQ_NA, vshogi::DIR_NA);
         CHECK_EQUAL(nullptr, actual);
     }
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_NA, SQ_1A);
+        const auto actual = Squares::ray_from(SQ_1A, vshogi::DIR_NA);
         CHECK_EQUAL(nullptr, actual);
     }
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_S, SQ_NA);
+        const auto actual = Squares::ray_from(SQ_NA, vshogi::DIR_S);
         CHECK_EQUAL(nullptr, actual);
     }
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_E, SQ_1A);
+        const auto actual = Squares::ray_from(SQ_1A, vshogi::DIR_E);
         CHECK_EQUAL(SQ_NA, actual[0]);
     }
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_S, SQ_1E);
+        const auto actual = Squares::ray_from(SQ_1E, vshogi::DIR_S);
         CHECK_EQUAL(SQ_1F, actual[0]);
         CHECK_EQUAL(SQ_NA, actual[1]);
     }
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_NNE, SQ_5E);
+        const auto actual = Squares::ray_from(SQ_5E, vshogi::DIR_NNE);
         CHECK_EQUAL(SQ_4C, actual[0]);
         CHECK_EQUAL(SQ_NA, actual[1]);
     }
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_NNE, SQ_5B);
+        const auto actual = Squares::ray_from(SQ_5B, vshogi::DIR_NNE);
         CHECK_EQUAL(SQ_NA, actual[0]);
     }
 }

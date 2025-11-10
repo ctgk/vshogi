@@ -176,7 +176,7 @@ public:
         const DirectionEnum& dir,
         const Square& skip = C::SQ_NA) const
     {
-        auto ptr_sq = SHelper::get_squares_along(dir, attacked);
+        auto ptr_sq = SHelper::ray_from(attacked, dir);
         if (ptr_sq == nullptr)
             return C::SQ_NA;
         if (!(BitBoardType::get_ray_to(attacked, dir)
@@ -222,7 +222,7 @@ public:
         const auto ray = BitBoardType::get_ray_to(attacked, dir);
         if (!(ray & m_bb_color[attacker_color]).any())
             return C::SQ_NA;
-        auto psq = SHelper::get_squares_along(dir, attacked);
+        auto psq = SHelper::ray_from(attacked, dir);
         if (psq == nullptr)
             return C::SQ_NA;
         for (; *psq != C::SQ_NA; ++psq) {
@@ -504,8 +504,8 @@ private:
             &= (Magic<Parameters>::get_adjacent_attack(target)
                 | Magic<Parameters>::get_diagonal_attack(target));
         for (auto atk : attackers.square_iterator()) {
-            const auto king_dir = SHelper::get_direction(target, atk);
-            if (!PHelper::is_ranging_to(m_pieces[atk], king_dir))
+            const auto target_dir = SHelper::direction(atk, target);
+            if (!PHelper::is_ranging_to(m_pieces[atk], target_dir))
                 continue;
             auto blockers = BitBoardType::get_line_segment(atk, target);
             blockers &= (m_bb_color[BLACK] | m_bb_color[WHITE]);
@@ -627,7 +627,7 @@ private:
             const bool is_attacking_the_pawn = (src_next != C::SQ_NA);
             if (is_attacking_the_pawn) {
                 const auto discovered_dir
-                    = SHelper::get_direction(src_next, enemy_king_sq);
+                    = SHelper::direction(enemy_king_sq, src_next);
                 const auto discovered_attacker_sq = find_ranging_attacker(
                     by_side, enemy_king_sq, discovered_dir, src_next);
                 const auto is_pinned = (discovered_attacker_sq != C::SQ_NA);

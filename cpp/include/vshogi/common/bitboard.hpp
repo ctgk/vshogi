@@ -479,7 +479,7 @@ private:
 private:
     static BitBoard compute_line_segment(Square a, const Square b)
     {
-        const auto dir_to_b = SHelper::get_direction(b, a);
+        const auto dir_to_b = SHelper::direction(a, b);
         if (dir_to_b == DIR_NA)
             return BitBoard();
         BitBoard out{};

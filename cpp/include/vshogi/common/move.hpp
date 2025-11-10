@@ -192,7 +192,7 @@ private:
             return C::num_dir_dl * 2 + static_cast<uint>(source_piece());
         const uint promo_offset = promote() ? C::num_dir_dl : 0U;
         const auto direction
-            = SHelper::get_direction(source_square(), destination());
+            = SHelper::direction(destination(), source_square());
         return static_cast<uint>(direction) + promo_offset;
     }
 };

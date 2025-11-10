@@ -394,52 +394,52 @@ TEST(test_shogi_squares, shift)
     CHECK_EQUAL(SQ_NA, Squares::shift(SQ_9I, vshogi::DIR_SSE));
 }
 
-TEST(test_shogi_squares, get_direction)
+TEST(test_shogi_squares, direction)
 {
-    CHECK_EQUAL(vshogi::DIR_NW, Squares::get_direction(SQ_2A, SQ_1B));
-    CHECK_EQUAL(vshogi::DIR_N, Squares::get_direction(SQ_8B, SQ_8F));
-    CHECK_EQUAL(vshogi::DIR_NE, Squares::get_direction(SQ_1A, SQ_6F));
-    CHECK_EQUAL(vshogi::DIR_W, Squares::get_direction(SQ_9D, SQ_1D));
-    CHECK_EQUAL(vshogi::DIR_E, Squares::get_direction(SQ_1D, SQ_9D));
-    CHECK_EQUAL(vshogi::DIR_SW, Squares::get_direction(SQ_8F, SQ_3A));
-    CHECK_EQUAL(vshogi::DIR_S, Squares::get_direction(SQ_1I, SQ_1A));
-    CHECK_EQUAL(vshogi::DIR_SE, Squares::get_direction(SQ_1I, SQ_9A));
-    CHECK_EQUAL(vshogi::DIR_SSW, Squares::get_direction(SQ_8I, SQ_7G));
-    CHECK_EQUAL(vshogi::DIR_SSE, Squares::get_direction(SQ_2I, SQ_3G));
-    CHECK_EQUAL(vshogi::DIR_NA, Squares::get_direction(SQ_9A, SQ_2B));
-    CHECK_EQUAL(vshogi::DIR_NA, Squares::get_direction(SQ_5C, SQ_1A));
+    CHECK_EQUAL(vshogi::DIR_NW, Squares::direction(SQ_1B, SQ_2A));
+    CHECK_EQUAL(vshogi::DIR_N, Squares::direction(SQ_8F, SQ_8B));
+    CHECK_EQUAL(vshogi::DIR_NE, Squares::direction(SQ_6F, SQ_1A));
+    CHECK_EQUAL(vshogi::DIR_W, Squares::direction(SQ_1D, SQ_9D));
+    CHECK_EQUAL(vshogi::DIR_E, Squares::direction(SQ_9D, SQ_1D));
+    CHECK_EQUAL(vshogi::DIR_SW, Squares::direction(SQ_3A, SQ_8F));
+    CHECK_EQUAL(vshogi::DIR_S, Squares::direction(SQ_1A, SQ_1I));
+    CHECK_EQUAL(vshogi::DIR_SE, Squares::direction(SQ_9A, SQ_1I));
+    CHECK_EQUAL(vshogi::DIR_SSW, Squares::direction(SQ_7G, SQ_8I));
+    CHECK_EQUAL(vshogi::DIR_SSE, Squares::direction(SQ_3G, SQ_2I));
+    CHECK_EQUAL(vshogi::DIR_NA, Squares::direction(SQ_2B, SQ_9A));
+    CHECK_EQUAL(vshogi::DIR_NA, Squares::direction(SQ_1A, SQ_5C));
 }
 
-TEST(test_shogi_squares, get_squares_along)
+TEST(test_shogi_squares, ray_from)
 {
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_NA, SQ_NA);
+        const auto actual = Squares::ray_from(SQ_NA, vshogi::DIR_NA);
         CHECK_EQUAL(nullptr, actual);
     }
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_NA, SQ_1A);
+        const auto actual = Squares::ray_from(SQ_1A, vshogi::DIR_NA);
         CHECK_EQUAL(nullptr, actual);
     }
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_S, SQ_NA);
+        const auto actual = Squares::ray_from(SQ_NA, vshogi::DIR_S);
         CHECK_EQUAL(nullptr, actual);
     }
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_E, SQ_1A);
+        const auto actual = Squares::ray_from(SQ_1A, vshogi::DIR_E);
         CHECK_EQUAL(SQ_NA, actual[0]);
     }
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_S, SQ_1H);
+        const auto actual = Squares::ray_from(SQ_1H, vshogi::DIR_S);
         CHECK_EQUAL(SQ_1I, actual[0]);
         CHECK_EQUAL(SQ_NA, actual[1]);
     }
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_NNE, SQ_5E);
+        const auto actual = Squares::ray_from(SQ_5E, vshogi::DIR_NNE);
         CHECK_EQUAL(SQ_4C, actual[0]);
         CHECK_EQUAL(SQ_NA, actual[1]);
     }
     {
-        const auto actual = Squares::get_squares_along(vshogi::DIR_NNE, SQ_5B);
+        const auto actual = Squares::ray_from(SQ_5B, vshogi::DIR_NNE);
         CHECK_EQUAL(SQ_NA, actual[0]);
     }
 }
