@@ -17,7 +17,6 @@ inline float piece_value_func(const Game<Parameters>& g)
     using PieceType = typename C::PieceType;
     using Square = typename C::Square;
     constexpr uint num_squares = C::num_squares;
-    constexpr uint num_stand_piece_types = C::num_stand_piece_types;
     constexpr float scaler = static_cast<float>(C::sum_piece_value);
 
     const ColorEnum turn = g.get_turn();
@@ -32,7 +31,7 @@ inline float piece_value_func(const Game<Parameters>& g)
         const auto v = static_cast<float>(PHelper::get_value(pt));
         value += (c == turn) ? v : -v;
     }
-    for (PieceType pt : EnumIterator<PieceType, num_stand_piece_types>()) {
+    for (PieceType pt : C::stand_piece_type_iterator()) {
         const auto v = PHelper::get_value(pt);
         value += static_cast<float>(ally_stand.count(pt) * v);
         value -= static_cast<float>(enemy_stand.count(pt) * v);

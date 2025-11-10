@@ -565,7 +565,7 @@ TEST(shogi_pieces, get_attack_directions)
         {DIR_NW, DIR_N, DIR_NE, DIR_W, DIR_E, DIR_SW, DIR_S, DIR_SE, DIR_NA}, // B_RY
         // clang-format on
     };
-    for (auto pt : EnumIterator<PieceTypeEnum, Config::num_piece_types>()) {
+    for (auto pt : Config::stand_piece_type_iterator()) {
         for (auto&& color : {BLACK, WHITE}) {
             const ColoredPieceEnum p
                 = vshogi::shogi::Pieces::to_board_piece(color, pt);

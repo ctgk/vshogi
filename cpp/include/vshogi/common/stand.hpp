@@ -49,7 +49,7 @@ public:
     uint unique_count() const
     {
         uint out = 0u;
-        for (auto pt : EnumIterator<PieceType, num_piece_types>())
+        for (auto pt : C::stand_piece_type_iterator())
             out += static_cast<uint>(exist(pt));
         return out;
     }
@@ -132,7 +132,7 @@ private:
     {
         std::uint64_t out = static_cast<std::uint64_t>(0);
         for (auto& c : color_array) {
-            for (auto pt : EnumIterator<PieceType, num_piece_types>()) {
+            for (auto pt : C::stand_piece_type_iterator()) {
                 const auto num = m_stands[c].count(pt);
                 assert(pt < num_piece_types);
                 assert(num <= max_piece_count);
@@ -316,7 +316,7 @@ public:
         std::mt19937_64 rng(dev());
         std::uniform_int_distribution<std::uint64_t> dist;
         for (auto&& c : color_array) {
-            for (auto pt : EnumIterator<PieceType, num_piece_types>()) {
+            for (auto pt : C::stand_piece_type_iterator()) {
                 for (uint num = 0; num < max_piece_count + 1; ++num) {
                     assert(pt < num_piece_types);
                     assert(num <= max_piece_count);

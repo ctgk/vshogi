@@ -93,7 +93,7 @@ inline void export_piece_stand(pybind11::module& m)
         .def("any", &Stand::any)
         .def("to_dict", [](const Stand& self) -> pybind11::dict {
             pybind11::dict out;
-            for (auto pt : vshogi::EnumIterator<PieceType, num_stand_types>())
+            for (auto pt : C::stand_piece_type_iterator())
                 out[pybind11::cast(pt)] = self.count(pt);
             return out;
         });

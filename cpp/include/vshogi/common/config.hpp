@@ -160,6 +160,10 @@ public:
     {
         return EnumIteratorContainer<DirectionEnum, num_dir>();
     }
+    static auto stand_piece_type_iterator()
+    {
+        return EnumIteratorContainer<PieceType, num_stand_piece_types>();
+    }
 };
 
 } // namespace vshogi

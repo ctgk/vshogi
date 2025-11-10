@@ -323,7 +323,7 @@ public:
                 continue;
             piece_count[PHelper::demote(PHelper::to_piece_type(b[sq]))] += 1u;
         }
-        for (auto pt : EnumIterator<PieceType, C::num_stand_piece_types>()) {
+        for (auto pt : C::stand_piece_type_iterator()) {
             piece_count[pt] += black_stand.count(pt) + white_stand.count(pt);
         }
         for (auto pt :
@@ -429,7 +429,7 @@ protected:
         const BoardType& board = s.get_board();
         const auto& stand = s.get_stand(c);
         uint out = board.get_occupied(c).hamming_weight();
-        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>())
+        for (auto pt : C::stand_piece_type_iterator())
             out += stand.count(pt);
         return out;
     }
@@ -440,7 +440,7 @@ protected:
         const auto& stand = s.get_stand(c);
         for (auto sq : board.get_occupied(c).square_iterator())
             out += PHelper::get_point(board[sq]);
-        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>())
+        for (auto pt : C::stand_piece_type_iterator())
             out += stand.count(pt) * PHelper::get_point(pt);
         return out;
     }
@@ -528,7 +528,7 @@ private:
         for (auto sq : mask.square_iterator())
             out += PHelper::get_point(board[sq]);
         const auto& stand = get_stand(c);
-        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>()) {
+        for (auto pt : C::stand_piece_type_iterator()) {
             out += stand.count(pt) * PHelper::get_point(pt);
         }
         return out;

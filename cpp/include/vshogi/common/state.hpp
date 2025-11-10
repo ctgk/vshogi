@@ -208,7 +208,7 @@ public:
 
         float num_pieces_curr[sp_types] = {};
         float num_pieces_next[sp_types] = {};
-        for (auto pt : EnumIterator<PieceType, num_stand_piece_types>()) {
+        for (auto pt : C::stand_piece_type_iterator()) {
             num_pieces_curr[pt] = static_cast<float>(stand_curr.count(pt));
             num_pieces_next[pt] = static_cast<float>(stand_next.count(pt));
         }
