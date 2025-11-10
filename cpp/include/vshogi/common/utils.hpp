@@ -67,6 +67,9 @@ public:
     EnumIterator() : m_curr(0u)
     {
     }
+    EnumIterator(const uint v) : m_curr(v)
+    {
+    }
     EnumIterator& operator++()
     {
         ++m_curr;
@@ -88,11 +91,6 @@ public:
     bool operator!=(const EnumIterator& other)
     {
         return m_curr != other.m_curr;
-    }
-
-private:
-    EnumIterator(const uint v) : m_curr(v)
-    {
     }
 };
 

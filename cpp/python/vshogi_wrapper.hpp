@@ -230,6 +230,7 @@ template <class Parameters>
 inline void export_game(pybind11::module& m)
 {
     namespace py = pybind11;
+    using C = vshogi::Configuration<Parameters>;
     using Game = vshogi::Game<Parameters>;
     using Move = vshogi::Move<Parameters>;
     py::class_<Game>(m, "_Game")
@@ -277,8 +278,7 @@ inline void export_game(pybind11::module& m)
                 const auto n = Game::num_squares;
                 const auto shape = std::vector<py::ssize_t>({num_dir, n, n});
                 auto out = py::array_t<float>(shape);
-                for (auto dir :
-                     vshogi::EnumIterator<vshogi::DirectionEnum, num_dir>()) {
+                for (auto dir : C::direction_iterator()) {
                     Game::attention_matrix(
                         &out.mutable_at(static_cast<int>(dir), 0, 0),
                         {dir},

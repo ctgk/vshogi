@@ -186,7 +186,7 @@ private:
         for (auto sq : EnumIterator<Square, C::num_squares>()) {
             const auto r = to_rank(sq);
             const auto f = to_file(sq);
-            for (auto dir : EnumIterator<DirectionEnum, C::num_dir>()) {
+            for (auto dir : C::direction_iterator()) {
                 if (((r == r1) && has_dir_n(dir))
                     || ((r == r2) && (dir == DIR_NNW || dir == DIR_NNE))
                     || ((r == rn) && has_dir_s(dir))
@@ -207,7 +207,7 @@ private:
         std::fill_n(&ranging_squares_to[0][0][0], size, C::SQ_NA);
 
         for (auto src : EnumIterator<Square, C::num_squares>()) {
-            for (auto dir : EnumIterator<DirectionEnum, C::num_dir>()) {
+            for (auto dir : C::direction_iterator()) {
                 auto dst = src;
                 int index = 0;
                 while (true) {
@@ -229,7 +229,7 @@ private:
                 / sizeof(direction_src_dst_table[0][0]),
             DIR_NA);
         for (auto src : EnumIterator<Square, C::num_squares>()) {
-            for (auto dir : EnumIterator<DirectionEnum, C::num_dir>()) {
+            for (auto dir : C::direction_iterator()) {
                 for (auto dst = shift(src, dir); dst != C::SQ_NA;
                      dst = shift(dst, dir))
                     direction_src_dst_table[src][dst] = dir;

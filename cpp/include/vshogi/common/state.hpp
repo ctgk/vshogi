@@ -292,7 +292,7 @@ private:
         std::fill_n(m_checkers, 2, C::SQ_NA);
         uint index = 0u;
         const auto king_sq = m_board.get_king_square(m_turn);
-        for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
+        for (auto dir : C::direction_iterator()) {
             const auto sq = m_board.find_attacker(~m_turn, king_sq, dir);
             if (sq != C::SQ_NA) {
                 m_checkers[index++] = sq;

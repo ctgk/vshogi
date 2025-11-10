@@ -30,8 +30,7 @@ TEST(test_minishogi_bitboard, shift)
     CHECK_EQUAL(
         bb_na.value(),
         BitBoard::from_square(SQ_1A).shift(vshogi::DIR_NW).value());
-    for (auto dir :
-         vshogi::EnumIterator<vshogi::DirectionEnum, Config::num_dir>()) {
+    for (auto dir : Config::direction_iterator()) {
         for (auto sq :
              vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
             CHECK_TRUE(

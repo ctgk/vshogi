@@ -3,6 +3,7 @@
 
 #include <array>
 
+#include "vshogi/common/direction.hpp"
 #include "vshogi/common/utils.hpp"
 
 namespace vshogi
@@ -137,6 +138,28 @@ public: // game rules
     static constexpr uint sum_piece_value = Param::sum_piece_value;
     static constexpr std::array<ColoredPiece, num_squares> initial_position
         = Param::initial_position;
+
+public:
+    template <class ContiguousEnum, uint End>
+    class EnumIteratorContainer
+    {
+    public:
+        EnumIteratorContainer()
+        {
+        }
+        EnumIterator<ContiguousEnum, End> begin()
+        {
+            return EnumIterator<ContiguousEnum, End>();
+        }
+        EnumIterator<ContiguousEnum, End> end()
+        {
+            return EnumIterator<ContiguousEnum, End>(End);
+        }
+    };
+    static auto direction_iterator()
+    {
+        return EnumIteratorContainer<DirectionEnum, num_dir>();
+    }
 };
 
 } // namespace vshogi

@@ -385,7 +385,7 @@ public:
         std::fill_n(data, num_squares * num_squares, 0.f);
         for (auto sq : EnumIterator<Square, num_squares>()) {
             const uint ii = static_cast<uint>(sq);
-            for (auto dir : EnumIterator<DirectionEnum, num_dir>()) {
+            for (auto dir : C::direction_iterator()) {
                 auto ptr_sq = SHelper::ray_from(sq, dir);
                 for (; *ptr_sq != C::SQ_NA; ++ptr_sq) {
                     const uint jj = static_cast<uint>(*ptr_sq);

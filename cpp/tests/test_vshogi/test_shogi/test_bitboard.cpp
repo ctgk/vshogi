@@ -76,8 +76,7 @@ TEST(test_shogi_bitboard, shift)
         CHECK_FALSE(actual.any());
     }
 
-    for (auto dir :
-         vshogi::EnumIterator<vshogi::DirectionEnum, Config::num_dir>()) {
+    for (auto dir : Config::direction_iterator()) {
         for (auto sq :
              vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
             CHECK_TRUE(

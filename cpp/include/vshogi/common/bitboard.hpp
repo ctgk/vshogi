@@ -377,7 +377,7 @@ public:
         }
 
         for (auto sq : EnumIterator<Square, C::num_squares>()) {
-            for (auto dir : EnumIterator<DirectionEnum, C::num_dir>()) {
+            for (auto dir : C::direction_iterator()) {
                 ray_table[sq][dir] = compute_ray_to(sq, dir);
             }
         }

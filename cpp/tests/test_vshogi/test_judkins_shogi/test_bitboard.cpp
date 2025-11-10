@@ -31,8 +31,7 @@ TEST(test_judkins_shogi_bitboard, shift)
     CHECK_EQUAL(bb_na.value(), bb_1e.shift(vshogi::DIR_SSW).value());
     CHECK_EQUAL(
         (bb_2a | bb_2e).value(), (bb_1a | bb_1e).shift(vshogi::DIR_W).value());
-    for (auto dir :
-         vshogi::EnumIterator<vshogi::DirectionEnum, Config::num_dir>()) {
+    for (auto dir : Config::direction_iterator()) {
         for (auto sq :
              vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
             const auto actual = BitBoard::from_square(sq).shift(dir);

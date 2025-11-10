@@ -620,7 +620,7 @@ private:
     {
         const auto enemy_king_sq = m_kings[~by_side];
         const auto enemy_king_dir = (by_side == BLACK) ? DIR_N : DIR_S;
-        for (auto dir : EnumIterator<DirectionEnum, C::num_dir>()) {
+        for (auto dir : C::direction_iterator()) {
             if (dir == enemy_king_dir)
                 continue;
             const auto src_next = find_attacker(~by_side, dst, dir);
