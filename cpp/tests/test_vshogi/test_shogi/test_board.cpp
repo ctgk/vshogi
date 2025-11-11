@@ -19,17 +19,17 @@ TEST(test_shogi_board, get)
     CHECK_EQUAL(SQ_5A, b.get_king_square(vshogi::WHITE));
 }
 
-TEST(test_shogi_board, set)
+TEST(test_shogi_board, place_at_pop_from)
 {
     auto b = Board();
-    b.apply(SQ_5E, B_HI);
-    b.apply(SQ_3A, VOID);
-    b.apply(SQ_8H, W_UM);
+    b.place_at(SQ_5E, B_HI);
+    b.place_at(SQ_3A, VOID);
+    b.place_at(SQ_8H, W_UM);
     CHECK_EQUAL(B_HI, b[SQ_5E]);
     CHECK_EQUAL(VOID, b[SQ_3A]);
     CHECK_EQUAL(W_UM, b[SQ_8H]);
     CHECK_EQUAL(SQ_5I, b.get_king_square(vshogi::BLACK));
-    b.apply(SQ_4H, SQ_5I);
+    b.place_at(SQ_4H, b.pop_from(SQ_5I));
     CHECK_EQUAL(SQ_4H, b.get_king_square(vshogi::BLACK));
 }
 
@@ -188,13 +188,13 @@ TEST(test_shogi_board, get_occupied_by_ranging)
     {
         auto b = Board("9/9/9/9/9/9/9/9/8L");
         CHECK_TRUE(bb_1i == b.get_occupied_by_ranging(vshogi::BLACK));
-        b.apply(SQ_1A, SQ_1I, true);
+        b.place_at(SQ_1A, Pieces::promote_nocheck(b.pop_from(SQ_1I)));
         CHECK_TRUE(bb_na == b.get_occupied_by_ranging(vshogi::BLACK));
     }
     {
         auto b = Board("9/9/9/9/9/9/9/9/8L");
         CHECK_TRUE(bb_1i == b.get_occupied_by_ranging(vshogi::BLACK));
-        b.apply(SQ_1D, SQ_1I, false);
+        b.place_at(SQ_1D, b.pop_from(SQ_1I));
         CHECK_TRUE(bb_1d == b.get_occupied_by_ranging(vshogi::BLACK));
     }
 }

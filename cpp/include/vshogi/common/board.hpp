@@ -117,6 +117,27 @@ public:
     {
         return m_bb_ranger[c];
     }
+    ColoredPiece pop_from(const Square& sq, std::uint64_t* const hash = nullptr)
+    {
+        const auto popped = m_pieces[sq];
+        m_pieces[sq] = C::VOID;
+        if (hash != nullptr)
+            *hash ^= zobrist_table[sq][C::VOID];
+        update_internals_by_popped(popped, sq, hash);
+        return popped;
+    }
+    ColoredPiece place_at(
+        const Square& sq,
+        const ColoredPiece& p,
+        std::uint64_t* const hash = nullptr)
+    {
+        assert(sq < C::SQ_NA);
+        const auto popped = m_pieces[sq];
+        m_pieces[sq] = p;
+        update_internals_by_placed(p, sq, hash);
+        update_internals_by_popped(popped, sq, hash);
+        return popped;
+    }
     void append_sfen(std::string& out) const
     {
         append_sfen_rank(static_cast<Rank>(0), out);
@@ -124,24 +145,6 @@ public:
             out += '/';
             append_sfen_rank(static_cast<Rank>(ir), out);
         }
-    }
-    ColoredPiece apply(
-        const Square& dst,
-        const ColoredPiece& p,
-        std::uint64_t* const hash = nullptr)
-    {
-        return place_piece_at(dst, p, hash);
-    }
-    ColoredPiece apply(
-        const Square& dst,
-        const Square& src,
-        const bool& promote = false,
-        std::uint64_t* const hash = nullptr)
-    {
-        ColoredPiece moving_piece = pop_piece_from(src, hash);
-        if (promote)
-            moving_piece = PHelper::promote_nocheck(moving_piece);
-        return place_piece_at(dst, moving_piece, hash);
     }
     const char* set_sfen(const char* sfen)
     {
@@ -412,25 +415,6 @@ private:
         }
         if (num_void > 0)
             out += static_cast<char>('0' + num_void);
-    }
-    ColoredPiece place_piece_at(
-        const Square& sq, const ColoredPiece& p, std::uint64_t* const hash)
-    {
-        assert(sq < C::SQ_NA);
-        const auto popped = m_pieces[sq];
-        m_pieces[sq] = p;
-        update_internals_by_placed(p, sq, hash);
-        update_internals_by_popped(popped, sq, hash);
-        return popped;
-    }
-    ColoredPiece pop_piece_from(const Square& sq, std::uint64_t* const hash)
-    {
-        const auto popped = m_pieces[sq];
-        m_pieces[sq] = C::VOID;
-        if (hash != nullptr)
-            *hash ^= zobrist_table[sq][C::VOID];
-        update_internals_by_popped(popped, sq, hash);
-        return popped;
     }
     void update_internals_based_on_pieces()
     {

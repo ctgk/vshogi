@@ -161,11 +161,14 @@ public:
         if (move.is_drop()) {
             const PieceType src = move.source_piece();
             const ColoredPiece p = m_stands.pop_piece_from(m_turn, src, hash);
-            m_board.apply(dst, p, hash);
+            m_board.place_at(dst, p, hash);
             update_checkers_before_turn_update(dst);
         } else {
             const Square src = move.source_square();
-            const auto captured = m_board.apply(dst, src, move.promote(), hash);
+            auto moving_piece = m_board.pop_from(src, hash);
+            if (move.promote())
+                moving_piece = PHelper::promote_nocheck(moving_piece);
+            const auto captured = m_board.place_at(dst, moving_piece, hash);
             m_stands.add_captured_piece(captured, hash);
             update_checkers_before_turn_update(dst, src);
         }
@@ -183,14 +186,15 @@ public:
         if (captured != VOID)
             m_stands.remove_captured_piece(captured);
         if (move.is_drop()) {
-            const auto dropped = m_board.apply(dst, captured);
+            assert(captured == C::VOID);
+            const auto dropped = m_board.pop_from(dst);
             m_stands.return_dropped_piece(dropped);
         } else {
             const auto src = move.source_square();
-            auto moved = m_board.apply(dst, captured);
+            auto moved = m_board.place_at(dst, captured);
             if (move.promote())
                 moved = PHelper::demote_nocheck(moved);
-            m_board.apply(src, moved);
+            m_board.place_at(src, moved);
         }
         m_turn = ~m_turn;
         m_checkers[0] = checker_sq;

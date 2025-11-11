@@ -18,10 +18,10 @@ TEST(test_minishogi_board, get)
     CHECK_EQUAL(VOID, b[SQ_1D]);
 }
 
-TEST(test_minishogi_board, set)
+TEST(test_minishogi_board, place_at)
 {
     auto b = Board();
-    b.apply(SQ_2D, W_GI);
+    b.place_at(SQ_2D, W_GI);
     CHECK_EQUAL(W_GI, b[SQ_2D]);
     CHECK_EQUAL(W_HI, b[SQ_5A]);
     CHECK_EQUAL(B_GI, b[SQ_3E]);
@@ -119,22 +119,12 @@ TEST(test_minishogi_board, append_sfen)
     STRCMP_EQUAL(expected, actual.c_str());
 }
 
-TEST(test_minishogi_board, apply)
+TEST(test_minishogi_board, pop_from)
 {
-    {
-        auto b = Board();
-        b.apply(SQ_5D, VOID);
-        CHECK_EQUAL(
-            (bb_5e | bb_4e | bb_3e | bb_2e | bb_1e).value(),
-            b.get_occupied(vshogi::BLACK).value());
-    }
-    {
-        auto b = Board();
-        b.apply(SQ_5D, SQ_5A);
-        CHECK_EQUAL(
-            (bb_4a | bb_3a | bb_2a | bb_1a | bb_1b | bb_5d).value(),
-            b.get_occupied(vshogi::WHITE).value());
-    }
+    auto b = Board();
+    CHECK_TRUE(b[SQ_5D] != VOID);
+    b.pop_from(SQ_5D);
+    CHECK_TRUE(b[SQ_5D] == VOID);
 }
 
 TEST(test_minishogi_board, get_occupied)
@@ -153,7 +143,7 @@ TEST(test_minishogi_board, get_occupied)
     }
     {
         auto b = Board("4k/5/5/5/K4 b");
-        b.apply(SQ_1A, SQ_5E);
+        b.place_at(SQ_1A, b.pop_from(SQ_5E));
         CHECK_EQUAL(bb_1a.value(), b.get_occupied().value());
         CHECK_EQUAL(bb_1a.value(), b.get_occupied(vshogi::BLACK).value());
         CHECK_EQUAL(0, b.get_occupied(vshogi::WHITE).value());
@@ -166,7 +156,7 @@ TEST(test_minishogi_board, get_occupied)
     }
     {
         auto b = Board("4k/5/5/5/K4 b");
-        b.apply(SQ_1A, B_FU);
+        b.place_at(SQ_1A, B_FU);
         CHECK_EQUAL((bb_1a | bb_5e).value(), b.get_occupied().value());
         CHECK_EQUAL(
             (bb_1a | bb_5e).value(), b.get_occupied(vshogi::BLACK).value());

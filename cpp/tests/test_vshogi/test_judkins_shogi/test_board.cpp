@@ -18,11 +18,11 @@ TEST(judkins_shogi_board, get)
     CHECK_EQUAL(VOID, b[SQ_1D]);
 }
 
-TEST(judkins_shogi_board, set)
+TEST(judkins_shogi_board, place_at)
 {
     auto b = Board();
     CHECK_EQUAL(VOID, b[SQ_2D]);
-    b.apply(SQ_2D, W_GI);
+    b.place_at(SQ_2D, W_GI);
     CHECK_EQUAL(W_GI, b[SQ_2D]);
 }
 
