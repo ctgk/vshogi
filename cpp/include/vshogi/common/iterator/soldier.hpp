@@ -1,20 +1,12 @@
-#ifndef VSHOGI_COMMON_GENERATOR_HPP
-#define VSHOGI_COMMON_GENERATOR_HPP
-
-#include <cassert>
+#ifndef VSHOGI_COMMON_ITERATOR_SOLDIER_HPP
+#define VSHOGI_COMMON_ITERATOR_SOLDIER_HPP
 
 #include "vshogi/common/bitboard.hpp"
-#include "vshogi/common/board.hpp"
-#include "vshogi/common/color.hpp"
-#include "vshogi/common/iterator/chained_iterator.hpp"
-#include "vshogi/common/iterator/drop.hpp"
+#include "vshogi/common/config.hpp"
 #include "vshogi/common/iterator/iterator.hpp"
-#include "vshogi/common/iterator/king.hpp"
-#include "vshogi/common/magic.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/squares.hpp"
 #include "vshogi/common/state.hpp"
-#include "vshogi/common/utils.hpp"
 
 namespace vshogi
 {
@@ -25,32 +17,35 @@ namespace vshogi
  * - promotion
  * - piece type (optional)
  *
- * SoldierMoveGenerator<Check=false>
+ * SoldierMoveIterator<LEGAL>
  * for (src : sources)
  *     for (dst : destinations)
  *         for (prm : promotions)
  *
- * SoldierMoveGenerator<Check=true>
+ * SoldierMoveIterator<CHECK>
  * for (src : sources)
  *     for (prm : promotions)
  *         for (dst : destinations)
  *
- * SoldierMoveGenerator<Check=true>
- * for (pt : piece_types)
- *     for (src : sources)
- *         for (dst : destinations)
  *
- * SoldierMoveGenerator<Check=true>
- * for (pt : piece_types)
+ * // Current implementation
+ * SoldierMoveIterator<EVADE>
+ * for (dst : destinations)
+ *     for (src : sources) // needs to keep pinned map
+ *         for (prm : promotions)
+ *
+ * // Possibly bad implementation
+ * SoldierMoveIterator<EVADE>
+ * for (src : sources) // too many sources
  *     for (dst : destinations)
- *         for (src : sources)  # cannot cope with discovered check
+ *         for (prm : promotions)
  */
 
-template <class P, bool Check>
-class SoldierMoveGenerator;
+template <class P, IterEnum IterType = IterEnum::LEGAL>
+class SoldierMoveIterator;
 
 template <class P>
-class SoldierMoveGenerator<P, false>
+class SoldierMoveIterator<P, IterEnum::LEGAL>
 {
 private:
     using C = Configuration<P>;
@@ -68,7 +63,7 @@ private:
     bool m_promote;
 
 public:
-    SoldierMoveGenerator(const State<P>& state)
+    SoldierMoveIterator(const State<P>& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(m_state.find_pinned()), m_src_iter(), m_dst_iter(),
           m_promote(true)
@@ -77,7 +72,7 @@ public:
             return;
         init_no_check();
     }
-    SoldierMoveGenerator(const State<P>& state, const BitBoard<P>& src_mask)
+    SoldierMoveIterator(const State<P>& state, const BitBoard<P>& src_mask)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(state.find_pinned()), m_src_iter(), m_dst_iter(),
           m_promote(true)
@@ -94,7 +89,7 @@ public:
         }
         init_promote();
     }
-    SoldierMoveGenerator& operator++()
+    SoldierMoveIterator& operator++()
     {
         if (!m_promote) {
             const auto src = *m_src_iter;
@@ -133,17 +128,17 @@ public:
     {
         return Move<P>(*m_src_iter, *m_dst_iter, m_promote);
     }
-    SoldierMoveGenerator begin()
+    SoldierMoveIterator begin()
     {
         return *this;
     }
-    SoldierMoveGenerator end()
+    SoldierMoveIterator end()
     {
         static const auto end_iter
-            = SoldierMoveGenerator(m_state, BitBoard<P>());
+            = SoldierMoveIterator(m_state, BitBoard<P>());
         return end_iter;
     }
-    bool operator!=(const SoldierMoveGenerator& other) const
+    bool operator!=(const SoldierMoveIterator& other) const
     {
         return (m_src_iter != other.m_src_iter)
                || (m_dst_iter != other.m_dst_iter)
@@ -155,7 +150,7 @@ public:
     }
 
 private:
-    SoldierMoveGenerator(
+    SoldierMoveIterator(
         const State<P>& state,
         const BitBoard<P>& src_mask,
         const BitBoard<P>& pinned)
@@ -237,7 +232,7 @@ private:
 };
 
 template <class P>
-class SoldierMoveGenerator<P, true>
+class SoldierMoveIterator<P, IterEnum::CHECK>
 {
 private:
     using C = Configuration<P>;
@@ -258,7 +253,7 @@ private:
     BitBoard<P> m_dst_mask;
 
 public:
-    SoldierMoveGenerator(const State<P>& state)
+    SoldierMoveIterator(const State<P>& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(state.find_pinned()), m_cover(compute_cover(state)),
           m_src_iter(), m_dst_iter(), m_promote(true), m_dst_mask()
@@ -281,7 +276,7 @@ public:
             ++m_src_iter;
         }
     }
-    SoldierMoveGenerator& operator++()
+    SoldierMoveIterator& operator++()
     {
         ++m_dst_iter;
         if (!m_dst_iter.is_end())
@@ -315,16 +310,16 @@ public:
     {
         return Move<P>(*m_src_iter, *m_dst_iter, m_promote);
     }
-    SoldierMoveGenerator begin()
+    SoldierMoveIterator begin()
     {
         return *this;
     }
-    SoldierMoveGenerator end()
+    SoldierMoveIterator end()
     {
-        static const auto end_iter = SoldierMoveGenerator(m_state, m_board);
+        static const auto end_iter = SoldierMoveIterator(m_state, m_board);
         return end_iter;
     }
-    bool operator!=(const SoldierMoveGenerator& other) const
+    bool operator!=(const SoldierMoveIterator& other) const
     {
         return (m_src_iter != other.m_src_iter)
                || (m_dst_iter != other.m_dst_iter)
@@ -336,7 +331,7 @@ public:
     }
 
 private:
-    SoldierMoveGenerator(const State<P>& state, const Board<P>& board)
+    SoldierMoveIterator(const State<P>& state, const Board<P>& board)
         : m_state(state), m_turn(), m_board(board), m_pinned(), m_cover(),
           m_src_iter(), m_dst_iter(), m_promote(true), m_dst_mask()
     {
@@ -449,65 +444,156 @@ private:
 };
 
 template <class P>
-class SoldierMoveGeneratorTSD
+class SoldierMoveIteratorEvade
 {
-    using C = Configuration<P>;
-    using PieceType = typename C::PieceType;
-    using ColoredPiece = typename C::ColoredPiece;
-    using Square = typename C::Square;
-    using PHelper = Pieces<P>;
-
 private:
-    const ColorEnum m_turn;
-    const Board<P>& m_board;
-    const BitBoard<P> m_pinned;
-    const BitBoard<P> m_cover;
-    PieceType m_piece_type;
-    ColoredPiece m_colored_piece;
-    typename BitBoard<P>::SquareIterator m_src_iter;
-    typename BitBoard<P>::SquareIterator m_dst_iter;
-    BitBoard<P> m_dst_mask;
+    using C = Configuration<P>;
+    using S = Squares<P>;
+    using Square = typename C::Square;
+    using SquareIterator = typename BitBoard<P>::SquareIterator;
+    using DirIter = EnumIterator<DirectionEnum, C::num_dir>;
+
+    const State<P>& m_state;
+    const BitBoard<P> m_src_mask;
+    const Square m_dst_last; // inclusive
+    const Square* m_dst_iter; //!< outer loop
+    DirIter m_src_dir_iter; //!< inner loop
+    Square m_src;
+    bool m_promote; //!< most inner loop
 
 public:
-    SoldierMoveGeneratorTSD(const State<P>& s)
-        : m_turn(s.get_turn()), m_board(s.get_board()),
-          m_pinned(s.find_pinned()),
-          m_cover(m_board.find_cover(m_turn)), m_piece_type{},
-          m_colored_piece{}, m_src_iter{}, m_dst_iter{}, m_dst_mask{}
+    SoldierMoveIteratorEvade(const State<P>& state)
+        : m_state{state}, m_src_mask{compute_src_mask(state)},
+          m_dst_last{state.get_checker_square()},
+          m_dst_iter{S::ray_from(
+              state.get_king_square(),
+              S::direction(state.get_king_square(), m_dst_last))},
+          m_src_dir_iter{}, m_src{C::SQ_NA}, m_promote{}
     {
+        assert(state.in_check());
+        if (state.in_double_check()) {
+            m_dst_iter = nullptr;
+            return;
+        }
+        while (true) {
+            init_src_dir_iter();
+            if (!m_src_dir_iter.is_end())
+                break;
+
+            if (*m_dst_iter == m_dst_last) {
+                m_dst_iter = nullptr;
+                break;
+            }
+            ++m_dst_iter;
+        }
+        init_promote();
+    }
+    Move<P> operator*() const
+    {
+        assert(m_dst_iter != nullptr);
+        return Move<P>(m_src, *m_dst_iter, m_promote);
+    }
+    SoldierMoveIteratorEvade& operator++()
+    {
+        if (m_promote) {
+            const auto p = m_state.get_board()[m_src];
+            if (BitBoard<P>::get_attacks_by(p, *m_dst_iter).any()) {
+                m_promote = false;
+                return *this;
+            }
+        }
+
+        ++m_src_dir_iter;
+        find_src_or_increment_src_dir_iter();
+        if (!m_src_dir_iter.is_end()) {
+            init_promote();
+            return *this;
+        }
+
+        while (true) {
+            if (*m_dst_iter == m_dst_last) {
+                m_dst_iter = nullptr;
+                break;
+            }
+            ++m_dst_iter;
+            init_src_dir_iter();
+            if (!m_src_dir_iter.is_end())
+                break;
+        }
+        init_promote();
+        return *this;
+    }
+    SoldierMoveIteratorEvade begin()
+    {
+        return *this;
+    }
+    SoldierMoveIteratorEvade end()
+    {
+        static const auto end_iter
+            = SoldierMoveIteratorEvade(m_state, C::SQ_NA);
+        return end_iter;
+    }
+    bool operator!=(const SoldierMoveIteratorEvade& other) const
+    {
+        return (m_dst_iter != other.m_dst_iter) || (m_src != other.m_src)
+               || (m_promote != other.m_promote);
+    }
+    bool is_end() const
+    {
+        return (m_dst_iter == nullptr);
     }
 
 private:
-    void increment_destination()
+    SoldierMoveIteratorEvade(const State<P>& state, const Square)
+        : m_state{state}, m_src_mask{}, m_dst_last{}, m_dst_iter{},
+          m_src_dir_iter{}, m_src{C::SQ_NA}, m_promote{}
     {
-        ++m_dst_iter;
-        if (!m_dst_iter.is_end())
-            return;
-        increment_source();
     }
-    void increment_source()
+    void init_src_dir_iter()
     {
-        ++m_src_iter;
-        if (!m_src_iter.is_end()) {
-            m_dst_iter
-                = (m_dst_mask & m_board.get_attacks_by_nocheck(*m_src_iter))
-                      .square_iterator();
-            if (!m_dst_iter.is_end())
+        m_src_dir_iter.reset();
+        find_src_or_increment_src_dir_iter();
+    }
+    void find_src_or_increment_src_dir_iter()
+    {
+        const auto t = m_state.get_turn();
+        const auto& b = m_state.get_board();
+        while (!m_src_dir_iter.is_end()) {
+            const auto src = b.find_attacker(t, *m_dst_iter, *m_src_dir_iter);
+            if (m_src_mask.is_one(src)) {
+                m_src = src;
                 return;
+            }
+            ++m_src_dir_iter;
         }
-        increment_piece_type();
+        m_src = C::SQ_NA;
     }
-    void increment_piece_type()
+    void init_promote()
     {
-        ++m_piece_type;
-        if (m_piece_type == C::NA)
+        if ((m_dst_iter == nullptr) || (m_src == C::SQ_NA)) {
+            m_promote = false;
             return;
-        // todo
+        }
+        const auto dst = *m_dst_iter;
+        const auto t = m_state.get_turn();
+        const auto p = m_state.get_board()[m_src];
+        m_promote = Pieces<P>::is_promotable(p)
+                    && (S::in_promotion_zone(dst, t)
+                        || S::in_promotion_zone(m_src, t));
+    }
+    static BitBoard<P> compute_src_mask(const State<P>& state)
+    {
+        return ~state.find_pinned().set(state.get_king_square());
     }
 };
 
+/**
+ * @brief Another implementation of `SoldierMoveIterator<P, EVADE>`.
+ * This is as fast as (or as slow as `SoldierMoveIterator<P, EVADE>`)
+ * using SquareIterator instead of array of squares.
+ */
 template <class P>
-class BlockMoveGenerator
+class SoldierMoveIterator<P, IterEnum::EVADE>
 {
 private:
     using C = Configuration<P>;
@@ -524,7 +610,7 @@ private:
     bool m_promote;
 
 public:
-    BlockMoveGenerator(const State<P>& state)
+    SoldierMoveIterator(const State<P>& state)
         : m_board(state.get_board()), m_turn(state.get_turn()),
           m_not_pinned(
               ~(state.find_pinned().set(m_board.get_king_square(m_turn)))),
@@ -544,7 +630,7 @@ public:
         }
         init_promote();
     }
-    BlockMoveGenerator& operator++()
+    SoldierMoveIterator& operator++()
     {
         if (m_promote) {
             const auto dst = *m_dst_iter;
@@ -576,16 +662,16 @@ public:
     {
         return Move<P>(*m_src_iter, *m_dst_iter, m_promote);
     }
-    BlockMoveGenerator begin()
+    SoldierMoveIterator begin()
     {
         return *this;
     }
-    BlockMoveGenerator end()
+    SoldierMoveIterator end()
     {
-        static const auto end_iter = BlockMoveGenerator(m_board);
+        static const auto end_iter = SoldierMoveIterator(m_board);
         return end_iter;
     }
-    bool operator!=(const BlockMoveGenerator& other) const
+    bool operator!=(const SoldierMoveIterator& other) const
     {
         return (m_dst_iter != other.m_dst_iter)
                || (m_src_iter != other.m_src_iter)
@@ -597,7 +683,7 @@ public:
     }
 
 private:
-    BlockMoveGenerator(const Board<P>& b)
+    SoldierMoveIterator(const Board<P>& b)
         : m_board(b), m_turn(), m_not_pinned(), m_dst_iter(), m_src_iter(),
           m_promote()
     {
@@ -630,19 +716,6 @@ private:
     }
 };
 
-template <class P, IterEnum IterType = IterEnum::LEGAL>
-using BoardMoveGenerator = ChainedIterator<
-    P,
-    KingMoveIterator<P, IterType>,
-    SoldierMoveGenerator<P, IterType == IterEnum::CHECK>>;
-
-template <class P, IterEnum IterType = IterEnum::LEGAL>
-using LegalMoveGenerator = ChainedIterator<
-    P,
-    KingMoveIterator<P, IterType>,
-    SoldierMoveGenerator<P, IterType == IterEnum::CHECK>,
-    DropMoveIterator<P, IterType>>;
-
 } // namespace vshogi
 
-#endif // VSHOGI_COMMON_GENERATOR_HPP
+#endif // VSHOGI_COMMON_ITERATOR_SOLDIER_HPP

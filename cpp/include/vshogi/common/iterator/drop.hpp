@@ -142,7 +142,7 @@ private:
         = static_cast<PieceType>(C::num_stand_piece_types);
 
     const State<P>& m_state;
-    const Square m_sq_end;
+    const Square m_sq_end; //!< exclusive
     const Square* m_sq_iter; //!< outer loop
     PieceType m_pt_iter; //!< inner loop
 

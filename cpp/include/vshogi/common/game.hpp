@@ -9,7 +9,7 @@
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/direction.hpp"
-#include "vshogi/common/generator.hpp"
+#include "vshogi/common/iterator.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/pieces.hpp"
 #include "vshogi/common/result.hpp"
@@ -106,7 +106,7 @@ public:
         std::vector<MoveType> out{};
         if (m_result != ONGOING)
             return out;
-        for (auto m : LegalMoveGenerator<Parameters>(m_current_state))
+        for (auto m : LegalMoveIterator<Parameters>(m_current_state))
             out.emplace_back(m);
         return out;
     }
@@ -116,7 +116,7 @@ public:
         if (m_result != ONGOING)
             return out;
         for (auto m :
-             LegalMoveGenerator<Parameters, IterEnum::CHECK>(m_current_state))
+             LegalMoveIterator<Parameters, IterEnum::CHECK>(m_current_state))
             out.emplace_back(m);
         return out;
     }
@@ -260,8 +260,7 @@ public:
                     return true;
             }
         } else {
-            for (auto m :
-                 SoldierMoveGenerator<Parameters, false>(m_current_state)) {
+            for (auto m : SoldierMoveIterator<Parameters>(m_current_state)) {
                 if (m == move)
                     return true;
             }
@@ -465,7 +464,7 @@ protected:
     {
         m_result = ONGOING;
         const auto turn = get_turn();
-        if (LegalMoveGenerator<Parameters>(m_current_state).is_end())
+        if (LegalMoveIterator<Parameters>(m_current_state).is_end())
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
         if (is_repetitions(max_repetitions_inclusive)) {
             if (m_current_state.in_check())

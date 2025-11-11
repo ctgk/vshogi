@@ -5,7 +5,7 @@
 
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/game.hpp"
-#include "vshogi/common/generator.hpp"
+#include "vshogi/common/iterator.hpp"
 #include "vshogi/common/iterator/drop.hpp"
 #include "vshogi/common/squares.hpp"
 #include "vshogi/common/state.hpp"
@@ -264,10 +264,11 @@ private:
         if ((*nibling) != nullptr)
             return expand_board_moves(next, nibling);
         if (offence)
-            return expand_by_generator<BoardMoveGenerator<P, IterEnum::CHECK>>(
+            return expand_by_generator<BoardMoveIterator<P, IterEnum::CHECK>>(
                 next, s);
         expand_by_generator<KingMoveIterator<P>>(next, s);
-        return expand_by_generator<BlockMoveGenerator<P>>(next, s);
+        return expand_by_generator<SoldierMoveIterator<P, IterEnum::EVADE>>(
+            next, s);
     }
     bool expand_board_moves(Node<P>*& next, const Node** const nibling)
     {

@@ -216,6 +216,31 @@ public:
         }
         return false;
     }
+    static bool is_attacking_to(const FullPieceTypes pt, const DirectionEnum d)
+    {
+        switch (d) {
+        case DIR_N:
+            return (pt != PT_KE) && (pt != PT_KA);
+        case DIR_NW:
+        case DIR_NE:
+            return !((pt < PT_GI) || (pt == PT_HI)); // FU, KY, KE, HI
+        case DIR_W:
+        case DIR_E:
+        case DIR_S:
+            return (pt > PT_KA) && (pt != PT_NA); // fu, ky, ke, gi, ka
+        case DIR_SW:
+        case DIR_SE:
+            return (pt == PT_GI) || (pt == PT_KA) || (pt == PT_OU)
+                   || (pt == PT_UM) || (pt == PT_RY);
+        case DIR_NNW:
+        case DIR_NNE:
+            return (pt == PT_KE);
+
+        default:
+            break;
+        }
+        return false;
+    }
 };
 
 inline const DirectionEnum FPTHelper::attack_directions_table[29][9] = {
@@ -356,6 +381,12 @@ public:
     static bool is_ranging_to(const ColoredPiece& p, const DirectionEnum& d)
     {
         return FPTHelper::is_ranging_to(
+            C::piece_types[to_piece_type(p)],
+            (get_color(p) == BLACK) ? d : rotate(d));
+    }
+    static bool is_attacking_to(const ColoredPiece& p, const DirectionEnum& d)
+    {
+        return FPTHelper::is_attacking_to(
             C::piece_types[to_piece_type(p)],
             (get_color(p) == BLACK) ? d : rotate(d));
     }

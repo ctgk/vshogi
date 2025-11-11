@@ -79,6 +79,10 @@ public:
     {
         return static_cast<ContiguousEnum>(m_curr);
     }
+    void reset()
+    {
+        m_curr = 0u;
+    }
     EnumIterator begin()
     {
         return *this;
@@ -87,6 +91,10 @@ public:
     {
         static const auto end_iter = EnumIterator(End);
         return end_iter;
+    }
+    bool is_end() const
+    {
+        return m_curr == End;
     }
     bool operator!=(const EnumIterator& other)
     {

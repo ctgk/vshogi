@@ -179,23 +179,17 @@ public:
         auto ptr_sq = SHelper::ray_from(attacked, dir);
         if (ptr_sq == nullptr)
             return C::SQ_NA;
-        if (!(BitBoardType::get_ray_to(attacked, dir)
-              & m_bb_color[attacker_color])
-                 .any())
-            return C::SQ_NA;
+        const auto dir_rotated = rotate(dir);
         {
             const ColoredPiece& p = m_pieces[*ptr_sq];
             if ((p != C::VOID) && (*ptr_sq != skip)) {
                 if ((PHelper::get_color(p) == attacker_color)
-                    && BitBoardType::get_attacks_by(p, *ptr_sq)
-                           .is_one(attacked))
+                    && PHelper::is_attacking_to(p, dir_rotated))
                     return *ptr_sq;
                 else
                     return C::SQ_NA;
             }
         }
-
-        const auto dir_rotated = rotate(dir);
         ++ptr_sq;
         for (; *ptr_sq != C::SQ_NA; ++ptr_sq) {
             const auto& sq = *ptr_sq;
