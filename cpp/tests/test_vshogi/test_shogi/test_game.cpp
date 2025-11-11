@@ -76,7 +76,7 @@ TEST(test_shogi_game, is_legal)
     // White: FU
     //     9   8   7   6   5   4   3   2   1
     //   +---+---+---+---+---+---+---+---+---+
-    // A |   |   |   |-OU|   |   |   |   |   |
+    // A |   |   |   |-OU|   |   |   |   |-FU|
     //   +---+---+---+---+---+---+---+---+---+
     // B |   |   |   |   |   |   |   |   |   |
     //   +---+---+---+---+---+---+---+---+---+
@@ -95,8 +95,13 @@ TEST(test_shogi_game, is_legal)
     // I |   |   |   |   |   |-HI|+FU|+OU|+KY|
     //   +---+---+---+---+---+---+---+---+---+
     // Black: -
-    auto g = Game("3k5/9/9/9/9/9/7g1/9/5rPKL w p");
-    CHECK_FALSE(g.is_legal(Move(FU, SQ_2H)));
+    auto g = Game("3k4p/9/9/9/9/9/7g1/9/5rPKL w p");
+    CHECK_TRUE(g.is_legal(Move(FU, SQ_5A)));
+    CHECK_TRUE(g.is_legal(Move(FU, SQ_3H)));
+    CHECK_FALSE(g.is_legal(Move(FU, SQ_1B))); // two pawns in a file
+    CHECK_FALSE(g.is_legal(Move(FU, SQ_2H))); // drop pawn mate
+    CHECK_FALSE(g.is_legal(Move(FU, SQ_9I))); // immobile pawn
+    CHECK_FALSE(g.is_legal(Move(KI, SQ_5A))); // not in stand
 }
 
 TEST(test_shogi_game, get_legal_moves)

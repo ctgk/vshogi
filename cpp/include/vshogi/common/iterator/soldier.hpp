@@ -72,6 +72,15 @@ public:
             return;
         init_no_check();
     }
+    SoldierMoveIterator(const State<P>& state, const Move<P>& move)
+        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
+          m_pinned(m_state.find_pinned()), m_src_iter(), m_dst_iter(),
+          m_promote(true)
+    {
+        if (m_state.in_double_check())
+            return;
+        init_no_check(move.source_square(), move.destination(), move.promote());
+    }
     SoldierMoveIterator(const State<P>& state, const BitBoard<P>& src_mask)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(state.find_pinned()), m_src_iter(), m_dst_iter(),
@@ -181,11 +190,36 @@ private:
         }
         init_promote();
     }
+    void init_no_check(
+        const Square src_begin,
+        const Square dst_begin,
+        const bool promote_begin)
+    {
+        init_src_iter(src_begin);
+        while (!m_src_iter.is_end()) {
+            init_dst_iter(dst_begin);
+            if (m_dst_iter.is_end())
+                ++m_src_iter;
+            else
+                break;
+        }
+        init_promote(promote_begin);
+    }
     void init_src_iter()
     {
         const auto king_sq = m_board.get_king_square(m_turn);
         const auto src_mask = m_board.get_occupied(m_turn).clear(king_sq);
         m_src_iter = src_mask.iterator();
+    }
+    void init_src_iter(const Square begin)
+    {
+        init_src_iter();
+        while (!m_src_iter.is_end()) {
+            if (*m_src_iter < begin)
+                ++m_src_iter;
+            else
+                break;
+        }
     }
     void init_src_iter(const BitBoard<P>& src_mask)
     {
@@ -215,6 +249,16 @@ private:
     ExitLabel:
         m_dst_iter = movable.iterator();
     }
+    void init_dst_iter(const Square begin)
+    {
+        init_dst_iter();
+        while (!m_dst_iter.is_end()) {
+            if (*m_dst_iter < begin)
+                ++m_dst_iter;
+            else
+                break;
+        }
+    }
     void init_promote()
     {
         if (m_src_iter.is_end() || m_dst_iter.is_end()) {
@@ -228,6 +272,12 @@ private:
         if (BitBoard<P>::get_attacks_by(p, *m_dst_iter).any())
             return;
         m_promote = true;
+    }
+    void init_promote(const bool begin)
+    {
+        init_promote();
+        if (m_promote < begin)
+            operator++();
     }
 };
 

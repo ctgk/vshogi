@@ -33,14 +33,15 @@ private:
     using C = Configuration<P>;
     using BitboardSquareIterator = typename BitBoard<P>::BitboardSquareIterator;
     using PieceType = typename C::PieceType;
+    using Square = typename C::Square;
     using PHelper = Pieces<P>;
 
 private:
     const State<P>& m_state;
     const ColorEnum m_turn;
     const Stand<P>& m_stand;
-    BitboardSquareIterator m_sq_iter;
-    PieceType m_pt_iter;
+    BitboardSquareIterator m_sq_iter; //!< inner loop
+    PieceType m_pt_iter; //!< outer loop
 
 public:
     DropMoveIterator(const State<P>& state)
@@ -55,6 +56,20 @@ public:
         if (m_pt_iter == C::num_stand_piece_types)
             return;
         init_sq_iter();
+        increment_piece_type_while_no_dst();
+    }
+    DropMoveIterator(const State<P>& state, const PieceType pt, const Square sq)
+        : m_state(state), m_turn(state.get_turn()),
+          m_stand(state.get_stand()), m_sq_iter{}, m_pt_iter{pt}
+    {
+        if (!state.can_apply_drop_move()) {
+            m_pt_iter = static_cast<PieceType>(C::num_stand_piece_types);
+            return;
+        }
+        increment_piece_type_unless_in_stand();
+        if (m_pt_iter == C::num_stand_piece_types)
+            return;
+        init_sq_iter(sq);
         increment_piece_type_while_no_dst();
     }
     DropMoveIterator& operator++()
@@ -74,7 +89,9 @@ public:
     DropMoveIterator end()
     {
         static const auto end_iter = DropMoveIterator(
-            m_state, static_cast<PieceType>(C::num_stand_piece_types));
+            m_state,
+            static_cast<PieceType>(C::num_stand_piece_types),
+            static_cast<Square>(0));
         return end_iter;
     }
     bool operator!=(const DropMoveIterator& other) const
@@ -87,11 +104,6 @@ public:
     }
 
 private:
-    DropMoveIterator(const State<P>& state, const PieceType pt)
-        : m_state(state), m_turn(state.get_turn()), m_stand(state.get_stand()),
-          m_sq_iter(), m_pt_iter(pt)
-    {
-    }
     void init_sq_iter()
     {
         const auto& b = m_state.get_board();
@@ -108,6 +120,16 @@ private:
             m_sq_iter
                 = b.template compute_droppable<IterType == IterEnum::CHECK>(p)
                       .iterator();
+        }
+    }
+    void init_sq_iter(const Square begin)
+    {
+        init_sq_iter();
+        while (!m_sq_iter.is_end()) {
+            if (*m_sq_iter < begin)
+                ++m_sq_iter;
+            else
+                break;
         }
     }
     void increment_piece_type_while_no_dst()

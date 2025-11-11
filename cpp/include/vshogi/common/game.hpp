@@ -249,10 +249,9 @@ public:
     bool is_legal(const MoveType move) const
     {
         if (move.is_drop()) {
-            for (auto m : DropMoveIterator<Parameters>(m_current_state)) {
-                if (m == move)
-                    return true;
-            }
+            auto iter = DropMoveIterator<Parameters>(
+                m_current_state, move.source_piece(), move.destination());
+            return move == *iter;
         } else if (
             move.source_square() == get_board().get_king_square(get_turn())) {
             for (auto m : KingMoveIterator<Parameters>(m_current_state)) {
@@ -260,10 +259,8 @@ public:
                     return true;
             }
         } else {
-            for (auto m : SoldierMoveIterator<Parameters>(m_current_state)) {
-                if (m == move)
-                    return true;
-            }
+            auto iter = SoldierMoveIterator<Parameters>(m_current_state, move);
+            return move == *iter;
         }
         return false;
     }
