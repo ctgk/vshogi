@@ -90,8 +90,7 @@ TEST_GROUP (test_minishogi_magic) {
         const bool hex = false)
     {
         using namespace vshogi::minishogi;
-        for (auto sq :
-             vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+        for (auto sq : Config::square_iterator()) {
             if (hex)
                 std::cout << "0x" << std::hex << std::setfill('0')
                           << std::setw(8) << array[sq] << std::dec;
@@ -163,7 +162,7 @@ TEST(test_minishogi_magic, get_diagonal_attack)
 //     using namespace vshogi::minishogi;
 //     std::uint32_t magics[Config::num_squares];
 
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//     for (auto sq : Config::square_iterator()) {
 //         const std::uint32_t magic
 //             = find_magic_number<Magic::log2_table_size_adjacent>(
 //                 sq,
@@ -177,7 +176,7 @@ TEST(test_minishogi_magic, get_diagonal_attack)
 //     print_array(magics, true);
 //     std::cout << "};";
 
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//     for (auto sq : Config::square_iterator()) {
 //         const std::uint32_t magic
 //             = find_magic_number<Magic::log2_table_size_diagonal>(
 //                 sq,
@@ -201,7 +200,7 @@ TEST(test_minishogi_magic, get_diagonal_attack)
 //     uint premask_array[Config::num_squares] = {};
 
 //     std::fill_n(premask_array, Config::num_squares, 0u);
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//     for (auto sq : Config::square_iterator()) {
 //         for (auto&& dir :
 //              {vshogi::DIR_N, vshogi::DIR_W, vshogi::DIR_E, vshogi::DIR_S}) {
 //             for (SquareEnum s = Squares::shift(sq, dir);;) {
@@ -221,7 +220,7 @@ TEST(test_minishogi_magic, get_diagonal_attack)
 //     std::cout << "};";
 
 //     std::fill_n(premask_array, Config::num_squares, 0u);
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//     for (auto sq : Config::square_iterator()) {
 //         for (auto&& dir :
 //              {vshogi::DIR_NW, vshogi::DIR_NE, vshogi::DIR_SW, vshogi::DIR_SE}) {
 //             for (SquareEnum s = Squares::shift(sq, dir);;) {

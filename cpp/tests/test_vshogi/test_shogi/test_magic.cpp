@@ -93,8 +93,7 @@ TEST_GROUP (test_shogi_magic) {
         const bool hex = false)
     {
         using namespace vshogi::shogi;
-        for (auto sq :
-             vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+        for (auto sq : Config::square_iterator()) {
             if (hex)
                 std::cout << "0x" << std::hex << std::setfill('0')
                           << std::setw(sizeof(Int) * 2) << array[sq]
@@ -112,8 +111,7 @@ TEST_GROUP (test_shogi_magic) {
         const vshogi::uint128 array[vshogi::shogi::Config::num_squares])
     {
         using namespace vshogi::shogi;
-        for (auto sq :
-             vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+        for (auto sq : Config::square_iterator()) {
             std::cout << "(static_cast<uint128>(0x" << std::hex
                       << std::setfill('0') << std::setw(5)
                       << static_cast<std::uint64_t>(array[sq] >> 64)
@@ -210,7 +208,7 @@ TEST(test_shogi_magic, get_diagonal_attack)
 //     using namespace vshogi::shogi;
 //     std::uint32_t magics[Config::num_squares] = {};
 
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//     for (auto sq : Config::square_iterator()) {
 //         const std::uint32_t magic
 //             = find_magic_number<Magic::log2_table_size_lance>(
 //                 sq,
@@ -236,7 +234,7 @@ TEST(test_shogi_magic, get_diagonal_attack)
 //     std::cout << "// clang-format on\n};";
 
 //     std::fill_n(magics, Config::num_squares, 0u);
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//     for (auto sq : Config::square_iterator()) {
 //         const std::uint32_t magic
 //             = find_magic_number<Magic::log2_table_size_lance>(
 //                 sq,
@@ -254,7 +252,7 @@ TEST(test_shogi_magic, get_diagonal_attack)
 //     std::cout << "// clang-format on\n};";
 
 //     std::fill_n(magics, Config::num_squares, 0u);
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//     for (auto sq : Config::square_iterator()) {
 //         const std::uint32_t magic
 //             = find_magic_number<Magic::log2_table_size_adjacent>(
 //                 sq,
@@ -278,7 +276,7 @@ TEST(test_shogi_magic, get_diagonal_attack)
 //     std::cout << "// clang-format on\n};";
 
 //     std::fill_n(magics, Config::num_squares, 0u);
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//     for (auto sq : Config::square_iterator()) {
 //         const std::uint32_t magic
 //             = find_magic_number<Magic::log2_table_size_diagonal>(
 //                 sq,
@@ -309,7 +307,7 @@ TEST(test_shogi_magic, get_diagonal_attack)
 // {
 //     using namespace vshogi::shogi;
 //     vshogi::uint128 premask_array[Config::num_squares] = {};
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//     for (auto sq : Config::square_iterator()) {
 //         for (auto&& dir : {vshogi::DIR_N,}) {
 //             for (SquareEnum s = Squares::shift(sq, dir);;) {
 //                 const auto next = Squares::shift(s, dir);
@@ -328,7 +326,7 @@ TEST(test_shogi_magic, get_diagonal_attack)
 //     std::cout << "// clang-format on\n" << "};";
 
 //     std::fill_n(premask_array, Config::num_squares, 0u);
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//     for (auto sq : Config::square_iterator()) {
 //         for (auto&& dir : {vshogi::DIR_S,}) {
 //             for (SquareEnum s = Squares::shift(sq, dir);;) {
 //                 const auto next = Squares::shift(s, dir);
@@ -347,7 +345,7 @@ TEST(test_shogi_magic, get_diagonal_attack)
 //     std::cout << "// clang-format on\n" << "};";
 
 //     std::fill_n(premask_array, Config::num_squares, 0u);
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//     for (auto sq : Config::square_iterator()) {
 //         for (auto&& dir :
 //              {vshogi::DIR_N, vshogi::DIR_W, vshogi::DIR_E, vshogi::DIR_S}) {
 //             for (SquareEnum s = Squares::shift(sq, dir);;) {
@@ -368,7 +366,7 @@ TEST(test_shogi_magic, get_diagonal_attack)
 //     std::cout << "// clang-format on\n" << "};";
 
 //     std::fill_n(premask_array, Config::num_squares, 0u);
-//     for (auto sq : vshogi::EnumIterator<SquareEnum, Config::num_squares>()) {
+//     for (auto sq : Config::square_iterator()) {
 //         for (auto&& dir :
 //              {vshogi::DIR_NW, vshogi::DIR_NE, vshogi::DIR_SW, vshogi::DIR_SE}) {
 //             for (SquareEnum s = Squares::shift(sq, dir);;) {

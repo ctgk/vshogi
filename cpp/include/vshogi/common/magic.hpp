@@ -166,7 +166,7 @@ public:
 private:
     static void init_attack_table_north()
     {
-        for (auto sq : EnumIterator<Square, C::num_squares>()) {
+        for (auto sq : C::square_iterator()) {
             const BitBoardType premask
                 = BitBoardType::from_value(premask_north[sq]);
             const uint num_relevant_squares = premask.hamming_weight();
@@ -191,7 +191,7 @@ private:
     }
     static void init_attack_table_south()
     {
-        for (auto sq : EnumIterator<Square, C::num_squares>()) {
+        for (auto sq : C::square_iterator()) {
             const BitBoardType premask
                 = BitBoardType::from_value(premask_south[sq]);
             const uint num_relevant_squares = premask.hamming_weight();
@@ -216,7 +216,7 @@ private:
     }
     static void init_attack_table_adjacent()
     {
-        for (auto sq : EnumIterator<Square, C::num_squares>()) {
+        for (auto sq : C::square_iterator()) {
             const BitBoardType premask
                 = BitBoardType::from_value(premask_adjacent[sq]);
             const uint num_relevant_squares = premask.hamming_weight();
@@ -245,7 +245,7 @@ private:
     }
     static void init_attack_table_diagonal()
     {
-        for (auto sq : EnumIterator<Square, C::num_squares>()) {
+        for (auto sq : C::square_iterator()) {
             const BitBoardType premask
                 = BitBoardType::from_value(premask_diagonal[sq]);
             const uint num_relevant_squares = premask.hamming_weight();

@@ -183,7 +183,7 @@ private:
         constexpr Rank r2 = static_cast<Rank>(1);
         constexpr Rank rm = static_cast<Rank>(C::num_ranks - 2);
         constexpr Rank rn = static_cast<Rank>(C::num_ranks - 1);
-        for (auto sq : EnumIterator<Square, C::num_squares>()) {
+        for (auto sq : C::square_iterator()) {
             const auto r = to_rank(sq);
             const auto f = to_file(sq);
             for (auto dir : C::direction_iterator()) {
@@ -206,7 +206,7 @@ private:
             = sizeof(ranging_squares_to) / sizeof(ranging_squares_to[0][0][0]);
         std::fill_n(&ranging_squares_to[0][0][0], size, C::SQ_NA);
 
-        for (auto src : EnumIterator<Square, C::num_squares>()) {
+        for (auto src : C::square_iterator()) {
             for (auto dir : C::direction_iterator()) {
                 auto dst = src;
                 int index = 0;
@@ -228,7 +228,7 @@ private:
             sizeof(direction_src_dst_table)
                 / sizeof(direction_src_dst_table[0][0]),
             DIR_NA);
-        for (auto src : EnumIterator<Square, C::num_squares>()) {
+        for (auto src : C::square_iterator()) {
             for (auto dir : C::direction_iterator()) {
                 for (auto dst = shift(src, dir); dst != C::SQ_NA;
                      dst = shift(dst, dir))

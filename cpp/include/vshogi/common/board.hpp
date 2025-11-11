@@ -307,7 +307,7 @@ public:
     Board hflip() const
     {
         Board out;
-        for (auto sq : EnumIterator<Square, C::num_squares>()) {
+        for (auto sq : C::square_iterator()) {
             const auto sq_hflipped = SHelper::hflip(sq);
             assert(sq_hflipped != C::SQ_NA);
             out.m_pieces[sq_hflipped] = m_pieces[sq];
@@ -320,7 +320,7 @@ public:
         std::random_device dev;
         std::mt19937_64 rng(dev());
         std::uniform_int_distribution<std::uint64_t> dist;
-        for (auto sq : EnumIterator<Square, C::num_squares>()) {
+        for (auto sq : C::square_iterator()) {
             for (uint ii = 0u; ii < num_square_states; ++ii) {
                 zobrist_table[sq][ii] = dist(rng);
             }
@@ -439,7 +439,7 @@ private:
         std::fill_n(m_bb_color, num_colors, BitBoard<P>());
         std::fill_n(m_bb_piece, C::num_piece_types, BitBoard<P>());
         std::fill_n(m_bb_ranger, num_colors, BitBoard<P>());
-        for (auto sq : EnumIterator<Square, C::num_squares>()) {
+        for (auto sq : C::square_iterator()) {
             const auto& p = m_pieces[sq];
             const auto c = PHelper::get_color(p);
             const auto pt = PHelper::to_piece_type(p);

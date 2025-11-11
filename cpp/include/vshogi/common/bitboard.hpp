@@ -371,25 +371,25 @@ public:
     {
         for (auto p :
              EnumIterator<ColoredPiece, C::num_colored_piece_types>()) {
-            for (auto sq : EnumIterator<Square, C::num_squares>()) {
+            for (auto sq : C::square_iterator()) {
                 attacks_table[p][sq] = compute_attack_by(p, sq);
             }
         }
 
-        for (auto sq : EnumIterator<Square, C::num_squares>()) {
+        for (auto sq : C::square_iterator()) {
             for (auto dir : C::direction_iterator()) {
                 ray_table[sq][dir] = compute_ray_to(sq, dir);
             }
         }
 
-        for (auto sq1 : EnumIterator<Square, C::num_squares>()) {
-            for (auto sq2 : EnumIterator<Square, C::num_squares>()) {
+        for (auto sq1 : C::square_iterator()) {
+            for (auto sq2 : C::square_iterator()) {
                 line_segment_table[sq1][sq2] = compute_line_segment(sq1, sq2);
             }
         }
 
         for (auto c : {BLACK, WHITE}) {
-            for (auto sq : EnumIterator<Square, C::num_squares>()) {
+            for (auto sq : C::square_iterator()) {
                 neighbor_table[c][sq] = compute_neighbor_at(sq, c);
                 neighbor_2nd_table[c][sq] = compute_2nd_neighbor_of(sq, c);
             }

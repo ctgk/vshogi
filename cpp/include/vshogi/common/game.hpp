@@ -317,7 +317,7 @@ public:
         const StandType& black_stand = get_stand(BLACK);
         const StandType& white_stand = get_stand(WHITE);
         uint piece_count[C::num_stand_piece_types + 1u] = {};
-        for (auto sq : EnumIterator<Square, C::num_squares>()) {
+        for (auto sq : C::square_iterator()) {
             if (b.is_empty(sq))
                 continue;
             piece_count[PHelper::demote(PHelper::to_piece_type(b[sq]))] += 1u;
@@ -382,7 +382,7 @@ public:
     static void attention_matrix(float* const data)
     {
         std::fill_n(data, num_squares * num_squares, 0.f);
-        for (auto sq : EnumIterator<Square, num_squares>()) {
+        for (auto sq : C::square_iterator()) {
             const uint ii = static_cast<uint>(sq);
             for (auto dir : C::direction_iterator()) {
                 auto ptr_sq = SHelper::ray_from(sq, dir);
@@ -399,7 +399,7 @@ public:
         const bool& local = false)
     {
         std::fill_n(data, num_squares * num_squares, 0.f);
-        for (auto sq : EnumIterator<Square, num_squares>()) {
+        for (auto sq : C::square_iterator()) {
             const uint ii = static_cast<uint>(sq);
             for (auto dir : directions) {
                 auto ptr_sq = SHelper::ray_from(sq, dir);
