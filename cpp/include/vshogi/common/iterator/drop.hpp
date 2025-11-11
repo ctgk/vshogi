@@ -31,7 +31,7 @@ class DropMoveIterator
 {
 private:
     using C = Configuration<P>;
-    using SquareIterator = typename BitBoard<P>::SquareIterator;
+    using BitboardSquareIterator = typename BitBoard<P>::BitboardSquareIterator;
     using PieceType = typename C::PieceType;
     using PHelper = Pieces<P>;
 
@@ -39,7 +39,7 @@ private:
     const State<P>& m_state;
     const ColorEnum m_turn;
     const Stand<P>& m_stand;
-    SquareIterator m_sq_iter;
+    BitboardSquareIterator m_sq_iter;
     PieceType m_pt_iter;
 
 public:
@@ -103,11 +103,11 @@ private:
                        BitBoard<P>::get_line_segment(
                            m_state.get_checker_square(),
                            b.get_king_square(m_turn)))
-                      .square_iterator();
+                      .iterator();
         } else {
             m_sq_iter
                 = b.template compute_droppable<IterType == IterEnum::CHECK>(p)
-                      .square_iterator();
+                      .iterator();
         }
     }
     void increment_piece_type_while_no_dst()
@@ -137,7 +137,7 @@ private:
     using S = Squares<P>;
     using PieceType = typename C::PieceType;
     using Square = typename C::Square;
-    using SquareIterator = typename BitBoard<P>::SquareIterator;
+    using BitboardSquareIterator = typename BitBoard<P>::BitboardSquareIterator;
     static constexpr auto pt_end
         = static_cast<PieceType>(C::num_stand_piece_types);
 

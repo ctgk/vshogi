@@ -397,17 +397,18 @@ public:
     }
 
 public:
-    class SquareIterator
+    class BitboardSquareIterator
     {
     private:
         UInt m_mask;
         uint m_curr;
 
     public:
-        SquareIterator() : m_mask(), m_curr(C::num_squares)
+        BitboardSquareIterator() : m_mask(), m_curr(C::num_squares)
         {
         }
-        SquareIterator(const UInt& bb_value) : m_mask(bb_value), m_curr()
+        BitboardSquareIterator(const UInt& bb_value)
+            : m_mask(bb_value), m_curr()
         {
             if (!static_cast<bool>(m_mask)) {
                 m_curr = C::num_squares;
@@ -417,7 +418,7 @@ public:
             m_curr = shift;
             m_mask = static_cast<UInt>(m_mask >> shift);
         }
-        SquareIterator& operator++()
+        BitboardSquareIterator& operator++()
         {
 
             ++m_curr;
@@ -435,16 +436,16 @@ public:
         {
             return static_cast<Square>(m_curr);
         }
-        SquareIterator begin()
+        BitboardSquareIterator begin()
         {
             return *this;
         }
-        SquareIterator end() const
+        BitboardSquareIterator end() const
         {
-            static const auto end_iter = SquareIterator();
+            static const auto end_iter = BitboardSquareIterator();
             return end_iter;
         }
-        bool operator!=(const SquareIterator& other) const
+        bool operator!=(const BitboardSquareIterator& other) const
         {
             return m_curr != other.m_curr;
         }
@@ -453,9 +454,9 @@ public:
             return m_curr >= C::num_squares;
         }
     };
-    SquareIterator square_iterator() const
+    BitboardSquareIterator iterator() const
     {
-        return SquareIterator(m_value);
+        return BitboardSquareIterator(m_value);
     }
 
 private:

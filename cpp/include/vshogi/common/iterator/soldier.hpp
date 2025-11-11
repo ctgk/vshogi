@@ -58,8 +58,8 @@ private:
     const ColorEnum m_turn;
     const Board<P>& m_board;
     const BitBoard<P> m_pinned;
-    typename BitBoard<P>::SquareIterator m_src_iter;
-    typename BitBoard<P>::SquareIterator m_dst_iter;
+    typename BitBoard<P>::BitboardSquareIterator m_src_iter;
+    typename BitBoard<P>::BitboardSquareIterator m_dst_iter;
     bool m_promote;
 
 public:
@@ -185,11 +185,11 @@ private:
     {
         const auto king_sq = m_board.get_king_square(m_turn);
         const auto src_mask = m_board.get_occupied(m_turn).clear(king_sq);
-        m_src_iter = src_mask.square_iterator();
+        m_src_iter = src_mask.iterator();
     }
     void init_src_iter(const BitBoard<P>& src_mask)
     {
-        m_src_iter = src_mask.square_iterator();
+        m_src_iter = src_mask.iterator();
     }
     void init_dst_iter()
     {
@@ -213,7 +213,7 @@ private:
             movable &= BitBoard<P>::get_ray_to(king_sq, dir);
         }
     ExitLabel:
-        m_dst_iter = movable.square_iterator();
+        m_dst_iter = movable.iterator();
     }
     void init_promote()
     {
@@ -247,8 +247,8 @@ private:
     const Board<P>& m_board;
     const BitBoard<P> m_pinned;
     const BitBoard<P> m_cover;
-    typename BitBoard<P>::SquareIterator m_src_iter;
-    typename BitBoard<P>::SquareIterator m_dst_iter;
+    typename BitBoard<P>::BitboardSquareIterator m_src_iter;
+    typename BitBoard<P>::BitboardSquareIterator m_dst_iter;
     bool m_promote;
     BitBoard<P> m_dst_mask;
 
@@ -346,7 +346,7 @@ private:
         src_mask |= m_board.get_occupied_by_ranging(m_turn);
         src_mask |= BitBoard<P>::get_neighbor_2nd_at(target, m_turn);
         src_mask &= m_board.get_occupied(m_turn).clear(king_sq);
-        m_src_iter = src_mask.square_iterator();
+        m_src_iter = src_mask.iterator();
     }
     void init_dst_mask()
     {
@@ -372,7 +372,7 @@ private:
             }
         }
         update_mask_by_forcing_check(movable, p, src);
-        m_dst_iter = movable.square_iterator();
+        m_dst_iter = movable.iterator();
     }
     void init_dst_iter_nopromo()
     {
@@ -384,7 +384,7 @@ private:
         if (movable.any()) {
             update_mask_by_nopromo(movable, p);
         }
-        m_dst_iter = movable.square_iterator();
+        m_dst_iter = movable.iterator();
     }
     bool update_mask_by_promotion(BitBoard<P>& mask, const Square src)
     {
@@ -450,7 +450,6 @@ private:
     using C = Configuration<P>;
     using S = Squares<P>;
     using Square = typename C::Square;
-    using SquareIterator = typename BitBoard<P>::SquareIterator;
     using DirIter = EnumIterator<DirectionEnum, C::num_dir>;
 
     const State<P>& m_state;
@@ -600,13 +599,13 @@ private:
     using PHelper = Pieces<P>;
     using SHelper = Squares<P>;
     using Square = typename C::Square;
-    using SquareIterator = typename BitBoard<P>::SquareIterator;
+    using BitboardSquareIterator = typename BitBoard<P>::BitboardSquareIterator;
 
     const Board<P>& m_board;
     const ColorEnum m_turn;
     const BitBoard<P> m_not_pinned;
-    SquareIterator m_dst_iter;
-    SquareIterator m_src_iter;
+    BitboardSquareIterator m_dst_iter;
+    BitboardSquareIterator m_src_iter;
     bool m_promote;
 
 public:
@@ -693,13 +692,13 @@ private:
         const auto& king = m_board.get_king_square(m_turn);
         m_dst_iter = BitBoard<P>::get_line_segment(checker_sq, king)
                          .set(checker_sq)
-                         .square_iterator();
+                         .iterator();
     }
     void init_src_iter()
     {
         const Square dst = *m_dst_iter;
-        m_src_iter = m_board.compute_movable_to(dst, m_turn, m_not_pinned)
-                         .square_iterator();
+        m_src_iter
+            = m_board.compute_movable_to(dst, m_turn, m_not_pinned).iterator();
     }
     void init_promote()
     {

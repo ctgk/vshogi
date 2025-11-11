@@ -65,7 +65,7 @@ public:
         const auto enemy_king_sq = b.get_king_square(~t);
         if (enemy_king_sq == C::SQ_NA)
             return;
-        for (auto src : b.get_occupied(t).square_iterator()) {
+        for (auto src : b.get_occupied(t).iterator()) {
             if (b.get_attacks_by_nocheck(src).is_one(enemy_king_sq)) {
                 m_result = (t == BLACK) ? BLACK_WIN : WHITE_WIN;
                 return;
@@ -437,7 +437,7 @@ protected:
         uint out = 0u;
         const BoardType& board = s.get_board();
         const auto& stand = s.get_stand(c);
-        for (auto sq : board.get_occupied(c).square_iterator())
+        for (auto sq : board.get_occupied(c).iterator())
             out += PHelper::get_point(board[sq]);
         for (auto pt : C::stand_piece_type_iterator())
             out += stand.count(pt) * PHelper::get_point(pt);
@@ -524,7 +524,7 @@ private:
     {
         uint out = 0;
         const BoardType& board = get_board();
-        for (auto sq : mask.square_iterator())
+        for (auto sq : mask.iterator())
             out += PHelper::get_point(board[sq]);
         const auto& stand = get_stand(c);
         for (auto pt : C::stand_piece_type_iterator()) {

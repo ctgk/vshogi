@@ -18,12 +18,12 @@ class KingMoveIterator
 private:
     using C = Configuration<P>;
     using SHelper = Squares<P>;
-    using SquareIterator = typename BitBoard<P>::SquareIterator;
+    using BitboardSquareIterator = typename BitBoard<P>::BitboardSquareIterator;
     using Square = typename C::Square;
 
 private:
     const Square m_src; //!< King square
-    SquareIterator m_iter;
+    BitboardSquareIterator m_iter;
 
     KingMoveIterator() : m_src(C::SQ_NA), m_iter()
     {
@@ -47,10 +47,10 @@ public:
                     = state
                           .compute_king_movable(~BitBoard<P>::get_line_segment(
                               checker_sq, enemy_king_sq))
-                          .square_iterator();
+                          .iterator();
             }
         } else {
-            m_iter = state.compute_king_movable().square_iterator();
+            m_iter = state.compute_king_movable().iterator();
         }
     }
     KingMoveIterator& operator++()

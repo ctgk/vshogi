@@ -272,7 +272,7 @@ public:
         mask_melee &= BitBoardType::get_neighbor_at(dst, by_side);
         const auto candidates = src_mask & (mask_ranging ^ mask_melee);
         BitBoardType out{};
-        for (auto src : candidates.square_iterator()) {
+        for (auto src : candidates.iterator()) {
             if (BitBoardType::get_attacks_by(m_pieces[src], src).is_one(dst))
                 out.toggle(src);
         }
@@ -497,7 +497,7 @@ private:
         attackers
             &= (Magic<Parameters>::get_adjacent_attack(target)
                 | Magic<Parameters>::get_diagonal_attack(target));
-        for (auto atk : attackers.square_iterator()) {
+        for (auto atk : attackers.iterator()) {
             const auto target_dir = SHelper::direction(atk, target);
             if (!PHelper::is_ranging_to(m_pieces[atk], target_dir))
                 continue;
@@ -505,7 +505,7 @@ private:
             blockers &= (m_bb_color[BLACK] | m_bb_color[WHITE]);
             if (blockers.hamming_weight() != 1u)
                 continue;
-            const auto blocker = *blockers.square_iterator();
+            const auto blocker = *blockers.iterator();
             if (PHelper::get_color(m_pieces[blocker]) == block_by)
                 out.set(blocker);
         }
@@ -521,7 +521,7 @@ private:
         occ_melee
             &= BitBoardType::get_neighbor_2nd_at(m_kings[~by_side], by_side);
         occ_atks ^= occ_melee;
-        for (auto sq : occ_atks.square_iterator()) {
+        for (auto sq : occ_atks.iterator()) {
             const auto& p = m_pieces[sq];
             if (PHelper::is_ranging_piece(p)
                 && (BitBoardType::get_attacks_by(p, sq) & mask).any()) {
