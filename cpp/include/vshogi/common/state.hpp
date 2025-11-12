@@ -46,11 +46,14 @@ private:
     Board<P> m_board;
     Stands m_stands;
     ColorEnum m_turn; //!< Player to make a move in the current state.
-    Square m_checkers[2]; //!< Checkers attacking turn player's king.
+
+    /**
+     * @brief Direction of checkers from turn player's king.
+     */
+    DirectionEnum m_checkers[2];
 
 public:
-    State()
-        : m_board(), m_stands(), m_turn(BLACK), m_checkers{C::SQ_NA, C::SQ_NA}
+    State() : m_board(), m_stands(), m_turn(BLACK), m_checkers{DIR_NA, DIR_NA}
     {
     }
     State(const std::string& sfen) : m_board(), m_stands(), m_turn()
@@ -100,17 +103,31 @@ public:
     {
         return m_board.get_king_square(c);
     }
-    Square get_checker_square(const uint i = 0u) const
+    DirectionEnum get_checker_dir(const uint index = 0u) const
     {
-        return m_checkers[i];
+        return m_checkers[index];
+    }
+    Square find_checker_square(const uint index = 0u) const
+    {
+        auto ptr_sq = SHelper::ray_from(get_king_square(), m_checkers[index]);
+        if (ptr_sq == nullptr) {
+            assert(m_checkers[index] == DIR_NA);
+            return C::SQ_NA;
+        }
+        for (; *ptr_sq != C::SQ_NA; ++ptr_sq) {
+            if (!m_board.is_empty(*ptr_sq))
+                break;
+        }
+        assert((m_checkers[index] == DIR_NA) || (*ptr_sq != C::SQ_NA));
+        return *ptr_sq;
     }
     bool in_check() const
     {
-        return m_checkers[0] != C::SQ_NA;
+        return m_checkers[0] != DIR_NA;
     }
     bool in_double_check() const
     {
-        return m_checkers[1] != C::SQ_NA;
+        return m_checkers[1] != DIR_NA;
     }
     bool can_apply_drop_move(const PieceType pt = C::NA) const
     {
@@ -118,9 +135,10 @@ public:
             return false;
         if ((pt != C::NA) && (!m_stands[m_turn].exist(pt)))
             return false;
-        if (in_check() && (!PHelper::is_ranging_piece(m_board[m_checkers[0]])))
-            return false;
-        return true;
+        if (!in_check())
+            return true;
+        return m_board.is_empty(
+            SHelper::shift(get_king_square(), m_checkers[0]));
     }
     bool in_promotion_zone(const Move<P>& m) const
     {
@@ -180,7 +198,8 @@ public:
     State& undo(
         const Move<P>& move,
         const ColoredPiece& captured,
-        const Square& checker_sq)
+        const DirectionEnum& checker_dir_0,
+        const DirectionEnum& checker_dir_1)
     {
         const Square dst = move.destination();
         if (captured != VOID)
@@ -197,8 +216,8 @@ public:
             m_board.place_at(src, moved);
         }
         m_turn = ~m_turn;
-        m_checkers[0] = checker_sq;
-        m_checkers[1] = C::SQ_NA;
+        m_checkers[0] = checker_dir_0;
+        m_checkers[1] = checker_dir_1;
         return *this;
     }
     void to_feature_map(float* const data) const
@@ -262,7 +281,7 @@ public:
     BitBoardType compute_king_movable(BitBoardType movable) const
     {
         for (uint ii = 0u; ii < 2u; ++ii) {
-            const Square& sq = m_checkers[ii];
+            const Square sq = find_checker_square(ii);
             if (sq == C::SQ_NA)
                 break;
             movable &= ~m_board.get_attacks_by_nocheck(sq);
@@ -293,13 +312,13 @@ private:
     }
     void update_checkers()
     {
-        std::fill_n(m_checkers, 2, C::SQ_NA);
+        std::fill_n(m_checkers, 2, DIR_NA);
         uint index = 0u;
         const auto king_sq = m_board.get_king_square(m_turn);
         for (auto dir : C::direction_iterator()) {
             const auto sq = m_board.find_attacker(~m_turn, king_sq, dir);
             if (sq != C::SQ_NA) {
-                m_checkers[index++] = sq;
+                m_checkers[index++] = dir;
                 if (index > 1)
                     break;
             }
@@ -310,37 +329,40 @@ private:
         const auto enemy_king_sq = m_board.get_king_square(~m_turn);
         const bool check_by_moved = is_check_by_moved(enemy_king_sq, dst);
 
-        m_checkers[0] = (check_by_moved) ? dst : C::SQ_NA;
-        m_checkers[1] = C::SQ_NA;
+        m_checkers[0] = (check_by_moved)
+                            ? SHelper::direction(enemy_king_sq, dst)
+                            : DIR_NA;
+        m_checkers[1] = DIR_NA;
     }
     void
     update_checkers_before_turn_update(const Square& dst, const Square& src)
     {
         const auto enemy_king_sq = m_board.get_king_square(~m_turn);
         if (enemy_king_sq == C::SQ_NA) {
-            m_checkers[0] = C::SQ_NA;
-            m_checkers[1] = C::SQ_NA;
+            m_checkers[0] = DIR_NA;
+            m_checkers[1] = DIR_NA;
             return;
         }
         const auto dst_dir = SHelper::direction(enemy_king_sq, dst);
-        const auto discovered_checker_sq = find_discovered_checker_square(
-            enemy_king_sq, dst_dir, SHelper::direction(enemy_king_sq, src));
+        const auto src_dir = SHelper::direction(enemy_king_sq, src);
+        const auto discovered_checker_sq
+            = find_discovered_checker_square(enemy_king_sq, dst_dir, src_dir);
 
         const bool check_by_discovered = (discovered_checker_sq != C::SQ_NA);
         const bool check_by_moved = is_check_by_moved(enemy_king_sq, dst);
 
         if (check_by_moved && check_by_discovered) {
-            m_checkers[0] = dst;
-            m_checkers[1] = discovered_checker_sq;
+            m_checkers[0] = dst_dir;
+            m_checkers[1] = src_dir;
         } else if (check_by_moved) {
-            m_checkers[0] = dst;
-            m_checkers[1] = C::SQ_NA;
+            m_checkers[0] = dst_dir;
+            m_checkers[1] = DIR_NA;
         } else if (check_by_discovered) {
-            m_checkers[0] = discovered_checker_sq;
-            m_checkers[1] = C::SQ_NA;
+            m_checkers[0] = src_dir;
+            m_checkers[1] = DIR_NA;
         } else {
-            m_checkers[0] = C::SQ_NA;
-            m_checkers[1] = C::SQ_NA;
+            m_checkers[0] = DIR_NA;
+            m_checkers[1] = DIR_NA;
         }
     }
     Square find_discovered_checker_square(

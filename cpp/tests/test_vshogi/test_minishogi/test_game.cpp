@@ -76,7 +76,7 @@ TEST(test_minishogi_game, undo)
         game.apply(Move(FU, SQ_1C));
         game.undo();
         CHECK_TRUE(game.in_check());
-        CHECK_EQUAL(SQ_1B, game.get_checker_square());
+        CHECK_EQUAL(SQ_1B, game.find_checker_square());
     }
     {
         // undo ignoring check & undo drop move

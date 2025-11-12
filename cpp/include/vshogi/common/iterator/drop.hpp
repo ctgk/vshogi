@@ -113,7 +113,7 @@ private:
                 = b.template compute_droppable<IterType == IterEnum::CHECK>(
                        p,
                        BitBoard<P>::get_line_segment(
-                           m_state.get_checker_square(),
+                           m_state.find_checker_square(),
                            b.get_king_square(m_turn)))
                       .iterator();
         } else {
@@ -170,14 +170,14 @@ private:
 
 public:
     DropMoveIterator(const State<P>& state)
-        : m_state{state}, m_sq_end{state.get_checker_square()}, m_sq_iter{},
+        : m_state{state}, m_sq_end{state.find_checker_square()}, m_sq_iter{},
           m_pt_iter{pt_end}
     {
         assert(state.in_check());
         if (!state.can_apply_drop_move())
             return;
         const auto k = state.get_king_square();
-        m_sq_iter = S::ray_from(k, S::direction(k, m_sq_end));
+        m_sq_iter = S::ray_from(k, state.get_checker_dir());
         assert(m_sq_iter != nullptr);
         if (*m_sq_iter == m_sq_end) {
             m_pt_iter = pt_end;

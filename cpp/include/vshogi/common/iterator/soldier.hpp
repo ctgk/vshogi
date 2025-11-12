@@ -235,7 +235,7 @@ private:
             goto ExitLabel;
 
         if (m_state.in_check()) {
-            const auto checker_sq = m_state.get_checker_square();
+            const auto checker_sq = m_state.find_checker_square();
             movable &= BitBoard<P>::get_line_segment(checker_sq, king_sq)
                            .set(checker_sq);
             if (!movable.any())
@@ -452,7 +452,7 @@ private:
     void update_dst_mask_by_current_check(const Square king_sq)
     {
         if (m_state.in_check()) {
-            const auto checker_sq = m_state.get_checker_square();
+            const auto checker_sq = m_state.find_checker_square();
             assert(checker_sq != C::SQ_NA);
             m_dst_mask &= BitBoard<P>::get_line_segment(checker_sq, king_sq)
                               .set(checker_sq);
@@ -513,10 +513,9 @@ private:
 public:
     SoldierMoveIteratorEvade(const State<P>& state)
         : m_state{state}, m_src_mask{compute_src_mask(state)},
-          m_dst_last{state.get_checker_square()},
-          m_dst_iter{S::ray_from(
-              state.get_king_square(),
-              S::direction(state.get_king_square(), m_dst_last))},
+          m_dst_last{state.find_checker_square()},
+          m_dst_iter{
+              S::ray_from(state.get_king_square(), state.get_checker_dir())},
           m_src_dir_iter{}, m_src{C::SQ_NA}, m_promote{}
     {
         assert(state.in_check());
@@ -669,7 +668,7 @@ public:
             return;
         if (!state.in_check())
             return;
-        init_dst_iter(state.get_checker_square());
+        init_dst_iter(state.find_checker_square());
         while (!m_dst_iter.is_end()) {
             init_src_iter();
             if (m_src_iter.is_end())

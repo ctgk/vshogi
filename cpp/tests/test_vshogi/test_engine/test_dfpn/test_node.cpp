@@ -512,7 +512,7 @@ TEST(dfpn_node_backprop, defence_preference)
     g.apply(Move(HI, SQ_5B));
     n.init(Move(HI, SQ_5B));
     n.expand(next, g);
-    n.backprop(g.get_checker_square());
+    n.backprop(g.find_checker_square());
 
     // Prefer capture move
     CHECK_EQUAL(
@@ -600,7 +600,7 @@ TEST(dfpn_node_backprop, defence_proved_by_repetitions)
         .apply(Move(SQ_2C, SQ_1B));
     auto n = Node();
     n.expand(next, g);
-    n.backprop(g.get_checker_square());
+    n.backprop(g.find_checker_square());
 
     uint th_p_ch, th_d_ch;
     auto c = n.select(inf, inf, th_p_ch, th_d_ch);
@@ -609,7 +609,7 @@ TEST(dfpn_node_backprop, defence_proved_by_repetitions)
     CHECK_TRUE(c->proved_no_mate(true));
     CHECK_TRUE(c->proved_by_repetitions());
     g.undo();
-    n.backprop(g.get_checker_square());
+    n.backprop(g.find_checker_square());
     CHECK_TRUE(n.proved_no_mate(false));
     CHECK_TRUE(n.proved_by_repetitions());
 }

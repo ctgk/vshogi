@@ -52,6 +52,18 @@ private:
     ResultEnum m_result;
     ZobristHashType m_hash;
     std::vector<ZobristHashType> m_hash_list;
+
+    /**
+     * @brief List of captured pieces, move, and check-square.
+     *       fedcba98 76543210 fedcba98 76543210
+     *       ________ ________ ******** ******** move
+     *       ________ ******** ________ ________ captured
+     *       ____**** ________ ________ ________ checker dir 0
+     *       ****____ ________ ________ ________ checker dir 1
+     * (MSB) xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx (LSB)
+     *
+     * @note
+     */
     std::vector<std::uint32_t> m_captured_move_list;
 
 public:
@@ -128,9 +140,9 @@ public:
     {
         return m_current_state.get_board().get_king_square(c);
     }
-    Square get_checker_square(const uint index = 0u) const
+    Square find_checker_square(const uint index = 0u) const
     {
-        return m_current_state.get_checker_square(index);
+        return m_current_state.find_checker_square(index);
     }
     ResultEnum get_result() const
     {
@@ -238,8 +250,9 @@ public:
         std::uint32_t v = m_captured_move_list[n];
         const auto move = MoveType(static_cast<std::uint16_t>(v & 0x0ffffu));
         const auto captured = static_cast<ColoredPiece>((v >> 16u) & 0x0ffu);
-        const auto checker_sq = static_cast<Square>(v >> 24u);
-        m_current_state.undo(move, captured, checker_sq);
+        const auto checker_0 = static_cast<DirectionEnum>((v >> 24u) & 0x0fu);
+        const auto checker_1 = static_cast<DirectionEnum>((v >> 28u) & 0x0fu);
+        m_current_state.undo(move, captured, checker_0, checker_1);
         m_result = ONGOING;
         m_hash = m_hash_list[n];
         m_hash_list.pop_back();
@@ -445,14 +458,16 @@ protected:
     void add_record_and_update_state(const MoveType& move)
     {
         const auto captured = m_current_state.get_board()[move.destination()];
-        const auto checker_sq = m_current_state.get_checker_square();
+        const auto checker_dir_0 = m_current_state.get_checker_dir(0u);
+        const auto checker_dir_1 = m_current_state.get_checker_dir(1u);
         m_hash_list.emplace_back(m_hash);
         static_assert(sizeof(MoveType) == sizeof(std::uint16_t));
         static_assert(sizeof(captured) == sizeof(std::uint8_t));
         m_captured_move_list.emplace_back(
             static_cast<std::uint32_t>(move.hash())
             ^ (static_cast<std::uint32_t>(captured) << 16)
-            ^ (static_cast<std::uint32_t>(checker_sq) << 24));
+            ^ (static_cast<std::uint32_t>(checker_dir_0) << 24)
+            ^ (static_cast<std::uint32_t>(checker_dir_1) << 28));
         m_current_state.apply(move, &m_hash);
     }
 
