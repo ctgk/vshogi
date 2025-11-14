@@ -117,10 +117,16 @@ public:
         if (m_visit_count)
             return; // this node should have previous simulation result.
         const auto result = game.get_result();
-        if ((result == ONGOING) || (result == DRAW))
-            return; // skip, no value changes.
+        if (result == ONGOING)
+            return;
 
         const auto turn = game.get_turn();
+        if (result == DRAW) {
+            m_value = (turn == BLACK) ? -0.2f : 0.2f;
+            m_q_value = m_value;
+            return;
+        }
+
         const auto winner = (result == BLACK_WIN) ? BLACK : WHITE;
         const auto value = (winner == turn) ? 1.f : -1.f;
         m_value = value;

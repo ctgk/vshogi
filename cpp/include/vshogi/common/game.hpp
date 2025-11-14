@@ -208,6 +208,11 @@ public:
         m_result = (get_turn() == BLACK) ? WHITE_WIN : BLACK_WIN;
         return *this;
     }
+    Game& declare_draw()
+    {
+        m_result = DRAW;
+        return *this;
+    }
     Game& apply(const MoveType& move)
     {
         if ((m_result == ONGOING) && (!is_legal(move))) {

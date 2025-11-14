@@ -372,6 +372,26 @@ class Game(abc.ABC):
         self._game.resign()
         return self
 
+    def declare_draw(self) -> 'Game':
+        """Declare a draw.
+
+        Returns
+        -------
+        Game
+            Game after draw.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> game = shogi.Game()
+        >>> game.result
+        Result.ONGOING
+        >>> game.declare_draw().result
+        Result.DRAW
+        """
+        self._game.declare_draw()
+        return self
+
     def undo(self) -> 'Game':
         """Undo a previous move.
 

@@ -203,6 +203,9 @@ def play_game(
         if player_white is not player_black:
             player_white.apply(move)
 
+    if game.result == vshogi.Result.ONGOING:
+        game.declare_draw()
+
     player_black.clear()
     player_white.clear()
     return game
@@ -288,7 +291,10 @@ def df_to_tfrecord(tfrecord_path: str, df: pd.DataFrame, args: Args, merger=None
                 visit_count = {args._shogi.Move(k): v for k, v in eval(row.visit_count).items()}
                 s = sum(visit_count.values())
                 visit_proba = {m: v / s for m, v in visit_count.items()}
-                z_value = 0 if ('DRAW' in row.result) else 2 * int(('BLACK' in row.result) == ('b' == row.state.split()[1])) - 1
+                if 'DRAW' in row.result:
+                    z_value = -0.2 if ('b' == row.state.split()[1]) else 0.2
+                else:
+                    z_value = 2 * int(('BLACK' in row.result) == ('b' == row.state.split()[1])) - 1
                 z_value = z_value * np.power(args.discount_factor, row.total_ply - row.ply)
                 value = row.z_weight * z_value + (1 - row.z_weight) * row.q_value
                 value01 = np.clip((value + 1) / 2, 0., 1.)
@@ -567,10 +573,16 @@ def run_train(args: Args):
     if i > 1 and args.nn_load_previous_weights:
         if os.path.exists(weight_path.format(i)):
             print(f"Loading {weight_path.format(i)}")
-            network.load_state_dict(th.load(weight_path.format(i), weights_only=True))
+            try:
+                network.load_state_dict(th.load(weight_path.format(i), weights_only=True))
+            except:
+                print(f"Failed loading {weight_path.format(i)}")
         elif os.path.exists(weight_path.format(i - 1)):
             print(f"Loading {weight_path.format(i - 1)}")
-            network.load_state_dict(th.load(weight_path.format(i - 1), weights_only=True))
+            try:
+                network.load_state_dict(th.load(weight_path.format(i - 1), weights_only=True))
+            except:
+                print(f"Failed loading {weight_path.format(i - 1)}")
     if i > 0:
         optimizer = th.optim.AdamW(network.parameters(), args.nn_learning_rate)
         load_data_and_train_network(network, i, optimizer)
