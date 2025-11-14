@@ -20,8 +20,8 @@ namespace vshogi::engine::dfpn
 {
 
 static constexpr uint zero = 0u;
-static constexpr uint cent = 1u;
-static constexpr uint unit = 100u;
+static constexpr uint cent = 1u << 8u;
+static constexpr uint unit = 100u * cent;
 static constexpr uint kilo = 1000u * unit;
 static constexpr uint inf = std::numeric_limits<uint>::max();
 
@@ -46,7 +46,7 @@ private:
     uint m_delta;
     bool m_proved_by_repetition;
     bool m_fully_expanded; //!< Omitted drop moves if false.
-    std::uint8_t m_chebyshev;
+    std::uint8_t m_delta_plus;
 
     Node* m_sibling;
     Node* m_child;
@@ -93,11 +93,17 @@ public:
         const int offset = offence ? 19 : 10;
         const Square king_sq
             = g.get_king_square(offence ? ~g.get_turn() : g.get_turn());
+        const Square checker = g.find_checker_square();
         for (Node* c = m_child; c; c = c->sibling()) {
-            const auto cd = static_cast<int>(SHelper::chebyshev_distance(
-                c->get_action().destination(), king_sq));
-            c->m_chebyshev
-                = static_cast<std::uint8_t>(std::abs(10 * cd - offset));
+            uint dp = 0u;
+            const auto m = c->get_action();
+            const auto dst = m.destination();
+            if ((offence && !m.is_drop()) || (!offence && (dst != checker)))
+                dp = 0x40u; // offence (defence) prefers drop (capturing)
+            const auto d
+                = static_cast<int>(SHelper::chebyshev_distance(dst, king_sq));
+            dp ^= std::min(0x3fu, static_cast<uint>(std::abs(10 * d - offset)));
+            c->m_delta_plus = static_cast<std::uint8_t>(dp);
         }
     }
     Node* select(const uint th_p, const uint th_d, uint& th_p_ch, uint& th_d_ch)
@@ -141,11 +147,13 @@ public:
                 delta_max[cd] = std::max(delta_max[cd], ch->m_phi);
                 cd_max = std::max(cd_max, static_cast<uint>(cd));
             }
-            if (ch->is_better_child_than(!offence, m_child_1st, checker_sq)) {
+            if ((m_child_1st == nullptr)
+                || ch->delta_plus() < m_child_1st->delta_plus()) {
                 m_child_2nd = m_child_1st;
                 m_child_1st = ch;
-            } else if (ch->is_better_child_than(
-                           !offence, m_child_2nd, checker_sq)) {
+            } else if (
+                (m_child_2nd == nullptr)
+                || (ch->delta_plus() < m_child_2nd->delta_plus())) {
                 m_child_2nd = ch;
             }
         }
@@ -337,28 +345,11 @@ private:
             std::clamp(nibling.phi(), cent, kilo),
             std::clamp(nibling.delta(), cent, kilo));
     }
-    bool is_better_child_than(
-        const bool offence,
-        const Node* const other,
-        const Square& dst_prev) const
+    uint delta_plus() const
     {
-        if (other == nullptr)
-            return true;
-        if (m_delta != other->m_delta)
-            return m_delta < other->m_delta;
-        if (m_child_1st && other->m_child_1st && m_child_1st->proved()
-            && (!other->m_child_1st->proved()))
-            return true;
-
-        const auto td = m_action.destination();
-        const auto od = other->m_action.destination();
-
-        if (offence && ((td == dst_prev) != (od == dst_prev)))
-            return (td == dst_prev) && (od != dst_prev); // defence at parent
-        if (!offence && (m_action.is_drop() != other->m_action.is_drop()))
-            return m_action.is_drop()
-                   && !other->m_action.is_drop(); // offence at parent
-        return m_chebyshev < other->m_chebyshev;
+        if (m_delta == inf)
+            return inf;
+        return m_delta ^ static_cast<uint>(m_delta_plus);
     }
     Node* child()
     {
@@ -372,7 +363,7 @@ private:
 public: // utility
     Node()
         : m_action(), m_phi(inf), m_delta(inf), m_proved_by_repetition(false),
-          m_fully_expanded(false), m_chebyshev{}, m_sibling(nullptr),
+          m_fully_expanded(false), m_delta_plus{}, m_sibling(nullptr),
           m_child(nullptr), m_child_1st(nullptr), m_child_2nd(nullptr)
 
     {
@@ -391,7 +382,7 @@ public: // utility
         m_delta = inf;
         m_proved_by_repetition = false;
         m_fully_expanded = false;
-        m_chebyshev = 0u;
+        m_delta_plus = 0u;
         m_sibling = nullptr;
         m_child = nullptr;
         m_child_1st = nullptr;
@@ -404,7 +395,7 @@ public: // utility
         m_delta = unit;
         m_proved_by_repetition = false;
         m_fully_expanded = false;
-        m_chebyshev = 0u;
+        m_delta_plus = 0u;
         m_sibling = nullptr;
         m_child = nullptr;
         m_child_1st = nullptr;
@@ -417,7 +408,7 @@ public: // utility
         m_delta = delta;
         m_proved_by_repetition = false;
         m_fully_expanded = false;
-        m_chebyshev = 0u;
+        m_delta_plus = 0u;
         m_sibling = nullptr;
         m_child = nullptr;
         m_child_1st = nullptr;
