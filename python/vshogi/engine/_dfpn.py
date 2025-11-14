@@ -1,5 +1,7 @@
 import typing as tp
 
+import numpy as np
+
 from vshogi._game import Game
 from vshogi.engine._engine import Engine
 
@@ -249,4 +251,7 @@ def _tree(offence, node, depth: int, breadth: int):
 
 def _repr_node(offence: bool, n) -> str:
     name = 'OR' if offence else 'AND'
-    return f'{name}(#P={n.pn(offence)}, #D={n.dn(offence)})'
+    return (
+        f'{name}(#P={np.round(n.pn(offence), 2)}, '
+        f'#D={np.round(n.dn(offence), 2)})'
+    )

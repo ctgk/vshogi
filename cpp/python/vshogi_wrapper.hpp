@@ -479,9 +479,25 @@ inline void export_dfpn_node(pybind11::module& m)
 {
     namespace py = pybind11;
     using Node = vshogi::engine::dfpn::Node<Parameters>;
+    constexpr float unit = static_cast<float>(vshogi::engine::dfpn::unit);
+    constexpr uint inf = vshogi::engine::dfpn::inf;
     py::class_<Node>(m, "DfpnNode")
-        .def("pn", &Node::pn)
-        .def("dn", &Node::dn)
+        .def(
+            "pn",
+            [](const Node& self, const bool offence) {
+                const auto n = self.pn(offence);
+                if (n == inf)
+                    return std::numeric_limits<float>::infinity();
+                return static_cast<float>(n) / unit;
+            })
+        .def(
+            "dn",
+            [](const Node& self, const bool offence) {
+                const auto n = self.dn(offence);
+                if (n == inf)
+                    return std::numeric_limits<float>::infinity();
+                return static_cast<float>(n) / unit;
+            })
         .def("get_action", &Node::get_action)
         .def("has_child", &Node::has_child)
         .def(

@@ -9,7 +9,17 @@ def test_proved_mate():
     searcher = DfpnSearcher()
     searcher.set_game(g)
     searcher.search()
+    print(searcher._tree())
     print(searcher._tree(pv_line=["G*1b"]))
+    assert searcher.proved_mate() is True
+
+
+def test_proved_mate_2():
+    g = shogi.Game('2+B1k/3r1/3Sp/G1K2/3r1 w Gbsp')
+    searcher = DfpnSearcher()
+    searcher.set_game(g)
+    searcher.search(10000)
+    print(searcher._tree(depth=3, breadth=3))
     assert searcher.proved_mate() is True
 
 
