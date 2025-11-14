@@ -36,17 +36,26 @@ private:
     Move<P> m_action;
 
     /**
-     * @brief Threshold value during search, #P (or #D) after search.
+     * @brief #P (or #D).
+     * @details
+     *           fedcba98 76543210 fedcba98 76543210
+     *           ******** ******** ******** ________       Valid delta value
+     * (MSB) ... xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx (LSB)
      */
     uint m_phi;
 
     /**
-     * @brief Threshold value during search, #D (or #P) after search.
+     * @brief #D (or #P) with some extra in the least significant 8 bits.
+     * @details
+     *           fedcba98 76543210 fedcba98 76543210
+     *           ________ ________ ________ __******       chebyshev(king, dst)
+     *           ________ ________ ________ _*______       drop (or capture)
+     *           ******** ******** ******** ________       Valid delta value
+     * (MSB) ... xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx (LSB)
      */
     uint m_delta;
     bool m_proved_by_repetition;
     bool m_fully_expanded; //!< Omitted drop moves if false.
-    std::uint8_t m_delta_plus;
 
     Node* m_sibling;
     Node* m_child;
@@ -95,23 +104,25 @@ public:
             = g.get_king_square(offence ? ~g.get_turn() : g.get_turn());
         const Square checker = g.find_checker_square();
         for (Node* c = m_child; c; c = c->sibling()) {
-            uint dp = 0u;
+            uint delta_plus = 0u;
             const auto m = c->get_action();
             const auto dst = m.destination();
             if ((offence && !m.is_drop()) || (!offence && (dst != checker)))
-                dp = 0x40u; // offence (defence) prefers drop (capturing)
+                delta_plus
+                    = 0x40u; // offence (defence) prefers drop (capturing)
             const auto d
                 = static_cast<int>(SHelper::chebyshev_distance(dst, king_sq));
-            dp ^= std::min(0x3fu, static_cast<uint>(std::abs(10 * d - offset)));
-            c->m_delta_plus = static_cast<std::uint8_t>(dp);
+            delta_plus ^= std::min(
+                0x3fu, static_cast<uint>(std::abs(10 * d - offset)));
+            c->m_delta ^= delta_plus;
         }
     }
     Node* select(const uint th_p, const uint th_d, uint& th_p_ch, uint& th_d_ch)
     {
         assert(m_child_1st);
         constexpr uint d2_max = inf - 1u;
-        const uint d2 = m_child_2nd ? m_child_2nd->m_delta : inf;
-        th_p_ch = th_d - m_delta + m_child_1st->m_phi;
+        const uint d2 = m_child_2nd ? m_child_2nd->delta() : inf;
+        th_p_ch = th_d - delta() + m_child_1st->m_phi;
         th_d_ch = std::min(th_p, std::min(d2, d2_max) + 1u);
         return m_child_1st;
     }
@@ -125,7 +136,7 @@ public:
     void backprop(const Square& checker_sq)
     {
         const bool offence = (checker_sq == C::SQ_NA);
-        if (m_child_1st && (m_child_1st->m_delta == zero)) {
+        if (m_child_1st && (m_child_1st->delta() == zero)) {
             m_phi = zero;
             m_delta = inf;
             m_proved_by_repetition = m_child_1st->proved_by_repetitions();
@@ -133,7 +144,7 @@ public:
         }
         uint cd_max = 0u;
         uint delta_max[C::num_squares] = {zero};
-        m_delta = zero;
+        m_delta &= 0xffu; // keep the least significant 8 bits.
         m_child_1st = nullptr;
         m_child_2nd = nullptr;
         m_proved_by_repetition = static_cast<bool>(m_child);
@@ -148,18 +159,20 @@ public:
                 cd_max = std::max(cd_max, static_cast<uint>(cd));
             }
             if ((m_child_1st == nullptr)
-                || ch->delta_plus() < m_child_1st->delta_plus()) {
+                || ch->m_delta < m_child_1st->m_delta) {
                 m_child_2nd = m_child_1st;
                 m_child_1st = ch;
             } else if (
                 (m_child_2nd == nullptr)
-                || (ch->delta_plus() < m_child_2nd->delta_plus())) {
+                || (ch->m_delta < m_child_2nd->m_delta)) {
                 m_child_2nd = ch;
             }
         }
         for (uint ii = cd_max + 1u; ii--;)
             m_delta += delta_max[ii];
-        m_phi = m_child_1st ? m_child_1st->m_delta : inf;
+        if (m_delta <= 0xffu)
+            m_delta = zero;
+        m_phi = m_child_1st ? m_child_1st->delta() : inf;
     }
 
 private:
@@ -345,12 +358,6 @@ private:
             std::clamp(nibling.phi(), cent, kilo),
             std::clamp(nibling.delta(), cent, kilo));
     }
-    uint delta_plus() const
-    {
-        if (m_delta == inf)
-            return inf;
-        return m_delta ^ static_cast<uint>(m_delta_plus);
-    }
     Node* child()
     {
         return m_child;
@@ -362,9 +369,9 @@ private:
 
 public: // utility
     Node()
-        : m_action(), m_phi(inf), m_delta(inf), m_proved_by_repetition(false),
-          m_fully_expanded(false), m_delta_plus{}, m_sibling(nullptr),
-          m_child(nullptr), m_child_1st(nullptr), m_child_2nd(nullptr)
+        : m_action(), m_phi(unit), m_delta(unit), m_proved_by_repetition(false),
+          m_fully_expanded(false), m_sibling(nullptr), m_child(nullptr),
+          m_child_1st(nullptr), m_child_2nd(nullptr)
 
     {
     }
@@ -378,11 +385,10 @@ public: // utility
 
     void init()
     {
-        m_phi = inf;
-        m_delta = inf;
+        m_phi = unit;
+        m_delta = unit;
         m_proved_by_repetition = false;
         m_fully_expanded = false;
-        m_delta_plus = 0u;
         m_sibling = nullptr;
         m_child = nullptr;
         m_child_1st = nullptr;
@@ -395,7 +401,6 @@ public: // utility
         m_delta = unit;
         m_proved_by_repetition = false;
         m_fully_expanded = false;
-        m_delta_plus = 0u;
         m_sibling = nullptr;
         m_child = nullptr;
         m_child_1st = nullptr;
@@ -408,7 +413,6 @@ public: // utility
         m_delta = delta;
         m_proved_by_repetition = false;
         m_fully_expanded = false;
-        m_delta_plus = 0u;
         m_sibling = nullptr;
         m_child = nullptr;
         m_child_1st = nullptr;
@@ -424,15 +428,15 @@ public: // utility
     }
     uint delta() const
     {
-        return m_delta;
+        return (m_delta == inf) ? m_delta : (m_delta >> 8u) << 8u;
     }
     uint pn(const bool offence) const
     {
-        return offence ? m_phi : m_delta;
+        return offence ? m_phi : delta();
     }
     uint dn(const bool offence) const
     {
-        return offence ? m_delta : m_phi;
+        return offence ? delta() : m_phi;
     }
     bool proved() const
     {
