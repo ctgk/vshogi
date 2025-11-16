@@ -96,6 +96,7 @@ TEST(soldier_move_iterator, minishogi_check)
     // unpromotable
 
     compare("B1S1k/5/5/5/K4 b -", {"3a2b", "3a2b+", "5a3c", "5a3c+"});
+    compare("2B1k/5/3P1/3GK/4R b P", {"3a2b", "3a2b+" /*1d2e*/});
 }
 
 TEST(soldier_move_iterator, minishogi_evade)

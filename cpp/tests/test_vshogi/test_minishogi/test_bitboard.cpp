@@ -59,14 +59,14 @@ TEST(test_minishogi_bitboard, from_rank)
     CHECK_EQUAL(bb_ranke.value(), BitBoard::from_rank(Config::RANK_Z).value());
 }
 
-TEST(test_minishogi_bitboard, get_neighbor_2nd_at)
+TEST(test_minishogi_bitboard, get_neighbor_2nd)
 {
     {
-        const auto actual = BitBoard::get_neighbor_2nd_at(SQ_NA, vshogi::BLACK);
+        const auto actual = BitBoard::get_neighbor_2nd(SQ_NA, B_FU);
         CHECK_EQUAL(0, actual.value());
     }
     {
-        const auto actual = BitBoard::get_neighbor_2nd_at(SQ_1A, vshogi::BLACK);
+        const auto actual = BitBoard::get_neighbor_2nd(SQ_1A, B_KI);
         CHECK_EQUAL(9, actual.hamming_weight());
         CHECK_EQUAL(
             (bb_1a | bb_1b | bb_1c | bb_2a | bb_2b | bb_2c | bb_3a | bb_3b
@@ -75,7 +75,7 @@ TEST(test_minishogi_bitboard, get_neighbor_2nd_at)
             actual.value());
     }
     {
-        const auto actual = BitBoard::get_neighbor_2nd_at(SQ_3C, vshogi::WHITE);
+        const auto actual = BitBoard::get_neighbor_2nd(SQ_3C, W_OU);
         CHECK_EQUAL((~BitBoard()).value(), actual.value());
     }
 }

@@ -38,7 +38,8 @@ private:
     static BitBoard ray_table[C::num_squares][C::num_dir];
     static BitBoard line_segment_table[C::num_squares][C::num_squares];
     static BitBoard neighbor_table[num_colors][C::num_squares];
-    static BitBoard neighbor_2nd_table[num_colors][C::num_squares];
+    static BitBoard neighbor_2nd_table[C::num_squares]
+                                      [C::num_colored_piece_types];
 
     constexpr BitBoard(const UInt v_masked) : m_value(v_masked)
     {
@@ -341,11 +342,11 @@ public:
             return BitBoard();
         return neighbor_table[c][sq];
     }
-    static BitBoard get_neighbor_2nd_at(const Square& sq, const ColorEnum& c)
+    static BitBoard get_neighbor_2nd(const Square& sq, const ColoredPiece& p)
     {
         if (sq == C::SQ_NA)
             return BitBoard();
-        return neighbor_2nd_table[c][sq];
+        return neighbor_2nd_table[sq][p];
     }
     static BitBoard compute_ray_to(
         Square sq,
@@ -391,7 +392,14 @@ public:
         for (auto c : {BLACK, WHITE}) {
             for (auto sq : C::square_iterator()) {
                 neighbor_table[c][sq] = compute_neighbor_at(sq, c);
-                neighbor_2nd_table[c][sq] = compute_2nd_neighbor_of(sq, c);
+            }
+        }
+        for (auto sq : C::square_iterator()) {
+            for (auto pt : C::piece_type_iterator()) {
+                for (auto c : {BLACK, WHITE}) {
+                    const auto p = PHelper::to_board_piece(c, pt);
+                    neighbor_2nd_table[sq][p] = compute_2nd_neighbor(sq, p);
+                }
             }
         }
     }
@@ -518,17 +526,28 @@ private:
         return out;
     }
     static BitBoard
-    compute_2nd_neighbor_of(const Square& sq, const ColorEnum& c)
+    compute_2nd_neighbor(const Square& sq, const ColoredPiece& p)
     {
-        auto out = compute_neighbor5x5(sq);
-        if constexpr (C::num_dir > 8) {
-            const auto d = (c == BLACK) ? DIR_S : DIR_N;
-            out |= out.shift(d);
-
-            BitBoard k = from_square(sq).shift(d).shift(d).shift(d).shift(d);
-            k |= k.shift(DIR_E).shift(DIR_E);
-            k |= k.shift(DIR_W).shift(DIR_W);
-            out |= k;
+        BitBoard out{};
+        const auto c = PHelper::get_color(p);
+        for (Square src : C::square_iterator()) {
+            bool src_is_2nd_neighbor = false;
+            for (Square dst : get_attacks_by(p, src).iterator()) {
+                if (get_attacks_by(p, dst).is_one(sq)) {
+                    src_is_2nd_neighbor = true;
+                    break;
+                }
+                if (PHelper::is_promotable(p)
+                    && (SHelper::in_promotion_zone(src, c)
+                        || SHelper::in_promotion_zone(dst, c))
+                    && get_attacks_by(PHelper::promote_nocheck(p), dst)
+                           .is_one(sq)) {
+                    src_is_2nd_neighbor = true;
+                    break;
+                }
+            }
+            if (src_is_2nd_neighbor)
+                out.toggle(src);
         }
         return out;
     }

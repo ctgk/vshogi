@@ -296,7 +296,8 @@ inline judkins_shogi::BitBoard
     = {};
 template <>
 inline judkins_shogi::BitBoard judkins_shogi::BitBoard::neighbor_2nd_table
-    [num_colors][judkins_shogi::Config::num_squares]
+    [judkins_shogi::Config::num_squares]
+    [judkins_shogi::Config::num_colored_piece_types]
     = {};
 
 template <>

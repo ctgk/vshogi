@@ -507,8 +507,15 @@ private:
     {
         BitBoard<P> occ_atks = get_occupied_by_ranging(by_side);
         BitBoard<P> occ_melee = m_bb_color[by_side] ^ occ_atks;
-        occ_melee
-            &= BitBoard<P>::get_neighbor_2nd_at(m_kings[~by_side], by_side);
+        const BitBoard<P> melee_mask = BitBoard<P>::get_neighbor_2nd(
+            m_kings[~by_side], m_pieces[m_kings[~by_side]]);
+        if constexpr (C::num_dir == 12u) {
+            occ_melee
+                &= (melee_mask
+                    | melee_mask.shift(by_side == BLACK ? DIR_S : DIR_N));
+        } else {
+            occ_melee &= melee_mask;
+        }
         occ_atks ^= occ_melee;
         for (auto sq : occ_atks.iterator()) {
             const auto& p = m_pieces[sq];

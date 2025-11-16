@@ -250,9 +250,8 @@ inline minishogi::BitBoard
                                        [minishogi::Config::num_squares]
     = {};
 template <>
-inline minishogi::BitBoard
-    minishogi::BitBoard::neighbor_2nd_table[num_colors]
-                                           [minishogi::Config::num_squares]
+inline minishogi::BitBoard minishogi::BitBoard::neighbor_2nd_table
+    [minishogi::Config::num_squares][minishogi::Config::num_colored_piece_types]
     = {};
 
 template <>

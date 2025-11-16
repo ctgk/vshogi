@@ -55,17 +55,17 @@ TEST(test_judkins_shogi_bitboard, get_neighbor_at)
     }
 }
 
-TEST(test_judkins_shogi_bitboard, get_neighbor_2nd_at)
+TEST(test_judkins_shogi_bitboard, get_neighbor_2nd)
 {
     {
-        const auto actual = BitBoard::get_neighbor_2nd_at(SQ_NA, vshogi::WHITE);
+        const auto actual = BitBoard::get_neighbor_2nd(SQ_NA, W_OU);
         CHECK_EQUAL(0, actual.value());
     }
     {
-        const auto actual = BitBoard::get_neighbor_2nd_at(SQ_1A, vshogi::BLACK);
-        CHECK_EQUAL(3 * 4 + 2, actual.hamming_weight());
-        CHECK_TRUE(actual.is_one(SQ_3E));
-        CHECK_FALSE(actual.is_one(SQ_2E));
+        const auto actual = BitBoard::get_neighbor_2nd(SQ_1A, B_KE);
+        CHECK_EQUAL(
+            (bb_1c | bb_1d | bb_2d | bb_1e | bb_3c | bb_3d | bb_3e).value(),
+            actual.value());
     }
 }
 

@@ -369,7 +369,8 @@ inline shogi::BitBoard
     = {};
 template <>
 inline shogi::BitBoard
-    shogi::BitBoard::neighbor_2nd_table[num_colors][shogi::Config::num_squares]
+    shogi::BitBoard::neighbor_2nd_table[shogi::Config::num_squares]
+                                       [shogi::Config::num_colored_piece_types]
     = {};
 
 template <>

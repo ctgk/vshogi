@@ -65,4 +65,17 @@ TEST(king_move_iterator, minishogi_check)
     compare("4k/5/4K/5/4R b -", {"1c2c", "1c2d"});
 }
 
+TEST(king_move_iterator, judkins_shogi_legal)
+{
+    auto compare
+        = [this](
+              const std::string& sfen, const std::vector<std::string>& expect) {
+              compare_moves<
+                  vshogi::IterEnum::LEGAL,
+                  vshogi::judkins_shogi::Parameters>(sfen, expect);
+          };
+
+    compare("5k/6/6/5N/6/6 w -", {"1a1b", "1a2a"});
+}
+
 } // namespace test_vshogi

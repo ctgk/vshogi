@@ -93,25 +93,25 @@ TEST(test_shogi_bitboard, set)
     CHECK_TRUE(actual.is_one(SQ_1I));
 }
 
-TEST(test_shogi_bitboard, get_neighbor_2nd_at)
+TEST(test_shogi_bitboard, get_neighbor_2nd)
 {
     {
-        const auto actual = BitBoard::get_neighbor_2nd_at(SQ_NA, vshogi::BLACK);
+        const auto actual = BitBoard::get_neighbor_2nd(SQ_NA, B_KY);
         CHECK_EQUAL(0, actual.hamming_weight());
     }
     {
-        const auto actual = BitBoard::get_neighbor_2nd_at(SQ_1A, vshogi::WHITE);
+        const auto actual = BitBoard::get_neighbor_2nd(SQ_1A, B_KI);
         CHECK_EQUAL(9, actual.hamming_weight());
         CHECK_TRUE(actual.is_one(SQ_3C));
         CHECK_FALSE(actual.is_one(SQ_3D));
     }
     {
-        const auto actual = BitBoard::get_neighbor_2nd_at(SQ_1A, vshogi::BLACK);
-        CHECK_EQUAL(14, actual.hamming_weight());
-        CHECK_TRUE(actual.is_one(SQ_3C));
-        CHECK_TRUE(actual.is_one(SQ_3D));
-        CHECK_TRUE(actual.is_one(SQ_3E));
-        CHECK_FALSE(actual.is_one(SQ_3F));
+        const auto actual = BitBoard::get_neighbor_2nd(SQ_1A, B_KY);
+        CHECK_EQUAL(15, actual.hamming_weight());
+        CHECK_FALSE(actual.is_one(SQ_1B));
+        CHECK_TRUE(actual.is_one(SQ_1C));
+        CHECK_TRUE(actual.is_one(SQ_2B));
+        CHECK_FALSE(actual.is_one(SQ_3B));
     }
 }
 

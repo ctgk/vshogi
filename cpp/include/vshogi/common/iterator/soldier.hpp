@@ -388,14 +388,17 @@ private:
     }
     void init_src_iter()
     {
-        const auto king_sq = m_board.get_king_square(m_turn);
         const auto target = m_board.get_king_square(~m_turn);
         assert(target != C::SQ_NA);
 
         BitBoard<P> src_mask = m_cover;
-        src_mask |= m_board.get_occupied_by_ranging(m_turn);
-        src_mask |= BitBoard<P>::get_neighbor_2nd_at(target, m_turn);
-        src_mask &= m_board.get_occupied(m_turn).clear(king_sq);
+        for (auto pt : C::piece_type_iterator()) {
+            if (pt == C::OU)
+                continue;
+            const auto p = PHelper::to_board_piece(m_turn, pt);
+            src_mask |= m_board.get_occupied(p)
+                        & BitBoard<P>::get_neighbor_2nd(target, p);
+        }
         m_src_iter = src_mask.iterator();
     }
     void init_dst_mask()
@@ -489,7 +492,9 @@ private:
     {
         if (s.in_double_check())
             return BitBoard<P>();
-        return s.get_board().find_cover(s.get_turn());
+        return s.get_board()
+            .find_cover(s.get_turn())
+            .clear(s.get_king_square());
     }
 };
 

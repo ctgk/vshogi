@@ -164,6 +164,10 @@ public:
     {
         return EnumIteratorContainer<Square, num_squares>();
     }
+    static auto piece_type_iterator()
+    {
+        return EnumIteratorContainer<PieceType, num_piece_types>();
+    }
     static auto stand_piece_type_iterator()
     {
         return EnumIteratorContainer<PieceType, num_stand_piece_types>();
