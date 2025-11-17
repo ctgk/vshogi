@@ -481,7 +481,9 @@ protected:
     {
         m_result = ONGOING;
         const auto turn = get_turn();
-        if (LegalMoveIterator<Parameters>(m_current_state).is_end())
+        if (DropMoveIterator<Parameters>(m_current_state).is_end()
+            && KingMoveIterator<Parameters>(m_current_state).is_end()
+            && SoldierMoveIterator<Parameters>(m_current_state).is_end())
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
         if (is_repetitions(max_repetitions_inclusive)) {
             if (m_current_state.in_check())
