@@ -74,7 +74,7 @@ public:
     {
         return m_bb_color[BLACK] ^ m_bb_color[WHITE];
     }
-    BitBoard<P> get_occupied(const ColorEnum& c) const
+    const BitBoard<P>& get_occupied(const ColorEnum& c) const
     {
         return m_bb_color[c];
     }

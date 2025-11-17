@@ -208,7 +208,8 @@ private:
     void init_src_iter()
     {
         const auto king_sq = m_board.get_king_square(m_turn);
-        const auto src_mask = m_board.get_occupied(m_turn).clear(king_sq);
+        auto src_mask = m_board.get_occupied(m_turn);
+        src_mask.clear(king_sq);
         m_src_iter = src_mask.iterator();
     }
     void init_src_iter(const Square begin)
@@ -396,9 +397,10 @@ private:
             if (pt == C::OU)
                 continue;
             const auto p = PHelper::to_board_piece(m_turn, pt);
-            src_mask |= m_board.get_occupied(p)
+            src_mask |= m_board.get_occupied(pt)
                         & BitBoard<P>::get_neighbor_2nd(target, p);
         }
+        src_mask &= m_board.get_occupied(m_turn);
         m_src_iter = src_mask.iterator();
     }
     void init_dst_mask()
