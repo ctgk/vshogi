@@ -380,7 +380,7 @@ private:
             = BitBoardType::get_attacks_by(m_board[dst], dst);
         if (!attacks.is_one(enemy_king_sq))
             return false;
-        if (!PHelper::is_ranging_piece(m_board[dst]))
+        if (!PHelper::is_slider(m_board[dst]))
             return true;
         return !(BitBoardType::get_line_segment(dst, enemy_king_sq)
                  & m_board.get_occupied())

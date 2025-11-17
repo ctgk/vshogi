@@ -573,10 +573,10 @@ private:
     static BitBoard compute_attack_by(const ColoredPiece& p, const Square& sq)
     {
         auto a = BitBoard();
-        if (PHelper::is_ranging_piece(p)) {
+        if (PHelper::is_slider(p)) {
             for (auto pd = PHelper::get_attack_directions(p); *pd != DIR_NA;
                  ++pd) {
-                if (PHelper::is_ranging_to(p, *pd))
+                if (PHelper::slidable_to(p, *pd))
                     a |= compute_ray_to(sq, *pd);
             }
         }

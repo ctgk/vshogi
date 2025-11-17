@@ -28,7 +28,7 @@ private:
     inline static Square shift_table[C::num_squares][C::num_dir];
     inline static DirectionEnum direction_src_dst_table[C::num_squares]
                                                        [C::num_squares];
-    inline static Square ranging_squares_to[C::num_squares][C::num_dir]
+    inline static Square sliding_squares_to[C::num_squares][C::num_dir]
                                            [C::board_length];
 
 public:
@@ -103,7 +103,7 @@ public:
         init_shift_table();
 
         // `shift_table` must be initialized, when calling the following.
-        init_ranging_squares_table();
+        init_sliding_squares_table();
         init_direction_src_dst_table();
     }
 
@@ -171,7 +171,7 @@ public:
     {
         if ((direction == DIR_NA) || (src == C::SQ_NA))
             return nullptr;
-        return ranging_squares_to[src][direction];
+        return sliding_squares_to[src][direction];
     }
 
 private:
@@ -200,11 +200,11 @@ private:
             }
         }
     }
-    static void init_ranging_squares_table()
+    static void init_sliding_squares_table()
     {
         constexpr int size
-            = sizeof(ranging_squares_to) / sizeof(ranging_squares_to[0][0][0]);
-        std::fill_n(&ranging_squares_to[0][0][0], size, C::SQ_NA);
+            = sizeof(sliding_squares_to) / sizeof(sliding_squares_to[0][0][0]);
+        std::fill_n(&sliding_squares_to[0][0][0], size, C::SQ_NA);
 
         for (auto src : C::square_iterator()) {
             for (auto dir : C::direction_iterator()) {
@@ -214,7 +214,7 @@ private:
                     dst = Squares::shift(dst, dir);
                     if (dst == C::SQ_NA)
                         break;
-                    ranging_squares_to[src][dir][index++] = dst;
+                    sliding_squares_to[src][dir][index++] = dst;
                     if (is_knight_direction(dir))
                         break;
                 }

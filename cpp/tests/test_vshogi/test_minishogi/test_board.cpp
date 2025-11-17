@@ -195,29 +195,29 @@ TEST(test_minishogi_board, find_pinned)
     }
 }
 
-TEST(test_minishogi_board, find_ranging_attacker)
+TEST(test_minishogi_board, find_sliding_attacker)
 {
     {
         const auto b = Board("5/5/5/5/4R");
         const auto actual
-            = b.find_ranging_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
+            = b.find_sliding_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
         CHECK_EQUAL(SQ_1E, actual);
     }
     {
         const auto b = Board("5/5/4P/5/4R");
         const auto actual
-            = b.find_ranging_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
+            = b.find_sliding_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
         CHECK_EQUAL(SQ_NA, actual);
     }
     {
         const auto b = Board("5/5/4P/5/4R");
-        const auto actual = b.find_ranging_attacker(
+        const auto actual = b.find_sliding_attacker(
             vshogi::BLACK, SQ_1A, vshogi::DIR_S, SQ_1C);
         CHECK_EQUAL(SQ_1E, actual);
     }
     {
         const auto b = Board("5/5/4P/4B/4R");
-        const auto actual = b.find_ranging_attacker(
+        const auto actual = b.find_sliding_attacker(
             vshogi::BLACK, SQ_1A, vshogi::DIR_S, SQ_1C);
         CHECK_EQUAL(SQ_NA, actual);
     }
@@ -289,12 +289,12 @@ TEST(test_minishogi_board, compute_droppable)
     }
 }
 
-TEST(test_minishogi_board, get_occupied_by_ranging)
+TEST(test_minishogi_board, get_occupied_by_slider)
 {
     {
         const auto b = Board("4k/5/5/3S1/K3r");
         CHECK_EQUAL(
-            bb_na.value(), b.get_occupied_by_ranging(vshogi::BLACK).value());
+            bb_na.value(), b.get_occupied_by_slider(vshogi::BLACK).value());
     }
 }
 

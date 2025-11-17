@@ -39,7 +39,7 @@ public:
             const auto enemy_king_sq = b.get_king_square(~t);
             const auto checker_dir = SHelper::direction(enemy_king_sq, m_src);
             const auto checker_sq
-                = b.find_ranging_attacker(t, enemy_king_sq, checker_dir, m_src);
+                = b.find_sliding_attacker(t, enemy_king_sq, checker_dir, m_src);
             if (checker_sq == C::SQ_NA) {
                 return;
             } else {

@@ -178,7 +178,7 @@ public:
             return attack_directions_table[28];
         return attack_directions_table[pt + static_cast<uint>(c) * 14u];
     }
-    static bool is_ranging(const FullPieceTypes pt)
+    static bool is_slider(const FullPieceTypes pt)
     {
         constexpr bool table[] = {
             false, //!< Fu (Pawn)
@@ -199,7 +199,7 @@ public:
         };
         return table[pt];
     }
-    static bool is_ranging_to(const FullPieceTypes pt, const DirectionEnum d)
+    static bool slidable_to(const FullPieceTypes pt, const DirectionEnum d)
     {
         switch (pt) {
         case PT_KY:
@@ -287,7 +287,11 @@ private:
 
 public:
     Pieces() = delete;
+    static void init_tables()
+    {
+    }
 
+public: // basic
     /**
      * @brief Get the color of a board piece.
      * @note Passing VOID returns WHITE.
@@ -323,36 +327,8 @@ public:
             return C::VOID;
         return static_cast<ColoredPiece>(c * C::num_piece_types + p);
     }
-    static constexpr ColoredPiece to_board_piece(const char c)
-    {
-        return to_board_piece(
-            std::islower(static_cast<int>(c)) ? WHITE : BLACK,
-            to_piece_type(c));
-    }
-    static constexpr char to_char(const PieceType& pt)
-    {
-        return FPTHelper::to_char(C::piece_types[pt]);
-    }
-    static const std::string& to_jpn(const PieceType& pt)
-    {
-        return FPTHelper::to_jpn(C::piece_types[pt]);
-    }
-    static const std::string&
-    to_jpn(const PieceType& pt, const bool single_char)
-    {
-        return FPTHelper::to_jpn(C::piece_types[pt], single_char);
-    }
-    static const std::string to_eng(const PieceType& pt)
-    {
-        if (is_promoted(pt))
-            return "+" + std::string(1, std::toupper(to_char(pt)));
-        return std::string(1, std::toupper(to_char(pt)));
-    }
-    static const std::string to_eng(const ColoredPiece& p)
-    {
-        return to_eng(to_piece_type(p));
-    }
 
+public: // promotion
     static constexpr bool is_promotable(const PieceType& p)
     {
         return (p + 1u < C::num_stand_piece_types);
@@ -378,27 +354,6 @@ public:
     {
         return is_promotion_fully_superior(to_piece_type(p));
     }
-    static bool is_ranging_to(const ColoredPiece& p, const DirectionEnum& d)
-    {
-        return FPTHelper::is_ranging_to(
-            C::piece_types[to_piece_type(p)],
-            (get_color(p) == BLACK) ? d : rotate(d));
-    }
-    static bool is_attacking_to(const ColoredPiece& p, const DirectionEnum& d)
-    {
-        return FPTHelper::is_attacking_to(
-            C::piece_types[to_piece_type(p)],
-            (get_color(p) == BLACK) ? d : rotate(d));
-    }
-    static bool is_ranging_piece(const PieceType& pt)
-    {
-        return FPTHelper::is_ranging(C::piece_types[pt]);
-    }
-    static bool is_ranging_piece(const ColoredPiece& p)
-    {
-        return is_ranging_piece(to_piece_type(p));
-    }
-
     /**
      * @brief Promote a promotable piece.
      * @note If the piece is not promotable, the return may not be safe.
@@ -427,6 +382,35 @@ public:
         return static_cast<T>(p - C::num_stand_piece_types - 1);
     }
 
+public: // attack directions
+    static bool slidable_to(const ColoredPiece& p, const DirectionEnum& d)
+    {
+        return FPTHelper::slidable_to(
+            C::piece_types[to_piece_type(p)],
+            (get_color(p) == BLACK) ? d : rotate(d));
+    }
+    static bool is_slider(const PieceType& pt)
+    {
+        return FPTHelper::is_slider(C::piece_types[pt]);
+    }
+    static bool is_slider(const ColoredPiece& p)
+    {
+        return is_slider(to_piece_type(p));
+    }
+    static bool is_attacking_to(const ColoredPiece& p, const DirectionEnum& d)
+    {
+        return FPTHelper::is_attacking_to(
+            C::piece_types[to_piece_type(p)],
+            (get_color(p) == BLACK) ? d : rotate(d));
+    }
+    static const DirectionEnum* get_attack_directions(const ColoredPiece& p)
+    {
+        assert(p != C::VOID);
+        return FPTHelper::get_attack_directions(
+            C::piece_types[to_piece_type(p)], get_color(p));
+    }
+
+public: // point, value
     static uint get_point(const PieceType& p)
     {
         return FPTHelper::to_point(C::piece_types[p]);
@@ -440,6 +424,13 @@ public:
         return FPTHelper::to_value(C::piece_types[pt]);
     }
 
+public: // char, str
+    static constexpr ColoredPiece to_board_piece(const char c)
+    {
+        return to_board_piece(
+            std::islower(static_cast<int>(c)) ? WHITE : BLACK,
+            to_piece_type(c));
+    }
     static void append_sfen(const ColoredPiece& p, std::string& out)
     {
         const auto color = get_color(p);
@@ -452,14 +443,28 @@ public:
             out += '+';
         out += c;
     }
-    static const DirectionEnum* get_attack_directions(const ColoredPiece& p)
+    static constexpr char to_char(const PieceType& pt)
     {
-        assert(p != C::VOID);
-        return FPTHelper::get_attack_directions(
-            C::piece_types[to_piece_type(p)], get_color(p));
+        return FPTHelper::to_char(C::piece_types[pt]);
     }
-    static void init_tables()
+    static const std::string& to_jpn(const PieceType& pt)
     {
+        return FPTHelper::to_jpn(C::piece_types[pt]);
+    }
+    static const std::string&
+    to_jpn(const PieceType& pt, const bool single_char)
+    {
+        return FPTHelper::to_jpn(C::piece_types[pt], single_char);
+    }
+    static const std::string to_eng(const PieceType& pt)
+    {
+        if (is_promoted(pt))
+            return "+" + std::string(1, std::toupper(to_char(pt)));
+        return std::string(1, std::toupper(to_char(pt)));
+    }
+    static const std::string to_eng(const ColoredPiece& p)
+    {
+        return to_eng(to_piece_type(p));
     }
 };
 

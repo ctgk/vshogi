@@ -37,17 +37,17 @@ private:
     Square m_kings[num_colors];
     BitBoard<P> m_bb_color[num_colors];
     BitBoard<P> m_bb_piece[C::num_piece_types];
-    BitBoard<P> m_bb_ranger[num_colors];
+    BitBoard<P> m_bb_slider[num_colors];
 
 public:
     Board()
         : m_pieces(C::initial_position), m_kings{}, m_bb_color{}, m_bb_piece{},
-          m_bb_ranger{}
+          m_bb_slider{}
     {
         update_internals_based_on_pieces();
     }
     Board(const char* const sfen)
-        : m_pieces{}, m_kings{}, m_bb_color{}, m_bb_piece{}, m_bb_ranger{}
+        : m_pieces{}, m_kings{}, m_bb_color{}, m_bb_piece{}, m_bb_slider{}
     {
         set_sfen(sfen);
     }
@@ -113,9 +113,9 @@ public:
     {
         return get_occupied<PT1>(c) | get_occupied<PT2, Args...>(c);
     }
-    BitBoard<P> get_occupied_by_ranging(const ColorEnum& c) const
+    const BitBoard<P>& get_occupied_by_slider(const ColorEnum& c) const
     {
-        return m_bb_ranger[c];
+        return m_bb_slider[c];
     }
     ColoredPiece pop_from(const Square& sq, std::uint64_t* const hash = nullptr)
     {
@@ -162,7 +162,7 @@ public:
     {
         assert(sq < C::SQ_NA);
         const auto& p = m_pieces[sq];
-        if (PHelper::is_ranging_piece(p))
+        if (PHelper::is_slider(p))
             return BitBoard<P>::get_attacks_by(p, sq, get_occupied());
         return BitBoard<P>::get_attacks_by(p, sq);
     }
@@ -194,13 +194,13 @@ public:
             if ((p == C::VOID) || (sq == skip))
                 continue;
             if ((PHelper::get_color(p) == attacker_color)
-                && PHelper::is_ranging_to(p, dir_rotated))
+                && PHelper::slidable_to(p, dir_rotated))
                 return sq;
             return C::SQ_NA;
         }
         return C::SQ_NA;
     }
-    Square find_ranging_attacker(
+    Square find_sliding_attacker(
         const ColorEnum& attacker_color,
         const Square& attacked,
         const DirectionEnum& dir,
@@ -220,7 +220,7 @@ public:
             if ((p == C::VOID) || (*psq == skip))
                 continue;
             if ((PHelper::get_color(p) == attacker_color)
-                && PHelper::is_ranging_to(p, dir_from_attacker))
+                && PHelper::slidable_to(p, dir_from_attacker))
                 return *psq;
             return C::SQ_NA;
         }
@@ -231,14 +231,14 @@ public:
         const Square& ally_king = m_kings[c];
         if (ally_king == C::SQ_NA)
             return BitBoard<P>();
-        return find_ranging_attack_blockers(~c, c, ally_king);
+        return find_sliding_attack_blockers(~c, c, ally_king);
     }
     BitBoard<P> find_cover(const ColorEnum& c) const
     {
         const Square& enemy_king = m_kings[~c];
         if (enemy_king == C::SQ_NA)
             return BitBoard<P>();
-        return find_ranging_attack_blockers(c, c, enemy_king);
+        return find_sliding_attack_blockers(c, c, enemy_king);
     }
     BitBoard<P> compute_king_movable(
         const ColorEnum& by_side, const BitBoard<P>& movable) const
@@ -259,14 +259,14 @@ public:
         const ColorEnum& by_side,
         const BitBoard<P>& src_mask) const
     {
-        auto mask_ranging = get_occupied_by_ranging(by_side);
-        auto mask_melee = m_bb_color[by_side] ^ mask_ranging;
+        auto mask_slider = get_occupied_by_slider(by_side);
+        auto mask_melee = m_bb_color[by_side] ^ mask_slider;
         const auto occ = get_occupied();
-        mask_ranging
+        mask_slider
             &= (Magic<P>::get_adjacent_attack(dst, occ)
                 | Magic<P>::get_diagonal_attack(dst, occ));
         mask_melee &= BitBoard<P>::get_neighbor_at(dst, by_side);
-        const auto candidates = src_mask & (mask_ranging ^ mask_melee);
+        const auto candidates = src_mask & (mask_slider ^ mask_melee);
         BitBoard<P> out{};
         for (auto src : candidates.iterator()) {
             if (BitBoard<P>::get_attacks_by(m_pieces[src], src).is_one(dst))
@@ -422,7 +422,7 @@ private:
         m_kings[WHITE] = C::SQ_NA;
         std::fill_n(m_bb_color, num_colors, BitBoard<P>());
         std::fill_n(m_bb_piece, C::num_piece_types, BitBoard<P>());
-        std::fill_n(m_bb_ranger, num_colors, BitBoard<P>());
+        std::fill_n(m_bb_slider, num_colors, BitBoard<P>());
         for (auto sq : C::square_iterator()) {
             const auto& p = m_pieces[sq];
             const auto c = PHelper::get_color(p);
@@ -433,8 +433,8 @@ private:
                 m_bb_color[c].toggle(sq);
                 m_bb_piece[pt].toggle(sq);
             }
-            if (PHelper::is_ranging_piece(pt))
-                m_bb_ranger[c].toggle(sq);
+            if (PHelper::is_slider(pt))
+                m_bb_slider[c].toggle(sq);
         }
     }
     void update_internals_by_placed(
@@ -454,8 +454,8 @@ private:
             m_kings[c] = sq;
         m_bb_color[c].toggle(sq);
         m_bb_piece[pt].toggle(sq);
-        if (PHelper::is_ranging_piece(pt))
-            m_bb_ranger[c].toggle(sq);
+        if (PHelper::is_slider(pt))
+            m_bb_slider[c].toggle(sq);
     }
     void update_internals_by_popped(
         const ColoredPiece& p,
@@ -473,22 +473,22 @@ private:
             m_kings[c] = C::SQ_NA;
         m_bb_color[c].toggle(sq);
         m_bb_piece[pt].toggle(sq);
-        if (PHelper::is_ranging_piece(pt))
-            m_bb_ranger[c].toggle(sq);
+        if (PHelper::is_slider(pt))
+            m_bb_slider[c].toggle(sq);
     }
-    BitBoard<P> find_ranging_attack_blockers(
+    BitBoard<P> find_sliding_attack_blockers(
         const ColorEnum& attack_by,
         const ColorEnum& block_by,
         const Square& target) const
     {
         BitBoard<P> out{};
-        auto attackers = get_occupied_by_ranging(attack_by);
+        auto attackers = get_occupied_by_slider(attack_by);
         attackers
             &= (Magic<P>::get_adjacent_attack(target)
                 | Magic<P>::get_diagonal_attack(target));
         for (auto atk : attackers.iterator()) {
             const auto target_dir = SHelper::direction(atk, target);
-            if (!PHelper::is_ranging_to(m_pieces[atk], target_dir))
+            if (!PHelper::slidable_to(m_pieces[atk], target_dir))
                 continue;
             auto blockers = BitBoard<P>::get_line_segment(atk, target);
             blockers &= (m_bb_color[BLACK] | m_bb_color[WHITE]);
@@ -505,7 +505,7 @@ private:
         const ColorEnum& by_side,
         const BitBoard<P>& occ_full_but_king) const
     {
-        BitBoard<P> occ_atks = get_occupied_by_ranging(by_side);
+        BitBoard<P> occ_atks = get_occupied_by_slider(by_side);
         BitBoard<P> occ_melee = m_bb_color[by_side] ^ occ_atks;
         const BitBoard<P> melee_mask = BitBoard<P>::get_neighbor_2nd(
             m_kings[~by_side], m_pieces[m_kings[~by_side]]);
@@ -519,7 +519,7 @@ private:
         occ_atks ^= occ_melee;
         for (auto sq : occ_atks.iterator()) {
             const auto& p = m_pieces[sq];
-            if (PHelper::is_ranging_piece(p)
+            if (PHelper::is_slider(p)
                 && (BitBoard<P>::get_attacks_by(p, sq) & mask).any()) {
                 mask &= ~BitBoard<P>::get_attacks_by(p, sq, occ_full_but_king);
             } else {
@@ -618,7 +618,7 @@ private:
             if (is_attacking_the_pawn) {
                 const auto discovered_dir
                     = SHelper::direction(enemy_king_sq, src_next);
-                const auto discovered_attacker_sq = find_ranging_attacker(
+                const auto discovered_attacker_sq = find_sliding_attacker(
                     by_side, enemy_king_sq, discovered_dir, src_next);
                 const auto is_pinned = (discovered_attacker_sq != C::SQ_NA);
                 if (!is_pinned)
@@ -719,8 +719,8 @@ private:
             return table_vertical[vertical_index];
         if (num_candidates_horizontal[horizontal_index] == 1u) {
             if ((horizontal_index == 1u)
-                && (PHelper::is_ranging_to(p, DIR_E)
-                    || PHelper::is_ranging_to(p, DIR_NW)))
+                && (PHelper::slidable_to(p, DIR_E)
+                    || PHelper::slidable_to(p, DIR_NW)))
                 return (num_candidates_horizontal[0]) ? table_horizontal[2]
                                                       : table_horizontal[0];
             return table_horizontal[horizontal_index];

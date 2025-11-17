@@ -135,35 +135,35 @@ TEST(test_shogi_board, find_cover)
     }
 }
 
-TEST(test_shogi_board, find_ranging_attacker)
+TEST(test_shogi_board, find_sliding_attacker)
 {
     {
         const auto b = Board("9/9/9/9/9/9/9/9/9");
         const auto actual
-            = b.find_ranging_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
+            = b.find_sliding_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
         CHECK_EQUAL(SQ_NA, actual);
     }
     {
         const auto b = Board("9/9/9/9/9/9/9/9/8L");
         const auto actual
-            = b.find_ranging_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
+            = b.find_sliding_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
         CHECK_EQUAL(SQ_1I, actual);
     }
     {
         const auto b = Board("9/9/9/8P/9/9/9/9/8L");
         const auto actual
-            = b.find_ranging_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
+            = b.find_sliding_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
         CHECK_EQUAL(SQ_NA, actual);
     }
     {
         const auto b = Board("9/9/9/8P/9/9/9/9/8L");
-        const auto actual = b.find_ranging_attacker(
+        const auto actual = b.find_sliding_attacker(
             vshogi::BLACK, SQ_1A, vshogi::DIR_S, SQ_1D);
         CHECK_EQUAL(SQ_1I, actual);
     }
     {
         const auto b = Board("9/9/9/8P/9/9/9/8l/8L");
-        const auto actual = b.find_ranging_attacker(
+        const auto actual = b.find_sliding_attacker(
             vshogi::BLACK, SQ_1A, vshogi::DIR_S, SQ_1D);
         CHECK_EQUAL(SQ_NA, actual);
     }
@@ -177,25 +177,25 @@ TEST(test_shogi_board, compute_droppable)
         ((bb_file2 | bb_file4 | bb_file6 | bb_file8) & ~bb_ranka) == actual);
 }
 
-TEST(test_shogi_board, get_occupied_by_ranging)
+TEST(test_shogi_board, get_occupied_by_slider)
 {
     {
         const auto b = Board();
         CHECK_TRUE(
             (bb_1a | bb_9a | bb_2b | bb_8b)
-            == b.get_occupied_by_ranging(vshogi::WHITE));
+            == b.get_occupied_by_slider(vshogi::WHITE));
     }
     {
         auto b = Board("9/9/9/9/9/9/9/9/8L");
-        CHECK_TRUE(bb_1i == b.get_occupied_by_ranging(vshogi::BLACK));
+        CHECK_TRUE(bb_1i == b.get_occupied_by_slider(vshogi::BLACK));
         b.place_at(SQ_1A, Pieces::promote_nocheck(b.pop_from(SQ_1I)));
-        CHECK_TRUE(bb_na == b.get_occupied_by_ranging(vshogi::BLACK));
+        CHECK_TRUE(bb_na == b.get_occupied_by_slider(vshogi::BLACK));
     }
     {
         auto b = Board("9/9/9/9/9/9/9/9/8L");
-        CHECK_TRUE(bb_1i == b.get_occupied_by_ranging(vshogi::BLACK));
+        CHECK_TRUE(bb_1i == b.get_occupied_by_slider(vshogi::BLACK));
         b.place_at(SQ_1D, b.pop_from(SQ_1I));
-        CHECK_TRUE(bb_1d == b.get_occupied_by_ranging(vshogi::BLACK));
+        CHECK_TRUE(bb_1d == b.get_occupied_by_slider(vshogi::BLACK));
     }
 }
 

@@ -362,100 +362,100 @@ TEST(shogi_pieces, to_char)
     CHECK_EQUAL('k', Pieces::to_char(OU));
 }
 
-TEST(shogi_pieces, is_ranging_piece)
+TEST(shogi_pieces, is_slider)
 {
-    CHECK_FALSE(Pieces::is_ranging_piece(FU));
-    CHECK_TRUE(Pieces::is_ranging_piece(KY));
-    CHECK_FALSE(Pieces::is_ranging_piece(KE));
-    CHECK_FALSE(Pieces::is_ranging_piece(GI));
-    CHECK_TRUE(Pieces::is_ranging_piece(KA));
-    CHECK_TRUE(Pieces::is_ranging_piece(HI));
-    CHECK_FALSE(Pieces::is_ranging_piece(KI));
-    CHECK_FALSE(Pieces::is_ranging_piece(OU));
-    CHECK_FALSE(Pieces::is_ranging_piece(TO));
-    CHECK_FALSE(Pieces::is_ranging_piece(NY));
-    CHECK_FALSE(Pieces::is_ranging_piece(NK));
-    CHECK_FALSE(Pieces::is_ranging_piece(NG));
-    CHECK_TRUE(Pieces::is_ranging_piece(UM));
-    CHECK_TRUE(Pieces::is_ranging_piece(RY));
-    CHECK_FALSE(Pieces::is_ranging_piece(NA));
+    CHECK_FALSE(Pieces::is_slider(FU));
+    CHECK_TRUE(Pieces::is_slider(KY));
+    CHECK_FALSE(Pieces::is_slider(KE));
+    CHECK_FALSE(Pieces::is_slider(GI));
+    CHECK_TRUE(Pieces::is_slider(KA));
+    CHECK_TRUE(Pieces::is_slider(HI));
+    CHECK_FALSE(Pieces::is_slider(KI));
+    CHECK_FALSE(Pieces::is_slider(OU));
+    CHECK_FALSE(Pieces::is_slider(TO));
+    CHECK_FALSE(Pieces::is_slider(NY));
+    CHECK_FALSE(Pieces::is_slider(NK));
+    CHECK_FALSE(Pieces::is_slider(NG));
+    CHECK_TRUE(Pieces::is_slider(UM));
+    CHECK_TRUE(Pieces::is_slider(RY));
+    CHECK_FALSE(Pieces::is_slider(NA));
 
-    CHECK_FALSE(Pieces::is_ranging_piece(B_FU));
-    CHECK_TRUE(Pieces::is_ranging_piece(B_KY));
-    CHECK_FALSE(Pieces::is_ranging_piece(B_KE));
-    CHECK_FALSE(Pieces::is_ranging_piece(B_GI));
-    CHECK_TRUE(Pieces::is_ranging_piece(B_KA));
-    CHECK_TRUE(Pieces::is_ranging_piece(B_HI));
-    CHECK_FALSE(Pieces::is_ranging_piece(B_KI));
-    CHECK_FALSE(Pieces::is_ranging_piece(B_OU));
-    CHECK_FALSE(Pieces::is_ranging_piece(B_TO));
-    CHECK_FALSE(Pieces::is_ranging_piece(B_NY));
-    CHECK_FALSE(Pieces::is_ranging_piece(B_NK));
-    CHECK_FALSE(Pieces::is_ranging_piece(B_NG));
-    CHECK_TRUE(Pieces::is_ranging_piece(B_UM));
-    CHECK_TRUE(Pieces::is_ranging_piece(B_RY));
+    CHECK_FALSE(Pieces::is_slider(B_FU));
+    CHECK_TRUE(Pieces::is_slider(B_KY));
+    CHECK_FALSE(Pieces::is_slider(B_KE));
+    CHECK_FALSE(Pieces::is_slider(B_GI));
+    CHECK_TRUE(Pieces::is_slider(B_KA));
+    CHECK_TRUE(Pieces::is_slider(B_HI));
+    CHECK_FALSE(Pieces::is_slider(B_KI));
+    CHECK_FALSE(Pieces::is_slider(B_OU));
+    CHECK_FALSE(Pieces::is_slider(B_TO));
+    CHECK_FALSE(Pieces::is_slider(B_NY));
+    CHECK_FALSE(Pieces::is_slider(B_NK));
+    CHECK_FALSE(Pieces::is_slider(B_NG));
+    CHECK_TRUE(Pieces::is_slider(B_UM));
+    CHECK_TRUE(Pieces::is_slider(B_RY));
 
-    CHECK_FALSE(Pieces::is_ranging_piece(W_FU));
-    CHECK_TRUE(Pieces::is_ranging_piece(W_KY));
-    CHECK_FALSE(Pieces::is_ranging_piece(W_KE));
-    CHECK_FALSE(Pieces::is_ranging_piece(W_GI));
-    CHECK_TRUE(Pieces::is_ranging_piece(W_KA));
-    CHECK_TRUE(Pieces::is_ranging_piece(W_HI));
-    CHECK_FALSE(Pieces::is_ranging_piece(W_KI));
-    CHECK_FALSE(Pieces::is_ranging_piece(W_OU));
-    CHECK_FALSE(Pieces::is_ranging_piece(W_TO));
-    CHECK_FALSE(Pieces::is_ranging_piece(W_NY));
-    CHECK_FALSE(Pieces::is_ranging_piece(W_NK));
-    CHECK_FALSE(Pieces::is_ranging_piece(W_NG));
-    CHECK_TRUE(Pieces::is_ranging_piece(W_UM));
-    CHECK_TRUE(Pieces::is_ranging_piece(W_RY));
+    CHECK_FALSE(Pieces::is_slider(W_FU));
+    CHECK_TRUE(Pieces::is_slider(W_KY));
+    CHECK_FALSE(Pieces::is_slider(W_KE));
+    CHECK_FALSE(Pieces::is_slider(W_GI));
+    CHECK_TRUE(Pieces::is_slider(W_KA));
+    CHECK_TRUE(Pieces::is_slider(W_HI));
+    CHECK_FALSE(Pieces::is_slider(W_KI));
+    CHECK_FALSE(Pieces::is_slider(W_OU));
+    CHECK_FALSE(Pieces::is_slider(W_TO));
+    CHECK_FALSE(Pieces::is_slider(W_NY));
+    CHECK_FALSE(Pieces::is_slider(W_NK));
+    CHECK_FALSE(Pieces::is_slider(W_NG));
+    CHECK_TRUE(Pieces::is_slider(W_UM));
+    CHECK_TRUE(Pieces::is_slider(W_RY));
 
-    CHECK_FALSE(Pieces::is_ranging_piece(VOID));
+    CHECK_FALSE(Pieces::is_slider(VOID));
 }
 
-TEST(shogi_pieces, is_ranging_to)
+TEST(shogi_pieces, slidable_to)
 {
-    CHECK_FALSE(Pieces::is_ranging_to(B_FU, vshogi::DIR_N));
-    CHECK_TRUE(Pieces::is_ranging_to(B_KY, vshogi::DIR_N));
-    CHECK_FALSE(Pieces::is_ranging_to(B_KY, vshogi::DIR_E));
-    CHECK_FALSE(Pieces::is_ranging_to(B_KE, vshogi::DIR_NNW));
-    CHECK_FALSE(Pieces::is_ranging_to(B_GI, vshogi::DIR_N));
-    CHECK_TRUE(Pieces::is_ranging_to(B_KA, vshogi::DIR_NW));
-    CHECK_FALSE(Pieces::is_ranging_to(B_KA, vshogi::DIR_N));
-    CHECK_TRUE(Pieces::is_ranging_to(B_HI, vshogi::DIR_N));
-    CHECK_FALSE(Pieces::is_ranging_to(B_HI, vshogi::DIR_NE));
-    CHECK_FALSE(Pieces::is_ranging_to(B_KI, vshogi::DIR_N));
-    CHECK_FALSE(Pieces::is_ranging_to(B_OU, vshogi::DIR_N));
-    CHECK_FALSE(Pieces::is_ranging_to(B_TO, vshogi::DIR_N));
-    CHECK_FALSE(Pieces::is_ranging_to(B_NY, vshogi::DIR_N));
-    CHECK_FALSE(Pieces::is_ranging_to(B_NK, vshogi::DIR_N));
-    CHECK_FALSE(Pieces::is_ranging_to(B_NG, vshogi::DIR_N));
-    CHECK_TRUE(Pieces::is_ranging_to(B_UM, vshogi::DIR_NW));
-    CHECK_FALSE(Pieces::is_ranging_to(B_UM, vshogi::DIR_N));
-    CHECK_TRUE(Pieces::is_ranging_to(B_RY, vshogi::DIR_N));
-    CHECK_FALSE(Pieces::is_ranging_to(B_RY, vshogi::DIR_NE));
+    CHECK_FALSE(Pieces::slidable_to(B_FU, vshogi::DIR_N));
+    CHECK_TRUE(Pieces::slidable_to(B_KY, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::slidable_to(B_KY, vshogi::DIR_E));
+    CHECK_FALSE(Pieces::slidable_to(B_KE, vshogi::DIR_NNW));
+    CHECK_FALSE(Pieces::slidable_to(B_GI, vshogi::DIR_N));
+    CHECK_TRUE(Pieces::slidable_to(B_KA, vshogi::DIR_NW));
+    CHECK_FALSE(Pieces::slidable_to(B_KA, vshogi::DIR_N));
+    CHECK_TRUE(Pieces::slidable_to(B_HI, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::slidable_to(B_HI, vshogi::DIR_NE));
+    CHECK_FALSE(Pieces::slidable_to(B_KI, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::slidable_to(B_OU, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::slidable_to(B_TO, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::slidable_to(B_NY, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::slidable_to(B_NK, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::slidable_to(B_NG, vshogi::DIR_N));
+    CHECK_TRUE(Pieces::slidable_to(B_UM, vshogi::DIR_NW));
+    CHECK_FALSE(Pieces::slidable_to(B_UM, vshogi::DIR_N));
+    CHECK_TRUE(Pieces::slidable_to(B_RY, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::slidable_to(B_RY, vshogi::DIR_NE));
 
-    CHECK_FALSE(Pieces::is_ranging_to(W_FU, vshogi::DIR_N));
-    CHECK_TRUE(Pieces::is_ranging_to(W_KY, vshogi::DIR_S));
-    CHECK_FALSE(Pieces::is_ranging_to(W_KY, vshogi::DIR_W));
-    CHECK_FALSE(Pieces::is_ranging_to(W_KE, vshogi::DIR_SSE));
-    CHECK_FALSE(Pieces::is_ranging_to(W_GI, vshogi::DIR_N));
-    CHECK_TRUE(Pieces::is_ranging_to(W_KA, vshogi::DIR_SW));
-    CHECK_FALSE(Pieces::is_ranging_to(W_KA, vshogi::DIR_S));
-    CHECK_TRUE(Pieces::is_ranging_to(W_HI, vshogi::DIR_S));
-    CHECK_FALSE(Pieces::is_ranging_to(W_HI, vshogi::DIR_SE));
-    CHECK_FALSE(Pieces::is_ranging_to(W_KI, vshogi::DIR_N));
-    CHECK_FALSE(Pieces::is_ranging_to(W_OU, vshogi::DIR_N));
-    CHECK_FALSE(Pieces::is_ranging_to(W_TO, vshogi::DIR_N));
-    CHECK_FALSE(Pieces::is_ranging_to(W_NY, vshogi::DIR_N));
-    CHECK_FALSE(Pieces::is_ranging_to(W_NK, vshogi::DIR_N));
-    CHECK_FALSE(Pieces::is_ranging_to(W_NG, vshogi::DIR_N));
-    CHECK_TRUE(Pieces::is_ranging_to(W_UM, vshogi::DIR_NW));
-    CHECK_FALSE(Pieces::is_ranging_to(W_UM, vshogi::DIR_N));
-    CHECK_TRUE(Pieces::is_ranging_to(W_RY, vshogi::DIR_N));
-    CHECK_FALSE(Pieces::is_ranging_to(W_RY, vshogi::DIR_NE));
+    CHECK_FALSE(Pieces::slidable_to(W_FU, vshogi::DIR_N));
+    CHECK_TRUE(Pieces::slidable_to(W_KY, vshogi::DIR_S));
+    CHECK_FALSE(Pieces::slidable_to(W_KY, vshogi::DIR_W));
+    CHECK_FALSE(Pieces::slidable_to(W_KE, vshogi::DIR_SSE));
+    CHECK_FALSE(Pieces::slidable_to(W_GI, vshogi::DIR_N));
+    CHECK_TRUE(Pieces::slidable_to(W_KA, vshogi::DIR_SW));
+    CHECK_FALSE(Pieces::slidable_to(W_KA, vshogi::DIR_S));
+    CHECK_TRUE(Pieces::slidable_to(W_HI, vshogi::DIR_S));
+    CHECK_FALSE(Pieces::slidable_to(W_HI, vshogi::DIR_SE));
+    CHECK_FALSE(Pieces::slidable_to(W_KI, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::slidable_to(W_OU, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::slidable_to(W_TO, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::slidable_to(W_NY, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::slidable_to(W_NK, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::slidable_to(W_NG, vshogi::DIR_N));
+    CHECK_TRUE(Pieces::slidable_to(W_UM, vshogi::DIR_NW));
+    CHECK_FALSE(Pieces::slidable_to(W_UM, vshogi::DIR_N));
+    CHECK_TRUE(Pieces::slidable_to(W_RY, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::slidable_to(W_RY, vshogi::DIR_NE));
 
-    CHECK_FALSE(Pieces::is_ranging_to(VOID, vshogi::DIR_N));
+    CHECK_FALSE(Pieces::slidable_to(VOID, vshogi::DIR_N));
 }
 
 TEST(shogi_pieces, append_sfen)
