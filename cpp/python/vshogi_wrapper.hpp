@@ -27,12 +27,12 @@ inline void export_to_jpn(pybind11::module& m)
 {
     namespace py = pybind11;
     using C = vshogi::Configuration<Parameters>;
-    using PHelper = vshogi::Pieces<Parameters>;
+    using PT = vshogi::PieceTraits<Parameters>;
     m.def("to_jpn", [](const typename C::PieceType pt) {
-        return PHelper::to_jpn(pt);
+        return PT::to_jpn(pt);
     });
-    m.def("to_jpn", [](const typename C::ColoredPiece p) {
-        return PHelper::to_jpn(PHelper::to_piece_type(p));
+    m.def("to_jpn", [](const typename C::Piece p) {
+        return PT::to_jpn(PT::to_piece_type(p));
     });
 }
 
@@ -41,17 +41,17 @@ inline void export_to_sfen(pybind11::module& m)
 {
     namespace py = pybind11;
     using C = vshogi::Configuration<Parameters>;
-    using PHelper = vshogi::Pieces<Parameters>;
+    using PT = vshogi::PieceTraits<Parameters>;
     m.def("to_sfen", [](const typename C::PieceType pt) -> std::string {
-        if ((pt == C::NA) || !PHelper::is_promoted(pt))
-            return std::string(1, PHelper::to_char(pt));
-        return std::string(1, '+') + PHelper::to_char(pt);
+        if ((pt == C::NA) || !PT::is_promoted(pt))
+            return std::string(1, PT::to_char(pt));
+        return std::string(1, '+') + PT::to_char(pt);
     });
-    m.def("to_sfen", [](const typename C::ColoredPiece p) -> std::string {
-        auto c = PHelper::to_char(PHelper::to_piece_type(p));
-        if (PHelper::get_color(p) == vshogi::BLACK)
+    m.def("to_sfen", [](const typename C::Piece p) -> std::string {
+        auto c = PT::to_char(PT::to_piece_type(p));
+        if (PT::get_color(p) == vshogi::BLACK)
             c = std::toupper(c);
-        if ((p == C::VOID) || !PHelper::is_promoted(p))
+        if ((p == C::VOID) || !PT::is_promoted(p))
             return std::string(1, c);
         return std::string(1, '+') + c;
     });
@@ -87,7 +87,6 @@ inline void export_piece_stand(pybind11::module& m)
     using C = vshogi::Configuration<Parameters>;
     using Stand = vshogi::Stand<Parameters>;
     using PieceType = typename Parameters::PieceType;
-    constexpr auto num_stand_types = C::num_stand_piece_types;
     pybind11::class_<Stand>(m, "Stand")
         .def("count", &Stand::count)
         .def("any", &Stand::any)

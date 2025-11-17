@@ -10,7 +10,7 @@
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/direction.hpp"
 #include "vshogi/common/move.hpp"
-#include "vshogi/common/pieces.hpp"
+#include "vshogi/common/piece_traits.hpp"
 #include "vshogi/common/squares.hpp"
 #include "vshogi/common/stand.hpp"
 
@@ -23,10 +23,10 @@ class State
 private:
     using C = Configuration<P>;
     using PieceType = typename C::PieceType;
-    using ColoredPiece = typename C::ColoredPiece;
+    using Piece = typename C::Piece;
     using Rank = typename C::Rank;
     using Square = typename C::Square;
-    using PHelper = Pieces<P>;
+    using PT = PieceTraits<P>;
     using SHelper = Squares<P>;
     using BitBoardType = BitBoard<P>;
     using Stands = BlackWhiteStands<P>;
@@ -34,7 +34,7 @@ private:
     static constexpr uint num_piece_types = C::num_piece_types;
     static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
     static constexpr uint num_dir = C::num_dir;
-    static constexpr ColoredPiece VOID = C::VOID; // NOLINT
+    static constexpr Piece VOID = C::VOID; // NOLINT
     static constexpr std::uint64_t zobrist_hash_for_turn = 0x000000aaaaaaaaaau;
 
 public:
@@ -178,14 +178,14 @@ public:
         const Square dst = move.destination();
         if (move.is_drop()) {
             const PieceType src = move.source_piece();
-            const ColoredPiece p = m_stands.pop_piece_from(m_turn, src, hash);
+            const Piece p = m_stands.pop_piece_from(m_turn, src, hash);
             m_board.place_at(dst, p, hash);
             update_checkers_before_turn_update(dst);
         } else {
             const Square src = move.source_square();
             auto moving_piece = m_board.pop_from(src, hash);
             if (move.promote())
-                moving_piece = PHelper::promote_nocheck(moving_piece);
+                moving_piece = PT::promote_nocheck(moving_piece);
             const auto captured = m_board.place_at(dst, moving_piece, hash);
             m_stands.add_captured_piece(captured, hash);
             update_checkers_before_turn_update(dst, src);
@@ -197,7 +197,7 @@ public:
     }
     State& undo(
         const Move<P>& move,
-        const ColoredPiece& captured,
+        const Piece& captured,
         const DirectionEnum& checker_dir_0,
         const DirectionEnum& checker_dir_1)
     {
@@ -212,7 +212,7 @@ public:
             const auto src = move.source_square();
             auto moved = m_board.place_at(dst, captured);
             if (move.promote())
-                moved = PHelper::demote_nocheck(moved);
+                moved = PT::demote_nocheck(moved);
             m_board.place_at(src, moved);
         }
         m_turn = ~m_turn;
@@ -249,9 +249,9 @@ public:
             if (m_board.is_empty(sq))
                 continue;
             const auto& p = m_board[sq];
-            const auto pt = PHelper::to_piece_type(p);
+            const auto pt = PT::to_piece_type(p);
             const auto k = static_cast<uint>(pt)
-                           + (m_turn != PHelper::get_color(p)) * ch_half;
+                           + (m_turn != PT::get_color(p)) * ch_half;
             data_ch[k + sp_types] = 1.f;
         }
     }
@@ -296,8 +296,7 @@ public:
             return false;
         if (!in_promotion_zone(move))
             return false;
-        return PHelper::is_promotion_fully_superior(
-            m_board[move.source_square()]);
+        return PT::is_promotion_fully_superior(m_board[move.source_square()]);
     }
 
 private:
@@ -380,21 +379,21 @@ private:
             = BitBoardType::get_attacks_by(m_board[dst], dst);
         if (!attacks.is_one(enemy_king_sq))
             return false;
-        if (!PHelper::is_slider(m_board[dst]))
+        if (!PT::is_slider(m_board[dst]))
             return true;
         return !(BitBoardType::get_line_segment(dst, enemy_king_sq)
                  & m_board.get_occupied())
                     .any();
     }
-    static void fill_ms24b_with(
-        std::uint64_t* const hash, const ColoredPiece& p, const Move<P>& m)
+    static void
+    fill_ms24b_with(std::uint64_t* const hash, const Piece& p, const Move<P>& m)
     {
         if (hash == nullptr)
             return;
         *hash <<= 24u;
         *hash >>= 24u;
 
-        static_assert(sizeof(ColoredPiece) == sizeof(std::uint8_t));
+        static_assert(sizeof(Piece) == sizeof(std::uint8_t));
         static_assert(sizeof(Move<P>) == sizeof(std::uint16_t));
         *hash ^= static_cast<std::uint64_t>(p) << (64u - 8u);
         *hash ^= static_cast<std::uint64_t>(m.hash()) << (64u - 24u);

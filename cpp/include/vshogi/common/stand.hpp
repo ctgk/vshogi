@@ -5,7 +5,7 @@
 #include <string>
 
 #include "vshogi/common/color.hpp"
-#include "vshogi/common/pieces.hpp"
+#include "vshogi/common/piece_traits.hpp"
 
 namespace vshogi
 {
@@ -17,7 +17,7 @@ private:
     using C = Configuration<Parameters>;
     using Int = typename C::BaseTypeStand;
     using PieceType = typename C::PieceType;
-    using PHelper = Pieces<Parameters>;
+    using PT = PieceTraits<Parameters>;
     static constexpr uint num_piece_types = C::num_stand_piece_types;
 
     static const uint shift_bits[num_piece_types];
@@ -65,7 +65,7 @@ public:
     Stand& add(const PieceType& p, const int num = 1)
     {
         assert(p != C::NA);
-        const auto p_demoted = PHelper::demote(p);
+        const auto p_demoted = PT::demote(p);
         for (int ii = num; ii--;) {
             m_value = static_cast<Int>(m_value + deltas[p_demoted]);
         }
@@ -74,7 +74,7 @@ public:
     Stand& subtract(const PieceType& p)
     {
         assert(p != C::NA);
-        m_value = static_cast<Int>(m_value - deltas[PHelper::demote(p)]);
+        m_value = static_cast<Int>(m_value - deltas[PT::demote(p)]);
         return *this;
     }
     bool operator==(const Stand& other) const
@@ -109,9 +109,9 @@ class BlackWhiteStands
 {
 private:
     using C = Configuration<Parameters>;
-    using PHelper = Pieces<Parameters>;
+    using PT = PieceTraits<Parameters>;
     using PieceType = typename C::PieceType;
-    using ColoredPiece = typename C::ColoredPiece;
+    using Piece = typename C::Piece;
 
 public:
     using StandType = Stand<Parameters>;
@@ -199,11 +199,9 @@ public:
             }
 
             if (('A' <= *ptr) && (*ptr <= 'Z'))
-                m_stands[BLACK].add(
-                    PHelper::to_piece_type(*ptr), num ? num : 1);
+                m_stands[BLACK].add(PT::to_piece_type(*ptr), num ? num : 1);
             else if (('a' <= *ptr) && (*ptr <= 'z'))
-                m_stands[WHITE].add(
-                    PHelper::to_piece_type(*ptr), num ? num : 1);
+                m_stands[WHITE].add(PT::to_piece_type(*ptr), num ? num : 1);
             num = 0;
         }
     END:
@@ -227,11 +225,11 @@ public:
                     out += '1';
                 if (num > 1)
                     out += static_cast<char>('0' + num % 10);
-                PHelper::append_sfen(PHelper::to_board_piece(c, p), out);
+                PT::append_sfen(PT::make_piece(c, p), out);
             }
         }
     }
-    ColoredPiece pop_piece_from(
+    Piece pop_piece_from(
         const ColorEnum& c,
         const PieceType& pt,
         std::uint64_t* const hash = nullptr)
@@ -248,7 +246,7 @@ public:
             *hash ^= zobrist_table[c][pt][num_before];
             *hash ^= zobrist_table[c][pt][num_after];
         }
-        return PHelper::to_board_piece(c, pt);
+        return PT::make_piece(c, pt);
     }
 
     /**
@@ -261,15 +259,13 @@ public:
      * @param hash Pointer to zobrist hash value.
      */
     void add_captured_piece(
-        const ColoredPiece& captured, std::uint64_t* const hash = nullptr)
+        const Piece& captured, std::uint64_t* const hash = nullptr)
     {
-        if ((captured == C::VOID)
-            || (PHelper::to_piece_type(captured) == C::OU))
+        if ((captured == C::VOID) || (PT::to_piece_type(captured) == C::OU))
             return;
 
-        const auto c = ~PHelper::get_color(captured);
-        const auto pt_demoted
-            = PHelper::demote(PHelper::to_piece_type(captured));
+        const auto c = ~PT::get_color(captured);
+        const auto pt_demoted = PT::demote(PT::to_piece_type(captured));
         m_stands[c].add(pt_demoted);
         const auto num_after = m_stands[c].count(pt_demoted);
         const auto num_before = num_after - 1;
@@ -283,23 +279,23 @@ public:
             *hash ^= zobrist_table[c][pt_demoted][num_after];
         }
     }
-    void return_dropped_piece(const ColoredPiece& dropped)
+    void return_dropped_piece(const Piece& dropped)
     {
-        const auto c = PHelper::get_color(dropped);
-        const auto pt = PHelper::to_piece_type(dropped);
+        const auto c = PT::get_color(dropped);
+        const auto pt = PT::to_piece_type(dropped);
         m_stands[c].add(pt);
         const auto num_after = m_stands[c].count(pt);
         const auto num_before = num_after - 1;
         m_hash ^= zobrist_table[c][pt][num_before];
         m_hash ^= zobrist_table[c][pt][num_after];
     }
-    void remove_captured_piece(const ColoredPiece& captured)
+    void remove_captured_piece(const Piece& captured)
     {
-        const auto pt = PHelper::to_piece_type(captured);
+        const auto pt = PT::to_piece_type(captured);
         if (pt == C::OU)
             return;
-        const auto c = ~PHelper::get_color(captured);
-        const auto pt_demoted = PHelper::demote(pt);
+        const auto c = ~PT::get_color(captured);
+        const auto pt_demoted = PT::demote(pt);
         m_stands[c].subtract(pt_demoted);
         const auto num_after = m_stands[c].count(pt_demoted);
         const auto num_before = num_after + 1;

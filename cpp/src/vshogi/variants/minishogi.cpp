@@ -22,7 +22,7 @@ minishogi::Stand::Stand(
 
 template <>
 minishogi::BitBoard minishogi::BitBoard::get_attacks_by(
-    const vshogi::minishogi::ColoredPieceEnum& p,
+    const vshogi::minishogi::PieceEnum& p,
     const vshogi::minishogi::SquareEnum& sq,
     const vshogi::minishogi::BitBoard& occupied)
 {

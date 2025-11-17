@@ -5,7 +5,7 @@
 
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/direction.hpp"
-#include "vshogi/common/pieces.hpp"
+#include "vshogi/common/piece_traits.hpp"
 #include "vshogi/common/squares.hpp"
 #include "vshogi/common/utils.hpp"
 
@@ -27,7 +27,7 @@ class Move
 private:
     using C = Configuration<Parameters>;
     using SHelper = Squares<Parameters>;
-    using PHelper = Pieces<Parameters>;
+    using PT = PieceTraits<Parameters>;
     using Square = typename C::Square;
     using PieceType = typename C::PieceType;
 
@@ -63,8 +63,7 @@ public:
     explicit Move(const char sfen[5])
         : Move(
             (sfen[1] == '*')
-                ? static_cast<uint>(PHelper::to_piece_type(sfen[0]))
-                      + C::num_squares
+                ? static_cast<uint>(PT::to_piece_type(sfen[0])) + C::num_squares
                 : static_cast<uint>(SHelper::to_square(sfen)),
             SHelper::to_square(sfen + 2),
             sfen[4] == '+')
@@ -77,8 +76,8 @@ public:
     void to_sfen(char sfen[5]) const
     {
         if (is_drop()) {
-            sfen[0] = static_cast<char>(
-                std::toupper(PHelper::to_char(source_piece())));
+            sfen[0]
+                = static_cast<char>(std::toupper(PT::to_char(source_piece())));
             sfen[1] = '*';
         } else {
             SHelper::to_sfen(sfen, source_square());
@@ -158,7 +157,7 @@ public:
     {
         if (promote())
             return u8"\u6210";
-        if (PHelper::is_promotable(pt)
+        if (PT::is_promotable(pt)
             && (SHelper::in_promotion_zone(destination(), t)
                 || SHelper::in_promotion_zone(source_square(), t)))
             return u8"\u4e0d\u6210";
@@ -168,7 +167,7 @@ public:
     {
         if (promote())
             return "+";
-        if (PHelper::is_promotable(pt)
+        if (PT::is_promotable(pt)
             && (SHelper::in_promotion_zone(destination(), t)
                 || SHelper::in_promotion_zone(source_square(), t)))
             return "=";

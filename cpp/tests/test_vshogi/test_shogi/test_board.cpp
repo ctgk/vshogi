@@ -188,7 +188,7 @@ TEST(test_shogi_board, get_occupied_by_slider)
     {
         auto b = Board("9/9/9/9/9/9/9/9/8L");
         CHECK_TRUE(bb_1i == b.get_occupied_by_slider(vshogi::BLACK));
-        b.place_at(SQ_1A, Pieces::promote_nocheck(b.pop_from(SQ_1I)));
+        b.place_at(SQ_1A, PieceTraits::promote_nocheck(b.pop_from(SQ_1I)));
         CHECK_TRUE(bb_na == b.get_occupied_by_slider(vshogi::BLACK));
     }
     {

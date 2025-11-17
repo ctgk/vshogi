@@ -50,7 +50,7 @@ class SoldierMoveIterator<P, IterEnum::LEGAL>
 private:
     using C = Configuration<P>;
     using Square = typename C::Square;
-    using PHelper = Pieces<P>;
+    using PT = PieceTraits<P>;
     using SHelper = Squares<P>;
 
 private:
@@ -104,7 +104,7 @@ public:
             const auto src = *m_src_iter;
             const auto dst = *m_dst_iter;
             const auto p = m_board[src];
-            if (PHelper::is_promotable(p)
+            if (PT::is_promotable(p)
                 && (SHelper::in_promotion_zone(src, m_turn)
                     || SHelper::in_promotion_zone(dst, m_turn))) {
                 m_promote = true;
@@ -287,9 +287,9 @@ class SoldierMoveIterator<P, IterEnum::CHECK>
 {
 private:
     using C = Configuration<P>;
-    using ColoredPiece = typename C::ColoredPiece;
+    using Piece = typename C::Piece;
     using Square = typename C::Square;
-    using PHelper = Pieces<P>;
+    using PT = PieceTraits<P>;
     using SHelper = Squares<P>;
 
 private:
@@ -396,7 +396,7 @@ private:
         for (auto pt : C::piece_type_iterator()) {
             if (pt == C::OU)
                 continue;
-            const auto p = PHelper::to_board_piece(m_turn, pt);
+            const auto p = PT::make_piece(m_turn, pt);
             src_mask |= m_board.get_occupied(pt)
                         & BitBoard<P>::get_neighbor_2nd(target, p);
         }
@@ -417,7 +417,7 @@ private:
         assert(m_promote);
         const auto src = *m_src_iter;
         const auto p = m_board[src];
-        if (!PHelper::is_promotable(p)) {
+        if (!PT::is_promotable(p)) {
             return;
         }
         auto movable = m_dst_mask;
@@ -450,7 +450,7 @@ private:
         }
         return false;
     }
-    void update_mask_by_nopromo(BitBoard<P>& mask, const ColoredPiece p)
+    void update_mask_by_nopromo(BitBoard<P>& mask, const Piece p)
     {
         mask &= BitBoard<P>::compute_droppable(p);
     }
@@ -473,16 +473,14 @@ private:
         }
     }
     void update_mask_by_forcing_check(
-        BitBoard<P>& mask, const ColoredPiece p, const Square& src)
+        BitBoard<P>& mask, const Piece p, const Square& src)
     {
         const auto enemy_king_sq = m_board.get_king_square(~m_turn);
-        auto pt = PHelper::to_piece_type(p);
+        auto pt = PT::to_piece_type(p);
         if (m_promote)
-            pt = PHelper::promote_nocheck(pt);
+            pt = PT::promote_nocheck(pt);
         const auto atk = BitBoard<P>::get_attacks_by(
-            PHelper::to_board_piece(~m_turn, pt),
-            enemy_king_sq,
-            m_board.get_occupied());
+            PT::make_piece(~m_turn, pt), enemy_king_sq, m_board.get_occupied());
         if (m_cover.is_one(src)) {
             const auto dir = SHelper::direction(enemy_king_sq, src);
             mask &= atk | (~BitBoard<P>::get_ray_to(enemy_king_sq, dir));
@@ -506,6 +504,7 @@ class SoldierMoveIteratorEvade
 private:
     using C = Configuration<P>;
     using S = Squares<P>;
+    using PT = PieceTraits<P>;
     using Square = typename C::Square;
     using DirIter = EnumIterator<DirectionEnum, C::num_dir>;
 
@@ -632,7 +631,7 @@ private:
         const auto dst = *m_dst_iter;
         const auto t = m_state.get_turn();
         const auto p = m_state.get_board()[m_src];
-        m_promote = Pieces<P>::is_promotable(p)
+        m_promote = PT::is_promotable(p)
                     && (S::in_promotion_zone(dst, t)
                         || S::in_promotion_zone(m_src, t));
     }
@@ -652,7 +651,7 @@ class SoldierMoveIterator<P, IterEnum::EVADE>
 {
 private:
     using C = Configuration<P>;
-    using PHelper = Pieces<P>;
+    using PT = PieceTraits<P>;
     using SHelper = Squares<P>;
     using Square = typename C::Square;
     using BitboardSquareIterator = typename BitBoard<P>::BitboardSquareIterator;
@@ -765,7 +764,7 @@ private:
         const Square dst = *m_dst_iter;
         const Square src = *m_src_iter;
         const auto& p = m_board[src];
-        m_promote = PHelper::is_promotable(p)
+        m_promote = PT::is_promotable(p)
                     && (SHelper::in_promotion_zone(dst, m_turn)
                         || SHelper::in_promotion_zone(src, m_turn));
     }

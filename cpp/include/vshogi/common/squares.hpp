@@ -7,7 +7,7 @@
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/direction.hpp"
-#include "vshogi/common/pieces.hpp"
+#include "vshogi/common/piece_traits.hpp"
 
 namespace vshogi
 {
@@ -20,7 +20,6 @@ struct Squares
 private:
     using C = Configuration<Parameters>;
     using PieceType = typename C::PieceType;
-    using ColoredPiece = typename C::ColoredPiece;
     using Square = typename C::Square;
     using File = typename C::File;
     using Rank = typename C::Rank;

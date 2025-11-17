@@ -198,7 +198,7 @@ void export_pieces(py::module& m)
         .value("RY", sg::RY)
         .value("NA", sg::NA);
 
-    py::enum_<sg::ColoredPieceEnum>(m, "BoardPiece")
+    py::enum_<sg::PieceEnum>(m, "BoardPiece")
         .value("B_FU", sg::B_FU)
         .value("B_KY", sg::B_KY)
         .value("B_KE", sg::B_KE)
@@ -235,7 +235,6 @@ void export_pieces(py::module& m)
 void export_shogi(py::module& m)
 {
     assert(0 == 1);
-    sg::Pieces::init_tables();
     sg::Squares::init_tables();
     sg::BlackWhiteStands::init_tables();
     sg::Board::init_tables();

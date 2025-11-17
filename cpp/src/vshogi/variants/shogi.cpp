@@ -23,7 +23,7 @@ shogi::Stand::Stand(
 
 template <>
 shogi::BitBoard shogi::BitBoard::get_attacks_by(
-    const shogi::ColoredPieceEnum& p,
+    const shogi::PieceEnum& p,
     const shogi::SquareEnum& sq,
     const shogi::BitBoard& occupied)
 {

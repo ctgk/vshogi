@@ -11,7 +11,7 @@
 #include "vshogi/common/direction.hpp"
 #include "vshogi/common/iterator.hpp"
 #include "vshogi/common/move.hpp"
-#include "vshogi/common/pieces.hpp"
+#include "vshogi/common/piece_traits.hpp"
 #include "vshogi/common/result.hpp"
 #include "vshogi/common/squares.hpp"
 #include "vshogi/common/stand.hpp"
@@ -28,8 +28,8 @@ private:
     using Square = typename C::Square;
     using File = typename C::File;
     using PieceType = typename C::PieceType;
-    using ColoredPiece = typename C::ColoredPiece;
-    using PHelper = Pieces<Parameters>;
+    using Piece = typename C::Piece;
+    using PT = PieceTraits<Parameters>;
     using SHelper = Squares<Parameters>;
     using BitBoardType = BitBoard<Parameters>;
     using BoardType = Board<Parameters>;
@@ -254,7 +254,7 @@ public:
         const auto n = ply() - 1u;
         std::uint32_t v = m_captured_move_list[n];
         const auto move = MoveType(static_cast<std::uint16_t>(v & 0x0ffffu));
-        const auto captured = static_cast<ColoredPiece>((v >> 16u) & 0x0ffu);
+        const auto captured = static_cast<Piece>((v >> 16u) & 0x0ffu);
         const auto checker_0 = static_cast<DirectionEnum>((v >> 24u) & 0x0fu);
         const auto checker_1 = static_cast<DirectionEnum>((v >> 28u) & 0x0fu);
         m_current_state.undo(move, captured, checker_0, checker_1);
@@ -335,7 +335,7 @@ public:
         for (auto sq : C::square_iterator()) {
             if (b.is_empty(sq))
                 continue;
-            piece_count[PHelper::demote(PHelper::to_piece_type(b[sq]))] += 1u;
+            piece_count[PT::demote(PT::to_piece_type(b[sq]))] += 1u;
         }
         for (auto pt : C::stand_piece_type_iterator()) {
             piece_count[pt] += black_stand.count(pt) + white_stand.count(pt);
@@ -361,12 +361,12 @@ public:
         const ColorEnum t = get_turn();
         if (move.is_drop()) {
             const auto dst_jpn = SHelper::to_jpn(dst);
-            return dst_jpn + PHelper::to_jpn(move.source_piece())
+            return dst_jpn + PT::to_jpn(move.source_piece())
                    + b.unique_identifier_jpn(move, t);
         } else {
             const Square src = move.source_square();
-            const PieceType pt = PHelper::to_piece_type(b[src]);
-            const auto pt_jpn = PHelper::to_jpn(pt, false);
+            const PieceType pt = PT::to_piece_type(b[src]);
+            const auto pt_jpn = PT::to_jpn(pt, false);
             const auto unique_identifier_jpn = b.unique_identifier_jpn(move, t);
             const auto promotion_jpn = move.promotion_to_jpn(pt, t);
             const uint n = ply();
@@ -380,14 +380,14 @@ public:
         const Square dst = move.destination();
         const auto dst_eng = SHelper::to_eng(dst);
         if (move.is_drop())
-            return PHelper::to_eng(move.source_piece()) + "*" + dst_eng;
+            return PT::to_eng(move.source_piece()) + "*" + dst_eng;
         const Square src = move.source_square();
         const BoardType& b = get_board();
-        const auto pt_eng = PHelper::to_eng(b[src]);
+        const auto pt_eng = PT::to_eng(b[src]);
         const auto origin_eng = b.origin_eng(move);
         const auto movement_eng = (b.is_empty(dst) ? "-" : "x");
         const auto promotion_eng
-            = move.promotion_to_eng(PHelper::to_piece_type(b[src]), get_turn());
+            = move.promotion_to_eng(PT::to_piece_type(b[src]), get_turn());
         return pt_eng + origin_eng + movement_eng + dst_eng + promotion_eng;
     }
     void to_feature_map(float* const data) const
@@ -453,9 +453,9 @@ protected:
         const BoardType& board = s.get_board();
         const auto& stand = s.get_stand(c);
         for (auto sq : board.get_occupied(c).iterator())
-            out += PHelper::get_point(board[sq]);
+            out += PT::get_point(board[sq]);
         for (auto pt : C::stand_piece_type_iterator())
-            out += stand.count(pt) * PHelper::get_point(pt);
+            out += stand.count(pt) * PT::get_point(pt);
         return out;
     }
 
@@ -544,10 +544,10 @@ private:
         uint out = 0;
         const BoardType& board = get_board();
         for (auto sq : mask.iterator())
-            out += PHelper::get_point(board[sq]);
+            out += PT::get_point(board[sq]);
         const auto& stand = get_stand(c);
         for (auto pt : C::stand_piece_type_iterator()) {
-            out += stand.count(pt) * PHelper::get_point(pt);
+            out += stand.count(pt) * PT::get_point(pt);
         }
         return out;
     }

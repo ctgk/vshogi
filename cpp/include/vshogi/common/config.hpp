@@ -15,13 +15,13 @@ struct Configuration
     Configuration() = delete;
     using Param = ParamS;
     using PieceType = typename Param::PieceType;
-    using ColoredPiece = typename Param::ColoredPiece;
+    using Piece = typename Param::Piece;
     using Square = typename Param::Square;
     using File = typename Param::File;
     using Rank = typename Param::Rank;
     using BaseTypeBitBoard = typename ParamS::BaseTypeBitBoard;
     using BaseTypeStand = typename ParamS::BaseTypeStand;
-    static_assert(sizeof(ColoredPiece) == sizeof(std::uint8_t));
+    static_assert(sizeof(Piece) == sizeof(std::uint8_t));
 
 public: // pieces
     /**
@@ -61,8 +61,8 @@ public: // pieces
     static constexpr PieceType NA // NOLINT
         = static_cast<PieceType>(num_piece_types);
     static_assert(piece_types[num_piece_types] == PT_NA);
-    static constexpr ColoredPiece VOID // NOLINT
-        = static_cast<ColoredPiece>(num_colored_piece_types);
+    static constexpr Piece VOID // NOLINT
+        = static_cast<Piece>(num_colored_piece_types);
 
 public: // squares
     /**
@@ -136,7 +136,7 @@ public: // game rules
     static constexpr uint half_num_init_piece_each = num_init_piece_each / 2u;
     static constexpr uint initial_points = Param::initial_points;
     static constexpr uint sum_piece_value = Param::sum_piece_value;
-    static constexpr std::array<ColoredPiece, num_squares> initial_position
+    static constexpr std::array<Piece, num_squares> initial_position
         = Param::initial_position;
 
 public:

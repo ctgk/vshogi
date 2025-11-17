@@ -4,7 +4,7 @@
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/iterator/iterator.hpp"
-#include "vshogi/common/pieces.hpp"
+#include "vshogi/common/piece_traits.hpp"
 #include "vshogi/common/squares.hpp"
 #include "vshogi/common/state.hpp"
 
@@ -34,7 +34,7 @@ private:
     using BitboardSquareIterator = typename BitBoard<P>::BitboardSquareIterator;
     using PieceType = typename C::PieceType;
     using Square = typename C::Square;
-    using PHelper = Pieces<P>;
+    using PT = PieceTraits<P>;
 
 private:
     const State<P>& m_state;
@@ -107,7 +107,7 @@ private:
     void init_sq_iter()
     {
         const auto& b = m_state.get_board();
-        const auto p = PHelper::to_board_piece(m_turn, m_pt_iter);
+        const auto p = PT::make_piece(m_turn, m_pt_iter);
         if (m_state.in_check()) {
             m_sq_iter
                 = b.template compute_droppable<IterType == IterEnum::CHECK>(
@@ -157,6 +157,7 @@ class DropMoveIterator<P, IterEnum::EVADE>
 private:
     using C = Configuration<P>;
     using S = Squares<P>;
+    using PT = PieceTraits<P>;
     using PieceType = typename C::PieceType;
     using Square = typename C::Square;
     using BitboardSquareIterator = typename BitBoard<P>::BitboardSquareIterator;
@@ -251,8 +252,8 @@ private:
         const Stand<P>& stand = m_state.get_stand();
         if (!stand.exist(m_pt_iter))
             return false;
-        const auto p = Pieces<P>::to_board_piece(turn, m_pt_iter);
-        const DirectionEnum* const dirs = Pieces<P>::get_attack_directions(p);
+        const auto p = PT::make_piece(turn, m_pt_iter);
+        const DirectionEnum* const dirs = PT::get_attack_directions(p);
         if (dirs[1] == DIR_NA) { // FU or KY
             if (S::to_rank(dst) == (turn == BLACK ? C::RANK_A : C::RANK_Z))
                 return false;

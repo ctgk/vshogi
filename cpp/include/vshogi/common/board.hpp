@@ -11,7 +11,7 @@
 #include "vshogi/common/direction.hpp"
 #include "vshogi/common/magic.hpp"
 #include "vshogi/common/move.hpp"
-#include "vshogi/common/pieces.hpp"
+#include "vshogi/common/piece_traits.hpp"
 #include "vshogi/common/squares.hpp"
 
 namespace vshogi
@@ -23,9 +23,9 @@ class Board
 private:
     using C = Configuration<P>;
     using SHelper = Squares<P>;
-    using PHelper = Pieces<P>;
+    using PT = PieceTraits<P>;
     using PieceType = typename C::PieceType;
-    using ColoredPiece = typename C::ColoredPiece;
+    using Piece = typename C::Piece;
     using Square = typename C::Square;
     using File = typename C::File;
     using Rank = typename C::Rank;
@@ -33,7 +33,7 @@ private:
     static std::uint64_t zobrist_table[C::num_squares][num_square_states];
 
 private:
-    std::array<ColoredPiece, C::num_squares> m_pieces;
+    std::array<Piece, C::num_squares> m_pieces;
     Square m_kings[num_colors];
     BitBoard<P> m_bb_color[num_colors];
     BitBoard<P> m_bb_piece[C::num_piece_types];
@@ -51,12 +51,12 @@ public:
     {
         set_sfen(sfen);
     }
-    ColoredPiece get(const Square& sq) const
+    Piece get(const Square& sq) const
     {
         assert(sq != C::SQ_NA);
         return m_pieces[sq];
     }
-    ColoredPiece operator[](const Square& sq) const
+    Piece operator[](const Square& sq) const
     {
         assert(sq != C::SQ_NA);
         return m_pieces[sq];
@@ -95,11 +95,11 @@ public:
      * @param p Colored piece. Note that `C::VOID` is not allowed here.
      * @return BitBoard<P> Occupation by the given colored piece.
      */
-    BitBoard<P> get_occupied(const ColoredPiece& p) const
+    BitBoard<P> get_occupied(const Piece& p) const
     {
         assert(p != C::VOID);
-        const auto c = PHelper::get_color(p);
-        const auto pt = PHelper::to_piece_type(p);
+        const auto c = PT::get_color(p);
+        const auto pt = PT::to_piece_type(p);
         return m_bb_color[c] & m_bb_piece[pt];
     }
     template <PieceType PT>
@@ -117,7 +117,7 @@ public:
     {
         return m_bb_slider[c];
     }
-    ColoredPiece pop_from(const Square& sq, std::uint64_t* const hash = nullptr)
+    Piece pop_from(const Square& sq, std::uint64_t* const hash = nullptr)
     {
         const auto popped = m_pieces[sq];
         m_pieces[sq] = C::VOID;
@@ -126,10 +126,8 @@ public:
         update_internals_by_popped(popped, sq, hash);
         return popped;
     }
-    ColoredPiece place_at(
-        const Square& sq,
-        const ColoredPiece& p,
-        std::uint64_t* const hash = nullptr)
+    Piece place_at(
+        const Square& sq, const Piece& p, std::uint64_t* const hash = nullptr)
     {
         assert(sq < C::SQ_NA);
         const auto popped = m_pieces[sq];
@@ -162,7 +160,7 @@ public:
     {
         assert(sq < C::SQ_NA);
         const auto& p = m_pieces[sq];
-        if (PHelper::is_slider(p))
+        if (PT::is_slider(p))
             return BitBoard<P>::get_attacks_by(p, sq, get_occupied());
         return BitBoard<P>::get_attacks_by(p, sq);
     }
@@ -177,10 +175,10 @@ public:
             return C::SQ_NA;
         const auto dir_rotated = rotate(dir);
         {
-            const ColoredPiece& p = m_pieces[*ptr_sq];
+            const Piece& p = m_pieces[*ptr_sq];
             if ((p != C::VOID) && (*ptr_sq != skip)) {
-                if ((PHelper::get_color(p) == attacker_color)
-                    && PHelper::is_attacking_to(p, dir_rotated))
+                if ((PT::get_color(p) == attacker_color)
+                    && PT::is_attacking_to(p, dir_rotated))
                     return *ptr_sq;
                 else
                     return C::SQ_NA;
@@ -193,8 +191,8 @@ public:
             const auto& p = m_pieces[sq];
             if ((p == C::VOID) || (sq == skip))
                 continue;
-            if ((PHelper::get_color(p) == attacker_color)
-                && PHelper::slidable_to(p, dir_rotated))
+            if ((PT::get_color(p) == attacker_color)
+                && PT::slidable_to(p, dir_rotated))
                 return sq;
             return C::SQ_NA;
         }
@@ -219,8 +217,8 @@ public:
             const auto& p = m_pieces[*psq];
             if ((p == C::VOID) || (*psq == skip))
                 continue;
-            if ((PHelper::get_color(p) == attacker_color)
-                && PHelper::slidable_to(p, dir_from_attacker))
+            if ((PT::get_color(p) == attacker_color)
+                && PT::slidable_to(p, dir_from_attacker))
                 return *psq;
             return C::SQ_NA;
         }
@@ -246,7 +244,7 @@ public:
         const auto src = m_kings[by_side];
         if (src == C::SQ_NA)
             return BitBoard<P>();
-        assert(m_pieces[src] == PHelper::to_board_piece(by_side, C::OU));
+        assert(m_pieces[src] == PT::make_piece(by_side, C::OU));
         BitBoard<P> out
             = BitBoard<P>::get_attacks_by(m_pieces[src], src) & movable;
         const BitBoard<P> occ_full_but_king = get_occupied().clear(src);
@@ -275,7 +273,7 @@ public:
         return out;
     }
     template <bool Check>
-    BitBoard<P> compute_droppable(const ColoredPiece& p) const
+    BitBoard<P> compute_droppable(const Piece& p) const
     {
         const auto occ_full = get_occupied();
         auto droppable = ~occ_full;
@@ -283,8 +281,7 @@ public:
         return droppable;
     }
     template <bool Check>
-    BitBoard<P>
-    compute_droppable(const ColoredPiece& p, BitBoard<P> droppable) const
+    BitBoard<P> compute_droppable(const Piece& p, BitBoard<P> droppable) const
     {
         const auto occ_full = get_occupied();
         droppable &= ~occ_full;
@@ -385,10 +382,10 @@ private:
                 promotion_flag = true;
                 continue;
             default:
-                *piece_ptr = promotion_flag
-                                 ? PHelper::promote_nocheck(
-                                     PHelper::to_board_piece(*sfen_ptr))
-                                 : PHelper::to_board_piece(*sfen_ptr);
+                *piece_ptr
+                    = promotion_flag
+                          ? PT::promote_nocheck(PT::make_piece(*sfen_ptr))
+                          : PT::make_piece(*sfen_ptr);
                 piece_ptr -= C::num_ranks;
                 break;
             }
@@ -411,7 +408,7 @@ private:
                 out += static_cast<char>('0' + num_void);
                 num_void = 0;
             }
-            PHelper::append_sfen(*ptr, out);
+            PT::append_sfen(*ptr, out);
         }
         if (num_void > 0)
             out += static_cast<char>('0' + num_void);
@@ -425,22 +422,20 @@ private:
         std::fill_n(m_bb_slider, num_colors, BitBoard<P>());
         for (auto sq : C::square_iterator()) {
             const auto& p = m_pieces[sq];
-            const auto c = PHelper::get_color(p);
-            const auto pt = PHelper::to_piece_type(p);
+            const auto c = PT::get_color(p);
+            const auto pt = PT::to_piece_type(p);
             if (pt == C::OU)
                 m_kings[c] = sq;
             if (p != C::VOID) {
                 m_bb_color[c].toggle(sq);
                 m_bb_piece[pt].toggle(sq);
             }
-            if (PHelper::is_slider(pt))
+            if (PT::is_slider(pt))
                 m_bb_slider[c].toggle(sq);
         }
     }
     void update_internals_by_placed(
-        const ColoredPiece& p,
-        const Square& sq,
-        std::uint64_t* const hash = nullptr)
+        const Piece& p, const Square& sq, std::uint64_t* const hash = nullptr)
     {
         assert(sq < C::SQ_NA);
         assert(p < num_square_states);
@@ -448,32 +443,30 @@ private:
             *hash ^= zobrist_table[sq][p];
         if (p == C::VOID)
             return;
-        const auto c = PHelper::get_color(p);
-        const auto pt = PHelper::to_piece_type(p);
+        const auto c = PT::get_color(p);
+        const auto pt = PT::to_piece_type(p);
         if (pt == C::OU)
             m_kings[c] = sq;
         m_bb_color[c].toggle(sq);
         m_bb_piece[pt].toggle(sq);
-        if (PHelper::is_slider(pt))
+        if (PT::is_slider(pt))
             m_bb_slider[c].toggle(sq);
     }
     void update_internals_by_popped(
-        const ColoredPiece& p,
-        const Square& sq,
-        std::uint64_t* const hash = nullptr)
+        const Piece& p, const Square& sq, std::uint64_t* const hash = nullptr)
     {
         assert(sq < C::SQ_NA);
         if (hash != nullptr)
             *hash ^= zobrist_table[sq][p];
         if (p == C::VOID)
             return;
-        const auto c = PHelper::get_color(p);
-        const auto pt = PHelper::to_piece_type(p);
+        const auto c = PT::get_color(p);
+        const auto pt = PT::to_piece_type(p);
         if (pt == C::OU)
             m_kings[c] = C::SQ_NA;
         m_bb_color[c].toggle(sq);
         m_bb_piece[pt].toggle(sq);
-        if (PHelper::is_slider(pt))
+        if (PT::is_slider(pt))
             m_bb_slider[c].toggle(sq);
     }
     BitBoard<P> find_sliding_attack_blockers(
@@ -488,14 +481,14 @@ private:
                 | Magic<P>::get_diagonal_attack(target));
         for (auto atk : attackers.iterator()) {
             const auto target_dir = SHelper::direction(atk, target);
-            if (!PHelper::slidable_to(m_pieces[atk], target_dir))
+            if (!PT::slidable_to(m_pieces[atk], target_dir))
                 continue;
             auto blockers = BitBoard<P>::get_line_segment(atk, target);
             blockers &= (m_bb_color[BLACK] | m_bb_color[WHITE]);
             if (blockers.hamming_weight() != 1u)
                 continue;
             const auto blocker = *blockers.iterator();
-            if (PHelper::get_color(m_pieces[blocker]) == block_by)
+            if (PT::get_color(m_pieces[blocker]) == block_by)
                 out.set(blocker);
         }
         return out;
@@ -519,7 +512,7 @@ private:
         occ_atks ^= occ_melee;
         for (auto sq : occ_atks.iterator()) {
             const auto& p = m_pieces[sq];
-            if (PHelper::is_slider(p)
+            if (PT::is_slider(p)
                 && (BitBoard<P>::get_attacks_by(p, sq) & mask).any()) {
                 mask &= ~BitBoard<P>::get_attacks_by(p, sq, occ_full_but_king);
             } else {
@@ -532,15 +525,15 @@ private:
     template <bool Check>
     void update_droppable(
         BitBoard<P>& droppable,
-        const ColoredPiece& p,
+        const Piece& p,
         const BitBoard<P>& occ_full) const
     {
         if constexpr (Check) {
-            const auto pt = PHelper::to_piece_type(p);
-            const auto c = PHelper::get_color(p);
+            const auto pt = PT::to_piece_type(p);
+            const auto c = PT::get_color(p);
             const Square& target = m_kings[~c];
             droppable &= BitBoard<P>::get_attacks_by(
-                PHelper::to_board_piece(~c, pt), target, occ_full);
+                PT::make_piece(~c, pt), target, occ_full);
             if (pt == C::FU) {
                 if (!droppable.any())
                     return;
@@ -550,8 +543,8 @@ private:
             }
         } else {
             droppable &= BitBoard<P>::compute_droppable(p);
-            if (PHelper::to_piece_type(p) == C::FU) {
-                const auto c = PHelper::get_color(p);
+            if (PT::to_piece_type(p) == C::FU) {
+                const auto c = PT::get_color(p);
                 exclude_two_pawns_in_a_file(droppable, c);
                 exclude_drop_pawn_mate(droppable, c);
             }
@@ -635,10 +628,9 @@ public:
         const auto dst = move.destination();
         const auto dr = SHelper::to_rank(dst);
         const auto df = SHelper::to_file(dst);
-        const auto p
-            = (move.is_drop())
-                  ? PHelper::to_board_piece(by_side, move.source_piece())
-                  : m_pieces[move.source_square()];
+        const auto p = (move.is_drop())
+                           ? PT::make_piece(by_side, move.source_piece())
+                           : m_pieces[move.source_square()];
         const auto src_candidates = get_src_candidates(dst, p, move.promote());
         const auto num_cands = src_candidates.hamming_weight();
         if (move.is_drop() && static_cast<bool>(num_cands))
@@ -682,13 +674,11 @@ public:
 
 private:
     BitBoard<P> get_src_candidates(
-        const Square dst, const ColoredPiece p, const bool promote) const
+        const Square dst, const Piece p, const bool promote) const
     {
-        const auto t = PHelper::get_color(p);
+        const auto t = PT::get_color(p);
         const auto inverse_atk = BitBoard<P>::get_attacks_by(
-            PHelper::to_board_piece(~t, PHelper::to_piece_type(p)),
-            dst,
-            get_occupied());
+            PT::make_piece(~t, PT::to_piece_type(p)), dst, get_occupied());
         BitBoard<P> src_candidates = inverse_atk & get_occupied(p);
         if (promote && (!SHelper::in_promotion_zone(dst, t)))
             src_candidates &= BitBoard<P>::get_promotion_zone(t);
@@ -708,7 +698,7 @@ private:
         const uint horizontal_index,
         const uint num_candidates_vertical[3],
         const uint num_candidates_horizontal[3],
-        const ColoredPiece& p)
+        const Piece& p)
     {
         // https://www.shogi.or.jp/faq/kihuhyouki.html
         static const std::string table_vertical[]
@@ -719,8 +709,7 @@ private:
             return table_vertical[vertical_index];
         if (num_candidates_horizontal[horizontal_index] == 1u) {
             if ((horizontal_index == 1u)
-                && (PHelper::slidable_to(p, DIR_E)
-                    || PHelper::slidable_to(p, DIR_NW)))
+                && (PT::slidable_to(p, DIR_E) || PT::slidable_to(p, DIR_NW)))
                 return (num_candidates_horizontal[0]) ? table_horizontal[2]
                                                       : table_horizontal[0];
             return table_horizontal[horizontal_index];

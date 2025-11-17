@@ -24,7 +24,7 @@ judkins_shogi::Stand::Stand(
 
 template <>
 judkins_shogi::BitBoard judkins_shogi::BitBoard::get_attacks_by(
-    const judkins_shogi::ColoredPieceEnum& p,
+    const judkins_shogi::PieceEnum& p,
     const judkins_shogi::SquareEnum& sq,
     const judkins_shogi::BitBoard& occupied)
 {

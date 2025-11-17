@@ -2,7 +2,7 @@
 #define VSHOGI_ENGINE_PIECE_VALUE_HPP
 
 #include "vshogi/common/game.hpp"
-#include "vshogi/common/pieces.hpp"
+#include "vshogi/common/piece_traits.hpp"
 #include "vshogi/common/stand.hpp"
 #include "vshogi/common/utils.hpp"
 
@@ -13,7 +13,7 @@ template <class Parameters>
 inline float piece_value_func(const Game<Parameters>& g)
 {
     using C = Configuration<Parameters>;
-    using PHelper = Pieces<Parameters>;
+    using PT = PieceTraits<Parameters>;
     using PieceType = typename C::PieceType;
     using Square = typename C::Square;
     constexpr float scaler = static_cast<float>(C::sum_piece_value);
@@ -25,13 +25,13 @@ inline float piece_value_func(const Game<Parameters>& g)
     float value = 0.f;
     for (Square sq : C::square_iterator()) {
         const auto p = board[sq];
-        const auto pt = PHelper::to_piece_type(p);
-        const auto c = PHelper::get_color(p);
-        const auto v = static_cast<float>(PHelper::get_value(pt));
+        const auto pt = PT::to_piece_type(p);
+        const auto c = PT::get_color(p);
+        const auto v = static_cast<float>(PT::get_value(pt));
         value += (c == turn) ? v : -v;
     }
     for (PieceType pt : C::stand_piece_type_iterator()) {
-        const auto v = PHelper::get_value(pt);
+        const auto v = PT::get_value(pt);
         value += static_cast<float>(ally_stand.count(pt) * v);
         value -= static_cast<float>(enemy_stand.count(pt) * v);
     }

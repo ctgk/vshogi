@@ -82,7 +82,7 @@ void export_pieces(py::module& m)
         .value("RY", ms::RY)
         .value("NA", ms::NA);
 
-    py::enum_<ms::ColoredPieceEnum>(m, "BoardPiece")
+    py::enum_<ms::PieceEnum>(m, "BoardPiece")
         .value("B_FU", ms::B_FU)
         .value("B_GI", ms::B_GI)
         .value("B_KA", ms::B_KA)
@@ -110,7 +110,6 @@ void export_pieces(py::module& m)
 
 void export_minishogi(py::module& m)
 {
-    ms::Pieces::init_tables();
     ms::Squares::init_tables();
     ms::BlackWhiteStands::init_tables();
     ms::BitBoard::init_tables();

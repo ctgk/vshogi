@@ -7,6 +7,7 @@
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/direction.hpp"
+#include "vshogi/common/piece_traits.hpp"
 #include "vshogi/common/squares.hpp"
 #include "vshogi/common/utils.hpp"
 
@@ -18,13 +19,13 @@ class BitBoard
 {
 private:
     using C = Configuration<Parameters>;
-    using ColoredPiece = typename C::ColoredPiece;
+    using Piece = typename C::Piece;
     using File = typename C::File;
     using Rank = typename C::Rank;
     using Square = typename C::Square;
     using UInt = typename C::BaseTypeBitBoard;
     using SHelper = Squares<Parameters>;
-    using PHelper = Pieces<Parameters>;
+    using PT = PieceTraits<Parameters>;
 
     static constexpr UInt ones(const uint num_ones)
     {
@@ -282,14 +283,14 @@ public:
         else
             return (*this & rankmask[dir]) >> static_cast<uint>(-delta);
     }
-    static BitBoard compute_droppable(const ColoredPiece& p)
+    static BitBoard compute_droppable(const Piece& p)
     {
         constexpr BitBoard all = BitBoard(mask);
         constexpr BitBoard all_but_a = ~from_rank<C::RANK_A>();
         constexpr BitBoard all_but_z = ~from_rank<C::RANK_Z>();
         constexpr BitBoard all_but_ab = ~from_rank<C::RANK_A, C::RANK_B>();
         constexpr BitBoard all_but_yz = ~from_rank<C::RANK_Y, C::RANK_Z>();
-        const auto dirs = PHelper::get_attack_directions(p);
+        const auto dirs = PT::get_attack_directions(p);
         if (dirs[1] == DIR_NA) {
             return (dirs[0] == DIR_N) ? all_but_a : all_but_z;
         } else if (dirs[2] == DIR_NA) {
@@ -299,14 +300,14 @@ public:
         }
     }
 
-    static BitBoard get_attacks_by(const ColoredPiece& p, const Square& sq)
+    static BitBoard get_attacks_by(const Piece& p, const Square& sq)
     {
         if ((p == C::VOID) || (sq == C::SQ_NA))
             return BitBoard();
         return attacks_table[p][sq];
     }
-    static BitBoard get_attacks_by(
-        const ColoredPiece& p, const Square& sq, const BitBoard& occupied);
+    static BitBoard
+    get_attacks_by(const Piece& p, const Square& sq, const BitBoard& occupied);
 
     /**
      * Get ray mask along a direction from a square.
@@ -342,7 +343,7 @@ public:
             return BitBoard();
         return neighbor_table[c][sq];
     }
-    static BitBoard get_neighbor_2nd(const Square& sq, const ColoredPiece& p)
+    static BitBoard get_neighbor_2nd(const Square& sq, const Piece& p)
     {
         if (sq == C::SQ_NA)
             return BitBoard();
@@ -370,8 +371,7 @@ public:
 
     static void init_tables()
     {
-        for (auto p :
-             EnumIterator<ColoredPiece, C::num_colored_piece_types>()) {
+        for (auto p : EnumIterator<Piece, C::num_colored_piece_types>()) {
             for (auto sq : C::square_iterator()) {
                 attacks_table[p][sq] = compute_attack_by(p, sq);
             }
@@ -397,7 +397,7 @@ public:
         for (auto sq : C::square_iterator()) {
             for (auto pt : C::piece_type_iterator()) {
                 for (auto c : {BLACK, WHITE}) {
-                    const auto p = PHelper::to_board_piece(c, pt);
+                    const auto p = PT::make_piece(c, pt);
                     neighbor_2nd_table[sq][p] = compute_2nd_neighbor(sq, p);
                 }
             }
@@ -506,7 +506,7 @@ private:
     compute_neighbor_at(const Square& sq, const ColorEnum& by_side)
     {
         auto out = BitBoard::from_square(sq);
-        out |= get_attacks_by(PHelper::to_board_piece(BLACK, C::OU), sq);
+        out |= get_attacks_by(PT::make_piece(BLACK, C::OU), sq);
         if constexpr (C::num_dir > 8) {
             for (auto d : {DIR_SSE, DIR_SSW}) {
                 if (by_side == WHITE)
@@ -520,16 +520,15 @@ private:
     {
         const auto base = BitBoard::from_square(sq);
         auto out = base;
-        out |= get_attacks_by(PHelper::to_board_piece(BLACK, C::OU), sq);
+        out |= get_attacks_by(PT::make_piece(BLACK, C::OU), sq);
         out |= out.shift(DIR_W) | out.shift(DIR_E);
         out |= out.shift(DIR_N) | out.shift(DIR_S);
         return out;
     }
-    static BitBoard
-    compute_2nd_neighbor(const Square& sq, const ColoredPiece& p)
+    static BitBoard compute_2nd_neighbor(const Square& sq, const Piece& p)
     {
         BitBoard out{};
-        const auto c = PHelper::get_color(p);
+        const auto c = PT::get_color(p);
         for (Square src : C::square_iterator()) {
             bool src_is_2nd_neighbor = false;
             for (Square dst : get_attacks_by(p, src).iterator()) {
@@ -537,11 +536,10 @@ private:
                     src_is_2nd_neighbor = true;
                     break;
                 }
-                if (PHelper::is_promotable(p)
+                if (PT::is_promotable(p)
                     && (SHelper::in_promotion_zone(src, c)
                         || SHelper::in_promotion_zone(dst, c))
-                    && get_attacks_by(PHelper::promote_nocheck(p), dst)
-                           .is_one(sq)) {
+                    && get_attacks_by(PT::promote_nocheck(p), dst).is_one(sq)) {
                     src_is_2nd_neighbor = true;
                     break;
                 }
@@ -570,17 +568,16 @@ private:
         else
             return (from_ranks<NumRanks - 1>() << 1u) | from_rank1<>();
     }
-    static BitBoard compute_attack_by(const ColoredPiece& p, const Square& sq)
+    static BitBoard compute_attack_by(const Piece& p, const Square& sq)
     {
         auto a = BitBoard();
-        if (PHelper::is_slider(p)) {
-            for (auto pd = PHelper::get_attack_directions(p); *pd != DIR_NA;
-                 ++pd) {
-                if (PHelper::slidable_to(p, *pd))
+        if (PT::is_slider(p)) {
+            for (auto pd = PT::get_attack_directions(p); *pd != DIR_NA; ++pd) {
+                if (PT::slidable_to(p, *pd))
                     a |= compute_ray_to(sq, *pd);
             }
         }
-        for (auto pd = PHelper::get_attack_directions(p); *pd != DIR_NA;) {
+        for (auto pd = PT::get_attack_directions(p); *pd != DIR_NA;) {
             a |= from_square(sq).shift(*pd++);
         }
         return a;

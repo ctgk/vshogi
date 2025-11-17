@@ -12,7 +12,7 @@
 #include "vshogi/common/iterator.hpp"
 #include "vshogi/common/magic.hpp"
 #include "vshogi/common/move.hpp"
-#include "vshogi/common/pieces.hpp"
+#include "vshogi/common/piece_traits.hpp"
 #include "vshogi/common/squares.hpp"
 #include "vshogi/common/stand.hpp"
 #include "vshogi/common/state.hpp"
@@ -35,7 +35,7 @@ enum PieceTypeEnum : std::uint8_t
     NA, //!< Not available
 };
 
-enum ColoredPieceEnum : std::uint8_t
+enum PieceEnum : std::uint8_t
 {
     B_FU, //!< Black Fu (Pawn)
     B_GI, //!< Black Gin (Silver)
@@ -110,7 +110,7 @@ struct Parameters
     static constexpr uint num_init_piece_each = 6;
     static constexpr std::array<uint, 11u> initial_piece_count = {2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0};
     static constexpr uint initial_points = 13;
-    static constexpr std::array<ColoredPieceEnum, 25> initial_position = {
+    static constexpr std::array<PieceEnum, 25> initial_position = {
         W_OU, W_FU, VOID, VOID, B_HI,
         W_KI, VOID, VOID, VOID, B_KA,
         W_GI, VOID, VOID, VOID, B_GI,
@@ -121,7 +121,7 @@ struct Parameters
     using BaseTypeStand
         = std::uint16_t; // __11_11_ 11_11_11 (KI, HI, KA, GI, FU)
     using PieceType = PieceTypeEnum;
-    using ColoredPiece = ColoredPieceEnum;
+    using Piece = PieceEnum;
     using Square = SquareEnum;
     using File = FileEnum;
     using Rank = RankEnum;
@@ -130,7 +130,7 @@ struct Parameters
 };
 
 using Config = vshogi::Configuration<Parameters>;
-using Pieces = vshogi::Pieces<Parameters>;
+using PieceTraits = vshogi::PieceTraits<Parameters>;
 using Squares = vshogi::Squares<Parameters>;
 using Move = vshogi::Move<Parameters>;
 using BitBoard = vshogi::BitBoard<Parameters>;

@@ -1,5 +1,5 @@
-#ifndef VSHOGI_PIECES_HPP
-#define VSHOGI_PIECES_HPP
+#ifndef VSHOGI_PIECE_TRAITS_HPP
+#define VSHOGI_PIECE_TRAITS_HPP
 
 #include <cassert>
 #include <cctype>
@@ -277,19 +277,16 @@ inline const DirectionEnum FPTHelper::attack_directions_table[29][9] = {
     // clang-format on
 };
 
-template <class Parameters>
-struct Pieces
+template <class P>
+struct PieceTraits
 {
 private:
-    using C = Configuration<Parameters>;
+    using C = Configuration<P>;
     using PieceType = typename C::PieceType;
-    using ColoredPiece = typename C::ColoredPiece;
+    using Piece = typename C::Piece;
 
 public:
-    Pieces() = delete;
-    static void init_tables()
-    {
-    }
+    PieceTraits() = delete;
 
 public: // basic
     /**
@@ -299,33 +296,21 @@ public: // basic
      * @param p Board piece.
      * @return constexpr ColorEnum Color of the board piece.
      */
-    static constexpr ColorEnum get_color(const ColoredPiece& p)
+    static constexpr ColorEnum get_color(const Piece& p)
     {
         return static_cast<ColorEnum>(p >= C::num_piece_types);
     }
-    static constexpr PieceType to_piece_type(const ColoredPiece& p)
+    static constexpr PieceType to_piece_type(const Piece& p)
     {
         return (p < C::num_piece_types)
                    ? static_cast<PieceType>(p)
                    : static_cast<PieceType>(p - C::num_piece_types);
     }
-    static PieceType to_piece_type(char c)
+    static constexpr Piece make_piece(const ColorEnum& c, const PieceType& pt)
     {
-        const FullPieceTypes fpt = FPTHelper::to_fpt(c);
-        c = static_cast<char>(std::tolower(static_cast<int>(c)));
-        const FullPieceTypes* ptr = C::piece_types.data();
-        for (; *ptr != PT_NA; ++ptr) {
-            if (*ptr == fpt)
-                return static_cast<PieceType>(ptr - C::piece_types.data());
-        }
-        return C::NA;
-    }
-    static constexpr ColoredPiece
-    to_board_piece(const ColorEnum& c, const PieceType& p)
-    {
-        if (p == C::NA)
+        if (pt == C::NA)
             return C::VOID;
-        return static_cast<ColoredPiece>(c * C::num_piece_types + p);
+        return static_cast<Piece>(c * C::num_piece_types + pt);
     }
 
 public: // promotion
@@ -333,7 +318,7 @@ public: // promotion
     {
         return (p + 1u < C::num_stand_piece_types);
     }
-    static constexpr bool is_promotable(const ColoredPiece& p)
+    static constexpr bool is_promotable(const Piece& p)
     {
         return is_promotable(to_piece_type(p));
     }
@@ -342,7 +327,7 @@ public: // promotion
     {
         return pt > C::num_stand_piece_types;
     }
-    static constexpr bool is_promoted(const ColoredPiece& p)
+    static constexpr bool is_promoted(const Piece& p)
     {
         return is_promoted(to_piece_type(p));
     }
@@ -350,10 +335,11 @@ public: // promotion
     {
         return FPTHelper::is_promotion_fully_superior(C::piece_types[pt]);
     }
-    static constexpr bool is_promotion_fully_superior(const ColoredPiece& p)
+    static constexpr bool is_promotion_fully_superior(const Piece& p)
     {
         return is_promotion_fully_superior(to_piece_type(p));
     }
+
     /**
      * @brief Promote a promotable piece.
      * @note If the piece is not promotable, the return may not be safe.
@@ -383,7 +369,7 @@ public: // promotion
     }
 
 public: // attack directions
-    static bool slidable_to(const ColoredPiece& p, const DirectionEnum& d)
+    static bool slidable_to(const Piece& p, const DirectionEnum& d)
     {
         return FPTHelper::slidable_to(
             C::piece_types[to_piece_type(p)],
@@ -393,17 +379,17 @@ public: // attack directions
     {
         return FPTHelper::is_slider(C::piece_types[pt]);
     }
-    static bool is_slider(const ColoredPiece& p)
+    static bool is_slider(const Piece& p)
     {
         return is_slider(to_piece_type(p));
     }
-    static bool is_attacking_to(const ColoredPiece& p, const DirectionEnum& d)
+    static bool is_attacking_to(const Piece& p, const DirectionEnum& d)
     {
         return FPTHelper::is_attacking_to(
             C::piece_types[to_piece_type(p)],
             (get_color(p) == BLACK) ? d : rotate(d));
     }
-    static const DirectionEnum* get_attack_directions(const ColoredPiece& p)
+    static const DirectionEnum* get_attack_directions(const Piece& p)
     {
         assert(p != C::VOID);
         return FPTHelper::get_attack_directions(
@@ -415,7 +401,7 @@ public: // point, value
     {
         return FPTHelper::to_point(C::piece_types[p]);
     }
-    static uint get_point(const ColoredPiece& p)
+    static uint get_point(const Piece& p)
     {
         return get_point(to_piece_type(p));
     }
@@ -425,23 +411,22 @@ public: // point, value
     }
 
 public: // char, str
-    static constexpr ColoredPiece to_board_piece(const char c)
+    static PieceType to_piece_type(char c)
     {
-        return to_board_piece(
+        const FullPieceTypes fpt = FPTHelper::to_fpt(c);
+        c = static_cast<char>(std::tolower(static_cast<int>(c)));
+        const FullPieceTypes* ptr = C::piece_types.data();
+        for (; *ptr != PT_NA; ++ptr) {
+            if (*ptr == fpt)
+                return static_cast<PieceType>(ptr - C::piece_types.data());
+        }
+        return C::NA;
+    }
+    static constexpr Piece make_piece(const char c)
+    {
+        return make_piece(
             std::islower(static_cast<int>(c)) ? WHITE : BLACK,
             to_piece_type(c));
-    }
-    static void append_sfen(const ColoredPiece& p, std::string& out)
-    {
-        const auto color = get_color(p);
-        const auto promotion = is_promoted(p);
-        const auto pt = demote(to_piece_type(p));
-        char c = to_char(pt);
-        if (color == BLACK)
-            c = static_cast<char>(std::toupper(static_cast<int>(c)));
-        if (promotion)
-            out += '+';
-        out += c;
     }
     static constexpr char to_char(const PieceType& pt)
     {
@@ -456,18 +441,30 @@ public: // char, str
     {
         return FPTHelper::to_jpn(C::piece_types[pt], single_char);
     }
-    static const std::string to_eng(const PieceType& pt)
+    static std::string to_eng(const PieceType& pt)
     {
         if (is_promoted(pt))
             return "+" + std::string(1, std::toupper(to_char(pt)));
         return std::string(1, std::toupper(to_char(pt)));
     }
-    static const std::string to_eng(const ColoredPiece& p)
+    static std::string to_eng(const Piece& p)
     {
         return to_eng(to_piece_type(p));
+    }
+    static void append_sfen(const Piece& p, std::string& out)
+    {
+        const auto color = get_color(p);
+        const auto promotion = is_promoted(p);
+        const auto pt = demote(to_piece_type(p));
+        char c = to_char(pt);
+        if (color == BLACK)
+            c = static_cast<char>(std::toupper(static_cast<int>(c)));
+        if (promotion)
+            out += '+';
+        out += c;
     }
 };
 
 } // namespace vshogi
 
-#endif // VSHOGI_PIECES_HPP
+#endif // VSHOGI_PIECE_TRAITS_HPP
