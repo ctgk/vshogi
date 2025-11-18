@@ -141,7 +141,6 @@ TEST(dfpn_table, look_up_l_prefer_no_mate_at_defence)
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
     auto n1 = Node();
-    n1.init(Move());
     auto g1 = Game("4k/5/4P/5/5 b -");
     g1.apply(Move(SQ_1C, SQ_1B));
     n1.expand(next, g1);
@@ -159,7 +158,6 @@ TEST(dfpn_table, look_up_l_prefer_no_mate_at_defence)
     CHECK_FALSE(n1.proved_by_repetitions());
 
     auto n2 = Node();
-    n2.init(Move());
     auto g2 = Game("4k/5/4P/5/5 b ps");
     g2.apply(Move(SQ_1C, SQ_1B));
     n2.expand(next, g2);
@@ -274,7 +272,6 @@ TEST(dfpn_table, look_up_g_prefer_mate_at_defence)
     auto buffer = std::vector<Node>(100);
     auto next = buffer.data();
     auto n1 = Node();
-    n1.init(Move());
     auto g1 = Game("4k/5/3GP/5/5 b psg");
     g1.apply(Move(SQ_2C, SQ_1B));
     n1.expand(next, g1);
@@ -282,7 +279,6 @@ TEST(dfpn_table, look_up_g_prefer_mate_at_defence)
     CHECK_TRUE(n1.fully_expanded());
     CHECK_TRUE(n1.proved_mate(false));
     auto n2 = Node();
-    n2.init(Move());
     auto g2 = Game("4k/4G/4P/5/5 w ps");
     {
         auto g = Game("4k/5/3SP/5/5 b ps");
@@ -398,12 +394,22 @@ TEST(test_dfpn_searcher, test_init)
 
 TEST(test_dfpn_searcher, test_small_num_nodes)
 {
-    auto g = Game("4k/5/3P1/5/5 b G");
-    auto searcher = dfpn::Searcher<Parameters>(1u);
-    searcher.search(g, 100u);
-    CHECK_FALSE(searcher.proved());
-    CHECK_EQUAL(0u, searcher.get_search_count());
-    CHECK_EQUAL(0u, searcher.get_num_nodes_remain());
+    {
+        auto g = Game("4k/5/3P1/5/5 b G");
+        auto searcher = dfpn::Searcher<Parameters>(1u);
+        searcher.search(g, 100u);
+        CHECK_FALSE(searcher.proved());
+        CHECK_EQUAL(0u, searcher.get_search_count());
+        CHECK_EQUAL(0u, searcher.get_num_nodes_remain());
+    }
+    {
+        auto g = Game("4k/5/3P1/5/5 b G");
+        auto searcher = dfpn::Searcher<Parameters>(2u);
+        searcher.search(g, 100u);
+        CHECK_FALSE(searcher.proved());
+        CHECK_EQUAL(0u, searcher.get_search_count());
+        CHECK_EQUAL(0u, searcher.get_num_nodes_remain());
+    }
 }
 
 TEST(test_dfpn_searcher, test_debug)

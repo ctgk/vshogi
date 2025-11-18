@@ -154,13 +154,11 @@ public:
     Move<P> search(Game<P>& g, const uint n)
     {
         ScopedGame scope{g};
-        if (m_search_count == 0u) {
-            m_next = std::next(m_nodes.data());
-            if (!m_nodes[0].simulate(g)) {
-                m_nodes[0].expand(m_next, g);
-                m_table.add(&m_nodes[0], g);
-                m_nodes[0].backprop(C::SQ_NA);
-            }
+        if ((m_search_count == 0u) && !m_nodes[0].simulate(g)
+            && !m_next->is_end()) {
+            m_nodes[0].expand(m_next, g);
+            m_table.add(&m_nodes[0], g);
+            m_nodes[0].backprop(C::SQ_NA);
         }
         if (m_nodes[0].proved()) {
             return Move<P>();
@@ -185,7 +183,7 @@ private:
             return out;
         }
         const auto checker_sq = offence ? C::SQ_NA : g.find_checker_square();
-        if (!n.has_child()) {
+        if (!n.has_child() && !m_next->is_end()) {
             n.expand(m_next, g, twin_ge, twin_le);
             if ((twin_e == nullptr) || twin_e->proved_by_repetitions()
                 || (!twin_e->fully_expanded()))
@@ -193,9 +191,7 @@ private:
             --m_remaining_searches;
             n.backprop(checker_sq);
         }
-        if (m_next == nullptr)
-            return out;
-        while (m_next && m_remaining_searches && (n.phi() < th_p)
+        while (!m_next->is_end() && m_remaining_searches && (n.phi() < th_p)
                && (n.delta() < th_d)) {
             uint th_p_ch, th_d_ch;
             Node<P>* const child = n.select(th_p, th_d, th_p_ch, th_d_ch);
@@ -225,8 +221,8 @@ public: // utility
     void init()
     {
         m_nodes[0].init();
-        m_nodes[m_nodes.size() - 1u].init(Move<P>(C::SQ_NA, C::SQ_NA));
-        m_next = nullptr;
+        m_nodes.back().init_end();
+        m_next = std::next(m_nodes.data());
         m_table.clear();
         m_search_count = 0u;
     }
@@ -236,10 +232,9 @@ public: // utility
     }
     uint get_num_nodes_remain() const
     {
-        if (m_next == nullptr)
-            return 0u;
+        assert(m_next);
         return static_cast<uint>(m_nodes.size())
-               - static_cast<uint>(m_next - m_nodes.data());
+               - static_cast<uint>(m_next - m_nodes.data()) - 1u;
     }
     bool proved() const
     {

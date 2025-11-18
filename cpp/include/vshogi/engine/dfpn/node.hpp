@@ -57,7 +57,7 @@ private:
     bool m_proved_by_repetition;
     bool m_fully_expanded; //!< Omitted drop moves if false.
 
-    Node* m_sibling;
+    Node* m_parent;
     Node* m_child;
     Node* m_child_1st;
     Node* m_child_2nd;
@@ -98,12 +98,15 @@ public:
         }
         if (m_child == next)
             m_child = nullptr;
+        assert(next);
+        if (!next->is_end())
+            next->m_parent = nullptr;
 
         const int offset = offence ? 19 : 10;
         const Square king_sq
             = g.get_king_square(offence ? ~g.get_turn() : g.get_turn());
         const Square checker = g.find_checker_square();
-        for (Node* c = m_child; c; c = c->sibling()) {
+        for (Node* c = m_child; c && (c->m_parent == this); ++c) {
             uint delta_plus = 0u;
             const auto m = c->get_action();
             const auto dst = m.destination();
@@ -148,7 +151,7 @@ public:
         m_child_1st = nullptr;
         m_child_2nd = nullptr;
         m_proved_by_repetition = static_cast<bool>(m_child);
-        for (Node* ch = child(); ch; ch = ch->sibling()) {
+        for (Node* ch = m_child; ch && (ch->m_parent == this); ++ch) {
             assert(ch->m_phi != inf);
             m_proved_by_repetition &= ch->proved_by_repetitions();
             if (offence || (!ch->m_action.is_drop()))
@@ -257,22 +260,13 @@ private:
     bool expand_by_generator(Node<P>*& next, const State<P>& s)
     {
         for (Move<P> m : Generator(s)) {
-            if (next == nullptr)
+            if (next->is_end())
                 return false;
-            const bool is_last = (next->get_action().destination() == C::SQ_NA);
             if (s.is_declined_promotion(m))
-                next->init(m, cent, kilo);
+                next->init(this, m, cent, kilo);
             else
-                next->init(m);
-            if (m_child != next) {
-                auto prev = next - 1;
-                prev->m_sibling = next;
-            }
-            if (is_last) {
-                next = nullptr;
-            } else {
-                ++next;
-            }
+                next->init(this, m, unit, unit);
+            ++next;
         }
         return true;
     }
@@ -294,21 +288,12 @@ private:
     bool expand_board_moves(Node<P>*& next, const Node** const nibling)
     {
         for (; *nibling; *nibling = (*nibling)->get_sibling()) {
-            if (next == nullptr)
+            if (next->is_end())
                 return false;
             if ((*nibling)->get_action().is_drop())
                 break;
-            const bool end = (next->get_action().destination() == C::SQ_NA);
             init_from_nibling(*next, **nibling);
-            if (m_child != next) {
-                auto prev = next - 1;
-                prev->m_sibling = next;
-            }
-            if (end) {
-                next = nullptr;
-            } else {
-                ++next;
-            }
+            ++next;
         }
         return true;
     }
@@ -331,46 +316,29 @@ private:
         Node<P>*& next, const Node** const nibling, const Stand<P>& s)
     {
         for (; *nibling; *nibling = (*nibling)->get_sibling()) {
-            if (next == nullptr)
+            if (next->is_end())
                 return false;
             assert((*nibling)->get_action().is_drop());
             if (!s.exist((*nibling)->get_action().source_piece()))
                 continue;
-            const bool end = (next->get_action().destination() == C::SQ_NA);
             init_from_nibling(*next, **nibling);
-            if (m_child != next) {
-                auto prev = next - 1;
-                prev->m_sibling = next;
-            }
-            if (end) {
-                next = nullptr;
-                break;
-            } else {
-                ++next;
-            }
+            ++next;
         }
         return true;
     }
     void init_from_nibling(Node<P>& n, const Node& nibling)
     {
         n.init(
+            this,
             nibling.get_action(),
             std::clamp(nibling.phi(), cent, kilo),
             std::clamp(nibling.delta(), cent, kilo));
-    }
-    Node* child()
-    {
-        return m_child;
-    }
-    Node* sibling()
-    {
-        return m_sibling;
     }
 
 public: // utility
     Node()
         : m_action(), m_phi(unit), m_delta(unit), m_proved_by_repetition(false),
-          m_fully_expanded(false), m_sibling(nullptr), m_child(nullptr),
+          m_fully_expanded(false), m_parent(nullptr), m_child(nullptr),
           m_child_1st(nullptr), m_child_2nd(nullptr)
 
     {
@@ -389,31 +357,28 @@ public: // utility
         m_delta = unit;
         m_proved_by_repetition = false;
         m_fully_expanded = false;
-        m_sibling = nullptr;
+        m_parent = nullptr;
         m_child = nullptr;
         m_child_1st = nullptr;
         m_child_2nd = nullptr;
     }
-    void init(const Move<P>& action)
+    void init_end()
     {
-        m_action = action;
-        m_phi = unit;
-        m_delta = unit;
-        m_proved_by_repetition = false;
-        m_fully_expanded = false;
-        m_sibling = nullptr;
-        m_child = nullptr;
-        m_child_1st = nullptr;
-        m_child_2nd = nullptr;
+        init();
+        m_parent = this;
     }
-    void init(const Move<P>& action, const uint phi, const uint delta)
+    void init(
+        Node* const parent,
+        const Move<P>& action,
+        const uint phi,
+        const uint delta)
     {
         m_action = action;
         m_phi = phi;
         m_delta = delta;
         m_proved_by_repetition = false;
         m_fully_expanded = false;
-        m_sibling = nullptr;
+        m_parent = parent;
         m_child = nullptr;
         m_child_1st = nullptr;
         m_child_2nd = nullptr;
@@ -460,7 +425,10 @@ public: // utility
     }
     const Node* get_sibling() const
     {
-        return m_sibling;
+        const Node* const sibling = this + 1;
+        if (m_parent == sibling->m_parent)
+            return sibling;
+        return nullptr;
     }
     bool fully_expanded() const
     {
@@ -477,6 +445,10 @@ public: // utility
     const Node* get_child_2nd() const
     {
         return m_child_2nd;
+    }
+    bool is_end() const
+    {
+        return m_parent == this;
     }
 };
 
