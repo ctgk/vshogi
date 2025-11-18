@@ -84,7 +84,6 @@ TEST(dfpn_node_simulate, defence_won_at_offence_turn)
     CHECK_TRUE(n.proved());
     CHECK_FALSE(n.proved_mate(true));
     CHECK_TRUE(n.proved_no_mate(true));
-    CHECK_FALSE(n.proved_by_repetitions());
 }
 
 TEST(dfpn_node_simulate, defence_won_at_defence_turn)
@@ -103,7 +102,6 @@ TEST(dfpn_node_simulate, defence_won_at_defence_turn)
     CHECK_TRUE(n.proved());
     CHECK_FALSE(n.proved_mate(false));
     CHECK_TRUE(n.proved_no_mate(false));
-    CHECK_TRUE(n.proved_by_repetitions());
 }
 
 TEST(dfpn_node_simulate, using_offence_twin_l_mate)
@@ -119,7 +117,6 @@ TEST(dfpn_node_simulate, using_offence_twin_l_mate)
     CHECK_TRUE(n.proved());
     CHECK_TRUE(n.proved_mate(true));
     CHECK_FALSE(n.proved_no_mate(true));
-    CHECK_FALSE(n.proved_by_repetitions());
 }
 
 TEST(dfpn_node_simulate, using_offence_twin_l_no_mate)
@@ -133,7 +130,6 @@ TEST(dfpn_node_simulate, using_offence_twin_l_no_mate)
     CHECK_FALSE(n.proved());
     CHECK_FALSE(n.proved_mate(true));
     CHECK_FALSE(n.proved_no_mate(true));
-    CHECK_FALSE(n.proved_by_repetitions());
 }
 
 TEST(dfpn_node_simulate, using_defence_twin_l_mate)
@@ -148,7 +144,6 @@ TEST(dfpn_node_simulate, using_defence_twin_l_mate)
     CHECK_FALSE(n.proved());
     CHECK_FALSE(n.proved_mate(false));
     CHECK_FALSE(n.proved_no_mate(false));
-    CHECK_FALSE(n.proved_by_repetitions());
 }
 
 TEST(dfpn_node_simulate, using_defence_twin_l_no_mate)
@@ -163,7 +158,6 @@ TEST(dfpn_node_simulate, using_defence_twin_l_no_mate)
     CHECK_TRUE(n.proved());
     CHECK_FALSE(n.proved_mate(false));
     CHECK_TRUE(n.proved_no_mate(false));
-    CHECK_FALSE(n.proved_by_repetitions());
 }
 
 TEST(dfpn_node_simulate, using_offence_twin_g_mate)
@@ -177,7 +171,6 @@ TEST(dfpn_node_simulate, using_offence_twin_g_mate)
     CHECK_FALSE(n.proved());
     CHECK_FALSE(n.proved_mate(true));
     CHECK_FALSE(n.proved_no_mate(true));
-    CHECK_FALSE(n.proved_by_repetitions());
 }
 
 TEST(dfpn_node_simulate, using_offence_twin_g_no_mate)
@@ -191,7 +184,6 @@ TEST(dfpn_node_simulate, using_offence_twin_g_no_mate)
     CHECK_TRUE(n.proved());
     CHECK_FALSE(n.proved_mate(true));
     CHECK_TRUE(n.proved_no_mate(true));
-    CHECK_FALSE(n.proved_by_repetitions());
 }
 
 TEST(dfpn_node_simulate, using_defence_twin_g_mate)
@@ -206,7 +198,6 @@ TEST(dfpn_node_simulate, using_defence_twin_g_mate)
     CHECK_TRUE(n.proved());
     CHECK_TRUE(n.proved_mate(false));
     CHECK_FALSE(n.proved_no_mate(false));
-    CHECK_FALSE(n.proved_by_repetitions());
 }
 
 TEST(dfpn_node_simulate, using_defence_twin_g_no_mate)
@@ -221,7 +212,6 @@ TEST(dfpn_node_simulate, using_defence_twin_g_no_mate)
     CHECK_FALSE(n.proved());
     CHECK_FALSE(n.proved_mate(false));
     CHECK_FALSE(n.proved_no_mate(false));
-    CHECK_FALSE(n.proved_by_repetitions());
 }
 
 TEST_GROUP (dfpn_node_expand) {
@@ -562,20 +552,16 @@ TEST(dfpn_node_backprop, offence_proved_by_repetitions)
     g.apply_dfpn(c->get_action());
     CHECK_TRUE(c->simulate(g)); // repetition
     CHECK_TRUE(c->proved_no_mate(false));
-    CHECK_TRUE(c->proved_by_repetitions());
     g.undo();
     n.backprop(SQ_NA);
     CHECK_FALSE(n.proved());
-    CHECK_FALSE(n.proved_by_repetitions());
     c = n.select(inf, inf, th_p_ch, th_d_ch);
     g.apply_dfpn(c->get_action());
     CHECK_TRUE(c->simulate(g)); // repetition
     CHECK_TRUE(c->proved_no_mate(false));
-    CHECK_TRUE(c->proved_by_repetitions());
     g.undo();
     n.backprop(SQ_NA);
     CHECK_TRUE(n.proved_no_mate(true));
-    CHECK_TRUE(n.proved_by_repetitions());
 }
 
 TEST(dfpn_node_backprop, defence_proved_by_repetitions)
@@ -597,11 +583,9 @@ TEST(dfpn_node_backprop, defence_proved_by_repetitions)
     g.apply_dfpn(c->get_action());
     CHECK_TRUE(c->simulate(g)); // repetition
     CHECK_TRUE(c->proved_no_mate(true));
-    CHECK_TRUE(c->proved_by_repetitions());
     g.undo();
     n.backprop(g.find_checker_square());
     CHECK_TRUE(n.proved_no_mate(false));
-    CHECK_TRUE(n.proved_by_repetitions());
 }
 
 TEST_GROUP (dfpn_node_select) {

@@ -19,7 +19,7 @@ def test_mate():
         ('5p+r1S/9/8k/5+B2p/7PN/9/9/9/9 b B10p4l3n3s4gr', 348),
         ('6+P2/8k/9/7SB/9/9/9/9/9 b P10p4g2r', 1860),
         ('5+Pnk1/8P/4p1+rsS/9/9/9/9/9/9 b BGS10p4l3ns3gbr', 2024),
-        ('3R2l2/4r2+B1/5+Bnn1/8k/6G2/8P/7P1/9/9 b 10p3l2n4s4g', 4718),
+        ('3R2l2/4r2+B1/5+Bnn1/8k/6G2/8P/7P1/9/9 b 10p3l2n4s4g', 4721),
     ]
 
     actual_total_searches = 0

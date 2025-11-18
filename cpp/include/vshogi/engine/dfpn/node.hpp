@@ -54,7 +54,6 @@ private:
      * (MSB) ... xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx (LSB)
      */
     uint m_delta;
-    bool m_proved_by_repetition;
     bool m_fully_expanded; //!< Omitted drop moves if false.
 
     Node* m_parent;
@@ -142,7 +141,6 @@ public:
         if (m_child_1st && (m_child_1st->delta() == zero)) {
             m_phi = zero;
             m_delta = inf;
-            m_proved_by_repetition = m_child_1st->proved_by_repetitions();
             return;
         }
         uint cd_max = 0u;
@@ -150,10 +148,8 @@ public:
         m_delta &= 0xffu; // keep the least significant 8 bits.
         m_child_1st = nullptr;
         m_child_2nd = nullptr;
-        m_proved_by_repetition = static_cast<bool>(m_child);
         for (Node* ch = m_child; ch && (ch->m_parent == this); ++ch) {
             assert(ch->m_phi != inf);
-            m_proved_by_repetition &= ch->proved_by_repetitions();
             if (offence || (!ch->m_action.is_drop()))
                 m_delta += ch->m_phi;
             else {
@@ -184,8 +180,7 @@ private:
     {
         // proved_no_mate_at_offence() == (dn() == zero) == (delta == zero)
         // proved_mate_at_defence() == (pn() == zero) == (delta == zero)
-        if (twin_ge && (twin_ge->m_delta == zero)
-            && (!twin_ge->proved_by_repetitions())) {
+        if (twin_ge && (twin_ge->m_delta == zero)) {
             m_phi = inf;
             m_delta = zero;
             return true;
@@ -193,8 +188,7 @@ private:
 
         // proved_mate_at_offence() == (pn() == zero) == (phi == zero)
         // proved_no_mate_at_defence() == (dn() == zero) == (phi == zero)
-        if (twin_le && (twin_le->m_phi == zero)
-            && (!twin_le->proved_by_repetitions())) {
+        if (twin_le && (twin_le->m_phi == zero)) {
             m_phi = zero;
             m_delta = inf;
             return true;
@@ -227,7 +221,6 @@ private:
         const auto turn = g.get_turn();
         auto result = g.get_result(); // this is usually ONGOING
         if (g.is_repetitions(1u)) {
-            m_proved_by_repetition = true;
             if (g.in_check())
                 result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
             else
@@ -337,9 +330,9 @@ private:
 
 public: // utility
     Node()
-        : m_action(), m_phi(unit), m_delta(unit), m_proved_by_repetition(false),
-          m_fully_expanded(false), m_parent(nullptr), m_child(nullptr),
-          m_child_1st(nullptr), m_child_2nd(nullptr)
+        : m_action(), m_phi(unit), m_delta(unit), m_fully_expanded(false),
+          m_parent(nullptr), m_child(nullptr), m_child_1st(nullptr),
+          m_child_2nd(nullptr)
 
     {
     }
@@ -355,7 +348,6 @@ public: // utility
     {
         m_phi = unit;
         m_delta = unit;
-        m_proved_by_repetition = false;
         m_fully_expanded = false;
         m_parent = nullptr;
         m_child = nullptr;
@@ -376,7 +368,6 @@ public: // utility
         m_action = action;
         m_phi = phi;
         m_delta = delta;
-        m_proved_by_repetition = false;
         m_fully_expanded = false;
         m_parent = parent;
         m_child = nullptr;
@@ -433,10 +424,6 @@ public: // utility
     bool fully_expanded() const
     {
         return m_fully_expanded;
-    }
-    bool proved_by_repetitions() const
-    {
-        return m_proved_by_repetition;
     }
     const Node* get_child_1st() const
     {

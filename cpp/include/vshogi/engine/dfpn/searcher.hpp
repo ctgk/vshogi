@@ -84,8 +84,7 @@ private:
                 *node_e = n_iter;
             }
             if (!found_best_l && (s_iter <= s)) {
-                if ((n_iter->phi() == zero) && n_iter->fully_expanded()
-                    && (!n_iter->proved_by_repetitions())) {
+                if ((n_iter->phi() == zero) && n_iter->fully_expanded()) {
                     *node_le = n_iter;
                     found_best_l = true;
                 } else if (
@@ -99,8 +98,7 @@ private:
                 }
             }
             if (!found_best_g && (s_iter >= s)) {
-                if ((n_iter->delta() == zero) && n_iter->fully_expanded()
-                    && (!n_iter->proved_by_repetitions())) {
+                if ((n_iter->delta() == zero) && n_iter->fully_expanded()) {
                     *node_ge = n_iter;
                     found_best_g = true;
                 } else if (
@@ -185,8 +183,7 @@ private:
         const auto checker_sq = offence ? C::SQ_NA : g.find_checker_square();
         if (!n.has_child() && !m_next->is_end()) {
             n.expand(m_next, g, twin_ge, twin_le);
-            if ((twin_e == nullptr) || twin_e->proved_by_repetitions()
-                || (!twin_e->fully_expanded()))
+            if ((twin_e == nullptr) || !twin_e->fully_expanded())
                 m_table.add(&n, g);
             --m_remaining_searches;
             n.backprop(checker_sq);

@@ -155,7 +155,6 @@ TEST(dfpn_table, look_up_l_prefer_no_mate_at_defence)
     n1.backprop(g1.find_checker_square());
     CHECK_TRUE(n1.fully_expanded());
     CHECK_TRUE(n1.proved_no_mate(false));
-    CHECK_FALSE(n1.proved_by_repetitions());
 
     auto n2 = Node();
     auto g2 = Game("4k/5/4P/5/5 b ps");
