@@ -239,10 +239,11 @@ private: // select
     }
     Node* select_best_child(const float coeff_puct)
     {
+        const float q_fpu = first_play_urgency();
         Node* ch = m_child.get();
         Node* out = ch;
         float max_puct_score = ch->puct_score_from_parent_view(
-            coeff_puct, m_sqrt_visit_count, m_q_value);
+            coeff_puct, m_sqrt_visit_count, q_fpu);
 
         ch = ch->m_sibling.get();
         for (; ch != nullptr;) {
@@ -256,6 +257,7 @@ private: // select
         }
         return out;
     }
+    float first_play_urgency() const;
     Node* select_random_child()
     {
         constexpr uint num_max_try = 3u;
@@ -518,6 +520,18 @@ private:
         return q + u * coeff_puct;
     }
 };
+
+template <class P>
+float Node<P>::first_play_urgency() const
+{
+    // https://lczero.org/dev/lc0/search/alphazero/#first-play-urgency-fpu
+    float q = m_q_value;
+    for (const Node* c = m_child.get(); c; c = c->get_sibling()) {
+        if (c->m_visit_count)
+            q -= c->m_proba;
+    }
+    return q;
+}
 
 template <class Parameters>
 class Searcher
