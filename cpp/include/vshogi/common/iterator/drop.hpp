@@ -31,7 +31,7 @@ class DropMoveIterator
 {
 private:
     using C = Configuration<P>;
-    using BitboardSquareIterator = typename BitBoard<P>::BitboardSquareIterator;
+    using BitSquareIterator = typename BitBoard<P>::Iterator;
     using PieceType = typename C::PieceType;
     using Square = typename C::Square;
     using PT = PieceTraits<P>;
@@ -40,7 +40,7 @@ private:
     const State<P>& m_state;
     const ColorEnum m_turn;
     const Stand<P>& m_stand;
-    BitboardSquareIterator m_sq_iter; //!< inner loop
+    BitSquareIterator m_sq_iter; //!< inner loop
     PieceType m_pt_iter; //!< outer loop
 
 public:
@@ -144,7 +144,7 @@ private:
     using PT = PieceTraits<P>;
     using PieceType = typename C::PieceType;
     using Square = typename C::Square;
-    using BitboardSquareIterator = typename BitBoard<P>::BitboardSquareIterator;
+    using BitSquareIterator = typename BitBoard<P>::Iterator;
     static constexpr auto pt_end
         = static_cast<PieceType>(C::num_stand_piece_types);
 

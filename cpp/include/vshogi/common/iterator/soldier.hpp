@@ -58,8 +58,8 @@ private:
     const ColorEnum m_turn;
     const Board<P>& m_board;
     const BitBoard<P> m_pinned;
-    typename BitBoard<P>::BitboardSquareIterator m_src_iter;
-    typename BitBoard<P>::BitboardSquareIterator m_dst_iter;
+    typename BitBoard<P>::Iterator m_src_iter;
+    typename BitBoard<P>::Iterator m_dst_iter;
     bool m_promote;
 
 public:
@@ -260,8 +260,8 @@ private:
     const Board<P>& m_board;
     const BitBoard<P> m_pinned;
     const BitBoard<P> m_cover;
-    typename BitBoard<P>::BitboardSquareIterator m_src_iter;
-    typename BitBoard<P>::BitboardSquareIterator m_dst_iter;
+    typename BitBoard<P>::Iterator m_src_iter;
+    typename BitBoard<P>::Iterator m_dst_iter;
     bool m_promote;
     BitBoard<P> m_dst_mask;
 
@@ -576,13 +576,12 @@ private:
     using PT = PieceTraits<P>;
     using SHelper = Squares<P>;
     using Square = typename C::Square;
-    using BitboardSquareIterator = typename BitBoard<P>::BitboardSquareIterator;
 
     const Board<P>& m_board;
     const ColorEnum m_turn;
     const BitBoard<P> m_not_pinned;
-    BitboardSquareIterator m_dst_iter;
-    BitboardSquareIterator m_src_iter;
+    typename BitBoard<P>::Iterator m_dst_iter;
+    typename BitBoard<P>::Iterator m_src_iter;
     bool m_promote;
 
 public:

@@ -18,12 +18,12 @@ class KingMoveIterator
 private:
     using C = Configuration<P>;
     using SHelper = Squares<P>;
-    using BitboardSquareIterator = typename BitBoard<P>::BitboardSquareIterator;
+    using BitSquareIterator = typename BitBoard<P>::Iterator;
     using Square = typename C::Square;
 
 private:
     const Square m_src; //!< King square
-    BitboardSquareIterator m_iter;
+    BitSquareIterator m_iter;
 
 public:
     KingMoveIterator(const State<P>& state)
