@@ -457,9 +457,9 @@ public:
         {
             return m_curr != other.m_curr;
         }
-        bool is_end() const
+        operator bool() const
         {
-            return m_curr >= C::num_squares;
+            return m_curr < C::num_squares;
         }
     };
     BitboardSquareIterator iterator() const

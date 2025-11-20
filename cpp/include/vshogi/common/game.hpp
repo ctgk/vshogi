@@ -118,8 +118,8 @@ public:
         std::vector<MoveType> out{};
         if (m_result != ONGOING)
             return out;
-        for (auto m : LegalMoveIterator<Parameters>(m_current_state))
-            out.emplace_back(m);
+        for (auto it = LegalMoveIterator<Parameters>(m_current_state); it; ++it)
+            out.emplace_back(*it);
         return out;
     }
     std::vector<MoveType> get_check_moves() const
@@ -127,9 +127,11 @@ public:
         std::vector<MoveType> out{};
         if (m_result != ONGOING)
             return out;
-        for (auto m :
-             LegalMoveIterator<Parameters, IterEnum::CHECK>(m_current_state))
-            out.emplace_back(m);
+        for (auto it
+             = LegalMoveIterator<Parameters, IterEnum::CHECK>(m_current_state);
+             it;
+             ++it)
+            out.emplace_back(*it);
         return out;
     }
     Square get_king_square() const
@@ -272,8 +274,9 @@ public:
             return move == *iter;
         } else if (
             move.source_square() == get_board().get_king_square(get_turn())) {
-            for (auto m : KingMoveIterator<Parameters>(m_current_state)) {
-                if (m == move)
+            for (auto it = KingMoveIterator<Parameters>(m_current_state); it;
+                 ++it) {
+                if (*it == move)
                     return true;
             }
         } else {
@@ -481,9 +484,9 @@ protected:
     {
         m_result = ONGOING;
         const auto turn = get_turn();
-        if (DropMoveIterator<Parameters>(m_current_state).is_end()
-            && KingMoveIterator<Parameters>(m_current_state).is_end()
-            && SoldierMoveIterator<Parameters>(m_current_state).is_end())
+        if (!DropMoveIterator<Parameters>(m_current_state)
+            && !KingMoveIterator<Parameters>(m_current_state)
+            && !SoldierMoveIterator<Parameters>(m_current_state))
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
         if (is_repetitions(max_repetitions_inclusive)) {
             if (m_current_state.in_check())

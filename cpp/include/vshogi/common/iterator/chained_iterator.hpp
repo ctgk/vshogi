@@ -23,10 +23,10 @@ public:
     ChainedIterator(const State<P>& state)
         : m_iter0{state}, m_iter1{state}, m_index{}
     {
-        if (!m_iter0.is_end())
+        if (m_iter0)
             return;
         ++m_index;
-        if (!m_iter1.is_end())
+        if (m_iter1)
             return;
         ++m_index;
     }
@@ -35,16 +35,16 @@ public:
         switch (m_index) {
         case 0u:
             ++m_iter0;
-            if (!m_iter0.is_end())
+            if (m_iter0)
                 break;
-            else if (!m_iter1.is_end())
+            else if (m_iter1)
                 m_index = 1u;
             else
                 m_index = 2u;
             break;
         case 1u:
             ++m_iter1;
-            if (m_iter1.is_end())
+            if (!m_iter1)
                 m_index = 2u;
         default:
             break;
@@ -63,30 +63,9 @@ public:
         }
         return Move<P>();
     }
-    ChainedIterator begin()
+    operator bool() const
     {
-        return *this;
-    }
-    ChainedIterator end()
-    {
-        static const auto end_iter
-            = ChainedIterator(m_iter0.end(), m_iter1.end(), 2u);
-        return end_iter;
-    }
-    bool operator!=(const ChainedIterator& other) const
-    {
-        return (m_iter0 != other.m_iter0) || (m_iter1 != other.m_iter1)
-               || (m_index != other.m_index);
-    }
-    bool is_end() const
-    {
-        return m_index == 2u;
-    }
-
-private:
-    ChainedIterator(const Iter0& iter0, const Iter1& iter1, const uint index)
-        : m_iter0{iter0}, m_iter1{iter1}, m_index{index}
-    {
+        return m_index != 2u;
     }
 };
 
@@ -103,13 +82,13 @@ public:
     ChainedIterator(const State<P>& state)
         : m_iter0{state}, m_iter1{state}, m_iter2{state}, m_index{}
     {
-        if (!m_iter0.is_end())
+        if (m_iter0)
             return;
         ++m_index;
-        if (!m_iter1.is_end())
+        if (m_iter1)
             return;
         ++m_index;
-        if (!m_iter2.is_end())
+        if (m_iter2)
             return;
         ++m_index;
     }
@@ -118,27 +97,27 @@ public:
         switch (m_index) {
         case 0u:
             ++m_iter0;
-            if (!m_iter0.is_end())
+            if (m_iter0)
                 break;
-            else if (!m_iter1.is_end())
+            else if (m_iter1)
                 m_index = 1u;
-            else if (!m_iter2.is_end())
+            else if (m_iter2)
                 m_index = 2u;
             else
                 m_index = 3u;
             break;
         case 1u:
             ++m_iter1;
-            if (!m_iter1.is_end())
+            if (m_iter1)
                 break;
-            else if (!m_iter2.is_end())
+            else if (m_iter2)
                 m_index = 2u;
             else
                 m_index = 3u;
             break;
         case 2u:
             ++m_iter2;
-            if (!m_iter2.is_end())
+            if (m_iter2)
                 break;
             else
                 m_index = 3u;
@@ -161,34 +140,9 @@ public:
         }
         return Move<P>();
     }
-    ChainedIterator begin()
+    operator bool() const
     {
-        return *this;
-    }
-    ChainedIterator end()
-    {
-        static const auto end_iter
-            = ChainedIterator(m_iter0.end(), m_iter1.end(), m_iter2.end(), 3u);
-        return end_iter;
-    }
-    bool operator!=(const ChainedIterator& other) const
-    {
-        return (m_iter0 != other.m_iter0) || (m_iter1 != other.m_iter1)
-               || (m_iter2 != other.m_iter2) || (m_index != other.m_index);
-    }
-    bool is_end() const
-    {
-        return m_index == 3u;
-    }
-
-private:
-    ChainedIterator(
-        const Iter0& iter0,
-        const Iter1& iter1,
-        const Iter2& iter2,
-        const uint index)
-        : m_iter0{iter0}, m_iter1{iter1}, m_iter2{iter2}, m_index{index}
-    {
+        return m_index != 3u;
     }
 };
 

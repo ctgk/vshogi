@@ -82,25 +82,9 @@ public:
     {
         return Move<P>(m_pt_iter, *m_sq_iter);
     }
-    DropMoveIterator begin()
+    operator bool() const
     {
-        return *this;
-    }
-    DropMoveIterator end()
-    {
-        static const auto end_iter = DropMoveIterator(
-            m_state,
-            static_cast<PieceType>(C::num_stand_piece_types),
-            static_cast<Square>(0));
-        return end_iter;
-    }
-    bool operator!=(const DropMoveIterator& other) const
-    {
-        return (m_sq_iter != other.m_sq_iter) || (m_pt_iter != other.m_pt_iter);
-    }
-    bool is_end() const
-    {
-        return m_sq_iter.is_end() && (m_pt_iter == C::num_stand_piece_types);
+        return m_sq_iter; // && (m_pt_iter != C::num_stand_piece_types);
     }
 
 private:
@@ -125,7 +109,7 @@ private:
     void init_sq_iter(const Square begin)
     {
         init_sq_iter();
-        while (!m_sq_iter.is_end()) {
+        while (m_sq_iter) {
             if (*m_sq_iter < begin)
                 ++m_sq_iter;
             else
@@ -134,7 +118,7 @@ private:
     }
     void increment_piece_type_while_no_dst()
     {
-        while (m_sq_iter.is_end()) {
+        while (!m_sq_iter) {
             m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
             increment_piece_type_unless_in_stand();
             if (m_pt_iter >= C::num_stand_piece_types)
@@ -206,43 +190,15 @@ public:
         }
         return *this;
     }
-    DropMoveIterator begin()
+    operator bool() const
     {
-        return *this;
-    }
-    DropMoveIterator end()
-    {
-        const auto end_iter
-            = DropMoveIterator(m_state, m_sq_end, m_sq_iter, pt_end);
-        return end_iter;
-    }
-    bool operator!=(const DropMoveIterator& other) const
-    {
-        return (m_sq_iter != other.m_sq_iter) || (m_pt_iter != other.m_pt_iter);
-    }
-    bool is_end() const
-    {
-        return (m_sq_iter == nullptr)
-               || ((*m_sq_iter == m_sq_end) && (m_pt_iter == pt_end));
+        return m_sq_iter && (*m_sq_iter != m_sq_end);
     }
 
 private:
-    DropMoveIterator(
-        const State<P>& state,
-        const Square sq_end,
-        const Square* const sq_iter,
-        const PieceType pt)
-        : m_state(state), m_sq_end{sq_end}, m_sq_iter{sq_iter}, m_pt_iter{pt}
-    {
-        if (m_sq_iter == nullptr)
-            return;
-        while (*m_sq_iter != m_sq_end) {
-            ++m_sq_iter;
-        }
-    }
     bool is_end_or_valid_move() const
     {
-        if (is_end())
+        if (!operator bool())
             return true;
         if ((*m_sq_iter == m_sq_end) || (m_pt_iter == pt_end))
             return false;

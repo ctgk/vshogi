@@ -81,14 +81,14 @@ TEST(shogi_profile, generator)
                 break;
             const auto move = Move(kifu[ii]);
             int num_legal_moves = 0;
-            for (auto it = LegalMoveIterator(g.get_state()); !it.is_end(); ++it)
+            for (auto it = LegalMoveIterator(g.get_state()); it; ++it)
                 ++num_legal_moves;
             CHECK_COMPARE(num_legal_moves, >, 0);
             int num_check_moves = 0;
             for (auto it = vshogi::
                      LegalMoveIterator<Parameters, vshogi::IterEnum::CHECK>(
                          g.get_state());
-                 !it.is_end();
+                 it;
                  ++it)
                 ++num_check_moves;
             CHECK_COMPARE(num_check_moves, <=, num_legal_moves);

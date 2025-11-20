@@ -25,10 +25,6 @@ private:
     const Square m_src; //!< King square
     BitboardSquareIterator m_iter;
 
-    KingMoveIterator() : m_src(C::SQ_NA), m_iter()
-    {
-    }
-
 public:
     KingMoveIterator(const State<P>& state)
         : m_src(state.get_board().get_king_square(state.get_turn())), m_iter()
@@ -62,22 +58,9 @@ public:
     {
         return Move<P>(m_src, *m_iter, false);
     }
-    KingMoveIterator begin() const
+    operator bool() const
     {
-        return *this;
-    }
-    KingMoveIterator end() const
-    {
-        static const auto end_iter = KingMoveIterator();
-        return end_iter;
-    }
-    bool operator!=(const KingMoveIterator& other) const
-    {
-        return m_iter != other.m_iter;
-    }
-    bool is_end() const
-    {
-        return m_iter.is_end();
+        return m_iter;
     }
 };
 

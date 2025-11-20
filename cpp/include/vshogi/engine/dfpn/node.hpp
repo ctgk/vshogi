@@ -249,10 +249,11 @@ private:
      * @return true fully expanded
      * @return false partially expanded
      */
-    template <class Generator>
+    template <class Iter>
     bool expand_by_generator(Node<P>*& next, const State<P>& s)
     {
-        for (Move<P> m : Generator(s)) {
+        for (auto it = Iter(s); it; ++it) {
+            const auto m = *it;
             if (next->is_end())
                 return false;
             if (s.is_declined_promotion(m))

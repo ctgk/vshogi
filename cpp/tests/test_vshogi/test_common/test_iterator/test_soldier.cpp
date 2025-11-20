@@ -21,8 +21,7 @@ TEST_GROUP (soldier_move_iterator) {
             CHECK_EQUAL(e.hash(), a.hash());
             ++iter;
         }
-        CHECK_FALSE(iter != iter.end());
-        CHECK_TRUE(iter.is_end());
+        CHECK_FALSE(iter);
     }
 };
 

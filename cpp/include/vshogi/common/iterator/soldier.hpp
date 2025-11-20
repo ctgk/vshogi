@@ -89,12 +89,11 @@ public:
         if (m_state.in_double_check())
             return;
         init_src_iter(src_mask);
-        while (!m_src_iter.is_end()) {
+        while (m_src_iter) {
             init_dst_iter();
-            if (m_dst_iter.is_end())
-                ++m_src_iter;
-            else
+            if (m_dst_iter)
                 break;
+            ++m_src_iter;
         }
         init_promote();
     }
@@ -114,15 +113,15 @@ public:
 
         m_promote = false;
         ++m_dst_iter;
-        if (!m_dst_iter.is_end()) {
+        if (m_dst_iter) {
             init_promote();
             return *this;
         }
 
         ++m_src_iter;
-        while (!m_src_iter.is_end()) {
+        while (m_src_iter) {
             init_dst_iter();
-            if (m_dst_iter.is_end())
+            if (!m_dst_iter)
                 ++m_src_iter;
             else {
                 init_promote();
@@ -137,56 +136,20 @@ public:
     {
         return Move<P>(*m_src_iter, *m_dst_iter, m_promote);
     }
-    SoldierMoveIterator begin()
+    operator bool() const
     {
-        return *this;
-    }
-    SoldierMoveIterator end()
-    {
-        static const auto end_iter
-            = SoldierMoveIterator(m_state, BitBoard<P>());
-        return end_iter;
-    }
-    bool operator!=(const SoldierMoveIterator& other) const
-    {
-        return (m_src_iter != other.m_src_iter)
-               || (m_dst_iter != other.m_dst_iter)
-               || (m_promote != other.m_promote);
-    }
-    bool is_end() const
-    {
-        return m_src_iter.is_end() && m_dst_iter.is_end();
+        return m_src_iter; // && m_dst_iter;
     }
 
 private:
-    SoldierMoveIterator(
-        const State<P>& state,
-        const BitBoard<P>& src_mask,
-        const BitBoard<P>& pinned)
-        : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
-          m_pinned(pinned), m_src_iter(), m_dst_iter(), m_promote(true)
-    {
-        if (m_state.in_double_check())
-            return;
-        init_src_iter(src_mask);
-        while (!m_src_iter.is_end()) {
-            init_dst_iter();
-            if (m_dst_iter.is_end())
-                ++m_src_iter;
-            else
-                break;
-        }
-        init_promote();
-    }
     void init_no_check()
     {
         init_src_iter();
-        while (!m_src_iter.is_end()) {
+        while (m_src_iter) {
             init_dst_iter();
-            if (m_dst_iter.is_end())
-                ++m_src_iter;
-            else
+            if (m_dst_iter)
                 break;
+            ++m_src_iter;
         }
         init_promote();
     }
@@ -196,12 +159,11 @@ private:
         const bool promote_begin)
     {
         init_src_iter(src_begin);
-        while (!m_src_iter.is_end()) {
+        while (m_src_iter) {
             init_dst_iter(dst_begin);
-            if (m_dst_iter.is_end())
-                ++m_src_iter;
-            else
+            if (m_dst_iter)
                 break;
+            ++m_src_iter;
         }
         init_promote(promote_begin);
     }
@@ -215,7 +177,7 @@ private:
     void init_src_iter(const Square begin)
     {
         init_src_iter();
-        while (!m_src_iter.is_end()) {
+        while (m_src_iter) {
             if (*m_src_iter < begin)
                 ++m_src_iter;
             else
@@ -253,7 +215,7 @@ private:
     void init_dst_iter(const Square begin)
     {
         init_dst_iter();
-        while (!m_dst_iter.is_end()) {
+        while (m_dst_iter) {
             if (*m_dst_iter < begin)
                 ++m_dst_iter;
             else
@@ -262,7 +224,7 @@ private:
     }
     void init_promote()
     {
-        if (m_src_iter.is_end() || m_dst_iter.is_end()) {
+        if (!m_src_iter || !m_dst_iter) {
             m_promote = true;
             return;
         }
@@ -312,16 +274,16 @@ public:
         if (state.in_double_check())
             return;
         init_src_iter();
-        while (!m_src_iter.is_end()) {
+        while (m_src_iter) {
             init_dst_mask();
             if (m_dst_mask.any()) {
                 m_promote = false;
                 init_dst_iter_nopromo();
-                if (!m_dst_iter.is_end())
+                if (m_dst_iter)
                     return;
                 m_promote = true;
                 init_dst_iter_promotion();
-                if (!m_dst_iter.is_end())
+                if (m_dst_iter)
                     return;
             }
             ++m_src_iter;
@@ -330,27 +292,27 @@ public:
     SoldierMoveIterator& operator++()
     {
         ++m_dst_iter;
-        if (!m_dst_iter.is_end())
+        if (m_dst_iter)
             return *this;
 
         if (m_promote == false) {
             m_promote = true;
             init_dst_iter_promotion();
-            if (!m_dst_iter.is_end())
+            if (m_dst_iter)
                 return *this;
         }
         ++m_src_iter;
 
-        while (!m_src_iter.is_end()) {
+        while (m_src_iter) {
             init_dst_mask();
             if (m_dst_mask.any()) {
                 m_promote = false;
                 init_dst_iter_nopromo();
-                if (!m_dst_iter.is_end())
+                if (m_dst_iter)
                     return *this;
                 m_promote = true;
                 init_dst_iter_promotion();
-                if (!m_dst_iter.is_end())
+                if (m_dst_iter)
                     return *this;
             }
             ++m_src_iter;
@@ -361,32 +323,12 @@ public:
     {
         return Move<P>(*m_src_iter, *m_dst_iter, m_promote);
     }
-    SoldierMoveIterator begin()
+    operator bool() const
     {
-        return *this;
-    }
-    SoldierMoveIterator end()
-    {
-        static const auto end_iter = SoldierMoveIterator(m_state, m_board);
-        return end_iter;
-    }
-    bool operator!=(const SoldierMoveIterator& other) const
-    {
-        return (m_src_iter != other.m_src_iter)
-               || (m_dst_iter != other.m_dst_iter)
-               || (m_promote != other.m_promote);
-    }
-    bool is_end() const
-    {
-        return m_src_iter.is_end();
+        return m_src_iter;
     }
 
 private:
-    SoldierMoveIterator(const State<P>& state, const Board<P>& board)
-        : m_state(state), m_turn(), m_board(board), m_pinned(), m_cover(),
-          m_src_iter(), m_dst_iter(), m_promote(true), m_dst_mask()
-    {
-    }
     void init_src_iter()
     {
         const auto target = m_board.get_king_square(~m_turn);
@@ -577,32 +519,12 @@ public:
         init_promote();
         return *this;
     }
-    SoldierMoveIteratorEvade begin()
+    operator bool() const
     {
-        return *this;
-    }
-    SoldierMoveIteratorEvade end()
-    {
-        static const auto end_iter
-            = SoldierMoveIteratorEvade(m_state, C::SQ_NA);
-        return end_iter;
-    }
-    bool operator!=(const SoldierMoveIteratorEvade& other) const
-    {
-        return (m_dst_iter != other.m_dst_iter) || (m_src != other.m_src)
-               || (m_promote != other.m_promote);
-    }
-    bool is_end() const
-    {
-        return (m_dst_iter == nullptr);
+        return m_dst_iter;
     }
 
 private:
-    SoldierMoveIteratorEvade(const State<P>& state, const Square)
-        : m_state{state}, m_src_mask{}, m_dst_last{}, m_dst_iter{},
-          m_src_dir_iter{}, m_src{C::SQ_NA}, m_promote{}
-    {
-    }
     void init_src_dir_iter()
     {
         m_src_dir_iter.reset();
@@ -675,12 +597,11 @@ public:
         if (!state.in_check())
             return;
         init_dst_iter(state.find_checker_square());
-        while (!m_dst_iter.is_end()) {
+        while (m_dst_iter) {
             init_src_iter();
-            if (m_src_iter.is_end())
-                ++m_dst_iter;
-            else
+            if (m_src_iter)
                 break;
+            ++m_dst_iter;
         }
         init_promote();
     }
@@ -696,15 +617,15 @@ public:
         }
 
         ++m_src_iter;
-        if (!m_src_iter.is_end()) {
+        if (m_src_iter) {
             init_promote();
             return *this;
         }
 
         ++m_dst_iter;
-        while (!m_dst_iter.is_end()) {
+        while (m_dst_iter) {
             init_src_iter();
-            if (m_src_iter.is_end())
+            if (!m_src_iter)
                 ++m_dst_iter;
             else
                 break;
@@ -716,32 +637,12 @@ public:
     {
         return Move<P>(*m_src_iter, *m_dst_iter, m_promote);
     }
-    SoldierMoveIterator begin()
+    operator bool() const
     {
-        return *this;
-    }
-    SoldierMoveIterator end()
-    {
-        static const auto end_iter = SoldierMoveIterator(m_board);
-        return end_iter;
-    }
-    bool operator!=(const SoldierMoveIterator& other) const
-    {
-        return (m_dst_iter != other.m_dst_iter)
-               || (m_src_iter != other.m_src_iter)
-               || (m_promote != other.m_promote);
-    }
-    bool is_end() const
-    {
-        return m_src_iter.is_end() && m_dst_iter.is_end();
+        return m_src_iter; // && m_dst_iter
     }
 
 private:
-    SoldierMoveIterator(const Board<P>& b)
-        : m_board(b), m_turn(), m_not_pinned(), m_dst_iter(), m_src_iter(),
-          m_promote()
-    {
-    }
     void init_dst_iter(const Square& checker_sq)
     {
         const auto& king = m_board.get_king_square(m_turn);
@@ -757,7 +658,7 @@ private:
     }
     void init_promote()
     {
-        if (m_dst_iter.is_end() || m_src_iter.is_end()) {
+        if (!m_dst_iter || !m_src_iter) {
             m_promote = false;
             return;
         }
