@@ -118,8 +118,17 @@ public:
         std::vector<MoveType> out{};
         if (m_result != ONGOING)
             return out;
-        for (auto it = LegalMoveIterator<Parameters>(m_current_state); it; ++it)
-            out.emplace_back(*it);
+        if (in_check()) {
+            for (auto it = LegalMoveIterator<Parameters, IterEnum::EVADE>(
+                     m_current_state);
+                 it;
+                 ++it)
+                out.emplace_back(*it);
+        } else {
+            for (auto it = LegalMoveIterator<Parameters>(m_current_state); it;
+                 ++it)
+                out.emplace_back(*it);
+        }
         return out;
     }
     std::vector<MoveType> get_check_moves() const
