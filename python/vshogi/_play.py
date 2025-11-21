@@ -11,6 +11,7 @@ def play_game(
     search_args: dict = {},
     select_args: dict = {},
     max_moves: int = 320,
+    draw_on_max_moves: bool = False,
     _return_num_searched: bool = False,
 ) -> Game:
     """Make two players play the game until an end.
@@ -30,6 +31,8 @@ def play_game(
     max_moves : int
         Maximum number of moves to apply to the game.
         If it reaches the value, return the game even if it is ongoing.
+    draw_on_max_moves : bool
+        If True, force the game to draw when the move limit is reached.
 
     Returns
     -------
@@ -47,6 +50,8 @@ def play_game(
             num_searched.append(player.num_searched)
         move = player.select(**select_args)
         game.apply(move)
+    if draw_on_max_moves and game.result == Result.ONGOING:
+        game.declare_draw()
     if _return_num_searched:
         return game, num_searched
     return game

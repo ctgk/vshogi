@@ -616,6 +616,7 @@ def run_rl_cycle(args: Args):
                         p_prev,
                         search_args={'n_or_t': args.mcts_search},
                         select_args={'temperature': None},
+                        draw_on_max_moves=True,
                     ).result
                     record += vshogi.Record.from_black_result(result)
                 else:
@@ -625,6 +626,7 @@ def run_rl_cycle(args: Args):
                         player,
                         search_args={'n_or_t': args.mcts_search},
                         select_args={'temperature': None},
+                        draw_on_max_moves=True,
                     ).result
                     record += vshogi.Record.from_white_result(result)
                 pbar.set_description(f'{player.name} vs {p_prev.name} = {record.wdl()}')
@@ -655,8 +657,9 @@ def run_rl_cycle(args: Args):
                     args._shogi.Game(),
                     player_curr,
                     player_best,
-                    search_args={'n_or_t': args.mcts_search},
-                    select_args={'temperature': None},
+                    search_args={"n_or_t": args.mcts_search},
+                    select_args={"temperature": None},
+                    draw_on_max_moves=True,
                 ).result
                 record_curr += vshogi.Record.from_black_result(result)
             else:
@@ -664,8 +667,9 @@ def run_rl_cycle(args: Args):
                     args._shogi.Game(),
                     player_best,
                     player_curr,
-                    search_args={'n_or_t': args.mcts_search},
-                    select_args={'temperature': None},
+                    search_args={"n_or_t": args.mcts_search},
+                    select_args={"temperature": None},
+                    draw_on_max_moves=True,
                 ).result
                 record_curr += vshogi.Record.from_white_result(result)
             pbar.set_description(f'{current} vs {best} = {record_curr.wdl()}')
