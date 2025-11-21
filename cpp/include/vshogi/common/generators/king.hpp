@@ -1,19 +1,19 @@
-#ifndef VSHOGI_COMMON_ITERATOR_KING_HPP
-#define VSHOGI_COMMON_ITERATOR_KING_HPP
+#ifndef VSHOGI_COMMON_GENERATORS_KING_HPP
+#define VSHOGI_COMMON_GENERATORS_KING_HPP
 
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/config.hpp"
-#include "vshogi/common/iterator/iterator.hpp"
+#include "vshogi/common/generators/gentype.hpp"
 #include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/state.hpp"
 
 namespace vshogi
 {
 
-template <class P, IterEnum IterType = IterEnum::LEGAL>
-class KingMoveIterator
+template <class P, GenEnum GenType = GenEnum::LEGAL>
+class KingMoveGenerator
 {
 private:
     using C = Configuration<P>;
@@ -26,10 +26,10 @@ private:
     BitSquareIterator m_iter;
 
 public:
-    KingMoveIterator(const State<P>& state)
+    KingMoveGenerator(const State<P>& state)
         : m_src(state.get_board().get_king_square(state.get_turn())), m_iter()
     {
-        if constexpr (IterType == IterEnum::CHECK) {
+        if constexpr (GenType == GenEnum::CHECK) {
             const auto t = state.get_turn();
             const auto& b = state.get_board();
             const auto enemy_king_sq = b.get_king_square(~t);
@@ -49,7 +49,7 @@ public:
             m_iter = state.compute_king_movable().iterator();
         }
     }
-    KingMoveIterator& operator++()
+    KingMoveGenerator& operator++()
     {
         ++m_iter;
         return *this;
@@ -66,4 +66,4 @@ public:
 
 } // namespace vshogi
 
-#endif // VSHOGI_COMMON_ITERATOR_KING_HPP
+#endif // VSHOGI_COMMON_GENERATORS_KING_HPP

@@ -9,7 +9,7 @@
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/game.hpp"
-#include "vshogi/common/iterator.hpp"
+#include "vshogi/common/generator.hpp"
 #include "vshogi/common/magic.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/piece_traits.hpp"
@@ -139,7 +139,7 @@ using Board = vshogi::Board<Parameters>;
 using Stand = vshogi::Stand<Parameters>;
 using BlackWhiteStands = vshogi::BlackWhiteStands<Parameters>;
 using State = vshogi::State<Parameters>;
-using LegalMoveGenerator = vshogi::MoveGenerator<Parameters, IterEnum::LEGAL>;
+using LegalMoveGenerator = vshogi::MoveGenerator<Parameters, GenEnum::LEGAL>;
 using Game = vshogi::Game<Parameters>;
 static_assert(FU == Config::FU);
 static_assert(OU == Config::OU);

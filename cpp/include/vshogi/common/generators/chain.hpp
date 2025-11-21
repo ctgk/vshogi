@@ -1,5 +1,5 @@
-#ifndef VSHOGI_COMMON_ITERATOR_CHAINED_ITERATOR_HPP
-#define VSHOGI_COMMON_ITERATOR_CHAINED_ITERATOR_HPP
+#ifndef VSHOGI_COMMON_GENERATORS_CHAIN_HPP
+#define VSHOGI_COMMON_GENERATORS_CHAIN_HPP
 
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/state.hpp"
@@ -8,43 +8,43 @@
 namespace vshogi
 {
 
-template <class P, class... Iters>
-class ChainedIterator;
+template <class P, class... Gens>
+class ChainGenerator;
 
-template <class P, class Iter0, class Iter1>
-class ChainedIterator<P, Iter0, Iter1>
+template <class P, class Gen0, class Gen1>
+class ChainGenerator<P, Gen0, Gen1>
 {
 private:
-    Iter0 m_iter0;
-    Iter1 m_iter1;
-    uint m_index; //!< 0: iter0, 1: iter1, 2: end
+    Gen0 m_gen0;
+    Gen1 m_gen1;
+    uint m_index; //!< 0: gen0, 1: gen1, 2: end
 
 public:
-    ChainedIterator(const State<P>& state)
-        : m_iter0{state}, m_iter1{state}, m_index{}
+    ChainGenerator(const State<P>& state)
+        : m_gen0{state}, m_gen1{state}, m_index{}
     {
-        if (m_iter0)
+        if (m_gen0)
             return;
         ++m_index;
-        if (m_iter1)
+        if (m_gen1)
             return;
         ++m_index;
     }
-    ChainedIterator& operator++()
+    ChainGenerator& operator++()
     {
         switch (m_index) {
         case 0u:
-            ++m_iter0;
-            if (m_iter0)
+            ++m_gen0;
+            if (m_gen0)
                 break;
-            else if (m_iter1)
+            else if (m_gen1)
                 m_index = 1u;
             else
                 m_index = 2u;
             break;
         case 1u:
-            ++m_iter1;
-            if (!m_iter1)
+            ++m_gen1;
+            if (!m_gen1)
                 m_index = 2u;
         default:
             break;
@@ -55,9 +55,9 @@ public:
     {
         switch (m_index) {
         case 0u:
-            return *m_iter0;
+            return *m_gen0;
         case 1u:
-            return *m_iter1;
+            return *m_gen1;
         default:
             break;
         }
@@ -69,55 +69,55 @@ public:
     }
 };
 
-template <class P, class Iter0, class Iter1, class Iter2>
-class ChainedIterator<P, Iter0, Iter1, Iter2>
+template <class P, class Gen0, class Gen1, class Gen2>
+class ChainGenerator<P, Gen0, Gen1, Gen2>
 {
 private:
-    Iter0 m_iter0;
-    Iter1 m_iter1;
-    Iter2 m_iter2;
-    uint m_index; //!< 0: iter0, 1: iter1, 2: iter2, 3: end
+    Gen0 m_gen0;
+    Gen1 m_gen1;
+    Gen2 m_gen2;
+    uint m_index; //!< 0: gen0, 1: gen1, 2: gen2, 3: end
 
 public:
-    ChainedIterator(const State<P>& state)
-        : m_iter0{state}, m_iter1{state}, m_iter2{state}, m_index{}
+    ChainGenerator(const State<P>& state)
+        : m_gen0{state}, m_gen1{state}, m_gen2{state}, m_index{}
     {
-        if (m_iter0)
+        if (m_gen0)
             return;
         ++m_index;
-        if (m_iter1)
+        if (m_gen1)
             return;
         ++m_index;
-        if (m_iter2)
+        if (m_gen2)
             return;
         ++m_index;
     }
-    ChainedIterator& operator++()
+    ChainGenerator& operator++()
     {
         switch (m_index) {
         case 0u:
-            ++m_iter0;
-            if (m_iter0)
+            ++m_gen0;
+            if (m_gen0)
                 break;
-            else if (m_iter1)
+            else if (m_gen1)
                 m_index = 1u;
-            else if (m_iter2)
+            else if (m_gen2)
                 m_index = 2u;
             else
                 m_index = 3u;
             break;
         case 1u:
-            ++m_iter1;
-            if (m_iter1)
+            ++m_gen1;
+            if (m_gen1)
                 break;
-            else if (m_iter2)
+            else if (m_gen2)
                 m_index = 2u;
             else
                 m_index = 3u;
             break;
         case 2u:
-            ++m_iter2;
-            if (m_iter2)
+            ++m_gen2;
+            if (m_gen2)
                 break;
             else
                 m_index = 3u;
@@ -130,11 +130,11 @@ public:
     {
         switch (m_index) {
         case 0u:
-            return *m_iter0;
+            return *m_gen0;
         case 1u:
-            return *m_iter1;
+            return *m_gen1;
         case 2u:
-            return *m_iter2;
+            return *m_gen2;
         default:
             break;
         }
@@ -148,4 +148,4 @@ public:
 
 } // namespace vshogi
 
-#endif // VSHOGI_COMMON_ITERATOR_CHAINED_ITERATOR_HPP
+#endif // VSHOGI_COMMON_GENERATORS_CHAIN_HPP

@@ -83,7 +83,7 @@ TEST(shogi_profile, generator)
             int num_legal_moves = 0;
             if (g.in_check()) {
                 for (auto gen = vshogi::
-                         MoveGenerator<Parameters, vshogi::IterEnum::EVADE>(
+                         MoveGenerator<Parameters, vshogi::GenEnum::EVADE>(
                              g.get_state());
                      gen;
                      ++gen)
@@ -95,7 +95,7 @@ TEST(shogi_profile, generator)
             CHECK_COMPARE(num_legal_moves, >, 0);
             int num_check_moves = 0;
             for (auto gen
-                 = vshogi::MoveGenerator<Parameters, vshogi::IterEnum::CHECK>(
+                 = vshogi::MoveGenerator<Parameters, vshogi::GenEnum::CHECK>(
                      g.get_state());
                  gen;
                  ++gen)

@@ -5,8 +5,8 @@
 
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/game.hpp"
-#include "vshogi/common/iterator.hpp"
-#include "vshogi/common/iterator/drop.hpp"
+#include "vshogi/common/generator.hpp"
+#include "vshogi/common/generators/drop.hpp"
 #include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/state.hpp"
 #include "vshogi/common/utils.hpp"
@@ -273,10 +273,10 @@ private:
         if ((*nibling) != nullptr)
             return expand_board_moves(next, nibling);
         if (offence)
-            return expand_by_generator<BoardMoveIterator<P, IterEnum::CHECK>>(
+            return expand_by_generator<BoardMoveGenerator<P, GenEnum::CHECK>>(
                 next, s);
-        expand_by_generator<KingMoveIterator<P>>(next, s);
-        return expand_by_generator<SoldierMoveIterator<P, IterEnum::EVADE>>(
+        expand_by_generator<KingMoveGenerator<P>>(next, s);
+        return expand_by_generator<SoldierMoveGenerator<P, GenEnum::EVADE>>(
             next, s);
     }
     bool expand_board_moves(Node<P>*& next, const Node** const nibling)
@@ -300,8 +300,8 @@ private:
         if ((*nibling) == nullptr) {
             if (offence)
                 return expand_by_generator<
-                    DropMoveIterator<P, IterEnum::CHECK>>(next, s);
-            return expand_by_generator<DropMoveIterator<P, IterEnum::EVADE>>(
+                    DropMoveGenerator<P, GenEnum::CHECK>>(next, s);
+            return expand_by_generator<DropMoveGenerator<P, GenEnum::EVADE>>(
                 next, s);
         }
         return expand_drop_moves(next, nibling, s.get_stand(s.get_turn()));

@@ -1,7 +1,7 @@
 #include <string>
 #include <vector>
 
-#include "vshogi/common/iterator/drop.hpp"
+#include "vshogi/common/generators/drop.hpp"
 #include "vshogi/variants/judkins_shogi.hpp"
 #include "vshogi/variants/minishogi.hpp"
 #include "vshogi/variants/shogi.hpp"
@@ -12,12 +12,12 @@ namespace test_vshogi
 {
 
 TEST_GROUP (drop_move_iterator) {
-    template <vshogi::IterEnum IterType, class P>
+    template <vshogi::GenEnum GenType, class P>
     void compare_moves(
         const std::string& sfen, const std::vector<std::string>& expect)
     {
         const auto s = vshogi::State<P>(sfen);
-        auto iter = vshogi::DropMoveIterator<P, IterType>(s);
+        auto iter = vshogi::DropMoveGenerator<P, GenType>(s);
         for (unsigned int ii = 0u; ii < expect.size(); ++ii) {
             const auto a = *iter;
             const auto e = vshogi::Move<P>(expect[ii].c_str());
@@ -33,7 +33,7 @@ TEST(drop_move_iterator, minishogi_legal)
     auto compare = [this](
                        const std::string& sfen,
                        const std::vector<std::string>& expect) {
-        compare_moves<vshogi::IterEnum::LEGAL, vshogi::minishogi::Parameters>(
+        compare_moves<vshogi::GenEnum::LEGAL, vshogi::minishogi::Parameters>(
             sfen, expect);
     };
 
@@ -62,7 +62,7 @@ TEST(drop_move_iterator, minishogi_check)
     auto compare = [this](
                        const std::string& sfen,
                        const std::vector<std::string>& expect) {
-        compare_moves<vshogi::IterEnum::CHECK, vshogi::minishogi::Parameters>(
+        compare_moves<vshogi::GenEnum::CHECK, vshogi::minishogi::Parameters>(
             sfen, expect);
     };
 
@@ -91,7 +91,7 @@ TEST(drop_move_iterator, minishogi_evade)
     auto compare = [this](
                        const std::string& sfen,
                        const std::vector<std::string>& expect) {
-        compare_moves<vshogi::IterEnum::EVADE, vshogi::minishogi::Parameters>(
+        compare_moves<vshogi::GenEnum::EVADE, vshogi::minishogi::Parameters>(
             sfen, expect);
     };
 
@@ -124,7 +124,7 @@ TEST(drop_move_iterator, judkins_shogi_evade)
         = [this](
               const std::string& sfen, const std::vector<std::string>& expect) {
               compare_moves<
-                  vshogi::IterEnum::EVADE,
+                  vshogi::GenEnum::EVADE,
                   vshogi::judkins_shogi::Parameters>(sfen, expect);
           };
     // empty stand
@@ -143,7 +143,7 @@ TEST(drop_move_iterator, standard_shogi_check)
     auto compare
         = [this](
               const std::string& sfen, const std::vector<std::string>& expect) {
-              compare_moves<vshogi::IterEnum::CHECK, vshogi::shogi::Parameters>(
+              compare_moves<vshogi::GenEnum::CHECK, vshogi::shogi::Parameters>(
                   sfen, expect);
           };
 
@@ -160,7 +160,7 @@ TEST(drop_move_iterator, standard_shogi_evade)
     auto compare
         = [this](
               const std::string& sfen, const std::vector<std::string>& expect) {
-              compare_moves<vshogi::IterEnum::EVADE, vshogi::shogi::Parameters>(
+              compare_moves<vshogi::GenEnum::EVADE, vshogi::shogi::Parameters>(
                   sfen, expect);
           };
     // empty stand

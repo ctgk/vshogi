@@ -1,9 +1,9 @@
-#ifndef VSHOGI_COMMON_ITERATOR_SOLDIER_HPP
-#define VSHOGI_COMMON_ITERATOR_SOLDIER_HPP
+#ifndef VSHOGI_COMMON_GENERATORS_SOLDIER_HPP
+#define VSHOGI_COMMON_GENERATORS_SOLDIER_HPP
 
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/config.hpp"
-#include "vshogi/common/iterator/iterator.hpp"
+#include "vshogi/common/generators/gentype.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/state.hpp"
@@ -17,35 +17,35 @@ namespace vshogi
  * - promotion
  * - piece type (optional)
  *
- * SoldierMoveIterator<LEGAL>
+ * SoldierMoveGenerator<LEGAL>
  * for (src : sources)
  *     for (dst : destinations)
  *         for (prm : promotions)
  *
- * SoldierMoveIterator<CHECK>
+ * SoldierMoveGenerator<CHECK>
  * for (src : sources)
  *     for (prm : promotions)
  *         for (dst : destinations)
  *
  *
  * // Current implementation
- * SoldierMoveIterator<EVADE>
+ * SoldierMoveGenerator<EVADE>
  * for (dst : destinations)
  *     for (src : sources) // needs to keep pinned map
  *         for (prm : promotions)
  *
  * // Possibly bad implementation
- * SoldierMoveIterator<EVADE>
+ * SoldierMoveGenerator<EVADE>
  * for (src : sources) // too many sources
  *     for (dst : destinations)
  *         for (prm : promotions)
  */
 
-template <class P, IterEnum IterType = IterEnum::LEGAL>
-class SoldierMoveIterator;
+template <class P, GenEnum GenType = GenEnum::LEGAL>
+class SoldierMoveGenerator;
 
 template <class P>
-class SoldierMoveIterator<P, IterEnum::LEGAL>
+class SoldierMoveGenerator<P, GenEnum::LEGAL>
 {
 private:
     using C = Configuration<P>;
@@ -63,7 +63,7 @@ private:
     bool m_promote;
 
 public:
-    SoldierMoveIterator(const State<P>& state)
+    SoldierMoveGenerator(const State<P>& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(m_state.find_pinned()), m_src_iter(), m_dst_iter(),
           m_promote(true)
@@ -72,7 +72,7 @@ public:
             return;
         init_no_check();
     }
-    SoldierMoveIterator(const State<P>& state, const Move<P>& move)
+    SoldierMoveGenerator(const State<P>& state, const Move<P>& move)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(m_state.find_pinned()), m_src_iter(), m_dst_iter(),
           m_promote(true)
@@ -81,7 +81,7 @@ public:
             return;
         init_no_check(move.source_square(), move.destination(), move.promote());
     }
-    SoldierMoveIterator(const State<P>& state, const BitBoard<P>& src_mask)
+    SoldierMoveGenerator(const State<P>& state, const BitBoard<P>& src_mask)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(state.find_pinned()), m_src_iter(), m_dst_iter(),
           m_promote(true)
@@ -97,7 +97,7 @@ public:
         }
         init_promote();
     }
-    SoldierMoveIterator& operator++()
+    SoldierMoveGenerator& operator++()
     {
         if (!m_promote) {
             const auto src = *m_src_iter;
@@ -245,7 +245,7 @@ private:
 };
 
 template <class P>
-class SoldierMoveIterator<P, IterEnum::CHECK>
+class SoldierMoveGenerator<P, GenEnum::CHECK>
 {
 private:
     using C = Configuration<P>;
@@ -266,7 +266,7 @@ private:
     BitBoard<P> m_dst_mask;
 
 public:
-    SoldierMoveIterator(const State<P>& state)
+    SoldierMoveGenerator(const State<P>& state)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(state.find_pinned()), m_cover(compute_cover(state)),
           m_src_iter(), m_dst_iter(), m_promote(true), m_dst_mask()
@@ -289,7 +289,7 @@ public:
             ++m_src_iter;
         }
     }
-    SoldierMoveIterator& operator++()
+    SoldierMoveGenerator& operator++()
     {
         ++m_dst_iter;
         if (m_dst_iter)
@@ -441,7 +441,7 @@ private:
 };
 
 template <class P>
-class SoldierMoveIteratorEvade
+class SoldierMoveGeneratorEvade
 {
 private:
     using C = Configuration<P>;
@@ -459,7 +459,7 @@ private:
     bool m_promote; //!< most inner loop
 
 public:
-    SoldierMoveIteratorEvade(const State<P>& state)
+    SoldierMoveGeneratorEvade(const State<P>& state)
         : m_state{state}, m_src_mask{compute_src_mask(state)},
           m_dst_last{state.find_checker_square()},
           m_dst_iter{
@@ -489,7 +489,7 @@ public:
         assert(m_dst_iter != nullptr);
         return Move<P>(m_src, *m_dst_iter, m_promote);
     }
-    SoldierMoveIteratorEvade& operator++()
+    SoldierMoveGeneratorEvade& operator++()
     {
         if (m_promote) {
             const auto p = m_state.get_board()[m_src];
@@ -564,12 +564,12 @@ private:
 };
 
 /**
- * @brief Another implementation of `SoldierMoveIterator<P, EVADE>`.
- * This is as fast as (or as slow as `SoldierMoveIterator<P, EVADE>`)
+ * @brief Another implementation of `SoldierMoveGenerator<P, EVADE>`.
+ * This is as fast as (or as slow as `SoldierMoveGenerator<P, EVADE>`)
  * using SquareIterator instead of array of squares.
  */
 template <class P>
-class SoldierMoveIterator<P, IterEnum::EVADE>
+class SoldierMoveGenerator<P, GenEnum::EVADE>
 {
 private:
     using C = Configuration<P>;
@@ -585,7 +585,7 @@ private:
     bool m_promote;
 
 public:
-    SoldierMoveIterator(const State<P>& state)
+    SoldierMoveGenerator(const State<P>& state)
         : m_board(state.get_board()), m_turn(state.get_turn()),
           m_not_pinned(
               ~(state.find_pinned().set(m_board.get_king_square(m_turn)))),
@@ -604,7 +604,7 @@ public:
         }
         init_promote();
     }
-    SoldierMoveIterator& operator++()
+    SoldierMoveGenerator& operator++()
     {
         if (m_promote) {
             const auto dst = *m_dst_iter;
@@ -672,4 +672,4 @@ private:
 
 } // namespace vshogi
 
-#endif // VSHOGI_COMMON_ITERATOR_SOLDIER_HPP
+#endif // VSHOGI_COMMON_GENERATORS_SOLDIER_HPP

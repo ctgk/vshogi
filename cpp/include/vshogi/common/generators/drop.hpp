@@ -1,9 +1,9 @@
-#ifndef VSHOGI_COMMON_ITERATOR_DROP_HPP
-#define VSHOGI_COMMON_ITERATOR_DROP_HPP
+#ifndef VSHOGI_COMMON_GENERATORS_DROP_HPP
+#define VSHOGI_COMMON_GENERATORS_DROP_HPP
 
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/config.hpp"
-#include "vshogi/common/iterator/iterator.hpp"
+#include "vshogi/common/generators/gentype.hpp"
 #include "vshogi/common/piece_traits.hpp"
 #include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/state.hpp"
@@ -13,21 +13,21 @@ namespace vshogi
 
 /**
  *
- * DropMoveIterator<LEGAL>
+ * DropMoveGenerator<LEGAL>
  * for (pt : piece_types)
  *     for (dst : destinations)
  *
- * DropMoveIterator<CHECK>
+ * DropMoveGenerator<CHECK>
  * for (pt : piece_types)
  *     for (dst : destinations)
  *
- * DropMoveIterator<EVADE>
+ * DropMoveGenerator<EVADE>
  * for (dst : destinations)
  *     for (pt : piece_types)
  */
 
-template <class P, IterEnum IterType = IterEnum::LEGAL>
-class DropMoveIterator
+template <class P, GenEnum GenType = GenEnum::LEGAL>
+class DropMoveGenerator
 {
 private:
     using C = Configuration<P>;
@@ -44,7 +44,7 @@ private:
     PieceType m_pt_iter; //!< outer loop
 
 public:
-    DropMoveIterator(const State<P>& state)
+    DropMoveGenerator(const State<P>& state)
         : m_state(state), m_turn(state.get_turn()),
           m_stand(state.get_stand()), m_sq_iter{}, m_pt_iter{}
     {
@@ -58,7 +58,8 @@ public:
         init_sq_iter();
         increment_piece_type_while_no_dst();
     }
-    DropMoveIterator(const State<P>& state, const PieceType pt, const Square sq)
+    DropMoveGenerator(
+        const State<P>& state, const PieceType pt, const Square sq)
         : m_state(state), m_turn(state.get_turn()),
           m_stand(state.get_stand()), m_sq_iter{}, m_pt_iter{pt}
     {
@@ -72,7 +73,7 @@ public:
         init_sq_iter(sq);
         increment_piece_type_while_no_dst();
     }
-    DropMoveIterator& operator++()
+    DropMoveGenerator& operator++()
     {
         ++m_sq_iter;
         increment_piece_type_while_no_dst();
@@ -93,16 +94,14 @@ private:
         const auto& b = m_state.get_board();
         const auto p = PT::make_piece(m_turn, m_pt_iter);
         if (m_state.in_check()) {
-            m_sq_iter
-                = b.template compute_droppable<IterType == IterEnum::CHECK>(
-                       p,
-                       BitBoard<P>::get_line_segment(
-                           m_state.find_checker_square(),
-                           b.get_king_square(m_turn)))
-                      .iterator();
+            const auto mask = BitBoard<P>::get_line_segment(
+                m_state.find_checker_square(), b.get_king_square(m_turn));
+            m_sq_iter = b.template compute_droppable<GenType == GenEnum::CHECK>(
+                             p, mask)
+                            .iterator();
         } else {
             m_sq_iter
-                = b.template compute_droppable<IterType == IterEnum::CHECK>(p)
+                = b.template compute_droppable<GenType == GenEnum::CHECK>(p)
                       .iterator();
         }
     }
@@ -136,7 +135,7 @@ private:
 };
 
 template <class P>
-class DropMoveIterator<P, IterEnum::EVADE>
+class DropMoveGenerator<P, GenEnum::EVADE>
 {
 private:
     using C = Configuration<P>;
@@ -154,7 +153,7 @@ private:
     PieceType m_pt_iter; //!< inner loop
 
 public:
-    DropMoveIterator(const State<P>& state)
+    DropMoveGenerator(const State<P>& state)
         : m_state{state}, m_sq_end{state.find_checker_square()}, m_sq_iter{},
           m_pt_iter{pt_end}
     {
@@ -180,7 +179,7 @@ public:
         assert(m_sq_iter != nullptr);
         return Move<P>(m_pt_iter, *m_sq_iter);
     }
-    DropMoveIterator& operator++()
+    DropMoveGenerator& operator++()
     {
         m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
         while (true) {
@@ -248,4 +247,4 @@ private:
 
 } // namespace vshogi
 
-#endif // VSHOGI_COMMON_ITERATOR_DROP_HPP
+#endif // VSHOGI_COMMON_GENERATORS_DROP_HPP

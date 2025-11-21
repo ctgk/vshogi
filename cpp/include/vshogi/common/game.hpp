@@ -9,7 +9,7 @@
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/direction.hpp"
-#include "vshogi/common/iterator.hpp"
+#include "vshogi/common/generator.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/piece_traits.hpp"
 #include "vshogi/common/result.hpp"
@@ -120,7 +120,7 @@ public:
             return out;
         if (in_check()) {
             for (auto g
-                 = MoveGenerator<Parameters, IterEnum::EVADE>(m_current_state);
+                 = MoveGenerator<Parameters, GenEnum::EVADE>(m_current_state);
                  g;
                  ++g)
                 out.emplace_back(*g);
@@ -136,7 +136,7 @@ public:
         if (m_result != ONGOING)
             return out;
         for (auto g
-             = MoveGenerator<Parameters, IterEnum::CHECK>(m_current_state);
+             = MoveGenerator<Parameters, GenEnum::CHECK>(m_current_state);
              g;
              ++g)
             out.emplace_back(*g);
@@ -281,18 +281,18 @@ public:
     bool is_legal(const MoveType move) const
     {
         if (move.is_drop()) {
-            auto iter = DropMoveIterator<Parameters>(
+            auto iter = DropMoveGenerator<Parameters>(
                 m_current_state, move.source_piece(), move.destination());
             return move == *iter;
         } else if (
             move.source_square() == get_board().get_king_square(get_turn())) {
-            for (auto it = KingMoveIterator<Parameters>(m_current_state); it;
+            for (auto it = KingMoveGenerator<Parameters>(m_current_state); it;
                  ++it) {
                 if (*it == move)
                     return true;
             }
         } else {
-            auto iter = SoldierMoveIterator<Parameters>(m_current_state, move);
+            auto iter = SoldierMoveGenerator<Parameters>(m_current_state, move);
             return move == *iter;
         }
         return false;
@@ -496,9 +496,9 @@ protected:
     {
         m_result = ONGOING;
         const auto turn = get_turn();
-        if (!DropMoveIterator<Parameters>(m_current_state)
-            && !KingMoveIterator<Parameters>(m_current_state)
-            && !SoldierMoveIterator<Parameters>(m_current_state))
+        if (!DropMoveGenerator<Parameters>(m_current_state)
+            && !KingMoveGenerator<Parameters>(m_current_state)
+            && !SoldierMoveGenerator<Parameters>(m_current_state))
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
         if (is_repetitions(max_repetitions_inclusive)) {
             if (m_current_state.in_check())
