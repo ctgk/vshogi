@@ -28,12 +28,14 @@ inline void export_to_jpn(pybind11::module& m)
     namespace py = pybind11;
     using C = vshogi::Configuration<Parameters>;
     using PT = vshogi::PieceTraits<Parameters>;
+    using ST = vshogi::Squares<Parameters>;
     m.def("to_jpn", [](const typename C::PieceType pt) {
         return PT::to_jpn(pt);
     });
     m.def("to_jpn", [](const typename C::Piece p) {
         return PT::to_jpn(PT::to_piece_type(p));
     });
+    m.def("to_jpn", [](const typename C::Square sq) { return ST::to_jpn(sq); });
 }
 
 template <class Parameters>
