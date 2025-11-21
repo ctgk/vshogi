@@ -755,29 +755,7 @@ class Game(abc.ABC):
         >>> g_rotated.ply()
         0
         """
-        sfen = self.to_sfen(include_move_count=False)
-        sfen_board, sfen_turn, sfen_stand = sfen.split(' ')
-        sfen_board = ''.join([s if s == '+' else f'{s}.' for s in sfen_board])
-        sfen_rotated = ''
-        for s in reversed(sfen_board.split('.')):
-            if s.islower():
-                sfen_rotated = sfen_rotated + s.upper()
-            elif s.isupper():
-                sfen_rotated = sfen_rotated + s.lower()
-            else:
-                sfen_rotated = sfen_rotated + s  # '/', '1', ...
-
-        sfen_rotated = sfen_rotated + ' ' + (
-            'b ' if sfen_turn == 'w' else 'w ')
-
-        for s in sfen_stand:
-            if s.islower():
-                sfen_rotated = sfen_rotated + s.upper()
-            elif s.isupper():
-                sfen_rotated = sfen_rotated + s.lower()
-            else:
-                sfen_rotated = sfen_rotated + s  # '/', '1', ...
-        return self.__class__(sfen_rotated)
+        return self.__class__(self._game.rotate())
 
     def to_dlshogi_features(self, *, out: np.ndarray = None) -> np.ndarray:
         """Return DL-shogi features.

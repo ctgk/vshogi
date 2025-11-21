@@ -173,7 +173,7 @@ public:
         auto ptr_sq = SHelper::ray_from(attacked, dir);
         if (ptr_sq == nullptr)
             return C::SQ_NA;
-        const auto dir_rotated = rotate(dir);
+        const auto dir_rotated = vshogi::rotate(dir);
         {
             const Piece& p = m_pieces[*ptr_sq];
             if ((p != C::VOID) && (*ptr_sq != skip)) {
@@ -206,7 +206,7 @@ public:
     {
         if ((dir == DIR_NA) || (attacked == C::SQ_NA))
             return C::SQ_NA;
-        const auto dir_from_attacker = rotate(dir);
+        const auto dir_from_attacker = vshogi::rotate(dir);
         const auto ray = BitBoard<P>::get_ray_to(attacked, dir);
         if (!(ray & m_bb_color[attacker_color]).any())
             return C::SQ_NA;
@@ -315,6 +315,7 @@ public:
         out.update_internals_based_on_pieces();
         return out;
     }
+    Board rotate() const;
     static void init_tables()
     {
         std::random_device dev;
@@ -722,6 +723,21 @@ private:
                + table_vertical[vertical_index];
     }
 };
+
+template <class P>
+Board<P> Board<P>::rotate() const
+{
+    Board out{};
+    for (auto sq : C::square_iterator()) {
+        const auto sq_rotated = SHelper::rotate(sq);
+        assert(sq_rotated != C::SQ_NA);
+        const auto pt = PT::to_piece_type(m_pieces[sq]);
+        const auto c = PT::get_color(m_pieces[sq]);
+        out.m_pieces[sq_rotated] = PT::make_piece(~c, pt);
+    }
+    out.update_internals_based_on_pieces();
+    return out;
+}
 
 } // namespace vshogi
 

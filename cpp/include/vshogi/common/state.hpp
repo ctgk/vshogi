@@ -173,6 +173,10 @@ public:
     {
         return State(m_board.hflip(), m_stands, m_turn);
     }
+    State rotate() const
+    {
+        return State(m_board.rotate(), m_stands.rotate(), ~m_turn);
+    }
     State& apply(const Move<P>& move, std::uint64_t* const hash = nullptr)
     {
         const Square dst = move.destination();

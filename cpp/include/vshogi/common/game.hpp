@@ -214,6 +214,10 @@ public:
     {
         return Game(m_current_state.hflip());
     }
+    Game rotate() const
+    {
+        return Game(m_current_state.rotate());
+    }
     Game& resign()
     {
         m_result = (get_turn() == BLACK) ? WHITE_WIN : BLACK_WIN;

@@ -321,7 +321,18 @@ public:
             }
         }
     }
+    BlackWhiteStands rotate() const;
 };
+
+template <class P>
+BlackWhiteStands<P> BlackWhiteStands<P>::rotate() const
+{
+    BlackWhiteStands out{};
+    out.m_stands[BLACK] = m_stands[WHITE];
+    out.m_stands[WHITE] = m_stands[BLACK];
+    out.m_hash = out.compute_zobrist_hash();
+    return out;
+}
 
 } // namespace vshogi
 

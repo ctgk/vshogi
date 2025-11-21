@@ -90,4 +90,20 @@ TEST(minishogi_stand, operators)
     CHECK_FALSE(Stand(0, 0, 0, 0, 1) >= Stand(0, 1, 0, 0, 0));
 }
 
+TEST(minishogi_stand, rotate)
+{
+    auto s = BlackWhiteStands();
+    s.add_captured_piece(B_FU); // add FU on white's stand
+    s.add_captured_piece(W_HI); // add HI on black's stand
+    CHECK_EQUAL(0, s.black().count(FU));
+    CHECK_EQUAL(1, s.black().count(HI));
+    CHECK_EQUAL(1, s.white().count(FU));
+    CHECK_EQUAL(0, s.white().count(HI));
+    auto actual = s.rotate();
+    CHECK_EQUAL(1, actual.black().count(FU));
+    CHECK_EQUAL(0, actual.black().count(HI));
+    CHECK_EQUAL(0, actual.white().count(FU));
+    CHECK_EQUAL(1, actual.white().count(HI));
+}
+
 } // namespace test_vshogi::test_minishogi

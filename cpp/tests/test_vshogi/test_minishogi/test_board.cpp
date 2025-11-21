@@ -298,4 +298,13 @@ TEST(test_minishogi_board, get_occupied_by_slider)
     }
 }
 
+TEST(test_minishogi_board, rotate)
+{
+    const auto b = Board("4k/5/5/3S1/r3K");
+    const auto actual = b.rotate();
+    CHECK_EQUAL(B_OU, actual[SQ_5E]);
+    CHECK_EQUAL(W_GI, actual[SQ_4B]);
+    CHECK_EQUAL(VOID, actual[SQ_3C]);
+}
+
 } // namespace test_vshogi::test_minishogi

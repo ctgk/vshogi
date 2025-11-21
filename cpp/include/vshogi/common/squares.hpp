@@ -96,6 +96,10 @@ public:
         return static_cast<File>(
             static_cast<int>(C::num_files) - 1 - static_cast<int>(f));
     }
+    static Square rotate(const Square& sq)
+    {
+        return static_cast<Square>(C::num_squares - 1u - sq);
+    }
 
     static void init_tables()
     {
