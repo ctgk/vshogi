@@ -122,10 +122,10 @@ public:
     }
     Move rotate() const
     {
-        const auto dst_rotated = rotate_square(destination());
+        const auto dst_rotated = ST::rotate(destination());
         if (is_drop())
             return Move(source_piece(), dst_rotated);
-        const auto src_rotated = rotate_square(source_square());
+        const auto src_rotated = ST::rotate(source_square());
         return Move(src_rotated, dst_rotated, promote());
     }
     Move hflip() const
@@ -180,10 +180,6 @@ private:
             (src << source_shift)
             | static_cast<uint>(promote << promotion_shift) | dst))
     {
-    }
-    static constexpr Square rotate_square(const Square sq)
-    {
-        return static_cast<Square>(C::num_squares - 1u - static_cast<uint>(sq));
     }
     uint to_dlshogi_source_index() const
     {
