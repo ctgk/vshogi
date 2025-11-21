@@ -13,7 +13,7 @@
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/piece_traits.hpp"
 #include "vshogi/common/result.hpp"
-#include "vshogi/common/squares.hpp"
+#include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/stand.hpp"
 #include "vshogi/common/state.hpp"
 
@@ -30,7 +30,7 @@ private:
     using PieceType = typename C::PieceType;
     using Piece = typename C::Piece;
     using PT = PieceTraits<Parameters>;
-    using SHelper = Squares<Parameters>;
+    using ST = SquareTraits<Parameters>;
     using BitBoardType = BitBoard<Parameters>;
     using BoardType = Board<Parameters>;
     using MoveType = Move<Parameters>;
@@ -375,7 +375,7 @@ public:
         const BoardType& b = get_board();
         const ColorEnum t = get_turn();
         if (move.is_drop()) {
-            const auto dst_jpn = SHelper::to_jpn(dst);
+            const auto dst_jpn = ST::to_jpn(dst);
             return dst_jpn + PT::to_jpn(move.source_piece())
                    + b.unique_identifier_jpn(move, t);
         } else {
@@ -393,7 +393,7 @@ public:
     std::string to_eng(const Move<Parameters>& move) const
     {
         const Square dst = move.destination();
-        const auto dst_eng = SHelper::to_eng(dst);
+        const auto dst_eng = ST::to_eng(dst);
         if (move.is_drop())
             return PT::to_eng(move.source_piece()) + "*" + dst_eng;
         const Square src = move.source_square();
@@ -415,7 +415,7 @@ public:
         for (auto sq : C::square_iterator()) {
             const uint ii = static_cast<uint>(sq);
             for (auto dir : C::direction_iterator()) {
-                auto ptr_sq = SHelper::ray_from(sq, dir);
+                auto ptr_sq = ST::ray_from(sq, dir);
                 for (; *ptr_sq != C::SQ_NA; ++ptr_sq) {
                     const uint jj = static_cast<uint>(*ptr_sq);
                     data[ii * num_squares + jj] = 1.f;
@@ -432,7 +432,7 @@ public:
         for (auto sq : C::square_iterator()) {
             const uint ii = static_cast<uint>(sq);
             for (auto dir : directions) {
-                auto ptr_sq = SHelper::ray_from(sq, dir);
+                auto ptr_sq = ST::ray_from(sq, dir);
                 for (; *ptr_sq != C::SQ_NA; ++ptr_sq) {
                     const uint jj = static_cast<uint>(*ptr_sq);
                     data[ii * num_squares + jj] = 1.f;
@@ -533,7 +533,7 @@ public:
         const auto turn = get_turn();
         const BoardType& board = get_board();
         // (1) The King of the declaring side is in the third rank or beyond.
-        if (!SHelper::in_promotion_zone(board.get_king_square(turn), turn))
+        if (!ST::in_promotion_zone(board.get_king_square(turn), turn))
             return false;
 
         const auto promo_zone_mask = BitBoardType::get_promotion_zone(turn);

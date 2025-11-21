@@ -8,7 +8,7 @@
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/direction.hpp"
 #include "vshogi/common/piece_traits.hpp"
-#include "vshogi/common/squares.hpp"
+#include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/utils.hpp"
 
 namespace vshogi
@@ -24,7 +24,7 @@ private:
     using Rank = typename C::Rank;
     using Square = typename C::Square;
     using UInt = typename C::BaseTypeBitBoard;
-    using SHelper = Squares<Parameters>;
+    using ST = SquareTraits<Parameters>;
     using PT = PieceTraits<Parameters>;
 
     static constexpr UInt ones(const uint num_ones)
@@ -263,7 +263,17 @@ public:
 
     constexpr BitBoard shift(const DirectionEnum& dir) const
     {
-        const auto delta = SHelper::direction_to_delta(dir);
+        constexpr int r = static_cast<int>(C::num_ranks);
+        constexpr int table[] = {
+            // clang-format off
+            -1+r, -1, -1-r,
+               r,       -r,
+            +1+r, +1, +1-r,
+            +2+r,     +2-r,
+            -2+r,     -2-r,
+            // clang-format on
+        };
+        const auto delta = table[dir];
         constexpr BitBoard all = BitBoard(mask);
         constexpr BitBoard all_but_a = ~from_rank<C::RANK_A>();
         constexpr BitBoard all_but_z = ~from_rank<C::RANK_Z>();
@@ -356,7 +366,7 @@ public:
     {
         BitBoard out{};
         while (true) {
-            sq = SHelper::shift(sq, dir);
+            sq = ST::shift(sq, dir);
             if (sq == C::SQ_NA)
                 break; // reached the end of the board
             else if (occupied.is_one(sq)) {
@@ -487,12 +497,12 @@ private:
 private:
     static BitBoard compute_line_segment(Square a, const Square b)
     {
-        const auto dir_to_b = SHelper::direction(a, b);
+        const auto dir_to_b = ST::direction(a, b);
         if (dir_to_b == DIR_NA)
             return BitBoard();
         BitBoard out{};
         while (true) {
-            a = SHelper::shift(a, dir_to_b);
+            a = ST::shift(a, dir_to_b);
             if (a == b)
                 break;
             out.set(a);
@@ -536,8 +546,8 @@ private:
                     break;
                 }
                 if (PT::is_promotable(p)
-                    && (SHelper::in_promotion_zone(src, c)
-                        || SHelper::in_promotion_zone(dst, c))
+                    && (ST::in_promotion_zone(src, c)
+                        || ST::in_promotion_zone(dst, c))
                     && get_attacks_by(PT::promote_nocheck(p), dst).is_one(sq)) {
                     src_is_2nd_neighbor = true;
                     break;

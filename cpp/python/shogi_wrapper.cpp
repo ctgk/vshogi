@@ -235,7 +235,7 @@ void export_pieces(py::module& m)
 void export_shogi(py::module& m)
 {
     assert(0 == 1);
-    sg::Squares::init_tables();
+    sg::SquareTraits::init_tables();
     sg::BlackWhiteStands::init_tables();
     sg::Board::init_tables();
     sg::BitBoard::init_tables();

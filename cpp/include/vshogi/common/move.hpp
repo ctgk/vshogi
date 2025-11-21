@@ -6,7 +6,7 @@
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/direction.hpp"
 #include "vshogi/common/piece_traits.hpp"
-#include "vshogi/common/squares.hpp"
+#include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/utils.hpp"
 
 namespace vshogi
@@ -26,7 +26,7 @@ class Move
 {
 private:
     using C = Configuration<Parameters>;
-    using SHelper = Squares<Parameters>;
+    using ST = SquareTraits<Parameters>;
     using PT = PieceTraits<Parameters>;
     using Square = typename C::Square;
     using PieceType = typename C::PieceType;
@@ -64,8 +64,8 @@ public:
         : Move(
             (sfen[1] == '*')
                 ? static_cast<uint>(PT::to_piece_type(sfen[0])) + C::num_squares
-                : static_cast<uint>(SHelper::to_square(sfen)),
-            SHelper::to_square(sfen + 2),
+                : static_cast<uint>(ST::to_square(sfen)),
+            ST::to_square(sfen + 2),
             sfen[4] == '+')
     {
     }
@@ -80,9 +80,9 @@ public:
                 = static_cast<char>(std::toupper(PT::to_char(source_piece())));
             sfen[1] = '*';
         } else {
-            SHelper::to_sfen(sfen, source_square());
+            ST::to_sfen(sfen, source_square());
         }
-        SHelper::to_sfen(sfen + 2, destination());
+        ST::to_sfen(sfen + 2, destination());
         sfen[4] = (promote()) ? '+' : '\0';
     }
     std::string to_sfen() const
@@ -130,10 +130,10 @@ public:
     }
     Move hflip() const
     {
-        const auto dst_hflipped = SHelper::hflip(destination());
+        const auto dst_hflipped = ST::hflip(destination());
         if (is_drop())
             return Move(source_piece(), dst_hflipped);
-        const auto src_hflipped = SHelper::hflip(source_square());
+        const auto src_hflipped = ST::hflip(source_square());
         return Move(src_hflipped, dst_hflipped, promote());
     }
     uint to_dlshogi_policy_index() const
@@ -151,15 +151,15 @@ public:
         const auto dst = destination();
         if (dst == dst_prev)
             return u8"\u540c";
-        return SHelper::to_jpn(dst);
+        return ST::to_jpn(dst);
     }
     std::string promotion_to_jpn(const PieceType pt, const ColorEnum t) const
     {
         if (promote())
             return u8"\u6210";
         if (PT::is_promotable(pt)
-            && (SHelper::in_promotion_zone(destination(), t)
-                || SHelper::in_promotion_zone(source_square(), t)))
+            && (ST::in_promotion_zone(destination(), t)
+                || ST::in_promotion_zone(source_square(), t)))
             return u8"\u4e0d\u6210";
         return u8"";
     }
@@ -168,8 +168,8 @@ public:
         if (promote())
             return "+";
         if (PT::is_promotable(pt)
-            && (SHelper::in_promotion_zone(destination(), t)
-                || SHelper::in_promotion_zone(source_square(), t)))
+            && (ST::in_promotion_zone(destination(), t)
+                || ST::in_promotion_zone(source_square(), t)))
             return "=";
         return "";
     }
@@ -190,8 +190,7 @@ private:
         if (is_drop())
             return C::num_dir_dl * 2 + static_cast<uint>(source_piece());
         const uint promo_offset = promote() ? C::num_dir_dl : 0U;
-        const auto direction
-            = SHelper::direction(destination(), source_square());
+        const auto direction = ST::direction(destination(), source_square());
         return static_cast<uint>(direction) + promo_offset;
     }
 };

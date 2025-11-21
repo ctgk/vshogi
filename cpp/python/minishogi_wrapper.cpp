@@ -110,7 +110,7 @@ void export_pieces(py::module& m)
 
 void export_minishogi(py::module& m)
 {
-    ms::Squares::init_tables();
+    ms::SquareTraits::init_tables();
     ms::BlackWhiteStands::init_tables();
     ms::BitBoard::init_tables();
     ms::Board::init_tables();

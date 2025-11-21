@@ -28,7 +28,7 @@ inline void export_to_jpn(pybind11::module& m)
     namespace py = pybind11;
     using C = vshogi::Configuration<Parameters>;
     using PT = vshogi::PieceTraits<Parameters>;
-    using ST = vshogi::Squares<Parameters>;
+    using ST = vshogi::SquareTraits<Parameters>;
     m.def("to_jpn", [](const typename C::PieceType pt) {
         return PT::to_jpn(pt);
     });

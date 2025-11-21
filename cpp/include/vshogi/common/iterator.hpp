@@ -13,7 +13,7 @@
 #include "vshogi/common/iterator/soldier.hpp"
 #include "vshogi/common/magic.hpp"
 #include "vshogi/common/move.hpp"
-#include "vshogi/common/squares.hpp"
+#include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/state.hpp"
 #include "vshogi/common/utils.hpp"
 

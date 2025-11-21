@@ -5,7 +5,7 @@
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/iterator/iterator.hpp"
 #include "vshogi/common/piece_traits.hpp"
-#include "vshogi/common/squares.hpp"
+#include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/state.hpp"
 
 namespace vshogi
@@ -140,7 +140,7 @@ class DropMoveIterator<P, IterEnum::EVADE>
 {
 private:
     using C = Configuration<P>;
-    using S = Squares<P>;
+    using ST = SquareTraits<P>;
     using PT = PieceTraits<P>;
     using PieceType = typename C::PieceType;
     using Square = typename C::Square;
@@ -162,7 +162,7 @@ public:
         if (!state.can_apply_drop_move())
             return;
         const auto k = state.get_king_square();
-        m_sq_iter = S::ray_from(k, state.get_checker_dir());
+        m_sq_iter = ST::ray_from(k, state.get_checker_dir());
         assert(m_sq_iter != nullptr);
         if (*m_sq_iter == m_sq_end) {
             m_pt_iter = pt_end;
@@ -211,11 +211,11 @@ private:
         const auto p = PT::make_piece(turn, m_pt_iter);
         const DirectionEnum* const dirs = PT::get_attack_directions(p);
         if (dirs[1] == DIR_NA) { // FU or KY
-            if (S::to_rank(dst) == (turn == BLACK ? C::RANK_A : C::RANK_Z))
+            if (ST::to_rank(dst) == (turn == BLACK ? C::RANK_A : C::RANK_Z))
                 return false;
             const Board<P>& b = m_state.get_board();
             if (m_pt_iter == C::FU) {
-                if (b.has_pawn_in_file(S::to_file(dst), turn))
+                if (b.has_pawn_in_file(ST::to_file(dst), turn))
                     return false;
                 if (b.is_drop_pawn_mate_square(dst, turn))
                     return false;
@@ -225,9 +225,9 @@ private:
                 (DIR_SSW < DIR_NNW) && (DIR_SSE < DIR_NNW)
                 && (DIR_NNW < DIR_NNE));
             if (dirs[0] >= DIR_NNW)
-                return S::to_rank(dst) > C::RANK_B;
+                return ST::to_rank(dst) > C::RANK_B;
             else
-                return S::to_rank(dst) < C::RANK_Y;
+                return ST::to_rank(dst) < C::RANK_Y;
         }
         return true;
     }

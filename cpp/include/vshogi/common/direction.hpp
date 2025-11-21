@@ -15,7 +15,7 @@ enum DirectionEnum : uint
      DIR_SW = 5,  DIR_S = 6,  DIR_SE = 7,
     DIR_SSW = 8,             DIR_SSE = 9, // knights come from SSW or SSE.
     // clang-format on
-    DIR_NA = 12,
+    DIR_NA = 12, // TODO: consider DIR_NA = 0
 };
 
 inline DirectionEnum rotate(const DirectionEnum& d)

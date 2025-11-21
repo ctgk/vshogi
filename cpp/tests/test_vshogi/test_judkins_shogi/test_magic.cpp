@@ -28,8 +28,8 @@ TEST_GROUP (test_judkins_shogi_magic) {
         using namespace vshogi::judkins_shogi;
         vshogi::judkins_shogi::BitBoard out{};
         for (auto&& dir : directions) {
-            for (auto s = Squares::shift(sq, dir);;) {
-                const auto next = Squares::shift(s, dir);
+            for (auto s = SquareTraits::shift(sq, dir);;) {
+                const auto next = SquareTraits::shift(s, dir);
                 if (next == SQ_NA)
                     break;
                 out |= BitBoard::from_square(s);
@@ -101,7 +101,7 @@ TEST_GROUP (test_judkins_shogi_magic) {
             else
                 std::cout << array[sq];
 
-            if (Squares::to_rank(sq) == RANK6)
+            if (SquareTraits::to_rank(sq) == RANK6)
                 std::cout << ",\n";
             else
                 std::cout << ", ";
@@ -230,8 +230,8 @@ TEST(test_judkins_shogi_magic, get_diagonal_attack)
 //     for (auto sq : Config::square_iterator()) {
 //         for (auto&& dir :
 //              {vshogi::DIR_N, vshogi::DIR_W, vshogi::DIR_E, vshogi::DIR_S}) {
-//             for (SquareEnum s = Squares::shift(sq, dir);;) {
-//                 const auto next = Squares::shift(s, dir);
+//             for (SquareEnum s = SquareTraits::shift(sq, dir);;) {
+//                 const auto next = SquareTraits::shift(s, dir);
 //                 if (next == SQ_NA)
 //                     break;
 //                 premask_array[sq] |= BitBoard::from_square(s).value();
@@ -251,8 +251,8 @@ TEST(test_judkins_shogi_magic, get_diagonal_attack)
 //     for (auto sq : Config::square_iterator()) {
 //         for (auto&& dir :
 //              {vshogi::DIR_NW, vshogi::DIR_NE, vshogi::DIR_SW, vshogi::DIR_SE}) {
-//             for (SquareEnum s = Squares::shift(sq, dir);;) {
-//                 const auto next = Squares::shift(s, dir);
+//             for (SquareEnum s = SquareTraits::shift(sq, dir);;) {
+//                 const auto next = SquareTraits::shift(s, dir);
 //                 if (next == SQ_NA)
 //                     break;
 //                 premask_array[sq] |= BitBoard::from_square(s).value();

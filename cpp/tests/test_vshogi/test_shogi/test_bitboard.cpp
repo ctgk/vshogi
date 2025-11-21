@@ -79,7 +79,7 @@ TEST(test_shogi_bitboard, shift)
     for (auto dir : Config::direction_iterator()) {
         for (auto sq : Config::square_iterator()) {
             CHECK_TRUE(
-                BitBoard::from_square(Squares::shift(sq, dir))
+                BitBoard::from_square(SquareTraits::shift(sq, dir))
                 == BitBoard::from_square(sq).shift(dir));
         }
     }

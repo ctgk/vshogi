@@ -7,7 +7,7 @@
 #include "vshogi/common/game.hpp"
 #include "vshogi/common/iterator.hpp"
 #include "vshogi/common/iterator/drop.hpp"
-#include "vshogi/common/squares.hpp"
+#include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/state.hpp"
 #include "vshogi/common/utils.hpp"
 
@@ -30,7 +30,7 @@ class Node
 {
     using C = Configuration<P>;
     using Square = typename C::Square;
-    using SHelper = Squares<P>;
+    using ST = SquareTraits<P>;
 
 private:
     Move<P> m_action;
@@ -113,7 +113,7 @@ public:
                 delta_plus
                     = 0x40u; // offence (defence) prefers drop (capturing)
             const auto d
-                = static_cast<int>(SHelper::chebyshev_distance(dst, king_sq));
+                = static_cast<int>(ST::chebyshev_distance(dst, king_sq));
             delta_plus ^= std::min(
                 0x3fu, static_cast<uint>(std::abs(10 * d - offset)));
             c->m_delta ^= delta_plus;

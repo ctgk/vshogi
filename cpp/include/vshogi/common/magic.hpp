@@ -3,7 +3,7 @@
 
 #include "vshogi/common/bitboard.hpp"
 #include "vshogi/common/config.hpp"
-#include "vshogi/common/squares.hpp"
+#include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/utils.hpp"
 
 namespace vshogi
@@ -15,7 +15,7 @@ struct Magic
 private:
     using C = Configuration<Parameters>;
     using BitBoardType = BitBoard<Parameters>;
-    using SHelper = Squares<Parameters>;
+    using ST = SquareTraits<Parameters>;
     using Square = typename C::Square;
     using UInt = typename C::BaseTypeBitBoard;
 

@@ -34,7 +34,8 @@ TEST(test_judkins_shogi_bitboard, shift)
     for (auto dir : Config::direction_iterator()) {
         for (auto sq : Config::square_iterator()) {
             const auto actual = BitBoard::from_square(sq).shift(dir);
-            const auto expect = BitBoard::from_square(Squares::shift(sq, dir));
+            const auto expect
+                = BitBoard::from_square(SquareTraits::shift(sq, dir));
             CHECK_EQUAL(expect.value(), actual.value());
         }
     }

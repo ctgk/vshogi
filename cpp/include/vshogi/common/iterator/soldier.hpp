@@ -5,7 +5,7 @@
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/iterator/iterator.hpp"
 #include "vshogi/common/move.hpp"
-#include "vshogi/common/squares.hpp"
+#include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/state.hpp"
 
 namespace vshogi
@@ -51,7 +51,7 @@ private:
     using C = Configuration<P>;
     using Square = typename C::Square;
     using PT = PieceTraits<P>;
-    using SHelper = Squares<P>;
+    using ST = SquareTraits<P>;
 
 private:
     const State<P>& m_state;
@@ -104,8 +104,8 @@ public:
             const auto dst = *m_dst_iter;
             const auto p = m_board[src];
             if (PT::is_promotable(p)
-                && (SHelper::in_promotion_zone(src, m_turn)
-                    || SHelper::in_promotion_zone(dst, m_turn))) {
+                && (ST::in_promotion_zone(src, m_turn)
+                    || ST::in_promotion_zone(dst, m_turn))) {
                 m_promote = true;
                 return *this;
             }
@@ -205,7 +205,7 @@ private:
                 goto ExitLabel;
         }
         if (m_pinned.is_one(src)) {
-            const auto dir = SHelper::direction(king_sq, src);
+            const auto dir = ST::direction(king_sq, src);
             assert((dir < 8) || (dir == DIR_NA));
             movable &= BitBoard<P>::get_ray_to(king_sq, dir);
         }
@@ -252,7 +252,7 @@ private:
     using Piece = typename C::Piece;
     using Square = typename C::Square;
     using PT = PieceTraits<P>;
-    using SHelper = Squares<P>;
+    using ST = SquareTraits<P>;
 
 private:
     const State<P>& m_state;
@@ -386,7 +386,7 @@ private:
     bool update_mask_by_promotion(BitBoard<P>& mask, const Square src)
     {
         assert(m_promote);
-        if (!SHelper::in_promotion_zone(src, m_turn)) {
+        if (!ST::in_promotion_zone(src, m_turn)) {
             mask &= BitBoard<P>::get_promotion_zone(m_turn);
             return true;
         }
@@ -409,7 +409,7 @@ private:
     update_dst_mask_by_counter_check(const Square src, const Square king_sq)
     {
         if (m_pinned.is_one(src)) {
-            const auto dir = SHelper::direction(king_sq, src);
+            const auto dir = ST::direction(king_sq, src);
             assert((dir < 8) || (dir == DIR_NA));
             m_dst_mask &= BitBoard<P>::get_ray_to(king_sq, dir);
         }
@@ -424,7 +424,7 @@ private:
         const auto atk = BitBoard<P>::get_attacks_by(
             PT::make_piece(~m_turn, pt), enemy_king_sq, m_board.get_occupied());
         if (m_cover.is_one(src)) {
-            const auto dir = SHelper::direction(enemy_king_sq, src);
+            const auto dir = ST::direction(enemy_king_sq, src);
             mask &= atk | (~BitBoard<P>::get_ray_to(enemy_king_sq, dir));
         } else {
             mask &= atk;
@@ -445,7 +445,7 @@ class SoldierMoveIteratorEvade
 {
 private:
     using C = Configuration<P>;
-    using S = Squares<P>;
+    using ST = SquareTraits<P>;
     using PT = PieceTraits<P>;
     using Square = typename C::Square;
     using DirIter = EnumIterator<DirectionEnum, C::num_dir>;
@@ -463,7 +463,7 @@ public:
         : m_state{state}, m_src_mask{compute_src_mask(state)},
           m_dst_last{state.find_checker_square()},
           m_dst_iter{
-              S::ray_from(state.get_king_square(), state.get_checker_dir())},
+              ST::ray_from(state.get_king_square(), state.get_checker_dir())},
           m_src_dir_iter{}, m_src{C::SQ_NA}, m_promote{}
     {
         assert(state.in_check());
@@ -554,8 +554,8 @@ private:
         const auto t = m_state.get_turn();
         const auto p = m_state.get_board()[m_src];
         m_promote = PT::is_promotable(p)
-                    && (S::in_promotion_zone(dst, t)
-                        || S::in_promotion_zone(m_src, t));
+                    && (ST::in_promotion_zone(dst, t)
+                        || ST::in_promotion_zone(m_src, t));
     }
     static BitBoard<P> compute_src_mask(const State<P>& state)
     {
@@ -574,7 +574,7 @@ class SoldierMoveIterator<P, IterEnum::EVADE>
 private:
     using C = Configuration<P>;
     using PT = PieceTraits<P>;
-    using SHelper = Squares<P>;
+    using ST = SquareTraits<P>;
     using Square = typename C::Square;
 
     const Board<P>& m_board;
@@ -665,8 +665,8 @@ private:
         const Square src = *m_src_iter;
         const auto& p = m_board[src];
         m_promote = PT::is_promotable(p)
-                    && (SHelper::in_promotion_zone(dst, m_turn)
-                        || SHelper::in_promotion_zone(src, m_turn));
+                    && (ST::in_promotion_zone(dst, m_turn)
+                        || ST::in_promotion_zone(src, m_turn));
     }
 };
 

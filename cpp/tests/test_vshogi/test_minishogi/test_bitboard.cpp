@@ -33,7 +33,7 @@ TEST(test_minishogi_bitboard, shift)
     for (auto dir : Config::direction_iterator()) {
         for (auto sq : Config::square_iterator()) {
             CHECK_TRUE(
-                BitBoard::from_square(Squares::shift(sq, dir))
+                BitBoard::from_square(SquareTraits::shift(sq, dir))
                 == BitBoard::from_square(sq).shift(dir));
         }
     }
@@ -48,7 +48,8 @@ TEST(test_minishogi_bitboard, is_one)
 TEST(test_minishogi_bitboard, from_file)
 {
     CHECK_EQUAL(
-        bb_na.value(), BitBoard::from_file(Squares::to_file(SQ_NA)).value());
+        bb_na.value(),
+        BitBoard::from_file(SquareTraits::to_file(SQ_NA)).value());
 }
 
 TEST(test_minishogi_bitboard, from_rank)

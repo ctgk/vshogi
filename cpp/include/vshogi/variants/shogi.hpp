@@ -13,7 +13,7 @@
 #include "vshogi/common/magic.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/piece_traits.hpp"
-#include "vshogi/common/squares.hpp"
+#include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/stand.hpp"
 #include "vshogi/common/state.hpp"
 
@@ -170,7 +170,7 @@ struct Parameters
 
 using Config = vshogi::Configuration<Parameters>;
 using PieceTraits = vshogi::PieceTraits<Parameters>;
-using Squares = vshogi::Squares<Parameters>;
+using SquareTraits = vshogi::SquareTraits<Parameters>;
 using Move = vshogi::Move<Parameters>;
 using BitBoard = vshogi::BitBoard<Parameters>;
 using Magic = vshogi::Magic<Parameters>;

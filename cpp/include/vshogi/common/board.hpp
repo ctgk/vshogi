@@ -12,7 +12,7 @@
 #include "vshogi/common/magic.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/piece_traits.hpp"
-#include "vshogi/common/squares.hpp"
+#include "vshogi/common/square_traits.hpp"
 
 namespace vshogi
 {
@@ -22,7 +22,7 @@ class Board
 {
 private:
     using C = Configuration<P>;
-    using SHelper = Squares<P>;
+    using ST = SquareTraits<P>;
     using PT = PieceTraits<P>;
     using PieceType = typename C::PieceType;
     using Piece = typename C::Piece;
@@ -170,7 +170,7 @@ public:
         const DirectionEnum& dir,
         const Square& skip = C::SQ_NA) const
     {
-        auto ptr_sq = SHelper::ray_from(attacked, dir);
+        auto ptr_sq = ST::ray_from(attacked, dir);
         if (ptr_sq == nullptr)
             return C::SQ_NA;
         const auto dir_rotated = vshogi::rotate(dir);
@@ -210,7 +210,7 @@ public:
         const auto ray = BitBoard<P>::get_ray_to(attacked, dir);
         if (!(ray & m_bb_color[attacker_color]).any())
             return C::SQ_NA;
-        auto psq = SHelper::ray_from(attacked, dir);
+        auto psq = ST::ray_from(attacked, dir);
         if (psq == nullptr)
             return C::SQ_NA;
         for (; *psq != C::SQ_NA; ++psq) {
@@ -296,8 +296,8 @@ public:
     bool
     is_drop_pawn_mate_square(const Square dst, const ColorEnum by_side) const
     {
-        const Square sq = SHelper::shift(
-            m_kings[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
+        const Square sq
+            = ST::shift(m_kings[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
         if ((sq == C::SQ_NA) || (sq != dst)
             || king_can_avoid_a_pawn_attack(~by_side)
             || enemy_can_capture_the_drop_pawn(sq, by_side))
@@ -308,7 +308,7 @@ public:
     {
         Board out;
         for (auto sq : C::square_iterator()) {
-            const auto sq_hflipped = SHelper::hflip(sq);
+            const auto sq_hflipped = ST::hflip(sq);
             assert(sq_hflipped != C::SQ_NA);
             out.m_pieces[sq_hflipped] = m_pieces[sq];
         }
@@ -481,7 +481,7 @@ private:
             &= (Magic<P>::get_adjacent_attack(target)
                 | Magic<P>::get_diagonal_attack(target));
         for (auto atk : attackers.iterator()) {
-            const auto target_dir = SHelper::direction(atk, target);
+            const auto target_dir = ST::direction(atk, target);
             if (!PT::slidable_to(m_pieces[atk], target_dir))
                 continue;
             auto blockers = BitBoard<P>::get_line_segment(atk, target);
@@ -538,7 +538,7 @@ private:
             if (pt == C::FU) {
                 if (!droppable.any())
                     return;
-                if (has_pawn_in_file(SHelper::to_file(target), c)
+                if (has_pawn_in_file(ST::to_file(target), c)
                     || (can_drop_pawn_mate(c)))
                     droppable &= BitBoard<P>();
             }
@@ -561,8 +561,8 @@ private:
     }
     bool can_drop_pawn_mate(const ColorEnum& by_side) const
     {
-        const Square dst = SHelper::shift(
-            m_kings[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
+        const Square dst
+            = ST::shift(m_kings[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
         if (dst == C::SQ_NA)
             return false;
         if (king_can_avoid_a_pawn_attack(~by_side))
@@ -574,8 +574,8 @@ private:
     void
     exclude_drop_pawn_mate(BitBoard<P>& occ, const ColorEnum& by_side) const
     {
-        const Square dst = SHelper::shift(
-            m_kings[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
+        const Square dst
+            = ST::shift(m_kings[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
         if (dst == C::SQ_NA)
             return;
         if (!occ.is_one(dst))
@@ -593,7 +593,7 @@ private:
         if (enemy_king_sq == C::SQ_NA)
             return false;
         return enemy_king_sq
-               == SHelper::shift(sq, (by_side == BLACK) ? DIR_N : DIR_S);
+               == ST::shift(sq, (by_side == BLACK) ? DIR_N : DIR_S);
     }
     bool king_can_avoid_a_pawn_attack(const ColorEnum& king_color) const
     {
@@ -611,7 +611,7 @@ private:
             const bool is_attacking_the_pawn = (src_next != C::SQ_NA);
             if (is_attacking_the_pawn) {
                 const auto discovered_dir
-                    = SHelper::direction(enemy_king_sq, src_next);
+                    = ST::direction(enemy_king_sq, src_next);
                 const auto discovered_attacker_sq = find_sliding_attacker(
                     by_side, enemy_king_sq, discovered_dir, src_next);
                 const auto is_pinned = (discovered_attacker_sq != C::SQ_NA);
@@ -627,8 +627,8 @@ public:
     unique_identifier_jpn(const Move<P>& move, const ColorEnum& by_side) const
     {
         const auto dst = move.destination();
-        const auto dr = SHelper::to_rank(dst);
-        const auto df = SHelper::to_file(dst);
+        const auto dr = ST::to_rank(dst);
+        const auto df = ST::to_file(dst);
         const auto p = (move.is_drop())
                            ? PT::make_piece(by_side, move.source_piece())
                            : m_pieces[move.source_square()];
@@ -655,8 +655,8 @@ public:
         };
         const auto src = move.source_square();
         return get_unique_identifier_jpn(
-            compute_index(dr, SHelper::to_rank(src), by_side),
-            compute_index(SHelper::to_file(src), df, by_side),
+            compute_index(dr, ST::to_rank(src), by_side),
+            compute_index(ST::to_file(src), df, by_side),
             num_cands_vertical,
             num_cands_horizontal,
             p);
@@ -669,8 +669,8 @@ public:
             = get_src_candidates(move.destination(), p, move.promote());
         if (src_candidates.hamming_weight() < 2u)
             return "";
-        return std::string(1, '1' + SHelper::to_file(src))
-               + std::string(1, '1' + SHelper::to_rank(src));
+        return std::string(1, '1' + ST::to_file(src))
+               + std::string(1, '1' + ST::to_rank(src));
     }
 
 private:
@@ -681,7 +681,7 @@ private:
         const auto inverse_atk = BitBoard<P>::get_attacks_by(
             PT::make_piece(~t, PT::to_piece_type(p)), dst, get_occupied());
         BitBoard<P> src_candidates = inverse_atk & get_occupied(p);
-        if (promote && (!SHelper::in_promotion_zone(dst, t)))
+        if (promote && (!ST::in_promotion_zone(dst, t)))
             src_candidates &= BitBoard<P>::get_promotion_zone(t);
         return src_candidates;
     }
@@ -729,7 +729,7 @@ Board<P> Board<P>::rotate() const
 {
     Board out{};
     for (auto sq : C::square_iterator()) {
-        const auto sq_rotated = SHelper::rotate(sq);
+        const auto sq_rotated = ST::rotate(sq);
         assert(sq_rotated != C::SQ_NA);
         const auto pt = PT::to_piece_type(m_pieces[sq]);
         const auto c = PT::get_color(m_pieces[sq]);

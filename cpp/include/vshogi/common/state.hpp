@@ -11,7 +11,7 @@
 #include "vshogi/common/direction.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/piece_traits.hpp"
-#include "vshogi/common/squares.hpp"
+#include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/stand.hpp"
 
 namespace vshogi
@@ -27,7 +27,7 @@ private:
     using Rank = typename C::Rank;
     using Square = typename C::Square;
     using PT = PieceTraits<P>;
-    using SHelper = Squares<P>;
+    using ST = SquareTraits<P>;
     using BitBoardType = BitBoard<P>;
     using Stands = BlackWhiteStands<P>;
     static constexpr uint max_stand_piece_count = C::max_stand_piece_count;
@@ -109,7 +109,7 @@ public:
     }
     Square find_checker_square(const uint index = 0u) const
     {
-        auto ptr_sq = SHelper::ray_from(get_king_square(), m_checkers[index]);
+        auto ptr_sq = ST::ray_from(get_king_square(), m_checkers[index]);
         if (ptr_sq == nullptr) {
             assert(m_checkers[index] == DIR_NA);
             return C::SQ_NA;
@@ -137,16 +137,15 @@ public:
             return false;
         if (!in_check())
             return true;
-        return m_board.is_empty(
-            SHelper::shift(get_king_square(), m_checkers[0]));
+        return m_board.is_empty(ST::shift(get_king_square(), m_checkers[0]));
     }
     bool in_promotion_zone(const Move<P>& m) const
     {
-        if (SHelper::in_promotion_zone(m.destination(), m_turn))
+        if (ST::in_promotion_zone(m.destination(), m_turn))
             return true;
         if (m.is_drop())
             return false;
-        return SHelper::in_promotion_zone(m.source_square(), m_turn);
+        return ST::in_promotion_zone(m.source_square(), m_turn);
     }
     void set_sfen(const std::string& sfen)
     {
@@ -332,9 +331,8 @@ private:
         const auto enemy_king_sq = m_board.get_king_square(~m_turn);
         const bool check_by_moved = is_check_by_moved(enemy_king_sq, dst);
 
-        m_checkers[0] = (check_by_moved)
-                            ? SHelper::direction(enemy_king_sq, dst)
-                            : DIR_NA;
+        m_checkers[0]
+            = check_by_moved ? ST::direction(enemy_king_sq, dst) : DIR_NA;
         m_checkers[1] = DIR_NA;
     }
     void
@@ -346,8 +344,8 @@ private:
             m_checkers[1] = DIR_NA;
             return;
         }
-        const auto dst_dir = SHelper::direction(enemy_king_sq, dst);
-        const auto src_dir = SHelper::direction(enemy_king_sq, src);
+        const auto dst_dir = ST::direction(enemy_king_sq, dst);
+        const auto src_dir = ST::direction(enemy_king_sq, src);
         const auto discovered_checker_sq
             = find_discovered_checker_square(enemy_king_sq, dst_dir, src_dir);
 

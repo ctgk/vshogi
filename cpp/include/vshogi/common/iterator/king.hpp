@@ -6,7 +6,7 @@
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/iterator/iterator.hpp"
-#include "vshogi/common/squares.hpp"
+#include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/state.hpp"
 
 namespace vshogi
@@ -17,7 +17,7 @@ class KingMoveIterator
 {
 private:
     using C = Configuration<P>;
-    using SHelper = Squares<P>;
+    using ST = SquareTraits<P>;
     using BitSquareIterator = typename BitBoard<P>::Iterator;
     using Square = typename C::Square;
 
@@ -33,7 +33,7 @@ public:
             const auto t = state.get_turn();
             const auto& b = state.get_board();
             const auto enemy_king_sq = b.get_king_square(~t);
-            const auto checker_dir = SHelper::direction(enemy_king_sq, m_src);
+            const auto checker_dir = ST::direction(enemy_king_sq, m_src);
             const auto checker_sq
                 = b.find_sliding_attacker(t, enemy_king_sq, checker_dir, m_src);
             if (checker_sq == C::SQ_NA) {
