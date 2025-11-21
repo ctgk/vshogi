@@ -178,7 +178,7 @@ using Board = vshogi::Board<Parameters>;
 using Stand = vshogi::Stand<Parameters>;
 using BlackWhiteStands = vshogi::BlackWhiteStands<Parameters>;
 using State = vshogi::State<Parameters>;
-using LegalMoveIterator = vshogi::LegalMoveIterator<Parameters>;
+using LegalMoveGenerator = vshogi::MoveGenerator<Parameters, IterEnum::LEGAL>;
 using Game = vshogi::Game<Parameters>;
 static_assert(FU == Config::FU);
 static_assert(OU == Config::OU);

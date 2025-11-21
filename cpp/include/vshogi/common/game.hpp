@@ -119,15 +119,14 @@ public:
         if (m_result != ONGOING)
             return out;
         if (in_check()) {
-            for (auto it = LegalMoveIterator<Parameters, IterEnum::EVADE>(
-                     m_current_state);
-                 it;
-                 ++it)
-                out.emplace_back(*it);
+            for (auto g
+                 = MoveGenerator<Parameters, IterEnum::EVADE>(m_current_state);
+                 g;
+                 ++g)
+                out.emplace_back(*g);
         } else {
-            for (auto it = LegalMoveIterator<Parameters>(m_current_state); it;
-                 ++it)
-                out.emplace_back(*it);
+            for (auto g = MoveGenerator<Parameters>(m_current_state); g; ++g)
+                out.emplace_back(*g);
         }
         return out;
     }
@@ -136,11 +135,11 @@ public:
         std::vector<MoveType> out{};
         if (m_result != ONGOING)
             return out;
-        for (auto it
-             = LegalMoveIterator<Parameters, IterEnum::CHECK>(m_current_state);
-             it;
-             ++it)
-            out.emplace_back(*it);
+        for (auto g
+             = MoveGenerator<Parameters, IterEnum::CHECK>(m_current_state);
+             g;
+             ++g)
+            out.emplace_back(*g);
         return out;
     }
     Square get_king_square() const

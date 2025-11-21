@@ -27,7 +27,7 @@ using BoardMoveIterator = ChainedIterator<
     SoldierMoveIterator<P, IterType>>;
 
 template <class P, IterEnum IterType = IterEnum::LEGAL>
-using LegalMoveIterator = ChainedIterator<
+using MoveGenerator = ChainedIterator<
     P,
     KingMoveIterator<P, IterType>,
     SoldierMoveIterator<P, IterType>,

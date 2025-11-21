@@ -82,23 +82,23 @@ TEST(shogi_profile, generator)
             const auto move = Move(kifu[ii]);
             int num_legal_moves = 0;
             if (g.in_check()) {
-                for (auto it = vshogi::
-                         LegalMoveIterator<Parameters, vshogi::IterEnum::EVADE>(
+                for (auto gen = vshogi::
+                         MoveGenerator<Parameters, vshogi::IterEnum::EVADE>(
                              g.get_state());
-                     it;
-                     ++it)
+                     gen;
+                     ++gen)
                     ++num_legal_moves;
             } else {
-                for (auto it = LegalMoveIterator(g.get_state()); it; ++it)
+                for (auto gen = LegalMoveGenerator(g.get_state()); gen; ++gen)
                     ++num_legal_moves;
             }
             CHECK_COMPARE(num_legal_moves, >, 0);
             int num_check_moves = 0;
-            for (auto it = vshogi::
-                     LegalMoveIterator<Parameters, vshogi::IterEnum::CHECK>(
-                         g.get_state());
-                 it;
-                 ++it)
+            for (auto gen
+                 = vshogi::MoveGenerator<Parameters, vshogi::IterEnum::CHECK>(
+                     g.get_state());
+                 gen;
+                 ++gen)
                 ++num_check_moves;
             CHECK_COMPARE(num_check_moves, <=, num_legal_moves);
             g.apply(move);
