@@ -8,6 +8,33 @@
 namespace test_vshogi::test_engine
 {
 
+template <class Move>
+class Generator
+{
+private:
+    const std::vector<Move> m_moves;
+    typename std::vector<Move>::const_iterator m_iter;
+
+public:
+    Generator(const std::vector<Move>& moves)
+        : m_moves(moves), m_iter(m_moves.cbegin())
+    {
+    }
+    Generator& operator++()
+    {
+        ++m_iter;
+        return *this;
+    }
+    Move operator*() const
+    {
+        return *m_iter;
+    }
+    operator bool() const
+    {
+        return m_iter != m_moves.cend();
+    }
+};
+
 namespace test_minishogi
 {
 
@@ -30,7 +57,8 @@ TEST(minishogi_node, init_default)
 TEST(minishogi_node, init_with_args)
 {
     auto root = Node();
-    root.simulate_ongoing_and_expand({}, vshogi::BLACK, -1.f, zeros);
+    root.simulate_ongoing_and_expand(
+        Generator<Move>({}), vshogi::BLACK, -1.f, zeros);
     root.backprop(root.get_value(), nullptr);
     CHECK_EQUAL(1, root.get_visit_count());
     DOUBLES_EQUAL(-1.f, root.get_value(), 1e-2f);
@@ -54,7 +82,7 @@ TEST(minishogi_node, explore_game_end)
     auto g = Game("b2pk/3b1/4P/2gRR/4K b -");
     auto root = Node();
     root.simulate_ongoing_and_expand(
-        g.get_legal_moves(), g.get_turn(), 0.f, zeros);
+        LegalMoveGenerator(g.get_state()), g.get_turn(), 0.f, zeros);
     root.backprop(root.get_value(), nullptr);
     DOUBLES_EQUAL(0.f, root.get_q_value(), 1e-2f);
     Node* const child = root.select_nocheck(g, 1.f, 0.f); // 1c1b
@@ -75,7 +103,7 @@ TEST(minishogi_node, explore_one_action)
     auto g = Game("4k/5/4P/5/5 b -");
     auto root = Node();
     root.simulate_ongoing_and_expand(
-        g.get_legal_moves(), g.get_turn(), 0.1f, zeros);
+        LegalMoveGenerator(g.get_state()), g.get_turn(), 0.1f, zeros);
     auto p = root.backprop(root.get_value(), nullptr);
     CHECK_EQUAL(nullptr, p);
     DOUBLES_EQUAL(0.1f, root.get_q_value(100), 1e-2f);
@@ -93,7 +121,7 @@ TEST(minishogi_node, explore_one_action)
         CHECK_TRUE(actual != &root);
     }
     actual->simulate_ongoing_and_expand(
-        g.get_legal_moves(), g.get_turn(), -0.8f, zeros);
+        LegalMoveGenerator(g.get_state()), g.get_turn(), -0.8f, zeros);
     p = actual->backprop(actual->get_value(), nullptr);
     CHECK_EQUAL(&root, p);
     CHECK_EQUAL(nullptr, p->backprop(-actual->get_value(), actual));
@@ -158,14 +186,18 @@ TEST(minishogi_node, explore_two_action)
     auto g = Game("4k/5/5/5/4S b -");
     auto root = Node();
     root.simulate_ongoing_and_expand(
-        {Move(SQ_1E, SQ_1D), Move(SQ_1E, SQ_2D)}, vshogi::BLACK, 0.f, logits);
+        Generator<Move>({Move(SQ_1E, SQ_1D), Move(SQ_1E, SQ_2D)}),
+        vshogi::BLACK,
+        0.f,
+        logits);
     CHECK_EQUAL(nullptr, root.backprop(root.get_value(), nullptr));
 
     for (std::size_t ii = 0; ii < 3; ++ii) {
         auto g_copy = Game(g);
         const auto actual = root.select_nocheck(g_copy, 1.f, 0.f);
         actual->simulate_ongoing_and_expand(
-            {Move(SQ_1B, SQ_1A)}, // dummy action to prevent mate
+            Generator<Move>(
+                {Move(SQ_1B, SQ_1A)}), // dummy action to prevent mate
             vshogi::WHITE,
             input_value[ii],
             zeros);
@@ -224,7 +256,10 @@ TEST(minishogi_node, explore_two_layer)
     auto g = Game("s4/5/5/5/4S b -");
     auto root = Node();
     root.simulate_ongoing_and_expand(
-        {Move(SQ_1E, SQ_1D), Move(SQ_1E, SQ_2D)}, vshogi::BLACK, 0.f, logits);
+        Generator<Move>({Move(SQ_1E, SQ_1D), Move(SQ_1E, SQ_2D)}),
+        vshogi::BLACK,
+        0.f,
+        logits);
     CHECK_EQUAL(nullptr, root.backprop(root.get_value(), nullptr));
 
     {
@@ -236,7 +271,7 @@ TEST(minishogi_node, explore_two_layer)
         policy[Move(SQ_5A, SQ_5B).rotate().to_dlshogi_policy_index()] = 1.099f;
         policy[Move(SQ_5A, SQ_4B).rotate().to_dlshogi_policy_index()] = -1.099f;
         actual->simulate_ongoing_and_expand(
-            {Move(SQ_5A, SQ_5B), Move(SQ_5A, SQ_4B)},
+            Generator<Move>({Move(SQ_5A, SQ_5B), Move(SQ_5A, SQ_4B)}),
             vshogi::WHITE,
             -0.9f,
             policy);
@@ -257,7 +292,10 @@ TEST(minishogi_node, explore_two_layer)
             grand_child);
         STRCMP_EQUAL("5/s4/5/4S/5 b - 3", g_copy.to_sfen().c_str());
         grand_child->simulate_ongoing_and_expand(
-            g_copy.get_legal_moves(), g_copy.get_turn(), -0.5f, zeros);
+            LegalMoveGenerator(g_copy.get_state()),
+            g_copy.get_turn(),
+            -0.5f,
+            zeros);
         CHECK_EQUAL(
             child, grand_child->backprop(grand_child->get_value(), nullptr));
         CHECK_EQUAL(
@@ -297,7 +335,7 @@ TEST(minishogi_node, test_apply)
     {
         auto g = Game("4p/5/5/5/P4 b -");
         root.simulate_ongoing_and_expand(
-            g.get_legal_moves(), g.get_turn(), 0.f, nullptr);
+            LegalMoveGenerator(g.get_state()), g.get_turn(), 0.f, nullptr);
         CHECK_EQUAL(nullptr, root.backprop(root.get_value(), nullptr));
     }
     {
@@ -305,7 +343,7 @@ TEST(minishogi_node, test_apply)
         auto n = root.select_nocheck(g, 1.f, 0.f);
         CHECK_EQUAL(root.get_child(), n);
         n->simulate_ongoing_and_expand(
-            g.get_legal_moves(), g.get_turn(), 0.f, nullptr);
+            LegalMoveGenerator(g.get_state()), g.get_turn(), 0.f, nullptr);
         CHECK_EQUAL(&root, n->backprop(n->get_value(), nullptr));
     }
     {
@@ -315,7 +353,7 @@ TEST(minishogi_node, test_apply)
         n = n->select_nocheck(g, 1.f, 0);
         CHECK_EQUAL(root.get_child()->get_child(), n);
         n->simulate_ongoing_and_expand(
-            g.get_legal_moves(), g.get_turn(), 0.f, nullptr);
+            LegalMoveGenerator(g.get_state()), g.get_turn(), 0.f, nullptr);
         CHECK_EQUAL(
             &root,
             n->backprop(n->get_value(), nullptr)->backprop(-n->get_value(), n));
