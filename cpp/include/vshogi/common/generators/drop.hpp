@@ -38,15 +38,13 @@ private:
 
 private:
     const State<P>& m_state;
-    const ColorEnum m_turn;
     const Stand<P>& m_stand;
     BitSquareIterator m_sq_iter; //!< inner loop
     PieceType m_pt_iter; //!< outer loop
 
 public:
     DropMoveGenerator(const State<P>& state)
-        : m_state(state), m_turn(state.get_turn()),
-          m_stand(state.get_stand()), m_sq_iter{}, m_pt_iter{}
+        : m_state(state), m_stand(state.get_stand()), m_sq_iter{}, m_pt_iter{}
     {
         if (!state.can_apply_drop_move()) {
             m_pt_iter = static_cast<PieceType>(C::num_stand_piece_types);
@@ -60,8 +58,7 @@ public:
     }
     DropMoveGenerator(
         const State<P>& state, const PieceType pt, const Square sq)
-        : m_state(state), m_turn(state.get_turn()),
-          m_stand(state.get_stand()), m_sq_iter{}, m_pt_iter{pt}
+        : m_state(state), m_stand(state.get_stand()), m_sq_iter{}, m_pt_iter{pt}
     {
         if (!state.can_apply_drop_move()) {
             m_pt_iter = static_cast<PieceType>(C::num_stand_piece_types);
@@ -92,10 +89,11 @@ private:
     void init_sq_iter()
     {
         const auto& b = m_state.get_board();
-        const auto p = PT::make_piece(m_turn, m_pt_iter);
+        const auto t = m_state.get_turn();
+        const auto p = PT::make_piece(t, m_pt_iter);
         if (m_state.in_check()) {
             const auto mask = BitBoard<P>::get_line_segment(
-                m_state.find_checker_square(), b.get_king_square(m_turn));
+                m_state.find_checker_square(), b.get_king_square(t));
             m_sq_iter = b.template compute_droppable<GenType == GenEnum::CHECK>(
                              p, mask)
                             .iterator();
@@ -153,30 +151,9 @@ private:
     PieceType m_pt_iter; //!< inner loop
 
 public:
-    DropMoveGenerator(const State<P>& state)
-        : m_state{state}, m_sq_end{state.find_checker_square()}, m_sq_iter{},
-          m_pt_iter{pt_end}
-    {
-        assert(state.in_check());
-        if (!state.can_apply_drop_move())
-            return;
-        const auto k = state.get_king_square();
-        m_sq_iter = ST::ray_from(k, state.get_checker_dir());
-        assert(m_sq_iter != nullptr);
-        if (*m_sq_iter == m_sq_end) {
-            m_pt_iter = pt_end;
-            return;
-        }
-        m_pt_iter = C::FU;
-        while (true) {
-            if (is_end_or_valid_move())
-                break;
-            increment();
-        }
-    }
+    DropMoveGenerator(const State<P>& state);
     Move<P> operator*() const
     {
-        assert(m_sq_iter != nullptr);
         return Move<P>(m_pt_iter, *m_sq_iter);
     }
     DropMoveGenerator& operator++()
@@ -191,15 +168,15 @@ public:
     }
     operator bool() const
     {
-        return m_sq_iter && (*m_sq_iter != m_sq_end);
+        return *m_sq_iter != m_sq_end;
     }
 
 private:
     bool is_end_or_valid_move() const
     {
-        if (!operator bool())
+        if (*m_sq_iter == m_sq_end) // outer loop
             return true;
-        if ((*m_sq_iter == m_sq_end) || (m_pt_iter == pt_end))
+        if (m_pt_iter == pt_end) // inner loop
             return false;
 
         const ColorEnum turn = m_state.get_turn();
@@ -244,6 +221,24 @@ private:
             m_pt_iter = pt_end;
     }
 };
+
+template <class P>
+DropMoveGenerator<P, GenEnum::EVADE>::DropMoveGenerator(const State<P>& state)
+    : m_state{state}, m_sq_end{state.find_checker_square()},
+      m_sq_iter{ST::ray_from(state.get_king_square(), state.get_checker_dir())},
+      m_pt_iter{C::FU}
+{
+    assert(state.in_check());
+    assert(m_sq_iter);
+    if (state.can_apply_drop_move() && (*m_sq_iter != m_sq_end)) {
+        while (!is_end_or_valid_move())
+            increment();
+    } else {
+        m_pt_iter = pt_end;
+        while (*m_sq_iter != m_sq_end)
+            ++m_sq_iter;
+    }
+}
 
 } // namespace vshogi
 

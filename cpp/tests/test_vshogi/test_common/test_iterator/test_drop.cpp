@@ -165,10 +165,16 @@ TEST(drop_move_iterator, standard_shogi_evade)
           };
     // empty stand
     // in check by adjacent piece
+
+    // in check by sliding piece
+    compare("7bk/8p/9/5B3/9/9/9/9/9 w sg", {"S*2b", "G*2b", "S*3c", "G*3c"});
+
     // in double check
     // nominal case
+
     // two pawns in a file
     compare("9/9/9/9/9/9/1PpPpPpP1/9/+r7K b P", {"P*3i", "P*5i", "P*7i"});
+
     // immobile pawn
 
     {
