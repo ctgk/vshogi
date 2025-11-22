@@ -110,10 +110,7 @@ public:
     Square find_checker_square(const uint index = 0u) const
     {
         auto ptr_sq = ST::ray_from(get_king_square(), m_checkers[index]);
-        if (ptr_sq == nullptr) {
-            assert(m_checkers[index] == DIR_NA);
-            return C::SQ_NA;
-        }
+        assert(ptr_sq != nullptr);
         for (; *ptr_sq != C::SQ_NA; ++ptr_sq) {
             if (!m_board.is_empty(*ptr_sq))
                 break;

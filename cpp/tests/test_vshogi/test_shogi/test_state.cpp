@@ -81,4 +81,10 @@ TEST(state, compute_king_movable)
     }
 }
 
+TEST(state, find_checker_square)
+{
+    const auto s = State("9/9/9/9/9/9/1PpPpPpP1/9/+r7K b P");
+    CHECK_EQUAL(SQ_9I, s.find_checker_square());
+}
+
 } // namespace test_vshogi::test_shogi

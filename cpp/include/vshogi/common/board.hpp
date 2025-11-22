@@ -171,8 +171,6 @@ public:
         const Square& skip = C::SQ_NA) const
     {
         auto ptr_sq = ST::ray_from(attacked, dir);
-        if (ptr_sq == nullptr)
-            return C::SQ_NA;
         const auto dir_rotated = vshogi::rotate(dir);
         {
             const Piece& p = m_pieces[*ptr_sq];
@@ -211,8 +209,6 @@ public:
         if (!(ray & m_bb_color[attacker_color]).any())
             return C::SQ_NA;
         auto psq = ST::ray_from(attacked, dir);
-        if (psq == nullptr)
-            return C::SQ_NA;
         for (; *psq != C::SQ_NA; ++psq) {
             const auto& p = m_pieces[*psq];
             if ((p == C::VOID) || (*psq == skip))
