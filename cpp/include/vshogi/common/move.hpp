@@ -143,33 +143,6 @@ public:
     {
         return 2 * C::num_dir_dl + C::num_stand_piece_types;
     }
-    std::string destination_to_jpn(const Square dst_prev) const
-    {
-        const auto dst = destination();
-        if (dst == dst_prev)
-            return u8"\u540c";
-        return ST::to_jpn(dst);
-    }
-    std::string promotion_to_jpn(const PieceType pt, const ColorEnum t) const
-    {
-        if (promote())
-            return u8"\u6210";
-        if (PT::is_promotable(pt)
-            && (ST::in_promotion_zone(destination(), t)
-                || ST::in_promotion_zone(source_square(), t)))
-            return u8"\u4e0d\u6210";
-        return u8"";
-    }
-    std::string promotion_to_eng(const PieceType pt, const ColorEnum t) const
-    {
-        if (promote())
-            return "+";
-        if (PT::is_promotable(pt)
-            && (ST::in_promotion_zone(destination(), t)
-                || ST::in_promotion_zone(source_square(), t)))
-            return "=";
-        return "";
-    }
 
 private:
     uint to_dlshogi_source_index(const ColorEnum& by_side) const;

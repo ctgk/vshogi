@@ -20,22 +20,17 @@
 namespace vshogi
 {
 
-template <class Parameters>
+template <class P>
 class Game
 {
 private:
-    using C = Configuration<Parameters>;
+    using C = Configuration<P>;
     using Square = typename C::Square;
     using File = typename C::File;
     using PieceType = typename C::PieceType;
     using Piece = typename C::Piece;
-    using PT = PieceTraits<Parameters>;
-    using ST = SquareTraits<Parameters>;
-    using BitBoardType = BitBoard<Parameters>;
-    using BoardType = Board<Parameters>;
-    using MoveType = Move<Parameters>;
-    using StandType = Stand<Parameters>;
-    using StateType = State<Parameters>;
+    using PT = PieceTraits<P>;
+    using ST = SquareTraits<P>;
 
 public:
     static constexpr uint num_ranks = C::num_ranks;
@@ -48,7 +43,7 @@ private:
     static constexpr uint num_dir = C::num_dir;
 
 private:
-    StateType m_current_state;
+    State<P> m_state;
     ResultEnum m_result;
     ZobristHashType m_hash;
     std::vector<ZobristHashType> m_hash_list;
@@ -67,13 +62,13 @@ private:
     std::vector<std::uint32_t> m_captured_move_list;
 
 public:
-    Game() : Game(StateType())
+    Game() : Game(State<P>())
     {
     }
-    Game(const std::string& sfen) : Game(StateType(sfen))
+    Game(const std::string& sfen) : Game(State<P>(sfen))
     {
         const auto t = get_turn();
-        const BoardType& b = get_board();
+        const Board<P>& b = get_board();
         const auto enemy_king_sq = b.get_king_square(~t);
         if (enemy_king_sq == C::SQ_NA)
             return;
@@ -87,72 +82,66 @@ public:
     static constexpr uint feature_channels()
     {
         // 2-player * (piece-types + stand-piece-types)
-        return StateType::feature_channels();
+        return State<P>::feature_channels();
     }
     static constexpr uint num_dlshogi_policy()
     {
-        return StateType::num_dlshogi_policy();
+        return State<P>::num_dlshogi_policy();
     }
     ColorEnum get_turn() const
     {
-        return m_current_state.get_turn();
+        return m_state.get_turn();
     }
-    const StateType& get_state() const
+    const State<P>& get_state() const
     {
-        return m_current_state;
+        return m_state;
     }
-    const BoardType& get_board() const
+    const Board<P>& get_board() const
     {
-        return m_current_state.get_board();
+        return m_state.get_board();
     }
-    const StandType& get_stand() const
+    const Stand<P>& get_stand() const
     {
-        return m_current_state.get_stand();
+        return m_state.get_stand();
     }
-    const StandType& get_stand(const ColorEnum c) const
+    const Stand<P>& get_stand(const ColorEnum c) const
     {
-        return m_current_state.get_stand(c);
+        return m_state.get_stand(c);
     }
-    std::vector<MoveType> get_legal_moves() const
+    std::vector<Move<P>> get_legal_moves() const
     {
-        std::vector<MoveType> out{};
+        std::vector<Move<P>> out{};
         if (m_result != ONGOING)
             return out;
         if (in_check()) {
-            for (auto g
-                 = MoveGenerator<Parameters, GenEnum::EVADE>(m_current_state);
-                 g;
-                 ++g)
+            for (auto g = MoveGenerator<P, GenEnum::EVADE>(m_state); g; ++g)
                 out.emplace_back(*g);
         } else {
-            for (auto g = MoveGenerator<Parameters>(m_current_state); g; ++g)
+            for (auto g = MoveGenerator<P>(m_state); g; ++g)
                 out.emplace_back(*g);
         }
         return out;
     }
-    std::vector<MoveType> get_check_moves() const
+    std::vector<Move<P>> get_check_moves() const
     {
-        std::vector<MoveType> out{};
+        std::vector<Move<P>> out{};
         if (m_result != ONGOING)
             return out;
-        for (auto g
-             = MoveGenerator<Parameters, GenEnum::CHECK>(m_current_state);
-             g;
-             ++g)
+        for (auto g = MoveGenerator<P, GenEnum::CHECK>(m_state); g; ++g)
             out.emplace_back(*g);
         return out;
     }
     Square get_king_square() const
     {
-        return m_current_state.get_board().get_king_square(get_turn());
+        return m_state.get_board().get_king_square(get_turn());
     }
     Square get_king_square(const ColorEnum c) const
     {
-        return m_current_state.get_board().get_king_square(c);
+        return m_state.get_board().get_king_square(c);
     }
     Square find_checker_square(const uint index = 0u) const
     {
-        return m_current_state.find_checker_square(index);
+        return m_state.find_checker_square(index);
     }
     ResultEnum get_result() const
     {
@@ -181,15 +170,15 @@ public:
     }
     std::uint64_t get_board_turn_hash() const
     {
-        return get_zobrist_hash() ^ m_current_state.hash_stands();
+        return get_zobrist_hash() ^ m_state.hash_stands();
     }
     std::string to_sfen(const bool include_move_count = true) const
     {
         if (include_move_count)
-            return m_current_state.to_sfen() + " "
+            return m_state.to_sfen() + " "
                    + std::to_string(m_captured_move_list.size() + 1);
         else
-            return m_current_state.to_sfen();
+            return m_state.to_sfen();
     }
 
     /**
@@ -211,11 +200,11 @@ public:
      */
     Game hflip() const
     {
-        return Game(m_current_state.hflip());
+        return Game(m_state.hflip());
     }
     Game rotate() const
     {
-        return Game(m_current_state.rotate());
+        return Game(m_state.rotate());
     }
     Game& resign()
     {
@@ -227,7 +216,7 @@ public:
         m_result = DRAW;
         return *this;
     }
-    Game& apply(const MoveType& move)
+    Game& apply(const Move<P>& move)
     {
         if ((m_result == ONGOING) && (!is_legal(move))) {
             add_record_and_update_state(move);
@@ -236,13 +225,13 @@ public:
         }
         return apply_nocheck(move);
     }
-    Game& apply_nocheck(const MoveType& move)
+    Game& apply_nocheck(const Move<P>& move)
     {
         add_record_and_update_state(move);
         update_result(C::max_acceptable_repetitions);
         return *this;
     }
-    Game& apply_dfpn(const MoveType& move)
+    Game& apply_dfpn(const Move<P>& move)
     {
         add_record_and_update_state(move);
         return *this;
@@ -254,7 +243,7 @@ public:
         m_result = ONGOING;
         const auto turn = get_turn();
         if (check_repetition && is_repetitions(max_repetitions_inclusive)) {
-            if (m_current_state.in_check())
+            if (m_state.in_check())
                 m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
             else
                 m_result = DRAW;
@@ -267,33 +256,32 @@ public:
         assert(ply() > 0u);
         const auto n = ply() - 1u;
         std::uint32_t v = m_captured_move_list[n];
-        const auto move = MoveType(static_cast<std::uint16_t>(v & 0x0ffffu));
+        const auto move = Move<P>(static_cast<std::uint16_t>(v & 0x0ffffu));
         const auto captured = static_cast<Piece>((v >> 16u) & 0x0ffu);
         const auto checker_0 = static_cast<DirectionEnum>((v >> 24u) & 0x0fu);
         const auto checker_1 = static_cast<DirectionEnum>((v >> 28u) & 0x0fu);
-        m_current_state.undo(move, captured, checker_0, checker_1);
+        m_state.undo(move, captured, checker_0, checker_1);
         m_result = ONGOING;
         m_hash = m_hash_list[n];
         m_hash_list.pop_back();
         m_captured_move_list.pop_back();
         return *this;
     }
-    bool is_legal(const MoveType move) const
+    bool is_legal(const Move<P> move) const
     {
         if (move.is_drop()) {
-            auto iter = DropMoveGenerator<Parameters>(
-                m_current_state, move.source_piece(), move.destination());
-            return move == *iter;
+            auto g = DropMoveGenerator<P>(
+                m_state, move.source_piece(), move.destination());
+            return move == *g;
         } else if (
             move.source_square() == get_board().get_king_square(get_turn())) {
-            for (auto it = KingMoveGenerator<Parameters>(m_current_state); it;
-                 ++it) {
-                if (*it == move)
+            for (auto g = KingMoveGenerator<P>(m_state); g; ++g) {
+                if (*g == move)
                     return true;
             }
         } else {
-            auto iter = SoldierMoveGenerator<Parameters>(m_current_state, move);
-            return move == *iter;
+            auto g = SoldierMoveGenerator<P>(m_state, move);
+            return move == *g;
         }
         return false;
     }
@@ -311,22 +299,22 @@ public:
             return false;
 
         // first sacrifice drop
-        const Move<Parameters> drop1st = get_record_action(n - 4u);
+        const Move<P> drop1st = get_record_action(n - 4u);
         if (!drop1st.is_drop())
             return false;
 
         // capture first sacrifice drop
-        const Move<Parameters> capt1st = get_record_action(n - 3u);
+        const Move<P> capt1st = get_record_action(n - 3u);
         if (drop1st.destination() != capt1st.destination())
             return false;
 
         // second sacrifice drop
-        const Move<Parameters> drop2nd = get_record_action(n - 2u);
+        const Move<P> drop2nd = get_record_action(n - 2u);
         if (!drop2nd.is_drop())
             return false;
 
         // capture second sacrifice drop
-        const Move<Parameters> capt2nd = get_record_action(n - 1u);
+        const Move<P> capt2nd = get_record_action(n - 1u);
         return (drop2nd.destination() == capt2nd.destination())
                && (capt1st.destination() == capt2nd.source_square());
     }
@@ -339,13 +327,13 @@ public:
      */
     bool in_check() const
     {
-        return m_current_state.in_check();
+        return m_state.in_check();
     }
     bool is_valid_piece_count(const PieceType& except = C::NA) const
     {
-        const BoardType& b = get_board();
-        const StandType& black_stand = get_stand(BLACK);
-        const StandType& white_stand = get_stand(WHITE);
+        const Board<P>& b = get_board();
+        const Stand<P>& black_stand = get_stand(BLACK);
+        const Stand<P>& white_stand = get_stand(WHITE);
         uint piece_count[C::num_stand_piece_types + 1u] = {};
         for (auto sq : C::square_iterator()) {
             if (b.is_empty(sq))
@@ -364,15 +352,14 @@ public:
         }
         return true;
     }
-    Move<Parameters> get_record_action(const uint index) const
+    Move<P> get_record_action(const uint index) const
     {
-        return Move<Parameters>(
-            static_cast<std::uint16_t>(m_captured_move_list[index]));
+        return Move<P>(static_cast<std::uint16_t>(m_captured_move_list[index]));
     }
-    std::string to_jpn(const Move<Parameters>& move) const
+    std::string to_jpn(const Move<P>& move) const
     {
         const Square dst = move.destination();
-        const BoardType& b = get_board();
+        const Board<P>& b = get_board();
         const ColorEnum t = get_turn();
         if (move.is_drop()) {
             const auto dst_jpn = ST::to_jpn(dst);
@@ -383,31 +370,28 @@ public:
             const PieceType pt = PT::to_piece_type(b[src]);
             const auto pt_jpn = PT::to_jpn(pt, false);
             const auto unique_identifier_jpn = b.unique_identifier_jpn(move, t);
-            const auto promotion_jpn = move.promotion_to_jpn(pt, t);
-            const uint n = ply();
-            const auto dst_jpn = move.destination_to_jpn(
-                (n > 0u) ? get_record_action(n - 1u).destination() : C::SQ_NA);
+            const auto promotion_jpn = promotion_to_jpn(move);
+            const auto dst_jpn = destination_to_jpn(move);
             return dst_jpn + pt_jpn + unique_identifier_jpn + promotion_jpn;
         }
     }
-    std::string to_eng(const Move<Parameters>& move) const
+    std::string to_eng(const Move<P>& move) const
     {
         const Square dst = move.destination();
         const auto dst_eng = ST::to_eng(dst);
         if (move.is_drop())
             return PT::to_eng(move.source_piece()) + "*" + dst_eng;
         const Square src = move.source_square();
-        const BoardType& b = get_board();
+        const Board<P>& b = get_board();
         const auto pt_eng = PT::to_eng(b[src]);
         const auto origin_eng = b.origin_eng(move);
         const auto movement_eng = (b.is_empty(dst) ? "-" : "x");
-        const auto promotion_eng
-            = move.promotion_to_eng(PT::to_piece_type(b[src]), get_turn());
+        const auto promotion_eng = promotion_to_eng(move);
         return pt_eng + origin_eng + movement_eng + dst_eng + promotion_eng;
     }
     void to_feature_map(float* const data) const
     {
-        m_current_state.to_feature_map(data);
+        m_state.to_feature_map(data);
     }
     static void attention_matrix(float* const data)
     {
@@ -444,28 +428,27 @@ public:
     }
 
 protected:
-    Game(const StateType& s)
-        : m_current_state(s), m_result(ONGOING),
-          m_hash(m_current_state.zobrist_hash()), m_hash_list{},
-          m_captured_move_list{}
+    Game(const State<P>& s)
+        : m_state(s), m_result(ONGOING), m_hash(m_state.zobrist_hash()),
+          m_hash_list{}, m_captured_move_list{}
     {
         m_hash_list.reserve(256);
         m_captured_move_list.reserve(256);
         update_result(C::max_acceptable_repetitions);
     }
-    static uint num_pieces(const StateType& s, const ColorEnum& c)
+    static uint num_pieces(const State<P>& s, const ColorEnum& c)
     {
-        const BoardType& board = s.get_board();
+        const Board<P>& board = s.get_board();
         const auto& stand = s.get_stand(c);
         uint out = board.get_occupied(c).hamming_weight();
         for (auto pt : C::stand_piece_type_iterator())
             out += stand.count(pt);
         return out;
     }
-    static uint total_point(const StateType& s, const ColorEnum& c)
+    static uint total_point(const State<P>& s, const ColorEnum& c)
     {
         uint out = 0u;
-        const BoardType& board = s.get_board();
+        const Board<P>& board = s.get_board();
         const auto& stand = s.get_stand(c);
         for (auto sq : board.get_occupied(c).iterator())
             out += PT::get_point(board[sq]);
@@ -475,20 +458,20 @@ protected:
     }
 
 protected:
-    void add_record_and_update_state(const MoveType& move)
+    void add_record_and_update_state(const Move<P>& move)
     {
-        const auto captured = m_current_state.get_board()[move.destination()];
-        const auto checker_dir_0 = m_current_state.get_checker_dir(0u);
-        const auto checker_dir_1 = m_current_state.get_checker_dir(1u);
+        const auto captured = m_state.get_board()[move.destination()];
+        const auto checker_dir_0 = m_state.get_checker_dir(0u);
+        const auto checker_dir_1 = m_state.get_checker_dir(1u);
         m_hash_list.emplace_back(m_hash);
-        static_assert(sizeof(MoveType) == sizeof(std::uint16_t));
+        static_assert(sizeof(Move<P>) == sizeof(std::uint16_t));
         static_assert(sizeof(captured) == sizeof(std::uint8_t));
         m_captured_move_list.emplace_back(
             static_cast<std::uint32_t>(move.hash())
             ^ (static_cast<std::uint32_t>(captured) << 16)
             ^ (static_cast<std::uint32_t>(checker_dir_0) << 24)
             ^ (static_cast<std::uint32_t>(checker_dir_1) << 28));
-        m_current_state.apply(move, &m_hash);
+        m_state.apply(move, &m_hash);
     }
 
 protected:
@@ -496,12 +479,11 @@ protected:
     {
         m_result = ONGOING;
         const auto turn = get_turn();
-        if (!DropMoveGenerator<Parameters>(m_current_state)
-            && !KingMoveGenerator<Parameters>(m_current_state)
-            && !SoldierMoveGenerator<Parameters>(m_current_state))
+        if (!DropMoveGenerator<P>(m_state) && !KingMoveGenerator<P>(m_state)
+            && !SoldierMoveGenerator<P>(m_state))
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
         if (is_repetitions(max_repetitions_inclusive)) {
-            if (m_current_state.in_check())
+            if (m_state.in_check())
                 m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
             else
                 m_result = DRAW;
@@ -527,16 +509,16 @@ public:
     {
         // http://www2.computer-shogi.org/wcsc17/rule_e.html
         // (4) There is no check on the King of the declaring side.
-        if (m_current_state.in_check())
+        if (m_state.in_check())
             return false;
 
         const auto turn = get_turn();
-        const BoardType& board = get_board();
+        const Board<P>& board = get_board();
         // (1) The King of the declaring side is in the third rank or beyond.
         if (!ST::in_promotion_zone(board.get_king_square(turn), turn))
             return false;
 
-        const auto promo_zone_mask = BitBoardType::get_promotion_zone(turn);
+        const auto promo_zone_mask = BitBoard<P>::get_promotion_zone(turn);
         const auto piece_mask = (promo_zone_mask & board.get_occupied(turn));
         const uint num_pieces_in_zone = piece_mask.hamming_weight();
 
@@ -554,10 +536,10 @@ public:
     }
 
 private:
-    uint count_point_of(const ColorEnum& c, const BitBoardType& mask) const
+    uint count_point_of(const ColorEnum& c, const BitBoard<P>& mask) const
     {
         uint out = 0;
-        const BoardType& board = get_board();
+        const Board<P>& board = get_board();
         for (auto sq : mask.iterator())
             out += PT::get_point(board[sq]);
         const auto& stand = get_stand(c);
@@ -566,7 +548,54 @@ private:
         }
         return out;
     }
+    std::string destination_to_jpn(const Move<P>& action) const;
+    std::string promotion_to_jpn(const Move<P>& action) const;
+    std::string promotion_to_eng(const Move<P>& action) const;
 };
+
+template <class P>
+std::string Game<P>::destination_to_jpn(const Move<P>& action) const
+{
+    const auto n = ply();
+    const auto dst_prev
+        = (n > 0u) ? get_record_action(n - 1u).destination() : C::SQ_NA;
+    const auto dst = action.destination();
+    if (dst == dst_prev)
+        return u8"\u540c";
+    return ST::to_jpn(dst);
+}
+
+template <class P>
+std::string Game<P>::promotion_to_jpn(const Move<P>& action) const
+{
+    if (action.promote())
+        return u8"\u6210";
+
+    const auto t = m_state.get_turn();
+    const auto src = action.source_square();
+    const auto dst = action.destination();
+    const auto& p = m_state.get_board()[src];
+    if (PT::is_promotable(p)
+        && (ST::in_promotion_zone(src, t) || ST::in_promotion_zone(dst, t)))
+        return u8"\u4e0d\u6210";
+    return u8"";
+}
+
+template <class P>
+std::string Game<P>::promotion_to_eng(const Move<P>& action) const
+{
+    if (action.promote())
+        return "+";
+
+    const auto t = m_state.get_turn();
+    const auto src = action.source_square();
+    const auto dst = action.destination();
+    const auto& p = m_state.get_board()[src];
+    if (PT::is_promotable(p)
+        && (ST::in_promotion_zone(dst, t) || ST::in_promotion_zone(src, t)))
+        return "=";
+    return "";
+}
 
 } // namespace vshogi
 
