@@ -77,13 +77,23 @@ TEST(test_minishogi_move, to_dlshogi_policy_index)
 {
     CHECK_EQUAL(
         static_cast<int>(SQ_3C) * (8 * 2 + 5) + 7,
-        Move(SQ_1E, SQ_3C).to_dlshogi_policy_index());
+        Move(SQ_1E, SQ_3C).to_dlshogi_policy_index(vshogi::BLACK));
     CHECK_EQUAL(
         static_cast<int>(SQ_4D) * (8 * 2 + 5) + 2 + 8,
-        Move(SQ_1A, SQ_4D, true).to_dlshogi_policy_index());
+        Move(SQ_1A, SQ_4D, true).to_dlshogi_policy_index(vshogi::BLACK));
     CHECK_EQUAL(
         static_cast<int>(SQ_4B) * (8 * 2 + 5) + 8 * 2 + static_cast<int>(GI),
-        Move(GI, SQ_4B).to_dlshogi_policy_index());
+        Move(GI, SQ_4B).to_dlshogi_policy_index(vshogi::BLACK));
+
+    CHECK_EQUAL(
+        static_cast<int>(SQ_3C) * (8 * 2 + 5) + 7,
+        Move(SQ_5A, SQ_3C).to_dlshogi_policy_index(vshogi::WHITE));
+    CHECK_EQUAL(
+        static_cast<int>(SQ_4D) * (8 * 2 + 5) + 2 + 8,
+        Move(SQ_5E, SQ_2B, true).to_dlshogi_policy_index(vshogi::WHITE));
+    CHECK_EQUAL(
+        static_cast<int>(SQ_4B) * (8 * 2 + 5) + 8 * 2 + static_cast<int>(GI),
+        Move(GI, SQ_2D).to_dlshogi_policy_index(vshogi::WHITE));
 }
 
 } // namespace test_vshogi::test_minishogi

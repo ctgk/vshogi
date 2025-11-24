@@ -142,12 +142,8 @@ public:
         if (num == 0)
             return;
         auto probas = std::vector<float>(num);
-        const auto is_black_turn = (turn == ColorEnum::BLACK);
         for (std::size_t ii = num; ii--;) {
-            const auto index
-                = (is_black_turn)
-                      ? actions[ii].to_dlshogi_policy_index()
-                      : actions[ii].rotate().to_dlshogi_policy_index();
+            const auto index = actions[ii].to_dlshogi_policy_index(turn);
             probas[ii] = (policy_logits) ? policy_logits[index] : 0.f;
         }
         softmax(probas);

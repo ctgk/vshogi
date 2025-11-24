@@ -44,6 +44,8 @@ private:
     */
     std::uint16_t m_value;
 
+    Move(const uint src, const Square dst, const bool promote = false);
+
 public:
     Move() : m_value()
     {
@@ -136,12 +138,7 @@ public:
         const auto src_hflipped = ST::hflip(source_square());
         return Move(src_hflipped, dst_hflipped, promote());
     }
-    uint to_dlshogi_policy_index() const
-    {
-        const auto dst_index = static_cast<uint>(destination());
-        const auto src_index = to_dlshogi_source_index();
-        return dst_index * num_policy_per_square() + src_index;
-    }
+    uint to_dlshogi_policy_index(const ColorEnum& by_side) const;
     static constexpr uint num_policy_per_square()
     {
         return 2 * C::num_dir_dl + C::num_stand_piece_types;
@@ -175,21 +172,37 @@ public:
     }
 
 private:
-    Move(const uint src, const Square dst, const bool promote = false)
-        : m_value(static_cast<std::uint16_t>(
-              (src << source_shift)
-              | static_cast<uint>(promote << promotion_shift) | dst))
-    {
-    }
-    uint to_dlshogi_source_index() const
-    {
-        if (is_drop())
-            return C::num_dir_dl * 2 + static_cast<uint>(source_piece());
-        const uint promo_offset = promote() ? C::num_dir_dl : 0U;
-        const auto direction = ST::direction(destination(), source_square());
-        return static_cast<uint>(direction) + promo_offset;
-    }
+    uint to_dlshogi_source_index(const ColorEnum& by_side) const;
 };
+
+template <class P>
+Move<P>::Move(const uint src, const Square dst, const bool promote)
+    : m_value(static_cast<std::uint16_t>(
+          (src << source_shift) | static_cast<uint>(promote << promotion_shift)
+          | dst))
+{
+}
+
+template <class P>
+uint Move<P>::to_dlshogi_policy_index(const ColorEnum& by_side) const
+{
+    auto dst = destination();
+    if (by_side == WHITE)
+        dst = ST::rotate(dst);
+    return dst * num_policy_per_square() + to_dlshogi_source_index(by_side);
+}
+
+template <class P>
+uint Move<P>::to_dlshogi_source_index(const ColorEnum& by_side) const
+{
+    if (is_drop())
+        return C::num_dir_dl * 2u + source_piece();
+    const uint promo_offset = promote() ? C::num_dir_dl : 0u;
+    auto dir = ST::direction(destination(), source_square());
+    if (by_side == WHITE)
+        dir = vshogi::rotate(dir);
+    return dir + promo_offset;
+}
 
 } // namespace vshogi
 

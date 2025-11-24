@@ -153,8 +153,8 @@ TEST(minishogi_node, explore_two_action)
 
     // softmax([-0.202, 0.202]) -> [0.5996, 0.4003]
     float logits[Game::num_dlshogi_policy()] = {0.f};
-    logits[Move(SQ_1E, SQ_1D).to_dlshogi_policy_index()] = 0.202f;
-    logits[Move(SQ_1E, SQ_2D).to_dlshogi_policy_index()] = -0.202f;
+    logits[Move(SQ_1E, SQ_1D).to_dlshogi_policy_index(vshogi::BLACK)] = 0.202f;
+    logits[Move(SQ_1E, SQ_2D).to_dlshogi_policy_index(vshogi::BLACK)] = -0.202f;
     auto g = Game("4k/5/5/5/4S b -");
     auto root = Node();
     root.simulate_ongoing_and_expand(
@@ -219,8 +219,8 @@ TEST(minishogi_node, explore_two_layer)
 
     // softmax([-1.099, 1.099]) -> [0.09993023, 0.90006977]
     float logits[Game::num_dlshogi_policy()] = {0.f};
-    logits[Move(SQ_1E, SQ_1D).to_dlshogi_policy_index()] = 1.099f;
-    logits[Move(SQ_1E, SQ_2D).to_dlshogi_policy_index()] = -1.099f;
+    logits[Move(SQ_1E, SQ_1D).to_dlshogi_policy_index(vshogi::BLACK)] = 1.099f;
+    logits[Move(SQ_1E, SQ_2D).to_dlshogi_policy_index(vshogi::BLACK)] = -1.099f;
     auto g = Game("s4/5/5/5/4S b -");
     auto root = Node();
     root.simulate_ongoing_and_expand(
@@ -233,8 +233,10 @@ TEST(minishogi_node, explore_two_layer)
         CHECK_EQUAL(root.get_child(Move(SQ_1E, SQ_1D)), actual);
         STRCMP_EQUAL("s4/5/5/4S/5 w - 2", g_copy.to_sfen().c_str());
         float policy[Game::num_dlshogi_policy()] = {0.f};
-        policy[Move(SQ_5A, SQ_5B).rotate().to_dlshogi_policy_index()] = 1.099f;
-        policy[Move(SQ_5A, SQ_4B).rotate().to_dlshogi_policy_index()] = -1.099f;
+        policy[Move(SQ_5A, SQ_5B).to_dlshogi_policy_index(vshogi::WHITE)]
+            = 1.099f;
+        policy[Move(SQ_5A, SQ_4B).to_dlshogi_policy_index(vshogi::WHITE)]
+            = -1.099f;
         actual->simulate_ongoing_and_expand(
             {Move(SQ_5A, SQ_5B), Move(SQ_5A, SQ_4B)},
             vshogi::WHITE,

@@ -71,13 +71,23 @@ TEST(test_judkins_shogi_move, to_dlshogi_policy_index)
 {
     CHECK_EQUAL(
         static_cast<int>(SQ_3C) * (10 * 2 + 6) + 7,
-        Move(SQ_1E, SQ_3C).to_dlshogi_policy_index());
+        Move(SQ_1E, SQ_3C).to_dlshogi_policy_index(vshogi::BLACK));
     CHECK_EQUAL(
         static_cast<int>(SQ_4D) * (10 * 2 + 6) + 2 + 10,
-        Move(SQ_1A, SQ_4D, true).to_dlshogi_policy_index());
+        Move(SQ_1A, SQ_4D, true).to_dlshogi_policy_index(vshogi::BLACK));
     CHECK_EQUAL(
         static_cast<int>(SQ_4B) * (10 * 2 + 6) + 10 * 2 + 2,
-        Move(GI, SQ_4B).to_dlshogi_policy_index());
+        Move(GI, SQ_4B).to_dlshogi_policy_index(vshogi::BLACK));
+
+    CHECK_EQUAL(
+        static_cast<int>(SQ_3C) * (10 * 2 + 6) + 7,
+        Move(SQ_6B, SQ_4D).to_dlshogi_policy_index(vshogi::WHITE));
+    CHECK_EQUAL(
+        static_cast<int>(SQ_4D) * (10 * 2 + 6) + 2 + 10,
+        Move(SQ_6F, SQ_3C, true).to_dlshogi_policy_index(vshogi::WHITE));
+    CHECK_EQUAL(
+        static_cast<int>(SQ_4B) * (10 * 2 + 6) + 10 * 2 + 2,
+        Move(GI, SQ_3E).to_dlshogi_policy_index(vshogi::WHITE));
 }
 
 } // namespace test_vshogi::test_judkins_shogi

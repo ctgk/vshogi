@@ -322,11 +322,11 @@ def test_to_dlshogi_policy():
     }, default_value=-1.)
 
     expected = np.zeros(5 * 5 * (2 * 8 + 5)) - 1
-    expected[a.rotate()._to_dlshogi_policy_index()] = 0.5
+    expected[a._to_dlshogi_policy_index(shogi.WHITE)] = 0.5
     for m in game.get_legal_moves():
         if m == a:
             continue
-        expected[m.rotate()._to_dlshogi_policy_index()] = 0.05
+        expected[m._to_dlshogi_policy_index(shogi.WHITE)] = 0.05
     assert np.allclose(expected, actual)
 
 

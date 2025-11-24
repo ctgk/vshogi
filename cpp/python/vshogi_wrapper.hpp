@@ -192,10 +192,7 @@ inline void export_state(pybind11::module& m)
                 for (auto it = action_proba.begin(); it != action_proba.end();
                      ++it) {
                     const auto move = it->first.cast<Move>();
-                    const auto index
-                        = (turn == vshogi::BLACK)
-                              ? move.to_dlshogi_policy_index()
-                              : move.rotate().to_dlshogi_policy_index();
+                    const auto index = move.to_dlshogi_policy_index(turn);
                     data[index] = it->second.cast<float>();
                 }
                 return out;
@@ -215,10 +212,7 @@ inline void export_state(pybind11::module& m)
                 for (auto it = action_proba.begin(); it != action_proba.end();
                      ++it) {
                     const auto move = it->first.cast<Move>();
-                    const auto index
-                        = (turn == vshogi::BLACK)
-                              ? move.to_dlshogi_policy_index()
-                              : move.rotate().to_dlshogi_policy_index();
+                    const auto index = move.to_dlshogi_policy_index(turn);
                     data[index] = it->second.cast<float>();
                 }
             },
@@ -347,10 +341,7 @@ inline void export_game(pybind11::module& m)
                 for (auto it = visit_proba.begin(); it != visit_proba.end();
                      ++it) {
                     const auto move = it->first.cast<Move>();
-                    const auto index
-                        = (turn == vshogi::BLACK)
-                              ? move.to_dlshogi_policy_index()
-                              : move.rotate().to_dlshogi_policy_index();
+                    const auto index = move.to_dlshogi_policy_index(turn);
                     data[index] = it->second.cast<float>();
                 }
                 return out;
@@ -359,15 +350,12 @@ inline void export_game(pybind11::module& m)
             "masked_softmax",
             [](const Game& self, const py::array_t<float>& logits) -> py::dict {
                 py::dict out;
-                const auto is_black_turn = (self.get_turn() == vshogi::BLACK);
+                const auto t = self.get_turn();
                 const auto& actions = self.get_legal_moves();
                 auto proba = std::vector<float>(actions.size());
                 const auto data = logits.data();
                 for (std::size_t ii = actions.size(); ii--;) {
-                    const auto index
-                        = (is_black_turn)
-                              ? actions[ii].to_dlshogi_policy_index()
-                              : actions[ii].rotate().to_dlshogi_policy_index();
+                    const auto index = actions[ii].to_dlshogi_policy_index(t);
                     proba[ii] = data[index];
                 }
                 vshogi::softmax(proba);

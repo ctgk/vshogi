@@ -71,13 +71,23 @@ TEST(test_shogi_move, to_dlshogi_policy_index)
 {
     CHECK_EQUAL(
         static_cast<int>(SQ_3C) * (10 * 2 + 7) + 6,
-        Move(SQ_3D, SQ_3C).to_dlshogi_policy_index());
+        Move(SQ_3D, SQ_3C).to_dlshogi_policy_index(vshogi::BLACK));
     CHECK_EQUAL(
         static_cast<int>(SQ_8B) * (10 * 2 + 7) + 10,
-        Move(SQ_9A, SQ_8B, true).to_dlshogi_policy_index());
+        Move(SQ_9A, SQ_8B, true).to_dlshogi_policy_index(vshogi::BLACK));
     CHECK_EQUAL(
         static_cast<int>(SQ_1I) * (10 * 2 + 7) + 20 + 2,
-        Move(KE, SQ_1I).to_dlshogi_policy_index());
+        Move(KE, SQ_1I).to_dlshogi_policy_index(vshogi::BLACK));
+
+    CHECK_EQUAL(
+        static_cast<int>(SQ_3C) * (10 * 2 + 7) + 6,
+        Move(SQ_7F, SQ_7G).to_dlshogi_policy_index(vshogi::WHITE));
+    CHECK_EQUAL(
+        static_cast<int>(SQ_8B) * (10 * 2 + 7) + 10,
+        Move(SQ_1I, SQ_2H, true).to_dlshogi_policy_index(vshogi::WHITE));
+    CHECK_EQUAL(
+        static_cast<int>(SQ_1I) * (10 * 2 + 7) + 20 + 2,
+        Move(KE, SQ_9A).to_dlshogi_policy_index(vshogi::WHITE));
 }
 
 } // namespace test_vshogi::test_shogi
