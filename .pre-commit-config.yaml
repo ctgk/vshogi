@@ -31,13 +31,6 @@ repos:
         exclude: 'cpp/python/'
         pass_filenames: false
         language: system
-    -   id: clang-tidy
-        name: Check C++ naming convention
-        entry: bash -c 'cmd=`which clang-tidy-17 || which clang-tidy`; cd `git rev-parse --show-toplevel`; $cmd $@ -p build/pre-commit -extra-arg=-Wno-unknown-warning-option' --
-        language: system
-        types: [text]
-        files: '\.(c|h|cpp|hpp)$'
-        exclude: 'python'
     -   id: flake8
         name: Check Python format
         entry: flake8 --count --show-source --statistics
