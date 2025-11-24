@@ -94,13 +94,11 @@ private:
         if (m_state.in_check()) {
             const auto mask = BitBoard<P>::get_line_segment(
                 m_state.find_checker_square(), b.get_king_square(t));
-            m_sq_iter = b.template compute_droppable<GenType == GenEnum::CHECK>(
-                             p, mask)
-                            .iterator();
+            m_sq_iter = b.template compute_droppable < GenType
+                        == GenEnum::CHECK > (p, mask).iterator();
         } else {
-            m_sq_iter
-                = b.template compute_droppable<GenType == GenEnum::CHECK>(p)
-                      .iterator();
+            m_sq_iter = b.template compute_droppable < GenType
+                        == GenEnum::CHECK > (p).iterator();
         }
     }
     void init_sq_iter(const Square begin)

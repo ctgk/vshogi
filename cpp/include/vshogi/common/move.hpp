@@ -62,11 +62,11 @@ public:
     }
     explicit Move(const char sfen[5])
         : Move(
-            (sfen[1] == '*')
-                ? static_cast<uint>(PT::to_piece_type(sfen[0])) + C::num_squares
-                : static_cast<uint>(ST::to_square(sfen)),
-            ST::to_square(sfen + 2),
-            sfen[4] == '+')
+              (sfen[1] == '*') ? static_cast<uint>(PT::to_piece_type(sfen[0]))
+                                     + C::num_squares
+                               : static_cast<uint>(ST::to_square(sfen)),
+              ST::to_square(sfen + 2),
+              sfen[4] == '+')
     {
     }
     std::uint16_t hash() const
@@ -177,8 +177,8 @@ public:
 private:
     Move(const uint src, const Square dst, const bool promote = false)
         : m_value(static_cast<std::uint16_t>(
-            (src << source_shift)
-            | static_cast<uint>(promote << promotion_shift) | dst))
+              (src << source_shift)
+              | static_cast<uint>(promote << promotion_shift) | dst))
     {
     }
     uint to_dlshogi_source_index() const

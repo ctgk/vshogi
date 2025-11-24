@@ -12,11 +12,11 @@ minishogi::Stand::Stand(
     const int num_hi,
     const int num_ki)
     : Stand(static_cast<std::uint16_t>(
-        (num_ki << shift_bits[minishogi::KI])
-        + (num_hi << shift_bits[minishogi::HI])
-        + (num_ka << shift_bits[minishogi::KA])
-        + (num_gi << shift_bits[minishogi::GI])
-        + (num_fu << shift_bits[minishogi::FU])))
+          (num_ki << shift_bits[minishogi::KI])
+          + (num_hi << shift_bits[minishogi::HI])
+          + (num_ka << shift_bits[minishogi::KA])
+          + (num_gi << shift_bits[minishogi::GI])
+          + (num_fu << shift_bits[minishogi::FU])))
 {
 }
 
