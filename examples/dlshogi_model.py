@@ -6,14 +6,20 @@ with warnings.catch_warnings():
     import ai_edge_torch
 
 import torch as th
+from classopt import classopt, config
 from tqdm import tqdm
 
 import vshogi
 
 
+@classopt(default_long=True)
+class Args:
+    short: bool = config(action='store_true', default=False)
+
+
 if __name__ == '__main__':
     from vshogi.shogi import Game
-
+    args = Args.from_args()
     model = vshogi.dlshogi.PolicyValueNetwork(
         game_class=Game,
         hidden_channels=128,
@@ -58,7 +64,7 @@ if __name__ == '__main__':
         "5c4b" , "3a4b" , "G*5c" , "G*3a" , "G*4c" , "3b2a" , "5c4b" , "2i5i" ,
         "6h5i" , "4h5h" , "4b3a" , "2a3a" , "S*2b" , "3a4a" , "L*4b" ,
     ]
-    for move in tqdm(kifu, ncols=50):
+    for move in tqdm(kifu[:10] if args.short else kifu, ncols=50):
         if game.result != vshogi.Result.ONGOING:
             break
         player.set_game(game)
