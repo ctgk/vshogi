@@ -477,24 +477,6 @@ public:
     }
 
 private:
-    static BitBoard compute_ray_to_adjacent(
-        const Square& sq, const BitBoard& occupied = BitBoard())
-    {
-        return compute_ray_to(sq, DIR_N, occupied)
-               | compute_ray_to(sq, DIR_E, occupied)
-               | compute_ray_to(sq, DIR_W, occupied)
-               | compute_ray_to(sq, DIR_S, occupied);
-    }
-    static BitBoard compute_ray_to_diagonal(
-        const Square& sq, const BitBoard& occupied = BitBoard())
-    {
-        return compute_ray_to(sq, DIR_NW, occupied)
-               | compute_ray_to(sq, DIR_NE, occupied)
-               | compute_ray_to(sq, DIR_SW, occupied)
-               | compute_ray_to(sq, DIR_SE, occupied);
-    }
-
-private:
     static BitBoard compute_line_segment(Square a, const Square b)
     {
         const auto dir_to_b = ST::direction(a, b);
