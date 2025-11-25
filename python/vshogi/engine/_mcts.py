@@ -13,10 +13,7 @@ Value = float
 
 def _repr_node(n, greedy_detph: int = 0) -> str:
     d = greedy_detph
-    return (
-        f"Node(v={n.get_value():.2f}, q{d}={n.get_q_value(d):.2f}, "
-        f"count={n.get_visit_count()})"
-    )
+    return f"Node(q{d}={n.get_q_value(d):.2f}, count={n.get_visit_count()})"
 
 
 def _tree(
@@ -186,16 +183,6 @@ class Mcts(Engine):
         for m in prev_visits.keys():
             prev_visits[m] = curr_visits[m]
         return kldgain
-
-    def get_value(self) -> float:
-        """Return raw value estimate of the current game position.
-
-        Returns
-        -------
-        float
-            Raw value estimate of the current game position.
-        """
-        return self._searcher.get_root().get_value()
 
     def get_q_value(self, greedy_depth: int = 0) -> float:
         """Return Q-value estimate of the current game position.

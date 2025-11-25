@@ -72,16 +72,7 @@ private:
     float m_sqrt_visit_count;
 
     /**
-     * @brief 1 ~ -1 scaled probability of the turn player winning the game.
-     * @details This is typically a raw estimate of a machine learning model.
-     * If the turn is black, then this value shows winning rate of black.
-     * If the turn is white, then it shows the rate of white. If the value is
-     * out of [-1, 1] range, then it means that there is a winner.
-     */
-    float m_value;
-
-    /**
-     * @brief Average of `m_value` of all the nodes below this including this
+     * @brief Average of raw values of all the nodes below this including this
      * one weighted by their `m_visit_count`.
      */
     float m_q_value;
@@ -122,14 +113,12 @@ public:
 
         const auto turn = game.get_turn();
         if (result == DRAW) {
-            m_value = (turn == BLACK) ? -0.2f : 0.2f;
-            m_q_value = m_value;
+            m_q_value = (turn == BLACK) ? -0.2f : 0.2f;
             return;
         }
 
         const auto winner = (result == BLACK_WIN) ? BLACK : WHITE;
         const auto value = (winner == turn) ? 1.f : -1.f;
-        m_value = value;
         m_q_value = value;
         m_is_mate = true;
     }
@@ -157,7 +146,6 @@ public:
     }
     void simulate_mate_and_expand(const Move<Parameters>& a)
     {
-        m_value = 1.f;
         m_q_value = 1.f;
         m_is_mate = true;
         if (has_child()) {
@@ -174,7 +162,6 @@ public:
             m_child = std::make_unique<Node<Parameters>>(a, 1.f);
             m_most_visited_child = m_child.get();
         }
-        m_most_visited_child->m_value = -1.f;
         m_most_visited_child->m_q_value = -1.f;
         m_most_visited_child->m_is_mate = true;
     }
@@ -280,7 +267,6 @@ private: // select
 private: // simulate
     void simulate_ongoing_game(const float value)
     {
-        m_value = value;
         m_q_value = value;
     }
 
@@ -343,15 +329,15 @@ public: // utility
     Node()
         : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr), m_action(),
           m_proba(0.f), m_visit_count(0), m_visit_count_by_random(0),
-          m_sqrt_visit_count(0.f), m_value(0.f), m_q_value(0.f),
-          m_is_mate(false), m_most_visited_child(nullptr)
+          m_sqrt_visit_count(0.f), m_q_value(0.f), m_is_mate(false),
+          m_most_visited_child(nullptr)
     {
     }
     Node(const MoveType action, const float proba)
         : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr),
           m_action(action), m_proba(proba), m_visit_count(0),
-          m_visit_count_by_random(0), m_sqrt_visit_count(0.f), m_value(0.f),
-          m_q_value(0.f), m_is_mate(false), m_most_visited_child(nullptr)
+          m_visit_count_by_random(0), m_sqrt_visit_count(0.f), m_q_value(0.f),
+          m_is_mate(false), m_most_visited_child(nullptr)
     {
         assert(action.hash() != 0u);
     }
@@ -370,10 +356,6 @@ public: // utility
     int get_visit_count_excluding_random() const
     {
         return m_visit_count - m_visit_count_by_random;
-    }
-    float get_value() const
-    {
-        return m_value;
     }
     float get_q_value(const uint greedy_depth = 0u) const
     {
@@ -460,7 +442,6 @@ public: // utility
                 m_visit_count = ch->m_visit_count;
                 m_visit_count_by_random = ch->m_visit_count_by_random;
                 m_sqrt_visit_count = ch->m_sqrt_visit_count;
-                m_value = ch->m_value;
                 m_q_value = ch->m_q_value;
                 m_is_mate = ch->m_is_mate;
                 m_most_visited_child = ch->m_most_visited_child;
@@ -473,7 +454,6 @@ public: // utility
         m_visit_count = 0;
         m_visit_count_by_random = 0;
         m_sqrt_visit_count = 0.f;
-        m_value = 0.f;
         m_q_value = 0.f;
         m_is_mate = false;
         m_most_visited_child = nullptr;
@@ -680,7 +660,7 @@ private:
     }
     void backprop_to_root(GameType& game, NodeType* const leaf)
     {
-        float v = leaf->get_value();
+        float v = leaf->get_q_value();
         for (NodeType *n = leaf, *prev = nullptr;; v = -v) {
             NodeType* const p = n->backprop(v, prev);
             prev = n;

@@ -88,12 +88,11 @@ def dump_game_log(file_, game: vshogi.Game, color_filter: vshogi.Color = None) -
             lambda g, i: g.get_sfen_at(i, include_move_count=False),
             lambda g, i: g.get_move_at(i).to_sfen(),
             lambda g, _: g.result,
-            lambda g, i: g.v_value_log[i],
             lambda g, i: g.q_value_log[i],
             lambda g, i: g.visit_count_log[i],
             lambda g, i: g.z_weight_log[i],
         ),
-        names=('state', 'move', 'result', 'v_value', 'q_value', 'visit_count', 'z_weight'),
+        names=('state', 'move', 'result', 'q_value', 'visit_count', 'z_weight'),
         file_=file_,
         color_filter=color_filter,
     )
@@ -134,7 +133,6 @@ def play_game(
         The game the two players played.
     """
     game = args._shogi.Game()
-    game.v_value_log = []
     game.q_value_log = []
     game.visit_count_log = []
     game.z_weight_log = []
@@ -162,7 +160,6 @@ def play_game(
                 if mate_moves is not None:
                     for i, m in enumerate(mate_moves):
                         game.apply(m)
-                        game.v_value_log.append(1. if i % 2 == 0 else -1.)
                         game.q_value_log.append(1. if i % 2 == 0 else -1.)
                         game.visit_count_log.append({})
                         game.z_weight_log.append(0.)
@@ -193,7 +190,6 @@ def play_game(
             for m, v in
             player_dump.get_visit_counts(include_random=False).items()
         }
-        game.v_value_log.append(player_dump.get_value())
         game.q_value_log.append(
             player_dump.get_q_value(greedy_depth=args.mcts_q_greedy_depth))
         game.visit_count_log.append(visit_count)
