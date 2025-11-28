@@ -1,7 +1,7 @@
 #ifndef VSHOGI_COMMON_GENERATORS_DROP_HPP
 #define VSHOGI_COMMON_GENERATORS_DROP_HPP
 
-#include "vshogi/common/bitboard.hpp"
+#include "vshogi/common/bitboard_traits.hpp"
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/generators/gentype.hpp"
 #include "vshogi/common/piece_traits.hpp"
@@ -31,10 +31,11 @@ class DropMoveGenerator
 {
 private:
     using C = Configuration<P>;
-    using BitSquareIterator = typename BitBoard<P>::Iterator;
     using PieceType = typename C::PieceType;
     using Square = typename C::Square;
     using PT = PieceTraits<P>;
+    using BT = BitboardTraits<P>;
+    using BitSquareIterator = typename BT::Iterator;
 
 private:
     const State<P>& m_state;
@@ -92,13 +93,14 @@ private:
         const auto t = m_state.get_turn();
         const auto p = PT::make_piece(t, m_pt_iter);
         if (m_state.in_check()) {
-            const auto mask = BitBoard<P>::get_line_segment(
+            const auto mask = BT::get_mask_between(
                 m_state.find_checker_square(), b.get_king_square(t));
-            m_sq_iter = b.template compute_droppable < GenType
-                        == GenEnum::CHECK > (p, mask).iterator();
+            m_sq_iter = BT::iterator(
+                b.template compute_droppable < GenType
+                == GenEnum::CHECK > (p, mask));
         } else {
-            m_sq_iter = b.template compute_droppable < GenType
-                        == GenEnum::CHECK > (p).iterator();
+            m_sq_iter = BT::iterator(
+                b.template compute_droppable < GenType == GenEnum::CHECK > (p));
         }
     }
     void init_sq_iter(const Square begin)
@@ -135,11 +137,12 @@ class DropMoveGenerator<P, GenEnum::EVADE>
 {
 private:
     using C = Configuration<P>;
+    using BT = BitboardTraits<P>;
     using ST = SquareTraits<P>;
     using PT = PieceTraits<P>;
     using PieceType = typename C::PieceType;
     using Square = typename C::Square;
-    using BitSquareIterator = typename BitBoard<P>::Iterator;
+    using BitSquareIterator = typename BT::Iterator;
     static constexpr auto pt_end
         = static_cast<PieceType>(C::num_stand_piece_types);
 

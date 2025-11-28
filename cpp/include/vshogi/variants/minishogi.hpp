@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "vshogi/common/bitboard.hpp"
+#include "vshogi/common/bitboard_traits.hpp"
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/config.hpp"
@@ -132,8 +132,8 @@ struct Parameters
 using Config = vshogi::Configuration<Parameters>;
 using PieceTraits = vshogi::PieceTraits<Parameters>;
 using SquareTraits = vshogi::SquareTraits<Parameters>;
+using BitboardTraits = vshogi::BitboardTraits<Parameters>;
 using Move = vshogi::Move<Parameters>;
-using BitBoard = vshogi::BitBoard<Parameters>;
 using Magic = vshogi::Magic<Parameters>;
 using Board = vshogi::Board<Parameters>;
 using Stand = vshogi::Stand<Parameters>;
@@ -141,54 +141,36 @@ using BlackWhiteStands = vshogi::BlackWhiteStands<Parameters>;
 using State = vshogi::State<Parameters>;
 using LegalMoveGenerator = vshogi::MoveGenerator<Parameters, GenEnum::LEGAL>;
 using Game = vshogi::Game<Parameters>;
+using bitboard_t = typename Config::bitboard_t;
 static_assert(FU == Config::FU);
 static_assert(OU == Config::OU);
 static_assert(NA == Config::NA);
 static_assert(VOID == Config::VOID);
 
-constexpr BitBoard bb_na = BitBoard();
-constexpr BitBoard bb_1a = BitBoard::from_square<SQ_1A>();
-constexpr BitBoard bb_1b = BitBoard::from_square<SQ_1B>();
-constexpr BitBoard bb_1c = BitBoard::from_square<SQ_1C>();
-constexpr BitBoard bb_1d = BitBoard::from_square<SQ_1D>();
-constexpr BitBoard bb_1e = BitBoard::from_square<SQ_1E>();
-constexpr BitBoard bb_2a = BitBoard::from_square<SQ_2A>();
-constexpr BitBoard bb_2b = BitBoard::from_square<SQ_2B>();
-constexpr BitBoard bb_2c = BitBoard::from_square<SQ_2C>();
-constexpr BitBoard bb_2d = BitBoard::from_square<SQ_2D>();
-constexpr BitBoard bb_2e = BitBoard::from_square<SQ_2E>();
-constexpr BitBoard bb_3a = BitBoard::from_square<SQ_3A>();
-constexpr BitBoard bb_3b = BitBoard::from_square<SQ_3B>();
-constexpr BitBoard bb_3c = BitBoard::from_square<SQ_3C>();
-constexpr BitBoard bb_3d = BitBoard::from_square<SQ_3D>();
-constexpr BitBoard bb_3e = BitBoard::from_square<SQ_3E>();
-constexpr BitBoard bb_4a = BitBoard::from_square<SQ_4A>();
-constexpr BitBoard bb_4b = BitBoard::from_square<SQ_4B>();
-constexpr BitBoard bb_4c = BitBoard::from_square<SQ_4C>();
-constexpr BitBoard bb_4d = BitBoard::from_square<SQ_4D>();
-constexpr BitBoard bb_4e = BitBoard::from_square<SQ_4E>();
-constexpr BitBoard bb_5a = BitBoard::from_square<SQ_5A>();
-constexpr BitBoard bb_5b = BitBoard::from_square<SQ_5B>();
-constexpr BitBoard bb_5c = BitBoard::from_square<SQ_5C>();
-constexpr BitBoard bb_5d = BitBoard::from_square<SQ_5D>();
-constexpr BitBoard bb_5e = BitBoard::from_square<SQ_5E>();
-
-constexpr BitBoard bb_ranka = bb_1a | bb_2a | bb_3a | bb_4a | bb_5a;
-constexpr BitBoard bb_rankb = bb_1b | bb_2b | bb_3b | bb_4b | bb_5b;
-constexpr BitBoard bb_rankc = bb_1c | bb_2c | bb_3c | bb_4c | bb_5c;
-constexpr BitBoard bb_rankd = bb_1d | bb_2d | bb_3d | bb_4d | bb_5d;
-constexpr BitBoard bb_ranke = bb_1e | bb_2e | bb_3e | bb_4e | bb_5e;
-
-constexpr BitBoard bb_file1 = bb_1a | bb_1b | bb_1c | bb_1d | bb_1e;
-constexpr BitBoard bb_file2 = bb_2a | bb_2b | bb_2c | bb_2d | bb_2e;
-constexpr BitBoard bb_file3 = bb_3a | bb_3b | bb_3c | bb_3d | bb_3e;
-constexpr BitBoard bb_file4 = bb_4a | bb_4b | bb_4c | bb_4d | bb_4e;
-constexpr BitBoard bb_file5 = bb_5a | bb_5b | bb_5c | bb_5d | bb_5e;
-
 } // namespace vshogi::minishogi
 
 namespace vshogi
 {
+
+template <>
+inline std::uint32_t
+    minishogi::BitboardTraits::table_attacks[minishogi::VOID + 1u]
+                                            [minishogi::SQ_NA + 1u]
+    = {};
+template <>
+inline std::uint32_t
+    minishogi::BitboardTraits::table_pre_reverse_attack[minishogi::SQ_NA + 1u]
+                                                       [minishogi::VOID + 1u]
+    = {};
+template <>
+inline std::uint32_t minishogi::BitboardTraits::table_ray[minishogi::SQ_NA + 1u]
+                                                         [DIR_NA + 1u]
+    = {};
+template <>
+inline std::uint32_t
+    minishogi::BitboardTraits::table_mask_between[minishogi::SQ_NA + 1u]
+                                                 [minishogi::SQ_NA + 1u]
+    = {};
 
 template <>
 inline const uint minishogi::Stand::shift_bits[] = {0, 3, 6, 9, 12};
@@ -231,38 +213,12 @@ inline std::uint64_t minishogi::BlackWhiteStands::zobrist_table
     = {};
 
 template <>
-inline minishogi::BitBoard minishogi::BitBoard::attacks_table
-    [minishogi::Config::num_colored_piece_types][minishogi::Config::num_squares]
-    = {};
-template <>
-inline minishogi::BitBoard
-    minishogi::BitBoard::ray_table[minishogi::Config::num_squares]
-                                  [minishogi::Config::num_dir]
-    = {};
-template <>
-inline minishogi::BitBoard
-    minishogi::BitBoard::line_segment_table[minishogi::Config::num_squares]
-                                           [minishogi::Config::num_squares]
-    = {};
-template <>
-inline minishogi::BitBoard
-    minishogi::BitBoard::neighbor_table[num_colors]
-                                       [minishogi::Config::num_squares]
-    = {};
-template <>
-inline minishogi::BitBoard minishogi::BitBoard::neighbor_2nd_table
-    [minishogi::Config::num_squares][minishogi::Config::num_colored_piece_types]
-    = {};
-
-template <>
 inline std::uint64_t minishogi::Board::zobrist_table
-    [minishogi::Config::num_squares]
-    [num_colors * minishogi::Config::num_piece_types + 1]
+    [minishogi::SQ_NA][num_colors * minishogi::Config::num_piece_types + 1]
     = {};
 
 template <>
-inline const std::uint32_t
-    minishogi::Magic::premask_adjacent[minishogi::Config::num_squares]
+inline const std::uint32_t minishogi::Magic::premask_adjacent[minishogi::SQ_NA]
     = {
         0x0000842e, 0x0001084c, 0x0002108a, 0x00042106, 0x0008420e,
         0x000085c0, 0x00010980, 0x00021140, 0x000420c0, 0x000841c0,
@@ -271,8 +227,7 @@ inline const std::uint32_t
         0x00e08420, 0x00c10840, 0x00a21080, 0x00642100, 0x00e84200,
 };
 template <>
-inline const std::uint32_t
-    minishogi::Magic::premask_diagonal[minishogi::Config::num_squares]
+inline const std::uint32_t minishogi::Magic::premask_diagonal[minishogi::SQ_NA]
     = {
         0x00041040, 0x00002080, 0x00000140, 0x00000880, 0x00011100,
         0x00020800, 0x00041000, 0x00002800, 0x00011000, 0x00022000,
@@ -282,7 +237,7 @@ inline const std::uint32_t
 };
 template <>
 inline const std::uint32_t
-    minishogi::Magic::magic_number_adjacent[minishogi::Config::num_squares]
+    minishogi::Magic::magic_number_adjacent[minishogi::SQ_NA]
     = {
         0x24208005, 0x42841008, 0x62081008, 0x22040405, 0x10081700,
         0x20504014, 0x20208c04, 0x02182008, 0x02440140, 0x01219110,
@@ -292,7 +247,7 @@ inline const std::uint32_t
 };
 template <>
 inline const std::uint32_t
-    minishogi::Magic::magic_number_diagonal[minishogi::Config::num_squares]
+    minishogi::Magic::magic_number_diagonal[minishogi::SQ_NA]
     = {
         0x45084810, 0x82810004, 0x04881240, 0x0c840001, 0x801290a0,
         0x09501000, 0x00040400, 0x0c040000, 0x20442088, 0x0040a000,
@@ -301,12 +256,12 @@ inline const std::uint32_t
         0x08814108, 0x80090800, 0xa0084800, 0x00101402, 0xa8881000,
 };
 template <>
-inline minishogi::BitBoard minishogi::Magic::attack_table_adjacent
-    [minishogi::Config::num_squares][minishogi::Magic::table_size_adjacent]
+inline minishogi::bitboard_t minishogi::Magic::attack_table_adjacent
+    [minishogi::SQ_NA][minishogi::Magic::table_size_adjacent]
     = {};
 template <>
-inline minishogi::BitBoard minishogi::Magic::attack_table_diagonal
-    [minishogi::Config::num_squares][minishogi::Magic::table_size_diagonal]
+inline minishogi::bitboard_t minishogi::Magic::attack_table_diagonal
+    [minishogi::SQ_NA][minishogi::Magic::table_size_diagonal]
     = {};
 
 } // namespace vshogi

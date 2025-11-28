@@ -137,7 +137,7 @@ void export_judkins_shogi(py::module& m)
 {
     js::SquareTraits::init_tables();
     js::BlackWhiteStands::init_tables();
-    js::BitBoard::init_tables();
+    js::BitboardTraits::init_tables();
     js::Board::init_tables();
     js::Magic::init_tables();
 

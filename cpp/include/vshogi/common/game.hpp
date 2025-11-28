@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "vshogi/common/bitboard.hpp"
+#include "vshogi/common/bitboard_traits.hpp"
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/direction.hpp"
@@ -29,8 +29,10 @@ private:
     using File = typename C::File;
     using PieceType = typename C::PieceType;
     using Piece = typename C::Piece;
+    using BT = BitboardTraits<P>;
     using PT = PieceTraits<P>;
     using ST = SquareTraits<P>;
+    using bitboard_t = typename C::bitboard_t;
 
 public:
     static constexpr uint num_ranks = C::num_ranks;
@@ -72,8 +74,8 @@ public:
         const auto enemy_king_sq = b.get_king_square(~t);
         if (enemy_king_sq == C::SQ_NA)
             return;
-        for (auto src : b.get_occupied(t).iterator()) {
-            if (b.get_attacks_by_nocheck(src).is_one(enemy_king_sq)) {
+        for (auto src : BT::iterator(b.get_occupied(t))) {
+            if (BT::is_one(b.get_attack_at(src), enemy_king_sq)) {
                 m_result = (t == BLACK) ? BLACK_WIN : WHITE_WIN;
                 return;
             }
@@ -518,9 +520,9 @@ public:
         if (!ST::in_promotion_zone(board.get_king_square(turn), turn))
             return false;
 
-        const auto promo_zone_mask = BitBoard<P>::get_promotion_zone(turn);
+        const auto promo_zone_mask = BT::promotion_zone(turn);
         const auto piece_mask = (promo_zone_mask & board.get_occupied(turn));
-        const uint num_pieces_in_zone = piece_mask.hamming_weight();
+        const uint num_pieces_in_zone = hamming_weight(piece_mask);
 
         // (3) The declaring side has 10 or more pieces other than the King in
         // the third rank or beyond.
@@ -536,11 +538,11 @@ public:
     }
 
 private:
-    uint count_point_of(const ColorEnum& c, const BitBoard<P>& mask) const
+    uint count_point_of(const ColorEnum& c, const bitboard_t& mask) const
     {
         uint out = 0;
         const Board<P>& board = get_board();
-        for (auto sq : mask.iterator())
+        for (auto sq : BT::iterator(mask))
             out += PT::get_point(board[sq]);
         const auto& stand = get_stand(c);
         for (auto pt : C::stand_piece_type_iterator()) {

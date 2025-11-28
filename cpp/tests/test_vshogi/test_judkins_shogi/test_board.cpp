@@ -6,6 +6,7 @@ namespace test_vshogi::test_judkins_shogi
 {
 
 using namespace vshogi::judkins_shogi;
+using BT = vshogi::BitboardTraits<Parameters>;
 
 TEST_GROUP (judkins_shogi_board) {
 };
@@ -132,8 +133,7 @@ TEST(judkins_shogi_board, find_pinned)
 {
     const auto b = Board("1b3+r/6/3P1P/6/1r1P1K/6 b");
     const auto actual = b.find_pinned(vshogi::BLACK);
-    const auto expect = bb_3c | bb_1c | bb_3e;
-    CHECK_EQUAL(expect.value(), actual.value());
+    CHECK_EQUAL(0b000000000000000000010100000000000100u, actual);
 }
 
 TEST(judkins_shogi_board, find_sliding_attacker)
@@ -169,14 +169,14 @@ TEST(judkins_shogi_board, compute_movable_to)
     {
         const auto b = Board("6/6/6/4n1/6/6");
         const auto actual
-            = b.compute_movable_to(SQ_1F, vshogi::WHITE, ~BitBoard());
-        CHECK_EQUAL(bb_2d.value(), actual.value());
+            = b.compute_movable_to(SQ_1F, vshogi::WHITE, BT::full());
+        CHECK_EQUAL(BT::from_square(SQ_2D), actual);
     }
     {
         const auto b = Board("6/6/6/4n1/6/6");
         const auto actual
-            = b.compute_movable_to(SQ_1F, vshogi::WHITE, bb_ranka);
-        CHECK_EQUAL(bb_na.value(), actual.value());
+            = b.compute_movable_to(SQ_1F, vshogi::WHITE, BT::from_rank(RANK1));
+        CHECK_EQUAL(0, actual);
     }
 }
 

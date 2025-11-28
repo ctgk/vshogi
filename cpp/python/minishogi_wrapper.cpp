@@ -112,7 +112,7 @@ void export_minishogi(py::module& m)
 {
     ms::SquareTraits::init_tables();
     ms::BlackWhiteStands::init_tables();
-    ms::BitBoard::init_tables();
+    ms::BitboardTraits::init_tables();
     ms::Board::init_tables();
     ms::Magic::init_tables();
 

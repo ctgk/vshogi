@@ -6,6 +6,10 @@ namespace test_vshogi::test_shogi
 {
 
 using namespace vshogi::shogi;
+using namespace vshogi;
+using Board = vshogi::shogi::Board;
+using BT = vshogi::shogi::BitboardTraits;
+using PT = vshogi::shogi::PieceTraits;
 
 TEST_GROUP (test_shogi_board) {
 };
@@ -63,42 +67,38 @@ TEST(test_shogi_board, find_pinned)
         // not pinned because KA does not attack to the north direction.
         const auto b = Board("8k/8g/9/9/9/9/9/9/8B");
         const auto actual = b.find_pinned(vshogi::WHITE);
-        const auto expect = bb_na;
-        CHECK_TRUE(expect == actual);
+        CHECK_TRUE(0u == actual);
     }
     {
         // pinned because KY does attack to the north direction.
         const auto b = Board("8k/8g/9/9/9/9/9/9/8L");
         const auto actual = b.find_pinned(vshogi::WHITE);
-        const auto expect = bb_1b;
-        CHECK_TRUE(expect == actual);
+        CHECK_TRUE(BT::from_square(SQ_1B) == actual);
     }
     {
         // no pinned pieces because there is no pieces in between
         const auto b = Board("8k/9/9/9/9/9/9/9/8L");
         const auto actual = b.find_pinned(vshogi::WHITE);
-        const auto expect = bb_na;
-        CHECK_TRUE(expect == actual);
+        CHECK_TRUE(0u == actual);
     }
     {
         // no pinned pieces because there are two ally pieces in between
         const auto b = Board("8k/8g/8g/9/9/9/9/9/8L");
         const auto actual = b.find_pinned(vshogi::WHITE);
-        const auto expect = bb_na;
-        CHECK_TRUE(expect == actual);
+        CHECK_TRUE(0u == actual);
     }
     {
         // no pinned pieces because there are one ally and one enemy piece
         const auto b = Board("8k/8g/8G/9/9/9/9/9/8L");
         const auto actual = b.find_pinned(vshogi::WHITE);
-        const auto expect = bb_na;
-        CHECK_TRUE(expect == actual);
+        CHECK_TRUE(0u == actual);
     }
     {
         const auto b = Board("4b3l/9/6P1P/9/4r1P1K/9/9/9/9");
         const auto actual = b.find_pinned(vshogi::BLACK);
-        const auto expect = bb_3c | bb_1c | bb_3e;
-        CHECK_TRUE(expect.value() == actual.value());
+        const auto expect = BT::from_square(SQ_3C) | BT::from_square(SQ_1C)
+                            | BT::from_square(SQ_3E);
+        CHECK_TRUE(expect == actual);
     }
 }
 
@@ -107,31 +107,31 @@ TEST(test_shogi_board, find_cover)
     {
         const auto b = Board("8k/9/9/9/9/9/9/8G/8L");
         const auto actual = b.find_cover(vshogi::BLACK);
-        CHECK_TRUE(bb_1h == actual);
+        CHECK_TRUE(BT::from_square(SQ_1H) == actual);
     }
     {
         // no cover because no pieces in between king and the attacker
         const auto b = Board("8k/9/9/9/9/9/9/9/8L");
-        const auto actual = b.find_cover(vshogi::BLACK);
-        CHECK_TRUE(bb_na == actual);
+        const auto actual = b.find_cover(BLACK);
+        CHECK_TRUE(0u == actual);
     }
     {
         // no cover because the blocker is not ally piece
         const auto b = Board("8k/9/9/9/9/9/9/8g/8L");
-        const auto actual = b.find_cover(vshogi::BLACK);
-        CHECK_TRUE(bb_na == actual);
+        const auto actual = b.find_cover(BLACK);
+        CHECK_TRUE(0u == actual);
     }
     {
         // no cover because two ally blockers
         const auto b = Board("8k/9/9/9/9/9/8S/8G/8L");
-        const auto actual = b.find_cover(vshogi::BLACK);
-        CHECK_TRUE(bb_na == actual);
+        const auto actual = b.find_cover(BLACK);
+        CHECK_TRUE(0u == actual);
     }
     {
         // no cover because one ally and one enemy blocker
         const auto b = Board("8k/9/9/9/9/9/8s/8G/8L");
-        const auto actual = b.find_cover(vshogi::BLACK);
-        CHECK_TRUE(bb_na == actual);
+        const auto actual = b.find_cover(BLACK);
+        CHECK_TRUE(0u == actual);
     }
 }
 
@@ -139,32 +139,27 @@ TEST(test_shogi_board, find_sliding_attacker)
 {
     {
         const auto b = Board("9/9/9/9/9/9/9/9/9");
-        const auto actual
-            = b.find_sliding_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
+        const auto actual = b.find_sliding_attacker(BLACK, SQ_1A, DIR_S);
         CHECK_EQUAL(SQ_NA, actual);
     }
     {
         const auto b = Board("9/9/9/9/9/9/9/9/8L");
-        const auto actual
-            = b.find_sliding_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
+        const auto actual = b.find_sliding_attacker(BLACK, SQ_1A, DIR_S);
         CHECK_EQUAL(SQ_1I, actual);
     }
     {
         const auto b = Board("9/9/9/8P/9/9/9/9/8L");
-        const auto actual
-            = b.find_sliding_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
+        const auto actual = b.find_sliding_attacker(BLACK, SQ_1A, DIR_S);
         CHECK_EQUAL(SQ_NA, actual);
     }
     {
         const auto b = Board("9/9/9/8P/9/9/9/9/8L");
-        const auto actual = b.find_sliding_attacker(
-            vshogi::BLACK, SQ_1A, vshogi::DIR_S, SQ_1D);
+        const auto actual = b.find_sliding_attacker(BLACK, SQ_1A, DIR_S, SQ_1D);
         CHECK_EQUAL(SQ_1I, actual);
     }
     {
         const auto b = Board("9/9/9/8P/9/9/9/8l/8L");
-        const auto actual = b.find_sliding_attacker(
-            vshogi::BLACK, SQ_1A, vshogi::DIR_S, SQ_1D);
+        const auto actual = b.find_sliding_attacker(BLACK, SQ_1A, DIR_S, SQ_1D);
         CHECK_EQUAL(SQ_NA, actual);
     }
 }
@@ -173,8 +168,10 @@ TEST(test_shogi_board, compute_droppable)
 {
     const auto b = Board("9/9/9/9/9/9/P1P1P1P1P/9/9");
     const auto actual = b.compute_droppable<false>(B_FU);
-    CHECK_TRUE(
-        ((bb_file2 | bb_file4 | bb_file6 | bb_file8) & ~bb_ranka) == actual);
+    const auto expect = (BT::from_file(FILE2) | BT::from_file(FILE4)
+                         | BT::from_file(FILE6) | BT::from_file(FILE8))
+                        & BT::invert(BT::from_rank(RANK1));
+    CHECK_TRUE(expect == actual);
 }
 
 TEST(test_shogi_board, get_occupied_by_slider)
@@ -182,20 +179,21 @@ TEST(test_shogi_board, get_occupied_by_slider)
     {
         const auto b = Board();
         CHECK_TRUE(
-            (bb_1a | bb_9a | bb_2b | bb_8b)
-            == b.get_occupied_by_slider(vshogi::WHITE));
+            (BT::from_square(SQ_1A) | BT::from_square(SQ_9A)
+             | BT::from_square(SQ_2B) | BT::from_square(SQ_8B))
+            == b.get_occupied_by_slider(WHITE));
     }
     {
         auto b = Board("9/9/9/9/9/9/9/9/8L");
-        CHECK_TRUE(bb_1i == b.get_occupied_by_slider(vshogi::BLACK));
-        b.place_at(SQ_1A, PieceTraits::promote_nocheck(b.pop_from(SQ_1I)));
-        CHECK_TRUE(bb_na == b.get_occupied_by_slider(vshogi::BLACK));
+        CHECK_TRUE(BT::from_square(SQ_1I) == b.get_occupied_by_slider(BLACK));
+        b.place_at(SQ_1A, PT::promote_nocheck(b.pop_from(SQ_1I)));
+        CHECK_TRUE(0u == b.get_occupied_by_slider(BLACK));
     }
     {
         auto b = Board("9/9/9/9/9/9/9/9/8L");
-        CHECK_TRUE(bb_1i == b.get_occupied_by_slider(vshogi::BLACK));
+        CHECK_TRUE(BT::from_square(SQ_1I) == b.get_occupied_by_slider(BLACK));
         b.place_at(SQ_1D, b.pop_from(SQ_1I));
-        CHECK_TRUE(bb_1d == b.get_occupied_by_slider(vshogi::BLACK));
+        CHECK_TRUE(BT::from_square(SQ_1D) == b.get_occupied_by_slider(BLACK));
     }
 }
 

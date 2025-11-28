@@ -10,6 +10,8 @@
 namespace test_vshogi::test_minishogi
 {
 
+using BT = vshogi::BitboardTraits<vshogi::minishogi::Parameters>;
+
 TEST_GROUP (test_minishogi_magic) {
     std::uint32_t random_uint32()
     {
@@ -21,18 +23,18 @@ TEST_GROUP (test_minishogi_magic) {
     {
         return random_uint32() & random_uint32() & random_uint32();
     }
-    vshogi::minishogi::BitBoard get_premask(
+    vshogi::minishogi::bitboard_t get_premask(
         const vshogi::minishogi::SquareEnum& sq,
         const std::vector<vshogi::DirectionEnum>& directions)
     {
         using namespace vshogi::minishogi;
-        vshogi::minishogi::BitBoard out{};
+        vshogi::minishogi::bitboard_t out{};
         for (auto&& dir : directions) {
             for (auto s = SquareTraits::shift(sq, dir);;) {
                 const auto next = SquareTraits::shift(s, dir);
                 if (next == SQ_NA)
                     break;
-                out |= BitBoard::from_square(s);
+                out |= BitboardTraits::from_square(s);
                 s = next;
             }
         }
@@ -45,35 +47,34 @@ TEST_GROUP (test_minishogi_magic) {
     {
         using namespace vshogi::minishogi;
         constexpr uint max_num_unique_occupancies = (1u << Shift);
-        const BitBoard premask = get_premask(sq, directions);
-        const uint num_relevant_squares = premask.hamming_weight();
+        const bitboard_t premask = get_premask(sq, directions);
+        const uint num_relevant_squares = vshogi::hamming_weight(premask);
 
         uint relevant_square_locations[Config::num_squares] = {};
-        BitBoard occupancies[max_num_unique_occupancies] = {};
-        BitBoard attacks[max_num_unique_occupancies] = {};
+        bitboard_t occupancies[max_num_unique_occupancies] = {};
+        bitboard_t attacks[max_num_unique_occupancies] = {};
 
         for (uint ii = 0, jj = 0; ii < Config::num_squares; ++ii) {
-            if (premask.is_one(static_cast<SquareEnum>(ii)))
+            if (BT::is_one(premask, static_cast<SquareEnum>(ii)))
                 relevant_square_locations[jj++] = ii;
         }
         for (uint ii = (1u << num_relevant_squares); ii--;) {
             occupancies[ii] = Magic::get_occupancy(
                 ii, num_relevant_squares, relevant_square_locations);
-            attacks[ii] = BitBoard();
+            attacks[ii] = static_cast<bitboard_t>(0);
             for (auto&& dir : directions) {
-                attacks[ii]
-                    |= BitBoard::compute_ray_to(sq, dir, occupancies[ii]);
+                attacks[ii] |= Magic::compute_ray_to(sq, dir, occupancies[ii]);
             }
         }
 
         for (uint kk = 10000; kk--;) {
-            BitBoard used_attacks[max_num_unique_occupancies] = {};
+            bitboard_t used_attacks[max_num_unique_occupancies] = {};
             const std::uint32_t magic = sparse_random();
             bool found_magic = true;
             for (uint ii = (1u << num_relevant_squares); ii--;) {
                 const auto index = Magic::to_magic_table_index<Shift>(
-                    occupancies[ii].value(), magic);
-                if (used_attacks[index].value() == 0u) {
+                    occupancies[ii], magic);
+                if (used_attacks[index] == 0u) {
                     used_attacks[index] = attacks[ii];
                 } else if (used_attacks[index] != attacks[ii]) {
                     found_magic = false;
@@ -110,22 +111,12 @@ TEST(test_minishogi_magic, get_adjacent_attack)
     using namespace vshogi::minishogi;
     {
         const auto actual = Magic::get_adjacent_attack(SQ_3C);
-        CHECK_EQUAL((bb_file3 | bb_rankc).clear(SQ_3C).value(), actual.value());
+        CHECK_EQUAL(0b0010000100110110010000100u, actual);
     }
     {
-        const SquareEnum sq_list[] = {SQ_5A, SQ_5A, SQ_3C};
-        const BitBoard occ_list[] = {BitBoard(), bb_5b, bb_1a};
-        for (auto ii = sizeof(sq_list) / sizeof(sq_list[0]); ii--;) {
-            const auto sq = sq_list[ii];
-            const auto occ = occ_list[ii];
-            const auto expect
-                = BitBoard::compute_ray_to(sq, vshogi::DIR_N, occ)
-                  | BitBoard::compute_ray_to(sq, vshogi::DIR_W, occ)
-                  | BitBoard::compute_ray_to(sq, vshogi::DIR_E, occ)
-                  | BitBoard::compute_ray_to(sq, vshogi::DIR_S, occ);
-            const auto actual = Magic::get_adjacent_attack(sq, occ);
-            CHECK_EQUAL(expect.value(), actual.value());
-        }
+        const auto actual
+            = Magic::get_adjacent_attack(SQ_1A, BT::from_square(SQ_3A));
+        CHECK_EQUAL(0b0000000000000010000111110u, actual);
     }
 }
 
@@ -134,26 +125,12 @@ TEST(test_minishogi_magic, get_diagonal_attack)
     using namespace vshogi::minishogi;
     {
         const auto actual = Magic::get_diagonal_attack(SQ_3C);
-        CHECK_EQUAL(
-            (bb_1a | bb_2b | bb_4d | bb_5e | bb_5a | bb_4b | bb_2d | bb_1e)
-                .value(),
-            actual.value());
+        CHECK_EQUAL(0b1000101010000000101010001u, actual);
     }
     {
-        const SquareEnum sq_list[] = {SQ_5A, SQ_5A, SQ_3C, SQ_3C};
-        const BitBoard occ_list[]
-            = {BitBoard(), bb_4b, bb_2b | bb_2d, bb_4b | bb_2b | bb_2d};
-        for (auto ii = sizeof(sq_list) / sizeof(sq_list[0]); ii--;) {
-            const auto sq = sq_list[ii];
-            const auto occ = occ_list[ii];
-            const auto expect
-                = BitBoard::compute_ray_to(sq, vshogi::DIR_NW, occ)
-                  | BitBoard::compute_ray_to(sq, vshogi::DIR_NE, occ)
-                  | BitBoard::compute_ray_to(sq, vshogi::DIR_SW, occ)
-                  | BitBoard::compute_ray_to(sq, vshogi::DIR_SE, occ);
-            const auto actual = Magic::get_diagonal_attack(sq, occ);
-            CHECK_EQUAL(expect.value(), actual.value());
-        }
+        const auto actual = Magic::get_diagonal_attack(
+            SQ_2C, BT::from_square(SQ_3B) | BT::from_square(SQ_3D));
+        CHECK_EQUAL(0b0000000000010100000001010u, actual);
     }
 }
 

@@ -8,6 +8,7 @@ namespace test_vshogi::test_shogi
 {
 
 using namespace vshogi::shogi;
+using BT = vshogi::shogi::BitboardTraits;
 
 TEST_GROUP (state) {
 };
@@ -71,13 +72,14 @@ TEST(state, compute_king_movable)
     {
         const auto s = State();
         const auto actual = s.compute_king_movable();
-        const auto expect = bb_4h | bb_5h | bb_6h;
+        const auto expect = BT::from_square(SQ_4H) | BT::from_square(SQ_5H)
+                            | BT::from_square(SQ_6H);
         CHECK_TRUE(expect == actual);
     }
     {
         const auto s = State("9/9/9/9/9/9/PPPPPPPPP/3LRL3/LNSGKGSNL b -");
         const auto actual = s.compute_king_movable();
-        CHECK_TRUE(!actual.any());
+        CHECK_TRUE(actual == 0u);
     }
 }
 

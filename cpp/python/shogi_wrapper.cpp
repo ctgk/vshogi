@@ -238,7 +238,7 @@ void export_shogi(py::module& m)
     sg::SquareTraits::init_tables();
     sg::BlackWhiteStands::init_tables();
     sg::Board::init_tables();
-    sg::BitBoard::init_tables();
+    sg::BitboardTraits::init_tables();
     sg::Magic::init_tables();
 
     export_square_enum(m);

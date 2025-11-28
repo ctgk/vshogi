@@ -1,7 +1,7 @@
 #ifndef VSHOGI_COMMON_GENERATORS_KING_HPP
 #define VSHOGI_COMMON_GENERATORS_KING_HPP
 
-#include "vshogi/common/bitboard.hpp"
+#include "vshogi/common/bitboard_traits.hpp"
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/config.hpp"
@@ -17,13 +17,13 @@ class KingMoveGenerator
 {
 private:
     using C = Configuration<P>;
+    using BT = BitboardTraits<P>;
     using ST = SquareTraits<P>;
-    using BitSquareIterator = typename BitBoard<P>::Iterator;
     using Square = typename C::Square;
 
 private:
     const Square m_src; //!< King square
-    BitSquareIterator m_iter;
+    typename BT::Iterator m_iter;
 
 public:
     KingMoveGenerator(const State<P>& state)
@@ -39,14 +39,12 @@ public:
             if (checker_sq == C::SQ_NA) {
                 return;
             } else {
-                m_iter
-                    = state
-                          .compute_king_movable(~BitBoard<P>::get_line_segment(
-                              checker_sq, enemy_king_sq))
-                          .iterator();
+                const auto m = BT::invert(
+                    BT::get_mask_between(checker_sq, enemy_king_sq));
+                m_iter = BT::iterator(state.compute_king_movable(m));
             }
         } else {
-            m_iter = state.compute_king_movable().iterator();
+            m_iter = BT::iterator(state.compute_king_movable());
         }
     }
     KingMoveGenerator& operator++()

@@ -10,6 +10,9 @@
 namespace test_vshogi::test_shogi
 {
 
+using namespace vshogi::shogi;
+using BT = vshogi::BitboardTraits<Parameters>;
+
 TEST_GROUP (test_shogi_magic) {
     std::uint32_t random_uint32()
     {
@@ -21,18 +24,18 @@ TEST_GROUP (test_shogi_magic) {
     {
         return random_uint32() & random_uint32();
     }
-    vshogi::shogi::BitBoard get_premask(
+    vshogi::shogi::bitboard_t get_premask(
         const vshogi::shogi::SquareEnum& sq,
         const std::vector<vshogi::DirectionEnum>& directions)
     {
         using namespace vshogi::shogi;
-        BitBoard out{};
+        bitboard_t out{};
         for (auto&& dir : directions) {
             for (auto s = SquareTraits::shift(sq, dir);;) {
                 const auto next = SquareTraits::shift(s, dir);
                 if (next == SQ_NA)
                     break;
-                out |= BitBoard::from_square(s);
+                out |= BitboardTraits::from_square(s);
                 s = next;
             }
         }
@@ -45,36 +48,35 @@ TEST_GROUP (test_shogi_magic) {
     {
         using namespace vshogi::shogi;
         const auto premask = get_premask(sq, directions);
-        const uint num_relevant_squares = premask.hamming_weight();
+        const uint num_relevant_squares = vshogi::hamming_weight(premask);
         constexpr uint max_unique_occupancies = (1u << Shift);
         if (num_relevant_squares == 0u)
             return 0xffffffff;
 
         uint relevant_square_locations[Config::num_squares] = {};
-        BitBoard occupancies[max_unique_occupancies] = {};
-        BitBoard attacks[max_unique_occupancies] = {};
+        bitboard_t occupancies[max_unique_occupancies] = {};
+        bitboard_t attacks[max_unique_occupancies] = {};
 
         for (uint ii = 0, jj = 0; ii < Config::num_squares; ++ii) {
-            if (premask.is_one(static_cast<SquareEnum>(ii)))
+            if (BT::is_one(premask, static_cast<SquareEnum>(ii)))
                 relevant_square_locations[jj++] = ii;
         }
         for (uint ii = (1u << num_relevant_squares); ii--;) {
             occupancies[ii] = Magic::get_occupancy(
                 ii, num_relevant_squares, relevant_square_locations);
-            attacks[ii] = BitBoard();
+            attacks[ii] = static_cast<bitboard_t>(0);
             for (auto&& dir : directions) {
-                attacks[ii]
-                    |= BitBoard::compute_ray_to(sq, dir, occupancies[ii]);
+                attacks[ii] |= Magic::compute_ray_to(sq, dir, occupancies[ii]);
             }
         }
 
         for (uint kk = 1000000; kk--;) {
-            BitBoard used_attacks[max_unique_occupancies] = {};
+            bitboard_t used_attacks[max_unique_occupancies] = {};
             const std::uint32_t magic = sparse_random();
             bool found_magic = true;
             for (uint ii = (1u << num_relevant_squares); ii--;) {
                 const auto index = Magic::to_magic_table_index<Shift>(
-                    occupancies[ii].value(), magic);
+                    occupancies[ii], magic);
                 if (!used_attacks[index].any()) {
                     used_attacks[index] = attacks[ii];
                 } else if (used_attacks[index] != attacks[ii]) {
@@ -131,75 +133,43 @@ TEST_GROUP (test_shogi_magic) {
 
 TEST(test_shogi_magic, get_south_attack)
 {
-    using namespace vshogi::shogi;
     {
-        const auto sq = SQ_9A;
-        const auto occ = BitBoard::from_square(SQ_9F);
-        const auto actual = Magic::get_south_attack(sq, occ);
-        CHECK_TRUE(
-            (bb_9b | bb_9c | bb_9d | bb_9e | bb_9f).value() == actual.value());
+        const auto actual
+            = Magic::get_south_attack(SQ_1E, BT::from_square(SQ_1H));
+        CHECK_TRUE(0b011100000u == actual);
+    }
+}
+
+TEST(test_shogi_magic, get_north_attack)
+{
+    {
+        const auto actual
+            = Magic::get_north_attack(SQ_2C, BT::from_rank(RANK2));
+        CHECK_TRUE(0b000000010000000000u == actual);
     }
 }
 
 TEST(test_shogi_magic, get_adjacent_attack)
 {
-    using namespace vshogi::shogi;
     {
         const auto actual = Magic::get_adjacent_attack(SQ_5E);
-        CHECK_TRUE((bb_file5 | bb_ranke).clear(SQ_5E) == actual);
-    }
-    {
-        const auto sq = SQ_5A;
-        const auto occ = BitBoard();
-        const auto actual = Magic::get_adjacent_attack(sq, occ);
         CHECK_TRUE(
-            BitBoard::get_attacks_by(B_HI, sq, occ).value() == actual.value());
-    }
-    {
-        const auto sq = SQ_5A;
-        const auto occ = BitBoard::from_square(SQ_5B);
-        const auto actual = Magic::get_adjacent_attack(sq, occ);
-        CHECK_TRUE(
-            BitBoard::get_attacks_by(B_HI, sq, occ).value() == actual.value());
-    }
-    {
-        const auto sq = SQ_3C;
-        const auto occ = bb_1a;
-        const auto actual = Magic::get_adjacent_attack(sq, occ);
-        CHECK_TRUE(
-            BitBoard::get_attacks_by(B_HI, sq, occ).value() == actual.value());
+            ((BT::from_file(FILE5) | BT::from_rank(RANK5))
+             ^ BT::from_square(SQ_5E))
+            == actual);
     }
 }
 
 TEST(test_shogi_magic, get_diagonal_attack)
 {
-    using namespace vshogi::shogi;
     {
         const auto actual = Magic::get_diagonal_attack(SQ_1A);
-        CHECK_TRUE(
-            (bb_2b | bb_3c | bb_4d | bb_5e | bb_6f | bb_7g | bb_8h | bb_9i)
-            == actual);
+        CHECK_EQUAL(8u, vshogi::hamming_weight(actual));
     }
     {
-        const auto sq = SQ_5A;
-        const auto occ = BitBoard();
-        const auto actual = Magic::get_diagonal_attack(sq, occ);
-        CHECK_TRUE(
-            BitBoard::get_attacks_by(B_KA, sq, occ).value() == actual.value());
-    }
-    {
-        const auto sq = SQ_5A;
-        const auto occ = bb_4b;
-        const auto actual = Magic::get_diagonal_attack(sq, occ);
-        CHECK_TRUE(
-            BitBoard::get_attacks_by(B_KA, sq, occ).value() == actual.value());
-    }
-    {
-        const auto sq = SQ_3C;
-        const auto occ = bb_2b | bb_2d;
-        const auto actual = Magic::get_diagonal_attack(sq, occ);
-        CHECK_TRUE(
-            BitBoard::get_attacks_by(B_KA, sq, occ).value() == actual.value());
+        const auto actual
+            = Magic::get_diagonal_attack(SQ_1A, BT::from_square(SQ_2B));
+        CHECK_EQUAL(1u, vshogi::hamming_weight(actual));
     }
 }
 

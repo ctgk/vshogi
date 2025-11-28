@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "vshogi/common/bitboard.hpp"
+#include "vshogi/common/bitboard_traits.hpp"
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/game.hpp"
@@ -171,8 +171,8 @@ struct Parameters
 using Config = vshogi::Configuration<Parameters>;
 using PieceTraits = vshogi::PieceTraits<Parameters>;
 using SquareTraits = vshogi::SquareTraits<Parameters>;
+using BitboardTraits = vshogi::BitboardTraits<Parameters>;
 using Move = vshogi::Move<Parameters>;
-using BitBoard = vshogi::BitBoard<Parameters>;
 using Magic = vshogi::Magic<Parameters>;
 using Board = vshogi::Board<Parameters>;
 using Stand = vshogi::Stand<Parameters>;
@@ -180,118 +180,33 @@ using BlackWhiteStands = vshogi::BlackWhiteStands<Parameters>;
 using State = vshogi::State<Parameters>;
 using LegalMoveGenerator = vshogi::MoveGenerator<Parameters, GenEnum::LEGAL>;
 using Game = vshogi::Game<Parameters>;
+using bitboard_t = typename Config::bitboard_t;
 static_assert(FU == Config::FU);
 static_assert(OU == Config::OU);
 static_assert(NA == Config::NA);
 static_assert(VOID == Config::VOID);
 
-// clang-format off
-constexpr BitBoard bb_na = BitBoard();
-constexpr BitBoard bb_1a = BitBoard::from_square<SQ_1A>();
-constexpr BitBoard bb_1b = BitBoard::from_square<SQ_1B>();
-constexpr BitBoard bb_1c = BitBoard::from_square<SQ_1C>();
-constexpr BitBoard bb_1d = BitBoard::from_square<SQ_1D>();
-constexpr BitBoard bb_1e = BitBoard::from_square<SQ_1E>();
-constexpr BitBoard bb_1f = BitBoard::from_square<SQ_1F>();
-constexpr BitBoard bb_1g = BitBoard::from_square<SQ_1G>();
-constexpr BitBoard bb_1h = BitBoard::from_square<SQ_1H>();
-constexpr BitBoard bb_1i = BitBoard::from_square<SQ_1I>();
-constexpr BitBoard bb_2a = BitBoard::from_square<SQ_2A>();
-constexpr BitBoard bb_2b = BitBoard::from_square<SQ_2B>();
-constexpr BitBoard bb_2c = BitBoard::from_square<SQ_2C>();
-constexpr BitBoard bb_2d = BitBoard::from_square<SQ_2D>();
-constexpr BitBoard bb_2e = BitBoard::from_square<SQ_2E>();
-constexpr BitBoard bb_2f = BitBoard::from_square<SQ_2F>();
-constexpr BitBoard bb_2g = BitBoard::from_square<SQ_2G>();
-constexpr BitBoard bb_2h = BitBoard::from_square<SQ_2H>();
-constexpr BitBoard bb_2i = BitBoard::from_square<SQ_2I>();
-constexpr BitBoard bb_3a = BitBoard::from_square<SQ_3A>();
-constexpr BitBoard bb_3b = BitBoard::from_square<SQ_3B>();
-constexpr BitBoard bb_3c = BitBoard::from_square<SQ_3C>();
-constexpr BitBoard bb_3d = BitBoard::from_square<SQ_3D>();
-constexpr BitBoard bb_3e = BitBoard::from_square<SQ_3E>();
-constexpr BitBoard bb_3f = BitBoard::from_square<SQ_3F>();
-constexpr BitBoard bb_3g = BitBoard::from_square<SQ_3G>();
-constexpr BitBoard bb_3h = BitBoard::from_square<SQ_3H>();
-constexpr BitBoard bb_3i = BitBoard::from_square<SQ_3I>();
-constexpr BitBoard bb_4a = BitBoard::from_square<SQ_4A>();
-constexpr BitBoard bb_4b = BitBoard::from_square<SQ_4B>();
-constexpr BitBoard bb_4c = BitBoard::from_square<SQ_4C>();
-constexpr BitBoard bb_4d = BitBoard::from_square<SQ_4D>();
-constexpr BitBoard bb_4e = BitBoard::from_square<SQ_4E>();
-constexpr BitBoard bb_4f = BitBoard::from_square<SQ_4F>();
-constexpr BitBoard bb_4g = BitBoard::from_square<SQ_4G>();
-constexpr BitBoard bb_4h = BitBoard::from_square<SQ_4H>();
-constexpr BitBoard bb_4i = BitBoard::from_square<SQ_4I>();
-constexpr BitBoard bb_5a = BitBoard::from_square<SQ_5A>();
-constexpr BitBoard bb_5b = BitBoard::from_square<SQ_5B>();
-constexpr BitBoard bb_5c = BitBoard::from_square<SQ_5C>();
-constexpr BitBoard bb_5d = BitBoard::from_square<SQ_5D>();
-constexpr BitBoard bb_5e = BitBoard::from_square<SQ_5E>();
-constexpr BitBoard bb_5f = BitBoard::from_square<SQ_5F>();
-constexpr BitBoard bb_5g = BitBoard::from_square<SQ_5G>();
-constexpr BitBoard bb_5h = BitBoard::from_square<SQ_5H>();
-constexpr BitBoard bb_5i = BitBoard::from_square<SQ_5I>();
-constexpr BitBoard bb_6a = BitBoard::from_square<SQ_6A>();
-constexpr BitBoard bb_6b = BitBoard::from_square<SQ_6B>();
-constexpr BitBoard bb_6c = BitBoard::from_square<SQ_6C>();
-constexpr BitBoard bb_6d = BitBoard::from_square<SQ_6D>();
-constexpr BitBoard bb_6e = BitBoard::from_square<SQ_6E>();
-constexpr BitBoard bb_6f = BitBoard::from_square<SQ_6F>();
-constexpr BitBoard bb_6g = BitBoard::from_square<SQ_6G>();
-constexpr BitBoard bb_6h = BitBoard::from_square<SQ_6H>();
-constexpr BitBoard bb_6i = BitBoard::from_square<SQ_6I>();
-constexpr BitBoard bb_7a = BitBoard::from_square<SQ_7A>();
-constexpr BitBoard bb_7b = BitBoard::from_square<SQ_7B>();
-constexpr BitBoard bb_7c = BitBoard::from_square<SQ_7C>();
-constexpr BitBoard bb_7d = BitBoard::from_square<SQ_7D>();
-constexpr BitBoard bb_7e = BitBoard::from_square<SQ_7E>();
-constexpr BitBoard bb_7f = BitBoard::from_square<SQ_7F>();
-constexpr BitBoard bb_7g = BitBoard::from_square<SQ_7G>();
-constexpr BitBoard bb_7h = BitBoard::from_square<SQ_7H>();
-constexpr BitBoard bb_7i = BitBoard::from_square<SQ_7I>();
-constexpr BitBoard bb_8a = BitBoard::from_square<SQ_8A>();
-constexpr BitBoard bb_8b = BitBoard::from_square<SQ_8B>();
-constexpr BitBoard bb_8c = BitBoard::from_square<SQ_8C>();
-constexpr BitBoard bb_8d = BitBoard::from_square<SQ_8D>();
-constexpr BitBoard bb_8e = BitBoard::from_square<SQ_8E>();
-constexpr BitBoard bb_8f = BitBoard::from_square<SQ_8F>();
-constexpr BitBoard bb_8g = BitBoard::from_square<SQ_8G>();
-constexpr BitBoard bb_8h = BitBoard::from_square<SQ_8H>();
-constexpr BitBoard bb_8i = BitBoard::from_square<SQ_8I>();
-constexpr BitBoard bb_9a = BitBoard::from_square<SQ_9A>();
-constexpr BitBoard bb_9b = BitBoard::from_square<SQ_9B>();
-constexpr BitBoard bb_9c = BitBoard::from_square<SQ_9C>();
-constexpr BitBoard bb_9d = BitBoard::from_square<SQ_9D>();
-constexpr BitBoard bb_9e = BitBoard::from_square<SQ_9E>();
-constexpr BitBoard bb_9f = BitBoard::from_square<SQ_9F>();
-constexpr BitBoard bb_9g = BitBoard::from_square<SQ_9G>();
-constexpr BitBoard bb_9h = BitBoard::from_square<SQ_9H>();
-constexpr BitBoard bb_9i = BitBoard::from_square<SQ_9I>();
-constexpr BitBoard bb_file1 = bb_1a | bb_1b | bb_1c | bb_1d | bb_1e | bb_1f | bb_1g | bb_1h | bb_1i;
-constexpr BitBoard bb_file2 = bb_2a | bb_2b | bb_2c | bb_2d | bb_2e | bb_2f | bb_2g | bb_2h | bb_2i;
-constexpr BitBoard bb_file3 = bb_3a | bb_3b | bb_3c | bb_3d | bb_3e | bb_3f | bb_3g | bb_3h | bb_3i;
-constexpr BitBoard bb_file4 = bb_4a | bb_4b | bb_4c | bb_4d | bb_4e | bb_4f | bb_4g | bb_4h | bb_4i;
-constexpr BitBoard bb_file5 = bb_5a | bb_5b | bb_5c | bb_5d | bb_5e | bb_5f | bb_5g | bb_5h | bb_5i;
-constexpr BitBoard bb_file6 = bb_6a | bb_6b | bb_6c | bb_6d | bb_6e | bb_6f | bb_6g | bb_6h | bb_6i;
-constexpr BitBoard bb_file7 = bb_7a | bb_7b | bb_7c | bb_7d | bb_7e | bb_7f | bb_7g | bb_7h | bb_7i;
-constexpr BitBoard bb_file8 = bb_8a | bb_8b | bb_8c | bb_8d | bb_8e | bb_8f | bb_8g | bb_8h | bb_8i;
-constexpr BitBoard bb_file9 = bb_9a | bb_9b | bb_9c | bb_9d | bb_9e | bb_9f | bb_9g | bb_9h | bb_9i;
-constexpr BitBoard bb_ranka = bb_1a | bb_2a | bb_3a | bb_4a | bb_5a | bb_6a | bb_7a | bb_8a | bb_9a;
-constexpr BitBoard bb_rankb = bb_1b | bb_2b | bb_3b | bb_4b | bb_5b | bb_6b | bb_7b | bb_8b | bb_9b;
-constexpr BitBoard bb_rankc = bb_1c | bb_2c | bb_3c | bb_4c | bb_5c | bb_6c | bb_7c | bb_8c | bb_9c;
-constexpr BitBoard bb_rankd = bb_1d | bb_2d | bb_3d | bb_4d | bb_5d | bb_6d | bb_7d | bb_8d | bb_9d;
-constexpr BitBoard bb_ranke = bb_1e | bb_2e | bb_3e | bb_4e | bb_5e | bb_6e | bb_7e | bb_8e | bb_9e;
-constexpr BitBoard bb_rankf = bb_1f | bb_2f | bb_3f | bb_4f | bb_5f | bb_6f | bb_7f | bb_8f | bb_9f;
-constexpr BitBoard bb_rankg = bb_1g | bb_2g | bb_3g | bb_4g | bb_5g | bb_6g | bb_7g | bb_8g | bb_9g;
-constexpr BitBoard bb_rankh = bb_1h | bb_2h | bb_3h | bb_4h | bb_5h | bb_6h | bb_7h | bb_8h | bb_9h;
-constexpr BitBoard bb_ranki = bb_1i | bb_2i | bb_3i | bb_4i | bb_5i | bb_6i | bb_7i | bb_8i | bb_9i;
-// clang-format on
-
 } // namespace vshogi::shogi
 
 namespace vshogi
 {
+
+template <>
+inline uint128 shogi::BitboardTraits::table_attacks[shogi::VOID + 1u]
+                                                   [shogi::SQ_NA + 1u]
+    = {};
+template <>
+inline uint128
+    shogi::BitboardTraits::table_pre_reverse_attack[shogi::SQ_NA + 1u]
+                                                   [shogi::VOID + 1u]
+    = {};
+template <>
+inline uint128 shogi::BitboardTraits::table_ray[shogi::SQ_NA + 1u][DIR_NA + 1u]
+    = {};
+template <>
+inline uint128 shogi::BitboardTraits::table_mask_between[shogi::SQ_NA + 1u]
+                                                        [shogi::SQ_NA + 1u]
+    = {};
 
 template <>
 inline const uint shogi::Stand::shift_bits[] = {0, 6, 10, 14, 18, 21, 24};
@@ -344,37 +259,11 @@ inline std::uint64_t shogi::BlackWhiteStands::zobrist_table
 
 template <>
 inline std::uint64_t vshogi::shogi::Board::zobrist_table
-    [shogi::Config::num_squares]
-    [num_colors * shogi::Config::num_piece_types + 1]
+    [shogi::SQ_NA][num_colors * shogi::Config::num_piece_types + 1]
     = {};
 
 template <>
-inline shogi::BitBoard
-    shogi::BitBoard::attacks_table[shogi::Config::num_colored_piece_types]
-                                  [shogi::Config::num_squares]
-    = {};
-
-template <>
-inline shogi::BitBoard shogi::BitBoard::ray_table[shogi::Config::num_squares]
-                                                 [shogi::Config::num_dir]
-    = {};
-template <>
-inline shogi::BitBoard
-    shogi::BitBoard::line_segment_table[shogi::Config::num_squares]
-                                       [shogi::Config::num_squares]
-    = {};
-template <>
-inline shogi::BitBoard
-    shogi::BitBoard::neighbor_table[num_colors][shogi::Config::num_squares]
-    = {};
-template <>
-inline shogi::BitBoard
-    shogi::BitBoard::neighbor_2nd_table[shogi::Config::num_squares]
-                                       [shogi::Config::num_colored_piece_types]
-    = {};
-
-template <>
-inline const uint128 shogi::Magic::premask_north[shogi::Config::num_squares] = {
+inline const uint128 shogi::Magic::premask_north[shogi::SQ_NA] = {
     // clang-format off
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000002), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000006), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000000000e), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000000001e), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000000003e), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000000007e), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000fe),
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000c00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000001c00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000003c00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000007c00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000000fc00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001fc00),
@@ -388,7 +277,7 @@ inline const uint128 shogi::Magic::premask_north[shogi::Config::num_squares] = {
     // clang-format on
 };
 template <>
-inline const uint128 shogi::Magic::premask_south[shogi::Config::num_squares] = {
+inline const uint128 shogi::Magic::premask_south[shogi::SQ_NA] = {
     // clang-format off
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000fe), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000fc), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000f8), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000f0), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000e0), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x00000000000000c0), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000080), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000),
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001fc00), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001f800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001f000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001e000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000000001c000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000018000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000010000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000000000000),
@@ -402,9 +291,8 @@ inline const uint128 shogi::Magic::premask_south[shogi::Config::num_squares] = {
     // clang-format on
 };
 template <>
-inline const uint128 shogi::Magic::premask_adjacent[shogi::Config::num_squares]
-    = {
-        // clang-format off
+inline const uint128 shogi::Magic::premask_adjacent[shogi::SQ_NA] = {
+    // clang-format off
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x80402010080402fe), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x00804020100804fc), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x01008040201008fa), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x02010080402010f6), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x04020100804020ee), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x08040201008040de), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x10080402010080be), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x201008040201007e), (static_cast<uint128>(0x00080) << 64) | static_cast<uint128>(0x40201008040200fe),
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x804020100805fc00), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x008040201009f800), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x010080402011f400), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x020100804021ec00), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x040201008041dc00), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x080402010081bc00), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x1008040201017c00), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x201008040200fc00), (static_cast<uint128>(0x00080) << 64) | static_cast<uint128>(0x402010080401fc00),
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x804020100bf80200), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0080402013f00400), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0100804023e80800), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0201008043d81000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x0402010083b82000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0804020103784000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x1008040202f88000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x2010080401f90000), (static_cast<uint128>(0x00080) << 64) | static_cast<uint128>(0x4020100803fa0000),
@@ -414,12 +302,11 @@ inline const uint128 shogi::Magic::premask_adjacent[shogi::Config::num_squares]
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0xbf80201008040200), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x3f00402010080400), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x3e80804020100800), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x3d81008040201000), (static_cast<uint128>(0x00008) << 64) | static_cast<uint128>(0x3b82010080402000), (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x3784020100804000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x2f88040201008000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x1f90080402010000), (static_cast<uint128>(0x00080) << 64) | static_cast<uint128>(0x3fa0100804020000),
 (static_cast<uint128>(0x0007f) << 64) | static_cast<uint128>(0x0040201008040200), (static_cast<uint128>(0x0007e) << 64) | static_cast<uint128>(0x0080402010080400), (static_cast<uint128>(0x0007d) << 64) | static_cast<uint128>(0x0100804020100800), (static_cast<uint128>(0x0007b) << 64) | static_cast<uint128>(0x0201008040201000), (static_cast<uint128>(0x00077) << 64) | static_cast<uint128>(0x0402010080402000), (static_cast<uint128>(0x0006f) << 64) | static_cast<uint128>(0x0804020100804000), (static_cast<uint128>(0x0005f) << 64) | static_cast<uint128>(0x1008040201008000), (static_cast<uint128>(0x0003f) << 64) | static_cast<uint128>(0x2010080402010000), (static_cast<uint128>(0x0007f) << 64) | static_cast<uint128>(0x4020100804020000),
 (static_cast<uint128>(0x0fe00) << 64) | static_cast<uint128>(0x8040201008040200), (static_cast<uint128>(0x0fc01) << 64) | static_cast<uint128>(0x0080402010080400), (static_cast<uint128>(0x0fa02) << 64) | static_cast<uint128>(0x0100804020100800), (static_cast<uint128>(0x0f604) << 64) | static_cast<uint128>(0x0201008040201000), (static_cast<uint128>(0x0ee08) << 64) | static_cast<uint128>(0x0402010080402000), (static_cast<uint128>(0x0de10) << 64) | static_cast<uint128>(0x0804020100804000), (static_cast<uint128>(0x0be20) << 64) | static_cast<uint128>(0x1008040201008000), (static_cast<uint128>(0x07e40) << 64) | static_cast<uint128>(0x2010080402010000), (static_cast<uint128>(0x0fe80) << 64) | static_cast<uint128>(0x4020100804020000),
-        // clang-format on
+    // clang-format on
 };
 template <>
-inline const uint128 shogi::Magic::premask_diagonal[shogi::Config::num_squares]
-    = {
-        // clang-format off
+inline const uint128 shogi::Magic::premask_diagonal[shogi::SQ_NA] = {
+    // clang-format off
 (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x1004010040100400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x2008020080200800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0010040100401400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000080200882800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000000411105000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x000000202220a000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000404040414000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0080808080808000), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0101010101010000),
 (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x0802008020080000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x1004010040100000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x2008020080280000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0010040110500000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000082220a00000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0000404441400000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0080808082800000), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0101010101000000), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0202020202000000),
 (static_cast<uint128>(0x00010) << 64) | static_cast<uint128>(0x0401004010000400), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x0802008020000800), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x1004010050001400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x20080220a0002800), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0010444140005000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x008088828000a000), (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0101010500014000), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0202020200008000), (static_cast<uint128>(0x00004) << 64) | static_cast<uint128>(0x0404040400010000),
@@ -429,13 +316,11 @@ inline const uint128 shogi::Magic::premask_diagonal[shogi::Config::num_squares]
 (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0000404040404000), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0000808080808000), (static_cast<uint128>(0x00005) << 64) | static_cast<uint128>(0x0001410101010000), (static_cast<uint128>(0x0000a) << 64) | static_cast<uint128>(0x0002822202000000), (static_cast<uint128>(0x00014) << 64) | static_cast<uint128>(0x0005044410000000), (static_cast<uint128>(0x00028) << 64) | static_cast<uint128>(0x000a088020080000), (static_cast<uint128>(0x00050) << 64) | static_cast<uint128>(0x0014010040100400), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x0008020080200800), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x0010040100401000),
 (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0080808080808000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0101010101010000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0282020202000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0504440400000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x0a08882000000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x1411004010000000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x2802008020080000), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x1004010040100400), (static_cast<uint128>(0x00000) << 64) | static_cast<uint128>(0x2008020080200800),
 (static_cast<uint128>(0x00001) << 64) | static_cast<uint128>(0x0101010101010000), (static_cast<uint128>(0x00002) << 64) | static_cast<uint128>(0x0202020202000000), (static_cast<uint128>(0x00005) << 64) | static_cast<uint128>(0x0404040400000000), (static_cast<uint128>(0x0000a) << 64) | static_cast<uint128>(0x0888080000000000), (static_cast<uint128>(0x00014) << 64) | static_cast<uint128>(0x1110400000000000), (static_cast<uint128>(0x00028) << 64) | static_cast<uint128>(0x2200802000000000), (static_cast<uint128>(0x00050) << 64) | static_cast<uint128>(0x0401004010000000), (static_cast<uint128>(0x00020) << 64) | static_cast<uint128>(0x0802008020080000), (static_cast<uint128>(0x00040) << 64) | static_cast<uint128>(0x1004010040100400),
-        // clang-format on
+    // clang-format on
 };
 template <>
-inline const std::uint32_t
-    shogi::Magic::magic_number_north[shogi::Config::num_squares]
-    = {
-        // clang-format off
+inline const std::uint32_t shogi::Magic::magic_number_north[shogi::SQ_NA] = {
+    // clang-format off
 0xffffffff, 0xffffffff, 0x58ec9440, 0x54891828, 0x22c00054, 0x41880103, 0x20420926, 0x079ac001, 0x1d000a05,
 0xffffffff, 0xffffffff, 0x0aa18028, 0x02050140, 0xec414504, 0x02412a10, 0x06208020, 0x11d0c0a8, 0x48048030,
 0xffffffff, 0xffffffff, 0x68278c11, 0x50400081, 0x42100c10, 0x94524fa0, 0x00004194, 0x6e210040, 0x88a24240,
@@ -445,13 +330,11 @@ inline const std::uint32_t
 0xffffffff, 0xffffffff, 0x06009c02, 0x000162f4, 0x8c082802, 0x10068005, 0x500d0ea1, 0x14801c1a, 0x406dab0a,
 0xffffffff, 0xffffffff, 0x118a0011, 0x24811468, 0x9619111a, 0x0204b185, 0xa0002844, 0x8e182d10, 0x40470908,
 0xffffffff, 0xffffffff, 0xc4ae8392, 0x8004b042, 0x39d22c0e, 0x080a8608, 0x14000278, 0x00010042, 0x592a0c84,
-        // clang-format on
+    // clang-format on
 };
 template <>
-inline const std::uint32_t
-    shogi::Magic::magic_number_south[shogi::Config::num_squares]
-    = {
-        // clang-format off
+inline const std::uint32_t shogi::Magic::magic_number_south[shogi::SQ_NA] = {
+    // clang-format off
 0x0d006c68, 0x5a620858, 0x281100c0, 0x41d4c242, 0x20821608, 0x44400010, 0x00800898, 0xffffffff, 0xffffffff,
 0x401b0201, 0x061ad253, 0xa4524000, 0x97211100, 0x10128011, 0x22a0310e, 0x40852401, 0xffffffff, 0xffffffff,
 0x4a520102, 0x010a0504, 0x0c800820, 0x401b0996, 0x32214902, 0x64b0c4a0, 0x50424104, 0xffffffff, 0xffffffff,
@@ -461,13 +344,11 @@ inline const std::uint32_t
 0x4c206252, 0x17041512, 0x0c14c9a1, 0x39844848, 0x92905180, 0x00850584, 0xc0200302, 0xffffffff, 0xffffffff,
 0x02900b08, 0xac041521, 0x01a348e6, 0x01024a51, 0x60000985, 0x496402a4, 0xb6818202, 0xffffffff, 0xffffffff,
 0x0d4823c2, 0x201d14e2, 0x08a9c101, 0x8200480e, 0x00062aa2, 0x04910003, 0x81459202, 0xffffffff, 0xffffffff,
-        // clang-format on
+    // clang-format on
 };
 template <>
-inline const std::uint32_t
-    shogi::Magic::magic_number_adjacent[shogi::Config::num_squares]
-    = {
-        // clang-format off
+inline const std::uint32_t shogi::Magic::magic_number_adjacent[shogi::SQ_NA] = {
+    // clang-format off
 0x10020208, 0x88002041, 0x11008204, 0x85400086, 0x12020020, 0x41000183, 0x9d200310, 0x00320010, 0x4010000c,
 0x2a900052, 0x81900a01, 0x20020402, 0x86a10012, 0x03420408, 0xc5000104, 0xe1240108, 0x10028102, 0xb806c402,
 0x40103002, 0x21180021, 0x94600a04, 0x804da801, 0x20448102, 0x14d0a004, 0x01501d10, 0x04d9a850, 0x99040208,
@@ -477,13 +358,11 @@ inline const std::uint32_t
 0x00c08006, 0x40102005, 0x04300009, 0x21020224, 0x6d008401, 0x05411022, 0x82812082, 0xc4082222, 0x82352102,
 0x01100608, 0x08808042, 0x12241404, 0x20204102, 0x0cac6208, 0xa0e9a008, 0x20024008, 0x82008810, 0x007a0601,
 0x64422102, 0x20a00202, 0x80008202, 0x01000102, 0x00604202, 0x45800082, 0x05410082, 0x80015024, 0x40512002,
-        // clang-format on
+    // clang-format on
 };
 template <>
-inline const std::uint32_t
-    shogi::Magic::magic_number_diagonal[shogi::Config::num_squares]
-    = {
-        // clang-format off
+inline const std::uint32_t shogi::Magic::magic_number_diagonal[shogi::SQ_NA] = {
+    // clang-format off
 0xc0011f84, 0x22290658, 0x54c10070, 0x84008244, 0x45828c42, 0x80500081, 0x03180280, 0x01b41004, 0x28900173,
 0x3a055381, 0x22c840a2, 0xa102008a, 0x504226a6, 0x00404420, 0xa10c0c88, 0x44206485, 0x4c0c238c, 0x98998c0a,
 0x00042508, 0x42101808, 0x44000a01, 0xa840800d, 0x01624008, 0xa420200a, 0xf154052a, 0x88060042, 0xa27109e0,
@@ -493,26 +372,26 @@ inline const std::uint32_t
 0x0004c491, 0x41908303, 0xd82d0028, 0x02200208, 0x60000805, 0x01180350, 0xb8600084, 0x4a04007c, 0x88238a16,
 0xac103401, 0x2452a401, 0x00001252, 0x224002c3, 0x8f4005c6, 0x00080203, 0x808080a0, 0x12927082, 0x041e8382,
 0x28408802, 0xd00c82e2, 0x70000401, 0x0410801c, 0x08302722, 0xc491350a, 0x24000088, 0x841e420c, 0x50c91c33,
-        // clang-format on
+    // clang-format on
 };
 template <>
-inline shogi::BitBoard
-    shogi::Magic::attack_table_north[shogi::Config::num_squares]
+inline shogi::bitboard_t
+    shogi::Magic::attack_table_north[shogi::SQ_NA]
                                     [shogi::Magic::table_size_lance]
     = {};
 template <>
-inline shogi::BitBoard
-    shogi::Magic::attack_table_south[shogi::Config::num_squares]
+inline shogi::bitboard_t
+    shogi::Magic::attack_table_south[shogi::SQ_NA]
                                     [shogi::Magic::table_size_lance]
     = {};
 template <>
-inline shogi::BitBoard
-    shogi::Magic::attack_table_adjacent[shogi::Config::num_squares]
+inline shogi::bitboard_t
+    shogi::Magic::attack_table_adjacent[shogi::SQ_NA]
                                        [shogi::Magic::table_size_adjacent]
     = {};
 template <>
-inline shogi::BitBoard
-    shogi::Magic::attack_table_diagonal[shogi::Config::num_squares]
+inline shogi::bitboard_t
+    shogi::Magic::attack_table_diagonal[shogi::SQ_NA]
                                        [shogi::Magic::table_size_diagonal]
     = {};
 

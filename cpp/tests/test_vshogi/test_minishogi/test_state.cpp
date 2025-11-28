@@ -125,23 +125,17 @@ TEST(test_minishogi_state, compute_king_movable)
     {
         // in single check
         const auto s = State("2k1+R/5/5/5/5 w -");
-        const auto actual = s.compute_king_movable();
-        const auto expect = bb_3b | bb_4b;
-        CHECK_EQUAL(expect.value(), actual.value());
+        CHECK_EQUAL(0b0000000010000100000000000u, s.compute_king_movable());
     }
     {
         // double check
         const auto s = State("2k1+R/5/B4/5/5 w -");
-        const auto actual = s.compute_king_movable();
-        const auto expect = bb_3b;
-        CHECK_EQUAL(expect.value(), actual.value());
+        CHECK_EQUAL(0b0000000000000100000000000u, s.compute_king_movable());
     }
     {
         // no check
         const auto s = State("2k2/5/3+R1/5/5 w -");
-        const auto actual = s.compute_king_movable();
-        const auto expect = bb_4a | bb_4b;
-        CHECK_EQUAL(expect.value(), actual.value());
+        CHECK_EQUAL(0b0000000011000000000000000u, s.compute_king_movable());
     }
 }
 

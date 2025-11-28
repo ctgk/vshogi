@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "vshogi/common/bitboard.hpp"
+#include "vshogi/common/bitboard_traits.hpp"
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/direction.hpp"
@@ -26,10 +26,11 @@ private:
     using Piece = typename C::Piece;
     using Rank = typename C::Rank;
     using Square = typename C::Square;
+    using BT = BitboardTraits<P>;
     using PT = PieceTraits<P>;
     using ST = SquareTraits<P>;
-    using BitBoardType = BitBoard<P>;
     using Stands = BlackWhiteStands<P>;
+    using bitboard_t = typename C::bitboard_t;
     static constexpr uint max_stand_piece_count = C::max_stand_piece_count;
     static constexpr uint num_piece_types = C::num_piece_types;
     static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
@@ -268,23 +269,23 @@ public:
     {
         return m_stands.get_zobrist_hash();
     }
-    BitBoardType find_pinned() const
+    bitboard_t find_pinned() const
     {
         if (in_double_check())
-            return BitBoardType();
+            return static_cast<bitboard_t>(0);
         return m_board.find_pinned(m_turn);
     }
-    BitBoardType compute_king_movable() const
+    bitboard_t compute_king_movable() const
     {
-        return compute_king_movable(~BitBoardType());
+        return compute_king_movable(BT::full());
     }
-    BitBoardType compute_king_movable(BitBoardType movable) const
+    bitboard_t compute_king_movable(bitboard_t movable) const
     {
         for (uint ii = 0u; ii < 2u; ++ii) {
             const Square sq = find_checker_square(ii);
             if (sq == C::SQ_NA)
                 break;
-            movable &= ~m_board.get_attacks_by_nocheck(sq);
+            movable &= BT::invert(m_board.get_attack_at(sq));
         }
         return m_board.compute_king_movable(m_turn, movable);
     }
@@ -374,15 +375,14 @@ private:
     }
     bool is_check_by_moved(const Square& enemy_king_sq, const Square& dst)
     {
-        const BitBoardType attacks
-            = BitBoardType::get_attacks_by(m_board[dst], dst);
-        if (!attacks.is_one(enemy_king_sq))
+        const auto attack = BT::get_attack_by(m_board[dst], dst);
+        if (!BT::is_one(attack, enemy_king_sq))
             return false;
         if (!PT::is_slider(m_board[dst]))
             return true;
-        return !(BitBoardType::get_line_segment(dst, enemy_king_sq)
-                 & m_board.get_occupied())
-                    .any();
+        return (BT::get_mask_between(dst, enemy_king_sq)
+                & m_board.get_occupied())
+               == 0u;
     }
     static void
     fill_ms24b_with(std::uint64_t* const hash, const Piece& p, const Move<P>& m)

@@ -6,6 +6,9 @@ namespace test_vshogi::test_minishogi
 {
 
 using namespace vshogi::minishogi;
+using namespace vshogi;
+using Board = vshogi::minishogi::Board;
+using BT = vshogi::BitboardTraits<Parameters>;
 
 TEST_GROUP (test_minishogi_board) {
 };
@@ -131,42 +134,41 @@ TEST(test_minishogi_board, get_occupied)
 {
     {
         const auto b = Board("4k/5/5/5/K4 b");
-        CHECK_EQUAL((bb_1a | bb_5e).value(), b.get_occupied().value());
-        CHECK_EQUAL(bb_5e.value(), b.get_occupied(vshogi::BLACK).value());
-        CHECK_EQUAL(bb_1a.value(), b.get_occupied(vshogi::WHITE).value());
-        CHECK_EQUAL(0, b.get_occupied(FU).value());
-        CHECK_EQUAL(0, b.get_occupied(B_FU).value());
-        CHECK_EQUAL(0, b.get_occupied(W_FU).value());
-        CHECK_EQUAL((bb_1a | bb_5e).value(), b.get_occupied(OU).value());
-        CHECK_EQUAL(bb_5e.value(), b.get_occupied(B_OU).value());
-        CHECK_EQUAL(bb_1a.value(), b.get_occupied(W_OU).value());
+        CHECK_EQUAL(0b1000000000000000000000001u, b.get_occupied());
+        CHECK_EQUAL(0b1000000000000000000000000u, b.get_occupied(BLACK));
+        CHECK_EQUAL(0b0000000000000000000000001u, b.get_occupied(WHITE));
+        CHECK_EQUAL(0, b.get_occupied(FU));
+        CHECK_EQUAL(0, b.get_occupied(B_FU));
+        CHECK_EQUAL(0, b.get_occupied(W_FU));
+        CHECK_EQUAL(0b1000000000000000000000001u, b.get_occupied(OU));
+        CHECK_EQUAL(0b1000000000000000000000000u, b.get_occupied(B_OU));
+        CHECK_EQUAL(0b0000000000000000000000001u, b.get_occupied(W_OU));
     }
     {
         auto b = Board("4k/5/5/5/K4 b");
         b.place_at(SQ_1A, b.pop_from(SQ_5E));
-        CHECK_EQUAL(bb_1a.value(), b.get_occupied().value());
-        CHECK_EQUAL(bb_1a.value(), b.get_occupied(vshogi::BLACK).value());
-        CHECK_EQUAL(0, b.get_occupied(vshogi::WHITE).value());
-        CHECK_EQUAL(0, b.get_occupied(FU).value());
-        CHECK_EQUAL(0, b.get_occupied(B_FU).value());
-        CHECK_EQUAL(0, b.get_occupied(W_FU).value());
-        CHECK_EQUAL(bb_1a.value(), b.get_occupied(OU).value());
-        CHECK_EQUAL(bb_1a.value(), b.get_occupied(B_OU).value());
-        CHECK_EQUAL(0, b.get_occupied(W_OU).value());
+        CHECK_EQUAL(0b0000000000000000000000001u, b.get_occupied());
+        CHECK_EQUAL(0b0000000000000000000000001u, b.get_occupied(BLACK));
+        CHECK_EQUAL(0, b.get_occupied(WHITE));
+        CHECK_EQUAL(0, b.get_occupied(FU));
+        CHECK_EQUAL(0, b.get_occupied(B_FU));
+        CHECK_EQUAL(0, b.get_occupied(W_FU));
+        CHECK_EQUAL(0b0000000000000000000000001u, b.get_occupied(OU));
+        CHECK_EQUAL(0b0000000000000000000000001u, b.get_occupied(B_OU));
+        CHECK_EQUAL(0, b.get_occupied(W_OU));
     }
     {
         auto b = Board("4k/5/5/5/K4 b");
         b.place_at(SQ_1A, B_FU);
-        CHECK_EQUAL((bb_1a | bb_5e).value(), b.get_occupied().value());
-        CHECK_EQUAL(
-            (bb_1a | bb_5e).value(), b.get_occupied(vshogi::BLACK).value());
-        CHECK_EQUAL(0, b.get_occupied(vshogi::WHITE).value());
-        CHECK_EQUAL(bb_1a.value(), b.get_occupied(FU).value());
-        CHECK_EQUAL(bb_1a.value(), b.get_occupied(B_FU).value());
-        CHECK_EQUAL(0, b.get_occupied(W_FU).value());
-        CHECK_EQUAL(bb_5e.value(), b.get_occupied(OU).value());
-        CHECK_EQUAL(bb_5e.value(), b.get_occupied(B_OU).value());
-        CHECK_EQUAL(0, b.get_occupied(W_OU).value());
+        CHECK_EQUAL(0b1000000000000000000000001u, b.get_occupied());
+        CHECK_EQUAL(0b1000000000000000000000001u, b.get_occupied(BLACK));
+        CHECK_EQUAL(0, b.get_occupied(WHITE));
+        CHECK_EQUAL(0b0000000000000000000000001u, b.get_occupied(FU));
+        CHECK_EQUAL(0b0000000000000000000000001u, b.get_occupied(B_FU));
+        CHECK_EQUAL(0, b.get_occupied(W_FU));
+        CHECK_EQUAL(0b1000000000000000000000000u, b.get_occupied(OU));
+        CHECK_EQUAL(0b1000000000000000000000000u, b.get_occupied(B_OU));
+        CHECK_EQUAL(0, b.get_occupied(W_OU));
     }
     {
         // W_GI VOID VOID VOID VOID
@@ -175,8 +177,10 @@ TEST(test_minishogi_board, get_occupied)
         // B_FU B_OU VOID VOID VOID
         // VOID VOID VOID W_KA B_HI
         auto b = Board("s4/ks1+R1/3GP/PK3/3bR w -");
-        const auto actual = b.get_occupied<KA, HI, UM, RY>(vshogi::WHITE);
-        CHECK_EQUAL(bb_2e.value(), actual.value());
+        CHECK_EQUAL(
+            0b0000000000000000001010000u, b.get_occupied_by_slider(BLACK));
+        CHECK_EQUAL(
+            0b0000000000000001000000000u, b.get_occupied_by_slider(WHITE));
     }
 }
 
@@ -184,14 +188,13 @@ TEST(test_minishogi_board, find_pinned)
 {
     {
         const auto b = Board("b3+r/5/2P1P/5/r1P1K");
-        const auto actual = b.find_pinned(vshogi::BLACK);
-        const auto expect = bb_3c | bb_1c | bb_3e;
-        CHECK_EQUAL(expect.value(), actual.value());
+        CHECK_EQUAL(0b0000000000101000000000100u, b.find_pinned(BLACK));
+        CHECK_EQUAL(0, b.find_pinned(WHITE));
     }
     {
         const auto b = Board("2s1R/2k2/4G/5/4K");
-        const auto actual = b.find_pinned(vshogi::BLACK);
-        CHECK_EQUAL(bb_na.value(), actual.value());
+        CHECK_EQUAL(0, b.find_pinned(BLACK));
+        CHECK_EQUAL(0, b.find_pinned(WHITE));
     }
 }
 
@@ -200,7 +203,7 @@ TEST(test_minishogi_board, find_sliding_attacker)
     {
         const auto b = Board("5/5/5/5/4R");
         const auto actual
-            = b.find_sliding_attacker(vshogi::BLACK, SQ_1A, vshogi::DIR_S);
+            = b.find_sliding_attacker(BLACK, SQ_1A, vshogi::DIR_S);
         CHECK_EQUAL(SQ_1E, actual);
     }
     {
@@ -227,21 +230,18 @@ TEST(test_minishogi_board, compute_movable_to)
 {
     {
         const auto b = Board("5/5/5/5/5");
-        const auto actual
-            = b.compute_movable_to(SQ_1A, vshogi::BLACK, ~BitBoard());
-        CHECK_EQUAL(bb_na.value(), actual.value());
+        const auto actual = b.compute_movable_to(SQ_1A, BLACK, BT::full());
+        CHECK_EQUAL(0, actual);
     }
     {
         const auto b = Board("5/5/5/5/4R");
-        const auto actual
-            = b.compute_movable_to(SQ_1A, vshogi::BLACK, ~BitBoard());
-        CHECK_EQUAL(bb_1e.value(), actual.value());
+        const auto actual = b.compute_movable_to(SQ_1A, BLACK, BT::full());
+        CHECK_EQUAL(0b0000000000000000000010000u, actual);
     }
     {
         const auto b = Board("5/4P/5/5/4R");
-        const auto actual
-            = b.compute_movable_to(SQ_1A, vshogi::BLACK, ~BitBoard());
-        CHECK_EQUAL(bb_1b.value(), actual.value());
+        const auto actual = b.compute_movable_to(SQ_1A, BLACK, BT::full());
+        CHECK_EQUAL(0b0000000000000000000000010u, actual);
     }
     {
         // Turn: WHITE
@@ -260,8 +260,9 @@ TEST(test_minishogi_board, compute_movable_to)
         //   +---+---+---+---+---+
         // Black: GI
         const auto b = Board("2pk+R/3b1/2+bG1/5/5");
-        const auto actual = b.compute_movable_to(SQ_1A, vshogi::WHITE, ~bb_2a);
-        CHECK_EQUAL(bb_2b.value(), actual.value());
+        const auto actual = b.compute_movable_to(
+            SQ_1A, WHITE, BT::invert(BT::from_square(SQ_2A)));
+        CHECK_EQUAL(0b0000000000000000001000000u, actual);
     }
 }
 
@@ -270,22 +271,22 @@ TEST(test_minishogi_board, compute_droppable)
     {
         const auto b = Board("1+p1p1/5/5/5/5");
         const auto actual = b.compute_droppable<false>(W_FU);
-        CHECK_EQUAL((~bb_ranke & ~bb_file2 & ~bb_4a).value(), actual.value());
+        CHECK_EQUAL(0b0111101110011110000001111u, actual);
     }
     {
         const auto b = Board("3rk/5/4G/5/4K");
         const auto actual = b.compute_droppable<true>(B_FU);
-        CHECK_EQUAL(bb_na.value(), actual.value());
+        CHECK_EQUAL(0, actual);
     }
     {
         const auto b = Board("5/5/4s/5/3GK");
         const auto actual = b.compute_droppable<true>(W_FU);
-        CHECK_EQUAL(bb_1d.value(), actual.value());
+        CHECK_EQUAL(0b0000000000000000000001000u, actual);
     }
     {
         const auto b = Board("5/5/4s/4P/3GK");
         const auto actual = b.compute_droppable<true>(W_FU);
-        CHECK_EQUAL(bb_na.value(), actual.value());
+        CHECK_EQUAL(0, actual);
     }
 }
 
@@ -293,8 +294,7 @@ TEST(test_minishogi_board, get_occupied_by_slider)
 {
     {
         const auto b = Board("4k/5/5/3S1/K3r");
-        CHECK_EQUAL(
-            bb_na.value(), b.get_occupied_by_slider(vshogi::BLACK).value());
+        CHECK_EQUAL(0, b.get_occupied_by_slider(vshogi::BLACK));
     }
 }
 

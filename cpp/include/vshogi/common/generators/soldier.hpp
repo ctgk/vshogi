@@ -1,7 +1,7 @@
 #ifndef VSHOGI_COMMON_GENERATORS_SOLDIER_HPP
 #define VSHOGI_COMMON_GENERATORS_SOLDIER_HPP
 
-#include "vshogi/common/bitboard.hpp"
+#include "vshogi/common/bitboard_traits.hpp"
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/generators/gentype.hpp"
 #include "vshogi/common/move.hpp"
@@ -50,16 +50,18 @@ class SoldierMoveGenerator<P, GenEnum::LEGAL>
 private:
     using C = Configuration<P>;
     using Square = typename C::Square;
+    using BT = BitboardTraits<P>;
     using PT = PieceTraits<P>;
     using ST = SquareTraits<P>;
+    using bitboard_t = typename C::bitboard_t;
 
 private:
     const State<P>& m_state;
     const ColorEnum m_turn;
     const Board<P>& m_board;
-    const BitBoard<P> m_pinned;
-    typename BitBoard<P>::Iterator m_src_iter;
-    typename BitBoard<P>::Iterator m_dst_iter;
+    const bitboard_t m_pinned;
+    typename BT::Iterator m_src_iter;
+    typename BT::Iterator m_dst_iter;
     bool m_promote;
 
 public:
@@ -81,7 +83,7 @@ public:
             return;
         init_no_check(move.source_square(), move.destination(), move.promote());
     }
-    SoldierMoveGenerator(const State<P>& state, const BitBoard<P>& src_mask)
+    SoldierMoveGenerator(const State<P>& state, const bitboard_t& src_mask)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(state.find_pinned()), m_src_iter(), m_dst_iter(),
           m_promote(true)
@@ -170,9 +172,9 @@ private:
     void init_src_iter()
     {
         const auto king_sq = m_board.get_king_square(m_turn);
-        auto src_mask = m_board.get_occupied(m_turn);
-        src_mask.clear(king_sq);
-        m_src_iter = src_mask.iterator();
+        const auto src_mask
+            = m_board.get_occupied(m_turn) ^ BT::from_square(king_sq);
+        m_src_iter = BT::iterator(src_mask);
     }
     void init_src_iter(const Square begin)
     {
@@ -184,33 +186,33 @@ private:
                 break;
         }
     }
-    void init_src_iter(const BitBoard<P>& src_mask)
+    void init_src_iter(const bitboard_t& src_mask)
     {
-        m_src_iter = src_mask.iterator();
+        m_src_iter = BT::iterator(src_mask);
     }
     void init_dst_iter()
     {
         const auto src = *m_src_iter;
         const auto king_sq = m_board.get_king_square(m_turn);
-        auto movable = m_board.get_attacks_by_nocheck(src);
-        movable &= ~m_board.get_occupied(m_turn);
-        if (!movable.any())
+        auto movable = m_board.get_attack_at(src);
+        movable &= BT::invert(m_board.get_occupied(m_turn));
+        if (movable == 0u)
             goto ExitLabel;
 
         if (m_state.in_check()) {
             const auto checker_sq = m_state.find_checker_square();
-            movable &= BitBoard<P>::get_line_segment(checker_sq, king_sq)
-                           .set(checker_sq);
-            if (!movable.any())
+            movable &= BT::get_mask_between(checker_sq, king_sq)
+                       | BT::from_square(checker_sq);
+            if (movable == 0u)
                 goto ExitLabel;
         }
-        if (m_pinned.is_one(src)) {
+        if (BT::is_one(m_pinned, src)) {
             const auto dir = ST::direction(king_sq, src);
             assert((dir < 8) || (dir == DIR_NA));
-            movable &= BitBoard<P>::get_ray_to(king_sq, dir);
+            movable &= BT::get_ray_to(king_sq, dir);
         }
     ExitLabel:
-        m_dst_iter = movable.iterator();
+        m_dst_iter = BT::iterator(movable);
     }
     void init_dst_iter(const Square begin)
     {
@@ -232,7 +234,7 @@ private:
         m_promote = false;
         const auto src = *m_src_iter;
         const auto p = m_board[src];
-        if (BitBoard<P>::get_attacks_by(p, *m_dst_iter).any())
+        if (BT::get_attack_by(p, *m_dst_iter))
             return;
         m_promote = true;
     }
@@ -251,19 +253,21 @@ private:
     using C = Configuration<P>;
     using Piece = typename C::Piece;
     using Square = typename C::Square;
+    using BT = BitboardTraits<P>;
     using PT = PieceTraits<P>;
     using ST = SquareTraits<P>;
+    using bitboard_t = typename C::bitboard_t;
 
 private:
     const State<P>& m_state;
     const ColorEnum m_turn;
     const Board<P>& m_board;
-    const BitBoard<P> m_pinned;
-    const BitBoard<P> m_cover;
-    typename BitBoard<P>::Iterator m_src_iter;
-    typename BitBoard<P>::Iterator m_dst_iter;
+    const bitboard_t m_pinned;
+    const bitboard_t m_cover;
+    typename BT::Iterator m_src_iter;
+    typename BT::Iterator m_dst_iter;
     bool m_promote;
-    BitBoard<P> m_dst_mask;
+    bitboard_t m_dst_mask;
 
 public:
     SoldierMoveGenerator(const State<P>& state)
@@ -276,7 +280,7 @@ public:
         init_src_iter();
         while (m_src_iter) {
             init_dst_mask();
-            if (m_dst_mask.any()) {
+            if (m_dst_mask) {
                 m_promote = false;
                 init_dst_iter_nopromo();
                 if (m_dst_iter)
@@ -305,7 +309,7 @@ public:
 
         while (m_src_iter) {
             init_dst_mask();
-            if (m_dst_mask.any()) {
+            if (m_dst_mask) {
                 m_promote = false;
                 init_dst_iter_nopromo();
                 if (m_dst_iter)
@@ -334,23 +338,23 @@ private:
         const auto target = m_board.get_king_square(~m_turn);
         assert(target != C::SQ_NA);
 
-        BitBoard<P> src_mask = m_cover;
+        auto src_mask = m_cover;
         for (auto pt : C::piece_type_iterator()) {
             if (pt == C::OU)
                 continue;
             const auto p = PT::make_piece(m_turn, pt);
             src_mask |= m_board.get_occupied(pt)
-                        & BitBoard<P>::get_neighbor_2nd(target, p);
+                        & BT::get_pre_reverse_attack(target, p);
         }
         src_mask &= m_board.get_occupied(m_turn);
-        m_src_iter = src_mask.iterator();
+        m_src_iter = BT::iterator(src_mask);
     }
     void init_dst_mask()
     {
         const auto src = *m_src_iter;
         const auto king_sq = m_board.get_king_square(m_turn);
-        m_dst_mask = m_board.get_attacks_by_nocheck(src);
-        m_dst_mask &= ~m_board.get_occupied(m_turn);
+        m_dst_mask = m_board.get_attack_at(src);
+        m_dst_mask &= BT::invert(m_board.get_occupied(m_turn));
         update_dst_mask_by_current_check(king_sq);
         update_dst_mask_by_counter_check(src, king_sq);
     }
@@ -364,79 +368,78 @@ private:
         }
         auto movable = m_dst_mask;
         if (update_mask_by_promotion(movable, src)) {
-            if (!movable.any()) {
+            if (movable == 0u)
                 return;
-            }
         }
         update_mask_by_forcing_check(movable, p, src);
-        m_dst_iter = movable.iterator();
+        m_dst_iter = BT::iterator(movable);
     }
     void init_dst_iter_nopromo()
     {
         assert(!m_promote);
         const auto src = *m_src_iter;
         const auto p = m_board[src];
-        BitBoard<P> movable = m_dst_mask;
+        auto movable = m_dst_mask;
         update_mask_by_forcing_check(movable, p, src);
-        if (movable.any()) {
+        if (movable) {
             update_mask_by_nopromo(movable, p);
         }
-        m_dst_iter = movable.iterator();
+        m_dst_iter = BT::iterator(movable);
     }
-    bool update_mask_by_promotion(BitBoard<P>& mask, const Square src)
+    bool update_mask_by_promotion(bitboard_t& mask, const Square src)
     {
         assert(m_promote);
         if (!ST::in_promotion_zone(src, m_turn)) {
-            mask &= BitBoard<P>::get_promotion_zone(m_turn);
+            mask &= BT::promotion_zone(m_turn);
             return true;
         }
         return false;
     }
-    void update_mask_by_nopromo(BitBoard<P>& mask, const Piece p)
+    void update_mask_by_nopromo(bitboard_t& mask, const Piece p)
     {
-        mask &= BitBoard<P>::compute_droppable(p);
+        mask &= BT::get_placeable(p);
     }
     void update_dst_mask_by_current_check(const Square king_sq)
     {
         if (m_state.in_check()) {
             const auto checker_sq = m_state.find_checker_square();
             assert(checker_sq != C::SQ_NA);
-            m_dst_mask &= BitBoard<P>::get_line_segment(checker_sq, king_sq)
-                              .set(checker_sq);
+            m_dst_mask &= BT::get_mask_between(checker_sq, king_sq)
+                          | BT::from_square(checker_sq);
         }
     }
     void
     update_dst_mask_by_counter_check(const Square src, const Square king_sq)
     {
-        if (m_pinned.is_one(src)) {
+        if (BT::is_one(m_pinned, src)) {
             const auto dir = ST::direction(king_sq, src);
             assert((dir < 8) || (dir == DIR_NA));
-            m_dst_mask &= BitBoard<P>::get_ray_to(king_sq, dir);
+            m_dst_mask &= BT::get_ray_to(king_sq, dir);
         }
     }
     void update_mask_by_forcing_check(
-        BitBoard<P>& mask, const Piece p, const Square& src)
+        bitboard_t& mask, const Piece p, const Square& src)
     {
         const auto enemy_king_sq = m_board.get_king_square(~m_turn);
         auto pt = PT::to_piece_type(p);
         if (m_promote)
             pt = PT::promote_nocheck(pt);
-        const auto atk = BitBoard<P>::get_attacks_by(
+        const auto atk = BT::get_attack_by(
             PT::make_piece(~m_turn, pt), enemy_king_sq, m_board.get_occupied());
-        if (m_cover.is_one(src)) {
+        if (BT::is_one(m_cover, src)) {
             const auto dir = ST::direction(enemy_king_sq, src);
-            mask &= atk | (~BitBoard<P>::get_ray_to(enemy_king_sq, dir));
+            mask &= atk | BT::invert(BT::get_ray_to(enemy_king_sq, dir));
         } else {
             mask &= atk;
         }
     }
-    static BitBoard<P> compute_cover(const State<P>& s)
+    static bitboard_t compute_cover(const State<P>& s)
     {
         if (s.in_double_check())
-            return BitBoard<P>();
-        return s.get_board()
-            .find_cover(s.get_turn())
-            .clear(s.get_king_square());
+            return static_cast<bitboard_t>(0);
+        const auto cover = s.get_board().find_cover(s.get_turn());
+        const auto king = s.get_king_square();
+        return cover & BT::invert(BT::from_square(king));
     }
 };
 
@@ -445,13 +448,15 @@ class SoldierMoveGeneratorEvade
 {
 private:
     using C = Configuration<P>;
+    using BT = BitboardTraits<P>;
     using ST = SquareTraits<P>;
     using PT = PieceTraits<P>;
     using Square = typename C::Square;
+    using bitboard_t = typename C::bitboard_t;
     using DirIter = EnumIterator<DirectionEnum, C::num_dir>;
 
     const State<P>& m_state;
-    const BitBoard<P> m_src_mask;
+    const bitboard_t m_src_mask;
     const Square m_dst_last; // inclusive
     const Square* m_dst_iter; //!< outer loop
     DirIter m_src_dir_iter; //!< inner loop
@@ -493,7 +498,7 @@ public:
     {
         if (m_promote) {
             const auto p = m_state.get_board()[m_src];
-            if (BitBoard<P>::get_attacks_by(p, *m_dst_iter).any()) {
+            if (BT::get_attack_by(p, *m_dst_iter)) {
                 m_promote = false;
                 return *this;
             }
@@ -557,9 +562,10 @@ private:
                     && (ST::in_promotion_zone(dst, t)
                         || ST::in_promotion_zone(m_src, t));
     }
-    static BitBoard<P> compute_src_mask(const State<P>& state)
+    static bitboard_t compute_src_mask(const State<P>& state)
     {
-        return ~state.find_pinned().set(state.get_king_square());
+        return BT::invert(
+            state.find_pinned() | BT::from_square(state.get_king_square()));
     }
 };
 
@@ -573,22 +579,25 @@ class SoldierMoveGenerator<P, GenEnum::EVADE>
 {
 private:
     using C = Configuration<P>;
+    using BT = BitboardTraits<P>;
     using PT = PieceTraits<P>;
     using ST = SquareTraits<P>;
     using Square = typename C::Square;
+    using bitboard_t = typename C::bitboard_t;
 
     const Board<P>& m_board;
     const ColorEnum m_turn;
-    const BitBoard<P> m_not_pinned;
-    typename BitBoard<P>::Iterator m_dst_iter;
-    typename BitBoard<P>::Iterator m_src_iter;
+    const bitboard_t m_not_pinned;
+    typename BT::Iterator m_dst_iter;
+    typename BT::Iterator m_src_iter;
     bool m_promote;
 
 public:
     SoldierMoveGenerator(const State<P>& state)
         : m_board(state.get_board()), m_turn(state.get_turn()),
-          m_not_pinned(
-              ~(state.find_pinned().set(m_board.get_king_square(m_turn)))),
+          m_not_pinned(BT::invert(
+              state.find_pinned()
+              | BT::from_square(m_board.get_king_square(m_turn)))),
           m_dst_iter(), m_src_iter(), m_promote()
     {
         if (state.in_double_check())
@@ -609,7 +618,7 @@ public:
         if (m_promote) {
             const auto dst = *m_dst_iter;
             const auto& p = m_board[*m_src_iter];
-            if (BitBoard<P>::get_attacks_by(p, dst).any()) {
+            if (BT::get_attack_by(p, dst)) {
                 m_promote = false;
                 return *this;
             }
@@ -645,15 +654,14 @@ private:
     void init_dst_iter(const Square& checker_sq)
     {
         const auto& king = m_board.get_king_square(m_turn);
-        m_dst_iter = BitBoard<P>::get_line_segment(checker_sq, king)
-                         .set(checker_sq)
-                         .iterator();
+        m_dst_iter = BT::iterator(
+            BT::get_mask_between(checker_sq, king)
+            | BT::from_square(checker_sq));
     }
     void init_src_iter()
     {
-        const Square dst = *m_dst_iter;
-        m_src_iter
-            = m_board.compute_movable_to(dst, m_turn, m_not_pinned).iterator();
+        m_src_iter = BT::iterator(
+            m_board.compute_movable_to(*m_dst_iter, m_turn, m_not_pinned));
     }
     void init_promote()
     {

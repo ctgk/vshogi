@@ -20,6 +20,7 @@ struct Configuration
     using File = typename Param::File;
     using Rank = typename Param::Rank;
     using BaseTypeBitBoard = typename ParamS::BaseTypeBitBoard;
+    using bitboard_t = typename ParamS::BaseTypeBitBoard;
     using BaseTypeStand = typename ParamS::BaseTypeStand;
     static_assert(sizeof(Piece) == sizeof(std::uint8_t));
 

@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "vshogi/common/bitboard.hpp"
+#include "vshogi/common/bitboard_traits.hpp"
 #include "vshogi/common/board.hpp"
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/config.hpp"
@@ -151,8 +151,8 @@ struct Parameters
 using Config = vshogi::Configuration<Parameters>;
 using PieceTraits = vshogi::PieceTraits<Parameters>;
 using SquareTraits = vshogi::SquareTraits<Parameters>;
+using BitboardTraits = vshogi::BitboardTraits<Parameters>;
 using Move = vshogi::Move<Parameters>;
-using BitBoard = vshogi::BitBoard<Parameters>;
 using Magic = vshogi::Magic<Parameters>;
 using Board = vshogi::Board<Parameters>;
 using Stand = vshogi::Stand<Parameters>;
@@ -160,66 +160,36 @@ using BlackWhiteStands = vshogi::BlackWhiteStands<Parameters>;
 using State = vshogi::State<Parameters>;
 using LegalMoveGenerator = vshogi::MoveGenerator<Parameters, GenEnum::LEGAL>;
 using Game = vshogi::Game<Parameters>;
+using bitboard_t = typename Config::bitboard_t;
 static_assert(FU == Config::FU);
 static_assert(OU == Config::OU);
 static_assert(NA == Config::NA);
 static_assert(VOID == Config::VOID);
 
-constexpr BitBoard bb_na = BitBoard();
-constexpr BitBoard bb_1a = BitBoard::from_square<SQ_1A>();
-constexpr BitBoard bb_1b = BitBoard::from_square<SQ_1B>();
-constexpr BitBoard bb_1c = BitBoard::from_square<SQ_1C>();
-constexpr BitBoard bb_1d = BitBoard::from_square<SQ_1D>();
-constexpr BitBoard bb_1e = BitBoard::from_square<SQ_1E>();
-constexpr BitBoard bb_1f = BitBoard::from_square<SQ_1F>();
-constexpr BitBoard bb_2a = BitBoard::from_square<SQ_2A>();
-constexpr BitBoard bb_2b = BitBoard::from_square<SQ_2B>();
-constexpr BitBoard bb_2c = BitBoard::from_square<SQ_2C>();
-constexpr BitBoard bb_2d = BitBoard::from_square<SQ_2D>();
-constexpr BitBoard bb_2e = BitBoard::from_square<SQ_2E>();
-constexpr BitBoard bb_2f = BitBoard::from_square<SQ_2F>();
-constexpr BitBoard bb_3a = BitBoard::from_square<SQ_3A>();
-constexpr BitBoard bb_3b = BitBoard::from_square<SQ_3B>();
-constexpr BitBoard bb_3c = BitBoard::from_square<SQ_3C>();
-constexpr BitBoard bb_3d = BitBoard::from_square<SQ_3D>();
-constexpr BitBoard bb_3e = BitBoard::from_square<SQ_3E>();
-constexpr BitBoard bb_3f = BitBoard::from_square<SQ_3F>();
-constexpr BitBoard bb_4a = BitBoard::from_square<SQ_4A>();
-constexpr BitBoard bb_4b = BitBoard::from_square<SQ_4B>();
-constexpr BitBoard bb_4c = BitBoard::from_square<SQ_4C>();
-constexpr BitBoard bb_4d = BitBoard::from_square<SQ_4D>();
-constexpr BitBoard bb_4e = BitBoard::from_square<SQ_4E>();
-constexpr BitBoard bb_4f = BitBoard::from_square<SQ_4F>();
-constexpr BitBoard bb_5a = BitBoard::from_square<SQ_5A>();
-constexpr BitBoard bb_5b = BitBoard::from_square<SQ_5B>();
-constexpr BitBoard bb_5c = BitBoard::from_square<SQ_5C>();
-constexpr BitBoard bb_5d = BitBoard::from_square<SQ_5D>();
-constexpr BitBoard bb_5e = BitBoard::from_square<SQ_5E>();
-constexpr BitBoard bb_5f = BitBoard::from_square<SQ_5F>();
-constexpr BitBoard bb_6a = BitBoard::from_square<SQ_6A>();
-constexpr BitBoard bb_6b = BitBoard::from_square<SQ_6B>();
-constexpr BitBoard bb_6c = BitBoard::from_square<SQ_6C>();
-constexpr BitBoard bb_6d = BitBoard::from_square<SQ_6D>();
-constexpr BitBoard bb_6e = BitBoard::from_square<SQ_6E>();
-constexpr BitBoard bb_6f = BitBoard::from_square<SQ_6F>();
-
-constexpr BitBoard bb_file1 = bb_1a | bb_1b | bb_1c | bb_1d | bb_1e | bb_1f;
-constexpr BitBoard bb_file2 = bb_2a | bb_2b | bb_2c | bb_2d | bb_2e | bb_2f;
-constexpr BitBoard bb_file3 = bb_3a | bb_3b | bb_3c | bb_3d | bb_3e | bb_3f;
-constexpr BitBoard bb_file4 = bb_4a | bb_4b | bb_4c | bb_4d | bb_4e | bb_4f;
-constexpr BitBoard bb_file5 = bb_5a | bb_5b | bb_5c | bb_5d | bb_5e | bb_5f;
-constexpr BitBoard bb_file6 = bb_6a | bb_6b | bb_6c | bb_6d | bb_6e | bb_6f;
-constexpr BitBoard bb_ranka = bb_1a | bb_2a | bb_3a | bb_4a | bb_5a | bb_6a;
-constexpr BitBoard bb_rankb = bb_1b | bb_2b | bb_3b | bb_4b | bb_5b | bb_6b;
-constexpr BitBoard bb_rankc = bb_1c | bb_2c | bb_3c | bb_4c | bb_5c | bb_6c;
-constexpr BitBoard bb_rankd = bb_1d | bb_2d | bb_3d | bb_4d | bb_5d | bb_6d;
-constexpr BitBoard bb_ranke = bb_1e | bb_2e | bb_3e | bb_4e | bb_5e | bb_6e;
-constexpr BitBoard bb_rankf = bb_1f | bb_2f | bb_3f | bb_4f | bb_5f | bb_6f;
-
 } // namespace vshogi::judkins_shogi
 
 namespace vshogi
 {
+
+template <>
+inline std::uint64_t
+    judkins_shogi::BitboardTraits::table_attacks[judkins_shogi::VOID + 1u]
+                                                [judkins_shogi::SQ_NA + 1u]
+    = {};
+template <>
+inline std::uint64_t judkins_shogi::BitboardTraits::table_pre_reverse_attack
+    [judkins_shogi::SQ_NA + 1u][judkins_shogi::VOID + 1u]
+    = {};
+template <>
+inline std::uint64_t
+    judkins_shogi::BitboardTraits::table_ray[judkins_shogi::SQ_NA + 1u]
+                                            [DIR_NA + 1u]
+    = {};
+template <>
+inline std::uint64_t
+    judkins_shogi::BitboardTraits::table_mask_between[judkins_shogi::SQ_NA + 1u]
+                                                     [judkins_shogi::SQ_NA + 1u]
+    = {};
 
 template <>
 inline const uint judkins_shogi::Stand::shift_bits[] = {0, 3, 6, 9, 12, 15};
@@ -270,39 +240,13 @@ inline std::uint64_t judkins_shogi::BlackWhiteStands::zobrist_table
 
 template <>
 inline std::uint64_t judkins_shogi::Board::zobrist_table
-    [judkins_shogi::Config::num_squares]
+    [judkins_shogi::SQ_NA]
     [num_colors * judkins_shogi::Config::num_piece_types + 1]
     = {};
 
 template <>
-inline judkins_shogi::BitBoard judkins_shogi::BitBoard::attacks_table
-    [judkins_shogi::Config::num_colored_piece_types]
-    [judkins_shogi::Config::num_squares]
-    = {};
-
-template <>
-inline judkins_shogi::BitBoard
-    judkins_shogi::BitBoard::ray_table[judkins_shogi::Config::num_squares]
-                                      [judkins_shogi::Config::num_dir]
-    = {};
-template <>
-inline judkins_shogi::BitBoard judkins_shogi::BitBoard::line_segment_table
-    [judkins_shogi::Config::num_squares][judkins_shogi::Config::num_squares]
-    = {};
-template <>
-inline judkins_shogi::BitBoard
-    judkins_shogi::BitBoard::neighbor_table[num_colors]
-                                           [judkins_shogi::Config::num_squares]
-    = {};
-template <>
-inline judkins_shogi::BitBoard judkins_shogi::BitBoard::neighbor_2nd_table
-    [judkins_shogi::Config::num_squares]
-    [judkins_shogi::Config::num_colored_piece_types]
-    = {};
-
-template <>
 inline const std::uint64_t
-    judkins_shogi::Magic::premask_adjacent[judkins_shogi::Config::num_squares]
+    judkins_shogi::Magic::premask_adjacent[judkins_shogi::SQ_NA]
     = {
         // clang-format off
 0x000000000104105e, 0x000000000208209c, 0x000000000410411a, 0x0000000008208216, 0x000000001041040e, 0x000000002082081e,
@@ -315,7 +259,7 @@ inline const std::uint64_t
 };
 template <>
 inline const std::uint64_t
-    judkins_shogi::Magic::premask_diagonal[judkins_shogi::Config::num_squares]
+    judkins_shogi::Magic::premask_diagonal[judkins_shogi::SQ_NA]
     = {
         // clang-format off
 0x0000000010204080, 0x0000000000408100, 0x0000000000010280, 0x0000000000002500, 0x0000000000084200, 0x0000000002108400,
@@ -327,8 +271,8 @@ inline const std::uint64_t
         // clang-format on
 };
 template <>
-inline const std::uint32_t judkins_shogi::Magic::magic_number_adjacent
-    [judkins_shogi::Config::num_squares]
+inline const std::uint32_t
+    judkins_shogi::Magic::magic_number_adjacent[judkins_shogi::SQ_NA]
     = {
         0x02002040, 0x20840c03, 0x0c020814, 0x02010202, 0x08680163, 0x0200a024,
         0x05280840, 0x38040840, 0x00442010, 0x00100830, 0x51084204, 0x13084002,
@@ -338,8 +282,8 @@ inline const std::uint32_t judkins_shogi::Magic::magic_number_adjacent
         0x04084042, 0x81804440, 0x15084021, 0xa040100a, 0x21204021, 0x00881813,
 };
 template <>
-inline const std::uint32_t judkins_shogi::Magic::magic_number_diagonal
-    [judkins_shogi::Config::num_squares]
+inline const std::uint32_t
+    judkins_shogi::Magic::magic_number_diagonal[judkins_shogi::SQ_NA]
     = {
         0x88b08098, 0x04101080, 0x02280440, 0x02140cc4, 0x00045080, 0x03082402,
         0x00410401, 0x010900a5, 0x00108888, 0x0004a4c0, 0x80084440, 0x08000408,
@@ -349,14 +293,12 @@ inline const std::uint32_t judkins_shogi::Magic::magic_number_diagonal
         0x54044818, 0x81190520, 0x080108a6, 0x00008401, 0x51904108, 0x1a104482,
 };
 template <>
-inline judkins_shogi::BitBoard judkins_shogi::Magic::attack_table_adjacent
-    [judkins_shogi::Config::num_squares]
-    [judkins_shogi::Magic::table_size_adjacent]
+inline judkins_shogi::bitboard_t judkins_shogi::Magic::attack_table_adjacent
+    [judkins_shogi::SQ_NA][judkins_shogi::Magic::table_size_adjacent]
     = {};
 template <>
-inline judkins_shogi::BitBoard judkins_shogi::Magic::attack_table_diagonal
-    [judkins_shogi::Config::num_squares]
-    [judkins_shogi::Magic::table_size_diagonal]
+inline judkins_shogi::bitboard_t judkins_shogi::Magic::attack_table_diagonal
+    [judkins_shogi::SQ_NA][judkins_shogi::Magic::table_size_diagonal]
     = {};
 
 } // namespace vshogi
