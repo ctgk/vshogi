@@ -307,4 +307,26 @@ TEST(test_minishogi_board, rotate)
     CHECK_EQUAL(VOID, actual[SQ_3C]);
 }
 
+TEST(test_minishogi_board, compute_king_movable)
+{
+    {
+        // in single check
+        const auto b = Board("2k1+R/5/5/5/5 w -");
+        CHECK_EQUAL(
+            0b0000000010000100000000000u, b.compute_king_movable(WHITE));
+    }
+    {
+        // double check
+        const auto b = Board("2k1+R/5/B4/5/5 w -");
+        CHECK_EQUAL(
+            0b0000000000000100000000000u, b.compute_king_movable(WHITE));
+    }
+    {
+        // no check
+        const auto b = Board("2k2/5/3+R1/5/5 w -");
+        CHECK_EQUAL(
+            0b0000000011000000000000000u, b.compute_king_movable(WHITE));
+    }
+}
+
 } // namespace test_vshogi::test_minishogi

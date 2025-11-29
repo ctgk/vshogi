@@ -67,22 +67,6 @@ TEST(state, to_sfen)
     }
 }
 
-TEST(state, compute_king_movable)
-{
-    {
-        const auto s = State();
-        const auto actual = s.compute_king_movable();
-        const auto expect = BT::from_square(SQ_4H) | BT::from_square(SQ_5H)
-                            | BT::from_square(SQ_6H);
-        CHECK_TRUE(expect == actual);
-    }
-    {
-        const auto s = State("9/9/9/9/9/9/PPPPPPPPP/3LRL3/LNSGKGSNL b -");
-        const auto actual = s.compute_king_movable();
-        CHECK_TRUE(actual == 0u);
-    }
-}
-
 TEST(state, find_checker_square)
 {
     const auto s = State("9/9/9/9/9/9/1PpPpPpP1/9/+r7K b P");

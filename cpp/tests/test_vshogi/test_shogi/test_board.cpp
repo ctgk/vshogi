@@ -197,4 +197,20 @@ TEST(test_shogi_board, get_occupied_by_slider)
     }
 }
 
+TEST(test_shogi_board, compute_king_movable)
+{
+    {
+        const auto b = Board();
+        const auto actual = b.compute_king_movable(BLACK);
+        const auto expect = BT::from_square(SQ_4H) | BT::from_square(SQ_5H)
+                            | BT::from_square(SQ_6H);
+        CHECK_TRUE(expect == actual);
+    }
+    {
+        const auto b = Board("9/9/9/9/9/9/PPPPPPPPP/3LRL3/LNSGKGSNL b -");
+        const auto actual = b.compute_king_movable(BLACK);
+        CHECK_TRUE(actual == 0u);
+    }
+}
+
 } // namespace test_vshogi::test_shogi

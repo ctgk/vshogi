@@ -243,18 +243,8 @@ public:
         return find_sliding_attack_blockers(c, c, enemy_king);
     }
     bitboard_t compute_king_movable(
-        const ColorEnum& by_side, const bitboard_t& movable) const
-    {
-        const auto src = m_kings[by_side];
-        if (src == C::SQ_NA)
-            return static_cast<bitboard_t>(0);
-        assert(m_pieces[src] == PT::make_piece(by_side, C::OU));
-        bitboard_t out = BT::get_attack_by(m_pieces[src], src) & movable;
-        const auto occ_full_but_king = get_occupied() ^ BT::from_square(src);
-        out &= BT::invert(m_bb_color[by_side]);
-        clear_mask_where_attacked(out, ~by_side, occ_full_but_king);
-        return out;
-    }
+        const ColorEnum& by_side,
+        const bitboard_t& candidate = BT::full()) const;
     bitboard_t compute_movable_to(
         const Square& dst,
         const ColorEnum& by_side,
@@ -505,34 +495,6 @@ private:
         }
         return out;
     }
-    void clear_mask_where_attacked(
-        bitboard_t& mask,
-        const ColorEnum& by_side,
-        const bitboard_t& occ_full_but_king) const
-    {
-        bitboard_t occ_atks = get_occupied_by_slider(by_side);
-        bitboard_t occ_melee = m_bb_color[by_side] ^ occ_atks;
-        const bitboard_t melee_mask = BT::get_pre_reverse_attack(
-            m_kings[~by_side], m_pieces[m_kings[~by_side]]);
-        if constexpr (C::num_dir == 12u) {
-            occ_melee
-                &= (melee_mask
-                    | BT::shift(melee_mask, by_side == BLACK ? DIR_S : DIR_N));
-        } else {
-            occ_melee &= melee_mask;
-        }
-        occ_atks ^= occ_melee;
-        for (auto sq : BT::iterator(occ_atks)) {
-            const auto& p = m_pieces[sq];
-            if (PT::is_slider(p) && (BT::get_attack_by(p, sq) & mask)) {
-                mask &= BT::invert(BT::get_attack_by(p, sq, occ_full_but_king));
-            } else {
-                mask &= BT::invert(BT::get_attack_by(p, sq));
-            }
-            if (mask == 0u)
-                return;
-        }
-    }
     template <bool Check>
     void update_droppable(
         bitboard_t& droppable, const Piece& p, const bitboard_t& occ_full) const
@@ -605,7 +567,7 @@ private:
     }
     bool king_can_avoid_a_pawn_attack(const ColorEnum& king_color) const
     {
-        return compute_king_movable(king_color, BT::full());
+        return compute_king_movable(king_color);
     }
     bool enemy_can_capture_the_drop_pawn(
         const Square& dst, const ColorEnum& by_side) const
@@ -758,6 +720,35 @@ Board<P> Board<P>::rotate() const
         out.m_pieces[sq_rotated] = PT::make_piece(~c, pt);
     }
     out.update_internals_based_on_pieces();
+    return out;
+}
+
+template <class P>
+typename Configuration<P>::bitboard_t Board<P>::compute_king_movable(
+    const ColorEnum& by_side, const bitboard_t& candidate) const
+{
+    const auto src = m_kings[by_side];
+    if (src == C::SQ_NA)
+        return static_cast<bitboard_t>(0);
+    assert(m_pieces[src] == PT::make_piece(by_side, C::OU));
+
+    auto out = BT::get_attack_by(m_pieces[src], src) & candidate;
+    out &= ~m_bb_color[by_side]; // leading bits are 0s for sure.
+    if (out == 0u)
+        return out;
+
+    const auto occ_full_but_king = get_occupied() ^ BT::from_square(src);
+    auto atks = get_occupied_by_slider(~by_side);
+    const auto melee = m_bb_color[~by_side] ^ atks;
+    auto neighbor = BT::get_pre_reverse_attack(src, m_pieces[src]);
+    if constexpr (C::num_dir == 12u)
+        neighbor |= BT::shift(neighbor, by_side ? DIR_S : DIR_N);
+    atks ^= melee & neighbor;
+    for (auto sq : BT::iterator(atks)) {
+        out &= ~BT::get_attack_by(m_pieces[sq], sq, occ_full_but_king);
+        if (out == 0u)
+            return out;
+    }
     return out;
 }
 

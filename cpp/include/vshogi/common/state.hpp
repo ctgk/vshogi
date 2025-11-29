@@ -275,20 +275,6 @@ public:
             return static_cast<bitboard_t>(0);
         return m_board.find_pinned(m_turn);
     }
-    bitboard_t compute_king_movable() const
-    {
-        return compute_king_movable(BT::full());
-    }
-    bitboard_t compute_king_movable(bitboard_t movable) const
-    {
-        for (uint ii = 0u; ii < 2u; ++ii) {
-            const Square sq = find_checker_square(ii);
-            if (sq == C::SQ_NA)
-                break;
-            movable &= BT::invert(m_board.get_attack_at(sq));
-        }
-        return m_board.compute_king_movable(m_turn, movable);
-    }
     bool is_declined_promotion(const Move<P>& move) const
     {
         if (move.is_drop())
