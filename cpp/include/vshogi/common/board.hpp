@@ -271,38 +271,9 @@ public:
         }
         return out;
     }
-    template <bool Check>
-    bitboard_t compute_droppable(const Piece& p) const
-    {
-        const auto occ_full = get_occupied();
-        auto droppable = BT::invert(occ_full);
-        update_droppable<Check>(droppable, p, occ_full);
-        return droppable;
-    }
-    template <bool Check>
-    bitboard_t compute_droppable(const Piece& p, bitboard_t droppable) const
-    {
-        const auto occ_full = get_occupied();
-        droppable &= BT::invert(occ_full);
-        update_droppable<Check>(droppable, p, occ_full);
-        return droppable;
-    }
-    bool has_pawn_in_file(const File& f, const ColorEnum& by_side) const
-    {
-        const auto occ = get_occupied<C::FU>(by_side);
-        return static_cast<bool>(BT::from_file(f) & occ);
-    }
-    bool
-    is_drop_pawn_mate_square(const Square dst, const ColorEnum by_side) const
-    {
-        const Square sq
-            = ST::shift(m_kings[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
-        if ((sq == C::SQ_NA) || (sq != dst)
-            || king_can_avoid_a_pawn_attack(~by_side)
-            || enemy_can_capture_the_drop_pawn(sq, by_side))
-            return false;
-        return true;
-    }
+    Square drop_pawn_mate_square(
+        const ColorEnum& by_side,
+        const bitboard_t& candidate = BT::full()) const;
     Board hflip() const
     {
         Board out;
@@ -495,80 +466,6 @@ private:
         }
         return out;
     }
-    template <bool Check>
-    void update_droppable(
-        bitboard_t& droppable, const Piece& p, const bitboard_t& occ_full) const
-    {
-        if constexpr (Check) {
-            const auto pt = PT::to_piece_type(p);
-            const auto c = PT::get_color(p);
-            const Square& target = m_kings[~c];
-            droppable
-                &= BT::get_attack_by(PT::make_piece(~c, pt), target, occ_full);
-            if (pt == C::FU) {
-                if (droppable == 0u)
-                    return;
-                if (has_pawn_in_file(ST::to_file(target), c)
-                    || (can_drop_pawn_mate(c)))
-                    droppable = static_cast<bitboard_t>(0);
-            }
-        } else {
-            droppable &= BT::get_placeable(p);
-            if (PT::to_piece_type(p) == C::FU) {
-                const auto c = PT::get_color(p);
-                exclude_two_pawns_in_a_file(droppable, c);
-                exclude_drop_pawn_mate(droppable, c);
-            }
-        }
-    }
-    void
-    exclude_two_pawns_in_a_file(bitboard_t& occ, const ColorEnum& by_side) const
-    {
-        for (auto f : EnumIterator<File, C::num_files>()) {
-            if (has_pawn_in_file(f, by_side))
-                occ &= ~BT::from_file(f);
-        }
-        occ &= BT::full();
-    }
-    bool can_drop_pawn_mate(const ColorEnum& by_side) const
-    {
-        const Square dst
-            = ST::shift(m_kings[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
-        if (dst == C::SQ_NA)
-            return false;
-        if (king_can_avoid_a_pawn_attack(~by_side))
-            return false;
-        if (enemy_can_capture_the_drop_pawn(dst, by_side))
-            return false;
-        return true;
-    }
-    void exclude_drop_pawn_mate(bitboard_t& occ, const ColorEnum& by_side) const
-    {
-        const Square dst
-            = ST::shift(m_kings[~by_side], (by_side == BLACK) ? DIR_S : DIR_N);
-        if (dst == C::SQ_NA)
-            return;
-        if (!BT::is_one(occ, dst))
-            return;
-        if (king_can_avoid_a_pawn_attack(~by_side))
-            return;
-        if (enemy_can_capture_the_drop_pawn(dst, by_side))
-            return;
-        occ ^= BT::from_square(dst);
-    }
-    bool is_pawn_attacking_to_enemy_king(
-        const Square& sq, const ColorEnum& by_side) const
-    {
-        const auto enemy_king_sq = m_kings[~by_side];
-        if (enemy_king_sq == C::SQ_NA)
-            return false;
-        return enemy_king_sq
-               == ST::shift(sq, (by_side == BLACK) ? DIR_N : DIR_S);
-    }
-    bool king_can_avoid_a_pawn_attack(const ColorEnum& king_color) const
-    {
-        return compute_king_movable(king_color);
-    }
     bool enemy_can_capture_the_drop_pawn(
         const Square& dst, const ColorEnum& by_side) const
     {
@@ -750,6 +647,18 @@ typename Configuration<P>::bitboard_t Board<P>::compute_king_movable(
             return out;
     }
     return out;
+}
+
+template <class P>
+typename Configuration<P>::Square Board<P>::drop_pawn_mate_square(
+    const ColorEnum& by_side, const bitboard_t& candidate) const
+{
+    const auto sq = ST::shift(m_kings[~by_side], by_side ? DIR_N : DIR_S);
+    if ((sq == C::SQ_NA) || !BT::is_one(candidate, sq)
+        || compute_king_movable(~by_side)
+        || enemy_can_capture_the_drop_pawn(sq, by_side))
+        return C::SQ_NA;
+    return sq;
 }
 
 } // namespace vshogi

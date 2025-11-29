@@ -266,30 +266,6 @@ TEST(test_minishogi_board, compute_movable_to)
     }
 }
 
-TEST(test_minishogi_board, compute_droppable)
-{
-    {
-        const auto b = Board("1+p1p1/5/5/5/5");
-        const auto actual = b.compute_droppable<false>(W_FU);
-        CHECK_EQUAL(0b0111101110011110000001111u, actual);
-    }
-    {
-        const auto b = Board("3rk/5/4G/5/4K");
-        const auto actual = b.compute_droppable<true>(B_FU);
-        CHECK_EQUAL(0, actual);
-    }
-    {
-        const auto b = Board("5/5/4s/5/3GK");
-        const auto actual = b.compute_droppable<true>(W_FU);
-        CHECK_EQUAL(0b0000000000000000000001000u, actual);
-    }
-    {
-        const auto b = Board("5/5/4s/4P/3GK");
-        const auto actual = b.compute_droppable<true>(W_FU);
-        CHECK_EQUAL(0, actual);
-    }
-}
-
 TEST(test_minishogi_board, get_occupied_by_slider)
 {
     {

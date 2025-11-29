@@ -164,16 +164,6 @@ TEST(test_shogi_board, find_sliding_attacker)
     }
 }
 
-TEST(test_shogi_board, compute_droppable)
-{
-    const auto b = Board("9/9/9/9/9/9/P1P1P1P1P/9/9");
-    const auto actual = b.compute_droppable<false>(B_FU);
-    const auto expect = (BT::from_file(FILE2) | BT::from_file(FILE4)
-                         | BT::from_file(FILE6) | BT::from_file(FILE8))
-                        & BT::invert(BT::from_rank(RANK1));
-    CHECK_TRUE(expect == actual);
-}
-
 TEST(test_shogi_board, get_occupied_by_slider)
 {
     {

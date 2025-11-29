@@ -35,6 +35,7 @@ private:
     using Square = typename C::Square;
     using PT = PieceTraits<P>;
     using BT = BitboardTraits<P>;
+    using bitboard_t = typename C::bitboard_t;
     using BitSquareIterator = typename BT::Iterator;
 
 private:
@@ -89,19 +90,39 @@ public:
 private:
     void init_sq_iter()
     {
-        const auto& b = m_state.get_board();
+        const Board<P>& b = m_state.get_board();
         const auto t = m_state.get_turn();
         const auto p = PT::make_piece(t, m_pt_iter);
-        if (m_state.in_check()) {
-            const auto mask = BT::get_mask_between(
+        auto mask = BT::invert(b.get_occupied());
+        if (m_state.in_check())
+            mask &= BT::get_mask_between(
                 m_state.find_checker_square(), b.get_king_square(t));
-            m_sq_iter = BT::iterator(
-                b.template compute_droppable < GenType
-                == GenEnum::CHECK > (p, mask));
-        } else {
-            m_sq_iter = BT::iterator(
-                b.template compute_droppable < GenType == GenEnum::CHECK > (p));
+        if (mask)
+            mask &= BT::get_placeable(p);
+        if (mask && (GenType == GenEnum::CHECK))
+            mask &= inverse_attack(b, t);
+        if (mask && (m_pt_iter == C::FU))
+            mask &= no_pawn_files(b, t);
+        if (mask && (m_pt_iter == C::FU))
+            mask ^= BT::from_square(b.drop_pawn_mate_square(t, mask));
+        m_sq_iter = BT::iterator(mask);
+    }
+    bitboard_t inverse_attack(const Board<P>& b, const ColorEnum t) const
+    {
+        return BT::get_attack_by(
+            PT::make_piece(~t, m_pt_iter),
+            b.get_king_square(~t),
+            b.get_occupied());
+    }
+    static bitboard_t no_pawn_files(const Board<P>& b, const ColorEnum t)
+    {
+        bitboard_t out{};
+        for (auto f : EnumIterator<typename C::File, C::num_files>()) {
+            const auto m = BT::from_file(f);
+            if (!(m & b.get_occupied(t) & b.get_occupied(C::FU)))
+                out ^= m;
         }
+        return out;
     }
     void init_sq_iter(const Square begin)
     {
@@ -192,9 +213,9 @@ private:
                 return false;
             const Board<P>& b = m_state.get_board();
             if (m_pt_iter == C::FU) {
-                if (b.has_pawn_in_file(ST::to_file(dst), turn))
+                if (has_pawn_in_file(b, ST::to_file(dst), turn))
                     return false;
-                if (b.is_drop_pawn_mate_square(dst, turn))
+                if (b.drop_pawn_mate_square(turn, BT::from_square(dst)) == dst)
                     return false;
             }
         } else if (dirs[2] == DIR_NA) { // KE
@@ -207,6 +228,12 @@ private:
                 return ST::to_rank(dst) < C::RANK_Y;
         }
         return true;
+    }
+    static bool has_pawn_in_file(
+        const Board<P>& b, const typename C::File& f, const ColorEnum& by_side)
+    {
+        return b.get_occupied(by_side) & b.get_occupied(C::FU)
+               & BT::from_file(f);
     }
     void increment()
     {
