@@ -102,9 +102,9 @@ public:
             next->m_parent = nullptr;
 
         const int offset = offence ? 19 : 10;
-        const Square king_sq
-            = g.get_king_square(offence ? ~g.get_turn() : g.get_turn());
-        const Square checker = g.find_checker_square();
+        const Square king_sq = g.get_state().get_king_square(
+            offence ? ~g.get_turn() : g.get_turn());
+        const Square checker = g.get_state().find_checker_square();
         for (Node* c = m_child; c && (c->m_parent == this); ++c) {
             uint delta_plus = 0u;
             const auto m = c->get_action();

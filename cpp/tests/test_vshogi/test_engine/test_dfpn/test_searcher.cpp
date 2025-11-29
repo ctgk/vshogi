@@ -103,7 +103,7 @@ TEST(dfpn_table, look_up_l_prefer_mate_at_offence)
     CHECK_EQUAL(vshogi::BLACK_WIN, g1.get_result());
     CHECK_TRUE(c1->simulate(g1));
     g1.undo();
-    n1.backprop(g1.find_checker_square());
+    n1.backprop(g1.get_state().find_checker_square());
     CHECK_TRUE(n1.fully_expanded());
     CHECK_TRUE(n1.proved_mate(true));
 
@@ -152,7 +152,7 @@ TEST(dfpn_table, look_up_l_prefer_no_mate_at_defence)
     c1->backprop(SQ_NA);
     CHECK_TRUE(c1->proved_no_mate(true));
     g1.undo();
-    n1.backprop(g1.find_checker_square());
+    n1.backprop(g1.get_state().find_checker_square());
     CHECK_TRUE(n1.fully_expanded());
     CHECK_TRUE(n1.proved_no_mate(false));
 
@@ -237,7 +237,7 @@ TEST(dfpn_table, look_up_g_prefer_no_mate_at_offence)
     auto n1 = Node();
     auto g1 = Game("3rk/3gs/5/5/5 b PSG");
     n1.expand(next, g1);
-    n1.backprop(g1.find_checker_square());
+    n1.backprop(g1.get_state().find_checker_square());
     CHECK_TRUE(n1.proved_no_mate(true));
     auto n2 = Node();
     auto g2 = Game("3rk/3gs/5/5/5 b PS");
@@ -274,7 +274,7 @@ TEST(dfpn_table, look_up_g_prefer_mate_at_defence)
     auto g1 = Game("4k/5/3GP/5/5 b psg");
     g1.apply(Move(SQ_2C, SQ_1B));
     n1.expand(next, g1);
-    n1.backprop(g1.find_checker_square());
+    n1.backprop(g1.get_state().find_checker_square());
     CHECK_TRUE(n1.fully_expanded());
     CHECK_TRUE(n1.proved_mate(false));
     auto n2 = Node();

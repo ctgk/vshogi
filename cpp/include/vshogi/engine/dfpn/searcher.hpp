@@ -180,7 +180,8 @@ private:
             --m_remaining_searches;
             return out;
         }
-        const auto checker_sq = offence ? C::SQ_NA : g.find_checker_square();
+        const auto checker_sq
+            = offence ? C::SQ_NA : g.get_state().find_checker_square();
         if (!n.has_child() && !m_next->is_end()) {
             n.expand(m_next, g, twin_ge, twin_le);
             if ((twin_e == nullptr) || !twin_e->fully_expanded())

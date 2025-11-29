@@ -133,18 +133,6 @@ public:
             out.emplace_back(*g);
         return out;
     }
-    Square get_king_square() const
-    {
-        return m_state.get_board().get_king_square(get_turn());
-    }
-    Square get_king_square(const ColorEnum c) const
-    {
-        return m_state.get_board().get_king_square(c);
-    }
-    Square find_checker_square(const uint index = 0u) const
-    {
-        return m_state.find_checker_square(index);
-    }
     ResultEnum get_result() const
     {
         return m_result;
