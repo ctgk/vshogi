@@ -42,12 +42,6 @@ public:
     static DirectionEnum direction(const Square& src, const Square& dst);
     static const Square* ray_from(const Square& src, const DirectionEnum& dir);
 
-public: // char, str
-    static Square to_square(const char sfen[2]);
-    static void to_sfen(char sfen[2], const Square& sq);
-    static std::string to_jpn(const Square& sq);
-    static std::string to_eng(const Square& sq);
-
 private:
     static File hflip(const File& f);
     static bool in_promotion_zone(const Rank& r, const ColorEnum& by_side);
@@ -206,58 +200,6 @@ void SquareTraits<P>::init_table_ray_from()
             }
         }
     }
-}
-
-template <class P>
-typename SquareTraits<P>::Square SquareTraits<P>::to_square(const char sfen[2])
-{
-    return to_square(
-        static_cast<File>(sfen[0] - '1'), static_cast<Rank>(sfen[1] - 'a'));
-}
-
-template <class P>
-void SquareTraits<P>::to_sfen(char sfen[2], const Square& sq)
-{
-    sfen[0] = static_cast<char>(static_cast<int>(to_file(sq)) + '1');
-    sfen[1] = static_cast<char>(static_cast<int>(to_rank(sq)) + 'a');
-}
-
-template <class P>
-std::string SquareTraits<P>::to_jpn(const Square& sq)
-{
-    const auto f = to_file(sq);
-    const auto r = to_rank(sq);
-    static const std::string arabic[] = {
-        u8"\uFF11",
-        u8"\uFF12",
-        u8"\uFF13",
-        u8"\uFF14",
-        u8"\uFF15",
-        u8"\uFF16",
-        u8"\uFF17",
-        u8"\uFF18",
-        u8"\uFF19",
-    };
-    static const std::string kanji[] = {
-        u8"\u4E00",
-        u8"\u4E8C",
-        u8"\u4E09",
-        u8"\u56DB",
-        u8"\u4E94",
-        u8"\u516D",
-        u8"\u4E03",
-        u8"\u516B",
-        u8"\u4E5D",
-    };
-    return arabic[f] + kanji[r];
-}
-
-template <class P>
-std::string SquareTraits<P>::to_eng(const Square& sq)
-{
-    const auto f = to_file(sq);
-    const auto r = to_rank(sq);
-    return std::string(1, '1' + f) + std::string(1, '1' + r);
 }
 
 } // namespace vshogi

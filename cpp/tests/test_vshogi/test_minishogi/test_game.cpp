@@ -1,3 +1,4 @@
+#include "vshogi/common/notation.hpp"
 #include "vshogi/variants/minishogi.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -6,6 +7,7 @@ namespace test_vshogi::test_minishogi
 {
 
 using namespace vshogi::minishogi;
+using NT = vshogi::Notation<Parameters>;
 
 TEST_GROUP (test_minishogi_game) {
 };
@@ -38,7 +40,7 @@ TEST(test_minishogi_game, apply)
     {
         auto game = Game();
         game.apply(Move(SQ_4E, SQ_3D));
-        STRCMP_EQUAL("rbsgk/4p/5/P1G2/K1SBR w - 2", game.to_sfen().c_str());
+        STRCMP_EQUAL("rbsgk/4p/5/P1G2/K1SBR w - 2", NT::to_sfen(game).c_str());
     }
 }
 
@@ -51,7 +53,7 @@ TEST(test_minishogi_game, undo)
         CHECK_EQUAL(1, game.ply());
         game.undo();
         CHECK_EQUAL(0, game.ply());
-        STRCMP_EQUAL("rbsgk/4p/5/P4/KGSBR b - 1", game.to_sfen().c_str());
+        STRCMP_EQUAL("rbsgk/4p/5/P4/KGSBR b - 1", NT::to_sfen(game).c_str());
     }
     {
         // undo capturing move
@@ -60,7 +62,7 @@ TEST(test_minishogi_game, undo)
         CHECK_EQUAL(1, game.get_stand(vshogi::BLACK).count(FU));
         game.undo();
         CHECK_EQUAL(0, game.get_stand(vshogi::BLACK).count(FU));
-        STRCMP_EQUAL("rbsgk/4p/5/P4/KGSBR b - 1", game.to_sfen().c_str());
+        STRCMP_EQUAL("rbsgk/4p/5/P4/KGSBR b - 1", NT::to_sfen(game).c_str());
     }
     {
         // undo promotion
@@ -69,7 +71,7 @@ TEST(test_minishogi_game, undo)
         CHECK_EQUAL(
             static_cast<int>(B_UM), static_cast<int>(game.get_board()[SQ_5A]));
         game.undo();
-        STRCMP_EQUAL("rbsgk/4p/5/P4/KGSRB b - 1", game.to_sfen().c_str());
+        STRCMP_EQUAL("rbsgk/4p/5/P4/KGSRB b - 1", NT::to_sfen(game).c_str());
     }
     {
         auto game = Game("4k/4r/5/5/4K b P");
@@ -511,7 +513,7 @@ TEST(test_minishogi_game, to_jpn)
         auto game = Game("5/2G2/G4/5/5 b -");
         {
             const auto m = Move("5c4b");
-            const auto actual = game.to_jpn(m);
+            const auto actual = NT::to_jpn(m, game);
             STRCMP_EQUAL(u8"\uFF14\u4E8C\u91D1\u4E0A", actual.c_str());
         }
     }
@@ -519,12 +521,12 @@ TEST(test_minishogi_game, to_jpn)
         auto game = Game("+B3+B/5/5/5/5 b -");
         {
             const auto m = Move("1a3c");
-            const auto actual = game.to_jpn(m);
+            const auto actual = NT::to_jpn(m, game);
             STRCMP_EQUAL(u8"\uff13\u4e09\u99ac\u53f3", actual.c_str());
         }
         {
             const auto m = Move("5a3c");
-            const auto actual = game.to_jpn(m);
+            const auto actual = NT::to_jpn(m, game);
             STRCMP_EQUAL(u8"\uff13\u4e09\u99ac\u5de6", actual.c_str());
         }
     }

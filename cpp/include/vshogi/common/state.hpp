@@ -92,6 +92,10 @@ public:
     {
         return m_stands[c];
     }
+    const Stands& get_stands() const
+    {
+        return m_stands;
+    }
     ColorEnum get_turn() const
     {
         return m_turn;
@@ -154,17 +158,6 @@ public:
             s += 2;
         }
         m_stands.set_sfen(s);
-    }
-    std::string to_sfen() const
-    {
-        auto out = std::string();
-        out.reserve(num_squares);
-        m_board.append_sfen(out);
-        out += ' ';
-        append_sfen_turn(out);
-        out += ' ';
-        m_stands.append_sfen(out);
-        return out;
     }
     State hflip() const
     {
@@ -291,10 +284,6 @@ private:
         : m_board(b), m_stands(s), m_turn(turn)
     {
         update_checkers();
-    }
-    void append_sfen_turn(std::string& out) const
-    {
-        out += ((m_turn == BLACK) ? 'b' : 'w');
     }
     void update_checkers()
     {

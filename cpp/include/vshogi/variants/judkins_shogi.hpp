@@ -13,6 +13,7 @@
 #include "vshogi/common/generator.hpp"
 #include "vshogi/common/magic.hpp"
 #include "vshogi/common/move.hpp"
+#include "vshogi/common/notation.hpp"
 #include "vshogi/common/piece_traits.hpp"
 #include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/stand.hpp"
@@ -224,7 +225,7 @@ inline const std::uint32_t judkins_shogi::Stand::mask
 
 template <>
 inline const judkins_shogi::PieceTypeEnum
-    judkins_shogi::BlackWhiteStands::pieces_in_sfen_order[]
+    Notation<judkins_shogi::Parameters>::pieces_in_sfen_order[]
     = {judkins_shogi::HI,
        judkins_shogi::KA,
        judkins_shogi::KI,

@@ -1,3 +1,4 @@
+#include "vshogi/common/notation.hpp"
 #include "vshogi/engine/mcts.hpp"
 #include "vshogi/variants/judkins_shogi.hpp"
 #include "vshogi/variants/minishogi.hpp"
@@ -12,6 +13,7 @@ namespace test_minishogi
 {
 
 using namespace vshogi::minishogi;
+using NT = vshogi::Notation<Parameters>;
 using Node = vshogi::engine::mcts::Node<Parameters>;
 using Searcher = vshogi::engine::mcts::Searcher<Parameters>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
@@ -79,7 +81,7 @@ TEST(minishogi_node, explore_one_action)
 
     const auto actual = root.select_nocheck(g, 1.f, 0.f);
     {
-        STRCMP_EQUAL("4k/4P/5/5/5 w - 2", g.to_sfen().c_str());
+        STRCMP_EQUAL("4k/4P/5/5/5 w - 2", NT::to_sfen(g).c_str());
 
         CHECK_EQUAL(1, root.get_visit_count());
         DOUBLES_EQUAL(0.1f, root.get_q_value(), 1e-2f);
@@ -225,7 +227,7 @@ TEST(minishogi_node, explore_two_layer)
         auto g_copy = Game(g);
         const auto actual = root.select_nocheck(g_copy, 1.f, 0.f);
         CHECK_EQUAL(root.get_child(Move(SQ_1E, SQ_1D)), actual);
-        STRCMP_EQUAL("s4/5/5/4S/5 w - 2", g_copy.to_sfen().c_str());
+        STRCMP_EQUAL("s4/5/5/4S/5 w - 2", NT::to_sfen(g_copy).c_str());
         float policy[Game::num_dlshogi_policy()] = {0.f};
         policy[Move(SQ_5A, SQ_5B).to_dlshogi_policy_index(vshogi::WHITE)]
             = 1.099f;
@@ -251,7 +253,7 @@ TEST(minishogi_node, explore_two_layer)
         CHECK_EQUAL(
             root.get_child(Move(SQ_1E, SQ_1D))->get_child(Move(SQ_5A, SQ_5B)),
             grand_child);
-        STRCMP_EQUAL("5/s4/5/4S/5 b - 3", g_copy.to_sfen().c_str());
+        STRCMP_EQUAL("5/s4/5/4S/5 b - 3", NT::to_sfen(g_copy).c_str());
         grand_child->simulate_ongoing_and_expand(
             g_copy.get_legal_moves(), g_copy.get_turn(), -0.5f, zeros);
         CHECK_EQUAL(

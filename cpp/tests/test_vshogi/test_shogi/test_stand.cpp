@@ -1,3 +1,4 @@
+#include "vshogi/common/notation.hpp"
 #include "vshogi/variants/shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -6,6 +7,7 @@ namespace test_vshogi::test_shogi
 {
 
 using namespace vshogi::shogi;
+using NT = vshogi::Notation<Parameters>;
 
 TEST_GROUP (shogi_stand) {
 };
@@ -74,21 +76,19 @@ TEST(shogi_stand, set_sfen)
     CHECK_EQUAL('\0', actual[1]);
 }
 
-TEST(shogi_stand, append_sfen)
+TEST(shogi_stand, to_sfen)
 {
     {
         auto s = BlackWhiteStands();
         s.set_sfen("-");
-        auto actual = std::string();
-        s.append_sfen(actual);
+        auto actual = NT::to_sfen(s);
         STRCMP_EQUAL("-", actual.c_str());
     }
     {
         const char sfen_holdings[] = "3P4NG10pl2r 5";
         auto s = BlackWhiteStands();
         s.set_sfen(sfen_holdings);
-        auto actual = std::string();
-        s.append_sfen(actual);
+        auto actual = NT::to_sfen(s);
         STRCMP_EQUAL("G4N3P2rl10p", actual.c_str());
     }
 }

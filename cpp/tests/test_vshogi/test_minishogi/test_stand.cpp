@@ -1,3 +1,4 @@
+#include "vshogi/common/notation.hpp"
 #include "vshogi/variants/minishogi.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -6,6 +7,7 @@ namespace test_vshogi::test_minishogi
 {
 
 using namespace vshogi::minishogi;
+using NT = vshogi::Notation<Parameters>;
 
 TEST_GROUP (minishogi_stand) {
 };
@@ -65,21 +67,19 @@ TEST(minishogi_stand, set_sfen)
     CHECK_EQUAL('\0', actual[1]);
 }
 
-TEST(minishogi_stand, append_sfen)
+TEST(minishogi_stand, to_sfen)
 {
     {
         auto s = BlackWhiteStands();
         s.set_sfen("-");
-        auto actual = std::string();
-        s.append_sfen(actual);
+        auto actual = NT::to_sfen(s);
         STRCMP_EQUAL("-", actual.c_str());
     }
     {
         const char sfen_holdings[] = "2bP2GSR 3";
         auto s = BlackWhiteStands();
         s.set_sfen(sfen_holdings);
-        auto actual = std::string();
-        s.append_sfen(actual);
+        auto actual = NT::to_sfen(s);
         STRCMP_EQUAL("R2GSP2b", actual.c_str());
     }
 }

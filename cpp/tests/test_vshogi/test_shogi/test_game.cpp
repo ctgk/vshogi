@@ -1,3 +1,4 @@
+#include "vshogi/common/notation.hpp"
 #include "vshogi/variants/shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -6,6 +7,7 @@ namespace test_vshogi::test_shogi
 {
 
 using namespace vshogi::shogi;
+using NT = vshogi::Notation<Parameters>;
 
 TEST_GROUP (test_shogi_game) {
 };
@@ -36,7 +38,7 @@ TEST(test_shogi_game, apply)
         STRCMP_EQUAL(
             "lnsgkgsnl/1r5b1/p1ppppppp/1p7/9/7P1/PPPPPPP1P/1B5R1/LNSGKGSNL b - "
             "3",
-            game.to_sfen().c_str());
+            NT::to_sfen(game).c_str());
     }
 }
 
@@ -215,7 +217,7 @@ TEST(test_shogi_game, to_jpn)
         auto game = Game("1+B3+B3/9/9/9/9/9/9/9/9 b -");
         {
             const auto m = Move("4a6c");
-            const auto actual = game.to_jpn(m);
+            const auto actual = NT::to_jpn(m, game);
             STRCMP_EQUAL(u8"\uff16\u4e09\u99ac\u53f3", actual.c_str());
         }
     }

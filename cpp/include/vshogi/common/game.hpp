@@ -162,14 +162,6 @@ public:
     {
         return get_zobrist_hash() ^ m_state.hash_stands();
     }
-    std::string to_sfen(const bool include_move_count = true) const
-    {
-        if (include_move_count)
-            return m_state.to_sfen() + " "
-                   + std::to_string(m_captured_move_list.size() + 1);
-        else
-            return m_state.to_sfen();
-    }
 
     /**
      * @brief Return the number of moves since the start of the game.
@@ -346,39 +338,6 @@ public:
     {
         return Move<P>(static_cast<std::uint16_t>(m_captured_move_list[index]));
     }
-    std::string to_jpn(const Move<P>& move) const
-    {
-        const Square dst = move.destination();
-        const Board<P>& b = get_board();
-        const ColorEnum t = get_turn();
-        if (move.is_drop()) {
-            const auto dst_jpn = ST::to_jpn(dst);
-            return dst_jpn + PT::to_jpn(move.source_piece())
-                   + b.unique_identifier_jpn(move, t);
-        } else {
-            const Square src = move.source_square();
-            const PieceType pt = PT::to_piece_type(b[src]);
-            const auto pt_jpn = PT::to_jpn(pt, false);
-            const auto unique_identifier_jpn = b.unique_identifier_jpn(move, t);
-            const auto promotion_jpn = promotion_to_jpn(move);
-            const auto dst_jpn = destination_to_jpn(move);
-            return dst_jpn + pt_jpn + unique_identifier_jpn + promotion_jpn;
-        }
-    }
-    std::string to_eng(const Move<P>& move) const
-    {
-        const Square dst = move.destination();
-        const auto dst_eng = ST::to_eng(dst);
-        if (move.is_drop())
-            return PT::to_eng(move.source_piece()) + "*" + dst_eng;
-        const Square src = move.source_square();
-        const Board<P>& b = get_board();
-        const auto pt_eng = PT::to_eng(b[src]);
-        const auto origin_eng = b.origin_eng(move);
-        const auto movement_eng = (b.is_empty(dst) ? "-" : "x");
-        const auto promotion_eng = promotion_to_eng(move);
-        return pt_eng + origin_eng + movement_eng + dst_eng + promotion_eng;
-    }
     void to_feature_map(float* const data) const
     {
         m_state.to_feature_map(data);
@@ -538,54 +497,7 @@ private:
         }
         return out;
     }
-    std::string destination_to_jpn(const Move<P>& action) const;
-    std::string promotion_to_jpn(const Move<P>& action) const;
-    std::string promotion_to_eng(const Move<P>& action) const;
 };
-
-template <class P>
-std::string Game<P>::destination_to_jpn(const Move<P>& action) const
-{
-    const auto n = ply();
-    const auto dst_prev
-        = (n > 0u) ? get_record_action(n - 1u).destination() : C::SQ_NA;
-    const auto dst = action.destination();
-    if (dst == dst_prev)
-        return u8"\u540c";
-    return ST::to_jpn(dst);
-}
-
-template <class P>
-std::string Game<P>::promotion_to_jpn(const Move<P>& action) const
-{
-    if (action.promote())
-        return u8"\u6210";
-
-    const auto t = m_state.get_turn();
-    const auto src = action.source_square();
-    const auto dst = action.destination();
-    const auto& p = m_state.get_board()[src];
-    if (PT::is_promotable(p)
-        && (ST::in_promotion_zone(src, t) || ST::in_promotion_zone(dst, t)))
-        return u8"\u4e0d\u6210";
-    return u8"";
-}
-
-template <class P>
-std::string Game<P>::promotion_to_eng(const Move<P>& action) const
-{
-    if (action.promote())
-        return "+";
-
-    const auto t = m_state.get_turn();
-    const auto src = action.source_square();
-    const auto dst = action.destination();
-    const auto& p = m_state.get_board()[src];
-    if (PT::is_promotable(p)
-        && (ST::in_promotion_zone(dst, t) || ST::in_promotion_zone(src, t)))
-        return "=";
-    return "";
-}
 
 } // namespace vshogi
 

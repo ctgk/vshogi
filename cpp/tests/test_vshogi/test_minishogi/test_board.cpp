@@ -1,3 +1,4 @@
+#include "vshogi/common/notation.hpp"
 #include "vshogi/variants/minishogi.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -9,6 +10,7 @@ using namespace vshogi::minishogi;
 using namespace vshogi;
 using Board = vshogi::minishogi::Board;
 using BT = vshogi::BitboardTraits<Parameters>;
+using NT = vshogi::Notation<Parameters>;
 
 TEST_GROUP (test_minishogi_board) {
 };
@@ -117,8 +119,7 @@ TEST(test_minishogi_board, append_sfen)
     CHECK_EQUAL(W_OU, b[SQ_1A]);
 
     const char expected[] = "2+S1k/1r2+P/2K2/5/5";
-    auto actual = std::string();
-    b.append_sfen(actual);
+    const auto actual = NT::to_sfen(b);
     STRCMP_EQUAL(expected, actual.c_str());
 }
 

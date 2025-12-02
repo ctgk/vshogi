@@ -97,42 +97,42 @@ TEST(test_judkins_shogi_square_traits, to_file)
 
 TEST(test_judkins_shogi_square_traits, to_square)
 {
-    CHECK_EQUAL(SQ_1A, SquareTraits::to_square("1a"));
-    CHECK_EQUAL(SQ_1B, SquareTraits::to_square("1b"));
-    CHECK_EQUAL(SQ_1C, SquareTraits::to_square("1c"));
-    CHECK_EQUAL(SQ_1D, SquareTraits::to_square("1d"));
-    CHECK_EQUAL(SQ_1E, SquareTraits::to_square("1e"));
-    CHECK_EQUAL(SQ_1F, SquareTraits::to_square("1f"));
-    CHECK_EQUAL(SQ_2A, SquareTraits::to_square("2a"));
-    CHECK_EQUAL(SQ_2B, SquareTraits::to_square("2b"));
-    CHECK_EQUAL(SQ_2C, SquareTraits::to_square("2c"));
-    CHECK_EQUAL(SQ_2D, SquareTraits::to_square("2d"));
-    CHECK_EQUAL(SQ_2E, SquareTraits::to_square("2e"));
-    CHECK_EQUAL(SQ_2F, SquareTraits::to_square("2f"));
-    CHECK_EQUAL(SQ_3A, SquareTraits::to_square("3a"));
-    CHECK_EQUAL(SQ_3B, SquareTraits::to_square("3b"));
-    CHECK_EQUAL(SQ_3C, SquareTraits::to_square("3c"));
-    CHECK_EQUAL(SQ_3D, SquareTraits::to_square("3d"));
-    CHECK_EQUAL(SQ_3E, SquareTraits::to_square("3e"));
-    CHECK_EQUAL(SQ_3F, SquareTraits::to_square("3f"));
-    CHECK_EQUAL(SQ_4A, SquareTraits::to_square("4a"));
-    CHECK_EQUAL(SQ_4B, SquareTraits::to_square("4b"));
-    CHECK_EQUAL(SQ_4C, SquareTraits::to_square("4c"));
-    CHECK_EQUAL(SQ_4D, SquareTraits::to_square("4d"));
-    CHECK_EQUAL(SQ_4E, SquareTraits::to_square("4e"));
-    CHECK_EQUAL(SQ_4F, SquareTraits::to_square("4f"));
-    CHECK_EQUAL(SQ_5A, SquareTraits::to_square("5a"));
-    CHECK_EQUAL(SQ_5B, SquareTraits::to_square("5b"));
-    CHECK_EQUAL(SQ_5C, SquareTraits::to_square("5c"));
-    CHECK_EQUAL(SQ_5D, SquareTraits::to_square("5d"));
-    CHECK_EQUAL(SQ_5E, SquareTraits::to_square("5e"));
-    CHECK_EQUAL(SQ_5F, SquareTraits::to_square("5f"));
-    CHECK_EQUAL(SQ_6A, SquareTraits::to_square("6a"));
-    CHECK_EQUAL(SQ_6B, SquareTraits::to_square("6b"));
-    CHECK_EQUAL(SQ_6C, SquareTraits::to_square("6c"));
-    CHECK_EQUAL(SQ_6D, SquareTraits::to_square("6d"));
-    CHECK_EQUAL(SQ_6E, SquareTraits::to_square("6e"));
-    CHECK_EQUAL(SQ_6F, SquareTraits::to_square("6f"));
+    CHECK_EQUAL(SQ_1A, SquareTraits::to_square(FILE1, RANK1));
+    CHECK_EQUAL(SQ_1B, SquareTraits::to_square(FILE1, RANK2));
+    CHECK_EQUAL(SQ_1C, SquareTraits::to_square(FILE1, RANK3));
+    CHECK_EQUAL(SQ_1D, SquareTraits::to_square(FILE1, RANK4));
+    CHECK_EQUAL(SQ_1E, SquareTraits::to_square(FILE1, RANK5));
+    CHECK_EQUAL(SQ_1F, SquareTraits::to_square(FILE1, RANK6));
+    CHECK_EQUAL(SQ_2A, SquareTraits::to_square(FILE2, RANK1));
+    CHECK_EQUAL(SQ_2B, SquareTraits::to_square(FILE2, RANK2));
+    CHECK_EQUAL(SQ_2C, SquareTraits::to_square(FILE2, RANK3));
+    CHECK_EQUAL(SQ_2D, SquareTraits::to_square(FILE2, RANK4));
+    CHECK_EQUAL(SQ_2E, SquareTraits::to_square(FILE2, RANK5));
+    CHECK_EQUAL(SQ_2F, SquareTraits::to_square(FILE2, RANK6));
+    CHECK_EQUAL(SQ_3A, SquareTraits::to_square(FILE3, RANK1));
+    CHECK_EQUAL(SQ_3B, SquareTraits::to_square(FILE3, RANK2));
+    CHECK_EQUAL(SQ_3C, SquareTraits::to_square(FILE3, RANK3));
+    CHECK_EQUAL(SQ_3D, SquareTraits::to_square(FILE3, RANK4));
+    CHECK_EQUAL(SQ_3E, SquareTraits::to_square(FILE3, RANK5));
+    CHECK_EQUAL(SQ_3F, SquareTraits::to_square(FILE3, RANK6));
+    CHECK_EQUAL(SQ_4A, SquareTraits::to_square(FILE4, RANK1));
+    CHECK_EQUAL(SQ_4B, SquareTraits::to_square(FILE4, RANK2));
+    CHECK_EQUAL(SQ_4C, SquareTraits::to_square(FILE4, RANK3));
+    CHECK_EQUAL(SQ_4D, SquareTraits::to_square(FILE4, RANK4));
+    CHECK_EQUAL(SQ_4E, SquareTraits::to_square(FILE4, RANK5));
+    CHECK_EQUAL(SQ_4F, SquareTraits::to_square(FILE4, RANK6));
+    CHECK_EQUAL(SQ_5A, SquareTraits::to_square(FILE5, RANK1));
+    CHECK_EQUAL(SQ_5B, SquareTraits::to_square(FILE5, RANK2));
+    CHECK_EQUAL(SQ_5C, SquareTraits::to_square(FILE5, RANK3));
+    CHECK_EQUAL(SQ_5D, SquareTraits::to_square(FILE5, RANK4));
+    CHECK_EQUAL(SQ_5E, SquareTraits::to_square(FILE5, RANK5));
+    CHECK_EQUAL(SQ_5F, SquareTraits::to_square(FILE5, RANK6));
+    CHECK_EQUAL(SQ_6A, SquareTraits::to_square(FILE6, RANK1));
+    CHECK_EQUAL(SQ_6B, SquareTraits::to_square(FILE6, RANK2));
+    CHECK_EQUAL(SQ_6C, SquareTraits::to_square(FILE6, RANK3));
+    CHECK_EQUAL(SQ_6D, SquareTraits::to_square(FILE6, RANK4));
+    CHECK_EQUAL(SQ_6E, SquareTraits::to_square(FILE6, RANK5));
+    CHECK_EQUAL(SQ_6F, SquareTraits::to_square(FILE6, RANK6));
 }
 
 TEST(test_judkins_shogi_square_traits, in_promotion_zone)

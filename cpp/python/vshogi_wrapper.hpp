@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "vshogi/common/config.hpp"
+#include "vshogi/common/notation.hpp"
 #include "vshogi/engine/dfpn/searcher.hpp"
 #include "vshogi/engine/mcts.hpp"
 #include "vshogi/engine/piece_value.hpp"
@@ -27,15 +28,16 @@ inline void export_to_jpn(pybind11::module& m)
 {
     namespace py = pybind11;
     using C = vshogi::Configuration<Parameters>;
+    using NT = vshogi::Notation<Parameters>;
     using PT = vshogi::PieceTraits<Parameters>;
     using ST = vshogi::SquareTraits<Parameters>;
     m.def("to_jpn", [](const typename C::PieceType pt) {
-        return PT::to_jpn(pt);
+        return NT::to_jpn(pt);
     });
     m.def("to_jpn", [](const typename C::Piece p) {
-        return PT::to_jpn(PT::to_piece_type(p));
+        return NT::to_jpn(PT::to_piece_type(p));
     });
-    m.def("to_jpn", [](const typename C::Square sq) { return ST::to_jpn(sq); });
+    m.def("to_jpn", [](const typename C::Square sq) { return NT::to_jpn(sq); });
 }
 
 template <class Parameters>
@@ -44,19 +46,11 @@ inline void export_to_sfen(pybind11::module& m)
     namespace py = pybind11;
     using C = vshogi::Configuration<Parameters>;
     using PT = vshogi::PieceTraits<Parameters>;
-    m.def("to_sfen", [](const typename C::PieceType pt) -> std::string {
-        if ((pt == C::NA) || !PT::is_promoted(pt))
-            return std::string(1, PT::to_char(pt));
-        return std::string(1, '+') + PT::to_char(pt);
+    using NT = vshogi::Notation<Parameters>;
+    m.def("to_sfen", [](const typename C::PieceType pt) {
+        return NT::to_sfen(pt);
     });
-    m.def("to_sfen", [](const typename C::Piece p) -> std::string {
-        auto c = PT::to_char(PT::to_piece_type(p));
-        if (PT::get_color(p) == vshogi::BLACK)
-            c = std::toupper(c);
-        if ((p == C::VOID) || !PT::is_promoted(p))
-            return std::string(1, c);
-        return std::string(1, '+') + c;
-    });
+    m.def("to_sfen", [](const typename C::Piece p) { return NT::to_sfen(p); });
 }
 
 template <class Parameters>
@@ -105,6 +99,7 @@ inline void export_move(pybind11::module& m)
 {
     namespace py = pybind11;
     using Move = vshogi::Move<Parameters>;
+    using NT = vshogi::Notation<Parameters>;
     using Square = typename Parameters::Square;
     using PieceType = typename Parameters::PieceType;
     py::class_<Move>(m, "Move")
@@ -137,13 +132,7 @@ inline void export_move(pybind11::module& m)
         .def("_to_dlshogi_policy_index", &Move::to_dlshogi_policy_index)
         .def_static("_num_policy_per_square", &Move::num_policy_per_square)
         .def("__hash__", &Move::hash)
-        .def(
-            "to_sfen",
-            [](const Move& self) {
-                std::string out((self.promote()) ? 5 : 4, '\0');
-                self.to_sfen(out.data());
-                return out;
-            })
+        .def("to_sfen", [](const Move& self) { return NT::to_sfen(self); })
         .def("__eq__", &Move::operator==)
         .def("__ne__", &Move::operator!=)
         .def(py::pickle(
@@ -157,11 +146,12 @@ inline void export_state(pybind11::module& m)
     namespace py = pybind11;
     using State = vshogi::State<Parameters>;
     using Move = vshogi::Move<Parameters>;
+    using NT = vshogi::Notation<Parameters>;
 
     py::class_<State>(m, "State")
         .def(py::init<const std::string&>())
         .def("hflip", &State::hflip)
-        .def("to_sfen", &State::to_sfen)
+        .def("to_sfen", [](const State& self) { return NT::to_sfen(self); })
         .def(
             "to_dlshogi_features",
             [](const State& self) {
@@ -226,6 +216,7 @@ inline void export_game(pybind11::module& m)
 {
     namespace py = pybind11;
     using C = vshogi::Configuration<Parameters>;
+    using NT = vshogi::Notation<Parameters>;
     using Game = vshogi::Game<Parameters>;
     using Move = vshogi::Move<Parameters>;
     py::class_<Game>(m, "_Game")
@@ -243,14 +234,22 @@ inline void export_game(pybind11::module& m)
         .def("count_repetitions", &Game::count_repetitions)
         .def("get_legal_moves", &Game::get_legal_moves)
         .def("get_check_moves", &Game::get_check_moves)
-        .def("to_sfen", &Game::to_sfen)
+        .def(
+            "to_sfen",
+            [](const Game& self, const bool include_move_count) {
+                return NT::to_sfen(self, include_move_count);
+            })
         .def("is_legal", &Game::is_legal)
         .def("in_check", &Game::in_check)
         .def("is_valid_piece_count", &Game::is_valid_piece_count)
         .def("hflip", &Game::hflip)
         .def("rotate", &Game::rotate)
-        .def("to_jpn", &Game::to_jpn)
-        .def("to_eng", &Game::to_eng)
+        .def(
+            "to_jpn",
+            [](const Game& g, const Move& m) { return NT::to_jpn(m, g); })
+        .def(
+            "to_eng",
+            [](const Game& g, const Move& m) { return NT::to_eng(m, g); })
         .def("apply", [](Game& self, const Move& m) { return self.apply(m); })
         .def("resign", &Game::resign)
         .def("declare_draw", &Game::declare_draw)

@@ -1,5 +1,6 @@
 #include <algorithm>
 
+#include "vshogi/common/notation.hpp"
 #include "vshogi/variants/minishogi.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -8,6 +9,7 @@ namespace test_vshogi::test_minishogi
 {
 
 using namespace vshogi::minishogi;
+using NT = vshogi::Notation<Parameters>;
 
 TEST_GROUP (test_minishogi_state) {
 };
@@ -46,7 +48,7 @@ TEST(test_minishogi_state, to_sfen)
 {
     auto s = State();
     s.set_sfen("2+S1k/1r2+P/2K2/5/5 b R2GSP2b 1");
-    const auto actual = s.to_sfen();
+    const auto actual = NT::to_sfen(s);
     STRCMP_EQUAL("2+S1k/1r2+P/2K2/5/5 b R2GSP2b", actual.c_str());
 }
 

@@ -138,14 +138,6 @@ public:
         update_internals_by_popped(popped, sq, hash);
         return popped;
     }
-    void append_sfen(std::string& out) const
-    {
-        append_sfen_rank(static_cast<Rank>(0), out);
-        for (uint ir = 1; ir < C::num_ranks; ++ir) {
-            out += '/';
-            append_sfen_rank(static_cast<Rank>(ir), out);
-        }
-    }
     const char* set_sfen(const char* sfen)
     {
         for (uint ir = 0U; ir < C::num_ranks; ++ir) {
@@ -366,24 +358,6 @@ private:
         assert(piece_ptr + C::num_ranks == m_pieces.data() + rank);
         return sfen_ptr;
     }
-    void append_sfen_rank(const Rank rank, std::string& out) const
-    {
-        auto ptr = m_pieces.data() + rank + (C::num_files - 1u) * C::num_ranks;
-        int num_void = 0;
-        for (; ptr >= m_pieces.data(); ptr -= C::num_ranks) {
-            if (*ptr == C::VOID) {
-                ++num_void;
-                continue;
-            }
-            if (num_void > 0) {
-                out += static_cast<char>('0' + num_void);
-                num_void = 0;
-            }
-            PT::append_sfen(*ptr, out);
-        }
-        if (num_void > 0)
-            out += static_cast<char>('0' + num_void);
-    }
     void update_internals_based_on_pieces()
     {
         m_kings[BLACK] = C::SQ_NA;
@@ -487,121 +461,6 @@ private:
             }
         }
         return false;
-    }
-
-public:
-    std::string
-    unique_identifier_jpn(const Move<P>& move, const ColorEnum& by_side) const
-    {
-        const auto dst = move.destination();
-        const auto dr = ST::to_rank(dst);
-        const auto df = ST::to_file(dst);
-        const auto p = (move.is_drop())
-                           ? PT::make_piece(by_side, move.source_piece())
-                           : m_pieces[move.source_square()];
-        const auto src_candidates = get_src_candidates(dst, p, move.promote());
-        const auto num_cands = hamming_weight(src_candidates);
-        if (move.is_drop() && static_cast<bool>(num_cands))
-            return u8"\u6253";
-        if (num_cands < 2u)
-            return u8""; // no unique identifier required
-        bitboard_t above{}, below{}, right{}, left{};
-        for (auto r : EnumIterator<Rank, C::num_ranks>()) {
-            if (((by_side == BLACK) && (r < dr))
-                || ((by_side == WHITE) && (dr < r)))
-                above ^= BT::from_rank(r);
-            else if (
-                ((by_side == BLACK) && (dr < r))
-                || ((by_side == WHITE) && (r < dr)))
-                below ^= BT::from_rank(r);
-        }
-        for (auto f : EnumIterator<File, C::num_files>()) {
-            if (((by_side == BLACK) && (f < df))
-                || ((by_side == WHITE) && (df < f)))
-                right ^= BT::from_file(f);
-            else if (
-                ((by_side == BLACK) && (df < f))
-                || ((by_side == WHITE) && (f < df)))
-                left ^= BT::from_file(f);
-        }
-        const uint num_cands_vertical[3] = {
-            hamming_weight(src_candidates & below),
-            hamming_weight(src_candidates & BT::from_rank(dr)),
-            hamming_weight(src_candidates & above),
-        };
-        const uint num_cands_horizontal[3] = {
-            hamming_weight(src_candidates & right),
-            hamming_weight(src_candidates & BT::from_file(df)),
-            hamming_weight(src_candidates & left),
-        };
-        const auto src = move.source_square();
-        return get_unique_identifier_jpn(
-            compute_index(dr, ST::to_rank(src), by_side),
-            compute_index(ST::to_file(src), df, by_side),
-            num_cands_vertical,
-            num_cands_horizontal,
-            p);
-    }
-    std::string origin_eng(const Move<P>& move) const
-    {
-        const auto src = move.source_square();
-        const auto p = m_pieces[src];
-        const auto src_candidates
-            = get_src_candidates(move.destination(), p, move.promote());
-        if (hamming_weight(src_candidates) < 2u)
-            return "";
-        return std::string(1, '1' + ST::to_file(src))
-               + std::string(1, '1' + ST::to_rank(src));
-    }
-
-private:
-    bitboard_t get_src_candidates(
-        const Square dst, const Piece p, const bool promote) const
-    {
-        const auto t = PT::get_color(p);
-        const auto inverse_atk = BT::get_attack_by(
-            PT::make_piece(~t, PT::to_piece_type(p)), dst, get_occupied());
-        auto src_candidates = inverse_atk & get_occupied(p);
-        if (promote && (!ST::in_promotion_zone(dst, t)))
-            src_candidates &= BT::promotion_zone(t);
-        return src_candidates;
-    }
-    template <class T>
-    static uint compute_index(const T d, const T s, const ColorEnum c)
-    {
-        return static_cast<uint>(
-            sign(
-                (static_cast<int>(c) * 2 - 1)
-                * (static_cast<int>(s) - static_cast<int>(d)))
-            + 1);
-    }
-    static std::string get_unique_identifier_jpn(
-        const uint vertical_index,
-        const uint horizontal_index,
-        const uint num_candidates_vertical[3],
-        const uint num_candidates_horizontal[3],
-        const Piece& p)
-    {
-        // https://www.shogi.or.jp/faq/kihuhyouki.html
-        static const std::string table_vertical[]
-            = {u8"\u4e0a", u8"\u5bc4", u8"\u5f15"};
-        static const std::string table_horizontal[]
-            = {u8"\u53f3", u8"\u76f4", u8"\u5de6"};
-        if (num_candidates_vertical[vertical_index] == 1u)
-            return table_vertical[vertical_index];
-        if (num_candidates_horizontal[horizontal_index] == 1u) {
-            if ((horizontal_index == 1u)
-                && (PT::slidable_to(p, DIR_E) || PT::slidable_to(p, DIR_NW)))
-                return (num_candidates_horizontal[0]) ? table_horizontal[2]
-                                                      : table_horizontal[0];
-            return table_horizontal[horizontal_index];
-        }
-        if ((vertical_index == 0u) && (horizontal_index == 1u))
-            return table_horizontal[horizontal_index];
-        if ((vertical_index == 2u) && (horizontal_index == 1u))
-            return table_vertical[vertical_index];
-        return table_horizontal[horizontal_index]
-               + table_vertical[vertical_index];
     }
 };
 

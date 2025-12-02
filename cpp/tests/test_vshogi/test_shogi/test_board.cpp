@@ -1,3 +1,4 @@
+#include "vshogi/common/notation.hpp"
 #include "vshogi/variants/shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -10,6 +11,7 @@ using namespace vshogi;
 using Board = vshogi::shogi::Board;
 using BT = vshogi::shogi::BitboardTraits;
 using PT = vshogi::shogi::PieceTraits;
+using NT = vshogi::Notation<Parameters>;
 
 TEST_GROUP (test_shogi_board) {
 };
@@ -54,8 +56,7 @@ TEST(test_shogi_board, set_sfen)
 TEST(test_shogi_board, append_sfen)
 {
     const auto b = Board();
-    auto actual = std::string();
-    b.append_sfen(actual);
+    const auto actual = NT::to_sfen(b);
     STRCMP_EQUAL(
         "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL",
         actual.c_str());

@@ -182,174 +182,87 @@ TEST(test_shogi_square_traits, to_file)
 
 TEST(test_shogi_square_traits, to_square)
 {
-    CHECK_EQUAL(SQ_1A, SquareTraits::to_square("1a"));
-    CHECK_EQUAL(SQ_1B, SquareTraits::to_square("1b"));
-    CHECK_EQUAL(SQ_1C, SquareTraits::to_square("1c"));
-    CHECK_EQUAL(SQ_1D, SquareTraits::to_square("1d"));
-    CHECK_EQUAL(SQ_1E, SquareTraits::to_square("1e"));
-    CHECK_EQUAL(SQ_1F, SquareTraits::to_square("1f"));
-    CHECK_EQUAL(SQ_1G, SquareTraits::to_square("1g"));
-    CHECK_EQUAL(SQ_1H, SquareTraits::to_square("1h"));
-    CHECK_EQUAL(SQ_1I, SquareTraits::to_square("1i"));
-    CHECK_EQUAL(SQ_2A, SquareTraits::to_square("2a"));
-    CHECK_EQUAL(SQ_2B, SquareTraits::to_square("2b"));
-    CHECK_EQUAL(SQ_2C, SquareTraits::to_square("2c"));
-    CHECK_EQUAL(SQ_2D, SquareTraits::to_square("2d"));
-    CHECK_EQUAL(SQ_2E, SquareTraits::to_square("2e"));
-    CHECK_EQUAL(SQ_2F, SquareTraits::to_square("2f"));
-    CHECK_EQUAL(SQ_2G, SquareTraits::to_square("2g"));
-    CHECK_EQUAL(SQ_2H, SquareTraits::to_square("2h"));
-    CHECK_EQUAL(SQ_2I, SquareTraits::to_square("2i"));
-    CHECK_EQUAL(SQ_3A, SquareTraits::to_square("3a"));
-    CHECK_EQUAL(SQ_3B, SquareTraits::to_square("3b"));
-    CHECK_EQUAL(SQ_3C, SquareTraits::to_square("3c"));
-    CHECK_EQUAL(SQ_3D, SquareTraits::to_square("3d"));
-    CHECK_EQUAL(SQ_3E, SquareTraits::to_square("3e"));
-    CHECK_EQUAL(SQ_3F, SquareTraits::to_square("3f"));
-    CHECK_EQUAL(SQ_3G, SquareTraits::to_square("3g"));
-    CHECK_EQUAL(SQ_3H, SquareTraits::to_square("3h"));
-    CHECK_EQUAL(SQ_3I, SquareTraits::to_square("3i"));
-    CHECK_EQUAL(SQ_4A, SquareTraits::to_square("4a"));
-    CHECK_EQUAL(SQ_4B, SquareTraits::to_square("4b"));
-    CHECK_EQUAL(SQ_4C, SquareTraits::to_square("4c"));
-    CHECK_EQUAL(SQ_4D, SquareTraits::to_square("4d"));
-    CHECK_EQUAL(SQ_4E, SquareTraits::to_square("4e"));
-    CHECK_EQUAL(SQ_4F, SquareTraits::to_square("4f"));
-    CHECK_EQUAL(SQ_4G, SquareTraits::to_square("4g"));
-    CHECK_EQUAL(SQ_4H, SquareTraits::to_square("4h"));
-    CHECK_EQUAL(SQ_4I, SquareTraits::to_square("4i"));
-    CHECK_EQUAL(SQ_5A, SquareTraits::to_square("5a"));
-    CHECK_EQUAL(SQ_5B, SquareTraits::to_square("5b"));
-    CHECK_EQUAL(SQ_5C, SquareTraits::to_square("5c"));
-    CHECK_EQUAL(SQ_5D, SquareTraits::to_square("5d"));
-    CHECK_EQUAL(SQ_5E, SquareTraits::to_square("5e"));
-    CHECK_EQUAL(SQ_5F, SquareTraits::to_square("5f"));
-    CHECK_EQUAL(SQ_5G, SquareTraits::to_square("5g"));
-    CHECK_EQUAL(SQ_5H, SquareTraits::to_square("5h"));
-    CHECK_EQUAL(SQ_5I, SquareTraits::to_square("5i"));
-    CHECK_EQUAL(SQ_6A, SquareTraits::to_square("6a"));
-    CHECK_EQUAL(SQ_6B, SquareTraits::to_square("6b"));
-    CHECK_EQUAL(SQ_6C, SquareTraits::to_square("6c"));
-    CHECK_EQUAL(SQ_6D, SquareTraits::to_square("6d"));
-    CHECK_EQUAL(SQ_6E, SquareTraits::to_square("6e"));
-    CHECK_EQUAL(SQ_6F, SquareTraits::to_square("6f"));
-    CHECK_EQUAL(SQ_6G, SquareTraits::to_square("6g"));
-    CHECK_EQUAL(SQ_6H, SquareTraits::to_square("6h"));
-    CHECK_EQUAL(SQ_6I, SquareTraits::to_square("6i"));
-    CHECK_EQUAL(SQ_7A, SquareTraits::to_square("7a"));
-    CHECK_EQUAL(SQ_7B, SquareTraits::to_square("7b"));
-    CHECK_EQUAL(SQ_7C, SquareTraits::to_square("7c"));
-    CHECK_EQUAL(SQ_7D, SquareTraits::to_square("7d"));
-    CHECK_EQUAL(SQ_7E, SquareTraits::to_square("7e"));
-    CHECK_EQUAL(SQ_7F, SquareTraits::to_square("7f"));
-    CHECK_EQUAL(SQ_7G, SquareTraits::to_square("7g"));
-    CHECK_EQUAL(SQ_7H, SquareTraits::to_square("7h"));
-    CHECK_EQUAL(SQ_7I, SquareTraits::to_square("7i"));
-    CHECK_EQUAL(SQ_8A, SquareTraits::to_square("8a"));
-    CHECK_EQUAL(SQ_8B, SquareTraits::to_square("8b"));
-    CHECK_EQUAL(SQ_8C, SquareTraits::to_square("8c"));
-    CHECK_EQUAL(SQ_8D, SquareTraits::to_square("8d"));
-    CHECK_EQUAL(SQ_8E, SquareTraits::to_square("8e"));
-    CHECK_EQUAL(SQ_8F, SquareTraits::to_square("8f"));
-    CHECK_EQUAL(SQ_8G, SquareTraits::to_square("8g"));
-    CHECK_EQUAL(SQ_8H, SquareTraits::to_square("8h"));
-    CHECK_EQUAL(SQ_8I, SquareTraits::to_square("8i"));
-    CHECK_EQUAL(SQ_9A, SquareTraits::to_square("9a"));
-    CHECK_EQUAL(SQ_9B, SquareTraits::to_square("9b"));
-    CHECK_EQUAL(SQ_9C, SquareTraits::to_square("9c"));
-    CHECK_EQUAL(SQ_9D, SquareTraits::to_square("9d"));
-    CHECK_EQUAL(SQ_9E, SquareTraits::to_square("9e"));
-    CHECK_EQUAL(SQ_9F, SquareTraits::to_square("9f"));
-    CHECK_EQUAL(SQ_9G, SquareTraits::to_square("9g"));
-    CHECK_EQUAL(SQ_9H, SquareTraits::to_square("9h"));
-    CHECK_EQUAL(SQ_9I, SquareTraits::to_square("9i"));
-}
-
-TEST(test_shogi_square_traits, to_sfen)
-{
-    // clang-format off
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_1A); STRCMP_EQUAL("1a", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_1B); STRCMP_EQUAL("1b", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_1C); STRCMP_EQUAL("1c", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_1D); STRCMP_EQUAL("1d", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_1E); STRCMP_EQUAL("1e", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_1F); STRCMP_EQUAL("1f", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_1G); STRCMP_EQUAL("1g", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_1H); STRCMP_EQUAL("1h", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_1I); STRCMP_EQUAL("1i", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_2A); STRCMP_EQUAL("2a", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_2B); STRCMP_EQUAL("2b", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_2C); STRCMP_EQUAL("2c", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_2D); STRCMP_EQUAL("2d", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_2E); STRCMP_EQUAL("2e", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_2F); STRCMP_EQUAL("2f", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_2G); STRCMP_EQUAL("2g", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_2H); STRCMP_EQUAL("2h", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_2I); STRCMP_EQUAL("2i", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_3A); STRCMP_EQUAL("3a", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_3B); STRCMP_EQUAL("3b", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_3C); STRCMP_EQUAL("3c", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_3D); STRCMP_EQUAL("3d", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_3E); STRCMP_EQUAL("3e", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_3F); STRCMP_EQUAL("3f", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_3G); STRCMP_EQUAL("3g", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_3H); STRCMP_EQUAL("3h", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_3I); STRCMP_EQUAL("3i", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_4A); STRCMP_EQUAL("4a", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_4B); STRCMP_EQUAL("4b", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_4C); STRCMP_EQUAL("4c", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_4D); STRCMP_EQUAL("4d", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_4E); STRCMP_EQUAL("4e", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_4F); STRCMP_EQUAL("4f", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_4G); STRCMP_EQUAL("4g", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_4H); STRCMP_EQUAL("4h", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_4I); STRCMP_EQUAL("4i", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_5A); STRCMP_EQUAL("5a", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_5B); STRCMP_EQUAL("5b", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_5C); STRCMP_EQUAL("5c", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_5D); STRCMP_EQUAL("5d", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_5E); STRCMP_EQUAL("5e", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_5F); STRCMP_EQUAL("5f", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_5G); STRCMP_EQUAL("5g", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_5H); STRCMP_EQUAL("5h", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_5I); STRCMP_EQUAL("5i", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_6A); STRCMP_EQUAL("6a", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_6B); STRCMP_EQUAL("6b", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_6C); STRCMP_EQUAL("6c", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_6D); STRCMP_EQUAL("6d", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_6E); STRCMP_EQUAL("6e", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_6F); STRCMP_EQUAL("6f", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_6G); STRCMP_EQUAL("6g", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_6H); STRCMP_EQUAL("6h", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_6I); STRCMP_EQUAL("6i", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_7A); STRCMP_EQUAL("7a", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_7B); STRCMP_EQUAL("7b", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_7C); STRCMP_EQUAL("7c", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_7D); STRCMP_EQUAL("7d", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_7E); STRCMP_EQUAL("7e", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_7F); STRCMP_EQUAL("7f", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_7G); STRCMP_EQUAL("7g", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_7H); STRCMP_EQUAL("7h", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_7I); STRCMP_EQUAL("7i", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_8A); STRCMP_EQUAL("8a", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_8B); STRCMP_EQUAL("8b", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_8C); STRCMP_EQUAL("8c", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_8D); STRCMP_EQUAL("8d", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_8E); STRCMP_EQUAL("8e", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_8F); STRCMP_EQUAL("8f", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_8G); STRCMP_EQUAL("8g", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_8H); STRCMP_EQUAL("8h", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_8I); STRCMP_EQUAL("8i", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_9A); STRCMP_EQUAL("9a", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_9B); STRCMP_EQUAL("9b", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_9C); STRCMP_EQUAL("9c", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_9D); STRCMP_EQUAL("9d", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_9E); STRCMP_EQUAL("9e", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_9F); STRCMP_EQUAL("9f", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_9G); STRCMP_EQUAL("9g", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_9H); STRCMP_EQUAL("9h", actual); }
-    { char actual[3] = {}; SquareTraits::to_sfen(actual, SQ_9I); STRCMP_EQUAL("9i", actual); }
-    // clang-format on
+    CHECK_EQUAL(SQ_1A, SquareTraits::to_square(FILE1, RANK1));
+    CHECK_EQUAL(SQ_1B, SquareTraits::to_square(FILE1, RANK2));
+    CHECK_EQUAL(SQ_1C, SquareTraits::to_square(FILE1, RANK3));
+    CHECK_EQUAL(SQ_1D, SquareTraits::to_square(FILE1, RANK4));
+    CHECK_EQUAL(SQ_1E, SquareTraits::to_square(FILE1, RANK5));
+    CHECK_EQUAL(SQ_1F, SquareTraits::to_square(FILE1, RANK6));
+    CHECK_EQUAL(SQ_1G, SquareTraits::to_square(FILE1, RANK7));
+    CHECK_EQUAL(SQ_1H, SquareTraits::to_square(FILE1, RANK8));
+    CHECK_EQUAL(SQ_1I, SquareTraits::to_square(FILE1, RANK9));
+    CHECK_EQUAL(SQ_2A, SquareTraits::to_square(FILE2, RANK1));
+    CHECK_EQUAL(SQ_2B, SquareTraits::to_square(FILE2, RANK2));
+    CHECK_EQUAL(SQ_2C, SquareTraits::to_square(FILE2, RANK3));
+    CHECK_EQUAL(SQ_2D, SquareTraits::to_square(FILE2, RANK4));
+    CHECK_EQUAL(SQ_2E, SquareTraits::to_square(FILE2, RANK5));
+    CHECK_EQUAL(SQ_2F, SquareTraits::to_square(FILE2, RANK6));
+    CHECK_EQUAL(SQ_2G, SquareTraits::to_square(FILE2, RANK7));
+    CHECK_EQUAL(SQ_2H, SquareTraits::to_square(FILE2, RANK8));
+    CHECK_EQUAL(SQ_2I, SquareTraits::to_square(FILE2, RANK9));
+    CHECK_EQUAL(SQ_3A, SquareTraits::to_square(FILE3, RANK1));
+    CHECK_EQUAL(SQ_3B, SquareTraits::to_square(FILE3, RANK2));
+    CHECK_EQUAL(SQ_3C, SquareTraits::to_square(FILE3, RANK3));
+    CHECK_EQUAL(SQ_3D, SquareTraits::to_square(FILE3, RANK4));
+    CHECK_EQUAL(SQ_3E, SquareTraits::to_square(FILE3, RANK5));
+    CHECK_EQUAL(SQ_3F, SquareTraits::to_square(FILE3, RANK6));
+    CHECK_EQUAL(SQ_3G, SquareTraits::to_square(FILE3, RANK7));
+    CHECK_EQUAL(SQ_3H, SquareTraits::to_square(FILE3, RANK8));
+    CHECK_EQUAL(SQ_3I, SquareTraits::to_square(FILE3, RANK9));
+    CHECK_EQUAL(SQ_4A, SquareTraits::to_square(FILE4, RANK1));
+    CHECK_EQUAL(SQ_4B, SquareTraits::to_square(FILE4, RANK2));
+    CHECK_EQUAL(SQ_4C, SquareTraits::to_square(FILE4, RANK3));
+    CHECK_EQUAL(SQ_4D, SquareTraits::to_square(FILE4, RANK4));
+    CHECK_EQUAL(SQ_4E, SquareTraits::to_square(FILE4, RANK5));
+    CHECK_EQUAL(SQ_4F, SquareTraits::to_square(FILE4, RANK6));
+    CHECK_EQUAL(SQ_4G, SquareTraits::to_square(FILE4, RANK7));
+    CHECK_EQUAL(SQ_4H, SquareTraits::to_square(FILE4, RANK8));
+    CHECK_EQUAL(SQ_4I, SquareTraits::to_square(FILE4, RANK9));
+    CHECK_EQUAL(SQ_5A, SquareTraits::to_square(FILE5, RANK1));
+    CHECK_EQUAL(SQ_5B, SquareTraits::to_square(FILE5, RANK2));
+    CHECK_EQUAL(SQ_5C, SquareTraits::to_square(FILE5, RANK3));
+    CHECK_EQUAL(SQ_5D, SquareTraits::to_square(FILE5, RANK4));
+    CHECK_EQUAL(SQ_5E, SquareTraits::to_square(FILE5, RANK5));
+    CHECK_EQUAL(SQ_5F, SquareTraits::to_square(FILE5, RANK6));
+    CHECK_EQUAL(SQ_5G, SquareTraits::to_square(FILE5, RANK7));
+    CHECK_EQUAL(SQ_5H, SquareTraits::to_square(FILE5, RANK8));
+    CHECK_EQUAL(SQ_5I, SquareTraits::to_square(FILE5, RANK9));
+    CHECK_EQUAL(SQ_6A, SquareTraits::to_square(FILE6, RANK1));
+    CHECK_EQUAL(SQ_6B, SquareTraits::to_square(FILE6, RANK2));
+    CHECK_EQUAL(SQ_6C, SquareTraits::to_square(FILE6, RANK3));
+    CHECK_EQUAL(SQ_6D, SquareTraits::to_square(FILE6, RANK4));
+    CHECK_EQUAL(SQ_6E, SquareTraits::to_square(FILE6, RANK5));
+    CHECK_EQUAL(SQ_6F, SquareTraits::to_square(FILE6, RANK6));
+    CHECK_EQUAL(SQ_6G, SquareTraits::to_square(FILE6, RANK7));
+    CHECK_EQUAL(SQ_6H, SquareTraits::to_square(FILE6, RANK8));
+    CHECK_EQUAL(SQ_6I, SquareTraits::to_square(FILE6, RANK9));
+    CHECK_EQUAL(SQ_7A, SquareTraits::to_square(FILE7, RANK1));
+    CHECK_EQUAL(SQ_7B, SquareTraits::to_square(FILE7, RANK2));
+    CHECK_EQUAL(SQ_7C, SquareTraits::to_square(FILE7, RANK3));
+    CHECK_EQUAL(SQ_7D, SquareTraits::to_square(FILE7, RANK4));
+    CHECK_EQUAL(SQ_7E, SquareTraits::to_square(FILE7, RANK5));
+    CHECK_EQUAL(SQ_7F, SquareTraits::to_square(FILE7, RANK6));
+    CHECK_EQUAL(SQ_7G, SquareTraits::to_square(FILE7, RANK7));
+    CHECK_EQUAL(SQ_7H, SquareTraits::to_square(FILE7, RANK8));
+    CHECK_EQUAL(SQ_7I, SquareTraits::to_square(FILE7, RANK9));
+    CHECK_EQUAL(SQ_8A, SquareTraits::to_square(FILE8, RANK1));
+    CHECK_EQUAL(SQ_8B, SquareTraits::to_square(FILE8, RANK2));
+    CHECK_EQUAL(SQ_8C, SquareTraits::to_square(FILE8, RANK3));
+    CHECK_EQUAL(SQ_8D, SquareTraits::to_square(FILE8, RANK4));
+    CHECK_EQUAL(SQ_8E, SquareTraits::to_square(FILE8, RANK5));
+    CHECK_EQUAL(SQ_8F, SquareTraits::to_square(FILE8, RANK6));
+    CHECK_EQUAL(SQ_8G, SquareTraits::to_square(FILE8, RANK7));
+    CHECK_EQUAL(SQ_8H, SquareTraits::to_square(FILE8, RANK8));
+    CHECK_EQUAL(SQ_8I, SquareTraits::to_square(FILE8, RANK9));
+    CHECK_EQUAL(SQ_9A, SquareTraits::to_square(FILE9, RANK1));
+    CHECK_EQUAL(SQ_9B, SquareTraits::to_square(FILE9, RANK2));
+    CHECK_EQUAL(SQ_9C, SquareTraits::to_square(FILE9, RANK3));
+    CHECK_EQUAL(SQ_9D, SquareTraits::to_square(FILE9, RANK4));
+    CHECK_EQUAL(SQ_9E, SquareTraits::to_square(FILE9, RANK5));
+    CHECK_EQUAL(SQ_9F, SquareTraits::to_square(FILE9, RANK6));
+    CHECK_EQUAL(SQ_9G, SquareTraits::to_square(FILE9, RANK7));
+    CHECK_EQUAL(SQ_9H, SquareTraits::to_square(FILE9, RANK8));
+    CHECK_EQUAL(SQ_9I, SquareTraits::to_square(FILE9, RANK9));
 }
 
 TEST(test_shogi_square_traits, shift)

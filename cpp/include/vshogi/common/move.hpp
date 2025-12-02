@@ -66,32 +66,14 @@ public:
         : Move(
               (sfen[1] == '*') ? static_cast<uint>(PT::to_piece_type(sfen[0]))
                                      + C::num_squares
-                               : static_cast<uint>(ST::to_square(sfen)),
-              ST::to_square(sfen + 2),
+                               : static_cast<uint>(to_square(sfen)),
+              to_square(sfen + 2),
               sfen[4] == '+')
     {
     }
     std::uint16_t hash() const
     {
         return m_value;
-    }
-    void to_sfen(char sfen[5]) const
-    {
-        if (is_drop()) {
-            sfen[0]
-                = static_cast<char>(std::toupper(PT::to_char(source_piece())));
-            sfen[1] = '*';
-        } else {
-            ST::to_sfen(sfen, source_square());
-        }
-        ST::to_sfen(sfen + 2, destination());
-        sfen[4] = (promote()) ? '+' : '\0';
-    }
-    std::string to_sfen() const
-    {
-        std::string out("     ");
-        to_sfen(out.data());
-        return out;
     }
     bool operator==(const Move& other) const
     {
@@ -145,6 +127,7 @@ public:
     }
 
 private:
+    static Square to_square(const char sfen[2]);
     uint to_dlshogi_source_index(const ColorEnum& by_side) const;
 };
 
@@ -154,6 +137,14 @@ Move<P>::Move(const uint src, const Square dst, const bool promote)
           (src << source_shift) | static_cast<uint>(promote << promotion_shift)
           | dst))
 {
+}
+
+template <class P>
+typename Configuration<P>::Square Move<P>::to_square(const char sfen[2])
+{
+    return ST::to_square(
+        static_cast<typename C::File>(sfen[0] - '1'),
+        static_cast<typename C::Rank>(sfen[1] - 'a'));
 }
 
 template <class P>

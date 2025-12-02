@@ -1,3 +1,4 @@
+#include "vshogi/common/notation.hpp"
 #include "vshogi/variants/judkins_shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -6,6 +7,7 @@ namespace test_vshogi::test_judkins_shogi
 {
 
 using namespace vshogi::judkins_shogi;
+using NT = vshogi::Notation<Parameters>;
 
 TEST_GROUP (judkins_shogi_pieces) {
 };
@@ -335,13 +337,13 @@ TEST(judkins_shogi_pieces, make_piece)
 
 TEST(judkins_shogi_pieces, to_char)
 {
-    CHECK_EQUAL('p', PieceTraits::to_char(FU));
-    CHECK_EQUAL('n', PieceTraits::to_char(KE));
-    CHECK_EQUAL('s', PieceTraits::to_char(GI));
-    CHECK_EQUAL('b', PieceTraits::to_char(KA));
-    CHECK_EQUAL('r', PieceTraits::to_char(HI));
-    CHECK_EQUAL('g', PieceTraits::to_char(KI));
-    CHECK_EQUAL('k', PieceTraits::to_char(OU));
+    CHECK_EQUAL('p', NT::to_char(FU));
+    CHECK_EQUAL('n', NT::to_char(KE));
+    CHECK_EQUAL('s', NT::to_char(GI));
+    CHECK_EQUAL('b', NT::to_char(KA));
+    CHECK_EQUAL('r', NT::to_char(HI));
+    CHECK_EQUAL('g', NT::to_char(KI));
+    CHECK_EQUAL('k', NT::to_char(OU));
 }
 
 TEST(judkins_shogi_pieces, is_slider)
@@ -428,33 +430,33 @@ TEST(judkins_shogi_pieces, slidable_to)
     CHECK_FALSE(PieceTraits::slidable_to(VOID, vshogi::DIR_N));
 }
 
-TEST(judkins_shogi_pieces, append_sfen)
+TEST(judkins_shogi_pieces, to_sfen)
 {
     // clang-format off
-    { auto actual = std::string(); PieceTraits::append_sfen(B_FU, actual); STRCMP_EQUAL("P", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(B_KE, actual); STRCMP_EQUAL("N", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(B_GI, actual); STRCMP_EQUAL("S", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(B_KA, actual); STRCMP_EQUAL("B", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(B_HI, actual); STRCMP_EQUAL("R", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(B_KI, actual); STRCMP_EQUAL("G", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(B_OU, actual); STRCMP_EQUAL("K", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(B_TO, actual); STRCMP_EQUAL("+P", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(B_NK, actual); STRCMP_EQUAL("+N", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(B_NG, actual); STRCMP_EQUAL("+S", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(B_UM, actual); STRCMP_EQUAL("+B", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(B_RY, actual); STRCMP_EQUAL("+R", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(W_FU, actual); STRCMP_EQUAL("p", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(W_KE, actual); STRCMP_EQUAL("n", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(W_GI, actual); STRCMP_EQUAL("s", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(W_KA, actual); STRCMP_EQUAL("b", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(W_HI, actual); STRCMP_EQUAL("r", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(W_KI, actual); STRCMP_EQUAL("g", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(W_OU, actual); STRCMP_EQUAL("k", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(W_TO, actual); STRCMP_EQUAL("+p", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(W_NK, actual); STRCMP_EQUAL("+n", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(W_NG, actual); STRCMP_EQUAL("+s", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(W_UM, actual); STRCMP_EQUAL("+b", actual.c_str()); }
-    { auto actual = std::string(); PieceTraits::append_sfen(W_RY, actual); STRCMP_EQUAL("+r", actual.c_str()); }
+    STRCMP_EQUAL("P", NT::to_sfen(B_FU).c_str());
+    STRCMP_EQUAL("N", NT::to_sfen(B_KE).c_str());
+    STRCMP_EQUAL("S", NT::to_sfen(B_GI).c_str());
+    STRCMP_EQUAL("B", NT::to_sfen(B_KA).c_str());
+    STRCMP_EQUAL("R", NT::to_sfen(B_HI).c_str());
+    STRCMP_EQUAL("G", NT::to_sfen(B_KI).c_str());
+    STRCMP_EQUAL("K", NT::to_sfen(B_OU).c_str());
+    STRCMP_EQUAL("+P", NT::to_sfen(B_TO).c_str());
+    STRCMP_EQUAL("+N", NT::to_sfen(B_NK).c_str());
+    STRCMP_EQUAL("+S", NT::to_sfen(B_NG).c_str());
+    STRCMP_EQUAL("+B", NT::to_sfen(B_UM).c_str());
+    STRCMP_EQUAL("+R", NT::to_sfen(B_RY).c_str());
+    STRCMP_EQUAL("p", NT::to_sfen(W_FU).c_str());
+    STRCMP_EQUAL("n", NT::to_sfen(W_KE).c_str());
+    STRCMP_EQUAL("s", NT::to_sfen(W_GI).c_str());
+    STRCMP_EQUAL("b", NT::to_sfen(W_KA).c_str());
+    STRCMP_EQUAL("r", NT::to_sfen(W_HI).c_str());
+    STRCMP_EQUAL("g", NT::to_sfen(W_KI).c_str());
+    STRCMP_EQUAL("k", NT::to_sfen(W_OU).c_str());
+    STRCMP_EQUAL("+p", NT::to_sfen(W_TO).c_str());
+    STRCMP_EQUAL("+n", NT::to_sfen(W_NK).c_str());
+    STRCMP_EQUAL("+s", NT::to_sfen(W_NG).c_str());
+    STRCMP_EQUAL("+b", NT::to_sfen(W_UM).c_str());
+    STRCMP_EQUAL("+r", NT::to_sfen(W_RY).c_str());
     // clang-format on
 }
 

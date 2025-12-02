@@ -12,6 +12,7 @@
 #include "vshogi/common/generator.hpp"
 #include "vshogi/common/magic.hpp"
 #include "vshogi/common/move.hpp"
+#include "vshogi/common/notation.hpp"
 #include "vshogi/common/piece_traits.hpp"
 #include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/stand.hpp"
@@ -199,7 +200,7 @@ inline const std::uint16_t minishogi::Stand::mask = 0b0011011011011011;
 
 template <>
 inline const minishogi::PieceTypeEnum
-    minishogi::BlackWhiteStands::pieces_in_sfen_order[]
+    Notation<minishogi::Parameters>::pieces_in_sfen_order[]
     = {minishogi::HI,
        minishogi::KA,
        minishogi::KI,

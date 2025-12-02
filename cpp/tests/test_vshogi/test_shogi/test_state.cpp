@@ -1,5 +1,6 @@
 #include <algorithm>
 
+#include "vshogi/common/notation.hpp"
 #include "vshogi/variants/shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -9,6 +10,7 @@ namespace test_vshogi::test_shogi
 
 using namespace vshogi::shogi;
 using BT = vshogi::shogi::BitboardTraits;
+using NT = vshogi::Notation<Parameters>;
 
 TEST_GROUP (state) {
 };
@@ -60,7 +62,7 @@ TEST(state, to_sfen)
 {
     {
         const auto s = State();
-        const auto actual = s.to_sfen();
+        const auto actual = NT::to_sfen(s);
         STRCMP_EQUAL(
             "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b -",
             actual.c_str());

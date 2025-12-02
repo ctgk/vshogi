@@ -1,3 +1,4 @@
+#include "vshogi/common/notation.hpp"
 #include "vshogi/engine/dfpn/searcher.hpp"
 #include "vshogi/variants/judkins_shogi.hpp"
 #include "vshogi/variants/minishogi.hpp"
@@ -362,6 +363,7 @@ namespace test_minishogi
 {
 
 using namespace vshogi::minishogi;
+using NT = vshogi::Notation<Parameters>;
 
 TEST(test_dfpn_searcher, test_debug_get_mate_moves)
 {
@@ -369,11 +371,11 @@ TEST(test_dfpn_searcher, test_debug_get_mate_moves)
     auto searcher = dfpn::Searcher<Parameters>();
     searcher.search(g, 10000u);
     CHECK_EQUAL(0u, g.ply());
-    STRCMP_EQUAL("1bg1k/p3p/1Bs2/K2SR/2G2 w r", g.to_sfen(false).c_str());
+    STRCMP_EQUAL("1bg1k/p3p/1Bs2/K2SR/2G2 w r", NT::to_sfen(g, false).c_str());
     CHECK_TRUE(searcher.proved_mate());
     const auto actual = searcher.get_mate_moves(g);
     CHECK_EQUAL(0u, g.ply());
-    STRCMP_EQUAL("1bg1k/p3p/1Bs2/K2SR/2G2 w r", g.to_sfen(false).c_str());
+    STRCMP_EQUAL("1bg1k/p3p/1Bs2/K2SR/2G2 w r", NT::to_sfen(g, false).c_str());
     for (auto&& m : actual) {
         CHECK_EQUAL(vshogi::ONGOING, g.get_result());
         g.apply(m);

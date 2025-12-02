@@ -1,3 +1,4 @@
+#include "vshogi/common/notation.hpp"
 #include "vshogi/variants/judkins_shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -7,6 +8,7 @@ namespace test_vshogi::test_judkins_shogi
 
 using namespace vshogi::judkins_shogi;
 using BT = vshogi::BitboardTraits<Parameters>;
+using NT = vshogi::Notation<Parameters>;
 
 TEST_GROUP (judkins_shogi_board) {
 };
@@ -124,8 +126,7 @@ TEST(judkins_shogi_board, append_sfen)
     b.set_sfen(sfen);
 
     const char expected[] = "+r+b+n+s+p+P/+S+N+B+RGg/6/5k/6/K5";
-    auto actual = std::string();
-    b.append_sfen(actual);
+    const auto actual = NT::to_sfen(b);
     STRCMP_EQUAL(expected, actual.c_str());
 }
 

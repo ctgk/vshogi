@@ -120,8 +120,6 @@ private:
     static constexpr uint num_piece_types = C::num_stand_piece_types;
     static constexpr uint max_piece_count = C::max_stand_piece_count;
     static constexpr uint max_sfen_length = 100u;
-
-    static const PieceType pieces_in_sfen_order[num_piece_types];
     static std::uint64_t zobrist_table[num_colors][num_piece_types]
                                       [max_piece_count + 1];
 
@@ -209,25 +207,6 @@ public:
             ++ptr;
         m_hash = compute_zobrist_hash();
         return ptr;
-    }
-    void append_sfen(std::string& out) const
-    {
-        if (!(m_stands[BLACK].any() || m_stands[WHITE].any())) {
-            out += '-';
-            return;
-        }
-        for (auto& c : color_array) {
-            for (auto& p : pieces_in_sfen_order) {
-                const auto num = operator[](c).count(p);
-                if (num == 0)
-                    continue;
-                if (num > 9)
-                    out += '1';
-                if (num > 1)
-                    out += static_cast<char>('0' + num % 10);
-                PT::append_sfen(PT::make_piece(c, p), out);
-            }
-        }
     }
     Piece pop_piece_from(
         const ColorEnum& c,

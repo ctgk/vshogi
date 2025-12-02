@@ -1,5 +1,6 @@
 #include <algorithm>
 
+#include "vshogi/common/notation.hpp"
 #include "vshogi/variants/judkins_shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -8,6 +9,7 @@ namespace test_vshogi::test_judkins_shogi
 {
 
 using namespace vshogi::judkins_shogi;
+using NT = vshogi::Notation<Parameters>;
 
 TEST_GROUP (state) {
 };
@@ -48,7 +50,7 @@ TEST(state, to_sfen)
 {
     auto s = State();
     s.set_sfen("2+S1k1/1r2+P1/2K2+N/4n1/6/6 w R2GSP2b 1");
-    const auto actual = s.to_sfen();
+    const auto actual = NT::to_sfen(s);
     STRCMP_EQUAL("2+S1k1/1r2+P1/2K2+N/4n1/6/6 w R2GSP2b", actual.c_str());
 }
 
