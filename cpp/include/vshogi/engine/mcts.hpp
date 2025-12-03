@@ -19,12 +19,11 @@ namespace vshogi::engine::mcts
 
 namespace dfpn = vshogi::engine::dfpn;
 
-template <class Parameters>
+template <class P>
 class Node
 {
 private:
-    using GameType = Game<Parameters>;
-    using MoveType = Move<Parameters>;
+    using MT = MoveTraits<P>;
 
     /**
      * @brief Pointer to parent node.
@@ -48,7 +47,7 @@ private:
      * @brief Action to perform to get to this node from parent node.
      *
      */
-    MoveType m_action;
+    move_t m_action;
 
     /**
      * @brief Probability to perform the action at the parent node.
@@ -95,7 +94,7 @@ public:
      * @return Node* A best or random child node.
      */
     Node* select_nocheck(
-        Game<Parameters>& game, const float coeff_puct, const float random_rate)
+        Game<P>& game, const float coeff_puct, const float random_rate)
     {
         assert(has_child());
         Node* const ch = select_best_or_random_child(coeff_puct, random_rate);
@@ -103,7 +102,7 @@ public:
         game.apply_nocheck(ch->m_action);
         return ch;
     }
-    void simulate(const Game<Parameters>& game)
+    void simulate(const Game<P>& game)
     {
         if (m_visit_count)
             return; // this node should have previous simulation result.
@@ -123,7 +122,7 @@ public:
         m_is_mate = true;
     }
     void expand(
-        const std::vector<MoveType>& actions,
+        const std::vector<move_t>& actions,
         const ColorEnum& turn,
         const float* const policy_logits)
     {
@@ -132,7 +131,7 @@ public:
             return;
         auto probas = std::vector<float>(num);
         for (std::size_t ii = num; ii--;) {
-            const auto index = actions[ii].to_dlshogi_policy_index(turn);
+            const auto index = MT::to_policy_index(actions[ii], turn);
             probas[ii] = (policy_logits) ? policy_logits[index] : 0.f;
         }
         softmax(probas);
@@ -144,7 +143,7 @@ public:
             child = child->m_sibling.get();
         }
     }
-    void simulate_mate_and_expand(const Move<Parameters>& a)
+    void simulate_mate_and_expand(const move_t& a)
     {
         m_q_value = 1.f;
         m_is_mate = true;
@@ -159,7 +158,7 @@ public:
             if (c == nullptr)
                 throw std::invalid_argument("Given action not found.");
         } else {
-            m_child = std::make_unique<Node<Parameters>>(a, 1.f);
+            m_child = std::make_unique<Node<P>>(a, 1.f);
             m_most_visited_child = m_child.get();
         }
         m_most_visited_child->m_q_value = -1.f;
@@ -174,7 +173,7 @@ public:
      * @param policy_logits
      */
     void simulate_ongoing_and_expand(
-        const std::vector<MoveType>& actions,
+        const std::vector<move_t>& actions,
         const ColorEnum& turn,
         const float value,
         const float* const policy_logits)
@@ -333,13 +332,13 @@ public: // utility
           m_most_visited_child(nullptr)
     {
     }
-    Node(const MoveType action, const float proba)
+    Node(const move_t action, const float proba)
         : m_parent(nullptr), m_sibling(nullptr), m_child(nullptr),
           m_action(action), m_proba(proba), m_visit_count(0),
           m_visit_count_by_random(0), m_sqrt_visit_count(0.f), m_q_value(0.f),
           m_is_mate(false), m_most_visited_child(nullptr)
     {
-        assert(action.hash() != 0u);
+        assert(action != 0u);
     }
 
     // Rules of 5
@@ -369,7 +368,7 @@ public: // utility
     {
         return m_proba;
     }
-    MoveType get_action() const
+    move_t get_action() const
     {
         return m_action;
     }
@@ -389,17 +388,11 @@ public: // utility
         }
         return out;
     }
-    const Node* get_child(uint index = 0U) const
+    const Node* get_child() const
     {
-        const Node* node = m_child.get();
-        for (; index--;) {
-            if (node->m_sibling == nullptr)
-                break;
-            node = node->m_sibling.get();
-        }
-        return node;
+        return m_child.get();
     }
-    const Node* get_child(const MoveType& action) const
+    const Node* get_child(const move_t& action) const
     {
         const Node* ch = m_child.get();
         for (; ch != nullptr; ch = ch->m_sibling.get()) {
@@ -432,7 +425,7 @@ public: // utility
     {
         return m_is_mate && (m_q_value < 0);
     }
-    Node& apply(const MoveType& action)
+    Node& apply(const move_t& action)
     {
         Node* ch = m_child.get();
         for (; ch != nullptr; ch = ch->m_sibling.get()) {
@@ -461,16 +454,6 @@ public: // utility
     }
 
 private:
-    Node* get_child(std::size_t index)
-    {
-        Node* node = m_child.get();
-        for (; index--;) {
-            if (node->m_sibling == nullptr)
-                break;
-            node = node->m_sibling.get();
-        }
-        return node;
-    }
     bool has_mate_to_win() const
     {
         const Node* ch = m_child.get();
@@ -509,17 +492,15 @@ float Node<P>::first_play_urgency() const
     return q;
 }
 
-template <class Parameters>
+template <class P>
 class Searcher
 {
 private:
-    using GameType = Game<Parameters>;
-    using MoveType = Move<Parameters>;
-    using NodeType = Node<Parameters>;
+    using MT = MoveTraits<P>;
 
 private:
-    std::unique_ptr<Node<Parameters>> m_root;
-    dfpn::Searcher<Parameters> m_dfpn;
+    std::unique_ptr<Node<P>> m_root;
+    dfpn::Searcher<P> m_dfpn;
     const float m_coeff_puct;
     const float m_random_rate;
     const uint m_dfpn_search_root;
@@ -531,7 +512,7 @@ public:
         const float random_rate,
         const uint dfpn_search_root = 0u,
         const uint dfpn_search_leaf = 0u)
-        : m_root(std::make_unique<Node<Parameters>>()),
+        : m_root(std::make_unique<Node<P>>()),
           m_dfpn{std::max(dfpn_search_root, dfpn_search_leaf) * 10u},
           m_coeff_puct(coeff_puct), m_random_rate(random_rate),
           m_dfpn_search_root(dfpn_search_root),
@@ -540,7 +521,7 @@ public:
     }
     void init_root()
     {
-        m_root = std::make_unique<Node<Parameters>>();
+        m_root = std::make_unique<Node<P>>();
     }
     int get_visit_count() const
     {
@@ -550,9 +531,9 @@ public:
     {
         return m_root->is_mate();
     }
-    Node<Parameters>* search(Game<Parameters>& game)
+    Node<P>* search(Game<P>& game)
     {
-        Node<Parameters>* const leaf = select_a_leaf_node(game);
+        Node<P>* const leaf = select_a_leaf_node(game);
         assert(leaf != nullptr);
         assert(!leaf->has_child());
         if (game.get_result() != ONGOING) {
@@ -571,8 +552,8 @@ public:
         return leaf;
     }
     void simulate_expand_backprop(
-        Node<Parameters>* const leaf,
-        Game<Parameters>& game,
+        Node<P>* const leaf,
+        Game<P>& game,
         const float value,
         const float* const policy_logits = nullptr)
     {
@@ -582,32 +563,32 @@ public:
             game.get_legal_moves(), game.get_turn(), value, policy_logits);
         backprop_to_root(game, leaf);
     }
-    Searcher<Parameters>& apply(Game<Parameters>& game, const MoveType& action)
+    Searcher<P>& apply(Game<P>& game, const move_t& action)
     {
         m_root->apply(action);
         game.apply(action);
         dfpn_proved_mate(game, m_root.get());
         return *this;
     }
-    const Node<Parameters>* get_root() const
+    const Node<P>* get_root() const
     {
         return m_root.get();
     }
-    MoveType get_action_by_visit_max() const
+    move_t get_action_by_visit_max() const
     {
-        const Node<Parameters>* const ch = m_root->get_most_visited_child();
+        const Node<P>* const ch = m_root->get_most_visited_child();
         if (ch == nullptr) {
             assert(!m_root->has_child());
-            return MoveType();
+            return move_t();
         } else
             return ch->get_action();
     }
-    MoveType get_action_by_visit_distribution(const float temperature) const
+    move_t get_action_by_visit_distribution(const float temperature) const
     {
         constexpr float eps = 1.f;
 
         std::vector<float> probas(m_root->get_num_child());
-        const Node<Parameters>* ch = m_root->get_child();
+        const Node<P>* ch = m_root->get_child();
         for (uint ii = 0u; ch != nullptr; ch = ch->get_sibling()) {
             const auto v
                 = static_cast<float>(ch->get_visit_count_excluding_random());
@@ -625,10 +606,10 @@ public:
         }
         return ch->get_action(); // For numerical instability.
     }
-    MoveType get_action_by_q_distribution(const float temperature) const
+    move_t get_action_by_q_distribution(const float temperature) const
     {
         std::vector<float> probas(m_root->get_num_child());
-        const Node<Parameters>* ch = m_root->get_child();
+        const Node<P>* ch = m_root->get_child();
         for (uint ii = 0u; ch != nullptr; ch = ch->get_sibling()) {
             probas[ii++] = -ch->get_q_value() / temperature;
         }
@@ -646,11 +627,11 @@ public:
     }
 
 private:
-    NodeType* select_a_leaf_node(Game<Parameters>& game)
+    Node<P>* select_a_leaf_node(Game<P>& game)
     {
-        NodeType* n = m_root.get();
+        Node<P>* n = m_root.get();
         while (n->has_child()) {
-            NodeType* const child = n->select_nocheck(
+            Node<P>* const child = n->select_nocheck(
                 game, m_coeff_puct, (n == m_root.get()) ? m_random_rate : 0.f);
             assert(child != nullptr);
             assert(child->get_parent() == n);
@@ -658,11 +639,11 @@ private:
         }
         return n;
     }
-    void backprop_to_root(GameType& game, NodeType* const leaf)
+    void backprop_to_root(Game<P>& game, Node<P>* const leaf)
     {
         float v = leaf->get_q_value();
-        for (NodeType *n = leaf, *prev = nullptr;; v = -v) {
-            NodeType* const p = n->backprop(v, prev);
+        for (Node<P>*n = leaf, *prev = nullptr;; v = -v) {
+            Node<P>* const p = n->backprop(v, prev);
             prev = n;
             n = p;
             if (n == nullptr) // `n` was root node.
@@ -670,7 +651,7 @@ private:
             game.undo();
         }
     }
-    bool dfpn_proved_mate(GameType& game, NodeType* const node)
+    bool dfpn_proved_mate(Game<P>& game, Node<P>* const node)
     {
         const uint search_count
             = (node == m_root.get()) ? m_dfpn_search_root : m_dfpn_search_leaf;
@@ -679,8 +660,8 @@ private:
         m_dfpn.init();
         m_dfpn.search(game, search_count);
         if (m_dfpn.proved_mate()) {
-            const MoveType m = m_dfpn.get_mate_move();
-            if (m.hash() != 0u) {
+            const move_t m = m_dfpn.get_mate_move();
+            if (m != 0u) {
                 node->simulate_mate_and_expand(m_dfpn.get_mate_move());
                 backprop_to_root(game, node);
                 return true;

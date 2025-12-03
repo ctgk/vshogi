@@ -29,20 +29,22 @@ TEST(test_to_sfen, minishogi_move)
 {
     using namespace vshogi::minishogi;
     using P = vshogi::minishogi::Parameters;
-    CHECK_TRUE(Move(SQ_1A, SQ_1B, true) == Move("1a1b+"));
-    check<P>(Move(FU, SQ_3C), "P*3c");
-    check<P>(Move(SQ_1A, SQ_1B), "1a1b");
-    check<P>(Move(SQ_1A, SQ_1B, true), "1a1b+");
+    using MT = vshogi::MoveTraits<P>;
+    CHECK_TRUE(MT::make_move(SQ_1A, SQ_1B, true) == MT::make_move("1a1b+"));
+    check<P>(MT::make_move(FU, SQ_3C), "P*3c");
+    check<P>(MT::make_move(SQ_1A, SQ_1B), "1a1b");
+    check<P>(MT::make_move(SQ_1A, SQ_1B, true), "1a1b+");
 }
 
 TEST(test_to_sfen, judkins_shogi_move)
 {
     using namespace vshogi::judkins_shogi;
     using P = vshogi::judkins_shogi::Parameters;
-    CHECK_TRUE(Move(SQ_1A, SQ_1B, true) == Move("1a1b+"));
-    check<P>(Move(FU, SQ_3C), "P*3c");
-    check<P>(Move(SQ_1A, SQ_1B), "1a1b");
-    check<P>(Move(SQ_1A, SQ_1B, true), "1a1b+");
+    using MT = vshogi::MoveTraits<P>;
+    CHECK_TRUE(MT::make_move(SQ_1A, SQ_1B, true) == MT::make_move("1a1b+"));
+    check<P>(MT::make_move(FU, SQ_3C), "P*3c");
+    check<P>(MT::make_move(SQ_1A, SQ_1B), "1a1b");
+    check<P>(MT::make_move(SQ_1A, SQ_1B, true), "1a1b+");
 }
 
 TEST(test_to_sfen, standard_shogi_square)
@@ -136,10 +138,11 @@ TEST(test_to_sfen, standard_shogi_move)
 {
     using namespace vshogi::shogi;
     using P = vshogi::shogi::Parameters;
-    CHECK_TRUE(Move(SQ_1A, SQ_1B, true) == Move("1a1b+"));
-    check<P>(Move(FU, SQ_3G), "P*3g");
-    check<P>(Move(SQ_1A, SQ_1B), "1a1b");
-    check<P>(Move(SQ_1A, SQ_1B, true), "1a1b+");
+    using MT = vshogi::MoveTraits<P>;
+    CHECK_TRUE(MT::make_move(SQ_1A, SQ_1B, true) == MT::make_move("1a1b+"));
+    check<P>(MT::make_move(FU, SQ_3G), "P*3g");
+    check<P>(MT::make_move(SQ_1A, SQ_1B), "1a1b");
+    check<P>(MT::make_move(SQ_1A, SQ_1B, true), "1a1b+");
 }
 
 } // namespace test_vshogi

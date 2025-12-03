@@ -13,6 +13,9 @@ namespace test_minishogi
 {
 
 using namespace vshogi::minishogi;
+using namespace vshogi;
+using Game = vshogi::minishogi::Game;
+using MT = vshogi::MoveTraits<Parameters>;
 using NT = vshogi::Notation<Parameters>;
 using Node = vshogi::engine::mcts::Node<Parameters>;
 using Searcher = vshogi::engine::mcts::Searcher<Parameters>;
@@ -31,7 +34,7 @@ TEST(minishogi_node, init_default)
 TEST(minishogi_node, init_with_args)
 {
     auto root = Node();
-    root.simulate_ongoing_and_expand({}, vshogi::BLACK, -1.f, zeros);
+    root.simulate_ongoing_and_expand({}, BLACK, -1.f, zeros);
     root.backprop(root.get_q_value(), nullptr);
     CHECK_EQUAL(1, root.get_visit_count());
     DOUBLES_EQUAL(-1.f, root.get_q_value(), 1e-2f);
@@ -65,8 +68,7 @@ TEST(minishogi_node, explore_game_end)
     p->backprop(-child->get_q_value(), child);
     DOUBLES_EQUAL(1.f, root.get_q_value(), 1e-2f);
     CHECK_EQUAL(
-        Move("1c1b").hash(),
-        root.get_most_visited_child()->get_action().hash());
+        MT::make_move("1c1b"), root.get_most_visited_child()->get_action());
 }
 
 TEST(minishogi_node, explore_one_action)
@@ -102,7 +104,7 @@ TEST(minishogi_node, explore_one_action)
         CHECK_EQUAL(1, actual->get_visit_count());
         DOUBLES_EQUAL(-0.8f, actual->get_q_value(), 1e-2f);
 
-        const auto ch = root.get_child(Move(SQ_1C, SQ_1B));
+        const auto ch = root.get_child(MT::make_move(SQ_1C, SQ_1B));
         CHECK_TRUE(actual == ch);
     }
     DOUBLES_EQUAL(0.8f, root.get_q_value(100), 1e-2f);
@@ -133,8 +135,10 @@ TEST(minishogi_node, explore_two_action)
      */
 
     std::vector<float> input_value = {0.3f, -0.8f, -0.8f};
-    const Move moves[]
-        = {Move(SQ_1E, SQ_1D), Move(SQ_1E, SQ_2D), Move(SQ_1E, SQ_2D)};
+    const move_t moves[]
+        = {MT::make_move(SQ_1E, SQ_1D),
+           MT::make_move(SQ_1E, SQ_2D),
+           MT::make_move(SQ_1E, SQ_2D)};
     std::vector<float> expected_q_value = {
         // At first, Move(SQ_1E, SQ_1D) is selected due to higher probability
         // clang-format off
@@ -143,26 +147,31 @@ TEST(minishogi_node, explore_two_action)
         (0.f + -0.3f + 0.8f + 0.8f) / 4.f,  // Move(SQ_1E, SQ_2D) selected
         // clang-format on
     };
-    std::vector<Move> expected_most_selected_moves
-        = {Move(SQ_1E, SQ_1D), Move(SQ_1E, SQ_2D), Move(SQ_1E, SQ_2D)};
+    std::vector<move_t> expected_most_selected_moves
+        = {MT::make_move(SQ_1E, SQ_1D),
+           MT::make_move(SQ_1E, SQ_2D),
+           MT::make_move(SQ_1E, SQ_2D)};
     const float expected_greedy_q_values[] = {-0.3f, 0.8f, 0.8f};
 
     // softmax([-0.202, 0.202]) -> [0.5996, 0.4003]
     float logits[Game::num_dlshogi_policy()] = {0.f};
-    logits[Move(SQ_1E, SQ_1D).to_dlshogi_policy_index(vshogi::BLACK)] = 0.202f;
-    logits[Move(SQ_1E, SQ_2D).to_dlshogi_policy_index(vshogi::BLACK)] = -0.202f;
+    logits[MT::to_policy_index(MT::make_move(SQ_1E, SQ_1D), BLACK)] = 0.202f;
+    logits[MT::to_policy_index(MT::make_move(SQ_1E, SQ_2D), BLACK)] = -0.202f;
     auto g = Game("4k/5/5/5/4S b -");
     auto root = Node();
     root.simulate_ongoing_and_expand(
-        {Move(SQ_1E, SQ_1D), Move(SQ_1E, SQ_2D)}, vshogi::BLACK, 0.f, logits);
+        {MT::make_move(SQ_1E, SQ_1D), MT::make_move(SQ_1E, SQ_2D)},
+        BLACK,
+        0.f,
+        logits);
     CHECK_EQUAL(nullptr, root.backprop(root.get_q_value(), nullptr));
 
     for (std::size_t ii = 0; ii < 3; ++ii) {
         auto g_copy = Game(g);
         const auto actual = root.select_nocheck(g_copy, 1.f, 0.f);
         actual->simulate_ongoing_and_expand(
-            {Move(SQ_1B, SQ_1A)}, // dummy action to prevent mate
-            vshogi::WHITE,
+            {MT::make_move(SQ_1B, SQ_1A)}, // dummy action to prevent mate
+            WHITE,
             input_value[ii],
             zeros);
         CHECK_EQUAL(&root, actual->backprop(actual->get_q_value(), nullptr));
@@ -215,27 +224,30 @@ TEST(minishogi_node, explore_two_layer)
 
     // softmax([-1.099, 1.099]) -> [0.09993023, 0.90006977]
     float logits[Game::num_dlshogi_policy()] = {0.f};
-    logits[Move(SQ_1E, SQ_1D).to_dlshogi_policy_index(vshogi::BLACK)] = 1.099f;
-    logits[Move(SQ_1E, SQ_2D).to_dlshogi_policy_index(vshogi::BLACK)] = -1.099f;
+    logits[MT::to_policy_index(MT::make_move(SQ_1E, SQ_1D), BLACK)] = 1.099f;
+    logits[MT::to_policy_index(MT::make_move(SQ_1E, SQ_2D), BLACK)] = -1.099f;
     auto g = Game("s4/5/5/5/4S b -");
     auto root = Node();
     root.simulate_ongoing_and_expand(
-        {Move(SQ_1E, SQ_1D), Move(SQ_1E, SQ_2D)}, vshogi::BLACK, 0.f, logits);
+        {MT::make_move(SQ_1E, SQ_1D), MT::make_move(SQ_1E, SQ_2D)},
+        BLACK,
+        0.f,
+        logits);
     CHECK_EQUAL(nullptr, root.backprop(root.get_q_value(), nullptr));
 
     {
         auto g_copy = Game(g);
         const auto actual = root.select_nocheck(g_copy, 1.f, 0.f);
-        CHECK_EQUAL(root.get_child(Move(SQ_1E, SQ_1D)), actual);
+        CHECK_EQUAL(root.get_child(MT::make_move(SQ_1E, SQ_1D)), actual);
         STRCMP_EQUAL("s4/5/5/4S/5 w - 2", NT::to_sfen(g_copy).c_str());
         float policy[Game::num_dlshogi_policy()] = {0.f};
-        policy[Move(SQ_5A, SQ_5B).to_dlshogi_policy_index(vshogi::WHITE)]
+        policy[MT::to_policy_index(MT::make_move(SQ_5A, SQ_5B), WHITE)]
             = 1.099f;
-        policy[Move(SQ_5A, SQ_4B).to_dlshogi_policy_index(vshogi::WHITE)]
+        policy[MT::to_policy_index(MT::make_move(SQ_5A, SQ_4B), WHITE)]
             = -1.099f;
         actual->simulate_ongoing_and_expand(
-            {Move(SQ_5A, SQ_5B), Move(SQ_5A, SQ_4B)},
-            vshogi::WHITE,
+            {MT::make_move(SQ_5A, SQ_5B), MT::make_move(SQ_5A, SQ_4B)},
+            WHITE,
             -0.9f,
             policy);
         CHECK_EQUAL(&root, actual->backprop(actual->get_q_value(), nullptr));
@@ -247,11 +259,12 @@ TEST(minishogi_node, explore_two_layer)
         auto g_copy = Game("s4/5/5/5/4S b -");
         Node* const child = root.select_nocheck(g_copy, 1.f, 0.f);
         CHECK_EQUAL(1u, g_copy.ply());
-        CHECK_EQUAL(root.get_child(Move(SQ_1E, SQ_1D)), child);
+        CHECK_EQUAL(root.get_child(MT::make_move(SQ_1E, SQ_1D)), child);
         Node* const grand_child = child->select_nocheck(g_copy, 1.f, 0.f);
         CHECK_EQUAL(2u, g_copy.ply());
         CHECK_EQUAL(
-            root.get_child(Move(SQ_1E, SQ_1D))->get_child(Move(SQ_5A, SQ_5B)),
+            root.get_child(MT::make_move(SQ_1E, SQ_1D))
+                ->get_child(MT::make_move(SQ_5A, SQ_5B)),
             grand_child);
         STRCMP_EQUAL("5/s4/5/4S/5 b - 3", NT::to_sfen(g_copy).c_str());
         grand_child->simulate_ongoing_and_expand(
@@ -263,7 +276,8 @@ TEST(minishogi_node, explore_two_layer)
         CHECK_EQUAL(nullptr, root.backprop(grand_child->get_q_value(), child));
         DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(), 1e-3f);
         CHECK_TRUE(
-            root.get_most_visited_child()->get_action() == Move(SQ_1E, SQ_1D));
+            root.get_most_visited_child()->get_action()
+            == MT::make_move(SQ_1E, SQ_1D));
         DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(0), 1e-2f);
         DOUBLES_EQUAL((0.9f + -0.5f) / 2.f, root.get_q_value(1), 1e-2f);
         DOUBLES_EQUAL(-0.5f, root.get_q_value(2), 1e-2f);
@@ -272,17 +286,22 @@ TEST(minishogi_node, explore_two_layer)
     {
         CHECK_EQUAL(3, root.get_visit_count());
         DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(), 1e-2f);
-        root.apply(Move(SQ_1E, SQ_1D));
+        root.apply(MT::make_move(SQ_1E, SQ_1D));
         CHECK_EQUAL(2, root.get_visit_count());
         DOUBLES_EQUAL((-0.9f + 0.5f) / 2.f, root.get_q_value(), 1e-2f);
 
         DOUBLES_EQUAL(
-            0.9f, root.get_child(Move(SQ_5A, SQ_5B))->get_proba(), 1e-2f);
+            0.9f,
+            root.get_child(MT::make_move(SQ_5A, SQ_5B))->get_proba(),
+            1e-2f);
         DOUBLES_EQUAL(
-            0.1f, root.get_child(Move(SQ_5A, SQ_4B))->get_proba(), 1e-2f);
+            0.1f,
+            root.get_child(MT::make_move(SQ_5A, SQ_4B))->get_proba(),
+            1e-2f);
         DOUBLES_EQUAL((-0.9f + 0.5f) / 2.f, root.get_q_value(), 1e-3f);
         CHECK_TRUE(
-            root.get_most_visited_child()->get_action() == Move(SQ_5A, SQ_5B));
+            root.get_most_visited_child()->get_action()
+            == MT::make_move(SQ_5A, SQ_5B));
         DOUBLES_EQUAL((-0.9f + 0.5f) / 2.f, root.get_q_value(0), 1e-2f);
         DOUBLES_EQUAL(0.5f, root.get_q_value(1), 1e-2f);
         DOUBLES_EQUAL(0.5f, root.get_q_value(100), 1e-2f);
@@ -388,8 +407,8 @@ TEST(minishogi_searcher, test_mate_in_three)
             mcts.simulate_expand_backprop(n, g, 0.f, nullptr);
     }
 
-    const auto m = Move(SQ_2D, SQ_3C);
-    CHECK_EQUAL(m.hash(), mcts.get_action_by_visit_max().hash());
+    const auto m = MT::make_move(SQ_2D, SQ_3C);
+    CHECK_EQUAL(m, mcts.get_action_by_visit_max());
     DOUBLES_EQUAL(-1.f, mcts.get_root()->get_child(m)->get_q_value(), 1e-3f);
     const int expected_visits
         = mcts.get_root()->get_child(m)->get_visit_count() + 100;
@@ -410,7 +429,7 @@ TEST(minishogi_searcher, test_dfpn_root)
         auto g = Game("5/4k/5/4P/4K b 2G");
         mcts.search(g);
         CHECK_TRUE(mcts.proved_mate());
-        CHECK_EQUAL(Move("G*1c").hash(), mcts.get_action_by_visit_max().hash());
+        CHECK_EQUAL(MT::make_move("G*1c"), mcts.get_action_by_visit_max());
     }
     {
         mcts.init_root();
@@ -422,10 +441,11 @@ TEST(minishogi_searcher, test_dfpn_root)
                 mcts.simulate_expand_backprop(leaf, g, 0.f, nullptr);
         }
         CHECK_FALSE(mcts.proved_mate());
-        CHECK_FALSE(mcts.get_root()->get_child(Move("1c1b"))->is_mate());
-        mcts.apply(game, Move("1c1b"));
+        CHECK_FALSE(
+            mcts.get_root()->get_child(MT::make_move("1c1b"))->is_mate());
+        mcts.apply(game, MT::make_move("1c1b"));
         CHECK_TRUE(mcts.proved_mate());
-        CHECK_EQUAL(Move("G*1c").hash(), mcts.get_action_by_visit_max().hash());
+        CHECK_EQUAL(MT::make_move("G*1c"), mcts.get_action_by_visit_max());
     }
 }
 
@@ -454,8 +474,8 @@ TEST(minishogi_searcher, test_dfpn_vertex)
             mcts.simulate_expand_backprop(n, game, 0.f, nullptr);
         CHECK_EQUAL(0u, game.ply());
     }
-    CHECK_EQUAL(Move("3e4e").hash(), mcts.get_action_by_visit_max().hash());
-    mcts.apply(game, Move("3e2e"));
+    CHECK_EQUAL(MT::make_move("3e4e"), mcts.get_action_by_visit_max());
+    mcts.apply(game, MT::make_move("3e2e"));
     CHECK_EQUAL(1u, game.ply());
     DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
     for (int ii = 2; ii--;) {
@@ -470,7 +490,7 @@ TEST(minishogi_searcher, test_dfpn_vertex)
         CHECK_EQUAL(nullptr, n);
         DOUBLES_EQUAL(1.f, mcts.get_root()->get_q_value(), 1e-3f);
     }
-    CHECK_EQUAL(Move("3c2d").hash(), mcts.get_action_by_visit_max().hash());
+    CHECK_EQUAL(MT::make_move("3c2d"), mcts.get_action_by_visit_max());
 }
 
 TEST(minishogi_searcher, test_dfpn_root_vertex)

@@ -60,15 +60,15 @@ TEST(state, apply)
         auto s = State();
         CHECK_EQUAL(VOID, s.get_board()[SQ_6D]);
         CHECK_EQUAL(B_FU, s.get_board()[SQ_6E]);
-        s.apply(Move(SQ_6E, SQ_6D));
+        s.apply(MoveTraits::make_move(SQ_6E, SQ_6D));
         CHECK_EQUAL(B_FU, s.get_board()[SQ_6D]);
         CHECK_EQUAL(VOID, s.get_board()[SQ_6E]);
     }
     {
         auto s = State()
-                     .apply(Move(SQ_3F, SQ_4D))
-                     .apply(Move(SQ_1B, SQ_1C))
-                     .apply(Move(SQ_4D, SQ_5B, true));
+                     .apply(MoveTraits::make_move(SQ_3F, SQ_4D))
+                     .apply(MoveTraits::make_move(SQ_1B, SQ_1C))
+                     .apply(MoveTraits::make_move(SQ_4D, SQ_5B, true));
         CHECK_EQUAL(B_NK, s.get_board()[SQ_5B]);
     }
 }

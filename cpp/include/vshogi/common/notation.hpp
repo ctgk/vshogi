@@ -23,6 +23,7 @@ class Notation
     using BT = BitboardTraits<P>;
     using PT = PieceTraits<P>;
     using ST = SquareTraits<P>;
+    using MT = MoveTraits<P>;
     using Piece = typename C::Piece;
     using PieceType = typename C::PieceType;
     using Square = typename C::Square;
@@ -32,7 +33,7 @@ public:
     Notation() = delete;
     static constexpr char to_char(const PieceType& pt);
     static void to_sfen(const Square& sq, char sfen[2]);
-    static void to_sfen(const Move<P>& m, char sfen[5]);
+    static void to_sfen(const move_t& m, char sfen[5]);
     template <class T>
     static std::string to_sfen(const T& a);
     static std::string to_sfen(const PieceType& pt);
@@ -46,12 +47,12 @@ public:
     static std::string to_eng(const PieceType& pt);
     static std::string to_eng(const Piece& p);
     static std::string to_eng(const Square& sq);
-    static std::string to_eng(const Move<P>& m, const Game<P>& g);
+    static std::string to_eng(const move_t& m, const Game<P>& g);
 
     static const std::string&
     to_jpn(const PieceType& pt, const bool single_char = true);
     static std::string to_jpn(const Square& sq);
-    static std::string to_jpn(const Move<P>& m, const Game<P>& g);
+    static std::string to_jpn(const move_t& m, const Game<P>& g);
 
 private:
     static const PieceType pieces_in_sfen_order[C::num_stand_piece_types];
@@ -60,7 +61,7 @@ private:
     static void to_sfen(
         const Board<P>& board, const typename C::Rank rank, std::string& out);
     static std::string unique_identifier_jpn(
-        const Move<P>& m, const Board<P>& b, const ColorEnum& by_side);
+        const move_t& m, const Board<P>& b, const ColorEnum& by_side);
     static uint compute_index(const int d, const int s, const ColorEnum c);
     static std::string get_unique_identifier_jpn(
         const uint vertical_index,
@@ -86,16 +87,16 @@ void Notation<P>::to_sfen(const Square& sq, char sfen[2])
 }
 
 template <class P>
-void Notation<P>::to_sfen(const Move<P>& m, char sfen[5])
+void Notation<P>::to_sfen(const move_t& m, char sfen[5])
 {
-    if (m.is_drop()) {
-        sfen[0] = static_cast<char>(std::toupper(to_char(m.source_piece())));
+    if (MT::is_drop(m)) {
+        sfen[0] = static_cast<char>(std::toupper(to_char(MT::get_src_pt(m))));
         sfen[1] = '*';
     } else {
-        to_sfen(m.source_square(), sfen);
+        to_sfen(MT::get_src_sq(m), sfen);
     }
-    to_sfen(m.destination(), sfen + 2);
-    if (m.promote())
+    to_sfen(MT::get_dst(m), sfen + 2);
+    if (MT::get_promote(m))
         sfen[4] = '+';
 }
 
@@ -237,25 +238,25 @@ std::string Notation<P>::to_eng(const Square& sq)
 }
 
 template <class P>
-std::string Notation<P>::to_eng(const Move<P>& m, const Game<P>& g)
+std::string Notation<P>::to_eng(const move_t& m, const Game<P>& g)
 {
-    const Square dst = m.destination();
-    const Square src = m.source_square();
+    const Square dst = MT::get_dst(m);
+    const Square src = MT::get_src_sq(m);
     const Board<P>& b = g.get_board();
     const auto p = b[src];
     const auto t = g.get_turn();
 
     const auto dst_eng = to_eng(dst);
-    if (m.is_drop())
-        return to_eng(m.source_piece()) + "*" + dst_eng;
+    if (MT::is_drop(m))
+        return to_eng(MT::get_src_pt(m)) + "*" + dst_eng;
     const auto pt_eng = to_eng(p);
-    const auto src_candidate = get_src_candidate(b, dst, p, m.promote());
+    const auto src_candidate = get_src_candidate(b, dst, p, MT::get_promote(m));
     const auto origin_eng = (hamming_weight(src_candidate) < 2u)
                                 ? ""
                                 : std::string(1, '1' + ST::to_file(src))
                                       + std::string(1, '1' + ST::to_rank(src));
     const auto movement_eng = (b.is_empty(dst) ? "-" : "x");
-    const char promotion_eng = m.promote() ? '+'
+    const char promotion_eng = MT::get_promote(m) ? '+'
                                : (PT::is_promotable(p)
                                   && (ST::in_promotion_zone(dst, t)
                                       || ST::in_promotion_zone(src, t)))
@@ -370,30 +371,28 @@ constexpr char Notation<P>::to_char(const FullPieceTypes& pt)
 }
 
 template <class P>
-std::string Notation<P>::to_jpn(const Move<P>& m, const Game<P>& g)
+std::string Notation<P>::to_jpn(const move_t& m, const Game<P>& g)
 {
-    const Square dst = m.destination();
+    const Square dst = MT::get_dst(m);
     const Board<P>& b = g.get_board();
     const ColorEnum t = g.get_turn();
     auto dst_jpn = to_jpn(dst);
     const auto unique_identifier = unique_identifier_jpn(m, b, t);
-    if (m.is_drop())
-        return dst_jpn + to_jpn(m.source_piece(), true) + unique_identifier;
+    if (MT::is_drop(m))
+        return dst_jpn + to_jpn(MT::get_src_pt(m), true) + unique_identifier;
 
-    const Square src = m.source_square();
+    const Square src = MT::get_src_sq(m);
     const auto p = b[src];
     const PieceType pt = PT::to_piece_type(p);
     const auto pt_jpn = to_jpn(pt, false);
-    const auto promotion_jpn = m.promote() ? u8"\u6210"
+    const auto promotion_jpn = MT::get_promote(m) ? u8"\u6210"
                                : (PT::is_promotable(p)
                                   && (ST::in_promotion_zone(src, t)
                                       || ST::in_promotion_zone(dst, t)))
                                    ? u8"\u4e0d\u6210"
                                    : u8"";
 
-    const auto n = g.ply();
-    const auto dst_prev
-        = (n > 0u) ? g.get_record_action(n - 1u).destination() : C::SQ_NA;
+    const auto dst_prev = MT::get_dst(g.get_record_action(g.ply() - 1u));
     if (dst == dst_prev)
         dst_jpn = u8"\u540c";
     return dst_jpn + pt_jpn + unique_identifier + promotion_jpn;
@@ -401,17 +400,18 @@ std::string Notation<P>::to_jpn(const Move<P>& m, const Game<P>& g)
 
 template <class P>
 std::string Notation<P>::unique_identifier_jpn(
-    const Move<P>& move, const Board<P>& b, const ColorEnum& by_side)
+    const move_t& move, const Board<P>& b, const ColorEnum& by_side)
 {
-    const auto dst = move.destination();
+    const auto dst = MT::get_dst(move);
     const auto dr = ST::to_rank(dst);
     const auto df = ST::to_file(dst);
-    const auto p = (move.is_drop())
-                       ? PT::make_piece(by_side, move.source_piece())
-                       : b[move.source_square()];
-    const auto src_candidates = get_src_candidate(b, dst, p, move.promote());
+    const auto p = (MT::is_drop(move))
+                       ? PT::make_piece(by_side, MT::get_src_pt(move))
+                       : b[MT::get_src_sq(move)];
+    const auto src_candidates
+        = get_src_candidate(b, dst, p, MT::get_promote(move));
     const auto num_cands = hamming_weight(src_candidates);
-    if (move.is_drop() && static_cast<bool>(num_cands))
+    if (MT::is_drop(move) && static_cast<bool>(num_cands))
         return u8"\u6253";
     if (num_cands < 2u)
         return u8""; // no unique identifier required
@@ -442,7 +442,7 @@ std::string Notation<P>::unique_identifier_jpn(
         hamming_weight(src_candidates & BT::from_file(df)),
         hamming_weight(src_candidates & left),
     };
-    const auto src = move.source_square();
+    const auto src = MT::get_src_sq(move);
     return get_unique_identifier_jpn(
         compute_index(
             static_cast<int>(dr), static_cast<int>(ST::to_rank(src)), by_side),

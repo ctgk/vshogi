@@ -53,6 +53,7 @@ private:
     using BT = BitboardTraits<P>;
     using PT = PieceTraits<P>;
     using ST = SquareTraits<P>;
+    using MT = MoveTraits<P>;
     using bitboard_t = typename C::bitboard_t;
 
 private:
@@ -74,14 +75,15 @@ public:
             return;
         init_no_check();
     }
-    SoldierMoveGenerator(const State<P>& state, const Move<P>& move)
+    SoldierMoveGenerator(const State<P>& state, const move_t& move)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
           m_pinned(m_state.find_pinned()), m_src_iter(), m_dst_iter(),
           m_promote(true)
     {
         if (m_state.in_double_check())
             return;
-        init_no_check(move.source_square(), move.destination(), move.promote());
+        init_no_check(
+            MT::get_src_sq(move), MT::get_dst(move), MT::get_promote(move));
     }
     SoldierMoveGenerator(const State<P>& state, const bitboard_t& src_mask)
         : m_state(state), m_turn(state.get_turn()), m_board(state.get_board()),
@@ -134,9 +136,9 @@ public:
         m_promote = true;
         return *this;
     }
-    Move<P> operator*() const
+    move_t operator*() const
     {
-        return Move<P>(*m_src_iter, *m_dst_iter, m_promote);
+        return MT::make_move(*m_src_iter, *m_dst_iter, m_promote);
     }
     operator bool() const
     {
@@ -256,6 +258,7 @@ private:
     using BT = BitboardTraits<P>;
     using PT = PieceTraits<P>;
     using ST = SquareTraits<P>;
+    using MT = MoveTraits<P>;
     using bitboard_t = typename C::bitboard_t;
 
 private:
@@ -323,9 +326,9 @@ public:
         }
         return *this;
     }
-    Move<P> operator*() const
+    move_t operator*() const
     {
-        return Move<P>(*m_src_iter, *m_dst_iter, m_promote);
+        return MT::make_move(*m_src_iter, *m_dst_iter, m_promote);
     }
     operator bool() const
     {
@@ -489,10 +492,10 @@ public:
         }
         init_promote();
     }
-    Move<P> operator*() const
+    move_t operator*() const
     {
         assert(m_dst_iter != nullptr);
-        return Move<P>(m_src, *m_dst_iter, m_promote);
+        return move_t(m_src, *m_dst_iter, m_promote);
     }
     SoldierMoveGeneratorEvade& operator++()
     {
@@ -582,6 +585,7 @@ private:
     using BT = BitboardTraits<P>;
     using PT = PieceTraits<P>;
     using ST = SquareTraits<P>;
+    using MT = MoveTraits<P>;
     using Square = typename C::Square;
     using bitboard_t = typename C::bitboard_t;
 
@@ -641,9 +645,9 @@ public:
         init_promote();
         return *this;
     }
-    Move<P> operator*() const
+    move_t operator*() const
     {
-        return Move<P>(*m_src_iter, *m_dst_iter, m_promote);
+        return MT::make_move(*m_src_iter, *m_dst_iter, m_promote);
     }
     operator bool() const
     {

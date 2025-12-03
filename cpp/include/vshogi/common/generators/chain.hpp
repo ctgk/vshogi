@@ -14,6 +14,9 @@ class ChainGenerator;
 template <class P, class Gen0, class Gen1>
 class ChainGenerator<P, Gen0, Gen1>
 {
+    using C = Configuration<P>;
+    using MT = MoveTraits<P>;
+
 private:
     Gen0 m_gen0;
     Gen1 m_gen1;
@@ -51,7 +54,7 @@ public:
         }
         return *this;
     }
-    Move<P> operator*() const
+    move_t operator*() const
     {
         switch (m_index) {
         case 0u:
@@ -61,7 +64,7 @@ public:
         default:
             break;
         }
-        return Move<P>();
+        return MT::make_move(C::SQ_NA, C::SQ_NA);
     }
     operator bool() const
     {
@@ -72,6 +75,9 @@ public:
 template <class P, class Gen0, class Gen1, class Gen2>
 class ChainGenerator<P, Gen0, Gen1, Gen2>
 {
+    using C = Configuration<P>;
+    using MT = MoveTraits<P>;
+
 private:
     Gen0 m_gen0;
     Gen1 m_gen1;
@@ -126,7 +132,7 @@ public:
         }
         return *this;
     }
-    Move<P> operator*() const
+    move_t operator*() const
     {
         switch (m_index) {
         case 0u:
@@ -138,7 +144,7 @@ public:
         default:
             break;
         }
-        return Move<P>();
+        return MT::make_move(C::SQ_NA, C::SQ_NA);
     }
     operator bool() const
     {

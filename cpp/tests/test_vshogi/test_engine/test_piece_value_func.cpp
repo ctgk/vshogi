@@ -21,7 +21,7 @@ TEST(test_minishogi_test_piece_value_func, has_stand_piece)
 {
     using namespace vshogi::minishogi;
     auto g = Game();
-    g.apply(Move(SQ_1E, SQ_1B));
+    g.apply(MoveTraits::make_move(SQ_1E, SQ_1B));
     const float actual = vshogi::engine::piece_value_func(g);
     CHECK_TRUE(actual < 0.f);
 }

@@ -32,6 +32,7 @@ private:
     using BT = BitboardTraits<P>;
     using PT = PieceTraits<P>;
     using ST = SquareTraits<P>;
+    using MT = MoveTraits<P>;
     using bitboard_t = typename C::bitboard_t;
 
 public:
@@ -110,9 +111,9 @@ public:
     {
         return m_state.get_stand(c);
     }
-    std::vector<Move<P>> get_legal_moves() const
+    std::vector<move_t> get_legal_moves() const
     {
-        std::vector<Move<P>> out{};
+        std::vector<move_t> out{};
         if (m_result != ONGOING)
             return out;
         if (in_check()) {
@@ -124,9 +125,9 @@ public:
         }
         return out;
     }
-    std::vector<Move<P>> get_check_moves() const
+    std::vector<move_t> get_check_moves() const
     {
-        std::vector<Move<P>> out{};
+        std::vector<move_t> out{};
         if (m_result != ONGOING)
             return out;
         for (auto g = MoveGenerator<P, GenEnum::CHECK>(m_state); g; ++g)
@@ -198,7 +199,7 @@ public:
         m_result = DRAW;
         return *this;
     }
-    Game& apply(const Move<P>& move)
+    Game& apply(const move_t& move)
     {
         if ((m_result == ONGOING) && (!is_legal(move))) {
             add_record_and_update_state(move);
@@ -207,13 +208,13 @@ public:
         }
         return apply_nocheck(move);
     }
-    Game& apply_nocheck(const Move<P>& move)
+    Game& apply_nocheck(const move_t& move)
     {
         add_record_and_update_state(move);
         update_result(C::max_acceptable_repetitions);
         return *this;
     }
-    Game& apply_dfpn(const Move<P>& move)
+    Game& apply_dfpn(const move_t& move)
     {
         add_record_and_update_state(move);
         return *this;
@@ -238,7 +239,7 @@ public:
         assert(ply() > 0u);
         const auto n = ply() - 1u;
         std::uint32_t v = m_captured_move_list[n];
-        const auto move = Move<P>(static_cast<std::uint16_t>(v & 0x0ffffu));
+        const auto move = move_t(static_cast<std::uint16_t>(v & 0x0ffffu));
         const auto captured = static_cast<Piece>((v >> 16u) & 0x0ffu);
         const auto checker_0 = static_cast<DirectionEnum>((v >> 24u) & 0x0fu);
         const auto checker_1 = static_cast<DirectionEnum>((v >> 28u) & 0x0fu);
@@ -249,14 +250,14 @@ public:
         m_captured_move_list.pop_back();
         return *this;
     }
-    bool is_legal(const Move<P> move) const
+    bool is_legal(const move_t move) const
     {
-        if (move.is_drop()) {
+        if (MT::is_drop(move)) {
             auto g = DropMoveGenerator<P>(
-                m_state, move.source_piece(), move.destination());
+                m_state, MT::get_src_pt(move), MT::get_dst(move));
             return move == *g;
         } else if (
-            move.source_square() == get_board().get_king_square(get_turn())) {
+            MT::get_src_sq(move) == get_board().get_king_square(get_turn())) {
             for (auto g = KingMoveGenerator<P>(m_state); g; ++g) {
                 if (*g == move)
                     return true;
@@ -281,24 +282,24 @@ public:
             return false;
 
         // first sacrifice drop
-        const Move<P> drop1st = get_record_action(n - 4u);
-        if (!drop1st.is_drop())
+        const move_t drop1st = get_record_action(n - 4u);
+        if (!MT::is_drop(drop1st))
             return false;
 
         // capture first sacrifice drop
-        const Move<P> capt1st = get_record_action(n - 3u);
-        if (drop1st.destination() != capt1st.destination())
+        const move_t capt1st = get_record_action(n - 3u);
+        if (MT::get_dst(drop1st) != MT::get_dst(capt1st))
             return false;
 
         // second sacrifice drop
-        const Move<P> drop2nd = get_record_action(n - 2u);
-        if (!drop2nd.is_drop())
+        const move_t drop2nd = get_record_action(n - 2u);
+        if (!MT::is_drop(drop2nd))
             return false;
 
         // capture second sacrifice drop
-        const Move<P> capt2nd = get_record_action(n - 1u);
-        return (drop2nd.destination() == capt2nd.destination())
-               && (capt1st.destination() == capt2nd.source_square());
+        const move_t capt2nd = get_record_action(n - 1u);
+        return (MT::get_dst(drop2nd) == MT::get_dst(capt2nd))
+               && (MT::get_dst(capt1st) == MT::get_src_sq(capt2nd));
     }
 
     /**
@@ -334,9 +335,11 @@ public:
         }
         return true;
     }
-    Move<P> get_record_action(const uint index) const
+    move_t get_record_action(const uint index) const
     {
-        return Move<P>(static_cast<std::uint16_t>(m_captured_move_list[index]));
+        if (index >= m_captured_move_list.size())
+            return MT::make_move(C::SQ_NA, C::SQ_NA);
+        return static_cast<move_t>(m_captured_move_list[index]);
     }
     void to_feature_map(float* const data) const
     {
@@ -407,16 +410,16 @@ protected:
     }
 
 protected:
-    void add_record_and_update_state(const Move<P>& move)
+    void add_record_and_update_state(const move_t& move)
     {
-        const auto captured = m_state.get_board()[move.destination()];
+        const auto captured = m_state.get_board()[MT::get_dst(move)];
         const auto checker_dir_0 = m_state.get_checker_dir(0u);
         const auto checker_dir_1 = m_state.get_checker_dir(1u);
         m_hash_list.emplace_back(m_hash);
-        static_assert(sizeof(Move<P>) == sizeof(std::uint16_t));
+        static_assert(sizeof(move_t) == sizeof(std::uint16_t));
         static_assert(sizeof(captured) == sizeof(std::uint8_t));
         m_captured_move_list.emplace_back(
-            static_cast<std::uint32_t>(move.hash())
+            static_cast<std::uint32_t>(move)
             ^ (static_cast<std::uint32_t>(captured) << 16)
             ^ (static_cast<std::uint32_t>(checker_dir_0) << 24)
             ^ (static_cast<std::uint32_t>(checker_dir_1) << 28));

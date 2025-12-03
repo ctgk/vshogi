@@ -94,50 +94,82 @@ inline void export_piece_stand(pybind11::module& m)
         });
 }
 
+template <class P>
+class Move
+{
+public:
+    vshogi::move_t m_value;
+    Move(const vshogi::move_t& m) : m_value{m}
+    {
+    }
+};
+
 template <class Parameters>
 inline void export_move(pybind11::module& m)
 {
     namespace py = pybind11;
-    using Move = vshogi::Move<Parameters>;
+    using MT = vshogi::MoveTraits<Parameters>;
     using NT = vshogi::Notation<Parameters>;
     using Square = typename Parameters::Square;
     using PieceType = typename Parameters::PieceType;
+    using move_t = vshogi::move_t;
+    using Move = Move<Parameters>;
     py::class_<Move>(m, "Move")
         .def(
-            py::init<const Square, const Square, const bool>(),
+            py::init(
+                [](const Square src, const Square dst, const bool promote) {
+                    return Move(MT::make_move(src, dst, promote));
+                }),
             py::arg("src"),
             py::arg("dst"),
             py::arg("promote") = false)
         .def(
-            py::init<const PieceType, const Square>(),
+            py::init([](const PieceType src, const Square dst) {
+                return Move(MT::make_move(src, dst));
+            }),
             py::arg("src"),
             py::arg("dst"))
-        .def(py::init<const std::uint16_t>(), py::arg("value"))
         .def(
-            py::init(
-                [](const std::string& sfen) { return Move(sfen.c_str()); }),
+            py::init([](const std::string& sfen) {
+                return Move(MT::make_move(sfen.c_str()));
+            }),
             py::arg("sfen"))
-        .def_property_readonly("destination", &Move::destination)
-        .def_property_readonly("promote", &Move::promote)
+        .def_property_readonly(
+            "destination", [](const Move& m) { return MT::get_dst(m.m_value); })
+        .def_property_readonly(
+            "promote", [](const Move& m) { return MT::get_promote(m.m_value); })
         .def_property_readonly(
             "source",
-            [](const Move& self) -> py::object {
-                if (self.is_drop())
-                    return py::cast(self.source_piece());
-                return py::cast(self.source_square());
+            [](const Move& m) {
+                if (MT::is_drop(m.m_value))
+                    return py::cast(MT::get_src_pt(m.m_value));
+                return py::cast(MT::get_src_sq(m.m_value));
             })
-        .def("is_drop", &Move::is_drop)
-        .def("rotate", &Move::rotate)
-        .def("hflip", &Move::hflip)
-        .def("_to_dlshogi_policy_index", &Move::to_dlshogi_policy_index)
-        .def_static("_num_policy_per_square", &Move::num_policy_per_square)
-        .def("__hash__", &Move::hash)
-        .def("to_sfen", [](const Move& self) { return NT::to_sfen(self); })
-        .def("__eq__", &Move::operator==)
-        .def("__ne__", &Move::operator!=)
+        .def("is_drop", [](const Move& m) { return MT::is_drop(m.m_value); })
+        .def(
+            "rotate", [](const Move& m) { return Move(MT::rotate(m.m_value)); })
+        .def("hflip", [](const Move& m) { return Move(MT::hflip(m.m_value)); })
+        .def(
+            "_to_dlshogi_policy_index",
+            [](const Move& m, const vshogi::ColorEnum& by_side) {
+                return MT::to_policy_index(m.m_value, by_side);
+            })
+        .def_static("_num_policy_per_square", &MT::num_policy_per_square)
+        .def(
+            "__hash__",
+            [](const Move& m) { return static_cast<int>(m.m_value); })
+        .def("to_sfen", [](const Move& m) { return NT::to_sfen(m.m_value); })
+        .def(
+            "__eq__",
+            [](const Move& a, const Move& b) { return a.m_value == b.m_value; })
+        .def(
+            "__ne__",
+            [](const Move& a, const Move& b) { return a.m_value != b.m_value; })
         .def(py::pickle(
-            [](const Move& self) { return py::make_tuple(self.hash()); },
-            [](py::tuple t) { return Move(t[0].cast<std::size_t>()); }));
+            [](const Move& m) {
+                return py::make_tuple(static_cast<int>(m.m_value));
+            },
+            [](py::tuple t) { return Move(t[0].cast<move_t>()); }));
 }
 
 template <class Parameters>
@@ -145,8 +177,9 @@ inline void export_state(pybind11::module& m)
 {
     namespace py = pybind11;
     using State = vshogi::State<Parameters>;
-    using Move = vshogi::Move<Parameters>;
+    using MoveTraits = vshogi::MoveTraits<Parameters>;
     using NT = vshogi::Notation<Parameters>;
+    using Move = Move<Parameters>;
 
     py::class_<State>(m, "State")
         .def(py::init<const std::string&>())
@@ -181,8 +214,9 @@ inline void export_state(pybind11::module& m)
                 std::fill(data, data + size, default_value);
                 for (auto it = action_proba.begin(); it != action_proba.end();
                      ++it) {
-                    const auto move = it->first.cast<Move>();
-                    const auto index = move.to_dlshogi_policy_index(turn);
+                    const auto m = it->first.cast<Move>();
+                    const auto index
+                        = MoveTraits::to_policy_index(m.m_value, turn);
                     data[index] = it->second.cast<float>();
                 }
                 return out;
@@ -201,8 +235,9 @@ inline void export_state(pybind11::module& m)
                 std::fill(data, data + size, default_value);
                 for (auto it = action_proba.begin(); it != action_proba.end();
                      ++it) {
-                    const auto move = it->first.cast<Move>();
-                    const auto index = move.to_dlshogi_policy_index(turn);
+                    const auto m = it->first.cast<Move>();
+                    const auto index
+                        = MoveTraits::to_policy_index(m.m_value, turn);
                     data[index] = it->second.cast<float>();
                 }
             },
@@ -218,7 +253,8 @@ inline void export_game(pybind11::module& m)
     using C = vshogi::Configuration<Parameters>;
     using NT = vshogi::Notation<Parameters>;
     using Game = vshogi::Game<Parameters>;
-    using Move = vshogi::Move<Parameters>;
+    using MoveTraits = vshogi::MoveTraits<Parameters>;
+    using Move = Move<Parameters>;
     py::class_<Game>(m, "_Game")
         .def(py::init<>())
         .def(py::init<const std::string&>())
@@ -232,8 +268,22 @@ inline void export_game(pybind11::module& m)
         .def("get_zobrist_hash", &Game::get_zobrist_hash)
         .def("ply", &Game::ply)
         .def("count_repetitions", &Game::count_repetitions)
-        .def("get_legal_moves", &Game::get_legal_moves)
-        .def("get_check_moves", &Game::get_check_moves)
+        .def(
+            "get_legal_moves",
+            [](const Game& g) {
+                std::vector<Move> out{};
+                for (auto&& m : g.get_legal_moves())
+                    out.emplace_back(m);
+                return out;
+            })
+        .def(
+            "get_check_moves",
+            [](const Game& g) {
+                std::vector<Move> out{};
+                for (auto&& m : g.get_check_moves())
+                    out.emplace_back(m);
+                return out;
+            })
         .def(
             "to_sfen",
             [](const Game& self, const bool include_move_count) {
@@ -246,11 +296,17 @@ inline void export_game(pybind11::module& m)
         .def("rotate", &Game::rotate)
         .def(
             "to_jpn",
-            [](const Game& g, const Move& m) { return NT::to_jpn(m, g); })
+            [](const Game& g, const Move& m) {
+                return NT::to_jpn(m.m_value, g);
+            })
         .def(
             "to_eng",
-            [](const Game& g, const Move& m) { return NT::to_eng(m, g); })
-        .def("apply", [](Game& self, const Move& m) { return self.apply(m); })
+            [](const Game& g, const Move& m) {
+                return NT::to_eng(m.m_value, g);
+            })
+        .def(
+            "apply",
+            [](Game& self, const Move& m) { return self.apply(m.m_value); })
         .def("resign", &Game::resign)
         .def("declare_draw", &Game::declare_draw)
         .def("undo", &Game::undo)
@@ -339,8 +395,9 @@ inline void export_game(pybind11::module& m)
                 std::fill(data, data + size, default_value);
                 for (auto it = visit_proba.begin(); it != visit_proba.end();
                      ++it) {
-                    const auto move = it->first.cast<Move>();
-                    const auto index = move.to_dlshogi_policy_index(turn);
+                    const auto m = it->first.cast<Move>();
+                    const auto index
+                        = MoveTraits::to_policy_index(m.m_value, turn);
                     data[index] = it->second.cast<float>();
                 }
                 return out;
@@ -354,12 +411,13 @@ inline void export_game(pybind11::module& m)
                 auto proba = std::vector<float>(actions.size());
                 const auto data = logits.data();
                 for (std::size_t ii = actions.size(); ii--;) {
-                    const auto index = actions[ii].to_dlshogi_policy_index(t);
+                    const auto index
+                        = MoveTraits::to_policy_index(actions[ii], t);
                     proba[ii] = data[index];
                 }
                 vshogi::softmax(proba);
                 for (std::size_t ii = actions.size(); ii--;) {
-                    out[py::cast(actions[ii])] = proba[ii];
+                    out[py::cast(Move(actions[ii]))] = proba[ii];
                 }
                 return out;
             })
@@ -369,9 +427,11 @@ inline void export_game(pybind11::module& m)
                 vshogi::engine::dfpn::Searcher<Parameters> dfpn{};
                 dfpn.search(self, num_dfpn_nodes);
                 if (dfpn.proved_mate()) {
-                    const auto moves = dfpn.get_mate_moves(self);
-                    if (moves.size() > 0u)
-                        return py::cast(moves);
+                    std::vector<Move> out{};
+                    for (auto&& m : dfpn.get_mate_moves(self))
+                        out.emplace_back(m);
+                    if (out.size() > 0u)
+                        return py::cast(out);
                 }
                 return py::none();
             },
@@ -384,8 +444,9 @@ inline void export_mcts_node(pybind11::module& m)
 {
     namespace py = pybind11;
     using Game = vshogi::Game<Parameters>;
-    using Move = vshogi::Move<Parameters>;
+    using MoveTraits = vshogi::MoveTraits<Parameters>;
     using Node = vshogi::engine::mcts::Node<Parameters>;
+    using Move = Move<Parameters>;
 
     py::class_<Node>(m, "MctsNode")
         .def("get_visit_count", &Node::get_visit_count)
@@ -406,7 +467,7 @@ inline void export_mcts_node(pybind11::module& m)
             })
         .def("get_proba", &Node::get_proba)
         .def("get_child", [](Node& node, const Move& action) -> py::object {
-            const auto out = node.get_child(action);
+            const auto out = node.get_child(action.m_value);
             if (out == nullptr)
                 return py::none();
             return py::cast(*out, py::return_value_policy::reference);
@@ -442,7 +503,11 @@ inline void export_mcts_searcher(pybind11::module& m)
                 self.simulate_expand_backprop(
                     leaf, game, value, policy_logits.data());
             })
-        .def("apply", &Searcher::apply)
+        .def(
+            "apply",
+            [](Searcher& self, Game& g, const Move<Parameters>& m) {
+                self.apply(g, m.m_value);
+            })
         .def(
             "get_root",
             [](Searcher& self) -> py::object {
@@ -453,13 +518,23 @@ inline void export_mcts_searcher(pybind11::module& m)
             })
         .def("proved_mate", &Searcher::proved_mate)
         .def("get_visit_count", &Searcher::get_visit_count)
-        .def("get_action_by_visit_max", &Searcher::get_action_by_visit_max)
+        .def(
+            "get_action_by_visit_max",
+            [](const Searcher& self) {
+                return Move<Parameters>(self.get_action_by_visit_max());
+            })
         .def(
             "get_action_by_visit_distribution",
-            &Searcher::get_action_by_visit_distribution)
+            [](const Searcher& self, const float temperature) {
+                return Move<Parameters>(
+                    self.get_action_by_visit_distribution(temperature));
+            })
         .def(
             "get_action_by_q_distribution",
-            &Searcher::get_action_by_q_distribution);
+            [](const Searcher& self, const float temperature) {
+                return Move<Parameters>(
+                    self.get_action_by_q_distribution(temperature));
+            });
 }
 
 template <class Parameters>
@@ -486,7 +561,11 @@ inline void export_dfpn_node(pybind11::module& m)
                     return std::numeric_limits<float>::infinity();
                 return static_cast<float>(n) / unit;
             })
-        .def("get_action", &Node::get_action)
+        .def(
+            "get_action",
+            [](const Node& self) {
+                return Move<Parameters>(self.get_action());
+            })
         .def("has_child", &Node::has_child)
         .def(
             "get_child_1st",
@@ -519,6 +598,7 @@ inline void export_dfpn_searcher(pybind11::module& m)
 {
     namespace py = pybind11;
     using Searcher = vshogi::engine::dfpn::Searcher<Parameters>;
+    using Move = Move<Parameters>;
 
     py::class_<Searcher>(m, "DfpnSearcher")
         .def(py::init<const uint>())
@@ -528,8 +608,17 @@ inline void export_dfpn_searcher(pybind11::module& m)
         .def("proved_no_mate", &Searcher::proved_no_mate)
         .def("proved", &Searcher::proved)
         .def("get_search_count", &Searcher::get_search_count)
-        .def("get_mate_move", &Searcher::get_mate_move)
-        .def("get_mate_moves", &Searcher::get_mate_moves)
+        .def(
+            "get_mate_move",
+            [](const Searcher& self) { return Move(self.get_mate_move()); })
+        .def(
+            "get_mate_moves",
+            [](const Searcher& self, vshogi::Game<Parameters>& g) {
+                std::vector<Move> out{};
+                for (auto&& m : self.get_mate_moves(g))
+                    out.emplace_back(m);
+                return out;
+            })
         .def("get_root", [](const Searcher& self) -> py::object {
             const auto out = self.get_root();
             if (out == nullptr)

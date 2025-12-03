@@ -11,6 +11,7 @@ namespace test_shogi
 {
 
 using namespace vshogi::shogi;
+using MT = vshogi::MoveTraits<Parameters>;
 using Node = vshogi::engine::mcts::Node<Parameters>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
@@ -60,7 +61,7 @@ TEST(shogi_profile, mcts_with_dfpn)
         }
 
         mcts.get_action_by_visit_max();
-        const auto m = Move(kifu[ii]);
+        const auto m = MT::make_move(kifu[ii]);
         mcts.apply(g, m);
 
         if (ii == 166u) {
@@ -79,7 +80,7 @@ TEST(shogi_profile, generator)
         for (uint ii = 0u; ii < 167u; ++ii) {
             if (g.get_result() != vshogi::ONGOING)
                 break;
-            const auto move = Move(kifu[ii]);
+            const auto move = MT::make_move(kifu[ii]);
             int num_legal_moves = 0;
             if (g.in_check()) {
                 for (auto gen = vshogi::

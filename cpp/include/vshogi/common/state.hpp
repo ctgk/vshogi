@@ -29,6 +29,7 @@ private:
     using BT = BitboardTraits<P>;
     using PT = PieceTraits<P>;
     using ST = SquareTraits<P>;
+    using MT = MoveTraits<P>;
     using Stands = BlackWhiteStands<P>;
     using bitboard_t = typename C::bitboard_t;
     static constexpr uint max_stand_piece_count = C::max_stand_piece_count;
@@ -68,7 +69,7 @@ public:
     }
     static constexpr uint num_dlshogi_policy()
     {
-        return num_squares * Move<P>::num_policy_per_square();
+        return num_squares * (2 * C::num_dir_dl + C::num_stand_piece_types);
     }
     bool operator==(const State& other) const
     {
@@ -141,13 +142,13 @@ public:
             return true;
         return m_board.is_empty(ST::shift(get_king_square(), m_checkers[0]));
     }
-    bool in_promotion_zone(const Move<P>& m) const
+    bool in_promotion_zone(const move_t& m) const
     {
-        if (ST::in_promotion_zone(m.destination(), m_turn))
+        if (ST::in_promotion_zone(MT::get_dst(m), m_turn))
             return true;
-        if (m.is_drop())
+        if (MT::is_drop(m))
             return false;
-        return ST::in_promotion_zone(m.source_square(), m_turn);
+        return ST::in_promotion_zone(MT::get_src_sq(m), m_turn);
     }
     void set_sfen(const std::string& sfen)
     {
@@ -167,18 +168,18 @@ public:
     {
         return State(m_board.rotate(), m_stands.rotate(), ~m_turn);
     }
-    State& apply(const Move<P>& move, std::uint64_t* const hash = nullptr)
+    State& apply(const move_t& move, std::uint64_t* const hash = nullptr)
     {
-        const Square dst = move.destination();
-        if (move.is_drop()) {
-            const PieceType src = move.source_piece();
+        const Square dst = MT::get_dst(move);
+        if (MT::is_drop(move)) {
+            const PieceType src = MT::get_src_pt(move);
             const Piece p = m_stands.pop_piece_from(m_turn, src, hash);
             m_board.place_at(dst, p, hash);
             update_checkers_before_turn_update(dst);
         } else {
-            const Square src = move.source_square();
+            const Square src = MT::get_src_sq(move);
             auto moving_piece = m_board.pop_from(src, hash);
-            if (move.promote())
+            if (MT::get_promote(move))
                 moving_piece = PT::promote_nocheck(moving_piece);
             const auto captured = m_board.place_at(dst, moving_piece, hash);
             m_stands.add_captured_piece(captured, hash);
@@ -190,22 +191,22 @@ public:
         return *this;
     }
     State& undo(
-        const Move<P>& move,
+        const move_t& move,
         const Piece& captured,
         const DirectionEnum& checker_dir_0,
         const DirectionEnum& checker_dir_1)
     {
-        const Square dst = move.destination();
+        const Square dst = MT::get_dst(move);
         if (captured != VOID)
             m_stands.remove_captured_piece(captured);
-        if (move.is_drop()) {
+        if (MT::is_drop(move)) {
             assert(captured == C::VOID);
             const auto dropped = m_board.pop_from(dst);
             m_stands.return_dropped_piece(dropped);
         } else {
-            const auto src = move.source_square();
+            const auto src = MT::get_src_sq(move);
             auto moved = m_board.place_at(dst, captured);
-            if (move.promote())
+            if (MT::get_promote(move))
                 moved = PT::demote_nocheck(moved);
             m_board.place_at(src, moved);
         }
@@ -268,15 +269,15 @@ public:
             return static_cast<bitboard_t>(0);
         return m_board.find_pinned(m_turn);
     }
-    bool is_declined_promotion(const Move<P>& move) const
+    bool is_declined_promotion(const move_t& move) const
     {
-        if (move.is_drop())
+        if (MT::is_drop(move))
             return false;
-        if (move.promote())
+        if (MT::get_promote(move))
             return false;
         if (!in_promotion_zone(move))
             return false;
-        return PT::is_promotion_fully_superior(m_board[move.source_square()]);
+        return PT::is_promotion_fully_superior(m_board[MT::get_src_sq(move)]);
     }
 
 private:
@@ -360,7 +361,7 @@ private:
                == 0u;
     }
     static void
-    fill_ms24b_with(std::uint64_t* const hash, const Piece& p, const Move<P>& m)
+    fill_ms24b_with(std::uint64_t* const hash, const Piece& p, const move_t& m)
     {
         if (hash == nullptr)
             return;
@@ -368,9 +369,9 @@ private:
         *hash >>= 24u;
 
         static_assert(sizeof(Piece) == sizeof(std::uint8_t));
-        static_assert(sizeof(Move<P>) == sizeof(std::uint16_t));
+        static_assert(sizeof(move_t) == sizeof(std::uint16_t));
         *hash ^= static_cast<std::uint64_t>(p) << (64u - 8u);
-        *hash ^= static_cast<std::uint64_t>(m.hash()) << (64u - 24u);
+        *hash ^= static_cast<std::uint64_t>(m) << (64u - 24u);
     }
 };
 

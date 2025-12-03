@@ -19,6 +19,7 @@ private:
     using C = Configuration<P>;
     using BT = BitboardTraits<P>;
     using ST = SquareTraits<P>;
+    using MT = MoveTraits<P>;
     using Square = typename C::Square;
     using bitboard_t = typename C::bitboard_t;
 
@@ -33,9 +34,9 @@ public:
         ++m_iter;
         return *this;
     }
-    Move<P> operator*() const
+    move_t operator*() const
     {
-        return Move<P>(m_src, *m_iter, false);
+        return MT::make_move(m_src, *m_iter, false);
     }
     operator bool() const
     {

@@ -31,9 +31,10 @@ class Node
     using C = Configuration<P>;
     using Square = typename C::Square;
     using ST = SquareTraits<P>;
+    using MT = MoveTraits<P>;
 
 private:
-    Move<P> m_action;
+    move_t m_action;
 
     /**
      * @brief #P (or #D).
@@ -108,8 +109,8 @@ public:
         for (Node* c = m_child; c && (c->m_parent == this); ++c) {
             uint delta_plus = 0u;
             const auto m = c->get_action();
-            const auto dst = m.destination();
-            if ((offence && !m.is_drop()) || (!offence && (dst != checker)))
+            const auto dst = MT::get_dst(m);
+            if ((offence && !MT::is_drop(m)) || (!offence && (dst != checker)))
                 delta_plus
                     = 0x40u; // offence (defence) prefers drop (capturing)
             const auto d
@@ -150,10 +151,10 @@ public:
         m_child_2nd = nullptr;
         for (Node* ch = m_child; ch && (ch->m_parent == this); ++ch) {
             assert(ch->m_phi != inf);
-            if (offence || (!ch->m_action.is_drop()))
+            if (offence || (!MT::is_drop(ch->m_action)))
                 m_delta += ch->m_phi;
             else {
-                const auto cd = ch->m_action.destination();
+                const auto cd = MT::get_dst(ch->m_action);
                 delta_max[cd] = std::max(delta_max[cd], ch->m_phi);
                 cd_max = std::max(cd_max, static_cast<uint>(cd));
             }
@@ -284,7 +285,7 @@ private:
         for (; *nibling; *nibling = (*nibling)->get_sibling()) {
             if (next->is_end())
                 return false;
-            if ((*nibling)->get_action().is_drop())
+            if (MT::is_drop((*nibling)->get_action()))
                 break;
             init_from_nibling(*next, **nibling);
             ++next;
@@ -312,8 +313,8 @@ private:
         for (; *nibling; *nibling = (*nibling)->get_sibling()) {
             if (next->is_end())
                 return false;
-            assert((*nibling)->get_action().is_drop());
-            if (!s.exist((*nibling)->get_action().source_piece()))
+            assert(MT::is_drop((*nibling)->get_action()));
+            if (!s.exist(MT::get_src_pt((*nibling)->get_action())))
                 continue;
             init_from_nibling(*next, **nibling);
             ++next;
@@ -362,7 +363,7 @@ public: // utility
     }
     void init(
         Node* const parent,
-        const Move<P>& action,
+        const move_t& action,
         const uint phi,
         const uint delta)
     {
@@ -375,7 +376,7 @@ public: // utility
         m_child_1st = nullptr;
         m_child_2nd = nullptr;
     }
-    Move<P> get_action() const
+    move_t get_action() const
     {
         return m_action;
     }

@@ -140,6 +140,8 @@ template <class P>
 class Searcher
 {
     using C = Configuration<P>;
+    using MT = MoveTraits<P>;
+    using Square = typename C::Square;
 
 private:
     std::vector<Node<P>> m_nodes; //!< The first one is the root node.
@@ -149,7 +151,7 @@ private:
     uint m_remaining_searches;
 
 public:
-    Move<P> search(Game<P>& g, const uint n)
+    move_t search(Game<P>& g, const uint n)
     {
         ScopedGame scope{g};
         if ((m_search_count == 0u) && !m_nodes[0].simulate(g)
@@ -159,7 +161,8 @@ public:
             m_nodes[0].backprop(C::SQ_NA);
         }
         if (m_nodes[0].proved()) {
-            return Move<P>();
+            return MT::make_move(
+                static_cast<Square>(0), static_cast<Square>(0));
         }
         m_remaining_searches = n;
         const auto out = multiple_iterative_deepening(m_nodes[0], g, inf, inf);
@@ -168,11 +171,11 @@ public:
     }
 
 private:
-    Move<P> multiple_iterative_deepening(
+    move_t multiple_iterative_deepening(
         Node<P>& n, Game<P>& g, const uint th_p, const uint th_d)
     {
         const bool offence = (g.ply() % 2u == 0u);
-        Move<P> out = n.get_action();
+        move_t out = n.get_action();
         assert(offence || g.in_check());
         const Node<P>*twin_ge{}, *twin_e{}, *twin_le{};
         m_table.look_up(g, &twin_ge, &twin_e, &twin_le);
@@ -250,20 +253,22 @@ public: // utility
     {
         return &m_nodes[0];
     }
-    Move<P> get_mate_move() const
+    move_t get_mate_move() const
     {
         if (!m_nodes[0].proved_mate(true))
-            return Move<P>();
+            return MT::make_move(
+                static_cast<Square>(0), static_cast<Square>(0));
         const auto c1 = m_nodes[0].get_child_1st();
         if (c1 == nullptr)
-            return Move<P>();
+            return MT::make_move(
+                static_cast<Square>(0), static_cast<Square>(0));
         return c1->get_action();
     }
-    std::vector<Move<P>> get_mate_moves(Game<P>& game) const
+    std::vector<move_t> get_mate_moves(Game<P>& game) const
     {
         ScopedGame scope{game};
         follow_line(game, m_nodes[0].get_child_1st());
-        std::vector<Move<P>> out{};
+        std::vector<move_t> out{};
         if (game.ply() > 0u) {
             for (uint ii = 0u; ii < game.ply(); ++ii)
                 out.emplace_back(game.get_record_action(ii));

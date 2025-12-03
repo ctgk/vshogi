@@ -10,6 +10,7 @@ namespace test_vshogi::test_shogi
 
 using namespace vshogi::shogi;
 using BT = vshogi::shogi::BitboardTraits;
+using MT = vshogi::shogi::MoveTraits;
 using NT = vshogi::Notation<Parameters>;
 
 TEST_GROUP (state) {
@@ -50,7 +51,7 @@ TEST(state, apply)
         CHECK_EQUAL(0, s.get_stand(vshogi::WHITE).count(KY));
         CHECK_EQUAL(W_KI, s.get_board()[SQ_1B]);
         CHECK_EQUAL(B_NY, s.get_board()[SQ_1A]);
-        s.apply(Move(SQ_1B, SQ_1A));
+        s.apply(MT::make_move(SQ_1B, SQ_1A));
         CHECK_EQUAL(1, s.get_stand(vshogi::WHITE).count(KY));
         CHECK_EQUAL(VOID, s.get_board()[SQ_1B]);
         CHECK_EQUAL(W_KI, s.get_board()[SQ_1A]);

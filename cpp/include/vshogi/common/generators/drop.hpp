@@ -35,6 +35,7 @@ private:
     using Square = typename C::Square;
     using PT = PieceTraits<P>;
     using BT = BitboardTraits<P>;
+    using MT = MoveTraits<P>;
     using bitboard_t = typename C::bitboard_t;
     using BitSquareIterator = typename BT::Iterator;
 
@@ -78,9 +79,9 @@ public:
         increment_piece_type_while_no_dst();
         return *this;
     }
-    Move<P> operator*() const
+    move_t operator*() const
     {
-        return Move<P>(m_pt_iter, *m_sq_iter);
+        return MT::make_move(m_pt_iter, *m_sq_iter);
     }
     operator bool() const
     {
@@ -161,6 +162,7 @@ private:
     using BT = BitboardTraits<P>;
     using ST = SquareTraits<P>;
     using PT = PieceTraits<P>;
+    using MT = MoveTraits<P>;
     using PieceType = typename C::PieceType;
     using Square = typename C::Square;
     using BitSquareIterator = typename BT::Iterator;
@@ -174,9 +176,9 @@ private:
 
 public:
     DropMoveGenerator(const State<P>& state);
-    Move<P> operator*() const
+    move_t operator*() const
     {
-        return Move<P>(m_pt_iter, *m_sq_iter);
+        return MT::make_move(m_pt_iter, *m_sq_iter);
     }
     DropMoveGenerator& operator++()
     {

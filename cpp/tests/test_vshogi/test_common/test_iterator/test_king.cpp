@@ -20,8 +20,8 @@ TEST_GROUP (king_move_iterator) {
         auto iter = vshogi::KingMoveGenerator<P, GenType>(s);
         for (unsigned int ii = 0u; ii < expect.size(); ++ii) {
             const auto a = *iter;
-            const auto e = vshogi::Move<P>(expect[ii].c_str());
-            CHECK_EQUAL(e.hash(), a.hash());
+            const auto e = vshogi::MoveTraits<P>::make_move(expect[ii].c_str());
+            CHECK_EQUAL(e, a);
             ++iter;
         }
         CHECK_FALSE(iter);

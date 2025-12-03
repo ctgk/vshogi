@@ -21,13 +21,14 @@ namespace vshogi
  *       _******* ________       Source square or piece
  * (MSB) xxxxxxxx xxxxxxxx (LSB)
  */
-template <class Parameters>
-class Move
+using move_t = std::uint16_t;
+
+template <class P>
+class MoveTraits
 {
-private:
-    using C = Configuration<Parameters>;
-    using ST = SquareTraits<Parameters>;
-    using PT = PieceTraits<Parameters>;
+    using C = Configuration<P>;
+    using PT = PieceTraits<P>;
+    using ST = SquareTraits<P>;
     using Square = typename C::Square;
     using PieceType = typename C::PieceType;
 
@@ -38,109 +39,43 @@ private:
     static constexpr std::uint16_t src_mask = 0x7f00u;
     static constexpr std::uint16_t full_mask = 0x7fffu;
 
-private:
-    /**
-     * @brief 16-bit integer representing a move in a game.
-    */
-    std::uint16_t m_value;
-
-    Move(const uint src, const Square dst, const bool promote = false);
-
 public:
-    Move() : m_value()
-    {
-    }
-    Move(const std::uint16_t value) : m_value(value & full_mask)
-    {
-    }
-    Move(
-        const Square src, const Square dst, const bool promote = false) noexcept
-        : Move(static_cast<uint>(src), dst, promote)
-    {
-    }
-    Move(const PieceType src, const Square dst) noexcept
-        : Move(static_cast<uint>(src) + C::num_squares, dst)
-    {
-    }
-    explicit Move(const char sfen[5])
-        : Move(
-              (sfen[1] == '*') ? static_cast<uint>(PT::to_piece_type(sfen[0]))
-                                     + C::num_squares
-                               : static_cast<uint>(to_square(sfen)),
-              to_square(sfen + 2),
-              sfen[4] == '+')
-    {
-    }
-    std::uint16_t hash() const
-    {
-        return m_value;
-    }
-    bool operator==(const Move& other) const
-    {
-        return m_value == other.m_value;
-    }
-    bool operator!=(const Move& other) const
-    {
-        return m_value != other.m_value;
-    }
-    Square destination() const
-    {
-        return static_cast<Square>(m_value & dst_mask);
-    }
-    Square source_square() const
-    {
-        return static_cast<Square>(m_value >> source_shift);
-    }
-    PieceType source_piece() const
-    {
-        return static_cast<PieceType>(
-            static_cast<uint>(m_value >> source_shift) - C::num_squares);
-    }
-    bool promote() const
-    {
-        return static_cast<bool>(m_value & prm_mask);
-    }
-    bool is_drop() const
-    {
-        return static_cast<uint>(m_value >> source_shift) >= C::num_squares;
-    }
-    Move rotate() const
-    {
-        const auto dst_rotated = ST::rotate(destination());
-        if (is_drop())
-            return Move(source_piece(), dst_rotated);
-        const auto src_rotated = ST::rotate(source_square());
-        return Move(src_rotated, dst_rotated, promote());
-    }
-    Move hflip() const
-    {
-        const auto dst_hflipped = ST::hflip(destination());
-        if (is_drop())
-            return Move(source_piece(), dst_hflipped);
-        const auto src_hflipped = ST::hflip(source_square());
-        return Move(src_hflipped, dst_hflipped, promote());
-    }
-    uint to_dlshogi_policy_index(const ColorEnum& by_side) const;
-    static constexpr uint num_policy_per_square()
-    {
-        return 2 * C::num_dir_dl + C::num_stand_piece_types;
-    }
+    MoveTraits() = delete;
+    static move_t
+    make_move(const Square src, const Square dst, const bool promote = false);
+    static move_t make_move(const PieceType src, const Square dst);
+    static move_t make_move(const char sfen[5]);
+
+    static Square get_dst(const move_t& a);
+    static Square get_src_sq(const move_t& a);
+    static PieceType get_src_pt(const move_t& a);
+    static bool get_promote(const move_t& a);
+    static bool is_drop(const move_t& a);
+
+    static move_t rotate(const move_t& a);
+    static move_t hflip(const move_t& a);
+
+    static uint num_policy_per_square();
+    static uint to_policy_index(const move_t& a, const ColorEnum& by_side);
 
 private:
+    static move_t
+    make_move(const uint src, const Square dst, const bool promote);
     static Square to_square(const char sfen[2]);
-    uint to_dlshogi_source_index(const ColorEnum& by_side) const;
+    static uint to_policy_index_src(const move_t& a, const ColorEnum& by_side);
 };
 
 template <class P>
-Move<P>::Move(const uint src, const Square dst, const bool promote)
-    : m_value(static_cast<std::uint16_t>(
-          (src << source_shift) | static_cast<uint>(promote << promotion_shift)
-          | dst))
+move_t
+MoveTraits<P>::make_move(const uint src, const Square dst, const bool promote)
 {
+    return static_cast<move_t>(
+        (src << source_shift) | static_cast<uint>(promote << promotion_shift)
+        | dst);
 }
 
 template <class P>
-typename Configuration<P>::Square Move<P>::to_square(const char sfen[2])
+typename Configuration<P>::Square MoveTraits<P>::to_square(const char sfen[2])
 {
     return ST::to_square(
         static_cast<typename C::File>(sfen[0] - '1'),
@@ -148,21 +83,101 @@ typename Configuration<P>::Square Move<P>::to_square(const char sfen[2])
 }
 
 template <class P>
-uint Move<P>::to_dlshogi_policy_index(const ColorEnum& by_side) const
+move_t
+MoveTraits<P>::make_move(const Square src, const Square dst, const bool promote)
 {
-    auto dst = destination();
-    if (by_side == WHITE)
-        dst = ST::rotate(dst);
-    return dst * num_policy_per_square() + to_dlshogi_source_index(by_side);
+    return make_move(static_cast<uint>(src), dst, promote);
 }
 
 template <class P>
-uint Move<P>::to_dlshogi_source_index(const ColorEnum& by_side) const
+move_t MoveTraits<P>::make_move(const PieceType src, const Square dst)
 {
-    if (is_drop())
-        return C::num_dir_dl * 2u + source_piece();
-    const uint promo_offset = promote() ? C::num_dir_dl : 0u;
-    auto dir = ST::direction(destination(), source_square());
+    return make_move(static_cast<uint>(src) + C::num_squares, dst, false);
+}
+
+template <class P>
+move_t MoveTraits<P>::make_move(const char sfen[5])
+{
+    return make_move(
+        (sfen[1] == '*') ? PT::to_piece_type(sfen[0]) + C::num_squares
+                         : to_square(sfen),
+        to_square(sfen + 2),
+        sfen[4] == '+');
+}
+
+template <class P>
+typename Configuration<P>::Square MoveTraits<P>::get_dst(const move_t& a)
+{
+    return static_cast<Square>(a & dst_mask);
+}
+
+template <class P>
+typename Configuration<P>::Square MoveTraits<P>::get_src_sq(const move_t& a)
+{
+    return static_cast<Square>(a >> source_shift);
+}
+
+template <class P>
+typename Configuration<P>::PieceType MoveTraits<P>::get_src_pt(const move_t& a)
+{
+    return static_cast<PieceType>(get_src_sq(a) - C::num_squares);
+}
+
+template <class P>
+bool MoveTraits<P>::get_promote(const move_t& a)
+{
+    return static_cast<bool>(a & prm_mask);
+}
+
+template <class P>
+bool MoveTraits<P>::is_drop(const move_t& a)
+{
+    return get_src_sq(a) >= C::num_squares;
+}
+
+template <class P>
+move_t MoveTraits<P>::rotate(const move_t& a)
+{
+    const auto dst_rotated = ST::rotate(get_dst(a));
+    if (is_drop(a))
+        return make_move(get_src_pt(a), dst_rotated);
+    const auto src_rotated = ST::rotate(get_src_sq(a));
+    return make_move(src_rotated, dst_rotated, get_promote(a));
+}
+
+template <class P>
+move_t MoveTraits<P>::hflip(const move_t& a)
+{
+    const auto dst_hflipped = ST::hflip(get_dst(a));
+    if (is_drop(a))
+        return make_move(get_src_pt(a), dst_hflipped);
+    const auto src_hflipped = ST::hflip(get_src_sq(a));
+    return make_move(src_hflipped, dst_hflipped, get_promote(a));
+}
+
+template <class P>
+uint MoveTraits<P>::num_policy_per_square()
+{
+    return 2 * C::num_dir_dl + C::num_stand_piece_types;
+}
+
+template <class P>
+uint MoveTraits<P>::to_policy_index(const move_t& a, const ColorEnum& by_side)
+{
+    auto dst = get_dst(a);
+    if (by_side == WHITE)
+        dst = ST::rotate(dst);
+    return dst * num_policy_per_square() + to_policy_index_src(a, by_side);
+}
+
+template <class P>
+uint MoveTraits<P>::to_policy_index_src(
+    const move_t& a, const ColorEnum& by_side)
+{
+    if (is_drop(a))
+        return C::num_dir_dl * 2u + get_src_pt(a);
+    const uint promo_offset = get_promote(a) ? C::num_dir_dl : 0u;
+    auto dir = ST::direction(get_dst(a), get_src_sq(a));
     if (by_side == WHITE)
         dir = vshogi::rotate(dir);
     return dir + promo_offset;
