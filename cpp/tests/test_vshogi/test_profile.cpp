@@ -1,4 +1,4 @@
-#include "vshogi/engine/mcts.hpp"
+#include "vshogi/engine/mcts/searcher.hpp"
 #include "vshogi/variants/minishogi.hpp"
 #include "vshogi/variants/shogi.hpp"
 
@@ -51,11 +51,12 @@ TEST(shogi_profile, mcts_with_dfpn)
     for (uint ii = 0u; ii < 167u; ++ii) {
         if (g.get_result() != vshogi::ONGOING)
             break;
-        for (int jj = (100 - mcts.get_visit_count()); jj--;) {
+        CHECK_COMPARE(100u, >=, mcts.get_visit_count());
+        for (uint jj = (100 - mcts.get_visit_count()); jj--;) {
             const auto n = mcts.search(g);
             if (n == nullptr)
                 continue;
-            CHECK_TRUE((n == mcts.get_root()) || (g.ply() > ii));
+            CHECK_TRUE((n == &mcts.get_root()) || (g.ply() > ii));
             mcts.simulate_expand_backprop(n, g, 0.f, zeros);
             CHECK_EQUAL(ii, g.ply());
         }

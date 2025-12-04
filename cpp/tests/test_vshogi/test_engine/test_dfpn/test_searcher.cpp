@@ -502,7 +502,7 @@ TEST(test_dfpn_searcher, test_minishogi_no_mate)
         {"2k2/5/1+P3/5/5 b 2S", 780u},
     };
 
-    for (auto&& arg : {args[0]})
+    for (auto&& arg : args)
         search_no_mate<Parameters>(std::get<0>(arg), std::get<1>(arg));
 }
 

@@ -7,7 +7,7 @@
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/notation.hpp"
 #include "vshogi/engine/dfpn/searcher.hpp"
-#include "vshogi/engine/mcts.hpp"
+#include "vshogi/engine/mcts/searcher.hpp"
 #include "vshogi/engine/piece_value.hpp"
 
 #include <pybind11/numpy.h>
@@ -453,7 +453,11 @@ inline void export_mcts_node(pybind11::module& m)
         .def(
             "get_visit_count_excluding_random",
             &Node::get_visit_count_excluding_random)
-        .def("get_q_value", &Node::get_q_value)
+        .def(
+            "get_q_value",
+            [](const Node& self, const uint greedy_depth) {
+                return self.get_q_value(greedy_depth);
+            })
         .def(
             "get_actions",
             [](const Node& self) {
@@ -511,10 +515,8 @@ inline void export_mcts_searcher(pybind11::module& m)
         .def(
             "get_root",
             [](Searcher& self) -> py::object {
-                const auto out = self.get_root();
-                if (out == nullptr)
-                    return py::none();
-                return py::cast(*out, py::return_value_policy::reference);
+                const Node& out = self.get_root();
+                return py::cast(out, py::return_value_policy::reference);
             })
         .def("proved_mate", &Searcher::proved_mate)
         .def("get_visit_count", &Searcher::get_visit_count)
