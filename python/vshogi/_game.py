@@ -39,11 +39,6 @@ class Game(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def _get_mcts_node_class(cls) -> type:
-        pass
-
-    @classmethod
-    @abc.abstractmethod
     def _get_mcts_searcher_class(cls) -> type:
         pass
 

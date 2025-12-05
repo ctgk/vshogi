@@ -3,7 +3,6 @@ from vshogi._vshogi.shogi import (
     BoardPiece,
     DfpnSearcher,
     Mcts,
-    MctsNode,
     Move,
     _Game as _ShogiGame,
     piece_value_func,
@@ -64,10 +63,6 @@ LNSGKGSNL w - 2")
     @classmethod
     def _get_move_class(cls) -> type:
         return Move
-
-    @classmethod
-    def _get_mcts_node_class(cls) -> type:
-        return MctsNode
 
     @classmethod
     def _get_mcts_searcher_class(cls) -> type:

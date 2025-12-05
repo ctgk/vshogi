@@ -30,7 +30,6 @@ inline void export_to_jpn(pybind11::module& m)
     using C = vshogi::Configuration<Parameters>;
     using NT = vshogi::Notation<Parameters>;
     using PT = vshogi::PieceTraits<Parameters>;
-    using ST = vshogi::SquareTraits<Parameters>;
     m.def("to_jpn", [](const typename C::PieceType pt) {
         return NT::to_jpn(pt);
     });
@@ -45,7 +44,6 @@ inline void export_to_sfen(pybind11::module& m)
 {
     namespace py = pybind11;
     using C = vshogi::Configuration<Parameters>;
-    using PT = vshogi::PieceTraits<Parameters>;
     using NT = vshogi::Notation<Parameters>;
     m.def("to_sfen", [](const typename C::PieceType pt) {
         return NT::to_sfen(pt);
@@ -82,7 +80,6 @@ inline void export_piece_stand(pybind11::module& m)
 {
     using C = vshogi::Configuration<Parameters>;
     using Stand = vshogi::Stand<Parameters>;
-    using PieceType = typename Parameters::PieceType;
     pybind11::class_<Stand>(m, "Stand")
         .def("count", &Stand::count)
         .def("any", &Stand::any)
@@ -134,6 +131,11 @@ inline void export_move(pybind11::module& m)
                 return Move(MT::make_move(sfen.c_str()));
             }),
             py::arg("sfen"))
+        .def(
+            py::init([](const uint value) {
+                return Move(static_cast<move_t>(value));
+            }),
+            py::arg("value"))
         .def_property_readonly(
             "destination", [](const Move& m) { return MT::get_dst(m.m_value); })
         .def_property_readonly(
@@ -440,50 +442,12 @@ inline void export_game(pybind11::module& m)
 }
 
 template <class Parameters>
-inline void export_mcts_node(pybind11::module& m)
-{
-    namespace py = pybind11;
-    using Game = vshogi::Game<Parameters>;
-    using MoveTraits = vshogi::MoveTraits<Parameters>;
-    using Node = vshogi::engine::mcts::Node<Parameters>;
-    using Move = Move<Parameters>;
-
-    py::class_<Node>(m, "MctsNode")
-        .def("get_visit_count", &Node::get_visit_count)
-        .def(
-            "get_visit_count_excluding_random",
-            &Node::get_visit_count_excluding_random)
-        .def(
-            "get_q_value",
-            [](const Node& self, const uint greedy_depth) {
-                return self.get_q_value(greedy_depth);
-            })
-        .def(
-            "get_actions",
-            [](const Node& self) {
-                std::vector<Move> out;
-                out.reserve(self.get_num_child());
-                const Node* ch = self.get_child();
-                for (; ch != nullptr; ch = ch->get_sibling()) {
-                    out.emplace_back(ch->get_action());
-                }
-                return out;
-            })
-        .def("get_proba", &Node::get_proba)
-        .def("get_child", [](Node& node, const Move& action) -> py::object {
-            const auto out = node.get_child(action.m_value);
-            if (out == nullptr)
-                return py::none();
-            return py::cast(*out, py::return_value_policy::reference);
-        });
-}
-
-template <class Parameters>
 inline void export_mcts_searcher(pybind11::module& m)
 {
     namespace py = pybind11;
     using Game = vshogi::Game<Parameters>;
-    using Node = vshogi::engine::mcts::Node<Parameters>;
+    using Node = vshogi::engine::mcts::Node;
+    using Move = pyvshogi::Move<Parameters>;
     using Searcher = vshogi::engine::mcts::Searcher<Parameters>;
 
     py::class_<Searcher>(m, "Mcts")
@@ -509,7 +473,7 @@ inline void export_mcts_searcher(pybind11::module& m)
             })
         .def(
             "apply",
-            [](Searcher& self, Game& g, const Move<Parameters>& m) {
+            [](Searcher& self, Game& g, const Move& m) {
                 self.apply(g, m.m_value);
             })
         .def(
@@ -519,23 +483,21 @@ inline void export_mcts_searcher(pybind11::module& m)
                 return py::cast(out, py::return_value_policy::reference);
             })
         .def("proved_mate", &Searcher::proved_mate)
-        .def("get_visit_count", &Searcher::get_visit_count)
+        .def("get_search_count", &Searcher::get_search_count)
         .def(
             "get_action_by_visit_max",
             [](const Searcher& self) {
-                return Move<Parameters>(self.get_action_by_visit_max());
+                return Move(self.get_action_by_visit_max());
             })
         .def(
             "get_action_by_visit_distribution",
             [](const Searcher& self, const float temperature) {
-                return Move<Parameters>(
-                    self.get_action_by_visit_distribution(temperature));
+                return Move(self.get_action_by_visit_distribution(temperature));
             })
         .def(
             "get_action_by_q_distribution",
             [](const Searcher& self, const float temperature) {
-                return Move<Parameters>(
-                    self.get_action_by_q_distribution(temperature));
+                return Move(self.get_action_by_q_distribution(temperature));
             });
 }
 
@@ -544,6 +506,7 @@ inline void export_dfpn_node(pybind11::module& m)
 {
     namespace py = pybind11;
     using Node = vshogi::engine::dfpn::Node<Parameters>;
+    using Move = pyvshogi::Move<Parameters>;
     constexpr float unit = static_cast<float>(vshogi::engine::dfpn::unit);
     constexpr uint inf = vshogi::engine::dfpn::inf;
     py::class_<Node>(m, "DfpnNode")
@@ -565,9 +528,7 @@ inline void export_dfpn_node(pybind11::module& m)
             })
         .def(
             "get_action",
-            [](const Node& self) {
-                return Move<Parameters>(self.get_action());
-            })
+            [](const Node& self) { return Move(self.get_action()); })
         .def("has_child", &Node::has_child)
         .def(
             "get_child_1st",
@@ -600,7 +561,7 @@ inline void export_dfpn_searcher(pybind11::module& m)
 {
     namespace py = pybind11;
     using Searcher = vshogi::engine::dfpn::Searcher<Parameters>;
-    using Move = Move<Parameters>;
+    using Move = pyvshogi::Move<Parameters>;
 
     py::class_<Searcher>(m, "DfpnSearcher")
         .def(py::init<const uint>())
@@ -647,7 +608,6 @@ void export_classes(pybind11::module& m)
     export_state<Parameters>(m);
     export_game<Parameters>(m);
     export_mcts_searcher<Parameters>(m);
-    export_mcts_node<Parameters>(m);
     export_value_functions<Parameters>(m);
     export_dfpn_searcher<Parameters>(m);
     export_dfpn_node<Parameters>(m);

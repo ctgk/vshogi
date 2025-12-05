@@ -12,7 +12,7 @@ namespace test_shogi
 
 using namespace vshogi::shogi;
 using MT = vshogi::MoveTraits<Parameters>;
-using Node = vshogi::engine::mcts::Node<Parameters>;
+using Node = vshogi::engine::mcts::Node;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
 TEST_GROUP (shogi_profile) {
@@ -51,8 +51,8 @@ TEST(shogi_profile, mcts_with_dfpn)
     for (uint ii = 0u; ii < 167u; ++ii) {
         if (g.get_result() != vshogi::ONGOING)
             break;
-        CHECK_COMPARE(100u, >=, mcts.get_visit_count());
-        for (uint jj = (100 - mcts.get_visit_count()); jj--;) {
+        CHECK_COMPARE(100u, >=, mcts.get_search_count());
+        for (uint jj = (100 - mcts.get_search_count()); jj--;) {
             const auto n = mcts.search(g);
             if (n == nullptr)
                 continue;

@@ -24,7 +24,7 @@ template <class P>
 class Searcher
 {
 private:
-    Node<P> m_root;
+    Node m_root;
     dfpn::Searcher<P> m_dfpn;
     const float m_coeff_puct;
     const float m_random_rate;
@@ -37,17 +37,9 @@ public:
         const float p_random,
         const uint dfpn_search_root = 0u,
         const uint dfpn_search_leaf = 0u);
-
-    // clang-format off
-    void init_root() { m_root.init(); }
-    uint get_visit_count() const { return m_root.get_visit_count(); }
-    bool proved_mate() const { return m_root.is_mate(); }
-    const Node<P>& get_root() const { return m_root; }
-    // clang-format on
-
-    Node<P>* search(Game<P>& game);
+    Node* search(Game<P>& game);
     void simulate_expand_backprop(
-        Node<P>* const leaf,
+        Node* const leaf,
         Game<P>& game,
         const float value,
         const float* const policy_logits = nullptr);
@@ -55,11 +47,17 @@ public:
     move_t get_action_by_visit_max() const;
     move_t get_action_by_visit_distribution(const float temperature) const;
     move_t get_action_by_q_distribution(const float temperature) const;
+    // clang-format off
+    void init_root() { m_root.init(); }
+    uint get_search_count() const { return m_root.get_visit_count(); }
+    bool proved_mate() const { return m_root.is_mate(); }
+    const Node& get_root() const { return m_root; }
+    // clang-format on
 
 private:
-    Node<P>* select_a_leaf_node(Game<P>& game);
-    void backprop_to_root(Game<P>& game, Node<P>* const leaf);
-    bool dfpn_proved_mate(Game<P>& game, Node<P>* const node);
+    Node* select_a_leaf_node(Game<P>& game);
+    void backprop_to_root(Game<P>& game, Node* const leaf);
+    bool dfpn_proved_mate(Game<P>& game, Node* const node);
 };
 
 template <class P>
@@ -75,9 +73,9 @@ Searcher<P>::Searcher(
 }
 
 template <class P>
-Node<P>* Searcher<P>::search(Game<P>& game)
+Node* Searcher<P>::search(Game<P>& game)
 {
-    Node<P>* const leaf = select_a_leaf_node(game);
+    Node* const leaf = select_a_leaf_node(game);
     assert(leaf != nullptr);
     assert(!leaf->has_child());
     if (game.get_result() != ONGOING) {
@@ -86,7 +84,7 @@ Node<P>* Searcher<P>::search(Game<P>& game)
         return nullptr;
     }
     if (leaf->is_mate_to_lose()) {
-        leaf->expand(game.get_legal_moves(), game.get_turn(), nullptr);
+        leaf->expand(game, nullptr);
         backprop_to_root(game, leaf);
         return nullptr;
     }
@@ -98,15 +96,14 @@ Node<P>* Searcher<P>::search(Game<P>& game)
 
 template <class P>
 void Searcher<P>::simulate_expand_backprop(
-    Node<P>* const leaf,
+    Node* const leaf,
     Game<P>& game,
     const float value,
     const float* const policy_logits)
 {
     if (leaf == nullptr)
         return;
-    leaf->simulate_ongoing_and_expand(
-        game.get_legal_moves(), game.get_turn(), value, policy_logits);
+    leaf->simulate_ongoing_and_expand(game, value, policy_logits);
     backprop_to_root(game, leaf);
 }
 
@@ -122,12 +119,10 @@ Searcher<P>& Searcher<P>::apply(Game<P>& game, const move_t& action)
 template <class P>
 move_t Searcher<P>::get_action_by_visit_max() const
 {
-    const Node<P>* const ch = m_root.get_most_visited_child();
-    if (ch == nullptr) {
-        assert(!m_root->has_child());
-        return move_t();
-    } else
-        return ch->get_action();
+    const Node* c = m_root.get_most_visited_child();
+    if (c == nullptr)
+        c = m_root.get_child();
+    return c ? c->get_action() : static_cast<move_t>(0);
 }
 
 template <class P>
@@ -136,7 +131,7 @@ Searcher<P>::get_action_by_visit_distribution(const float temperature) const
 {
     constexpr float eps = 1.f;
     std::vector<float> probas(m_root.get_num_child());
-    const Node<P>* ch = m_root.get_child();
+    const Node* ch = m_root.get_child();
     for (uint ii = 0u; ch; ch = ch->get_sibling()) {
         const auto v
             = static_cast<float>(ch->get_visit_count_excluding_random());
@@ -159,7 +154,7 @@ template <class P>
 move_t Searcher<P>::get_action_by_q_distribution(const float temperature) const
 {
     std::vector<float> probas(m_root.get_num_child());
-    const Node<P>* c = m_root.get_child();
+    const Node* c = m_root.get_child();
     for (uint ii = 0u; c; c = c->get_sibling()) {
         probas[ii++] = -c->get_q_value() / temperature;
     }
@@ -177,11 +172,11 @@ move_t Searcher<P>::get_action_by_q_distribution(const float temperature) const
 }
 
 template <class P>
-Node<P>* Searcher<P>::select_a_leaf_node(Game<P>& game)
+Node* Searcher<P>::select_a_leaf_node(Game<P>& game)
 {
-    Node<P>* n = &m_root;
+    Node* n = &m_root;
     while (n->has_child()) {
-        Node<P>* const child = n->select(
+        Node* const child = n->select(
             game, m_coeff_puct, (n == &m_root) ? m_random_rate : 0.f);
         assert(child != nullptr);
         assert(child->get_parent() == n);
@@ -191,21 +186,21 @@ Node<P>* Searcher<P>::select_a_leaf_node(Game<P>& game)
 }
 
 template <class P>
-void Searcher<P>::backprop_to_root(Game<P>& game, Node<P>* const leaf)
+void Searcher<P>::backprop_to_root(Game<P>& game, Node* const leaf)
 {
     float v = leaf->get_q_value();
-    for (Node<P>*n = leaf, *prev = nullptr;; v = -v) {
-        Node<P>* const p = n->backprop(v, prev);
-        prev = n;
-        n = p;
-        if (n == nullptr) // `n` was root node.
+    for (Node *node = leaf, *child = nullptr;; v = -v) {
+        Node* const parent = node->backprop(v, child);
+        child = node;
+        node = parent;
+        if (parent == nullptr) // `node` was root node.
             break;
         game.undo();
     }
 }
 
 template <class P>
-bool Searcher<P>::dfpn_proved_mate(Game<P>& game, Node<P>* const node)
+bool Searcher<P>::dfpn_proved_mate(Game<P>& game, Node* const node)
 {
     const uint search_count
         = (node == &m_root) ? m_dfpn_search_root : m_dfpn_search_leaf;

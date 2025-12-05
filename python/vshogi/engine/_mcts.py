@@ -18,6 +18,7 @@ def _repr_node(n, greedy_detph: int = 0) -> str:
 
 def _tree(
     root,
+    move_type: type,
     depth: int = 1,
     breadth: int = 3,
     *,
@@ -34,6 +35,7 @@ def _tree(
     for i, (a, child) in enumerate(children):
         s = _tree(
             child,
+            move_type,
             depth - 1,
             breadth,
             sort_key=sort_key,
@@ -43,7 +45,7 @@ def _tree(
             s = s.replace('\n', '\n    ')
         else:
             s = s.replace('\n', '\n|   ')
-        out += f'\n+-- p={child.get_proba():.4f} {a} -> {s}'
+        out += f'\n+-- p={child.get_proba():.4f} {move_type(a)} -> {s}'
     return out
 
 
@@ -134,7 +136,7 @@ class Mcts(Engine):
     def _get_num_searched(self):
         if self._searcher is None:
             return 0
-        return self._searcher.get_visit_count()
+        return self._searcher.get_search_count()
 
     def search(self, n_or_t: tp.Union[int, float] = 0.01):
         """Explore from root node for n times.
@@ -234,13 +236,14 @@ class Mcts(Engine):
         """
         if self._searcher is None:
             return {}
+        move_type = self._game._get_move_class()
         root = self._searcher.get_root()
         move_q_pair_list = [
             (m, -root.get_child(m).get_q_value(greedy_depth))
             for m in root.get_actions()
         ]
         move_q_pair_list.sort(key=lambda a: a[1], reverse=True)
-        return {m: q for m, q in move_q_pair_list}
+        return {move_type(m): q for m, q in move_q_pair_list}
 
     def get_visit_counts(
         self,
@@ -260,10 +263,11 @@ class Mcts(Engine):
         """
         if self._searcher is None:
             return {}
+        move_type = self._game._get_move_class()
         root = self._searcher.get_root()
         move_visit_count_pair_list = [
             (
-                m,
+                move_type(m),
                 root.get_child(m).get_visit_count()
                 if include_random else
                 root.get_child(m).get_visit_count_excluding_random(),
@@ -312,15 +316,17 @@ class Mcts(Engine):
             self._game._get_move_class()(m) if isinstance(m, str) else m
             for m in pv_line
         ]
+        move_type = self._game._get_move_class()
         for m in pv_line:
             for a in node.get_actions():
-                if a == m:
+                if move_type(a) == m:
                     node = node.get_child(a)
                     break
             else:
                 raise ValueError(f'Cannot find child with action, {m}')
         return _tree(
             node,
+            move_type,
             depth,
             breadth,
             sort_key=sort_key,

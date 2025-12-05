@@ -1,5 +1,6 @@
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/result.hpp"
+#include "vshogi/engine/mcts/node.hpp"
 
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
@@ -26,10 +27,44 @@ void export_result_enum(py::module& m)
         .value("WHITE_WIN", vshogi::WHITE_WIN);
 }
 
+void export_mcts_node(py::module& m)
+{
+    using Node = vshogi::engine::mcts::Node;
+    py::class_<Node>(m, "MctsNode")
+        .def("get_proba", &Node::get_proba)
+        .def("get_visit_count", &Node::get_visit_count)
+        .def(
+            "get_visit_count_excluding_random",
+            &Node::get_visit_count_excluding_random)
+        .def(
+            "get_q_value",
+            [](const Node& self, const uint depth) {
+                return self.get_q_value(depth);
+            })
+        .def(
+            "get_actions",
+            [](const Node& self) {
+                std::vector<uint> out{};
+                out.reserve(self.get_num_child());
+                for (const Node* c = self.get_child(); c; c = c->get_sibling())
+                    out.emplace_back(c->get_action());
+                return out;
+            })
+        .def(
+            "get_child",
+            [](const Node& self, const vshogi::move_t& action) -> py::object {
+                const auto out = self.get_child(action);
+                if (out)
+                    return py::cast(*out, py::return_value_policy::reference);
+                return py::none();
+            });
+}
+
 PYBIND11_MODULE(_vshogi, m)
 {
     export_color_enum(m);
     export_result_enum(m);
+    export_mcts_node(m);
 
     auto judkins_shogi_module = m.def_submodule("judkins_shogi");
     export_judkins_shogi(judkins_shogi_module);
