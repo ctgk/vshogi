@@ -56,8 +56,10 @@ TEST(minishogi_node, explore_game_end)
     root.simulate_ongoing_and_expand(g, 0.f, nullptr);
     root.backprop(root.get_q_value(), nullptr);
     DOUBLES_EQUAL(0.f, root.get_q_value(), 1e-2f);
-    Node* const child = root.select(g, 1.f, 0.f); // 1c1b
+    Node* const child = root.select(1.f, 0.f); // 1c1b
     CHECK_TRUE(nullptr != child);
+    CHECK_EQUAL(MT::make_move("1c1b"), child->get_action());
+    g.apply_nocheck(child->get_action());
     child->simulate(g);
     auto p = child->backprop(child->get_q_value(), nullptr);
     CHECK_EQUAL(&root, p);
@@ -75,7 +77,10 @@ TEST(minishogi_node, explore_one_action)
     CHECK_EQUAL(nullptr, p);
     DOUBLES_EQUAL(0.1f, root.get_q_value(100), 1e-2f);
 
-    const auto actual = root.select(g, 1.f, 0.f);
+    const auto actual = root.select(1.f, 0.f);
+    CHECK_TRUE(actual != nullptr);
+    CHECK_EQUAL(MT::make_move("1c1b"), actual->get_action());
+    g.apply_nocheck(actual->get_action());
     {
         STRCMP_EQUAL("4k/4P/5/5/5 w - 2", NT::to_sfen(g).c_str());
 
@@ -155,7 +160,9 @@ TEST(minishogi_node, explore_two_action)
 
     for (std::size_t ii = 0; ii < 3; ++ii) {
         auto g_copy = Game(g);
-        const auto actual = root.select(g_copy, 1.f, 0.f);
+        const auto actual = root.select(1.f, 0.f);
+        CHECK_TRUE(actual != nullptr);
+        g_copy.apply_nocheck(actual->get_action());
         actual->simulate_ongoing_and_expand(g_copy, input_value[ii], nullptr);
         CHECK_EQUAL(&root, actual->backprop(actual->get_q_value(), nullptr));
         CHECK_EQUAL(nullptr, root.backprop(-actual->get_q_value(), actual));
@@ -215,7 +222,9 @@ TEST(minishogi_node, explore_two_layer)
 
     {
         auto g_copy = Game(g);
-        const auto actual = root.select(g_copy, 1.f, 0.f);
+        const auto actual = root.select(1.f, 0.f);
+        CHECK_TRUE(actual != nullptr);
+        g_copy.apply_nocheck(actual->get_action());
         CHECK_EQUAL(root.get_child(MT::make_move(SQ_1E, SQ_1D)), actual);
         STRCMP_EQUAL("s4/5/5/4S/5 w - 2", NT::to_sfen(g_copy).c_str());
         float policy[Game::num_dlshogi_policy()] = {0.f};
@@ -231,10 +240,13 @@ TEST(minishogi_node, explore_two_layer)
     }
     {
         auto g_copy = Game(g);
-        Node* const child = root.select(g_copy, 1.f, 0.f);
+        Node* const child = root.select(1.f, 0.f);
+        CHECK_TRUE(child != nullptr);
+        g_copy.apply_nocheck(child->get_action());
         CHECK_EQUAL(1u, g_copy.ply());
         CHECK_EQUAL(root.get_child(MT::make_move(SQ_1E, SQ_1D)), child);
-        Node* const grand_child = child->select(g_copy, 1.f, 0.f);
+        Node* const grand_child = child->select(1.f, 0.f);
+        g_copy.apply_nocheck(grand_child->get_action());
         CHECK_EQUAL(2u, g_copy.ply());
         CHECK_EQUAL(
             root.get_child(MT::make_move(SQ_1E, SQ_1D))
@@ -290,16 +302,19 @@ TEST(minishogi_node, test_apply)
     }
     {
         auto g_copy = Game(g);
-        auto n = root.select(g_copy, 1.f, 0.f);
+        auto n = root.select(1.f, 0.f);
+        g_copy.apply_nocheck(n->get_action());
         CHECK_EQUAL(root.get_child(), n);
         n->simulate_ongoing_and_expand(g_copy, 0.f, nullptr);
         CHECK_EQUAL(&root, n->backprop(n->get_q_value(), nullptr));
     }
     {
         auto g_copy = Game(g);
-        auto n = root.select(g_copy, 1.f, 0.f);
+        auto n = root.select(1.f, 0.f);
+        g_copy.apply_nocheck(n->get_action());
         CHECK_EQUAL(root.get_child(), n);
-        n = n->select(g_copy, 1.f, 0);
+        n = n->select(1.f, 0);
+        g_copy.apply_nocheck(n->get_action());
         CHECK_EQUAL(root.get_child()->get_child(), n);
         n->simulate_ongoing_and_expand(g_copy, 0.f, nullptr);
         CHECK_EQUAL(
@@ -317,8 +332,9 @@ TEST(minishogi_node, test_apply)
     CHECK_EQUAL(root.get_most_visited_child(), gc);
     CHECK_COMPARE(gc->get_parent(), !=, &root);
 
-    root.select(g, 1.f, 0.f);
+    const auto c_after_apply = root.select(1.f, 0.f);
     CHECK_COMPARE(gc->get_parent(), ==, &root);
+    CHECK_COMPARE(gc, ==, c_after_apply);
 }
 
 } // namespace test_minishogi

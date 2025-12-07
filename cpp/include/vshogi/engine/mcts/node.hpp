@@ -64,8 +64,7 @@ public:
      * @note Users must check if the node has at least one child before
      * calling this method.
      */
-    template <class P>
-    Node* select(Game<P>& g, const float& c_puct, const float& p_random);
+    Node* select(const float& c_puct, const float& p_random);
     template <class P>
     void simulate(const Game<P>& g);
     template <class P>
@@ -90,16 +89,6 @@ private:
     void update_most_visited_child(Node* const candidate);
     bool all_childs_are_mate_to_win() const;
 };
-
-template <class P>
-Node* Node::select(Game<P>& g, const float& c_puct, const float& p_random)
-{
-    assert(has_child());
-    Node* const c = select_best_or_random_child(c_puct, p_random);
-    c->m_parent = this;
-    g.apply_nocheck(c->m_action);
-    return c;
-}
 
 template <class P>
 void Node::simulate(const Game<P>& g)

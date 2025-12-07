@@ -176,9 +176,10 @@ Node* Searcher<P>::select_a_leaf_node(Game<P>& game)
 {
     Node* n = &m_root;
     while (n->has_child()) {
-        Node* const child = n->select(
-            game, m_coeff_puct, (n == &m_root) ? m_random_rate : 0.f);
+        Node* const child
+            = n->select(m_coeff_puct, (n == &m_root) ? m_random_rate : 0.f);
         assert(child != nullptr);
+        game.apply_nocheck(child->get_action());
         assert(child->get_parent() == n);
         n = child;
     }
