@@ -85,6 +85,13 @@ private:
     float puct_score_of(
         const Node* const c, const float c_puct, const float q_fpu) const;
 
+    template <class P>
+    static float make_node_at(
+        std::unique_ptr<Node>** ptr,
+        const move_t& action,
+        const ColorEnum& turn,
+        const float* const policy_logits);
+
     // backprop
     void update_most_visited_child(Node* const candidate);
     bool all_childs_are_mate_to_win() const;
@@ -112,24 +119,44 @@ void Node::simulate(const Game<P>& g)
 template <class P>
 void Node::expand(const Game<P>& game, const float* const policy_logits)
 {
-    const auto actions = game.get_legal_moves();
     const auto turn = game.get_turn();
-    const auto num = actions.size();
-    if (num == 0)
-        return;
-    auto probas = std::vector<float>(num);
-    for (std::size_t ii = num; ii--;) {
-        const auto index = MoveTraits<P>::to_policy_index(actions[ii], turn);
-        probas[ii] = (policy_logits) ? policy_logits[index] : 0.f;
+    std::unique_ptr<Node>* ptr = &m_child;
+    float max_logit = -std::numeric_limits<float>::infinity();
+    if (game.in_check()) {
+        auto gen = MoveGenerator<P, GenEnum::EVADE>(game.get_state());
+        for (; gen; ++gen)
+            max_logit = std::max(
+                max_logit, make_node_at<P>(&ptr, *gen, turn, policy_logits));
+    } else {
+        auto gen = MoveGenerator<P, GenEnum::LEGAL>(game.get_state());
+        for (; gen; ++gen)
+            max_logit = std::max(
+                max_logit, make_node_at<P>(&ptr, *gen, turn, policy_logits));
     }
-    softmax(probas);
 
-    m_child = std::make_unique<Node>(actions[0], probas[0]);
-    Node* child = m_child.get();
-    for (std::size_t ii = 1; ii < num; ++ii) {
-        child->m_sibling = std::make_unique<Node>(actions[ii], probas[ii]);
-        child = child->m_sibling.get();
+    float sumexp = 0.f;
+    for (Node* c = m_child.get(); c; c = c->m_sibling.get()) {
+        c->m_proba -= max_logit;
+        c->m_proba = std::exp(c->m_proba);
+        sumexp += c->m_proba;
     }
+    for (Node* c = m_child.get(); c; c = c->m_sibling.get()) {
+        c->m_proba /= sumexp;
+    }
+}
+
+template <class P>
+float Node::make_node_at(
+    std::unique_ptr<Node>** ptr,
+    const move_t& action,
+    const ColorEnum& turn,
+    const float* const policy_logits)
+{
+    const auto index = MoveTraits<P>::to_policy_index(action, turn);
+    const auto logit = policy_logits ? policy_logits[index] : 0.f;
+    **ptr = std::make_unique<Node>(action, logit);
+    *ptr = &(**ptr)->m_sibling;
+    return logit;
 }
 
 template <class P>
