@@ -49,23 +49,23 @@ class Args:
             ', default=10'
         ),
     )
-    mcts_kldgain_threshold: float = config(
+    az_kldgain_threshold: float = config(
         type=float, default=None,
         help='KL divergence threshold to stop MCT-search',
     )
-    mcts_search_count: int = config(
+    az_search_count: int = config(
         type=int, default=None,
         help='Number of searches at each game status, default=None',
     )
-    mcts_search_second: float = config(
+    az_search_second: float = config(
         type=float, default=None,
         help='Duration of searches at each game status, default=None',
     )
-    mcts_coeff_puct: float = config(
+    az_coeff_puct: float = config(
         type=float, default=4.,
-        help='Coefficient to compute PUCT score in MCTS, default=4',
+        help='Coefficient to compute PUCT score in Alpha Zero, default=4',
     )
-    mcts_temperature: float = config(
+    az_temperature: float = config(
         type=float, default=0.,
         help='Temperature parameter to select action to take, default=0.',
     )
@@ -82,22 +82,22 @@ def _get_results_of_single_pair(
     player2: str,
     num_games_each: int,
     show_pbar: bool,
-    mcts_init_args: dict,
+    az_init_args: dict,
     search_args: dict,
     select_args: dict,
 ) -> vshogi.Record:
     shogi = getattr(vshogi, shogi_variant)
-    player1 = vshogi.engine.Mcts(
+    player1 = vshogi.engine.AlphaZero(
         vshogi.dlshogi.PolicyValueFunction(player1),
-        **mcts_init_args,
+        **az_init_args,
     )
-    player2 = vshogi.engine.Mcts(
+    player2 = vshogi.engine.AlphaZero(
         vshogi.dlshogi.PolicyValueFunction(player2),
-        **mcts_init_args,
+        **az_init_args,
     )
     record_of_p1 = vshogi.Record(0, 0, 0, 0, 0, 0)
     iterator = range(num_games_each * 2)
-    show_mcts_search: bool = isinstance(search_args['n_or_t'], float)
+    show_az_search: bool = isinstance(search_args['n_or_t'], float)
     p1_search_total = 0
     p2_search_total = 0
     if show_pbar:
@@ -140,7 +140,7 @@ def _get_results_of_single_pair(
                 'draw': record_of_p1.draws_total,
                 'p2': record_of_p1.losses_total,
             }))
-    if args.show_pbar and show_mcts_search:
+    if args.show_pbar and show_az_search:
         print(
             'Initial search counts:',
             f'p1={p1_search_total / (num_games_each * 2):.2f},',
@@ -183,17 +183,17 @@ if __name__ == "__main__":
         record_of_p1 = _get_results_of_single_pair(
             args.shogi_variant,
             p1, p2, args.num_games_each, args.show_pbar,
-            mcts_init_args = {
-                'coeff_puct': args.mcts_coeff_puct,
+            az_init_args = {
+                'coeff_puct': args.az_coeff_puct,
                 'dfpn_search_root': args.dfpn_search_root,
                 'dfpn_search_leaf': args.dfpn_search_leaf,
-                'kldgain_threshold': args.mcts_kldgain_threshold,
+                'kldgain_threshold': args.az_kldgain_threshold,
             },
             search_args={
-                'n_or_t': args.mcts_search_count or args.mcts_search_second,
+                'n_or_t': args.az_search_count or args.az_search_second,
             },
             select_args={
-                'temperature': args.mcts_temperature,
+                'temperature': args.az_temperature,
             },
         )
         record_of_p1_group += record_of_p1

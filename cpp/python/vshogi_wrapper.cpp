@@ -1,6 +1,6 @@
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/result.hpp"
-#include "vshogi/engine/mcts/node.hpp"
+#include "vshogi/engine/az/node.hpp"
 
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
@@ -27,10 +27,10 @@ void export_result_enum(py::module& m)
         .value("WHITE_WIN", vshogi::WHITE_WIN);
 }
 
-void export_mcts_node(py::module& m)
+void export_az_node(py::module& m)
 {
-    using Node = vshogi::engine::mcts::Node;
-    py::class_<Node>(m, "MctsNode")
+    using Node = vshogi::engine::az::Node;
+    py::class_<Node>(m, "AzNode")
         .def("get_proba", &Node::get_proba)
         .def("get_visit_count", &Node::get_visit_count)
         .def(
@@ -64,7 +64,7 @@ PYBIND11_MODULE(_vshogi, m)
 {
     export_color_enum(m);
     export_result_enum(m);
-    export_mcts_node(m);
+    export_az_node(m);
 
     auto judkins_shogi_module = m.def_submodule("judkins_shogi");
     export_judkins_shogi(judkins_shogi_module);

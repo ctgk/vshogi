@@ -1,5 +1,5 @@
-#ifndef VSHOGI_ENGINE_MCTS_NODE_HPP
-#define VSHOGI_ENGINE_MCTS_NODE_HPP
+#ifndef VSHOGI_ENGINE_AZ_NODE_HPP
+#define VSHOGI_ENGINE_AZ_NODE_HPP
 
 #include <memory>
 #include <stdexcept>
@@ -9,11 +9,10 @@
 #include "vshogi/common/utils.hpp"
 
 /**
- * @brief Monte Carlo Tree Search
+ * @brief Alpha Zero
  *
- * https://en.wikipedia.org/wiki/Monte_Carlo_tree_search#Principle_of_operation
  */
-namespace vshogi::engine::mcts
+namespace vshogi::engine::az
 {
 
 class Node
@@ -167,6 +166,6 @@ void Node::simulate_ongoing_and_expand(
     expand(game, policy_logits);
 }
 
-} // namespace vshogi::engine::mcts
+} // namespace vshogi::engine::az
 
-#endif // VSHOGI_ENGINE_MCTS_NODE_HPP
+#endif // VSHOGI_ENGINE_AZ_NODE_HPP

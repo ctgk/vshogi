@@ -1,4 +1,4 @@
-#include "vshogi/engine/mcts/searcher.hpp"
+#include "vshogi/engine/az/searcher.hpp"
 #include "vshogi/variants/minishogi.hpp"
 #include "vshogi/variants/shogi.hpp"
 
@@ -12,7 +12,7 @@ namespace test_shogi
 
 using namespace vshogi::shogi;
 using MT = vshogi::MoveTraits<Parameters>;
-using Node = vshogi::engine::mcts::Node;
+using Searcher = vshogi::engine::az::Searcher<Parameters>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
 TEST_GROUP (shogi_profile) {
@@ -43,27 +43,26 @@ TEST_GROUP (shogi_profile) {
     };
 };
 
-TEST(shogi_profile, mcts_with_dfpn)
+TEST(shogi_profile, alpha_zero)
 {
     auto g = Game();
-    auto mcts
-        = vshogi::engine::mcts::Searcher<Parameters>(4.f, 0.25f, 10000u, 100u);
+    auto az = Searcher(4.f, 0.25f, 10000u, 100u);
     for (uint ii = 0u; ii < 167u; ++ii) {
         if (g.get_result() != vshogi::ONGOING)
             break;
-        CHECK_COMPARE(100u, >=, mcts.get_search_count());
-        for (uint jj = (100 - mcts.get_search_count()); jj--;) {
-            const auto n = mcts.search(g);
+        CHECK_COMPARE(100u, >=, az.get_search_count());
+        for (uint jj = (100 - az.get_search_count()); jj--;) {
+            const auto n = az.search(g);
             if (n == nullptr)
                 continue;
-            CHECK_TRUE((n == &mcts.get_root()) || (g.ply() > ii));
-            mcts.simulate_expand_backprop(n, g, 0.f, zeros);
+            CHECK_TRUE((n == &az.get_root()) || (g.ply() > ii));
+            az.simulate_expand_backprop(n, g, 0.f, zeros);
             CHECK_EQUAL(ii, g.ply());
         }
 
-        mcts.get_action_by_visit_max();
+        az.get_action_by_visit_max();
         const auto m = MT::make_move(kifu[ii]);
-        mcts.apply(g, m);
+        az.apply(g, m);
 
         if (ii == 166u) {
             CHECK_TRUE(g.get_result() == vshogi::BLACK_WIN);

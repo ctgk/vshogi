@@ -1,6 +1,6 @@
-#include "vshogi/engine/mcts/node.hpp"
+#include "vshogi/engine/az/node.hpp"
 
-namespace vshogi::engine::mcts
+namespace vshogi::engine::az
 {
 
 Node::Node()
@@ -262,4 +262,4 @@ Node* Node::backprop(const float v, Node* const child)
     return m_parent;
 }
 
-} // namespace vshogi::engine::mcts
+} // namespace vshogi::engine::az

@@ -1,5 +1,5 @@
 #include "vshogi/common/notation.hpp"
-#include "vshogi/engine/mcts/node.hpp"
+#include "vshogi/engine/az/node.hpp"
 #include "vshogi/variants/minishogi.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -14,7 +14,7 @@ using namespace vshogi;
 using namespace vshogi::minishogi;
 using MT = vshogi::minishogi::MoveTraits;
 using NT = vshogi::Notation<Parameters>;
-using Node = vshogi::engine::mcts::Node;
+using Node = vshogi::engine::az::Node;
 using Game = vshogi::minishogi::Game;
 
 TEST_GROUP (minishogi_node) {

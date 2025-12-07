@@ -58,9 +58,9 @@ class Args:
     nn_load_previous_weights: int = config(type=int, default=1, help='Load previous weights if 1, else train network from scratch. By default 0.')
     nn_train_device: str = config(type=str, default='cpu', choices=['cpu', 'cuda', 'mps'])
     discount_factor: float = config(type=float, default=0.99, help='Discount factor of reward supervision. By default 0.99.')
-    mcts_kldgain_threshold: float = config(type=float, default=1e-4, help='KL divergence threshold to stop MCT-search')
-    mcts_search: int = config(type=int, default=1000, help='# of searches in MCTS, default=1000. Alpha Zero used 800 simulations.')
-    mcts_random_rate: float = config(
+    az_kldgain_threshold: float = config(type=float, default=1e-4, help='KL divergence threshold to stop Alpha Zero search')
+    az_search: int = config(type=int, default=1000, help='# of searches in Alpha Zero, default=1000. Alpha Zero used 800 simulations in the paper.')
+    az_random_rate: float = config(
         type=float, default=0.5,
         help=(
             'Select action by random sample from distribution by MCTS '
@@ -68,9 +68,9 @@ class Args:
             'The rest of the actions are obtained by selecting the mode of the distribution.'
         ),
     )
-    mcts_temperature: float = config(type=float, default=1., help='Temperature parameter when selecting action by random.')
-    mcts_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in MCTS, default=4.')
-    mcts_q_greedy_depth: int = config(type=int, default=3, help='Number of depth to select node greedily when computing Q-value of a node, by default=3')
+    az_temperature: float = config(type=float, default=1., help='Temperature parameter when selecting action by random.')
+    az_coeff_puct: float = config(type=float, default=4., help='Coefficient of PUCT score in Alpha Zero, default=4.')
+    az_q_greedy_depth: int = config(type=int, default=3, help='Number of depth to select node greedily when computing Q-value of a node, by default=3')
     dfpn_search_root: int = config(type=int, default=10000, help='Number of DFPN searches at root node of MCTS tree. By default 10000.')
     dfpn_search_leaf: int = config(type=int, default=100, help='Number of DFPN searches at leaf node of MCTS tree. By default 100.')
     self_play: int = config(type=int, default=100, help='# of self-play in one RL cycle, default=100')
@@ -109,19 +109,19 @@ def dump_game_log_and_convert_to_tfrecord(
 
 
 def play_game(
-    player_black: vshogi.engine.Mcts,
-    player_white: vshogi.engine.Mcts,
+    player_black: vshogi.engine.AlphaZero,
+    player_white: vshogi.engine.AlphaZero,
     args: Args,
     max_moves: int = 320,
-    main_player: tp.Optional[vshogi.engine.Mcts] = None,
+    main_player: tp.Optional[vshogi.engine.AlphaZero] = None,
 ) -> vshogi.Game:
     """Make two players play the game until an end.
 
     Parameters
     ----------
-    player_black : vshogi.engine.Mcts
+    player_black : vshogi.engine.AlphaZero
         First player
-    player_white : vshogi.engine.Mcts
+    player_white : vshogi.engine.AlphaZero
         Second player
     max_moves : int
         Maximum number of moves to apply to the game.
@@ -148,11 +148,11 @@ def play_game(
         if not player.is_ready():
             player.set_game(game)
 
-        player.search(args.mcts_search - player.num_searched)
+        player.search(args.az_search - player.num_searched)
         if (main_player is not None) and (main_player is not player):
             if not main_player.is_ready():
                 main_player.set_game(game)
-            main_player.search(args.mcts_search - main_player.num_searched)
+            main_player.search(args.az_search - main_player.num_searched)
 
         if player.proved_mate():
             if player.get_q_value() > 0:
@@ -174,7 +174,7 @@ def play_game(
             # following game position.
             game.z_weight_log.append(0.)
         elif game.ply() < num_random_moves:
-            move = player.select(temperature=args.mcts_temperature)
+            move = player.select(temperature=args.az_temperature)
             game.z_weight_log.append(0.)
         else:
             move = player.select()
@@ -191,7 +191,7 @@ def play_game(
             player_dump.get_visit_counts(include_random=False).items()
         }
         game.q_value_log.append(
-            player_dump.get_q_value(greedy_depth=args.mcts_q_greedy_depth))
+            player_dump.get_q_value(greedy_depth=args.az_q_greedy_depth))
         game.visit_count_log.append(visit_count)
 
         game.apply(move)
@@ -207,14 +207,14 @@ def play_game(
     return game
 
 
-def load_player_of(index: int) -> vshogi.engine.Mcts:
-    return vshogi.engine.Mcts(
+def load_player_of(index: int) -> vshogi.engine.AlphaZero:
+    return vshogi.engine.AlphaZero(
         (
             vshogi.dlshogi.PolicyValueFunction(f'models/model_{index:04d}.tflite')
             if index != 0 else lambda g: (np.zeros(g.num_dlshogi_policy, dtype=np.float32), vshogi.engine.piece_value_func(g))
         ),
-        coeff_puct=args.mcts_coeff_puct,
-        kldgain_threshold=args.mcts_kldgain_threshold,
+        coeff_puct=args.az_coeff_puct,
+        kldgain_threshold=args.az_kldgain_threshold,
         dfpn_search_root=args.dfpn_search_root,
         dfpn_search_leaf=args.dfpn_search_leaf,
         name=str(index),
@@ -610,7 +610,7 @@ def run_rl_cycle(args: Args):
                         args._shogi.Game(),
                         player,
                         p_prev,
-                        search_args={'n_or_t': args.mcts_search},
+                        search_args={'n_or_t': args.az_search},
                         select_args={'temperature': None},
                         draw_on_max_moves=True,
                     ).result
@@ -620,7 +620,7 @@ def run_rl_cycle(args: Args):
                         args._shogi.Game(),
                         p_prev,
                         player,
-                        search_args={'n_or_t': args.mcts_search},
+                        search_args={'n_or_t': args.az_search},
                         select_args={'temperature': None},
                         draw_on_max_moves=True,
                     ).result
@@ -653,7 +653,7 @@ def run_rl_cycle(args: Args):
                     args._shogi.Game(),
                     player_curr,
                     player_best,
-                    search_args={"n_or_t": args.mcts_search},
+                    search_args={"n_or_t": args.az_search},
                     select_args={"temperature": None},
                     draw_on_max_moves=True,
                 ).result
@@ -663,7 +663,7 @@ def run_rl_cycle(args: Args):
                     args._shogi.Game(),
                     player_best,
                     player_curr,
-                    search_args={"n_or_t": args.mcts_search},
+                    search_args={"n_or_t": args.az_search},
                     select_args={"temperature": None},
                     draw_on_max_moves=True,
                 ).result
@@ -716,7 +716,7 @@ def run_rl_cycle(args: Args):
                     continue
                 with open(path, 'rb') as f:
                     line_length_list.append(sum(1 for _ in f) - 1)
-            n = np.mean(line_length_list) * args.mcts_random_rate
+            n = np.mean(line_length_list) * args.az_random_rate
             args._num_random_moves = int(np.ceil(n / 2)) * 2
 
         if i > 1:
@@ -803,7 +803,7 @@ def parse_args() -> Args:
                 continue
             with open(path, 'rb') as f:
                 line_length_list.append(sum(1 for _ in f) - 1)
-        n = np.mean(line_length_list) * args.mcts_random_rate
+        n = np.mean(line_length_list) * args.az_random_rate
         args._num_random_moves = int(np.ceil(n / 2)) * 2
 
     print(args)

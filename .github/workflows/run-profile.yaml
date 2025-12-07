@@ -14,23 +14,23 @@ jobs:
       run: sudo apt update -y; sudo apt install -y build-essential make cpputest libc++-dev python3 graphviz; pip install gprof2dot
     - name: Build
       run: cmake -DCMAKE_CXX_FLAGS=-pg -DCMAKE_EXE_LINKER_FLAGS=-pg -DCMAKE_SHARED_LINKER_FLAGS=-pg ./cpp; make
-    - name: Execute MCTS+DFPN
-      run: ./tests/test_vshogi -r20 -g shogi_profile -n mcts_with_dfpn; mv gmon.out gmon.out.mcts_with_dfpn
-    - name: Profile MCTS+DFPN
-      run: gprof ./tests/test_vshogi gmon.out.mcts_with_dfpn > profile_mcts_with_dfpn.txt; cat profile_mcts_with_dfpn.txt
-    - name: Visualize MCTS+DFPN profile
-      run: cat profile_mcts_with_dfpn.txt | gprof2dot -s | dot -Tpng -o mcts_with_dfpn.png
+    - name: Execute Alpha Zero
+      run: ./tests/test_vshogi -r20 -g shogi_profile -n alpha_zero; mv gmon.out gmon.out.alpha_zero
+    - name: Profile Alpha Zero
+      run: gprof ./tests/test_vshogi gmon.out.alpha_zero > profile_alpha_zero.txt; cat profile_alpha_zero.txt
+    - name: Visualize Alpha Zero profile
+      run: cat profile_alpha_zero.txt | gprof2dot -s | dot -Tpng -o alpha_zero.png
     - name: Execute MoveGenerator
       run: ./tests/test_vshogi -r20 -g shogi_profile -n generator; mv gmon.out gmon.out.generator
     - name: Profile MoveGenerator
       run: gprof ./tests/test_vshogi gmon.out.generator > profile_generator.txt; cat profile_generator.txt
     - name: Visualize MoveGenerator profile
       run: cat profile_generator.txt | gprof2dot | dot -Tpng -o generator.png
-    - name: Upload MCTS+DFPN image
+    - name: Upload Alpha Zero image
       uses: actions/upload-artifact@v4
       with:
-        name: mcts_with_dfpn.png
-        path: mcts_with_dfpn.png
+        name: alpha_zero.png
+        path: alpha_zero.png
     - name: Upload MoveGenerator image
       uses: actions/upload-artifact@v4
       with:

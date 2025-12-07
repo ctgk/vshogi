@@ -1,20 +1,16 @@
-import numpy as np
 import pytest
 
 import vshogi.minishogi as shogi
 from vshogi import play_game
-from vshogi.engine import Mcts
+from vshogi.engine import AlphaZero
 
 
 def test_play_game():
-    def uniform_policy_zero_value_func(game):
-        return np.zeros(game.num_dlshogi_policy), 0.
-
     game = shogi.Game()
     play_game(
         game,
-        Mcts(uniform_policy_zero_value_func),
-        Mcts(uniform_policy_zero_value_func),
+        AlphaZero(),
+        AlphaZero(),
     )
     assert game.result != shogi.ONGOING
 

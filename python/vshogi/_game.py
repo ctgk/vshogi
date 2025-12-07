@@ -39,7 +39,7 @@ class Game(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def _get_mcts_searcher_class(cls) -> type:
+    def _get_az_searcher_class(cls) -> type:
         pass
 
     @classmethod

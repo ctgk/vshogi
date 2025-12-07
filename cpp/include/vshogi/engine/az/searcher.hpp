@@ -1,5 +1,5 @@
-#ifndef VSHOGI_ENGINE_MCTS_SEARCHER_HPP
-#define VSHOGI_ENGINE_MCTS_SEARCHER_HPP
+#ifndef VSHOGI_ENGINE_AZ_SEARCHER_HPP
+#define VSHOGI_ENGINE_AZ_SEARCHER_HPP
 
 #include <algorithm>
 #include <cmath>
@@ -12,10 +12,10 @@
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/result.hpp"
 #include "vshogi/common/utils.hpp"
+#include "vshogi/engine/az/node.hpp"
 #include "vshogi/engine/dfpn/searcher.hpp"
-#include "vshogi/engine/mcts/node.hpp"
 
-namespace vshogi::engine::mcts
+namespace vshogi::engine::az
 {
 
 namespace dfpn = vshogi::engine::dfpn;
@@ -220,6 +220,6 @@ bool Searcher<P>::dfpn_proved_mate(Game<P>& game, Node* const node)
     return false;
 }
 
-} // namespace vshogi::engine::mcts
+} // namespace vshogi::engine::az
 
-#endif // VSHOGI_ENGINE_MCTS_SEARCHER_HPP
+#endif // VSHOGI_ENGINE_AZ_SEARCHER_HPP

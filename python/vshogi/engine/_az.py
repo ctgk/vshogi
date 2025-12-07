@@ -49,8 +49,8 @@ def _tree(
     return out
 
 
-class Mcts(Engine):
-    """Monte Carlo Tree Searcher engine."""
+class AlphaZero(Engine):
+    """Alpha Zero engine."""
 
     def __init__(
         self,
@@ -65,7 +65,7 @@ class Mcts(Engine):
         dfpn_search_leaf: int = 0,
         name: tp.Optional[str] = None,
     ) -> None:
-        """Initialize a Monte Carlo Tree Searcher.
+        """Initialize an Alpha Zero agent.
 
         Parameters
         ----------
@@ -100,7 +100,7 @@ class Mcts(Engine):
 
     def _set_game(self, game: Game):
         self._game = game.copy()
-        self._searcher = game._get_mcts_searcher_class()(
+        self._searcher = game._get_az_searcher_class()(
             self._coeff_puct, self._random_rate,
             self._dfpn_search_root, self._dfpn_search_leaf,
         )

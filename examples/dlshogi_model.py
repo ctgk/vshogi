@@ -33,7 +33,7 @@ if __name__ == '__main__':
         edge_model.export(t.name)
         pv_func = vshogi.dlshogi.PolicyValueFunction(t.name)
     print(pv_func.summary())
-    player = vshogi.engine.Mcts(
+    player = vshogi.engine.AlphaZero(
         pv_func,
         kldgain_threshold=1e-4,
         dfpn_search_root=10000,

@@ -31,7 +31,7 @@ jobs:
         NAME: ${{ matrix.game.name }}
         CYCLE: ${{ matrix.game.rl_cycle }}
         BACKBONES: ${{ matrix.game.nn_backbone_blocks }}
-      run: python examples/dlshogi.py rl $NAME --rl_cycle $CYCLE --nn_backbone_blocks $BACKBONES --mcts_search 100 --self_play 50 --nn_epochs 5 --win_ratio_threshold 0.1
+      run: python examples/dlshogi.py rl $NAME --rl_cycle $CYCLE --nn_backbone_blocks $BACKBONES --az_search 100 --self_play 50 --nn_epochs 5 --win_ratio_threshold 0.1
     - name: Check errors
       env:
         NAME: ${{ matrix.game.name }}
@@ -40,7 +40,7 @@ jobs:
       env:
         NAME: ${{ matrix.game.name }}
         CYCLE: ${{ matrix.game.rl_cycle }}
-      run: python -m vshogi $NAME --player1 $NAME/models/model_0000.tflite --player2 $NAME/models/model_$(printf %04d $CYCLE).tflite --mcts_search_count 100
+      run: python -m vshogi $NAME --player1 $NAME/models/model_0000.tflite --player2 $NAME/models/model_$(printf %04d $CYCLE).tflite --az_search_count 100
     - name: Check generated dataset
       env:
         NAME: ${{ matrix.game.name }}

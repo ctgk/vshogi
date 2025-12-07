@@ -6,8 +6,8 @@
 
 #include "vshogi/common/config.hpp"
 #include "vshogi/common/notation.hpp"
+#include "vshogi/engine/az/searcher.hpp"
 #include "vshogi/engine/dfpn/searcher.hpp"
-#include "vshogi/engine/mcts/searcher.hpp"
 #include "vshogi/engine/piece_value.hpp"
 
 #include <pybind11/numpy.h>
@@ -442,15 +442,15 @@ inline void export_game(pybind11::module& m)
 }
 
 template <class Parameters>
-inline void export_mcts_searcher(pybind11::module& m)
+inline void export_az_searcher(pybind11::module& m)
 {
     namespace py = pybind11;
     using Game = vshogi::Game<Parameters>;
-    using Node = vshogi::engine::mcts::Node;
+    using Node = vshogi::engine::az::Node;
     using Move = pyvshogi::Move<Parameters>;
-    using Searcher = vshogi::engine::mcts::Searcher<Parameters>;
+    using Searcher = vshogi::engine::az::Searcher<Parameters>;
 
-    py::class_<Searcher>(m, "Mcts")
+    py::class_<Searcher>(m, "AlphaZero")
         .def(py::init<const float, const float, const uint, const uint>())
         .def("init_root", &Searcher::init_root)
         .def(
@@ -607,7 +607,7 @@ void export_classes(pybind11::module& m)
     export_move<Parameters>(m);
     export_state<Parameters>(m);
     export_game<Parameters>(m);
-    export_mcts_searcher<Parameters>(m);
+    export_az_searcher<Parameters>(m);
     export_value_functions<Parameters>(m);
     export_dfpn_searcher<Parameters>(m);
     export_dfpn_node<Parameters>(m);

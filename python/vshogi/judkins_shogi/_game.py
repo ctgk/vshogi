@@ -1,8 +1,8 @@
 from vshogi._game import Game as BaseGame
 from vshogi._vshogi.judkins_shogi import (
+    AlphaZero,
     BoardPiece,
     DfpnSearcher,
-    Mcts,
     Move,
     _Game as _ShogiGame,
     piece_value_func,
@@ -57,8 +57,8 @@ class Game(BaseGame):
         return Move
 
     @classmethod
-    def _get_mcts_searcher_class(cls) -> type:
-        return Mcts
+    def _get_az_searcher_class(cls) -> type:
+        return AlphaZero
 
     @classmethod
     def _get_dfpn_searcher_class(cls) -> type:

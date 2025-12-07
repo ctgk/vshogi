@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 import vshogi.minishogi as shogi
-from vshogi.engine import Mcts
+from vshogi.engine import AlphaZero
 
 
 def uniform_pv_func(game):
@@ -11,7 +11,7 @@ def uniform_pv_func(game):
 
 def test_is_ready():
     game = shogi.Game()
-    searcher = Mcts(uniform_pv_func)
+    searcher = AlphaZero(uniform_pv_func)
     assert searcher.is_ready() is False
     searcher.set_game(game)
     assert searcher.is_ready()
@@ -19,7 +19,7 @@ def test_is_ready():
 
 def test_num_searched():
     game = shogi.Game()
-    searcher = Mcts(uniform_pv_func)
+    searcher = AlphaZero(uniform_pv_func)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
     assert searcher.num_searched == 100
@@ -27,7 +27,7 @@ def test_num_searched():
 
 def test_clear():
     game = shogi.Game()
-    searcher = Mcts(uniform_pv_func)
+    searcher = AlphaZero(uniform_pv_func)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
     searcher.clear()
@@ -39,7 +39,7 @@ def test_q_values_mate_in_one():
     game = shogi.Game("b2pk/3b1/4P/2gRR/4K b -")
     m = shogi.Move(shogi.SQ_1C, shogi.SQ_1B)
 
-    searcher = Mcts(uniform_pv_func, random_rate=0.)
+    searcher = AlphaZero(uniform_pv_func, random_rate=0.)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
     actual = searcher.get_q_values()
@@ -50,7 +50,7 @@ def test_q_values_mate_in_one():
 
 def test_q_values_initial():
     game = shogi.Game()
-    searcher = Mcts(uniform_pv_func)
+    searcher = AlphaZero(uniform_pv_func)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
     actual = searcher.get_q_values()
@@ -63,7 +63,7 @@ def test_mate_in_three():
     game = shogi.Game('1r3/2k1G/5/2PG1/5 b -')
     m = shogi.Move(shogi.SQ_2D, shogi.SQ_3C)
 
-    searcher = Mcts(uniform_pv_func, random_rate=0)
+    searcher = AlphaZero(uniform_pv_func, random_rate=0)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
 
@@ -82,14 +82,14 @@ def test_visit_count_by_random():
     game = shogi.Game()
     m = shogi.Move(shogi.SQ_1E, shogi.SQ_1B)
 
-    searcher = Mcts(
+    searcher = AlphaZero(
         lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.), random_rate=0)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
     visit_count = searcher.get_visit_counts()[m]
     print(searcher._tree(depth=2, breadth=-1))
 
-    searcher = Mcts(
+    searcher = AlphaZero(
         lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.),
         random_rate=0.25)
     searcher.set_game(game)
@@ -101,7 +101,7 @@ def test_visit_count_by_random():
 
 def test_greedy_q_value():
     game = shogi.Game()
-    searcher = Mcts(uniform_pv_func)
+    searcher = AlphaZero(uniform_pv_func)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
     action = searcher.select()
@@ -121,7 +121,7 @@ def test_greedy_q_value():
 
 
 def test_dfpn_root():
-    mcts = Mcts(
+    mcts = AlphaZero(
         lambda g: (g.to_dlshogi_policy({}), 0.),
         random_rate=0,
         dfpn_search_root=10000,
@@ -166,7 +166,7 @@ def test_mating_net():
     #   +---+---+---+---+---+
     # Black: -
     g = shogi.Game("4k/3g1/5/5/2K2 w g")
-    mcts = Mcts(dfpn_search_root=0, dfpn_search_leaf=100)
+    mcts = AlphaZero(dfpn_search_root=0, dfpn_search_leaf=100)
     mcts.set_game(g)
     mcts.search(n_or_t=10000)
     assert mcts.proved_mate()
@@ -175,7 +175,7 @@ def test_mating_net():
 
 
 def test_dfpn_vertex():
-    mcts = Mcts(
+    mcts = AlphaZero(
         lambda g: (g.to_dlshogi_policy({}), 0.),
         random_rate=0,
         dfpn_search_root=0,
@@ -208,7 +208,7 @@ def test_dfpn_vertex():
 
 
 def test_dfpn_vertex_2():
-    mcts = Mcts(
+    mcts = AlphaZero(
         lambda g: (g.to_dlshogi_policy({}), 0.),
         random_rate=0,
         dfpn_search_root=0,
@@ -250,7 +250,7 @@ def test_dfpn_vertex_2():
 
 
 def test_dfpn_root_vertex():
-    mcts = Mcts(
+    mcts = AlphaZero(
         lambda g: (g.to_dlshogi_policy({}), 0.),
         random_rate=0,
         dfpn_search_root=10000,
@@ -289,7 +289,7 @@ def test_dfpn_root_vertex():
 
 
 def test_debug():
-    mcts = Mcts(
+    mcts = AlphaZero(
         lambda g: (g.to_dlshogi_policy({}), 0.),
         random_rate=0,
         dfpn_search_root=10000,
