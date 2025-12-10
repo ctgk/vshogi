@@ -3,6 +3,7 @@ from vshogi._vshogi.shogi import (
     AlphaZero,
     BoardPiece,
     DfpnSearcher,
+    GumbelAlphaZero,
     Move,
     _Game as _ShogiGame,
     piece_value_func,
@@ -67,6 +68,10 @@ LNSGKGSNL w - 2")
     @classmethod
     def _get_az_searcher_class(cls) -> type:
         return AlphaZero
+
+    @classmethod
+    def _get_gaz_searcher_class(cls):
+        return GumbelAlphaZero
 
     @classmethod
     def _get_dfpn_searcher_class(cls) -> type:

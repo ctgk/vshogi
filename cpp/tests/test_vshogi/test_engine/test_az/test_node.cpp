@@ -102,7 +102,7 @@ TEST(minishogi_node, explore_one_action)
         CHECK_EQUAL(1, actual->get_visit_count());
         DOUBLES_EQUAL(-0.8f, actual->get_q_value(), 1e-2f);
 
-        const auto ch = root.get_child(MT::make_move(SQ_1C, SQ_1B));
+        const auto ch = root.get_child_of(MT::make_move(SQ_1C, SQ_1B));
         CHECK_TRUE(actual == ch);
     }
     DOUBLES_EQUAL(0.8f, root.get_q_value(100), 1e-2f);
@@ -167,7 +167,7 @@ TEST(minishogi_node, explore_two_action)
         CHECK_EQUAL(&root, actual->backprop(actual->get_q_value(), nullptr));
         CHECK_EQUAL(nullptr, root.backprop(-actual->get_q_value(), actual));
 
-        CHECK_EQUAL(root.get_child(moves[ii]), actual);
+        CHECK_EQUAL(root.get_child_of(moves[ii]), actual);
         DOUBLES_EQUAL(expected_q_value[ii], root.get_q_value(), 1e-3f);
         CHECK_TRUE(
             root.get_most_visited_child()->get_action()
@@ -225,7 +225,7 @@ TEST(minishogi_node, explore_two_layer)
         const auto actual = root.select(1.f, 0.f);
         CHECK_TRUE(actual != nullptr);
         g_copy.apply_nocheck(actual->get_action());
-        CHECK_EQUAL(root.get_child(MT::make_move(SQ_1E, SQ_1D)), actual);
+        CHECK_EQUAL(root.get_child_of(MT::make_move(SQ_1E, SQ_1D)), actual);
         STRCMP_EQUAL("s4/5/5/4S/5 w - 2", NT::to_sfen(g_copy).c_str());
         float policy[Game::num_dlshogi_policy()] = {0.f};
         policy[MT::to_policy_index(MT::make_move(SQ_5A, SQ_5B), WHITE)]
@@ -244,13 +244,13 @@ TEST(minishogi_node, explore_two_layer)
         CHECK_TRUE(child != nullptr);
         g_copy.apply_nocheck(child->get_action());
         CHECK_EQUAL(1u, g_copy.ply());
-        CHECK_EQUAL(root.get_child(MT::make_move(SQ_1E, SQ_1D)), child);
+        CHECK_EQUAL(root.get_child_of(MT::make_move(SQ_1E, SQ_1D)), child);
         Node* const grand_child = child->select(1.f, 0.f);
         g_copy.apply_nocheck(grand_child->get_action());
         CHECK_EQUAL(2u, g_copy.ply());
         CHECK_EQUAL(
-            root.get_child(MT::make_move(SQ_1E, SQ_1D))
-                ->get_child(MT::make_move(SQ_5A, SQ_5B)),
+            root.get_child_of(MT::make_move(SQ_1E, SQ_1D))
+                ->get_child_of(MT::make_move(SQ_5A, SQ_5B)),
             grand_child);
         STRCMP_EQUAL("5/s4/5/4S/5 b - 3", NT::to_sfen(g_copy).c_str());
         grand_child->simulate_ongoing_and_expand(g_copy, -0.5f, nullptr);
@@ -277,11 +277,11 @@ TEST(minishogi_node, explore_two_layer)
 
         DOUBLES_EQUAL(
             0.9f,
-            root.get_child(MT::make_move(SQ_5A, SQ_5B))->get_proba(),
+            root.get_child_of(MT::make_move(SQ_5A, SQ_5B))->get_proba(),
             1e-2f);
         DOUBLES_EQUAL(
             0.1f,
-            root.get_child(MT::make_move(SQ_5A, SQ_4B))->get_proba(),
+            root.get_child_of(MT::make_move(SQ_5A, SQ_4B))->get_proba(),
             1e-2f);
         DOUBLES_EQUAL((-0.9f + 0.5f) / 2.f, root.get_q_value(), 1e-3f);
         CHECK_TRUE(

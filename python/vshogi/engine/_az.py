@@ -28,7 +28,7 @@ def _tree(
     out = _repr_node(root, greedy_detph=greedy_depth)
     if depth == 0:
         return out
-    children = [(a, root.get_child(a)) for a in root.get_actions()]
+    children = [(a, root.get_child_of(a)) for a in root.get_actions()]
     children.sort(key=lambda t: sort_key(t[1]), reverse=False)
     if breadth > 0:
         children = children[:breadth]
@@ -214,7 +214,7 @@ class AlphaZero(Engine):
             return {}
         root = self._searcher.get_root()
         move_proba_pair_list = [
-            (m, root.get_child(m).get_proba())
+            (m, root.get_child_of(m).get_proba())
             for m in root.get_actions()
         ]
         move_proba_pair_list.sort(key=lambda t: t[1], reverse=True)
@@ -239,7 +239,7 @@ class AlphaZero(Engine):
         move_type = self._game._get_move_class()
         root = self._searcher.get_root()
         move_q_pair_list = [
-            (m, -root.get_child(m).get_q_value(greedy_depth))
+            (m, -root.get_child_of(m).get_q_value(greedy_depth))
             for m in root.get_actions()
         ]
         move_q_pair_list.sort(key=lambda a: a[1], reverse=True)
@@ -268,9 +268,9 @@ class AlphaZero(Engine):
         move_visit_count_pair_list = [
             (
                 move_type(m),
-                root.get_child(m).get_visit_count()
+                root.get_child_of(m).get_visit_count()
                 if include_random else
-                root.get_child(m).get_visit_count_excluding_random(),
+                root.get_child_of(m).get_visit_count_excluding_random(),
             )
             for m in root.get_actions()
         ]
@@ -320,7 +320,7 @@ class AlphaZero(Engine):
         for m in pv_line:
             for a in node.get_actions():
                 if move_type(a) == m:
-                    node = node.get_child(a)
+                    node = node.get_child_of(a)
                     break
             else:
                 raise ValueError(f'Cannot find child with action, {m}')

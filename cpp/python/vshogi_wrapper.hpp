@@ -8,6 +8,7 @@
 #include "vshogi/common/notation.hpp"
 #include "vshogi/engine/az/searcher.hpp"
 #include "vshogi/engine/dfpn/searcher.hpp"
+#include "vshogi/engine/gaz/searcher.hpp"
 #include "vshogi/engine/piece_value.hpp"
 
 #include <pybind11/numpy.h>
@@ -291,7 +292,11 @@ inline void export_game(pybind11::module& m)
             [](const Game& self, const bool include_move_count) {
                 return NT::to_sfen(self, include_move_count);
             })
-        .def("is_legal", &Game::is_legal)
+        .def(
+            "is_legal",
+            [](const Game& self, const Move& m) {
+                return self.is_legal(m.m_value);
+            })
         .def("in_check", &Game::in_check)
         .def("is_valid_piece_count", &Game::is_valid_piece_count)
         .def("hflip", &Game::hflip)
@@ -501,6 +506,48 @@ inline void export_az_searcher(pybind11::module& m)
             });
 }
 
+template <class P>
+inline void export_gaz_searcher(pybind11::module& m)
+{
+    namespace py = pybind11;
+    using Node = vshogi::engine::gaz::Node;
+    using Searcher = vshogi::engine::gaz::Searcher<P>;
+    py::class_<Searcher>(m, "GumbelAlphaZero")
+        .def(py::init<const uint, const uint>())
+        .def("init", &Searcher::init)
+        .def("get_search_count", &Searcher::get_search_count)
+        .def("count_active_childs", &Searcher::count_active_childs)
+        .def("proved_mate", &Searcher::proved_mate)
+        .def(
+            "get_root",
+            [](const Searcher& self) {
+                return py::cast(
+                    self.get_root(), py::return_value_policy::reference);
+            })
+        .def("keep_top_n_actions", &Searcher::keep_top_n_actions)
+        .def(
+            "search",
+            [](Searcher& self, vshogi::Game<P>& game) -> py::object {
+                const auto out = self.search(game);
+                if (out == nullptr)
+                    return py::none();
+                return py::cast(*out, py::return_value_policy::reference);
+            })
+        .def(
+            "simulate_expand_backprop",
+            [](Searcher& self,
+               Node* const leaf,
+               vshogi::Game<P>& game,
+               const float value,
+               const py::array_t<float>& policy_logits) {
+                self.simulate_expand_backprop(
+                    leaf, game, value, policy_logits.data());
+            })
+        .def("select_action", [](const Searcher& self) {
+            return Move<P>(self.select_action());
+        });
+}
+
 template <class Parameters>
 inline void export_dfpn_node(pybind11::module& m)
 {
@@ -608,6 +655,7 @@ void export_classes(pybind11::module& m)
     export_state<Parameters>(m);
     export_game<Parameters>(m);
     export_az_searcher<Parameters>(m);
+    export_gaz_searcher<Parameters>(m);
     export_value_functions<Parameters>(m);
     export_dfpn_searcher<Parameters>(m);
     export_dfpn_node<Parameters>(m);

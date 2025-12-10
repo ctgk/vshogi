@@ -102,21 +102,25 @@ public:
     }
 };
 
+inline void softmax(float* const logits, const uint n)
+{
+    const float maximum_value = *std::max_element(logits, logits + n);
+    float sum = 0.f;
+    for (uint ii = n; ii--;) {
+        logits[ii] -= maximum_value;
+        logits[ii] = std::exp(logits[ii]);
+        sum += logits[ii];
+    }
+    for (uint ii = n; ii--;) {
+        logits[ii] /= sum;
+    }
+}
+
 inline void softmax(std::vector<float>& logits)
 {
     if (logits.empty())
         return;
-    const float maximum_value
-        = *std::max_element(logits.cbegin(), logits.cend());
-    float sum = 0.f;
-    for (auto&& e : logits) {
-        e -= maximum_value;
-        e = std::exp(e);
-        sum += e;
-    }
-    for (auto&& e : logits) {
-        e /= sum;
-    }
+    softmax(logits.data(), static_cast<uint>(logits.size()));
 }
 
 #ifdef __SIZEOF_INT128__

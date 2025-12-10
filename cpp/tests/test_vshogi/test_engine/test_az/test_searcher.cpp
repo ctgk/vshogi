@@ -78,16 +78,17 @@ TEST(minishogi_searcher, test_mate_in_three)
 
     const auto m = MT::make_move(SQ_2D, SQ_3C);
     CHECK_EQUAL(m, az.get_action_by_visit_max());
-    DOUBLES_EQUAL(-1.f, az.get_root().get_child(m)->get_q_value(), 1e-3f);
+    DOUBLES_EQUAL(-1.f, az.get_root().get_child_of(m)->get_q_value(), 1e-3f);
     const auto expected_visits
-        = az.get_root().get_child(m)->get_visit_count() + 100u;
+        = az.get_root().get_child_of(m)->get_visit_count() + 100u;
 
     for (int ii = 100; ii--;) {
         Node* const n = az.search(g);
         if (n)
             az.simulate_expand_backprop(n, g, 0.f, nullptr);
     }
-    CHECK_EQUAL(expected_visits, az.get_root().get_child(m)->get_visit_count());
+    CHECK_EQUAL(
+        expected_visits, az.get_root().get_child_of(m)->get_visit_count());
 }
 
 TEST(minishogi_searcher, test_dfpn_root)
@@ -109,7 +110,8 @@ TEST(minishogi_searcher, test_dfpn_root)
                 az.simulate_expand_backprop(leaf, g, 0.f, nullptr);
         }
         CHECK_FALSE(az.proved_mate());
-        CHECK_FALSE(az.get_root().get_child(MT::make_move("1c1b"))->is_mate());
+        CHECK_FALSE(
+            az.get_root().get_child_of(MT::make_move("1c1b"))->is_mate());
         az.apply(game, MT::make_move("1c1b"));
         CHECK_TRUE(az.proved_mate());
         CHECK_EQUAL(MT::make_move("G*1c"), az.get_action_by_visit_max());

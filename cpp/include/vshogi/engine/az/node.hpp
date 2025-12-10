@@ -7,6 +7,7 @@
 #include "vshogi/common/game.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/utils.hpp"
+#include "vshogi/engine/tree/node.hpp"
 
 /**
  * @brief Alpha Zero
@@ -15,7 +16,7 @@
 namespace vshogi::engine::az
 {
 
-class Node
+class Node : public tree::Node<Node>
 {
 private:
     move_t m_action;
@@ -25,19 +26,10 @@ private:
     float m_sqrt_visit_count;
     float m_q_value;
     bool m_is_mate;
-    Node* m_parent;
-    std::unique_ptr<Node> m_sibling;
-    std::unique_ptr<Node> m_child;
-    Node* m_most_visited_child;
 
 public:
     Node();
     Node(const move_t& action, const float proba);
-    ~Node() = default; // Rule 1/5 destructor
-    Node(const Node& other) = delete; // Rule 2/5 copy constructor
-    Node& operator=(const Node& other) = delete; // Rule 3/5 copy assignment
-    Node(Node&& other) = default; // Rule 4/5 move constructor
-    Node& operator=(Node&& other) = default; // Rule 5/5 move assignment
     void init();
     // clang-format off
     move_t get_action() const { return m_action; }
@@ -48,15 +40,10 @@ public:
     bool is_mate() const { return m_is_mate; }
     bool is_mate_to_win() const { return m_is_mate && (m_q_value > 0.f); }
     bool is_mate_to_lose() const { return m_is_mate && (m_q_value < 0.f); }
-    const Node* get_parent() const { return m_parent; }
-    const Node* get_sibling() const { return m_sibling.get(); }
-    const Node* get_child() const { return m_child.get(); }
-    const Node* get_most_visited_child() const { return m_most_visited_child; }
-    bool has_child() const { return static_cast<bool>(m_child); }
     // clang-format on
     float get_q_value(const uint greedy_depth) const;
-    uint get_num_child() const;
-    const Node* get_child(const move_t& action) const;
+    uint count_childs() const;
+    const Node* get_child_of(const move_t& action) const;
     Node& apply(const move_t& action);
 
     /**

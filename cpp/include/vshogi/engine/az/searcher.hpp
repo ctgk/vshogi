@@ -130,7 +130,7 @@ move_t
 Searcher<P>::get_action_by_visit_distribution(const float temperature) const
 {
     constexpr float eps = 1.f;
-    std::vector<float> probas(m_root.get_num_child());
+    std::vector<float> probas(m_root.count_childs());
     const Node* ch = m_root.get_child();
     for (uint ii = 0u; ch; ch = ch->get_sibling()) {
         const auto v
@@ -153,7 +153,7 @@ Searcher<P>::get_action_by_visit_distribution(const float temperature) const
 template <class P>
 move_t Searcher<P>::get_action_by_q_distribution(const float temperature) const
 {
-    std::vector<float> probas(m_root.get_num_child());
+    std::vector<float> probas(m_root.count_childs());
     const Node* c = m_root.get_child();
     for (uint ii = 0u; c; c = c->get_sibling()) {
         probas[ii++] = -c->get_q_value() / temperature;

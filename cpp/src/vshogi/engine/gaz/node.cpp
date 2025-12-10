@@ -1,19 +1,17 @@
-#include "vshogi/engine/az/node.hpp"
+#include "vshogi/engine/gaz/node.hpp"
 
-namespace vshogi::engine::az
+namespace vshogi::engine::gaz
 {
 
 Node::Node()
-    : tree::Node<Node>(), m_action{}, m_proba(0.f), m_visit_count(0u),
-      m_visit_count_by_random(0u), m_sqrt_visit_count(0.f), m_q_value(0.f),
-      m_is_mate(false)
+    : tree::Node<Node>(), m_action{}, m_logit(0.f), m_visit_count(0u),
+      m_q_value(0.f), m_is_mate(false)
 {
 }
 
-Node::Node(const move_t& action, const float proba)
-    : tree::Node<Node>(), m_action(action), m_proba(proba), m_visit_count(0u),
-      m_visit_count_by_random(0u), m_sqrt_visit_count(0.f), m_q_value(0.f),
-      m_is_mate(false)
+Node::Node(const move_t& action, const float logit)
+    : tree::Node<Node>(), m_action(action), m_logit(logit), m_visit_count(0u),
+      m_q_value(0.f), m_is_mate(false)
 {
 }
 
@@ -21,19 +19,10 @@ void Node::init()
 {
     tree::Node<Node>::init();
     m_action = static_cast<move_t>(0);
-    m_proba = 0.f;
+    m_logit = 0.f;
     m_visit_count = 0u;
-    m_visit_count_by_random = 0u;
-    m_sqrt_visit_count = 0.f;
     m_q_value = 0.f;
     m_is_mate = false;
-}
-
-float Node::get_q_value(const uint greedy_depth) const
-{
-    if (m_is_mate || !m_most_visited_child || !greedy_depth)
-        return m_q_value;
-    return -m_most_visited_child->get_q_value(greedy_depth - 1u);
 }
 
 uint Node::count_childs() const
@@ -42,6 +31,13 @@ uint Node::count_childs() const
     for (const Node* c = get_child(); c; c = c->get_sibling())
         ++out;
     return out;
+}
+
+float Node::get_q_value(const uint greedy_depth) const
+{
+    if (m_is_mate || !m_most_visited_child || !greedy_depth)
+        return m_q_value;
+    return -m_most_visited_child->get_q_value(greedy_depth - 1u);
 }
 
 const Node* Node::get_child_of(const move_t& action) const
@@ -60,8 +56,6 @@ Node& Node::apply(const move_t& action)
         if (c->m_action == action) {
             // m_action = c->m_action;
             m_visit_count = c->m_visit_count;
-            m_visit_count_by_random = c->m_visit_count_by_random;
-            m_sqrt_visit_count = c->m_sqrt_visit_count;
             m_q_value = c->m_q_value;
             m_is_mate = c->m_is_mate;
             // m_parent = c->m_parent;
@@ -72,8 +66,6 @@ Node& Node::apply(const move_t& action)
         }
     }
     m_visit_count = 0u;
-    m_visit_count_by_random = 0u;
-    m_sqrt_visit_count = 0.f;
     m_q_value = 0.f;
     m_is_mate = false;
     m_most_visited_child = nullptr;
@@ -81,93 +73,45 @@ Node& Node::apply(const move_t& action)
     return *this;
 }
 
-Node* Node::select(const float& c_puct, const float& p_random)
+void Node::improved_policy(float* const out) const
 {
-    assert(has_child());
-    Node* const c = select_best_or_random_child(c_puct, p_random);
-    c->m_parent = this;
-    return c;
+    const uint max_visits
+        = m_most_visited_child ? m_most_visited_child->get_visit_count() : 0u;
+    uint ii = 0u;
+    for (const Node* c = get_child(); c; c = c->get_sibling()) {
+        const float s = sigma(completed_q_value_of(c), max_visits);
+        out[ii++] = c->get_logit() + s;
+    }
+    softmax(out, ii);
 }
 
-Node* Node::select_best_or_random_child(
-    const float c_puct, const float p_random)
+float Node::completed_q_value_of(const Node* const child) const
 {
-    if (select_best_over_random(p_random))
-        return select_best_child(c_puct);
-    return select_random_child();
+    // eq. 10 in https://openreview.net/pdf?id=bERaNdoegnO
+    if (child->get_visit_count())
+        return -child->m_q_value;
+    return m_q_value;
 }
 
-bool Node::select_best_over_random(const float p_random)
+Node* Node::argmax_improved_policy()
 {
-    if (m_is_mate)
-        return true;
-    constexpr float eps = 1e-3f;
-    if (p_random < eps)
-        return true;
-    const float s = dist01(random_engine);
-    return s > p_random;
-}
+    float pi_prime[max_legal_moves] = {};
+    improved_policy(pi_prime);
 
-Node* Node::select_best_child(const float c_puct)
-{
-    const float q_fpu = first_play_urgency();
-    Node* out = nullptr;
-    float max_puct_score = -100.f;
-
-    for (Node* c = m_child.get(); c; c = c->m_sibling.get()) {
-        const float score = puct_score_of(c, c_puct, q_fpu);
-        if (score > max_puct_score) {
-            max_puct_score = score;
+    // assert(m_visit_count == (sum(c->get_visit_count()) + 1));
+    uint ii = 0u;
+    Node* out = m_child.get();
+    float max_diff = pi_prime[0u]
+                     - static_cast<float>(out->get_visit_count())
+                           / static_cast<float>(m_visit_count);
+    for (Node* c = out->m_sibling.get(); c; c = c->m_sibling.get()) {
+        const float d = pi_prime[ii++]
+                        - static_cast<float>(c->get_visit_count())
+                              / static_cast<float>(m_visit_count);
+        if (d > max_diff)
             out = c;
-        }
     }
     return out;
-}
-
-float Node::first_play_urgency() const
-{
-    // https://lczero.org/dev/lc0/search/alphazero/#first-play-urgency-fpu
-    float q = m_q_value;
-    for (const Node* c = m_child.get(); c; c = c->get_sibling()) {
-        if (c->m_visit_count)
-            q -= c->m_proba;
-    }
-    return q;
-}
-
-float Node::puct_score_of(
-    const Node* const c, const float c_puct, const float q_fpu) const
-{
-    const float q = (m_visit_count) ? -c->m_q_value : q_fpu;
-    if (c->is_mate_to_lose()) {
-        const float p_plus_1 = c->m_proba + 1.f;
-        return q + 2.f + p_plus_1 * m_sqrt_visit_count * c_puct;
-    }
-    const float u = c->m_proba * m_sqrt_visit_count
-                    / static_cast<float>(1 + c->m_visit_count);
-    return q + u * c_puct;
-}
-
-Node* Node::select_random_child()
-{
-    constexpr uint num_try_max = 3u;
-    const uint num = count_childs();
-    const float p = 1.f / static_cast<float>(num);
-    Node* c = nullptr;
-    for (uint ii = num_try_max; ii--;) {
-        float s = dist01(random_engine);
-        for (c = m_child.get(); c; c = c->m_sibling.get()) {
-            if (s < p) {
-                if (c->is_mate_to_win())
-                    break; // Do not select child that leads to LOSS
-                return c;
-            } else
-                s -= p;
-        }
-    }
-    assert(c != nullptr);
-    ++(c->m_visit_count_by_random);
-    return c;
 }
 
 void Node::simulate_mate_and_expand(const move_t& action)
@@ -218,12 +162,11 @@ void Node::update_most_visited_child(Node* const candidate)
         m_most_visited_child = candidate;
         return;
     }
-    if (candidate->get_visit_count_excluding_random()
-        > m_most_visited_child->get_visit_count_excluding_random())
+    if (candidate->get_visit_count() > m_most_visited_child->get_visit_count())
         m_most_visited_child = candidate;
     else if (
-        (candidate->get_visit_count_excluding_random()
-         == m_most_visited_child->get_visit_count_excluding_random())
+        (candidate->get_visit_count()
+         == m_most_visited_child->get_visit_count())
         && (candidate->m_q_value < m_most_visited_child->m_q_value))
         m_most_visited_child = candidate;
 }
@@ -241,7 +184,6 @@ Node* Node::backprop(const float v, Node* const child)
 {
     const auto count_before = static_cast<float>(m_visit_count++);
     const auto count_after = static_cast<float>(m_visit_count);
-    m_sqrt_visit_count = std::sqrt(static_cast<float>(m_visit_count));
     update_most_visited_child(child);
     if (m_is_mate) {
         // preserve `m_q_value` if it is already found to be mate.
@@ -257,4 +199,4 @@ Node* Node::backprop(const float v, Node* const child)
     return m_parent;
 }
 
-} // namespace vshogi::engine::az
+} // namespace vshogi::engine::gaz
