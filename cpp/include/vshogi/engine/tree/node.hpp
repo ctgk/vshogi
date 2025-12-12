@@ -13,10 +13,10 @@ protected:
     Derived* m_parent;
     std::unique_ptr<Derived> m_sibling;
     std::unique_ptr<Derived> m_child;
-    Derived* m_most_visited_child;
+    Derived* m_child_1st;
 
 public:
-    Node() : m_parent{}, m_sibling{}, m_child{}, m_most_visited_child{}
+    Node() : m_parent{}, m_sibling{}, m_child{}, m_child_1st{}
     {
     }
     ~Node() = default; // Rule 1/5 destructor
@@ -28,7 +28,7 @@ public:
     const Derived* get_parent() const { return m_parent; }
     const Derived* get_sibling() const { return m_sibling.get(); }
     const Derived* get_child() const { return m_child.get(); }
-    const Derived* get_most_visited_child() const { return m_most_visited_child; }
+    const Derived* get_child_1st() const { return m_child_1st; }
     bool has_child() const { return static_cast<bool>(m_child); }
     // clang-format on
     void init()
@@ -36,7 +36,7 @@ public:
         m_parent = nullptr;
         m_sibling.reset();
         m_child.reset();
-        m_most_visited_child = nullptr;
+        m_child_1st = nullptr;
     }
     uint count_childs() const
     {

@@ -63,8 +63,7 @@ public:
         float max_score = -std::numeric_limits<float>::infinity();
         move_t out{};
 
-        const uint max_visits
-            = m_root.get_most_visited_child()->get_visit_count();
+        const uint max_visits = m_root.get_child_1st()->get_visit_count();
         uint ii = 0u;
         if (m_child_nodes[0] == nullptr) {
             for (const Node* c = m_root.get_child(); c; c = c->get_sibling()) {
@@ -202,7 +201,7 @@ bool Searcher<P>::dfpn_proved_mate(Game<P>& game, Node* const node)
             node->simulate_mate_and_expand(m);
             backprop_to_root(game, node);
             if (node == &m_root) {
-                m_child_nodes[0] = m_root.get_most_visited_child();
+                m_child_nodes[0] = m_root.get_child_1st();
                 m_child_nodes[1] = nullptr;
             }
             return true;
@@ -216,7 +215,7 @@ void Searcher<P>::keep_top_n_actions(const uint num_actions)
 {
     assert(num_actions > 1u);
     const uint num_child = set_child_nodes_and_gumbel_noises();
-    const Node* const best_child = m_root.get_most_visited_child();
+    const Node* const best_child = m_root.get_child_1st();
     const uint max_visits = best_child ? best_child->get_visit_count() : 0u;
     std::tuple<const Node*, float, float> data[max_legal_moves] = {};
     for (uint ii = 0u; ii < num_child; ++ii) {

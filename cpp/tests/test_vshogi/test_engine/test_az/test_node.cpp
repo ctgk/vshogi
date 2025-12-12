@@ -65,8 +65,7 @@ TEST(minishogi_node, explore_game_end)
     CHECK_EQUAL(&root, p);
     p->backprop(-child->get_q_value(), child);
     DOUBLES_EQUAL(1.f, root.get_q_value(), 1e-2f);
-    CHECK_EQUAL(
-        MT::make_move("1c1b"), root.get_most_visited_child()->get_action());
+    CHECK_EQUAL(MT::make_move("1c1b"), root.get_child_1st()->get_action());
 }
 
 TEST(minishogi_node, explore_one_action)
@@ -170,7 +169,7 @@ TEST(minishogi_node, explore_two_action)
         CHECK_EQUAL(root.get_child_of(moves[ii]), actual);
         DOUBLES_EQUAL(expected_q_value[ii], root.get_q_value(), 1e-3f);
         CHECK_TRUE(
-            root.get_most_visited_child()->get_action()
+            root.get_child_1st()->get_action()
             == expected_most_selected_moves[ii]);
         DOUBLES_EQUAL(
             expected_greedy_q_values[ii], root.get_q_value(100), 1e-2f);
@@ -261,8 +260,7 @@ TEST(minishogi_node, explore_two_layer)
         CHECK_EQUAL(nullptr, root.backprop(grand_child->get_q_value(), child));
         DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(), 1e-3f);
         CHECK_TRUE(
-            root.get_most_visited_child()->get_action()
-            == MT::make_move(SQ_1E, SQ_1D));
+            root.get_child_1st()->get_action() == MT::make_move(SQ_1E, SQ_1D));
         DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(0), 1e-2f);
         DOUBLES_EQUAL((0.9f + -0.5f) / 2.f, root.get_q_value(1), 1e-2f);
         DOUBLES_EQUAL(-0.5f, root.get_q_value(2), 1e-2f);
@@ -285,8 +283,7 @@ TEST(minishogi_node, explore_two_layer)
             1e-2f);
         DOUBLES_EQUAL((-0.9f + 0.5f) / 2.f, root.get_q_value(), 1e-3f);
         CHECK_TRUE(
-            root.get_most_visited_child()->get_action()
-            == MT::make_move(SQ_5A, SQ_5B));
+            root.get_child_1st()->get_action() == MT::make_move(SQ_5A, SQ_5B));
         DOUBLES_EQUAL((-0.9f + 0.5f) / 2.f, root.get_q_value(0), 1e-2f);
         DOUBLES_EQUAL(0.5f, root.get_q_value(1), 1e-2f);
         DOUBLES_EQUAL(0.5f, root.get_q_value(100), 1e-2f);
@@ -324,12 +321,12 @@ TEST(minishogi_node, test_apply)
     }
     auto c = root.get_child();
     auto gc = root.get_child()->get_child();
-    CHECK_EQUAL(c->get_most_visited_child(), gc);
+    CHECK_EQUAL(c->get_child_1st(), gc);
     CHECK_COMPARE(gc->get_parent(), ==, c);
 
     root.apply(root.get_child()->get_action());
     CHECK_EQUAL(0u, root.get_action());
-    CHECK_EQUAL(root.get_most_visited_child(), gc);
+    CHECK_EQUAL(root.get_child_1st(), gc);
     CHECK_COMPARE(gc->get_parent(), !=, &root);
 
     const auto c_after_apply = root.select(1.f, 0.f);

@@ -119,7 +119,7 @@ Searcher<P>& Searcher<P>::apply(Game<P>& game, const move_t& action)
 template <class P>
 move_t Searcher<P>::get_action_by_visit_max() const
 {
-    const Node* c = m_root.get_most_visited_child();
+    const Node* c = m_root.get_child_1st();
     if (c == nullptr)
         c = m_root.get_child();
     return c ? c->get_action() : static_cast<move_t>(0);

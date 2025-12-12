@@ -31,9 +31,9 @@ void Node::init()
 
 float Node::get_q_value(const uint greedy_depth) const
 {
-    if (m_is_mate || !m_most_visited_child || !greedy_depth)
+    if (m_is_mate || !m_child_1st || !greedy_depth)
         return m_q_value;
-    return -m_most_visited_child->get_q_value(greedy_depth - 1u);
+    return -m_child_1st->get_q_value(greedy_depth - 1u);
 }
 
 const Node* Node::get_child_of(const move_t& action) const
@@ -58,7 +58,7 @@ Node& Node::apply(const move_t& action)
             m_is_mate = c->m_is_mate;
             // m_parent = c->m_parent;
             // m_sibling = c->m_sibling;
-            m_most_visited_child = c->m_most_visited_child;
+            m_child_1st = c->m_child_1st;
             m_child = std::move(c->m_child);
             return *this;
         }
@@ -68,7 +68,7 @@ Node& Node::apply(const move_t& action)
     m_sqrt_visit_count = 0.f;
     m_q_value = 0.f;
     m_is_mate = false;
-    m_most_visited_child = nullptr;
+    m_child_1st = nullptr;
     m_child.reset();
     return *this;
 }
@@ -170,7 +170,7 @@ void Node::simulate_mate_and_expand(const move_t& action)
         Node* c = m_child.get();
         for (; c; c = c->m_sibling.get()) {
             if (c->get_action() == action) {
-                m_most_visited_child = c;
+                m_child_1st = c;
                 break;
             }
         }
@@ -178,15 +178,15 @@ void Node::simulate_mate_and_expand(const move_t& action)
             throw std::invalid_argument("Given action not found.");
     } else {
         m_child = std::make_unique<Node>(action, 1.f);
-        m_most_visited_child = m_child.get();
+        m_child_1st = m_child.get();
     }
-    m_most_visited_child->m_q_value = -1.f;
-    m_most_visited_child->m_is_mate = true;
+    m_child_1st->m_q_value = -1.f;
+    m_child_1st->m_is_mate = true;
 }
 
 void Node::update_most_visited_child(Node* const candidate)
 {
-    // |   candidate(c)  |                m_most_visited_child(m)             |
+    // |   candidate(c)  |                    m_child_1st(m)                  |
     // |                 | nullptr | is_mate_to_win | is_mate_to_lose | other |
     // |         nullptr |    #    |       (m)      |       (m)       |  (m)  |
     // |  is_mate_to_win |   (c)   |        #       |        x        |  (m)  |
@@ -195,29 +195,27 @@ void Node::update_most_visited_child(Node* const candidate)
     // #: don't care
     // x: impossible to happen.
 
-    if (m_most_visited_child == nullptr) {
-        m_most_visited_child = candidate;
+    if (m_child_1st == nullptr) {
+        m_child_1st = candidate;
         return;
     }
     if (candidate == nullptr) {
         return;
     }
     assert(
-        candidate->is_mate_to_win() ? !m_most_visited_child->is_mate_to_lose()
-                                    : true);
-    if (candidate->is_mate_to_lose()
-        || m_most_visited_child->is_mate_to_win()) {
-        m_most_visited_child = candidate;
+        candidate->is_mate_to_win() ? !m_child_1st->is_mate_to_lose() : true);
+    if (candidate->is_mate_to_lose() || m_child_1st->is_mate_to_win()) {
+        m_child_1st = candidate;
         return;
     }
     if (candidate->get_visit_count_excluding_random()
-        > m_most_visited_child->get_visit_count_excluding_random())
-        m_most_visited_child = candidate;
+        > m_child_1st->get_visit_count_excluding_random())
+        m_child_1st = candidate;
     else if (
         (candidate->get_visit_count_excluding_random()
-         == m_most_visited_child->get_visit_count_excluding_random())
-        && (candidate->m_q_value < m_most_visited_child->m_q_value))
-        m_most_visited_child = candidate;
+         == m_child_1st->get_visit_count_excluding_random())
+        && (candidate->m_q_value < m_child_1st->m_q_value))
+        m_child_1st = candidate;
 }
 
 bool Node::all_childs_are_mate_to_win() const
@@ -238,7 +236,7 @@ Node* Node::backprop(const float v, Node* const child)
     if (m_is_mate) {
         // preserve `m_q_value` if it is already found to be mate.
     } else if (
-        (m_most_visited_child && m_most_visited_child->is_mate_to_lose())
+        (m_child_1st && m_child_1st->is_mate_to_lose())
         || all_childs_are_mate_to_win()) {
         m_is_mate = true;
         assert((0.99f < std::abs(v)) && (std::abs(v) < 1.01f));
