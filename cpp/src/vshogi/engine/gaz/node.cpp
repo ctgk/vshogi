@@ -4,13 +4,13 @@ namespace vshogi::engine::gaz
 {
 
 Node::Node()
-    : tree::Node<Node>(), m_action{}, m_logit(0.f), m_visit_count(0u),
-      m_q_value(0.f), m_is_mate(false)
+    : tree::Node<Node>(), m_logit(0.f), m_visit_count(0u), m_q_value(0.f),
+      m_is_mate(false)
 {
 }
 
 Node::Node(const move_t& action, const float logit)
-    : tree::Node<Node>(), m_action(action), m_logit(logit), m_visit_count(0u),
+    : tree::Node<Node>(action), m_logit(logit), m_visit_count(0u),
       m_q_value(0.f), m_is_mate(false)
 {
 }

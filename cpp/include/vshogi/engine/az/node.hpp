@@ -19,7 +19,6 @@ namespace vshogi::engine::az
 class Node : public tree::Node<Node>
 {
 private:
-    move_t m_action;
     float m_proba;
     uint m_visit_count;
     uint m_visit_count_by_random;
@@ -32,7 +31,6 @@ public:
     Node(const move_t& action, const float proba);
     void init();
     // clang-format off
-    move_t get_action() const { return m_action; }
     float get_proba() const { return m_proba; }
     uint get_visit_count() const { return m_visit_count; }
     uint get_visit_count_excluding_random() const { return m_visit_count - m_visit_count_by_random; }

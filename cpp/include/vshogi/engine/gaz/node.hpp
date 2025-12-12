@@ -35,7 +35,6 @@ constexpr uint max_legal_moves = 600u;
 class Node : public tree::Node<Node>
 {
 private:
-    move_t m_action;
     float m_logit;
     uint m_visit_count;
     float m_q_value;
@@ -46,7 +45,6 @@ public:
     Node(const move_t& action, const float logit);
     void init();
     // clang-format off
-    move_t get_action() const { return m_action; }
     float get_logit() const { return m_logit; }
     uint get_visit_count() const { return m_visit_count; }
     float get_q_value() const { return m_q_value; }
