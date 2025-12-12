@@ -30,6 +30,7 @@ TEST(test_gaz_searcher, keep_top_n_actions)
         auto g_copy = Game(g);
         const auto c = searcher.search(g_copy);
         c->backprop(0.f, nullptr);
+        CHECK_FALSE(c->is_mate());
         actual.emplace(c->get_action());
     }
     CHECK_EQUAL(2u, actual.size());

@@ -176,8 +176,9 @@ Node* Node::backprop(const float v, Node* const child)
     if (m_is_mate) {
         // preserve `m_q_value` if it is already found to be mate.
     } else if (
-        (m_child_1st && m_child_1st->is_mate_to_lose())
-        || all_childs_are_mate_to_win()) {
+        has_child()
+        && ((m_child_1st && m_child_1st->is_mate_to_lose())
+            || all_childs_are_mate_to_win())) {
         m_is_mate = true;
         assert((0.99f < std::abs(v)) && (std::abs(v) < 1.01f));
         m_q_value = v;

@@ -67,4 +67,11 @@ TEST(test_gaz_node, get_q_value)
     DOUBLES_EQUAL(-1.f, node.get_q_value(1u), 1e-3f);
 }
 
+TEST(test_gaz_node, backprop)
+{
+    node.backprop(0.5f, nullptr);
+    CHECK_FALSE(node.is_mate());
+    DOUBLES_EQUAL(0.5f, node.get_q_value(), 1e-3f);
+}
+
 } // namespace test_vshogi::test_engine::test_gaz
