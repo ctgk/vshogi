@@ -36,14 +36,6 @@ float Node::get_q_value(const uint greedy_depth) const
     return -m_most_visited_child->get_q_value(greedy_depth - 1u);
 }
 
-uint Node::count_childs() const
-{
-    uint out = 0u;
-    for (const Node* c = get_child(); c; c = c->get_sibling())
-        ++out;
-    return out;
-}
-
 const Node* Node::get_child_of(const move_t& action) const
 {
     for (const Node* c = get_child(); c; c = c->get_sibling()) {

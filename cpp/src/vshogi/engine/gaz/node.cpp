@@ -25,14 +25,6 @@ void Node::init()
     m_is_mate = false;
 }
 
-uint Node::count_childs() const
-{
-    uint out = 0u;
-    for (const Node* c = get_child(); c; c = c->get_sibling())
-        ++out;
-    return out;
-}
-
 float Node::get_q_value(const uint greedy_depth) const
 {
     if (m_is_mate || !m_most_visited_child || !greedy_depth)

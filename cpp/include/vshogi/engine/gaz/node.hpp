@@ -54,7 +54,6 @@ public:
     bool is_mate_to_win() const { return m_is_mate && (m_q_value > 0.f); }
     bool is_mate_to_lose() const { return m_is_mate && (m_q_value < 0.f); }
     // clang-format on
-    uint count_childs() const;
     float get_q_value(const uint greedy_depth) const;
     const Node* get_child_of(const move_t& action) const;
     Node& apply(const move_t& action);

@@ -24,13 +24,6 @@ public:
     Node& operator=(const Node& other) = delete; // Rule 3/5 copy assignment
     Node(Node&& other) = default; // Rule 4/5 move constructor
     Node& operator=(Node&& other) = default; // Rule 5/5 move assignment
-    void init()
-    {
-        m_parent = nullptr;
-        m_sibling.reset();
-        m_child.reset();
-        m_most_visited_child = nullptr;
-    }
     // clang-format off
     const Derived* get_parent() const { return m_parent; }
     const Derived* get_sibling() const { return m_sibling.get(); }
@@ -38,6 +31,20 @@ public:
     const Derived* get_most_visited_child() const { return m_most_visited_child; }
     bool has_child() const { return static_cast<bool>(m_child); }
     // clang-format on
+    void init()
+    {
+        m_parent = nullptr;
+        m_sibling.reset();
+        m_child.reset();
+        m_most_visited_child = nullptr;
+    }
+    uint count_childs() const
+    {
+        uint out = 0u;
+        for (auto c = get_child(); c; c = c->get_sibling())
+            ++out;
+        return out;
+    }
 };
 
 } // namespace vshogi::engine::tree
