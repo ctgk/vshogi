@@ -253,3 +253,5 @@ __pycache__
 gha-creds-*.json
 
 examples/**/*shogi*/
+examples/**/*judkins*/
+tmp/
