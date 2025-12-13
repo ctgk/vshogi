@@ -82,6 +82,13 @@ private:
     void improved_policy(float* const out) const;
     float completed_q_value_of(const Node* const child) const;
 
+    template <class P>
+    static void make_node_at(
+        std::unique_ptr<Node>** ptr,
+        const move_t& action,
+        const ColorEnum& turn,
+        const float* const policy_logits);
+
     // backprop
     void update_most_visited_child(Node* const candidate);
     bool all_childs_are_mate_to_win() const;
@@ -151,18 +158,30 @@ void Node::simulate(const Game<P>& g)
 template <class P>
 void Node::expand(const Game<P>& game, const float* const policy_logits)
 {
-    const auto actions = game.get_legal_moves();
     const auto turn = game.get_turn();
-    const auto num = actions.size();
-    if (num == 0)
-        return;
     std::unique_ptr<Node>* ptr = &m_child;
-    for (uint ii = 0u; ii < num; ++ii) {
-        const auto index = MoveTraits<P>::to_policy_index(actions[ii], turn);
-        const auto logit = policy_logits ? policy_logits[index] : 0.f;
-        *ptr = std::make_unique<Node>(actions[ii], logit);
-        ptr = &(*ptr)->m_sibling;
+    if (game.in_check()) {
+        auto gen = MoveGenerator<P, GenEnum::EVADE>(game.get_state());
+        for (; gen; ++gen)
+            make_node_at<P>(&ptr, *gen, turn, policy_logits);
+    } else {
+        auto gen = MoveGenerator<P, GenEnum::LEGAL>(game.get_state());
+        for (; gen; ++gen)
+            make_node_at<P>(&ptr, *gen, turn, policy_logits);
     }
+}
+
+template <class P>
+void Node::make_node_at(
+    std::unique_ptr<Node>** ptr,
+    const move_t& action,
+    const ColorEnum& turn,
+    const float* const policy_logits)
+{
+    const auto index = MoveTraits<P>::to_policy_index(action, turn);
+    const auto logit = policy_logits ? policy_logits[index] : 0.f;
+    **ptr = std::make_unique<Node>(action, logit);
+    *ptr = &(**ptr)->m_sibling;
 }
 
 template <class P>
