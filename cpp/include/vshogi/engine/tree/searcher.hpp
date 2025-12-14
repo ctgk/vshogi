@@ -29,6 +29,8 @@ protected:
     std::vector<N> m_nodes;
     N* m_next;
 
+    template <class G>
+    void backprop_to_root(G& game, N* const leaf);
     void remove_unselected_nodes(const move_t& selected);
 };
 
@@ -58,6 +60,21 @@ template <class N>
 const N& Searcher<N>::get_root() const
 {
     return m_nodes.front();
+}
+
+template <class N>
+template <class G>
+void Searcher<N>::backprop_to_root(G& game, N* const leaf)
+{
+    float v = leaf->get_q_value();
+    for (N *curr = leaf, *prev = nullptr;; v = -v) {
+        N* const parent = curr->backprop(v, prev);
+        prev = curr;
+        curr = parent;
+        if (parent == nullptr) // `curr` was root node.
+            break;
+        game.undo();
+    }
 }
 
 template <class N>

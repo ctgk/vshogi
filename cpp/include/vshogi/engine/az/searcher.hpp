@@ -55,7 +55,6 @@ public:
 
 private:
     Node* select_a_leaf_node(Game<P>& game);
-    void backprop_to_root(Game<P>& game, Node* const leaf);
     bool dfpn_proved_mate(Game<P>& game, Node* const node);
 };
 
@@ -189,20 +188,6 @@ Node* Searcher<P>::select_a_leaf_node(Game<P>& game)
         n = child;
     }
     return n;
-}
-
-template <class P>
-void Searcher<P>::backprop_to_root(Game<P>& game, Node* const leaf)
-{
-    float v = leaf->get_q_value();
-    for (Node *node = leaf, *child = nullptr;; v = -v) {
-        Node* const parent = node->backprop(v, child);
-        child = node;
-        node = parent;
-        if (parent == nullptr) // `node` was root node.
-            break;
-        game.undo();
-    }
 }
 
 template <class P>
