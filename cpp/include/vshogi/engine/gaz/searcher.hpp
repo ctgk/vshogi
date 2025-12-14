@@ -14,6 +14,7 @@
 #include "vshogi/common/utils.hpp"
 #include "vshogi/engine/dfpn/searcher.hpp"
 #include "vshogi/engine/gaz/node.hpp"
+#include "vshogi/engine/tree/searcher.hpp"
 
 namespace vshogi::engine::gaz
 {
@@ -21,11 +22,9 @@ namespace vshogi::engine::gaz
 namespace dfpn = vshogi::engine::dfpn;
 
 template <class P>
-class Searcher
+class Searcher : public tree::Searcher<Node>
 {
 private:
-    std::vector<Node> m_nodes;
-    Node* m_next;
     dfpn::Searcher<P> m_dfpn;
     const uint m_dfpn_search_root;
     const uint m_dfpn_search_leaf;
@@ -93,7 +92,6 @@ public:
     // clang-format off
     uint get_search_count() const { return m_nodes[0].get_visit_count(); }
     bool proved_mate() const { return m_nodes[0].is_mate(); }
-    const Node& get_root() const { return m_nodes[0]; }
     // clang-format on
 
 private:
@@ -108,7 +106,7 @@ Searcher<P>::Searcher(
     const uint tree_size,
     const uint dfpn_search_root,
     const uint dfpn_search_leaf)
-    : m_nodes(tree_size + 2u), m_next{},
+    : tree::Searcher<Node>(tree_size),
       m_dfpn{std::max(dfpn_search_root, dfpn_search_leaf) * 10u},
       m_dfpn_search_root(dfpn_search_root),
       m_dfpn_search_leaf(dfpn_search_leaf), m_child_nodes{}, m_gumbel_noises{}
@@ -119,10 +117,7 @@ Searcher<P>::Searcher(
 template <class P>
 void Searcher<P>::init()
 {
-    m_nodes.front().init();
-    m_next = std::next(m_nodes.data());
-    m_next->init();
-    m_nodes.back().init_as_end();
+    tree::Searcher<Node>::init();
     m_child_nodes[0] = nullptr;
 }
 
