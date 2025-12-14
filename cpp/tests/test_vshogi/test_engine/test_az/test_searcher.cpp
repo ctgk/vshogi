@@ -27,7 +27,7 @@ TEST_GROUP (minishogi_searcher) {
 TEST(minishogi_searcher, explore_after_apply)
 {
     auto g = Game();
-    auto az = Searcher(4.f, 1.f);
+    auto az = Searcher(4.f, 1.f, 1000000u);
     for (int ii = 100; ii--;) {
         const auto n = az.search(g);
         if (n != nullptr) {
@@ -69,7 +69,7 @@ TEST(minishogi_searcher, test_mate_in_three)
     //   +---+---+---+---+---+
     // Black: -
     auto g = Game("1r3/2k1G/5/2PG1/5 b -");
-    auto az = Searcher(4.f, 0.f);
+    auto az = Searcher(4.f, 0.f, 1000000u);
     for (int ii = 100; ii--;) {
         Node* const n = az.search(g);
         if (n)
@@ -93,7 +93,7 @@ TEST(minishogi_searcher, test_mate_in_three)
 
 TEST(minishogi_searcher, test_dfpn_root)
 {
-    auto az = Searcher(4.f, 0.f, 10000u, 0u);
+    auto az = Searcher(4.f, 0.f, 1000000u, 10000u, 0u);
     {
         auto g = Game("5/4k/5/4P/4K b 2G");
         az.search(g);
@@ -101,7 +101,7 @@ TEST(minishogi_searcher, test_dfpn_root)
         CHECK_EQUAL(MT::make_move("G*1c"), az.get_action_by_visit_max());
     }
     {
-        az.init_root();
+        az.init();
         auto game = Game("5/5/4k/4P/4K w 2G");
         for (int ii = 100; ii--;) {
             auto g = Game(game);
@@ -136,7 +136,7 @@ TEST(minishogi_searcher, test_dfpn_vertex)
     //   +---+---+---+---+---+
     // Black: -
     auto game = Game("2k2/2rg1/2sp1/5/2K2 b -");
-    auto az = Searcher(4.f, 0.f, 0u, 100u);
+    auto az = Searcher(4.f, 0.f, 1000000u, 0u, 100u);
     for (int ii = 3; ii--;) {
         Node* const n = az.search(game);
         if (n)
@@ -144,6 +144,9 @@ TEST(minishogi_searcher, test_dfpn_vertex)
         CHECK_EQUAL(0u, game.ply());
     }
     CHECK_EQUAL(MT::make_move("3e4e"), az.get_action_by_visit_max());
+    const auto root = az.get_root();
+    const auto child = root.get_child_of(MT::make_move("3e2e"));
+    CHECK_TRUE(child->is_mate_to_win());
     az.apply(game, MT::make_move("3e2e"));
     CHECK_EQUAL(1u, game.ply());
     DOUBLES_EQUAL(1.f, az.get_root().get_q_value(), 1e-3f);
@@ -180,7 +183,7 @@ TEST(minishogi_searcher, test_dfpn_root_vertex)
     //   +---+---+---+---+---+
     // Black: HI
     auto game = Game("r4/2k2/2+b1P/PGB2/K1S2 w Rgs 22");
-    auto az = Searcher(4.f, 0.f, 10000u, 100u);
+    auto az = Searcher(4.f, 0.f, 1000000u, 10000u, 100u);
     for (int ii = 4; ii--;) {
         const auto leaf = az.search(game);
         if (leaf)
@@ -194,7 +197,7 @@ TEST(minishogi_searcher, test_dfpn_root_vertex)
 TEST(minishogi_searcher, explore_until_game_end)
 {
     auto g = Game();
-    auto az = Searcher(4.f, 1.f);
+    auto az = Searcher(4.f, 1.f, 1000000u);
     for (uint num_ply = 0u;; ++num_ply) {
         if (g.get_result() != vshogi::ONGOING)
             break;
@@ -213,6 +216,106 @@ TEST(minishogi_searcher, explore_until_game_end)
     }
 }
 
+TEST(minishogi_searcher, few_nodes)
+{
+    auto az = Searcher(4.f, 0.f, 0u);
+    auto g = Game("g3k/5/5/5/K3G b -");
+    const auto n = az.search(g);
+    az.simulate_expand_backprop(n, g, 0.f, nullptr);
+    CHECK_EQUAL(1u, az.get_search_count());
+    CHECK_EQUAL(0u, az.get_root().count_childs());
+    CHECK_FALSE(az.get_root().is_mate());
+
+    const auto n2 = az.search(g);
+    CHECK_EQUAL(n, n2);
+    az.simulate_expand_backprop(n2, g, 0.f, nullptr);
+    CHECK_EQUAL(2u, az.get_search_count());
+    CHECK_EQUAL(0u, az.get_root().count_childs());
+    CHECK_FALSE(az.get_root().is_mate());
+}
+
+TEST(minishogi_searcher, apply_non_child1st_action)
+{
+    auto g = Game("g3k/5/5/5/K3G b -");
+    auto az = Searcher(4.f, 0.f, 1000000u);
+    for (uint ii = 100u; ii--;) {
+        const auto n = az.search(g);
+        az.simulate_expand_backprop(n, g, 0.f, nullptr);
+        CHECK_EQUAL(0u, g.ply());
+    }
+    CHECK_EQUAL(az.get_root().get_child_1st(), az.get_root().get_child());
+    const auto c2 = az.get_root().get_child()->get_sibling();
+    CHECK_TRUE(c2);
+    CHECK_EQUAL(&az.get_root(), c2->get_parent());
+
+    const auto action_c2 = c2->get_action();
+    const auto expect_a = c2->get_child_1st()->get_action();
+    az.apply(g, action_c2);
+    CHECK_EQUAL(expect_a, az.get_root().get_child_1st()->get_action());
+}
+
+TEST(minishogi_searcher, apply_child1st_action)
+{
+    auto g = Game("g3k/5/5/5/K3G b -");
+    auto az = Searcher();
+    for (uint ii = 100u; ii--;) {
+        const auto n = az.search(g);
+        az.simulate_expand_backprop(n, g, 0.f, nullptr);
+        CHECK_EQUAL(0u, g.ply());
+    }
+    const auto c1 = az.get_root().get_child_1st();
+    const auto action_c1 = c1->get_action();
+    const auto expect_a = c1->get_child_1st()->get_action();
+    az.apply(g, action_c1);
+    CHECK_EQUAL(expect_a, az.get_root().get_child_1st()->get_action());
+}
+
+TEST(minishogi_searcher, apply_action_without_child)
+{
+    auto g = Game("2k2/5/2P2/5/5 b G");
+    auto az = Searcher(4.f, 0.25f, 100u, 100u, 0u);
+    CHECK_EQUAL(nullptr, az.search(g));
+    CHECK_EQUAL(1u, az.get_search_count());
+    CHECK_EQUAL(1u, az.get_root().count_childs());
+    CHECK_EQUAL(MT::make_move("G*3b"), az.get_root().get_child()->get_action());
+
+    az.apply(g, MT::make_move("G*2b"));
+    CHECK_EQUAL(0u, az.get_search_count());
+    CHECK_EQUAL(0u, az.get_root().count_childs());
+}
+
+TEST(minishogi_searcher, apply_action_with_child)
+{
+    auto g = Game("2k2/5/2P2/5/5 b G");
+    auto az = Searcher(4.f, 0.25f, 100u, 100u, 0u);
+    CHECK_EQUAL(nullptr, az.search(g));
+    CHECK_EQUAL(1u, az.get_search_count());
+    CHECK_EQUAL(1u, az.get_root().count_childs());
+    CHECK_EQUAL(0u, az.get_root().get_child()->get_visit_count());
+    CHECK_EQUAL(MT::make_move("G*3b"), az.get_root().get_child()->get_action());
+    CHECK_EQUAL(nullptr, az.search(g));
+    CHECK_EQUAL(2u, az.get_search_count());
+    CHECK_EQUAL(1u, az.get_root().get_child()->get_visit_count());
+
+    az.apply(g, MT::make_move("G*3b"));
+    CHECK_EQUAL(1u, az.get_search_count());
+    CHECK_EQUAL(0u, az.get_root().count_childs());
+}
+
+TEST(minishogi_searcher, apply_no_child)
+{
+    auto g = Game("p4/5/5/5/4P b -");
+    auto az = Searcher(4.f, 0.f, 100u);
+    az.apply(g, MT::make_move("1e1d"));
+    CHECK_EQUAL(0u, az.get_search_count());
+    const auto n = az.search(g);
+    CHECK_EQUAL(&az.get_root(), n);
+    az.simulate_expand_backprop(n, g, 0.f, nullptr);
+    CHECK_EQUAL(1u, az.get_search_count());
+    const auto c = az.search(g);
+    CHECK_EQUAL(&az.get_root(), c->get_parent());
+}
+
 } // namespace test_minishogi
 
 namespace test_judkins_shogi
@@ -229,7 +332,7 @@ TEST_GROUP (judkins_shogi_searcher) {
 TEST(judkins_shogi_searcher, explore_until_game_end)
 {
     auto g = Game();
-    auto az = Searcher(4.f, 0.25f);
+    auto az = Searcher(4.f, 0.25f, 1000000u);
     for (uint num_ply = 0u; g.get_result() == vshogi::ONGOING; ++num_ply) {
         CHECK_COMPARE(100u, >=, az.get_search_count());
         for (uint ii = (100 - az.get_search_count()); ii--;) {
@@ -255,13 +358,13 @@ using Node = vshogi::engine::az::Node;
 using Searcher = vshogi::engine::az::Searcher<Parameters>;
 static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
 
-TEST_GROUP (shogi_searcher) {
+TEST_GROUP (test_shogi_searcher) {
 };
 
-TEST(shogi_searcher, explore_until_game_end)
+TEST(test_shogi_searcher, explore_until_game_end)
 {
     auto g = Game();
-    auto az = Searcher(4.f, 0.25f);
+    auto az = Searcher(4.f, 0.25f, 1000000u);
     for (uint num_ply = 0u; g.get_result() == vshogi::ONGOING; ++num_ply) {
         if (g.get_result() != vshogi::ONGOING)
             break;
@@ -280,12 +383,12 @@ TEST(shogi_searcher, explore_until_game_end)
     }
 }
 
-TEST(shogi_searcher, dfpn)
+TEST(test_shogi_searcher, dfpn)
 {
     const char kifu[][6] = {"S*2b", "3a4a", "L*4b"};
     auto g = Game("l5k1l/3+R5/1p3Gnp1/5pp1p/2p1p2P1/p5P1P/1P1S5/PG2+p4/1NK1S3L "
                   "b RGSLP2bgs2n3p 165");
-    auto az = Searcher(4.f, 0.25f, 10000u, 100u);
+    auto az = Searcher(4.f, 0.25f, 1000000u, 10000u, 100u);
     for (uint ii = 0u; ii < 3u; ++ii) {
         if (g.get_result() != vshogi::ONGOING)
             break;
@@ -294,14 +397,19 @@ TEST(shogi_searcher, dfpn)
             const auto n = az.search(g);
             if (n == nullptr)
                 continue;
-            CHECK_TRUE((n == &az.get_root()) || (g.ply() > ii));
+            if (n != &az.get_root())
+                CHECK_COMPARE(ii, <, g.ply());
+            else
+                CHECK_EQUAL(&az.get_root(), n);
             az.simulate_expand_backprop(n, g, 0.f, zeros);
             CHECK_EQUAL(ii, g.ply());
         }
+        CHECK_EQUAL(1u, az.get_search_count());
 
         az.get_action_by_visit_max();
         const auto m = MoveTraits::make_move(kifu[ii]);
         az.apply(g, m);
+        CHECK_EQUAL(nullptr, az.get_root().get_parent());
         if (ii == 2u)
             CHECK_EQUAL(vshogi::BLACK_WIN, g.get_result());
         else

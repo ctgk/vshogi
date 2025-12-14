@@ -9,20 +9,20 @@ Node::Node()
 {
 }
 
-Node::Node(const move_t& action, const float logit)
-    : tree::Node<Node>(action), m_logit(logit), m_visit_count(0u),
-      m_q_value(0.f), m_is_mate(false)
-{
-}
-
 void Node::init()
 {
     tree::Node<Node>::init();
-    m_action = static_cast<move_t>(0);
     m_logit = 0.f;
     m_visit_count = 0u;
     m_q_value = 0.f;
     m_is_mate = false;
+}
+void Node::init(Node* const parent, const move_t& action, const float logit)
+{
+    init();
+    m_parent = parent;
+    m_action = action;
+    m_logit = logit;
 }
 
 float Node::get_q_value(const uint greedy_depth) const
@@ -39,30 +39,6 @@ const Node* Node::get_child_of(const move_t& action) const
             return c;
     }
     return nullptr;
-}
-
-Node& Node::apply(const move_t& action)
-{
-    assert(m_action == 0u);
-    for (Node* c = m_child.get(); c; c = c->m_sibling.get()) {
-        if (c->m_action == action) {
-            // m_action = c->m_action;
-            m_visit_count = c->m_visit_count;
-            m_q_value = c->m_q_value;
-            m_is_mate = c->m_is_mate;
-            // m_parent = c->m_parent;
-            // m_sibling = c->m_sibling;
-            m_child_1st = c->m_child_1st;
-            m_child = std::move(c->m_child);
-            return *this;
-        }
-    }
-    m_visit_count = 0u;
-    m_q_value = 0.f;
-    m_is_mate = false;
-    m_child_1st = nullptr;
-    m_child.reset();
-    return *this;
 }
 
 void Node::improved_policy(float* const out) const
@@ -84,47 +60,28 @@ float Node::completed_q_value_of(const Node* const child) const
     return m_q_value;
 }
 
-Node* Node::argmax_improved_policy()
-{
-    float pi_prime[max_legal_moves] = {};
-    improved_policy(pi_prime);
-
-    // assert(m_visit_count == (sum(c->get_visit_count()) + 1));
-    uint ii = 0u;
-    Node* out = m_child.get();
-    float max_diff = pi_prime[0u]
-                     - static_cast<float>(out->get_visit_count())
-                           / static_cast<float>(m_visit_count);
-    for (Node* c = out->m_sibling.get(); c; c = c->m_sibling.get()) {
-        const float d = pi_prime[ii++]
-                        - static_cast<float>(c->get_visit_count())
-                              / static_cast<float>(m_visit_count);
-        if (d > max_diff)
-            out = c;
-    }
-    return out;
-}
-
-void Node::simulate_mate_and_expand(const move_t& action)
+void Node::simulate_mate_and_expand(Node*& next, const move_t& action)
 {
     m_q_value = 1.f;
     m_is_mate = true;
     if (has_child()) {
-        Node* c = m_child.get();
-        for (; c; c = c->m_sibling.get()) {
+        for (Node* c = m_child; c->m_parent == this; ++c) {
             if (c->get_action() == action) {
                 m_child_1st = c;
-                break;
+                m_child_1st->m_q_value = -1.f;
+                m_child_1st->m_is_mate = true;
+                return;
             }
         }
-        if (c == nullptr)
-            throw std::invalid_argument("Given action not found.");
-    } else {
-        m_child = std::make_unique<Node>(action, 1.f);
-        m_child_1st = m_child.get();
+        throw std::invalid_argument("Given action not found.");
+    } else if (!next->is_end()) {
+        next->init(this, action, 1.f);
+        m_child = next++;
+        m_child_1st = m_child;
+        m_child_1st->m_q_value = -1.f;
+        m_child_1st->m_is_mate = true;
+        next->init_if_not_end();
     }
-    m_child_1st->m_q_value = -1.f;
-    m_child_1st->m_is_mate = true;
 }
 
 void Node::update_most_visited_child(Node* const candidate)

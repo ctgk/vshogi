@@ -61,6 +61,7 @@ class AlphaZero(Engine):
         coeff_puct: float = 1.,
         random_rate: float = 0.25,
         kldgain_threshold: tp.Optional[float] = None,
+        tree_size: int = 1000000,
         dfpn_search_root: int = 0,
         dfpn_search_leaf: int = 0,
         name: tp.Optional[str] = None,
@@ -81,6 +82,8 @@ class AlphaZero(Engine):
         kldgain_threshold : float, optional
             KL divergence threshold for early stopping of MCTS.
             Default is None.
+        tree_size : int, optional
+            Size of the tree search. Default is 1000000.
         dfpn_search_root : int, optional
             Number of DFPN searches to run at the root node. Default is 0.
         dfpn_search_leaf : int, optional
@@ -91,22 +94,27 @@ class AlphaZero(Engine):
         super().__init__(name=name)
         self._policy_value_func = policy_value_func
         self._searcher = None
+        self._game = None
 
         self._coeff_puct = coeff_puct
         self._random_rate = random_rate
         self._kldgain_threshold = kldgain_threshold
+        self._tree_size = tree_size
         self._dfpn_search_root = dfpn_search_root
         self._dfpn_search_leaf = dfpn_search_leaf
 
     def _set_game(self, game: Game):
         self._game = game.copy()
-        self._searcher = game._get_az_searcher_class()(
-            self._coeff_puct, self._random_rate,
-            self._dfpn_search_root, self._dfpn_search_leaf,
-        )
+        if (type(self._searcher) is not game._get_az_searcher_class()):
+            self._searcher = game._get_az_searcher_class()(
+                self._coeff_puct, self._random_rate, self._tree_size,
+                self._dfpn_search_root, self._dfpn_search_leaf,
+            )
+        else:
+            self._searcher.init()
 
     def _is_ready(self) -> bool:
-        return self._searcher is not None
+        return self._game is not None
 
     def proved_mate(self) -> bool:
         """Return true if the engine proved a checkmate, otherwise false.
@@ -119,7 +127,8 @@ class AlphaZero(Engine):
         return (self._searcher is not None) and self._searcher.proved_mate()
 
     def _clear(self) -> None:
-        self._searcher = None
+        if self._searcher is not None:
+            self._searcher.init()
         self._game = None
 
     def apply(self, move: Move):

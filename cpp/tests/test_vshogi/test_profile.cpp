@@ -46,7 +46,7 @@ TEST_GROUP (shogi_profile) {
 TEST(shogi_profile, alpha_zero)
 {
     auto g = Game();
-    auto az = Searcher(4.f, 0.25f, 10000u, 100u);
+    auto az = Searcher(4.f, 0.25f, 1000000u, 10000u, 100u);
     for (uint ii = 0u; ii < 167u; ++ii) {
         if (g.get_result() != vshogi::ONGOING)
             break;
@@ -59,6 +59,8 @@ TEST(shogi_profile, alpha_zero)
             az.simulate_expand_backprop(n, g, 0.f, zeros);
             CHECK_EQUAL(ii, g.ply());
         }
+        CHECK_EQUAL(100u, az.get_search_count());
+        CHECK_COMPARE(0u, <, az.count_nodes_remain());
 
         az.get_action_by_visit_max();
         const auto m = MT::make_move(kifu[ii]);

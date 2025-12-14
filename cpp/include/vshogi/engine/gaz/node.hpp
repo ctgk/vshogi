@@ -42,8 +42,6 @@ private:
 
 public:
     Node();
-    Node(const move_t& action, const float logit);
-    void init();
     // clang-format off
     float get_logit() const { return m_logit; }
     uint get_visit_count() const { return m_visit_count; }
@@ -52,9 +50,10 @@ public:
     bool is_mate_to_win() const { return m_is_mate && (m_q_value > 0.f); }
     bool is_mate_to_lose() const { return m_is_mate && (m_q_value < 0.f); }
     // clang-format on
+    void init();
+    void init(Node* const parent, const move_t& action, const float logit);
     float get_q_value(const uint greedy_depth) const;
     const Node* get_child_of(const move_t& action) const;
-    Node& apply(const move_t& action);
 
     /**
      * @note Users must check if the node has at least one child before
@@ -65,16 +64,19 @@ public:
     template <class P>
     void simulate(const Game<P>& g);
     template <class P>
-    void expand(const Game<P>& g, const float* const policy_logits);
-    void simulate_mate_and_expand(const move_t& action);
+    void
+    expand(Node*& next, const Game<P>& g, const float* const policy_logits);
+    void simulate_mate_and_expand(Node*& next, const move_t& action);
     template <class P>
     void simulate_ongoing_and_expand(
-        const Game<P>& g, const float value, const float* const policy_logits);
+        Node*& next,
+        const Game<P>& g,
+        const float value,
+        const float* const policy_logits);
     Node* backprop(const float v, Node* const child);
 
 private:
     // select
-    Node* argmax_improved_policy();
     /**
      * @brief softmax(logits + sigma(completedQ))
      * @details eq. 11 in https://openreview.net/pdf?id=bERaNdoegnO
@@ -83,8 +85,8 @@ private:
     float completed_q_value_of(const Node* const child) const;
 
     template <class P>
-    static void make_node_at(
-        std::unique_ptr<Node>** ptr,
+    void make_node_at(
+        Node*& next,
         const move_t& action,
         const ColorEnum& turn,
         const float* const policy_logits);
@@ -103,11 +105,11 @@ inline Node* Node::select()
     // assert(m_visit_count == (sum(c->get_visit_count()) + 1));
     // eq. 14 in https://openreview.net/pdf?id=bERaNdoegnO
     uint ii = 0u;
-    Node* out = m_child.get();
+    Node* out = m_child;
     float max_diff = pi_prime[ii++]
                      - static_cast<float>(out->get_visit_count())
                            / static_cast<float>(m_visit_count);
-    for (Node* c = out->m_sibling.get(); c; c = c->m_sibling.get()) {
+    for (Node* c = m_child + 1; c->m_parent == this; ++c) {
         const float d = pi_prime[ii++]
                         - static_cast<float>(c->get_visit_count())
                               / static_cast<float>(m_visit_count);
@@ -126,7 +128,7 @@ inline Node* Node::select_from(const Node** const child_nodes)
         if ((*p)->get_visit_count() < least_visited->get_visit_count())
             least_visited = *p;
     }
-    for (Node* c = m_child.get(); c; c = c->m_sibling.get()) {
+    for (Node* c = m_child; c->m_parent == this; ++c) {
         if (c == least_visited) {
             c->m_parent = this;
             return c;
@@ -156,40 +158,53 @@ void Node::simulate(const Game<P>& g)
 }
 
 template <class P>
-void Node::expand(const Game<P>& game, const float* const policy_logits)
+void Node::expand(
+    Node*& next, const Game<P>& game, const float* const policy_logits)
 {
     const auto turn = game.get_turn();
-    std::unique_ptr<Node>* ptr = &m_child;
+    m_child = next;
     if (game.in_check()) {
         auto gen = MoveGenerator<P, GenEnum::EVADE>(game.get_state());
-        for (; gen; ++gen)
-            make_node_at<P>(&ptr, *gen, turn, policy_logits);
+        for (; gen; ++gen) {
+            if (next->is_end())
+                break;
+            make_node_at<P>(next, *gen, turn, policy_logits);
+        }
     } else {
         auto gen = MoveGenerator<P, GenEnum::LEGAL>(game.get_state());
-        for (; gen; ++gen)
-            make_node_at<P>(&ptr, *gen, turn, policy_logits);
+        for (; gen; ++gen) {
+            if (next->is_end())
+                break;
+            make_node_at<P>(next, *gen, turn, policy_logits);
+        }
     }
+    if (m_child == next)
+        m_child = nullptr;
+    next->init_if_not_end();
 }
 
 template <class P>
 void Node::make_node_at(
-    std::unique_ptr<Node>** ptr,
+    Node*& next,
     const move_t& action,
     const ColorEnum& turn,
     const float* const policy_logits)
 {
     const auto index = MoveTraits<P>::to_policy_index(action, turn);
     const auto logit = policy_logits ? policy_logits[index] : 0.f;
-    **ptr = std::make_unique<Node>(action, logit);
-    *ptr = &(**ptr)->m_sibling;
+    next->init(this, action, logit);
+    ++next;
 }
 
 template <class P>
 void Node::simulate_ongoing_and_expand(
-    const Game<P>& game, const float value, const float* const policy_logits)
+    Node*& next,
+    const Game<P>& game,
+    const float value,
+    const float* const policy_logits)
 {
     m_q_value = value;
-    expand(game, policy_logits);
+    expand(next, game, policy_logits);
 }
 
 } // namespace vshogi::engine::gaz

@@ -14,28 +14,34 @@ using Node = vshogi::engine::gaz::Node;
 using MT = vshogi::minishogi::MoveTraits;
 
 TEST_GROUP (test_gaz_node) {
-    Node node{};
+    Node root{};
+    Node nodes[1000] = {};
+    Node* next{};
     void setup()
     {
-        node.init();
+        root.init();
+        nodes[0].init();
+        nodes[999].init_as_end();
+        next = nodes;
     }
 };
 
 TEST(test_gaz_node, select_from)
 {
-    node.simulate_ongoing_and_expand(Game("g4/5/5/5/4G b -"), 0.f, nullptr);
-    node.backprop(node.get_q_value(), nullptr);
+    root.simulate_ongoing_and_expand(
+        next, Game("g4/5/5/5/4G b -"), 0.f, nullptr);
+    root.backprop(root.get_q_value(), nullptr);
     {
         const Node* child_nodes[10] = {};
-        child_nodes[0] = node.get_child()->get_sibling();
-        const auto actual = node.select_from(child_nodes);
-        CHECK_EQUAL(node.get_child()->get_sibling(), actual);
-        CHECK_EQUAL(&node, actual->get_parent());
+        child_nodes[0] = root.get_child()->get_sibling();
+        const auto actual = root.select_from(child_nodes);
+        CHECK_EQUAL(root.get_child()->get_sibling(), actual);
+        CHECK_EQUAL(&root, actual->get_parent());
     }
     {
-        const auto actual = node.select();
-        CHECK_EQUAL(node.get_child(), actual);
-        CHECK_EQUAL(&node, actual->get_parent());
+        const auto actual = root.select();
+        CHECK_EQUAL(root.get_child(), actual);
+        CHECK_EQUAL(&root, actual->get_parent());
     }
 }
 
@@ -45,33 +51,38 @@ TEST(test_gaz_node, select_given_policy)
     for (uint ii = State::num_dlshogi_policy(); ii--;)
         policy_logits[ii] = static_cast<float>(ii);
 
-    node.simulate_ongoing_and_expand(
-        Game("g4/5/5/5/4G b -"), 0.f, policy_logits);
-    node.backprop(node.get_q_value(), nullptr);
-    const auto actual = node.select();
-    CHECK_EQUAL(node.get_child()->get_sibling()->get_sibling(), actual);
-    CHECK_EQUAL(&node, actual->get_parent());
+    root.simulate_ongoing_and_expand(
+        next, Game("g4/5/5/5/4G b -"), 0.f, policy_logits);
+    root.backprop(root.get_q_value(), nullptr);
+    const auto actual = root.select();
+    CHECK_EQUAL(root.get_child()->get_sibling()->get_sibling(), actual);
+    CHECK_EQUAL(&root, actual->get_parent());
 }
 
 TEST(test_gaz_node, get_q_value)
 {
-    node.simulate_ongoing_and_expand(Game("g4/5/5/5/4G b -"), 0.f, nullptr);
-    node.backprop(node.get_q_value(), nullptr);
+    CHECK_EQUAL(nodes, next);
+    root.simulate_ongoing_and_expand(
+        next, Game("g4/5/5/5/4G b -"), 0.f, nullptr);
+    CHECK_EQUAL(nodes + 3, next);
+    DOUBLES_EQUAL(0.f, root.get_q_value(), 1e-3f);
+    root.backprop(root.get_q_value(), nullptr);
     {
-        const auto c = node.select();
-        c->simulate_mate_and_expand(static_cast<move_t>(0));
+        const auto c = root.select();
+        c->simulate_mate_and_expand(next, static_cast<move_t>(0));
+        DOUBLES_EQUAL(1.f, c->get_q_value(), 1e-3f);
         c->backprop(c->get_q_value(), nullptr);
-        node.backprop(-c->get_q_value(), c);
+        root.backprop(-c->get_q_value(), c);
     }
-    DOUBLES_EQUAL(-0.5f, node.get_q_value(), 1e-3f);
-    DOUBLES_EQUAL(-1.f, node.get_q_value(1u), 1e-3f);
+    DOUBLES_EQUAL(-0.5f, root.get_q_value(), 1e-3f);
+    DOUBLES_EQUAL(-1.f, root.get_q_value(1u), 1e-3f);
 }
 
 TEST(test_gaz_node, backprop)
 {
-    node.backprop(0.5f, nullptr);
-    CHECK_FALSE(node.is_mate());
-    DOUBLES_EQUAL(0.5f, node.get_q_value(), 1e-3f);
+    root.backprop(0.5f, nullptr);
+    CHECK_FALSE(root.is_mate());
+    DOUBLES_EQUAL(0.5f, root.get_q_value(), 1e-3f);
 }
 
 } // namespace test_vshogi::test_engine::test_gaz

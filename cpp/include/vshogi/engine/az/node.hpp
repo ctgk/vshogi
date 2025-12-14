@@ -28,8 +28,6 @@ private:
 
 public:
     Node();
-    Node(const move_t& action, const float proba);
-    void init();
     // clang-format off
     float get_proba() const { return m_proba; }
     uint get_visit_count() const { return m_visit_count; }
@@ -39,9 +37,10 @@ public:
     bool is_mate_to_win() const { return m_is_mate && (m_q_value > 0.f); }
     bool is_mate_to_lose() const { return m_is_mate && (m_q_value < 0.f); }
     // clang-format on
+    void init();
+    void init(Node* const parent, const move_t& action, const float proba);
     float get_q_value(const uint greedy_depth) const;
     const Node* get_child_of(const move_t& action) const;
-    Node& apply(const move_t& action);
 
     /**
      * @note Users must check if the node has at least one child before
@@ -51,17 +50,22 @@ public:
     template <class P>
     void simulate(const Game<P>& g);
     template <class P>
-    void expand(const Game<P>& g, const float* const policy_logits);
-    void simulate_mate_and_expand(const move_t& action);
+    void
+    expand(Node*& next, const Game<P>& g, const float* const policy_logits);
+    void simulate_mate_and_expand(Node*& next, const move_t& action);
     template <class P>
     void simulate_ongoing_and_expand(
-        const Game<P>& g, const float value, const float* const policy_logits);
+        Node*& next,
+        const Game<P>& g,
+        const float value,
+        const float* const policy_logits);
     Node* backprop(const float v, Node* const child);
 
 private:
     // select
     Node* select_best_or_random_child(const float c_puct, const float p_random);
     bool select_best_over_random(const float p_random);
+    bool has_mate_to_win() const;
     Node* select_best_child(const float c_puct);
     Node* select_random_child();
     float first_play_urgency() const;
@@ -69,8 +73,8 @@ private:
         const Node* const c, const float c_puct, const float q_fpu) const;
 
     template <class P>
-    static float make_node_at(
-        std::unique_ptr<Node>** ptr,
+    float init_node_at(
+        Node*& next,
         const move_t& action,
         const ColorEnum& turn,
         const float* const policy_logits);
@@ -100,54 +104,69 @@ void Node::simulate(const Game<P>& g)
 }
 
 template <class P>
-void Node::expand(const Game<P>& game, const float* const policy_logits)
+void Node::expand(
+    Node*& next, const Game<P>& game, const float* const policy_logits)
 {
     const auto turn = game.get_turn();
-    std::unique_ptr<Node>* ptr = &m_child;
+    m_child = next;
     float max_logit = -std::numeric_limits<float>::infinity();
     if (game.in_check()) {
         auto gen = MoveGenerator<P, GenEnum::EVADE>(game.get_state());
-        for (; gen; ++gen)
+        for (; gen; ++gen) {
+            if (next->is_end())
+                break;
             max_logit = std::max(
-                max_logit, make_node_at<P>(&ptr, *gen, turn, policy_logits));
+                max_logit, init_node_at<P>(next, *gen, turn, policy_logits));
+        }
     } else {
         auto gen = MoveGenerator<P, GenEnum::LEGAL>(game.get_state());
-        for (; gen; ++gen)
+        for (; gen; ++gen) {
+            if (next->is_end())
+                break;
             max_logit = std::max(
-                max_logit, make_node_at<P>(&ptr, *gen, turn, policy_logits));
+                max_logit, init_node_at<P>(next, *gen, turn, policy_logits));
+        }
     }
+    if (m_child == next) { // there is no child under this node.
+        m_child = nullptr;
+        return;
+    }
+    next->init_if_not_end();
 
     float sumexp = 0.f;
-    for (Node* c = m_child.get(); c; c = c->m_sibling.get()) {
+    for (Node* c = m_child; c->m_parent == this; ++c) {
         c->m_proba -= max_logit;
         c->m_proba = std::exp(c->m_proba);
         sumexp += c->m_proba;
     }
-    for (Node* c = m_child.get(); c; c = c->m_sibling.get()) {
+    for (Node* c = m_child; c->m_parent == this; ++c) {
         c->m_proba /= sumexp;
     }
 }
 
 template <class P>
-float Node::make_node_at(
-    std::unique_ptr<Node>** ptr,
+float Node::init_node_at(
+    Node*& next,
     const move_t& action,
     const ColorEnum& turn,
     const float* const policy_logits)
 {
     const auto index = MoveTraits<P>::to_policy_index(action, turn);
     const auto logit = policy_logits ? policy_logits[index] : 0.f;
-    **ptr = std::make_unique<Node>(action, logit);
-    *ptr = &(**ptr)->m_sibling;
+    next->init(this, action, logit);
+    ++next;
     return logit;
 }
 
 template <class P>
 void Node::simulate_ongoing_and_expand(
-    const Game<P>& game, const float value, const float* const policy_logits)
+    Node*& next,
+    const Game<P>& game,
+    const float value,
+    const float* const policy_logits)
 {
     m_q_value = value;
-    expand(game, policy_logits);
+    expand(next, game, policy_logits);
 }
 
 } // namespace vshogi::engine::az

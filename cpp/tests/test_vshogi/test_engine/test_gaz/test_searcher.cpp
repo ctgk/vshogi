@@ -9,8 +9,9 @@ namespace test_vshogi::test_engine::test_gaz
 {
 
 using namespace vshogi;
+using P = vshogi::minishogi::Parameters;
 using Game = vshogi::minishogi::Game;
-using Searcher = vshogi::engine::gaz::Searcher<vshogi::minishogi::Parameters>;
+using Searcher = vshogi::engine::gaz::Searcher<P>;
 
 TEST_GROUP (test_gaz_searcher) {
 };
@@ -29,7 +30,7 @@ TEST(test_gaz_searcher, keep_top_n_actions)
     for (uint ii = 2u; ii--;) {
         auto g_copy = Game(g);
         const auto c = searcher.search(g_copy);
-        c->backprop(0.f, nullptr);
+        CHECK_EQUAL(&searcher.get_root(), c->backprop(0.f, nullptr));
         CHECK_FALSE(c->is_mate());
         actual.emplace(c->get_action());
     }
@@ -69,12 +70,15 @@ TEST(test_gaz_searcher, explore_until_game_end)
         for (uint phase = num_phase; phase--;) {
             CHECK_TRUE(num_actions > 1u);
             searcher.keep_top_n_actions(num_actions);
+            if (g.get_legal_moves().size() >= num_actions)
+                CHECK_EQUAL(num_actions, searcher.count_active_childs());
             num_actions /= 2u;
             uint budget = phase ? num_simulations / num_phase : num_simulations;
             for (uint sim = budget; sim--;) {
                 const auto n = searcher.search(g);
-                if (n)
+                if (n) {
                     searcher.simulate_expand_backprop(n, g, 0.f, nullptr);
+                }
             }
             num_simulations -= budget;
         }
@@ -86,7 +90,7 @@ TEST(test_gaz_searcher, explore_until_game_end)
 
 TEST(test_gaz_searcher, dfpn)
 {
-    Searcher searcher_with_dfpn(10000u, 100u);
+    Searcher searcher_with_dfpn(1000000u, 10000u, 100u);
     Game g("5/4k/4G/4K/5 w G");
     {
         {

@@ -24,7 +24,8 @@ template <class P>
 class Searcher
 {
 private:
-    Node m_root;
+    std::vector<Node> m_nodes;
+    Node* m_next;
     dfpn::Searcher<P> m_dfpn;
     const uint m_dfpn_search_root;
     const uint m_dfpn_search_leaf;
@@ -34,7 +35,9 @@ private:
 
 public:
     Searcher(
-        const uint dfpn_search_root = 0u, const uint dfpn_search_leaf = 0u);
+        const uint tree_size = 1000000u,
+        const uint dfpn_search_root = 0u,
+        const uint dfpn_search_leaf = 0u);
     ~Searcher() = default; // 1/5 destructor
     Searcher(const Searcher& other) = delete; // 2/5 copy constructor
     Searcher& operator=(const Searcher& other) = delete; // 3/5 copy assignment
@@ -63,10 +66,11 @@ public:
         float max_score = -std::numeric_limits<float>::infinity();
         move_t out{};
 
-        const uint max_visits = m_root.get_child_1st()->get_visit_count();
+        const uint max_visits = m_nodes[0].get_child_1st()->get_visit_count();
         uint ii = 0u;
         if (m_child_nodes[0] == nullptr) {
-            for (const Node* c = m_root.get_child(); c; c = c->get_sibling()) {
+            for (const Node* c = m_nodes[0].get_child(); c;
+                 c = c->get_sibling()) {
                 const float score
                     = c->get_logit() + sigma(-c->get_q_value(), max_visits);
                 if (score > max_score) {
@@ -87,9 +91,9 @@ public:
         return out;
     }
     // clang-format off
-    uint get_search_count() const { return m_root.get_visit_count(); }
-    bool proved_mate() const { return m_root.is_mate(); }
-    const Node& get_root() const { return m_root; }
+    uint get_search_count() const { return m_nodes[0].get_visit_count(); }
+    bool proved_mate() const { return m_nodes[0].is_mate(); }
+    const Node& get_root() const { return m_nodes[0]; }
     // clang-format on
 
 private:
@@ -100,17 +104,25 @@ private:
 };
 
 template <class P>
-Searcher<P>::Searcher(const uint dfpn_search_root, const uint dfpn_search_leaf)
-    : m_root(), m_dfpn{std::max(dfpn_search_root, dfpn_search_leaf) * 10u},
+Searcher<P>::Searcher(
+    const uint tree_size,
+    const uint dfpn_search_root,
+    const uint dfpn_search_leaf)
+    : m_nodes(tree_size + 2u), m_next{},
+      m_dfpn{std::max(dfpn_search_root, dfpn_search_leaf) * 10u},
       m_dfpn_search_root(dfpn_search_root),
       m_dfpn_search_leaf(dfpn_search_leaf), m_child_nodes{}, m_gumbel_noises{}
 {
+    init();
 }
 
 template <class P>
 void Searcher<P>::init()
 {
-    m_root.init();
+    m_nodes.front().init();
+    m_next = std::next(m_nodes.data());
+    m_next->init();
+    m_nodes.back().init_as_end();
     m_child_nodes[0] = nullptr;
 }
 
@@ -126,7 +138,7 @@ Node* Searcher<P>::search(Game<P>& game)
         return nullptr;
     }
     if (leaf->is_mate_to_lose()) {
-        leaf->expand(game, nullptr);
+        leaf->expand(m_next, game, nullptr);
         backprop_to_root(game, leaf);
         return nullptr;
     }
@@ -145,21 +157,21 @@ void Searcher<P>::simulate_expand_backprop(
 {
     if (leaf == nullptr)
         return;
-    leaf->simulate_ongoing_and_expand(game, value, policy_logits);
+    leaf->simulate_ongoing_and_expand(m_next, game, value, policy_logits);
     backprop_to_root(game, leaf);
 }
 
 template <class P>
 Node* Searcher<P>::select_a_leaf_node(Game<P>& game)
 {
-    if (!m_root.has_child())
-        return &m_root;
+    if (!m_nodes[0].has_child())
+        return &m_nodes[0];
     Node* n = nullptr;
     if (m_child_nodes[0] == nullptr)
-        n = &m_root;
+        n = &m_nodes[0];
     else {
-        n = m_root.select_from(m_child_nodes);
-        assert(n->get_parent() == &m_root);
+        n = m_nodes[0].select_from(m_child_nodes);
+        assert(n->get_parent() == &m_nodes[0]);
         game.apply_nocheck(n->get_action());
     }
     while (n->has_child()) {
@@ -190,7 +202,7 @@ template <class P>
 bool Searcher<P>::dfpn_proved_mate(Game<P>& game, Node* const node)
 {
     const uint search_count
-        = (node == &m_root) ? m_dfpn_search_root : m_dfpn_search_leaf;
+        = (node == &m_nodes[0]) ? m_dfpn_search_root : m_dfpn_search_leaf;
     if (search_count == 0u)
         return false;
     m_dfpn.init();
@@ -198,10 +210,10 @@ bool Searcher<P>::dfpn_proved_mate(Game<P>& game, Node* const node)
     if (m_dfpn.proved_mate()) {
         const move_t m = m_dfpn.get_mate_move();
         if (m != 0u) {
-            node->simulate_mate_and_expand(m);
+            node->simulate_mate_and_expand(m_next, m);
             backprop_to_root(game, node);
-            if (node == &m_root) {
-                m_child_nodes[0] = m_root.get_child_1st();
+            if (node == &m_nodes[0]) {
+                m_child_nodes[0] = m_nodes[0].get_child_1st();
                 m_child_nodes[1] = nullptr;
             }
             return true;
@@ -215,7 +227,7 @@ void Searcher<P>::keep_top_n_actions(const uint num_actions)
 {
     assert(num_actions > 1u);
     const uint num_child = set_child_nodes_and_gumbel_noises();
-    const Node* const best_child = m_root.get_child_1st();
+    const Node* const best_child = m_nodes[0].get_child_1st();
     const uint max_visits = best_child ? best_child->get_visit_count() : 0u;
     std::tuple<const Node*, float, float> data[max_legal_moves] = {};
     for (uint ii = 0u; ii < num_child; ++ii) {
@@ -248,7 +260,7 @@ uint Searcher<P>::set_child_nodes_and_gumbel_noises()
 
     if (m_child_nodes[0] == nullptr) {
         uint index = 0u;
-        for (const Node* c = m_root.get_child(); c; c = c->get_sibling()) {
+        for (const Node* c = m_nodes[0].get_child(); c; c = c->get_sibling()) {
             m_child_nodes[index] = c;
             m_gumbel_noises[index] = gumbel_dist(random_engine);
             ++index;

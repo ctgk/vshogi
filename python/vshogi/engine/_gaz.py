@@ -57,6 +57,7 @@ class GumbelAlphaZero(Engine):
             [Game], tp.Tuple[Policy, Value],
         ] = lambda g: (g.to_dlshogi_policy({}), 0.),
         *,
+        tree_size: int = 1000000,
         dfpn_search_root: int = 0,
         dfpn_search_leaf: int = 0,
         name: tp.Optional[str] = None,
@@ -68,6 +69,8 @@ class GumbelAlphaZero(Engine):
         policy_value_func : tp.Callable[[Game], tp.Tuple[Policy, Value]]
             Function that computes the policy distribution and state value for
             a given game position.
+        tree_size : int, optional
+            Size of the tree search. Default is 1000000.
         dfpn_search_root : int, optional
             Number of DFPN searches to run at the root node. Default is 0.
         dfpn_search_leaf : int, optional
@@ -78,7 +81,9 @@ class GumbelAlphaZero(Engine):
         super().__init__(name=name)
         self._policy_value_func = policy_value_func
         self._searcher = None
+        self._game = None
 
+        self._tree_size = tree_size
         self._dfpn_search_root = dfpn_search_root
         self._dfpn_search_leaf = dfpn_search_leaf
 
@@ -86,13 +91,15 @@ class GumbelAlphaZero(Engine):
         self._game = game.copy()
         if self._searcher is None:
             self._searcher = game._get_gaz_searcher_class()(
-                self._dfpn_search_root, self._dfpn_search_leaf,
+                self._tree_size,
+                self._dfpn_search_root,
+                self._dfpn_search_leaf,
             )
         else:
             self._searcher.init()
 
     def _is_ready(self) -> bool:
-        return self._searcher is not None
+        return self._game is not None
 
     def proved_mate(self) -> bool:
         """Return true if the engine proved a checkmate, otherwise false.
@@ -105,7 +112,7 @@ class GumbelAlphaZero(Engine):
         return (self._searcher is not None) and self._searcher.proved_mate()
 
     def _clear(self) -> None:
-        self._searcher = None
+        self._searcher.init()
         self._game = None
 
     def _get_num_searched(self):

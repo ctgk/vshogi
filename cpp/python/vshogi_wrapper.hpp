@@ -456,8 +456,13 @@ inline void export_az_searcher(pybind11::module& m)
     using Searcher = vshogi::engine::az::Searcher<Parameters>;
 
     py::class_<Searcher>(m, "AlphaZero")
-        .def(py::init<const float, const float, const uint, const uint>())
-        .def("init_root", &Searcher::init_root)
+        .def(py::init<
+             const float,
+             const float,
+             const uint,
+             const uint,
+             const uint>())
+        .def("init", &Searcher::init)
         .def(
             "search",
             [](Searcher& self, Game& game) -> py::object {
@@ -513,7 +518,7 @@ inline void export_gaz_searcher(pybind11::module& m)
     using Node = vshogi::engine::gaz::Node;
     using Searcher = vshogi::engine::gaz::Searcher<P>;
     py::class_<Searcher>(m, "GumbelAlphaZero")
-        .def(py::init<const uint, const uint>())
+        .def(py::init<const uint, const uint, const uint>())
         .def("init", &Searcher::init)
         .def("get_search_count", &Searcher::get_search_count)
         .def("count_active_childs", &Searcher::count_active_childs)

@@ -10,13 +10,6 @@ Node::Node()
 {
 }
 
-Node::Node(const move_t& action, const float proba)
-    : tree::Node<Node>(action), m_proba(proba), m_visit_count(0u),
-      m_visit_count_by_random(0u), m_sqrt_visit_count(0.f), m_q_value(0.f),
-      m_is_mate(false)
-{
-}
-
 void Node::init()
 {
     tree::Node<Node>::init();
@@ -26,6 +19,14 @@ void Node::init()
     m_sqrt_visit_count = 0.f;
     m_q_value = 0.f;
     m_is_mate = false;
+}
+
+void Node::init(Node* const parent, const move_t& action, const float proba)
+{
+    init();
+    m_parent = parent;
+    m_action = action;
+    m_proba = proba;
 }
 
 float Node::get_q_value(const uint greedy_depth) const
@@ -42,34 +43,6 @@ const Node* Node::get_child_of(const move_t& action) const
             return c;
     }
     return nullptr;
-}
-
-Node& Node::apply(const move_t& action)
-{
-    assert(m_action == 0u);
-    for (Node* c = m_child.get(); c; c = c->m_sibling.get()) {
-        if (c->m_action == action) {
-            // m_action = c->m_action;
-            m_visit_count = c->m_visit_count;
-            m_visit_count_by_random = c->m_visit_count_by_random;
-            m_sqrt_visit_count = c->m_sqrt_visit_count;
-            m_q_value = c->m_q_value;
-            m_is_mate = c->m_is_mate;
-            // m_parent = c->m_parent;
-            // m_sibling = c->m_sibling;
-            m_child_1st = c->m_child_1st;
-            m_child = std::move(c->m_child);
-            return *this;
-        }
-    }
-    m_visit_count = 0u;
-    m_visit_count_by_random = 0u;
-    m_sqrt_visit_count = 0.f;
-    m_q_value = 0.f;
-    m_is_mate = false;
-    m_child_1st = nullptr;
-    m_child.reset();
-    return *this;
 }
 
 Node* Node::select(const float& c_puct, const float& p_random)
@@ -99,13 +72,23 @@ bool Node::select_best_over_random(const float p_random)
     return s > p_random;
 }
 
+bool Node::has_mate_to_win() const
+{
+    for (auto c = get_child(); c; c = c->get_sibling()) {
+        if (c->is_mate_to_win())
+            return true;
+    }
+    return false;
+}
+
 Node* Node::select_best_child(const float c_puct)
 {
     const float q_fpu = first_play_urgency();
     Node* out = nullptr;
     float max_puct_score = -100.f;
 
-    for (Node* c = m_child.get(); c; c = c->m_sibling.get()) {
+    assert(m_child);
+    for (Node* c = m_child; c->m_parent == this; ++c) {
         const float score = puct_score_of(c, c_puct, q_fpu);
         if (score > max_puct_score) {
             max_puct_score = score;
@@ -117,9 +100,10 @@ Node* Node::select_best_child(const float c_puct)
 
 float Node::first_play_urgency() const
 {
+    assert(m_child);
     // https://lczero.org/dev/lc0/search/alphazero/#first-play-urgency-fpu
     float q = m_q_value;
-    for (const Node* c = m_child.get(); c; c = c->get_sibling()) {
+    for (const Node* c = m_child; c->m_parent == this; ++c) {
         if (c->m_visit_count)
             q -= c->m_proba;
     }
@@ -141,13 +125,14 @@ float Node::puct_score_of(
 
 Node* Node::select_random_child()
 {
+    assert(m_child);
     constexpr uint num_try_max = 3u;
     const uint num = count_childs();
     const float p = 1.f / static_cast<float>(num);
     Node* c = nullptr;
     for (uint ii = num_try_max; ii--;) {
         float s = dist01(random_engine);
-        for (c = m_child.get(); c; c = c->m_sibling.get()) {
+        for (c = m_child; c->m_parent == this; ++c) {
             if (s < p) {
                 if (c->is_mate_to_win())
                     break; // Do not select child that leads to LOSS
@@ -161,13 +146,13 @@ Node* Node::select_random_child()
     return c;
 }
 
-void Node::simulate_mate_and_expand(const move_t& action)
+void Node::simulate_mate_and_expand(Node*& next, const move_t& action)
 {
     m_q_value = 1.f;
     m_is_mate = true;
     if (has_child()) {
-        Node* c = m_child.get();
-        for (; c; c = c->m_sibling.get()) {
+        Node* c = m_child;
+        for (; c->m_parent == this; ++c) {
             if (c->get_action() == action) {
                 m_child_1st = c;
                 break;
@@ -175,9 +160,12 @@ void Node::simulate_mate_and_expand(const move_t& action)
         }
         if (c == nullptr)
             throw std::invalid_argument("Given action not found.");
-    } else {
-        m_child = std::make_unique<Node>(action, 1.f);
-        m_child_1st = m_child.get();
+    } else if (!next->is_end()) {
+        next->init(this, action, 1.f);
+        m_child = next;
+        m_child_1st = m_child;
+        ++next;
+        next->init_if_not_end();
     }
     m_child_1st->m_q_value = -1.f;
     m_child_1st->m_is_mate = true;
