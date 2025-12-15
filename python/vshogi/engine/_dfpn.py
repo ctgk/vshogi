@@ -214,22 +214,23 @@ class DfpnSearcher(Engine):
         if root is None:
             return None
         root_offence: bool = True
+        move_class = self._game._get_move_class()
         pv_line = [
-            self._game._get_move_class()(m) if isinstance(m, str) else m
+            move_class(m) if isinstance(m, str) else m
             for m in pv_line
         ]
         for m in pv_line:
             for child in root.get_children():
-                if child.get_action() == m:
+                if move_class(child.get_action()) == m:
                     root = child
                     break
             else:
                 raise ValueError(f'Cannot find child with action, {m}')
             root_offence = not root_offence
-        return _tree(root_offence, root, depth, breadth)
+        return _tree(root_offence, move_class, root, depth, breadth)
 
 
-def _tree(offence, node, depth: int, breadth: int):
+def _tree(offence, move_class, node, depth: int, breadth: int):
     out = _repr_node(offence, node)
     if depth == 0:
         return out
@@ -240,12 +241,12 @@ def _tree(offence, node, depth: int, breadth: int):
     if breadth >= 0:
         children = children[:breadth]
     for i, child in enumerate(children):
-        s = _tree(offence, child, depth - 1, breadth)
+        s = _tree(offence, move_class, child, depth - 1, breadth)
         if i == len(children) - 1:
             s = s.replace('\n', '\n    ')
         else:
             s = s.replace('\n', '\n|   ')
-        out += f'\n+-- {child.get_action().to_sfen()} -> {s}'
+        out += f'\n+-- {move_class(child.get_action()).to_sfen()} -> {s}'
     return out
 
 

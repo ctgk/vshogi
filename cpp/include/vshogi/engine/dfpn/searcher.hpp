@@ -17,7 +17,7 @@ class Table
 {
     using C = Configuration<P>;
     using BaseTypeStand = typename C::BaseTypeStand;
-    using StandNodePairs = std::list<std::pair<BaseTypeStand, Node<P>*>>;
+    using StandNodePairs = std::list<std::pair<BaseTypeStand, Node*>>;
 
 private:
     std::unordered_map<std::uint64_t, StandNodePairs> m_table;
@@ -30,7 +30,7 @@ public:
     {
         m_table.clear();
     }
-    void add(Node<P>* const n, const Game<P>& g)
+    void add(Node* const n, const Game<P>& g)
     {
         const std::uint64_t bt_hash = g.get_board_turn_hash();
         const auto s = g.get_stand().value();
@@ -50,9 +50,9 @@ public:
     }
     void look_up(
         const Game<P>& g,
-        const Node<P>** const node_ge,
-        const Node<P>** const node_e,
-        const Node<P>** const node_le) const
+        const Node** const node_ge,
+        const Node** const node_e,
+        const Node** const node_le) const
     {
         const std::uint64_t bt_hash = g.get_board_turn_hash();
         auto it = m_table.find(bt_hash);
@@ -68,9 +68,9 @@ private:
     void look_up(
         const Game<P>& g,
         const StandNodePairs& pairs,
-        const Node<P>** const node_ge,
-        const Node<P>** const node_e,
-        const Node<P>** const node_le) const
+        const Node** const node_ge,
+        const Node** const node_e,
+        const Node** const node_le) const
     {
         const auto& s = g.get_stand();
         Stand<P> s_l{};
@@ -79,7 +79,7 @@ private:
         bool found_best_g = false;
         for (auto&& it : pairs) {
             const Stand<P> s_iter{it.first};
-            const Node<P>* const n_iter = it.second;
+            const Node* const n_iter = it.second;
             if (s_iter == s) {
                 *node_e = n_iter;
             }
@@ -144,8 +144,8 @@ class Searcher
     using Square = typename C::Square;
 
 private:
-    std::vector<Node<P>> m_nodes; //!< The first one is the root node.
-    Node<P>* m_next;
+    std::vector<Node> m_nodes; //!< The first one is the root node.
+    Node* m_next;
     Table<P> m_table;
     uint m_search_count;
     uint m_remaining_searches;
@@ -158,12 +158,10 @@ public:
             && !m_next->is_end()) {
             m_nodes[0].expand(m_next, g);
             m_table.add(&m_nodes[0], g);
-            m_nodes[0].backprop(C::SQ_NA);
+            m_nodes[0].template backprop<P>(true);
         }
-        if (m_nodes[0].proved()) {
-            return MT::make_move(
-                static_cast<Square>(0), static_cast<Square>(0));
-        }
+        if (m_nodes[0].proved())
+            return static_cast<move_t>(0);
         m_remaining_searches = n;
         const auto out = multiple_iterative_deepening(m_nodes[0], g, inf, inf);
         m_search_count += n - m_remaining_searches;
@@ -172,41 +170,39 @@ public:
 
 private:
     move_t multiple_iterative_deepening(
-        Node<P>& n, Game<P>& g, const uint th_p, const uint th_d)
+        Node& n, Game<P>& g, const uint th_p, const uint th_d)
     {
         const bool offence = (g.ply() % 2u == 0u);
         move_t out = n.get_action();
         assert(offence || g.in_check());
-        const Node<P>*twin_ge{}, *twin_e{}, *twin_le{};
+        const Node *twin_ge{}, *twin_e{}, *twin_le{};
         m_table.look_up(g, &twin_ge, &twin_e, &twin_le);
         if (n.simulate(g, twin_ge, twin_le)) {
             --m_remaining_searches;
             return out;
         }
-        const auto checker_sq
-            = offence ? C::SQ_NA : g.get_state().find_checker_square();
         if (!n.has_child() && !m_next->is_end()) {
             n.expand(m_next, g, twin_ge, twin_le);
             if ((twin_e == nullptr) || !twin_e->fully_expanded())
                 m_table.add(&n, g);
             --m_remaining_searches;
-            n.backprop(checker_sq);
+            n.backprop<P>(offence);
         }
         while (!m_next->is_end() && m_remaining_searches && (n.phi() < th_p)
                && (n.delta() < th_d)) {
             uint th_p_ch, th_d_ch;
-            Node<P>* const child = n.select(th_p, th_d, th_p_ch, th_d_ch);
+            Node* const child = n.select(th_p, th_d, th_p_ch, th_d_ch);
             g.apply_dfpn(child->get_action());
             out = multiple_iterative_deepening(*child, g, th_p_ch, th_d_ch);
             g.undo();
-            n.backprop(checker_sq);
+            n.backprop<P>(offence);
         }
         return out;
     }
 
 public: // utility
     Searcher(const uint num_nodes = 100000u)
-        : m_nodes(num_nodes + 1u), m_next(nullptr), m_table{},
+        : m_nodes(num_nodes + 2u), m_next(nullptr), m_table{},
           m_search_count(0u), m_remaining_searches(0u)
     {
         init();
@@ -221,9 +217,10 @@ public: // utility
 
     void init()
     {
-        m_nodes[0].init();
-        m_nodes.back().init_end();
+        m_nodes.front().init();
         m_next = std::next(m_nodes.data());
+        m_next->init();
+        m_nodes.back().init_as_end();
         m_table.clear();
         m_search_count = 0u;
     }
@@ -249,7 +246,7 @@ public: // utility
     {
         return m_nodes[0].proved_no_mate(true);
     }
-    const Node<P>* get_root() const
+    const Node* get_root() const
     {
         return &m_nodes[0];
     }
@@ -280,7 +277,7 @@ public: // utility
     }
 
 private: // utility
-    bool follow_line(Game<P>& game, const Node<P>* node) const
+    bool follow_line(Game<P>& game, const Node* node) const
     {
         if ((node == nullptr) || (!game.is_legal(node->get_action())))
             return false;
@@ -295,7 +292,7 @@ private: // utility
         if (!node->proved_mate(offence))
             node = lookup_in_table(game);
         if (node) {
-            const Node<P>* c = node->get_child_1st();
+            const Node* c = node->get_child_1st();
             if (follow_line(game, c))
                 return true;
             for (c = node->get_child(); c; c = c->get_sibling()) {
@@ -318,12 +315,12 @@ private: // utility
         const auto winner = (r == BLACK_WIN) ? BLACK : WHITE;
         return offence ? (turn == winner) : (turn != winner);
     }
-    const Node<P>* lookup_in_table(Game<P>& game) const
+    const Node* lookup_in_table(Game<P>& game) const
     {
         const bool offence = (game.ply() % 2u == 0u);
-        const Node<P>*node_ge{}, *node_e{}, *node_le{};
+        const Node *node_ge{}, *node_e{}, *node_le{};
         m_table.look_up(game, &node_ge, &node_e, &node_le);
-        const Node<P>* const node = (offence) ? node_le : node_ge;
+        const Node* const node = (offence) ? node_le : node_ge;
         if (node && node->proved_mate(offence))
             return node;
         return nullptr;

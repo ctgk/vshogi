@@ -12,7 +12,7 @@ using namespace vshogi::minishogi;
 using MT = MoveTraits;
 using move_t = vshogi::move_t;
 namespace dfpn = vshogi::engine::dfpn;
-using Node = dfpn::Node<Parameters>;
+using Node = dfpn::Node;
 constexpr uint zero = dfpn::zero;
 constexpr uint cent = dfpn::cent;
 constexpr uint unit = dfpn::unit;
@@ -250,7 +250,7 @@ TEST(dfpn_node_expand, offence_no_twins)
     }
     {
         auto buffer = std::vector<Node>(4);
-        buffer.back().init_end();
+        buffer.back().init_as_end();
         auto next = buffer.data();
         auto n = Node();
         CHECK_FALSE(n.fully_expanded());
@@ -260,7 +260,7 @@ TEST(dfpn_node_expand, offence_no_twins)
     }
     {
         auto buffer = std::vector<Node>(5);
-        buffer.back().init_end();
+        buffer.back().init_as_end();
         auto next = buffer.data();
         auto n = Node();
         CHECK_FALSE(n.fully_expanded());
@@ -447,7 +447,7 @@ TEST(dfpn_node_backprop, offence_preference)
     auto g = Game("2B1k/5/5/5/5 b P");
     auto n = Node();
     n.expand(next, g);
-    n.backprop(SQ_NA);
+    n.backprop<Parameters>(true);
     CHECK_EQUAL(unit, n.pn(true));
     CHECK_EQUAL(2u * unit + cent, n.dn(true));
 
@@ -466,7 +466,7 @@ TEST(dfpn_node_backprop, offence_with_proved_child)
     auto g = Game("3rk/3p1/4P/5/4K b G");
     auto n = Node();
     n.expand(next, g);
-    n.backprop(SQ_NA);
+    n.backprop<Parameters>(true);
     CHECK_FALSE(n.proved());
     CHECK_EQUAL(unit, n.pn(true));
     CHECK_EQUAL(2u * unit, n.dn(true));
@@ -480,7 +480,7 @@ TEST(dfpn_node_backprop, offence_with_proved_child)
     ch->simulate(g);
     CHECK_TRUE(ch->proved_mate(false));
 
-    n.backprop(SQ_NA);
+    n.backprop<Parameters>(true);
     CHECK_TRUE(n.proved_mate(true));
     CHECK_EQUAL(zero, n.pn(true));
     CHECK_EQUAL(inf, n.dn(true));
@@ -495,7 +495,7 @@ TEST(dfpn_node_backprop, defence_preference)
     auto n = Node();
     g.apply(MT::make_move(HI, SQ_5B));
     n.expand(next, g);
-    n.backprop(g.get_state().find_checker_square());
+    n.backprop<Parameters>(g.get_state().find_checker_square());
 
     // Prefer capture move
     CHECK_EQUAL(MT::make_move(SQ_5A, SQ_5B), n.get_child_1st()->get_action());
@@ -512,18 +512,18 @@ TEST(dfpn_node_backprop, defence_with_proved_child)
     g.apply(MT::make_move(SQ_1C, SQ_1B));
     auto n = Node();
     n.expand(next, g);
-    n.backprop(SQ_1B);
+    n.backprop<Parameters>(false);
 
     uint th_p_ch, th_d_ch;
     const auto ch = n.select(inf, inf, th_p_ch, th_d_ch);
     CHECK_EQUAL(MT::make_move(SQ_1A, SQ_1B), ch->get_action());
     g.apply_dfpn(ch->get_action());
     ch->expand(next, g);
-    ch->backprop(SQ_NA);
+    ch->backprop<Parameters>(true);
     CHECK_TRUE(ch->proved_no_mate(true));
     g.undo();
 
-    n.backprop(SQ_1B);
+    n.backprop<Parameters>(false);
     CHECK_TRUE(ch->proved_no_mate(true));
 }
 
@@ -546,7 +546,7 @@ TEST(dfpn_node_backprop, offence_proved_by_repetitions)
         .apply(MT::make_move(SQ_1B, SQ_1A));
     auto n = Node();
     n.expand(next, g);
-    n.backprop(SQ_NA);
+    n.backprop<Parameters>(true);
 
     uint th_p_ch, th_d_ch;
     auto c = n.select(inf, inf, th_p_ch, th_d_ch);
@@ -554,14 +554,14 @@ TEST(dfpn_node_backprop, offence_proved_by_repetitions)
     CHECK_TRUE(c->simulate(g)); // repetition
     CHECK_TRUE(c->proved_no_mate(false));
     g.undo();
-    n.backprop(SQ_NA);
+    n.backprop<Parameters>(true);
     CHECK_FALSE(n.proved());
     c = n.select(inf, inf, th_p_ch, th_d_ch);
     g.apply_dfpn(c->get_action());
     CHECK_TRUE(c->simulate(g)); // repetition
     CHECK_TRUE(c->proved_no_mate(false));
     g.undo();
-    n.backprop(SQ_NA);
+    n.backprop<Parameters>(true);
     CHECK_TRUE(n.proved_no_mate(true));
 }
 
@@ -577,7 +577,7 @@ TEST(dfpn_node_backprop, defence_proved_by_repetitions)
         .apply(MT::make_move(SQ_2C, SQ_1B));
     auto n = Node();
     n.expand(next, g);
-    n.backprop(g.get_state().find_checker_square());
+    n.backprop<Parameters>(g.get_state().find_checker_square());
 
     uint th_p_ch, th_d_ch;
     auto c = n.select(inf, inf, th_p_ch, th_d_ch);
@@ -585,7 +585,7 @@ TEST(dfpn_node_backprop, defence_proved_by_repetitions)
     CHECK_TRUE(c->simulate(g)); // repetition
     CHECK_TRUE(c->proved_no_mate(true));
     g.undo();
-    n.backprop(g.get_state().find_checker_square());
+    n.backprop<Parameters>(g.get_state().find_checker_square());
     CHECK_TRUE(n.proved_no_mate(false));
 }
 
@@ -599,7 +599,7 @@ TEST(dfpn_node_select, offence_single_child)
     {
         auto n = Node();
         n.expand(next, Game("4k/5/4P/5/5 b -"));
-        n.backprop(SQ_NA);
+        n.backprop<Parameters>(true);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(inf, inf, th_p_ch, th_d_ch);
         CHECK_EQUAL(inf, th_p_ch);
@@ -611,7 +611,7 @@ TEST(dfpn_node_select, offence_single_child)
     {
         auto n = Node();
         n.expand(next, Game("4k/5/4P/5/5 b -"));
-        n.backprop(SQ_NA);
+        n.backprop<Parameters>(true);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(25, 10, th_p_ch, th_d_ch);
         CHECK_EQUAL(10, th_p_ch);
@@ -629,7 +629,7 @@ TEST(dfpn_node_select, offence_multiple_child)
     {
         auto n = Node();
         n.expand(next, Game("4k/5/5/5/5 b S"));
-        n.backprop(SQ_NA);
+        n.backprop<Parameters>(true);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(inf, inf, th_p_ch, th_d_ch);
         CHECK_EQUAL(inf - unit, th_p_ch);
@@ -641,7 +641,7 @@ TEST(dfpn_node_select, offence_multiple_child)
         // offence prefers promotion
         auto n = Node();
         n.expand(next, Game("2B1k/5/5/5/5 b -"));
-        n.backprop(SQ_NA);
+        n.backprop<Parameters>(true);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(inf, inf, th_p_ch, th_d_ch);
         CHECK_EQUAL(MT::make_move(SQ_3A, SQ_2B, true), c->get_action());
@@ -655,7 +655,7 @@ TEST(dfpn_node_select, offence_with_disproved_child)
     auto g = Game("4k/5/4G/5/5 b -");
     auto n = Node();
     n.expand(next, g);
-    n.backprop(SQ_NA);
+    n.backprop<Parameters>(true);
 
     uint th_p_ch, th_d_ch;
     auto c = n.select(inf, inf, th_p_ch, th_d_ch);
@@ -666,7 +666,7 @@ TEST(dfpn_node_select, offence_with_disproved_child)
     CHECK_TRUE(c->proved_no_mate(false));
     g.undo();
 
-    n.backprop(SQ_NA);
+    n.backprop<Parameters>(true);
     c = n.select(inf, inf, th_p_ch, th_d_ch);
     CHECK_EQUAL(inf, th_p_ch);
     CHECK_EQUAL(inf, th_d_ch);
@@ -681,7 +681,7 @@ TEST(dfpn_node_select, defence_single_child)
         auto n = Node();
         g.apply(MT::make_move(SQ_1C, SQ_1B));
         n.expand(next, g);
-        n.backprop(SQ_1B);
+        n.backprop<Parameters>(false);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(inf, inf, th_p_ch, th_d_ch);
         CHECK_EQUAL(inf, th_p_ch);
@@ -695,7 +695,7 @@ TEST(dfpn_node_select, defence_single_child)
         auto n = Node();
         g.apply(MT::make_move(SQ_1C, SQ_1B));
         n.expand(next, g);
-        n.backprop(SQ_1B);
+        n.backprop<Parameters>(false);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(25, 10, th_p_ch, th_d_ch);
         CHECK_EQUAL(10, th_p_ch);
@@ -715,7 +715,7 @@ TEST(dfpn_node_select, defence_multiple_child)
         auto n = Node();
         g.apply(MT::make_move(SQ_4B, SQ_5C));
         n.expand(next, g);
-        n.backprop(SQ_5C);
+        n.backprop<Parameters>(false);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(inf, inf, th_p_ch, th_d_ch);
         CHECK_EQUAL(MT::make_move("4c5c"), c->get_action());

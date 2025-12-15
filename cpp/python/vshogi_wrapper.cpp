@@ -1,6 +1,7 @@
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/result.hpp"
 #include "vshogi/engine/az/node.hpp"
+#include "vshogi/engine/dfpn/node.hpp"
 #include "vshogi/engine/gaz/node.hpp"
 
 #include <pybind11/numpy.h>
@@ -26,6 +27,40 @@ void export_result_enum(py::module& m)
         .value("DRAW", vshogi::DRAW)
         .value("BLACK_WIN", vshogi::BLACK_WIN)
         .value("WHITE_WIN", vshogi::WHITE_WIN);
+}
+
+void export_dfpn_node(py::module& m)
+{
+    using Node = vshogi::engine::dfpn::Node;
+    constexpr float unit = static_cast<float>(vshogi::engine::dfpn::unit);
+    constexpr uint inf = vshogi::engine::dfpn::inf;
+    py::class_<Node>(m, "DfpnNode")
+        .def(
+            "pn",
+            [](const Node& self, const bool offence) {
+                const auto n = self.pn(offence);
+                if (n == inf)
+                    return std::numeric_limits<float>::infinity();
+                return static_cast<float>(n) / unit;
+            })
+        .def(
+            "dn",
+            [](const Node& self, const bool offence) {
+                const auto n = self.dn(offence);
+                if (n == inf)
+                    return std::numeric_limits<float>::infinity();
+                return static_cast<float>(n) / unit;
+            })
+        .def("get_action", &Node::get_action)
+        .def("has_child", &Node::has_child)
+        .def("get_children", [](const Node& self) -> py::object {
+            std::vector<const Node*> out;
+            if (self.has_child()) {
+                for (auto ch = self.get_child(); ch; ch = ch->get_sibling())
+                    out.emplace_back(ch);
+            }
+            return py::cast(out, py::return_value_policy::reference);
+        });
 }
 
 void export_az_node(py::module& m)
@@ -102,6 +137,7 @@ PYBIND11_MODULE(_vshogi, m)
 {
     export_color_enum(m);
     export_result_enum(m);
+    export_dfpn_node(m);
     export_az_node(m);
     export_gaz_node(m);
 

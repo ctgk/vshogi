@@ -559,61 +559,6 @@ inline void export_gaz_searcher(pybind11::module& m)
 }
 
 template <class Parameters>
-inline void export_dfpn_node(pybind11::module& m)
-{
-    namespace py = pybind11;
-    using Node = vshogi::engine::dfpn::Node<Parameters>;
-    using Move = pyvshogi::Move<Parameters>;
-    constexpr float unit = static_cast<float>(vshogi::engine::dfpn::unit);
-    constexpr uint inf = vshogi::engine::dfpn::inf;
-    py::class_<Node>(m, "DfpnNode")
-        .def(
-            "pn",
-            [](const Node& self, const bool offence) {
-                const auto n = self.pn(offence);
-                if (n == inf)
-                    return std::numeric_limits<float>::infinity();
-                return static_cast<float>(n) / unit;
-            })
-        .def(
-            "dn",
-            [](const Node& self, const bool offence) {
-                const auto n = self.dn(offence);
-                if (n == inf)
-                    return std::numeric_limits<float>::infinity();
-                return static_cast<float>(n) / unit;
-            })
-        .def(
-            "get_action",
-            [](const Node& self) { return Move(self.get_action()); })
-        .def("has_child", &Node::has_child)
-        .def(
-            "get_child_1st",
-            [](const Node& self) -> py::object {
-                const auto c = self.get_child_1st();
-                if (c == nullptr)
-                    return py::none();
-                return py::cast(c, py::return_value_policy::reference);
-            })
-        .def(
-            "get_child_2nd",
-            [](const Node& self) -> py::object {
-                const auto c = self.get_child_2nd();
-                if (c == nullptr)
-                    return py::none();
-                return py::cast(c, py::return_value_policy::reference);
-            })
-        .def("get_children", [](const Node& self) -> py::object {
-            std::vector<const Node*> out;
-            if (self.has_child()) {
-                for (auto ch = self.get_child(); ch; ch = ch->get_sibling())
-                    out.emplace_back(ch);
-            }
-            return py::cast(out, py::return_value_policy::reference);
-        });
-}
-
-template <class Parameters>
 inline void export_dfpn_searcher(pybind11::module& m)
 {
     namespace py = pybind11;
@@ -668,7 +613,6 @@ void export_classes(pybind11::module& m)
     export_gaz_searcher<Parameters>(m);
     export_value_functions<Parameters>(m);
     export_dfpn_searcher<Parameters>(m);
-    export_dfpn_node<Parameters>(m);
 }
 
 } // namespace pyvshogi
