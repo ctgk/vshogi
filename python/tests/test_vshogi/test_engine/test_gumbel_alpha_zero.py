@@ -54,5 +54,18 @@ def test_dfpn_root():
     assert shogi.Move("G*2b") == searcher.select()
 
 
+def test_apply():
+    game = shogi.Game("p4/5/5/5/4P b -")
+    searcher = GumbelAlphaZero()
+    searcher.set_game(game)
+    searcher.search(10)
+    actual = searcher.select()
+    assert shogi.Move("1e1d") == actual
+    assert searcher.num_searched == 10
+    searcher.apply(actual)
+    assert shogi.Move("5a5b") == searcher.select()
+    assert searcher.num_searched == 9
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

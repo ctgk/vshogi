@@ -51,44 +51,9 @@ public:
         const float value,
         const float* const policy_logits = nullptr);
     void keep_top_n_actions(const uint num_actions);
-    uint count_active_childs() const
-    {
-        for (uint ii = 0u; ii < max_legal_moves; ++ii) {
-            if (m_child_nodes[ii] == nullptr)
-                return ii;
-        }
-        return max_legal_moves;
-    }
-    move_t select_action() const
-    {
-
-        float max_score = -std::numeric_limits<float>::infinity();
-        move_t out{};
-
-        const uint max_visits = m_nodes[0].get_child_1st()->get_visit_count();
-        uint ii = 0u;
-        if (m_child_nodes[0] == nullptr) {
-            for (const Node* c = m_nodes[0].get_child(); c;
-                 c = c->get_sibling()) {
-                const float score
-                    = c->get_logit() + sigma(-c->get_q_value(), max_visits);
-                if (score > max_score) {
-                    max_score = score;
-                    out = c->get_action();
-                }
-            }
-        } else {
-            for (auto c = m_child_nodes; *c; ++c) {
-                const float score = m_gumbel_noises[ii++] + (*c)->get_logit()
-                                    + sigma(-(*c)->get_q_value(), max_visits);
-                if (score > max_score) {
-                    max_score = score;
-                    out = (*c)->get_action();
-                }
-            }
-        }
-        return out;
-    }
+    uint count_active_childs() const;
+    move_t select_action() const;
+    Searcher& apply(Game<P>& game, const move_t& action);
     // clang-format off
     uint get_search_count() const { return m_nodes[0].get_visit_count(); }
     bool proved_mate() const { return m_nodes[0].is_mate(); }
@@ -254,6 +219,57 @@ uint Searcher<P>::set_child_nodes_and_gumbel_noises()
     }
     assert(false);
     return max_legal_moves;
+}
+
+template <class P>
+uint Searcher<P>::count_active_childs() const
+{
+    for (uint ii = 0u; ii < max_legal_moves; ++ii) {
+        if (m_child_nodes[ii] == nullptr)
+            return ii;
+    }
+    return max_legal_moves;
+}
+
+template <class P>
+move_t Searcher<P>::select_action() const
+{
+    float max_score = -std::numeric_limits<float>::infinity();
+    move_t out{};
+
+    const uint max_visits = m_nodes[0].get_child_1st()->get_visit_count();
+    uint ii = 0u;
+    if (m_child_nodes[0] == nullptr) {
+        for (const Node* c = &m_nodes[1]; &m_nodes[0] == c->get_parent(); ++c) {
+            const float score
+                = c->get_logit() + sigma(-c->get_q_value(), max_visits);
+            if (score > max_score) {
+                max_score = score;
+                out = c->get_action();
+            }
+        }
+    } else {
+        for (auto c = m_child_nodes; *c; ++c) {
+            const float score = m_gumbel_noises[ii++] + (*c)->get_logit()
+                                + sigma(-(*c)->get_q_value(), max_visits);
+            if (score > max_score) {
+                max_score = score;
+                out = (*c)->get_action();
+            }
+        }
+    }
+    return out;
+}
+
+template <class P>
+Searcher<P>& Searcher<P>::apply(Game<P>& game, const move_t& action)
+{
+    remove_unselected_nodes(action);
+    m_nodes.front().init_as_begin();
+    m_child_nodes[0] = nullptr;
+    game.apply(action);
+    dfpn_proved_mate(game, &m_nodes[0]);
+    return *this;
 }
 
 } // namespace vshogi::engine::gaz

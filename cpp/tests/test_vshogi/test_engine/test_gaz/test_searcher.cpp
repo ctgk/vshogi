@@ -50,7 +50,27 @@ TEST(test_gaz_searcher, keep_top_n_actions)
     }
 }
 
-TEST(test_gaz_searcher, explore_until_game_end)
+TEST(test_gaz_searcher, explore_until_game_end_no_sample)
+{
+    Searcher searcher{};
+    Game g{};
+    for (uint num_ply = 0u;; ++num_ply) {
+        CHECK_EQUAL(num_ply, g.ply());
+        if (g.get_result() != ONGOING)
+            break;
+        CHECK_COMPARE(searcher.get_search_count(), <, 100u);
+        for (uint ii = 100u - searcher.get_search_count(); ii--;) {
+            const auto n = searcher.search(g);
+            searcher.simulate_expand_backprop(n, g, 0.f, nullptr);
+        }
+        CHECK_EQUAL(100u, searcher.get_search_count());
+        const auto action = searcher.select_action();
+        CHECK_TRUE(g.is_legal(action));
+        searcher.apply(g, action);
+    }
+}
+
+TEST(test_gaz_searcher, explore_until_game_end_sampled)
 {
     Searcher searcher{};
     Game g{};
@@ -84,6 +104,7 @@ TEST(test_gaz_searcher, explore_until_game_end)
         }
         CHECK_EQUAL(11u, searcher.get_search_count());
         const auto action = searcher.select_action();
+        CHECK_TRUE(g.is_legal(action));
         g.apply(action);
     }
 }

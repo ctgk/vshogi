@@ -548,9 +548,14 @@ inline void export_gaz_searcher(pybind11::module& m)
                 self.simulate_expand_backprop(
                     leaf, game, value, policy_logits.data());
             })
-        .def("select_action", [](const Searcher& self) {
-            return Move<P>(self.select_action());
-        });
+        .def(
+            "select_action",
+            [](const Searcher& self) { return Move<P>(self.select_action()); })
+        .def(
+            "apply",
+            [](Searcher& self, vshogi::Game<P>& game, const Move<P>& action) {
+                self.apply(game, action.m_value);
+            });
 }
 
 template <class Parameters>

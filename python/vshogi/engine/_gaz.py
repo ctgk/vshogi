@@ -199,6 +199,17 @@ class GumbelAlphaZero(Engine):
         """
         return self._searcher.select_action()
 
+    def apply(self, move: Move):
+        """Apply a move and make a corresponding child node be the new root.
+
+        Parameters
+        ----------
+        move : Move
+            Move to apply.
+        """
+        if self._is_ready():
+            self._searcher.apply(self._game._game, move)
+
     def _tree(
         self,
         depth: int = 1,
