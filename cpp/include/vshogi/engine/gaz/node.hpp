@@ -84,6 +84,12 @@ private:
     void improved_policy(float* const out) const;
     float completed_q_value_of(const Node* const child) const;
 
+    template <class G, class P>
+    void expand_by_generator(
+        Node*& next,
+        const State<P>& s,
+        const ColorEnum& turn,
+        const float* const policy_logits);
     template <class P>
     void make_node_at(
         Node*& next,
@@ -163,24 +169,29 @@ void Node::expand(
 {
     const auto turn = game.get_turn();
     m_child = next;
-    if (game.in_check()) {
-        auto gen = MoveGenerator<P, GenEnum::EVADE>(game.get_state());
-        for (; gen; ++gen) {
-            if (next->is_end())
-                break;
-            make_node_at<P>(next, *gen, turn, policy_logits);
-        }
-    } else {
-        auto gen = MoveGenerator<P, GenEnum::LEGAL>(game.get_state());
-        for (; gen; ++gen) {
-            if (next->is_end())
-                break;
-            make_node_at<P>(next, *gen, turn, policy_logits);
-        }
-    }
+    if (game.in_check())
+        expand_by_generator<MoveGenerator<P, GenEnum::EVADE>>(
+            next, game.get_state(), turn, policy_logits);
+    else
+        expand_by_generator<MoveGenerator<P, GenEnum::LEGAL>>(
+            next, game.get_state(), turn, policy_logits);
     if (m_child == next)
         m_child = nullptr;
     next->init_if_not_end();
+}
+
+template <class G, class P>
+void Node::expand_by_generator(
+    Node*& next,
+    const State<P>& s,
+    const ColorEnum& turn,
+    const float* const policy_logits)
+{
+    for (auto g = G(s); g; ++g) {
+        if (next->is_end())
+            break;
+        make_node_at<P>(next, *g, turn, policy_logits);
+    }
 }
 
 template <class P>
