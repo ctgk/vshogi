@@ -3,12 +3,20 @@ import logging
 import numpy as np
 from flask import Flask, jsonify, render_template, request
 
+import vshogi
 from vshogi.shogi import Color, Game, Move
 
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
 game: Game = Game()
+
+alphazero_player = vshogi.engine.AlphaZero(
+    kldgain_threshold=1e-4,
+    dfpn_search_root=10000,
+    dfpn_search_leaf=100,
+)
+logging.info("AlphaZero player initialized")
 
 
 @app.route('/')
@@ -59,10 +67,20 @@ def ask_or_move():
     elif move_is_legal:
         game.apply(move)
         logging.debug(f'make_move.game after game.apply(): {game.to_sfen()}')
+
+        # Make AlphaZero move if game is still ongoing
+        if game.result == vshogi.Result.ONGOING:
+            make_alphazero_move()
+
         return jsonify({'legal': True, 'ask': False, 'src': src, 'dst': dst})
     elif promotion_is_legal:
         game.apply(move_promotion)
         logging.debug(f'make_move.game after game.apply(): {game.to_sfen()}')
+
+        # Make AlphaZero move if game is still ongoing
+        if game.result == vshogi.Result.ONGOING:
+            make_alphazero_move()
+
         return jsonify({'legal': True, 'ask': False, 'src': src, 'dst': dst})
     else:
         logging.debug(f'make_move: {move} is illegal at {game.to_sfen()}')
@@ -81,10 +99,34 @@ def move():
     if game.is_legal(move):
         game.apply(move)
         logging.debug(f'make_move.game after game.apply(): {game.to_sfen()}')
+
+        # Make AlphaZero move if game is still ongoing
+        if game.result == vshogi.Result.ONGOING:
+            make_alphazero_move()
+
         return jsonify({'success': True})
     else:
         logging.debug(f'make_move: {move} is illegal at {game.to_sfen()}')
         return jsonify({'success': False})
+
+
+def make_alphazero_move():
+    """Make AlphaZero play its move."""
+    if game.result != vshogi.Result.ONGOING:
+        return
+
+    logging.info(f"AlphaZero is thinking... : {game.to_sfen()}")
+    alphazero_player.set_game(game)
+    alphazero_player.search(n_or_t=1000)
+    az_move = alphazero_player.select()
+
+    if az_move and game.is_legal(az_move):
+        game.apply(az_move)
+        logging.info(f"AlphaZero played: {az_move.to_sfen()}")
+    else:
+        logging.error(f"AlphaZero selected invalid move: {az_move}")
+
+    alphazero_player.clear()
 
 
 if __name__ == '__main__':
