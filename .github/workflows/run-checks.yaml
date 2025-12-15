@@ -18,7 +18,7 @@ jobs:
         python-version: ['3.10', '3.11', '3.12']
         command: [
           "pip install .; pip install pytest; pytest --doctest-modules --import-mode=importlib --ignore-glob='**/*dlshogi/*' python/",
-          "pip install -e .[develop]; SKIP=no-commit-to-branch pre-commit run -a; clang-tidy `find ./cpp/**/*.hpp ./cpp/**/*.cpp -type f | grep -v python` -p build/pre-commit -extra-arg=-Wno-unknown-warning-option"
+          "pip install -e .[develop,dlshogi]; SKIP=no-commit-to-branch pre-commit run -a && clang-tidy `find ./cpp/**/*.hpp ./cpp/**/*.cpp -type f | grep -v python` -p build/pre-commit -extra-arg=-Wno-unknown-warning-option"
         ]
       fail-fast: false
 
