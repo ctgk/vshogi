@@ -47,7 +47,7 @@ def play_game(
         player.set_game(game)
         player.search(**search_args)
         if _return_num_searched and (i < 2):
-            num_searched.append(player.num_searched)
+            num_searched.append(player.get_search_count())
         move = player.select(**select_args)
         game.apply(move)
     if draw_on_max_moves and game.result == Result.ONGOING:
