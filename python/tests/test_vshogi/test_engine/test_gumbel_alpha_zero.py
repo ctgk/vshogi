@@ -13,13 +13,13 @@ def test_is_ready():
     assert searcher.is_ready()
 
 
-def test_num_searched():
+def test_get_search_count():
     game = shogi.Game()
     searcher = GumbelAlphaZero()
     searcher.set_game(game)
-    assert searcher.num_searched == 0
+    assert searcher.get_search_count() == 0
     searcher.search(num_sims=20, num_actions=4)
-    assert searcher.num_searched == 20
+    assert searcher.get_search_count() == 20
 
 
 def test_set_game():
@@ -29,10 +29,10 @@ def test_set_game():
     searcher.search(num_sims=10, num_actions=2)
     action = searcher.select()
     game.apply(action)
-    assert searcher.num_searched == 10
+    assert searcher.get_search_count() == 10
 
     searcher.set_game(game)
-    assert searcher.num_searched == 0
+    assert searcher.get_search_count() == 0
 
 
 def test_search_without_sequential_halving():
@@ -61,10 +61,10 @@ def test_apply():
     searcher.search(10)
     actual = searcher.select()
     assert shogi.Move("1e1d") == actual
-    assert searcher.num_searched == 10
+    assert searcher.get_search_count() == 10
     searcher.apply(actual)
     assert shogi.Move("5a5b") == searcher.select()
-    assert searcher.num_searched == 9
+    assert searcher.get_search_count() == 9
 
 
 if __name__ == '__main__':

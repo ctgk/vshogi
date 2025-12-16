@@ -142,11 +142,6 @@ class AlphaZero(Engine):
         if self._is_ready():
             self._searcher.apply(self._game._game, move)
 
-    def _get_num_searched(self):
-        if self._searcher is None:
-            return 0
-        return self._searcher.get_search_count()
-
     def search(self, n_or_t: tp.Union[int, float] = 0.01):
         """Explore from root node for n times.
 

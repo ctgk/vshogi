@@ -72,11 +72,8 @@ class DfpnSearcher(Engine):
         self._max_num_nodes = max_num_nodes
 
     def _set_game(self, game: Game):
-        try:
-            cls_ = game._get_dfpn_searcher_class()
-        except:
-            return
         if self._searcher is None:
+            cls_ = game._get_dfpn_searcher_class()
             self._searcher = cls_(self._max_num_nodes)
         self._searcher.init()
         self._game = game.copy()
@@ -88,11 +85,6 @@ class DfpnSearcher(Engine):
         self._searcher = None
 
     def _apply(self, _: Move):
-        raise NotImplementedError
-
-    @property
-    def num_searched(self) -> int:
-        # flake8: noqa
         raise NotImplementedError
 
     def search(self, n: int = 100) -> bool:
@@ -170,10 +162,6 @@ class DfpnSearcher(Engine):
         """
         self._raise_error_if_not_ready()
         return self._searcher.proved_no_mate()
-
-    def get_search_count(self) -> int:
-        self._raise_error_if_not_ready()
-        return self._searcher.get_search_count()
 
     def get_mate_move(self) -> Move:
         """Return move to mate found.

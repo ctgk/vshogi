@@ -72,8 +72,7 @@ class Engine(abc.ABC):
         """
         return self._name
 
-    @property
-    def num_searched(self) -> int:
+    def get_search_count(self) -> int:
         """Return number of game positions searched so far.
 
         Returns
@@ -81,7 +80,7 @@ class Engine(abc.ABC):
         int
             Number of game positions searched so far.
         """
-        return self._get_num_searched()
+        return self._get_search_count()
 
     @abc.abstractmethod
     def _set_game(self, game: Game):
@@ -95,8 +94,10 @@ class Engine(abc.ABC):
     def _clear(self) -> None:
         pass
 
-    def _get_num_searched(self) -> int:
-        return 0
+    def _get_search_count(self) -> int:
+        if self._searcher is None:
+            raise ValueError("There is no searcher to get the count from.")
+        return self._searcher.get_search_count()
 
     def _raise_error_if_not_ready(self):
         method = f'{self.__class__.__name__}.set_game()'

@@ -17,12 +17,12 @@ def test_is_ready():
     assert searcher.is_ready()
 
 
-def test_num_searched():
+def test_get_search_count():
     game = shogi.Game()
     searcher = AlphaZero(uniform_pv_func)
     searcher.set_game(game)
     searcher.search(n_or_t=100)
-    assert searcher.num_searched == 100
+    assert searcher.get_search_count() == 100
 
 
 def test_clear():
@@ -32,7 +32,7 @@ def test_clear():
     searcher.search(n_or_t=100)
     searcher.clear()
     assert searcher.is_ready() is False
-    assert searcher.num_searched == 0
+    assert searcher.get_search_count() == 0
 
 
 def test_q_values_mate_in_one():

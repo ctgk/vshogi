@@ -115,11 +115,6 @@ class GumbelAlphaZero(Engine):
         self._searcher.init()
         self._game = None
 
-    def _get_num_searched(self):
-        if self._searcher is None:
-            return 0
-        return self._searcher.get_search_count()
-
     def search(self, num_sims: int, num_actions: tp.Optional[int] = None):
         """Explore nodes using sequential halving.
 
@@ -153,7 +148,7 @@ class GumbelAlphaZero(Engine):
                 f"Number of simulations in a phase (={n_per_p}) should be "
                 f"larger than `num_actions` (={num_actions}). Please pass a "
                 f"value larger than {num_actions * n_phase} to `num_sims`.")
-        if self.num_searched == 0:
+        if self.get_search_count() == 0:
             self._select_simulate_expand_backprop()
             num_sims -= 1
 

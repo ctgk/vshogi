@@ -148,11 +148,11 @@ def play_game(
         if not player.is_ready():
             player.set_game(game)
 
-        player.search(args.az_search - player.num_searched)
+        player.search(args.az_search - player.get_search_count())
         if (main_player is not None) and (main_player is not player):
             if not main_player.is_ready():
                 main_player.set_game(game)
-            main_player.search(args.az_search - main_player.num_searched)
+            main_player.search(args.az_search - main_player.get_search_count())
 
         if player.proved_mate():
             if player.get_q_value() > 0:
