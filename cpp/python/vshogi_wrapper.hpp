@@ -552,6 +552,11 @@ inline void export_gaz_searcher(pybind11::module& m)
             "select_action",
             [](const Searcher& self) { return Move<P>(self.select_action()); })
         .def(
+            "select_action",
+            [](const Searcher& self, const float temperature) {
+                return Move<P>(self.select_action(temperature));
+            })
+        .def(
             "apply",
             [](Searcher& self, vshogi::Game<P>& game, const Move<P>& action) {
                 self.apply(game, action.m_value);

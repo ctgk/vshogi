@@ -12,7 +12,7 @@ Value = float
 
 
 def _repr_node(n) -> str:
-    return f"Node(q={n.get_q_value():.2f}, count={n.get_visit_count()})"
+    return f"Node(q={n.get_q_value(0):.2f}, count={n.get_visit_count()})"
 
 
 def _tree(
@@ -184,15 +184,26 @@ class GumbelAlphaZero(Engine):
         """
         return self._searcher.get_root().get_q_value(greedy_depth)
 
-    def select(self) -> Move:
+    def select(self, temperature: float = None) -> Move:
         """Return selected action based on the algorithm.
+
+        Parameters
+        ----------
+        temperature : float, optional
+            Temperature parameter for selecting an action.
 
         Returns
         -------
         Move
             Selected action.
         """
-        return self._searcher.select_action()
+        if temperature is None:
+            return self._searcher.select_action()
+        if self._searcher.count_active_childs() > 0:
+            raise ValueError(
+                "Do not pass `temperature` parameter after running "
+                "sequential halving")
+        return self._searcher.select_action(temperature)
 
     def apply(self, move: Move):
         """Apply a move and make a corresponding child node be the new root.

@@ -53,6 +53,7 @@ public:
     void keep_top_n_actions(const uint num_actions);
     uint count_active_childs() const;
     move_t select_action() const;
+    move_t select_action(const float& temperature) const;
     Searcher& apply(Game<P>& game, const move_t& action);
     // clang-format off
     uint get_search_count() const { return m_nodes[0].get_visit_count(); }
@@ -63,6 +64,12 @@ private:
     Node* select_a_leaf_node(Game<P>& game);
     bool dfpn_proved_mate(Game<P>& game, Node* const node);
     uint set_child_nodes_and_gumbel_noises();
+    float score_of(const Node& child, const uint& max_visits) const;
+    float score_of(
+        const Node& child,
+        const uint& max_visits,
+        const float& gumbel_noise) const;
+    uint max_child_visits() const;
 };
 
 template <class P>
@@ -172,8 +179,7 @@ void Searcher<P>::keep_top_n_actions(const uint num_actions)
 {
     assert(num_actions > 1u);
     const uint num_child = set_child_nodes_and_gumbel_noises();
-    const Node* const best_child = m_nodes[0].get_child_1st();
-    const uint max_visits = best_child ? best_child->get_visit_count() : 0u;
+    const uint max_visits = max_child_visits();
     std::tuple<const Node*, float, float> data[max_legal_moves] = {};
     for (uint ii = 0u; ii < num_child; ++ii) {
         const Node* const c = m_child_nodes[ii];
@@ -228,7 +234,7 @@ uint Searcher<P>::count_active_childs() const
         if (m_child_nodes[ii] == nullptr)
             return ii;
     }
-    return max_legal_moves;
+    return 0u;
 }
 
 template <class P>
@@ -237,21 +243,19 @@ move_t Searcher<P>::select_action() const
     float max_score = -std::numeric_limits<float>::infinity();
     move_t out{};
 
-    const uint max_visits = m_nodes[0].get_child_1st()->get_visit_count();
-    uint ii = 0u;
+    const uint max_visits = max_child_visits();
     if (m_child_nodes[0] == nullptr) {
         for (const Node* c = &m_nodes[1]; &m_nodes[0] == c->get_parent(); ++c) {
-            const float score
-                = c->get_logit() + sigma(-c->get_q_value(), max_visits);
+            const float score = score_of(*c, max_visits);
             if (score > max_score) {
                 max_score = score;
                 out = c->get_action();
             }
         }
     } else {
+        const float* noise = m_gumbel_noises;
         for (auto c = m_child_nodes; *c; ++c) {
-            const float score = m_gumbel_noises[ii++] + (*c)->get_logit()
-                                + sigma(-(*c)->get_q_value(), max_visits);
+            const float score = score_of(**c, max_visits, *noise++);
             if (score > max_score) {
                 max_score = score;
                 out = (*c)->get_action();
@@ -259,6 +263,48 @@ move_t Searcher<P>::select_action() const
         }
     }
     return out;
+}
+
+template <class P>
+move_t Searcher<P>::select_action(const float& temperature) const
+{
+    std::vector<float> probas{};
+    probas.reserve(m_nodes[0].count_childs());
+    const uint max_visits = max_child_visits();
+    for (auto c = &m_nodes[1]; &m_nodes[0] == c->get_parent(); ++c) {
+        const float score = score_of(*c, max_visits) / temperature;
+        probas.emplace_back(score);
+    }
+    softmax(probas);
+    const float p_uniform = 1.f / static_cast<float>(probas.size());
+    float sample = dist01(random_engine);
+    for (auto c = &m_nodes[1]; &m_nodes[0] == c->get_parent(); ++c) {
+        if (sample < p_uniform)
+            return c->get_action();
+        sample -= p_uniform;
+    }
+    assert(false);
+    return m_nodes[1].get_action(); // just in case for numerical instability
+}
+
+template <class P>
+float Searcher<P>::score_of(const Node& child, const uint& max_visits) const
+{
+    return child.get_logit() + sigma(-child.get_q_value(), max_visits);
+}
+
+template <class P>
+float Searcher<P>::score_of(
+    const Node& child, const uint& max_visits, const float& gumbel_noise) const
+{
+    return score_of(child, max_visits) + gumbel_noise;
+}
+
+template <class P>
+uint Searcher<P>::max_child_visits() const
+{
+    const Node* c1 = get_root().get_child_1st();
+    return c1 ? c1->get_visit_count() : 0u;
 }
 
 template <class P>

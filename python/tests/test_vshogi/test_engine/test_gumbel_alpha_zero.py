@@ -67,5 +67,22 @@ def test_apply():
     assert searcher.get_search_count() == 9
 
 
+def test_select_action():
+    game = shogi.Game()
+    searcher = GumbelAlphaZero()
+    searcher.set_game(game)
+    searcher.search(32, num_actions=4)
+    print(searcher._tree(depth=1, breadth=-1))
+    with pytest.raises(ValueError):
+        searcher.select(10.)
+    searcher.clear()
+    searcher.set_game(game)
+    searcher.search(32)
+    assert (
+        len(game.get_legal_moves())
+        == len(set([searcher.select(10.) for _ in range(1000)]))
+    )
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
