@@ -4,14 +4,18 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+from vshogi.dlshogi._data import Data
 from vshogi.dlshogi._network import PolicyValueNetwork
 from vshogi.dlshogi._policy_value_function import PolicyValueFunction
+from vshogi.dlshogi._replay_buffer import ReplayBuffer
 from vshogi.dlshogi._train import train
 
 
 _classes = [
+    Data,
     PolicyValueFunction,
     PolicyValueNetwork,
+    ReplayBuffer,
 ]
 _functions = [
     train,

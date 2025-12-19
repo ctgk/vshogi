@@ -133,11 +133,11 @@ def train(
         loss_policy_mean = 0.
         loss_value_mean = 0.
         loss_mean = 0.
-        for i, (x_mb, (p_mb, v_mb), w_mb) in pbar:
-            x_mb = th.tensor(x_mb, device=device)
-            p_mb = th.tensor(p_mb, device=device)
-            v_mb = th.tensor(v_mb, device=device)
-            w_mb = th.tensor(w_mb, device=device)
+        for i, (x_mb, p_mb, v_mb, w_mb) in pbar:
+            x_mb = x_mb.to(device)
+            p_mb = p_mb.to(device)
+            v_mb = v_mb.to(device)
+            w_mb = w_mb.to(device)
             if counter == 0:
                 optimizer.zero_grad()
             counter += 1

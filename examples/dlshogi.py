@@ -9,9 +9,9 @@
 """
 
 import contextlib
+from functools import reduce
 from glob import glob
 import os
-import random
 import subprocess
 import sys
 import typing as tp
@@ -27,7 +27,6 @@ import joblib
 from joblib.parallel import Parallel, delayed
 import numpy as np
 import pandas as pd
-import tensorflow as tf
 import torch as th
 from tqdm import tqdm
 
@@ -57,6 +56,9 @@ class Args:
     nn_entropy_regularization: float = config(type=float, default=1e-2)
     nn_load_previous_weights: int = config(type=int, default=1, help='Load previous weights if 1, else train network from scratch. By default 0.')
     nn_train_device: str = config(type=str, default='cpu', choices=['cpu', 'cuda', 'mps'])
+    nn_workers: int = config(type=int, default=0, help='Number of workers for data loading. Default is 0.')
+    nn_prefetch_factor: int = config(type=int, default=1, help='Prefetch factor for data loading. Default is 1.')
+    nn_dataset_size: int = config(type=int, default=100000, help='Max size of NN training dataset. Default is 100000.')
     discount_factor: float = config(type=float, default=0.99, help='Discount factor of reward supervision. By default 0.99.')
     az_kldgain_threshold: float = config(type=float, default=1e-4, help='KL divergence threshold to stop Alpha Zero search')
     az_search: int = config(type=int, default=1000, help='# of searches in Alpha Zero, default=1000. Alpha Zero used 800 simulations in the paper.')
@@ -96,16 +98,6 @@ def dump_game_log(file_, game: vshogi.Game, color_filter: vshogi.Color = None) -
         file_=file_,
         color_filter=color_filter,
     )
-
-
-def dump_game_log_and_convert_to_tfrecord(
-    kifu_path: str,
-    game: vshogi.Game,
-    args: Args,
-) -> None:
-    with open(kifu_path, 'w') as f:
-        dump_game_log(f, game)
-    kifu_to_tfrecord(kifu_path.replace('.tsv', '.tfrecord'), kifu_path, args)
 
 
 def play_game(
@@ -264,74 +256,18 @@ def read_kifu(
         )[::-1],
         0.1,
     )
+    df['z_value'] = df.apply(lambda row: 0 if ('DRAW' in row['result']) else 2 * int(('BLACK' in row['result']) == ('b' == row.state.split()[1])) - 1, axis=1)
+    df['z_value'] = df.apply(lambda row: row['z_value'] * np.power(args.discount_factor, row['total_ply'] - row['ply']), axis=1)
+    df['value'] = df.apply(lambda row: row['z_weight'] * row['z_value'] + (1 - row['z_weight']) * row['q_value'], axis=1)
+    df['value01'] = df['value'].apply(lambda value: np.clip((value + 1) / 2, 0., 1.))
+
+    df['visit_count_sum'] = df['visit_count'].apply(lambda s: sum(eval(s).values()))
+    df['visit_proba'] = df.apply(lambda row: {m: v / row['visit_count_sum'] for m, v in eval(row['visit_count']).items()}, axis=1)
 
     if fraction is None:
         return df
     n = int(len(df) * fraction)
     return df.tail(n)
-
-
-def df_to_tfrecord(tfrecord_path: str, df: pd.DataFrame, args: Args, merger=None):
-    with tf.io.TFRecordWriter(tfrecord_path) as writer:
-        for i in range(len(df)):
-            row = df.iloc[i]
-
-            if (merger is not None) and row.state in merger:
-                state = args._shogi.State(row.state)
-                s = sum(merger[row.state]['visits_total'].values())
-                visit_proba = {m: v / s for m, v in merger[row.state]['visits_total'].items()}
-                value01 = merger[row.state]['value01_total'] / merger[row.state]['count']
-                weight = row.weight
-            else:
-                state = args._shogi.State(row.state)
-                visit_count = {args._shogi.Move(k): v for k, v in eval(row.visit_count).items()}
-                s = sum(visit_count.values())
-                visit_proba = {m: v / s for m, v in visit_count.items()}
-                if 'DRAW' in row.result:
-                    z_value = -0.2 if ('b' == row.state.split()[1]) else 0.2
-                else:
-                    z_value = 2 * int(('BLACK' in row.result) == ('b' == row.state.split()[1])) - 1
-                z_value = z_value * np.power(args.discount_factor, row.total_ply - row.ply)
-                value = row.z_weight * z_value + (1 - row.z_weight) * row.q_value
-                value01 = np.clip((value + 1) / 2, 0., 1.)
-                weight = row.weight
-
-            x = state.to_dlshogi_features()
-            policy = state.to_dlshogi_policy(visit_proba, default_value=-100000.)
-            record_bytes = tf.train.Example(features=tf.train.Features(feature={
-                'x': tf.train.Feature(float_list=tf.train.FloatList(value=x.ravel())),
-                'policy': tf.train.Feature(float_list=tf.train.FloatList(value=policy.ravel())),
-                'value': tf.train.Feature(float_list=tf.train.FloatList(value=[value01])),
-                'weight': tf.train.Feature(float_list=tf.train.FloatList(value=[weight])),
-            })).SerializeToString()
-            writer.write(record_bytes)
-
-            state = state.hflip()
-            visit_proba = {m.hflip(): p for m, p in visit_proba.items()}
-            x = state.to_dlshogi_features()
-            policy = state.to_dlshogi_policy(visit_proba, default_value=-100000.)
-            record_bytes = tf.train.Example(features=tf.train.Features(feature={
-                'x': tf.train.Feature(float_list=tf.train.FloatList(value=x.ravel())),
-                'policy': tf.train.Feature(float_list=tf.train.FloatList(value=policy.ravel())),
-                'value': tf.train.Feature(float_list=tf.train.FloatList(value=[value01])),
-                'weight': tf.train.Feature(float_list=tf.train.FloatList(value=[weight])),
-            })).SerializeToString()
-            writer.write(record_bytes)
-
-
-def kifu_to_tfrecord(
-    tfrecord_path: str,
-    kifu_path: str,
-    args: Args,
-    fraction: float = None,
-    merger=None,
-):
-    df = read_kifu(
-        kifu_path,
-        fraction=fraction,
-        importance_decay=args.nn_data_importance_decay,
-    )
-    df_to_tfrecord(tfrecord_path, df, args, merger=merger)
 
 
 @contextlib.contextmanager
@@ -411,142 +347,48 @@ def run_self_play(args: Args):
 
 def run_train(args: Args):
 
-    def kifu_to_tfrecord_with_deduplication(index: int, args: Args):
-        data_deduped: tp.Dict[str, tp.Dict[str, tp.Any]] = {}
-        kifu_list = glob(f'datasets/dataset_{index:04d}/*.tsv')
-        for kifu_path in kifu_list:
-            df = read_kifu(kifu_path)
-            for i in range(len(df)):
-                row = df.iloc[i]
-                visits = {args._shogi.Move(k): v for k, v in eval(row.visit_count).items()}
-                z_value = 0 if ('DRAW' in row.result) else 2 * int(('BLACK' in row.result) == ('b' == row.state.split()[1])) - 1
-                z_value = z_value * np.power(args.discount_factor, row.total_ply - row.ply)
-                value = row.z_weight * z_value + (1 - row.z_weight) * row.q_value
-                value01 = np.clip((value + 1) / 2, 0., 1.)
-                count = 1
-
-                if row.state in data_deduped:
-                    if set(data_deduped[row.state]['visits_total'].keys()) != set(visits.keys()):
-                        raise ValueError(f'Mismatching keys at SFEN="{row.state}": {set(data_deduped[row.state]["visits_total"].keys())} != {set(visits.keys())}')
-                    visits = {
-                        m: data_deduped[row.state]['visits_total'][m] + visits[m]
-                        for m in visits.keys()
-                    }
-                    value01 = value01 + data_deduped[row.state]['value01_total']
-                    count = count + data_deduped[row.state]['count']
-
-                data_deduped[row.state] = {
-                    'count': count,
-                    'value01_total': value01,
-                    'visits_total': visits,
-                }
-        data_deduped = {k: v for k, v in data_deduped.items() if v['count'] > 1}
-        print(f"Number of duplicating game positions: {len(data_deduped)}")
-        threshold = 2
-        while len(data_deduped) > 1000:
-            data_deduped = {k: v for k, v in data_deduped.items() if v['count'] > threshold}
-            threshold += 1
-        if threshold != 2:
-            print(f"Number of duplicating game positions after removal: {len(data_deduped)}")
-        df_deduped = pd.DataFrame([
-            {'sfen': s, 'count': data['count'], 'value01_total': data['value01_total'], 'visits_total': data['visits_total']}
-            for s, data in data_deduped.items()
-        ], columns=['sfen', 'count', 'value01_total', 'visits_total'])
-        df_deduped['value'] = (df_deduped['value01_total'] / df_deduped['count']) * 2 - 1
-        pd.options.display.width = 100
-        pd.options.display.max_colwidth = 9 * 9 * 2
-        print(df_deduped.sort_values(by='count', ascending=False).head(n=10)[['sfen', 'value', 'count']])
-
-        if args.jobs == 1:
-            for kifu_path in kifu_list:
-                kifu_to_tfrecord(kifu_path.replace('.tsv', '.tfrecord'), kifu_path, args, merger=data_deduped)
-        else:
-            with tqdm_joblib(tqdm(total=len(kifu_list), desc=f'Dataset_{index:04d}', ncols=100, file=sys.stdout)):
-                Parallel(n_jobs=args.jobs)(
-                    delayed(kifu_to_tfrecord)(p.replace('.tsv', '.tfrecord'), p, args, merger=data_deduped)
-                    for p in kifu_list
-                )
-
-    def get_dataset_from_tfrecord(path_list: tp.List[str]):
-
-        def parse_value(example):
-            features = tf.io.parse_example(example, {
-                'value': tf.io.FixedLenFeature([1], dtype=tf.float32),
-                'weight': tf.io.FixedLenFeature([1], dtype=tf.float32),
-            })
-            return features['value'], features['weight']
-
-        dataset = tf.data.Dataset.from_tensor_slices(path_list)
-        dataset = dataset.interleave(lambda filename: tf.data.TFRecordDataset(filename))
-        dataset = dataset.batch(args.nn_minibatch)
-        dataset = dataset.map(parse_value)
-        dataset = dataset.prefetch(2)
-
-        average_value = 0.
-        for count, (v, w) in enumerate(dataset, start=1):
-            average_value = average_value + (v * w).numpy().sum() / w.numpy().sum()
-        average_value = average_value / count
-        print(f'Average Value (0-1 scale) = {average_value:.3f}')
-
-        def parse_example(example):
-            x_shape = [args._shogi.Game.ranks, args._shogi.Game.files, args._shogi.Game.feature_channels]
-            p_shape = [args._shogi.Game.num_dlshogi_policy]
-            features = tf.io.parse_example(example, {
-                'x': tf.io.FixedLenFeature(x_shape, dtype=tf.float32),
-                'policy': tf.io.FixedLenFeature(p_shape, dtype=tf.float32),
-                'value': tf.io.FixedLenFeature([1], dtype=tf.float32),
-                'weight': tf.io.FixedLenFeature([1], dtype=tf.float32),
-            })
-            return (
-                features['x'],
-                (
-                    features['policy'],
-                    tf.clip_by_value(features['value'] - (average_value - 0.5), 0., 1.),
-                ),
-                features['weight'],
-            )
-
-        dataset = tf.data.Dataset.from_tensor_slices(path_list).shuffle(
-            buffer_size=50000,
-            reshuffle_each_iteration=True,
-        )
-        dataset = dataset.interleave(lambda filename: tf.data.TFRecordDataset(filename))
-        dataset = dataset.shuffle(
-            buffer_size=10000,
-            reshuffle_each_iteration=True,
-        )
-        dataset = dataset.batch(args.nn_minibatch)
-        dataset = dataset.map(parse_example)
-        dataset = dataset.prefetch(2)
-
-        class _NumpyIterable:
-
-            def __init__(self, dataset):
-                self.dataset = dataset
-
-            def __iter__(self):
-                return self.dataset.as_numpy_iterator()
-
-        return _NumpyIterable(dataset)
-
     def load_data_and_train_network(network: th.nn.Module, index: int, optimizer):
-        num_tfrecord_max = 100000
-        tfrecord_list = []
-        for i in range(index, 0, -1):
-            list_ = [p for p in glob(f'datasets/dataset_{i:04d}/*.tfrecord') if os.path.getsize(p) != 0]
-            random.shuffle(list_)
-            tfrecord_list.extend(list_)
-            if len(tfrecord_list) > num_tfrecord_max:
+        buffer = vshogi.dlshogi.ReplayBuffer(args.nn_dataset_size)
+        for i, f in zip(range(index, 0, -1), (args.nn_train_fraction ** i for i in range(index))):
+            if f < 0.01:
                 break
-        if len(tfrecord_list) > num_tfrecord_max:
-            tfrecord_list = tfrecord_list[:num_tfrecord_max]
-        random.shuffle(tfrecord_list)
-        print(f'#tfrecord = {len(tfrecord_list):,}')
-        dataset = get_dataset_from_tfrecord(tfrecord_list)
+            kifu_list = sorted(glob(f'datasets/dataset_{i:04d}/*.tsv'))[::-1]
+            for kifu_path in kifu_list:
+                df = read_kifu(kifu_path, f, args.nn_data_importance_decay)
+                df['visit_proba'] = df['visit_proba'].apply(lambda d: {
+                    args._shogi.Move(m): v for m, v in d.items()
+                })
+                for _, row in df.iterrows():
+                    buffer.add(vshogi.dlshogi.Data(
+                        sfen=row['state'],
+                        visit_dist=row['visit_proba'],
+                        value01=row['value01'],
+                        weight=row['weight'],
+                    ))
+                if buffer.is_full():
+                    break
+            if buffer.is_full():
+                break
+        summary = buffer.deduplicate()
+        df_summary = pd.DataFrame([{
+            'sfen': s, 'count': data['count'], 'value': 2 * data['value01'] - 1,
+        } for s, data in summary.items()], columns=['sfen', 'count', 'value'])
+        print(f"Dataset size = {len(buffer)}")
+        print(df_summary.sort_values(by='count', ascending=False).head(n=10)[['sfen', 'value', 'count']])
+        dataloader = th.utils.data.DataLoader(
+            buffer,
+            batch_size=args.nn_minibatch,
+            shuffle=True,
+            drop_last=True,
+            num_workers=args.nn_workers,
+            prefetch_factor=(
+                None if args.nn_workers == 0 else args.nn_prefetch_factor
+            ),
+        )
         network.to(th.device(args.nn_train_device))
         vshogi.dlshogi.train(
             network,
-            dataset,
+            dataloader,
             optimizer,
             args.nn_epochs,
             args.nn_coeff_policy_loss,
@@ -557,7 +399,6 @@ def run_train(args: Args):
         return network
 
     i = args.resume_rl_cycle_from
-    kifu_to_tfrecord_with_deduplication(i, args)
     shogi = args._shogi
     network = vshogi.dlshogi.PolicyValueNetwork(
         game_class=shogi.Game,
@@ -671,24 +512,6 @@ def run_rl_cycle(args: Args):
             pbar.set_description(f'{current} vs {best} = {record_curr.wdl()}')
         return current if record_curr.score() >= win_threshold else best
 
-    def keep_only_end_games_in_previous_tfrecord(index: int, args: Args):
-        for i, f in zip(range(index, 0, -1), (args.nn_train_fraction ** i for i in range(index))):
-            if i == index:
-                continue
-            os.system(f"rm -f datasets/dataset_{i:04d}/*.tfrecord")
-            if f < 0.01:
-                continue
-            kifu_list = glob(f'datasets/dataset_{i:04d}/*.tsv')
-            if args.jobs == 1:
-                for kifu_path in tqdm(kifu_list, desc=f'Dataset_{i:04d}', ncols=100):
-                    kifu_to_tfrecord(kifu_path.replace('.tsv', '.tfrecord'), kifu_path, args, f)
-            else:
-                with tqdm_joblib(tqdm(total=len(kifu_list), desc=f'Dataset_{i:04d}', ncols=100)):
-                    Parallel(n_jobs=args.jobs)(
-                        delayed(kifu_to_tfrecord)(p.replace('.tsv', '.tfrecord'), p, args, f)
-                        for p in kifu_list
-                    )
-
     with open('command.txt', 'w') as f:
         f.write(f'python {" ".join(sys.argv)}')
     os.system(f"cp {__file__} ./")
@@ -718,9 +541,6 @@ def run_rl_cycle(args: Args):
                     line_length_list.append(sum(1 for _ in f) - 1)
             n = np.mean(line_length_list) * args.az_random_rate
             args._num_random_moves = int(np.ceil(n / 2)) * 2
-
-        if i > 1:
-            keep_only_end_games_in_previous_tfrecord(i, args)
 
         if i >= 3:
             best_past_players = get_best_past_player_against_latest(args, i - 1)
