@@ -14,6 +14,7 @@ from glob import glob
 import os
 import subprocess
 import sys
+import tempfile
 import typing as tp
 import warnings
 
@@ -398,6 +399,39 @@ def run_train(args: Args):
         network.to(th.device('cpu'))
         return network
 
+    def get_best_player_index(player_curr, current: int, best: int):
+        record_curr = vshogi.Record()
+        player_best = load_player_of(best)
+        num_play = 40
+        win_threshold = num_play * args.win_ratio_threshold
+        loss_threshold = num_play * (1 - args.win_ratio_threshold)
+        pbar = tqdm(range(num_play), ncols=100, file=sys.stdout)
+        for n in pbar:
+            if (record_curr.score() >= win_threshold) or ((~record_curr).score() > loss_threshold):
+                break
+            if n % 2 == 0:
+                result = vshogi.play_game(
+                    args._shogi.Game(),
+                    player_curr,
+                    player_best,
+                    search_args={"n_or_t": args.az_search},
+                    select_args={"temperature": None},
+                    draw_on_max_moves=True,
+                ).result
+                record_curr += vshogi.Record.from_black_result(result)
+            else:
+                result = vshogi.play_game(
+                    args._shogi.Game(),
+                    player_best,
+                    player_curr,
+                    search_args={"n_or_t": args.az_search},
+                    select_args={"temperature": None},
+                    draw_on_max_moves=True,
+                ).result
+                record_curr += vshogi.Record.from_white_result(result)
+            pbar.set_description(f'{current} vs {best} = {record_curr.wdl()}')
+        return current if record_curr.score() >= win_threshold else best
+
     i = args.resume_rl_cycle_from
     shogi = args._shogi
     network = vshogi.dlshogi.PolicyValueNetwork(
@@ -427,7 +461,17 @@ def run_train(args: Args):
 
     sample_inputs = (th.randn(1, shogi.Game.files, shogi.Game.ranks, shogi.Game.feature_channels),)
     edge_model = ai_edge_torch.convert(network.eval(), sample_inputs)
-    edge_model.export(f'models/model_{i:04d}.tflite')
+    with tempfile.NamedTemporaryFile(delete=True) as t:
+        edge_model.export(t.name)
+        pv_func = vshogi.dlshogi.PolicyValueFunction(t.name)
+    player = vshogi.engine.AlphaZero(
+        pv_func,
+        kldgain_threshold=args.az_kldgain_threshold,
+        dfpn_search_root=args.dfpn_search_root,
+        dfpn_search_leaf=args.dfpn_search_leaf,
+    )
+    if (i == 0) or (i == get_best_player_index(player, i, i - 1)):
+        edge_model.export(f'models/model_{i:04d}.tflite')
 
 def run_rl_cycle(args: Args):
 
@@ -477,40 +521,6 @@ def run_rl_cycle(args: Args):
             indices_prev[:2].tolist()
             + indices_prev[2:][win_point_list[2:] <= 3].tolist()[:3]
         )
-
-    def get_best_player_index(current: int, best: int):
-        record_curr = vshogi.Record()
-        player_curr = load_player_of(current)
-        player_best = load_player_of(best)
-        num_play = 40
-        win_threshold = num_play * args.win_ratio_threshold
-        loss_threshold = num_play * (1 - args.win_ratio_threshold)
-        pbar = tqdm(range(num_play), ncols=100)
-        for n in pbar:
-            if (record_curr.score() >= win_threshold) or ((~record_curr).score() > loss_threshold):
-                break
-            if n % 2 == 0:
-                result = vshogi.play_game(
-                    args._shogi.Game(),
-                    player_curr,
-                    player_best,
-                    search_args={"n_or_t": args.az_search},
-                    select_args={"temperature": None},
-                    draw_on_max_moves=True,
-                ).result
-                record_curr += vshogi.Record.from_black_result(result)
-            else:
-                result = vshogi.play_game(
-                    args._shogi.Game(),
-                    player_best,
-                    player_curr,
-                    search_args={"n_or_t": args.az_search},
-                    select_args={"temperature": None},
-                    draw_on_max_moves=True,
-                ).result
-                record_curr += vshogi.Record.from_white_result(result)
-            pbar.set_description(f'{current} vs {best} = {record_curr.wdl()}')
-        return current if record_curr.score() >= win_threshold else best
 
     with open('command.txt', 'w') as f:
         f.write(f'python {" ".join(sys.argv)}')
@@ -584,7 +594,7 @@ def run_rl_cycle(args: Args):
                     )
                 ]).split(), stderr=f)
 
-            if (i == 1) or (get_best_player_index(i, i - 1) == i):
+            if os.path.exists(f'models/model_{i:04d}.tflite'):
                 break
 
 
