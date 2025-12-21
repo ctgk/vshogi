@@ -362,7 +362,7 @@ def run_train(args: Args):
                 for _, row in df.iterrows():
                     buffer.add(vshogi.dlshogi.Data(
                         sfen=row['state'],
-                        visit_dist=row['visit_proba'],
+                        policy=row['visit_proba'],
                         value01=row['value01'],
                         weight=row['weight'],
                     ))

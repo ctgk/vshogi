@@ -65,7 +65,7 @@ class ReplayBuffer(th.utils.data.Dataset):
         return len(self._buffer) == self._buffer_size
 
     def deduplicate(self) -> dict:
-        """Update value01 and visit_dist by averaging all the data.
+        """Update value01 and policy by averaging all the data.
 
         Returns
         -------
@@ -75,7 +75,7 @@ class ReplayBuffer(th.utils.data.Dataset):
         summary = self._summarize()
         for data in self._buffer:
             data.value01 = summary[data.sfen]['value01']
-            data.visit_dist = summary[data.sfen]['visit_dist']
+            data.policy = summary[data.sfen]['policy']
         return summary
 
     def _summarize(self):
@@ -84,18 +84,18 @@ class ReplayBuffer(th.utils.data.Dataset):
             if data.sfen not in data_summed:
                 data_summed[data.sfen] = {
                     'value01': 0.,
-                    'visit_dist': {m: 0 for m in data.visit_dist},
+                    'policy': {m: 0 for m in data.policy},
                     'count': 0,
                 }
             data_summed[data.sfen]['value01'] += data.value01
-            data_summed[data.sfen]['visit_dist'] = _add_dicts(
-                data_summed[data.sfen]['visit_dist'],
-                data.visit_dist,
+            data_summed[data.sfen]['policy'] = _add_dicts(
+                data_summed[data.sfen]['policy'],
+                data.policy,
             )
             data_summed[data.sfen]['count'] += 1
         for value in data_summed.values():
             value['value01'] = value['value01'] / value['count']
-            value['visit_dist'] = _normalize(value['visit_dist'])
+            value['policy'] = _normalize(value['policy'])
         return data_summed
 
     def __len__(self):
@@ -124,12 +124,12 @@ class ReplayBuffer(th.utils.data.Dataset):
             raise ValueError("Please add data before trying to get items.")
         ii = index % len(self._buffer)
         g = eval(self._game_variant)(self._buffer[ii].sfen)
-        visit_dist = self._buffer[ii].visit_dist
+        policy = self._buffer[ii].policy
         if (index >= len(self._buffer)):
             g = g.hflip()
-            visit_dist = {m.hflip(): v for m, v in visit_dist.items()}
+            policy = {m.hflip(): v for m, v in policy.items()}
         x = g.to_dlshogi_features().squeeze()
-        policy = g.to_dlshogi_policy(visit_dist, default_value=-100000.)
+        policy = g.to_dlshogi_policy(policy, default_value=-100000.)
         value01 = np.array([np.float32(self._buffer[ii].value01)])
         w = np.array(np.float32(self._buffer[ii].weight))
         return x.squeeze(), policy.squeeze(), value01, w
