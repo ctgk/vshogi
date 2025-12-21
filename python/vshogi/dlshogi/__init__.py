@@ -7,6 +7,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from vshogi.dlshogi._data import Data
 from vshogi.dlshogi._network import PolicyValueNetwork
 from vshogi.dlshogi._policy_value_function import PolicyValueFunction
+from vshogi.dlshogi._read_kifu import read_kifu
 from vshogi.dlshogi._replay_buffer import ReplayBuffer
 from vshogi.dlshogi._train import train
 
@@ -18,6 +19,7 @@ _classes = [
     ReplayBuffer,
 ]
 _functions = [
+    read_kifu,
     train,
 ]
 

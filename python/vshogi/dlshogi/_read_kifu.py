@@ -1,0 +1,68 @@
+import numpy as np
+import pandas as pd
+
+
+def read_kifu(
+    tsv_path: str,
+    *,
+    discount_factor: float = 1.,
+    importance_decay: float = 1.,
+) -> pd.DataFrame:
+    """Return dataframe of Shogi kifu.
+
+    Parameters
+    ----------
+    tsv_path : str
+        Path to tsv file containing Shogi kifu.
+    discount_factor : float, optional
+        Discount factor of result value, by default 1.
+    importance_decay : float, optional
+        Decay factor of data importance of each game position, by default 1.
+
+    Returns
+    -------
+    pd.DataFrame
+        Dataframe of kifu of a Shogi game.
+    """
+    df = pd.read_csv(
+        tsv_path,
+        sep='\t',
+        dtype={
+            'sfen': str,
+            'result': int,
+            'q_value': float,
+            'policy': str,
+            'z_weight': float,
+        },
+    )
+    total_ply = len(df)
+    df['weight'] = _compute_weight(df, importance_decay)
+    df['value'] = (
+        df['z_weight'] * df['result'] * np.power(
+            discount_factor, total_ply - df.index - 1)
+        + (1 - df['z_weight']) * df['q_value']
+    )
+    df['value01'] = df['value'].apply(lambda v: np.clip((v + 1) / 2, 0., 1.))
+    df['policy'] = df['policy'].apply(lambda s: eval(s))
+    df['policy'] = _compute_visit_dist(df)
+    return df
+
+
+def _compute_weight(df: pd.DataFrame, importance_decay: float) -> np.ndarray:
+    dq = (
+        df['q_value'].values[:-2] - df['q_value'].values[2:]
+    ).tolist() + [0., 0.]
+    large_dq = [np.abs(d) > 0.5 for d in dq]
+    return np.maximum(
+        np.power(
+            importance_decay,
+            np.maximum(np.cumsum(large_dq[::-1]) - 2, 0),
+        )[::-1],
+        0.1,
+    )
+
+
+def _compute_visit_dist(df: pd.DataFrame):
+    return df['policy'].apply(
+        lambda d: {m: v / sum(d.values()) for m, v in d.items()},
+    )

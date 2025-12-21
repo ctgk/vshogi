@@ -98,7 +98,7 @@ def dump_game_log(file_, game: vshogi.Game, color_filter: vshogi.Color = None) -
             lambda g, i: g.visit_count_log[i],
             lambda g, i: g.z_weight_log[i],
         ),
-        names=('state', 'move', 'result', 'q_value', 'visit_count', 'z_weight'),
+        names=('sfen', 'move', 'result', 'q_value', 'policy', 'z_weight'),
         file_=file_,
         color_filter=color_filter,
     )
@@ -236,49 +236,6 @@ def play_game_and_dump_log(
     return game.result
 
 
-def read_kifu(
-    tsv_path: str,
-    fraction: float = None,
-    importance_decay: float = 1.,
-) -> pd.DataFrame:
-    df = pd.read_csv(
-        tsv_path, sep='\t',
-        usecols=['state', 'result', 'q_value', 'visit_count', 'z_weight'],
-        dtype={'state': str, 'result': int, 'q_value': float, 'visit_count': str, 'z_weight': float},
-    )
-    total_ply = len(df)
-    df['total_ply'] = [total_ply] * total_ply
-    df['ply'] = list(range(total_ply))
-    dq = (
-        df['q_value'].values[:-2] - df['q_value'].values[2:]
-    ).tolist() + [0., 0.]
-    large_dq = [np.abs(d) > 0.5 for d in dq]
-    df['weight'] = np.maximum(
-        np.power(
-            importance_decay,
-            np.maximum(np.cumsum(large_dq[::-1]) - 2, 0),
-        )[::-1],
-        0.1,
-    )
-    df['value'] = df.apply(
-        lambda row: (
-            row['z_weight'] * row['result'] * np.power(
-                args.discount_factor, row['total_ply'] - row['ply'])
-            + (1 - row['z_weight']) * row['q_value']
-        ),
-        axis=1,
-    )
-    df['value01'] = df['value'].apply(lambda value: np.clip((value + 1) / 2, 0., 1.))
-
-    df['visit_count_sum'] = df['visit_count'].apply(lambda s: sum(eval(s).values()))
-    df['visit_proba'] = df.apply(lambda row: {m: v / row['visit_count_sum'] for m, v in eval(row['visit_count']).items()}, axis=1)
-
-    if fraction is None:
-        return df
-    n = int(len(df) * fraction)
-    return df.tail(n)
-
-
 @contextlib.contextmanager
 def tqdm_joblib(tqdm_object):
     """Context manager to patch joblib to report into tqdm progress, args bar given as argument"""
@@ -363,14 +320,19 @@ def run_train(args: Args):
                 break
             kifu_list = sorted(glob(f'datasets/dataset_{i:04d}/*.tsv'))[::-1]
             for kifu_path in kifu_list:
-                df = read_kifu(kifu_path, f, args.nn_data_importance_decay)
-                df['visit_proba'] = df['visit_proba'].apply(lambda d: {
+                df = vshogi.dlshogi.read_kifu(
+                    kifu_path,
+                    discount_factor=args.discount_factor,
+                    importance_decay=args.nn_data_importance_decay,
+                )
+                df = df.tail(int(len(df) * f))
+                df['policy'] = df['policy'].apply(lambda d: {
                     args._shogi.Move(m): v for m, v in d.items()
                 })
                 for _, row in df.iterrows():
                     buffer.add(vshogi.dlshogi.Data(
-                        sfen=row['state'],
-                        policy=row['visit_proba'],
+                        sfen=row['sfen'],
+                        policy=row['policy'],
                         value01=row['value01'],
                         weight=row['weight'],
                     ))
