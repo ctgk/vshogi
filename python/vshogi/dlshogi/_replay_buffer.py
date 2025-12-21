@@ -25,7 +25,25 @@ def _normalize(d: dict) -> dict:
 
 
 class ReplayBuffer(th.utils.data.Dataset):
-    """Storage of data to train DL-Shogi network."""
+    """Storage of data to train DL-Shogi network.
+
+    Examples
+    --------
+    >>> b = ReplayBuffer(buffer_size=2)
+    >>> b.add(Data('4k/5/4P/5/5 b G 1', {}, 1., 1.))
+    >>> b.is_full()
+    False
+    >>> b.add(Data('4k/5/4P/5/5 b G 3', {}, 0.5, 0.9))
+    >>> b.is_full()
+    True
+    >>> b[0][2:]  # value01, weight
+    (array([1.], dtype=float32), array(1., dtype=float32))
+    >>> _ = b.deduplicate()
+    >>> b[0][2:]  # value01, weight
+    (array([0.75], dtype=float32), array(1., dtype=float32))
+    >>> b[1][2:]  # weights remain as they are
+    (array([0.75], dtype=float32), array(0.9, dtype=float32))
+    """
 
     def __init__(self, buffer_size: int = 100000):
         """Initialize dataset class.
