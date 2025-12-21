@@ -86,11 +86,14 @@ class Args:
 
 
 def dump_game_log(file_, game: vshogi.Game, color_filter: vshogi.Color = None) -> None:
+    r = str(game.result)
+    if 'ONGOING' in r:
+        raise ValueError('The game is still ongoing')
     game.dump_log(
         (
             lambda g, i: g.get_sfen_at(i, include_move_count=False),
             lambda g, i: g.get_move_at(i).to_sfen(),
-            lambda g, _: g.result,
+            lambda g, i: 0 if 'DRAW' in r else (2 * (('BLACK' in r) is (i % 2 == 0)) - 1),
             lambda g, i: g.q_value_log[i],
             lambda g, i: g.visit_count_log[i],
             lambda g, i: g.z_weight_log[i],
@@ -241,7 +244,7 @@ def read_kifu(
     df = pd.read_csv(
         tsv_path, sep='\t',
         usecols=['state', 'result', 'q_value', 'visit_count', 'z_weight'],
-        dtype={'state': str, 'result': str, 'q_value': float, 'visit_count': str, 'z_weight': float},
+        dtype={'state': str, 'result': int, 'q_value': float, 'visit_count': str, 'z_weight': float},
     )
     total_ply = len(df)
     df['total_ply'] = [total_ply] * total_ply
@@ -257,9 +260,14 @@ def read_kifu(
         )[::-1],
         0.1,
     )
-    df['z_value'] = df.apply(lambda row: 0 if ('DRAW' in row['result']) else 2 * int(('BLACK' in row['result']) == ('b' == row.state.split()[1])) - 1, axis=1)
-    df['z_value'] = df.apply(lambda row: row['z_value'] * np.power(args.discount_factor, row['total_ply'] - row['ply']), axis=1)
-    df['value'] = df.apply(lambda row: row['z_weight'] * row['z_value'] + (1 - row['z_weight']) * row['q_value'], axis=1)
+    df['value'] = df.apply(
+        lambda row: (
+            row['z_weight'] * row['result'] * np.power(
+                args.discount_factor, row['total_ply'] - row['ply'])
+            + (1 - row['z_weight']) * row['q_value']
+        ),
+        axis=1,
+    )
     df['value01'] = df['value'].apply(lambda value: np.clip((value + 1) / 2, 0., 1.))
 
     df['visit_count_sum'] = df['visit_count'].apply(lambda s: sum(eval(s).values()))

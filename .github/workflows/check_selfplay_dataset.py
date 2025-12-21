@@ -18,7 +18,7 @@ if __name__ == '__main__':
         usecols=['state', 'result', 'q_value', 'visit_count', 'z_weight'],
         dtype={
             'state': str,
-            'result': str,
+            'result': int,
             'q_value': float,
             'visit_count': str,
             'z_weight': float,
@@ -47,17 +47,7 @@ if __name__ == '__main__':
                 f"'{state}': `q_value`(={row.q_value}) should be 1 or -1 "
                 "when `visit_count` is empty."
             )
-        for t, r in zip(('b', 'w'), ('BLACK_WIN', 'WHITE_WIN')):
-            if (turn == t) and (r in row.result):
-                if not np.isclose(row.q_value, 1):
-                    raise ValueError(
-                        f"'{state}': `q_value`(={row.q_value}) should be 1 "
-                        f"when the result is {r}"
-                    )
-        for t, r in zip(('w', 'b'), ('BLACK_WIN', 'WHITE_WIN')):
-            if (turn == t) and (r in row.result):
-                if not np.isclose(row.q_value, -1):
-                    raise ValueError(
-                        f"'{state}': `q_value`(={row.q_value}) should be -1 "
-                        f"when the result is {r}"
-                    )
+        if not np.isclose(row.q_value, row.result):
+            raise ValueError(
+                f"'{state}': `q_value` (={row.q_value}) shoule be "
+                f"{row.result}")
