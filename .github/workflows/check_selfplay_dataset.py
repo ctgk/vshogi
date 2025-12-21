@@ -15,12 +15,12 @@ if __name__ == '__main__':
     df = pd.read_csv(
         args.kifu,
         sep='\t',
-        usecols=['state', 'result', 'q_value', 'visit_count', 'z_weight'],
+        usecols=['sfen', 'result', 'q_value', 'policy', 'z_weight'],
         dtype={
-            'state': str,
+            'sfen': str,
             'result': int,
             'q_value': float,
-            'visit_count': str,
+            'policy': str,
             'z_weight': float,
         },
     )
@@ -30,24 +30,24 @@ if __name__ == '__main__':
     in_mate_sequence: bool = False
     for i in range(len(df)):
         row = df.iloc[i]
-        visit_count: dict = eval(row.visit_count)
-        state = row.state
-        if visit_count != {}:
+        policy: dict = eval(row.policy)
+        sfen = row.sfen
+        if policy != {}:
             if in_mate_sequence:
                 raise ValueError(
-                    f"'{state}': there should be empty visit_count "
-                    f"once a checkmate is proved, but was {visit_count}"
+                    f"'{sfen}': there should be empty policy "
+                    f"once a checkmate is proved, but was {policy}"
                 )
             continue
 
         in_mate_sequence = True
-        turn: tp.Union[tp.Literal['b'], tp.Literal['w']] = state.split(' ')[1]
+        turn: tp.Union[tp.Literal['b'], tp.Literal['w']] = sfen.split(' ')[1]
         if not np.isclose(abs(row.q_value), 1):
             raise ValueError(
-                f"'{state}': `q_value`(={row.q_value}) should be 1 or -1 "
-                "when `visit_count` is empty."
+                f"'{sfen}': `q_value`(={row.q_value}) should be 1 or -1 "
+                "when `policy` is empty."
             )
         if not np.isclose(row.q_value, row.result):
             raise ValueError(
-                f"'{state}': `q_value` (={row.q_value}) shoule be "
+                f"'{sfen}': `q_value` (={row.q_value}) shoule be "
                 f"{row.result}")

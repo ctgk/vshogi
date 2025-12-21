@@ -46,7 +46,7 @@ repos:
     -   id: python-unittest
         name: Run Python UnitTests
         language: system
-        entry: bash -c "pytest --doctest-modules python/"
+        entry: pytest
         types: [text]
         files: '\.(c|h|cpp|hpp|py)$'
         pass_filenames: false

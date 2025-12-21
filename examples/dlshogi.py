@@ -9,34 +9,27 @@
 """
 
 import contextlib
-from functools import reduce
 from glob import glob
 import os
 import subprocess
 import sys
-import tempfile
 import typing as tp
-import warnings
 
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore") # Or use action="ignore" for Python 3.11+
-    import ai_edge_torch
 
 from classopt import classopt, config
 import joblib
 from joblib.parallel import Parallel, delayed
 import numpy as np
-import pandas as pd
-import torch as th
 from tqdm import tqdm
 
 import vshogi
+from vshogi.dlshogi._cli_nn_trainer import _train_step
 
 
 @classopt(default_long=True)
 class Args:
-    run: str = config(long=False, choices=['rl', 'self-play', 'train'])
+    run: str = config(long=False, choices=['rl', 'self-play'])
     shogi_variant: str = config(
         long=False,
         choices=['shogi', 'judkins_shogi', 'minishogi'],
@@ -311,138 +304,6 @@ def run_self_play(args: Args):
     self_play_and_dump_logs(i, args.another_player)
 
 
-def run_train(args: Args):
-
-    def load_data_and_train_network(network: th.nn.Module, index: int, optimizer):
-        buffer = vshogi.dlshogi.ReplayBuffer(args.nn_dataset_size)
-        for i, f in zip(range(index, 0, -1), (args.nn_train_fraction ** i for i in range(index))):
-            if f < 0.01:
-                break
-            kifu_list = sorted(glob(f'datasets/dataset_{i:04d}/*.tsv'))[::-1]
-            for kifu_path in kifu_list:
-                df = vshogi.dlshogi.read_kifu(
-                    kifu_path,
-                    discount_factor=args.discount_factor,
-                    importance_decay=args.nn_data_importance_decay,
-                )
-                df = df.tail(int(len(df) * f))
-                df['policy'] = df['policy'].apply(lambda d: {
-                    args._shogi.Move(m): v for m, v in d.items()
-                })
-                for _, row in df.iterrows():
-                    buffer.add(vshogi.dlshogi.Data(
-                        sfen=row['sfen'],
-                        policy=row['policy'],
-                        value01=row['value01'],
-                        weight=row['weight'],
-                    ))
-                if buffer.is_full():
-                    break
-            if buffer.is_full():
-                break
-        summary = buffer.deduplicate()
-        df_summary = pd.DataFrame([{
-            'sfen': s, 'count': data['count'], 'value': 2 * data['value01'] - 1,
-        } for s, data in summary.items()], columns=['sfen', 'count', 'value'])
-        print(f"Dataset size = {len(buffer)}")
-        print(df_summary.sort_values(by='count', ascending=False).head(n=10)[['sfen', 'value', 'count']])
-        dataloader = th.utils.data.DataLoader(
-            buffer,
-            batch_size=args.nn_minibatch,
-            shuffle=True,
-            drop_last=True,
-            num_workers=args.nn_workers,
-            prefetch_factor=(
-                None if args.nn_workers == 0 else args.nn_prefetch_factor
-            ),
-        )
-        network.to(th.device(args.nn_train_device))
-        vshogi.dlshogi.train(
-            network,
-            dataloader,
-            optimizer,
-            args.nn_epochs,
-            args.nn_coeff_policy_loss,
-            args.nn_entropy_regularization,
-            args.nn_grad_accum,
-        )
-        network.to(th.device('cpu'))
-        return network
-
-    def get_best_player_index(player_curr, current: int, best: int):
-        record_curr = vshogi.Record()
-        player_best = load_player_of(best)
-        num_play = 40
-        win_threshold = num_play * args.win_ratio_threshold
-        loss_threshold = num_play * (1 - args.win_ratio_threshold)
-        pbar = tqdm(range(num_play), ncols=100, file=sys.stdout)
-        for n in pbar:
-            if (record_curr.score() >= win_threshold) or ((~record_curr).score() > loss_threshold):
-                break
-            if n % 2 == 0:
-                result = vshogi.play_game(
-                    args._shogi.Game(),
-                    player_curr,
-                    player_best,
-                    search_args={"n_or_t": args.az_search},
-                    select_args={"temperature": None},
-                    draw_on_max_moves=True,
-                ).result
-                record_curr += vshogi.Record.from_black_result(result)
-            else:
-                result = vshogi.play_game(
-                    args._shogi.Game(),
-                    player_best,
-                    player_curr,
-                    search_args={"n_or_t": args.az_search},
-                    select_args={"temperature": None},
-                    draw_on_max_moves=True,
-                ).result
-                record_curr += vshogi.Record.from_white_result(result)
-            pbar.set_description(f'{current} vs {best} = {record_curr.wdl()}')
-        return current if record_curr.score() >= win_threshold else best
-
-    i = args.resume_rl_cycle_from
-    shogi = args._shogi
-    network = vshogi.dlshogi.PolicyValueNetwork(
-        game_class=shogi.Game,
-        hidden_channels=args.nn_hidden_channels,
-        bottleneck_channels=args.nn_bottleneck_channels,
-        num_backbone_blocks=args.nn_backbone_blocks,
-    )
-    weight_path = 'models/model_{:04d}.pth'
-    if i > 1 and args.nn_load_previous_weights:
-        if os.path.exists(weight_path.format(i)):
-            print(f"Loading {weight_path.format(i)}")
-            try:
-                network.load_state_dict(th.load(weight_path.format(i), weights_only=True))
-            except:
-                print(f"Failed loading {weight_path.format(i)}")
-        elif os.path.exists(weight_path.format(i - 1)):
-            print(f"Loading {weight_path.format(i - 1)}")
-            try:
-                network.load_state_dict(th.load(weight_path.format(i - 1), weights_only=True))
-            except:
-                print(f"Failed loading {weight_path.format(i - 1)}")
-    if i > 0:
-        optimizer = th.optim.AdamW(network.parameters(), args.nn_learning_rate)
-        load_data_and_train_network(network, i, optimizer)
-        th.save(network.state_dict(), weight_path.format(i))
-
-    sample_inputs = (th.randn(1, shogi.Game.files, shogi.Game.ranks, shogi.Game.feature_channels),)
-    edge_model = ai_edge_torch.convert(network.eval(), sample_inputs)
-    with tempfile.NamedTemporaryFile(delete=True) as t:
-        edge_model.export(t.name)
-        pv_func = vshogi.dlshogi.PolicyValueFunction(t.name)
-    player = vshogi.engine.AlphaZero(
-        pv_func,
-        kldgain_threshold=args.az_kldgain_threshold,
-        dfpn_search_root=args.dfpn_search_root,
-        dfpn_search_leaf=args.dfpn_search_leaf,
-    )
-    if (i == 0) or (i == get_best_player_index(player, i, i - 1)):
-        edge_model.export(f'models/model_{i:04d}.tflite')
-
 def run_rl_cycle(args: Args):
 
     def get_best_past_player_against_latest(args: Args, index: int):
@@ -497,17 +358,30 @@ def run_rl_cycle(args: Args):
     os.system(f"cp {__file__} ./")
 
     if args.resume_rl_cycle_from == 1:
-        with open('errors.txt', 'a') as f:
-            subprocess.call([
-                sys.executable, "dlshogi.py", "train", args.shogi_variant,
-                "--resume_rl_cycle_from", str(0),
-            ] + ' '.join([
-                f'--{k} {v}' for k, v in args.to_dict().items()
-                if (
-                    (k not in ('run', 'shogi_variant', 'resume_rl_cycle_from', 'another_player'))
-                    and (v is not None)
-                )
-            ]).split(), stderr=f)
+        i = 0
+        weight_path = 'models/model_{:04d}.pth'
+        _train_step(
+            model_path=weight_path.format(i),
+            prev_model_path=None if i == 0 else weight_path.format(i - 1),
+            shogi_variant=args.shogi_variant,
+            network_hidden_channels=args.nn_hidden_channels,
+            network_bottleneck_channels=args.nn_bottleneck_channels,
+            network_backbone_blocks=args.nn_backbone_blocks,
+            max_dataset_size=args.nn_dataset_size,
+            kifu_path_pattern='datasets/dataset_*/kifu_*.tsv',
+            kifu_fraction=args.nn_train_fraction,
+            discount_factor=args.discount_factor,
+            importance_decay=args.nn_data_importance_decay,
+            minibatch_size=args.nn_minibatch,
+            learning_rate=args.nn_learning_rate,
+            epochs=args.nn_epochs,
+            coeff_policy_loss=args.nn_coeff_policy_loss,
+            coeff_entropy_regularization=args.nn_entropy_regularization,
+            grad_accumulations=args.nn_grad_accum,
+            win_ratio_threshold=args.win_ratio_threshold,
+            device=args.nn_train_device,
+            engine='AlphaZero',
+        )
 
     for i in range(args.resume_rl_cycle_from, args.rl_cycle + 1):
         if i == 1:
@@ -549,21 +423,30 @@ def run_rl_cycle(args: Args):
                 ]).split(), stderr=f)
 
 
-            c = max(len(glob(pattern)) // args.self_play, 1)
             # Train NN!
-            with open('errors.txt', 'a') as f:
-                subprocess.call([
-                    sys.executable, "dlshogi.py", "train", args.shogi_variant,
-                    "--resume_rl_cycle_from", str(i),
-                    "--nn_grad_accum", str(args.nn_grad_accum * c),
-                ] + ' '.join([
-                    f'--{k} {v}' for k, v in args.to_dict().items()
-                    if (
-                        (k not in ('run', 'shogi_variant', 'resume_rl_cycle_from', 'another_player', 'nn_grad_accum'))
-                        and (v is not None)
-                    )
-                ]).split(), stderr=f)
-
+            weight_path = 'models/model_{:04d}.pth'
+            _train_step(
+                model_path=weight_path.format(i),
+                prev_model_path=None if i == 0 else weight_path.format(i - 1),
+                shogi_variant=args.shogi_variant,
+                network_hidden_channels=args.nn_hidden_channels,
+                network_bottleneck_channels=args.nn_bottleneck_channels,
+                network_backbone_blocks=args.nn_backbone_blocks,
+                max_dataset_size=args.nn_dataset_size,
+                kifu_path_pattern='datasets/dataset_*/kifu_*.tsv',
+                kifu_fraction=args.nn_train_fraction,
+                discount_factor=args.discount_factor,
+                importance_decay=args.nn_data_importance_decay,
+                minibatch_size=args.nn_minibatch,
+                learning_rate=args.nn_learning_rate,
+                epochs=args.nn_epochs,
+                coeff_policy_loss=args.nn_coeff_policy_loss,
+                coeff_entropy_regularization=args.nn_entropy_regularization,
+                grad_accumulations=args.nn_grad_accum,
+                win_ratio_threshold=args.win_ratio_threshold,
+                device=args.nn_train_device,
+                engine='AlphaZero',
+            )
             if os.path.exists(f'models/model_{i:04d}.tflite'):
                 break
 
@@ -618,5 +501,3 @@ if __name__ == '__main__':
         run_rl_cycle(args)
     elif args.run == 'self-play':
         run_self_play(args)
-    elif args.run == 'train':
-        run_train(args)
