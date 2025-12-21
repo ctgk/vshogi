@@ -40,7 +40,7 @@ jobs:
       env:
         NAME: ${{ matrix.game.name }}
         CYCLE: ${{ matrix.game.rl_cycle }}
-      run: python -m vshogi $NAME --player1 $NAME/models/model_0000.tflite --player2 $NAME/models/model_$(printf %04d $CYCLE).tflite --az_search_count 100
+      run: python -m vshogi match $NAME --player1 $NAME/models/model_0000.tflite --player2 $NAME/models/model_$(printf %04d $CYCLE).tflite --az_search_count 100
     - name: Check generated dataset
       env:
         NAME: ${{ matrix.game.name }}
