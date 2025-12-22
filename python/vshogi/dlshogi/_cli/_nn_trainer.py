@@ -31,7 +31,12 @@ def _network(
         try:
             network.load_state_dict(th.load(path, weights_only=True))
         except Exception:
-            warnings.warn(f'Failed loading weight: {path}')
+            if path == weight_candidate_path[0]:
+                if os.path.exists(path):
+                    warnings.warn(f'Failed loading weight: {path}')
+            else:
+                if not os.path.exists(path):
+                    warnings.warn(f'Weight file not found: {path}')
         else:
             break
     return network
@@ -209,6 +214,8 @@ def _train_step(
     engine: tp.Literal['AlphaZero'] = 'AlphaZero',
 ):
     import ai_edge_torch
+    if not os.path.isdir(os.path.dirname(model_path)):
+        os.makedirs(os.path.dirname(model_path))
     shogi_module = getattr(vs, shogi_variant)
     game_class = getattr(shogi_module, 'Game')
     network = _network(
@@ -277,73 +284,64 @@ def _train_step(
         edge_model.export(model_path.replace('.pth', '.tflite'))
 
 
+def _resume_from() -> int:
+    tflite_list = sorted(glob('models/model_*.tflite'))
+    if not tflite_list:
+        return 0
+    return int(tflite_list[-1].split('_')[-1].split('.')[0]) + 1
+
+
 @cl.command()
 @cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
-@cl.option("--network-hidden-channels", default=32)
-@cl.option("--network-bottleneck-channels", default=8)
-@cl.option("--network-backbone-blocks", default=4)
-@cl.option("--max-dataset-size", default=100000)
+@cl.option("--hidden-channels", default=128, show_default=True)
+@cl.option("--bottleneck-channels", default=32, show_default=True)
+@cl.option("--backbone-blocks", default=4, show_default=True)
+@cl.option("--dataset-size", default=100000, show_default=True)
 @cl.option("--kifu-path-pattern", default="datasets/dataset_*/kifu_*.tsv")
-@cl.option("--kifu-fraction", default=0.8)
-@cl.option("--discount-factor", default=0.99)
-@cl.option("--importance-decay", default=0.7)
-@cl.option("--minibatch-size", default=32)
-@cl.option("--learning-rate", default=1e-2)
-@cl.option("--epochs", default=5)
-@cl.option("--coeff-policy-loss", default=0.1)
-@cl.option("--coeff-entropy-regularization", default=1e-2)
-@cl.option("--grad-accumulations", default=1)
-@cl.option("--win-ratio-threshold", default=0.55)
-@cl.option("--device", default='cpu')
-def _nn_trainer(
-    shogi: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
-    network_hidden_channels: int,
-    network_bottleneck_channels: int,
-    network_backbone_blocks: int,
-    max_dataset_size: int,
-    kifu_path_pattern: str,
-    kifu_fraction: float,
-    discount_factor: float,
-    importance_decay: float,
-    minibatch_size: int,
-    learning_rate: float,
-    epochs: int,
-    coeff_policy_loss: float,
-    coeff_entropy_regularization: float,
-    grad_accumulations: int,
-    win_ratio_threshold: float,
-    device: tp.Literal['cpu', 'cuda', 'mps'],
-    engine: tp.Literal['AlphaZero'] = 'AlphaZero',
-):
-    ii = 0
+@cl.option("--kifu-fraction", default=0.8, show_default=True)
+@cl.option("--discount-factor", default=0.99, show_default=True)
+@cl.option("--importance-decay", default=0.7, show_default=True)
+@cl.option("--minibatch-size", default=32, show_default=True)
+@cl.option("--learning-rate", default=1e-2, show_default=True)
+@cl.option("--epochs", default=5, show_default=True)
+@cl.option("--coeff-policy-loss", default=0.1, show_default=True)
+@cl.option("--coeff-policy-entropy", default=1e-2, show_default=True)
+@cl.option("--grad-accumulations", default=1, show_default=True)
+@cl.option("--win-ratio-threshold", default=0.55, show_default=True)
+@cl.option("--device", default='cpu', show_default=True)
+@cl.option(
+    "--engine",
+    default='AlphaZero',
+    type=cl.Choice(['AlphaZero']),
+    show_default=True,
+)
+def _nn_trainer(**kwargs):
+    ii = _resume_from()
+    model_path = 'models/model_{:04d}.pth'
     while ii < 10000:
-        model_path = f'models/model_{ii:04d}.pth'
-        prev_model_path = f'models/model_{ii - 1:04d}.pth'
-        if not os.path.isdir(os.path.dirname(model_path)):
-            os.makedirs(os.path.dirname(model_path))
         _train_step(
-            model_path=model_path,
-            prev_model_path=None if ii == 0 else prev_model_path,
-            shogi_variant=shogi,
-            network_hidden_channels=network_hidden_channels,
-            network_bottleneck_channels=network_bottleneck_channels,
-            network_backbone_blocks=network_backbone_blocks,
-            max_dataset_size=max_dataset_size,
-            kifu_path_pattern=kifu_path_pattern,
-            kifu_fraction=kifu_fraction,
-            discount_factor=discount_factor,
-            importance_decay=importance_decay,
-            minibatch_size=minibatch_size,
-            learning_rate=learning_rate,
-            epochs=epochs,
-            coeff_policy_loss=coeff_policy_loss,
-            coeff_entropy_regularization=coeff_entropy_regularization,
-            grad_accumulations=grad_accumulations,
-            win_ratio_threshold=win_ratio_threshold,
-            device=device,
-            engine=engine,
+            model_path=model_path.format(ii),
+            prev_model_path=None if ii == 0 else model_path.format(ii - 1),
+            shogi_variant=kwargs['shogi'],
+            network_hidden_channels=kwargs['hidden_channels'],
+            network_bottleneck_channels=kwargs['bottleneck_channels'],
+            network_backbone_blocks=kwargs['backbone_blocks'],
+            max_dataset_size=kwargs['dataset_size'],
+            kifu_path_pattern=kwargs['kifu_path_pattern'],
+            kifu_fraction=kwargs['kifu_fraction'],
+            discount_factor=kwargs['discount_factor'],
+            importance_decay=kwargs['importance_decay'],
+            minibatch_size=kwargs['minibatch_size'],
+            learning_rate=kwargs['learning_rate'],
+            epochs=kwargs['epochs'],
+            coeff_policy_loss=kwargs['coeff_policy_loss'],
+            coeff_entropy_regularization=kwargs['coeff_policy_entropy'],
+            grad_accumulations=kwargs['grad_accumulations'],
+            win_ratio_threshold=kwargs['win_ratio_threshold'],
+            device=kwargs['device'],
+            engine=kwargs['engine'],
         )
-        if os.path.exists(model_path.replace('.pth', '.tflite')):
+        if os.path.exists(model_path.format(ii).replace('.pth', '.tflite')):
             ii += 1
 
 
