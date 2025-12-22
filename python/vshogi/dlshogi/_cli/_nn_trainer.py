@@ -225,6 +225,18 @@ def _train_step(
         network_backbone_blocks,
         weight_candidate_path=[model_path, prev_model_path],
     )
+    if epochs == 0:
+        sample_inputs = (
+            th.randn(
+                1,
+                game_class.files,
+                game_class.ranks,
+                game_class.feature_channels,
+            ),
+        )
+        edge_model = ai_edge_torch.convert(network.eval(), sample_inputs)
+        edge_model.export(model_path.replace('.pth', '.tflite'))
+        return
     dataset = _dataset(
         shogi_variant=shogi_variant,
         max_dataset_size=max_dataset_size,
@@ -259,9 +271,6 @@ def _train_step(
         ),
     )
     edge_model = ai_edge_torch.convert(network.eval(), sample_inputs)
-    if prev_model_path is None:
-        edge_model.export(model_path.replace('.pth', '.tflite'))
-        return
 
     with tempfile.NamedTemporaryFile(delete=True) as t:
         edge_model.export(t.name)
@@ -333,7 +342,7 @@ def _nn_trainer(**kwargs):
             importance_decay=kwargs['importance_decay'],
             minibatch_size=kwargs['minibatch_size'],
             learning_rate=kwargs['learning_rate'],
-            epochs=kwargs['epochs'],
+            epochs=0 if ii == 0 else kwargs['epochs'],
             coeff_policy_loss=kwargs['coeff_policy_loss'],
             coeff_entropy_regularization=kwargs['coeff_policy_entropy'],
             grad_accumulations=kwargs['grad_accumulations'],

@@ -32,7 +32,7 @@ def _train(nth_cycle: int, **kwargs):
         importance_decay=kwargs['train_importance_decay'],
         minibatch_size=kwargs['train_minibatch_size'],
         learning_rate=kwargs['train_learning_rate'],
-        epochs=kwargs['train_epochs'],
+        epochs=0 if nth_cycle == 0 else kwargs['train_epochs'],
         coeff_policy_loss=kwargs['train_coeff_policy_loss'],
         coeff_entropy_regularization=kwargs['train_coeff_policy_entropy'],
         grad_accumulations=kwargs['train_grad_accumulations'],

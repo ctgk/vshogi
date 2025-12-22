@@ -196,7 +196,7 @@ def _load_player(
 
 def _run_self_play_single(
     shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
-    tflite_path: str,
+    tflite_path: str | None,
     tflite_path_others: tp.List[str],
     kifu_dir: str,
     kifu_index_range: tp.Iterable[int],
@@ -261,7 +261,7 @@ def _run_self_play_single(
 
 def _run_self_play_parallel(
     shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
-    tflite_path: str,
+    tflite_path: str | None,
     tflite_path_others: tp.List[str],
     kifu_dir: str,
     kifu_index_groups: tp.Iterable[tp.Iterable[int]],
@@ -275,7 +275,10 @@ def _run_self_play_parallel(
     max_random_moves: int,
     n_jobs: int,
 ):
-    name = tflite_path.split('/')[-1].split('.')[0]
+    name = (
+        'none' if tflite_path is None
+        else tflite_path.split('/')[-1].split('.')[0]
+    )
     with _tqdm_joblib(
         tqdm(
             total=len(kifu_index_groups),
@@ -306,7 +309,7 @@ def _run_self_play_parallel(
 
 def _run_self_play(
     shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
-    tflite_path: str,
+    tflite_path: str | None,
     tflite_path_others: tp.List[str],
     kifu_dir: str,
     num_selfplay: int,
@@ -321,9 +324,12 @@ def _run_self_play(
     n_jobs: int,
     job_size: int = 5,
 ):
+    name = (
+        "none" if tflite_path is None
+        else tflite_path.split("/")[-1].split(".")[0]
+    )
     print(
-        f'Self-play ({tflite_path.split("/")[-1].split(".")[0]}) '
-        + 'with others: '
+        f'Self-play ({name}) with others: '
         + ', '.join(
             p.split('/')[-1].split('.')[0]
             for p in tflite_path_others
@@ -461,31 +467,18 @@ def _compute_random_moves(random_rate: float, kifu_dir: str):
 
 @cl.command()
 @cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
-@cl.option("--selfplay", default=100)
-@cl.option("--coeff-puct", default=4.)
-@cl.option("--kldgain-threshold", default=1e-4)
-@cl.option("--dfpn-search-root", default=10000)
-@cl.option("--dfpn-search-leaf", default=100)
-@cl.option("--num-simulations", default=100)
-@cl.option("--temperature", default=1.)
-@cl.option("--q-greedy-depth", default=1)
-@cl.option("--random-rate", default=0.5)
-@cl.option("--jobs", default=1)
-@cl.option("--job-size", default=5)
-def _selfplay_worker(
-    shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
-    num_selfplay: int,
-    coeff_puct: float,
-    kldgain_threshold: float,
-    dfpn_search_root: int,
-    dfpn_search_leaf: int,
-    num_simulations: int,
-    temperature: float,
-    q_greedy_depth: int,
-    random_rate: float,
-    n_jobs: int,
-    job_size: int = 5,
-):
+@cl.option("--num-games", default=100, show_default=True)
+@cl.option("--coeff-puct", default=4., show_default=True)
+@cl.option("--kldgain-threshold", default=1e-4, show_default=True)
+@cl.option("--dfpn-root", default=10000, show_default=True)
+@cl.option("--dfpn-leaf", default=100, show_default=True)
+@cl.option("--num-simulations", default=100, show_default=True)
+@cl.option("--temperature", default=1., show_default=True)
+@cl.option("--q-greedy-depth", default=1, show_default=True)
+@cl.option("--random-rate", default=0.5, show_default=True)
+@cl.option("--jobs", default=1, show_default=True)
+@cl.option("--job-size", default=5, show_default=True)
+def _selfplay_worker(**kwargs):
     tflite_path = 'models/model_{:04d}.tflite'
     for ii in range(10000):
         if (
@@ -493,38 +486,35 @@ def _selfplay_worker(
             and os.path.exists(tflite_path.format(ii + 1))
         ):
             continue
-        max_random_moves = random_rate * _average_kifu_length(
-            f'datasets/dataset_{ii - 1:04d}')
-        if max_random_moves != np.inf:
-            max_random_moves = int(np.ceil(max_random_moves / 2)) * 2
-        others = [
-            f'models/model_{jj:04d}.tflite'
-            for jj in list(range(ii - 1, -1, -1))[:10]
-            if _validate(
-                shogi_variant,
-                latest=f'models/model_{ii:04d}.tflite',
-                previous=f'models/model_{jj:04d}.tflite',
-                num_games=10,
-                coeff_puct=coeff_puct,
-            ) < 10 * 0.5
-        ]
+        max_random_moves = _compute_random_moves(
+            kwargs['random_rate'], f'datasets/dataset_{ii - 1:04d}')
+        others = _get_previous_models_superior_to_latest(
+            shogi_variant=kwargs['shogi'],
+            latest=tflite_path.format(ii),
+            previous=[
+                tflite_path.format(j)
+                for j in list(range(ii - 1, -1, -1))[:10]
+            ],
+            num_games=10,
+            coeff_puct=kwargs['coeff_puct'],
+        )
         while True:
             _run_self_play(
-                shogi_variant=shogi_variant,
-                tflite_path=tflite_path.format(ii),
+                shogi_variant=kwargs['shogi'],
+                tflite_path=tflite_path.format(ii) if ii > 0 else None,
                 tflite_path_others=others,
                 kifu_dir=f'datasets/dataset_{ii:04d}',
-                num_selfplay=num_selfplay,
-                coeff_puct=coeff_puct,
-                kldgain_threshold=kldgain_threshold,
-                dfpn_search_root=dfpn_search_root,
-                dfpn_search_leaf=dfpn_search_leaf,
-                num_simulations=num_simulations,
-                temperature=temperature,
-                q_greedy_depth=q_greedy_depth,
+                num_selfplay=kwargs['num_games'],
+                coeff_puct=kwargs['coeff_puct'],
+                kldgain_threshold=kwargs['kldgain_threshold'],
+                dfpn_search_root=kwargs['dfpn_root'],
+                dfpn_search_leaf=kwargs['dfpn_leaf'],
+                num_simulations=kwargs['num_simulations'],
+                temperature=kwargs['temperature'],
+                q_greedy_depth=kwargs['q_greedy_depth'],
                 max_random_moves=max_random_moves,
-                n_jobs=n_jobs,
-                job_size=job_size,
+                n_jobs=kwargs['jobs'],
+                job_size=kwargs['job_size'],
             )
             if os.path.exists(tflite_path.format(ii + 1)):
                 break
