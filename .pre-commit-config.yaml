@@ -59,7 +59,7 @@ repos:
     -   id: python-profile
         name: Run Python profiling script
         language: system
-        entry: python examples/dlshogi_model.py --short
+        entry: python python/scripts/run_alpha_zero.py --short
         types: [text]
         files: '\.(c|h|cpp|hpp|py)$'
         pass_filenames: false
