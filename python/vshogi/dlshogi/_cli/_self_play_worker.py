@@ -218,7 +218,7 @@ def _load_player(
 
 def _run_self_play_single(
     shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
-    engine: tp.Literal['AlphaZero'],
+    engine: tp.Literal['AlphaZero', 'GumbelAlphaZero'],
     tflite_path: str | None,
     tflite_path_others: tp.List[str],
     kifu_dir: str,
@@ -308,6 +308,7 @@ def _run_self_play_parallel(
         'none' if tflite_path is None
         else tflite_path.split('/')[-1].split('.')[0]
     )
+    timeout_second = 10 * 60  # 10 minutes
     with _tqdm_joblib(
         tqdm(
             total=len(kifu_index_groups),
@@ -315,27 +316,30 @@ def _run_self_play_parallel(
             desc=f'{name} vs {name}',
         ),
     ):
-        Parallel(n_jobs=n_jobs)(
-            delayed(_run_self_play_single)(
-                shogi_variant,
-                engine,
-                tflite_path,
-                tflite_path_others,
-                kifu_dir,
-                indices,
-                coeff_puct,
-                kldgain_threshold,
-                dfpn_search_root,
-                dfpn_search_leaf,
-                num_simulations,
-                temperature,
-                q_greedy_depth,
-                max_random_moves,
-                gumbel_actions=gumbel_actions,
-                show_pbar=False,
+        try:
+            Parallel(n_jobs=n_jobs, timeout=timeout_second)(
+                delayed(_run_self_play_single)(
+                    shogi_variant,
+                    engine,
+                    tflite_path,
+                    tflite_path_others,
+                    kifu_dir,
+                    indices,
+                    coeff_puct,
+                    kldgain_threshold,
+                    dfpn_search_root,
+                    dfpn_search_leaf,
+                    num_simulations,
+                    temperature,
+                    q_greedy_depth,
+                    max_random_moves,
+                    gumbel_actions=gumbel_actions,
+                    show_pbar=False,
+                )
+                for indices in kifu_index_groups
             )
-            for indices in kifu_index_groups
-        )
+        except Exception as e:
+            print(f"Self-play task timed out: {e}")
 
 
 def _run_self_play(
