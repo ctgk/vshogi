@@ -175,7 +175,7 @@ def _tqdm_joblib(tqdm_object):
 
 
 def _load_player(
-    tflite_path: str | None,
+    pte_path: str | None,
     coeff_puct: float,
     kldgain_threshold: float,
     dfpn_search_root: int,
@@ -199,16 +199,16 @@ def _load_player(
                     vs.engine.piece_value_func(g),
                 )
             )
-            if tflite_path is None
-            else vs.dlshogi.PolicyValueFunction(tflite_path)
+            if pte_path is None
+            else vs.dlshogi.PolicyValueFunction(pte_path)
         ),
         **kwargs,
         dfpn_search_root=dfpn_search_root,
         dfpn_search_leaf=dfpn_search_leaf,
         name=(
             'none'
-            if tflite_path is None
-            else tflite_path.split('/')[-1].split('.')[0]
+            if pte_path is None
+            else pte_path.split('/')[-1].split('.')[0]
         ),
     )
 
@@ -216,8 +216,8 @@ def _load_player(
 def _run_self_play_single(
     shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
     engine: tp.Literal['AlphaZero', 'GumbelAlphaZero'],
-    tflite_path: str | None,
-    tflite_path_others: tp.List[str],
+    pte_path: str | None,
+    pte_path_others: tp.List[str],
     kifu_dir: str,
     kifu_index_range: tp.Iterable[int],
     coeff_puct: float,
@@ -232,23 +232,23 @@ def _run_self_play_single(
     show_pbar: bool = True,
 ):
     player = _load_player(
-        tflite_path=tflite_path,
+        pte_path=pte_path,
         coeff_puct=coeff_puct,
         kldgain_threshold=kldgain_threshold,
         dfpn_search_root=dfpn_search_root,
         dfpn_search_leaf=dfpn_search_leaf,
         engine=engine,
     )
-    player_others = [player for _ in range(10 - len(tflite_path_others))] + [
+    player_others = [player for _ in range(10 - len(pte_path_others))] + [
         _load_player(
-            tflite_path=path,
+            pte_path=path,
             coeff_puct=coeff_puct,
             kldgain_threshold=kldgain_threshold,
             dfpn_search_root=dfpn_search_root,
             dfpn_search_leaf=dfpn_search_leaf,
             engine=engine,
         )
-        for path in tflite_path_others
+        for path in pte_path_others
     ]
     iterator = kifu_index_range
     if show_pbar:
@@ -286,8 +286,8 @@ def _run_self_play_single(
 def _run_self_play_parallel(
     shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
     engine: tp.Literal['AlphaZero'],
-    tflite_path: str | None,
-    tflite_path_others: tp.List[str],
+    pte_path: str | None,
+    pte_path_others: tp.List[str],
     kifu_dir: str,
     kifu_index_groups: tp.Iterable[tp.Iterable[int]],
     coeff_puct: float,
@@ -302,9 +302,7 @@ def _run_self_play_parallel(
     n_jobs: int,
 ):
     name = (
-        'none'
-        if tflite_path is None
-        else tflite_path.split('/')[-1].split('.')[0]
+        'none' if pte_path is None else pte_path.split('/')[-1].split('.')[0]
     )
     timeout_second = 10 * 60  # 10 minutes
     with _tqdm_joblib(
@@ -319,8 +317,8 @@ def _run_self_play_parallel(
                 delayed(_run_self_play_single)(
                     shogi_variant,
                     engine,
-                    tflite_path,
-                    tflite_path_others,
+                    pte_path,
+                    pte_path_others,
                     kifu_dir,
                     indices,
                     coeff_puct,
@@ -343,8 +341,8 @@ def _run_self_play_parallel(
 def _run_self_play(
     shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
     engine: tp.Literal['AlphaZero', 'GumbelAlphaZero'],
-    tflite_path: str | None,
-    tflite_path_others: tp.List[str],
+    pte_path: str | None,
+    pte_path_others: tp.List[str],
     kifu_dir: str,
     num_selfplay: int,
     coeff_puct: float,
@@ -360,15 +358,11 @@ def _run_self_play(
     job_size: int = 5,
 ):
     name = (
-        "none"
-        if tflite_path is None
-        else tflite_path.split("/")[-1].split(".")[0]
+        "none" if pte_path is None else pte_path.split("/")[-1].split(".")[0]
     )
     print(
         f'Self-play ({name}) with others: '
-        + ', '.join(
-            p.split('/')[-1].split('.')[0] for p in tflite_path_others
-        ),
+        + ', '.join(p.split('/')[-1].split('.')[0] for p in pte_path_others),
     )
     if not os.path.isdir(kifu_dir):
         os.makedirs(kifu_dir)
@@ -377,8 +371,8 @@ def _run_self_play(
         _run_self_play_single(
             shogi_variant=shogi_variant,
             engine=engine,
-            tflite_path=tflite_path,
-            tflite_path_others=tflite_path_others,
+            pte_path=pte_path,
+            pte_path_others=pte_path_others,
             kifu_dir=kifu_dir,
             kifu_index_range=range(index_start, index_start + num_selfplay),
             coeff_puct=coeff_puct,
@@ -395,8 +389,8 @@ def _run_self_play(
         _run_self_play_parallel(
             shogi_variant=shogi_variant,
             engine=engine,
-            tflite_path=tflite_path,
-            tflite_path_others=tflite_path_others,
+            pte_path=pte_path,
+            pte_path_others=pte_path_others,
             kifu_dir=kifu_dir,
             kifu_index_groups=[
                 range(i, i + job_size)
@@ -542,11 +536,10 @@ def _selfplay_worker(**kwargs):
     now = datetime.now().strftime('%Y%m%d_%H%M%S')
     with open(f'command_{now}.txt', 'w') as f:
         f.write(f'python {" ".join(sys.argv)}')
-
-    tflite_path = 'models/model_{:04d}.tflite'
+    pte_path = 'models/model_{:04d}.pte'
     for ii in range(10000):
-        if os.path.exists(tflite_path.format(ii)) and os.path.exists(
-            tflite_path.format(ii + 1)
+        if os.path.exists(pte_path.format(ii)) and os.path.exists(
+            pte_path.format(ii + 1)
         ):
             continue
         max_random_moves = _compute_random_moves(
@@ -554,9 +547,9 @@ def _selfplay_worker(**kwargs):
         )
         others = _get_previous_models_superior_to_latest(
             shogi_variant=kwargs['shogi'],
-            latest=tflite_path.format(ii),
+            latest=pte_path.format(ii),
             previous=[
-                tflite_path.format(j) for j in list(range(ii - 1, -1, -1))[:10]
+                pte_path.format(j) for j in list(range(ii - 1, -1, -1))[:10]
             ],
             engine=kwargs['engine'],
             num_games=10,
@@ -566,8 +559,8 @@ def _selfplay_worker(**kwargs):
             _run_self_play(
                 shogi_variant=kwargs['shogi'],
                 engine=kwargs['engine'],
-                tflite_path=tflite_path.format(ii) if ii > 0 else None,
-                tflite_path_others=others,
+                pte_path=pte_path.format(ii) if ii > 0 else None,
+                pte_path_others=others,
                 kifu_dir=f'datasets/dataset_{ii:04d}',
                 num_selfplay=kwargs['num_games'],
                 coeff_puct=kwargs['coeff_puct'],
@@ -582,5 +575,5 @@ def _selfplay_worker(**kwargs):
                 n_jobs=kwargs['jobs'],
                 job_size=kwargs['job_size'],
             )
-            if os.path.exists(tflite_path.format(ii + 1)):
+            if os.path.exists(pte_path.format(ii + 1)):
                 break

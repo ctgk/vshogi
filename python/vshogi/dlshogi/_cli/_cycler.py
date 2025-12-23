@@ -47,7 +47,7 @@ def _train(nth_cycle: int, **kwargs):
 
 
 def _selfplay(
-    tflite_path: str,
+    pte_path: str,
     other_path: list[str],
     kifu_dir: str,
     max_random_moves: int,
@@ -56,8 +56,8 @@ def _selfplay(
     _run_self_play(
         shogi_variant=kwargs['shogi'],
         engine=kwargs['play_engine'],
-        tflite_path=tflite_path,
-        tflite_path_others=other_path,
+        pte_path=pte_path,
+        pte_path_others=other_path,
         kifu_dir=kifu_dir,
         num_selfplay=kwargs['play_num_games'],
         coeff_puct=kwargs['play_coeff_puct'],
@@ -71,6 +71,13 @@ def _selfplay(
         gumbel_actions=kwargs["play_gumbel_actions"],
         n_jobs=kwargs['play_jobs'],
     )
+
+
+def _resume_from() -> int:
+    pte_list = sorted(glob('models/model_*.pte'))
+    if not pte_list:
+        return 0
+    return int(pte_list[-1].split('_')[-1].split('.')[0]) + 1
 
 
 @cl.command()
@@ -135,16 +142,15 @@ def _cycle_selfplay_and_train(**kwargs):
     with open(os.path.join(kwargs['output'], f'command_{now}.txt'), 'w') as f:
         f.write(f'python {" ".join(sys.argv)}')
 
-    tflite_path = os.path.join(kwargs['output'], 'models/model_{:04d}.tflite')
-
     def _resume_from() -> int:
-        tflite_list = sorted(
-            glob(os.path.join(kwargs['output'], 'models/model_*.tflite'))
+        pte_list = sorted(
+            glob(os.path.join(kwargs['output'], 'models/model_*.pte'))
         )
-        if not tflite_list:
+        if not pte_list:
             return 0
-        return int(tflite_list[-1].split('_')[-1].split('.')[0]) + 1
+        return int(pte_list[-1].split('_')[-1].split('.')[0]) + 1
 
+    pte_path = os.path.join(kwargs['output'], 'models/model_{:04d}.pte')
     start = _resume_from()
     if start == 0:
         _train(nth_cycle=0, **kwargs)
@@ -158,9 +164,9 @@ def _cycle_selfplay_and_train(**kwargs):
         )
         others = _get_previous_models_superior_to_latest(
             shogi_variant=kwargs['shogi'],
-            latest=tflite_path.format(i - 1),
+            latest=pte_path.format(i - 1),
             previous=[
-                tflite_path.format(j) for j in list(range(i - 2, -1, -1))[:10]
+                pte_path.format(j) for j in list(range(i - 2, -1, -1))[:10]
             ],
             engine=kwargs['play_engine'],
             num_games=10,
@@ -168,7 +174,7 @@ def _cycle_selfplay_and_train(**kwargs):
         )
         while True:
             _selfplay(
-                tflite_path=None if i == 1 else tflite_path.format(i - 1),
+                pte_path=None if i == 1 else pte_path.format(i - 1),
                 other_path=others,
                 kifu_dir=os.path.join(
                     kwargs['output'],
@@ -178,5 +184,5 @@ def _cycle_selfplay_and_train(**kwargs):
                 **kwargs,
             )
             _train(nth_cycle=i, **kwargs)
-            if os.path.exists(tflite_path.format(i)):
+            if os.path.exists(pte_path.format(i)):
                 break

@@ -1,17 +1,15 @@
 import tempfile
-import warnings
 
 import click as cl
 import torch as th
+from executorch.backends.xnnpack.partition.xnnpack_partitioner import (
+    XnnpackPartitioner,
+)
+from executorch.exir import to_edge_transform_and_lower
 from tqdm import tqdm
 
 import vshogi
 from vshogi.shogi import Game
-
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    import ai_edge_torch
 
 
 @cl.command()
@@ -25,11 +23,12 @@ def _main(short: bool):
     ).eval()
     sample_input = (
         th.randn(1, Game.files, Game.ranks, Game.feature_channels),)
-    edge_model = ai_edge_torch.convert(model, sample_input)
+    exported = th.export.export(model, sample_input, strict=True)
+    program = to_edge_transform_and_lower(
+        exported, partitioner=[XnnpackPartitioner()]).to_executorch()
     with tempfile.NamedTemporaryFile(delete=True) as t:
-        edge_model.export(t.name)
+        t.write(program.buffer)
         pv_func = vshogi.dlshogi.PolicyValueFunction(t.name)
-    print(pv_func.summary())
     player = vshogi.engine.AlphaZero(
         pv_func,
         kldgain_threshold=1e-4,

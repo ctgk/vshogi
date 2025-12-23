@@ -9,6 +9,10 @@ from glob import glob
 import click as cl
 import pandas as pd
 import torch as th
+from executorch.backends.xnnpack.partition.xnnpack_partitioner import (
+    XnnpackPartitioner,
+)
+from executorch.exir import to_edge_transform_and_lower
 from tqdm import tqdm
 
 import vshogi as vs
@@ -110,15 +114,15 @@ def _dataset(
     return buffer
 
 
-def _engine(engine: str, tflite_path: str, name: str) -> vs.engine.Engine:
+def _engine(engine: str, pte_path: str, name: str) -> vs.engine.Engine:
     engine_class = {'AlphaZero': vs.engine.AlphaZero}[engine]
-    if os.path.exists(tflite_path):
+    if os.path.exists(pte_path):
         return engine_class(
-            vs.dlshogi.PolicyValueFunction(tflite_path),
+            vs.dlshogi.PolicyValueFunction(pte_path),
             name=name,
         )
     else:
-        warnings.warn(f"tflite model, {tflite_path}, not found")
+        warnings.warn(f"pte model, {pte_path}, not found")
         return engine_class(name=f'{name}_not_found')
 
 
@@ -221,8 +225,6 @@ def _train_step(
     device: tp.Literal['cpu', 'cuda', 'mps'],
     engine: tp.Literal['AlphaZero'] = 'AlphaZero',
 ):
-    import ai_edge_torch
-
     if not os.path.isdir(os.path.dirname(model_path)):
         os.makedirs(os.path.dirname(model_path))
     shogi_module = getattr(vs, shogi_variant)
@@ -243,8 +245,12 @@ def _train_step(
                 game_class.feature_channels,
             ),
         )
-        edge_model = ai_edge_torch.convert(network.eval(), sample_inputs)
-        edge_model.export(model_path.replace('.pth', '.tflite'))
+        exported = th.export.export(network.eval(), sample_inputs, strict=True)
+        edge_model = to_edge_transform_and_lower(
+            exported, partitioner=[XnnpackPartitioner()]
+        ).to_executorch()
+        with open(model_path.replace('.pth', '.pte'), 'wb') as f:
+            f.write(edge_model.buffer)
         return
     dataset = _dataset(
         max_dataset_size=max_dataset_size,
@@ -279,10 +285,13 @@ def _train_step(
             game_class.feature_channels,
         ),
     )
-    edge_model = ai_edge_torch.convert(network.eval(), sample_inputs)
+    exported = th.export.export(network.eval(), sample_inputs, strict=True)
+    edge_model = to_edge_transform_and_lower(
+        exported, partitioner=[XnnpackPartitioner()]
+    ).to_executorch()
 
     with tempfile.NamedTemporaryFile(delete=True) as t:
-        edge_model.export(t.name)
+        t.write(edge_model.buffer)
         player_curr = _engine(
             engine,
             t.name,
@@ -290,7 +299,7 @@ def _train_step(
         )
     player_prev = _engine(
         engine,
-        prev_model_path.replace('.pth', '.tflite'),
+        prev_model_path.replace('.pth', '.pte'),
         name=prev_model_path.split('/')[-1].split('.')[0],
     )
     name_better = _get_best_player_index(
@@ -302,7 +311,8 @@ def _train_step(
         win_ratio_threshold=win_ratio_threshold,
     )
     if player_curr.name == name_better:
-        edge_model.export(model_path.replace('.pth', '.tflite'))
+        with open(model_path.replace('.pth', '.pte'), 'wb') as f:
+            f.write(edge_model.buffer)
 
 
 @cl.command()
@@ -341,10 +351,10 @@ def _nn_trainer(**kwargs):
         f.write(f'python {" ".join(sys.argv)}')
 
     def _resume_from() -> int:
-        tflite_list = sorted(glob('models/model_*.tflite'))
-        if not tflite_list:
+        pte_list = sorted(glob('models/model_*.pte'))
+        if not pte_list:
             return 0
-        return int(tflite_list[-1].split('_')[-1].split('.')[0]) + 1
+        return int(pte_list[-1].split('_')[-1].split('.')[0]) + 1
 
     ii = _resume_from()
     model_path = 'models/model_{:04d}.pth'
@@ -372,7 +382,7 @@ def _nn_trainer(**kwargs):
             device=kwargs['device'],
             engine=kwargs['engine'],
         )
-        if os.path.exists(model_path.format(ii).replace('.pth', '.tflite')):
+        if os.path.exists(model_path.format(ii).replace('.pth', '.pte')):
             ii += 1
 
 

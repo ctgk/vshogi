@@ -51,8 +51,11 @@ class _DepthwiseAttention(th.nn.Module):
         if mode is False:
             self.register_buffer(
                 '_w',
-                th.matmul(self._attentions, self._kernel.detach()).moveaxis(
-                    2, 0
-                ),
+                th.matmul(
+                    self._attentions,
+                    self._kernel.detach(),
+                )
+                .moveaxis(2, 0)
+                .contiguous(),
             )
         return super().train(mode)

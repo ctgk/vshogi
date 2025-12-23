@@ -1,8 +1,12 @@
 import tempfile
-import warnings
 
 import pytest
 import torch as th
+from executorch.backends.xnnpack.partition.xnnpack_partitioner import (
+    XnnpackPartitioner,
+)
+from executorch.exir import to_edge_transform_and_lower
+from executorch.runtime import Runtime
 
 from vshogi.dlshogi._network._depthwise_attention import _DepthwiseAttention
 from vshogi.dlshogi._network._network import PolicyValueNetwork
@@ -10,11 +14,6 @@ from vshogi.dlshogi._network._policy_head import _PolicyHead
 from vshogi.dlshogi._network._residual_block import _ResidualBlock
 from vshogi.dlshogi._network._value_head import _ValueHead
 from vshogi.minishogi import Game
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    import ai_edge_torch
-    from ai_edge_litert.interpreter import Interpreter
 
 
 @pytest.mark.parametrize(
@@ -51,25 +50,29 @@ with warnings.catch_warnings():
         ),
     ],
 )
-def test_export_to_tflite(module, input_shape, output_shape):
+def test_export_to_pte(module, input_shape, output_shape):
     sample_inputs = (th.randn(*input_shape),)
-    edge_model = ai_edge_torch.convert(module.eval(), sample_inputs)
+    exported = th.export.export(module.eval(), sample_inputs)
+    program = to_edge_transform_and_lower(
+        exported,
+        partitioner=[XnnpackPartitioner()],
+    ).to_executorch()
     with tempfile.NamedTemporaryFile(delete=True) as t:
-        edge_model.export(t.name)
-        interpreter = Interpreter(model_path=t.name)
-    interpreter.allocate_tensors()
-    input_details = interpreter.get_input_details()[0]
-    output_details = interpreter.get_output_details()
-    assert tuple(input_details['shape']) == input_shape
+        t.write(program.buffer)
+        runtime = Runtime.get()
+        method = runtime.load_program(t.name).load_method('forward')
 
+    metadata = method.metadata
+    expect_input_shape = metadata.input_tensor_meta(0).sizes()
+    assert expect_input_shape == input_shape
     if isinstance(output_shape, set):
         actual = {
-            tuple(output_details[0]['shape']),
-            tuple(output_details[1]['shape']),
+            metadata.output_tensor_meta(0).sizes(),
+            metadata.output_tensor_meta(1).sizes(),
         }
         assert actual == output_shape
     else:
-        assert tuple(output_details[0]['shape']) == output_shape
+        assert metadata.output_tensor_meta(0).sizes() == output_shape
 
 
 @pytest.mark.parametrize(
