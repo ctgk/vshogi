@@ -110,7 +110,12 @@ def _resume_from() -> int:
 @cl.option("--train-coeff-policy-entropy", default=1e-2, show_default=True)
 @cl.option("--train-grad-accumulations", default=1, show_default=True)
 @cl.option("--train-win-ratio-threshold", default=0.55, show_default=True)
-@cl.option("--train-device", default='cpu', show_default=True)
+@cl.option(
+    "--train-device",
+    default='cpu',
+    type=cl.Choice(['cpu', 'cuda', 'mps']),
+    show_default=True,
+)
 def _cycle_selfplay_and_train(**kwargs):
     print('kwargs:', kwargs)
 

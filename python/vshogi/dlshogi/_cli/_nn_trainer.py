@@ -318,7 +318,12 @@ def _resume_from() -> int:
 @cl.option("--coeff-policy-entropy", default=1e-2, show_default=True)
 @cl.option("--grad-accumulations", default=1, show_default=True)
 @cl.option("--win-ratio-threshold", default=0.55, show_default=True)
-@cl.option("--device", default='cpu', show_default=True)
+@cl.option(
+    "--device",
+    default='cpu',
+    type=cl.Choice(['cpu', 'cuda', 'mps']),
+    show_default=True,
+)
 @cl.option(
     "--engine",
     default='AlphaZero',
