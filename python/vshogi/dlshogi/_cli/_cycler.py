@@ -51,6 +51,7 @@ def _selfplay(
 ):
     _run_self_play(
         shogi_variant=kwargs['shogi'],
+        engine=kwargs['play_engine'],
         tflite_path=tflite_path,
         tflite_path_others=other_path,
         kifu_dir=kifu_dir,
@@ -63,6 +64,7 @@ def _selfplay(
         temperature=kwargs['play_temperature'],
         q_greedy_depth=kwargs['play_dump_q_greedy_depth'],
         max_random_moves=max_random_moves,
+        gumbel_actions=kwargs["play_gumbel_actions"],
         n_jobs=kwargs['play_jobs'],
     )
 
@@ -77,6 +79,12 @@ def _resume_from() -> int:
 @cl.command()
 @cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
 @cl.option("--cycles", default=10, show_default=True)
+@cl.option(
+    "--play-engine",
+    default='AlphaZero',
+    type=cl.Choice(['AlphaZero', 'GumbelAlphaZero']),
+    show_default=True,
+)
 @cl.option("--play-num-games", default=100, show_default=True)
 @cl.option("--play-coeff-puct", default=4., show_default=True)
 @cl.option("--play-kldgain-threshold", default=1e-4, show_default=True)
@@ -86,6 +94,7 @@ def _resume_from() -> int:
 @cl.option("--play-temperature", default=1., show_default=True)
 @cl.option("--play-dump-q-greedy-depth", default=1, show_default=True)
 @cl.option("--play-random-rate", default=0.5, show_default=True)
+@cl.option("--play-gumbel-actions", default=16, show_default=True)
 @cl.option("--play-jobs", default=1, show_default=True)
 @cl.option("--train-hidden-channels", default=128, show_default=True)
 @cl.option("--train-bottleneck-channels", default=32, show_default=True)
@@ -127,6 +136,7 @@ def _cycle_selfplay_and_train(**kwargs):
                 tflite_path.format(j)
                 for j in list(range(i - 2, -1, -1))[:10]
             ],
+            engine=kwargs['play_engine'],
             num_games=10,
             coeff_puct=kwargs['play_coeff_puct'],
         )

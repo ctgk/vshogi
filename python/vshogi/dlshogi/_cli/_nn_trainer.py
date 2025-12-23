@@ -1,7 +1,9 @@
 import os
+import sys
 import tempfile
 import typing as tp
 import warnings
+from datetime import datetime
 from glob import glob
 
 import click as cl
@@ -51,7 +53,6 @@ def _dataset(
     discount_factor: float = 1.,
     importance_decay: float = 1.,
 ) -> th.utils.data.Dataset:
-    move_type: type = getattr(getattr(vs, shogi_variant), 'Move')
     buffer = vs.dlshogi.ReplayBuffer(buffer_size=max_dataset_size)
     kifu_dir_list = sorted(
         glob('/'.join(kifu_path_pattern.split('/')[:-1])),
@@ -77,7 +78,7 @@ def _dataset(
             for _, row in df.iterrows():
                 buffer.add(vs.dlshogi.Data(
                     sfen=row['sfen'],
-                    policy={move_type(m): v for m, v in row['policy'].items()},
+                    policy={m: v for m, v in row['policy'].items()},
                     value01=row['value01'],
                     weight=row['weight'],
                 ))
@@ -325,6 +326,10 @@ def _resume_from() -> int:
     show_default=True,
 )
 def _nn_trainer(**kwargs):
+    now = datetime.now().strftime('%Y%m%d_%H%M%S')
+    with open(f'command_{now}.txt', 'w') as f:
+        f.write(f'python {" ".join(sys.argv)}')
+
     ii = _resume_from()
     model_path = 'models/model_{:04d}.pth'
     while ii < 10000:

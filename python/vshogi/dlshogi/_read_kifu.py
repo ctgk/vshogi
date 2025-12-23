@@ -1,6 +1,10 @@
 import numpy as np
 import pandas as pd
 
+from vshogi.judkins_shogi._game import Game as JudkinsGame  # noqa: F401
+from vshogi.minishogi._game import Game as MinishogiGame  # noqa: F401
+from vshogi.shogi._game import Game as StandardGame  # noqa: F401
+
 
 def read_kifu(
     tsv_path: str,
@@ -43,7 +47,6 @@ def read_kifu(
         + (1 - df['z_weight']) * df['q_value']
     )
     df['value01'] = df['value'].apply(lambda v: np.clip((v + 1) / 2, 0., 1.))
-    df['policy'] = df['policy'].apply(lambda s: eval(s))
     df['policy'] = _compute_visit_dist(df)
     return df
 
@@ -63,6 +66,33 @@ def _compute_weight(df: pd.DataFrame, importance_decay: float) -> np.ndarray:
 
 
 def _compute_visit_dist(df: pd.DataFrame):
-    return df['policy'].apply(
-        lambda d: {m: v / sum(d.values()) for m, v in d.items()},
+    if len(df) == 0:
+        return
+    game_class = _infer_game_variant(df['sfen'][0])
+    move_class = game_class._get_move_class()
+    return df.apply(
+        lambda row: (
+            {
+                move_class(m): v / (sum(eval(row['policy']).values()))
+                for m, v in eval(row['policy']).items()
+            }
+            if '{' in row['policy'] else
+            {
+                m: float(m.to_sfen() == row['policy'])
+                for m in game_class(row['sfen']).get_legal_moves()
+            }
+        ),
+        axis=1,
     )
+
+
+def _infer_game_variant(sfen: str) -> type:
+    num_slashes = sfen.split(' ')[0].count('/')
+    if num_slashes == 4:
+        return MinishogiGame
+    elif num_slashes == 5:
+        return JudkinsGame
+    elif num_slashes == 8:
+        return StandardGame
+    else:
+        raise ValueError(f'Invalid SFEN: {sfen}')

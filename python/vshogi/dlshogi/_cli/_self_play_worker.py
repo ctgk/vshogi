@@ -1,6 +1,8 @@
 import contextlib
 import os
+import sys
 import typing as tp
+from datetime import datetime
 from glob import glob
 
 import click as cl
@@ -25,7 +27,7 @@ def _dump_game_log(file_, game: vs.Game) -> None:
                 else (2 * (('BLACK' in r) is (i % 2 == 0)) - 1)
             ),
             lambda g, i: g.q_value_log[i],
-            lambda g, i: g.visit_count_log[i],
+            lambda g, i: g.policy_log[i],
             lambda g, i: g.z_weight_log[i],
         ),
         names=('sfen', 'move', 'result', 'q_value', 'policy', 'z_weight'),
@@ -35,20 +37,22 @@ def _dump_game_log(file_, game: vs.Game) -> None:
 
 def _play_game(
     shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
-    black: vs.engine.AlphaZero,
-    white: vs.engine.AlphaZero,
+    black: vs.engine.Engine,
+    white: vs.engine.Engine,
     num_simulations: int,
     temperature: float,
-    main: tp.Optional[vs.engine.AlphaZero] = None,
+    main: tp.Optional[vs.engine.Engine] = None,
     q_greedy_depth: int = 1,
     max_random_moves: int = 320,
     max_moves: int = 320,
+    gumbel_actions: int | None = None,
 ) -> vs.Game:
     shogi_module = getattr(vs, shogi_variant)
     game_class = getattr(shogi_module, 'Game')
+    engine = black.__class__.__name__
     game = game_class()
     game.q_value_log = []
-    game.visit_count_log = []
+    game.policy_log = []
     game.z_weight_log = []
 
     num_random_moves = (
@@ -60,14 +64,21 @@ def _play_game(
             break
 
         player = black if game.turn == vs.Color.BLACK else white
-        if not player.is_ready():
+        if (not player.is_ready()) or (engine == 'GumbelAlphaZero'):
             player.set_game(game)
 
-        player.search(num_simulations - player.get_search_count())
+        if engine == 'AlphaZero':
+            player.search(num_simulations - player.get_search_count())
+        elif engine == 'GumbelAlphaZero':
+            player.search(num_simulations, num_actions=gumbel_actions)
+
         if (main is not None) and (main is not player):
-            if not main.is_ready():
+            if (not main.is_ready()) or (engine == 'GumbelAlphaZero'):
                 main.set_game(game)
-            main.search(num_simulations - main.get_search_count())
+            if engine == 'AlphaZero':
+                main.search(num_simulations - main.get_search_count())
+            elif engine == 'GumbelAlphaZero':
+                main.search(num_simulations, num_actions=gumbel_actions)
 
         if player.proved_mate():
             if player.get_q_value() > 0:
@@ -77,7 +88,7 @@ def _play_game(
                     for i, m in enumerate(mate_moves):
                         game.apply(m)
                         game.q_value_log.append(1. if i % 2 == 0 else -1.)
-                        game.visit_count_log.append({})
+                        game.policy_log.append({})
                         game.z_weight_log.append(0.)
                     if game.result != vs.Result.ONGOING:
                         break
@@ -89,7 +100,7 @@ def _play_game(
             # this proof when the player fails to prove a checkmate in the
             # following game position.
             game.z_weight_log.append(0.)
-        elif game.ply() < num_random_moves:
+        elif (engine == 'AlphaZero') and (game.ply() < num_random_moves):
             move = player.select(temperature=temperature)
             game.z_weight_log.append(0.)
         else:
@@ -101,19 +112,23 @@ def _play_game(
                 f"{game.to_sfen()}.\n{player._tree(depth=2)}")
 
         player_dump = main or player
-        visit_count = {
-            m.to_sfen(): v + 1  # +1 for smoothing
-            for m, v in
-            player_dump.get_visit_counts(include_random=False).items()
-        }
+        if engine == 'AlphaZero':
+            visit_count = {
+                m.to_sfen(): v + 1  # +1 for smoothing
+                for m, v in
+                player_dump.get_visit_counts(include_random=False).items()
+            }
+            game.policy_log.append(visit_count)
+        elif engine == 'GumbelAlphaZero':
+            game.policy_log.append(player_dump.select().to_sfen())
         game.q_value_log.append(
             player_dump.get_q_value(greedy_depth=q_greedy_depth))
-        game.visit_count_log.append(visit_count)
 
         game.apply(move)
-        black.apply(move)
-        if white is not black:
-            white.apply(move)
+        if engine == 'AlphaZero':
+            black.apply(move)
+            if white is not black:
+                white.apply(move)
 
     if game.result == vs.Result.ONGOING:
         game.declare_draw()
@@ -133,6 +148,7 @@ def _play_game_and_dump_log(
     temperature: float,
     q_greedy_depth: int,
     max_random_moves: int,
+    gumbel_actions: int | None,
 ) -> None:
     game = _play_game(
         shogi_variant,
@@ -143,6 +159,7 @@ def _play_game_and_dump_log(
         main_player,
         q_greedy_depth=q_greedy_depth,
         max_random_moves=max_random_moves,
+        gumbel_actions=gumbel_actions,
     )
     with open(filepath, 'w') as f:
         _dump_game_log(f, game)
@@ -171,8 +188,14 @@ def _load_player(
     kldgain_threshold: float,
     dfpn_search_root: int,
     dfpn_search_leaf: int,
-) -> vs.engine.AlphaZero:
-    return vs.engine.AlphaZero(
+    engine: tp.Literal['AlphaZero', 'GumbelAlphaZero'],
+) -> vs.engine.Engine:
+    engine_class = getattr(vs.engine, engine)
+    kwargs = {} if engine == 'GumbelAlphaZero' else {
+        'coeff_puct': coeff_puct,
+        'kldgain_threshold': kldgain_threshold,
+    }
+    return engine_class(
         (
             (
                 lambda g: (
@@ -183,8 +206,7 @@ def _load_player(
             if tflite_path is None else
             vs.dlshogi.PolicyValueFunction(tflite_path)
         ),
-        coeff_puct=coeff_puct,
-        kldgain_threshold=kldgain_threshold,
+        **kwargs,
         dfpn_search_root=dfpn_search_root,
         dfpn_search_leaf=dfpn_search_leaf,
         name=(
@@ -196,6 +218,7 @@ def _load_player(
 
 def _run_self_play_single(
     shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
+    engine: tp.Literal['AlphaZero'],
     tflite_path: str | None,
     tflite_path_others: tp.List[str],
     kifu_dir: str,
@@ -208,6 +231,7 @@ def _run_self_play_single(
     temperature: float,
     q_greedy_depth: int,
     max_random_moves: int,
+    gumbel_actions: int | None,
     show_pbar: bool = True,
 ):
     player = _load_player(
@@ -216,6 +240,7 @@ def _run_self_play_single(
         kldgain_threshold=kldgain_threshold,
         dfpn_search_root=dfpn_search_root,
         dfpn_search_leaf=dfpn_search_leaf,
+        engine=engine,
     )
     player_others = [player for _ in range(10 - len(tflite_path_others))] + [
         _load_player(
@@ -224,6 +249,7 @@ def _run_self_play_single(
             kldgain_threshold=kldgain_threshold,
             dfpn_search_root=dfpn_search_root,
             dfpn_search_leaf=dfpn_search_leaf,
+            engine=engine,
         )
         for path in tflite_path_others
     ]
@@ -256,11 +282,13 @@ def _run_self_play_single(
             temperature=temperature,
             q_greedy_depth=q_greedy_depth,
             max_random_moves=max_random_moves,
+            gumbel_actions=gumbel_actions,
         )
 
 
 def _run_self_play_parallel(
     shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
+    engine: tp.Literal['AlphaZero'],
     tflite_path: str | None,
     tflite_path_others: tp.List[str],
     kifu_dir: str,
@@ -273,6 +301,7 @@ def _run_self_play_parallel(
     temperature: float,
     q_greedy_depth: int,
     max_random_moves: int,
+    gumbel_actions: int | None,
     n_jobs: int,
 ):
     name = (
@@ -289,6 +318,7 @@ def _run_self_play_parallel(
         Parallel(n_jobs=n_jobs)(
             delayed(_run_self_play_single)(
                 shogi_variant,
+                engine,
                 tflite_path,
                 tflite_path_others,
                 kifu_dir,
@@ -301,6 +331,7 @@ def _run_self_play_parallel(
                 temperature,
                 q_greedy_depth,
                 max_random_moves,
+                gumbel_actions=gumbel_actions,
                 show_pbar=False,
             )
             for indices in kifu_index_groups
@@ -309,6 +340,7 @@ def _run_self_play_parallel(
 
 def _run_self_play(
     shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
+    engine: tp.Literal['AlphaZero', 'GumbelAlphaZero'],
     tflite_path: str | None,
     tflite_path_others: tp.List[str],
     kifu_dir: str,
@@ -321,6 +353,7 @@ def _run_self_play(
     temperature: float,
     q_greedy_depth: int,
     max_random_moves: int,
+    gumbel_actions: int | None,
     n_jobs: int,
     job_size: int = 5,
 ):
@@ -341,6 +374,7 @@ def _run_self_play(
     if n_jobs <= 1:
         _run_self_play_single(
             shogi_variant=shogi_variant,
+            engine=engine,
             tflite_path=tflite_path,
             tflite_path_others=tflite_path_others,
             kifu_dir=kifu_dir,
@@ -353,10 +387,12 @@ def _run_self_play(
             temperature=temperature,
             q_greedy_depth=q_greedy_depth,
             max_random_moves=max_random_moves,
+            gumbel_actions=gumbel_actions,
         )
     else:
         _run_self_play_parallel(
             shogi_variant=shogi_variant,
+            engine=engine,
             tflite_path=tflite_path,
             tflite_path_others=tflite_path_others,
             kifu_dir=kifu_dir,
@@ -372,12 +408,14 @@ def _run_self_play(
             temperature=temperature,
             q_greedy_depth=q_greedy_depth,
             max_random_moves=max_random_moves,
+            gumbel_actions=gumbel_actions,
             n_jobs=n_jobs,
         )
 
 
 def _validate(
     shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
+    engine: tp.Literal['AlphaZero', 'GumbelAlphaZero'],
     latest: str,
     previous: str,
     num_games: int,
@@ -390,6 +428,7 @@ def _validate(
         kldgain_threshold=None,
         dfpn_search_root=0,
         dfpn_search_leaf=0,
+        engine=engine,
     )
     player_prev = _load_player(
         previous,
@@ -397,6 +436,7 @@ def _validate(
         kldgain_threshold=None,
         dfpn_search_root=0,
         dfpn_search_leaf=0,
+        engine=engine,
     )
     record = vs.Record(0, 0, 0, 0, 0, 0)
     pbar = tqdm(range(num_games), ncols=100)
@@ -406,7 +446,10 @@ def _validate(
                 game_class(),
                 player_latest,
                 player_prev,
-                search_args={'n_or_t': 100},
+                search_args=(
+                    {'n_or_t': 100} if engine == 'AlphaZero'
+                    else {'num_sims': 100, 'num_actions': 16}
+                ),
                 select_args={'temperature': None},
                 draw_on_max_moves=True,
             ).result
@@ -416,7 +459,10 @@ def _validate(
                 game_class(),
                 player_prev,
                 player_latest,
-                search_args={'n_or_t': 100},
+                search_args=(
+                    {'n_or_t': 100} if engine == 'AlphaZero'
+                    else {'num_sims': 100, 'num_actions': 16}
+                ),
                 select_args={'temperature': None},
                 draw_on_max_moves=True,
             ).result
@@ -430,6 +476,7 @@ def _get_previous_models_superior_to_latest(
     shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
     latest: str,
     previous: list[str],
+    engine: tp.Literal['AlphaZero'],
     num_games: int = 10,
     coeff_puct: float = 4.,
 ) -> list[str]:
@@ -437,6 +484,7 @@ def _get_previous_models_superior_to_latest(
         prev for prev in previous
         if _validate(
             shogi_variant,
+            engine,
             latest,
             prev,
             num_games,
@@ -476,9 +524,20 @@ def _compute_random_moves(random_rate: float, kifu_dir: str):
 @cl.option("--temperature", default=1., show_default=True)
 @cl.option("--q-greedy-depth", default=1, show_default=True)
 @cl.option("--random-rate", default=0.5, show_default=True)
+@cl.option(
+    "--engine",
+    default='AlphaZero',
+    type=cl.Choice(['AlphaZero', 'GumbelAlphaZero']),
+    show_default=True,
+)
+@cl.option("--gumbel-actions", default=16, show_default=True)
 @cl.option("--jobs", default=1, show_default=True)
 @cl.option("--job-size", default=5, show_default=True)
 def _selfplay_worker(**kwargs):
+    now = datetime.now().strftime('%Y%m%d_%H%M%S')
+    with open(f'command_{now}.txt', 'w') as f:
+        f.write(f'python {" ".join(sys.argv)}')
+
     tflite_path = 'models/model_{:04d}.tflite'
     for ii in range(10000):
         if (
@@ -495,12 +554,14 @@ def _selfplay_worker(**kwargs):
                 tflite_path.format(j)
                 for j in list(range(ii - 1, -1, -1))[:10]
             ],
+            engine=kwargs['engine'],
             num_games=10,
             coeff_puct=kwargs['coeff_puct'],
         )
         while True:
             _run_self_play(
                 shogi_variant=kwargs['shogi'],
+                engine=kwargs['engine'],
                 tflite_path=tflite_path.format(ii) if ii > 0 else None,
                 tflite_path_others=others,
                 kifu_dir=f'datasets/dataset_{ii:04d}',
@@ -513,6 +574,7 @@ def _selfplay_worker(**kwargs):
                 temperature=kwargs['temperature'],
                 q_greedy_depth=kwargs['q_greedy_depth'],
                 max_random_moves=max_random_moves,
+                gumbel_actions=kwargs['gumbel_actions'],
                 n_jobs=kwargs['jobs'],
                 job_size=kwargs['job_size'],
             )
