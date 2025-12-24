@@ -8,6 +8,7 @@
 #include "vshogi/common/game.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/engine/dfpn/node.hpp"
+#include "vshogi/engine/tree/searcher.hpp"
 
 namespace vshogi::engine::dfpn
 {
@@ -137,15 +138,13 @@ public:
 };
 
 template <class P>
-class Searcher
+class Searcher : public tree::Searcher<Node>
 {
     using C = Configuration<P>;
     using MT = MoveTraits<P>;
     using Square = typename C::Square;
 
 private:
-    std::vector<Node> m_nodes; //!< The first one is the root node.
-    Node* m_next;
     Table<P> m_table;
     uint m_search_count;
     uint m_remaining_searches;
@@ -201,12 +200,7 @@ private:
     }
 
 public: // utility
-    Searcher(const uint num_nodes = 100000u)
-        : m_nodes(num_nodes + 2u), m_next(nullptr), m_table{},
-          m_search_count(0u), m_remaining_searches(0u)
-    {
-        init();
-    }
+    Searcher(const uint tree_size = 100000u);
 
     // Rules of 5
     ~Searcher() = default; // 1/5 destructor
@@ -215,15 +209,7 @@ public: // utility
     Searcher(Searcher&& other) = delete; // 4/5 move constructor
     Searcher& operator=(Searcher&& other) = delete; // 5/5 move assignment
 
-    void init()
-    {
-        m_nodes.front().init();
-        m_next = std::next(m_nodes.data());
-        m_next->init();
-        m_nodes.back().init_as_end();
-        m_table.clear();
-        m_search_count = 0u;
-    }
+    void init();
     uint get_search_count() const
     {
         return m_search_count;
@@ -245,22 +231,6 @@ public: // utility
     bool proved_no_mate() const
     {
         return m_nodes[0].proved_no_mate(true);
-    }
-    const Node* get_root() const
-    {
-        return &m_nodes[0];
-    }
-    move_t select_action() const;
-    move_t get_mate_move() const
-    {
-        if (!m_nodes[0].proved_mate(true))
-            return MT::make_move(
-                static_cast<Square>(0), static_cast<Square>(0));
-        const auto c1 = m_nodes[0].get_child_1st();
-        if (c1 == nullptr)
-            return MT::make_move(
-                static_cast<Square>(0), static_cast<Square>(0));
-        return c1->get_action();
     }
     std::vector<move_t> get_mate_moves(Game<P>& game) const
     {
@@ -329,10 +299,19 @@ private: // utility
 };
 
 template <class P>
-move_t Searcher<P>::select_action() const
+Searcher<P>::Searcher(const uint tree_size)
+    : tree::Searcher<Node>(tree_size), m_table{}, m_search_count(0u),
+      m_remaining_searches(0u)
 {
-    const auto c1 = m_nodes[0].get_child_1st();
-    return c1 ? c1->get_action() : static_cast<move_t>(0);
+    init();
+}
+
+template <class P>
+void Searcher<P>::init()
+{
+    tree::Searcher<Node>::init();
+    m_table.clear();
+    m_search_count = 0u;
 }
 
 } // namespace vshogi::engine::dfpn

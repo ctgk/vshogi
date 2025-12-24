@@ -592,10 +592,8 @@ inline void export_dfpn_searcher(pybind11::module& m)
                 return out;
             })
         .def("get_root", [](const Searcher& self) -> py::object {
-            const auto out = self.get_root();
-            if (out == nullptr)
-                return py::none();
-            return py::cast(*out, py::return_value_policy::reference);
+            return py::cast(
+                self.get_root(), py::return_value_policy::reference);
         });
 }
 

@@ -355,7 +355,6 @@ TEST_GROUP (test_dfpn_searcher) {
         CHECK_FALSE(searcher.proved_mate());
         CHECK_TRUE(searcher.proved_no_mate());
         CHECK_EQUAL(expect_search_count, searcher.get_search_count());
-        CHECK_EQUAL(0u, searcher.get_mate_move());
         CHECK_EQUAL(0u, searcher.get_mate_moves(g).size());
     }
 };

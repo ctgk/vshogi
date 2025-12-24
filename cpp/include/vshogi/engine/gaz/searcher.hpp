@@ -160,7 +160,7 @@ bool Searcher<P>::dfpn_proved_mate(Game<P>& game, Node* const node)
     m_dfpn.init();
     m_dfpn.search(game, search_count);
     if (m_dfpn.proved_mate()) {
-        const move_t m = m_dfpn.get_mate_move();
+        const move_t m = m_dfpn.select_action();
         if (m != 0u) {
             node->simulate_mate_and_expand(m_next, m);
             backprop_to_root(game, node);

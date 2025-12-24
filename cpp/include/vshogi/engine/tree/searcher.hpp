@@ -23,7 +23,10 @@ public:
     Searcher& operator=(Searcher&& other) = delete; // 5/5 move assignment
     void init();
     uint count_remaining_nodes() const;
-    const N& get_root() const;
+    move_t select_action() const;
+    // clang-format off
+    const N& get_root() const { return m_nodes.front(); }
+    // clang-format on
 
 protected:
     std::vector<N> m_nodes;
@@ -57,9 +60,10 @@ uint Searcher<N>::count_remaining_nodes() const
 }
 
 template <class N>
-const N& Searcher<N>::get_root() const
+move_t Searcher<N>::select_action() const
 {
-    return m_nodes.front();
+    const auto c1 = get_root().get_child_1st();
+    return c1 ? c1->get_action() : static_cast<move_t>(0);
 }
 
 template <class N>
