@@ -45,7 +45,6 @@ def _network(
 
 
 def _dataset(
-    shogi_variant: str,
     max_dataset_size: int,
     kifu_path_pattern: str,
     *,
@@ -239,7 +238,6 @@ def _train_step(
         edge_model.export(model_path.replace('.pth', '.tflite'))
         return
     dataset = _dataset(
-        shogi_variant=shogi_variant,
         max_dataset_size=max_dataset_size,
         kifu_path_pattern=kifu_path_pattern,
         kifu_fraction=kifu_fraction,
@@ -294,13 +292,6 @@ def _train_step(
         edge_model.export(model_path.replace('.pth', '.tflite'))
 
 
-def _resume_from() -> int:
-    tflite_list = sorted(glob('models/model_*.tflite'))
-    if not tflite_list:
-        return 0
-    return int(tflite_list[-1].split('_')[-1].split('.')[0]) + 1
-
-
 @cl.command()
 @cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
 @cl.option("--hidden-channels", default=128, show_default=True)
@@ -334,6 +325,12 @@ def _nn_trainer(**kwargs):
     now = datetime.now().strftime('%Y%m%d_%H%M%S')
     with open(f'command_{now}.txt', 'w') as f:
         f.write(f'python {" ".join(sys.argv)}')
+
+    def _resume_from() -> int:
+        tflite_list = sorted(glob('models/model_*.tflite'))
+        if not tflite_list:
+            return 0
+        return int(tflite_list[-1].split('_')[-1].split('.')[0]) + 1
 
     ii = _resume_from()
     model_path = 'models/model_{:04d}.pth'

@@ -1,5 +1,6 @@
 import os
 import sys
+import warnings
 from datetime import datetime
 from glob import glob
 
@@ -14,7 +15,7 @@ from vshogi.dlshogi._cli._self_play_worker import (
 
 
 def _train(nth_cycle: int, **kwargs):
-    weight_path = 'models/model_{:04d}.pth'
+    weight_path = os.path.join(kwargs['output'], 'models/model_{:04d}.pth')
     _train_step(
         model_path=weight_path.format(nth_cycle),
         prev_model_path=(
@@ -26,7 +27,10 @@ def _train(nth_cycle: int, **kwargs):
         network_bottleneck_channels=kwargs['train_bottleneck_channels'],
         network_backbone_blocks=kwargs['train_backbone_blocks'],
         max_dataset_size=kwargs['train_dataset_size'],
-        kifu_path_pattern='datasets/dataset_*/kifu_*.tsv',
+        kifu_path_pattern=os.path.join(
+            kwargs['output'],
+            'datasets/dataset_*/kifu_*.tsv',
+        ),
         kifu_fraction=kwargs['train_kifu_fraction'],
         discount_factor=kwargs['train_discount_factor'],
         importance_decay=kwargs['train_importance_decay'],
@@ -69,13 +73,6 @@ def _selfplay(
     )
 
 
-def _resume_from() -> int:
-    tflite_list = sorted(glob('models/model_*.tflite'))
-    if not tflite_list:
-        return 0
-    return int(tflite_list[-1].split('_')[-1].split('.')[0]) + 1
-
-
 @cl.command()
 @cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
 @cl.option("--cycles", default=10, show_default=True)
@@ -116,14 +113,33 @@ def _resume_from() -> int:
     type=cl.Choice(['cpu', 'cuda', 'mps']),
     show_default=True,
 )
+@cl.option(
+    "-o", "--output",
+    default='',
+    type=str,
+    help='Output directory (default: cwd)',
+)
 def _cycle_selfplay_and_train(**kwargs):
     print('kwargs:', kwargs)
 
     now = datetime.now().strftime('%Y%m%d_%H%M%S')
-    with open(f'command_{now}.txt', 'w') as f:
+    if kwargs['output'] != '':
+        if os.path.isdir(kwargs['output']):
+            warnings.warn(
+                f'Output directory ({kwargs["output"]}) already exists')
+        else:
+            os.makedirs(kwargs['output'])
+    with open(os.path.join(kwargs['output'], f'command_{now}.txt'), 'w') as f:
         f.write(f'python {" ".join(sys.argv)}')
 
-    tflite_path = 'models/model_{:04d}.tflite'
+    tflite_path = os.path.join(kwargs['output'], 'models/model_{:04d}.tflite')
+
+    def _resume_from() -> int:
+        tflite_list = sorted(glob(os.path.join(
+            kwargs['output'], 'models/model_*.tflite')))
+        if not tflite_list:
+            return 0
+        return int(tflite_list[-1].split('_')[-1].split('.')[0]) + 1
 
     start = _resume_from()
     if start == 0:
@@ -133,7 +149,9 @@ def _cycle_selfplay_and_train(**kwargs):
         print(f"Resume cycle from {start}")
     for i in range(start, kwargs['cycles'] + 1):
         max_random_moves = _compute_random_moves(
-            kwargs['play_random_rate'], f'datasets/dataset_{i - 1:04d}')
+            kwargs['play_random_rate'],
+            os.path.join(kwargs['output'], f'datasets/dataset_{i - 1:04d}'),
+        )
         others = _get_previous_models_superior_to_latest(
             shogi_variant=kwargs['shogi'],
             latest=tflite_path.format(i - 1),
@@ -149,7 +167,10 @@ def _cycle_selfplay_and_train(**kwargs):
             _selfplay(
                 tflite_path=tflite_path.format(i - 1),
                 other_path=others,
-                kifu_dir=f'datasets/dataset_{i:04d}',
+                kifu_dir=os.path.join(
+                    kwargs['output'],
+                    f'datasets/dataset_{i:04d}',
+                ),
                 max_random_moves=max_random_moves,
                 **kwargs,
             )
