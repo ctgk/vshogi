@@ -250,6 +250,7 @@ public: // utility
     {
         return &m_nodes[0];
     }
+    move_t select_action() const;
     move_t get_mate_move() const
     {
         if (!m_nodes[0].proved_mate(true))
@@ -326,6 +327,13 @@ private: // utility
         return nullptr;
     }
 };
+
+template <class P>
+move_t Searcher<P>::select_action() const
+{
+    const auto c1 = m_nodes[0].get_child_1st();
+    return c1 ? c1->get_action() : static_cast<move_t>(0);
+}
 
 } // namespace vshogi::engine::dfpn
 

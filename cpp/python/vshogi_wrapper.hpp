@@ -579,8 +579,8 @@ inline void export_dfpn_searcher(pybind11::module& m)
         .def("proved", &Searcher::proved)
         .def("get_search_count", &Searcher::get_search_count)
         .def(
-            "get_mate_move",
-            [](const Searcher& self) { return Move(self.get_mate_move()); })
+            "select",
+            [](const Searcher& self) { return Move(self.select_action()); })
         .def(
             "get_mate_moves",
             [](const Searcher& self, vshogi::Game<Parameters>& g) {

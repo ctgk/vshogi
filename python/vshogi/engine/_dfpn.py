@@ -124,7 +124,7 @@ class DfpnSearcher(Engine):
         if temperature is not None:
             raise ValueError(
                 "DFPN algorithm does not support selection temperature")
-        return self._searcher.get_mate_move()
+        return self._searcher.select()
 
     def proved(self) -> bool:
         """Return true if there is a mate or no-mate proved.
