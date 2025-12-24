@@ -165,7 +165,7 @@ def _cycle_selfplay_and_train(**kwargs):
         )
         while True:
             _selfplay(
-                tflite_path=tflite_path.format(i - 1),
+                tflite_path=None if i == 1 else tflite_path.format(i - 1),
                 other_path=others,
                 kifu_dir=os.path.join(
                     kwargs['output'],
