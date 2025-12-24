@@ -386,8 +386,9 @@ TEST(test_shogi_searcher, explore_until_game_end)
 TEST(test_shogi_searcher, dfpn)
 {
     const char kifu[][6] = {"S*2b", "3a4a", "L*4b"};
-    auto g = Game("l5k1l/3+R5/1p3Gnp1/5pp1p/2p1p2P1/p5P1P/1P1S5/PG2+p4/1NK1S3L "
-                  "b RGSLP2bgs2n3p 165");
+    auto g = Game(
+        "l5k1l/3+R5/1p3Gnp1/5pp1p/2p1p2P1/p5P1P/1P1S5/PG2+p4/1NK1S3L "
+        "b RGSLP2bgs2n3p 165");
     auto az = Searcher(4.f, 0.25f, 1000000u, 10000u, 100u);
     for (uint ii = 0u; ii < 3u; ++ii) {
         if (g.get_result() != vshogi::ONGOING)

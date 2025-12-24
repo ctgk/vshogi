@@ -168,11 +168,12 @@ inline void export_move(pybind11::module& m)
         .def(
             "__ne__",
             [](const Move& a, const Move& b) { return a.m_value != b.m_value; })
-        .def(py::pickle(
-            [](const Move& m) {
-                return py::make_tuple(static_cast<int>(m.m_value));
-            },
-            [](py::tuple t) { return Move(t[0].cast<move_t>()); }));
+        .def(
+            py::pickle(
+                [](const Move& m) {
+                    return py::make_tuple(static_cast<int>(m.m_value));
+                },
+                [](py::tuple t) { return Move(t[0].cast<move_t>()); }));
 }
 
 template <class Parameters>
@@ -456,12 +457,13 @@ inline void export_az_searcher(pybind11::module& m)
     using Searcher = vshogi::engine::az::Searcher<Parameters>;
 
     py::class_<Searcher>(m, "AlphaZero")
-        .def(py::init<
-             const float,
-             const float,
-             const uint,
-             const uint,
-             const uint>())
+        .def(
+            py::init<
+                const float,
+                const float,
+                const uint,
+                const uint,
+                const uint>())
         .def("init", &Searcher::init)
         .def(
             "search",

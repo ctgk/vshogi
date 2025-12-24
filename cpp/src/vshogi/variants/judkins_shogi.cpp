@@ -74,13 +74,14 @@ judkins_shogi::Stand::Stand(
     const int num_ka,
     const int num_hi,
     const int num_ki)
-    : Stand(static_cast<Int>(
-          (num_fu << shift_bits[judkins_shogi::FU])
-          + (num_ke << shift_bits[judkins_shogi::KE])
-          + (num_gi << shift_bits[judkins_shogi::GI])
-          + (num_ka << shift_bits[judkins_shogi::KA])
-          + (num_hi << shift_bits[judkins_shogi::HI])
-          + (num_ki << shift_bits[judkins_shogi::KI])))
+    : Stand(
+          static_cast<Int>(
+              (num_fu << shift_bits[judkins_shogi::FU])
+              + (num_ke << shift_bits[judkins_shogi::KE])
+              + (num_gi << shift_bits[judkins_shogi::GI])
+              + (num_ka << shift_bits[judkins_shogi::KA])
+              + (num_hi << shift_bits[judkins_shogi::HI])
+              + (num_ki << shift_bits[judkins_shogi::KI])))
 {
 }
 

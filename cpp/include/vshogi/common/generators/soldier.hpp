@@ -599,9 +599,10 @@ private:
 public:
     SoldierMoveGenerator(const State<P>& state)
         : m_board(state.get_board()), m_turn(state.get_turn()),
-          m_not_pinned(BT::invert(
-              state.find_pinned()
-              | BT::from_square(m_board.get_king_square(m_turn)))),
+          m_not_pinned(
+              BT::invert(
+                  state.find_pinned()
+                  | BT::from_square(m_board.get_king_square(m_turn)))),
           m_dst_iter(), m_src_iter(), m_promote()
     {
         if (state.in_double_check())

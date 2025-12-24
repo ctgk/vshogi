@@ -904,8 +904,9 @@ TEST(test_dfpn_searcher, test_shogi_debug_2)
     // I |+KY|+OU|   |   |   |   |   |   |+KY|
     //   +---+---+---+---+---+---+---+---+---+
     // Black: FUx3,KYx2,GI,HI,KIx3
-    auto g = Game("2g4+B1/3pk4/p1p2p1pp/4S4/3n5/2P2Sp2/PPNP1P2P/3+nP+b3/LK6L w "
-                  "R3GS2L3Prsnp");
+    auto g = Game(
+        "2g4+B1/3pk4/p1p2p1pp/4S4/3n5/2P2Sp2/PPNP1P2P/3+nP+b3/LK6L w "
+        "R3GS2L3Prsnp");
     auto searcher = dfpn::Searcher<Parameters>();
     searcher.search(g, 10000u);
     CHECK_TRUE(searcher.proved_mate());
@@ -1301,8 +1302,9 @@ TEST(test_dfpn_searcher, test_shogi_avoid_consecutive_checks_2)
     // I |   |   |-RY|   |   |   |   |   |+KA|
     //   +---+---+---+---+---+---+---+---+---+
     // Black: FUx4
-    auto g = Game("1ns2k1n1/5b1nl/5p2p/G5g2/PP1ppPpPs/3PPSPLP/2G3N1G/L+s2K3L/"
-                  "2+r5B w 4Prp");
+    auto g = Game(
+        "1ns2k1n1/5b1nl/5p2p/G5g2/PP1ppPpPs/3PPSPLP/2G3N1G/L+s2K3L/"
+        "2+r5B w 4Prp");
     auto searcher = dfpn::Searcher<Parameters>();
     searcher.search(g, 100u);
     CHECK_TRUE(searcher.proved_mate());
