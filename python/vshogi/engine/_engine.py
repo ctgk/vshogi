@@ -50,17 +50,6 @@ class Engine(abc.ABC):
         """Run search engine."""
         pass
 
-    @abc.abstractmethod
-    def select(self, *args, **kwargs) -> Move:
-        """Select action based on the search result.
-
-        Returns
-        -------
-        Move
-            Selected action
-        """
-        pass
-
     @property
     def name(self) -> tp.Union[str, None]:
         """Return name of the engine.
@@ -82,6 +71,22 @@ class Engine(abc.ABC):
         """
         return self._get_search_count()
 
+    def select(self, temperature: float | None = None) -> Move:
+        """Return best action based on the searches so far.
+
+        Parameters
+        ----------
+        temperature : tp.Optional[float], optional
+            Temperature parameter for action selection, by default None.
+            If `None`, select the best action.
+
+        Returns
+        -------
+        Move
+            Selected action.
+        """
+        return self._select(temperature)
+
     @abc.abstractmethod
     def _set_game(self, game: Game):
         pass
@@ -92,6 +97,10 @@ class Engine(abc.ABC):
 
     @abc.abstractmethod
     def _clear(self) -> None:
+        pass
+
+    @abc.abstractmethod
+    def _select(self, temperature: float | None = None) -> Move:
         pass
 
     def _get_search_count(self) -> int:

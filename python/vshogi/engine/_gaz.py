@@ -182,19 +182,7 @@ class GumbelAlphaZero(Engine):
         """
         return self._searcher.get_root().get_q_value(greedy_depth)
 
-    def select(self, temperature: float = None) -> Move:
-        """Return selected action based on the algorithm.
-
-        Parameters
-        ----------
-        temperature : float, optional
-            Temperature parameter for selecting an action.
-
-        Returns
-        -------
-        Move
-            Selected action.
-        """
+    def _select(self, temperature: float | None = None) -> Move:
         if temperature is None:
             return self._searcher.select_action()
         if self._searcher.count_active_childs() > 0:

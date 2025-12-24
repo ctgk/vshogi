@@ -285,20 +285,7 @@ class AlphaZero(Engine):
         move_visit_count_pair_list.sort(key=lambda a: a[1], reverse=True)
         return {m: v for m, v in move_visit_count_pair_list}
 
-    def select(self, temperature: tp.Optional[float] = None) -> Move:
-        """Return selected action based on visit counts.
-
-        Parameters
-        ----------
-        temperature : tp.Optional[float], optional
-            Temperature parameter for action selection, by default None.
-            If `None`, then select the most searched action.
-
-        Returns
-        -------
-        Move
-            Selected action.
-        """
+    def _select(self, temperature: float | None = None) -> Move:
         if (temperature is None) or np.isclose(temperature, 0):
             return self._searcher.get_action_by_visit_max()
         else:

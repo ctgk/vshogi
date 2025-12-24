@@ -120,14 +120,10 @@ class DfpnSearcher(Engine):
                 f"Failed to run DFPN searches on the game position: {sfen}")
         return self._searcher.proved_mate()
 
-    def select(self) -> Move:
-        """Get first action to mate.
-
-        Returns
-        -------
-        Move
-            First action to mate.
-        """
+    def _select(self, temperature: float | None = None) -> Move:
+        if temperature is not None:
+            raise ValueError(
+                "DFPN algorithm does not support selection temperature")
         return self._searcher.get_mate_move()
 
     def proved(self) -> bool:
