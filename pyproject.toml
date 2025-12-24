@@ -10,6 +10,7 @@ build-backend = "setuptools.build_meta"
 [tool.pytest]
 addopts = [
     "--doctest-modules",
+    "--ignore=python/scripts/",
     "--ignore=python/vshogi/_cli",
     "--ignore=python/vshogi/dlshogi/_cli_nn_trainer.py",
     "--ignore=python/vshogi/__main__.py",
