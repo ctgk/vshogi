@@ -143,22 +143,20 @@ class GumbelAlphaZero(Engine):
     def _search_with_gumbel_planning(self, num_sims: int, num_actions: int):
         n_phase = max(int(np.ceil(np.log2(num_actions))), 1)
         n_per_p = (num_sims - 1) // n_phase
-        if n_per_p <= num_actions:
-            raise ValueError(
-                f"Number of simulations in a phase (={n_per_p}) should be "
-                f"larger than `num_actions` (={num_actions}). Please pass a "
-                f"value larger than {num_actions * n_phase} to `num_sims`.")
         if self.get_search_count() == 0:
             self._select_simulate_expand_backprop()
             num_sims -= 1
 
-        budgets = (
-            [n_per_p] * (n_phase - 1) + [num_sims - n_per_p * (n_phase - 1)])
-        for budget in budgets:
+        for _ in range(n_phase):
             self._searcher.keep_top_n_actions(num_actions)
-            for _ in range(budget):
+            for _ in range(min(max(n_per_p, num_actions), num_sims)):
                 self._select_simulate_expand_backprop()
+                num_sims -= 1
             num_actions = num_actions // 2
+
+            if num_actions <= 1:
+                for _ in range(num_sims):
+                    self._select_simulate_expand_backprop()
 
     def _select_simulate_expand_backprop(self):
         node = self._searcher.search(self._game._game)

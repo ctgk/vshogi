@@ -19,6 +19,7 @@ def test_get_search_count():
     searcher.set_game(game)
     assert searcher.get_search_count() == 0
     searcher.search(num_sims=20, num_actions=4)
+    print(searcher._tree(breadth=-1))
     assert searcher.get_search_count() == 20
 
 
