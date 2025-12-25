@@ -1,19 +1,13 @@
-import typing as tp
-
-from classopt import classopt, config
+import click as cl
 import numpy as np
 import pandas as pd
 
 
-@classopt(default_long=True)
-class Args:
-    kifu: str = config(long=False)
-
-
-if __name__ == '__main__':
-    args = Args.from_args()
+@cl.command()
+@cl.argument('kifu', type=str)
+def _check(kifu: str):
     df = pd.read_csv(
-        args.kifu,
+        kifu,
         sep='\t',
         usecols=['sfen', 'result', 'q_value', 'policy', 'z_weight'],
         dtype={
@@ -25,7 +19,7 @@ if __name__ == '__main__':
         },
     )
     if len(df) == 0:
-        raise ValueError(f"Empty kifu, {args.kifu}")
+        raise ValueError(f"Empty kifu, {kifu}")
 
     in_mate_sequence: bool = False
     for i in range(len(df)):
@@ -41,7 +35,6 @@ if __name__ == '__main__':
             continue
 
         in_mate_sequence = True
-        turn: tp.Union[tp.Literal['b'], tp.Literal['w']] = sfen.split(' ')[1]
         if not np.isclose(abs(row.q_value), 1):
             raise ValueError(
                 f"'{sfen}': `q_value`(={row.q_value}) should be 1 or -1 "
@@ -51,3 +44,7 @@ if __name__ == '__main__':
             raise ValueError(
                 f"'{sfen}': `q_value` (={row.q_value}) shoule be "
                 f"{row.result}")
+
+
+if __name__ == '__main__':
+    _check()
