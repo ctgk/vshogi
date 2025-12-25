@@ -24,7 +24,9 @@ def _check(kifu: str):
     in_mate_sequence: bool = False
     for i in range(len(df)):
         row = df.iloc[i]
-        policy: dict = eval(row.policy)
+        policy: dict = (
+            eval(row.policy) if '{' in row.policy else {row.policy: 1}
+        )
         sfen = row.sfen
         if policy != {}:
             if in_mate_sequence:

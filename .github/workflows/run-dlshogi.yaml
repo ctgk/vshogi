@@ -10,9 +10,10 @@ jobs:
     strategy:
       matrix:
         game: [
-          {name: minishogi, rl_cycle: 8, nn_backbone_blocks: 3},
-          {name: judkins_shogi, rl_cycle: 6, nn_backbone_blocks: 3},
-          {name: shogi, rl_cycle: 2, nn_backbone_blocks: 2},
+          {name: minishogi, engine: AlphaZero, rl_cycle: 8, nn_backbone_blocks: 3},
+          {name: judkins_shogi, engine: AlphaZero, rl_cycle: 6, nn_backbone_blocks: 3},
+          {name: shogi, engine: AlphaZero, rl_cycle: 2, nn_backbone_blocks: 2},
+          {name: minishogi, engine: GumbelAlphaZero, rl_cycle: 8, nn_backbone_blocks: 3},
         ]
       fail-fast: false
 
@@ -29,9 +30,10 @@ jobs:
     - name: Run command
       env:
         NAME: ${{ matrix.game.name }}
+        ENGINE: ${{ matrix.game.engine }}
         CYCLE: ${{ matrix.game.rl_cycle }}
         BACKBONES: ${{ matrix.game.nn_backbone_blocks }}
-      run: python -m vshogi dlshogi cycler $NAME --cycles $CYCLE --train-backbone-blocks $BACKBONES --play-num-simulations 100 --play-num-games 50 --train-epochs 5 --train-win-ratio-threshold 0.1
+      run: python -m vshogi dlshogi cycler $NAME --cycles $CYCLE --play-engine $ENGINE --play-num-simulations 100 --play-num-games 50 --train-backbone-blocks $BACKBONES --train-epochs 5 --train-win-ratio-threshold 0.1
     - name: Evaluate model
       env:
         NAME: ${{ matrix.game.name }}
