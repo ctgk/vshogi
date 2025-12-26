@@ -933,9 +933,9 @@ class Game(abc.ABC):
         r = self.result
         return '\n'.join((
             f'Turn: {self.turn.name}' if r == Result.ONGOING else r.name,
-            f'White: {str(self._game.get_stand(Color.WHITE))}',
+            f'White: {self._game.get_stand(Color.WHITE)!s}',
             repr(self.board),
-            f'Black: {str(self._game.get_stand(Color.BLACK))}',
+            f'Black: {self._game.get_stand(Color.BLACK)!s}',
         ))
 
     def copy(self) -> 'Game':
