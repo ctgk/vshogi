@@ -325,12 +325,12 @@ class Game(abc.ABC):
             return cls._get_move_class()(*arg, **kwargs)
         return cls._get_move_class()(move, *arg, **kwargs)
 
-    def apply(self, move: tp.Union['Move', str, list]) -> 'Game':
+    def apply(self, move: Move | str | list[Move | str]) -> 'Game':
         """Apply a move.
 
         Parameters
         ----------
-        move : tp.Union['Move', str, list]
+        move : Move | str | list[Move | str]
             Move or list of moves to apply to the current state.
 
         Returns
@@ -813,7 +813,7 @@ class Game(abc.ABC):
 
     def to_dlshogi_policy(
         self,
-        action_proba: tp.Union[Move, tp.Dict[Move, int]],
+        action_proba: Move | tp.Dict[Move, int],
         *,
         default_value: float = 0.,
     ) -> np.ndarray:
@@ -825,7 +825,7 @@ class Game(abc.ABC):
 
         Parameters
         ----------
-        action_proba : tp.Union[Move, tp.Dict[Move, int]]
+        action_proba : Move | tp.Dict[Move, int]
             One-hot action to turn into DL-shogi policy format,
             or dict of actions with their probabilities.
             If the probabilities do not sum up to 1, they will be normalized.
@@ -884,7 +884,7 @@ class Game(abc.ABC):
     def get_mate_moves_if_any(
         self,
         num_dfpn_nodes: int = 10000,
-    ) -> tp.Union[list[Move], None]:
+    ) -> list[Move] | None:
         """Return a sequence of moves leading to checkmate if there is any.
 
         Parameters
@@ -895,7 +895,7 @@ class Game(abc.ABC):
 
         Returns
         -------
-        tp.Union[list[Move], None]
+        list[Move] | None
             A sequence of moves to check mate if any otherwise `None`.
 
         Examples

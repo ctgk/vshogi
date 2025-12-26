@@ -142,12 +142,12 @@ class AlphaZero(Engine):
         if self._is_ready():
             self._searcher.apply(self._game._game, move)
 
-    def search(self, n_or_t: tp.Union[int, float] = 0.01):
+    def search(self, n_or_t: int | float = 0.01):
         """Explore from root node for n times.
 
         Parameters
         ----------
-        n_or_t : tp.Union[int, float], optional
+        n_or_t : int | float, optional
             Number of game positions to search or period of time to search
             in second, by default 0.01
         """
@@ -295,7 +295,7 @@ class AlphaZero(Engine):
         self,
         depth: int = 1,
         breadth: int = 3,
-        pv_line: list[tp.Union[Move, str]] = [],
+        pv_line: list[Move | str] = [],
         *,
         sort_key: callable = lambda n: -n.get_visit_count(),
         greedy_depth: int = 0,

@@ -51,12 +51,12 @@ class Engine(abc.ABC):
         pass
 
     @property
-    def name(self) -> tp.Union[str, None]:
+    def name(self) -> str | None:
         """Return name of the engine.
 
         Returns
         -------
-        tp.Union[str, None]
+        str | None
             Name of the engine.
         """
         return self._name
@@ -116,7 +116,7 @@ class Engine(abc.ABC):
     @classmethod
     def _count(
         cls,
-        n_or_t: tp.Union[int, float],
+        n_or_t: int | float,
     ) -> tp.Generator[int, int, int]:
         if isinstance(n_or_t, int):
             for i in range(n_or_t):

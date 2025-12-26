@@ -191,7 +191,7 @@ class DfpnSearcher(Engine):
         self,
         depth: int = 1,
         breadth: int = 3,
-        pv_line: list[tp.Union[Move, str]] = [],
+        pv_line: list[Move | str] = [],
     ):
         self._raise_error_if_not_ready()
         root = self._searcher.get_root()

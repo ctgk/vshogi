@@ -206,7 +206,7 @@ class GumbelAlphaZero(Engine):
         self,
         depth: int = 1,
         breadth: int = 3,
-        pv_line: list[tp.Union[Move, str]] = [],
+        pv_line: list[Move | str] = [],
         *,
         sort_key: callable = lambda n: -n.get_visit_count(),
     ) -> str:
