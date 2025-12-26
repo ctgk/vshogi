@@ -1,3 +1,5 @@
+from ast import literal_eval
+
 import click as cl
 import numpy as np
 import pandas as pd
@@ -25,7 +27,7 @@ def _check(kifu: str):
     for i in range(len(df)):
         row = df.iloc[i]
         policy: dict = (
-            eval(row.policy) if '{' in row.policy else {row.policy: 1}
+            literal_eval(row.policy) if '{' in row.policy else {row.policy: 1}
         )
         sfen = row.sfen
         if policy != {}:

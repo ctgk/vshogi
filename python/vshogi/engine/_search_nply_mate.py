@@ -164,7 +164,11 @@ def search_nply_mate(
             'Searching 5-ply mates involving redundant blocks is '
             'not accurate yet.')
     for n in range(1, num_ply + 1, 2):
-        out = eval(f'_search_{n}ply_mate')(game, start, max_duration_second)
+        out = {
+            1: _search_1ply_mate,
+            3: _search_3ply_mate,
+            5: _search_5ply_mate,
+        }[n](game, start, max_duration_second)
         if out:
             if remove_duplicate_futile_interposition:
                 return _remove_duplicate_futile_interposition(out)

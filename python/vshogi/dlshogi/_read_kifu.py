@@ -1,3 +1,5 @@
+from ast import literal_eval
+
 import numpy as np
 import pandas as pd
 
@@ -73,8 +75,8 @@ def _compute_visit_dist(df: pd.DataFrame):
     return df.apply(
         lambda row: (
             {
-                move_class(m): v / (sum(eval(row['policy']).values()))
-                for m, v in eval(row['policy']).items()
+                move_class(m): v / (sum(literal_eval(row['policy']).values()))
+                for m, v in literal_eval(row['policy']).items()
             }
             if '{' in row['policy'] else
             {

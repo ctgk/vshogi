@@ -1,3 +1,5 @@
+from ast import literal_eval
+
 import numpy as np
 import torch as th
 
@@ -141,7 +143,7 @@ class ReplayBuffer(th.utils.data.Dataset):
         if self._game_variant is None:
             raise ValueError("Please add data before trying to get items.")
         ii = index % len(self._buffer)
-        g = eval(self._game_variant)(self._buffer[ii].sfen)
+        g = literal_eval(self._game_variant)(self._buffer[ii].sfen)
         policy = self._buffer[ii].policy
         if (index >= len(self._buffer)):
             g = g.hflip()
