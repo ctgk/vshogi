@@ -72,13 +72,13 @@ def _to_svg(
         f'<rect x="20" y="10" width="{20 * game.files + 1}" '
         f'height="{20 * game.ranks + 1}" fill="none" stroke-width="1.5" />'
         + ''.join([
-            (  # noqa
+            (  # noqa: UP032
                 '<line x1="20.5" y1="{y}" x2="{x}" y2="{y}" '
                 'stroke-width="1.0" />'
             ).format(x=20.5 + 20 * game.files, y=30.5 + 20 * r)
             for r in range(game.ranks - 1)
         ]) + ''.join([
-            (  # noqa
+            (  # noqa: UP032
                 '<line x1="{x}" y1="10.5" x2="{x}" y2="{y}" '
                 'stroke-width="1.0" />'
             ).format(x=20.5 + 20 * f, y=10.5 + 20 * game.ranks)
