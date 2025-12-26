@@ -579,7 +579,7 @@ class Game(abc.ABC):
 
     def dump_log(
         self,
-        getters: tp.Tuple[
+        getters: tuple[
             tp.Callable[['Game', int], object],
             tp.Iterable[tp.Callable[['Game', int], object]],
         ] = lambda g, i: g.get_sfen_at(i),

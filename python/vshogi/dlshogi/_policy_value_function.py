@@ -1,5 +1,3 @@
-import typing as tp
-
 import numpy as np
 import pandas as pd
 from ai_edge_litert.interpreter import Interpreter
@@ -35,7 +33,7 @@ class PolicyValueFunction:
             self._value_index = output_details[1]['index']
             self._policy_index = output_details[0]['index']
 
-    def __call__(self, game: Game) -> tp.Tuple[np.ndarray, float]:
+    def __call__(self, game: Game) -> tuple[np.ndarray, float]:
         """Return logits of policy and value of the current game state.
 
         Parameters
@@ -45,7 +43,7 @@ class PolicyValueFunction:
 
         Returns
         -------
-        tp.Tuple[np.ndarray, float]
+        tuple[np.ndarray, float]
             Tuple of logits of policy and value.
         """
         game.to_dlshogi_features(out=self._input_placeholder)

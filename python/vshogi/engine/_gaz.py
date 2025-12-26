@@ -54,7 +54,7 @@ class GumbelAlphaZero(Engine):
     def __init__(
         self,
         policy_value_func: tp.Callable[
-            [Game], tp.Tuple[Policy, Value],
+            [Game], tuple[Policy, Value],
         ] = lambda g: (g.to_dlshogi_policy({}), 0.),
         *,
         tree_size: int = 1000000,
@@ -66,7 +66,7 @@ class GumbelAlphaZero(Engine):
 
         Parameters
         ----------
-        policy_value_func : tp.Callable[[Game], tp.Tuple[Policy, Value]]
+        policy_value_func : tp.Callable[[Game], tuple[Policy, Value]]
             Function that computes the policy distribution and state value for
             a given game position.
         tree_size : int, optional

@@ -65,7 +65,7 @@ class PolicyValueNetwork(th.nn.Module):
         self._policy_head = _PolicyHead(hidden_channels, num_policy_per_square)
         self._value_head = _ValueHead(hidden_channels, shape)
 
-    def forward(self, x: th.Tensor) -> tp.Tuple[th.Tensor, th.Tensor]:
+    def forward(self, x: th.Tensor) -> tuple[th.Tensor, th.Tensor]:
         # x: (B, H, W, C_in)
         x = x.moveaxis(-1, 1)  # (B, C_in, H, W)
         if x.is_mps:
