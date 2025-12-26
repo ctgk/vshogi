@@ -26,8 +26,12 @@ class _DepthwiseAttention(th.nn.Module):
 
     def forward(self, x: th.Tensor):
         # x: (B, C_in, H, W)
-        assert x.shape[1] % self._groups == 0, (
-            f"x.shape[1]({x.shape[1]}) % groups({self._groups}) != 0")
+        if x.shape[1] % self._groups != 0:
+            msg = (
+                f'Input channel ({x.shape[1]}) must be '
+                f'multiple of groups {self._groups}'
+            )
+            raise ValueError(msg)
         ch_in_group = x.shape[1] // self._groups
 
         # (B, G, C/G, H*W)
