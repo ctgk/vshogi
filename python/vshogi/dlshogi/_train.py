@@ -37,7 +37,7 @@ def masked_log_softmax(
 def masked_softmax_cross_entropy(
     target: th.Tensor,
     logit: th.Tensor,
-    coeff_entropy_regularization: float = None,
+    coeff_entropy_regularization: float | None = None,
 ) -> th.Tensor:
     """Return masked softmax cross entropy loss.
 
@@ -47,7 +47,7 @@ def masked_softmax_cross_entropy(
         Ground truth. Negative values indicate masks.
     logit : Tensor [..., C]
         Output logit
-    coeff_entropy_regularization : float
+    coeff_entropy_regularization : float | None
         Coefficient of entropy regularization, by default None.
 
     Returns
@@ -73,7 +73,7 @@ def train(
     optimizer: th.optim.Optimizer,
     epochs: int,
     coeff_policy_loss: float = 0.1,
-    coeff_entropy_regularization: float = None,
+    coeff_entropy_regularization: float | None = None,
     gradient_accumulation_steps: int = 1,
 ) -> None:
     """Train a model given dataset.
@@ -91,7 +91,7 @@ def train(
     coeff_policy_loss : float, optional
         Coefficient of policy loss, by default 0.1.
         `total_loss = value_loss + coeff_policy_loss * policy_loss`.
-    coeff_entropy_regularization : float, optional
+    coeff_entropy_regularization : float | None, optional
         Coefficient of entropy regularization
     gradient_accumulation_steps : int, optional
         Steps to accumulate gradient computation, by default 1

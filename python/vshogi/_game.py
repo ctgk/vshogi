@@ -52,12 +52,12 @@ class Game(abc.ABC):
     def _get_dfpn_searcher_class(cls) -> type:
         pass
 
-    def __init__(self, sfen: str = None) -> None:
+    def __init__(self, sfen: str | None = None) -> None:
         """Initialize shogi game.
 
         Parameters
         ----------
-        sfen : str, optional
+        sfen : str | None, optional
             Initial game status in SFEN, by default None
         """
         cls_ = self._get_backend_game_class()
@@ -583,7 +583,7 @@ class Game(abc.ABC):
             tp.Callable[['Game', int], object],
             tp.Iterable[tp.Callable[['Game', int], object]],
         ] = lambda g, i: g.get_sfen_at(i),
-        names: tp.Iterable[str] = None,
+        names: tp.Iterable[str] | None = None,
         sep: str = '\t',
         file_: tp.TextIO = sys.stdout,
         color_filter: Color = None,
@@ -594,7 +594,7 @@ class Game(abc.ABC):
         ----------
         getters :
             Callable or iterable of callables to get desired values.
-        names : tp.Iterable[str], optional
+        names : tp.Iterable[str] | None, optional
             Dump a header if passed, by default None
         sep : str, optional
             Separator of column names and values, by default '\t'

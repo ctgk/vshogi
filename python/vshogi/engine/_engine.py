@@ -11,12 +11,12 @@ Move = tp.TypeVar('Move')
 class Engine(abc.ABC):
     """Base Shogi engine class."""
 
-    def __init__(self, name: str = None):
+    def __init__(self, name: str | None = None):
         """Initialize engine.
 
         Parameters
         ----------
-        name : str, optional
+        name : str | None, optional
             Name of the engine, by default None
         """
         self._name = name

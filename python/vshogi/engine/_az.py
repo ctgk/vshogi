@@ -60,11 +60,11 @@ class AlphaZero(Engine):
         *,
         coeff_puct: float = 1.,
         random_rate: float = 0.25,
-        kldgain_threshold: float = None,
+        kldgain_threshold: float | None = None,
         tree_size: int = 1000000,
         dfpn_search_root: int = 0,
         dfpn_search_leaf: int = 0,
-        name: str = None,
+        name: str | None = None,
     ) -> None:
         """Initialize an Alpha Zero agent.
 
@@ -79,7 +79,7 @@ class AlphaZero(Engine):
         random_rate : float, optional
             Probability of selecting a random node at root during exploration.
             Default is 0.25.
-        kldgain_threshold : float, optional
+        kldgain_threshold : float | None, optional
             KL divergence threshold for early stopping of MCTS.
             Default is None.
         tree_size : int, optional
@@ -88,7 +88,7 @@ class AlphaZero(Engine):
             Number of DFPN searches to run at the root node. Default is 0.
         dfpn_search_leaf : int, optional
             Number of DFPN searches to run at leaf nodes. Default is 0.
-        name : str, optional
+        name : str | None, optional
             Name of the search engine instance. Default is None.
         """
         super().__init__(name=name)

@@ -60,7 +60,7 @@ class GumbelAlphaZero(Engine):
         tree_size: int = 1000000,
         dfpn_search_root: int = 0,
         dfpn_search_leaf: int = 0,
-        name: str = None,
+        name: str | None = None,
     ) -> None:
         """Initialize a Gumbel Alpha Zero engine.
 
@@ -75,7 +75,7 @@ class GumbelAlphaZero(Engine):
             Number of DFPN searches to run at the root node. Default is 0.
         dfpn_search_leaf : int, optional
             Number of DFPN searches to run at leaf nodes. Default is 0.
-        name : str, optional
+        name : str | None, optional
             Name of the search engine instance. Default is None.
         """
         super().__init__(name=name)
@@ -115,14 +115,14 @@ class GumbelAlphaZero(Engine):
         self._searcher.init()
         self._game = None
 
-    def search(self, num_sims: int, num_actions: int = None):
+    def search(self, num_sims: int, num_actions: int | None = None):
         """Explore nodes using sequential halving.
 
         Parameters
         ----------
         num_sims : int
             Number of game positions (including root) to simulate.
-        num_actions : int, optional
+        num_actions : int | None, optional
             Number of initial actions at root node to search for,
             by default `None`.
             Note that 16 actions are sampled in the original paper:
