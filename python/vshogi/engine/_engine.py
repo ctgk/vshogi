@@ -11,12 +11,12 @@ Move = tp.TypeVar('Move')
 class Engine(abc.ABC):
     """Base Shogi engine class."""
 
-    def __init__(self, name: tp.Optional[str] = None):
+    def __init__(self, name: str = None):
         """Initialize engine.
 
         Parameters
         ----------
-        name : tp.Optional[str], optional
+        name : str, optional
             Name of the engine, by default None
         """
         self._name = name
@@ -76,7 +76,7 @@ class Engine(abc.ABC):
 
         Parameters
         ----------
-        temperature : tp.Optional[float], optional
+        temperature : float, optional
             Temperature parameter for action selection, by default None.
             If `None`, select the best action.
 

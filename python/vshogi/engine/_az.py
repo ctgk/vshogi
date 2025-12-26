@@ -60,11 +60,11 @@ class AlphaZero(Engine):
         *,
         coeff_puct: float = 1.,
         random_rate: float = 0.25,
-        kldgain_threshold: tp.Optional[float] = None,
+        kldgain_threshold: float = None,
         tree_size: int = 1000000,
         dfpn_search_root: int = 0,
         dfpn_search_leaf: int = 0,
-        name: tp.Optional[str] = None,
+        name: str = None,
     ) -> None:
         """Initialize an Alpha Zero agent.
 
@@ -88,7 +88,7 @@ class AlphaZero(Engine):
             Number of DFPN searches to run at the root node. Default is 0.
         dfpn_search_leaf : int, optional
             Number of DFPN searches to run at leaf nodes. Default is 0.
-        name : tp.Optional[str], optional
+        name : str, optional
             Name of the search engine instance. Default is None.
         """
         super().__init__(name=name)

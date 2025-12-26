@@ -52,12 +52,12 @@ class Game(abc.ABC):
     def _get_dfpn_searcher_class(cls) -> type:
         pass
 
-    def __init__(self, sfen: tp.Optional[str] = None) -> None:
+    def __init__(self, sfen: str = None) -> None:
         """Initialize shogi game.
 
         Parameters
         ----------
-        sfen : tp.Optional[str], optional
+        sfen : str, optional
             Initial game status in SFEN, by default None
         """
         cls_ = self._get_backend_game_class()
@@ -583,10 +583,10 @@ class Game(abc.ABC):
             tp.Callable[['Game', int], object],
             tp.Iterable[tp.Callable[['Game', int], object]],
         ] = lambda g, i: g.get_sfen_at(i),
-        names: tp.Optional[tp.Iterable[str]] = None,
+        names: tp.Iterable[str] = None,
         sep: str = '\t',
         file_: tp.TextIO = sys.stdout,
-        color_filter: tp.Optional[Color] = None,
+        color_filter: Color = None,
     ) -> None:
         r"""Dump game log.
 
@@ -594,13 +594,13 @@ class Game(abc.ABC):
         ----------
         getters :
             Callable or iterable of callables to get desired values.
-        names : tp.Optional[tp.Iterable[str]], optional
+        names : tp.Iterable[str], optional
             Dump a header if passed, by default None
         sep : str, optional
             Separator of column names and values, by default '\t'
         file_ : tp.TextIO, optional
             Location to dump to, by default sys.stdout.
-        color_filter : tp.Optional[Color], optional
+        color_filter : Color, optional
             Dump only BLACK or WHITE turn records if given.
 
         Examples

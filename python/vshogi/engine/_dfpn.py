@@ -52,7 +52,7 @@ class DfpnSearcher(Engine):
     def __init__(
         self,
         max_num_nodes: int = 100000,
-        name: tp.Optional[str] = None,
+        name: str = None,
     ) -> None:
         """Initialize DFPN mate-moves searcher object.
 
@@ -60,7 +60,7 @@ class DfpnSearcher(Engine):
         ----------
         max_num_nodes : int
             Maximum number of nodes to search, by default 100000
-        name : tp.Optional[str], optional
+        name : str, optional
             Name of the engine, by default None
         """
         super().__init__(name=name)

@@ -1,4 +1,3 @@
-import typing as tp
 import xml.etree.ElementTree as ElementTree
 
 import numpy as np
@@ -20,7 +19,7 @@ class _SvgWrapper(str):
 
 def _to_svg(
     game: 'Game',
-    lastmove: tp.Optional['Move'] = None,
+    lastmove: 'Move' = None,
     scale: float = 1.0,
     *,
     skip_white_stand: bool = False,

@@ -41,7 +41,7 @@ def _play_game(
     white: vs.engine.Engine,
     num_simulations: int,
     temperature: float,
-    main: tp.Optional[vs.engine.Engine] = None,
+    main: vs.engine.Engine = None,
     q_greedy_depth: int = 1,
     max_random_moves: int = 320,
     max_moves: int = 320,
