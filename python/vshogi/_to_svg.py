@@ -17,6 +17,7 @@ Move = tp.TypeVar('Move')
 
 
 class _SvgWrapper(str):
+    __slots__ = ()
 
     def _repr_svg_(self):
         return self
