@@ -1,6 +1,3 @@
-# flake8: noqa
-import typing as tp
-
 import numpy as np
 import torch as th
 
@@ -8,9 +5,6 @@ from vshogi._game import Game
 from vshogi.dlshogi._network._policy_head import _PolicyHead
 from vshogi.dlshogi._network._residual_block import _ResidualBlock
 from vshogi.dlshogi._network._value_head import _ValueHead
-
-
-GameClass = tp.TypeVar('Game', bound=Game)
 
 
 class PolicyValueNetwork(th.nn.Module):
@@ -21,16 +15,16 @@ class PolicyValueNetwork(th.nn.Module):
 
     def __init__(
         self,
-        game_class: GameClass,
+        game_class: type[Game],
         hidden_channels: int,
         bottleneck_channels: int,
         num_backbone_blocks: int,
-    ):
+    ) -> None:
         """Initialize policy-value network.
 
         Parameters
         ----------
-        game_class : GameClass
+        game_class : type[Game]
             A subclass of `vshogi.Game` class.
         hidden_channels : int
             Number of feature-channel of output of backbone network.
