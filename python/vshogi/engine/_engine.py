@@ -48,7 +48,6 @@ class Engine(abc.ABC):
     @abc.abstractmethod
     def search(self, *args, **kwargs):
         """Run search engine."""
-        pass
 
     @property
     def name(self) -> str | None:
