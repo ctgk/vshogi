@@ -168,7 +168,7 @@ class AlphaZero(Engine):
             self._searcher.simulate_expand_backprop(
                 node, self._game._game, value, policy_logits)
 
-    def _kldgain(self, prev_visits: tp.Dict[Move, int]) -> float:
+    def _kldgain(self, prev_visits: dict[Move, int]) -> float:
         prev_visits_added = {m: v + 1 for m, v in prev_visits.items()}
         prev_visits_sum = sum(prev_visits_added.values())
         prev_probas = {
@@ -206,12 +206,12 @@ class AlphaZero(Engine):
         """
         return self._searcher.get_root().get_q_value(greedy_depth)
 
-    def get_probas(self) -> tp.Dict[Move, float]:
+    def get_probas(self) -> dict[Move, float]:
         """Return raw probabilities of selecting actions.
 
         Returns
         -------
-        tp.Dict[Move, float]
+        dict[Move, float]
             Raw probabilities of selecting actions by `policy_value_func`.
         """
         if self._searcher is None:
@@ -224,7 +224,7 @@ class AlphaZero(Engine):
         move_proba_pair_list.sort(key=lambda t: t[1], reverse=True)
         return {m: p for m, p in move_proba_pair_list}
 
-    def get_q_values(self, greedy_depth: int = 0) -> tp.Dict[Move, float]:
+    def get_q_values(self, greedy_depth: int = 0) -> dict[Move, float]:
         """Return Q value of each action.
 
         Parameters
@@ -235,7 +235,7 @@ class AlphaZero(Engine):
 
         Returns
         -------
-        tp.Dict[Move, float]
+        dict[Move, float]
             Q value of each action.
         """
         if self._searcher is None:
@@ -252,7 +252,7 @@ class AlphaZero(Engine):
     def get_visit_counts(
         self,
         include_random: bool = True,
-    ) -> tp.Dict[Move, int]:
+    ) -> dict[Move, int]:
         """Return visit counts of each action.
 
         Parameters
@@ -262,7 +262,7 @@ class AlphaZero(Engine):
 
         Returns
         -------
-        tp.Dict[Move, int]
+        dict[Move, int]
             Visit counts of each action.
         """
         if self._searcher is None:

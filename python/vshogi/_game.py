@@ -813,7 +813,7 @@ class Game(abc.ABC):
 
     def to_dlshogi_policy(
         self,
-        action_proba: Move | tp.Dict[Move, int],
+        action_proba: Move | dict[Move, int],
         *,
         default_value: float = 0.,
     ) -> np.ndarray:
@@ -825,7 +825,7 @@ class Game(abc.ABC):
 
         Parameters
         ----------
-        action_proba : Move | tp.Dict[Move, int]
+        action_proba : Move | dict[Move, int]
             One-hot action to turn into DL-shogi policy format,
             or dict of actions with their probabilities.
             If the probabilities do not sum up to 1, they will be normalized.
@@ -855,7 +855,7 @@ class Game(abc.ABC):
                 f'Unsupported type for `action_proba`: {type(action_proba)}')
         return self._game.to_dlshogi_policy(action_proba, default_value)
 
-    def masked_softmax(self, logits: np.ndarray) -> tp.Dict[Move, float]:
+    def masked_softmax(self, logits: np.ndarray) -> dict[Move, float]:
         """Return masked softmax given logits.
 
         Parameters
@@ -865,7 +865,7 @@ class Game(abc.ABC):
 
         Returns
         -------
-        tp.Dict[Move, float]
+        dict[Move, float]
             Probability of each action.
 
         Examples
