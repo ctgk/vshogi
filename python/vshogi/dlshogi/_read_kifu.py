@@ -3,9 +3,9 @@ from ast import literal_eval
 import numpy as np
 import pandas as pd
 
-from vshogi.judkins_shogi._game import Game as JudkinsGame  # noqa: F401
-from vshogi.minishogi._game import Game as MinishogiGame  # noqa: F401
-from vshogi.shogi._game import Game as StandardGame  # noqa: F401
+from vshogi.judkins_shogi._game import Game as JudkinsGame
+from vshogi.minishogi._game import Game as MinishogiGame
+from vshogi.shogi._game import Game as StandardGame
 
 
 def read_kifu(
