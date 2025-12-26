@@ -118,8 +118,7 @@ class Engine(abc.ABC):
         n_or_t: int | float,
     ) -> tp.Generator[int, int, int]:
         if isinstance(n_or_t, int):
-            for i in range(n_or_t):
-                yield i
+            yield from range(n_or_t)
         else:
             start_sec = time()
             c = 0
