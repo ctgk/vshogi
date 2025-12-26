@@ -1,3 +1,4 @@
+import typing as tp
 import xml.etree.ElementTree as ElementTree
 
 import numpy as np
@@ -11,6 +12,10 @@ NUMBER_JPN_SYMBOLS = [
 ]
 
 
+Game = tp.TypeVar('Game')
+Move = tp.TypeVar('Move')
+
+
 class _SvgWrapper(str):
 
     def _repr_svg_(self):
@@ -18,8 +23,8 @@ class _SvgWrapper(str):
 
 
 def _to_svg(
-    game: 'Game',
-    lastmove: 'Move' = None,
+    game: Game,
+    lastmove: Move | None = None,
     scale: float = 1.0,
     *,
     skip_white_stand: bool = False,
