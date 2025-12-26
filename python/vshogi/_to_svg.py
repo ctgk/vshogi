@@ -69,8 +69,8 @@ def _to_svg(
 
     svg.append(ElementTree.fromstring(
         '<g stroke="black">'
-        + f'<rect x="20" y="10" width="{20 * game.files + 1}" '
-        + f'height="{20 * game.ranks + 1}" fill="none" stroke-width="1.5" />'
+        f'<rect x="20" y="10" width="{20 * game.files + 1}" '
+        f'height="{20 * game.ranks + 1}" fill="none" stroke-width="1.5" />'
         + ''.join([
             (  # noqa
                 '<line x1="20.5" y1="{y}" x2="{x}" y2="{y}" '
@@ -90,7 +90,7 @@ def _to_svg(
         + ''.join([
             (
                 '<text font-family="serif" text-anchor="middle" font-size="9" '
-                + f'x="{30.5 + 20 * f}" y="8">{game.files - f}</text>'
+                f'x="{30.5 + 20 * f}" y="8">{game.files - f}</text>'
             )
             for f in range(game.files)
         ])
