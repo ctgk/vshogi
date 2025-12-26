@@ -295,7 +295,7 @@ class AlphaZero(Engine):
         self,
         depth: int = 1,
         breadth: int = 3,
-        pv_line: tp.List[tp.Union[Move, str]] = [],
+        pv_line: list[tp.Union[Move, str]] = [],
         *,
         sort_key: callable = lambda n: -n.get_visit_count(),
         greedy_depth: int = 0,

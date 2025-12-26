@@ -47,7 +47,7 @@ def _search_1ply_mate(
     start: float,
     max_duration: float,
     allow_redundant_blocks: bool = False,
-) -> tp.List[tuple[Move]]:
+) -> list[tuple[Move]]:
     _raise_error_if_ended(game)
     check_moves = game.get_check_moves()
     check_moves = sorted(check_moves, key=lambda m: not m.promote)
@@ -133,7 +133,7 @@ def search_nply_mate(
     remove_duplicate_futile_interposition: bool = True,
     *,
     max_duration_second: float = 10.,
-) -> tp.List[tuple[Move, ...]]:
+) -> list[tuple[Move, ...]]:
     """Return checkmate moves less than the specified length.
 
     Parameters
@@ -145,7 +145,7 @@ def search_nply_mate(
 
     Returns
     -------
-    tp.List[tuple[Move, ...]]
+    list[tuple[Move, ...]]
         List of checkmate moves less than the specified length.
 
     Examples
@@ -178,7 +178,7 @@ def _search_2ply_mate(
     start: float,
     max_duration: float,
     checker_sq,
-) -> tp.List[tuple[Move, ...]]:
+) -> list[tuple[Move, ...]]:
     _raise_error_if_ended(game)
     legal_moves = game.get_legal_moves()
     redundant_block_cache = [None] * (game.ranks * game.files)
@@ -231,7 +231,7 @@ def _search_3ply_mate(
     start,
     max_duration,
     target=None,
-) -> tp.List[tuple[Move, ...]]:
+) -> list[tuple[Move, ...]]:
     _raise_error_if_ended(game)
     check_moves = game.get_check_moves()
     check_moves = sorted(check_moves, key=lambda m: not m.promote)
@@ -259,7 +259,7 @@ def _search_4ply_mate(
     game: Game,
     start,
     max_duration,
-) -> tp.List[tuple[Move, ...]]:
+) -> list[tuple[Move, ...]]:
     _raise_error_if_ended(game)
     legal_moves = game.get_legal_moves()
     out = []
@@ -284,7 +284,7 @@ def _search_5ply_mate(
     game: Game,
     start,
     max_duration,
-) -> tp.List[tuple[Move, ...]]:
+) -> list[tuple[Move, ...]]:
     _raise_error_if_ended(game)
     check_moves = game.get_check_moves()
     check_moves = sorted(check_moves, key=lambda m: not m.promote)

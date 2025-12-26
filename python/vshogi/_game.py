@@ -67,8 +67,8 @@ class Game(abc.ABC):
             self._game = sfen
         else:
             self._game = cls_(sfen)
-        self._move_list: tp.List[Move] = []
-        self._sfen_list: tp.List[str] = []
+        self._move_list: list[Move] = []
+        self._sfen_list: list[str] = []
 
     @_ClassProperty
     def ranks(self) -> int:
@@ -447,22 +447,22 @@ class Game(abc.ABC):
             return self._game.is_valid_piece_count(ignore)
         return self._game.is_valid_piece_count()
 
-    def get_legal_moves(self) -> tp.List[Move]:
+    def get_legal_moves(self) -> list[Move]:
         """Return list of legal moves at the current state.
 
         Returns
         -------
-        tp.List[Move]
+        list[Move]
             List of legal moves.
         """
         return self._game.get_legal_moves()
 
-    def get_check_moves(self) -> tp.List[Move]:
+    def get_check_moves(self) -> list[Move]:
         """Return list of check moves at the current state.
 
         Returns
         -------
-        tp.List[Move]
+        list[Move]
             List of check moves.
         """
         return self._game.get_check_moves()
@@ -884,7 +884,7 @@ class Game(abc.ABC):
     def get_mate_moves_if_any(
         self,
         num_dfpn_nodes: int = 10000,
-    ) -> tp.Union[tp.List[Move], None]:
+    ) -> tp.Union[list[Move], None]:
         """Return a sequence of moves leading to checkmate if there is any.
 
         Parameters
@@ -895,7 +895,7 @@ class Game(abc.ABC):
 
         Returns
         -------
-        tp.Union[tp.List[Move], None]
+        tp.Union[list[Move], None]
             A sequence of moves to check mate if any otherwise `None`.
 
         Examples

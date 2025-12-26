@@ -170,12 +170,12 @@ class DfpnSearcher(Engine):
         self._raise_error_if_not_ready()
         return self._searcher.get_mate_move()
 
-    def get_mate_moves(self) -> tp.List[Move]:
+    def get_mate_moves(self) -> list[Move]:
         """Return mate moves found.
 
         Returns
         -------
-        tp.List[Move]
+        list[Move]
             Mate moves found.
         """
         self._raise_error_if_not_ready()
@@ -191,7 +191,7 @@ class DfpnSearcher(Engine):
         self,
         depth: int = 1,
         breadth: int = 3,
-        pv_line: tp.List[tp.Union[Move, str]] = [],
+        pv_line: list[tp.Union[Move, str]] = [],
     ):
         self._raise_error_if_not_ready()
         root = self._searcher.get_root()
