@@ -114,7 +114,7 @@ class _OptionEatAll(cl.Option):
         if nargs != -1:
             msg = f'nargs must be -1, not {nargs}'
             raise ValueError(msg)
-        super(_OptionEatAll, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._previous_parser_process = None
         self._eat_all_parser = None
 
@@ -141,7 +141,7 @@ class _OptionEatAll(cl.Option):
             # call the actual process
             self._previous_parser_process(value, state)
 
-        retval = super(_OptionEatAll, self).add_to_parser(parser, ctx)
+        retval = super().add_to_parser(parser, ctx)
         for name in self.opts:
             our_parser = (
                 parser._long_opt.get(name) or parser._short_opt.get(name)
