@@ -77,7 +77,7 @@ def _dataset(
             for _, row in df.iterrows():
                 buffer.add(vs.dlshogi.Data(
                     sfen=row['sfen'],
-                    policy={m: v for m, v in row['policy'].items()},
+                    policy=row['policy'],
                     value01=row['value01'],
                     weight=row['weight'],
                 ))

@@ -217,12 +217,12 @@ class AlphaZero(Engine):
         if self._searcher is None:
             return {}
         root = self._searcher.get_root()
-        move_proba_pair_list = [
+        move_proba_pair_list: list[tuple[Move, float]] = [
             (m, root.get_child_of(m).get_proba())
             for m in root.get_actions()
         ]
         move_proba_pair_list.sort(key=lambda t: t[1], reverse=True)
-        return {m: p for m, p in move_proba_pair_list}
+        return dict(move_proba_pair_list)
 
     def get_q_values(self, greedy_depth: int = 0) -> dict[Move, float]:
         """Return Q value of each action.
@@ -269,7 +269,7 @@ class AlphaZero(Engine):
             return {}
         move_type = self._game._get_move_class()
         root = self._searcher.get_root()
-        move_visit_count_pair_list = [
+        move_visit_count_pair_list: list[tuple[Move, int]] = [
             (
                 move_type(m),
                 root.get_child_of(m).get_visit_count()
@@ -283,7 +283,7 @@ class AlphaZero(Engine):
             if m not in [t[0] for t in move_visit_count_pair_list]
         ])
         move_visit_count_pair_list.sort(key=lambda a: a[1], reverse=True)
-        return {m: v for m, v in move_visit_count_pair_list}
+        return dict(move_visit_count_pair_list)
 
     def _select(self, temperature: float | None = None) -> Move:
         if (temperature is None) or np.isclose(temperature, 0):

@@ -104,7 +104,7 @@ class ReplayBuffer(th.utils.data.Dataset):
             if data.sfen not in data_summed:
                 data_summed[data.sfen] = {
                     'value01': 0.,
-                    'policy': {m: 0 for m in data.policy},
+                    'policy': dict.fromkeys(data.policy, 0),
                     'count': 0,
                 }
             data_summed[data.sfen]['value01'] += data.value01

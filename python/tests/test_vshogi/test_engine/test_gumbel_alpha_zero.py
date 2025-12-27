@@ -81,7 +81,7 @@ def test_select_action():
     searcher.search(32)
     assert (
         len(game.get_legal_moves())
-        == len(set([searcher.select(10.) for _ in range(1000)]))
+        == len({searcher.select(10.) for _ in range(1000)})
     )
 
 
