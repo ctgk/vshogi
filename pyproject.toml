@@ -16,3 +16,47 @@ addopts = [
     "--ignore=python/vshogi/__main__.py",
 ]
 testpaths = ["python/"]
+
+[tool.ruff]
+line-length = 79
+exclude = [
+    "setup.py",
+]
+force-exclude = true  # for pre-commit hook
+
+[tool.ruff.format]
+quote-style = "preserve"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "C901",  # Checks for functions with a high McCabe complexity.
+    "ERA001",  # commented out code (, which had some false positives)
+    "PTH",  # pathlib
+    "PYI041",  # Use `float` instead of `int | float`
+    "Q000",  # Single quotes found but double quotes preferred
+    "Q001",  # Single quote multiline found but double quotes preferred
+    "SLF",  # private member access
+    # B,I001,S314,T201,ANN,BLE001,DTZ005,EM101,EM102,FBT,ICN001,NPY002,PD011,PLC0415,PLR,PLW2901,PT006,PT011,PT015,RET,RUF001,RUF005,SIM,TRY003
+]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+known-first-party = ["vshogi"]
+
+[tool.ruff.lint.per-file-ignores]
+"python/tests/**.py" = [
+    "D100",  # Missing docstring in public module
+    "D101",  # Missing docstring in public class
+    "D102",  # Missing docstring in public method
+    "D103",  # Missing docstring in public function
+    "D104",  # Missing docstring in public package
+    "S101",  # Use of `assert`
+]
+"python/scripts/**.py" = [
+    "INP001",  # Add an `__init__.py`
+    "D100",  # Missing docstring in public module
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
