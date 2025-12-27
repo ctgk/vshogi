@@ -5,9 +5,9 @@ import numpy as np
 import torch as th
 
 from vshogi._game import Game
-from vshogi.dlshogi._policy_head import PolicyHead
-from vshogi.dlshogi._residual_block import _ResidualBlock
-from vshogi.dlshogi._value_head import _ValueHead
+from vshogi.dlshogi._network._policy_head import _PolicyHead
+from vshogi.dlshogi._network._residual_block import _ResidualBlock
+from vshogi.dlshogi._network._value_head import _ValueHead
 
 
 GameClass = tp.TypeVar('Game', bound=Game)
@@ -62,7 +62,7 @@ class PolicyValueNetwork(th.nn.Module):
                 for _ in range(num_backbone_blocks)
             ],
         )
-        self._policy_head = PolicyHead(hidden_channels, num_policy_per_square)
+        self._policy_head = _PolicyHead(hidden_channels, num_policy_per_square)
         self._value_head = _ValueHead(hidden_channels, shape)
 
     def forward(self, x: th.Tensor) -> tp.Tuple[th.Tensor, th.Tensor]:

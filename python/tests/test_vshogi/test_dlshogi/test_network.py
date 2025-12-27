@@ -1,51 +1,115 @@
 import tempfile
 import warnings
 
+import pytest
+import torch as th
+
+from vshogi.dlshogi._network._depthwise_attention import _DepthwiseAttention
+from vshogi.dlshogi._network._network import PolicyValueNetwork
+from vshogi.dlshogi._network._policy_head import _PolicyHead
+from vshogi.dlshogi._network._residual_block import _ResidualBlock
+from vshogi.dlshogi._network._value_head import _ValueHead
+from vshogi.minishogi import Game
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import ai_edge_torch
-
-import pytest
-import torch as th
-from ai_edge_litert.interpreter import Interpreter
-
-from vshogi.dlshogi._network import PolicyValueNetwork
-from vshogi.minishogi import Game
+    from ai_edge_litert.interpreter import Interpreter
 
 
-def test_export_pvnet_to_tflite():
-    module = PolicyValueNetwork(Game, 32, 8, 3)
-    sample_inputs = (th.randn(1, 5, 5, Game.feature_channels),)
+@pytest.mark.parametrize(("module", "input_shape", "output_shape"), [
+    (_ValueHead(16, (5, 5)), (1, 16, 5, 5), (1, 1)),
+    (_ValueHead(32, (6, 6)), (1, 32, 6, 6), (1, 1)),
+    (_PolicyHead(32, 20), (1, 32, 5, 5), (1, 5 * 5 * 20)),
+    (_PolicyHead(64, 10), (1, 64, 9, 9), (1, 9 * 9 * 10)),
+    (
+        _DepthwiseAttention(Game.get_local_attentions(), groups=8),
+        (1, 16, 5, 5),
+        (1, 16, 5, 5),
+    ),
+    (
+        _DepthwiseAttention(Game.get_local_attentions(), groups=8),
+        (1, 32, 5, 5),
+        (1, 32, 5, 5),
+    ),
+    (
+        _ResidualBlock(32, 8, Game.get_local_attentions(), attention_groups=8),
+        (1, 32, 5, 5),
+        (1, 32, 5, 5),
+    ),
+    (
+        PolicyValueNetwork(Game, 32, 8, 3),
+        (1, 5, 5, Game.feature_channels),
+        {(1, 1), (1, 5 * 5 * Game._get_move_class()._num_policy_per_square())},
+    ),
+])
+def test_export_to_tflite(module, input_shape, output_shape):
+    sample_inputs = (th.randn(*input_shape),)
     edge_model = ai_edge_torch.convert(module.eval(), sample_inputs)
-
     with tempfile.NamedTemporaryFile(delete=True) as t:
         edge_model.export(t.name)
         interpreter = Interpreter(model_path=t.name)
     interpreter.allocate_tensors()
     input_details = interpreter.get_input_details()[0]
     output_details = interpreter.get_output_details()
-    assert tuple(input_details['shape']) == (1, 5, 5, Game.feature_channels)
-    i = 0 if (output_details[0]['shape'][-1] == 1) else -1
-    assert tuple(output_details[i]['shape']) == (1, 1)
-    assert tuple(output_details[i + 1]['shape']) == (
-        1, 5 * 5 * Game._get_move_class()._num_policy_per_square())
+    assert tuple(input_details['shape']) == input_shape
+
+    if isinstance(output_shape, set):
+        actual = {
+            tuple(output_details[0]['shape']),
+            tuple(output_details[1]['shape']),
+        }
+        assert actual == output_shape
+    else:
+        assert tuple(output_details[0]['shape']) == output_shape
 
 
-def test_pvnet_backward():
-    model = PolicyValueNetwork(Game, 32, 8, 1)
-    x = th.randn(2, 5, 5, Game.feature_channels).requires_grad_()
-    p, v = model(x)
-    loss = th.sum(th.square(p - 1)) + th.sum(th.square(v - 1))
+@pytest.mark.parametrize(("model", "input_shape"), [
+    (_ValueHead(16, (5, 5)), (2, 16, 5, 5)),
+    (_PolicyHead(32, 20), (2, 32, 5, 5)),
+    (
+        _DepthwiseAttention(Game.get_local_attentions(), groups=8),
+        (2, 16, 5, 5),
+    ),
+    (
+        _ResidualBlock(32, 8, Game.get_local_attentions(), attention_groups=8),
+        (2, 32, 5, 5),
+    ),
+    (PolicyValueNetwork(Game, 32, 8, 1), (2, 5, 5, Game.feature_channels)),
+])
+def test_backward(model, input_shape: tuple):
+    x = th.randn(*input_shape).requires_grad_()
+    output = model(x)
+    if isinstance(output, (tuple, list)):
+        loss = sum(th.sum(th.square(o - 1)) for o in output)
+    else:
+        loss = th.sum(th.square(output - 1))
     loss.backward()
 
 
-def test_pvnet_backward_mps():
+@pytest.mark.parametrize(("model", "input_shape"), [
+    (_ValueHead(16, (5, 5)), (2, 16, 5, 5)),
+    (_PolicyHead(32, 20), (2, 32, 5, 5)),
+    (
+        _DepthwiseAttention(Game.get_local_attentions(), groups=8),
+        (2, 16, 5, 5),
+    ),
+    (
+        _ResidualBlock(32, 8, Game.get_local_attentions(), attention_groups=8),
+        (2, 32, 5, 5),
+    ),
+    (PolicyValueNetwork(Game, 32, 8, 1), (2, 5, 5, Game.feature_channels)),
+])
+def test_backward_mps(model, input_shape: tuple):
     if not th.backends.mps.is_available():
         return
-    model = PolicyValueNetwork(Game, 32, 8, 1).to('mps')
-    x = th.randn(2, 5, 5, Game.feature_channels).requires_grad_().to('mps')
-    p, v = model(x)
-    loss = th.sum(th.square(p - 1)) + th.sum(th.square(v - 1))
+    model = model.to('mps')
+    x = th.randn(*input_shape).requires_grad_().to("mps")
+    output = model(x)
+    if isinstance(output, (tuple, list)):
+        loss = sum(th.sum(th.square(o - 1)) for o in output)
+    else:
+        loss = th.sum(th.square(output - 1))
     loss.backward()
 
 

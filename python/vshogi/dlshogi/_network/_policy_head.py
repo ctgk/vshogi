@@ -1,7 +1,7 @@
 import torch as th
 
 
-class PolicyHead(th.nn.Module):
+class _PolicyHead(th.nn.Module):
     """Policy head class.
 
     Input (B, C_in, H, W) -> Output (B, H * W * C_out)

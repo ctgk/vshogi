@@ -1,11 +1,9 @@
-import typing as tp
-
 import torch as th
 
 
 class _ValueHead(th.nn.Module):
 
-    def __init__(self, in_ch: int, shape: tp.Tuple[int, int]):
+    def __init__(self, in_ch: int, shape: tuple[int, int]):
         super().__init__()
         self.layers = th.nn.Sequential(
             th.nn.Conv2d(

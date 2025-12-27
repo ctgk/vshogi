@@ -1,7 +1,7 @@
 import numpy as np
 import torch as th
 
-from vshogi.dlshogi._depthwise_attention import _DepthwiseAttention
+from vshogi.dlshogi._network._depthwise_attention import _DepthwiseAttention
 
 
 class _ResidualBlock(th.nn.Module):
@@ -12,7 +12,7 @@ class _ResidualBlock(th.nn.Module):
         hid_ch: int,
         attentions: np.ndarray,
         attention_groups: int,
-    ):
+    ) -> None:
         super().__init__()
         self.layers = th.nn.Sequential(
             # (B, C_in, H, W) -> (B, C_hid, H, W)
@@ -30,7 +30,7 @@ class _ResidualBlock(th.nn.Module):
             th.nn.Dropout(p=0.1, inplace=True),
         )
 
-    def forward(self, x: th.Tensor):
+    def forward(self, x: th.Tensor) -> th.Tensor:
         # x: (B, C_in, H*W)
         x = x + self.layers(x)
         return th.nn.functional.relu(x, inplace=True)
