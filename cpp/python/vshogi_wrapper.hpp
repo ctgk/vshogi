@@ -431,8 +431,9 @@ inline void export_game(pybind11::module& m)
             })
         .def(
             "get_mate_moves_if_any",
-            [](Game& self, const int num_dfpn_nodes) -> py::object {
-                vshogi::engine::dfpn::Searcher<Parameters> dfpn{};
+            [](Game& self, const unsigned int num_dfpn_nodes) -> py::object {
+                vshogi::engine::dfpn::Searcher<Parameters> dfpn{
+                    10u * num_dfpn_nodes};
                 dfpn.search(self, num_dfpn_nodes);
                 if (dfpn.proved_mate()) {
                     std::vector<Move> out{};

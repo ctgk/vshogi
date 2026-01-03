@@ -106,10 +106,13 @@ class ReplayBuffer(th.utils.data.Dataset):
                     'count': 0,
                 }
             data_summed[data.sfen]['value01'] += data.value01
-            data_summed[data.sfen]['policy'] = _add_dicts(
-                data_summed[data.sfen]['policy'],
-                data.policy,
-            )
+            try:
+                data_summed[data.sfen]['policy'] = _add_dicts(
+                    data_summed[data.sfen]['policy'],
+                    data.policy,
+                )
+            except ValueError as e:
+                raise ValueError(f"Error at {data.sfen}: {e}")
             data_summed[data.sfen]['count'] += 1
         for value in data_summed.values():
             value['value01'] = value['value01'] / value['count']
