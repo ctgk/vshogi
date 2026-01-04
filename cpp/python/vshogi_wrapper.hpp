@@ -498,10 +498,8 @@ inline void export_az_searcher(pybind11::module& m)
         .def("proved_mate", &Searcher::proved_mate)
         .def("get_search_count", &Searcher::get_search_count)
         .def(
-            "get_action_by_visit_max",
-            [](const Searcher& self) {
-                return Move(self.get_action_by_visit_max());
-            })
+            "select_action",
+            [](const Searcher& self) { return Move(self.select_action()); })
         .def(
             "get_action_by_visit_distribution",
             [](const Searcher& self, const float temperature) {

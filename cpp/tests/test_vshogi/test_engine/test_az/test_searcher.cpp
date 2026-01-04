@@ -36,7 +36,7 @@ TEST(minishogi_searcher, explore_after_apply)
         CHECK_EQUAL(0u, g.ply());
     }
 
-    const auto move = az.get_action_by_visit_max();
+    const auto move = az.select_action();
     az.apply(g, move);
     const auto current_visit_count = az.get_search_count();
     CHECK_TRUE(current_visit_count > 0);
@@ -77,7 +77,7 @@ TEST(minishogi_searcher, test_mate_in_three)
     }
 
     const auto m = MT::make_move(SQ_2D, SQ_3C);
-    CHECK_EQUAL(m, az.get_action_by_visit_max());
+    CHECK_EQUAL(m, az.select_action());
     DOUBLES_EQUAL(-1.f, az.get_root().get_child_of(m)->get_q_value(), 1e-3f);
     const auto expected_visits
         = az.get_root().get_child_of(m)->get_visit_count() + 100u;
@@ -98,7 +98,7 @@ TEST(minishogi_searcher, test_dfpn_root)
         auto g = Game("5/4k/5/4P/4K b 2G");
         az.search(g);
         CHECK_TRUE(az.proved_mate());
-        CHECK_EQUAL(MT::make_move("G*1c"), az.get_action_by_visit_max());
+        CHECK_EQUAL(MT::make_move("G*1c"), az.select_action());
     }
     {
         az.init();
@@ -114,7 +114,7 @@ TEST(minishogi_searcher, test_dfpn_root)
             az.get_root().get_child_of(MT::make_move("1c1b"))->is_mate());
         az.apply(game, MT::make_move("1c1b"));
         CHECK_TRUE(az.proved_mate());
-        CHECK_EQUAL(MT::make_move("G*1c"), az.get_action_by_visit_max());
+        CHECK_EQUAL(MT::make_move("G*1c"), az.select_action());
     }
 }
 
@@ -143,7 +143,7 @@ TEST(minishogi_searcher, test_dfpn_vertex)
             az.simulate_expand_backprop(n, game, 0.f, nullptr);
         CHECK_EQUAL(0u, game.ply());
     }
-    CHECK_EQUAL(MT::make_move("3e4e"), az.get_action_by_visit_max());
+    CHECK_EQUAL(MT::make_move("3e4e"), az.select_action());
     const auto root = az.get_root();
     const auto child = root.get_child_of(MT::make_move("3e2e"));
     CHECK_TRUE(child->is_mate_to_win());
@@ -162,7 +162,7 @@ TEST(minishogi_searcher, test_dfpn_vertex)
         CHECK_EQUAL(nullptr, n);
         DOUBLES_EQUAL(1.f, az.get_root().get_q_value(), 1e-3f);
     }
-    CHECK_EQUAL(MT::make_move("3c2d"), az.get_action_by_visit_max());
+    CHECK_EQUAL(MT::make_move("3c2d"), az.select_action());
 }
 
 TEST(minishogi_searcher, test_dfpn_root_vertex)
@@ -211,7 +211,7 @@ TEST(minishogi_searcher, explore_until_game_end)
             CHECK_EQUAL(num_ply, g.ply());
         }
 
-        const auto action = az.get_action_by_visit_max();
+        const auto action = az.select_action();
         az.apply(g, action);
     }
 }
@@ -343,7 +343,7 @@ TEST(judkins_shogi_searcher, explore_until_game_end)
             }
             CHECK_EQUAL(num_ply, g.ply());
         }
-        const auto action = az.get_action_by_visit_max();
+        const auto action = az.select_action();
         az.apply(g, action);
     }
 }
@@ -378,7 +378,7 @@ TEST(test_shogi_searcher, explore_until_game_end)
             CHECK_EQUAL(num_ply, g.ply());
         }
 
-        const auto action = az.get_action_by_visit_max();
+        const auto action = az.select_action();
         az.apply(g, action);
     }
 }
@@ -407,7 +407,7 @@ TEST(test_shogi_searcher, dfpn)
         }
         CHECK_EQUAL(1u, az.get_search_count());
 
-        az.get_action_by_visit_max();
+        az.select_action();
         const auto m = MoveTraits::make_move(kifu[ii]);
         az.apply(g, m);
         CHECK_EQUAL(nullptr, az.get_root().get_parent());

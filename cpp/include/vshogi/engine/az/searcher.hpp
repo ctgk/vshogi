@@ -45,7 +45,6 @@ public:
         const float value,
         const float* const policy_logits = nullptr);
     Searcher<P>& apply(Game<P>& game, const move_t& action);
-    move_t get_action_by_visit_max() const;
     move_t get_action_by_visit_distribution(const float temperature) const;
     move_t get_action_by_q_distribution(const float temperature) const;
     // clang-format off
@@ -118,15 +117,6 @@ Searcher<P>& Searcher<P>::apply(Game<P>& game, const move_t& action)
     game.apply(action);
     dfpn_proved_mate(game, &m_nodes[0]);
     return *this;
-}
-
-template <class P>
-move_t Searcher<P>::get_action_by_visit_max() const
-{
-    const Node* c = m_nodes[0].get_child_1st();
-    if (c == nullptr)
-        c = m_nodes[0].get_child();
-    return c ? c->get_action() : static_cast<move_t>(0);
 }
 
 template <class P>

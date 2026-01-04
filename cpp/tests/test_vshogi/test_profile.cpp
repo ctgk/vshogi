@@ -62,7 +62,7 @@ TEST(shogi_profile, alpha_zero)
         CHECK_EQUAL(100u, az.get_search_count());
         CHECK_COMPARE(0u, <, az.count_remaining_nodes());
 
-        az.get_action_by_visit_max();
+        az.select_action();
         const auto m = MT::make_move(kifu[ii]);
         az.apply(g, m);
 

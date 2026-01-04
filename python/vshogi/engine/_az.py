@@ -285,7 +285,7 @@ class AlphaZero(Engine):
 
     def _select(self, temperature: float | None = None) -> Move:
         if (temperature is None) or np.isclose(temperature, 0):
-            return self._searcher.get_action_by_visit_max()
+            return self._searcher.select_action()
         else:
             return self._searcher.get_action_by_visit_distribution(temperature)
 
