@@ -18,7 +18,7 @@ def test_get_search_count():
     searcher = GumbelAlphaZero()
     searcher.set_game(game)
     assert searcher.get_search_count() == 0
-    searcher.search(num_sims=20, num_actions=4)
+    searcher.search(budget=20, num_actions=4)
     print(searcher._tree(breadth=-1))
     assert searcher.get_search_count() == 20
 
@@ -27,7 +27,7 @@ def test_set_game():
     game = shogi.Game()
     searcher = GumbelAlphaZero()
     searcher.set_game(game)
-    searcher.search(num_sims=10, num_actions=2)
+    searcher.search(budget=10, num_actions=2)
     action = searcher.select()
     game.apply(action)
     assert searcher.get_search_count() == 10
@@ -40,7 +40,7 @@ def test_search_without_sequential_halving():
     game = shogi.Game()
     searcher = GumbelAlphaZero()
     searcher.set_game(game)
-    searcher.search(num_sims=500)
+    searcher.search(budget=500)
     action = searcher.select()
     assert game.is_legal(action)
 
@@ -49,7 +49,7 @@ def test_dfpn_root():
     game = shogi.Game("3k1/5/4G/4K/5 b G")
     searcher = GumbelAlphaZero(dfpn_search_root=10000, dfpn_search_leaf=100)
     searcher.set_game(game)
-    searcher.search(num_sims=10, num_actions=2)
+    searcher.search(budget=10, num_actions=2)
     assert np.isclose(searcher.get_q_value(), 1.)
     assert searcher.proved_mate()
     assert shogi.Move("G*2b") == searcher.select()

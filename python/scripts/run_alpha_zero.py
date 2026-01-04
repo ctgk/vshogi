@@ -1,16 +1,17 @@
 import tempfile
 import warnings
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore") # Or use action="ignore" for Python 3.11+
-    import ai_edge_torch
-
 import click as cl
 import torch as th
 from tqdm import tqdm
 
 import vshogi
 from vshogi.shogi import Game
+
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import ai_edge_torch
 
 
 @cl.command()
@@ -64,7 +65,7 @@ def _main(short: bool):
         if game.result != vshogi.Result.ONGOING:
             break
         player.set_game(game)
-        player.search(n_or_t=1000)
+        player.search(budget=1000)
         game.apply(move)
 
 

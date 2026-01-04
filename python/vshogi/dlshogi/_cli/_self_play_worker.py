@@ -444,16 +444,17 @@ def _validate(
     )
     record = vs.Record(0, 0, 0, 0, 0, 0)
     pbar = tqdm(range(num_games), ncols=100)
+    search_args = {
+        'AlphaZero': {'budget': 100},
+        'GumbelAlphaZero': {'budget': 100, 'num_actions': 16},
+    }[engine]
     for n in pbar:
         if n % 2 == 0:
             result = vs.play_game(
                 game_class(),
                 player_latest,
                 player_prev,
-                search_args=(
-                    {'n_or_t': 100} if engine == 'AlphaZero'
-                    else {'num_sims': 100, 'num_actions': 16}
-                ),
+                search_args=search_args,
                 select_args={'temperature': None},
                 draw_on_max_moves=True,
             ).result
@@ -463,10 +464,7 @@ def _validate(
                 game_class(),
                 player_prev,
                 player_latest,
-                search_args=(
-                    {'n_or_t': 100} if engine == 'AlphaZero'
-                    else {'num_sims': 100, 'num_actions': 16}
-                ),
+                search_args=search_args,
                 select_args={'temperature': None},
                 draw_on_max_moves=True,
             ).result

@@ -8,7 +8,7 @@ def test_proved_mate():
     g = shogi.Game("4k/5/4P/5/K4 b G")
     searcher = DfpnSearcher()
     searcher.set_game(g)
-    searcher.search()
+    searcher.search(100)
     print(searcher._tree())
     print(searcher._tree(pv_line=["G*1b"]))
     assert searcher.proved_mate() is True

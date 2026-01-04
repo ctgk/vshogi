@@ -21,7 +21,7 @@ def test_get_search_count():
     game = shogi.Game()
     searcher = AlphaZero(uniform_pv_func)
     searcher.set_game(game)
-    searcher.search(n_or_t=100)
+    searcher.search(budget=100)
     assert searcher.get_search_count() == 100
 
 
@@ -29,7 +29,7 @@ def test_clear():
     game = shogi.Game()
     searcher = AlphaZero(uniform_pv_func)
     searcher.set_game(game)
-    searcher.search(n_or_t=100)
+    searcher.search(budget=100)
     searcher.clear()
     assert searcher.is_ready() is False
     assert searcher.get_search_count() == 0
@@ -41,7 +41,7 @@ def test_q_values_mate_in_one():
 
     searcher = AlphaZero(uniform_pv_func, random_rate=0.)
     searcher.set_game(game)
-    searcher.search(n_or_t=100)
+    searcher.search(budget=100)
     actual = searcher.get_q_values()
     print(searcher._tree())
     print(actual)
@@ -52,7 +52,7 @@ def test_q_values_initial():
     game = shogi.Game()
     searcher = AlphaZero(uniform_pv_func)
     searcher.set_game(game)
-    searcher.search(n_or_t=100)
+    searcher.search(budget=100)
     actual = searcher.get_q_values()
     print(actual)
     for a in actual.values():
@@ -65,7 +65,7 @@ def test_mate_in_three():
 
     searcher = AlphaZero(uniform_pv_func, random_rate=0)
     searcher.set_game(game)
-    searcher.search(n_or_t=100)
+    searcher.search(budget=100)
 
     actual = searcher.get_q_values()
     print(actual)
@@ -73,7 +73,7 @@ def test_mate_in_three():
     assert np.isclose(actual[m], 1, rtol=0, atol=1e-2)
 
     visit_count = searcher.get_visit_counts()[m]
-    searcher.search(n_or_t=100)
+    searcher.search(budget=100)
     # If there is a mate, all explorations go through the mate.
     assert searcher.get_visit_counts()[m] == visit_count + 100
 
@@ -85,7 +85,7 @@ def test_visit_count_by_random():
     searcher = AlphaZero(
         lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.), random_rate=0)
     searcher.set_game(game)
-    searcher.search(n_or_t=100)
+    searcher.search(budget=100)
     visit_count = searcher.get_visit_counts()[m]
     print(searcher._tree(depth=2, breadth=-1))
 
@@ -93,7 +93,7 @@ def test_visit_count_by_random():
         lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.),
         random_rate=0.25)
     searcher.set_game(game)
-    searcher.search(n_or_t=100)
+    searcher.search(budget=100)
     visit_count_with_noise = searcher.get_visit_counts()[m]
     print(searcher._tree(depth=2, breadth=-1))
     assert visit_count > visit_count_with_noise + 10
@@ -103,7 +103,7 @@ def test_greedy_q_value():
     game = shogi.Game()
     searcher = AlphaZero(uniform_pv_func)
     searcher.set_game(game)
-    searcher.search(n_or_t=100)
+    searcher.search(budget=100)
     action = searcher.select()
 
     assert np.isclose(
@@ -144,7 +144,7 @@ def test_dfpn_root():
     # Black: KA
     game = shogi.Game("2rbk/2p1p/2P1P/3G1/3R1 b B")
     mcts.set_game(game)
-    mcts.search(n_or_t=1)
+    mcts.search(budget=1)
     assert shogi.Move("B*2b") == mcts.select()
     assert len(mcts.get_visit_counts()) > 10
 
@@ -168,7 +168,7 @@ def test_mating_net():
     g = shogi.Game("4k/3g1/5/5/2K2 w g")
     mcts = AlphaZero(dfpn_search_root=0, dfpn_search_leaf=100)
     mcts.set_game(g)
-    mcts.search(n_or_t=10000)
+    mcts.search(budget=10000)
     assert mcts.proved_mate()
     assert shogi.Move("2b3c") == mcts.select()
     assert set(mcts.get_visit_counts().keys()) == set(g.get_legal_moves())
@@ -199,7 +199,7 @@ def test_dfpn_vertex():
     # Black: -
     g = shogi.Game("2k2/5/2gp1/5/2K2 b -")
     mcts.set_game(g)
-    mcts.search(n_or_t=3)
+    mcts.search(budget=3)
     print(mcts._tree(depth=5, breadth=5))
     assert shogi.Move("3e4e") == mcts.select()
 
@@ -231,19 +231,19 @@ def test_dfpn_vertex_2():
     # Black: -
     g = shogi.Game("2k2/2rg1/2sp1/5/2K2 b -")
     mcts.set_game(g)
-    mcts.search(n_or_t=3)
+    mcts.search(budget=3)
     print(mcts._tree(depth=2))
     assert shogi.Move("3e4e") == mcts.select()
     mcts.apply(shogi.Move("3e2e"))
     g.apply(shogi.Move("3e2e"))
 
-    mcts.search(n_or_t=1)
+    mcts.search(budget=1)
     print(mcts._tree(depth=2))
     assert shogi.Move("3c2d") == mcts.select()
     mcts.apply(shogi.Move("3c2d"))
     g.apply(shogi.Move("3c2d"))
 
-    mcts.search(n_or_t=1)
+    mcts.search(budget=1)
     print(mcts._tree(depth=2))
     assert mcts.select() in g.get_legal_moves(), (
         mcts.select(), g.get_legal_moves())

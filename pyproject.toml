@@ -7,7 +7,7 @@ requires = [
 
 build-backend = "setuptools.build_meta"
 
-[tool.pytest]
+[tool.pytest.ini_options]
 addopts = [
     "--doctest-modules",
     "--ignore=python/scripts/",

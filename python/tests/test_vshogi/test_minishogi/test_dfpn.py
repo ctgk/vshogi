@@ -12,11 +12,11 @@ def test_mate():
 
     actual_total_searches = 0
     expect_total_searches = 0
-    searcher = DfpnSearcher()
+    searcher = DfpnSearcher(1000000)
     for sfen, searches in sfen_searches_pair_list:
         game = shogi.Game(sfen)
         searcher.set_game(game)
-        searcher.search(n=100000)
+        searcher.search(100000)
         if not searcher.proved_mate():
             print(game)
             print(searcher._tree(depth=5, breadth=5))

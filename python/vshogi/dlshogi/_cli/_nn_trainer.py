@@ -285,7 +285,7 @@ def _train_step(
     )
     name_better = _get_best_player_index(
         game_class, player_curr, player_prev,
-        {'n_or_t': 100}, {'temperature': None},
+        {'budget': 100}, {'temperature': None},
         win_ratio_threshold=win_ratio_threshold,
     )
     if player_curr.name == name_better:

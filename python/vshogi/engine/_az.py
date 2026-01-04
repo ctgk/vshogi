@@ -102,6 +102,7 @@ class AlphaZero(Engine):
         self._tree_size = tree_size
         self._dfpn_search_root = dfpn_search_root
         self._dfpn_search_leaf = dfpn_search_leaf
+        self._prev_visits = None
 
     def _set_game(self, game: Game):
         self._game = game.copy()
@@ -112,6 +113,7 @@ class AlphaZero(Engine):
             )
         else:
             self._searcher.init()
+        self._prev_visits = None
 
     def _is_ready(self) -> bool:
         return self._game is not None
@@ -130,6 +132,7 @@ class AlphaZero(Engine):
         if self._searcher is not None:
             self._searcher.init()
         self._game = None
+        self._prev_visits = None
 
     def apply(self, move: Move):
         """Apply a move on the game.
@@ -141,24 +144,20 @@ class AlphaZero(Engine):
         """
         if self._is_ready():
             self._searcher.apply(self._game._game, move)
+        self._prev_visits = None
 
-    def search(self, n_or_t: tp.Union[int, float] = 0.01):
-        """Explore from root node for n times.
-
-        Parameters
-        ----------
-        n_or_t : tp.Union[int, float], optional
-            Number of game positions to search or period of time to search
-            in second, by default 0.01
-        """
-        prev_visits = None
+    def _search(self, budget: int | float):
         kldgain_steps = 100
-        for ii in self._count(n_or_t=n_or_t):
-            if (self._kldgain_threshold and (ii % kldgain_steps == 0)):
-                if prev_visits is None:
-                    prev_visits = self.get_visit_counts()
+        count = self.get_search_count()
+        for ii in self._count(budget):
+            if (
+                self._kldgain_threshold
+                and ((ii + count) % kldgain_steps == 0)
+            ):
+                if self._prev_visits is None:
+                    self._prev_visits = self.get_visit_counts()
                 else:
-                    kldgain = self._kldgain(prev_visits)
+                    kldgain = self._kldgain(self._prev_visits)
                     if kldgain < self._kldgain_threshold * kldgain_steps:
                         break
             node = self._searcher.search(self._game._game)

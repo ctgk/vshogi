@@ -37,13 +37,13 @@ class DfpnSearcher(Engine):
     >>> game = shogi.Game("4pp/3pbk/3n1N/3P1P/2S1SR/3GRG b B")
     >>> searcher = DfpnSearcher()
     >>> searcher.set_game(game)
-    >>> searcher.search(n=4)
-    False
+    >>> searcher.search(budget=4)
     >>> searcher.proved()
     False
     >>>
     >>> # Finds mates by restarting from the searches of the previous call!
-    >>> searcher.search(n=1) # Note that numbers of searches add up to 5.
+    >>> searcher.search(budget=1) # Note that numbers of searches add up to 5.
+    >>> searcher.proved()
     True
     >>> [m.to_sfen() for m in searcher.get_mate_moves()]
     ['B*2c', '1b2c', '2e2d', '2c1b', '2d2c']
@@ -87,38 +87,19 @@ class DfpnSearcher(Engine):
     def _apply(self, _: Move):
         raise NotImplementedError
 
-    def search(self, n: int = 100) -> bool:
-        """Search for mate-moves.
-
-        If you call this method multiple times, the following calls does not
-        resume searches but restart searches retaining the searches of previous
-        calls.
-
-        Parameters
-        ----------
-        n : int, optional
-            Number of nodes to search for, by default 100
-
-        Returns
-        -------
-        bool
-            True if there is a mate-move, otherwise false.
-
-        Note
-        ----
-        Note that returning false can mean two ways:
-        - There is no ways to checkmate opponent king
-        - It is not certain that there is a checkmate or no checkmates.
-        """
+    def _search(self, budget: int | float) -> None:
         if self._searcher is None:
-            return False
+            return
         sfen = self._game.to_sfen()
         ply = self._game.ply()
-        self._searcher.search(self._game._game, n)
+        if isinstance(budget, int):
+            self._searcher.search(self._game._game, budget)
+        else:
+            for _ in self._count(budget):
+                self._searcher.search(self._game._game, 1)
         if self._game.ply() != ply:
             raise ValueError(
                 f"Failed to run DFPN searches on the game position: {sfen}")
-        return self._searcher.proved_mate()
 
     def _select(self, temperature: float | None = None) -> Move:
         if temperature is not None:

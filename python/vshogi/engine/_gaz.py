@@ -115,13 +115,14 @@ class GumbelAlphaZero(Engine):
         self._searcher.init()
         self._game = None
 
-    def search(self, num_sims: int, num_actions: tp.Optional[int] = None):
+    def search(self, budget: int | float, num_actions: int | None = None):
         """Explore nodes using sequential halving.
 
         Parameters
         ----------
-        num_sims : int
-            Number of game positions (including root) to simulate.
+        budget : int | float
+            If int, number of simulations.
+            If float, search duration in seconds.
         num_actions : int, optional
             Number of initial actions at root node to search for,
             by default `None`.
@@ -132,12 +133,18 @@ class GumbelAlphaZero(Engine):
         if not self.is_ready():
             raise ValueError("The engine is not ready to run")
         if num_actions is None:
-            self._search(num_sims)
+            self._search(budget)
         else:
-            self._search_with_gumbel_planning(num_sims, num_actions)
+            if not isinstance(budget, int):
+                msg = (
+                    '`budget` must be int when `num_actions` given, '
+                    f'but was `{type(budget)}`.'
+                )
+                raise TypeError(msg)
+            self._search_with_gumbel_planning(budget, num_actions)
 
-    def _search(self, num_sims: int):
-        for _ in range(num_sims):
+    def _search(self, budget: int | float):
+        for _ in self._count(budget):
             self._select_simulate_expand_backprop()
 
     def _search_with_gumbel_planning(self, num_sims: int, num_actions: int):

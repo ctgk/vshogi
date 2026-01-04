@@ -8,7 +8,7 @@ def play_game(
     player_black: Engine,
     player_white: Engine,
     *,
-    search_args: dict = {},
+    search_args: dict = {'budget': 100},
     select_args: dict = {},
     max_moves: int = 320,
     draw_on_max_moves: bool = False,

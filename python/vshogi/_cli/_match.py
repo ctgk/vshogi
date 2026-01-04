@@ -28,7 +28,7 @@ def _get_results_of_single_pair(
     )
     record_of_p1 = vs.Record(0, 0, 0, 0, 0, 0)
     iterator = range(num_games_each * 2)
-    show_az_search: bool = isinstance(search_args['n_or_t'], float)
+    show_az_search: bool = isinstance(search_args['budget'], float)
     p1_search_total = 0
     p2_search_total = 0
     if show_pbar:
@@ -41,9 +41,9 @@ def _get_results_of_single_pair(
                 search_args=search_args,
                 select_args=select_args,
                 _return_num_searched=isinstance(
-                    search_args['n_or_t'], float),
+                    search_args['budget'], float),
             )
-            if isinstance(search_args['n_or_t'], float):
+            if isinstance(search_args['budget'], float):
                 result = out[0].result
                 p1_search_total += np.nanmean(np.asarray(out[1][::2], float))
                 p2_search_total += np.nanmean(np.asarray(out[1][1::2], float))
@@ -56,9 +56,9 @@ def _get_results_of_single_pair(
                 search_args=search_args,
                 select_args=select_args,
                 _return_num_searched=isinstance(
-                    search_args['n_or_t'], float),
+                    search_args['budget'], float),
             )
-            if isinstance(search_args['n_or_t'], float):
+            if isinstance(search_args['budget'], float):
                 result = out[0].result
                 p2_search_total += np.nanmean(np.asarray(out[1][::2], float))
                 p1_search_total += np.nanmean(np.asarray(out[1][1::2], float))
@@ -251,7 +251,7 @@ def _match(
                 'kldgain_threshold': az_kldgain_threshold,
             },
             search_args={
-                'n_or_t': az_search_count or az_search_second,
+                'budget': az_search_count or az_search_second,
             },
             select_args={
                 'temperature': az_temperature,

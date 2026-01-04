@@ -45,10 +45,16 @@ class Engine(abc.ABC):
         """Clear game set and searches done so far."""
         self._clear()
 
-    @abc.abstractmethod
-    def search(self, *args, **kwargs):
-        """Run search engine."""
-        pass
+    def search(self, budget: int | float, **kwargs):
+        """Run the search within the given budget.
+
+        Parameters
+        ----------
+        budget : int | float
+            If int, number of simulations.
+            If float, search duration in seconds.
+        """
+        self._search(budget, **kwargs)
 
     @property
     def name(self) -> tp.Union[str, None]:
@@ -103,6 +109,10 @@ class Engine(abc.ABC):
     def _select(self, temperature: float | None = None) -> Move:
         pass
 
+    @abc.abstractmethod
+    def _search(self, budget: int | float, **kwargs) -> None:
+        pass
+
     def _get_search_count(self) -> int:
         if self._searcher is None:
             raise ValueError("There is no searcher to get the count from.")
@@ -116,17 +126,17 @@ class Engine(abc.ABC):
     @classmethod
     def _count(
         cls,
-        n_or_t: tp.Union[int, float],
+        budget: int | float,
     ) -> tp.Generator[int, int, int]:
-        if isinstance(n_or_t, int):
-            for i in range(n_or_t):
+        if isinstance(budget, int):
+            for i in range(budget):
                 yield i
         else:
             start_sec = time()
             c = 0
             while True:
                 now = time()
-                if (now - start_sec) > n_or_t:
+                if (now - start_sec) > budget:
                     break
                 yield c
                 c += 1
