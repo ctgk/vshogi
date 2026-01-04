@@ -106,6 +106,56 @@
         .modal-buttons {
             margin-top: 10px;
         }
+
+        body {
+            background: linear-gradient(135deg, #f6f8fb 0%, #e9edf5 100%);
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .control-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin: 14px auto 6px;
+            padding: 12px 16px;
+            background: #ffffff;
+            border: 1px solid #e3e8f0;
+            border-radius: 10px;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
+            width: fit-content;
+        }
+
+        .control-panel .label {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .control-panel button {
+            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+            color: #fff;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.2s ease;
+            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+        }
+
+        .control-panel button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .control-panel button:active {
+            transform: translateY(0);
+        }
+
+        .status-message {
+            font-size: 14px;
+            color: #4a5568;
+        }
     </style>
 </head>
 
@@ -126,6 +176,12 @@
     '+r': '龍', '+R': '龍',
     '+b': '馬', '+B': '馬'
     } %}
+    <div class="control-panel">
+        <span class="label">Network weight</span>
+        <button id="selectModelButton" type="button">Select file</button>
+        <input id="modelFileInput" type="file" accept=".tflite" style="display: none;" />
+        <span id="modelStatus" class="status-message">Current: {{ model_path or 'default (built-in)' }}</span>
+    </div>
     <div class="game-container">
         <div class="stand">
             <div class="stand-label {% if current_turn == 'white' %}current-turn{% endif %}">☖</div>
@@ -175,6 +231,9 @@
         let selectedElement = null;
         let src = null;
         let pendingPromotionData = null; // Store move data while user decides
+        const modelStatus = document.getElementById('modelStatus');
+        const selectModelButton = document.getElementById('selectModelButton');
+        const modelFileInput = document.getElementById('modelFileInput');
 
         function clearSelection() {
             if (selectedElement) {
@@ -335,6 +394,42 @@
 
         // Add click handler to document to clear selection when clicking outside
         document.addEventListener('click', clearSelection);
+
+        selectModelButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            modelFileInput.click();
+        });
+
+        modelFileInput.addEventListener('change', (event) => {
+            event.stopPropagation();
+            const [file] = modelFileInput.files;
+            if (!file) {
+                return;
+            }
+
+            modelStatus.textContent = 'Uploading...';
+            const formData = new FormData();
+            formData.append('model', file);
+
+            fetch('/upload_model', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json().then(body => ({ status: response.status, body })))
+            .then(({ body }) => {
+                if (body.success) {
+                    modelStatus.textContent = `Loaded: ${file.name}`;
+                } else {
+                    modelStatus.textContent = `Failed: ${body.error || 'Unknown error'}`;
+                }
+            })
+            .catch(() => {
+                modelStatus.textContent = 'Failed: network error';
+            })
+            .finally(() => {
+                modelFileInput.value = '';
+            });
+        });
     </script>
 </body>
 
