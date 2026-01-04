@@ -35,7 +35,7 @@ def test_proved_no_mate():
 
 def test_error():
     with pytest.raises(ValueError):
-        DfpnSearcher(max_num_nodes=0)
+        DfpnSearcher(tree_size=0)
 
 
 if __name__ == '__main__':

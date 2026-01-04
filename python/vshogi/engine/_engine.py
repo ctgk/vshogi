@@ -11,14 +11,18 @@ Move = tp.TypeVar('Move')
 class Engine(abc.ABC):
     """Base Shogi engine class."""
 
-    def __init__(self, name: tp.Optional[str] = None):
+    def __init__(self, tree_size: int, name: str | None = None):
         """Initialize engine.
 
         Parameters
         ----------
-        name : tp.Optional[str], optional
+        name : str | None, optional
             Name of the engine, by default None
         """
+        if tree_size <= 0:
+            msg = f"`tree_size` (={tree_size}) must be larger than 0."
+            raise ValueError(msg)
+        self._tree_size = tree_size
         self._name = name
 
     def set_game(self, game: Game) -> None:

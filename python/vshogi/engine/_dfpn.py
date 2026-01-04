@@ -51,30 +51,25 @@ class DfpnSearcher(Engine):
 
     def __init__(
         self,
-        max_num_nodes: int = 100000,
-        name: tp.Optional[str] = None,
+        tree_size: int = 100000,
+        name: str | None = None,
     ) -> None:
         """Initialize DFPN mate-moves searcher object.
 
         Parameters
         ----------
-        max_num_nodes : int
-            Maximum number of nodes to search, by default 100000
-        name : tp.Optional[str], optional
+        tree_size : int
+            Max size of the tree, by default 100000
+        name : str | None, optional
             Name of the engine, by default None
         """
-        super().__init__(name=name)
-        if max_num_nodes <= 0:
-            raise ValueError(
-                '`max_num_nodes` should be larger than or equal to 1, '
-                f'but was {max_num_nodes}')
+        super().__init__(tree_size=tree_size, name=name)
         self._searcher = None
-        self._max_num_nodes = max_num_nodes
 
     def _set_game(self, game: Game):
         if self._searcher is None:
             cls_ = game._get_dfpn_searcher_class()
-            self._searcher = cls_(self._max_num_nodes)
+            self._searcher = cls_(self._tree_size)
         self._searcher.init()
         self._game = game.copy()
 

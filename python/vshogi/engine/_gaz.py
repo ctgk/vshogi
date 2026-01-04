@@ -60,7 +60,7 @@ class GumbelAlphaZero(Engine):
         tree_size: int = 1000000,
         dfpn_search_root: int = 0,
         dfpn_search_leaf: int = 0,
-        name: tp.Optional[str] = None,
+        name: str | None = None,
     ) -> None:
         """Initialize a Gumbel Alpha Zero engine.
 
@@ -75,15 +75,14 @@ class GumbelAlphaZero(Engine):
             Number of DFPN searches to run at the root node. Default is 0.
         dfpn_search_leaf : int, optional
             Number of DFPN searches to run at leaf nodes. Default is 0.
-        name : tp.Optional[str], optional
+        name : str | None, optional
             Name of the search engine instance. Default is None.
         """
-        super().__init__(name=name)
+        super().__init__(tree_size=tree_size, name=name)
         self._policy_value_func = policy_value_func
         self._searcher = None
         self._game = None
 
-        self._tree_size = tree_size
         self._dfpn_search_root = dfpn_search_root
         self._dfpn_search_leaf = dfpn_search_leaf
 
