@@ -46,7 +46,6 @@ public:
         const float* const policy_logits = nullptr);
     Searcher<P>& apply(Game<P>& game, const move_t& action);
     move_t get_action_by_visit_distribution(const float temperature) const;
-    move_t get_action_by_q_distribution(const float temperature) const;
     // clang-format off
     uint get_search_count() const { return m_nodes[0].get_visit_count(); }
     bool proved_mate() const { return m_nodes[0].is_mate(); }
@@ -142,27 +141,6 @@ Searcher<P>::get_action_by_visit_distribution(const float temperature) const
         s -= p;
     }
     return ch->get_action(); // For numerical instability.
-}
-
-template <class P>
-move_t Searcher<P>::get_action_by_q_distribution(const float temperature) const
-{
-    std::vector<float> probas(m_nodes[0].count_childs());
-    const Node* c = m_nodes[0].get_child();
-    for (uint ii = 0u; c; c = c->get_sibling()) {
-        probas[ii++] = -c->get_q_value() / temperature;
-    }
-    softmax(probas);
-
-    float s = dist01(random_engine);
-    c = m_nodes[0].get_child();
-    for (uint ii = 0u; c; c = c->get_sibling()) {
-        const auto p = probas[ii++];
-        if (s < p)
-            return c->get_action();
-        s -= p;
-    }
-    return c->get_action(); // For numerical instability.
 }
 
 template <class P>
