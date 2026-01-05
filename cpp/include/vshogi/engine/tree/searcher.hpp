@@ -24,6 +24,7 @@ public:
     void init();
     uint count_remaining_nodes() const;
     move_t select_action() const;
+    void apply(const move_t& action);
     // clang-format off
     const N& get_root() const { return m_nodes.front(); }
     // clang-format on
@@ -34,6 +35,8 @@ protected:
 
     template <class G>
     void backprop_to_root(G& game, N* const leaf);
+
+private:
     void remove_unselected_nodes(const move_t& selected);
 };
 
@@ -108,6 +111,15 @@ void Searcher<N>::remove_unselected_nodes(const move_t& selected)
     }
     m_next = next;
     m_next->init();
+}
+
+template <class P>
+void Searcher<P>::apply(const move_t& action)
+{
+    remove_unselected_nodes(action);
+    assert(&m_nodes.front() < m_next);
+    assert(m_next < &m_nodes.back());
+    m_nodes.front().init_as_begin();
 }
 
 } // namespace vshogi::engine::tree

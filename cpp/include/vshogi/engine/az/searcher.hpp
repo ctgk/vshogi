@@ -110,10 +110,7 @@ void Searcher<P>::simulate_expand_backprop(
 template <class P>
 Searcher<P>& Searcher<P>::apply(Game<P>& game, const move_t& action)
 {
-    remove_unselected_nodes(action);
-    assert(&m_nodes.front() < m_next);
-    assert(m_next < &m_nodes.back());
-    m_nodes.front().init_as_begin();
+    tree::Searcher<Node>::apply(action);
     game.apply(action);
     dfpn_proved_mate(game, &m_nodes[0]);
     return *this;

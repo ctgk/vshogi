@@ -310,8 +310,7 @@ uint Searcher<P>::max_child_visits() const
 template <class P>
 Searcher<P>& Searcher<P>::apply(Game<P>& game, const move_t& action)
 {
-    remove_unselected_nodes(action);
-    m_nodes.front().init_as_begin();
+    tree::Searcher<Node>::apply(action);
     m_child_nodes[0] = nullptr;
     game.apply(action);
     dfpn_proved_mate(game, &m_nodes[0]);
