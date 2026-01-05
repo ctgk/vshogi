@@ -287,7 +287,7 @@ class AlphaZero(Engine):
         if (temperature is None) or np.isclose(temperature, 0):
             return self._searcher.select_action()
         else:
-            return self._searcher.get_action_by_visit_distribution(temperature)
+            return self._searcher.select_action(temperature)
 
     def _tree(
         self,

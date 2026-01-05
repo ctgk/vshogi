@@ -45,7 +45,8 @@ public:
         const float value,
         const float* const policy_logits = nullptr);
     Searcher<P>& apply(Game<P>& game, const move_t& action);
-    move_t get_action_by_visit_distribution(const float temperature) const;
+    move_t select_action() const;
+    move_t select_action(const float temperature) const;
     // clang-format off
     uint get_search_count() const { return m_nodes[0].get_visit_count(); }
     bool proved_mate() const { return m_nodes[0].is_mate(); }
@@ -119,8 +120,13 @@ Searcher<P>& Searcher<P>::apply(Game<P>& game, const move_t& action)
 }
 
 template <class P>
-move_t
-Searcher<P>::get_action_by_visit_distribution(const float temperature) const
+move_t Searcher<P>::select_action() const
+{
+    return tree::Searcher<Node>::select_action();
+}
+
+template <class P>
+move_t Searcher<P>::select_action(const float temperature) const
 {
     constexpr float eps = 1.f;
     std::vector<float> probas(m_nodes[0].count_childs());

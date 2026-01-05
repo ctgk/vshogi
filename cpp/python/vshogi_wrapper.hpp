@@ -501,9 +501,8 @@ inline void export_az_searcher(pybind11::module& m)
             "select_action",
             [](const Searcher& self) { return Move(self.select_action()); })
         .def(
-            "get_action_by_visit_distribution",
-            [](const Searcher& self, const float temperature) {
-                return Move(self.get_action_by_visit_distribution(temperature));
+            "select_action", [](const Searcher& self, const float temperature) {
+                return Move(self.select_action(temperature));
             });
 }
 
