@@ -22,21 +22,17 @@ namespace vshogi::engine::gaz
 namespace dfpn = vshogi::engine::dfpn;
 
 template <class P>
-class Searcher : public tree::Searcher<Node>
+class Searcher : public dfpn::DfpnAugmentedSearcher<P, Node>
 {
 private:
-    dfpn::Searcher<P> m_dfpn;
-    const uint m_dfpn_search_root;
-    const uint m_dfpn_search_leaf;
-
     const Node* m_child_nodes[max_legal_moves];
     float m_gumbel_noises[max_legal_moves];
 
 public:
     Searcher(
         const uint tree_size = 1000000u,
-        const uint dfpn_search_root = 0u,
-        const uint dfpn_search_leaf = 0u);
+        const uint dfpn_root = 0u,
+        const uint dfpn_leaf = 0u);
     ~Searcher() = default; // 1/5 destructor
     Searcher(const Searcher& other) = delete; // 2/5 copy constructor
     Searcher& operator=(const Searcher& other) = delete; // 3/5 copy assignment
@@ -54,15 +50,19 @@ public:
     uint count_active_childs() const;
     move_t select_action() const;
     move_t select_action(const float& temperature) const;
-    Searcher& apply(Game<P>& game, const move_t& action);
+    void apply(Game<P>& game, const move_t& action);
     // clang-format off
     uint get_search_count() const { return m_nodes[0].get_visit_count(); }
     bool proved_mate() const { return m_nodes[0].is_mate(); }
     // clang-format on
 
+protected:
+    using dfpn::DfpnAugmentedSearcher<P, Node>::m_nodes;
+    using dfpn::DfpnAugmentedSearcher<P, Node>::m_next;
+    using dfpn::DfpnAugmentedSearcher<P, Node>::backprop_to_root;
+
 private:
     Node* select_a_leaf_node(Game<P>& game);
-    bool dfpn_proved_mate(Game<P>& game, Node* const node);
     uint set_child_nodes_and_gumbel_noises();
     float score_of(const Node& child, const uint& max_visits) const;
     float score_of(
@@ -74,15 +74,10 @@ private:
 
 template <class P>
 Searcher<P>::Searcher(
-    const uint tree_size,
-    const uint dfpn_search_root,
-    const uint dfpn_search_leaf)
-    : tree::Searcher<Node>(tree_size),
-      m_dfpn{std::max(dfpn_search_root, dfpn_search_leaf) * 10u},
-      m_dfpn_search_root(dfpn_search_root),
-      m_dfpn_search_leaf(dfpn_search_leaf), m_child_nodes{}, m_gumbel_noises{}
+    const uint tree_size, const uint dfpn_root, const uint dfpn_leaf)
+    : dfpn::DfpnAugmentedSearcher<P, Node>(tree_size, dfpn_root, dfpn_leaf)
 {
-    init();
+    m_child_nodes[0] = nullptr;
 }
 
 template <class P>
@@ -96,22 +91,7 @@ template <class P>
 Node* Searcher<P>::search(Game<P>& game)
 {
     Node* const leaf = select_a_leaf_node(game);
-    assert(leaf != nullptr);
-    assert(!leaf->has_child());
-    if (game.get_result() != ONGOING) {
-        leaf->simulate(game);
-        backprop_to_root(game, leaf);
-        return nullptr;
-    }
-    if (leaf->is_mate_to_lose()) {
-        leaf->expand(m_next, game, nullptr);
-        backprop_to_root(game, leaf);
-        return nullptr;
-    }
-    assert(!leaf->is_mate_to_win());
-    if (dfpn_proved_mate(game, leaf))
-        return nullptr;
-    return leaf;
+    return this->simulate_backprop_if_possible(game, leaf);
 }
 
 template <class P>
@@ -148,30 +128,6 @@ Node* Searcher<P>::select_a_leaf_node(Game<P>& game)
         n = child;
     }
     return n;
-}
-
-template <class P>
-bool Searcher<P>::dfpn_proved_mate(Game<P>& game, Node* const node)
-{
-    const uint search_count
-        = (node == &m_nodes[0]) ? m_dfpn_search_root : m_dfpn_search_leaf;
-    if (search_count == 0u)
-        return false;
-    m_dfpn.init();
-    m_dfpn.search(game, search_count);
-    if (m_dfpn.proved_mate()) {
-        const move_t m = m_dfpn.select_action();
-        if (m != 0u) {
-            node->simulate_mate_and_expand(m_next, m);
-            backprop_to_root(game, node);
-            if (node == &m_nodes[0]) {
-                m_child_nodes[0] = m_nodes[0].get_child_1st();
-                m_child_nodes[1] = nullptr;
-            }
-            return true;
-        }
-    }
-    return false;
 }
 
 template <class P>
@@ -303,18 +259,20 @@ float Searcher<P>::score_of(
 template <class P>
 uint Searcher<P>::max_child_visits() const
 {
-    const Node* c1 = get_root().get_child_1st();
+    const Node* c1 = this->get_root().get_child_1st();
     return c1 ? c1->get_visit_count() : 0u;
 }
 
 template <class P>
-Searcher<P>& Searcher<P>::apply(Game<P>& game, const move_t& action)
+void Searcher<P>::apply(Game<P>& game, const move_t& action)
 {
-    tree::Searcher<Node>::apply(action);
-    m_child_nodes[0] = nullptr;
-    game.apply(action);
-    dfpn_proved_mate(game, &m_nodes[0]);
-    return *this;
+    dfpn::DfpnAugmentedSearcher<P, Node>::apply(game, action);
+    if (this->get_root().is_mate_to_win()) {
+        m_child_nodes[0] = this->get_root().get_child_1st();
+        m_child_nodes[1] = nullptr;
+    } else {
+        m_child_nodes[0] = nullptr;
+    }
 }
 
 } // namespace vshogi::engine::gaz

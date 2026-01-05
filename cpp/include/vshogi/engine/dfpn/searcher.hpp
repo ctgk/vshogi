@@ -1,120 +1,16 @@
 #ifndef VSHOGI_ENGINE_DFPN_SEARCHER_HPP
 #define VSHOGI_ENGINE_DFPN_SEARCHER_HPP
 
-#include <list>
 #include <memory>
-#include <unordered_map>
 
 #include "vshogi/common/game.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/engine/dfpn/node.hpp"
+#include "vshogi/engine/dfpn/table.hpp"
 #include "vshogi/engine/tree/searcher.hpp"
 
 namespace vshogi::engine::dfpn
 {
-
-template <class P>
-class Table
-{
-    using C = Configuration<P>;
-    using BaseTypeStand = typename C::BaseTypeStand;
-    using StandNodePairs = std::list<std::pair<BaseTypeStand, Node*>>;
-
-private:
-    std::unordered_map<std::uint64_t, StandNodePairs> m_table;
-
-public:
-    Table() : m_table{}
-    {
-    }
-    void clear()
-    {
-        m_table.clear();
-    }
-    void add(Node* const n, const Game<P>& g)
-    {
-        const std::uint64_t bt_hash = g.get_board_turn_hash();
-        const auto s = g.get_stand().value();
-        auto it = m_table.find(bt_hash);
-        if (it == m_table.end()) {
-            m_table.emplace(bt_hash, StandNodePairs());
-            m_table[bt_hash].emplace_back(s, n);
-        } else {
-            for (auto&& pair : it->second) {
-                if (pair.first == s) {
-                    pair.second = n;
-                    return;
-                }
-            }
-            it->second.emplace_back(s, n);
-        }
-    }
-    void look_up(
-        const Game<P>& g,
-        const Node** const node_ge,
-        const Node** const node_e,
-        const Node** const node_le) const
-    {
-        const std::uint64_t bt_hash = g.get_board_turn_hash();
-        auto it = m_table.find(bt_hash);
-        *node_ge = nullptr;
-        *node_e = nullptr;
-        *node_le = nullptr;
-        if (it == m_table.end())
-            return;
-        return look_up(g, it->second, node_ge, node_e, node_le);
-    }
-
-private:
-    void look_up(
-        const Game<P>& g,
-        const StandNodePairs& pairs,
-        const Node** const node_ge,
-        const Node** const node_e,
-        const Node** const node_le) const
-    {
-        const auto& s = g.get_stand();
-        Stand<P> s_l{};
-        Stand<P> s_g{static_cast<BaseTypeStand>(~0)};
-        bool found_best_l = false;
-        bool found_best_g = false;
-        for (auto&& it : pairs) {
-            const Stand<P> s_iter{it.first};
-            const Node* const n_iter = it.second;
-            if (s_iter == s) {
-                *node_e = n_iter;
-            }
-            if (!found_best_l && (s_iter <= s)) {
-                if ((n_iter->phi() == zero) && n_iter->fully_expanded()) {
-                    *node_le = n_iter;
-                    found_best_l = true;
-                } else if (
-                    (*node_le == nullptr)
-                    || ((*node_le)->fully_expanded() < n_iter->fully_expanded())
-                    || (((*node_le)->fully_expanded()
-                         == n_iter->fully_expanded())
-                        && (s_l < s_iter))) {
-                    s_l = s_iter;
-                    *node_le = n_iter;
-                }
-            }
-            if (!found_best_g && (s_iter >= s)) {
-                if ((n_iter->delta() == zero) && n_iter->fully_expanded()) {
-                    *node_ge = n_iter;
-                    found_best_g = true;
-                } else if (
-                    (*node_ge == nullptr)
-                    || ((*node_ge)->fully_expanded() < n_iter->fully_expanded())
-                    || (((*node_ge)->fully_expanded()
-                         == n_iter->fully_expanded())
-                        && (s_iter < s_g))) {
-                    s_g = s_iter;
-                    *node_ge = n_iter;
-                }
-            }
-        }
-    }
-};
 
 template <class P>
 class ScopedGame
@@ -312,6 +208,95 @@ void Searcher<P>::init()
     tree::Searcher<Node>::init();
     m_table.clear();
     m_search_count = 0u;
+}
+
+template <class P, class N>
+class DfpnAugmentedSearcher : public tree::Searcher<N>
+{
+public:
+    /**
+     * @brief Construct a new Dfpn Augmenter object
+     *
+     * @param tree_size Maximum size of the derived search tree.
+     * @param budget_root Budget for DFPN search at root of the base tree.
+     * @param budget_leaf Budget for DFPN search at leaf of the base tree.
+     */
+    DfpnAugmentedSearcher(
+        const uint tree_size, const uint budget_root, const uint budget_leaf);
+    void apply(Game<P>& game, const move_t& action);
+
+private:
+    Searcher<P> m_dfpn;
+    const uint m_budget_root;
+    const uint m_budget_leaf;
+
+protected:
+    using tree::Searcher<N>::m_nodes;
+    using tree::Searcher<N>::m_next;
+    using tree::Searcher<N>::backprop_to_root;
+    N* simulate_backprop_if_possible(Game<P>& game, N* const leaf);
+    bool dfpn_proved_mate(Game<P>& game, N* const node);
+};
+
+template <class P, class N>
+DfpnAugmentedSearcher<P, N>::DfpnAugmentedSearcher(
+    const uint tree_size, const uint budget_root, const uint budget_leaf)
+    : tree::Searcher<N>(tree_size),
+      m_dfpn{std::max(budget_root, budget_leaf) * 10u},
+      m_budget_root{budget_root}, m_budget_leaf{budget_leaf}
+{
+}
+
+template <class P, class N>
+void DfpnAugmentedSearcher<P, N>::apply(Game<P>& game, const move_t& action)
+{
+    tree::Searcher<N>::apply(action);
+    game.apply(action);
+    dfpn_proved_mate(game, &m_nodes[0]);
+}
+
+template <class P, class N>
+N* DfpnAugmentedSearcher<P, N>::simulate_backprop_if_possible(
+    Game<P>& game, N* const leaf)
+{
+    assert(leaf != nullptr);
+    assert(!leaf->has_child());
+    if (game.get_result() != ONGOING) {
+        leaf->simulate(game);
+        backprop_to_root(game, leaf);
+        return nullptr;
+    }
+    if (leaf->is_mate_to_lose()) {
+        leaf->expand(m_next, game, nullptr);
+        backprop_to_root(game, leaf);
+        return nullptr;
+    }
+    assert(!leaf->is_mate_to_win());
+    if (dfpn_proved_mate(game, leaf))
+        return nullptr;
+    return leaf;
+}
+
+template <class P, class N>
+bool DfpnAugmentedSearcher<P, N>::dfpn_proved_mate(Game<P>& game, N* const node)
+{
+    using C = Configuration<P>;
+    const uint budget = (node == &m_nodes[0]) ? m_budget_root : m_budget_leaf;
+    if (budget == 0u)
+        return false;
+    if (game.get_state().get_king_square(~game.get_turn()) == C::SQ_NA)
+        return false;
+    m_dfpn.init();
+    m_dfpn.search(game, budget);
+    if (m_dfpn.proved_mate()) {
+        const move_t action = m_dfpn.select_action();
+        if (action) {
+            node->simulate_mate_and_expand(m_next, action);
+            backprop_to_root(game, node);
+            return true;
+        }
+    }
+    return false;
 }
 
 } // namespace vshogi::engine::dfpn

@@ -113,8 +113,8 @@ void Searcher<N>::remove_unselected_nodes(const move_t& selected)
     m_next->init();
 }
 
-template <class P>
-void Searcher<P>::apply(const move_t& action)
+template <class N>
+void Searcher<N>::apply(const move_t& action)
 {
     remove_unselected_nodes(action);
     assert(&m_nodes.front() < m_next);
