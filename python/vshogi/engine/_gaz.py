@@ -12,7 +12,7 @@ Value = float
 
 
 def _repr_node(n) -> str:
-    return f"Node(q={n.get_q_value(0):.2f}, count={n.get_visit_count()})"
+    return f"Node(q={n.get_q_value(0, 0):.2f}, count={n.get_visit_count()})"
 
 
 def _tree(
@@ -172,7 +172,11 @@ class GumbelAlphaZero(Engine):
         self._searcher.simulate_expand_backprop(
             node, self._game._game, value, policy_logits)
 
-    def get_q_value(self, greedy_depth: int = 0) -> float:
+    def get_q_value(
+        self,
+        greedy_depth: int = 0,
+        min_visits: int = 10,
+    ) -> float:
         """Return Q-value estimate of the current game position.
 
         Parameters
@@ -180,13 +184,16 @@ class GumbelAlphaZero(Engine):
         greedy_depth : int, optional
             Number of depth to select nodes greedily instead of averaging,
             by default 0.
+        min_visits : int, optional
+            Number of minium visit counts to dig greedily, by default 10.
+            It helps reducing variance of the q-value.
 
         Returns
         -------
         float
             Q-value estimate of the current game position.
         """
-        return self._searcher.get_root().get_q_value(greedy_depth)
+        return self._searcher.get_root().get_q_value(greedy_depth, min_visits)
 
     def _select(self, temperature: float | None = None) -> Move:
         if temperature is None:

@@ -103,7 +103,8 @@ void export_gaz_node(py::module& m)
         .def("get_visit_count", &Node::get_visit_count)
         .def(
             "get_q_value",
-            py::overload_cast<const uint>(&Node::get_q_value, py::const_))
+            py::overload_cast<const uint, const uint>(
+                &Node::get_q_value, py::const_))
         .def(
             "get_actions",
             [](const Node& self) {

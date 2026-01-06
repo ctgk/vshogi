@@ -52,7 +52,8 @@ public:
     // clang-format on
     void init();
     void init(Node* const parent, const move_t& action, const float logit);
-    float get_q_value(const uint greedy_depth) const;
+    float
+    get_q_value(const uint greedy_depth, const uint min_visits = 10u) const;
     const Node* get_child_of(const move_t& action) const;
 
     /**
@@ -76,6 +77,7 @@ public:
     Node* backprop(const float v, Node* const child);
 
 private:
+    float compute_v_pi() const;
     // select
     /**
      * @brief softmax(logits + sigma(completedQ))

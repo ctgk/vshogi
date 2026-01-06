@@ -25,11 +25,38 @@ void Node::init(Node* const parent, const move_t& action, const float logit)
     m_logit = logit;
 }
 
-float Node::get_q_value(const uint greedy_depth) const
+float Node::get_q_value(const uint greedy_depth, const uint min_visits) const
 {
-    if (m_is_mate || !m_child_1st || !greedy_depth)
+    if (m_is_mate || !m_child_1st)
         return m_q_value;
-    return -m_child_1st->get_q_value(greedy_depth - 1u);
+    if (!greedy_depth || (m_child_1st->get_visit_count() < min_visits)) {
+        if (m_parent)
+            return m_q_value;
+        return compute_v_pi();
+    }
+    return -m_child_1st->get_q_value(greedy_depth - 1u, min_visits);
+}
+
+float Node::compute_v_pi() const
+{
+    float n = 0.f;
+    float d = 1e-8f; // to prevent 0 division
+    float pi[max_legal_moves] = {};
+    uint ii = 0u;
+    for (const Node* c = get_child(); c; c = c->get_sibling()) {
+        if (c->get_visit_count())
+            pi[ii++] = c->get_logit();
+    }
+    softmax(pi, ii);
+    ii = 0u;
+    for (const Node* c = get_child(); c; c = c->get_sibling()) {
+        if (c->get_visit_count()) {
+            const float p = pi[ii++];
+            n += p * -c->get_q_value();
+            d += p;
+        }
+    }
+    return n / d;
 }
 
 const Node* Node::get_child_of(const move_t& action) const

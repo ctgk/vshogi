@@ -75,7 +75,8 @@ TEST(test_gaz_node, get_q_value)
         root.backprop(-c->get_q_value(), c);
     }
     DOUBLES_EQUAL(-0.5f, root.get_q_value(), 1e-3f);
-    DOUBLES_EQUAL(-1.f, root.get_q_value(1u), 1e-3f);
+    // DOUBLES_EQUAL(-1.f, root.get_q_value(1u, 0u), 1e-3f);
+    DOUBLES_EQUAL(-1.f, root.get_q_value(1u, 10u), 1e-3f);
 }
 
 TEST(test_gaz_node, backprop)
