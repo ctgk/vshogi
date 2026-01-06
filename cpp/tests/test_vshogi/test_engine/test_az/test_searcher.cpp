@@ -99,6 +99,10 @@ TEST(minishogi_searcher, test_dfpn_root)
         az.search(g);
         CHECK_TRUE(az.proved_mate());
         CHECK_EQUAL(MT::make_move("G*1c"), az.select_action());
+        const auto actual = az.get_mate_moves(g);
+        CHECK_EQUAL(3u, actual.size());
+        CHECK_EQUAL(MT::make_move("G*1c"), actual[0]);
+        CHECK_EQUAL(0u, g.ply());
     }
     {
         az.init();
@@ -118,7 +122,40 @@ TEST(minishogi_searcher, test_dfpn_root)
     }
 }
 
-TEST(minishogi_searcher, test_dfpn_vertex)
+TEST(minishogi_searcher, test_dfpn_vertex_1)
+{
+    // mating net
+    // Turn: WHITE
+    // White: KI
+    //     5   4   3   2   1
+    //   +---+---+---+---+---+
+    // A |   |   |   |   |-OU|
+    //   +---+---+---+---+---+
+    // B |   |   |   |-KI|   |
+    //   +---+---+---+---+---+
+    // C |   |   |   |   |   |
+    //   +---+---+---+---+---+
+    // D |   |   |   |   |   |
+    //   +---+---+---+---+---+
+    // E |   |   |+OU|   |   |
+    //   +---+---+---+---+---+
+    // Black: -
+    auto g = Game("4k/3g1/5/5/2K2 w g");
+    auto az = Searcher(4.f, 0.f, 1000u, 0u, 100u);
+    for (uint ii = 1000; ii--;) {
+        if (az.proved_mate())
+            break;
+        const auto n = az.search(g);
+        az.simulate_expand_backprop(n, g, 0.f);
+    }
+    CHECK_TRUE(az.proved_mate());
+    CHECK_EQUAL(MT::make_move("2b3c"), az.select_action());
+    const auto actual = az.get_mate_moves(g);
+    CHECK_EQUAL(3u, actual.size());
+    CHECK_EQUAL(MT::make_move("2b3c"), actual[0]);
+}
+
+TEST(minishogi_searcher, test_dfpn_vertex_2)
 {
     // Turn: BLACK
     // White: -

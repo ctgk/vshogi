@@ -166,12 +166,16 @@ def test_mating_net():
     #   +---+---+---+---+---+
     # Black: -
     g = shogi.Game("4k/3g1/5/5/2K2 w g")
-    mcts = AlphaZero(dfpn_search_root=0, dfpn_search_leaf=100)
-    mcts.set_game(g)
-    mcts.search(budget=10000)
-    assert mcts.proved_mate()
-    assert shogi.Move("2b3c") == mcts.select()
-    assert set(mcts.get_visit_counts().keys()) == set(g.get_legal_moves())
+    az = AlphaZero(dfpn_search_root=0, dfpn_search_leaf=100)
+    az.set_game(g)
+    az.search(budget=10000)
+    assert az.proved_mate()
+    assert shogi.Move("2b3c") == az.select()
+    assert set(az.get_visit_counts().keys()) == set(g.get_legal_moves())
+    mate_moves = az.get_mate_moves()
+    assert isinstance(mate_moves, list)
+    assert len(mate_moves) == 3
+    assert shogi.Move("2b3c") == mate_moves[0]
 
 
 def test_dfpn_vertex():

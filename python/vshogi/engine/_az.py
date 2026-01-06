@@ -289,6 +289,11 @@ class AlphaZero(Engine):
         else:
             return self._searcher.select_action(temperature)
 
+    def _get_mate_moves(self) -> list[Move] | None:
+        if not self.proved_mate():
+            return None
+        return self._searcher.get_mate_moves(self._game._game)
+
     def _tree(
         self,
         depth: int = 1,

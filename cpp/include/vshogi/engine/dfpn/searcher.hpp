@@ -224,18 +224,25 @@ public:
     DfpnAugmentedSearcher(
         const uint tree_size, const uint budget_root, const uint budget_leaf);
     void apply(Game<P>& game, const move_t& action);
+    std::vector<move_t> get_mate_moves(Game<P>& game);
+    // clang-format off
+    bool proved_mate() const { return m_nodes[0].is_mate(); }
+    // clang-format on
 
 private:
     Searcher<P> m_dfpn;
     const uint m_budget_root;
     const uint m_budget_leaf;
 
+    bool dfpn_proved_mate(Game<P>& game, N* const node);
+    bool follow_line(Game<P>& game, const N* const node);
+    bool follow_dfpn(Game<P>& game);
+
 protected:
     using tree::Searcher<N>::m_nodes;
     using tree::Searcher<N>::m_next;
     using tree::Searcher<N>::backprop_to_root;
     N* simulate_backprop_if_possible(Game<P>& game, N* const leaf);
-    bool dfpn_proved_mate(Game<P>& game, N* const node);
 };
 
 template <class P, class N>
@@ -253,6 +260,63 @@ void DfpnAugmentedSearcher<P, N>::apply(Game<P>& game, const move_t& action)
     tree::Searcher<N>::apply(action);
     game.apply(action);
     dfpn_proved_mate(game, &m_nodes[0]);
+}
+
+template <class P, class N>
+std::vector<move_t> DfpnAugmentedSearcher<P, N>::get_mate_moves(Game<P>& game)
+{
+    std::vector<move_t> out{};
+    if (!proved_mate())
+        return out;
+
+    dfpn::ScopedGame scope{game};
+    const N& root = m_nodes.front();
+    if (follow_line(game, root.get_child_1st())) {
+        for (uint ii = 0u; ii < game.ply(); ++ii)
+            out.emplace_back(game.get_record_action(ii));
+    }
+    for (uint ii = game.ply(); ii--;)
+        game.undo();
+    assert(game.ply() == 0u);
+    return out;
+}
+
+template <class P, class N>
+bool DfpnAugmentedSearcher<P, N>::follow_line(
+    Game<P>& game, const N* const node_and)
+{
+    assert(game.ply() % 2u == 0u);
+    if (game.ply() > 32u)
+        return false; // prevent falling into infinite loop
+    if (node_and == nullptr)
+        return follow_dfpn(game);
+    const auto move_atk = node_and->get_action();
+    if (!game.is_legal(move_atk))
+        return false;
+    const N* const node_or = node_and->get_child_1st();
+    if (node_or and node_or->is_mate_to_win()) {
+        const auto move_def = node_or->get_action();
+        game.apply_nocheck(move_atk);
+        if (game.is_legal(move_def)) {
+            game.apply_nocheck(move_def);
+            return follow_line(game, node_or->get_child_1st());
+        }
+    }
+    return follow_dfpn(game);
+}
+
+template <class P, class N>
+bool DfpnAugmentedSearcher<P, N>::follow_dfpn(Game<P>& game)
+{
+    assert(game.ply() % 2u == 0u);
+    m_dfpn.init();
+    m_dfpn.search(game, std::max(m_budget_leaf, m_budget_root));
+    if (!m_dfpn.proved_mate())
+        return false;
+    const auto mate_moves = m_dfpn.get_mate_moves(game);
+    for (auto&& m : mate_moves)
+        game.apply_nocheck(m);
+    return true;
 }
 
 template <class P, class N>

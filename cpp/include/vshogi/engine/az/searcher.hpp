@@ -10,6 +10,7 @@
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/game.hpp"
 #include "vshogi/common/move.hpp"
+#include "vshogi/common/notation.hpp"
 #include "vshogi/common/result.hpp"
 #include "vshogi/common/utils.hpp"
 #include "vshogi/engine/az/node.hpp"
@@ -45,7 +46,6 @@ public:
     move_t select_action(const float temperature) const;
     // clang-format off
     uint get_search_count() const { return m_nodes[0].get_visit_count(); }
-    bool proved_mate() const { return m_nodes[0].is_mate(); }
     // clang-format on
 
 private:

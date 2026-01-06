@@ -82,8 +82,7 @@ def _play_game(
 
         if player.proved_mate():
             if player.get_q_value() > 0:
-                mate_moves = game.get_mate_moves_if_any(
-                    player._dfpn_search_root)
+                mate_moves = player.get_mate_moves()
                 if mate_moves is not None:
                     for i, m in enumerate(mate_moves):
                         game.apply(m)

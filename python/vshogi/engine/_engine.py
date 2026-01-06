@@ -97,6 +97,17 @@ class Engine(abc.ABC):
         """
         return self._select(temperature)
 
+    def get_mate_moves(self) -> list[Move] | None:
+        """Return a sequence of mate moves if found one.
+
+        Returns
+        -------
+        list[Move] | None
+            A sequence of mate moves found.
+        """
+        self._raise_error_if_not_ready()
+        return self._get_mate_moves()
+
     @abc.abstractmethod
     def _set_game(self, game: Game):
         pass
@@ -111,6 +122,10 @@ class Engine(abc.ABC):
 
     @abc.abstractmethod
     def _select(self, temperature: float | None = None) -> Move:
+        pass
+
+    @abc.abstractmethod
+    def _get_mate_moves(self) -> list[Move] | None:
         pass
 
     @abc.abstractmethod

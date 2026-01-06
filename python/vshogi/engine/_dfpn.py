@@ -146,17 +146,11 @@ class DfpnSearcher(Engine):
         self._raise_error_if_not_ready()
         return self._searcher.get_mate_move()
 
-    def get_mate_moves(self) -> tp.List[Move]:
-        """Return mate moves found.
-
-        Returns
-        -------
-        tp.List[Move]
-            Mate moves found.
-        """
-        self._raise_error_if_not_ready()
+    def _get_mate_moves(self) -> list[Move] | None:
         sfen = self._game.to_sfen()
         ply = self._game.ply()
+        if not self.proved_mate():
+            return None
         mate_moves = self._searcher.get_mate_moves(self._game._game)
         if self._game.ply() != ply:
             raise ValueError(

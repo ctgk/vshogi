@@ -501,15 +501,24 @@ inline void export_az_searcher(pybind11::module& m)
             "select_action",
             [](const Searcher& self) { return Move(self.select_action()); })
         .def(
-            "select_action", [](const Searcher& self, const float temperature) {
+            "select_action",
+            [](const Searcher& self, const float temperature) {
                 return Move(self.select_action(temperature));
-            });
+            })
+        .def("get_mate_moves", [](Searcher& self, Game& g) {
+            std::vector<Move> out{};
+            for (auto&& m : self.get_mate_moves(g))
+                out.emplace_back(m);
+            return out;
+        });
 }
 
 template <class P>
 inline void export_gaz_searcher(pybind11::module& m)
 {
     namespace py = pybind11;
+    using Game = vshogi::Game<P>;
+    using Move = pyvshogi::Move<P>;
     using Node = vshogi::engine::gaz::Node;
     using Searcher = vshogi::engine::gaz::Searcher<P>;
     py::class_<Searcher>(m, "GumbelAlphaZero")
@@ -527,7 +536,7 @@ inline void export_gaz_searcher(pybind11::module& m)
         .def("keep_top_n_actions", &Searcher::keep_top_n_actions)
         .def(
             "search",
-            [](Searcher& self, vshogi::Game<P>& game) -> py::object {
+            [](Searcher& self, Game& game) -> py::object {
                 const auto out = self.search(game);
                 if (out == nullptr)
                     return py::none();
@@ -537,7 +546,7 @@ inline void export_gaz_searcher(pybind11::module& m)
             "simulate_expand_backprop",
             [](Searcher& self,
                Node* const leaf,
-               vshogi::Game<P>& game,
+               Game& game,
                const float value,
                const py::array_t<float>& policy_logits) {
                 self.simulate_expand_backprop(
@@ -545,17 +554,23 @@ inline void export_gaz_searcher(pybind11::module& m)
             })
         .def(
             "select_action",
-            [](const Searcher& self) { return Move<P>(self.select_action()); })
+            [](const Searcher& self) { return Move(self.select_action()); })
         .def(
             "select_action",
             [](const Searcher& self, const float temperature) {
-                return Move<P>(self.select_action(temperature));
+                return Move(self.select_action(temperature));
             })
         .def(
-            "apply",
-            [](Searcher& self, vshogi::Game<P>& game, const Move<P>& action) {
-                self.apply(game, action.m_value);
-            });
+            "get_mate_moves",
+            [](Searcher& self, Game& g) {
+                std::vector<Move> out{};
+                for (auto&& m : self.get_mate_moves(g))
+                    out.emplace_back(m);
+                return out;
+            })
+        .def("apply", [](Searcher& self, Game& game, const Move& action) {
+            self.apply(game, action.m_value);
+        });
 }
 
 template <class Parameters>

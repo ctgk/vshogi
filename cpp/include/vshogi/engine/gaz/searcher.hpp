@@ -70,6 +70,8 @@ private:
         const uint& max_visits,
         const float& gumbel_noise) const;
     uint max_child_visits() const;
+    bool follow_line(Game<P>& game, const Node* const node_and);
+    bool follow_dfpn(Game<P>& game);
 };
 
 template <class P>
