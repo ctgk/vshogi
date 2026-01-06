@@ -29,11 +29,12 @@ void Node::init(Node* const parent, const move_t& action, const float proba)
     m_proba = proba;
 }
 
-float Node::get_q_value(const uint greedy_depth) const
+float Node::get_q_value(const uint greedy_depth, const uint min_visits) const
 {
-    if (m_is_mate || !m_child_1st || !greedy_depth)
+    if (m_is_mate || !m_child_1st || !greedy_depth
+        || (m_child_1st->get_visit_count() < min_visits))
         return m_q_value;
-    return -m_child_1st->get_q_value(greedy_depth - 1u);
+    return -m_child_1st->get_q_value(greedy_depth - 1u, min_visits);
 }
 
 const Node* Node::get_child_of(const move_t& action) const

@@ -74,8 +74,8 @@ void export_az_node(py::module& m)
             &Node::get_visit_count_excluding_random)
         .def(
             "get_q_value",
-            [](const Node& self, const uint depth) {
-                return self.get_q_value(depth);
+            [](const Node& self, const uint depth, const uint min_visits) {
+                return self.get_q_value(depth, min_visits);
             })
         .def(
             "get_actions",

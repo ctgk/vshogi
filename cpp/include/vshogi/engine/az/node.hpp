@@ -39,7 +39,8 @@ public:
     // clang-format on
     void init();
     void init(Node* const parent, const move_t& action, const float proba);
-    float get_q_value(const uint greedy_depth) const;
+    float
+    get_q_value(const uint greedy_depth, const uint min_visits = 10u) const;
     const Node* get_child_of(const move_t& action) const;
 
     /**

@@ -112,7 +112,8 @@ TEST(minishogi_node, explore_one_action)
         const auto ch = root.get_child_of(MT::make_move(SQ_1C, SQ_1B));
         CHECK_TRUE(actual == ch);
     }
-    DOUBLES_EQUAL(0.8f, root.get_q_value(100), 1e-2f);
+    DOUBLES_EQUAL(0.8f, root.get_q_value(100u, 0u), 1e-2f);
+    DOUBLES_EQUAL((0.1f + 0.8f) / 2.f, root.get_q_value(100u, 10u), 1e-2f);
 }
 
 TEST(minishogi_node, explore_two_action)
@@ -181,7 +182,7 @@ TEST(minishogi_node, explore_two_action)
             root.get_child_1st()->get_action()
             == expected_most_selected_moves[ii]);
         DOUBLES_EQUAL(
-            expected_greedy_q_values[ii], root.get_q_value(100), 1e-2f);
+            expected_greedy_q_values[ii], root.get_q_value(100u, 0u), 1e-2f);
     }
 }
 
@@ -244,7 +245,7 @@ TEST(minishogi_node, explore_two_layer)
         CHECK_EQUAL(&root, actual->backprop(actual->get_q_value(), nullptr));
         CHECK_EQUAL(nullptr, root.backprop(-actual->get_q_value(), actual));
         DOUBLES_EQUAL((0.f + 0.9f) / 2.f, root.get_q_value(), 1e-3f);
-        DOUBLES_EQUAL(0.9f, root.get_q_value(100), 1e-2f);
+        DOUBLES_EQUAL(0.9f, root.get_q_value(100u, 0u), 1e-2f);
     }
     {
         auto g_copy = Game(g);
@@ -271,9 +272,10 @@ TEST(minishogi_node, explore_two_layer)
         CHECK_TRUE(
             root.get_child_1st()->get_action() == MT::make_move(SQ_1E, SQ_1D));
         DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(0), 1e-2f);
-        DOUBLES_EQUAL((0.9f + -0.5f) / 2.f, root.get_q_value(1), 1e-2f);
-        DOUBLES_EQUAL(-0.5f, root.get_q_value(2), 1e-2f);
-        DOUBLES_EQUAL(-0.5f, root.get_q_value(100), 1e-2f);
+        DOUBLES_EQUAL((0.9f + -0.5f) / 2.f, root.get_q_value(1u, 0u), 1e-2f);
+        DOUBLES_EQUAL(-0.5f, root.get_q_value(2, 0u), 1e-2f);
+        DOUBLES_EQUAL((0.9f + -0.5f) / 2.f, root.get_q_value(2, 2u), 1e-2f);
+        DOUBLES_EQUAL(-0.5f, root.get_q_value(100, 0u), 1e-2f);
     }
     {
         CHECK_EQUAL(3, root.get_visit_count());

@@ -13,7 +13,7 @@ Value = float
 
 def _repr_node(n, greedy_detph: int = 0) -> str:
     d = greedy_detph
-    return f"Node(q{d}={n.get_q_value(d):.2f}, count={n.get_visit_count()})"
+    return f"Node(q{d}={n.get_q_value(d, 0):.2f}, count={n.get_visit_count()})"
 
 
 def _tree(
@@ -188,7 +188,11 @@ class AlphaZero(Engine):
             prev_visits[m] = curr_visits[m]
         return kldgain
 
-    def get_q_value(self, greedy_depth: int = 0) -> float:
+    def get_q_value(
+        self,
+        greedy_depth: int = 0,
+        min_visits: int = 10,
+    ) -> float:
         """Return Q-value estimate of the current game position.
 
         Parameters
@@ -196,13 +200,16 @@ class AlphaZero(Engine):
         greedy_depth : int, optional
             Number of depth to select nodes greedily instead of averaging,
             by default 0.
+        min_visits : int, optional
+            Number of minium visit counts to dig greedily, by default 10.
+            It helps reducing variance of the q-value.
 
         Returns
         -------
         float
             Q-value estimate of the current game position.
         """
-        return self._searcher.get_root().get_q_value(greedy_depth)
+        return self._searcher.get_root().get_q_value(greedy_depth, min_visits)
 
     def get_probas(self) -> tp.Dict[Move, float]:
         """Return raw probabilities of selecting actions.
@@ -241,7 +248,7 @@ class AlphaZero(Engine):
         move_type = self._game._get_move_class()
         root = self._searcher.get_root()
         move_q_pair_list = [
-            (m, -root.get_child_of(m).get_q_value(greedy_depth))
+            (m, -root.get_child_of(m).get_q_value(greedy_depth, 0))
             for m in root.get_actions()
         ]
         move_q_pair_list.sort(key=lambda a: a[1], reverse=True)

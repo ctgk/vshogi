@@ -100,19 +100,29 @@ def test_visit_count_by_random():
 
 
 def test_greedy_q_value():
+
+    def random_pv_func(game):
+        return np.zeros(game.num_dlshogi_policy), np.random.uniform(-1, 1)
+
     game = shogi.Game()
-    searcher = AlphaZero(uniform_pv_func)
+    searcher = AlphaZero(random_pv_func)
     searcher.set_game(game)
     searcher.search(budget=100)
     action = searcher.select()
 
+    print(searcher._tree(depth=3, breadth=2))
     assert np.isclose(
-        searcher.get_q_value(greedy_depth=1),
+        searcher.get_q_value(greedy_depth=1, min_visits=0),
         searcher.get_q_values()[action],
     )
+    print(searcher.get_q_values(greedy_depth=1))
     assert np.isclose(
-        searcher.get_q_value(greedy_depth=2),
+        searcher.get_q_value(greedy_depth=2, min_visits=0),
         searcher.get_q_values(greedy_depth=1)[action],
+    )
+    assert np.isclose(
+        searcher.get_q_value(greedy_depth=100, min_visits=100),
+        searcher.get_q_value(),
     )
 
     searcher._tree(depth=2, breadth=3)
