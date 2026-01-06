@@ -277,7 +277,7 @@ def _run_self_play_single(
             player_black=player_black,
             player_white=player_white,
             filepath=kifu_dir + '/' + f'kifu_{i:05d}{suffix}.tsv',
-            main_player=player,
+            main_player=None if player_black is player_white else player,
             num_simulations=num_simulations,
             temperature=temperature,
             q_greedy_depth=q_greedy_depth,
