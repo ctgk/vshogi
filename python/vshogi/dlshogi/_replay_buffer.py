@@ -8,6 +8,8 @@ from vshogi.shogi._game import Game as StandardGame  # noqa: F401
 
 
 def _add_dicts(d1: dict, d2: dict) -> dict:
+    if (not d1) or (not d2):
+        return {}
     if set(d1.keys()) != set(d2.keys()):
         raise ValueError(
             'Cannot add two dicts with unmatching keys: '
@@ -29,8 +31,9 @@ class ReplayBuffer(th.utils.data.Dataset):
 
     Examples
     --------
+    >>> from vshogi.minishogi import Move; import numpy as np
     >>> b = ReplayBuffer(buffer_size=2)
-    >>> b.add(Data('4k/5/4P/5/5 b G 1', {}, 1., 1.))
+    >>> b.add(Data('4k/5/4P/5/5 b G 1', {Move('1c1b'): 1}, 1., 1.))
     >>> b.is_full()
     False
     >>> b.add(Data('4k/5/4P/5/5 b G 3', {}, 0.5, 0.9))
@@ -43,6 +46,8 @@ class ReplayBuffer(th.utils.data.Dataset):
     (array([0.75], dtype=float32), array(1., dtype=float32))
     >>> b[1][2:]  # weights remain as they are
     (array([0.75], dtype=float32), array(0.9, dtype=float32))
+    >>> np.allclose(-100000., b[0][1])  # policy
+    True
     """
 
     def __init__(self, buffer_size: int = 100000):
