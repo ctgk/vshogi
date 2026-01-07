@@ -11,6 +11,7 @@ def read_kifu(
     *,
     discount_factor: float = 1.,
     importance_decay: float = 1.,
+    default_result_rate: float = 1.,
 ) -> pd.DataFrame:
     """Return dataframe of Shogi kifu.
 
@@ -22,6 +23,8 @@ def read_kifu(
         Discount factor of result value, by default 1.
     importance_decay : float, optional
         Decay factor of data importance of each game position, by default 1.
+    default_result_rate : float, optional
+        `value = result_rate * result + (1 - result_rate) * q_value`
 
     Returns
     -------
@@ -36,10 +39,11 @@ def read_kifu(
             'result': int,
             'q_value': float,
             'policy': str,
-            'z_weight': float,
         },
     )
     total_ply = len(df)
+    df['policy'] = _compute_visit_dist(df)
+    df['z_weight'] = _compute_z_weight(df, default_result_rate)
     df['weight'] = _compute_weight(df, importance_decay)
     df['value'] = (
         df['z_weight'] * df['result'] * np.power(
@@ -47,8 +51,26 @@ def read_kifu(
         + (1 - df['z_weight']) * df['q_value']
     )
     df['value01'] = df['value'].apply(lambda v: np.clip((v + 1) / 2, 0., 1.))
-    df['policy'] = _compute_visit_dist(df)
     return df
+
+
+def _compute_z_weight(
+    df: pd.DataFrame,
+    default_result_rate: float,
+) -> pd.Series:
+    game_class = _infer_game_variant(df['sfen'][0])
+    move_class = game_class._get_move_class()
+    return df.apply(
+        lambda row: (
+            0. if (
+                row['policy'] == {}
+                or move_class(row['move']) != max(
+                    row['policy'], key=row['policy'].get)
+            )
+            else default_result_rate
+        ),
+        axis=1,
+    )
 
 
 def _compute_weight(df: pd.DataFrame, importance_decay: float) -> np.ndarray:

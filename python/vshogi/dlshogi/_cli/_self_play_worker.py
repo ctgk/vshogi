@@ -28,9 +28,8 @@ def _dump_game_log(file_, game: vs.Game) -> None:
             ),
             lambda g, i: g.q_value_log[i],
             lambda g, i: g.policy_log[i],
-            lambda g, i: g.z_weight_log[i],
         ),
-        names=('sfen', 'move', 'result', 'q_value', 'policy', 'z_weight'),
+        names=('sfen', 'move', 'result', 'q_value', 'policy'),
         file_=file_,
     )
 
@@ -53,7 +52,6 @@ def _play_game(
     game = game_class()
     game.q_value_log = []
     game.policy_log = []
-    game.z_weight_log = []
 
     num_random_moves = (
         np.random.choice(max_random_moves + 1)
@@ -80,31 +78,22 @@ def _play_game(
             elif engine == 'GumbelAlphaZero':
                 main.search(num_simulations, num_actions=gumbel_actions)
 
-        if player.proved_mate():
-            if player.get_q_value() > 0:
-                mate_moves = player.get_mate_moves()
-                if mate_moves is not None:
-                    for i, m in enumerate(mate_moves):
-                        game.apply(m)
-                        game.q_value_log.append(1. if i % 2 == 0 else -1.)
-                        game.policy_log.append({})
-                        game.z_weight_log.append(0.)
-                    if game.result != vs.Result.ONGOING:
-                        break
-                    else:
-                        for _ in mate_moves:
-                            game.undo()
-            move = player.select()
-            # Setting z_weight = 0, because the result can be independent of
-            # this proof when the player fails to prove a checkmate in the
-            # following game position.
-            game.z_weight_log.append(0.)
+        if player.proved_mate() and player.get_q_value() > 0:
+            mate_moves = player.get_mate_moves()
+            if mate_moves is not None:
+                for i, m in enumerate(mate_moves):
+                    game.apply(m)
+                    game.q_value_log.append(1. if i % 2 == 0 else -1.)
+                    game.policy_log.append({})
+                if game.result != vs.Result.ONGOING:
+                    break
+                else:
+                    for _ in mate_moves:
+                        game.undo()
         elif (engine == 'AlphaZero') and (game.ply() < num_random_moves):
             move = player.select(temperature=temperature)
-            game.z_weight_log.append(0.)
         else:
             move = player.select()
-            game.z_weight_log.append(0.5 if (main is None) else 0.)
         if (hash(move) == 0):
             raise ValueError(
                 f"Invalid move ({move}) selected at the game, "

@@ -51,6 +51,7 @@ def _dataset(
     kifu_fraction: float = 1.,
     discount_factor: float = 1.,
     importance_decay: float = 1.,
+    default_result_rate: float = 1.,
 ) -> th.utils.data.Dataset:
     buffer = vs.dlshogi.ReplayBuffer(buffer_size=max_dataset_size)
     kifu_dir_list = sorted(
@@ -72,6 +73,7 @@ def _dataset(
                 kifu_path,
                 discount_factor=discount_factor,
                 importance_decay=importance_decay,
+                default_result_rate=default_result_rate,
             )
             df = df.tail(int(len(df) * fr))
             for _, row in df.iterrows():
@@ -203,6 +205,7 @@ def _train_step(
     kifu_fraction: float,
     discount_factor: float,
     importance_decay: float,
+    default_result_rate: float,
     minibatch_size: int,
     learning_rate: float,
     epochs: int,
@@ -243,6 +246,7 @@ def _train_step(
         kifu_fraction=kifu_fraction,
         discount_factor=discount_factor,
         importance_decay=importance_decay,
+        default_result_rate=default_result_rate,
     )
     if len(dataset) != 0:
         print(f"Start training: {model_path}")
@@ -302,6 +306,7 @@ def _train_step(
 @cl.option("--kifu-fraction", default=0.8, show_default=True)
 @cl.option("--discount-factor", default=0.99, show_default=True)
 @cl.option("--importance-decay", default=0.7, show_default=True)
+@cl.option("--default-result-rate", default=0.5, show_default=True)
 @cl.option("--minibatch-size", default=32, show_default=True)
 @cl.option("--learning-rate", default=1e-2, show_default=True)
 @cl.option("--epochs", default=5, show_default=True)
@@ -347,6 +352,7 @@ def _nn_trainer(**kwargs):
             kifu_fraction=kwargs['kifu_fraction'],
             discount_factor=kwargs['discount_factor'],
             importance_decay=kwargs['importance_decay'],
+            default_result_rate=kwargs['default_result_rate'],
             minibatch_size=kwargs['minibatch_size'],
             learning_rate=kwargs['learning_rate'],
             epochs=0 if ii == 0 else kwargs['epochs'],

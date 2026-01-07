@@ -34,6 +34,7 @@ def _train(nth_cycle: int, **kwargs):
         kifu_fraction=kwargs['train_kifu_fraction'],
         discount_factor=kwargs['train_discount_factor'],
         importance_decay=kwargs['train_importance_decay'],
+        default_result_rate=kwargs['train_default_result_rate'],
         minibatch_size=kwargs['train_minibatch_size'],
         learning_rate=kwargs['train_learning_rate'],
         epochs=0 if nth_cycle == 0 else kwargs['train_epochs'],
@@ -100,6 +101,7 @@ def _selfplay(
 @cl.option("--train-kifu-fraction", default=0.8, show_default=True)
 @cl.option("--train-discount-factor", default=0.99, show_default=True)
 @cl.option("--train-importance-decay", default=0.7, show_default=True)
+@cl.option("--train-default-result-rate", default=0.5, show_default=True)
 @cl.option("--train-minibatch-size", default=32, show_default=True)
 @cl.option("--train-learning-rate", default=1e-2, show_default=True)
 @cl.option("--train-epochs", default=5, show_default=True)
