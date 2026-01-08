@@ -9,13 +9,12 @@ def _check(kifu: str):
     df = pd.read_csv(
         kifu,
         sep='\t',
-        usecols=['sfen', 'result', 'q_value', 'policy', 'z_weight'],
+        usecols=['sfen', 'result', 'q_value', 'policy'],
         dtype={
             'sfen': str,
             'result': int,
             'q_value': float,
             'policy': str,
-            'z_weight': float,
         },
     )
     if len(df) == 0:
