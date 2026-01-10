@@ -5,23 +5,24 @@
 #include <string>
 
 #include "vshogi/common/color.hpp"
-#include "vshogi/common/pieces.hpp"
+#include "vshogi/common/piece_traits.hpp"
 
 namespace vshogi
 {
 
-template <class Config>
+template <class Parameters>
 class Stand
 {
 private:
-    using Int = typename Config::BaseTypeStand;
-    using PieceType = typename Config::PieceType;
-    using PHelper = Pieces<Config>;
-    static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
+    using C = Configuration<Parameters>;
+    using Int = typename C::BaseTypeStand;
+    using PieceType = typename C::PieceType;
+    using PT = PieceTraits<Parameters>;
+    static constexpr uint num_piece_types = C::num_stand_piece_types;
 
-    static const uint shift_bits[num_stand_piece_types];
-    static const Int masks[num_stand_piece_types];
-    static const Int deltas[num_stand_piece_types];
+    static const uint shift_bits[num_piece_types];
+    static const Int masks[num_piece_types];
+    static const Int deltas[num_piece_types];
     static const Int mask;
 
     Int m_value;
@@ -36,12 +37,25 @@ public:
     template <typename... Args>
     Stand(const int, const int, Args...);
 
+    Int value() const
+    {
+        return m_value;
+    }
     uint count(const PieceType& p) const
     {
+        assert(static_cast<uint>(p) < num_piece_types);
         return static_cast<uint>((m_value & masks[p]) >> shift_bits[p]);
+    }
+    uint unique_count() const
+    {
+        uint out = 0u;
+        for (auto pt : C::stand_piece_type_iterator())
+            out += static_cast<uint>(exist(pt));
+        return out;
     }
     bool exist(const PieceType& p) const
     {
+        assert(static_cast<uint>(p) < num_piece_types);
         return (m_value & masks[p]) > 0;
     }
     bool any() const
@@ -50,14 +64,17 @@ public:
     }
     Stand& add(const PieceType& p, const int num = 1)
     {
+        assert(p != C::NA);
+        const auto p_demoted = PT::demote(p);
         for (int ii = num; ii--;) {
-            m_value = static_cast<Int>(m_value + deltas[PHelper::demote(p)]);
+            m_value = static_cast<Int>(m_value + deltas[p_demoted]);
         }
         return *this;
     }
     Stand& subtract(const PieceType& p)
     {
-        m_value = static_cast<Int>(m_value - deltas[PHelper::demote(p)]);
+        assert(p != C::NA);
+        m_value = static_cast<Int>(m_value - deltas[PT::demote(p)]);
         return *this;
     }
     bool operator==(const Stand& other) const
@@ -68,35 +85,70 @@ public:
     {
         return m_value != other.m_value;
     }
+    bool operator>=(const Stand& other) const
+    {
+        return (((m_value - other.m_value) & ~mask) == 0u);
+    }
+    bool operator<=(const Stand& other) const
+    {
+        return other.operator>=(*this);
+    }
+    bool operator>(const Stand& other) const
+    {
+        const auto d = m_value - other.m_value;
+        return (d != 0u) && ((d & ~mask) == 0u);
+    }
+    bool operator<(const Stand& other) const
+    {
+        return other.operator>(*this);
+    }
 };
 
-template <class Config>
+template <class Parameters>
 class BlackWhiteStands
 {
+private:
+    using C = Configuration<Parameters>;
+    using PT = PieceTraits<Parameters>;
+    using PieceType = typename C::PieceType;
+    using Piece = typename C::Piece;
+
 public:
-    using StandType = Stand<Config>;
+    using StandType = Stand<Parameters>;
 
 private:
-    using PHelper = Pieces<Config>;
-    using PieceType = typename Config::PieceType;
-    using ColoredPiece = typename Config::ColoredPiece;
-    static constexpr uint num_stand_piece_types = Config::num_stand_piece_types;
-    static constexpr uint max_stand_piece_count = Config::max_stand_piece_count;
-    static constexpr uint max_sfen_length = Config::max_stand_sfen_length;
-
-    static const PieceType stand_pieces_in_sfen_order[num_stand_piece_types];
-    static std::uint64_t zobrist_table[num_colors][num_stand_piece_types]
-                                      [max_stand_piece_count + 1];
+    static constexpr uint num_piece_types = C::num_stand_piece_types;
+    static constexpr uint max_piece_count = C::max_stand_piece_count;
+    static constexpr uint max_sfen_length = 100u;
+    static std::uint64_t zobrist_table[num_colors][num_piece_types]
+                                      [max_piece_count + 1];
 
     StandType m_stands[num_colors];
+    std::uint64_t m_hash;
+
+    std::uint64_t compute_zobrist_hash() const
+    {
+        std::uint64_t out = static_cast<std::uint64_t>(0);
+        for (auto& c : color_array) {
+            for (auto pt : C::stand_piece_type_iterator()) {
+                const auto num = m_stands[c].count(pt);
+                assert(pt < num_piece_types);
+                assert(num <= max_piece_count);
+                out ^= zobrist_table[c][pt][num];
+            }
+        }
+        return out;
+    }
 
 public:
-    BlackWhiteStands() : m_stands{}
+    BlackWhiteStands() : m_stands{}, m_hash()
     {
+        m_hash = compute_zobrist_hash();
     }
-    BlackWhiteStands(const std::string& sfen) : m_stands{}
+    BlackWhiteStands(const std::string& sfen) : m_stands{}, m_hash()
     {
         set_sfen(sfen.c_str());
+        m_hash = compute_zobrist_hash();
     }
     bool operator==(const BlackWhiteStands& other) const
     {
@@ -126,10 +178,11 @@ public:
     {
         int num = 0;
         const char* ptr = sfen;
-        for (; ptr - sfen < max_sfen_length; ++ptr) {
+        for (; ptr < sfen + max_sfen_length; ++ptr) {
             switch (*ptr) {
             case '-':
-                ++ptr; // fall-through
+                ++ptr;
+                goto END;
             case ' ':
                 ++ptr; // fall-through
             case '\0':
@@ -144,46 +197,35 @@ public:
             }
 
             if (('A' <= *ptr) && (*ptr <= 'Z'))
-                m_stands[BLACK].add(
-                    PHelper::to_piece_type(*ptr), num ? num : 1);
+                m_stands[BLACK].add(PT::to_piece_type(*ptr), num ? num : 1);
             else if (('a' <= *ptr) && (*ptr <= 'z'))
-                m_stands[WHITE].add(
-                    PHelper::to_piece_type(*ptr), num ? num : 1);
+                m_stands[WHITE].add(PT::to_piece_type(*ptr), num ? num : 1);
             num = 0;
         }
     END:
+        if (ptr[0] == ' ')
+            ++ptr;
+        m_hash = compute_zobrist_hash();
         return ptr;
     }
-    void append_sfen(std::string& out) const
-    {
-        if (!(m_stands[BLACK].any() || m_stands[WHITE].any())) {
-            out += '-';
-            return;
-        }
-        for (auto& c : color_array) {
-            for (auto& p : stand_pieces_in_sfen_order) {
-                const auto num = operator[](c).count(p);
-                if (num == 0)
-                    continue;
-                if (num > 9)
-                    out += '1';
-                if (num > 1)
-                    out += static_cast<char>('0' + num % 10);
-                PHelper::append_sfen(PHelper::to_board_piece(c, p), out);
-            }
-        }
-    }
-    ColoredPiece pop_piece_from(
-        const ColorEnum& c, const PieceType& pt, std::uint64_t* const hash)
+    Piece pop_piece_from(
+        const ColorEnum& c,
+        const PieceType& pt,
+        std::uint64_t* const hash = nullptr)
     {
         m_stands[c].subtract(pt);
+        const auto num_after = m_stands[c].count(pt);
+        const auto num_before = num_after + 1;
+        assert(pt != C::NA);
+        assert(num_before <= max_piece_count);
+        assert(num_after <= max_piece_count);
+        m_hash ^= zobrist_table[c][pt][num_before];
+        m_hash ^= zobrist_table[c][pt][num_after];
         if (hash != nullptr) {
-            const auto num_after = m_stands[c].count(pt);
-            const auto num_before = num_after + 1;
             *hash ^= zobrist_table[c][pt][num_before];
             *hash ^= zobrist_table[c][pt][num_after];
         }
-        return PHelper::to_board_piece(c, pt);
+        return PT::make_piece(c, pt);
     }
 
     /**
@@ -196,50 +238,80 @@ public:
      * @param hash Pointer to zobrist hash value.
      */
     void add_captured_piece(
-        const ColoredPiece& captured, std::uint64_t* const hash = nullptr)
+        const Piece& captured, std::uint64_t* const hash = nullptr)
     {
-        if ((captured == PHelper::VOID)
-            || (PHelper::to_piece_type(captured) == PHelper::OU))
+        if ((captured == C::VOID) || (PT::to_piece_type(captured) == C::OU))
             return;
 
-        const auto c = ~PHelper::get_color(captured);
-        const auto pt_demoted
-            = PHelper::demote(PHelper::to_piece_type(captured));
+        const auto c = ~PT::get_color(captured);
+        const auto pt_demoted = PT::demote(PT::to_piece_type(captured));
         m_stands[c].add(pt_demoted);
+        const auto num_after = m_stands[c].count(pt_demoted);
+        const auto num_before = num_after - 1;
+        assert(pt_demoted < num_piece_types);
+        assert(num_before <= max_piece_count);
+        assert(num_after <= max_piece_count);
+        m_hash ^= zobrist_table[c][pt_demoted][num_before];
+        m_hash ^= zobrist_table[c][pt_demoted][num_after];
         if (hash != nullptr) {
-            const auto num_after = m_stands[c].count(pt_demoted);
-            const auto num_before = num_after - 1;
             *hash ^= zobrist_table[c][pt_demoted][num_before];
             *hash ^= zobrist_table[c][pt_demoted][num_after];
         }
     }
-
-    std::uint64_t zobrist_hash() const
+    void return_dropped_piece(const Piece& dropped)
     {
-        std::uint64_t out = static_cast<std::uint64_t>(0);
-        for (auto& c : color_array) {
-            for (auto pt : EnumIterator<PieceType, num_stand_piece_types>()) {
-                const auto num = m_stands[c].count(pt);
-                out ^= zobrist_table[c][pt][num];
-            }
-        }
-        return out;
+        const auto c = PT::get_color(dropped);
+        const auto pt = PT::to_piece_type(dropped);
+        m_stands[c].add(pt);
+        const auto num_after = m_stands[c].count(pt);
+        const auto num_before = num_after - 1;
+        m_hash ^= zobrist_table[c][pt][num_before];
+        m_hash ^= zobrist_table[c][pt][num_after];
     }
-
+    void remove_captured_piece(const Piece& captured)
+    {
+        const auto pt = PT::to_piece_type(captured);
+        if (pt == C::OU)
+            return;
+        const auto c = ~PT::get_color(captured);
+        const auto pt_demoted = PT::demote(pt);
+        m_stands[c].subtract(pt_demoted);
+        const auto num_after = m_stands[c].count(pt_demoted);
+        const auto num_before = num_after + 1;
+        m_hash ^= zobrist_table[c][pt_demoted][num_before];
+        m_hash ^= zobrist_table[c][pt_demoted][num_after];
+    }
+    std::uint64_t get_zobrist_hash() const
+    {
+        return m_hash;
+    }
     static void init_tables()
     {
         std::random_device dev;
         std::mt19937_64 rng(dev());
         std::uniform_int_distribution<std::uint64_t> dist;
         for (auto&& c : color_array) {
-            for (auto pt : EnumIterator<PieceType, num_stand_piece_types>()) {
-                for (uint num = 0; num < max_stand_piece_count + 1; ++num) {
+            for (auto pt : C::stand_piece_type_iterator()) {
+                for (uint num = 0; num < max_piece_count + 1; ++num) {
+                    assert(pt < num_piece_types);
+                    assert(num <= max_piece_count);
                     zobrist_table[c][pt][num] = dist(rng);
                 }
             }
         }
     }
+    BlackWhiteStands rotate() const;
 };
+
+template <class P>
+BlackWhiteStands<P> BlackWhiteStands<P>::rotate() const
+{
+    BlackWhiteStands out{};
+    out.m_stands[BLACK] = m_stands[WHITE];
+    out.m_stands[WHITE] = m_stands[BLACK];
+    out.m_hash = out.compute_zobrist_hash();
+    return out;
+}
 
 } // namespace vshogi
 

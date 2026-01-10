@@ -5,9 +5,9 @@ name: Check Repository
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, tmp ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, tmp ]
 
 jobs:
   build:
@@ -15,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.10', '3.11', '3.12']
         command: [
-          "pip install .; pip install pytest; pytest --doctest-modules --import-mode=importlib python/",
-          "pip install -e .[develop]; SKIP=no-commit-to-branch pre-commit run -a"
+          "pip install .; pip install pytest; pytest --doctest-modules --import-mode=importlib --ignore-glob='**/*dlshogi/*' python/",
+          "pip install -e .[develop,dlshogi]; SKIP=no-commit-to-branch pre-commit run -a && clang-tidy `find ./cpp/**/*.hpp ./cpp/**/*.cpp -type f | grep -v python` -p build/pre-commit -extra-arg=-Wno-unknown-warning-option"
         ]
       fail-fast: false
 
@@ -31,7 +31,7 @@ jobs:
     - name: Upgrade pip
       run: python -m pip install --upgrade pip
     - name: install packages
-      run: sudo apt update -y; sudo apt install -y build-essential make cpputest clang-format-12 clang-tidy-11 libc++-dev
+      run: sudo apt update -y; sudo apt install -y build-essential make cpputest clang-tidy libc++-dev
     - name: Run command
       env:
         CMD: ${{ matrix.command }}

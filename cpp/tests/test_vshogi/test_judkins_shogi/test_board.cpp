@@ -1,3 +1,4 @@
+#include "vshogi/common/notation.hpp"
 #include "vshogi/variants/judkins_shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -6,8 +7,11 @@ namespace test_vshogi::test_judkins_shogi
 {
 
 using namespace vshogi::judkins_shogi;
+using BT = vshogi::BitboardTraits<Parameters>;
+using NT = vshogi::Notation<Parameters>;
 
-TEST_GROUP(judkins_shogi_board){};
+TEST_GROUP (judkins_shogi_board) {
+};
 
 TEST(judkins_shogi_board, get)
 {
@@ -17,11 +21,11 @@ TEST(judkins_shogi_board, get)
     CHECK_EQUAL(VOID, b[SQ_1D]);
 }
 
-TEST(judkins_shogi_board, set)
+TEST(judkins_shogi_board, place_at)
 {
     auto b = Board();
     CHECK_EQUAL(VOID, b[SQ_2D]);
-    b.apply(SQ_2D, W_GI);
+    b.place_at(SQ_2D, W_GI);
     CHECK_EQUAL(W_GI, b[SQ_2D]);
 }
 
@@ -122,9 +126,59 @@ TEST(judkins_shogi_board, append_sfen)
     b.set_sfen(sfen);
 
     const char expected[] = "+r+b+n+s+p+P/+S+N+B+RGg/6/5k/6/K5";
-    auto actual = std::string();
-    b.append_sfen(actual);
+    const auto actual = NT::to_sfen(b);
     STRCMP_EQUAL(expected, actual.c_str());
+}
+
+TEST(judkins_shogi_board, find_pinned)
+{
+    const auto b = Board("1b3+r/6/3P1P/6/1r1P1K/6 b");
+    const auto actual = b.find_pinned(vshogi::BLACK);
+    CHECK_EQUAL(0b000000000000000000010100000000000100u, actual);
+}
+
+TEST(judkins_shogi_board, find_sliding_attacker)
+{
+    {
+        const auto b = Board("6/6/6/6/6/b5");
+        const auto actual
+            = b.find_sliding_attacker(vshogi::WHITE, SQ_1A, vshogi::DIR_SW);
+        CHECK_EQUAL(SQ_6F, actual);
+    }
+    {
+        const auto b = Board("6/6/3p2/6/6/b5");
+        const auto actual
+            = b.find_sliding_attacker(vshogi::WHITE, SQ_1A, vshogi::DIR_SW);
+        CHECK_EQUAL(SQ_NA, actual);
+    }
+    {
+        const auto b = Board("6/6/3p2/6/6/b5");
+        const auto actual = b.find_sliding_attacker(
+            vshogi::WHITE, SQ_1A, vshogi::DIR_SW, SQ_3C);
+        CHECK_EQUAL(SQ_6F, actual);
+    }
+    {
+        const auto b = Board("6/6/3p2/2r3/6/b5");
+        const auto actual = b.find_sliding_attacker(
+            vshogi::WHITE, SQ_1A, vshogi::DIR_SW, SQ_3C);
+        CHECK_EQUAL(SQ_NA, actual);
+    }
+}
+
+TEST(judkins_shogi_board, compute_movable_to)
+{
+    {
+        const auto b = Board("6/6/6/4n1/6/6");
+        const auto actual
+            = b.compute_movable_to(SQ_1F, vshogi::WHITE, BT::full());
+        CHECK_EQUAL(BT::from_square(SQ_2D), actual);
+    }
+    {
+        const auto b = Board("6/6/6/4n1/6/6");
+        const auto actual
+            = b.compute_movable_to(SQ_1F, vshogi::WHITE, BT::from_rank(RANK1));
+        CHECK_EQUAL(0, actual);
+    }
 }
 
 } // namespace test_vshogi::test_judkins_shogi

@@ -1,10 +1,12 @@
 from vshogi._game import Game as BaseGame
 from vshogi._vshogi.minishogi import (
+    AlphaZero,
+    BoardPiece,
     DfpnSearcher,
-    MCTS,
-    MctsNode,
+    GumbelAlphaZero,
     Move,
     _Game as _MinishogiGame,
+    piece_value_func,
 )
 
 
@@ -25,19 +27,19 @@ class Game(BaseGame):
     Turn: BLACK
     White: -
         5   4   3   2   1
-      *---*---*---*---*---*
+      +---+---+---+---+---+
     A |-HI|-KA|-GI|-KI|-OU|
-      *---*---*---*---*---*
+      +---+---+---+---+---+
     B |   |   |   |   |-FU|
-      *---*---*---*---*---*
+      +---+---+---+---+---+
     C |   |   |   |   |   |
-      *---*---*---*---*---*
+      +---+---+---+---+---+
     D |+FU|   |   |   |   |
-      *---*---*---*---*---*
+      +---+---+---+---+---+
     E |+OU|+KI|+GI|+KA|+HI|
-      *---*---*---*---*---*
+      +---+---+---+---+---+
     Black: -
-    >>> game.apply(SQ_4C, SQ_2E)
+    >>> game.apply('2e4c')
     Game(sfen="rbsgk/4p/1B3/P4/KGS1R w - 2")
     """
 
@@ -46,17 +48,24 @@ class Game(BaseGame):
         return _MinishogiGame
 
     @classmethod
+    def _get_board_piece_class(cls) -> type:
+        return BoardPiece
+
+    @classmethod
     def _get_move_class(cls) -> type:
         return Move
 
     @classmethod
-    def _get_mcts_node_class(cls) -> type:
-        return MctsNode
+    def _get_az_searcher_class(cls) -> type:
+        return AlphaZero
 
     @classmethod
-    def _get_mcts_searcher_class(cls) -> type:
-        return MCTS
+    def _get_gaz_searcher_class(cls):
+        return GumbelAlphaZero
 
     @classmethod
     def _get_dfpn_searcher_class(cls) -> type:
         return DfpnSearcher
+
+    def _piece_value_func(self) -> float:
+        return piece_value_func(self._game)

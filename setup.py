@@ -19,6 +19,5 @@ setup(
     cmdclass={'build_ext': build_ext},
     classifiers=[
         "Programming Language :: Python :: 3",
-        'License :: OSI Approved :: GNU General Public License (GPL)',
     ],
 )

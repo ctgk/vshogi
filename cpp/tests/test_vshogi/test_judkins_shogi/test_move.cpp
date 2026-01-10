@@ -6,76 +6,65 @@ namespace test_vshogi::test_judkins_shogi
 {
 
 using namespace vshogi::judkins_shogi;
+using namespace vshogi;
+using MT = vshogi::MoveTraits<Parameters>;
 
-TEST_GROUP(move){};
+TEST_GROUP (test_judkins_shogi_move) {
+};
 
-TEST(move, usi)
+TEST(test_judkins_shogi_move, get_dst)
 {
-    CHECK_TRUE(Move(SQ_1B, SQ_1A, true) == Move("1a1b+"));
-    {
-        char actual[6] = {'\0'};
-        Move(SQ_3C, FU).to_usi(actual);
-        STRCMP_EQUAL("P*3c", actual);
-    }
-    {
-        char actual[6] = {'\0'};
-        Move(SQ_1B, SQ_1A).to_usi(actual);
-        STRCMP_EQUAL("1a1b", actual);
-    }
-    {
-        char actual[6] = {'\0'};
-        Move(SQ_1B, SQ_1A, true).to_usi(actual);
-        STRCMP_EQUAL("1a1b+", actual);
-    }
+    CHECK_EQUAL(SQ_1A, MT::get_dst(MT::make_move(SQ_1B, SQ_1A, true)));
+    CHECK_EQUAL(SQ_3E, MT::get_dst(MT::make_move(GI, SQ_3E)));
 }
 
-TEST(move, destination)
+TEST(test_judkins_shogi_move, get_src)
 {
-    CHECK_EQUAL(SQ_1A, Move(SQ_1A, SQ_1B, true).destination());
-    CHECK_EQUAL(SQ_3E, Move(SQ_3E, GI).destination());
+    CHECK_EQUAL(SQ_1B, MT::get_src_sq(MT::make_move(SQ_1B, SQ_1A, true)));
+    CHECK_EQUAL(GI, MT::get_src_pt(MT::make_move(GI, SQ_3E)));
 }
 
-TEST(move, source)
+TEST(test_judkins_shogi_move, promote)
 {
-    CHECK_EQUAL(SQ_1B, Move(SQ_1A, SQ_1B, true).source_square());
-    CHECK_EQUAL(GI, Move(SQ_3E, GI).source_piece());
+    CHECK_TRUE(MT::get_promote(MT::make_move(SQ_1B, SQ_1A, true)));
+    CHECK_FALSE(MT::get_promote(MT::make_move(GI, SQ_3E)));
 }
 
-TEST(move, promote)
+TEST(test_judkins_shogi_move, is_drop)
 {
-    CHECK_TRUE(Move(SQ_1A, SQ_1B, true).promote());
-    CHECK_FALSE(Move(SQ_3E, GI).promote());
+    CHECK_FALSE(MT::is_drop(MT::make_move(SQ_1B, SQ_1A, true)));
+    CHECK_TRUE(MT::is_drop(MT::make_move(GI, SQ_3E)));
 }
 
-TEST(move, is_drop)
-{
-    CHECK_FALSE(Move(SQ_1A, SQ_1B, true).is_drop());
-    CHECK_TRUE(Move(SQ_3E, GI).is_drop());
-}
-
-TEST(move, hash)
-{
-    CHECK_TRUE(
-        Move(SQ_1A, SQ_1B, true) == Move(Move(SQ_1A, SQ_1B, true).hash()));
-    CHECK_TRUE(Move(SQ_3E, GI) == Move(Move(SQ_3E, GI).hash()));
-}
-
-TEST(move, rotate)
-{
-    CHECK_TRUE(Move(SQ_5E, SQ_5D, true) == Move(SQ_2B, SQ_2C, true).rotate());
-    CHECK_TRUE(Move(SQ_3A, GI) == Move(SQ_4F, GI).rotate());
-}
-
-TEST(move, to_dlshogi_policy_index)
+TEST(test_judkins_shogi_move, rotate)
 {
     CHECK_EQUAL(
-        15 * (10 * 2 + 6) + 7, Move(SQ_3C, SQ_1E).to_dlshogi_policy_index());
+        MT::make_move(SQ_5D, SQ_5E, true),
+        MT::rotate(MT::make_move(SQ_2C, SQ_2B, true)));
+    CHECK_EQUAL(MT::make_move(GI, SQ_3A), MT::rotate(MT::make_move(GI, SQ_4F)));
+}
+
+TEST(test_judkins_shogi_move, to_policy_index)
+{
     CHECK_EQUAL(
-        20 * (10 * 2 + 6) + 2 + 10,
-        Move(SQ_4D, SQ_1A, true).to_dlshogi_policy_index());
+        static_cast<int>(SQ_3C) * (10 * 2 + 6) + 7,
+        MT::to_policy_index(MT::make_move(SQ_1E, SQ_3C), BLACK));
     CHECK_EQUAL(
-        8 * (10 * 2 + 6) + 10 * 2 + 2,
-        Move(SQ_4B, GI).to_dlshogi_policy_index());
+        static_cast<int>(SQ_4D) * (10 * 2 + 6) + 2 + 10,
+        MT::to_policy_index(MT::make_move(SQ_1A, SQ_4D, true), BLACK));
+    CHECK_EQUAL(
+        static_cast<int>(SQ_4B) * (10 * 2 + 6) + 10 * 2 + 2,
+        MT::to_policy_index(MT::make_move(GI, SQ_4B), BLACK));
+
+    CHECK_EQUAL(
+        static_cast<int>(SQ_3C) * (10 * 2 + 6) + 7,
+        MT::to_policy_index(MT::make_move(SQ_6B, SQ_4D), WHITE));
+    CHECK_EQUAL(
+        static_cast<int>(SQ_4D) * (10 * 2 + 6) + 2 + 10,
+        MT::to_policy_index(MT::make_move(SQ_6F, SQ_3C, true), WHITE));
+    CHECK_EQUAL(
+        static_cast<int>(SQ_4B) * (10 * 2 + 6) + 10 * 2 + 2,
+        MT::to_policy_index(MT::make_move(GI, SQ_3E), WHITE));
 }
 
 } // namespace test_vshogi::test_judkins_shogi

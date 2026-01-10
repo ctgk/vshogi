@@ -7,9 +7,11 @@ function(vshogi_add_compile_options target)
             -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs
             -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls
             -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel
-            -Wswitch-default -Wundef -Werror -Wno-unused -Wconversion)
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        target_compile_options(${target} PRIVATE -Wall -Wextra)
+            -Wswitch-default -Wundef -Werror -Wno-unused -Wconversion
+            -Wno-array-bounds)
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "^(Apple)?Clang$")
+        target_compile_options(${target} PRIVATE
+            -Werror -Wall -Wextra -Wconversion -Wold-style-cast -Wshadow)
     endif()
     target_compile_options(${target} PRIVATE
         $<$<CONFIG:Release>:-O3>

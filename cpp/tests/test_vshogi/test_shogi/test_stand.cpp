@@ -1,3 +1,4 @@
+#include "vshogi/common/notation.hpp"
 #include "vshogi/variants/shogi.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -6,8 +7,10 @@ namespace test_vshogi::test_shogi
 {
 
 using namespace vshogi::shogi;
+using NT = vshogi::Notation<Parameters>;
 
-TEST_GROUP(shogi_stand){};
+TEST_GROUP (shogi_stand) {
+};
 
 TEST(shogi_stand, count)
 {
@@ -73,23 +76,39 @@ TEST(shogi_stand, set_sfen)
     CHECK_EQUAL('\0', actual[1]);
 }
 
-TEST(shogi_stand, append_sfen)
+TEST(shogi_stand, to_sfen)
 {
     {
         auto s = BlackWhiteStands();
         s.set_sfen("-");
-        auto actual = std::string();
-        s.append_sfen(actual);
+        auto actual = NT::to_sfen(s);
         STRCMP_EQUAL("-", actual.c_str());
     }
     {
         const char sfen_holdings[] = "3P4NG10pl2r 5";
         auto s = BlackWhiteStands();
         s.set_sfen(sfen_holdings);
-        auto actual = std::string();
-        s.append_sfen(actual);
+        auto actual = NT::to_sfen(s);
         STRCMP_EQUAL("G4N3P2rl10p", actual.c_str());
     }
+}
+
+TEST(shogi_stand, operators)
+{
+    CHECK_TRUE(Stand(1, 0, 0, 0, 0, 0, 0) == Stand(1, 0, 0, 0, 0, 0, 0));
+    CHECK_FALSE(Stand(1, 0, 0, 0, 0, 0, 0) != Stand(1, 0, 0, 0, 0, 0, 0));
+    CHECK_TRUE(Stand(1, 0, 0, 0, 0, 0, 0) >= Stand(1, 0, 0, 0, 0, 0, 0));
+
+    CHECK_TRUE(Stand(2, 0, 0, 0, 0, 0, 0) >= Stand(1, 0, 0, 0, 0, 0, 0));
+    CHECK_FALSE(Stand(2, 0, 0, 0, 0, 0, 0) >= Stand(3, 0, 0, 0, 0, 0, 0));
+
+    CHECK_TRUE(Stand(9, 4, 4, 4, 2, 2, 4) >= Stand(3, 4, 4, 4, 4, 2, 4));
+    CHECK_FALSE(Stand(9, 0, 4, 4, 2, 2, 4) >= Stand(3, 4, 4, 4, 2, 2, 4));
+    CHECK_FALSE(Stand(9, 4, 0, 4, 2, 2, 4) >= Stand(3, 4, 4, 4, 2, 2, 4));
+    CHECK_FALSE(Stand(9, 4, 4, 0, 2, 2, 4) >= Stand(3, 4, 4, 4, 2, 2, 4));
+    CHECK_FALSE(Stand(9, 4, 4, 4, 0, 2, 4) >= Stand(3, 4, 4, 4, 2, 2, 4));
+    CHECK_FALSE(Stand(9, 4, 4, 4, 2, 0, 4) >= Stand(3, 4, 4, 4, 2, 2, 4));
+    CHECK_FALSE(Stand(9, 4, 4, 4, 2, 2, 0) >= Stand(3, 4, 4, 4, 2, 2, 4));
 }
 
 } // namespace test_vshogi::test_shogi

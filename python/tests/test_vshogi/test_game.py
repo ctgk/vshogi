@@ -3,7 +3,7 @@ import inspect
 
 import pytest
 
-import vshogi.animal_shogi as shogi
+import vshogi.minishogi as shogi
 
 
 def run_doctest_of_class_method(class_method):

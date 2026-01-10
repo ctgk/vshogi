@@ -5,82 +5,74 @@
 namespace test_vshogi::test_minishogi
 {
 
+using namespace vshogi;
 using namespace vshogi::minishogi;
+using MT = vshogi::MoveTraits<Parameters>;
 
-TEST_GROUP(move){};
+TEST_GROUP (test_minishogi_move) {
+};
 
-TEST(move, usi)
+TEST(test_minishogi_move, get_dst)
 {
-    CHECK_TRUE(Move(SQ_1B, SQ_1A, true) == Move("1a1b+"));
-    {
-        char actual[6] = {'\0'};
-        Move(SQ_3C, FU).to_usi(actual);
-        STRCMP_EQUAL("P*3c", actual);
-    }
-    {
-        char actual[6] = {'\0'};
-        Move(SQ_1B, SQ_1A).to_usi(actual);
-        STRCMP_EQUAL("1a1b", actual);
-    }
-    {
-        char actual[6] = {'\0'};
-        Move(SQ_1B, SQ_1A, true).to_usi(actual);
-        STRCMP_EQUAL("1a1b+", actual);
-    }
+    CHECK_EQUAL(SQ_1A, MT::get_dst(MT::make_move(SQ_1B, SQ_1A, true)));
+    CHECK_EQUAL(SQ_3E, MT::get_dst(MT::make_move(GI, SQ_3E)));
 }
 
-TEST(move, destination)
+TEST(test_minishogi_move, get_src)
 {
-    CHECK_EQUAL(SQ_1A, Move(SQ_1A, SQ_1B, true).destination());
-    CHECK_EQUAL(SQ_3E, Move(SQ_3E, GI).destination());
+    CHECK_EQUAL(SQ_1B, MT::get_src_sq(MT::make_move(SQ_1B, SQ_1A, true)));
+    CHECK_EQUAL(GI, MT::get_src_pt(MT::make_move(GI, SQ_3E)));
 }
 
-TEST(move, source)
+TEST(test_minishogi_move, get_promote)
 {
-    CHECK_EQUAL(SQ_1B, Move(SQ_1A, SQ_1B, true).source_square());
-    CHECK_EQUAL(GI, Move(SQ_3E, GI).source_piece());
+    CHECK_TRUE(MT::get_promote(MT::make_move(SQ_1B, SQ_1A, true)));
+    CHECK_FALSE(MT::get_promote(MT::make_move(GI, SQ_3E)));
 }
 
-TEST(move, promote)
+TEST(test_minishogi_move, is_drop)
 {
-    CHECK_TRUE(Move(SQ_1A, SQ_1B, true).promote());
-    CHECK_FALSE(Move(SQ_3E, GI).promote());
+    CHECK_FALSE(MT::is_drop(MT::make_move(SQ_1B, SQ_1A, true)));
+    CHECK_TRUE(MT::is_drop(MT::make_move(GI, SQ_3E)));
 }
 
-TEST(move, is_drop)
-{
-    CHECK_FALSE(Move(SQ_1A, SQ_1B, true).is_drop());
-    CHECK_TRUE(Move(SQ_3E, GI).is_drop());
-}
-
-TEST(move, hash)
-{
-    CHECK_TRUE(
-        Move(SQ_1A, SQ_1B, true) == Move(Move(SQ_1A, SQ_1B, true).hash()));
-    CHECK_TRUE(Move(SQ_3E, GI) == Move(Move(SQ_3E, GI).hash()));
-}
-
-TEST(move, rotate)
-{
-    CHECK_TRUE(Move(SQ_5E, SQ_5D, true) == Move(SQ_1A, SQ_1B, true).rotate());
-    CHECK_TRUE(Move(SQ_3A, GI) == Move(SQ_3E, GI).rotate());
-}
-
-TEST(move, hflip)
-{
-    CHECK_TRUE(Move(SQ_5A, SQ_5B, true) == Move(SQ_1A, SQ_1B, true).hflip());
-    CHECK_TRUE(Move(SQ_3E, GI) == Move(SQ_3E, GI).hflip());
-}
-
-TEST(move, to_dlshogi_policy_index)
+TEST(test_minishogi_move, rotate)
 {
     CHECK_EQUAL(
-        12 * (8 * 2 + 5) + 7, Move(SQ_3C, SQ_1E).to_dlshogi_policy_index());
+        MT::make_move(SQ_5D, SQ_5E, true),
+        MT::rotate(MT::make_move(SQ_1B, SQ_1A, true)));
+    CHECK_EQUAL(MT::make_move(GI, SQ_3A), MT::rotate(MT::make_move(GI, SQ_3E)));
+}
+
+TEST(test_minishogi_move, hflip)
+{
     CHECK_EQUAL(
-        16 * (8 * 2 + 5) + 2 + 8,
-        Move(SQ_4D, SQ_1A, true).to_dlshogi_policy_index());
+        MT::make_move(SQ_5B, SQ_5A, true),
+        MT::hflip(MT::make_move(SQ_1B, SQ_1A, true)));
+    CHECK_EQUAL(MT::make_move(GI, SQ_3E), MT::hflip(MT::make_move(GI, SQ_3E)));
+}
+
+TEST(test_minishogi_move, to_policy_index)
+{
     CHECK_EQUAL(
-        6 * (8 * 2 + 5) + 8 * 2 + 1, Move(SQ_4B, GI).to_dlshogi_policy_index());
+        static_cast<int>(SQ_3C) * (8 * 2 + 5) + 7,
+        MT::to_policy_index(MT::make_move(SQ_1E, SQ_3C), BLACK));
+    CHECK_EQUAL(
+        static_cast<int>(SQ_4D) * (8 * 2 + 5) + 2 + 8,
+        MT::to_policy_index(MT::make_move(SQ_1A, SQ_4D, true), BLACK));
+    CHECK_EQUAL(
+        static_cast<int>(SQ_4B) * (8 * 2 + 5) + 8 * 2 + static_cast<int>(GI),
+        MT::to_policy_index(MT::make_move(GI, SQ_4B), BLACK));
+
+    CHECK_EQUAL(
+        static_cast<int>(SQ_3C) * (8 * 2 + 5) + 7,
+        MT::to_policy_index(MT::make_move(SQ_5A, SQ_3C), WHITE));
+    CHECK_EQUAL(
+        static_cast<int>(SQ_4D) * (8 * 2 + 5) + 2 + 8,
+        MT::to_policy_index(MT::make_move(SQ_5E, SQ_2B, true), WHITE));
+    CHECK_EQUAL(
+        static_cast<int>(SQ_4B) * (8 * 2 + 5) + 8 * 2 + static_cast<int>(GI),
+        MT::to_policy_index(MT::make_move(GI, SQ_2D), WHITE));
 }
 
 } // namespace test_vshogi::test_minishogi

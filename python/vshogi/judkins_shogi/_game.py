@@ -1,10 +1,12 @@
 from vshogi._game import Game as BaseGame
 from vshogi._vshogi.judkins_shogi import (
+    AlphaZero,
+    BoardPiece,
     DfpnSearcher,
-    MCTS,
-    MctsNode,
+    GumbelAlphaZero,
     Move,
     _Game as _ShogiGame,
+    piece_value_func,
 )
 
 
@@ -39,7 +41,7 @@ class Game(BaseGame):
     F |+OU|+KI|+GI|+KE|+KA|+HI|
       +---+---+---+---+---+---+
     Black: -
-    >>> game.apply(SQ_6D, SQ_6E)
+    >>> game.apply('6e6d')
     Game(sfen="rbnsgk/5p/6/P5/6/KGSNBR w - 2")
     """
 
@@ -48,17 +50,24 @@ class Game(BaseGame):
         return _ShogiGame
 
     @classmethod
+    def _get_board_piece_class(cls) -> type:
+        return BoardPiece
+
+    @classmethod
     def _get_move_class(cls) -> type:
         return Move
 
     @classmethod
-    def _get_mcts_searcher_class(cls) -> type:
-        return MCTS
+    def _get_az_searcher_class(cls) -> type:
+        return AlphaZero
 
     @classmethod
-    def _get_mcts_node_class(cls) -> type:
-        return MctsNode
+    def _get_gaz_searcher_class(cls):
+        return GumbelAlphaZero
 
     @classmethod
     def _get_dfpn_searcher_class(cls) -> type:
         return DfpnSearcher
+
+    def _piece_value_func(self) -> float:
+        return piece_value_func(self._game)

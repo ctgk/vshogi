@@ -1,3 +1,4 @@
+#include "vshogi/common/notation.hpp"
 #include "vshogi/variants/minishogi.hpp"
 
 #include <CppUTest/TestHarness.h>
@@ -6,67 +7,191 @@ namespace test_vshogi::test_minishogi
 {
 
 using namespace vshogi::minishogi;
+using MT = vshogi::MoveTraits<Parameters>;
+using NT = vshogi::Notation<Parameters>;
 
-TEST_GROUP(minishogi_game){};
+TEST_GROUP (test_minishogi_game) {
+};
 
-TEST(minishogi_game, num_dlshogi_policy)
+TEST(test_minishogi_game, num_dlshogi_policy)
 {
     CHECK_EQUAL(5 * 5 * (2 * 8 + 5), Game::num_dlshogi_policy());
 }
 
-TEST(minishogi_game, record_length)
+TEST(test_minishogi_game, ply)
 {
     auto game = Game();
-    CHECK_EQUAL(0, game.record_length());
-    game.apply(Move(SQ_3D, SQ_2E))
-        .apply(Move(SQ_3B, SQ_2A))
-        .apply(Move(SQ_1B, SQ_1E));
-    CHECK_EQUAL(3, game.record_length());
+    CHECK_EQUAL(0, game.ply());
+    game.apply(MT::make_move(SQ_2E, SQ_3D))
+        .apply(MT::make_move(SQ_2A, SQ_3B))
+        .apply(MT::make_move(SQ_1E, SQ_1B));
+    CHECK_EQUAL(3, game.ply());
 }
 
-TEST(minishogi_game, apply)
+TEST(test_minishogi_game, get_board_turn_hash)
+{
+    auto g1 = Game("4k/5/4G/5/5 b G");
+    auto g2 = Game("4k/5/4G/5/5 b GS");
+    CHECK_TRUE(g1.get_zobrist_hash() != g2.get_zobrist_hash());
+    CHECK_EQUAL(g1.get_board_turn_hash(), g2.get_board_turn_hash());
+}
+
+TEST(test_minishogi_game, apply)
 {
     {
         auto game = Game();
-        game.apply(Move(SQ_3D, SQ_4E));
-        STRCMP_EQUAL("rbsgk/4p/5/P1G2/K1SBR w - 2", game.to_sfen().c_str());
+        game.apply(MT::make_move(SQ_4E, SQ_3D));
+        STRCMP_EQUAL("rbsgk/4p/5/P1G2/K1SBR w - 2", NT::to_sfen(game).c_str());
     }
 }
 
-TEST(minishogi_game, is_legal)
+TEST(test_minishogi_game, undo)
 {
-    // Turn: WHITE
-    // White: FU
-    //     5   4   3   2   1
-    //   *---*---*---*---*---*
-    // A |   |   |   |   |   |
-    //   *---*---*---*---*---*
-    // B |   |-OU|   |   |   |
-    //   *---*---*---*---*---*
-    // C |   |   |-HI|   |   |
-    //   *---*---*---*---*---*
-    // D |   |+OU|   |   |   |
-    //   *---*---*---*---*---*
-    // E |-KI|   |   |   |   |
-    //   *---*---*---*---*---*
-    // Black: -
-    auto g = Game("5/1k3/2r2/1K3/g4 w p");
-    CHECK_TRUE(g.is_legal(Move(SQ_4C, FU)));
+    {
+        // no promotion no capturing
+        auto game = Game();
+        game.apply(MT::make_move(SQ_4E, SQ_3D));
+        CHECK_EQUAL(1, game.ply());
+        game.undo();
+        CHECK_EQUAL(0, game.ply());
+        STRCMP_EQUAL("rbsgk/4p/5/P4/KGSBR b - 1", NT::to_sfen(game).c_str());
+    }
+    {
+        // undo capturing move
+        auto game = Game();
+        game.apply(MT::make_move(SQ_1E, SQ_1B));
+        CHECK_EQUAL(1, game.get_stand(vshogi::BLACK).count(FU));
+        game.undo();
+        CHECK_EQUAL(0, game.get_stand(vshogi::BLACK).count(FU));
+        STRCMP_EQUAL("rbsgk/4p/5/P4/KGSBR b - 1", NT::to_sfen(game).c_str());
+    }
+    {
+        // undo promotion
+        auto game = Game("rbsgk/4p/5/P4/KGSRB b -");
+        game.apply(MT::make_move(SQ_1E, SQ_5A, true));
+        CHECK_EQUAL(
+            static_cast<int>(B_UM), static_cast<int>(game.get_board()[SQ_5A]));
+        game.undo();
+        STRCMP_EQUAL("rbsgk/4p/5/P4/KGSRB b - 1", NT::to_sfen(game).c_str());
+    }
+    {
+        auto game = Game("4k/4r/5/5/4K b P");
+        game.apply(MT::make_move(FU, SQ_1C));
+        game.undo();
+        CHECK_TRUE(game.in_check());
+        CHECK_EQUAL(SQ_1B, game.get_state().find_checker_square());
+    }
+    {
+        // undo ignoring check & undo drop move
+        auto game = Game("4k/4p/4K/5/5 b P");
+        game.apply(MT::make_move(FU, SQ_5B));
+        CHECK_EQUAL(0, game.get_stand(vshogi::BLACK).count(FU));
+        CHECK_EQUAL(vshogi::WHITE_WIN, game.get_result());
+        game.undo();
+        CHECK_EQUAL(1, game.get_stand(vshogi::BLACK).count(FU));
+        CHECK_EQUAL(vshogi::ONGOING, game.get_result());
+        CHECK_TRUE(game.in_check());
+    }
 }
 
-TEST(minishogi_game, get_legal_moves)
+TEST(test_minishogi_game, is_legal)
+{
+    {
+        // Turn: WHITE
+        // White: FU
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // B |   |-OU|   |   |   |
+        //   *---*---*---*---*---*
+        // C |   |   |-HI|   |   |
+        //   *---*---*---*---*---*
+        // D |   |+OU|   |   |   |
+        //   *---*---*---*---*---*
+        // E |-KI|   |   |   |   |
+        //   *---*---*---*---*---*
+        // Black: -
+        auto g = Game("5/1k3/2r2/1K3/g4 w p");
+        CHECK_TRUE(g.is_legal(MT::make_move(FU, SQ_4C)));
+    }
+    {
+        // Turn: BLACK
+        // White: FU
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |-HI|-KA|-GI|-KI|   |
+        //   *---*---*---*---*---*
+        // B |   |   |   |-OU|-FU|
+        //   *---*---*---*---*---*
+        // C |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // D |+FU|+OU|   |   |   |
+        //   *---*---*---*---*---*
+        // E |   |+KI|+GI|+KA|+HI|
+        //   *---*---*---*---*---*
+        // Black: -
+        auto g = Game("rbsg1/3kp/5/PK3/1GSBR b -");
+        CHECK_FALSE(g.is_legal(MT::make_move(SQ_1A, SQ_2B)));
+    }
+    {
+        // Turn: WHITE
+        // White: FU
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |-HI|-KA|-GI|-KI|   |
+        //   *---*---*---*---*---*
+        // B |   |   |   |-OU|-FU|
+        //   *---*---*---*---*---*
+        // C |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // D |+FU|+OU|   |   |   |
+        //   *---*---*---*---*---*
+        // E |   |+KI|+GI|+KA|+HI|
+        //   *---*---*---*---*---*
+        // Black: -
+        auto g = Game("rbsg1/3kp/5/PK3/1GSBR w -");
+        CHECK_FALSE(g.is_legal(MT::make_move(SQ_1A, SQ_2B)));
+    }
+    {
+        // Turn: BLACK
+        // White: -
+        //     5   4   3   2   1
+        //   *---*---*---*---*---*
+        // A |   |   |   |   |   |
+        //   *---*---*---*---*---*
+        // B |+OU|-KA|   |-RY|   |
+        //   *---*---*---*---*---*
+        // C |   |   |+KA|   |   |
+        //   *---*---*---*---*---*
+        // D |   |   |   |-KI|   |
+        //   *---*---*---*---*---*
+        // E |   |   |   |   |-OU|
+        //   *---*---*---*---*---*
+        // Black: -
+        auto g = Game("5/Kb1+r1/2B2/3g1/4k b -");
+        CHECK_FALSE(g.is_legal(MT::make_move(SQ_3C, SQ_1E)));
+    }
+}
+
+TEST(test_minishogi_game, get_legal_moves)
 {
     {
         auto g = Game();
         const auto& actual = g.get_legal_moves();
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_5C, SQ_5D))
+            std::find(
+                actual.cbegin(), actual.cend(), MT::make_move(SQ_5D, SQ_5C))
             != actual.cend());
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_5C, SQ_5D, true))
+            std::find(
+                actual.cbegin(),
+                actual.cend(),
+                MT::make_move(SQ_5D, SQ_5C, true))
             != actual.cend());
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_5B, SQ_5D))
+            std::find(
+                actual.cbegin(), actual.cend(), MT::make_move(SQ_5D, SQ_5B))
             != actual.cend());
     }
     {
@@ -87,26 +212,32 @@ TEST(minishogi_game, get_legal_moves)
         const auto& actual = g.get_legal_moves();
 
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_1C, FU))
+            std::find(actual.cbegin(), actual.cend(), MT::make_move(FU, SQ_1C))
             != actual.cend());
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_5A, FU))
+            std::find(actual.cbegin(), actual.cend(), MT::make_move(FU, SQ_5A))
             != actual.cend()); // Unmovable
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_1B, FU))
+            std::find(actual.cbegin(), actual.cend(), MT::make_move(FU, SQ_1B))
             != actual.cend()); // drop pawn mate
 
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_4A, SQ_4B))
+            std::find(
+                actual.cbegin(), actual.cend(), MT::make_move(SQ_4B, SQ_4A))
             != actual.cend());
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_4A, SQ_4B, true))
+            std::find(
+                actual.cbegin(),
+                actual.cend(),
+                MT::make_move(SQ_4B, SQ_4A, true))
             != actual.cend());
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_5A, SQ_4B))
+            std::find(
+                actual.cbegin(), actual.cend(), MT::make_move(SQ_4B, SQ_5A))
             != actual.cend());
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_5B, SQ_4B))
+            std::find(
+                actual.cbegin(), actual.cend(), MT::make_move(SQ_4B, SQ_5B))
             != actual.cend()); // discovered check
     }
     {
@@ -128,10 +259,16 @@ TEST(minishogi_game, get_legal_moves)
         auto g = Game("rbsBk/5/5/P3p/KGS1R b G 5");
         const auto& actual = g.get_legal_moves();
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_1B, SQ_2A, true))
+            std::find(
+                actual.cbegin(),
+                actual.cend(),
+                MT::make_move(SQ_2A, SQ_1B, true))
             != actual.cend());
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_1D, SQ_1E, true))
+            std::find(
+                actual.cbegin(),
+                actual.cend(),
+                MT::make_move(SQ_1E, SQ_1D, true))
             != actual.cend());
     }
     {
@@ -153,7 +290,8 @@ TEST(minishogi_game, get_legal_moves)
         auto g = Game("+B1s2/B1g1p/3k1/PS1R1/KG2R w - 10");
         const auto& actual = g.get_legal_moves();
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_2D, SQ_3A))
+            std::find(
+                actual.cbegin(), actual.cend(), MT::make_move(SQ_3A, SQ_2D))
             != actual.cend());
     }
     {
@@ -175,10 +313,14 @@ TEST(minishogi_game, get_legal_moves)
         auto g = Game("+P2gk/1Pbs1/2b2/1R3/KG2+r b s 2");
         const auto& actual = g.get_legal_moves();
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_4A, SQ_4B))
+            std::find(
+                actual.cbegin(), actual.cend(), MT::make_move(SQ_4B, SQ_4A))
             != actual.cend());
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_4A, SQ_4B, true))
+            std::find(
+                actual.cbegin(),
+                actual.cend(),
+                MT::make_move(SQ_4B, SQ_4A, true))
             != actual.cend());
     }
     {
@@ -200,16 +342,16 @@ TEST(minishogi_game, get_legal_moves)
         auto g = Game("R2gk/5/4G/1P3/K4 b P");
         const auto& actual = g.get_legal_moves();
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_1B, FU))
+            std::find(actual.cbegin(), actual.cend(), MT::make_move(FU, SQ_1B))
             != actual.cend()); // drop pawn mate
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_4B, FU))
+            std::find(actual.cbegin(), actual.cend(), MT::make_move(FU, SQ_4B))
             != actual.cend()); // two pawns on the same file
         CHECK_FALSE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_3A, FU))
+            std::find(actual.cbegin(), actual.cend(), MT::make_move(FU, SQ_3A))
             != actual.cend()); // unmovable after drop
         CHECK_TRUE(
-            std::find(actual.cbegin(), actual.cend(), Move(SQ_3B, FU))
+            std::find(actual.cbegin(), actual.cend(), MT::make_move(FU, SQ_3B))
             != actual.cend());
     }
     {
@@ -326,71 +468,91 @@ TEST(minishogi_game, get_legal_moves)
     }
 }
 
-TEST(minishogi_game, result)
+TEST(test_minishogi_game, result)
 {
     {
         auto game = Game();
-        game.apply(Move(SQ_4C, SQ_2E));
+        game.apply(MT::make_move(SQ_2E, SQ_4C));
         CHECK_EQUAL(vshogi::ONGOING, game.get_result());
-        game.apply(Move(SQ_1C, SQ_1B));
+        game.apply(MT::make_move(SQ_1B, SQ_1C));
         CHECK_EQUAL(vshogi::ONGOING, game.get_result());
-        game.apply(Move(SQ_2E, SQ_1E));
+        game.apply(MT::make_move(SQ_1E, SQ_2E));
         CHECK_EQUAL(vshogi::ONGOING, game.get_result());
-        game.apply(Move(SQ_1D, SQ_1C));
+        game.apply(MT::make_move(SQ_1C, SQ_1D));
         CHECK_EQUAL(vshogi::ONGOING, game.get_result());
-        game.apply(Move(SQ_2A, SQ_2E, true));
+        game.apply(MT::make_move(SQ_2E, SQ_2A, true));
         CHECK_EQUAL(vshogi::BLACK_WIN, game.get_result());
     }
     {
         auto game = Game();
-        game.apply(Move(SQ_1D, SQ_1E))
-            .apply(Move(SQ_5B, SQ_5A))
-            .apply(Move(SQ_1E, SQ_1D))
-            .apply(Move(SQ_5A, SQ_5B));
+        game.apply(MT::make_move(SQ_1E, SQ_1D))
+            .apply(MT::make_move(SQ_5A, SQ_5B))
+            .apply(MT::make_move(SQ_1D, SQ_1E))
+            .apply(MT::make_move(SQ_5B, SQ_5A));
         CHECK_EQUAL(vshogi::ONGOING, game.get_result()); // #repeat = 2
-        game.apply(Move(SQ_1D, SQ_1E))
-            .apply(Move(SQ_5B, SQ_5A))
-            .apply(Move(SQ_1E, SQ_1D))
-            .apply(Move(SQ_5A, SQ_5B));
+        game.apply(MT::make_move(SQ_1E, SQ_1D))
+            .apply(MT::make_move(SQ_5A, SQ_5B))
+            .apply(MT::make_move(SQ_1D, SQ_1E))
+            .apply(MT::make_move(SQ_5B, SQ_5A));
         CHECK_EQUAL(vshogi::ONGOING, game.get_result()); // #repeat = 3
-        game.apply(Move(SQ_1D, SQ_1E))
-            .apply(Move(SQ_5B, SQ_5A))
-            .apply(Move(SQ_1E, SQ_1D));
+        game.apply(MT::make_move(SQ_1E, SQ_1D))
+            .apply(MT::make_move(SQ_5A, SQ_5B))
+            .apply(MT::make_move(SQ_1D, SQ_1E));
         CHECK_EQUAL(vshogi::ONGOING, game.get_result());
-        game.apply(Move(SQ_5A, SQ_5B)); // #repeat = 4
+        game.apply(MT::make_move(SQ_5B, SQ_5A)); // #repeat = 4
+        CHECK_EQUAL(4, game.count_repetitions());
         CHECK_EQUAL(vshogi::DRAW, game.get_result());
     }
     {
         auto game = Game();
-        game.apply(Move(SQ_5C, SQ_5D)).apply(Move(SQ_3B, SQ_2A));
-        game.apply(Move(SQ_1B, SQ_1E)); // #repeat = 1
-        game.apply(Move(SQ_2A, SQ_1A))
-            .apply(Move(SQ_2B, SQ_1B))
-            .apply(Move(SQ_1A, SQ_2A))
-            .apply(Move(SQ_1B, SQ_2B)); // #repeat = 2
+        game.apply(MT::make_move(SQ_5D, SQ_5C))
+            .apply(MT::make_move(SQ_2A, SQ_3B));
+        game.apply(MT::make_move(SQ_1E, SQ_1B)); // #repeat = 1
+        game.apply(MT::make_move(SQ_1A, SQ_2A))
+            .apply(MT::make_move(SQ_1B, SQ_2B))
+            .apply(MT::make_move(SQ_2A, SQ_1A))
+            .apply(MT::make_move(SQ_2B, SQ_1B)); // #repeat = 2
         CHECK_EQUAL(vshogi::ONGOING, game.get_result());
-        game.apply(Move(SQ_2A, SQ_1A))
-            .apply(Move(SQ_2B, SQ_1B))
-            .apply(Move(SQ_1A, SQ_2A))
-            .apply(Move(SQ_1B, SQ_2B)); // #repeat = 3
+        game.apply(MT::make_move(SQ_1A, SQ_2A))
+            .apply(MT::make_move(SQ_1B, SQ_2B))
+            .apply(MT::make_move(SQ_2A, SQ_1A))
+            .apply(MT::make_move(SQ_2B, SQ_1B)); // #repeat = 3
         CHECK_EQUAL(vshogi::ONGOING, game.get_result());
-        game.apply(Move(SQ_2A, SQ_1A))
-            .apply(Move(SQ_2B, SQ_1B))
-            .apply(Move(SQ_1A, SQ_2A));
+        game.apply(MT::make_move(SQ_1A, SQ_2A))
+            .apply(MT::make_move(SQ_1B, SQ_2B))
+            .apply(MT::make_move(SQ_2A, SQ_1A));
         CHECK_EQUAL(vshogi::ONGOING, game.get_result());
-        game.apply(Move(SQ_1B, SQ_2B)); // #repeat = 4
+        game.apply(MT::make_move(SQ_2B, SQ_1B)); // #repeat = 4
         CHECK_EQUAL(vshogi::WHITE_WIN, game.get_result());
+    }
+    {
+        auto game = Game("4k/5/5/5/4R b -");
+        CHECK_EQUAL(vshogi::BLACK_WIN, game.get_result());
     }
 }
 
-TEST(minishogi_game, get_sfen_move_at)
+TEST(test_minishogi_game, to_jpn)
 {
     {
-        const auto game = Game().apply(Move(SQ_3D, SQ_4E));
-        CHECK_TRUE(Move(SQ_3D, SQ_4E) == game.get_move_at(0));
-        STRCMP_EQUAL("rbsgk/4p/5/P4/KGSBR b - 1", game.get_sfen_at(0).c_str());
-        STRCMP_EQUAL(
-            "rbsgk/4p/5/P4/KGSBR b -", game.get_sfen_at(0, false).c_str());
+        auto game = Game("5/2G2/G4/5/5 b -");
+        {
+            const auto m = MT::make_move("5c4b");
+            const auto actual = NT::to_jpn(m, game);
+            STRCMP_EQUAL(u8"\uFF14\u4E8C\u91D1\u4E0A", actual.c_str());
+        }
+    }
+    {
+        auto game = Game("+B3+B/5/5/5/5 b -");
+        {
+            const auto m = MT::make_move("1a3c");
+            const auto actual = NT::to_jpn(m, game);
+            STRCMP_EQUAL(u8"\uff13\u4e09\u99ac\u53f3", actual.c_str());
+        }
+        {
+            const auto m = MT::make_move("5a3c");
+            const auto actual = NT::to_jpn(m, game);
+            STRCMP_EQUAL(u8"\uff13\u4e09\u99ac\u5de6", actual.c_str());
+        }
     }
 }
 

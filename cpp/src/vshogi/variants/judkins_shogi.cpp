@@ -3,128 +3,86 @@
 namespace vshogi
 {
 
-static constexpr auto B_FU = vshogi::judkins_shogi::B_FU; // NOLINT
-static constexpr auto B_KE = vshogi::judkins_shogi::B_KE; // NOLINT
-static constexpr auto B_GI = vshogi::judkins_shogi::B_GI; // NOLINT
-static constexpr auto B_KI = vshogi::judkins_shogi::B_KI; // NOLINT
-static constexpr auto B_KA = vshogi::judkins_shogi::B_KA; // NOLINT
-static constexpr auto B_HI = vshogi::judkins_shogi::B_HI; // NOLINT
-static constexpr auto B_OU = vshogi::judkins_shogi::B_OU; // NOLINT
-static constexpr auto B_TO = vshogi::judkins_shogi::B_TO; // NOLINT
-static constexpr auto B_NK = vshogi::judkins_shogi::B_NK; // NOLINT
-static constexpr auto B_NG = vshogi::judkins_shogi::B_NG; // NOLINT
-static constexpr auto B_UM = vshogi::judkins_shogi::B_UM; // NOLINT
-static constexpr auto B_RY = vshogi::judkins_shogi::B_RY; // NOLINT
-static constexpr auto W_FU = vshogi::judkins_shogi::W_FU; // NOLINT
-static constexpr auto W_KE = vshogi::judkins_shogi::W_KE; // NOLINT
-static constexpr auto W_GI = vshogi::judkins_shogi::W_GI; // NOLINT
-static constexpr auto W_KI = vshogi::judkins_shogi::W_KI; // NOLINT
-static constexpr auto W_KA = vshogi::judkins_shogi::W_KA; // NOLINT
-static constexpr auto W_HI = vshogi::judkins_shogi::W_HI; // NOLINT
-static constexpr auto W_OU = vshogi::judkins_shogi::W_OU; // NOLINT
-static constexpr auto W_TO = vshogi::judkins_shogi::W_TO; // NOLINT
-static constexpr auto W_NK = vshogi::judkins_shogi::W_NK; // NOLINT
-static constexpr auto W_NG = vshogi::judkins_shogi::W_NG; // NOLINT
-static constexpr auto W_UM = vshogi::judkins_shogi::W_UM; // NOLINT
-static constexpr auto W_RY = vshogi::judkins_shogi::W_RY; // NOLINT
-static constexpr auto VOID = vshogi::judkins_shogi::VOID; // NOLINT
-
 template <>
-judkins_shogi::Board::Board()
-    : m_pieces{
-        // clang-format off
-        W_HI, W_KA, W_KE, W_GI, W_KI, W_OU,
-        VOID, VOID, VOID, VOID, VOID, W_FU,
-        VOID, VOID, VOID, VOID, VOID, VOID,
-        VOID, VOID, VOID, VOID, VOID, VOID,
-        B_FU, VOID, VOID, VOID, VOID, VOID,
-        B_OU, B_KI, B_GI, B_KE, B_KA, B_HI,
-        // clang-format on
-    }, m_king_locations{}, m_bb_color{}
+judkins_shogi::bitboard_t
+judkins_shogi::BitboardTraits::get_placeable(const judkins_shogi::PieceEnum& p)
 {
-    update_internals_based_on_pieces();
+    constexpr bitboard_t table[C::num_colored_piece_types + 1u] = {
+        mask & (~top_n_rank<1u>()), // B_FU
+        mask & (~top_n_rank<2u>()), // B_KE
+        mask, // B_GI
+        mask, // B_KA
+        mask, // B_HI
+        mask, // B_KI
+        mask, // B_OU
+        mask, // B_TO
+        mask, // B_NK
+        mask, // B_NG
+        mask, // B_UM
+        mask, // B_RY
+        mask & top_n_rank<5u>(), // W_FU
+        mask & top_n_rank<4u>(), // W_KE
+        mask, // W_GI
+        mask, // W_KA
+        mask, // W_HI
+        mask, // W_KI
+        mask, // W_OU
+        mask, // W_TO
+        mask, // W_NK
+        mask, // W_NG
+        mask, // W_UM
+        mask, // W_RY
+        mask, // VOID
+    };
+    return table[p];
 }
 
 template <>
-const char* judkins_shogi::Board::set_sfen_rank(
-    const char* const sfen_rank, const Rank rank)
+judkins_shogi::bitboard_t judkins_shogi::BitboardTraits::get_attack_by(
+    const judkins_shogi::PieceEnum& p,
+    const judkins_shogi::SquareEnum& sq,
+    const judkins_shogi::bitboard_t& occupied)
 {
-    constexpr int max_length = 13; // e.g. "+r+b+s+n+p+P/"
-    auto piece_str = m_pieces + num_files * static_cast<uint>(rank);
-    const char* sfen_ptr = sfen_rank;
-    bool promotion_flag = false;
-    for (; sfen_ptr < sfen_rank + max_length; ++sfen_ptr) {
-        switch (*sfen_ptr) {
-        case '/':
-        case ' ':
-            ++sfen_ptr;
-        case '\0':
-            goto OUT_OF_LOOP;
-        case '6':
-            (*piece_str++) = VOID; // fall-through
-        case '5':
-            (*piece_str++) = VOID; // fall-through
-        case '4':
-            (*piece_str++) = VOID; // fall-through
-        case '3':
-            (*piece_str++) = VOID; // fall-through
-        case '2':
-            (*piece_str++) = VOID; // fall-through
-        case '1':
-            (*piece_str++) = VOID;
-            break;
-        case '+':
-            promotion_flag = true;
-            continue;
-        case 'P':
-            (*piece_str++) = (promotion_flag) ? B_TO : B_FU;
-            break;
-        case 'N':
-            (*piece_str++) = (promotion_flag) ? B_NK : B_KE;
-            break;
-        case 'S':
-            (*piece_str++) = (promotion_flag) ? B_NG : B_GI;
-            break;
-        case 'G':
-            (*piece_str++) = B_KI;
-            break;
-        case 'B':
-            (*piece_str++) = (promotion_flag) ? B_UM : B_KA;
-            break;
-        case 'R':
-            (*piece_str++) = (promotion_flag) ? B_RY : B_HI;
-            break;
-        case 'K':
-            (*piece_str++) = B_OU;
-            break;
-        case 'p':
-            (*piece_str++) = (promotion_flag) ? W_TO : W_FU;
-            break;
-        case 'n':
-            (*piece_str++) = (promotion_flag) ? W_NK : W_KE;
-            break;
-        case 's':
-            (*piece_str++) = (promotion_flag) ? W_NG : W_GI;
-            break;
-        case 'g':
-            (*piece_str++) = W_KI;
-            break;
-        case 'b':
-            (*piece_str++) = (promotion_flag) ? W_UM : W_KA;
-            break;
-        case 'r':
-            (*piece_str++) = (promotion_flag) ? W_RY : W_HI;
-            break;
-        case 'k':
-            (*piece_str++) = W_OU;
-            break;
-        default:
-            break;
-        }
-        promotion_flag = false;
+    switch (p) {
+    case judkins_shogi::B_KA:
+    case judkins_shogi::W_KA:
+        return judkins_shogi::Magic::get_diagonal_attack(sq, occupied);
+    case judkins_shogi::B_HI:
+    case judkins_shogi::W_HI:
+        return judkins_shogi::Magic::get_adjacent_attack(sq, occupied);
+    case judkins_shogi::B_UM:
+    case judkins_shogi::W_UM:
+        return judkins_shogi::Magic::get_diagonal_attack(sq, occupied)
+               | judkins_shogi::BitboardTraits::get_attack_by(
+                   judkins_shogi::B_OU, sq);
+    case judkins_shogi::B_RY:
+    case judkins_shogi::W_RY:
+        return judkins_shogi::Magic::get_adjacent_attack(sq, occupied)
+               | judkins_shogi::BitboardTraits::get_attack_by(
+                   judkins_shogi::B_OU, sq);
+    default:
+        return get_attack_by(p, sq);
     }
-OUT_OF_LOOP:
-    return sfen_ptr;
+}
+
+template <>
+template <>
+judkins_shogi::Stand::Stand(
+    const int num_fu,
+    const int num_ke,
+    const int num_gi,
+    const int num_ka,
+    const int num_hi,
+    const int num_ki)
+    : Stand(
+          static_cast<Int>(
+              (num_fu << shift_bits[judkins_shogi::FU])
+              + (num_ke << shift_bits[judkins_shogi::KE])
+              + (num_gi << shift_bits[judkins_shogi::GI])
+              + (num_ka << shift_bits[judkins_shogi::KA])
+              + (num_hi << shift_bits[judkins_shogi::HI])
+              + (num_ki << shift_bits[judkins_shogi::KI])))
+{
 }
 
 } // namespace vshogi

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <random>
 #include <type_traits>
 #include <vector>
 
@@ -11,6 +12,44 @@ namespace vshogi
 {
 
 using uint = unsigned int;
+using ZobristHashType = std::uint64_t;
+static std::random_device seed_gen;
+static std::default_random_engine random_engine(seed_gen());
+static std::uniform_real_distribution<float>
+    dist01(0.f, 0.9999f); // for numerical stability
+
+/**
+ * @brief
+ * https://stackoverflow.com/questions/1903954/is-there-a-standard-sign-function-signum-sgn-in-c-c
+ *
+ * @tparam T
+ * @param val
+ * @return int
+ */
+template <typename T>
+int sign(T val)
+{
+    return (T(0) < val) - (val < T(0));
+}
+
+enum FullPieceTypes : uint
+{
+    PT_FU, //!< Fu (Pawn)
+    PT_KY, //!< Kyo (Lance)
+    PT_KE, //!< Kei (Knight)
+    PT_GI, //!< Gin (Silver)
+    PT_KA, //!< Kaku (Bishop)
+    PT_HI, //!< Hisha (Rook)
+    PT_KI, //!< Kin (Gold)
+    PT_OU, //!< Ou, Gyoku (King)
+    PT_TO, //!< Tokin (Promoted Pawn)
+    PT_NY, //!< Nari-Kyo (Promoted Lance)
+    PT_NK, //!< Nari-Kei (Promoted Knight)
+    PT_NG, //!< Nari-Gin (Promoted Silver)
+    PT_UM, //!< Uma (Promoted Bishop)
+    PT_RY, //!< Ryu (Promoted Rook)
+    PT_NA, //!< NA
+};
 
 /**
  * @brief Iterator for Enum.
@@ -28,6 +67,9 @@ public:
     EnumIterator() : m_curr(0u)
     {
     }
+    EnumIterator(const uint v) : m_curr(v)
+    {
+    }
     EnumIterator& operator++()
     {
         ++m_curr;
@@ -36,6 +78,10 @@ public:
     ContiguousEnum operator*() const
     {
         return static_cast<ContiguousEnum>(m_curr);
+    }
+    void reset()
+    {
+        m_curr = 0u;
     }
     EnumIterator begin()
     {
@@ -46,69 +92,35 @@ public:
         static const auto end_iter = EnumIterator(End);
         return end_iter;
     }
+    bool is_end() const
+    {
+        return m_curr == End;
+    }
     bool operator!=(const EnumIterator& other)
     {
         return m_curr != other.m_curr;
     }
-
-private:
-    EnumIterator(const uint v) : m_curr(v)
-    {
-    }
 };
+
+inline void softmax(float* const logits, const uint n)
+{
+    const float maximum_value = *std::max_element(logits, logits + n);
+    float sum = 0.f;
+    for (uint ii = n; ii--;) {
+        logits[ii] -= maximum_value;
+        logits[ii] = std::exp(logits[ii]);
+        sum += logits[ii];
+    }
+    for (uint ii = n; ii--;) {
+        logits[ii] /= sum;
+    }
+}
 
 inline void softmax(std::vector<float>& logits)
 {
     if (logits.empty())
         return;
-    const float maximum_value
-        = *std::max_element(logits.cbegin(), logits.cend());
-    float sum = 0.f;
-    for (auto&& e : logits) {
-        e -= maximum_value;
-        e = std::exp(e);
-        sum += e;
-    }
-    for (auto&& e : logits) {
-        e /= sum;
-    }
-}
-
-constexpr uint get_msb(uint x)
-{
-#ifdef __GNUC__
-    return static_cast<uint>(
-        static_cast<int>(sizeof(uint)) * 8 - 1 - __builtin_clz(x));
-#else
-    uint out = 0u;
-
-    {
-        constexpr bool flag = static_cast<bool>(x & 0xffff0000);
-        out += 16u * flag;
-        x >>= 16u * flag;
-    }
-    {
-        constexpr bool flag = static_cast<bool>(x & 0x0000ff00);
-        out += 8u * flag;
-        x >>= 8u * flag;
-    }
-    {
-        constexpr bool flag = static_cast<bool>(x & 0x000000f0);
-        out += 4u * flag;
-        x >>= 4u * flag;
-    }
-    {
-        constexpr bool flag = static_cast<bool>(x & 0x0000000c);
-        out += 2u * flag;
-        x >>= 2u * flag;
-    }
-    {
-        constexpr bool flag = static_cast<bool>(x & 0x00000002);
-        out += 1u * flag;
-        x >>= 1u * flag;
-    }
-    return out;
-#endif
+    softmax(logits.data(), static_cast<uint>(logits.size()));
 }
 
 #ifdef __SIZEOF_INT128__
@@ -196,15 +208,15 @@ public:
 private:
     constexpr std::uint64_t lshift_lower(const uint shift_width) const
     {
-        return (shift_width == 0) ? m_value[0]
+        return (shift_width == 0)   ? m_value[0]
                : (shift_width > 63) ? 0
                                     : (m_value[0] << shift_width);
     }
     constexpr std::uint64_t lshift_carry(const uint shift_width) const
     {
         return static_cast<std::uint64_t>(
-            (shift_width == 0) ? 0
-            : (shift_width < 64) ? (m_value[0] >> (64 - shift_width))
+            (shift_width == 0)    ? 0
+            : (shift_width < 64)  ? (m_value[0] >> (64 - shift_width))
             : (shift_width < 128) ? (m_value[0] << (shift_width - 64))
                                   : 0);
     }
@@ -216,7 +228,7 @@ private:
     }
     constexpr std::uint64_t rshift_lower(const uint shift_width) const
     {
-        const auto v = (shift_width == 0) ? m_value[0]
+        const auto v = (shift_width == 0)   ? m_value[0]
                        : (shift_width > 63) ? 0
                                             : (m_value[0] >> shift_width);
         const auto c = rshift_carry(shift_width);
@@ -225,8 +237,8 @@ private:
     constexpr std::uint64_t rshift_carry(const uint shift_width) const
     {
         const auto v = static_cast<std::uint64_t>(m_value[1]);
-        return (shift_width == 0) ? 0
-               : (shift_width <= 64) ? (v << (64 - shift_width))
+        return (shift_width == 0)     ? 0
+               : (shift_width <= 64)  ? (v << (64 - shift_width))
                : (shift_width <= 128) ? (v >> (shift_width - 64))
                                       : 0;
     }
@@ -238,22 +250,37 @@ private:
 using uint128 = UInt128;
 #endif
 
+template <class T>
+inline uint ntz(const T x);
+
+template <>
+inline uint ntz(const std::uint32_t x)
+{
+    return static_cast<uint>(__builtin_ctz(x));
+}
+
+template <>
+inline uint ntz(const std::uint64_t x)
+{
+    return static_cast<uint>(__builtin_ctzll(x));
+}
+
+template <>
+inline uint ntz(const uint128 x)
+{
+    std::uint64_t x64 = static_cast<std::uint64_t>(x);
+    if (static_cast<bool>(x64))
+        return ntz(x64);
+    return ntz(static_cast<std::uint32_t>(x >> 64)) + 64u;
+}
+
 template <class UInt>
 inline uint hamming_weight(UInt x);
 
 template <>
 inline uint hamming_weight(std::uint32_t x)
 {
-    // https://en.wikipedia.org/wiki/Hamming_weight
-    constexpr std::uint32_t m1 = 0x55555555;
-    constexpr std::uint32_t m2 = 0x33333333;
-    constexpr std::uint32_t m4 = 0x0f0f0f0f;
-    x -= (x >> 1U) & m1;
-    x = (x & m2) + ((x >> 2) & m2);
-    x = (x + (x >> 4)) & m4;
-    x += x >> 8;
-    x += x >> 16;
-    return x & 0x7f;
+    return static_cast<uint>(__builtin_popcount(x));
 }
 
 template <>
@@ -265,23 +292,14 @@ inline uint hamming_weight(std::uint16_t x)
 template <>
 inline uint hamming_weight(std::uint64_t x)
 {
-    constexpr std::uint64_t m1 = 0x5555555555555555; // 0101...
-    constexpr std::uint64_t m2 = 0x3333333333333333; // 00110011..
-    constexpr std::uint64_t m4 = 0x0f0f0f0f0f0f0f0f; // 0000111100001111..
-    x -= (x >> 1) & m1; //put count of each 2 bits into those 2 bits
-    x = (x & m2) + ((x >> 2) & m2); // each 4 bits into those 4 bits
-    x = (x + (x >> 4)) & m4; //put count of each 8 bits into those 8 bits
-    x += x >> 8; //put count of each 16 bits into their lowest 8 bits
-    x += x >> 16; //put count of each 32 bits into their lowest 8 bits
-    x += x >> 32; //put count of each 64 bits into their lowest 8 bits
-    return x & 0x7f;
+    return static_cast<uint>(__builtin_popcountll(x));
 }
 
 template <>
 inline uint hamming_weight(uint128 x)
 {
     return hamming_weight(static_cast<std::uint64_t>(x))
-           + hamming_weight(static_cast<std::uint64_t>(x >> 64));
+           + hamming_weight(static_cast<std::uint32_t>(x >> 64));
 }
 
 } // namespace vshogi

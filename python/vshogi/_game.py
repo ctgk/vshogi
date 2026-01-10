@@ -29,17 +29,22 @@ class Game(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
+    def _get_board_piece_class(cls) -> type:
+        pass
+
+    @classmethod
+    @abc.abstractmethod
     def _get_move_class(cls) -> type:
         pass
 
     @classmethod
     @abc.abstractmethod
-    def _get_mcts_node_class(cls) -> type:
+    def _get_az_searcher_class(cls) -> type:
         pass
 
     @classmethod
     @abc.abstractmethod
-    def _get_mcts_searcher_class(cls) -> type:
+    def _get_gaz_searcher_class(cls) -> type:
         pass
 
     @classmethod
@@ -62,6 +67,8 @@ class Game(abc.ABC):
             self._game = sfen
         else:
             self._game = cls_(sfen)
+        self._move_list: tp.List[Move] = []
+        self._sfen_list: tp.List[str] = []
 
     @_ClassProperty
     def ranks(self) -> int:
@@ -106,6 +113,67 @@ class Game(abc.ABC):
             Number of DL-shogi policy options in the game.
         """
         return self._get_backend_game_class().num_dlshogi_policy()
+
+    @classmethod
+    def get_attention(cls) -> np.ndarray:
+        """Return attention matrix of the game.
+
+        Returns
+        -------
+        np.ndarray
+            Attention matrix whose size is (F, R, F, R) where F and R are
+            number of files and ranks respectively.
+            The matrix (A) has value 1 at (fi, ri, fj, rj) if there is a piece
+            that can move from (fi, ri) square to (fj, rj) square, otherwise 0.
+        """
+        return cls._get_backend_game_class().get_attention().reshape(
+            cls.files, cls.ranks, cls.files, cls.ranks)
+
+    @classmethod
+    def get_local_attentions(cls) -> np.ndarray:
+        """Return local attention matrices of the game.
+
+        Returns
+        -------
+        np.ndarray
+            Attention tensor whose size is (D, F, R, F, R) where D, F and R
+            are number of valid move directions, files, and ranks respectively.
+            A tensor `A[di]` has value 1 at (fi, ri, fj, rj) if there is a
+            minor piece that can move from (fi, ri) square to (fj, rj) square,
+            otherwise 0.
+        """
+        return cls._get_backend_game_class().get_local_attentions().reshape(
+            -1, cls.files, cls.ranks, cls.files, cls.ranks)
+
+    @classmethod
+    def get_adjacent_attention(cls) -> np.ndarray:
+        """Return adjacent attention matrix of the game.
+
+        Returns
+        -------
+        np.ndarray
+            Attention matrix whose size is (F, R, F, R) where F and R are
+            number of files and ranks respectively.
+            The matrix (A) has value 1 at (fi, ri, fj, rj) if (fi, ri) square
+            lies along adjacent direction from (fj, rj) square, otherwise 0.
+        """
+        return cls._get_backend_game_class().get_adjacent_attention().reshape(
+            cls.files, cls.ranks, cls.files, cls.ranks)
+
+    @classmethod
+    def get_diagonal_attention(cls) -> np.ndarray:
+        """Return adjacent attention matrix of the game.
+
+        Returns
+        -------
+        np.ndarray
+            Attention matrix whose size is (F, R, F, R) where F and R are
+            number of files and ranks respectively.
+            The matrix (A) has value 1 at (fi, ri, fj, rj) if (fi, ri) square
+            lies along diagonal direction from (fj, rj) square, otherwise 0.
+        """
+        return cls._get_backend_game_class().get_diagonal_attention().reshape(
+            cls.files, cls.ranks, cls.files, cls.ranks)
 
     @property
     def turn(self) -> Color:
@@ -155,37 +223,60 @@ class Game(abc.ABC):
 
         Examples
         --------
-        >>> import vshogi.animal_shogi as shogi
+        >>> import vshogi.minishogi as shogi
         >>> game = shogi.Game()
         >>> game.result
         Result.ONGOING
-        >>> game.apply(shogi.A3, shogi.B4).apply(
-        ...     shogi.A2, shogi.B1).apply(shogi.A2, shogi.A3)
-        Game(sfen="g1e/Lc1/1C1/E1G w - 4")
-        >>> game.result
+        >>> game.apply("4e3d").apply("2a3b").apply("3d2c").apply("3b4c").result
+        Result.ONGOING
+        >>> game.apply("2c1b").result
         Result.BLACK_WIN
         """
         return self._game.get_result()
 
-    @property
-    def record_length(self) -> int:
-        """Return length of the game record.
+    def ply(self) -> int:
+        """Return the number of moves since the start of the game.
 
         Returns
         -------
         int
-            Length of the game record.
+            Number of moves since the start of the game.
 
         Examples
         --------
         >>> import vshogi.minishogi as shogi
         >>> game = shogi.Game()
-        >>> game.record_length
+        >>> game.ply()
         0
-        >>> game.apply(shogi.D3, shogi.E2).record_length
+        >>> game.apply("2e3d").ply()
         1
         """
-        return self._game.record_length()
+        return self._game.ply()
+
+    def count_repetitions(self) -> int:
+        """Return number of repetitions of the current game position.
+
+        Notes
+        -----
+        The current position itself counts as one occurrence.
+
+        Returns
+        -------
+        int
+            Number of repetitions of the current game position.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> game = shogi.Game()
+        >>>
+        >>> # The current position itself counts as one occurrence.
+        >>> game.count_repetitions()
+        1
+        >>> game.apply(["1e1d", "5a5b", "1d1e", "5b5a"]).count_repetitions()
+        2
+        """
+        return self._game.count_repetitions()
 
     @property
     def zobrist_hash(self) -> int:
@@ -203,8 +294,29 @@ class Game(abc.ABC):
         """
         return self._game.get_zobrist_hash()
 
+    def in_check(self) -> bool:
+        """Return true if a king of the current turn is in check.
+
+        Returns
+        -------
+        bool
+            True if current turn's king is in check otherwise false.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> game = shogi.Game("4k/5/4P/5/4K b -")
+        >>> game.in_check()
+        False
+        >>> game.apply("1c1b")
+        Game(sfen="4k/4P/5/5/4K w - 2")
+        >>> game.in_check()
+        True
+        """
+        return self._game.in_check()
+
     @classmethod
-    def _get_move(cls, move=None, *arg, **kwargs) -> Move:
+    def _to_move(cls, move=None, *arg, **kwargs) -> Move:
         if not (arg or kwargs):
             if isinstance(move, str):
                 return cls._get_move_class()(move)
@@ -213,35 +325,39 @@ class Game(abc.ABC):
             return cls._get_move_class()(*arg, **kwargs)
         return cls._get_move_class()(move, *arg, **kwargs)
 
-    def apply(self, move=None, *arg, **kwargs) -> 'Game':
+    def apply(self, move: tp.Union['Move', str, list]) -> 'Game':
         """Apply a move.
 
         Parameters
         ----------
-        move : Move
-            Move to apply to the current state.
-            But if there are multiple arguments, they are treated as parameters
-            of move class initialization and converted automatically.
+        move : tp.Union['Move', str, list]
+            Move or list of moves to apply to the current state.
 
         Returns
         -------
         Game
-            Game with the move applied.
+            Game with the move(s) applied.
 
         Examples
         --------
         >>> import vshogi.minishogi as shogi
         >>> game = shogi.Game()
-        >>> game.apply(shogi.Move(shogi.D3, shogi.E2))
+        >>> game.apply(shogi.Move(shogi.E2, shogi.D3))
         Game(sfen="rbsgk/4p/5/P1B2/KGS1R w - 2")
-        >>> game.apply(shogi.B2, shogi.A3)
+        >>> game.apply('3a2b')
         Game(sfen="rb1gk/3sp/5/P1B2/KGS1R b - 3")
-        >>> game.apply(dst=shogi.D2, src=shogi.E3)
-        Game(sfen="rb1gk/3sp/5/P1BS1/KG2R w - 4")
-        >>> game.apply('4a3b').apply('4e4d')
+        >>> game.apply(['3e2d', '4a3b', '4e4d'])
         Game(sfen="r2gk/2bsp/5/PGBS1/K3R w - 6")
         """
-        move = self._get_move(move, *arg, **kwargs)
+        if not isinstance(move, list):
+            move = [self._to_move(move)]
+        for m in move:
+            self._apply(self._to_move(m))
+        return self
+
+    def _apply(self, move: 'Move') -> 'Game':
+        self._move_list.append(move)
+        self._sfen_list.append(self.to_sfen(False))
         self._game.apply(move)
         return self
 
@@ -254,6 +370,46 @@ class Game(abc.ABC):
             Game after resignation.
         """
         self._game.resign()
+        return self
+
+    def declare_draw(self) -> 'Game':
+        """Declare a draw.
+
+        Returns
+        -------
+        Game
+            Game after draw.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> game = shogi.Game()
+        >>> game.result
+        Result.ONGOING
+        >>> game.declare_draw().result
+        Result.DRAW
+        """
+        self._game.declare_draw()
+        return self
+
+    def undo(self) -> 'Game':
+        """Undo a previous move.
+
+        Returns
+        -------
+        Game
+            Previous game position.
+
+        Examples
+        --------
+        >>> from vshogi.minishogi import *
+        >>> g = Game()
+        >>> g.apply("1e1b")
+        Game(sfen="rbsgk/4R/5/P4/KGSB1 w P 2")
+        >>> g.undo()
+        Game(sfen="rbsgk/4p/5/P4/KGSBR b - 1")
+        """
+        self._game.undo()
         return self
 
     def is_legal(self, move=None, *arg, **kwargs) -> bool:
@@ -271,8 +427,25 @@ class Game(abc.ABC):
         bool
             True if the move is legal, otherwise false.
         """
-        move = self._get_move(move, *arg, **kwargs)
+        move = self._to_move(move, *arg, **kwargs)
         return self._game.is_legal(move)
+
+    def is_valid_piece_count(self, ignore=None) -> bool:
+        """Return true if piece count at the current state is valid.
+
+        Parameters
+        ----------
+        ignore : PieceType, optional
+            PieceType to ignore from the piece count, by default None
+
+        Returns
+        -------
+        bool
+            True if piece count is valid, otherwise false.
+        """
+        if ignore is not None:
+            return self._game.is_valid_piece_count(ignore)
+        return self._game.is_valid_piece_count()
 
     def get_legal_moves(self) -> tp.List[Move]:
         """Return list of legal moves at the current state.
@@ -283,6 +456,16 @@ class Game(abc.ABC):
             List of legal moves.
         """
         return self._game.get_legal_moves()
+
+    def get_check_moves(self) -> tp.List[Move]:
+        """Return list of check moves at the current state.
+
+        Returns
+        -------
+        tp.List[Move]
+            List of check moves.
+        """
+        return self._game.get_check_moves()
 
     def to_sfen(self, include_move_count: bool = True) -> str:
         """Return current game state in SFEN.
@@ -316,18 +499,16 @@ class Game(abc.ABC):
         --------
         >>> import vshogi.minishogi as shogi
         >>> game = shogi.Game()
-        >>> game.apply(shogi.D3, shogi.E2).apply(shogi.B2, shogi.A3)
+        >>> game.apply(["2e3d", "3a2b"])
         Game(sfen="rb1gk/3sp/5/P1B2/KGS1R b - 3")
         >>> game.get_move_at(0)
-        Move(dst=SQ_3D, src=SQ_2E)
+        Move(src=SQ_2E, dst=SQ_3D)
         >>> game.get_move_at(1)
-        Move(dst=SQ_2B, src=SQ_3A)
+        Move(src=SQ_3A, dst=SQ_2B)
         >>> game.get_move_at(-1)
-        Move(dst=SQ_2B, src=SQ_3A)
+        Move(src=SQ_3A, dst=SQ_2B)
         """
-        if n < 0:
-            n = self.record_length + n
-        return self._game.get_move_at(n)
+        return self._move_list[n]
 
     def get_sfen_at(self, n: int, include_move_count: bool = True) -> str:
         """Return n-th game state in SFEN, where n starts from 0.
@@ -348,7 +529,7 @@ class Game(abc.ABC):
         --------
         >>> import vshogi.minishogi as shogi
         >>> game = shogi.Game()
-        >>> game.apply(shogi.D3, shogi.E2).apply(shogi.B2, shogi.A3)
+        >>> game.apply(["2e3d", "3a2b"])
         Game(sfen="rb1gk/3sp/5/P1B2/KGS1R b - 3")
         >>> game.get_sfen_at(0)
         'rbsgk/4p/5/P4/KGSBR b - 1'
@@ -358,10 +539,45 @@ class Game(abc.ABC):
         'rbsgk/4p/5/P1B2/KGS1R w - 2'
         """
         if n < 0:
-            n = self.record_length + n
-        return self._game.get_sfen_at(n, include_move_count)
+            n = self.ply() + n
+        if include_move_count:
+            return self._sfen_list[n] + f' {n + 1}'
+        else:
+            return self._sfen_list[n]
 
-    def dump_records(
+    def to_jpn(self, move=None, *args, **kwargs) -> str:
+        """Return Japanese notation of a given move.
+
+        Parameters
+        ----------
+        move : Move
+            Move to notate in Japanese
+
+        Returns
+        -------
+        str
+            Japanese notation of the move at the current game position.
+        """
+        move = self._to_move(move, *args, **kwargs)
+        return self._game.to_jpn(move)
+
+    def to_eng(self, move=None, *args, **kwargs) -> str:
+        """Return English notation of a given move.
+
+        Parameters
+        ----------
+        move : Move
+            Move to notate in English, by default None
+
+        Returns
+        -------
+        str
+            English notation of the move at the current game position.
+        """
+        move = self._to_move(move, *args, **kwargs)
+        return self._game.to_eng(move)
+
+    def dump_log(
         self,
         getters: tp.Tuple[
             tp.Callable[['Game', int], object],
@@ -372,7 +588,7 @@ class Game(abc.ABC):
         file_: tp.TextIO = sys.stdout,
         color_filter: tp.Optional[Color] = None,
     ) -> None:
-        r"""Dump game records.
+        r"""Dump game log.
 
         Parameters
         ----------
@@ -389,22 +605,26 @@ class Game(abc.ABC):
 
         Examples
         --------
-        >>> import vshogi.animal_shogi as shogi; import io
-        >>> game = shogi.Game().apply(shogi.A3, shogi.B4).apply(
-        ...     shogi.A2, shogi.B1).apply(shogi.A2, shogi.A3)
+        >>> import vshogi.minishogi as shogi; import io
+        >>> game = shogi.Game()
+        >>> moves = ["4e3d", "2a3b", "3d2c", "3b4c", "2c1b"]
+        >>> for m in moves:
+        ...     game = game.apply(m)
         >>> with io.StringIO() as f:
-        ...     game.dump_records(file_=f)
+        ...     game.dump_log(file_=f)
         ...     _ = f.seek(0)
         ...     print(f.read())
-        gle/1c1/1C1/ELG b - 1
-        gle/1c1/LC1/E1G w - 2
-        g1e/lc1/LC1/E1G b - 3
+        rbsgk/4p/5/P4/KGSBR b - 1
+        rbsgk/4p/5/P1G2/K1SBR w - 2
+        rbs1k/2g1p/5/P1G2/K1SBR b - 3
+        rbs1k/2g1p/3G1/P4/K1SBR w - 4
+        rbs1k/4p/1g1G1/P4/K1SBR b - 5
         <BLANKLINE>
         >>> with io.StringIO() as f:
-        ...     game.dump_records(
+        ...     game.dump_log(
         ...         (
         ...             lambda g, i: g.get_sfen_at(i),
-        ...             lambda g, i: g.get_move_at(i).to_usi(),
+        ...             lambda g, i: g.get_move_at(i).to_sfen(),
         ...             lambda g, i: g.result,
         ...         ),
         ...         names=('sfen', 'move', 'result'),
@@ -414,15 +634,16 @@ class Game(abc.ABC):
         ...     _ = f.seek(0)
         ...     print(f.read())  #doctest: +NORMALIZE_WHITESPACE
         sfen        move    result
-        gle/1c1/1C1/ELG b - 1       b4a3    Result.BLACK_WIN
-        g1e/lc1/LC1/E1G b - 3       a3a2    Result.BLACK_WIN
+        rbsgk/4p/5/P4/KGSBR b - 1   4e3d    Result.BLACK_WIN
+        rbs1k/2g1p/5/P1G2/K1SBR b - 3       3d2c    Result.BLACK_WIN
+        rbs1k/4p/1g1G1/P4/K1SBR b - 5       2c1b    Result.BLACK_WIN
         <BLANKLINE>
         """
         if names is not None:
             print(*names, file=file_, sep=sep)
         if callable(getters):
             getters = (getters,)
-        for i in range(self.record_length):
+        for i in range(self.ply()):
             if (color_filter == Color.WHITE) and (i % 2 == 0):
                 continue
             elif (color_filter == Color.BLACK) and (i % 2 == 1):
@@ -442,43 +663,99 @@ class Game(abc.ABC):
 
         Examples
         --------
-        >>> import vshogi.animal_shogi as shogi
-        >>> g = shogi.Game()
-        >>> print(g.apply(shogi.C3, shogi.C4))
+        >>> import vshogi.minishogi as shogi
+        >>> g = shogi.Game().apply("5d5c")
+        >>> print(g)
         Turn: WHITE
         White: -
-            A  B  C
-          *--*--*--*
-        1 |-G|-L|-E|
-          *--*--*--*
-        2 |  |-C|  |
-          *--*--*--*
-        3 |  |+C|+G|
-          *--*--*--*
-        4 |+E|+L|  |
-          *--*--*--*
+            5   4   3   2   1
+          +---+---+---+---+---+
+        A |-HI|-KA|-GI|-KI|-OU|
+          +---+---+---+---+---+
+        B |   |   |   |   |-FU|
+          +---+---+---+---+---+
+        C |+FU|   |   |   |   |
+          +---+---+---+---+---+
+        D |   |   |   |   |   |
+          +---+---+---+---+---+
+        E |+OU|+KI|+GI|+KA|+HI|
+          +---+---+---+---+---+
         Black: -
         >>> g_hflip = g.hflip()
         >>> print(g_hflip)
         Turn: WHITE
         White: -
-            A  B  C
-          *--*--*--*
-        1 |-E|-L|-G|
-          *--*--*--*
-        2 |  |-C|  |
-          *--*--*--*
-        3 |+G|+C|  |
-          *--*--*--*
-        4 |  |+L|+E|
-          *--*--*--*
+            5   4   3   2   1
+          +---+---+---+---+---+
+        A |-OU|-KI|-GI|-KA|-HI|
+          +---+---+---+---+---+
+        B |-FU|   |   |   |   |
+          +---+---+---+---+---+
+        C |   |   |   |   |+FU|
+          +---+---+---+---+---+
+        D |   |   |   |   |   |
+          +---+---+---+---+---+
+        E |+HI|+KA|+GI|+KI|+OU|
+          +---+---+---+---+---+
         Black: -
-        >>> g.record_length
+        >>> g.ply()
         1
-        >>> g_hflip.record_length
+        >>> g_hflip.ply()
         0
         """
         return self.__class__(self._game.hflip())
+
+    def rotate(self) -> 'Game':
+        """Return new game with rotated current positions.
+
+        Returns
+        -------
+        Game
+            New game with rotated current positions.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> g = shogi.Game().apply("5d5c")
+        >>> print(g)
+        Turn: WHITE
+        White: -
+            5   4   3   2   1
+          +---+---+---+---+---+
+        A |-HI|-KA|-GI|-KI|-OU|
+          +---+---+---+---+---+
+        B |   |   |   |   |-FU|
+          +---+---+---+---+---+
+        C |+FU|   |   |   |   |
+          +---+---+---+---+---+
+        D |   |   |   |   |   |
+          +---+---+---+---+---+
+        E |+OU|+KI|+GI|+KA|+HI|
+          +---+---+---+---+---+
+        Black: -
+        >>> g_rotated = g.rotate()
+        >>> print(g_rotated)
+        Turn: BLACK
+        White: -
+            5   4   3   2   1
+          +---+---+---+---+---+
+        A |-HI|-KA|-GI|-KI|-OU|
+          +---+---+---+---+---+
+        B |   |   |   |   |   |
+          +---+---+---+---+---+
+        C |   |   |   |   |-FU|
+          +---+---+---+---+---+
+        D |+FU|   |   |   |   |
+          +---+---+---+---+---+
+        E |+OU|+KI|+GI|+KA|+HI|
+          +---+---+---+---+---+
+        Black: -
+        >>> g.ply()
+        1
+        >>> g_rotated.ply()
+        0
+        """
+        return self.__class__(self._game.rotate())
 
     def to_dlshogi_features(self, *, out: np.ndarray = None) -> np.ndarray:
         """Return DL-shogi features.
@@ -495,39 +772,39 @@ class Game(abc.ABC):
 
         Examples
         --------
-        >>> import vshogi.animal_shogi as shogi
-        >>> x = shogi.Game("3/elg/1C1/ELG b C").to_dlshogi_features()
-        >>> print(x[0, ..., 0]) # Black's CH on stand
-        [[1. 1. 1.]
-         [1. 1. 1.]
-         [1. 1. 1.]
-         [1. 1. 1.]]
-        >>> print(x[0, ..., 6]) # Black's LI on board
-        [[0. 0. 0.]
-         [0. 0. 0.]
-         [0. 0. 0.]
-         [0. 1. 0.]]
-        >>> print(x[0, ..., 8]) # White's CH on stand
-        [[0. 0. 0.]
-         [0. 0. 0.]
-         [0. 0. 0.]
-         [0. 0. 0.]]
-        >>> print(x[0, ..., 14]) # White's LI on board
-        [[0. 0. 0.]
-         [0. 1. 0.]
-         [0. 0. 0.]
-         [0. 0. 0.]]
-        >>> shogi.Game("3/elg/1C1/ELG C w").to_dlshogi_features(out=x)
-        >>> print(x[0, ..., 6]) # White's LI on board from white's view
-        [[0. 0. 0.]
-         [0. 0. 0.]
-         [0. 1. 0.]
-         [0. 0. 0.]]
-        >>> print(x[0, ..., 14]) # Black's LI on board from white's view
-        [[0. 1. 0.]
-         [0. 0. 0.]
-         [0. 0. 0.]
-         [0. 0. 0.]]
+        >>> import vshogi.minishogi as shogi; import numpy as np
+        >>> x = shogi.Game("rbs1k/4g/5/P4/KGSB1 b P").to_dlshogi_features()
+        >>> print(x[0, ..., 0]) # Black's FU on stand
+        [[1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1.]]
+        >>> print(np.rot90(x[0, ..., 10], -1)) # Black's OU on board
+        [[0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [1. 0. 0. 0. 0.]]
+        >>> print(np.rot90(x[0, ..., 15], -1)) # White's FU on stand
+        [[0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]]
+        >>> print(np.rot90(x[0, ..., 25], -1)) # White's LI on board
+        [[0. 0. 0. 0. 1.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]]
+        >>> shogi.Game("rbs1k/4g/5/P4/KGSB1 w P").to_dlshogi_features(out=x)
+        >>> print(np.rot90(x[0, ..., 9], -1)) # White's KI from white's view
+        [[0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [1. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]]
         """
         if out is None:
             return self._game.to_dlshogi_features()
@@ -593,14 +870,14 @@ class Game(abc.ABC):
 
         Examples
         --------
-        >>> import vshogi.animal_shogi as shogi
-        >>> g = shogi.Game()
+        >>> import vshogi.minishogi as shogi
+        >>> g = shogi.Game("4k/5/5/5/4S b -")
         >>> logits = np.zeros(g.num_dlshogi_policy)
         >>> proba = g.masked_softmax(logits)
-        >>> proba[shogi.Move("c4c3")]
-        0.25
-        >>> proba[shogi.Move("b4c3")]
-        0.25
+        >>> proba[shogi.Move("1e1d")]
+        0.5
+        >>> proba[shogi.Move("1e2d")]
+        0.5
         """
         return self._game.masked_softmax(logits)
 
@@ -626,9 +903,14 @@ class Game(abc.ABC):
         >>> import vshogi.minishogi as shogi
         >>> g = shogi.Game("5/2k2/5/2P2/2K2 b 2G")
         >>> g.get_mate_moves_if_any() # doctest: +ELLIPSIS
-        [Move(dst=SQ_3C, src=KI), ...]
+        [Move(src=KI, dst=SQ_3C), ...]
         """
-        return self._game.get_mate_moves_if_any(num_dfpn_nodes)
+        mate_moves = self._game.get_mate_moves_if_any(num_dfpn_nodes)
+        return mate_moves
+
+    @abc.abstractmethod
+    def _piece_value_func(self) -> float:
+        pass
 
     def __repr__(self) -> str:
         """Return representation of the object for debugging.
@@ -665,3 +947,24 @@ class Game(abc.ABC):
             Copy of the game object.
         """
         return self.__class__(self._game.copy())
+
+    def to_svg(self, scale: float = 1., *, skip_white_stand: bool = False):
+        """Return an SVG representation of the current game position.
+
+        Parameters
+        ----------
+        scale : float, optional
+            Scaling factor of the resulting SVG image, by default 1.
+        skip_white_stand : bool, optional
+            Skip depiction of white stand from SVG image if true,
+            by default false.
+
+        Returns
+        -------
+        object
+            SVG representation of the game position.
+        """
+        from vshogi._to_svg import _to_svg
+        lastmove = self.get_move_at(-1) if self.ply() > 0 else None
+        return _to_svg(
+            self, lastmove, scale, skip_white_stand=skip_white_stand)

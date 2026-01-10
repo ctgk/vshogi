@@ -1,5 +1,8 @@
 #include "vshogi/common/color.hpp"
 #include "vshogi/common/result.hpp"
+#include "vshogi/engine/az/node.hpp"
+#include "vshogi/engine/dfpn/node.hpp"
+#include "vshogi/engine/gaz/node.hpp"
 
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
@@ -7,7 +10,6 @@
 
 namespace py = pybind11;
 
-void export_animal_shogi(py::module& m);
 void export_judkins_shogi(py::module& m);
 void export_minishogi(py::module& m);
 void export_shogi(py::module& m);
@@ -27,13 +29,118 @@ void export_result_enum(py::module& m)
         .value("WHITE_WIN", vshogi::WHITE_WIN);
 }
 
+void export_dfpn_node(py::module& m)
+{
+    using Node = vshogi::engine::dfpn::Node;
+    constexpr float unit = static_cast<float>(vshogi::engine::dfpn::unit);
+    constexpr uint inf = vshogi::engine::dfpn::inf;
+    py::class_<Node>(m, "DfpnNode")
+        .def(
+            "pn",
+            [](const Node& self, const bool offence) {
+                const auto n = self.pn(offence);
+                if (n == inf)
+                    return std::numeric_limits<float>::infinity();
+                return static_cast<float>(n) / unit;
+            })
+        .def(
+            "dn",
+            [](const Node& self, const bool offence) {
+                const auto n = self.dn(offence);
+                if (n == inf)
+                    return std::numeric_limits<float>::infinity();
+                return static_cast<float>(n) / unit;
+            })
+        .def("get_action", &Node::get_action)
+        .def("has_child", &Node::has_child)
+        .def("get_children", [](const Node& self) -> py::object {
+            std::vector<const Node*> out;
+            if (self.has_child()) {
+                for (auto ch = self.get_child(); ch; ch = ch->get_sibling())
+                    out.emplace_back(ch);
+            }
+            return py::cast(out, py::return_value_policy::reference);
+        });
+}
+
+void export_az_node(py::module& m)
+{
+    using Node = vshogi::engine::az::Node;
+    py::class_<Node>(m, "AzNode")
+        .def("get_proba", &Node::get_proba)
+        .def("get_visit_count", &Node::get_visit_count)
+        .def(
+            "get_visit_count_excluding_random",
+            &Node::get_visit_count_excluding_random)
+        .def(
+            "get_q_value",
+            [](const Node& self, const uint depth, const uint min_visits) {
+                return self.get_q_value(depth, min_visits);
+            })
+        .def(
+            "get_actions",
+            [](const Node& self) {
+                std::vector<uint> out{};
+                out.reserve(self.count_childs());
+                for (const Node* c = self.get_child(); c; c = c->get_sibling())
+                    out.emplace_back(c->get_action());
+                return out;
+            })
+        .def(
+            "get_child_of",
+            [](const Node& self, const vshogi::move_t& action) -> py::object {
+                const auto out = self.get_child_of(action);
+                if (out)
+                    return py::cast(*out, py::return_value_policy::reference);
+                return py::none();
+            });
+}
+
+void export_gaz_node(py::module& m)
+{
+    using Node = vshogi::engine::gaz::Node;
+    py::class_<Node>(m, "GazNode")
+        .def("get_visit_count", &Node::get_visit_count)
+        .def(
+            "get_q_value",
+            py::overload_cast<const uint, const uint>(
+                &Node::get_q_value, py::const_))
+        .def(
+            "get_actions",
+            [](const Node& self) {
+                std::vector<uint> out{};
+                out.reserve(self.count_childs());
+                for (const Node* c = self.get_child(); c; c = c->get_sibling())
+                    out.emplace_back(c->get_action());
+                return out;
+            })
+        .def(
+            "get_probas",
+            [](const Node& self) {
+                std::vector<float> out{};
+                out.reserve(self.count_childs());
+                for (const Node* c = self.get_child(); c; c = c->get_sibling())
+                    out.emplace_back(c->get_logit());
+                vshogi::softmax(out);
+                return out;
+            })
+        .def(
+            "get_child_of",
+            [](const Node& self, const vshogi::move_t& action) -> py::object {
+                const auto out = self.get_child_of(action);
+                if (out)
+                    return py::cast(*out, py::return_value_policy::reference);
+                return py::none();
+            });
+}
+
 PYBIND11_MODULE(_vshogi, m)
 {
     export_color_enum(m);
     export_result_enum(m);
-
-    auto animal_shogi_module = m.def_submodule("animal_shogi");
-    export_animal_shogi(animal_shogi_module);
+    export_dfpn_node(m);
+    export_az_node(m);
+    export_gaz_node(m);
 
     auto judkins_shogi_module = m.def_submodule("judkins_shogi");
     export_judkins_shogi(judkins_shogi_module);

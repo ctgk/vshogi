@@ -1,18 +1,25 @@
 """Shogi API for shogi and its variants."""
 
-from vshogi import animal_shogi, judkins_shogi, minishogi, shogi
-from vshogi import engine
+from vshogi import engine, judkins_shogi, minishogi, shogi
 from vshogi._game import Game
 from vshogi._play import play_game
+from vshogi._record import Record
 from vshogi._repr import _repr_enum
 from vshogi._vshogi import Color, Result
 
 Color.__repr__ = _repr_enum
 Result.__repr__ = _repr_enum
 
-_classes = [Color, Result, Game]
+try:
+    from vshogi import dlshogi
+except ModuleNotFoundError:
+    dlshogi = None
+
+_classes = [Color, Record, Result, Game]
 _enums = [Color, Result]
-_modules = [animal_shogi, engine, judkins_shogi, minishogi, shogi]
+_modules = [engine, judkins_shogi, minishogi, shogi]
+if dlshogi is not None:
+    _modules.append(dlshogi)
 _functions = [play_game]
 
 

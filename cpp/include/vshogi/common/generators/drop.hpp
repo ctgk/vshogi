@@ -1,0 +1,275 @@
+#ifndef VSHOGI_COMMON_GENERATORS_DROP_HPP
+#define VSHOGI_COMMON_GENERATORS_DROP_HPP
+
+#include "vshogi/common/bitboard_traits.hpp"
+#include "vshogi/common/config.hpp"
+#include "vshogi/common/generators/gentype.hpp"
+#include "vshogi/common/piece_traits.hpp"
+#include "vshogi/common/square_traits.hpp"
+#include "vshogi/common/state.hpp"
+
+namespace vshogi
+{
+
+/**
+ *
+ * DropMoveGenerator<LEGAL>
+ * for (pt : piece_types)
+ *     for (dst : destinations)
+ *
+ * DropMoveGenerator<CHECK>
+ * for (pt : piece_types)
+ *     for (dst : destinations)
+ *
+ * DropMoveGenerator<EVADE>
+ * for (dst : destinations)
+ *     for (pt : piece_types)
+ */
+
+template <class P, GenEnum GenType = GenEnum::LEGAL>
+class DropMoveGenerator
+{
+private:
+    using C = Configuration<P>;
+    using PieceType = typename C::PieceType;
+    using Square = typename C::Square;
+    using PT = PieceTraits<P>;
+    using BT = BitboardTraits<P>;
+    using MT = MoveTraits<P>;
+    using bitboard_t = typename C::bitboard_t;
+    using BitSquareIterator = typename BT::Iterator;
+
+private:
+    const State<P>& m_state;
+    const Stand<P>& m_stand;
+    BitSquareIterator m_sq_iter; //!< inner loop
+    PieceType m_pt_iter; //!< outer loop
+
+public:
+    DropMoveGenerator(const State<P>& state)
+        : m_state(state), m_stand(state.get_stand()), m_sq_iter{}, m_pt_iter{}
+    {
+        if (!state.can_apply_drop_move()) {
+            m_pt_iter = static_cast<PieceType>(C::num_stand_piece_types);
+            return;
+        }
+        increment_piece_type_unless_in_stand();
+        if (m_pt_iter == C::num_stand_piece_types)
+            return;
+        init_sq_iter();
+        increment_piece_type_while_no_dst();
+    }
+    DropMoveGenerator(
+        const State<P>& state, const PieceType pt, const Square sq)
+        : m_state(state), m_stand(state.get_stand()), m_sq_iter{}, m_pt_iter{pt}
+    {
+        if (!state.can_apply_drop_move()) {
+            m_pt_iter = static_cast<PieceType>(C::num_stand_piece_types);
+            return;
+        }
+        increment_piece_type_unless_in_stand();
+        if (m_pt_iter == C::num_stand_piece_types)
+            return;
+        init_sq_iter(sq);
+        increment_piece_type_while_no_dst();
+    }
+    DropMoveGenerator& operator++()
+    {
+        ++m_sq_iter;
+        increment_piece_type_while_no_dst();
+        return *this;
+    }
+    move_t operator*() const
+    {
+        return MT::make_move(m_pt_iter, *m_sq_iter);
+    }
+    operator bool() const
+    {
+        return m_sq_iter; // && (m_pt_iter != C::num_stand_piece_types);
+    }
+
+private:
+    void init_sq_iter()
+    {
+        const Board<P>& b = m_state.get_board();
+        const auto t = m_state.get_turn();
+        const auto p = PT::make_piece(t, m_pt_iter);
+        auto mask = BT::invert(b.get_occupied());
+        if (m_state.in_check())
+            mask &= BT::get_mask_between(
+                m_state.find_checker_square(), b.get_king_square(t));
+        if (mask)
+            mask &= BT::get_placeable(p);
+        if (mask && (GenType == GenEnum::CHECK))
+            mask &= inverse_attack(b, t);
+        if (mask && (m_pt_iter == C::FU))
+            mask &= no_pawn_files(b, t);
+        if (mask && (m_pt_iter == C::FU))
+            mask ^= BT::from_square(b.drop_pawn_mate_square(t, mask));
+        m_sq_iter = BT::iterator(mask);
+    }
+    bitboard_t inverse_attack(const Board<P>& b, const ColorEnum t) const
+    {
+        return BT::get_attack_by(
+            PT::make_piece(~t, m_pt_iter),
+            b.get_king_square(~t),
+            b.get_occupied());
+    }
+    static bitboard_t no_pawn_files(const Board<P>& b, const ColorEnum t)
+    {
+        bitboard_t out{};
+        for (auto f : EnumIterator<typename C::File, C::num_files>()) {
+            const auto m = BT::from_file(f);
+            if (!(m & b.get_occupied(t) & b.get_occupied(C::FU)))
+                out ^= m;
+        }
+        return out;
+    }
+    void init_sq_iter(const Square begin)
+    {
+        init_sq_iter();
+        while (m_sq_iter) {
+            if (*m_sq_iter < begin)
+                ++m_sq_iter;
+            else
+                break;
+        }
+    }
+    void increment_piece_type_while_no_dst()
+    {
+        while (!m_sq_iter) {
+            m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
+            increment_piece_type_unless_in_stand();
+            if (m_pt_iter >= C::num_stand_piece_types)
+                break;
+            init_sq_iter();
+        }
+    }
+    void increment_piece_type_unless_in_stand()
+    {
+        while ((m_pt_iter < C::num_stand_piece_types)
+               && !m_stand.exist(m_pt_iter)) {
+            m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
+        }
+    }
+};
+
+template <class P>
+class DropMoveGenerator<P, GenEnum::EVADE>
+{
+private:
+    using C = Configuration<P>;
+    using BT = BitboardTraits<P>;
+    using ST = SquareTraits<P>;
+    using PT = PieceTraits<P>;
+    using MT = MoveTraits<P>;
+    using PieceType = typename C::PieceType;
+    using Square = typename C::Square;
+    using BitSquareIterator = typename BT::Iterator;
+    static constexpr auto pt_end
+        = static_cast<PieceType>(C::num_stand_piece_types);
+
+    const State<P>& m_state;
+    const Square m_sq_end; //!< exclusive
+    const Square* m_sq_iter; //!< outer loop
+    PieceType m_pt_iter; //!< inner loop
+
+public:
+    DropMoveGenerator(const State<P>& state);
+    move_t operator*() const
+    {
+        return MT::make_move(m_pt_iter, *m_sq_iter);
+    }
+    DropMoveGenerator& operator++()
+    {
+        m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
+        while (true) {
+            if (is_end_or_valid_move())
+                break;
+            increment();
+        }
+        return *this;
+    }
+    operator bool() const
+    {
+        return *m_sq_iter != m_sq_end;
+    }
+
+private:
+    bool is_end_or_valid_move() const
+    {
+        if (*m_sq_iter == m_sq_end) // outer loop
+            return true;
+        if (m_pt_iter == pt_end) // inner loop
+            return false;
+
+        const ColorEnum turn = m_state.get_turn();
+        const Square dst = *m_sq_iter;
+        const Stand<P>& stand = m_state.get_stand();
+        if (!stand.exist(m_pt_iter))
+            return false;
+        const auto p = PT::make_piece(turn, m_pt_iter);
+        const DirectionEnum* const dirs = PT::get_attack_directions(p);
+        if (dirs[1] == DIR_NA) { // FU or KY
+            if (ST::to_rank(dst) == (turn == BLACK ? C::RANK_A : C::RANK_Z))
+                return false;
+            const Board<P>& b = m_state.get_board();
+            if (m_pt_iter == C::FU) {
+                if (has_pawn_in_file(b, ST::to_file(dst), turn))
+                    return false;
+                if (b.drop_pawn_mate_square(turn, BT::from_square(dst)) == dst)
+                    return false;
+            }
+        } else if (dirs[2] == DIR_NA) { // KE
+            static_assert(
+                (DIR_SSW < DIR_NNW) && (DIR_SSE < DIR_NNW)
+                && (DIR_NNW < DIR_NNE));
+            if (dirs[0] >= DIR_NNW)
+                return ST::to_rank(dst) > C::RANK_B;
+            else
+                return ST::to_rank(dst) < C::RANK_Y;
+        }
+        return true;
+    }
+    static bool has_pawn_in_file(
+        const Board<P>& b, const typename C::File& f, const ColorEnum& by_side)
+    {
+        return b.get_occupied(by_side) & b.get_occupied(C::FU)
+               & BT::from_file(f);
+    }
+    void increment()
+    {
+        // for (sq : m_sq_iter) // outer loop
+        //     for (pt : m_pt_iter) // inner loop
+        m_pt_iter = static_cast<PieceType>(m_pt_iter + 1);
+        if (m_pt_iter < pt_end)
+            return;
+        ++m_sq_iter;
+        if (*m_sq_iter != m_sq_end)
+            m_pt_iter = C::FU;
+        else
+            m_pt_iter = pt_end;
+    }
+};
+
+template <class P>
+DropMoveGenerator<P, GenEnum::EVADE>::DropMoveGenerator(const State<P>& state)
+    : m_state{state}, m_sq_end{state.find_checker_square()},
+      m_sq_iter{ST::ray_from(state.get_king_square(), state.get_checker_dir())},
+      m_pt_iter{C::FU}
+{
+    assert(state.in_check());
+    assert(m_sq_iter);
+    if (state.can_apply_drop_move() && (*m_sq_iter != m_sq_end)) {
+        while (!is_end_or_valid_move())
+            increment();
+    } else {
+        m_pt_iter = pt_end;
+        while (*m_sq_iter != m_sq_end)
+            ++m_sq_iter;
+    }
+}
+
+} // namespace vshogi
+
+#endif // VSHOGI_COMMON_GENERATORS_DROP_HPP

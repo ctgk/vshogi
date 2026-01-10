@@ -246,4 +246,12 @@ ModelManifest.xml
 __pycache__
 /dist
 .vscode
+
+# gemini-cli settings
+.gemini/
+# GitHub App credentials
+gha-creds-*.json
+
 examples/**/*shogi*/
+examples/**/*judkins*/
+tmp/

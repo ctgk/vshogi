@@ -103,7 +103,7 @@ void export_pieces(py::module& m)
         .value("UM", js::UM)
         .value("RY", js::RY)
         .value("NA", js::NA);
-    py::enum_<js::ColoredPieceEnum>(m, "BoardPiece")
+    py::enum_<js::PieceEnum>(m, "BoardPiece")
         .value("B_FU", js::B_FU)
         .value("B_KE", js::B_KE)
         .value("B_GI", js::B_GI)
@@ -135,13 +135,13 @@ void export_pieces(py::module& m)
 
 void export_judkins_shogi(py::module& m)
 {
-    js::Pieces::init_tables();
-    js::Squares::init_tables();
+    js::SquareTraits::init_tables();
     js::BlackWhiteStands::init_tables();
-    js::BitBoard::init_tables();
+    js::BitboardTraits::init_tables();
     js::Board::init_tables();
+    js::Magic::init_tables();
 
     export_square_enum(m);
     export_pieces(m);
-    pyvshogi::export_classes<js::Config>(m);
+    pyvshogi::export_classes<js::Parameters>(m);
 }
