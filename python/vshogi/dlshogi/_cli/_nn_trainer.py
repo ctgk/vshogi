@@ -128,6 +128,7 @@ def _train(
     minibatch_size: int,
     learning_rate: float,
     epochs: int,
+    beta2: float = 0.999,
     coeff_policy_loss: float = 0.1,
     coeff_entropy_regularization: float = 0.01,
     grad_accumulations: int = 1,
@@ -138,7 +139,9 @@ def _train(
         shuffle=True,
         drop_last=True,
     )
-    optimizer = th.optim.AdamW(model.parameters(), learning_rate)
+    optimizer = th.optim.AdamW(
+        model.parameters(), learning_rate, betas=(0.9, beta2)
+    )
     vs.dlshogi.train(
         model,
         dataloader,
@@ -214,6 +217,7 @@ def _train_step(
     minibatch_size: int,
     learning_rate: float,
     epochs: int,
+    beta2: float,
     coeff_policy_loss: float,
     coeff_entropy_regularization: float,
     grad_accumulations: int,
@@ -263,6 +267,7 @@ def _train_step(
             minibatch_size=minibatch_size,
             learning_rate=learning_rate,
             epochs=epochs,
+            beta2=beta2,
             coeff_policy_loss=coeff_policy_loss,
             coeff_entropy_regularization=coeff_entropy_regularization,
             grad_accumulations=grad_accumulations,
@@ -319,6 +324,19 @@ def _train_step(
 @cl.option("--minibatch-size", default=32, show_default=True)
 @cl.option("--learning-rate", default=1e-2, show_default=True)
 @cl.option("--epochs", default=5, show_default=True)
+@cl.option(
+    "--beta2",
+    default=-1.0,
+    type=float,
+    show_default=True,
+    help=(
+        "2nd-moment decay (`beta2`) of Adam optimizer. "
+        "Set a negative value to auto-tune by batch size: "
+        "`beta2 = 0.999 ** (minibatch_size / 1024)`. "
+        "This keeps the effective averaging window comparable "
+        "across different minibatch sizes."
+    ),
+)
 @cl.option("--coeff-policy-loss", default=0.1, show_default=True)
 @cl.option("--coeff-policy-entropy", default=1e-2, show_default=True)
 @cl.option("--grad-accumulations", default=1, show_default=True)
@@ -365,6 +383,7 @@ def _nn_trainer(**kwargs):
             minibatch_size=kwargs['minibatch_size'],
             learning_rate=kwargs['learning_rate'],
             epochs=0 if ii == 0 else kwargs['epochs'],
+            beta2=kwargs['beta2'],
             coeff_policy_loss=kwargs['coeff_policy_loss'],
             coeff_entropy_regularization=kwargs['coeff_policy_entropy'],
             grad_accumulations=kwargs['grad_accumulations'],

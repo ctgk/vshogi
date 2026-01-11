@@ -37,6 +37,11 @@ def _train(nth_cycle: int, **kwargs):
         minibatch_size=kwargs['train_minibatch_size'],
         learning_rate=kwargs['train_learning_rate'],
         epochs=0 if nth_cycle == 0 else kwargs['train_epochs'],
+        beta2=(
+            kwargs['train_beta2']
+            if kwargs['train_beta2'] > 0
+            else 0.999 ** (kwargs['train_minibatch_size'] / 1024)
+        ),
         coeff_policy_loss=kwargs['train_coeff_policy_loss'],
         coeff_entropy_regularization=kwargs['train_coeff_policy_entropy'],
         grad_accumulations=kwargs['train_grad_accumulations'],
@@ -104,6 +109,19 @@ def _selfplay(
 @cl.option("--train-minibatch-size", default=32, show_default=True)
 @cl.option("--train-learning-rate", default=1e-2, show_default=True)
 @cl.option("--train-epochs", default=5, show_default=True)
+@cl.option(
+    "--train-beta2",
+    default=-1.0,
+    type=float,
+    show_default=True,
+    help=(
+        "2nd-moment decay (`beta2`) of Adam optimizer. "
+        "Set a negative value to auto-tune by batch size: "
+        "`beta2 = 0.999 ** (minibatch_size / 1024)`. "
+        "This keeps the effective averaging window comparable "
+        "across different minibatch sizes."
+    ),
+)
 @cl.option("--train-coeff-policy-loss", default=0.1, show_default=True)
 @cl.option("--train-coeff-policy-entropy", default=1e-2, show_default=True)
 @cl.option("--train-grad-accumulations", default=1, show_default=True)
