@@ -252,6 +252,6 @@ __pycache__
 # GitHub App credentials
 gha-creds-*.json
 
-examples/**/*shogi*/
-examples/**/*judkins*/
 tmp/
+assets/
+experiments/
