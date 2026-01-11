@@ -458,18 +458,15 @@ inline void export_az_searcher(pybind11::module& m)
     using Searcher = vshogi::engine::az::Searcher<Parameters>;
 
     py::class_<Searcher>(m, "AlphaZero")
-        .def(
-            py::init<
-                const float,
-                const float,
-                const uint,
-                const uint,
-                const uint>())
+        .def(py::init<const uint, const uint, const uint>())
         .def("init", &Searcher::init)
         .def(
             "search",
-            [](Searcher& self, Game& game) -> py::object {
-                const auto out = self.search(game);
+            [](Searcher& self,
+               Game& game,
+               const float c_puct,
+               const float p_random) -> py::object {
+                const auto out = self.search(game, c_puct, p_random);
                 if (out == nullptr)
                     return py::none();
                 return py::cast(*out, py::return_value_policy::reference);

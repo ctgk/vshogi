@@ -108,8 +108,6 @@ class AlphaZero(Engine):
         self._game = game.copy()
         if type(self._searcher) is not game._get_az_searcher_class():
             self._searcher = game._get_az_searcher_class()(
-                self._coeff_puct,
-                self._random_rate,
                 self._tree_size,
                 self._dfpn_search_root,
                 self._dfpn_search_leaf,
@@ -160,7 +158,9 @@ class AlphaZero(Engine):
                     kldgain = self._kldgain(self._prev_visits)
                     if kldgain < self._kldgain_threshold * kldgain_steps:
                         break
-            node = self._searcher.search(self._game._game)
+            node = self._searcher.search(
+                self._game._game, self._coeff_puct, self._random_rate
+            )
             if node is None:
                 continue
             policy_logits, value = self._policy_value_func(self._game)

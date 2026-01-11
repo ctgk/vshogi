@@ -46,7 +46,7 @@ TEST_GROUP (shogi_profile) {
 TEST(shogi_profile, alpha_zero)
 {
     auto g = Game();
-    auto az = Searcher(4.f, 0.25f, 1000000u, 10000u, 100u);
+    auto az = Searcher(1000000u, 10000u, 100u);
     for (uint ii = 0u; ii < 167u; ++ii) {
         if (g.get_result() != vshogi::ONGOING)
             break;

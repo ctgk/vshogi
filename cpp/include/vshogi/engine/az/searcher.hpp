@@ -25,18 +25,13 @@ namespace dfpn = vshogi::engine::dfpn;
 template <class P>
 class Searcher : public dfpn::DfpnAugmentedSearcher<P, Node>
 {
-private:
-    const float m_coeff_puct;
-    const float m_random_rate;
-
 public:
     Searcher(
-        const float c_puct = 4.f,
-        const float p_random = 0.25f,
         const uint tree_size = 1000000u,
         const uint dfpn_budget_root = 0u,
         const uint dfpn_budget_leaf = 0u);
-    Node* search(Game<P>& game);
+    Node* search(
+        Game<P>& game, const float c_puct = 4.f, const float p_random = 0.25f);
     void simulate_expand_backprop(
         Node* const leaf,
         Game<P>& game,
@@ -53,26 +48,27 @@ private:
     using dfpn::DfpnAugmentedSearcher<P, Node>::m_next;
     using dfpn::DfpnAugmentedSearcher<P, Node>::backprop_to_root;
     using dfpn::DfpnAugmentedSearcher<P, Node>::simulate_backprop_if_possible;
-    Node* select_a_leaf_node(Game<P>& game);
+    Node*
+    select_a_leaf_node(Game<P>& game, const float c_puct, const float p_random);
 };
 
 template <class P>
 Searcher<P>::Searcher(
-    const float c_puct,
-    const float p_random,
     const uint tree_size,
     const uint dfpn_budget_root,
     const uint dfpn_budget_leaf)
     : dfpn::DfpnAugmentedSearcher<P, Node>(
-          tree_size, dfpn_budget_root, dfpn_budget_leaf),
-      m_coeff_puct(c_puct), m_random_rate(p_random)
+          tree_size, dfpn_budget_root, dfpn_budget_leaf)
 {
 }
 
 template <class P>
-Node* Searcher<P>::search(Game<P>& game)
+Node* Searcher<P>::search(
+    Game<P>& game, const float c_puct, const float p_random)
 {
-    Node* const leaf = select_a_leaf_node(game);
+    if (m_next->is_end())
+        return nullptr;
+    Node* const leaf = select_a_leaf_node(game, c_puct, p_random);
     return simulate_backprop_if_possible(game, leaf);
 }
 
@@ -121,12 +117,13 @@ move_t Searcher<P>::select_action(const float temperature) const
 }
 
 template <class P>
-Node* Searcher<P>::select_a_leaf_node(Game<P>& game)
+Node* Searcher<P>::select_a_leaf_node(
+    Game<P>& game, const float c_puct, const float p_random)
 {
     Node* n = &m_nodes[0];
     while (n->has_child()) {
         Node* const child
-            = n->select(m_coeff_puct, (n == &m_nodes[0]) ? m_random_rate : 0.f);
+            = n->select(c_puct, (n == &m_nodes[0]) ? p_random : 0.f);
         assert(child != nullptr);
         game.apply_nocheck(child->get_action());
         assert(child->get_parent() == n);
