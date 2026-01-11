@@ -180,9 +180,7 @@ class Record:
         1.2
         """
         return (
-            self.wins_total
-            + 0.4 * self.draws_black
-            + 0.6 * self.draws_white
+            self.wins_total + 0.4 * self.draws_black + 0.6 * self.draws_white
         )
 
 

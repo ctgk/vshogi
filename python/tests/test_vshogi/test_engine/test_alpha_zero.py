@@ -6,7 +6,7 @@ from vshogi.engine import AlphaZero
 
 
 def uniform_pv_func(game):
-    return np.zeros(game.num_dlshogi_policy), 0.
+    return np.zeros(game.num_dlshogi_policy), 0.0
 
 
 def test_is_ready():
@@ -39,7 +39,7 @@ def test_q_values_mate_in_one():
     game = shogi.Game("b2pk/3b1/4P/2gRR/4K b -")
     m = shogi.Move(shogi.SQ_1C, shogi.SQ_1B)
 
-    searcher = AlphaZero(uniform_pv_func, random_rate=0.)
+    searcher = AlphaZero(uniform_pv_func, random_rate=0.0)
     searcher.set_game(game)
     searcher.search(budget=100)
     actual = searcher.get_q_values()
@@ -83,15 +83,17 @@ def test_visit_count_by_random():
     m = shogi.Move(shogi.SQ_1E, shogi.SQ_1B)
 
     searcher = AlphaZero(
-        lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.), random_rate=0)
+        lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.0), random_rate=0
+    )
     searcher.set_game(game)
     searcher.search(budget=100)
     visit_count = searcher.get_visit_counts()[m]
     print(searcher._tree(depth=2, breadth=-1))
 
     searcher = AlphaZero(
-        lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.),
-        random_rate=0.25)
+        lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.0),
+        random_rate=0.25,
+    )
     searcher.set_game(game)
     searcher.search(budget=100)
     visit_count_with_noise = searcher.get_visit_counts()[m]
@@ -100,7 +102,6 @@ def test_visit_count_by_random():
 
 
 def test_greedy_q_value():
-
     def random_pv_func(game):
         return np.zeros(game.num_dlshogi_policy), np.random.uniform(-1, 1)
 
@@ -132,7 +133,7 @@ def test_greedy_q_value():
 
 def test_dfpn_root():
     mcts = AlphaZero(
-        lambda g: (g.to_dlshogi_policy({}), 0.),
+        lambda g: (g.to_dlshogi_policy({}), 0.0),
         random_rate=0,
         dfpn_search_root=10000,
     )
@@ -190,7 +191,7 @@ def test_mating_net():
 
 def test_dfpn_vertex():
     mcts = AlphaZero(
-        lambda g: (g.to_dlshogi_policy({}), 0.),
+        lambda g: (g.to_dlshogi_policy({}), 0.0),
         random_rate=0,
         dfpn_search_root=0,
         dfpn_search_leaf=100,
@@ -223,7 +224,7 @@ def test_dfpn_vertex():
 
 def test_dfpn_vertex_2():
     mcts = AlphaZero(
-        lambda g: (g.to_dlshogi_policy({}), 0.),
+        lambda g: (g.to_dlshogi_policy({}), 0.0),
         random_rate=0,
         dfpn_search_root=0,
         dfpn_search_leaf=100,
@@ -260,12 +261,14 @@ def test_dfpn_vertex_2():
     mcts.search(budget=1)
     print(mcts._tree(depth=2))
     assert mcts.select() in g.get_legal_moves(), (
-        mcts.select(), g.get_legal_moves())
+        mcts.select(),
+        g.get_legal_moves(),
+    )
 
 
 def test_dfpn_root_vertex():
     mcts = AlphaZero(
-        lambda g: (g.to_dlshogi_policy({}), 0.),
+        lambda g: (g.to_dlshogi_policy({}), 0.0),
         random_rate=0,
         dfpn_search_root=10000,
         dfpn_search_leaf=100,
@@ -289,22 +292,22 @@ def test_dfpn_root_vertex():
     mcts.set_game(g)
     mcts.search(100)
     assert mcts.proved_mate()
-    assert np.isclose(mcts.get_q_value(), 1., rtol=0, atol=1e-3)
+    assert np.isclose(mcts.get_q_value(), 1.0, rtol=0, atol=1e-3)
 
     assert shogi.Move("4d3c") == mcts.select()
     g.apply(mcts.select())
     mcts.apply(mcts.select())
 
     print(mcts._tree())
-    assert np.isclose(mcts.get_q_value(), -1., rtol=0, atol=1e-3)
+    assert np.isclose(mcts.get_q_value(), -1.0, rtol=0, atol=1e-3)
     mcts.search(100)
     assert mcts.proved_mate()
-    assert np.isclose(mcts.get_q_value(), -1., rtol=0, atol=1e-3)
+    assert np.isclose(mcts.get_q_value(), -1.0, rtol=0, atol=1e-3)
 
 
 def test_debug():
     mcts = AlphaZero(
-        lambda g: (g.to_dlshogi_policy({}), 0.),
+        lambda g: (g.to_dlshogi_policy({}), 0.0),
         random_rate=0,
         dfpn_search_root=10000,
         dfpn_search_leaf=100,
@@ -331,7 +334,7 @@ def test_debug():
     mcts.search(1)
     print(mcts._tree(depth=2))
     assert mcts.proved_mate()
-    assert np.isclose(mcts.get_q_value(), 1.)
+    assert np.isclose(mcts.get_q_value(), 1.0)
 
 
 if __name__ == '__main__':

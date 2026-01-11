@@ -23,7 +23,8 @@ def _dump_game_log(file_, game: vs.Game) -> None:
             lambda g, i: g.get_sfen_at(i, include_move_count=False),
             lambda g, i: g.get_move_at(i).to_sfen(),
             lambda _, i: (
-                0 if 'DRAW' in r
+                0
+                if 'DRAW' in r
                 else (2 * (('BLACK' in r) is (i % 2 == 0)) - 1)
             ),
             lambda g, i: g.q_value_log[i],
@@ -55,7 +56,8 @@ def _play_game(
 
     num_random_moves = (
         np.random.choice(max_random_moves + 1)
-        if np.isfinite(max_random_moves) else max_random_moves
+        if np.isfinite(max_random_moves)
+        else max_random_moves
     )
     for _ in range(max_moves):
         if game.result != vs.Result.ONGOING:
@@ -83,7 +85,7 @@ def _play_game(
             if mate_moves is not None:
                 for i, m in enumerate(mate_moves):
                     game.apply(m)
-                    game.q_value_log.append(1. if i % 2 == 0 else -1.)
+                    game.q_value_log.append(1.0 if i % 2 == 0 else -1.0)
                     game.policy_log.append({})
                 if game.result != vs.Result.ONGOING:
                     break
@@ -94,23 +96,26 @@ def _play_game(
             move = player.select(temperature=temperature)
         else:
             move = player.select()
-        if (hash(move) == 0):
+        if hash(move) == 0:
             raise ValueError(
                 f"Invalid move ({move}) selected at the game, "
-                f"{game.to_sfen()}.\n{player._tree(depth=2)}")
+                f"{game.to_sfen()}.\n{player._tree(depth=2)}"
+            )
 
         player_dump = main or player
         if engine == 'AlphaZero':
             visit_count = {
                 m.to_sfen(): v + 1  # +1 for smoothing
-                for m, v in
-                player_dump.get_visit_counts(include_random=False).items()
+                for m, v in player_dump.get_visit_counts(
+                    include_random=False
+                ).items()
             }
             game.policy_log.append(visit_count)
         elif engine == 'GumbelAlphaZero':
             game.policy_log.append(player_dump.select().to_sfen())
         game.q_value_log.append(
-            player_dump.get_q_value(greedy_depth=q_greedy_depth))
+            player_dump.get_q_value(greedy_depth=q_greedy_depth)
+        )
 
         game.apply(move)
         if engine == 'AlphaZero':
@@ -155,7 +160,6 @@ def _play_game_and_dump_log(
 
 @contextlib.contextmanager
 def _tqdm_joblib(tqdm_object):
-
     class TqdmBatchCompletionCallback(joblib.parallel.BatchCompletionCallBack):
         def __call__(self, *args, **kwargs):
             tqdm_object.update(n=self.batch_size)
@@ -179,10 +183,14 @@ def _load_player(
     engine: tp.Literal['AlphaZero', 'GumbelAlphaZero'],
 ) -> vs.engine.Engine:
     engine_class = getattr(vs.engine, engine)
-    kwargs = {} if engine == 'GumbelAlphaZero' else {
-        'coeff_puct': coeff_puct,
-        'kldgain_threshold': kldgain_threshold,
-    }
+    kwargs = (
+        {}
+        if engine == 'GumbelAlphaZero'
+        else {
+            'coeff_puct': coeff_puct,
+            'kldgain_threshold': kldgain_threshold,
+        }
+    )
     return engine_class(
         (
             (
@@ -191,15 +199,16 @@ def _load_player(
                     vs.engine.piece_value_func(g),
                 )
             )
-            if tflite_path is None else
-            vs.dlshogi.PolicyValueFunction(tflite_path)
+            if tflite_path is None
+            else vs.dlshogi.PolicyValueFunction(tflite_path)
         ),
         **kwargs,
         dfpn_search_root=dfpn_search_root,
         dfpn_search_leaf=dfpn_search_leaf,
         name=(
-            'none' if tflite_path is None else
-            tflite_path.split('/')[-1].split('.')[0]
+            'none'
+            if tflite_path is None
+            else tflite_path.split('/')[-1].split('.')[0]
         ),
     )
 
@@ -254,11 +263,11 @@ def _run_self_play_single(
         player_white = player
         if (i // 10) % 2 == 0:
             player_white = player_others[i % len(player_others)]
-            if (player_white is not player):
+            if player_white is not player:
                 suffix = f'_W{player_white.name}'
         else:
             player_black = player_others[i % len(player_others)]
-            if (player_black is not player):
+            if player_black is not player:
                 suffix = f'_B{player_black.name}'
         _play_game_and_dump_log(
             shogi_variant=shogi_variant,
@@ -293,7 +302,8 @@ def _run_self_play_parallel(
     n_jobs: int,
 ):
     name = (
-        'none' if tflite_path is None
+        'none'
+        if tflite_path is None
         else tflite_path.split('/')[-1].split('.')[0]
     )
     timeout_second = 10 * 60  # 10 minutes
@@ -350,14 +360,14 @@ def _run_self_play(
     job_size: int = 5,
 ):
     name = (
-        "none" if tflite_path is None
+        "none"
+        if tflite_path is None
         else tflite_path.split("/")[-1].split(".")[0]
     )
     print(
         f'Self-play ({name}) with others: '
         + ', '.join(
-            p.split('/')[-1].split('.')[0]
-            for p in tflite_path_others
+            p.split('/')[-1].split('.')[0] for p in tflite_path_others
         ),
     )
     if not os.path.isdir(kifu_dir):
@@ -389,8 +399,10 @@ def _run_self_play(
             tflite_path_others=tflite_path_others,
             kifu_dir=kifu_dir,
             kifu_index_groups=[
-                range(i, i + job_size) for i in
-                range(index_start, index_start + num_selfplay, job_size)
+                range(i, i + job_size)
+                for i in range(
+                    index_start, index_start + num_selfplay, job_size
+                )
             ],
             coeff_puct=coeff_puct,
             kldgain_threshold=kldgain_threshold,
@@ -458,7 +470,8 @@ def _validate(
             ).result
             record += vs.Record.from_white_result(result)
         pbar.set_description(
-            f'{player_latest.name} vs {player_prev.name} = {record.wdl()}')
+            f'{player_latest.name} vs {player_prev.name} = {record.wdl()}'
+        )
     return record.score()
 
 
@@ -468,10 +481,11 @@ def _get_previous_models_superior_to_latest(
     previous: list[str],
     engine: tp.Literal['AlphaZero'],
     num_games: int = 10,
-    coeff_puct: float = 4.,
+    coeff_puct: float = 4.0,
 ) -> list[str]:
     return [
-        prev for prev in previous
+        prev
+        for prev in previous
         if _validate(
             shogi_variant,
             engine,
@@ -479,7 +493,8 @@ def _get_previous_models_superior_to_latest(
             prev,
             num_games,
             coeff_puct,
-        ) < num_games * 0.5
+        )
+        < num_games * 0.5
     ]
 
 
@@ -506,12 +521,12 @@ def _compute_random_moves(random_rate: float, kifu_dir: str):
 @cl.command()
 @cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
 @cl.option("--num-games", default=100, show_default=True)
-@cl.option("--coeff-puct", default=4., show_default=True)
+@cl.option("--coeff-puct", default=4.0, show_default=True)
 @cl.option("--kldgain-threshold", default=1e-4, show_default=True)
 @cl.option("--dfpn-root", default=10000, show_default=True)
 @cl.option("--dfpn-leaf", default=100, show_default=True)
 @cl.option("--num-simulations", default=100, show_default=True)
-@cl.option("--temperature", default=1., show_default=True)
+@cl.option("--temperature", default=1.0, show_default=True)
 @cl.option("--q-greedy-depth", default=1, show_default=True)
 @cl.option("--random-rate", default=0.5, show_default=True)
 @cl.option(
@@ -530,19 +545,18 @@ def _selfplay_worker(**kwargs):
 
     tflite_path = 'models/model_{:04d}.tflite'
     for ii in range(10000):
-        if (
-            os.path.exists(tflite_path.format(ii))
-            and os.path.exists(tflite_path.format(ii + 1))
+        if os.path.exists(tflite_path.format(ii)) and os.path.exists(
+            tflite_path.format(ii + 1)
         ):
             continue
         max_random_moves = _compute_random_moves(
-            kwargs['random_rate'], f'datasets/dataset_{ii - 1:04d}')
+            kwargs['random_rate'], f'datasets/dataset_{ii - 1:04d}'
+        )
         others = _get_previous_models_superior_to_latest(
             shogi_variant=kwargs['shogi'],
             latest=tflite_path.format(ii),
             previous=[
-                tflite_path.format(j)
-                for j in list(range(ii - 1, -1, -1))[:10]
+                tflite_path.format(j) for j in list(range(ii - 1, -1, -1))[:10]
             ],
             engine=kwargs['engine'],
             num_games=10,

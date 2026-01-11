@@ -43,20 +43,26 @@ class PolicyValueNetwork(th.nn.Module):
         in_ch: int = game_class.feature_channels
         shape = (game_class.files, game_class.ranks)
         num_policy_per_square = (
-            game_class._get_move_class()._num_policy_per_square())
-        attentions = np.concatenate((
-            np.eye(shape[0] * shape[1]).reshape(1, *shape, *shape),
-            game_class.get_local_attentions(),
-            game_class.get_adjacent_attention()[None, ...],
-            game_class.get_diagonal_attention()[None, ...],
-        ), axis=0)
+            game_class._get_move_class()._num_policy_per_square()
+        )
+        attentions = np.concatenate(
+            (
+                np.eye(shape[0] * shape[1]).reshape(1, *shape, *shape),
+                game_class.get_local_attentions(),
+                game_class.get_adjacent_attention()[None, ...],
+                game_class.get_diagonal_attention()[None, ...],
+            ),
+            axis=0,
+        )
         self._backbone = th.nn.Sequential(
             th.nn.Conv2d(in_ch, hidden_channels, kernel_size=1, bias=False),
             th.nn.BatchNorm2d(hidden_channels),
             th.nn.ReLU(inplace=True),
             *[
                 _ResidualBlock(
-                    hidden_channels, bottleneck_channels, attentions,
+                    hidden_channels,
+                    bottleneck_channels,
+                    attentions,
                     attention_groups=8,
                 )
                 for _ in range(num_backbone_blocks)

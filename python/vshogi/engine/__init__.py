@@ -24,9 +24,7 @@ for _cls in _classes:
     _cls.__module__ = __name__
 
 
-__all__ = [
-    _cls.__name__ for _cls in _classes
-] + [
+__all__ = [_cls.__name__ for _cls in _classes] + [
     _f.__name__ for _f in _functions
 ]
 

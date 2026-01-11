@@ -16,3 +16,53 @@ addopts = [
     "--ignore=python/vshogi/__main__.py",
 ]
 testpaths = ["python/"]
+
+[tool.ruff]
+line-length = 79
+indent-width = 4
+exclude = [
+    "python/scripts/*.py",
+    "python/vshogi/__main__.py",
+    ".github/workflows/*.py",
+    "setup.py",
+]
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`) codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = ["E4", "E7", "E9", "F"]
+ignore = [
+    # "D105",  # Missing docstring in magic method
+    "F821",  # undefined name ...
+    # "W503",  # line break before binary ooperator
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+known-first-party = ["vshogi"]
+
+[tool.ruff.lint.per-file-ignores]
+"python/tests/**.py" = [
+    "D100",  # Missing docstring in public module
+    "D101",  # Missing docstring in public class
+    "D102",  # Missing docstring in public method
+    "D103",  # Missing docstring in public function
+    "D104",  # Missing docstring in public package
+    "S101",  # Use of `assert`
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.format]
+quote-style = "preserve"
+indent-style = "space"
+line-ending = "lf"
+skip-magic-trailing-comma = false
+docstring-code-format = false
+docstring-code-line-length = "dynamic"

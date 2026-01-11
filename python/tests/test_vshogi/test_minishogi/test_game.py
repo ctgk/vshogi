@@ -30,11 +30,14 @@ def test_init():
     shogi.Game()
 
 
-@pytest.mark.parametrize('sfen, expect_turn, expect_result', [
-    ('4k/5/5/5/K4 b -', shogi.BLACK, shogi.ONGOING),
-    ('4k/5/5/5/K3R w -', shogi.WHITE, shogi.ONGOING),
-    ('4k/5/4p/4g/4K b -', shogi.BLACK, shogi.WHITE_WIN),
-])
+@pytest.mark.parametrize(
+    'sfen, expect_turn, expect_result',
+    [
+        ('4k/5/5/5/K4 b -', shogi.BLACK, shogi.ONGOING),
+        ('4k/5/5/5/K3R w -', shogi.WHITE, shogi.ONGOING),
+        ('4k/5/4p/4g/4K b -', shogi.BLACK, shogi.WHITE_WIN),
+    ],
+)
 def test_init_sfen(sfen, expect_turn, expect_result):
     g = shogi.Game(sfen)
     assert g.turn == expect_turn
@@ -45,13 +48,15 @@ def test_board():
     game: shogi.Game = shogi.Game()
     actual = np.asarray(game.board)
 
-    expected = np.rot90([
-        [shogi.W_HI, shogi.W_KA, shogi.W_GI, shogi.W_KI, shogi.W_OU],
-        [shogi.VOID, shogi.VOID, shogi.VOID, shogi.VOID, shogi.W_FU],
-        [shogi.VOID, shogi.VOID, shogi.VOID, shogi.VOID, shogi.VOID],
-        [shogi.B_FU, shogi.VOID, shogi.VOID, shogi.VOID, shogi.VOID],
-        [shogi.B_OU, shogi.B_KI, shogi.B_GI, shogi.B_KA, shogi.B_HI],
-    ])
+    expected = np.rot90(
+        [
+            [shogi.W_HI, shogi.W_KA, shogi.W_GI, shogi.W_KI, shogi.W_OU],
+            [shogi.VOID, shogi.VOID, shogi.VOID, shogi.VOID, shogi.W_FU],
+            [shogi.VOID, shogi.VOID, shogi.VOID, shogi.VOID, shogi.VOID],
+            [shogi.B_FU, shogi.VOID, shogi.VOID, shogi.VOID, shogi.VOID],
+            [shogi.B_OU, shogi.B_KI, shogi.B_GI, shogi.B_KA, shogi.B_HI],
+        ]
+    )
     assert (actual == expected).all()
 
 
@@ -62,10 +67,18 @@ def test_to_sfen():
     assert shogi.B_HI == actual.board[shogi.SQ_1B]
     assert shogi.VOID == actual.board[shogi.SQ_1E]
     assert actual.stand(shogi.BLACK) == {
-        shogi.FU: 1, shogi.GI: 0, shogi.KI: 0, shogi.KA: 0, shogi.HI: 0,
+        shogi.FU: 1,
+        shogi.GI: 0,
+        shogi.KI: 0,
+        shogi.KA: 0,
+        shogi.HI: 0,
     }
     assert actual.stand(shogi.WHITE) == {
-        shogi.FU: 0, shogi.GI: 0, shogi.KI: 0, shogi.KA: 0, shogi.HI: 0,
+        shogi.FU: 0,
+        shogi.GI: 0,
+        shogi.KI: 0,
+        shogi.KA: 0,
+        shogi.HI: 0,
     }
 
 
@@ -116,38 +129,44 @@ def test_get_attention():
     assert a.shape == (5, 5, 5, 5)
     a = a.reshape(25, 25)
     assert np.allclose(a.T, a)
-    expect = np.array([
-        [1, 0, 1, 1, 1],
-        [1, 1, 1, 0, 0],
-        [0, 1, 0, 1, 0],
-        [0, 1, 0, 0, 1],
-        [0, 1, 0, 0, 0],
-    ])
+    expect = np.array(
+        [
+            [1, 0, 1, 1, 1],
+            [1, 1, 1, 0, 0],
+            [0, 1, 0, 1, 0],
+            [0, 1, 0, 0, 1],
+            [0, 1, 0, 0, 0],
+        ]
+    )
     assert np.allclose(a[1].reshape(5, 5), expect)
 
 
 def test_get_local_attentions():
     a = shogi.Game.get_local_attentions()
     assert a.shape == (8, 5, 5, 5, 5)
-    expect = np.array([
-        [0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-    ])
+    expect = np.array(
+        [
+            [0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+        ]
+    )
     assert np.allclose(a[0, 0, 1], expect)
 
     a = a.sum(axis=0)
     a = a.reshape(25, 25)
     assert np.allclose(a.T, a)
-    expect = np.array([
-        [1, 0, 1, 0, 0],
-        [1, 1, 1, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-    ])
+    expect = np.array(
+        [
+            [1, 0, 1, 0, 0],
+            [1, 1, 1, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+        ]
+    )
     assert np.allclose(a[1].reshape(5, 5), expect)
 
 
@@ -156,13 +175,15 @@ def test_get_adjacent_attention():
     assert a.shape == (5, 5, 5, 5)
     a = a.reshape(25, 25)
     assert np.allclose(a.T, a)
-    expect = np.array([
-        [1, 0, 1, 1, 1],
-        [0, 1, 0, 0, 0],
-        [0, 1, 0, 0, 0],
-        [0, 1, 0, 0, 0],
-        [0, 1, 0, 0, 0],
-    ])
+    expect = np.array(
+        [
+            [1, 0, 1, 1, 1],
+            [0, 1, 0, 0, 0],
+            [0, 1, 0, 0, 0],
+            [0, 1, 0, 0, 0],
+            [0, 1, 0, 0, 0],
+        ]
+    )
     assert np.allclose(a[1].reshape(5, 5), expect)
 
 
@@ -171,13 +192,15 @@ def test_get_diagonal_attention():
     assert a.shape == (5, 5, 5, 5)
     a = a.reshape(25, 25)
     assert np.allclose(a.T, a)
-    expect = np.array([
-        [0, 0, 0, 0, 0],
-        [1, 0, 1, 0, 0],
-        [0, 0, 0, 1, 0],
-        [0, 0, 0, 0, 1],
-        [0, 0, 0, 0, 0],
-    ])
+    expect = np.array(
+        [
+            [0, 0, 0, 0, 0],
+            [1, 0, 1, 0, 0],
+            [0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0],
+        ]
+    )
     assert np.allclose(a[1].reshape(5, 5), expect)
 
 
@@ -236,42 +259,67 @@ def test_array_white():
     assert np.allclose(actual[0, ..., 3], 0)  # white's captured bishop
     assert np.allclose(actual[0, ..., 4], 0)  # white's captured rook
     assert np.allclose(actual[0, ..., 5], 0)  # white's board pawn
-    assert np.allclose(actual[0, ..., 6], np.rot90([
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0],
-    ]))  # white's board silver
-    assert np.allclose(actual[0, ..., 7], np.rot90([
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 1, 0],
-    ]))  # white's board bishop
-    assert np.allclose(actual[0, ..., 8], np.rot90([
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1],
-    ]))  # white's board rook
-    assert np.allclose(actual[0, ..., 9], np.rot90([
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0],
-    ]))  # white's board gold
+    assert np.allclose(
+        actual[0, ..., 6],
+        np.rot90(
+            [
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0],
+            ]
+        ),
+    )  # white's board silver
+    assert np.allclose(
+        actual[0, ..., 7],
+        np.rot90(
+            [
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 1, 0],
+            ]
+        ),
+    )  # white's board bishop
+    assert np.allclose(
+        actual[0, ..., 8],
+        np.rot90(
+            [
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1],
+            ]
+        ),
+    )  # white's board rook
+    assert np.allclose(
+        actual[0, ..., 9],
+        np.rot90(
+            [
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 1, 0, 0, 0],
+            ]
+        ),
+    )  # white's board gold
     assert np.allclose(actual[0, ..., 15], 1)  # black's captured pawn
-    assert np.allclose(actual[0, ..., 23], np.rot90([
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-    ]))  # black's rook
+    assert np.allclose(
+        actual[0, ..., 23],
+        np.rot90(
+            [
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+            ]
+        ),
+    )  # black's rook
 
 
 def test_stand():
@@ -292,10 +340,18 @@ def test_stand():
     #   *---*---*---*---*---*
     # Black: GI,FU
     assert game.stand(shogi.BLACK) == {
-        shogi.HI: 0, shogi.KA: 0, shogi.KI: 0, shogi.GI: 1, shogi.FU: 1,
+        shogi.HI: 0,
+        shogi.KA: 0,
+        shogi.KI: 0,
+        shogi.GI: 1,
+        shogi.FU: 1,
     }
     assert game.stand(shogi.WHITE) == {
-        shogi.HI: 0, shogi.KA: 0, shogi.KI: 0, shogi.GI: 0, shogi.FU: 0,
+        shogi.HI: 0,
+        shogi.KA: 0,
+        shogi.KI: 0,
+        shogi.GI: 0,
+        shogi.FU: 0,
     }
 
 
@@ -317,9 +373,10 @@ def test_to_dlshogi_policy():
     # Black: -
     game = shogi.Game("1bsgk/4p/5/P4/KGSBR w - 1")
     a = shogi.Move(shogi.B1, shogi.C1)
-    actual = game.to_dlshogi_policy({
-        m: 0.5 if m == a else 0.05 for m in game.get_legal_moves()
-    }, default_value=-1.)
+    actual = game.to_dlshogi_policy(
+        {m: 0.5 if m == a else 0.05 for m in game.get_legal_moves()},
+        default_value=-1.0,
+    )
 
     expected = np.zeros(5 * 5 * (2 * 8 + 5)) - 1
     expected[a._to_dlshogi_policy_index(shogi.WHITE)] = 0.5
@@ -334,8 +391,9 @@ def test_get_sfen_at():
     actual = shogi.Game().apply("5d5c").get_sfen_at(0)
     assert "rbsgk/4p/5/P4/KGSBR b - 1" == actual
 
-    actual = shogi.Game().apply("5d5c").get_sfen_at(
-        0, include_move_count=False)
+    actual = (
+        shogi.Game().apply("5d5c").get_sfen_at(0, include_move_count=False)
+    )
     assert "rbsgk/4p/5/P4/KGSBR b -" == actual
 
     game = shogi.Game('4k/5/5/5/K4 b RBGSPrbgsp')

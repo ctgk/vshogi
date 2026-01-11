@@ -55,10 +55,11 @@ class AlphaZero(Engine):
     def __init__(
         self,
         policy_value_func: tp.Callable[
-            [Game], tp.Tuple[Policy, Value],
-        ] = lambda g: (g.to_dlshogi_policy({}), 0.),
+            [Game],
+            tp.Tuple[Policy, Value],
+        ] = lambda g: (g.to_dlshogi_policy({}), 0.0),
         *,
-        coeff_puct: float = 1.,
+        coeff_puct: float = 1.0,
         random_rate: float = 0.25,
         kldgain_threshold: tp.Optional[float] = None,
         tree_size: int = 1000000,
@@ -105,10 +106,13 @@ class AlphaZero(Engine):
 
     def _set_game(self, game: Game):
         self._game = game.copy()
-        if (type(self._searcher) is not game._get_az_searcher_class()):
+        if type(self._searcher) is not game._get_az_searcher_class():
             self._searcher = game._get_az_searcher_class()(
-                self._coeff_puct, self._random_rate, self._tree_size,
-                self._dfpn_search_root, self._dfpn_search_leaf,
+                self._coeff_puct,
+                self._random_rate,
+                self._tree_size,
+                self._dfpn_search_root,
+                self._dfpn_search_leaf,
             )
         else:
             self._searcher.init()
@@ -149,10 +153,7 @@ class AlphaZero(Engine):
         kldgain_steps = 100
         count = self.get_search_count()
         for ii in self._count(budget):
-            if (
-                self._kldgain_threshold
-                and ((ii + count) % kldgain_steps == 0)
-            ):
+            if self._kldgain_threshold and ((ii + count) % kldgain_steps == 0):
                 if self._prev_visits is None:
                     self._prev_visits = self.get_visit_counts()
                 else:
@@ -164,7 +165,8 @@ class AlphaZero(Engine):
                 continue
             policy_logits, value = self._policy_value_func(self._game)
             self._searcher.simulate_expand_backprop(
-                node, self._game._game, value, policy_logits)
+                node, self._game._game, value, policy_logits
+            )
 
     def _kldgain(self, prev_visits: tp.Dict[Move, int]) -> float:
         prev_visits_added = {m: v + 1 for m, v in prev_visits.items()}
@@ -223,8 +225,7 @@ class AlphaZero(Engine):
             return {}
         root = self._searcher.get_root()
         move_proba_pair_list = [
-            (m, root.get_child_of(m).get_proba())
-            for m in root.get_actions()
+            (m, root.get_child_of(m).get_proba()) for m in root.get_actions()
         ]
         move_proba_pair_list.sort(key=lambda t: t[1], reverse=True)
         return {m: p for m, p in move_proba_pair_list}
@@ -278,15 +279,18 @@ class AlphaZero(Engine):
             (
                 move_type(m),
                 root.get_child_of(m).get_visit_count()
-                if include_random else
-                root.get_child_of(m).get_visit_count_excluding_random(),
+                if include_random
+                else root.get_child_of(m).get_visit_count_excluding_random(),
             )
             for m in root.get_actions()
         ]
-        move_visit_count_pair_list.extend([
-            (m, 0) for m in self._game.get_legal_moves()
-            if m not in [t[0] for t in move_visit_count_pair_list]
-        ])
+        move_visit_count_pair_list.extend(
+            [
+                (m, 0)
+                for m in self._game.get_legal_moves()
+                if m not in [t[0] for t in move_visit_count_pair_list]
+            ]
+        )
         move_visit_count_pair_list.sort(key=lambda a: a[1], reverse=True)
         return {m: v for m, v in move_visit_count_pair_list}
 

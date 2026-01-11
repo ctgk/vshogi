@@ -37,11 +37,12 @@ def _get_results_of_single_pair(
     for i in iterator:
         if i % 2 == 0:
             out = vs.play_game(
-                shogi.Game(), player1, player2,
+                shogi.Game(),
+                player1,
+                player2,
                 search_args=search_args,
                 select_args=select_args,
-                _return_num_searched=isinstance(
-                    search_args['budget'], float),
+                _return_num_searched=isinstance(search_args['budget'], float),
             )
             if isinstance(search_args['budget'], float):
                 result = out[0].result
@@ -52,11 +53,12 @@ def _get_results_of_single_pair(
             record_of_p1 += vs.Record.from_black_result(result)
         else:
             out = vs.play_game(
-                shogi.Game(), player2, player1,
+                shogi.Game(),
+                player2,
+                player1,
                 search_args=search_args,
                 select_args=select_args,
-                _return_num_searched=isinstance(
-                    search_args['budget'], float),
+                _return_num_searched=isinstance(search_args['budget'], float),
             )
             if isinstance(search_args['budget'], float):
                 result = out[0].result
@@ -66,11 +68,15 @@ def _get_results_of_single_pair(
                 result = out.result
             record_of_p1 += vs.Record.from_white_result(result)
         if show_pbar:
-            iterator.set_description(str({
-                'p1': record_of_p1.wins_total,
-                'draw': record_of_p1.draws_total,
-                'p2': record_of_p1.losses_total,
-            }))
+            iterator.set_description(
+                str(
+                    {
+                        'p1': record_of_p1.wins_total,
+                        'draw': record_of_p1.draws_total,
+                        'p2': record_of_p1.losses_total,
+                    }
+                )
+            )
     if show_pbar and show_az_search:
         print(
             'Initial search counts:',
@@ -92,22 +98,23 @@ def _print_results(record: vs.Record):
 |  #Loss  | {:5d} | {:5d} | {:5d} |
 +---------+-------+-------+-------+
 '''
-    print(template.format(
-        record.wins_total,
-        record.wins_black,
-        record.wins_white,
-        record.draws_total,
-        record.draws_black,
-        record.draws_white,
-        record.losses_total,
-        record.losses_black,
-        record.losses_white,
-    ))
+    print(
+        template.format(
+            record.wins_total,
+            record.wins_black,
+            record.wins_white,
+            record.draws_total,
+            record.draws_black,
+            record.draws_white,
+            record.losses_total,
+            record.losses_black,
+            record.losses_white,
+        )
+    )
 
 
 # https://stackoverflow.com/questions/48391777/nargs-equivalent-for-options-in-click
 class _OptionEatAll(cl.Option):
-
     def __init__(self, *args, **kwargs):
         self.save_other_options = kwargs.pop('save_other_options', True)
         nargs = kwargs.pop('nargs', -1)
@@ -117,7 +124,6 @@ class _OptionEatAll(cl.Option):
         self._eat_all_parser = None
 
     def add_to_parser(self, parser, ctx):
-
         def parser_process(value, state):
             # method to hook to the parser.process
             done = False
@@ -141,8 +147,8 @@ class _OptionEatAll(cl.Option):
 
         retval = super(_OptionEatAll, self).add_to_parser(parser, ctx)
         for name in self.opts:
-            our_parser = (
-                parser._long_opt.get(name) or parser._short_opt.get(name)
+            our_parser = parser._long_opt.get(name) or parser._short_opt.get(
+                name
             )
             if our_parser:
                 self._eat_all_parser = our_parser
@@ -158,13 +164,15 @@ class _OptionEatAll(cl.Option):
     type=cl.Choice(['shogi', 'judkins_shogi', 'minishogi']),
 )
 @cl.option(
-    '-p1', '--player1',
+    '-p1',
+    '--player1',
     cls=_OptionEatAll,
     type=tuple,
     required=True,
 )
 @cl.option(
-    '-p2', '--player2',
+    '-p2',
+    '--player2',
     cls=_OptionEatAll,
     type=tuple,
     required=True,
@@ -234,7 +242,8 @@ def _match(
 ):
     if (az_search_count is None) and (az_search_second is None):
         raise ValueError(
-            "Either `az_search_count` or `az_search_second` must be given")
+            "Either `az_search_count` or `az_search_second` must be given"
+        )
 
     record_of_p1_group = vs.Record(0, 0, 0, 0, 0, 0)
     for p1, p2 in itertools.product(player1, player2):
@@ -243,7 +252,10 @@ def _match(
             print(f'player2: {p2}')
         record_of_p1 = _get_results_of_single_pair(
             shogi_variant,
-            p1, p2, num_games_each, show_pbar,
+            p1,
+            p2,
+            num_games_each,
+            show_pbar,
             az_init_args={
                 'coeff_puct': az_coeff_puct,
                 'dfpn_search_root': dfpn_search_root,

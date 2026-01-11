@@ -26,7 +26,7 @@ def masked_log_softmax(
     Tensor [..., C]
         Masked log softmax.
     """
-    logit_masked = th.where(mask, logit, -100000.)
+    logit_masked = th.where(mask, logit, -100000.0)
     logit_max = th.max(logit_masked.detach(), dim=axis, keepdim=True).values
     logit_subtracted = logit_masked - logit_max
     logsumexp = th.logsumexp(logit_subtracted, dim=axis, keepdim=True)
@@ -106,13 +106,16 @@ def train(
         p_logits, v_logits = model(x)
         loss_policy_each = scale_grad(
             masked_softmax_cross_entropy(
-                y_policy, p_logits, coeff_entropy_regularization,
+                y_policy,
+                p_logits,
+                coeff_entropy_regularization,
             ),
             w,
         )
         loss_value_each = scale_grad(
             th.nn.functional.binary_cross_entropy_with_logits(
-                v_logits, y_value,
+                v_logits,
+                y_value,
             ),
             w,
         )
@@ -130,9 +133,9 @@ def train(
     counter = 0
     for e in range(1, epochs + 1):
         pbar = tqdm(enumerate(dataset, start=1), ncols=80, file=sys.stdout)
-        loss_policy_mean = 0.
-        loss_value_mean = 0.
-        loss_mean = 0.
+        loss_policy_mean = 0.0
+        loss_value_mean = 0.0
+        loss_mean = 0.0
         for i, (x_mb, p_mb, v_mb, w_mb) in pbar:
             x_mb = x_mb.to(device)
             p_mb = p_mb.to(device)
@@ -142,7 +145,8 @@ def train(
                 optimizer.zero_grad()
             counter += 1
             loss, loss_policy, loss_value = compute_losses_and_backward(
-                x_mb, p_mb, v_mb, w_mb)
+                x_mb, p_mb, v_mb, w_mb
+            )
             if counter == gradient_accumulation_steps:
                 for p in model.parameters():
                     p.grad /= gradient_accumulation_steps

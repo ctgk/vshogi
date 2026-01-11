@@ -1,4 +1,3 @@
-
 import pytest
 
 import vshogi.judkins_shogi as shogi
@@ -31,7 +30,8 @@ def test_mate():
             assert game.result == shogi.ONGOING
             game.apply(m)
         assert game.result == (
-            shogi.BLACK_WIN if sfen.split()[1] == 'b' else shogi.WHITE_WIN)
+            shogi.BLACK_WIN if sfen.split()[1] == 'b' else shogi.WHITE_WIN
+        )
         actual_total_searches += searcher.get_search_count()
         expect_total_searches += searches
     print(

@@ -9,9 +9,9 @@ from vshogi.shogi._game import Game as StandardGame  # noqa: F401
 def read_kifu(
     tsv_path: str,
     *,
-    discount_factor: float = 1.,
-    importance_decay: float = 1.,
-    default_result_rate: float = 1.,
+    discount_factor: float = 1.0,
+    importance_decay: float = 1.0,
+    default_result_rate: float = 1.0,
 ) -> pd.DataFrame:
     """Return dataframe of Shogi kifu.
 
@@ -46,11 +46,12 @@ def read_kifu(
     df['z_weight'] = _compute_z_weight(df, default_result_rate)
     df['weight'] = _compute_weight(df, importance_decay)
     df['value'] = (
-        df['z_weight'] * df['result'] * np.power(
-            discount_factor, total_ply - df.index - 1)
+        df['z_weight']
+        * df['result']
+        * np.power(discount_factor, total_ply - df.index - 1)
         + (1 - df['z_weight']) * df['q_value']
     )
-    df['value01'] = df['value'].apply(lambda v: np.clip((v + 1) / 2, 0., 1.))
+    df['value01'] = df['value'].apply(lambda v: np.clip((v + 1) / 2, 0.0, 1.0))
     return df
 
 
@@ -62,10 +63,11 @@ def _compute_z_weight(
     move_class = game_class._get_move_class()
     return df.apply(
         lambda row: (
-            0. if (
+            0.0
+            if (
                 row['policy'] == {}
-                or move_class(row['move']) != max(
-                    row['policy'], key=row['policy'].get)
+                or move_class(row['move'])
+                != max(row['policy'], key=row['policy'].get)
             )
             else default_result_rate
         ),
@@ -74,9 +76,10 @@ def _compute_z_weight(
 
 
 def _compute_weight(df: pd.DataFrame, importance_decay: float) -> np.ndarray:
-    dq = (
-        df['q_value'].values[:-2] - df['q_value'].values[2:]
-    ).tolist() + [0., 0.]
+    dq = (df['q_value'].values[:-2] - df['q_value'].values[2:]).tolist() + [
+        0.0,
+        0.0,
+    ]
     large_dq = [np.abs(d) > 0.5 for d in dq]
     return np.maximum(
         np.power(
@@ -98,8 +101,8 @@ def _compute_visit_dist(df: pd.DataFrame):
                 move_class(m): v / (sum(eval(row['policy']).values()))
                 for m, v in eval(row['policy']).items()
             }
-            if '{' in row['policy'] else
-            {
+            if '{' in row['policy']
+            else {
                 m: float(m.to_sfen() == row['policy'])
                 for m in game_class(row['sfen']).get_legal_moves()
             }

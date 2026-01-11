@@ -50,7 +50,7 @@ def test_dfpn_root():
     searcher = GumbelAlphaZero(dfpn_search_root=10000, dfpn_search_leaf=100)
     searcher.set_game(game)
     searcher.search(budget=10, num_actions=2)
-    assert np.isclose(searcher.get_q_value(), 1.)
+    assert np.isclose(searcher.get_q_value(), 1.0)
     assert searcher.proved_mate()
     assert shogi.Move("G*2b") == searcher.select()
 
@@ -75,13 +75,12 @@ def test_select_action():
     searcher.search(32, num_actions=4)
     print(searcher._tree(depth=1, breadth=-1))
     with pytest.raises(ValueError):
-        searcher.select(10.)
+        searcher.select(10.0)
     searcher.clear()
     searcher.set_game(game)
     searcher.search(32)
-    assert (
-        len(game.get_legal_moves())
-        == len(set([searcher.select(10.) for _ in range(1000)]))
+    assert len(game.get_legal_moves()) == len(
+        set([searcher.select(10.0) for _ in range(1000)])
     )
 
 

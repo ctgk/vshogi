@@ -2,13 +2,15 @@ import torch as th
 
 
 class _ValueHead(th.nn.Module):
-
     def __init__(self, in_ch: int, shape: tuple[int, int]):
         super().__init__()
         self.layers = th.nn.Sequential(
             th.nn.Conv2d(
-                in_ch, in_ch,
-                kernel_size=shape, groups=in_ch, bias=False,
+                in_ch,
+                in_ch,
+                kernel_size=shape,
+                groups=in_ch,
+                bias=False,
             ),
             th.nn.BatchNorm2d(in_ch, affine=False),
             th.nn.ReLU(inplace=True),

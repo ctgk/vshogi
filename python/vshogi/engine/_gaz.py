@@ -54,8 +54,9 @@ class GumbelAlphaZero(Engine):
     def __init__(
         self,
         policy_value_func: tp.Callable[
-            [Game], tp.Tuple[Policy, Value],
-        ] = lambda g: (g.to_dlshogi_policy({}), 0.),
+            [Game],
+            tp.Tuple[Policy, Value],
+        ] = lambda g: (g.to_dlshogi_policy({}), 0.0),
         *,
         tree_size: int = 1000000,
         dfpn_search_root: int = 0,
@@ -170,7 +171,8 @@ class GumbelAlphaZero(Engine):
             return
         policy_logits, value = self._policy_value_func(self._game)
         self._searcher.simulate_expand_backprop(
-            node, self._game._game, value, policy_logits)
+            node, self._game._game, value, policy_logits
+        )
 
     def get_q_value(
         self,
@@ -201,7 +203,8 @@ class GumbelAlphaZero(Engine):
         if self._searcher.count_active_childs() > 0:
             raise ValueError(
                 "Do not pass `temperature` parameter after running "
-                "sequential halving")
+                "sequential halving"
+            )
         return self._searcher.select_action(temperature)
 
     def _get_mate_moves(self) -> list[Move] | None:

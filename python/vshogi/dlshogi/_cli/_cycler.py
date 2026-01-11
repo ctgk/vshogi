@@ -19,8 +19,7 @@ def _train(nth_cycle: int, **kwargs):
     _train_step(
         model_path=weight_path.format(nth_cycle),
         prev_model_path=(
-            None if nth_cycle == 0 else
-            weight_path.format(nth_cycle - 1)
+            None if nth_cycle == 0 else weight_path.format(nth_cycle - 1)
         ),
         shogi_variant=kwargs['shogi'],
         network_hidden_channels=kwargs['train_hidden_channels'],
@@ -84,12 +83,12 @@ def _selfplay(
     show_default=True,
 )
 @cl.option("--play-num-games", default=100, show_default=True)
-@cl.option("--play-coeff-puct", default=4., show_default=True)
+@cl.option("--play-coeff-puct", default=4.0, show_default=True)
 @cl.option("--play-kldgain-threshold", default=1e-4, show_default=True)
 @cl.option("--play-dfpn-root", default=10000, show_default=True)
 @cl.option("--play-dfpn-leaf", default=100, show_default=True)
 @cl.option("--play-num-simulations", default=100, show_default=True)
-@cl.option("--play-temperature", default=1., show_default=True)
+@cl.option("--play-temperature", default=1.0, show_default=True)
 @cl.option("--play-dump-q-greedy-depth", default=1, show_default=True)
 @cl.option("--play-random-rate", default=0.5, show_default=True)
 @cl.option("--play-gumbel-actions", default=16, show_default=True)
@@ -116,7 +115,8 @@ def _selfplay(
     show_default=True,
 )
 @cl.option(
-    "-o", "--output",
+    "-o",
+    "--output",
     default='',
     type=str,
     help='Output directory (default: cwd)',
@@ -128,7 +128,8 @@ def _cycle_selfplay_and_train(**kwargs):
     if kwargs['output'] != '':
         if os.path.isdir(kwargs['output']):
             warnings.warn(
-                f'Output directory ({kwargs["output"]}) already exists')
+                f'Output directory ({kwargs["output"]}) already exists'
+            )
         else:
             os.makedirs(kwargs['output'])
     with open(os.path.join(kwargs['output'], f'command_{now}.txt'), 'w') as f:
@@ -137,8 +138,9 @@ def _cycle_selfplay_and_train(**kwargs):
     tflite_path = os.path.join(kwargs['output'], 'models/model_{:04d}.tflite')
 
     def _resume_from() -> int:
-        tflite_list = sorted(glob(os.path.join(
-            kwargs['output'], 'models/model_*.tflite')))
+        tflite_list = sorted(
+            glob(os.path.join(kwargs['output'], 'models/model_*.tflite'))
+        )
         if not tflite_list:
             return 0
         return int(tflite_list[-1].split('_')[-1].split('.')[0]) + 1
@@ -158,8 +160,7 @@ def _cycle_selfplay_and_train(**kwargs):
             shogi_variant=kwargs['shogi'],
             latest=tflite_path.format(i - 1),
             previous=[
-                tflite_path.format(j)
-                for j in list(range(i - 2, -1, -1))[:10]
+                tflite_path.format(j) for j in list(range(i - 2, -1, -1))[:10]
             ],
             engine=kwargs['play_engine'],
             num_games=10,

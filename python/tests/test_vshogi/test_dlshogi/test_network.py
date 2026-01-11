@@ -17,32 +17,40 @@ with warnings.catch_warnings():
     from ai_edge_litert.interpreter import Interpreter
 
 
-@pytest.mark.parametrize(("module", "input_shape", "output_shape"), [
-    (_ValueHead(16, (5, 5)), (1, 16, 5, 5), (1, 1)),
-    (_ValueHead(32, (6, 6)), (1, 32, 6, 6), (1, 1)),
-    (_PolicyHead(32, 20), (1, 32, 5, 5), (1, 5 * 5 * 20)),
-    (_PolicyHead(64, 10), (1, 64, 9, 9), (1, 9 * 9 * 10)),
-    (
-        _DepthwiseAttention(Game.get_local_attentions(), groups=8),
-        (1, 16, 5, 5),
-        (1, 16, 5, 5),
-    ),
-    (
-        _DepthwiseAttention(Game.get_local_attentions(), groups=8),
-        (1, 32, 5, 5),
-        (1, 32, 5, 5),
-    ),
-    (
-        _ResidualBlock(32, 8, Game.get_local_attentions(), attention_groups=8),
-        (1, 32, 5, 5),
-        (1, 32, 5, 5),
-    ),
-    (
-        PolicyValueNetwork(Game, 32, 8, 3),
-        (1, 5, 5, Game.feature_channels),
-        {(1, 1), (1, 5 * 5 * Game._get_move_class()._num_policy_per_square())},
-    ),
-])
+@pytest.mark.parametrize(
+    ("module", "input_shape", "output_shape"),
+    [
+        (_ValueHead(16, (5, 5)), (1, 16, 5, 5), (1, 1)),
+        (_ValueHead(32, (6, 6)), (1, 32, 6, 6), (1, 1)),
+        (_PolicyHead(32, 20), (1, 32, 5, 5), (1, 5 * 5 * 20)),
+        (_PolicyHead(64, 10), (1, 64, 9, 9), (1, 9 * 9 * 10)),
+        (
+            _DepthwiseAttention(Game.get_local_attentions(), groups=8),
+            (1, 16, 5, 5),
+            (1, 16, 5, 5),
+        ),
+        (
+            _DepthwiseAttention(Game.get_local_attentions(), groups=8),
+            (1, 32, 5, 5),
+            (1, 32, 5, 5),
+        ),
+        (
+            _ResidualBlock(
+                32, 8, Game.get_local_attentions(), attention_groups=8
+            ),
+            (1, 32, 5, 5),
+            (1, 32, 5, 5),
+        ),
+        (
+            PolicyValueNetwork(Game, 32, 8, 3),
+            (1, 5, 5, Game.feature_channels),
+            {
+                (1, 1),
+                (1, 5 * 5 * Game._get_move_class()._num_policy_per_square()),
+            },
+        ),
+    ],
+)
 def test_export_to_tflite(module, input_shape, output_shape):
     sample_inputs = (th.randn(*input_shape),)
     edge_model = ai_edge_torch.convert(module.eval(), sample_inputs)
@@ -64,19 +72,24 @@ def test_export_to_tflite(module, input_shape, output_shape):
         assert tuple(output_details[0]['shape']) == output_shape
 
 
-@pytest.mark.parametrize(("model", "input_shape"), [
-    (_ValueHead(16, (5, 5)), (2, 16, 5, 5)),
-    (_PolicyHead(32, 20), (2, 32, 5, 5)),
-    (
-        _DepthwiseAttention(Game.get_local_attentions(), groups=8),
-        (2, 16, 5, 5),
-    ),
-    (
-        _ResidualBlock(32, 8, Game.get_local_attentions(), attention_groups=8),
-        (2, 32, 5, 5),
-    ),
-    (PolicyValueNetwork(Game, 32, 8, 1), (2, 5, 5, Game.feature_channels)),
-])
+@pytest.mark.parametrize(
+    ("model", "input_shape"),
+    [
+        (_ValueHead(16, (5, 5)), (2, 16, 5, 5)),
+        (_PolicyHead(32, 20), (2, 32, 5, 5)),
+        (
+            _DepthwiseAttention(Game.get_local_attentions(), groups=8),
+            (2, 16, 5, 5),
+        ),
+        (
+            _ResidualBlock(
+                32, 8, Game.get_local_attentions(), attention_groups=8
+            ),
+            (2, 32, 5, 5),
+        ),
+        (PolicyValueNetwork(Game, 32, 8, 1), (2, 5, 5, Game.feature_channels)),
+    ],
+)
 def test_backward(model, input_shape: tuple):
     x = th.randn(*input_shape).requires_grad_()
     output = model(x)
@@ -87,19 +100,24 @@ def test_backward(model, input_shape: tuple):
     loss.backward()
 
 
-@pytest.mark.parametrize(("model", "input_shape"), [
-    (_ValueHead(16, (5, 5)), (2, 16, 5, 5)),
-    (_PolicyHead(32, 20), (2, 32, 5, 5)),
-    (
-        _DepthwiseAttention(Game.get_local_attentions(), groups=8),
-        (2, 16, 5, 5),
-    ),
-    (
-        _ResidualBlock(32, 8, Game.get_local_attentions(), attention_groups=8),
-        (2, 32, 5, 5),
-    ),
-    (PolicyValueNetwork(Game, 32, 8, 1), (2, 5, 5, Game.feature_channels)),
-])
+@pytest.mark.parametrize(
+    ("model", "input_shape"),
+    [
+        (_ValueHead(16, (5, 5)), (2, 16, 5, 5)),
+        (_PolicyHead(32, 20), (2, 32, 5, 5)),
+        (
+            _DepthwiseAttention(Game.get_local_attentions(), groups=8),
+            (2, 16, 5, 5),
+        ),
+        (
+            _ResidualBlock(
+                32, 8, Game.get_local_attentions(), attention_groups=8
+            ),
+            (2, 32, 5, 5),
+        ),
+        (PolicyValueNetwork(Game, 32, 8, 1), (2, 5, 5, Game.feature_channels)),
+    ],
+)
 def test_backward_mps(model, input_shape: tuple):
     if not th.backends.mps.is_available():
         return

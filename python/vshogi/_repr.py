@@ -18,10 +18,17 @@ def _repr_square(sq) -> str:
 
 
 def _repr_stand(s) -> str:
-    return '-' if not s.any() else ','.join([
-        k.name + ('' if v == 1 else f'x{v}') for k, v in s.to_dict().items()
-        if v > 0
-    ])
+    return (
+        '-'
+        if not s.any()
+        else ','.join(
+            [
+                k.name + ('' if v == 1 else f'x{v}')
+                for k, v in s.to_dict().items()
+                if v > 0
+            ]
+        )
+    )
 
 
 def _repr_board(b) -> str:
@@ -31,11 +38,15 @@ def _repr_board(b) -> str:
     divider = '  +' + '+'.join('---' for _ in range(nf)) + '+\n'
     row = '|' + '|'.join('{}' for _ in range(nf)) + '|\n'
     template = (
-        top_label + divider
+        top_label
+        + divider
         + divider.join(f'{c} ' + row for c in ascii_uppercase[:nr])
         + divider[:-1]
     )
-    return template.format(*[
-        b[f * nr + r]._to_3char()
-        for r in range(nr) for f in range(nf - 1, -1, -1)
-    ])
+    return template.format(
+        *[
+            b[f * nr + r]._to_3char()
+            for r in range(nr)
+            for f in range(nf - 1, -1, -1)
+        ]
+    )

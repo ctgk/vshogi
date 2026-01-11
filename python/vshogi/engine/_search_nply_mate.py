@@ -12,7 +12,8 @@ Move = tp.TypeVar('Move')
 def _raise_error_if_ended(game: Game):
     if game.result != Result.ONGOING:
         raise ValueError(
-            f'Input game ({game.to_sfen()}) has already been ended the game.')
+            f'Input game ({game.to_sfen()}) has already been ended the game.'
+        )
 
 
 def _is_mate_after_redundant_blocks(game: Game, checker_sq) -> bool:
@@ -29,9 +30,8 @@ def _is_mate_after_redundant_blocks(game: Game, checker_sq) -> bool:
                 continue
             game.apply(atk)
             if (
-                (game.result == expected_result)
-                or _is_mate_after_redundant_blocks(game, atk.destination)
-            ):
+                game.result == expected_result
+            ) or _is_mate_after_redundant_blocks(game, atk.destination):
                 is_mate = True
                 game.undo()
                 break
@@ -58,7 +58,7 @@ def _search_1ply_mate(
     for m in check_moves:
         if (max_duration is not None) and ((time() - start) > max_duration):
             return []
-        if (not m.is_drop()):
+        if not m.is_drop():
             if (not m.promote) and ((type(m)(m.to_sfen() + '+'),) in out):
                 continue
         game.apply(m)
@@ -70,13 +70,12 @@ def _search_1ply_mate(
     for m in check_moves:
         if (max_duration is not None) and ((time() - start) > max_duration):
             return []
-        if (not m.is_drop()):
+        if not m.is_drop():
             if (not m.promote) and ((type(m)(m.to_sfen() + '+'),) in out):
                 continue
         game.apply(m)
-        if (
-            (not allow_redundant_blocks)
-            and _is_mate_after_redundant_blocks(game, m.destination)
+        if (not allow_redundant_blocks) and _is_mate_after_redundant_blocks(
+            game, m.destination
         ):
             out.append((m,))
         game.undo()
@@ -98,15 +97,18 @@ def _is_duplicate_futile_interposition(
     if len(mate_moves_1) != len(mate_moves_2):
         raise ValueError(
             'len(mate_moves_1) != len(mate_mates_2), '
-            f'({len(mate_moves_1)} != {len(mate_moves_2)})')
+            f'({len(mate_moves_1)} != {len(mate_moves_2)})'
+        )
     if mate_moves_1 == mate_moves_2:
         raise ValueError(
-            f'`mate_moves_1` and `mate_moves_2` are identical, {mate_moves_1}')
+            f'`mate_moves_1` and `mate_moves_2` are identical, {mate_moves_1}'
+        )
     if any(m1 != m2 for m1, m2 in zip(mate_moves_1[::2], mate_moves_2[::2])):
         return False  # Found different attack moves
     return all(
         ((m1 == m2) or _are_same_drop_destination(m1, m2))
-        for m1, m2 in zip(mate_moves_1[1::2], mate_moves_2[1::2]))
+        for m1, m2 in zip(mate_moves_1[1::2], mate_moves_2[1::2])
+    )
 
 
 def _has_duplicate_futile_interposition(
@@ -132,7 +134,7 @@ def search_nply_mate(
     num_ply: int,
     remove_duplicate_futile_interposition: bool = True,
     *,
-    max_duration_second: float = 10.,
+    max_duration_second: float = 10.0,
 ) -> tp.List[tp.Tuple[Move, ...]]:
     """Return checkmate moves less than the specified length.
 
@@ -158,11 +160,13 @@ def search_nply_mate(
     start = time()
     if num_ply not in (1, 3, 5):
         raise NotImplementedError(
-            f'`num_ply == {num_ply}` is not currently supported')
+            f'`num_ply == {num_ply}` is not currently supported'
+        )
     if num_ply == 5:
         warnings.warn(
             'Searching 5-ply mates involving redundant blocks is '
-            'not accurate yet.')
+            'not accurate yet.'
+        )
     for n in range(1, num_ply + 1, 2):
         out = eval(f'_search_{n}ply_mate')(game, start, max_duration_second)
         if out:
@@ -190,16 +194,18 @@ def _search_2ply_mate(
         if game.result != Result.ONGOING:
             game.undo()
             return []  # no mate
-        if (m.destination != checker_sq):
+        if m.destination != checker_sq:
             mates_1ply = _search_1ply_mate(game, start, max_duration, False)
             if len(mates_1ply) == 0:
                 d = int(m.destination)
                 if m.is_drop():
                     if redundant_block_cache[d] is None:
                         mate_moves = _search_3ply_mate(
-                            game, start, max_duration, m.destination)
+                            game, start, max_duration, m.destination
+                        )
                         mate_moves = [
-                            m for m in mate_moves
+                            m
+                            for m in mate_moves
                             if game.stand(game.turn).get(m[-1].source, 1)
                         ]
                         redundant_block_cache[d] = bool(mate_moves)
@@ -208,9 +214,11 @@ def _search_2ply_mate(
                         continue
                 else:
                     mate_moves = _search_3ply_mate(
-                        game, start, max_duration, m.destination)
+                        game, start, max_duration, m.destination
+                    )
                     mate_moves = [
-                        m for m in mate_moves
+                        m
+                        for m in mate_moves
                         if game.stand(game.turn).get(m[-1].source, 1)
                     ]
                     if bool(mate_moves):
@@ -241,15 +249,15 @@ def _search_3ply_mate(
             return []
         if (target is not None) and (target != m.destination):
             continue
-        if (not m.is_drop()):
-            if (
-                (not m.promote)
-                and ((type(m)(m.to_sfen() + '+'),) in [(o[0],) for o in out])
+        if not m.is_drop():
+            if (not m.promote) and (
+                (type(m)(m.to_sfen() + '+'),) in [(o[0],) for o in out]
             ):
                 continue
         game.apply(m)
         mates_2ply = _search_2ply_mate(
-            game, start, max_duration, m.destination)
+            game, start, max_duration, m.destination
+        )
         out.extend([(m, *moves) for moves in mates_2ply])
         game.undo()
     return out
@@ -292,10 +300,9 @@ def _search_5ply_mate(
     for m in check_moves:
         if (max_duration is not None) and ((time() - start) > max_duration):
             return []
-        if (not m.is_drop()):
-            if (
-                (not m.promote)
-                and ((type(m)(m.to_sfen() + '+'),) in [(o[0],) for o in out])
+        if not m.is_drop():
+            if (not m.promote) and (
+                (type(m)(m.to_sfen() + '+'),) in [(o[0],) for o in out]
             ):
                 continue
         game.apply(m)

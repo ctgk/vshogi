@@ -87,17 +87,24 @@ def test_to_dlshogi_policy():
     game = shogi.Game(sfen)
     state = shogi.State(sfen)
     assert np.allclose(
-        game.to_dlshogi_policy(visit_probas, default_value=-1.),
-        state.to_dlshogi_policy(visit_probas, default_value=-1.),
+        game.to_dlshogi_policy(visit_probas, default_value=-1.0),
+        state.to_dlshogi_policy(visit_probas, default_value=-1.0),
     )
 
-    assert np.sum(np.isnan(state.to_dlshogi_policy(
-        visit_probas, default_value=np.nan))) > 0
+    assert (
+        np.sum(
+            np.isnan(
+                state.to_dlshogi_policy(visit_probas, default_value=np.nan)
+            )
+        )
+        > 0
+    )
 
     a = np.empty((2, shogi.Game.num_dlshogi_policy), dtype=np.float32)
-    state.to_dlshogi_policy(visit_probas, default_value=-1., out=a[1])
+    state.to_dlshogi_policy(visit_probas, default_value=-1.0, out=a[1])
     assert np.allclose(
-        game.to_dlshogi_policy(visit_probas, default_value=-1.), a[1])
+        game.to_dlshogi_policy(visit_probas, default_value=-1.0), a[1]
+    )
 
 
 if __name__ == '__main__':

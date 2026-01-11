@@ -48,10 +48,10 @@ def _dataset(
     max_dataset_size: int,
     kifu_path_pattern: str,
     *,
-    kifu_fraction: float = 1.,
-    discount_factor: float = 1.,
-    importance_decay: float = 1.,
-    default_result_rate: float = 1.,
+    kifu_fraction: float = 1.0,
+    discount_factor: float = 1.0,
+    importance_decay: float = 1.0,
+    default_result_rate: float = 1.0,
 ) -> th.utils.data.Dataset:
     buffer = vs.dlshogi.ReplayBuffer(buffer_size=max_dataset_size)
     kifu_dir_list = sorted(
@@ -60,7 +60,7 @@ def _dataset(
     )
     for kifu_dir, fr in zip(
         kifu_dir_list,
-        (kifu_fraction ** i for i in range(len(kifu_dir_list))),
+        (kifu_fraction**i for i in range(len(kifu_dir_list))),
     ):
         if fr < 0.01:
             break
@@ -77,12 +77,14 @@ def _dataset(
             )
             df = df.tail(int(len(df) * fr))
             for _, row in df.iterrows():
-                buffer.add(vs.dlshogi.Data(
-                    sfen=row['sfen'],
-                    policy={m: v for m, v in row['policy'].items()},
-                    value01=row['value01'],
-                    weight=row['weight'],
-                ))
+                buffer.add(
+                    vs.dlshogi.Data(
+                        sfen=row['sfen'],
+                        policy={m: v for m, v in row['policy'].items()},
+                        value01=row['value01'],
+                        weight=row['weight'],
+                    )
+                )
             if buffer.is_full():
                 break
         if buffer.is_full():
@@ -100,8 +102,11 @@ def _dataset(
         columns=['sfen', 'count', 'value'],
     )
     print(f"Dataset size = {len(buffer)}")
-    print(df_summary.sort_values(
-        by='count', ascending=False).head(n=10)[['sfen', 'value', 'count']])
+    print(
+        df_summary.sort_values(by='count', ascending=False).head(n=10)[
+            ['sfen', 'value', 'count']
+        ]
+    )
     return buffer
 
 
@@ -126,7 +131,6 @@ def _train(
     coeff_policy_loss: float = 0.1,
     coeff_entropy_regularization: float = 0.01,
     grad_accumulations: int = 1,
-
 ):
     dataloader = th.utils.data.DataLoader(
         dataset,
@@ -160,9 +164,8 @@ def _get_best_player_index(
     loss_threshold = num_play * (1 - win_ratio_threshold)
     pbar = tqdm(range(num_play), ncols=100)
     for n in pbar:
-        if (
-            (record_curr.score() >= win_threshold)
-            or ((~record_curr).score() > loss_threshold)
+        if (record_curr.score() >= win_threshold) or (
+            (~record_curr).score() > loss_threshold
         ):
             break
         if n % 2 == 0:
@@ -186,9 +189,11 @@ def _get_best_player_index(
             ).result
             record_curr += vs.Record.from_white_result(result)
         pbar.set_description(
-            f'{player_curr.name} vs {player_best.name} = {record_curr.wdl()}')
+            f'{player_curr.name} vs {player_best.name} = {record_curr.wdl()}'
+        )
     return (
-        player_curr.name if record_curr.score() >= win_threshold
+        player_curr.name
+        if record_curr.score() >= win_threshold
         else player_best.name
     )
 
@@ -217,6 +222,7 @@ def _train_step(
     engine: tp.Literal['AlphaZero'] = 'AlphaZero',
 ):
     import ai_edge_torch
+
     if not os.path.isdir(os.path.dirname(model_path)):
         os.makedirs(os.path.dirname(model_path))
     shogi_module = getattr(vs, shogi_variant)
@@ -288,8 +294,11 @@ def _train_step(
         name=prev_model_path.split('/')[-1].split('.')[0],
     )
     name_better = _get_best_player_index(
-        game_class, player_curr, player_prev,
-        {'budget': 100}, {'temperature': None},
+        game_class,
+        player_curr,
+        player_prev,
+        {'budget': 100},
+        {'temperature': None},
         win_ratio_threshold=win_ratio_threshold,
     )
     if player_curr.name == name_better:

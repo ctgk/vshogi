@@ -21,11 +21,13 @@ class PolicyValueFunction:
             Number of threads to use, by default 1
         """
         self._interpreter = Interpreter(
-            model_path=model_path, num_threads=num_threads)
+            model_path=model_path, num_threads=num_threads
+        )
         self._interpreter.allocate_tensors()
         input_details = self._interpreter.get_input_details()[0]
         self._input_placeholder = np.empty(
-            input_details['shape'], dtype=np.float32)
+            input_details['shape'], dtype=np.float32
+        )
         self._input_index = input_details['index']
         output_details = self._interpreter.get_output_details()
         if output_details[0]['shape'][-1] == 1:
@@ -50,7 +52,8 @@ class PolicyValueFunction:
         """
         game.to_dlshogi_features(out=self._input_placeholder)
         self._interpreter.set_tensor(
-            self._input_index, self._input_placeholder)
+            self._input_index, self._input_placeholder
+        )
         self._interpreter.invoke()
         value = self._interpreter.get_tensor(self._value_index).item()
         policy_logits = self._interpreter.get_tensor(self._policy_index)
@@ -69,25 +72,29 @@ class PolicyValueFunction:
         for op in self._interpreter._get_ops_details():
             if op['op_name'] == 'DELEGATE':
                 continue
-            data.append({
-                'Operation': op['op_name'],
-                'Input Indices': list(op['inputs']),
-                'Output Indices': list(op['outputs']),
-                'Output Shape': tensor_details[op['outputs'][0]]['shape'],
-                'Connected to': [],
-            })
+            data.append(
+                {
+                    'Operation': op['op_name'],
+                    'Input Indices': list(op['inputs']),
+                    'Output Indices': list(op['outputs']),
+                    'Output Shape': tensor_details[op['outputs'][0]]['shape'],
+                    'Connected to': [],
+                }
+            )
         for op_data in data:
             for oi in op_data['Output Indices']:
                 for index in [
-                    j for j, op in enumerate(data)
-                    if oi in op['Input Indices']
+                    j for j, op in enumerate(data) if oi in op['Input Indices']
                 ]:
                     op_data['Connected to'].append(
-                        f'{index}:{data[index]["Operation"]}')
+                        f'{index}:{data[index]["Operation"]}'
+                    )
 
         df = pd.DataFrame(data)
         with pd.option_context(
-            'display.max_rows', None,
-            'display.max_columns', None,
+            'display.max_rows',
+            None,
+            'display.max_columns',
+            None,
         ):
             return str(df[['Operation', 'Output Shape', 'Connected to']])

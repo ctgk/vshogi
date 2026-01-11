@@ -10,7 +10,6 @@ def test_mate():
         ("1+rg2+L2R/4k4/1Sppppsp1/1P7/9/9/9/9/9 b GSN3L2P2bg3p", 176),
         ('7p1/5l3/5pk2/6B+r1/5P1P1/6L2/9/9/9 b Rrb4g4s4n3l9p', 3246),
         ('7bk/8p/9/9/9/9/B8/9/9 b N10p4l3n4s4gb2r', 5596),
-
         # five-move mate
         ('9/9/9/6l1+P/5n3/7ks/6R2/5B1Np/7P1 b R10p4l2n3s4gb', 872),
         ('9/5+R3/6n2/6k+b1/8+B/5P3/9/9/9 b 2S10p4l3n2s4gr', 452),
@@ -43,7 +42,8 @@ def test_mate():
             assert game.result == shogi.ONGOING
             game.apply(m)
         assert game.result == (
-            shogi.BLACK_WIN if sfen.split()[1] == 'b' else shogi.WHITE_WIN)
+            shogi.BLACK_WIN if sfen.split()[1] == 'b' else shogi.WHITE_WIN
+        )
         actual_total_searches += searcher.get_search_count()
         expect_total_searches += searches
     print(

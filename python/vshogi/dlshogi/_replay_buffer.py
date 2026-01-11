@@ -13,7 +13,8 @@ def _add_dicts(d1: dict, d2: dict) -> dict:
     if set(d1.keys()) != set(d2.keys()):
         raise ValueError(
             'Cannot add two dicts with unmatching keys: '
-            f'd1({set(d1.keys())}), d2({set(d2.keys())})')
+            f'd1({set(d1.keys())}), d2({set(d2.keys())})'
+        )
     return {k: d1[k] + d2[k] for k in d1}
 
 
@@ -106,7 +107,7 @@ class ReplayBuffer(th.utils.data.Dataset):
         for data in self._buffer:
             if data.sfen not in data_summed:
                 data_summed[data.sfen] = {
-                    'value01': 0.,
+                    'value01': 0.0,
                     'policy': {m: 0 for m in data.policy},
                     'count': 0,
                 }
@@ -151,11 +152,11 @@ class ReplayBuffer(th.utils.data.Dataset):
         ii = index % len(self._buffer)
         g = eval(self._game_variant)(self._buffer[ii].sfen)
         policy = self._buffer[ii].policy
-        if (index >= len(self._buffer)):
+        if index >= len(self._buffer):
             g = g.hflip()
             policy = {m.hflip(): v for m, v in policy.items()}
         x = g.to_dlshogi_features().squeeze()
-        policy = g.to_dlshogi_policy(policy, default_value=-100000.)
+        policy = g.to_dlshogi_policy(policy, default_value=-100000.0)
         value01 = np.array([np.float32(self._buffer[ii].value01)])
         w = np.array(np.float32(self._buffer[ii].weight))
         return x.squeeze(), policy.squeeze(), value01, w

@@ -21,6 +21,17 @@ repos:
     hooks:
     -   id: clang-format
         files: '\.(c|h|cpp|hpp)$'
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.12.4
+    hooks:
+      # Run the linter.
+      - id: ruff-check
+        entry: ruff check --force-exclude
+        args: [ --fix ]
+      # Run the formatter.
+      - id: ruff-format
+        entry: ruff format --force-exclude
 -   repo: local
     hooks:
     -   id: cpp-unittest
@@ -31,11 +42,6 @@ repos:
         exclude: 'cpp/python/'
         pass_filenames: false
         language: system
-    -   id: flake8
-        name: Check Python format
-        entry: flake8 --count --show-source --statistics
-        language: system
-        types: [python]
     -   id: python-setup
         name: Build Python extensions
         language: system

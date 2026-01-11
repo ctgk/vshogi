@@ -11,7 +11,6 @@ Move = tp.TypeVar('Move')
 
 
 class _ClassProperty:
-
     def __init__(self, func: callable):
         self._func = func
 
@@ -126,8 +125,11 @@ class Game(abc.ABC):
             The matrix (A) has value 1 at (fi, ri, fj, rj) if there is a piece
             that can move from (fi, ri) square to (fj, rj) square, otherwise 0.
         """
-        return cls._get_backend_game_class().get_attention().reshape(
-            cls.files, cls.ranks, cls.files, cls.ranks)
+        return (
+            cls._get_backend_game_class()
+            .get_attention()
+            .reshape(cls.files, cls.ranks, cls.files, cls.ranks)
+        )
 
     @classmethod
     def get_local_attentions(cls) -> np.ndarray:
@@ -142,8 +144,11 @@ class Game(abc.ABC):
             minor piece that can move from (fi, ri) square to (fj, rj) square,
             otherwise 0.
         """
-        return cls._get_backend_game_class().get_local_attentions().reshape(
-            -1, cls.files, cls.ranks, cls.files, cls.ranks)
+        return (
+            cls._get_backend_game_class()
+            .get_local_attentions()
+            .reshape(-1, cls.files, cls.ranks, cls.files, cls.ranks)
+        )
 
     @classmethod
     def get_adjacent_attention(cls) -> np.ndarray:
@@ -157,8 +162,11 @@ class Game(abc.ABC):
             The matrix (A) has value 1 at (fi, ri, fj, rj) if (fi, ri) square
             lies along adjacent direction from (fj, rj) square, otherwise 0.
         """
-        return cls._get_backend_game_class().get_adjacent_attention().reshape(
-            cls.files, cls.ranks, cls.files, cls.ranks)
+        return (
+            cls._get_backend_game_class()
+            .get_adjacent_attention()
+            .reshape(cls.files, cls.ranks, cls.files, cls.ranks)
+        )
 
     @classmethod
     def get_diagonal_attention(cls) -> np.ndarray:
@@ -172,8 +180,11 @@ class Game(abc.ABC):
             The matrix (A) has value 1 at (fi, ri, fj, rj) if (fi, ri) square
             lies along diagonal direction from (fj, rj) square, otherwise 0.
         """
-        return cls._get_backend_game_class().get_diagonal_attention().reshape(
-            cls.files, cls.ranks, cls.files, cls.ranks)
+        return (
+            cls._get_backend_game_class()
+            .get_diagonal_attention()
+            .reshape(cls.files, cls.ranks, cls.files, cls.ranks)
+        )
 
     @property
     def turn(self) -> Color:
@@ -650,7 +661,8 @@ class Game(abc.ABC):
                 continue
             print(
                 *(getter(self, i) for getter in getters),
-                sep='\t', file=file_,
+                sep='\t',
+                file=file_,
             )
 
     def hflip(self) -> 'Game':
@@ -815,7 +827,7 @@ class Game(abc.ABC):
         self,
         action_proba: tp.Union[Move, tp.Dict[Move, int]],
         *,
-        default_value: float = 0.,
+        default_value: float = 0.0,
     ) -> np.ndarray:
         """Convert an action into DL-shogi policy array.
 
@@ -847,12 +859,13 @@ class Game(abc.ABC):
             action_proba = {k: v / s for k, v in action_proba.items()}
         elif isinstance(action_proba, self._get_move_class()):
             action_proba = {
-                k: 1. if k == action_proba else 0.
+                k: 1.0 if k == action_proba else 0.0
                 for k in self.get_legal_moves()
             }
         else:
             raise TypeError(
-                f'Unsupported type for `action_proba`: {type(action_proba)}')
+                f'Unsupported type for `action_proba`: {type(action_proba)}'
+            )
         return self._game.to_dlshogi_policy(action_proba, default_value)
 
     def masked_softmax(self, logits: np.ndarray) -> tp.Dict[Move, float]:
@@ -931,12 +944,14 @@ class Game(abc.ABC):
             Current game state.
         """
         r = self.result
-        return '\n'.join((
-            f'Turn: {self.turn.name}' if r == Result.ONGOING else r.name,
-            f'White: {str(self._game.get_stand(Color.WHITE))}',
-            repr(self.board),
-            f'Black: {str(self._game.get_stand(Color.BLACK))}',
-        ))
+        return '\n'.join(
+            (
+                f'Turn: {self.turn.name}' if r == Result.ONGOING else r.name,
+                f'White: {str(self._game.get_stand(Color.WHITE))}',
+                repr(self.board),
+                f'Black: {str(self._game.get_stand(Color.BLACK))}',
+            )
+        )
 
     def copy(self) -> 'Game':
         """Return copy of the game.
@@ -948,7 +963,7 @@ class Game(abc.ABC):
         """
         return self.__class__(self._game.copy())
 
-    def to_svg(self, scale: float = 1., *, skip_white_stand: bool = False):
+    def to_svg(self, scale: float = 1.0, *, skip_white_stand: bool = False):
         """Return an SVG representation of the current game position.
 
         Parameters
@@ -965,6 +980,8 @@ class Game(abc.ABC):
             SVG representation of the game position.
         """
         from vshogi._to_svg import _to_svg
+
         lastmove = self.get_move_at(-1) if self.ply() > 0 else None
         return _to_svg(
-            self, lastmove, scale, skip_white_stand=skip_white_stand)
+            self, lastmove, scale, skip_white_stand=skip_white_stand
+        )

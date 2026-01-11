@@ -94,12 +94,14 @@ class DfpnSearcher(Engine):
                 self._searcher.search(self._game._game, 1)
         if self._game.ply() != ply:
             raise ValueError(
-                f"Failed to run DFPN searches on the game position: {sfen}")
+                f"Failed to run DFPN searches on the game position: {sfen}"
+            )
 
     def _select(self, temperature: float | None = None) -> Move:
         if temperature is not None:
             raise ValueError(
-                "DFPN algorithm does not support selection temperature")
+                "DFPN algorithm does not support selection temperature"
+            )
         return self._searcher.select()
 
     def proved(self) -> bool:
@@ -154,7 +156,8 @@ class DfpnSearcher(Engine):
         mate_moves = self._searcher.get_mate_moves(self._game._game)
         if self._game.ply() != ply:
             raise ValueError(
-                f"Failed to run DFPN searches on the game position: {sfen}")
+                f"Failed to run DFPN searches on the game position: {sfen}"
+            )
         return mate_moves
 
     def _tree(
@@ -169,10 +172,7 @@ class DfpnSearcher(Engine):
             return None
         root_offence: bool = True
         move_class = self._game._get_move_class()
-        pv_line = [
-            move_class(m) if isinstance(m, str) else m
-            for m in pv_line
-        ]
+        pv_line = [move_class(m) if isinstance(m, str) else m for m in pv_line]
         for m in pv_line:
             for child in root.get_children():
                 if move_class(child.get_action()) == m:
