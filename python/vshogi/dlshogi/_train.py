@@ -74,7 +74,6 @@ def train(
     epochs: int,
     coeff_policy_loss: float = 0.1,
     coeff_entropy_regularization: tp.Optional[float] = None,
-    gradient_accumulation_steps: int = 1,
 ) -> None:
     """Train a model given dataset.
 
@@ -93,8 +92,6 @@ def train(
         `total_loss = value_loss + coeff_policy_loss * policy_loss`.
     coeff_entropy_regularization : float, optional
         Coefficient of entropy regularization
-    gradient_accumulation_steps : int, optional
-        Steps to accumulate gradient computation, by default 1
     """
     model.train()
     device = next(model.parameters()).device
@@ -130,7 +127,6 @@ def train(
         loss = loss.item()
         return loss, loss_policy, loss_value
 
-    counter = 0
     for e in range(1, epochs + 1):
         pbar = tqdm(enumerate(dataset, start=1), ncols=80, file=sys.stdout)
         loss_policy_mean = 0.0
@@ -141,17 +137,11 @@ def train(
             p_mb = p_mb.to(device)
             v_mb = v_mb.to(device)
             w_mb = w_mb.to(device)
-            if counter == 0:
-                optimizer.zero_grad()
-            counter += 1
+            optimizer.zero_grad()
             loss, loss_policy, loss_value = compute_losses_and_backward(
                 x_mb, p_mb, v_mb, w_mb
             )
-            if counter == gradient_accumulation_steps:
-                for p in model.parameters():
-                    p.grad /= gradient_accumulation_steps
-                optimizer.step()
-                counter = 0
+            optimizer.step()
 
             loss_policy_mean = ((i - 1) * loss_policy_mean + loss_policy) / i
             loss_value_mean = ((i - 1) * loss_value_mean + loss_value) / i

@@ -131,7 +131,6 @@ def _train(
     beta2: float = 0.999,
     coeff_policy_loss: float = 0.1,
     coeff_entropy_regularization: float = 0.01,
-    grad_accumulations: int = 1,
 ):
     dataloader = th.utils.data.DataLoader(
         dataset,
@@ -149,7 +148,6 @@ def _train(
         epochs=epochs,
         coeff_policy_loss=coeff_policy_loss,
         coeff_entropy_regularization=coeff_entropy_regularization,
-        gradient_accumulation_steps=grad_accumulations,
     )
 
 
@@ -220,7 +218,6 @@ def _train_step(
     beta2: float,
     coeff_policy_loss: float,
     coeff_entropy_regularization: float,
-    grad_accumulations: int,
     win_ratio_threshold: float,
     device: tp.Literal['cpu', 'cuda', 'mps'],
     engine: tp.Literal['AlphaZero'] = 'AlphaZero',
@@ -270,7 +267,6 @@ def _train_step(
             beta2=beta2,
             coeff_policy_loss=coeff_policy_loss,
             coeff_entropy_regularization=coeff_entropy_regularization,
-            grad_accumulations=grad_accumulations,
         )
         network.to(th.device('cpu'))
         print(f"Saving trained parameters: {model_path}")
@@ -339,7 +335,6 @@ def _train_step(
 )
 @cl.option("--coeff-policy-loss", default=0.1, show_default=True)
 @cl.option("--coeff-policy-entropy", default=1e-2, show_default=True)
-@cl.option("--grad-accumulations", default=1, show_default=True)
 @cl.option("--win-ratio-threshold", default=0.55, show_default=True)
 @cl.option(
     "--device",
@@ -386,7 +381,6 @@ def _nn_trainer(**kwargs):
             beta2=kwargs['beta2'],
             coeff_policy_loss=kwargs['coeff_policy_loss'],
             coeff_entropy_regularization=kwargs['coeff_policy_entropy'],
-            grad_accumulations=kwargs['grad_accumulations'],
             win_ratio_threshold=kwargs['win_ratio_threshold'],
             device=kwargs['device'],
             engine=kwargs['engine'],

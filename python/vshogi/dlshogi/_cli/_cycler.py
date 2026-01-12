@@ -44,7 +44,6 @@ def _train(nth_cycle: int, **kwargs):
         ),
         coeff_policy_loss=kwargs['train_coeff_policy_loss'],
         coeff_entropy_regularization=kwargs['train_coeff_policy_entropy'],
-        grad_accumulations=kwargs['train_grad_accumulations'],
         win_ratio_threshold=kwargs['train_win_ratio_threshold'],
         device=kwargs['train_device'],
         engine='AlphaZero',
@@ -124,7 +123,6 @@ def _selfplay(
 )
 @cl.option("--train-coeff-policy-loss", default=0.1, show_default=True)
 @cl.option("--train-coeff-policy-entropy", default=1e-2, show_default=True)
-@cl.option("--train-grad-accumulations", default=1, show_default=True)
 @cl.option("--train-win-ratio-threshold", default=0.55, show_default=True)
 @cl.option(
     "--train-device",
