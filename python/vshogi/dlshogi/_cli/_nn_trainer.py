@@ -73,11 +73,6 @@ def _trainer_parameters(prefix: str = "") -> callable:
             f"--{prefix}dataset-size", default=100000, show_default=True
         ),
         cl.option(
-            f"--{prefix}kifu-path-pattern",
-            default="datasets/dataset_*/kifu_*.tsv",
-            show_default=True,
-        ),
-        cl.option(
             f"--{prefix}kifu-fraction",
             default=0.8,
             show_default=True,
@@ -461,7 +456,7 @@ def _nn_trainer(**kwargs):
             network_bottleneck_channels=kwargs['bottleneck_channels'],
             network_backbone_blocks=kwargs['backbone_blocks'],
             max_dataset_size=kwargs['dataset_size'],
-            kifu_path_pattern=kwargs['kifu_path_pattern'],
+            kifu_path_pattern="datasets/dataset_*/kifu_*.tsv",
             kifu_fraction=kwargs['kifu_fraction'],
             discount_factor=kwargs['discount_factor'],
             importance_decay=kwargs['importance_decay'],

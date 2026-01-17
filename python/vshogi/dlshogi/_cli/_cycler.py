@@ -29,7 +29,7 @@ def _train(nth_cycle: int, **kwargs):
         max_dataset_size=kwargs['train_dataset_size'],
         kifu_path_pattern=os.path.join(
             kwargs['output'],
-            kwargs['train_kifu_path_pattern'],
+            "datasets/dataset_*/kifu_*.tsv",
         ),
         kifu_fraction=kwargs['train_kifu_fraction'],
         discount_factor=kwargs['train_discount_factor'],
