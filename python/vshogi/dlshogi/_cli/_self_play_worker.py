@@ -520,24 +520,70 @@ def _compute_random_moves(random_rate: float, kifu_dir: str):
 
 @cl.command()
 @cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
-@cl.option("--num-games", default=100, show_default=True)
-@cl.option("--coeff-puct", default=4.0, show_default=True)
-@cl.option("--kldgain-threshold", default=1e-4, show_default=True)
-@cl.option("--dfpn-root", default=10000, show_default=True)
-@cl.option("--dfpn-leaf", default=100, show_default=True)
-@cl.option("--num-simulations", default=100, show_default=True)
-@cl.option("--temperature", default=1.0, show_default=True)
-@cl.option("--q-greedy-depth", default=1, show_default=True)
-@cl.option("--random-rate", default=0.5, show_default=True)
+@cl.option(
+    "--num-games",
+    default=100,
+    show_default=True,
+    help="Number of self-play games to generate per iteration.",
+)
+@cl.option(
+    "--dfpn-root",
+    default=10000,
+    show_default=True,
+    help="DFPN search limit for root nodes",
+)
+@cl.option(
+    "--dfpn-leaf",
+    default=100,
+    show_default=True,
+    help="DFPN search limit for leaf nodes",
+)
+@cl.option(
+    "--num-simulations",
+    default=100,
+    show_default=True,
+    help=(
+        "Number of search simulations per move; higher is stronger but slower."
+    ),
+)
+@cl.option(
+    "--q-greedy-depth",
+    default=1,
+    show_default=True,
+    help="Depth for greedy Q-value evaluation during self-play.",
+)
 @cl.option(
     "--engine",
     default='AlphaZero',
     type=cl.Choice(['AlphaZero', 'GumbelAlphaZero']),
     show_default=True,
+    help="Engine to use for self-play games",
 )
-@cl.option("--gumbel-actions", default=16, show_default=True)
-@cl.option("--jobs", default=1, show_default=True)
-@cl.option("--job-size", default=5, show_default=True)
+@cl.option("--coeff-puct", default=4.0, show_default=True)
+@cl.option("--kldgain-threshold", default=1e-4, show_default=True)
+@cl.option("--temperature", default=1.0, show_default=True)
+@cl.option("--random-rate", default=0.5, show_default=True)
+@cl.option(
+    "--gumbel-actions",
+    default=16,
+    show_default=True,
+    help=(
+        "Number of actions to sample when using GumbelAlphaZero "
+        "(ignored for AlphaZero)"
+    ),
+)
+@cl.option(
+    "--jobs",
+    default=1,
+    show_default=True,
+    help="Number of parallel workers for self-play; 1 runs sequentially.",
+)
+@cl.option(
+    "--job-size",
+    default=5,
+    show_default=True,
+    help="Number of games per parallel job.",
+)
 def _selfplay_worker(**kwargs):
     now = datetime.now().strftime('%Y%m%d_%H%M%S')
     with open(f'command_{now}.txt', 'w') as f:
