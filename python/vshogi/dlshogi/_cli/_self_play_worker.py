@@ -14,6 +14,90 @@ from tqdm import tqdm
 import vshogi as vs
 
 
+def _self_play_parameters(prefix: str = "") -> callable:
+    if prefix and (not prefix.endswith("-")):
+        prefix = prefix + "-"
+    wrappers = [
+        cl.option(
+            f"--{prefix}num-games",
+            default=100,
+            show_default=True,
+            help="Number of self-play games to generate per iteration.",
+        ),
+        cl.option(
+            f"--{prefix}dfpn-root",
+            default=10000,
+            show_default=True,
+            help="DFPN search limit for root nodes",
+        ),
+        cl.option(
+            f"--{prefix}dfpn-leaf",
+            default=100,
+            show_default=True,
+            help="DFPN search limit for leaf nodes",
+        ),
+        cl.option(
+            f"--{prefix}num-simulations",
+            default=100,
+            show_default=True,
+            help=(
+                "Number of search simulations per move; "
+                "higher is stronger but slower."
+            ),
+        ),
+        cl.option(
+            f"--{prefix}dump-q-greedy-depth",
+            default=1,
+            show_default=True,
+            help="Depth for greedy Q-value evaluation during self-play.",
+        ),
+        cl.option(
+            f"--{prefix}engine",
+            default='AlphaZero',
+            type=cl.Choice(['AlphaZero', 'GumbelAlphaZero']),
+            show_default=True,
+            help="Engine to use for self-play games",
+        ),
+        cl.option(f"--{prefix}coeff-puct", default=4.0, show_default=True),
+        cl.option(
+            f"--{prefix}kldgain-threshold", default=1e-4, show_default=True
+        ),
+        cl.option(f"--{prefix}temperature", default=1.0, show_default=True),
+        cl.option(f"--{prefix}random-rate", default=0.5, show_default=True),
+        cl.option(
+            f"--{prefix}gumbel-actions",
+            default=16,
+            show_default=True,
+            help=(
+                "Number of actions to sample when using GumbelAlphaZero "
+                "(ignored for AlphaZero)"
+            ),
+        ),
+        cl.option(
+            f"--{prefix}jobs",
+            default=1,
+            show_default=True,
+            help=(
+                "Number of parallel workers for self-play; "
+                "1 runs sequentially."
+            ),
+        ),
+        cl.option(
+            f"--{prefix}job-size",
+            default=5,
+            show_default=True,
+            help="Number of games per parallel job.",
+        ),
+    ]
+
+    def decorator(func: callable) -> callable:
+        for wrap in reversed(wrappers):
+            func = wrap(func)
+        return func
+
+    return decorator
+
+
 def _dump_game_log(file_, game: vs.Game) -> None:
     r = str(game.result)
     if 'ONGOING' in r:
@@ -520,70 +604,7 @@ def _compute_random_moves(random_rate: float, kifu_dir: str):
 
 @cl.command()
 @cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
-@cl.option(
-    "--num-games",
-    default=100,
-    show_default=True,
-    help="Number of self-play games to generate per iteration.",
-)
-@cl.option(
-    "--dfpn-root",
-    default=10000,
-    show_default=True,
-    help="DFPN search limit for root nodes",
-)
-@cl.option(
-    "--dfpn-leaf",
-    default=100,
-    show_default=True,
-    help="DFPN search limit for leaf nodes",
-)
-@cl.option(
-    "--num-simulations",
-    default=100,
-    show_default=True,
-    help=(
-        "Number of search simulations per move; higher is stronger but slower."
-    ),
-)
-@cl.option(
-    "--q-greedy-depth",
-    default=1,
-    show_default=True,
-    help="Depth for greedy Q-value evaluation during self-play.",
-)
-@cl.option(
-    "--engine",
-    default='AlphaZero',
-    type=cl.Choice(['AlphaZero', 'GumbelAlphaZero']),
-    show_default=True,
-    help="Engine to use for self-play games",
-)
-@cl.option("--coeff-puct", default=4.0, show_default=True)
-@cl.option("--kldgain-threshold", default=1e-4, show_default=True)
-@cl.option("--temperature", default=1.0, show_default=True)
-@cl.option("--random-rate", default=0.5, show_default=True)
-@cl.option(
-    "--gumbel-actions",
-    default=16,
-    show_default=True,
-    help=(
-        "Number of actions to sample when using GumbelAlphaZero "
-        "(ignored for AlphaZero)"
-    ),
-)
-@cl.option(
-    "--jobs",
-    default=1,
-    show_default=True,
-    help="Number of parallel workers for self-play; 1 runs sequentially.",
-)
-@cl.option(
-    "--job-size",
-    default=5,
-    show_default=True,
-    help="Number of games per parallel job.",
-)
+@_self_play_parameters(prefix="")
 def _selfplay_worker(**kwargs):
     now = datetime.now().strftime('%Y%m%d_%H%M%S')
     with open(f'command_{now}.txt', 'w') as f:
@@ -622,7 +643,7 @@ def _selfplay_worker(**kwargs):
                 dfpn_search_leaf=kwargs['dfpn_leaf'],
                 num_simulations=kwargs['num_simulations'],
                 temperature=kwargs['temperature'],
-                q_greedy_depth=kwargs['q_greedy_depth'],
+                q_greedy_depth=kwargs['dump_q_greedy_depth'],
                 max_random_moves=max_random_moves,
                 gumbel_actions=kwargs['gumbel_actions'],
                 n_jobs=kwargs['jobs'],

@@ -14,6 +14,137 @@ from tqdm import tqdm
 import vshogi as vs
 
 
+def _trainer_parameters(prefix: str = "") -> callable:
+    if prefix and (not prefix.endswith("-")):
+        prefix = prefix + "-"
+    wrappers = [
+        cl.option(
+            f"--{prefix}hidden-channels",
+            type=int,
+            callback=lambda ctx, param, value: (
+                value
+                if value is not None
+                else {
+                    "minishogi": 64,
+                    "judkins_shogi": 64,
+                    "shogi": 128,
+                }.get(ctx.params.get("shogi"), 128)
+            ),
+            help=(
+                "Number of hidden channels in the neural network backbone. "
+                "Variant defaults: minishogi=64, judkins_shogi=64, shogi=128."
+            ),
+        ),
+        cl.option(
+            f"--{prefix}bottleneck-channels",
+            type=int,
+            callback=lambda ctx, param, value: (
+                value
+                if value is not None
+                else {
+                    "minishogi": 32,
+                    "judkins_shogi": 32,
+                    "shogi": 64,
+                }.get(ctx.params.get("shogi"), 64)
+            ),
+            help=(
+                "Number of bottleneck channels in the neural network backbone. "
+                "Variant defaults: minishogi=32, judkins_shogi=32, shogi=64."
+            ),
+        ),
+        cl.option(
+            f"--{prefix}backbone-blocks",
+            type=int,
+            callback=lambda ctx, param, value: (
+                value
+                if value is not None
+                else {
+                    "minishogi": 3,
+                    "judkins_shogi": 4,
+                    "shogi": 8,
+                }.get(ctx.params.get("shogi"), 8)
+            ),
+            help=(
+                "Number of residual blocks in the neural network backbone. "
+                "Variant defaults: minishogi=3, judkins_shogi=4, shogi=8."
+            ),
+        ),
+        cl.option(
+            f"--{prefix}dataset-size", default=100000, show_default=True
+        ),
+        cl.option(
+            f"--{prefix}kifu-path-pattern",
+            default="datasets/dataset_*/kifu_*.tsv",
+            show_default=True,
+        ),
+        cl.option(
+            f"--{prefix}kifu-fraction",
+            default=0.8,
+            show_default=True,
+        ),
+        cl.option(
+            f"--{prefix}discount-factor",
+            default=0.99,
+            show_default=True,
+        ),
+        cl.option(
+            f"--{prefix}importance-decay",
+            default=0.7,
+            show_default=True,
+        ),
+        cl.option(
+            f"--{prefix}default-result-rate",
+            default=0.5,
+            show_default=True,
+        ),
+        cl.option(f"--{prefix}minibatch-size", default=32, show_default=True),
+        cl.option(f"--{prefix}learning-rate", default=1e-2, show_default=True),
+        cl.option(f"--{prefix}epochs", default=5, show_default=True),
+        cl.option(
+            f"--{prefix}beta2",
+            type=float,
+            callback=lambda ctx, param, value: (
+                value
+                if value is not None
+                else 0.999
+                ** (
+                    ctx.params.get(f"{prefix}minibatch-size".replace("-", "_"))
+                    / 1024
+                )
+            ),
+            help=(
+                "2nd-moment decay (`beta2`) of Adam optimizer. "
+                "Omit to auto-tune by batch size: "
+                "`beta2 = 0.999 ** (minibatch_size / 1024)`. "
+                "This keeps the effective averaging window comparable "
+                "across different minibatch sizes."
+            ),
+        ),
+        cl.option(
+            f"--{prefix}coeff-policy-loss", default=0.1, show_default=True
+        ),
+        cl.option(
+            f"--{prefix}coeff-policy-entropy", default=1e-2, show_default=True
+        ),
+        cl.option(
+            f"--{prefix}win-ratio-threshold", default=0.55, show_default=True
+        ),
+        cl.option(
+            f"--{prefix}device",
+            default='cpu',
+            type=cl.Choice(['cpu', 'cuda', 'mps']),
+            show_default=True,
+        ),
+    ]
+
+    def decorator(func: callable) -> callable:
+        for wrap in reversed(wrappers):
+            func = wrap(func)
+        return func
+
+    return decorator
+
+
 def _network(
     game_class: type,
     hidden_channels: int,
@@ -27,6 +158,7 @@ def _network(
         bottleneck_channels=bottleneck_channels,
         num_backbone_blocks=num_backbone_blocks,
     )
+    print(f"{weight_candidate_path=}")
     for path in weight_candidate_path:
         if path is None:
             continue
@@ -40,6 +172,7 @@ def _network(
                 if not os.path.exists(path):
                     warnings.warn(f'Weight file not found: {path}')
         else:
+            print(f"Loaded weight file: {path}")
             break
     return network
 
@@ -110,16 +243,15 @@ def _dataset(
     return buffer
 
 
-def _engine(engine: str, tflite_path: str, name: str) -> vs.engine.Engine:
-    engine_class = {'AlphaZero': vs.engine.AlphaZero}[engine]
+def _engine(tflite_path: str, name: str) -> vs.engine.Engine:
     if os.path.exists(tflite_path):
-        return engine_class(
+        return vs.engine.AlphaZero(
             vs.dlshogi.PolicyValueFunction(tflite_path),
             name=name,
         )
     else:
         warnings.warn(f"tflite model, {tflite_path}, not found")
-        return engine_class(name=f'{name}_not_found')
+        return vs.engine.AlphaZero(name=f'{name}_not_found')
 
 
 def _train(
@@ -220,7 +352,6 @@ def _train_step(
     coeff_entropy_regularization: float,
     win_ratio_threshold: float,
     device: tp.Literal['cpu', 'cuda', 'mps'],
-    engine: tp.Literal['AlphaZero'] = 'AlphaZero',
 ):
     import ai_edge_torch
 
@@ -285,12 +416,10 @@ def _train_step(
     with tempfile.NamedTemporaryFile(delete=True) as t:
         edge_model.export(t.name)
         player_curr = _engine(
-            engine,
             t.name,
             name=model_path.split('/')[-1].split('.')[0],
         )
     player_prev = _engine(
-        engine,
         prev_model_path.replace('.pth', '.tflite'),
         name=prev_model_path.split('/')[-1].split('.')[0],
     )
@@ -308,47 +437,9 @@ def _train_step(
 
 @cl.command()
 @cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
-@cl.option("--hidden-channels", default=128, show_default=True)
-@cl.option("--bottleneck-channels", default=32, show_default=True)
-@cl.option("--backbone-blocks", default=4, show_default=True)
-@cl.option("--dataset-size", default=100000, show_default=True)
-@cl.option("--kifu-path-pattern", default="datasets/dataset_*/kifu_*.tsv")
-@cl.option("--kifu-fraction", default=0.8, show_default=True)
-@cl.option("--discount-factor", default=0.99, show_default=True)
-@cl.option("--importance-decay", default=0.7, show_default=True)
-@cl.option("--default-result-rate", default=0.5, show_default=True)
-@cl.option("--minibatch-size", default=32, show_default=True)
-@cl.option("--learning-rate", default=1e-2, show_default=True)
-@cl.option("--epochs", default=5, show_default=True)
-@cl.option(
-    "--beta2",
-    default=-1.0,
-    type=float,
-    show_default=True,
-    help=(
-        "2nd-moment decay (`beta2`) of Adam optimizer. "
-        "Set a negative value to auto-tune by batch size: "
-        "`beta2 = 0.999 ** (minibatch_size / 1024)`. "
-        "This keeps the effective averaging window comparable "
-        "across different minibatch sizes."
-    ),
-)
-@cl.option("--coeff-policy-loss", default=0.1, show_default=True)
-@cl.option("--coeff-policy-entropy", default=1e-2, show_default=True)
-@cl.option("--win-ratio-threshold", default=0.55, show_default=True)
-@cl.option(
-    "--device",
-    default='cpu',
-    type=cl.Choice(['cpu', 'cuda', 'mps']),
-    show_default=True,
-)
-@cl.option(
-    "--engine",
-    default='AlphaZero',
-    type=cl.Choice(['AlphaZero']),
-    show_default=True,
-)
+@_trainer_parameters(prefix="")
 def _nn_trainer(**kwargs):
+    print(f"{kwargs=}")
     now = datetime.now().strftime('%Y%m%d_%H%M%S')
     with open(f'command_{now}.txt', 'w') as f:
         f.write(f'python {" ".join(sys.argv)}')
@@ -383,7 +474,6 @@ def _nn_trainer(**kwargs):
             coeff_entropy_regularization=kwargs['coeff_policy_entropy'],
             win_ratio_threshold=kwargs['win_ratio_threshold'],
             device=kwargs['device'],
-            engine=kwargs['engine'],
         )
         if os.path.exists(model_path.format(ii).replace('.pth', '.tflite')):
             ii += 1

@@ -6,11 +6,12 @@ from glob import glob
 
 import click as cl
 
-from vshogi.dlshogi._cli._nn_trainer import _train_step
+from vshogi.dlshogi._cli._nn_trainer import _train_step, _trainer_parameters
 from vshogi.dlshogi._cli._self_play_worker import (
     _compute_random_moves,
     _get_previous_models_superior_to_latest,
     _run_self_play,
+    _self_play_parameters,
 )
 
 
@@ -28,7 +29,7 @@ def _train(nth_cycle: int, **kwargs):
         max_dataset_size=kwargs['train_dataset_size'],
         kifu_path_pattern=os.path.join(
             kwargs['output'],
-            'datasets/dataset_*/kifu_*.tsv',
+            kwargs['train_kifu_path_pattern'],
         ),
         kifu_fraction=kwargs['train_kifu_fraction'],
         discount_factor=kwargs['train_discount_factor'],
@@ -46,7 +47,6 @@ def _train(nth_cycle: int, **kwargs):
         coeff_entropy_regularization=kwargs['train_coeff_policy_entropy'],
         win_ratio_threshold=kwargs['train_win_ratio_threshold'],
         device=kwargs['train_device'],
-        engine='AlphaZero',
     )
 
 
@@ -80,62 +80,15 @@ def _selfplay(
 @cl.command()
 @cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
 @cl.option("--cycles", default=10, show_default=True)
-@cl.option(
-    "--play-engine",
-    default='AlphaZero',
-    type=cl.Choice(['AlphaZero', 'GumbelAlphaZero']),
-    show_default=True,
-)
-@cl.option("--play-num-games", default=100, show_default=True)
-@cl.option("--play-coeff-puct", default=4.0, show_default=True)
-@cl.option("--play-kldgain-threshold", default=1e-4, show_default=True)
-@cl.option("--play-dfpn-root", default=10000, show_default=True)
-@cl.option("--play-dfpn-leaf", default=100, show_default=True)
-@cl.option("--play-num-simulations", default=100, show_default=True)
-@cl.option("--play-temperature", default=1.0, show_default=True)
-@cl.option("--play-dump-q-greedy-depth", default=1, show_default=True)
-@cl.option("--play-random-rate", default=0.5, show_default=True)
-@cl.option("--play-gumbel-actions", default=16, show_default=True)
-@cl.option("--play-jobs", default=1, show_default=True)
-@cl.option("--train-hidden-channels", default=128, show_default=True)
-@cl.option("--train-bottleneck-channels", default=32, show_default=True)
-@cl.option("--train-backbone-blocks", default=4, show_default=True)
-@cl.option("--train-dataset-size", default=100000, show_default=True)
-@cl.option("--train-kifu-fraction", default=0.8, show_default=True)
-@cl.option("--train-discount-factor", default=0.99, show_default=True)
-@cl.option("--train-importance-decay", default=0.7, show_default=True)
-@cl.option("--train-default-result-rate", default=0.5, show_default=True)
-@cl.option("--train-minibatch-size", default=32, show_default=True)
-@cl.option("--train-learning-rate", default=1e-2, show_default=True)
-@cl.option("--train-epochs", default=5, show_default=True)
-@cl.option(
-    "--train-beta2",
-    default=-1.0,
-    type=float,
-    show_default=True,
-    help=(
-        "2nd-moment decay (`beta2`) of Adam optimizer. "
-        "Set a negative value to auto-tune by batch size: "
-        "`beta2 = 0.999 ** (minibatch_size / 1024)`. "
-        "This keeps the effective averaging window comparable "
-        "across different minibatch sizes."
-    ),
-)
-@cl.option("--train-coeff-policy-loss", default=0.1, show_default=True)
-@cl.option("--train-coeff-policy-entropy", default=1e-2, show_default=True)
-@cl.option("--train-win-ratio-threshold", default=0.55, show_default=True)
-@cl.option(
-    "--train-device",
-    default='cpu',
-    type=cl.Choice(['cpu', 'cuda', 'mps']),
-    show_default=True,
-)
+@_self_play_parameters(prefix="play")
+@_trainer_parameters(prefix="train")
 @cl.option(
     "-o",
     "--output",
     default='',
+    show_default=True,
     type=str,
-    help='Output directory (default: cwd)',
+    help='Output directory',
 )
 def _cycle_selfplay_and_train(**kwargs):
     print('kwargs:', kwargs)
