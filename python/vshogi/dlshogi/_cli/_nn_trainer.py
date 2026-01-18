@@ -426,6 +426,7 @@ def _train_step(
         {'temperature': None},
         win_ratio_threshold=win_ratio_threshold,
     )
+    print(f"{player_curr.name} vs {player_prev.name}: Winner {name_better}")
     if player_curr.name == name_better:
         edge_model.export(model_path.replace('.pth', '.tflite'))
 

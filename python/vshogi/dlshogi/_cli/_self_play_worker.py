@@ -650,4 +650,11 @@ def _selfplay_worker(**kwargs):
                 job_size=kwargs['job_size'],
             )
             if os.path.exists(tflite_path.format(ii + 1)):
+                print(f"Found new model: {tflite_path.format(ii + 1)}")
                 break
+            else:
+                msg = (
+                    f"New model ({tflite_path.format(ii + 1)}) not found. "
+                    f"Continue self-play with {tflite_path.format(ii)}"
+                )
+                print(msg)
