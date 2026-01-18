@@ -7,6 +7,7 @@ from datetime import datetime
 from glob import glob
 
 import click as cl
+import numpy as np
 import pandas as pd
 import torch as th
 from tqdm import tqdm
@@ -74,8 +75,12 @@ def _trainer_parameters(prefix: str = "") -> callable:
         ),
         cl.option(
             f"--{prefix}kifu-fraction",
-            default=0.8,
+            default=1.0,
             show_default=True,
+            help=(
+                "Fraction of samples to use from each kifu file (0.0 to 1.0). "
+                "Use values less than 1.0 to subsample the dataset."
+            ),
         ),
         cl.option(
             f"--{prefix}discount-factor",
@@ -172,6 +177,18 @@ def _network(
     return network
 
 
+def _average_kifu_length(kifu_dir: str) -> float | None:
+    line_length_list = []
+    for path in glob(os.path.join(kifu_dir, 'kifu_*.tsv')):
+        if ('B' in path) or ('W' in path):
+            continue
+        with open(path, 'rb') as f:
+            line_length_list.append(sum(1 for _ in f) - 1)
+    if line_length_list:
+        return np.mean(line_length_list)
+    return None
+
+
 def _dataset(
     max_dataset_size: int,
     kifu_path_pattern: str,
@@ -188,7 +205,7 @@ def _dataset(
     )
     for kifu_dir, fr in zip(
         kifu_dir_list,
-        (kifu_fraction**i for i in range(len(kifu_dir_list))),
+        (0.8**i for i in range(len(kifu_dir_list))),
     ):
         if fr < 0.01:
             break
@@ -196,6 +213,13 @@ def _dataset(
             glob(kifu_dir + '/' + kifu_path_pattern.split('/')[-1]),
             reverse=True,
         )
+        kifu_length = _average_kifu_length(kifu_dir=kifu_dir) * fr
+        sample_frac = min(
+            kifu_fraction,
+            (max_dataset_size * 2) / (len(kifu_list) * kifu_length),
+        )
+        if kifu_dir == kifu_dir_list[0]:
+            print(f"{sample_frac=}")
         for kifu_path in kifu_list:
             df = vs.dlshogi.read_kifu(
                 kifu_path,
@@ -204,6 +228,7 @@ def _dataset(
                 default_result_rate=default_result_rate,
             )
             df = df.tail(int(len(df) * fr))
+            df = df.sample(frac=sample_frac)
             for _, row in df.iterrows():
                 buffer.add(
                     vs.dlshogi.Data(
