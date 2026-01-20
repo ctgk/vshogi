@@ -145,12 +145,14 @@ def _trainer_parameters(prefix: str = "") -> callable:
     return decorator
 
 
-def _network(
+def _network_and_optimizer(
     game_class: type,
     hidden_channels: int,
     bottleneck_channels: int,
     num_backbone_blocks: int,
-    weight_candidate_path: list = [],
+    learning_rate: float,
+    beta2: float,
+    candidate_path: list = [],
 ):
     network = vs.dlshogi.PolicyValueNetwork(
         game_class=game_class,
@@ -158,23 +160,30 @@ def _network(
         bottleneck_channels=bottleneck_channels,
         num_backbone_blocks=num_backbone_blocks,
     )
-    print(f"{weight_candidate_path=}")
-    for path in weight_candidate_path:
+    optimizer = th.optim.AdamW(
+        network.parameters(),
+        lr=learning_rate,
+        betas=(0.9, beta2),
+    )
+    print(f"{candidate_path=}")
+    for path in candidate_path:
         if path is None:
             continue
         try:
-            network.load_state_dict(th.load(path, weights_only=True))
+            checkpoint = th.load(path)
+            network.load_state_dict(checkpoint["state_dict"])
+            optimizer.load_state_dict(checkpoint["optimizer"])
         except Exception:
-            if path == weight_candidate_path[0]:
+            if path == candidate_path[0]:
                 if os.path.exists(path):
-                    warnings.warn(f'Failed loading weight: {path}')
+                    warnings.warn(f'Failed loading: {path}')
             else:
                 if not os.path.exists(path):
-                    warnings.warn(f'Weight file not found: {path}')
+                    warnings.warn(f'File not found: {path}')
         else:
-            print(f"Loaded weight file: {path}")
+            print(f"Loaded file: {path}")
             break
-    return network
+    return network, optimizer
 
 
 def _average_kifu_length(kifu_dir: str) -> float | None:
@@ -277,10 +286,9 @@ def _engine(tflite_path: str, name: str) -> vs.engine.Engine:
 def _train(
     model: th.nn.Module,
     dataset: th.utils.data.Dataset,
+    optimizer: th.optim.Optimizer,
     minibatch_size: int,
-    learning_rate: float,
     epochs: int,
-    beta2: float = 0.999,
     coeff_policy_loss: float = 0.1,
     coeff_entropy_regularization: float = 0.01,
 ):
@@ -289,9 +297,6 @@ def _train(
         batch_size=minibatch_size,
         shuffle=True,
         drop_last=True,
-    )
-    optimizer = th.optim.AdamW(
-        model.parameters(), learning_rate, betas=(0.9, beta2)
     )
     vs.dlshogi.train(
         model,
@@ -379,12 +384,14 @@ def _train_step(
         os.makedirs(os.path.dirname(model_path))
     shogi_module = getattr(vs, shogi_variant)
     game_class = getattr(shogi_module, 'Game')
-    network = _network(
+    network, optimizer = _network_and_optimizer(
         game_class,
         network_hidden_channels,
         network_bottleneck_channels,
         network_backbone_blocks,
-        weight_candidate_path=[model_path, prev_model_path],
+        learning_rate=learning_rate,
+        beta2=beta2,
+        candidate_path=[model_path, prev_model_path],
     )
     if epochs == 0:
         sample_inputs = (
@@ -412,16 +419,16 @@ def _train_step(
         _train(
             network,
             dataset,
+            optimizer,
             minibatch_size=minibatch_size,
-            learning_rate=learning_rate,
             epochs=epochs,
-            beta2=beta2,
             coeff_policy_loss=coeff_policy_loss,
             coeff_entropy_regularization=coeff_entropy_regularization,
         )
         network.to(th.device('cpu'))
         print(f"Saving trained parameters: {model_path}")
-        th.save(network.state_dict(), model_path)
+        state = {"state_dict": network.state_dict(), "optimizer": optimizer}
+        th.save(state, model_path)
 
     sample_inputs = (
         th.randn(
