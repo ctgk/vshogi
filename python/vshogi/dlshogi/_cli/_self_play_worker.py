@@ -508,7 +508,9 @@ def _validate(
     previous: str,
     num_games: int,
     coeff_puct: float,
-) -> float:
+    *,
+    show_pbar: bool = True,
+) -> vs.Record:
     game_class = getattr(getattr(vs, shogi_variant), 'Game')
     player_latest = _load_player(
         latest,
@@ -527,12 +529,14 @@ def _validate(
         engine=engine,
     )
     record = vs.Record(0, 0, 0, 0, 0, 0)
-    pbar = tqdm(range(num_games), ncols=100)
+    iterator = range(num_games)
+    if show_pbar:
+        iterator = tqdm(iterator, ncols=100)
     search_args = {
         'AlphaZero': {'budget': 100},
         'GumbelAlphaZero': {'budget': 100, 'num_actions': 16},
     }[engine]
-    for n in pbar:
+    for n in iterator:
         if n % 2 == 0:
             result = vs.play_game(
                 game_class(),
@@ -553,10 +557,11 @@ def _validate(
                 draw_on_max_moves=True,
             ).result
             record += vs.Record.from_white_result(result)
-        pbar.set_description(
-            f'{player_latest.name} vs {player_prev.name} = {record.wdl()}'
-        )
-    return record.score()
+        if show_pbar:
+            iterator.set_description(
+                f'{player_latest.name} vs {player_prev.name} = {record.wdl()}'
+            )
+    return record
 
 
 def _get_previous_models_superior_to_latest(
@@ -566,20 +571,57 @@ def _get_previous_models_superior_to_latest(
     engine: tp.Literal['AlphaZero'],
     num_games: int = 10,
     coeff_puct: float = 4.0,
+    n_jobs: int = 1,
 ) -> list[str]:
-    return [
-        prev
-        for prev in previous
-        if _validate(
-            shogi_variant,
-            engine,
-            latest,
-            prev,
-            num_games,
-            coeff_puct,
-        )
-        < num_games * 0.5
-    ]
+    if not previous:
+        return []
+    if (n_jobs == 1) or (len(previous) == 1):
+        return [
+            prev
+            for prev in previous
+            if _validate(
+                shogi_variant,
+                engine,
+                latest,
+                prev,
+                num_games,
+                coeff_puct,
+            ).score()
+            < num_games * 0.5
+        ]
+    else:
+        timeout_second = 5 * 60  # 5 minutes
+        with _tqdm_joblib(
+            tqdm(
+                total=len(previous),
+                desc="Play against previous models",
+                ncols=80,
+            ),
+        ):
+            records: list[vs.Record] = Parallel(
+                n_jobs=min(n_jobs, len(previous)),
+                timeout=timeout_second,
+            )(
+                delayed(_validate)(
+                    shogi_variant,
+                    engine,
+                    latest,
+                    prev,
+                    num_games,
+                    coeff_puct,
+                    show_pbar=False,
+                )
+                for prev in previous
+            )
+        for prev, record in zip(previous, records):
+            msg = (
+                f"{latest.split('/')[-1].split('.')[0]} vs "
+                f"{prev.split('/')[-1].split('.')[0]} = {record.wdl()}"
+            )
+            print(msg)
+        return [
+            p for p, r in zip(previous, records) if r.score() < num_games * 0.5
+        ]
 
 
 def _average_kifu_length(kifu_dir: str) -> float:
@@ -628,6 +670,7 @@ def _selfplay_worker(**kwargs):
             engine=kwargs['engine'],
             num_games=10,
             coeff_puct=kwargs['coeff_puct'],
+            n_jobs=kwargs['jobs'],
         )
         while True:
             _run_self_play(

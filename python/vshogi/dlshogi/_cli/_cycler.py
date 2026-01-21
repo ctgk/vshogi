@@ -134,6 +134,7 @@ def _cycle_selfplay_and_train(**kwargs):
             engine=kwargs['play_engine'],
             num_games=10,
             coeff_puct=kwargs['play_coeff_puct'],
+            n_jobs=kwargs['play_jobs'],
         )
         while True:
             _selfplay(
