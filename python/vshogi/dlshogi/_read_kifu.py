@@ -42,8 +42,10 @@ def read_kifu(
         },
     )
     total_ply = len(df)
-    df['policy'] = _compute_visit_dist(df)
-    df['z_weight'] = _compute_z_weight(df, default_result_rate)
+    game_class = _infer_game_variant(df['sfen'][0])
+    move_class = game_class._get_move_class()
+    df['policy'] = _compute_visit_dist(df, move_class)
+    df['z_weight'] = _compute_z_weight(df, default_result_rate, move_class)
     df['weight'] = _compute_weight(df, importance_decay)
     df['value'] = (
         df['z_weight']
@@ -58,9 +60,8 @@ def read_kifu(
 def _compute_z_weight(
     df: pd.DataFrame,
     default_result_rate: float,
+    move_class: type,
 ) -> pd.Series:
-    game_class = _infer_game_variant(df['sfen'][0])
-    move_class = game_class._get_move_class()
     return df.apply(
         lambda row: (
             0.0
@@ -90,11 +91,9 @@ def _compute_weight(df: pd.DataFrame, importance_decay: float) -> np.ndarray:
     )
 
 
-def _compute_visit_dist(df: pd.DataFrame):
+def _compute_visit_dist(df: pd.DataFrame, move_class: type):
     if len(df) == 0:
         return
-    game_class = _infer_game_variant(df['sfen'][0])
-    move_class = game_class._get_move_class()
     return df.apply(
         lambda row: (
             {
@@ -102,10 +101,7 @@ def _compute_visit_dist(df: pd.DataFrame):
                 for m, v in eval(row['policy']).items()
             }
             if '{' in row['policy']
-            else {
-                m: float(m.to_sfen() == row['policy'])
-                for m in game_class(row['sfen']).get_legal_moves()
-            }
+            else {move_class(row["policy"]): 1.0}
         ),
         axis=1,
     )

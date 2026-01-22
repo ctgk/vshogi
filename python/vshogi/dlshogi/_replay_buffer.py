@@ -10,12 +10,14 @@ from vshogi.shogi._game import Game as StandardGame  # noqa: F401
 def _add_dicts(d1: dict, d2: dict) -> dict:
     if (not d1) or (not d2):
         return {}
-    if set(d1.keys()) != set(d2.keys()):
-        raise ValueError(
-            'Cannot add two dicts with unmatching keys: '
-            f'd1({set(d1.keys())}), d2({set(d2.keys())})'
-        )
-    return {k: d1[k] + d2[k] for k in d1}
+    out = {
+        k: d1.get(k, 0.0) + d2.get(k, 0.0)
+        for k in (set(d1.keys()) | set(d2.keys()))
+    }
+    if np.isclose(sum(out.values()), 0):
+        msg = f"Adding two invalid dictionaries: {d1} and {d2}"
+        raise ValueError(msg)
+    return out
 
 
 def _normalize(d: dict) -> dict:
@@ -120,9 +122,15 @@ class ReplayBuffer(th.utils.data.Dataset):
             except ValueError as e:
                 raise ValueError(f"Error at {data.sfen}: {e}")
             data_summed[data.sfen]['count'] += 1
-        for value in data_summed.values():
+        for sfen, value in data_summed.items():
+            game = eval(self._game_variant)(sfen)
             value['value01'] = value['value01'] / value['count']
-            value['policy'] = _normalize(value['policy'])
+            policy = _normalize(value["policy"])
+            value["policy"] = (
+                {m: policy.get(m, 0.0) for m in game.get_legal_moves()}
+                if policy
+                else {}
+            )
         return data_summed
 
     def __len__(self):
@@ -156,7 +164,11 @@ class ReplayBuffer(th.utils.data.Dataset):
             g = g.hflip()
             policy = {m.hflip(): v for m, v in policy.items()}
         x = g.to_dlshogi_features().squeeze()
-        policy = g.to_dlshogi_policy(policy, default_value=-100000.0)
+        try:
+            policy = g.to_dlshogi_policy(policy, default_value=-100000.0)
+        except ZeroDivisionError:
+            msg = f"Invalid policy ({policy}) at: {self._buffer[ii].sfen}"
+            raise ZeroDivisionError(msg)
         value01 = np.array([np.float32(self._buffer[ii].value01)])
         w = np.array(np.float32(self._buffer[ii].weight))
         return x.squeeze(), policy.squeeze(), value01, w
