@@ -416,6 +416,10 @@ def _train_step(
     if len(dataset) != 0:
         print(f"Start training: {model_path}")
         network.to(th.device(device))
+        for state in optimizer.state.values():
+            for k, v in state.items():
+                if isinstance(v, th.Tensor) and v.device != th.device(device):
+                    state[k] = v.to(th.device(device))
         _train(
             network,
             dataset,
@@ -427,7 +431,10 @@ def _train_step(
         )
         network.to(th.device('cpu'))
         print(f"Saving trained parameters: {model_path}")
-        state = {"state_dict": network.state_dict(), "optimizer": optimizer}
+        state = {
+            "state_dict": network.state_dict(),
+            "optimizer": optimizer.state_dict(),
+        }
         th.save(state, model_path)
 
     sample_inputs = (
