@@ -52,6 +52,8 @@ def run_processes(**kwargs):
             [sys.executable, "-m", "vshogi", "dlshogi", "nn-trainer"]
             + [kwargs["shogi"]] + sum(
                 [
+                    [("--no-", "--")[v] + k.replace("_", "-")]
+                    if isinstance(v, bool) else
                     [f"--{k.replace('_', '-')}", str(v)]
                     for k, v in kwargs_train.items()
                 ],
@@ -71,6 +73,8 @@ def run_processes(**kwargs):
             [sys.executable, "-m", "vshogi", "dlshogi", "self-play-worker"]
             + [kwargs["shogi"]] + sum(
                 [
+                    [("--no-", "--")[v] + k.replace("_", "-")]
+                    if isinstance(v, bool) else
                     [f"--{k.replace('_', '-')}", str(v)]
                     for k, v in kwargs_play.items()
                 ],

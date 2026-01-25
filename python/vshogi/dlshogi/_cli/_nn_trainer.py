@@ -3,6 +3,7 @@ import sys
 import tempfile
 import typing as tp
 import warnings
+from collections.abc import Callable
 from datetime import datetime
 from glob import glob
 
@@ -72,6 +73,12 @@ def _trainer_parameters(prefix: str = "") -> callable:
         ),
         cl.option(
             f"--{prefix}dataset-size", default=100000, show_default=True
+        ),
+        cl.option(
+            f"--{prefix}per/--{prefix}no-per",
+            default=False,
+            show_default=True,
+            help="Enable/Disable prioritized experience replay.",
         ),
         cl.option(
             f"--{prefix}kifu-fraction",
@@ -206,6 +213,7 @@ def _dataset(
     discount_factor: float = 1.0,
     importance_decay: float = 1.0,
     default_result_rate: float = 1.0,
+    value_func: Callable[[str], float] | None = None,
 ) -> th.utils.data.Dataset:
     buffer = vs.dlshogi.ReplayBuffer(buffer_size=max_dataset_size)
     kifu_dir_list = sorted(
@@ -237,18 +245,31 @@ def _dataset(
                 default_result_rate=default_result_rate,
             )
             df = df.tail(int(len(df) * fr))
+            if len(df) == 0:
+                continue
+            if value_func is None:
+                df["priority"] = 1.0
+            else:
+                df["priority"] = df.apply(
+                    lambda row: max(
+                        np.abs(row["q_value"] - value_func(row["sfen"])),
+                        1e-4,
+                    ),
+                    axis=1,
+                )
             df = df.sample(
                 **(
                     {"n": 1}
                     if len(df) * sample_frac < 1
                     else {"frac": sample_frac}
-                )
+                ),
+                weights="priority",
             )
             for _, row in df.iterrows():
                 buffer.add(
                     vs.dlshogi.Data(
                         sfen=row['sfen'],
-                        policy={m: v for m, v in row['policy'].items()},
+                        policy=row['policy'],
                         value01=row['value01'],
                         weight=row['weight'],
                     )
@@ -371,6 +392,7 @@ def _train_step(
     network_backbone_blocks: int,
     max_dataset_size: int,
     kifu_path_pattern: str,
+    prioritized_experience_replay: bool,
     kifu_fraction: float,
     discount_factor: float,
     importance_decay: float,
@@ -411,6 +433,17 @@ def _train_step(
         edge_model = ai_edge_torch.convert(network.eval(), sample_inputs)
         edge_model.export(model_path.replace('.pth', '.tflite'))
         return
+
+    if prioritized_experience_replay and (prev_model_path is not None):
+        pv_func = vs.dlshogi.PolicyValueFunction(
+            prev_model_path.replace(".pth", ".tflite")
+        )
+
+        def value_func(sfen: str) -> float:
+            return pv_func(game_class(sfen))[1]
+    else:
+        value_func = None
+
     dataset = _dataset(
         max_dataset_size=max_dataset_size,
         kifu_path_pattern=kifu_path_pattern,
@@ -418,6 +451,7 @@ def _train_step(
         discount_factor=discount_factor,
         importance_decay=importance_decay,
         default_result_rate=default_result_rate,
+        value_func=value_func,
     )
     if len(dataset) != 0:
         print(f"Start training: {model_path}")
@@ -503,6 +537,7 @@ def _nn_trainer(**kwargs):
             network_backbone_blocks=kwargs['backbone_blocks'],
             max_dataset_size=kwargs['dataset_size'],
             kifu_path_pattern="datasets/dataset_*/kifu_*.tsv",
+            prioritized_experience_replay=kwargs["per"],
             kifu_fraction=kwargs['kifu_fraction'],
             discount_factor=kwargs['discount_factor'],
             importance_decay=kwargs['importance_decay'],

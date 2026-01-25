@@ -31,6 +31,7 @@ def _train(nth_cycle: int, **kwargs):
             kwargs['output'],
             "datasets/dataset_*/kifu_*.tsv",
         ),
+        prioritized_experience_replay=kwargs["train_per"],
         kifu_fraction=kwargs['train_kifu_fraction'],
         discount_factor=kwargs['train_discount_factor'],
         importance_decay=kwargs['train_importance_decay'],
