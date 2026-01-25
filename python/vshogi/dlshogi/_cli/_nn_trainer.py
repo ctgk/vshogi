@@ -49,7 +49,7 @@ def _trainer_parameters(prefix: str = "") -> callable:
                 }.get(ctx.params.get("shogi"), 64)
             ),
             help=(
-                "Number of bottleneck channels in the neural network backbone. "
+                "Number of bottleneck channels in the backbone network. "
                 "Variant defaults: minishogi=32, judkins_shogi=32, shogi=64."
             ),
         ),

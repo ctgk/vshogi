@@ -60,6 +60,7 @@ def _to_svg(
 
     defs = ElementTree.SubElement(svg, "defs")
     tf = 'transform="rotate(180)"'
+    font = 'font-family="serif"'
     for name, p in game._get_board_piece_class().__members__.items():
         if name == 'VOID':
             continue
@@ -68,7 +69,7 @@ def _to_svg(
                 f'<g id="{p.to_sfen()}"'
                 + ('' if name.startswith('B_') else f' {tf}')
                 + '>'
-                + '<text font-family="serif" font-size="17" text-anchor="middle" '
+                + f'<text {font} font-size="17" text-anchor="middle" '
                 + (
                     'x="10.5" y="16.5">'
                     if name.startswith('B_')
@@ -98,7 +99,8 @@ def _to_svg(
         ElementTree.fromstring(
             '<g stroke="black">'
             + f'<rect x="20" y="10" width="{20 * game.files + 1}" '
-            + f'height="{20 * game.ranks + 1}" fill="none" stroke-width="1.5" />'
+            + f'height="{20 * game.ranks + 1}" fill="none" stroke-width="1.5" '
+            + '/>'
             + ''.join(
                 [
                     (
@@ -126,7 +128,7 @@ def _to_svg(
             + ''.join(
                 [
                     (
-                        '<text font-family="serif" text-anchor="middle" font-size="9" '
+                        f'<text {font} text-anchor="middle" font-size="9" '
                         + f'x="{30.5 + 20 * f}" y="8">{game.files - f}</text>'
                     )
                     for f in range(game.files)
@@ -135,8 +137,9 @@ def _to_svg(
             + ''.join(
                 [
                     (
-                        '<text font-family="serif" font-size="9" '
-                        f'x="{21 + 20 * game.files + 2.5}" y="{3 + 20 * r}">{c}</text>'
+                        f'<text {font} font-size="9" '
+                        f'x="{21 + 20 * game.files + 2.5}" '
+                        f'y="{3 + 20 * r}">{c}</text>'
                     )
                     for r, c in zip(
                         range(1, game.ranks + 1), "一二三四五六七八九"
