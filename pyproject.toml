@@ -29,7 +29,6 @@ Homepage = "https://github.com/ctgk/vshogi"
 develop = [
     "ai-edge-litert",
     "ai-edge-torch",
-    "jax < 0.7.0",
     "pandas",
     "torch",
     "tqdm",
@@ -41,7 +40,6 @@ develop = [
 dlshogi = [
     "ai-edge-litert",
     "ai-edge-torch",
-    "jax < 0.7.0",
     "click",
     "joblib",
     "pandas",
