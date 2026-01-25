@@ -7,6 +7,53 @@ requires = [
 
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "vshogi"
+version = "0.0.3"
+description = "Shogi API for Shogi and its variants"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [
+    {name = "ctgk", email = "r1135nj54w@gmail.com"}
+]
+dependencies = [
+    "numpy",
+]
+
+[project.urls]
+Homepage = "https://github.com/ctgk/vshogi"
+
+[project.optional-dependencies]
+develop = [
+    "ai-edge-litert",
+    "ai-edge-torch",
+    "jax < 0.7.0",
+    "pandas",
+    "torch",
+    "tqdm",
+    "pre-commit",
+    "pybind11",
+    "pytest",
+    "ruff",
+]
+dlshogi = [
+    "ai-edge-litert",
+    "ai-edge-torch",
+    "jax < 0.7.0",
+    "click",
+    "joblib",
+    "pandas",
+    "torch",
+    "tqdm",
+]
+
+[tool.setuptools.packages.find]
+where = ["python"]
+include = ["vshogi*"]
+exclude = ["test*"]
+
 [tool.pytest.ini_options]
 addopts = [
     "--doctest-modules",
