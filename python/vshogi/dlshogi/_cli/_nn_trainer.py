@@ -237,7 +237,13 @@ def _dataset(
                 default_result_rate=default_result_rate,
             )
             df = df.tail(int(len(df) * fr))
-            df = df.sample(frac=sample_frac)
+            df = df.sample(
+                **(
+                    {"n": 1}
+                    if len(df) * sample_frac < 1
+                    else {"frac": sample_frac}
+                )
+            )
             for _, row in df.iterrows():
                 buffer.add(
                     vs.dlshogi.Data(
