@@ -27,8 +27,15 @@ Homepage = "https://github.com/ctgk/vshogi"
 
 [project.optional-dependencies]
 develop = [
-    "ai-edge-litert",
-    "ai-edge-torch",
+    # TODO: Unpin when ai-edge-litert >1.4.0 is released that
+    # fixes macOS ARM64 wheels
+    # https://github.com/google-ai-edge/LiteRT/issues/2836
+    "ai-edge-litert==1.2.0; sys_platform == 'darwin'",
+    "ai-edge-torch==0.4.0; sys_platform == 'darwin'",
+    "jax < 0.7.0; sys_platform == 'darwin'",
+    "ai-edge-litert; sys_platform != 'darwin'",
+    "ai-edge-torch; sys_platform != 'darwin'",
+
     "pandas",
     "torch",
     "tqdm",
@@ -38,8 +45,15 @@ develop = [
     "ruff",
 ]
 dlshogi = [
-    "ai-edge-litert",
-    "ai-edge-torch",
+    # TODO: Unpin when ai-edge-litert >1.4.0 is released that
+    # fixes macOS ARM64 wheels
+    # https://github.com/google-ai-edge/LiteRT/issues/2836
+    "ai-edge-litert==1.2.0; sys_platform == 'darwin'",
+    "ai-edge-torch==0.4.0; sys_platform == 'darwin'",
+    "jax < 0.7.0; sys_platform == 'darwin'",
+    "ai-edge-litert; sys_platform != 'darwin'",
+    "ai-edge-torch; sys_platform != 'darwin'",
+
     "click",
     "joblib",
     "pandas",
