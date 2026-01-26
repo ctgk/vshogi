@@ -88,7 +88,12 @@ exclude = [
 
 [tool.ruff.lint]
 # select = ["E4", "E7", "E9", "F"] <- default
-select = ["A", "E", "F"]
+select = [
+    "A",  # flake8-builtins
+    "E",  # pycodestyle
+    "F",  # pyflakes
+    "T100",  # flake8-debugger
+]
 ignore = [
     # "D105",  # Missing docstring in magic method
     "F821",  # undefined name ...
