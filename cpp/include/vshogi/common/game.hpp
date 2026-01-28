@@ -256,8 +256,7 @@ public:
             auto g = DropMoveGenerator<P>(
                 m_state, MT::get_src_pt(move), MT::get_dst(move));
             return move == *g;
-        } else if (
-            MT::get_src_sq(move) == get_board().get_king_square(get_turn())) {
+        } else if (MT::get_src_sq(move) == m_state.get_king_square()) {
             for (auto g = KingMoveGenerator<P>(m_state); g; ++g) {
                 if (*g == move)
                     return true;
@@ -268,6 +267,7 @@ public:
         }
         return false;
     }
+    bool is_aigoma(const move_t move) const;
     void swap_log(
         std::vector<ZobristHashType>& hash_list,
         std::vector<std::uint32_t>& captured_move_list)
@@ -501,6 +501,21 @@ private:
         return out;
     }
 };
+
+template <class P>
+bool Game<P>::is_aigoma(const move_t move) const
+{
+    if (not is_legal(move))
+        return false;
+    const Square checker_sq = m_state.find_checker_square();
+    if (checker_sq == C::SQ_NA)
+        return false;
+    if (MT::get_dst(move) == checker_sq)
+        return false;
+    if (MT::is_drop(move))
+        return true;
+    return (MT::get_src_sq(move) != m_state.get_king_square());
+}
 
 } // namespace vshogi
 

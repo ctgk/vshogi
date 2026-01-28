@@ -298,6 +298,11 @@ inline void export_game(pybind11::module& m)
             [](const Game& self, const Move& m) {
                 return self.is_legal(m.m_value);
             })
+        .def(
+            "is_aigoma",
+            [](const Game& self, const Move& m) {
+                return self.is_aigoma(m.m_value);
+            })
         .def("in_check", &Game::in_check)
         .def("is_valid_piece_count", &Game::is_valid_piece_count)
         .def("hflip", &Game::hflip)

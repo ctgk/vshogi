@@ -430,7 +430,7 @@ class Game(abc.ABC):
         ----------
         move : Move
             Input move to check.
-            But if there are multiple arguments, they are treated as parameters
+            If there are multiple arguments, they are treated as parameters
             of move class initialization and converted automatically.
 
         Returns
@@ -440,6 +440,30 @@ class Game(abc.ABC):
         """
         move = self._to_move(move, *arg, **kwargs)
         return self._game.is_legal(move)
+
+    def is_aigoma(
+        self,
+        move: Move | None = None,
+        *arg,
+        **kwargs,
+    ) -> bool:
+        """Return true if the move is interposing the ally king from a check.
+
+        Parameters
+        ----------
+        move : Move | None, optional
+            Input move to check.
+            If there are multiple arguments, they are treated as parameters
+            of move class initialization and converted automatically.
+
+        Returns
+        -------
+        bool
+            True if the move is interposing the ally king from a check,
+            otherwise false.
+        """
+        move = self._to_move(move, *arg, **kwargs)
+        return self._game.is_aigoma(move)
 
     def is_valid_piece_count(self, ignore=None) -> bool:
         """Return true if piece count at the current state is valid.

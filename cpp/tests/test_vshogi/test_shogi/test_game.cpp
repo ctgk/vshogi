@@ -108,6 +108,14 @@ TEST(test_shogi_game, is_legal)
     CHECK_FALSE(g.is_legal(MT::make_move(KI, SQ_5A))); // not in stand
 }
 
+TEST(test_shogi_game, is_aigoma)
+{
+    auto g = Game("k7r/9/9/9/9/9/9/9/7GK b P");
+    CHECK_TRUE(g.is_aigoma(MT::make_move(FU, SQ_1E)));
+    CHECK_TRUE(g.is_aigoma(MT::make_move(SQ_2I, SQ_1H)));
+    CHECK_FALSE(g.is_aigoma(MT::make_move(SQ_1I, SQ_2H)));
+}
+
 TEST(test_shogi_game, get_legal_moves)
 {
     {
