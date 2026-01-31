@@ -250,6 +250,8 @@ public:
         m_captured_move_list.pop_back();
         return *this;
     }
+    Game& apply_discard(const move_t& move);
+    Game& undo_discard();
     bool is_legal(const move_t move) const
     {
         if (MT::is_drop(move)) {
@@ -425,6 +427,21 @@ protected:
             ^ (static_cast<std::uint32_t>(checker_dir_1) << 28));
         m_state.apply(move, &m_hash);
     }
+    void add_record_and_update_state_banish(const move_t& move)
+    {
+        const auto captured = m_state.get_board()[MT::get_dst(move)];
+        const auto checker_dir_0 = m_state.get_checker_dir(0u);
+        const auto checker_dir_1 = m_state.get_checker_dir(1u);
+        m_hash_list.emplace_back(m_hash);
+        static_assert(sizeof(move_t) == sizeof(std::uint16_t));
+        static_assert(sizeof(captured) == sizeof(std::uint8_t));
+        m_captured_move_list.emplace_back(
+            static_cast<std::uint32_t>(move)
+            ^ (static_cast<std::uint32_t>(captured) << 16)
+            ^ (static_cast<std::uint32_t>(checker_dir_0) << 24)
+            ^ (static_cast<std::uint32_t>(checker_dir_1) << 28));
+        m_state.apply_discard(move, &m_hash);
+    }
 
 protected:
     void update_result(const uint max_repetitions_inclusive)
@@ -515,6 +532,37 @@ bool Game<P>::is_aigoma(const move_t move) const
     if (MT::is_drop(move))
         return true;
     return (MT::get_src_sq(move) != m_state.get_king_square());
+}
+
+template <class P>
+Game<P>& Game<P>::apply_discard(const move_t& move)
+{
+    if ((m_result == ONGOING) && (!is_legal(move))) {
+        add_record_and_update_state_banish(move);
+        m_result = (get_turn() == BLACK) ? BLACK_WIN : WHITE_WIN;
+        return *this;
+    }
+    add_record_and_update_state_banish(move);
+    update_result(C::max_acceptable_repetitions);
+    return *this;
+}
+
+template <class P>
+Game<P>& Game<P>::undo_discard()
+{
+    assert(ply() > 0u);
+    const auto n = ply() - 1u;
+    std::uint32_t v = m_captured_move_list[n];
+    const auto move = move_t(static_cast<std::uint16_t>(v & 0x0ffffu));
+    const auto captured = static_cast<Piece>((v >> 16u) & 0x0ffu);
+    const auto checker_0 = static_cast<DirectionEnum>((v >> 24u) & 0x0fu);
+    const auto checker_1 = static_cast<DirectionEnum>((v >> 28u) & 0x0fu);
+    m_state.undo_discard(move, captured, checker_0, checker_1);
+    m_result = ONGOING;
+    m_hash = m_hash_list[n];
+    m_hash_list.pop_back();
+    m_captured_move_list.pop_back();
+    return *this;
 }
 
 } // namespace vshogi

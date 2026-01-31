@@ -323,6 +323,12 @@ inline void export_game(pybind11::module& m)
         .def("resign", &Game::resign)
         .def("declare_draw", &Game::declare_draw)
         .def("undo", &Game::undo)
+        .def(
+            "apply_discard",
+            [](Game& self, const Move& m) {
+                return self.apply_discard(m.m_value);
+            })
+        .def("undo_discard", &Game::undo_discard)
         .def_static("ranks", []() { return &Game::num_ranks; })
         .def_static("files", []() { return &Game::num_files; })
         .def_static("feature_channels", &Game::feature_channels)

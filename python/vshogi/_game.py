@@ -1,4 +1,5 @@
 import abc
+import contextlib
 import sys
 import typing as tp
 
@@ -1009,3 +1010,23 @@ class Game(abc.ABC):
         return _to_svg(
             self, lastmove, scale, skip_white_stand=skip_white_stand
         )
+
+    def _apply_discard(self, move: Move) -> "Game":
+        self._move_list.append(move)
+        self._sfen_list.append(self.to_sfen(False))
+        self._game.apply_discard(move)
+        return self
+
+    def _undo_discard(self) -> "Game":
+        self._game.undo_discard()
+        return self
+
+    @contextlib.contextmanager
+    def _apply_context(
+        self, move: Move, *, banish: bool = False
+    ) -> tp.Generator["Game", "Game", "Game"]:
+        try:
+            self._apply_discard(move) if banish else self._apply(move)
+            yield self
+        finally:
+            self._undo_discard() if banish else self.undo()

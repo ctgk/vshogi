@@ -215,6 +215,13 @@ public:
         m_checkers[1] = checker_dir_1;
         return *this;
     }
+    State&
+    apply_discard(const move_t& move, std::uint64_t* const hash = nullptr);
+    State& undo_discard(
+        const move_t& move,
+        const Piece& captured,
+        const DirectionEnum& checker_dir_0,
+        const DirectionEnum& checker_dir_1);
     void to_feature_map(float* const data) const
     {
         constexpr uint sp_types = num_stand_piece_types;
@@ -374,6 +381,57 @@ private:
         *hash ^= static_cast<std::uint64_t>(m) << (64u - 24u);
     }
 };
+
+template <class P>
+State<P>& State<P>::apply_discard(const move_t& move, std::uint64_t* const hash)
+{
+    const Square dst = MT::get_dst(move);
+    if (MT::is_drop(move)) {
+        const PieceType src = MT::get_src_pt(move);
+        const Piece p = m_stands.pop_piece_from(m_turn, src, hash);
+        m_board.place_at(dst, p, hash);
+        update_checkers_before_turn_update(dst);
+    } else {
+        const Square src = MT::get_src_sq(move);
+        auto moving_piece = m_board.pop_from(src, hash);
+        if (MT::get_promote(move))
+            moving_piece = PT::promote_nocheck(moving_piece);
+        const auto captured = m_board.place_at(dst, moving_piece, hash);
+        // m_stands.add_captured_piece(captured, hash);
+        update_checkers_before_turn_update(dst, src);
+    }
+    m_turn = ~m_turn;
+    if (hash != nullptr)
+        *hash ^= zobrist_hash_for_turn;
+    return *this;
+}
+
+template <class P>
+State<P>& State<P>::undo_discard(
+    const move_t& move,
+    const Piece& captured,
+    const DirectionEnum& checker_dir_0,
+    const DirectionEnum& checker_dir_1)
+{
+    const Square dst = MT::get_dst(move);
+    // if (captured != VOID)
+    //     m_stands.remove_captured_piece(captured);
+    if (MT::is_drop(move)) {
+        assert(captured == C::VOID);
+        const auto dropped = m_board.pop_from(dst);
+        m_stands.return_dropped_piece(dropped);
+    } else {
+        const auto src = MT::get_src_sq(move);
+        auto moved = m_board.place_at(dst, captured);
+        if (MT::get_promote(move))
+            moved = PT::demote_nocheck(moved);
+        m_board.place_at(src, moved);
+    }
+    m_turn = ~m_turn;
+    m_checkers[0] = checker_dir_0;
+    m_checkers[1] = checker_dir_1;
+    return *this;
+}
 
 } // namespace vshogi
 
