@@ -34,7 +34,9 @@ develop = [
     "ai-edge-torch==0.4.0; sys_platform == 'darwin'",
     "jax < 0.7.0; sys_platform == 'darwin'",
     "ai-edge-litert; sys_platform != 'darwin'",
-    "ai-edge-torch; sys_platform != 'darwin'",
+    # ai-edge-torch==0.7.2 caused a following error:
+    # AttributeError: module 'ai_edge_torch' has no attribute 'convert'
+    "ai-edge-torch!=0.7.2; sys_platform != 'darwin'",
 
     "pandas",
     "torch",
@@ -52,7 +54,9 @@ dlshogi = [
     "ai-edge-torch==0.4.0; sys_platform == 'darwin'",
     "jax < 0.7.0; sys_platform == 'darwin'",
     "ai-edge-litert; sys_platform != 'darwin'",
-    "ai-edge-torch; sys_platform != 'darwin'",
+    # ai-edge-torch==0.7.2 caused a following error:
+    # AttributeError: module 'ai_edge_torch' has no attribute 'convert'
+    "ai-edge-torch!=0.7.2; sys_platform != 'darwin'",
 
     "click",
     "joblib",
