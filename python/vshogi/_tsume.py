@@ -1,0 +1,150 @@
+import typing as tp
+
+from vshogi._game import Game
+from vshogi._vshogi import Color, Result
+
+
+Move = tp.TypeVar("Move")
+
+
+def _is_unnecessary_declined_promotion(
+    move: Move,
+    out: list[tuple[Move]],
+) -> bool:
+    if move.is_drop() or move.promote:
+        return False
+    return type(move)(move.to_sfen() + "+") in [t[0] for t in out]
+
+
+def _search_defence(game: Game, n_tezume: int) -> list[tuple[Move]]:
+    if n_tezume <= 0:
+        return []
+    if n_tezume % 2 == 1:
+        msg = f"`n_tezume` must be an even number, but was {n_tezume}"
+        raise ValueError(msg)
+    out: list[tuple[Move, Move]] = []
+    forced_mate: bool = True
+    legal_moves = sorted(
+        game.get_legal_moves(),
+        key=lambda m: game.is_aigoma(m),
+    )
+    for m in legal_moves:
+        is_aigoma = game.is_aigoma(m)
+        with game._apply_context(m):
+            if mates := _search_offence(game, n_tezume=n_tezume - 1):
+                out.extend([(m, *mate) for mate in mates])
+            elif (
+                not is_aigoma
+                or not out
+                or not _search_offence(
+                    game, n_tezume=n_tezume + 1, dst=m.destination
+                )
+            ):
+                forced_mate = False
+        if not forced_mate:
+            break
+    if forced_mate:
+        max_len = max(len(mate) for mate in out)
+        out = [mate for mate in out if len(mate) == max_len]
+        out = _remove_virtually_duplicating_interposition(out)
+    return out if forced_mate else []
+
+
+def _remove_virtually_duplicating_interposition(
+    out: list[tuple[Move]],
+) -> list[tuple[Move]]:
+    removed: list[tuple[Move]] = []
+    for mate in out:
+        virtual_dupes = [
+            r
+            for r in removed
+            if (r[0].destination == mate[0].destination)
+            and (r[1:] == mate[1:])
+        ]
+        if not virtual_dupes:
+            removed.append(mate)
+    return removed
+
+
+def _is_tsumi_with_futile_block(game: Game) -> bool:
+    assert game.turn == Color.WHITE
+    if game.result != Result.ONGOING:
+        return False
+    is_tsumi: bool = True
+    for m in game.get_legal_moves():
+        if not game.is_aigoma(m):
+            return False
+        with game._apply_context(m):
+            if not _search_offence(game, n_tezume=1, dst=m.destination):
+                is_tsumi = False
+        if not is_tsumi:
+            return False
+    return is_tsumi
+
+
+def _search_offence(game: Game, n_tezume: int, dst=None) -> list[tuple[Move]]:
+    if n_tezume < 0:
+        return []
+    assert game.turn == Color.BLACK
+    assert n_tezume % 2 == 1
+    out: list[tuple[Move, ...]] = []
+    check_moves = sorted(game.get_check_moves(), key=lambda m: not m.promote)
+    if dst is not None:
+        check_moves = [m for m in check_moves if m.destination == dst]
+    for m in check_moves:
+        if _is_unnecessary_declined_promotion(m, out):
+            continue
+        with game._apply_context(m, banish=dst is not None):
+            if game.result == Result.BLACK_WIN:
+                out.append((m,))
+            elif mates := _search_defence(game, n_tezume=n_tezume - 1):
+                out.extend([(m, *mate) for mate in mates])
+        if out:
+            break
+    if out or n_tezume > 1:
+        return out
+    for m in check_moves:
+        with game._apply_context(m):
+            if _is_tsumi_with_futile_block(game):
+                out.append((m,))
+        if out:
+            break
+    return out
+
+
+def _solve_tsumeshogi(game: Game, n_tezume: int) -> list[tuple[Move]]:
+    if n_tezume % 2 == 0:
+        if game.turn == Color.BLACK:
+            game = game.rotate()
+            mates = _search_defence(game, n_tezume=n_tezume)
+            return [tuple(m.rotate() for m in mate) for mate in mates]
+        return _search_defence(game, n_tezume=n_tezume)
+    else:
+        if game.turn == Color.WHITE:
+            game = game.rotate()
+            mates = _search_offence(game, n_tezume=n_tezume)
+            return [tuple(m.rotate() for m in mate) for mate in mates]
+        return _search_offence(game, n_tezume=n_tezume)
+
+
+def solve_tsumeshogi(game: Game, max_ply: int = 5) -> list[tuple[Move]]:
+    """Solve tsumeshogi puzzle.
+
+    Parameters
+    ----------
+    game : Game
+        Game position of the puzzle.
+    max_ply : int
+        Maximum number of ply. Note that it does not count futile blocks.
+
+    Returns
+    -------
+    list[tuple[Move]]
+        The answers of the puzzle.
+    """
+    if not isinstance(max_ply, int):
+        msg = f"`max_ply` must be an instance of int, but was {type(max_ply)}"
+        raise TypeError(msg)
+    for n_tezume in range(max_ply % 2, max_ply + 1, 2):
+        if out := _solve_tsumeshogi(game, n_tezume=n_tezume):
+            return out

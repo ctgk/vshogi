@@ -5,6 +5,7 @@ from vshogi._game import Game
 from vshogi._play import play_game
 from vshogi._record import Record
 from vshogi._repr import _repr_enum
+from vshogi._tsume import solve_tsumeshogi
 from vshogi._vshogi import Color, Result
 
 Color.__repr__ = _repr_enum
@@ -20,7 +21,7 @@ _enums = [Color, Result]
 _modules = [engine, judkins_shogi, minishogi, shogi]
 if dlshogi is not None:
     _modules.append(dlshogi)
-_functions = [play_game]
+_functions = [play_game, solve_tsumeshogi]
 
 
 for _e in _enums:
