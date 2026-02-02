@@ -18,14 +18,14 @@ def _is_unnecessary_declined_promotion(
 
 def _search_defence(
     game: Game,
-    n_tezume: int,
+    max_ply: int,
     *,
     search_all: bool,
 ) -> list[tuple[Move]]:
-    if n_tezume <= 0:
+    if max_ply <= 0:
         return []
-    if n_tezume % 2 == 1:
-        msg = f"`n_tezume` must be an even number, but was {n_tezume}"
+    if max_ply % 2 == 1:
+        msg = f"`max_ply` must be an even number, but was {max_ply}"
         raise ValueError(msg)
     out: list[tuple[Move, Move]] = []
     forced_mate: bool = True
@@ -38,7 +38,7 @@ def _search_defence(
         with game._apply_context(m):
             if mates := _search_offence(
                 game,
-                n_tezume=n_tezume - 1,
+                max_ply=max_ply - 1,
                 search_all=search_all,
             ):
                 out.extend([(m, *mate) for mate in mates])
@@ -47,7 +47,7 @@ def _search_defence(
                 or not out
                 or not _search_offence(
                     game,
-                    n_tezume=n_tezume + 1,
+                    max_ply=max_ply + 1,
                     dst=m.destination,
                     search_all=False,
                 )
@@ -89,7 +89,7 @@ def _is_tsumi_with_futile_block(game: Game) -> bool:
         with game._apply_context(m):
             if not _search_offence(
                 game,
-                n_tezume=1,
+                max_ply=1,
                 dst=m.destination,
                 search_all=False,
             ):
@@ -101,15 +101,15 @@ def _is_tsumi_with_futile_block(game: Game) -> bool:
 
 def _search_offence(
     game: Game,
-    n_tezume: int,
+    max_ply: int,
     *,
     search_all: bool,
     dst=None,
 ) -> list[tuple[Move]]:
-    if n_tezume < 0:
+    if max_ply < 0:
         return []
     assert game.turn == Color.BLACK
-    assert n_tezume % 2 == 1
+    assert max_ply % 2 == 1
     out: list[tuple[Move, ...]] = []
     check_moves = sorted(
         game.get_check_moves(),
@@ -126,38 +126,40 @@ def _search_offence(
                 out.append((m,))
             elif mates := _search_defence(
                 game,
-                n_tezume=n_tezume - 1,
+                max_ply=max_ply - 1,
                 search_all=search_all,
             ):
                 out.extend([(m, *mate) for mate in mates])
         if not search_all and out:
             break
-    if out or n_tezume > 1:
-        return out
-    for m in check_moves:
-        if _is_unnecessary_declined_promotion(m, out):
-            continue
-        with game._apply_context(m):
-            if _is_tsumi_with_futile_block(game):
-                out.append((m,))
-        if not search_all and out:
-            break
+    if not out:
+        for m in check_moves:
+            if _is_unnecessary_declined_promotion(m, out):
+                continue
+            with game._apply_context(m):
+                if _is_tsumi_with_futile_block(game):
+                    out.append((m,))
+            if not search_all and out:
+                break
+    if out:
+        min_len = min(len(mate) for mate in out)
+        out = [mate for mate in out if len(mate) == min_len]
     return out
 
 
 def _solve_tsumeshogi(
     game: Game,
-    n_tezume: int,
+    max_ply: int,
     *,
     search_all: bool,
 ) -> list[tuple[Move]]:
     t = game.turn
-    if n_tezume % 2 == 0:
+    if max_ply % 2 == 0:
         if t == Color.BLACK:
             game = game.rotate()
         mates = _search_defence(
             game,
-            n_tezume=n_tezume,
+            max_ply=max_ply,
             search_all=search_all,
         )
         if t == Color.BLACK:
@@ -168,7 +170,7 @@ def _solve_tsumeshogi(
             game = game.rotate()
         mates = _search_offence(
             game,
-            n_tezume=n_tezume,
+            max_ply=max_ply,
             search_all=search_all,
         )
         if t == Color.WHITE:
@@ -240,11 +242,5 @@ def solve_tsumeshogi(
     if not isinstance(max_ply, int):
         msg = f"`max_ply` must be an instance of int, but was {type(max_ply)}"
         raise TypeError(msg)
-    for n_tezume in range(max_ply % 2, max_ply + 1, 2):
-        if out := _solve_tsumeshogi(
-            game,
-            n_tezume=n_tezume,
-            search_all=True,
-        ):
-            return _remove_redundant_mate(game, out) if exact else out
-    return []
+    out = _solve_tsumeshogi(game, max_ply=max_ply, search_all=True)
+    return _remove_redundant_mate(game, out) if exact else out
