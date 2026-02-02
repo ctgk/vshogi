@@ -61,7 +61,9 @@ def masked_softmax_cross_entropy(
     if coeff_entropy_regularization is None:
         return cross_entropy
     entropy = th.sum(-th.exp(lnp) * lnp, axis=-1, keepdims=True)
-    return cross_entropy + coeff_entropy_regularization * entropy
+    return cross_entropy - coeff_entropy_regularization * (
+        entropy - entropy.detach()
+    )
 
 
 NumpyIterable = tp.TypeVar('NumpyIterable')
