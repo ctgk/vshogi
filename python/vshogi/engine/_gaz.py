@@ -200,11 +200,6 @@ class GumbelAlphaZero(Engine):
     def _select(self, temperature: float | None = None) -> Move:
         if temperature is None:
             return self._searcher.select_action()
-        if self._searcher.count_active_childs() > 0:
-            raise ValueError(
-                "Do not pass `temperature` parameter after running "
-                "sequential halving"
-            )
         return self._searcher.select_action(temperature)
 
     def _get_mate_moves(self) -> list[Move] | None:

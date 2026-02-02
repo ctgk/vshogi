@@ -176,7 +176,7 @@ def _play_game(
                 else:
                     for _ in mate_moves:
                         game.undo()
-        elif (engine == 'AlphaZero') and (game.ply() < num_random_moves):
+        elif game.ply() < num_random_moves:
             move = player.select(temperature=temperature)
         else:
             move = player.select()

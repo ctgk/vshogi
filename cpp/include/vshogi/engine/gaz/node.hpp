@@ -62,6 +62,11 @@ public:
      */
     Node* select();
     Node* select_from(const Node** const child_nodes);
+    /**
+     * @brief softmax(logits + sigma(completedQ))
+     * @details eq. 11 in https://openreview.net/pdf?id=bERaNdoegnO
+     */
+    void improved_policy(float* const out, const float temperature = 1.f) const;
     template <class P>
     void simulate(const Game<P>& g);
     template <class P>
@@ -79,11 +84,6 @@ public:
 private:
     float compute_v_pi() const;
     // select
-    /**
-     * @brief softmax(logits + sigma(completedQ))
-     * @details eq. 11 in https://openreview.net/pdf?id=bERaNdoegnO
-     */
-    void improved_policy(float* const out) const;
     float completed_q_value_of(const Node* const child) const;
 
     template <class G, class P>

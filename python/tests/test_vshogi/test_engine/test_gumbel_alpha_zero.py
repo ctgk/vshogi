@@ -74,8 +74,9 @@ def test_select_action():
     searcher.set_game(game)
     searcher.search(32, num_actions=4)
     print(searcher._tree(depth=1, breadth=-1))
-    with pytest.raises(ValueError):
-        searcher.select(10.0)
+    assert len(game.get_legal_moves()) == len(
+        set([searcher.select(10.0) for _ in range(1000)])
+    )
     searcher.clear()
     searcher.set_game(game)
     searcher.search(32)

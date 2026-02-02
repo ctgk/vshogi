@@ -68,13 +68,13 @@ const Node* Node::get_child_of(const move_t& action) const
     return nullptr;
 }
 
-void Node::improved_policy(float* const out) const
+void Node::improved_policy(float* const out, const float temperature) const
 {
     const uint max_visits = m_child_1st ? m_child_1st->get_visit_count() : 0u;
     uint ii = 0u;
     for (const Node* c = get_child(); c; c = c->get_sibling()) {
         const float s = sigma(completed_q_value_of(c), max_visits);
-        out[ii++] = c->get_logit() + s;
+        out[ii++] = (c->get_logit() + s) / temperature;
     }
     softmax(out, ii);
 }

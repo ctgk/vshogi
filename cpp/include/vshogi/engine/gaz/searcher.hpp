@@ -49,7 +49,7 @@ public:
     void keep_top_n_actions(const uint num_actions);
     uint count_active_childs() const;
     move_t select_action() const;
-    move_t select_action(const float& temperature) const;
+    move_t select_action(const float temperature) const;
     void apply(Game<P>& game, const move_t& action);
     // clang-format off
     uint get_search_count() const { return m_nodes[0].get_visit_count(); }
@@ -224,22 +224,18 @@ move_t Searcher<P>::select_action() const
 }
 
 template <class P>
-move_t Searcher<P>::select_action(const float& temperature) const
+move_t Searcher<P>::select_action(const float temperature) const
 {
     std::vector<float> probas{};
     probas.reserve(m_nodes[0].count_childs());
-    const uint max_visits = max_child_visits();
-    for (auto c = &m_nodes[1]; &m_nodes[0] == c->get_parent(); ++c) {
-        const float score = score_of(*c, max_visits) / temperature;
-        probas.emplace_back(score);
-    }
-    softmax(probas);
-    const float p_uniform = 1.f / static_cast<float>(probas.size());
+    m_nodes[0].improved_policy(probas.data(), temperature);
+    const float* p = probas.data();
     float sample = dist01(random_engine);
     for (auto c = &m_nodes[1]; &m_nodes[0] == c->get_parent(); ++c) {
-        if (sample < p_uniform)
+        if (sample < *p)
             return c->get_action();
-        sample -= p_uniform;
+        sample -= *p++;
+        assert((p - probas.data()) < probas.size());
     }
     assert(false);
     return m_nodes[1].get_action(); // just in case for numerical instability
