@@ -2,15 +2,16 @@ import numpy as np
 import pytest
 
 from vshogi.dlshogi import ReplayBuffer, Data
-from vshogi.minishogi import Move
+from vshogi.minishogi import Game, Move
 
 
 def test_deduplicate():
+    legal_moves = Game("rbsgk/4p/5/P4/KGSBR b -").get_legal_moves()
     buffer = ReplayBuffer()
     buffer.add(
         Data(
             sfen="rbsgk/4p/5/P4/KGSBR b -",
-            policy={Move("2e3d"): 1.0},
+            policy={m: float(m == Move("2e3d")) for m in legal_moves},
             value01=0.0,
             weight=1.0,
         )
@@ -18,7 +19,7 @@ def test_deduplicate():
     buffer.add(
         Data(
             sfen="rbsgk/4p/5/P4/KGSBR b -",
-            policy={Move("4e4d"): 1.0},
+            policy={m: float(m == Move("4e4d")) for m in legal_moves},
             value01=0.5,
             weight=1.0,
         )

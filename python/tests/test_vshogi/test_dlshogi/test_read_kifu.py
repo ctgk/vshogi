@@ -22,8 +22,8 @@ def test_read_kifu():
 def test_read_kifu_single_policy():
     content = (
         "sfen\tmove\tresult\tq_value\tpolicy\n"
-        "rbsgk/4p/5/P4/KGSBR b -\t4e4d\t-1\t0.5\t2e3d\n"
-        "rbsgk/4p/5/P4/KGSBR b -\t4e4d\t-1\t0.5\t4e4d\n"
+        "rbsgk/4p/5/P4/KGSBR b -\t4e4d\t-1\t0.5\t{'2e3d': 1.0}\n"
+        "rbsgk/4p/5/P4/KGSBR b -\t4e4d\t-1\t0.5\t{'4e4d': 1.0}\n"
     )
     with io.StringIO(initial_value=content) as f:
         f.seek(0)

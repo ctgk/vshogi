@@ -122,15 +122,9 @@ class ReplayBuffer(th.utils.data.Dataset):
             except ValueError as e:
                 raise ValueError(f"Error at {data.sfen}: {e}")
             data_summed[data.sfen]['count'] += 1
-        for sfen, value in data_summed.items():
-            game = eval(self._game_variant)(sfen)
+        for value in data_summed.values():
             value['value01'] = value['value01'] / value['count']
-            policy = _normalize(value["policy"])
-            value["policy"] = (
-                {m: policy.get(m, 0.0) for m in game.get_legal_moves()}
-                if policy
-                else {}
-            )
+            value["policy"] = _normalize(value["policy"])
         return data_summed
 
     def __len__(self):

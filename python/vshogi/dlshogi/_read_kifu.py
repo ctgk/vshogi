@@ -12,6 +12,7 @@ def read_kifu(
     discount_factor: float = 1.0,
     importance_decay: float = 1.0,
     default_result_rate: float = 1.0,
+    tail_fraction: float | None = None,
 ) -> pd.DataFrame:
     """Return dataframe of Shogi kifu.
 
@@ -25,6 +26,8 @@ def read_kifu(
         Decay factor of data importance of each game position, by default 1.
     default_result_rate : float, optional
         `value = result_rate * result + (1 - result_rate) * q_value`
+    tail_fraction : float, optional
+        Return fraction of the dataframe from tail if given, by default None.
 
     Returns
     -------
@@ -44,9 +47,13 @@ def read_kifu(
     total_ply = len(df)
     game_class = _infer_game_variant(df['sfen'][0])
     move_class = game_class._get_move_class()
-    df['policy'] = _compute_visit_dist(df, move_class)
-    df['z_weight'] = _compute_z_weight(df, default_result_rate, move_class)
     df['weight'] = _compute_weight(df, importance_decay)
+    if tail_fraction is not None:
+        df = df.tail(int(total_ply * tail_fraction))
+    if len(df) == 0:
+        return df
+    df['policy'] = _preprocess_policy(df, move_class)
+    df['z_weight'] = _compute_z_weight(df, default_result_rate, move_class)
     df['value'] = (
         df['z_weight']
         * df['result']
@@ -91,19 +98,11 @@ def _compute_weight(df: pd.DataFrame, importance_decay: float) -> np.ndarray:
     )
 
 
-def _compute_visit_dist(df: pd.DataFrame, move_class: type):
+def _preprocess_policy(df: pd.DataFrame, move_class: type):
     if len(df) == 0:
         return
-    return df.apply(
-        lambda row: (
-            {
-                move_class(m): v / (sum(eval(row['policy']).values()))
-                for m, v in eval(row['policy']).items()
-            }
-            if '{' in row['policy']
-            else {move_class(row["policy"]): 1.0}
-        ),
-        axis=1,
+    return df["policy"].apply(
+        lambda d: {move_class(m): v for m, v in eval(d).items()}
     )
 
 

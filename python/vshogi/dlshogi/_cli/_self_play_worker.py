@@ -134,7 +134,7 @@ def _play_game(
     shogi_module = getattr(vs, shogi_variant)
     game_class = getattr(shogi_module, 'Game')
     engine = black.__class__.__name__
-    game = game_class()
+    game: vs.Game = game_class()
     game.q_value_log = []
     game.policy_log = []
 
@@ -188,15 +188,19 @@ def _play_game(
 
         player_dump = main or player
         if engine == 'AlphaZero':
-            visit_count = {
-                m.to_sfen(): v + 1  # +1 for smoothing
-                for m, v in player_dump.get_visit_counts(
-                    include_random=False
-                ).items()
-            }
-            game.policy_log.append(visit_count)
+            policy = player_dump.get_visit_counts(include_random=False)
+            total = sum(policy.values()) + len(policy)
+            policy = {m.to_sfen(): (v + 1) / total for m, v in policy.items()}
+            game.policy_log.append(policy)
         elif engine == 'GumbelAlphaZero':
-            game.policy_log.append(player_dump.select().to_sfen())
+            action = player_dump.select()
+            policy = {
+                m.to_sfen(): float(m == action) for m in game.get_legal_moves()
+            }
+            policy = dict(
+                sorted(policy.items(), key=lambda t: t[1], reverse=True)
+            )
+            game.policy_log.append(policy)
         game.q_value_log.append(
             player_dump.get_q_value(greedy_depth=q_greedy_depth)
         )

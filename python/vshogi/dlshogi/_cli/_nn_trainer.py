@@ -243,8 +243,8 @@ def _dataset(
                 discount_factor=discount_factor,
                 importance_decay=importance_decay,
                 default_result_rate=default_result_rate,
+                tail_fraction=fr,
             )
-            df = df.tail(int(len(df) * fr))
             if len(df) == 0:
                 continue
             if value_func is None:
