@@ -37,20 +37,13 @@ class ReplayBuffer(th.utils.data.Dataset):
     >>> from vshogi.minishogi import Move; import numpy as np
     >>> b = ReplayBuffer(buffer_size=2)
     >>> b.add(Data('4k/5/4P/5/5 b G 1', {Move('1c1b'): 1}, 1., 1.))
-    >>> b.is_full()
-    False
+    >>> len(b)  # Note that the length is doubled
+    2
     >>> b.add(Data('4k/5/4P/5/5 b G 3', {}, 0.5, 0.9))
-    >>> b.is_full()
-    True
+    >>> len(b)
+    2
     >>> b[0][2:]  # value01, weight
-    (array([1.], dtype=float32), array(1., dtype=float32))
-    >>> _ = b.deduplicate()
-    >>> b[0][2:]  # value01, weight
-    (array([0.75], dtype=float32), array(1., dtype=float32))
-    >>> b[1][2:]  # weights remain as they are
-    (array([0.75], dtype=float32), array(0.9, dtype=float32))
-    >>> np.allclose(-100000., b[0][1])  # policy
-    True
+    (array([0.75], dtype=float32), array(1.9, dtype=float32))
     """
 
     def __init__(self, buffer_size: int = 100000):
@@ -74,11 +67,35 @@ class ReplayBuffer(th.utils.data.Dataset):
         data : Data
             Data to add.
         """
+        index = next(
+            (i for i, b in enumerate(self._buffer) if b.sfen == data.sfen),
+            None,
+        )
+        if index is not None:
+            old = self._buffer.pop(index)
+            data = self._merge(old, data)
         self._buffer.append(data)
         if self._game_variant is None:
             self._game_variant = self._infer_game_variant(data.sfen)
         while len(self._buffer) > self._buffer_size:
             self._buffer.pop(0)  # FIFO
+
+    @staticmethod
+    def _merge(a: Data, b: Data) -> Data:
+        assert a.sfen == b.sfen
+        s = a.count + b.count
+        return Data(
+            sfen=a.sfen,
+            policy={}
+            if (not a.policy) or (not b.policy)
+            else {
+                m: (a.count * a.policy[m] + b.count * b.policy[m]) / s
+                for m in set(a.policy.keys()) | set(b.policy.keys())
+            },
+            value01=(a.value01 * a.count + b.value01 * b.count) / s,
+            weight=a.weight + b.weight,
+            count=s,
+        )
 
     def is_full(self) -> bool:
         """Return true if the buffer is full of data.
@@ -98,34 +115,20 @@ class ReplayBuffer(th.utils.data.Dataset):
         dict
             Summary.
         """
-        summary = self._summarize()
-        for data in self._buffer:
-            data.value01 = summary[data.sfen]['value01']
-            data.policy = summary[data.sfen]['policy']
+        summary: dict[str, dict] = {
+            d.sfen: {
+                "value01": d.value01,
+                "policy": d.policy,
+                "count": d.count,
+                "weight": d.weight,
+            }
+            for d in self._buffer
+        }
+        scale = 1 / np.mean([v["weight"] for v in summary.values()])
+        for d in self._buffer:
+            d.weight /= scale
+            d.policy = _normalize(d.policy)
         return summary
-
-    def _summarize(self):
-        data_summed = {}
-        for data in self._buffer:
-            if data.sfen not in data_summed:
-                data_summed[data.sfen] = {
-                    'value01': 0.0,
-                    'policy': {m: 0 for m in data.policy},
-                    'count': 0,
-                }
-            data_summed[data.sfen]['value01'] += data.value01
-            try:
-                data_summed[data.sfen]['policy'] = _add_dicts(
-                    data_summed[data.sfen]['policy'],
-                    data.policy,
-                )
-            except ValueError as e:
-                raise ValueError(f"Error at {data.sfen}: {e}")
-            data_summed[data.sfen]['count'] += 1
-        for value in data_summed.values():
-            value['value01'] = value['value01'] / value['count']
-            value["policy"] = _normalize(value["policy"])
-        return data_summed
 
     def __len__(self):
         """Return the length of the dataset."""

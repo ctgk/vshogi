@@ -274,6 +274,8 @@ def _dataset(
                         weight=row['weight'],
                     )
                 )
+                if buffer.is_full():
+                    break
             if buffer.is_full():
                 break
         if buffer.is_full():

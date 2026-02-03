@@ -24,7 +24,6 @@ def test_deduplicate():
             weight=1.0,
         )
     )
-    buffer.deduplicate()
     p, v = buffer.__getitem__(0)[1:3]
     assert np.isclose(p, 0.5).sum() == 2
     assert np.isclose(p, 0.0).sum() == 12
