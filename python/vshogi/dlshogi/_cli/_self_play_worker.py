@@ -189,8 +189,8 @@ def _play_game(
         player_dump = main or player
         if engine == 'AlphaZero':
             policy = player_dump.get_visit_counts(include_random=False)
-            total = sum(policy.values()) + len(policy)
-            policy = {m.to_sfen(): (v + 1) / total for m, v in policy.items()}
+            total = sum(policy.values())
+            policy = {m.to_sfen(): v / total for m, v in policy.items()}
             game.policy_log.append(policy)
         elif engine == 'GumbelAlphaZero':
             action = player_dump.select()

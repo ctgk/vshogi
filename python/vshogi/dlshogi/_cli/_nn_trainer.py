@@ -131,7 +131,10 @@ def _trainer_parameters(prefix: str = "") -> callable:
             f"--{prefix}coeff-policy-loss", default=0.1, show_default=True
         ),
         cl.option(
-            f"--{prefix}coeff-policy-entropy", default=1e-2, show_default=True
+            f"--{prefix}coeff-policy-entropy",
+            default=0.1,
+            show_default=True,
+            help="Coefficient for policy entropy regularization.",
         ),
         cl.option(
             f"--{prefix}win-ratio-threshold", default=0.55, show_default=True
