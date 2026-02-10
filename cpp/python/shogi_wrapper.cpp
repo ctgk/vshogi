@@ -2,21 +2,21 @@
 
 #include "vshogi/variants/shogi.hpp"
 
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 #include "vshogi_wrapper.hpp"
 
-namespace py = pybind11;
+namespace nb = nanobind;
 namespace sg = vshogi::shogi;
 
-void export_shogi(py::module& m);
+void export_shogi(nb::module_& m);
 
 namespace
 {
 
-void export_square_enum(py::module& m)
+void export_square_enum(nb::module_& m)
 {
-    py::enum_<sg::SquareEnum>(m, "Square")
+    nb::enum_<sg::SquareEnum>(m, "Square")
         .value("SQ_9A", sg::SQ_9A)
         .value("SQ_8A", sg::SQ_8A)
         .value("SQ_7A", sg::SQ_7A)
@@ -181,9 +181,9 @@ void export_square_enum(py::module& m)
         .value("I1", sg::SQ_1I);
 }
 
-void export_pieces(py::module& m)
+void export_pieces(nb::module_& m)
 {
-    py::enum_<sg::PieceTypeEnum>(m, "Piece")
+    nb::enum_<sg::PieceTypeEnum>(m, "Piece")
         .value("FU", sg::FU)
         .value("KY", sg::KY)
         .value("KE", sg::KE)
@@ -200,7 +200,7 @@ void export_pieces(py::module& m)
         .value("RY", sg::RY)
         .value("NA", sg::NA);
 
-    py::enum_<sg::PieceEnum>(m, "BoardPiece")
+    nb::enum_<sg::PieceEnum>(m, "BoardPiece")
         .value("B_FU", sg::B_FU)
         .value("B_KY", sg::B_KY)
         .value("B_KE", sg::B_KE)
@@ -234,12 +234,12 @@ void export_pieces(py::module& m)
 
 } // namespace
 
-PYBIND11_MODULE(_shogi, m)
+NB_MODULE(_shogi, m)
 {
     export_shogi(m);
 }
 
-void export_shogi(py::module& m)
+void export_shogi(nb::module_& m)
 {
     assert(0 == 1);
     sg::SquareTraits::init_tables();

@@ -1,22 +1,23 @@
 #include "vshogi/variants/minishogi.hpp"
 
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
 #include "vshogi_wrapper.hpp"
 
-namespace py = pybind11;
+namespace nb = nanobind;
 namespace ms = vshogi::minishogi;
 
-void export_minishogi(py::module& m);
+void export_minishogi(nb::module_& m);
 
 namespace
 {
 
-void export_square_enum(py::module& m)
+void export_square_enum(nb::module_& m)
 {
-    py::enum_<ms::SquareEnum>(m, "Square")
+    nb::enum_<ms::SquareEnum>(m, "Square")
         .value("SQ_5A", ms::SQ_5A)
         .value("SQ_4A", ms::SQ_4A)
         .value("SQ_3A", ms::SQ_3A)
@@ -69,9 +70,9 @@ void export_square_enum(py::module& m)
         .value("E1", ms::SQ_1E);
 }
 
-void export_pieces(py::module& m)
+void export_pieces(nb::module_& m)
 {
-    py::enum_<ms::PieceTypeEnum>(m, "Piece")
+    nb::enum_<ms::PieceTypeEnum>(m, "Piece")
         .value("FU", ms::FU)
         .value("GI", ms::GI)
         .value("KA", ms::KA)
@@ -84,7 +85,7 @@ void export_pieces(py::module& m)
         .value("RY", ms::RY)
         .value("NA", ms::NA);
 
-    py::enum_<ms::PieceEnum>(m, "BoardPiece")
+    nb::enum_<ms::PieceEnum>(m, "BoardPiece")
         .value("B_FU", ms::B_FU)
         .value("B_GI", ms::B_GI)
         .value("B_KA", ms::B_KA)
@@ -110,12 +111,12 @@ void export_pieces(py::module& m)
 
 } // namespace
 
-PYBIND11_MODULE(_minishogi, m)
+NB_MODULE(_minishogi, m)
 {
     export_minishogi(m);
 }
 
-void export_minishogi(py::module& m)
+void export_minishogi(nb::module_& m)
 {
     ms::SquareTraits::init_tables();
     ms::BlackWhiteStands::init_tables();

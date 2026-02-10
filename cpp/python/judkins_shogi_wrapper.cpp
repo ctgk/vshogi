@@ -1,20 +1,20 @@
 #include "vshogi/variants/judkins_shogi.hpp"
 
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 #include "vshogi_wrapper.hpp"
 
-namespace py = pybind11;
+namespace nb = nanobind;
 namespace js = vshogi::judkins_shogi;
 
-void export_judkins_shogi(py::module& m);
+void export_judkins_shogi(nb::module_& m);
 
 namespace
 {
 
-void export_square_enum(py::module& m)
+void export_square_enum(nb::module_& m)
 {
-    py::enum_<js::SquareEnum>(m, "Square")
+    nb::enum_<js::SquareEnum>(m, "Square")
         .value("SQ_6A", js::SQ_6A)
         .value("SQ_5A", js::SQ_5A)
         .value("SQ_4A", js::SQ_4A)
@@ -89,9 +89,9 @@ void export_square_enum(py::module& m)
         .value("F1", js::SQ_1F);
 }
 
-void export_pieces(py::module& m)
+void export_pieces(nb::module_& m)
 {
-    py::enum_<js::PieceTypeEnum>(m, "Piece")
+    nb::enum_<js::PieceTypeEnum>(m, "Piece")
         .value("FU", js::FU)
         .value("KE", js::KE)
         .value("GI", js::GI)
@@ -105,7 +105,7 @@ void export_pieces(py::module& m)
         .value("UM", js::UM)
         .value("RY", js::RY)
         .value("NA", js::NA);
-    py::enum_<js::PieceEnum>(m, "BoardPiece")
+    nb::enum_<js::PieceEnum>(m, "BoardPiece")
         .value("B_FU", js::B_FU)
         .value("B_KE", js::B_KE)
         .value("B_GI", js::B_GI)
@@ -135,12 +135,12 @@ void export_pieces(py::module& m)
 
 } // namespace
 
-PYBIND11_MODULE(_judkins_shogi, m)
+NB_MODULE(_judkins_shogi, m)
 {
     export_judkins_shogi(m);
 }
 
-void export_judkins_shogi(py::module& m)
+void export_judkins_shogi(nb::module_& m)
 {
     js::SquareTraits::init_tables();
     js::BlackWhiteStands::init_tables();
