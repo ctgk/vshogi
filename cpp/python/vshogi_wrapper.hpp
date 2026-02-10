@@ -117,28 +117,31 @@ inline void export_move(nanobind::module_& m)
     using Move = Move<Parameters>;
     nb::class_<Move>(m, "Move")
         .def(
-            nb::init(
-                [](const Square src, const Square dst, const bool promote) {
-                    return Move(MT::make_move(src, dst, promote));
-                }),
+            "__init__",
+            [](Move* t, const Square src, const Square dst, const bool promote) {
+                new (t) Move(MT::make_move(src, dst, promote));
+            },
             nb::arg("src"),
             nb::arg("dst"),
             nb::arg("promote") = false)
         .def(
-            nb::init([](const PieceType src, const Square dst) {
-                return Move(MT::make_move(src, dst));
-            }),
+            "__init__",
+            [](Move* t, const PieceType src, const Square dst) {
+                new (t) Move(MT::make_move(src, dst));
+            },
             nb::arg("src"),
             nb::arg("dst"))
         .def(
-            nb::init([](const std::string& sfen) {
-                return Move(MT::make_move(sfen.c_str()));
-            }),
+            "__init__",
+            [](Move* t, const std::string& sfen) {
+                new (t) Move(MT::make_move(sfen.c_str()));
+            },
             nb::arg("sfen"))
         .def(
-            nb::init([](const uint value) {
-                return Move(static_cast<move_t>(value));
-            }),
+            "__init__",
+            [](Move* t, const uint value) {
+                new (t) Move(static_cast<move_t>(value));
+            },
             nb::arg("value"))
         .def_prop_ro(
             "destination", [](const Move& m) { return MT::get_dst(m.m_value); })
@@ -179,7 +182,7 @@ inline void export_move(nanobind::module_& m)
         .def(
             "__setstate__",
             [](Move& m, nb::tuple t) {
-                new (&m) Move(t[0].cast<move_t>());
+                new (&m) Move(nb::cast<move_t>(t[0]));
             });
 }
 
@@ -204,9 +207,11 @@ inline void export_state(nanobind::module_& m)
                      State::num_ranks,
                      State::num_files,
                      State::feature_channels()});
-                auto out = nb::ndarray<nb::numpy, float, nb::shape<nb::any, nb::any, nb::any, nb::any>>(
-                    shape.data(), 4);
-                self.to_feature_map(out.data());
+                float* data = new float[shape[0] * shape[1] * shape[2] * shape[3]];
+                auto out = nb::ndarray<nb::numpy, float>(
+                    data, shape.size(), shape.data(), nb::capsule(data,
+                        [](void* p) noexcept { delete[] static_cast<float*>(p); }));
+                self.to_feature_map(data);
                 return out;
             })
         .def(
@@ -221,10 +226,11 @@ inline void export_state(nanobind::module_& m)
                const float default_value) {
                 const auto turn = self.get_turn();
                 constexpr auto size = State::num_dlshogi_policy();
-                auto out = nb::ndarray<nb::numpy, float, nb::shape<nb::any>>(
-                    new float[size], {size}, nb::capsule(
+                const auto shape = std::vector<size_t>({size});
+                float* data = new float[size];
+                auto out = nb::ndarray<nb::numpy, float>(
+                    data, shape.size(), shape.data(), nb::capsule(data,
                         [](void* p) noexcept { delete[] static_cast<float*>(p); }));
-                float* const data = out.data();
                 std::fill(data, data + size, default_value);
                 for (auto [key, value] : action_proba) {
                     const auto m = nb::cast<Move>(key);
@@ -346,10 +352,11 @@ inline void export_game(nanobind::module_& m)
             []() {
                 const auto n = Game::num_squares;
                 const auto shape = std::vector<size_t>({n, n});
-                auto out = nb::ndarray<nb::numpy, float, nb::shape<nb::any, nb::any>>(
-                    new float[n * n], {n, n}, nb::capsule(
+                float* data = new float[n * n];
+                auto out = nb::ndarray<nb::numpy, float>(
+                    data, shape.size(), shape.data(), nb::capsule(data,
                         [](void* p) noexcept { delete[] static_cast<float*>(p); }));
-                Game::attention_matrix(out.data());
+                Game::attention_matrix(data);
                 return out;
             })
         .def_static(
@@ -358,12 +365,13 @@ inline void export_game(nanobind::module_& m)
                 constexpr uint num_dir = Parameters::num_dir;
                 const auto n = Game::num_squares;
                 const auto shape = std::vector<size_t>({num_dir, n, n});
-                auto out = nb::ndarray<nb::numpy, float, nb::shape<nb::any, nb::any, nb::any>>(
-                    new float[num_dir * n * n], {num_dir, n, n}, nb::capsule(
+                float* data = new float[num_dir * n * n];
+                auto out = nb::ndarray<nb::numpy, float>(
+                    data, shape.size(), shape.data(), nb::capsule(data,
                         [](void* p) noexcept { delete[] static_cast<float*>(p); }));
                 for (auto dir : C::direction_iterator()) {
                     Game::attention_matrix(
-                        &out.data()[static_cast<int>(dir) * n * n],
+                        &data[static_cast<int>(dir) * n * n],
                         {dir},
                         true);
                 }
@@ -374,11 +382,12 @@ inline void export_game(nanobind::module_& m)
             []() {
                 const auto n = Game::num_squares;
                 const auto shape = std::vector<size_t>({n, n});
-                auto out = nb::ndarray<nb::numpy, float, nb::shape<nb::any, nb::any>>(
-                    new float[n * n], {n, n}, nb::capsule(
+                float* data = new float[n * n];
+                auto out = nb::ndarray<nb::numpy, float>(
+                    data, shape.size(), shape.data(), nb::capsule(data,
                         [](void* p) noexcept { delete[] static_cast<float*>(p); }));
                 Game::attention_matrix(
-                    out.data(),
+                    data,
                     {vshogi::DIR_N,
                      vshogi::DIR_W,
                      vshogi::DIR_E,
@@ -390,11 +399,12 @@ inline void export_game(nanobind::module_& m)
             []() {
                 const auto n = Game::num_squares;
                 const auto shape = std::vector<size_t>({n, n});
-                auto out = nb::ndarray<nb::numpy, float, nb::shape<nb::any, nb::any>>(
-                    new float[n * n], {n, n}, nb::capsule(
+                float* data = new float[n * n];
+                auto out = nb::ndarray<nb::numpy, float>(
+                    data, shape.size(), shape.data(), nb::capsule(data,
                         [](void* p) noexcept { delete[] static_cast<float*>(p); }));
                 Game::attention_matrix(
-                    out.data(),
+                    data,
                     {vshogi::DIR_NW,
                      vshogi::DIR_NE,
                      vshogi::DIR_SW,
@@ -409,9 +419,11 @@ inline void export_game(nanobind::module_& m)
                      Game::num_ranks,
                      Game::num_files,
                      Game::feature_channels()});
-                auto out = nb::ndarray<nb::numpy, float, nb::shape<nb::any, nb::any, nb::any, nb::any>>(
-                    shape.data(), 4);
-                self.to_feature_map(out.data());
+                float* data = new float[shape[0] * shape[1] * shape[2] * shape[3]];
+                auto out = nb::ndarray<nb::numpy, float>(
+                    data, shape.size(), shape.data(), nb::capsule(data,
+                        [](void* p) noexcept { delete[] static_cast<float*>(p); }));
+                self.to_feature_map(data);
                 return out;
             })
         .def(
@@ -426,10 +438,11 @@ inline void export_game(nanobind::module_& m)
                const float default_value) {
                 const auto turn = self.get_turn();
                 constexpr auto size = Game::num_dlshogi_policy();
-                auto out = nb::ndarray<nb::numpy, float, nb::shape<nb::any>>(
-                    new float[size], {size}, nb::capsule(
+                const auto shape = std::vector<size_t>({size});
+                float* data = new float[size];
+                auto out = nb::ndarray<nb::numpy, float>(
+                    data, shape.size(), shape.data(), nb::capsule(data,
                         [](void* p) noexcept { delete[] static_cast<float*>(p); }));
-                float* const data = out.data();
                 std::fill(data, data + size, default_value);
                 for (auto [key, value] : visit_proba) {
                     const auto m = nb::cast<Move>(key);
