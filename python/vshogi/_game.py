@@ -326,14 +326,10 @@ class Game(abc.ABC):
         return self._game.in_check()
 
     @classmethod
-    def _to_move(cls, move=None, *arg, **kwargs) -> Move:
-        if not (arg or kwargs):
-            if isinstance(move, str):
-                return cls._get_move_class()(move)
-            return move
-        if move is None:
-            return cls._get_move_class()(*arg, **kwargs)
-        return cls._get_move_class()(move, *arg, **kwargs)
+    def _to_move(cls, move: Move | str) -> Move:
+        if isinstance(move, str):
+            return cls._get_move_class()(move)
+        return move
 
     def apply(self, move: tp.Union[Move, str, list]) -> 'Game':
         """Apply a move.
@@ -422,38 +418,29 @@ class Game(abc.ABC):
         self._game.undo()
         return self
 
-    def is_legal(self, move=None, *arg, **kwargs) -> bool:
+    def is_legal(self, move: Move | str) -> bool:
         """Return true if the move is legal at the current state.
 
         Parameters
         ----------
-        move : Move
+        move : Move | str
             Input move to check.
-            If there are multiple arguments, they are treated as parameters
-            of move class initialization and converted automatically.
 
         Returns
         -------
         bool
             True if the move is legal, otherwise false.
         """
-        move = self._to_move(move, *arg, **kwargs)
+        move = self._to_move(move)
         return self._game.is_legal(move)
 
-    def is_aigoma(
-        self,
-        move: Move | None = None,
-        *arg,
-        **kwargs,
-    ) -> bool:
+    def is_aigoma(self, move: Move | str) -> bool:
         """Return true if the move is interposing the ally king from a check.
 
         Parameters
         ----------
-        move : Move | None, optional
+        move : Move | str, optional
             Input move to check.
-            If there are multiple arguments, they are treated as parameters
-            of move class initialization and converted automatically.
 
         Returns
         -------
@@ -461,7 +448,7 @@ class Game(abc.ABC):
             True if the move is interposing the ally king from a check,
             otherwise false.
         """
-        move = self._to_move(move, *arg, **kwargs)
+        move = self._to_move(move)
         return self._game.is_aigoma(move)
 
     def is_valid_piece_count(self, ignore=None) -> bool:
@@ -579,7 +566,7 @@ class Game(abc.ABC):
         else:
             return self._sfen_list[n]
 
-    def to_jpn(self, move=None, *args, **kwargs) -> str:
+    def to_jpn(self, move: Move | str) -> str:
         """Return Japanese notation of a given move.
 
         Parameters
@@ -592,10 +579,10 @@ class Game(abc.ABC):
         str
             Japanese notation of the move at the current game position.
         """
-        move = self._to_move(move, *args, **kwargs)
+        move = self._to_move(move)
         return self._game.to_jpn(move)
 
-    def to_eng(self, move=None, *args, **kwargs) -> str:
+    def to_eng(self, move: Move | str) -> str:
         """Return English notation of a given move.
 
         Parameters
@@ -608,7 +595,7 @@ class Game(abc.ABC):
         str
             English notation of the move at the current game position.
         """
-        move = self._to_move(move, *args, **kwargs)
+        move = self._to_move(move)
         return self._game.to_eng(move)
 
     def dump_log(
