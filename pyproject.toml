@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "pybind11",
+    "nanobind",
     "setuptools>=42",
     "wheel",
 ]
@@ -42,7 +42,7 @@ develop = [
     "torch",
     "tqdm",
     "pre-commit",
-    "pybind11",
+    "nanobind",
     "pytest",
     "ruff",
 ]

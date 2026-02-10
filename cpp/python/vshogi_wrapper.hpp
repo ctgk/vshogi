@@ -11,9 +11,11 @@
 #include "vshogi/engine/gaz/searcher.hpp"
 #include "vshogi/engine/piece_value.hpp"
 
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
+#include <nanobind/stl/tuple.h>
 
 namespace pyvshogi
 {
@@ -25,9 +27,9 @@ inline bool has(const std::vector<T>& vec, const T& target)
 }
 
 template <class Parameters>
-inline void export_to_jpn(pybind11::module& m)
+inline void export_to_jpn(nanobind::module_& m)
 {
-    namespace py = pybind11;
+    namespace nb = nanobind;
     using C = vshogi::Configuration<Parameters>;
     using NT = vshogi::Notation<Parameters>;
     using PT = vshogi::PieceTraits<Parameters>;
@@ -41,9 +43,9 @@ inline void export_to_jpn(pybind11::module& m)
 }
 
 template <class Parameters>
-inline void export_to_sfen(pybind11::module& m)
+inline void export_to_sfen(nanobind::module_& m)
 {
-    namespace py = pybind11;
+    namespace nb = nanobind;
     using C = vshogi::Configuration<Parameters>;
     using NT = vshogi::Notation<Parameters>;
     m.def("to_sfen", [](const typename C::PieceType pt) {
@@ -53,41 +55,42 @@ inline void export_to_sfen(pybind11::module& m)
 }
 
 template <class Parameters>
-inline void export_board(pybind11::module& m)
+inline void export_board(nanobind::module_& m)
 {
-    namespace py = pybind11;
+    namespace nb = nanobind;
     using C = vshogi::Configuration<Parameters>;
     using Board = vshogi::Board<Parameters>;
     using Square = typename C::Square;
-    py::class_<Board>(m, "Board")
+    nb::class_<Board>(m, "Board")
         .def(
             "__getitem__",
-            py::overload_cast<const Square&>(&Board::operator[], py::const_))
+            nb::overload_cast<const Square&>(&Board::operator[], nb::const_))
         .def(
             "__getitem__",
             [](const Board& self, const uint index) {
                 return self[static_cast<Square>(index)];
             })
-        .def_property_readonly_static(
-            "num_files", [](py::object) { return C::num_files; })
-        .def_property_readonly_static(
-            "num_ranks", [](py::object) { return C::num_ranks; })
-        .def_property_readonly_static(
-            "num_squares", [](py::object) { return C::num_squares; });
+        .def_prop_ro_static(
+            "num_files", [](nb::handle) { return C::num_files; })
+        .def_prop_ro_static(
+            "num_ranks", [](nb::handle) { return C::num_ranks; })
+        .def_prop_ro_static(
+            "num_squares", [](nb::handle) { return C::num_squares; });
 }
 
 template <class Parameters>
-inline void export_piece_stand(pybind11::module& m)
+inline void export_piece_stand(nanobind::module_& m)
 {
+    namespace nb = nanobind;
     using C = vshogi::Configuration<Parameters>;
     using Stand = vshogi::Stand<Parameters>;
-    pybind11::class_<Stand>(m, "Stand")
+    nb::class_<Stand>(m, "Stand")
         .def("count", &Stand::count)
         .def("any", &Stand::any)
-        .def("to_dict", [](const Stand& self) -> pybind11::dict {
-            pybind11::dict out;
+        .def("to_dict", [](const Stand& self) -> nb::dict {
+            nb::dict out;
             for (auto pt : C::stand_piece_type_iterator())
-                out[pybind11::cast(pt)] = self.count(pt);
+                out[nb::cast(pt)] = self.count(pt);
             return out;
         });
 }
@@ -103,50 +106,50 @@ public:
 };
 
 template <class Parameters>
-inline void export_move(pybind11::module& m)
+inline void export_move(nanobind::module_& m)
 {
-    namespace py = pybind11;
+    namespace nb = nanobind;
     using MT = vshogi::MoveTraits<Parameters>;
     using NT = vshogi::Notation<Parameters>;
     using Square = typename Parameters::Square;
     using PieceType = typename Parameters::PieceType;
     using move_t = vshogi::move_t;
     using Move = Move<Parameters>;
-    py::class_<Move>(m, "Move")
+    nb::class_<Move>(m, "Move")
         .def(
-            py::init(
+            nb::init(
                 [](const Square src, const Square dst, const bool promote) {
                     return Move(MT::make_move(src, dst, promote));
                 }),
-            py::arg("src"),
-            py::arg("dst"),
-            py::arg("promote") = false)
+            nb::arg("src"),
+            nb::arg("dst"),
+            nb::arg("promote") = false)
         .def(
-            py::init([](const PieceType src, const Square dst) {
+            nb::init([](const PieceType src, const Square dst) {
                 return Move(MT::make_move(src, dst));
             }),
-            py::arg("src"),
-            py::arg("dst"))
+            nb::arg("src"),
+            nb::arg("dst"))
         .def(
-            py::init([](const std::string& sfen) {
+            nb::init([](const std::string& sfen) {
                 return Move(MT::make_move(sfen.c_str()));
             }),
-            py::arg("sfen"))
+            nb::arg("sfen"))
         .def(
-            py::init([](const uint value) {
+            nb::init([](const uint value) {
                 return Move(static_cast<move_t>(value));
             }),
-            py::arg("value"))
-        .def_property_readonly(
+            nb::arg("value"))
+        .def_prop_ro(
             "destination", [](const Move& m) { return MT::get_dst(m.m_value); })
-        .def_property_readonly(
+        .def_prop_ro(
             "promote", [](const Move& m) { return MT::get_promote(m.m_value); })
-        .def_property_readonly(
+        .def_prop_ro(
             "source",
             [](const Move& m) {
                 if (MT::is_drop(m.m_value))
-                    return py::cast(MT::get_src_pt(m.m_value));
-                return py::cast(MT::get_src_sq(m.m_value));
+                    return nb::cast(MT::get_src_pt(m.m_value));
+                return nb::cast(MT::get_src_sq(m.m_value));
             })
         .def("is_drop", [](const Move& m) { return MT::is_drop(m.m_value); })
         .def(
@@ -169,105 +172,110 @@ inline void export_move(pybind11::module& m)
             "__ne__",
             [](const Move& a, const Move& b) { return a.m_value != b.m_value; })
         .def(
-            py::pickle(
-                [](const Move& m) {
-                    return py::make_tuple(static_cast<int>(m.m_value));
-                },
-                [](py::tuple t) { return Move(t[0].cast<move_t>()); }));
+            "__getstate__",
+            [](const Move& m) {
+                return nb::make_tuple(static_cast<int>(m.m_value));
+            })
+        .def(
+            "__setstate__",
+            [](Move& m, nb::tuple t) {
+                new (&m) Move(t[0].cast<move_t>());
+            });
 }
 
 template <class Parameters>
-inline void export_state(pybind11::module& m)
+inline void export_state(nanobind::module_& m)
 {
-    namespace py = pybind11;
+    namespace nb = nanobind;
     using State = vshogi::State<Parameters>;
     using MoveTraits = vshogi::MoveTraits<Parameters>;
     using NT = vshogi::Notation<Parameters>;
     using Move = Move<Parameters>;
 
-    py::class_<State>(m, "State")
-        .def(py::init<const std::string&>())
+    nb::class_<State>(m, "State")
+        .def(nb::init<const std::string&>())
         .def("hflip", &State::hflip)
         .def("to_sfen", [](const State& self) { return NT::to_sfen(self); })
         .def(
             "to_dlshogi_features",
             [](const State& self) {
-                const auto shape = std::vector<py::ssize_t>(
+                const auto shape = std::vector<size_t>(
                     {1,
                      State::num_ranks,
                      State::num_files,
                      State::feature_channels()});
-                auto out = py::array_t<float>(shape);
-                self.to_feature_map(out.mutable_data());
+                auto out = nb::ndarray<nb::numpy, float, nb::shape<nb::any, nb::any, nb::any, nb::any>>(
+                    shape.data(), 4);
+                self.to_feature_map(out.data());
                 return out;
             })
         .def(
             "to_dlshogi_features",
-            [](const State& self, py::array_t<float>& out) {
-                self.to_feature_map(out.mutable_data());
+            [](const State& self, nb::ndarray<nb::numpy, float, nb::c_contig> out) {
+                self.to_feature_map(out.data());
             })
         .def(
             "to_dlshogi_policy",
             [](const State& self,
-               const py::dict& action_proba,
-               const float default_value) -> py::array_t<float> {
+               const nb::dict& action_proba,
+               const float default_value) {
                 const auto turn = self.get_turn();
                 constexpr auto size = State::num_dlshogi_policy();
-                auto out = py::array_t<float>(std::vector<py::ssize_t>({size}));
-                float* const data = out.mutable_data();
+                auto out = nb::ndarray<nb::numpy, float, nb::shape<nb::any>>(
+                    new float[size], {size}, nb::capsule(
+                        [](void* p) noexcept { delete[] static_cast<float*>(p); }));
+                float* const data = out.data();
                 std::fill(data, data + size, default_value);
-                for (auto it = action_proba.begin(); it != action_proba.end();
-                     ++it) {
-                    const auto m = it->first.cast<Move>();
+                for (auto [key, value] : action_proba) {
+                    const auto m = nb::cast<Move>(key);
                     const auto index
                         = MoveTraits::to_policy_index(m.m_value, turn);
-                    data[index] = it->second.cast<float>();
+                    data[index] = nb::cast<float>(value);
                 }
                 return out;
             },
-            py::arg("action_proba"),
-            py::arg("default_value"))
+            nb::arg("action_proba"),
+            nb::arg("default_value"))
         .def(
             "to_dlshogi_policy",
             [](const State& self,
-               const py::dict& action_proba,
+               const nb::dict& action_proba,
                const float default_value,
-               py::array_t<float>& out) {
+               nb::ndarray<nb::numpy, float, nb::c_contig> out) {
                 const auto turn = self.get_turn();
                 constexpr auto size = State::num_dlshogi_policy();
-                float* const data = out.mutable_data();
+                float* const data = out.data();
                 std::fill(data, data + size, default_value);
-                for (auto it = action_proba.begin(); it != action_proba.end();
-                     ++it) {
-                    const auto m = it->first.cast<Move>();
+                for (auto [key, value] : action_proba) {
+                    const auto m = nb::cast<Move>(key);
                     const auto index
                         = MoveTraits::to_policy_index(m.m_value, turn);
-                    data[index] = it->second.cast<float>();
+                    data[index] = nb::cast<float>(value);
                 }
             },
-            py::arg("action_proba"),
-            py::arg("default_value"),
-            py::arg("out"));
+            nb::arg("action_proba"),
+            nb::arg("default_value"),
+            nb::arg("out"));
 }
 
 template <class Parameters>
-inline void export_game(pybind11::module& m)
+inline void export_game(nanobind::module_& m)
 {
-    namespace py = pybind11;
+    namespace nb = nanobind;
     using C = vshogi::Configuration<Parameters>;
     using NT = vshogi::Notation<Parameters>;
     using Game = vshogi::Game<Parameters>;
     using MoveTraits = vshogi::MoveTraits<Parameters>;
     using Move = Move<Parameters>;
-    py::class_<Game>(m, "_Game")
-        .def(py::init<>())
-        .def(py::init<const std::string&>())
+    nb::class_<Game>(m, "_Game")
+        .def(nb::init<>())
+        .def(nb::init<const std::string&>())
         .def("get_turn", &Game::get_turn)
         .def("get_board", &Game::get_board)
         .def(
             "get_stand",
-            py::overload_cast<const vshogi::ColorEnum>(
-                &Game::get_stand, py::const_))
+            nb::overload_cast<const vshogi::ColorEnum>(
+                &Game::get_stand, nb::const_))
         .def("get_result", &Game::get_result)
         .def("get_zobrist_hash", &Game::get_zobrist_hash)
         .def("ply", &Game::ply)
@@ -337,9 +345,11 @@ inline void export_game(pybind11::module& m)
             "get_attention",
             []() {
                 const auto n = Game::num_squares;
-                const auto shape = std::vector<py::ssize_t>({n, n});
-                auto out = py::array_t<float>(shape);
-                Game::attention_matrix(out.mutable_data());
+                const auto shape = std::vector<size_t>({n, n});
+                auto out = nb::ndarray<nb::numpy, float, nb::shape<nb::any, nb::any>>(
+                    new float[n * n], {n, n}, nb::capsule(
+                        [](void* p) noexcept { delete[] static_cast<float*>(p); }));
+                Game::attention_matrix(out.data());
                 return out;
             })
         .def_static(
@@ -347,11 +357,13 @@ inline void export_game(pybind11::module& m)
             []() {
                 constexpr uint num_dir = Parameters::num_dir;
                 const auto n = Game::num_squares;
-                const auto shape = std::vector<py::ssize_t>({num_dir, n, n});
-                auto out = py::array_t<float>(shape);
+                const auto shape = std::vector<size_t>({num_dir, n, n});
+                auto out = nb::ndarray<nb::numpy, float, nb::shape<nb::any, nb::any, nb::any>>(
+                    new float[num_dir * n * n], {num_dir, n, n}, nb::capsule(
+                        [](void* p) noexcept { delete[] static_cast<float*>(p); }));
                 for (auto dir : C::direction_iterator()) {
                     Game::attention_matrix(
-                        &out.mutable_at(static_cast<int>(dir), 0, 0),
+                        &out.data()[static_cast<int>(dir) * n * n],
                         {dir},
                         true);
                 }
@@ -361,10 +373,12 @@ inline void export_game(pybind11::module& m)
             "get_adjacent_attention",
             []() {
                 const auto n = Game::num_squares;
-                const auto shape = std::vector<py::ssize_t>({n, n});
-                auto out = py::array_t<float>(shape);
+                const auto shape = std::vector<size_t>({n, n});
+                auto out = nb::ndarray<nb::numpy, float, nb::shape<nb::any, nb::any>>(
+                    new float[n * n], {n, n}, nb::capsule(
+                        [](void* p) noexcept { delete[] static_cast<float*>(p); }));
                 Game::attention_matrix(
-                    out.mutable_data(),
+                    out.data(),
                     {vshogi::DIR_N,
                      vshogi::DIR_W,
                      vshogi::DIR_E,
@@ -375,10 +389,12 @@ inline void export_game(pybind11::module& m)
             "get_diagonal_attention",
             []() {
                 const auto n = Game::num_squares;
-                const auto shape = std::vector<py::ssize_t>({n, n});
-                auto out = py::array_t<float>(shape);
+                const auto shape = std::vector<size_t>({n, n});
+                auto out = nb::ndarray<nb::numpy, float, nb::shape<nb::any, nb::any>>(
+                    new float[n * n], {n, n}, nb::capsule(
+                        [](void* p) noexcept { delete[] static_cast<float*>(p); }));
                 Game::attention_matrix(
-                    out.mutable_data(),
+                    out.data(),
                     {vshogi::DIR_NW,
                      vshogi::DIR_NE,
                      vshogi::DIR_SW,
@@ -388,43 +404,45 @@ inline void export_game(pybind11::module& m)
         .def(
             "to_dlshogi_features",
             [](const Game& self) {
-                const auto shape = std::vector<py::ssize_t>(
+                const auto shape = std::vector<size_t>(
                     {1,
                      Game::num_ranks,
                      Game::num_files,
                      Game::feature_channels()});
-                auto out = py::array_t<float>(shape);
-                self.to_feature_map(out.mutable_data());
+                auto out = nb::ndarray<nb::numpy, float, nb::shape<nb::any, nb::any, nb::any, nb::any>>(
+                    shape.data(), 4);
+                self.to_feature_map(out.data());
                 return out;
             })
         .def(
             "to_dlshogi_features",
-            [](const Game& self, py::array_t<float>& out) {
-                self.to_feature_map(out.mutable_data());
+            [](const Game& self, nb::ndarray<nb::numpy, float, nb::c_contig> out) {
+                self.to_feature_map(out.data());
             })
         .def(
             "to_dlshogi_policy",
             [](const Game& self,
-               const py::dict& visit_proba,
-               const float default_value) -> py::array_t<float> {
+               const nb::dict& visit_proba,
+               const float default_value) {
                 const auto turn = self.get_turn();
                 constexpr auto size = Game::num_dlshogi_policy();
-                auto out = py::array_t<float>(std::vector<py::ssize_t>({size}));
-                float* const data = out.mutable_data();
+                auto out = nb::ndarray<nb::numpy, float, nb::shape<nb::any>>(
+                    new float[size], {size}, nb::capsule(
+                        [](void* p) noexcept { delete[] static_cast<float*>(p); }));
+                float* const data = out.data();
                 std::fill(data, data + size, default_value);
-                for (auto it = visit_proba.begin(); it != visit_proba.end();
-                     ++it) {
-                    const auto m = it->first.cast<Move>();
+                for (auto [key, value] : visit_proba) {
+                    const auto m = nb::cast<Move>(key);
                     const auto index
                         = MoveTraits::to_policy_index(m.m_value, turn);
-                    data[index] = it->second.cast<float>();
+                    data[index] = nb::cast<float>(value);
                 }
                 return out;
             })
         .def(
             "masked_softmax",
-            [](const Game& self, const py::array_t<float>& logits) -> py::dict {
-                py::dict out;
+            [](const Game& self, const nb::ndarray<nb::numpy, float, nb::c_contig>& logits) -> nb::dict {
+                nb::dict out;
                 const auto t = self.get_turn();
                 const auto& actions = self.get_legal_moves();
                 auto proba = std::vector<float>(actions.size());
@@ -436,13 +454,13 @@ inline void export_game(pybind11::module& m)
                 }
                 vshogi::softmax(proba);
                 for (std::size_t ii = actions.size(); ii--;) {
-                    out[py::cast(Move(actions[ii]))] = proba[ii];
+                    out[nb::cast(Move(actions[ii]))] = proba[ii];
                 }
                 return out;
             })
         .def(
             "get_mate_moves_if_any",
-            [](Game& self, const unsigned int num_dfpn_nodes) -> py::object {
+            [](Game& self, const unsigned int num_dfpn_nodes) -> nb::object {
                 vshogi::engine::dfpn::Searcher<Parameters> dfpn{
                     10u * num_dfpn_nodes};
                 dfpn.search(self, num_dfpn_nodes);
@@ -451,36 +469,36 @@ inline void export_game(pybind11::module& m)
                     for (auto&& m : dfpn.get_mate_moves(self))
                         out.emplace_back(m);
                     if (out.size() > 0u)
-                        return py::cast(out);
+                        return nb::cast(out);
                 }
-                return py::none();
+                return nb::none();
             },
-            py::arg("num_dfpn_nodes"))
+            nb::arg("num_dfpn_nodes"))
         .def("copy", [](const Game& self) { return Game(self); });
 }
 
 template <class Parameters>
-inline void export_az_searcher(pybind11::module& m)
+inline void export_az_searcher(nanobind::module_& m)
 {
-    namespace py = pybind11;
+    namespace nb = nanobind;
     using Game = vshogi::Game<Parameters>;
     using Node = vshogi::engine::az::Node;
     using Move = pyvshogi::Move<Parameters>;
     using Searcher = vshogi::engine::az::Searcher<Parameters>;
 
-    py::class_<Searcher>(m, "AlphaZero")
-        .def(py::init<const uint, const uint, const uint>())
+    nb::class_<Searcher>(m, "AlphaZero")
+        .def(nb::init<const uint, const uint, const uint>())
         .def("init", &Searcher::init)
         .def(
             "search",
             [](Searcher& self,
                Game& game,
                const float c_puct,
-               const float p_random) -> py::object {
+               const float p_random) -> nb::object {
                 const auto out = self.search(game, c_puct, p_random);
                 if (out == nullptr)
-                    return py::none();
-                return py::cast(*out, py::return_value_policy::reference);
+                    return nb::none();
+                return nb::cast(*out, nb::rv_policy::reference);
             })
         .def(
             "simulate_expand_backprop",
@@ -488,7 +506,7 @@ inline void export_az_searcher(pybind11::module& m)
                Node* const leaf,
                Game& game,
                const float value,
-               const py::array_t<float>& policy_logits) {
+               const nb::ndarray<nb::numpy, float, nb::c_contig>& policy_logits) {
                 self.simulate_expand_backprop(
                     leaf, game, value, policy_logits.data());
             })
@@ -499,9 +517,9 @@ inline void export_az_searcher(pybind11::module& m)
             })
         .def(
             "get_root",
-            [](Searcher& self) -> py::object {
+            [](Searcher& self) -> nb::object {
                 const Node& out = self.get_root();
-                return py::cast(out, py::return_value_policy::reference);
+                return nb::cast(out, nb::rv_policy::reference);
             })
         .def("proved_mate", &Searcher::proved_mate)
         .def("get_search_count", &Searcher::get_search_count)
@@ -522,15 +540,15 @@ inline void export_az_searcher(pybind11::module& m)
 }
 
 template <class P>
-inline void export_gaz_searcher(pybind11::module& m)
+inline void export_gaz_searcher(nanobind::module_& m)
 {
-    namespace py = pybind11;
+    namespace nb = nanobind;
     using Game = vshogi::Game<P>;
     using Move = pyvshogi::Move<P>;
     using Node = vshogi::engine::gaz::Node;
     using Searcher = vshogi::engine::gaz::Searcher<P>;
-    py::class_<Searcher>(m, "GumbelAlphaZero")
-        .def(py::init<const uint, const uint, const uint>())
+    nb::class_<Searcher>(m, "GumbelAlphaZero")
+        .def(nb::init<const uint, const uint, const uint>())
         .def("init", &Searcher::init)
         .def("get_search_count", &Searcher::get_search_count)
         .def("count_active_childs", &Searcher::count_active_childs)
@@ -538,17 +556,17 @@ inline void export_gaz_searcher(pybind11::module& m)
         .def(
             "get_root",
             [](const Searcher& self) {
-                return py::cast(
-                    self.get_root(), py::return_value_policy::reference);
+                return nb::cast(
+                    self.get_root(), nb::rv_policy::reference);
             })
         .def("keep_top_n_actions", &Searcher::keep_top_n_actions)
         .def(
             "search",
-            [](Searcher& self, Game& game) -> py::object {
+            [](Searcher& self, Game& game) -> nb::object {
                 const auto out = self.search(game);
                 if (out == nullptr)
-                    return py::none();
-                return py::cast(*out, py::return_value_policy::reference);
+                    return nb::none();
+                return nb::cast(*out, nb::rv_policy::reference);
             })
         .def(
             "simulate_expand_backprop",
@@ -556,7 +574,7 @@ inline void export_gaz_searcher(pybind11::module& m)
                Node* const leaf,
                Game& game,
                const float value,
-               const py::array_t<float>& policy_logits) {
+               const nb::ndarray<nb::numpy, float, nb::c_contig>& policy_logits) {
                 self.simulate_expand_backprop(
                     leaf, game, value, policy_logits.data());
             })
@@ -582,14 +600,14 @@ inline void export_gaz_searcher(pybind11::module& m)
 }
 
 template <class Parameters>
-inline void export_dfpn_searcher(pybind11::module& m)
+inline void export_dfpn_searcher(nanobind::module_& m)
 {
-    namespace py = pybind11;
+    namespace nb = nanobind;
     using Searcher = vshogi::engine::dfpn::Searcher<Parameters>;
     using Move = pyvshogi::Move<Parameters>;
 
-    py::class_<Searcher>(m, "DfpnSearcher")
-        .def(py::init<const uint>())
+    nb::class_<Searcher>(m, "DfpnSearcher")
+        .def(nb::init<const uint>())
         .def("init", &Searcher::init)
         .def("search", &Searcher::search)
         .def("proved_mate", &Searcher::proved_mate)
@@ -607,21 +625,21 @@ inline void export_dfpn_searcher(pybind11::module& m)
                     out.emplace_back(m);
                 return out;
             })
-        .def("get_root", [](const Searcher& self) -> py::object {
-            return py::cast(
-                self.get_root(), py::return_value_policy::reference);
+        .def("get_root", [](const Searcher& self) -> nb::object {
+            return nb::cast(
+                self.get_root(), nb::rv_policy::reference);
         });
 }
 
 template <class Parameters>
-inline void export_value_functions(pybind11::module& m)
+inline void export_value_functions(nanobind::module_& m)
 {
-    namespace py = pybind11;
+    namespace nb = nanobind;
     m.def("piece_value_func", &vshogi::engine::piece_value_func<Parameters>);
 }
 
 template <class Parameters>
-void export_classes(pybind11::module& m)
+void export_classes(nanobind::module_& m)
 {
     export_to_jpn<Parameters>(m);
     export_to_sfen<Parameters>(m);

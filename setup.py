@@ -1,10 +1,10 @@
 from glob import glob
 
-from pybind11.setup_helpers import Pybind11Extension, build_ext
+from nanobind.setuptools import NanobindExtension, build_ext
 from setuptools import setup
 
 
-_vshogi_extension = Pybind11Extension(
+_vshogi_extension = NanobindExtension(
     name='vshogi._vshogi',
     sources=sorted(
         glob('cpp/src/**/*.cpp', recursive=True)
@@ -14,8 +14,8 @@ _vshogi_extension = Pybind11Extension(
 )
 
 
-def _get_extension(variant: str) -> Pybind11Extension:
-    return Pybind11Extension(
+def _get_extension(variant: str) -> NanobindExtension:
+    return NanobindExtension(
         name=f"vshogi.{variant}._{variant}",
         sources=sorted(
             glob("cpp/src/**/*.cpp", recursive=True)
