@@ -571,27 +571,32 @@ def _validate(
 def _get_previous_models_superior_to_latest(
     shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
     latest: str,
-    previous: list[str],
     engine: tp.Literal['AlphaZero'],
     num_games: int = 10,
     coeff_puct: float = 4.0,
     n_jobs: int = 1,
 ) -> list[str]:
-    if not previous:
+    index = int(latest.split("_")[-1].split(".")[0])
+    path_template = "_".join(latest.split("_")[:-1] + ["{:04d}.tflite"])
+    if index == 0:
         return []
+    p = np.arange(1, index + 1).astype(float) ** 2
+    p /= p.sum()
+    previous = sorted(
+        [
+            path_template.format(i)
+            for i in np.random.choice(
+                index, size=min(10, index), replace=False, p=p
+            )
+        ],
+        reverse=True,
+    )
     if (n_jobs == 1) or (len(previous) == 1):
-        return [
-            prev
-            for prev in previous
-            if _validate(
-                shogi_variant,
-                engine,
-                latest,
-                prev,
-                num_games,
-                coeff_puct,
+        scores = [
+            _validate(
+                shogi_variant, engine, latest, prev, num_games, coeff_puct
             ).score()
-            < num_games * 0.5
+            for prev in previous
         ]
     else:
         timeout_second = 5 * 60  # 5 minutes
@@ -623,9 +628,9 @@ def _get_previous_models_superior_to_latest(
                 f"{prev.split('/')[-1].split('.')[0]} = {record.wdl()}"
             )
             print(msg)
-        return [
-            p for p, r in zip(previous, records) if r.score() < num_games * 0.5
-        ]
+        scores = [r.score() for r in records]
+    indices = np.argsort(scores)[:9]  # low -> high
+    return [previous[i] for i in indices if scores[i] < num_games * 0.5]
 
 
 def _average_kifu_length(kifu_dir: str) -> float:
@@ -668,9 +673,6 @@ def _selfplay_worker(**kwargs):
         others = _get_previous_models_superior_to_latest(
             shogi_variant=kwargs['shogi'],
             latest=tflite_path.format(ii),
-            previous=[
-                tflite_path.format(j) for j in list(range(ii - 1, -1, -1))[:10]
-            ],
             engine=kwargs['engine'],
             num_games=10,
             coeff_puct=kwargs['coeff_puct'],

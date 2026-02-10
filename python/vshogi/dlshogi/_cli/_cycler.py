@@ -129,9 +129,6 @@ def _cycle_selfplay_and_train(**kwargs):
         others = _get_previous_models_superior_to_latest(
             shogi_variant=kwargs['shogi'],
             latest=tflite_path.format(i - 1),
-            previous=[
-                tflite_path.format(j) for j in list(range(i - 2, -1, -1))[:10]
-            ],
             engine=kwargs['play_engine'],
             num_games=10,
             coeff_puct=kwargs['play_coeff_puct'],
