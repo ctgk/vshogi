@@ -9,6 +9,8 @@
 namespace py = pybind11;
 namespace ms = vshogi::minishogi;
 
+void export_minishogi(py::module& m);
+
 namespace
 {
 
@@ -107,6 +109,11 @@ void export_pieces(py::module& m)
 }
 
 } // namespace
+
+PYBIND11_MODULE(_minishogi, m)
+{
+    export_minishogi(m);
+}
 
 void export_minishogi(py::module& m)
 {

@@ -1,5 +1,5 @@
 from vshogi._game import Game as BaseGame
-from vshogi._vshogi.shogi import (
+from vshogi.shogi._shogi import (
     AlphaZero,
     BoardPiece,
     DfpnSearcher,

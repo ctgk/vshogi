@@ -60,7 +60,7 @@ from vshogi._repr import (
     _repr_stand,
 )
 from vshogi._vshogi import Color, Result
-from vshogi._vshogi.minishogi import (
+from vshogi.minishogi._minishogi import (
     Board,
     BoardPiece,
     Move,

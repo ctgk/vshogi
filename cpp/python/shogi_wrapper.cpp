@@ -9,6 +9,8 @@
 namespace py = pybind11;
 namespace sg = vshogi::shogi;
 
+void export_shogi(py::module& m);
+
 namespace
 {
 
@@ -231,6 +233,11 @@ void export_pieces(py::module& m)
 }
 
 } // namespace
+
+PYBIND11_MODULE(_shogi, m)
+{
+    export_shogi(m);
+}
 
 void export_shogi(py::module& m)
 {

@@ -4,9 +4,9 @@ import numpy as np
 
 from vshogi._game import Game
 from vshogi.engine._engine import Engine
+from vshogi._move import Move
 
 
-Move = tp.TypeVar('Move')
 Policy = np.ndarray
 Value = float
 

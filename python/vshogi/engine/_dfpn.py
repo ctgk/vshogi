@@ -4,9 +4,7 @@ import numpy as np
 
 from vshogi._game import Game
 from vshogi.engine._engine import Engine
-
-
-Move = tp.TypeVar('Move')
+from vshogi._move import Move
 
 
 class DfpnSearcher(Engine):

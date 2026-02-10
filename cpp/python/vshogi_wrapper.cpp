@@ -10,10 +10,6 @@
 
 namespace py = pybind11;
 
-void export_judkins_shogi(py::module& m);
-void export_minishogi(py::module& m);
-void export_shogi(py::module& m);
-
 void export_color_enum(py::module& m)
 {
     py::enum_<vshogi::ColorEnum>(m, "Color")
@@ -141,13 +137,4 @@ PYBIND11_MODULE(_vshogi, m)
     export_dfpn_node(m);
     export_az_node(m);
     export_gaz_node(m);
-
-    auto judkins_shogi_module = m.def_submodule("judkins_shogi");
-    export_judkins_shogi(judkins_shogi_module);
-
-    auto minishogi_module = m.def_submodule("minishogi");
-    export_minishogi(minishogi_module);
-
-    auto shogi_module = m.def_submodule("shogi");
-    export_shogi(shogi_module);
 }

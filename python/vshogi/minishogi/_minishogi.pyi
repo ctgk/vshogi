@@ -1,0 +1,3 @@
+from vshogi._move import Move as BaseMove
+
+class Move(BaseMove): ...

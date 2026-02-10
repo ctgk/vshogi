@@ -7,6 +7,8 @@
 namespace py = pybind11;
 namespace js = vshogi::judkins_shogi;
 
+void export_judkins_shogi(py::module& m);
+
 namespace
 {
 
@@ -132,6 +134,11 @@ void export_pieces(py::module& m)
 }
 
 } // namespace
+
+PYBIND11_MODULE(_judkins_shogi, m)
+{
+    export_judkins_shogi(m);
+}
 
 void export_judkins_shogi(py::module& m)
 {

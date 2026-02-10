@@ -1,10 +1,6 @@
-import typing as tp
-
 from vshogi._game import Game
 from vshogi._vshogi import Color, Result
-
-
-Move = tp.TypeVar("Move")
+from vshogi._move import Move
 
 
 def _is_unnecessary_declined_promotion(

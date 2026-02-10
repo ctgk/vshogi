@@ -6,9 +6,7 @@ import typing as tp
 import numpy as np
 
 from vshogi._vshogi import Color, Result
-
-
-Move = tp.TypeVar('Move')
+from vshogi._move import Move
 
 
 class _ClassProperty:
@@ -337,12 +335,12 @@ class Game(abc.ABC):
             return cls._get_move_class()(*arg, **kwargs)
         return cls._get_move_class()(move, *arg, **kwargs)
 
-    def apply(self, move: tp.Union['Move', str, list]) -> 'Game':
+    def apply(self, move: tp.Union[Move, str, list]) -> 'Game':
         """Apply a move.
 
         Parameters
         ----------
-        move : tp.Union['Move', str, list]
+        move : tp.Union[Move, str, list]
             Move or list of moves to apply to the current state.
 
         Returns
@@ -367,7 +365,7 @@ class Game(abc.ABC):
             self._apply(self._to_move(m))
         return self
 
-    def _apply(self, move: 'Move') -> 'Game':
+    def _apply(self, move: Move) -> 'Game':
         self._move_list.append(move)
         self._sfen_list.append(self.to_sfen(False))
         self._game.apply(move)

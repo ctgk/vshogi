@@ -13,7 +13,7 @@ from vshogi._repr import (
     _repr_stand,
 )
 from vshogi._vshogi import Color, Result
-from vshogi._vshogi.judkins_shogi import (
+from vshogi.judkins_shogi._judkins_shogi import (
     Board,
     BoardPiece,
     Move,

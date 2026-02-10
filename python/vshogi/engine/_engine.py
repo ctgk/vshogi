@@ -3,9 +3,7 @@ import typing as tp
 from time import time
 
 from vshogi._game import Game
-
-
-Move = tp.TypeVar('Move')
+from vshogi._move import Move
 
 
 class Engine(abc.ABC):

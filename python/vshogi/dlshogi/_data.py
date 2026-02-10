@@ -1,8 +1,6 @@
-import typing as tp
 from dataclasses import dataclass
 
-
-Move = tp.TypeVar('Move')
+from vshogi._move import Move
 
 
 @dataclass
