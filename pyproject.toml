@@ -1,11 +1,6 @@
 [build-system]
-requires = [
-    "nanobind",
-    "setuptools>=42",
-    "wheel",
-]
-
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core >=0.10", "nanobind >=1.3.2"]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "vshogi"
@@ -69,6 +64,22 @@ dlshogi = [
 where = ["python"]
 include = ["vshogi*"]
 exclude = ["test*"]
+
+[tool.scikit-build]
+# Protect the configuration against future changes in scikit-build-core
+minimum-version = "build-system.requires"
+
+# Setuptools-style build caching in a local directory
+build-dir = "build/{wheel_tag}"
+
+# Source directory for CMake
+cmake.source-dir = "."
+
+# Build stable ABI wheels for CPython 3.12+
+wheel.py-api = "cp312"
+
+# Install the Python package from the python/ directory
+wheel.install-dir = "vshogi"
 
 [tool.pytest.ini_options]
 addopts = [
