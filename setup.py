@@ -4,6 +4,10 @@ import nanobind
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
+# DEPRECATED: This setup.py is kept for backwards compatibility.
+# The project now uses scikit-build-core (see CMakeLists.txt and pyproject.toml)
+# For building, use: pip install .
+# For development: pip install --no-build-isolation -ve .
 
 class NanobindBuildExt(build_ext):
     def build_extensions(self):
