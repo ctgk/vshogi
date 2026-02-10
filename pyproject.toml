@@ -78,7 +78,8 @@ cmake.source-dir = "."
 # Build stable ABI wheels for CPython 3.12+
 wheel.py-api = "cp312"
 
-# Install the Python package from the python/ directory
+# Install the Python package into the vshogi directory
+# This tells scikit-build-core where to place compiled extensions
 wheel.install-dir = "vshogi"
 
 [tool.pytest.ini_options]

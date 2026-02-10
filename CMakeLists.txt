@@ -31,6 +31,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Try to import all Python components potentially needed by nanobind
+# Note: While we require Python 3.10+, stable ABI wheels (cp312+) will only
+# be generated for Python 3.12+. Python 3.10-3.11 will get standard wheels.
 find_package(Python 3.10
   REQUIRED COMPONENTS Interpreter Development.Module
   OPTIONAL_COMPONENTS Development.SABIModule)
