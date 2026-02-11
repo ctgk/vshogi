@@ -4,33 +4,33 @@
 #include "vshogi/engine/dfpn/node.hpp"
 #include "vshogi/engine/gaz/node.hpp"
 
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
+#include <nanobind/stl/vector.h>
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
-void export_color_enum(py::module& m)
+void export_color_enum(nb::module_& m)
 {
-    py::enum_<vshogi::ColorEnum>(m, "Color")
+    nb::enum_<vshogi::ColorEnum>(m, "Color", nb::is_arithmetic())
         .value("BLACK", vshogi::BLACK)
         .value("WHITE", vshogi::WHITE);
 }
-void export_result_enum(py::module& m)
+void export_result_enum(nb::module_& m)
 {
-    py::enum_<vshogi::ResultEnum>(m, "Result")
+    nb::enum_<vshogi::ResultEnum>(m, "Result", nb::is_arithmetic())
         .value("ONGOING", vshogi::ONGOING)
         .value("DRAW", vshogi::DRAW)
         .value("BLACK_WIN", vshogi::BLACK_WIN)
         .value("WHITE_WIN", vshogi::WHITE_WIN);
 }
 
-void export_dfpn_node(py::module& m)
+void export_dfpn_node(nb::module_& m)
 {
     using Node = vshogi::engine::dfpn::Node;
     constexpr float unit = static_cast<float>(vshogi::engine::dfpn::unit);
     constexpr uint inf = vshogi::engine::dfpn::inf;
-    py::class_<Node>(m, "DfpnNode")
+    nb::class_<Node>(m, "DfpnNode")
         .def(
             "pn",
             [](const Node& self, const bool offence) {
@@ -49,20 +49,20 @@ void export_dfpn_node(py::module& m)
             })
         .def("get_action", &Node::get_action)
         .def("has_child", &Node::has_child)
-        .def("get_children", [](const Node& self) -> py::object {
+        .def("get_children", [](const Node& self) -> nb::object {
             std::vector<const Node*> out;
             if (self.has_child()) {
                 for (auto ch = self.get_child(); ch; ch = ch->get_sibling())
                     out.emplace_back(ch);
             }
-            return py::cast(out, py::return_value_policy::reference);
+            return nb::cast(out, nb::rv_policy::reference);
         });
 }
 
-void export_az_node(py::module& m)
+void export_az_node(nb::module_& m)
 {
     using Node = vshogi::engine::az::Node;
-    py::class_<Node>(m, "AzNode")
+    nb::class_<Node>(m, "AzNode")
         .def("get_proba", &Node::get_proba)
         .def("get_visit_count", &Node::get_visit_count)
         .def(
@@ -84,23 +84,23 @@ void export_az_node(py::module& m)
             })
         .def(
             "get_child_of",
-            [](const Node& self, const vshogi::move_t& action) -> py::object {
+            [](const Node& self, const vshogi::move_t& action) -> nb::object {
                 const auto out = self.get_child_of(action);
                 if (out)
-                    return py::cast(*out, py::return_value_policy::reference);
-                return py::none();
+                    return nb::cast(*out, nb::rv_policy::reference);
+                return nb::none();
             });
 }
 
-void export_gaz_node(py::module& m)
+void export_gaz_node(nb::module_& m)
 {
     using Node = vshogi::engine::gaz::Node;
-    py::class_<Node>(m, "GazNode")
+    nb::class_<Node>(m, "GazNode")
         .def("get_visit_count", &Node::get_visit_count)
         .def(
             "get_q_value",
-            py::overload_cast<const uint, const uint>(
-                &Node::get_q_value, py::const_))
+            nb::overload_cast<const uint, const uint>(
+                &Node::get_q_value, nb::const_))
         .def(
             "get_actions",
             [](const Node& self) {
@@ -122,15 +122,15 @@ void export_gaz_node(py::module& m)
             })
         .def(
             "get_child_of",
-            [](const Node& self, const vshogi::move_t& action) -> py::object {
+            [](const Node& self, const vshogi::move_t& action) -> nb::object {
                 const auto out = self.get_child_of(action);
                 if (out)
-                    return py::cast(*out, py::return_value_policy::reference);
-                return py::none();
+                    return nb::cast(*out, nb::rv_policy::reference);
+                return nb::none();
             });
 }
 
-PYBIND11_MODULE(_vshogi, m)
+NB_MODULE(_vshogi, m)
 {
     export_color_enum(m);
     export_result_enum(m);
