@@ -135,4 +135,4 @@ Please read the [changelog](CHANGELOG.md) to check any notable changes of this p
 
 ## Contributing
 
-Please read the [contribution guidelines](CONTRIBUTING.md) before starting work on a pull request.
+Please read the [contribution guidelines](docs/CONTRIBUTING.md) before starting work on a pull request.
