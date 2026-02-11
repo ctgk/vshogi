@@ -14,7 +14,7 @@ namespace
 
 void export_square_enum(nb::module_& m)
 {
-    nb::enum_<js::SquareEnum>(m, "Square")
+    nb::enum_<js::SquareEnum>(m, "Square", nb::is_arithmetic())
         .value("SQ_6A", js::SQ_6A)
         .value("SQ_5A", js::SQ_5A)
         .value("SQ_4A", js::SQ_4A)
@@ -91,7 +91,7 @@ void export_square_enum(nb::module_& m)
 
 void export_pieces(nb::module_& m)
 {
-    nb::enum_<js::PieceTypeEnum>(m, "Piece")
+    nb::enum_<js::PieceTypeEnum>(m, "Piece", nb::is_arithmetic())
         .value("FU", js::FU)
         .value("KE", js::KE)
         .value("GI", js::GI)
@@ -105,7 +105,7 @@ void export_pieces(nb::module_& m)
         .value("UM", js::UM)
         .value("RY", js::RY)
         .value("NA", js::NA);
-    nb::enum_<js::PieceEnum>(m, "BoardPiece")
+    nb::enum_<js::PieceEnum>(m, "BoardPiece", nb::is_arithmetic())
         .value("B_FU", js::B_FU)
         .value("B_KE", js::B_KE)
         .value("B_GI", js::B_GI)

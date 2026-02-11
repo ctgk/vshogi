@@ -12,13 +12,13 @@ namespace nb = nanobind;
 
 void export_color_enum(nb::module_& m)
 {
-    nb::enum_<vshogi::ColorEnum>(m, "Color")
+    nb::enum_<vshogi::ColorEnum>(m, "Color", nb::is_arithmetic())
         .value("BLACK", vshogi::BLACK)
         .value("WHITE", vshogi::WHITE);
 }
 void export_result_enum(nb::module_& m)
 {
-    nb::enum_<vshogi::ResultEnum>(m, "Result")
+    nb::enum_<vshogi::ResultEnum>(m, "Result", nb::is_arithmetic())
         .value("ONGOING", vshogi::ONGOING)
         .value("DRAW", vshogi::DRAW)
         .value("BLACK_WIN", vshogi::BLACK_WIN)

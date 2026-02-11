@@ -16,7 +16,7 @@ namespace
 
 void export_square_enum(nb::module_& m)
 {
-    nb::enum_<sg::SquareEnum>(m, "Square")
+    nb::enum_<sg::SquareEnum>(m, "Square", nb::is_arithmetic())
         .value("SQ_9A", sg::SQ_9A)
         .value("SQ_8A", sg::SQ_8A)
         .value("SQ_7A", sg::SQ_7A)
@@ -183,7 +183,7 @@ void export_square_enum(nb::module_& m)
 
 void export_pieces(nb::module_& m)
 {
-    nb::enum_<sg::PieceTypeEnum>(m, "Piece")
+    nb::enum_<sg::PieceTypeEnum>(m, "Piece", nb::is_arithmetic())
         .value("FU", sg::FU)
         .value("KY", sg::KY)
         .value("KE", sg::KE)
@@ -200,7 +200,7 @@ void export_pieces(nb::module_& m)
         .value("RY", sg::RY)
         .value("NA", sg::NA);
 
-    nb::enum_<sg::PieceEnum>(m, "BoardPiece")
+    nb::enum_<sg::PieceEnum>(m, "BoardPiece", nb::is_arithmetic())
         .value("B_FU", sg::B_FU)
         .value("B_KY", sg::B_KY)
         .value("B_KE", sg::B_KE)
