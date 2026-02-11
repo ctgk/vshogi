@@ -14,8 +14,8 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/string.h>
-#include <nanobind/stl/vector.h>
 #include <nanobind/stl/tuple.h>
+#include <nanobind/stl/vector.h>
 
 namespace pyvshogi
 {
@@ -118,7 +118,10 @@ inline void export_move(nanobind::module_& m)
     nb::class_<Move>(m, "Move")
         .def(
             "__init__",
-            [](Move* t, const Square src, const Square dst, const bool promote) {
+            [](Move* t,
+               const Square src,
+               const Square dst,
+               const bool promote) {
                 new (t) Move(MT::make_move(src, dst, promote));
             },
             nb::arg("src"),
@@ -179,11 +182,9 @@ inline void export_move(nanobind::module_& m)
             [](const Move& m) {
                 return nb::make_tuple(static_cast<int>(m.m_value));
             })
-        .def(
-            "__setstate__",
-            [](Move& m, nb::tuple t) {
-                new (&m) Move(nb::cast<move_t>(t[0]));
-            });
+        .def("__setstate__", [](Move& m, nb::tuple t) {
+            new (&m) Move(nb::cast<move_t>(t[0]));
+        });
 }
 
 template <class Parameters>
@@ -207,16 +208,22 @@ inline void export_state(nanobind::module_& m)
                      State::num_ranks,
                      State::num_files,
                      State::feature_channels()});
-                float* data = new float[shape[0] * shape[1] * shape[2] * shape[3]];
+                float* data
+                    = new float[shape[0] * shape[1] * shape[2] * shape[3]];
                 auto out = nb::ndarray<nb::numpy, float>(
-                    data, shape.size(), shape.data(), nb::capsule(data,
-                        [](void* p) noexcept { delete[] static_cast<float*>(p); }));
+                    data,
+                    shape.size(),
+                    shape.data(),
+                    nb::capsule(data, [](void* p) noexcept {
+                        delete[] static_cast<float*>(p);
+                    }));
                 self.to_feature_map(data);
                 return out;
             })
         .def(
             "to_dlshogi_features",
-            [](const State& self, nb::ndarray<nb::numpy, float, nb::c_contig> out) {
+            [](const State& self,
+               nb::ndarray<nb::numpy, float, nb::c_contig> out) {
                 self.to_feature_map(out.data());
             })
         .def(
@@ -229,8 +236,12 @@ inline void export_state(nanobind::module_& m)
                 const auto shape = std::vector<size_t>({size});
                 float* data = new float[size];
                 auto out = nb::ndarray<nb::numpy, float>(
-                    data, shape.size(), shape.data(), nb::capsule(data,
-                        [](void* p) noexcept { delete[] static_cast<float*>(p); }));
+                    data,
+                    shape.size(),
+                    shape.data(),
+                    nb::capsule(data, [](void* p) noexcept {
+                        delete[] static_cast<float*>(p);
+                    }));
                 std::fill(data, data + size, default_value);
                 for (auto [key, value] : action_proba) {
                     const auto m = nb::cast<Move>(key);
@@ -354,8 +365,12 @@ inline void export_game(nanobind::module_& m)
                 const auto shape = std::vector<size_t>({n, n});
                 float* data = new float[n * n];
                 auto out = nb::ndarray<nb::numpy, float>(
-                    data, shape.size(), shape.data(), nb::capsule(data,
-                        [](void* p) noexcept { delete[] static_cast<float*>(p); }));
+                    data,
+                    shape.size(),
+                    shape.data(),
+                    nb::capsule(data, [](void* p) noexcept {
+                        delete[] static_cast<float*>(p);
+                    }));
                 Game::attention_matrix(data);
                 return out;
             })
@@ -367,13 +382,15 @@ inline void export_game(nanobind::module_& m)
                 const auto shape = std::vector<size_t>({num_dir, n, n});
                 float* data = new float[num_dir * n * n];
                 auto out = nb::ndarray<nb::numpy, float>(
-                    data, shape.size(), shape.data(), nb::capsule(data,
-                        [](void* p) noexcept { delete[] static_cast<float*>(p); }));
+                    data,
+                    shape.size(),
+                    shape.data(),
+                    nb::capsule(data, [](void* p) noexcept {
+                        delete[] static_cast<float*>(p);
+                    }));
                 for (auto dir : C::direction_iterator()) {
                     Game::attention_matrix(
-                        &data[static_cast<int>(dir) * n * n],
-                        {dir},
-                        true);
+                        &data[static_cast<int>(dir) * n * n], {dir}, true);
                 }
                 return out;
             })
@@ -384,8 +401,12 @@ inline void export_game(nanobind::module_& m)
                 const auto shape = std::vector<size_t>({n, n});
                 float* data = new float[n * n];
                 auto out = nb::ndarray<nb::numpy, float>(
-                    data, shape.size(), shape.data(), nb::capsule(data,
-                        [](void* p) noexcept { delete[] static_cast<float*>(p); }));
+                    data,
+                    shape.size(),
+                    shape.data(),
+                    nb::capsule(data, [](void* p) noexcept {
+                        delete[] static_cast<float*>(p);
+                    }));
                 Game::attention_matrix(
                     data,
                     {vshogi::DIR_N,
@@ -401,8 +422,12 @@ inline void export_game(nanobind::module_& m)
                 const auto shape = std::vector<size_t>({n, n});
                 float* data = new float[n * n];
                 auto out = nb::ndarray<nb::numpy, float>(
-                    data, shape.size(), shape.data(), nb::capsule(data,
-                        [](void* p) noexcept { delete[] static_cast<float*>(p); }));
+                    data,
+                    shape.size(),
+                    shape.data(),
+                    nb::capsule(data, [](void* p) noexcept {
+                        delete[] static_cast<float*>(p);
+                    }));
                 Game::attention_matrix(
                     data,
                     {vshogi::DIR_NW,
@@ -419,16 +444,22 @@ inline void export_game(nanobind::module_& m)
                      Game::num_ranks,
                      Game::num_files,
                      Game::feature_channels()});
-                float* data = new float[shape[0] * shape[1] * shape[2] * shape[3]];
+                float* data
+                    = new float[shape[0] * shape[1] * shape[2] * shape[3]];
                 auto out = nb::ndarray<nb::numpy, float>(
-                    data, shape.size(), shape.data(), nb::capsule(data,
-                        [](void* p) noexcept { delete[] static_cast<float*>(p); }));
+                    data,
+                    shape.size(),
+                    shape.data(),
+                    nb::capsule(data, [](void* p) noexcept {
+                        delete[] static_cast<float*>(p);
+                    }));
                 self.to_feature_map(data);
                 return out;
             })
         .def(
             "to_dlshogi_features",
-            [](const Game& self, nb::ndarray<nb::numpy, float, nb::c_contig> out) {
+            [](const Game& self,
+               nb::ndarray<nb::numpy, float, nb::c_contig> out) {
                 self.to_feature_map(out.data());
             })
         .def(
@@ -441,8 +472,12 @@ inline void export_game(nanobind::module_& m)
                 const auto shape = std::vector<size_t>({size});
                 float* data = new float[size];
                 auto out = nb::ndarray<nb::numpy, float>(
-                    data, shape.size(), shape.data(), nb::capsule(data,
-                        [](void* p) noexcept { delete[] static_cast<float*>(p); }));
+                    data,
+                    shape.size(),
+                    shape.data(),
+                    nb::capsule(data, [](void* p) noexcept {
+                        delete[] static_cast<float*>(p);
+                    }));
                 std::fill(data, data + size, default_value);
                 for (auto [key, value] : visit_proba) {
                     const auto m = nb::cast<Move>(key);
@@ -454,7 +489,9 @@ inline void export_game(nanobind::module_& m)
             })
         .def(
             "masked_softmax",
-            [](const Game& self, const nb::ndarray<nb::numpy, float, nb::c_contig>& logits) -> nb::dict {
+            [](const Game& self,
+               const nb::ndarray<nb::numpy, float, nb::c_contig>& logits)
+                -> nb::dict {
                 nb::dict out;
                 const auto t = self.get_turn();
                 const auto& actions = self.get_legal_moves();
@@ -519,7 +556,8 @@ inline void export_az_searcher(nanobind::module_& m)
                Node* const leaf,
                Game& game,
                const float value,
-               const nb::ndarray<nb::numpy, float, nb::c_contig>& policy_logits) {
+               const nb::ndarray<nb::numpy, float, nb::c_contig>&
+                   policy_logits) {
                 self.simulate_expand_backprop(
                     leaf, game, value, policy_logits.data());
             })
@@ -569,8 +607,7 @@ inline void export_gaz_searcher(nanobind::module_& m)
         .def(
             "get_root",
             [](const Searcher& self) {
-                return nb::cast(
-                    self.get_root(), nb::rv_policy::reference);
+                return nb::cast(self.get_root(), nb::rv_policy::reference);
             })
         .def("keep_top_n_actions", &Searcher::keep_top_n_actions)
         .def(
@@ -587,7 +624,8 @@ inline void export_gaz_searcher(nanobind::module_& m)
                Node* const leaf,
                Game& game,
                const float value,
-               const nb::ndarray<nb::numpy, float, nb::c_contig>& policy_logits) {
+               const nb::ndarray<nb::numpy, float, nb::c_contig>&
+                   policy_logits) {
                 self.simulate_expand_backprop(
                     leaf, game, value, policy_logits.data());
             })
@@ -639,8 +677,7 @@ inline void export_dfpn_searcher(nanobind::module_& m)
                 return out;
             })
         .def("get_root", [](const Searcher& self) -> nb::object {
-            return nb::cast(
-                self.get_root(), nb::rv_policy::reference);
+            return nb::cast(self.get_root(), nb::rv_policy::reference);
         });
 }
 
