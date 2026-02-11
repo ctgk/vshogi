@@ -255,3 +255,6 @@ gha-creds-*.json
 tmp/
 assets/
 experiments/
+
+# CodeQL analysis artifacts
+_codeql_detected_source_root
