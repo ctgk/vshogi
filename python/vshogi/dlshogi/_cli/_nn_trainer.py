@@ -234,9 +234,12 @@ def _dataset(
             reverse=True,
         )
         kifu_length = _average_kifu_length(kifu_dir=kifu_dir) * fr
-        sample_frac = min(
-            kifu_fraction,
-            (max_dataset_size * 2) / (len(kifu_list) * kifu_length),
+        sample_frac = max(
+            min(
+                kifu_fraction,
+                (max_dataset_size * 2) / (len(kifu_list) * kifu_length),
+            ),
+            0.1,
         )
         if kifu_dir == kifu_dir_list[0]:
             print(f"{sample_frac=}")
