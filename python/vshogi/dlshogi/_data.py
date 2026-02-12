@@ -22,7 +22,6 @@ class Data:
     policy: dict[Move, float]
     value01: float
     weight: float = 1.0
-    count: int = 1
 
     def __post_init__(self):
         if self.sfen.count(' ') == 3:

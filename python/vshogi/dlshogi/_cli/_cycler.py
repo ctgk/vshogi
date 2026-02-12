@@ -6,6 +6,7 @@ from glob import glob
 
 import click as cl
 
+from vshogi.dlshogi import ReplayBuffer
 from vshogi.dlshogi._cli._nn_trainer import _train_step, _trainer_parameters
 from vshogi.dlshogi._cli._self_play_worker import (
     _compute_random_moves,
@@ -15,9 +16,10 @@ from vshogi.dlshogi._cli._self_play_worker import (
 )
 
 
-def _train(nth_cycle: int, **kwargs):
+def _train(buffer: ReplayBuffer, nth_cycle: int, **kwargs):
     weight_path = os.path.join(kwargs['output'], 'models/model_{:04d}.pth')
     _train_step(
+        buffer=buffer,
         model_path=weight_path.format(nth_cycle),
         prev_model_path=(
             None if nth_cycle == 0 else weight_path.format(nth_cycle - 1)
@@ -26,7 +28,6 @@ def _train(nth_cycle: int, **kwargs):
         network_hidden_channels=kwargs['train_hidden_channels'],
         network_bottleneck_channels=kwargs['train_bottleneck_channels'],
         network_backbone_blocks=kwargs['train_backbone_blocks'],
-        max_dataset_size=kwargs['train_dataset_size'],
         kifu_path_pattern=os.path.join(
             kwargs['output'],
             "datasets/dataset_*/kifu_*.tsv",
@@ -116,8 +117,12 @@ def _cycle_selfplay_and_train(**kwargs):
         return int(tflite_list[-1].split('_')[-1].split('.')[0]) + 1
 
     start = _resume_from()
+    buffer = ReplayBuffer(
+        buffer_size=kwargs["train_buffer_size"],
+        alpha=kwargs["train_buffer_decay"],
+    )
     if start == 0:
-        _train(nth_cycle=0, **kwargs)
+        _train(buffer=buffer, nth_cycle=0, **kwargs)
         start += 1
     else:
         print(f"Resume cycle from {start}")
@@ -145,6 +150,6 @@ def _cycle_selfplay_and_train(**kwargs):
                 max_random_moves=max_random_moves,
                 **kwargs,
             )
-            _train(nth_cycle=i, **kwargs)
+            _train(buffer=buffer, nth_cycle=i, **kwargs)
             if os.path.exists(tflite_path.format(i)):
                 break

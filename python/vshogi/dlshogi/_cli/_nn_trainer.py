@@ -6,6 +6,7 @@ import warnings
 from collections.abc import Callable
 from datetime import datetime
 from glob import glob
+from time import time
 
 import click as cl
 import numpy as np
@@ -14,6 +15,7 @@ import torch as th
 from tqdm import tqdm
 
 import vshogi as vs
+from vshogi.dlshogi import ReplayBuffer
 
 
 def _trainer_parameters(prefix: str = "") -> callable:
@@ -72,7 +74,19 @@ def _trainer_parameters(prefix: str = "") -> callable:
             ),
         ),
         cl.option(
-            f"--{prefix}dataset-size", default=100000, show_default=True
+            f"--{prefix}buffer-size",
+            default=100000,
+            show_default=True,
+            help=(
+                "Maximum size of the replay buffer for storing training "
+                "samples."
+            ),
+        ),
+        cl.option(
+            f"--{prefix}buffer-decay",
+            default=0.9,
+            show_default=True,
+            help="Decay factor for the replay buffer.",
         ),
         cl.option(
             f"--{prefix}per/--{prefix}no-per",
@@ -196,20 +210,8 @@ def _network_and_optimizer(
     return network, optimizer
 
 
-def _average_kifu_length(kifu_dir: str) -> float | None:
-    line_length_list = []
-    for path in glob(os.path.join(kifu_dir, 'kifu_*.tsv')):
-        if ('B' in path) or ('W' in path):
-            continue
-        with open(path, 'rb') as f:
-            line_length_list.append(sum(1 for _ in f) - 1)
-    if line_length_list:
-        return np.mean(line_length_list)
-    return None
-
-
 def _dataset(
-    max_dataset_size: int,
+    buffer: ReplayBuffer,
     kifu_path_pattern: str,
     *,
     kifu_fraction: float = 1.0,
@@ -218,32 +220,31 @@ def _dataset(
     default_result_rate: float = 1.0,
     value_func: Callable[[str], float] | None = None,
 ) -> th.utils.data.Dataset:
-    buffer = vs.dlshogi.ReplayBuffer(buffer_size=max_dataset_size)
+    buffer._first = None
+    if not hasattr(buffer, "_last"):
+        buffer._last = None
+    count: dict[str, int] = {}
     kifu_dir_list = sorted(
         glob('/'.join(kifu_path_pattern.split('/')[:-1])),
         reverse=True,
     )
+    start = time()
     for kifu_dir, fr in zip(
         kifu_dir_list,
         (0.8**i for i in range(len(kifu_dir_list))),
     ):
-        if fr < 0.01:
+        if fr < 0.01 or (time() - start) > 60:
             break
         kifu_list = sorted(
             glob(kifu_dir + '/' + kifu_path_pattern.split('/')[-1]),
             reverse=True,
         )
-        kifu_length = _average_kifu_length(kifu_dir=kifu_dir) * fr
-        sample_frac = max(
-            min(
-                kifu_fraction,
-                (max_dataset_size * 2) / (len(kifu_list) * kifu_length),
-            ),
-            0.1,
-        )
-        if kifu_dir == kifu_dir_list[0]:
-            print(f"{sample_frac=}")
         for kifu_path in kifu_list:
+            if buffer._first is None:
+                buffer._first = kifu_path
+            if buffer._last == kifu_path:
+                buffer._last = buffer._first
+                break
             df = vs.dlshogi.read_kifu(
                 kifu_path,
                 discount_factor=discount_factor,
@@ -266,35 +267,37 @@ def _dataset(
             df = df.sample(
                 **(
                     {"n": 1}
-                    if len(df) * sample_frac < 1
-                    else {"frac": sample_frac}
+                    if len(df) * kifu_fraction < 1
+                    else {"frac": kifu_fraction}
                 ),
                 weights="priority",
             )
             for _, row in df.iterrows():
-                buffer.add(
-                    vs.dlshogi.Data(
-                        sfen=row['sfen'],
-                        policy=row['policy'],
-                        value01=row['value01'],
-                        weight=row['weight'],
-                    )
+                data = vs.dlshogi.Data(
+                    sfen=row['sfen'],
+                    policy=row['policy'],
+                    value01=row['value01'],
+                    weight=row['weight'],
                 )
-                if buffer.is_full():
-                    break
-            if buffer.is_full():
+                buffer.add(data)
+                if data.sfen not in count:
+                    count[data.sfen] = 0
+                count[data.sfen] += 1
+            if (time() - start) > 60:
                 break
-        if buffer.is_full():
+        if (buffer._last == buffer._first) or (time() - start) > 60:
             break
-    summary = buffer.deduplicate()
+    buffer._last = buffer._first
     df_summary = pd.DataFrame(
         [
             {
-                'sfen': s,
-                'count': data['count'],
-                'value': 2 * data['value01'] - 1,
+                'sfen': sfen,
+                'count': v,
+                'value': (
+                    2 * getattr(buffer.get_ema_of(sfen), "value01", np.nan) - 1
+                ),
             }
-            for s, data in summary.items()
+            for sfen, v in count.items()
         ],
         columns=['sfen', 'count', 'value'],
     )
@@ -392,13 +395,13 @@ def _get_best_player_index(
 
 
 def _train_step(
+    buffer: ReplayBuffer,
     model_path: str,
     prev_model_path: str | None,
     shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
     network_hidden_channels: int,
     network_bottleneck_channels: int,
     network_backbone_blocks: int,
-    max_dataset_size: int,
     kifu_path_pattern: str,
     prioritized_experience_replay: bool,
     kifu_fraction: float,
@@ -452,8 +455,8 @@ def _train_step(
     else:
         value_func = None
 
-    dataset = _dataset(
-        max_dataset_size=max_dataset_size,
+    buffer = _dataset(
+        buffer=buffer,
         kifu_path_pattern=kifu_path_pattern,
         kifu_fraction=kifu_fraction,
         discount_factor=discount_factor,
@@ -461,7 +464,7 @@ def _train_step(
         default_result_rate=default_result_rate,
         value_func=value_func,
     )
-    if len(dataset) != 0:
+    if len(buffer) != 0:
         print(f"Start training: {model_path}")
         network.to(th.device(device))
         for state in optimizer.state.values():
@@ -470,7 +473,7 @@ def _train_step(
                     state[k] = v.to(th.device(device))
         _train(
             network,
-            dataset,
+            buffer,
             optimizer,
             minibatch_size=minibatch_size,
             epochs=epochs,
@@ -534,16 +537,20 @@ def _nn_trainer(**kwargs):
         return int(tflite_list[-1].split('_')[-1].split('.')[0]) + 1
 
     ii = _resume_from()
+    buffer = ReplayBuffer(
+        buffer_size=kwargs["buffer_size"],
+        alpha=kwargs["buffer_decay"],
+    )
     model_path = 'models/model_{:04d}.pth'
     while ii < 10000:
         _train_step(
+            buffer=buffer,
             model_path=model_path.format(ii),
             prev_model_path=None if ii == 0 else model_path.format(ii - 1),
             shogi_variant=kwargs['shogi'],
             network_hidden_channels=kwargs['hidden_channels'],
             network_bottleneck_channels=kwargs['bottleneck_channels'],
             network_backbone_blocks=kwargs['backbone_blocks'],
-            max_dataset_size=kwargs['dataset_size'],
             kifu_path_pattern="datasets/dataset_*/kifu_*.tsv",
             prioritized_experience_replay=kwargs["per"],
             kifu_fraction=kwargs['kifu_fraction'],
