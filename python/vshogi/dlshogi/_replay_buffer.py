@@ -7,19 +7,6 @@ from vshogi.minishogi._game import Game as MinishogiGame  # noqa: F401
 from vshogi.shogi._game import Game as StandardGame  # noqa: F401
 
 
-def _add_dicts(d1: dict, d2: dict) -> dict:
-    if (not d1) or (not d2):
-        return {}
-    out = {
-        k: d1.get(k, 0.0) + d2.get(k, 0.0)
-        for k in (set(d1.keys()) | set(d2.keys()))
-    }
-    if np.isclose(sum(out.values()), 0):
-        msg = f"Adding two invalid dictionaries: {d1} and {d2}"
-        raise ValueError(msg)
-    return out
-
-
 def _normalize(d: dict) -> dict:
     if not d:
         return d
@@ -35,28 +22,31 @@ class ReplayBuffer(th.utils.data.Dataset):
     Examples
     --------
     >>> from vshogi.minishogi import Move; import numpy as np
-    >>> b = ReplayBuffer(buffer_size=2)
+    >>> b = ReplayBuffer(buffer_size=2, alpha=0.5)
     >>> b.add(Data('4k/5/4P/5/5 b G 1', {Move('1c1b'): 1}, 1., 1.))
     >>> len(b)  # Note that the length is doubled
     2
-    >>> b.add(Data('4k/5/4P/5/5 b G 3', {}, 0.5, 0.9))
+    >>> b.add(Data('4k/5/4P/5/5 b G 3', {}, 0.5, 0.6))
     >>> len(b)
     2
     >>> b[0][2:]  # value01, weight
-    (array([0.75], dtype=float32), array(1.9, dtype=float32))
+    (array([0.75], dtype=float32), array(0.8, dtype=float32))
     """
 
-    def __init__(self, buffer_size: int = 100000):
+    def __init__(self, buffer_size: int = 100000, alpha: float = 0.9):
         """Initialize dataset class.
 
         Parameters
         ----------
         buffer_size : int
             Max size of the buffer
+        alpha : float
+            Decay rate to update duplicating data.
         """
         super().__init__()
         self._buffer: list[Data] = []
         self._buffer_size = buffer_size
+        self._alpha: float = alpha
         self._game_variant: str | None = None
 
     def add(self, data: Data):
@@ -73,28 +63,44 @@ class ReplayBuffer(th.utils.data.Dataset):
         )
         if index is not None:
             old = self._buffer.pop(index)
-            data = self._merge(old, data)
+            data = self._update(old, data)
         self._buffer.append(data)
         if self._game_variant is None:
             self._game_variant = self._infer_game_variant(data.sfen)
         while len(self._buffer) > self._buffer_size:
             self._buffer.pop(0)  # FIFO
 
-    @staticmethod
-    def _merge(a: Data, b: Data) -> Data:
+    def get(self, sfen: str) -> Data | None:
+        """Get data of the given SFEN game position.
+
+        Parameters
+        ----------
+        sfen : str
+            SFEN representation of the game position.
+
+        Returns
+        -------
+        Data | None
+            Data of the game position if found, otherwise None.
+        """
+        return next(
+            (b for b in self._buffer if b.sfen == sfen),
+            None,
+        )
+
+    def _update(self, a: Data, b: Data) -> Data:
         assert a.sfen == b.sfen
-        s = a.count + b.count
+        r: float = self._alpha  # rate of `a`
         return Data(
             sfen=a.sfen,
             policy={}
             if (not a.policy) or (not b.policy)
             else {
-                m: (a.count * a.policy[m] + b.count * b.policy[m]) / s
+                m: (r * a.policy[m] + (1 - r) * b.policy[m])
                 for m in set(a.policy.keys()) | set(b.policy.keys())
             },
-            value01=(a.value01 * a.count + b.value01 * b.count) / s,
-            weight=a.weight + b.weight,
-            count=s,
+            value01=(r * a.value01 + (1 - r) * b.value01),
+            weight=(r * a.weight + (1 - r) * b.weight),
         )
 
     def is_full(self) -> bool:
@@ -107,28 +113,10 @@ class ReplayBuffer(th.utils.data.Dataset):
         """
         return len(self._buffer) == self._buffer_size
 
-    def deduplicate(self) -> dict:
-        """Update value01 and policy by averaging all the data.
-
-        Returns
-        -------
-        dict
-            Summary.
-        """
-        summary: dict[str, dict] = {
-            d.sfen: {
-                "value01": d.value01,
-                "policy": d.policy,
-                "count": d.count,
-                "weight": d.weight,
-            }
-            for d in self._buffer
-        }
-        scale = 1 / np.mean([v["weight"] for v in summary.values()])
+    def normalize(self) -> None:
+        """Normalize policy distributions of all data."""
         for d in self._buffer:
-            d.weight /= scale
             d.policy = _normalize(d.policy)
-        return summary
 
     def __len__(self):
         """Return the length of the dataset."""
