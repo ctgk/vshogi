@@ -255,3 +255,7 @@ gha-creds-*.json
 tmp/
 assets/
 experiments/
+
+# CodeQL build artifacts
+cpp/_codeql_build_dir/
+_codeql_detected_source_root
