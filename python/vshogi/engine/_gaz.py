@@ -12,7 +12,7 @@ Value = float
 
 
 def _repr_node(n) -> str:
-    return f"Node(q={n.get_q_value(0, 0):.2f}, count={n.get_visit_count()})"
+    return f"Node(q={n.get_q_value():.2f}, count={n.get_visit_count()})"
 
 
 def _tree(

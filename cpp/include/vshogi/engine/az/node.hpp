@@ -63,6 +63,7 @@ public:
     Node* backprop(const float v, Node* const child);
 
 private:
+    float compute_v_pi(const uint min_visits) const;
     // select
     Node* select_best_or_random_child(const float c_puct, const float p_random);
     bool select_best_over_random(const float p_random);

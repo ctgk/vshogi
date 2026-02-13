@@ -29,11 +29,8 @@ float Node::get_q_value(const uint greedy_depth, const uint min_visits) const
 {
     if (m_is_mate || !m_child_1st)
         return m_q_value;
-    if (!greedy_depth || (m_child_1st->get_visit_count() < min_visits)) {
-        if (m_parent)
-            return m_q_value;
-        return compute_v_pi();
-    }
+    if (!greedy_depth || (m_child_1st->get_visit_count() < min_visits))
+        compute_v_pi();
     return -m_child_1st->get_q_value(greedy_depth - 1u, min_visits);
 }
 

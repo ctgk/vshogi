@@ -31,10 +31,23 @@ void Node::init(Node* const parent, const move_t& action, const float proba)
 
 float Node::get_q_value(const uint greedy_depth, const uint min_visits) const
 {
-    if (m_is_mate || !m_child_1st || !greedy_depth
-        || (m_child_1st->get_visit_count() < min_visits))
+    if (m_is_mate || !m_child_1st)
         return m_q_value;
+    if (!greedy_depth || (m_child_1st->get_visit_count() < min_visits))
+        return compute_v_pi(min_visits);
     return -m_child_1st->get_q_value(greedy_depth - 1u, min_visits);
+}
+
+float Node::compute_v_pi(const uint min_visits) const
+{
+    float out = 0.f;
+    for (const Node* c = get_child(); c; c = c->get_sibling()) {
+        if (c->get_visit_count() < min_visits)
+            out += c->get_proba() * m_q_value;
+        else
+            out += c->get_proba() * -c->get_q_value();
+    }
+    return out;
 }
 
 const Node* Node::get_child_of(const move_t& action) const

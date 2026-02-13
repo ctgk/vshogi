@@ -68,11 +68,11 @@ void export_az_node(nb::module_& m)
         .def(
             "get_visit_count_excluding_random",
             &Node::get_visit_count_excluding_random)
+        .def("get_q_value", nb::overload_cast<>(&Node::get_q_value, nb::const_))
         .def(
             "get_q_value",
-            [](const Node& self, const uint depth, const uint min_visits) {
-                return self.get_q_value(depth, min_visits);
-            })
+            nb::overload_cast<const uint, const uint>(
+                &Node::get_q_value, nb::const_))
         .def(
             "get_actions",
             [](const Node& self) {
@@ -97,6 +97,7 @@ void export_gaz_node(nb::module_& m)
     using Node = vshogi::engine::gaz::Node;
     nb::class_<Node>(m, "GazNode")
         .def("get_visit_count", &Node::get_visit_count)
+        .def("get_q_value", nb::overload_cast<>(&Node::get_q_value, nb::const_))
         .def(
             "get_q_value",
             nb::overload_cast<const uint, const uint>(

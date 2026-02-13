@@ -271,10 +271,13 @@ TEST(minishogi_node, explore_two_layer)
         DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(), 1e-3f);
         CHECK_TRUE(
             root.get_child_1st()->get_action() == MT::make_move(SQ_1E, SQ_1D));
-        DOUBLES_EQUAL((0.f + 0.9f + -0.5f) / 3.f, root.get_q_value(0), 1e-2f);
-        DOUBLES_EQUAL((0.9f + -0.5f) / 2.f, root.get_q_value(1u, 0u), 1e-2f);
+        DOUBLES_EQUAL(
+            0.9f * ((0.9f - 0.5f) * 0.5f) + 0.1f * (0.4 / 3.f),
+            root.get_q_value(0u, 1u),
+            1e-2f);
+        DOUBLES_EQUAL(
+            0.9f * -0.5f + 0.1f * 0.2f, root.get_q_value(1u, 1u), 1e-2f);
         DOUBLES_EQUAL(-0.5f, root.get_q_value(2, 0u), 1e-2f);
-        DOUBLES_EQUAL((0.9f + -0.5f) / 2.f, root.get_q_value(2, 2u), 1e-2f);
         DOUBLES_EQUAL(-0.5f, root.get_q_value(100, 0u), 1e-2f);
     }
     {

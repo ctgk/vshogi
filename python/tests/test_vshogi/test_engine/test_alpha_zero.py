@@ -54,6 +54,7 @@ def test_q_values_initial():
     searcher.set_game(game)
     searcher.search(budget=100)
     actual = searcher.get_q_values()
+    print(searcher._tree(depth=2, breadth=-1))
     print(actual)
     for a in actual.values():
         assert np.isclose(a, 0, rtol=0, atol=0.1)
@@ -109,6 +110,7 @@ def test_greedy_q_value():
     searcher = AlphaZero(random_pv_func)
     searcher.set_game(game)
     searcher.search(budget=100)
+    assert searcher.get_search_count() == 100
     action = searcher.select()
 
     print(searcher._tree(depth=3, breadth=2))
@@ -120,10 +122,6 @@ def test_greedy_q_value():
     assert np.isclose(
         searcher.get_q_value(greedy_depth=2, min_visits=0),
         searcher.get_q_values(greedy_depth=1)[action],
-    )
-    assert np.isclose(
-        searcher.get_q_value(greedy_depth=100, min_visits=100),
-        searcher.get_q_value(),
     )
 
     searcher._tree(depth=2, breadth=3)

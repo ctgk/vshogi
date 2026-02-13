@@ -11,9 +11,8 @@ Policy = np.ndarray
 Value = float
 
 
-def _repr_node(n, greedy_detph: int = 0) -> str:
-    d = greedy_detph
-    return f"Node(q{d}={n.get_q_value(d, 0):.2f}, count={n.get_visit_count()})"
+def _repr_node(n) -> str:
+    return f"Node(q={n.get_q_value():.2f}, count={n.get_visit_count()})"
 
 
 def _tree(
@@ -23,9 +22,8 @@ def _tree(
     breadth: int = 3,
     *,
     sort_key=lambda n: -n.get_visit_count(),
-    greedy_depth: int = 0,
 ) -> str:
-    out = _repr_node(root, greedy_detph=greedy_depth)
+    out = _repr_node(root)
     if depth == 0:
         return out
     children = [(a, root.get_child_of(a)) for a in root.get_actions()]
@@ -39,7 +37,6 @@ def _tree(
             depth - 1,
             breadth,
             sort_key=sort_key,
-            greedy_depth=greedy_depth,
         )
         if i == len(children) - 1:
             s = s.replace('\n', '\n    ')
@@ -312,7 +309,6 @@ class AlphaZero(Engine):
         pv_line: tp.List[tp.Union[Move, str]] = [],
         *,
         sort_key: callable = lambda n: -n.get_visit_count(),
-        greedy_depth: int = 0,
     ) -> str:
         node = self._searcher.get_root()
         if node is None:
@@ -335,5 +331,4 @@ class AlphaZero(Engine):
             depth,
             breadth,
             sort_key=sort_key,
-            greedy_depth=greedy_depth,
         )
