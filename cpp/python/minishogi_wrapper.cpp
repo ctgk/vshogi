@@ -113,7 +113,6 @@ void export_pieces(nb::module_& m)
 
 NB_MODULE(_minishogi, m)
 {
-    nb::set_leak_warnings(false);
     export_minishogi(m);
 }
 
