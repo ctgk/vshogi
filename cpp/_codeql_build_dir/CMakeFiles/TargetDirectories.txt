@@ -1,0 +1,6 @@
+/home/runner/work/vshogi/vshogi/cpp/_codeql_build_dir/CMakeFiles/vshogi.dir
+/home/runner/work/vshogi/vshogi/cpp/_codeql_build_dir/CMakeFiles/edit_cache.dir
+/home/runner/work/vshogi/vshogi/cpp/_codeql_build_dir/CMakeFiles/rebuild_cache.dir
+/home/runner/work/vshogi/vshogi/cpp/_codeql_build_dir/tests/CMakeFiles/test_vshogi.dir
+/home/runner/work/vshogi/vshogi/cpp/_codeql_build_dir/tests/CMakeFiles/edit_cache.dir
+/home/runner/work/vshogi/vshogi/cpp/_codeql_build_dir/tests/CMakeFiles/rebuild_cache.dir

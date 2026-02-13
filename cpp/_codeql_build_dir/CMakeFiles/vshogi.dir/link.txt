@@ -1,0 +1,2 @@
+/usr/bin/ar qc libvshogi.a CMakeFiles/vshogi.dir/src/vshogi/engine/az/node.cpp.o CMakeFiles/vshogi.dir/src/vshogi/engine/gaz/node.cpp.o CMakeFiles/vshogi.dir/src/vshogi/variants/judkins_shogi.cpp.o CMakeFiles/vshogi.dir/src/vshogi/variants/minishogi.cpp.o CMakeFiles/vshogi.dir/src/vshogi/variants/shogi.cpp.o
+/usr/bin/ranlib libvshogi.a
