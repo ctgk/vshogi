@@ -236,6 +236,7 @@ void export_pieces(nb::module_& m)
 
 NB_MODULE(_shogi, m)
 {
+    nb::set_leak_warnings(false);
     export_shogi(m);
 }
 

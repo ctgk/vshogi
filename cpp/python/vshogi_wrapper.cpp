@@ -132,6 +132,7 @@ void export_gaz_node(nb::module_& m)
 
 NB_MODULE(_vshogi, m)
 {
+    nb::set_leak_warnings(false);
     export_color_enum(m);
     export_result_enum(m);
     export_dfpn_node(m);

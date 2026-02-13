@@ -137,6 +137,7 @@ void export_pieces(nb::module_& m)
 
 NB_MODULE(_judkins_shogi, m)
 {
+    nb::set_leak_warnings(false);
     export_judkins_shogi(m);
 }
 

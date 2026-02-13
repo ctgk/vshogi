@@ -354,8 +354,8 @@ inline void export_game(nanobind::module_& m)
                 return self.apply_discard(m.m_value);
             })
         .def("undo_discard", &Game::undo_discard)
-        .def_static("ranks", []() { return &Game::num_ranks; })
-        .def_static("files", []() { return &Game::num_files; })
+        .def_static("ranks", []() { return Game::num_ranks; })
+        .def_static("files", []() { return Game::num_files; })
         .def_static("feature_channels", &Game::feature_channels)
         .def_static("num_dlshogi_policy", &Game::num_dlshogi_policy)
         .def_static(
