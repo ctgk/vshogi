@@ -53,7 +53,6 @@ set(VSHOGI_INCLUDE_DIRS
 nanobind_add_module(
     _vshogi
     STABLE_ABI
-    NB_STATIC
     ${VSHOGI_SOURCES}
     vshogi_wrapper.cpp
 )
@@ -69,7 +68,6 @@ install(TARGETS _vshogi LIBRARY DESTINATION .)
 nanobind_add_module(
     _minishogi
     STABLE_ABI
-    NB_STATIC
     ${VSHOGI_SOURCES}
     minishogi_wrapper.cpp
 )
@@ -85,7 +83,6 @@ install(TARGETS _minishogi LIBRARY DESTINATION minishogi)
 nanobind_add_module(
     _judkins_shogi
     STABLE_ABI
-    NB_STATIC
     ${VSHOGI_SOURCES}
     judkins_shogi_wrapper.cpp
 )
@@ -101,7 +98,6 @@ install(TARGETS _judkins_shogi LIBRARY DESTINATION judkins_shogi)
 nanobind_add_module(
     _shogi
     STABLE_ABI
-    NB_STATIC
     ${VSHOGI_SOURCES}
     shogi_wrapper.cpp
 )
