@@ -226,16 +226,17 @@ move_t Searcher<P>::select_action() const
 template <class P>
 move_t Searcher<P>::select_action(const float temperature) const
 {
-    std::vector<float> probas{};
-    probas.reserve(m_nodes[0].count_childs());
+    const uint n = m_nodes[0].count_childs();
+    if (n == 0u)
+        return static_cast<move_t>(0);
+    std::vector<float> probas(n);
     m_nodes[0].improved_policy(probas.data(), temperature);
     const float* p = probas.data();
     float sample = dist01(random_engine);
-    for (auto c = &m_nodes[1]; &m_nodes[0] == c->get_parent(); ++c) {
+    for (uint i = 0u; i < n; ++i) {
         if (sample < *p)
-            return c->get_action();
+            return m_nodes[1u + i].get_action();
         sample -= *p++;
-        assert((p - probas.data()) < probas.size());
     }
     assert(false);
     return m_nodes[1].get_action(); // just in case for numerical instability

@@ -154,7 +154,7 @@ TEST(test_gaz_searcher, select_action)
 {
     Game g{};
     {
-        Searcher searcher{};
+        Searcher searcher{1000u};
         const auto n = searcher.search(g);
         CHECK_EQUAL(&searcher.get_root(), n);
         searcher.simulate_expand_backprop(n, g, 0.f);
@@ -166,16 +166,17 @@ TEST(test_gaz_searcher, select_action)
         CHECK_EQUAL(1u, actual.size());
     }
     {
-        Searcher searcher{};
+        Searcher searcher{1000u};
         searcher.simulate_expand_backprop(searcher.search(g), g, 0.f);
+        CHECK_EQUAL(14u, searcher.get_root().count_childs());
         searcher.keep_top_n_actions(2u);
         std::set<move_t> actual{};
         for (uint ii = 1000; ii--;)
             actual.emplace(searcher.select_action(10.f));
-        CHECK_EQUAL(g.get_legal_moves().size(), actual.size());
+        CHECK_EQUAL(14u, actual.size());
     }
     {
-        Searcher searcher{};
+        Searcher searcher{1000u};
         searcher.simulate_expand_backprop(searcher.search(g), g, 0.f);
         std::set<move_t> actual{};
         for (uint ii = 1000; ii--;)
@@ -183,7 +184,7 @@ TEST(test_gaz_searcher, select_action)
         CHECK_EQUAL(1u, actual.size());
     }
     {
-        Searcher searcher{};
+        Searcher searcher{1000u};
         searcher.simulate_expand_backprop(searcher.search(g), g, 0.f);
         std::set<move_t> actual{};
         for (uint ii = 1000; ii--;)
