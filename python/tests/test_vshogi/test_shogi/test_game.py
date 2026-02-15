@@ -131,7 +131,7 @@ def test_get_diagonal_attention():
 
 
 @pytest.mark.parametrize(
-    'game, expected',
+    'sfen, expected',
     [
         (
             # Turn: BLACK
@@ -142,9 +142,9 @@ def test_get_diagonal_attention():
             #   +---+---+---+---+---+---+---+---+---+
             # B |   |   |-GI|   |-KI|   |   |   |-KY|
             #   +---+---+---+---+---+---+---+---+---+
-            # C |+FU|-FU|-FU|-FU|-FU|   |   |   |   |
+            # C |   |   |   |   |   |   |   |   |   |
             #   +---+---+---+---+---+---+---+---+---+
-            # D |+KE|-KE|   |   |-GI|   |-FU|   |-FU|
+            # D |   |   |   |   |   |   |   |   |   |
             #   +---+---+---+---+---+---+---+---+---+
             # E |   |   |   |   |   |   |   |   |   |
             #   +---+---+---+---+---+---+---+---+---+
@@ -157,72 +157,58 @@ def test_get_diagonal_attention():
             # I |   |+KE|+KI|   |+KI|   |   |   |-UM|
             #   +---+---+---+---+---+---+---+---+---+
             # Black: FU,KA
-            shogi.Game(
-                '1nkg3+R1/2s1g3l/Ppppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/'
-                '1NG1G3+b b BP2l4p'
-            ),
+            '1nkg3+R1/2s1g3l/9/9/9/2PS3PP/1P1PP4/2KS1L+r2/1NG1G3+b b BP2l4p',
             (
                 {
-                    shogi.FU: 1,
-                    shogi.KY: 0,
-                    shogi.KE: 0,
-                    shogi.GI: 0,
-                    shogi.KI: 0,
-                    shogi.KA: 1,
-                    shogi.HI: 0,
+                    "FU": 1,
+                    "KY": 0,
+                    "KE": 0,
+                    "GI": 0,
+                    "KI": 0,
+                    "KA": 1,
+                    "HI": 0,
                 },
                 {
-                    shogi.FU: 4,
-                    shogi.KY: 2,
-                    shogi.KE: 0,
-                    shogi.GI: 0,
-                    shogi.KI: 0,
-                    shogi.KA: 0,
-                    shogi.HI: 0,
+                    "FU": 4,
+                    "KY": 2,
+                    "KE": 0,
+                    "GI": 0,
+                    "KI": 0,
+                    "KA": 0,
+                    "HI": 0,
                 },
             ),
         ),
     ],
 )
-def test_stand(game, expected):
-    assert game.stand(shogi.BLACK) == expected[0]
-    assert game.stand(shogi.WHITE) == expected[1]
+def test_stand(sfen, expected):
+    game = shogi.Game(sfen)
+    assert game.stand(shogi.BLACK) == {
+        getattr(shogi.Piece, k): v for k, v in expected[0].items()
+    }
+    assert game.stand(shogi.WHITE) == {
+        getattr(shogi.Piece, k): v for k, v in expected[1].items()
+    }
 
 
-@pytest.mark.parametrize(
-    'game, index, expected',
-    [
-        (
-            shogi.Game(
-                '1nkg3+R1/2s1g3l/Ppppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/'
-                '1NG1G3+b b BP2l4p',
-            ).apply(['9c9b+', '7c7d']),
-            0,
-            '1nkg3+R1/2s1g3l/Ppppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/1NG1G3+b'
-            ' b BP2l4p',
-        ),
-        (
-            shogi.Game(
-                '1nkg3+R1/2s1g3l/Ppppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/'
-                '1NG1G3+b b BP2l4p',
-            ).apply(['9c9b+', '7c7d']),
-            1,
-            '1nkg3+R1/+P1s1g3l/1pppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/'
-            '1NG1G3+b w BP2l4p',
-        ),
-        (
-            shogi.Game(
-                '1nkg3+R1/2s1g3l/Ppppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/'
-                '1NG1G3+b b BP2l4p',
-            ).apply(['9c9b+', '7c7d']),
-            -1,
-            '1nkg3+R1/+P1s1g3l/1pppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/'
-            '1NG1G3+b w BP2l4p',
-        ),
-    ],
-)
-def test_get_sfen_at(game: shogi.Game, index, expected):
-    assert game.get_sfen_at(index, False) == expected
+def test_get_sfen_at():
+    game = shogi.Game(
+        '1nkg3+R1/2s1g3l/Ppppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/1NG1G3+b b '
+        'BP2l4p'
+    )
+    game.apply(['9c9b+', '7c7d'])
+    assert game.get_sfen_at(0, False) == (
+        '1nkg3+R1/2s1g3l/Ppppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/1NG1G3+b b '
+        'BP2l4p'
+    )
+    assert game.get_sfen_at(1, False) == (
+        '1nkg3+R1/+P1s1g3l/1pppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/1NG1G3+b '
+        'w BP2l4p'
+    )
+    assert game.get_sfen_at(-1, False) == (
+        '1nkg3+R1/+P1s1g3l/1pppp4/Nn2s1p1p/9/2PS3PP/1P1PP4/2KS1L+r2/1NG1G3+b '
+        'w BP2l4p'
+    )
 
 
 def test_array_black():
@@ -553,53 +539,50 @@ def test_array_white():
 
 
 @pytest.mark.parametrize(
-    'game, move, expected',
+    'sfen, policy, expected',
     [
         (
-            shogi.Game(),
-            shogi.Move(shogi.G2, shogi.F2),
-            np.eye(2187)[int(shogi.F2) * (10 * 2 + 7) + 6],
+            None,
+            {"2g2f": 1},
+            np.eye(2187)[14 * (10 * 2 + 7) + 6],
         ),
         (
-            shogi.Game('9/9/1k7/9/9/9/9/9/8K w -'),
-            shogi.Move(shogi.C8, shogi.D8),
-            np.eye(2187)[int(shogi.F2) * (10 * 2 + 7) + 6],
+            '9/9/1k7/9/9/9/9/9/8K w -',
+            {"8c8d": 1},
+            np.eye(2187)[14 * (10 * 2 + 7) + 6],
         ),
         (
-            shogi.Game(),
-            {shogi.Move('2g2f'): 1, shogi.Move('7g7f'): 1},
+            None,
+            {"2g2f": 1, "5i6h": 1},
             0.5
             * (
-                np.eye(2187)[int(shogi.F2) * (10 * 2 + 7) + 6]
-                + np.eye(2187)[int(shogi.F7) * (10 * 2 + 7) + 6]
-            ),
-        ),
-        (
-            shogi.Game('9/9/9/9/9/9/9/9/9 w - 1'),
-            {shogi.Move('8c8d'): 1, shogi.Move('3c3d'): 1},
-            0.5
-            * (
-                np.eye(2187)[int(shogi.F2) * (10 * 2 + 7) + 6]
-                + np.eye(2187)[int(shogi.F7) * (10 * 2 + 7) + 6]
+                np.eye(2187)[14 * (10 * 2 + 7) + 6]
+                + np.eye(2187)[52 * (10 * 2 + 7) + 7]
             ),
         ),
     ],
 )
-def test_to_dlshogi_policy(game, move, expected):
-    actual = game.to_dlshogi_policy(move)
+def test_to_dlshogi_policy(sfen, policy, expected):
+    game = shogi.Game(sfen)
+    policy = {shogi.Move(k): v for k, v in policy.items()}
+    actual = game.to_dlshogi_policy(policy)
     assert np.allclose(actual, expected, rtol=0, atol=1e-2)
 
 
 @pytest.mark.parametrize(
-    "game, expected",
+    "sfen, expected",
     [
-        (shogi.Game(), shogi.WHITE_WIN),
-        (shogi.Game().apply('2f2g'), shogi.BLACK_WIN),
+        (None, "WHITE_WIN"),
+        (
+            "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPP1P/1B5R1/LNSGKGSNL w p 2",
+            "BLACK_WIN",
+        ),
     ],
 )
-def test_resign(game, expected):
+def test_resign(sfen, expected):
+    game = shogi.Game(sfen)
     game.resign()
-    assert game.result == expected
+    assert game.result == getattr(shogi.Result, expected)
 
 
 if __name__ == '__main__':
