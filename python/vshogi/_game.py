@@ -415,7 +415,11 @@ class Game(abc.ABC):
         >>> g.undo()
         Game(sfen="rbsgk/4p/5/P4/KGSBR b - 1")
         """
+        if self.ply() == 0:
+            raise ValueError("Failed to undo: No moves to undo.")
         self._game.undo()
+        self._move_list.pop()
+        self._sfen_list.pop()
         return self
 
     def is_legal(self, move: Move | str) -> bool:
