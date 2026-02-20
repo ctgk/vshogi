@@ -14,8 +14,25 @@ def test_read_kifu():
         'kifu_00000.tsv',
     )
     df = read_kifu(kifu_path, default_result_rate=1.0)
+    print(df)
     assert np.isclose(df['z_weight'][0], 0.0)
+    assert np.isclose(df['z_weight'][1], 0.0)
+    assert np.isclose(df["z_weight"][30], 0.0)
+    assert np.isclose(df['z_weight'][31], 1.0)
+    assert np.isclose(df['z_weight'][38], 1.0)
+    assert np.isclose(df['z_weight'][len(df) - 1], 0.0)
+
+    df = read_kifu(
+        kifu_path,
+        default_result_rate=1.0,
+        always_backup_result=True,
+    )
+    print(df)
+    assert np.isclose(df['z_weight'][0], 1.0)
     assert np.isclose(df['z_weight'][1], 1.0)
+    assert np.isclose(df["z_weight"][30], 1.0)
+    assert np.isclose(df['z_weight'][31], 1.0)
+    assert np.isclose(df['z_weight'][38], 1.0)
     assert np.isclose(df['z_weight'][len(df) - 1], 0.0)
 
 

@@ -36,6 +36,7 @@ def _train(buffer: ReplayBuffer, nth_cycle: int, **kwargs):
         kifu_fraction=kwargs['train_kifu_fraction'],
         discount_factor=kwargs['train_discount_factor'],
         importance_decay=kwargs['train_importance_decay'],
+        always_backup_result=kwargs["train_backup_result"] == "always",
         default_result_rate=kwargs['train_default_result_rate'],
         minibatch_size=kwargs['train_minibatch_size'],
         learning_rate=kwargs['train_learning_rate'],

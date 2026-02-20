@@ -13,6 +13,7 @@ def read_kifu(
     importance_decay: float = 1.0,
     default_result_rate: float = 1.0,
     tail_fraction: float | None = None,
+    always_backup_result: bool = False,
 ) -> pd.DataFrame:
     """Return dataframe of Shogi kifu.
 
@@ -28,6 +29,9 @@ def read_kifu(
         `value = result_rate * result + (1 - result_rate) * q_value`
     tail_fraction : float, optional
         Return fraction of the dataframe from tail if given, by default None.
+    always_backup_result : bool, optional
+        Whether to backup result even if the move is not the best one,
+        by default False.
 
     Returns
     -------
@@ -50,10 +54,16 @@ def read_kifu(
     df['weight'] = _compute_weight(df, importance_decay)
     if tail_fraction is not None:
         df = df.tail(int(total_ply * tail_fraction))
+        df.reset_index(drop=True, inplace=True)
     if len(df) == 0:
         return df
     df['policy'] = _preprocess_policy(df, move_class)
-    df['z_weight'] = _compute_z_weight(df, default_result_rate, move_class)
+    df['z_weight'] = _compute_z_weight(
+        df,
+        default_result_rate,
+        move_class,
+        always_backup_result=always_backup_result,
+    )
     df['value'] = (
         df['z_weight']
         * df['result']
@@ -68,19 +78,33 @@ def _compute_z_weight(
     df: pd.DataFrame,
     default_result_rate: float,
     move_class: type,
-) -> pd.Series:
-    return df.apply(
-        lambda row: (
-            0.0
-            if (
-                row['policy'] == {}
-                or move_class(row['move'])
-                != max(row['policy'], key=row['policy'].get)
-            )
-            else default_result_rate
-        ),
-        axis=1,
-    )
+    *,
+    always_backup_result: bool = False,
+) -> list[float]:
+    policy: list[dict] = df["policy"].to_list()
+    if not always_backup_result:
+        is_best: list[bool] = df.apply(
+            lambda row: row["policy"] == {}
+            or (
+                move_class(row["move"])
+                == max(row["policy"], key=row["policy"].get)
+            ),
+            axis=1,
+        ).values.tolist()
+        is_all_best_later_turns: list[bool] = [
+            all(is_best[i:]) for i in range(len(is_best))
+        ]
+    else:
+        is_all_best_later_turns = [True for _ in policy]
+    assert len(policy) == len(is_all_best_later_turns)
+    return [
+        0.0
+        if policy[i] == {}
+        else default_result_rate
+        if is_all_best_later_turns[i]
+        else 0.0
+        for i in range(len(policy))
+    ]
 
 
 def _compute_weight(df: pd.DataFrame, importance_decay: float) -> np.ndarray:

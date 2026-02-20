@@ -114,6 +114,12 @@ def _trainer_parameters(prefix: str = "") -> callable:
             show_default=True,
         ),
         cl.option(
+            f"--{prefix}backup-result",
+            type=cl.Choice(["always", "best"]),
+            default="best",
+            show_default=True,
+        ),
+        cl.option(
             f"--{prefix}default-result-rate",
             default=0.5,
             show_default=True,
@@ -217,6 +223,7 @@ def _dataset(
     kifu_fraction: float = 1.0,
     discount_factor: float = 1.0,
     importance_decay: float = 1.0,
+    always_backup_result: bool = False,
     default_result_rate: float = 1.0,
     value_func: Callable[[str], float] | None = None,
 ) -> th.utils.data.Dataset:
@@ -251,6 +258,7 @@ def _dataset(
                 importance_decay=importance_decay,
                 default_result_rate=default_result_rate,
                 tail_fraction=fr,
+                always_backup_result=always_backup_result,
             )
             if len(df) == 0:
                 continue
@@ -407,6 +415,7 @@ def _train_step(
     kifu_fraction: float,
     discount_factor: float,
     importance_decay: float,
+    always_backup_result: bool,
     default_result_rate: float,
     minibatch_size: int,
     learning_rate: float,
@@ -461,6 +470,7 @@ def _train_step(
         kifu_fraction=kifu_fraction,
         discount_factor=discount_factor,
         importance_decay=importance_decay,
+        always_backup_result=always_backup_result,
         default_result_rate=default_result_rate,
         value_func=value_func,
     )
@@ -556,6 +566,7 @@ def _nn_trainer(**kwargs):
             kifu_fraction=kwargs['kifu_fraction'],
             discount_factor=kwargs['discount_factor'],
             importance_decay=kwargs['importance_decay'],
+            always_backup_result=kwargs["backup_result"] == "always",
             default_result_rate=kwargs['default_result_rate'],
             minibatch_size=kwargs['minibatch_size'],
             learning_rate=kwargs['learning_rate'],
