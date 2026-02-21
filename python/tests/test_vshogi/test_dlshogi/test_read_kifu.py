@@ -13,7 +13,7 @@ def test_read_kifu():
         os.path.dirname(os.path.abspath(__file__)),
         'kifu_00000.tsv',
     )
-    df = read_kifu(kifu_path, default_result_rate=1.0)
+    df = read_kifu(kifu_path, result_backup_rate=1.0)
     print(df)
     assert np.isclose(df['z_weight'][0], 0.0)
     assert np.isclose(df['z_weight'][1], 0.0)
@@ -24,7 +24,7 @@ def test_read_kifu():
 
     df = read_kifu(
         kifu_path,
-        default_result_rate=1.0,
+        result_backup_rate=1.0,
         always_backup_result=True,
     )
     print(df)

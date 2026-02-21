@@ -120,8 +120,9 @@ def _trainer_parameters(prefix: str = "") -> callable:
             show_default=True,
         ),
         cl.option(
-            f"--{prefix}default-result-rate",
-            default=0.5,
+            # f"--{prefix}default-result-rate",
+            f"--{prefix}result-backup-rate",
+            default=0.1,
             show_default=True,
         ),
         cl.option(f"--{prefix}minibatch-size", default=32, show_default=True),
@@ -224,7 +225,7 @@ def _dataset(
     discount_factor: float = 1.0,
     importance_decay: float = 1.0,
     always_backup_result: bool = False,
-    default_result_rate: float = 1.0,
+    result_backup_rate: float = 1.0,
     value_func: Callable[[str], float] | None = None,
 ) -> th.utils.data.Dataset:
     buffer._first = None
@@ -256,7 +257,7 @@ def _dataset(
                 kifu_path,
                 discount_factor=discount_factor,
                 importance_decay=importance_decay,
-                default_result_rate=default_result_rate,
+                result_backup_rate=result_backup_rate,
                 tail_fraction=fr,
                 always_backup_result=always_backup_result,
             )
@@ -416,7 +417,7 @@ def _train_step(
     discount_factor: float,
     importance_decay: float,
     always_backup_result: bool,
-    default_result_rate: float,
+    result_backup_rate: float,
     minibatch_size: int,
     learning_rate: float,
     epochs: int,
@@ -471,7 +472,7 @@ def _train_step(
         discount_factor=discount_factor,
         importance_decay=importance_decay,
         always_backup_result=always_backup_result,
-        default_result_rate=default_result_rate,
+        result_backup_rate=result_backup_rate,
         value_func=value_func,
     )
     if len(buffer) != 0:
@@ -567,7 +568,7 @@ def _nn_trainer(**kwargs):
             discount_factor=kwargs['discount_factor'],
             importance_decay=kwargs['importance_decay'],
             always_backup_result=kwargs["backup_result"] == "always",
-            default_result_rate=kwargs['default_result_rate'],
+            result_backup_rate=kwargs['result_backup_rate'],
             minibatch_size=kwargs['minibatch_size'],
             learning_rate=kwargs['learning_rate'],
             epochs=0 if ii == 0 else kwargs['epochs'],

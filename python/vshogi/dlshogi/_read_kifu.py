@@ -11,7 +11,7 @@ def read_kifu(
     *,
     discount_factor: float = 1.0,
     importance_decay: float = 1.0,
-    default_result_rate: float = 1.0,
+    result_backup_rate: float = 1.0,
     tail_fraction: float | None = None,
     always_backup_result: bool = False,
 ) -> pd.DataFrame:
@@ -25,7 +25,7 @@ def read_kifu(
         Discount factor of result value, by default 1.
     importance_decay : float, optional
         Decay factor of data importance of each game position, by default 1.
-    default_result_rate : float, optional
+    result_backup_rate : float, optional
         `value = result_rate * result + (1 - result_rate) * q_value`
     tail_fraction : float, optional
         Return fraction of the dataframe from tail if given, by default None.
@@ -60,7 +60,7 @@ def read_kifu(
     df['policy'] = _preprocess_policy(df, move_class)
     df['z_weight'] = _compute_z_weight(
         df,
-        default_result_rate,
+        result_backup_rate,
         move_class,
         always_backup_result=always_backup_result,
     )
@@ -76,7 +76,7 @@ def read_kifu(
 
 def _compute_z_weight(
     df: pd.DataFrame,
-    default_result_rate: float,
+    result_backup_rate: float,
     move_class: type,
     *,
     always_backup_result: bool = False,
@@ -100,7 +100,7 @@ def _compute_z_weight(
     return [
         0.0
         if policy[i] == {}
-        else default_result_rate
+        else result_backup_rate
         if is_all_best_later_turns[i]
         else 0.0
         for i in range(len(policy))
