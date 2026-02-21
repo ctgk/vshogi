@@ -116,7 +116,7 @@ move_t Searcher<P>::select_action(const float temperature) const
             return ch->get_action();
         s -= p;
     }
-    return ch->get_action(); // For numerical instability.
+    return root.get_child()->get_action(); // For numerical instability.
 }
 
 template <class P>

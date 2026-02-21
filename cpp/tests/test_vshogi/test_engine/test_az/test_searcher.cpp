@@ -365,6 +365,30 @@ TEST(minishogi_searcher, apply_no_child)
     CHECK_EQUAL(&az.get_root(), c->get_parent());
 }
 
+TEST_GROUP (test_minishogi_searcher_mock_dist) {
+    std::uniform_real_distribution<float> dist01_backup;
+    void setup()
+    {
+        dist01_backup = vshogi::dist01;
+        vshogi::dist01 = std::uniform_real_distribution<float>(1.2f, 1.2f);
+    }
+    void teardown()
+    {
+        vshogi::dist01 = dist01_backup;
+    }
+};
+
+TEST(test_minishogi_searcher_mock_dist, select_action_edge_case)
+{
+    auto g = Game();
+    auto az = Searcher(100u);
+    const auto n = az.search(g, 4.f, 1.f);
+    if (n != nullptr)
+        az.simulate_expand_backprop(n, g, 0.f, zeros);
+    const auto actual = az.select_action(1.f);
+    CHECK_TRUE(g.is_legal(actual));
+}
+
 } // namespace test_minishogi
 
 namespace test_judkins_shogi
