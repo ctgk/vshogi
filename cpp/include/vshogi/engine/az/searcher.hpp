@@ -96,7 +96,10 @@ move_t Searcher<P>::select_action(const float temperature) const
 {
     constexpr float eps = 1.f;
     const auto& root = m_nodes.front();
-    std::vector<float> probas(root.count_childs());
+    const uint n = root.count_childs();
+    if (n == 0u)
+        return static_cast<move_t>(0);
+    std::vector<float> probas(n);
     const Node* ch = root.get_child();
     for (uint ii = 0u; ch; ch = ch->get_sibling()) {
         const auto v

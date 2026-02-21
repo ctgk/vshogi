@@ -335,5 +335,15 @@ def test_debug():
     assert np.isclose(mcts.get_q_value(), 1.0)
 
 
+def test_select_before_search():
+    g = shogi.Game()
+    player = AlphaZero()
+    player.set_game(g)
+    with pytest.raises(ValueError):
+        player.select()
+    with pytest.raises(ValueError):
+        player.select(temperature=1.0)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

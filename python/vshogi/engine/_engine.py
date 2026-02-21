@@ -93,7 +93,14 @@ class Engine(abc.ABC):
         Move
             Selected action.
         """
-        return self._select(temperature)
+        action = self._select(temperature)
+        if hash(action) == 0:
+            msg = (
+                "Selected invalid action (=0). "
+                "Make sure you to call `search()` before `select()`."
+            )
+            raise ValueError(msg)
+        return action
 
     def get_mate_moves(self) -> list[Move] | None:
         """Return a sequence of mate moves if found one.
