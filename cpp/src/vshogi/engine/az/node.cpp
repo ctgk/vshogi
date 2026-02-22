@@ -181,8 +181,10 @@ void Node::simulate_mate_and_expand(Node*& next, const move_t& action)
         ++next;
         next->init_if_not_end();
     }
-    m_child_1st->m_q_value = -1.f;
-    m_child_1st->m_is_mate = true;
+    if (m_child_1st) { // m_child_1st may be nullptr if the tree if full.
+        m_child_1st->m_q_value = -1.f;
+        m_child_1st->m_is_mate = true;
+    }
 }
 
 void Node::update_most_visited_child(Node* const candidate)

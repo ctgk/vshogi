@@ -17,7 +17,7 @@ using NT = vshogi::Notation<Parameters>;
 using Node = vshogi::engine::az::Node;
 using Game = vshogi::minishogi::Game;
 
-TEST_GROUP (minishogi_node) {
+TEST_GROUP (minishogi_az_node) {
     Node root{};
     Node nodes[1000] = {};
     Node* next{};
@@ -30,13 +30,33 @@ TEST_GROUP (minishogi_node) {
     }
 };
 
-TEST(minishogi_node, init_default)
+TEST(minishogi_az_node, simulate_mate_and_expand)
+{
+    root.simulate_mate_and_expand(next, MT::make_move("1c1b"));
+    DOUBLES_EQUAL(1.f, root.get_q_value(), 1e-3f);
+    CHECK_TRUE(root.is_mate_to_win());
+    CHECK_EQUAL(1u, root.count_childs());
+    const auto child = root.get_child_1st();
+    CHECK_TRUE(child != nullptr);
+    CHECK_TRUE(child->is_mate_to_lose());
+}
+
+TEST(minishogi_az_node, simulate_mate_and_expand_with_tree_full)
+{
+    next = nodes + 999;
+    root.simulate_mate_and_expand(next, MT::make_move("1c1b"));
+    DOUBLES_EQUAL(1.f, root.get_q_value(), 1e-3f);
+    CHECK_TRUE(root.is_mate_to_win());
+    CHECK_EQUAL(0u, root.count_childs());
+}
+
+TEST(minishogi_az_node, init_default)
 {
     CHECK_EQUAL(0, root.get_visit_count());
     DOUBLES_EQUAL(0.f, root.get_q_value(), 1e-2f);
 }
 
-TEST(minishogi_node, init_with_args)
+TEST(minishogi_az_node, init_with_args)
 {
     root.simulate_ongoing_and_expand(
         next, Game("5/5/5/5/5 b -"), -1.f, nullptr);
@@ -45,7 +65,7 @@ TEST(minishogi_node, init_with_args)
     DOUBLES_EQUAL(-1.f, root.get_q_value(), 1e-2f);
 }
 
-TEST(minishogi_node, explore_no_child)
+TEST(minishogi_az_node, explore_no_child)
 {
     auto g = Game("5/5/5/5/5 b -");
     CHECK_TRUE(g.get_result() != ONGOING);
@@ -56,7 +76,7 @@ TEST(minishogi_node, explore_no_child)
     CHECK_EQUAL(2, root.get_visit_count());
 }
 
-TEST(minishogi_node, explore_game_end)
+TEST(minishogi_az_node, explore_game_end)
 {
     auto g = Game("b2pk/3b1/4P/2gRR/4K b -");
     root.simulate_ongoing_and_expand(next, g, 0.f, nullptr);
@@ -74,7 +94,7 @@ TEST(minishogi_node, explore_game_end)
     CHECK_EQUAL(MT::make_move("1c1b"), root.get_child_1st()->get_action());
 }
 
-TEST(minishogi_node, explore_one_action)
+TEST(minishogi_az_node, explore_one_action)
 {
     auto g = Game("4k/5/4P/5/5 b -");
     CHECK_EQUAL(nodes, next);
@@ -116,7 +136,7 @@ TEST(minishogi_node, explore_one_action)
     DOUBLES_EQUAL((0.1f + 0.8f) / 2.f, root.get_q_value(100u, 10u), 1e-2f);
 }
 
-TEST(minishogi_node, explore_two_action)
+TEST(minishogi_az_node, explore_two_action)
 {
 
     /**
@@ -186,7 +206,7 @@ TEST(minishogi_node, explore_two_action)
     }
 }
 
-TEST(minishogi_node, explore_two_layer)
+TEST(minishogi_az_node, explore_two_layer)
 {
 
     /**
