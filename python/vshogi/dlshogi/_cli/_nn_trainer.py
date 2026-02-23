@@ -116,8 +116,14 @@ def _trainer_parameters(prefix: str = "") -> callable:
         cl.option(
             f"--{prefix}backup-result",
             type=cl.Choice(["always", "best"]),
-            default="best",
+            default="always",
             show_default=True,
+            help=(
+                "Specify when to backup the result. "
+                "Options are 'always' to backup every time or "
+                "'best' to backup only if following actions are all best. "
+                "The original AlphaZero trains on 'always' setting."
+            ),
         ),
         cl.option(
             # f"--{prefix}default-result-rate",
