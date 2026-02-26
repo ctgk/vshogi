@@ -21,10 +21,12 @@ def _get_results_of_single_pair(
     player1 = vs.engine.AlphaZero(
         vs.dlshogi.PolicyValueFunction(player1),
         **az_init_args,
+        name=player1,
     )
     player2 = vs.engine.AlphaZero(
         vs.dlshogi.PolicyValueFunction(player2),
         **az_init_args,
+        name=player2,
     )
     record_of_p1 = vs.Record(0, 0, 0, 0, 0, 0)
     iterator = range(num_games_each * 2)

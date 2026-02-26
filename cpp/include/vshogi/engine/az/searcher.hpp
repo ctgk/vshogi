@@ -88,7 +88,23 @@ void Searcher<P>::simulate_expand_backprop(
 template <class P>
 move_t Searcher<P>::select_action() const
 {
-    return tree::Searcher<Node>::select_action();
+    move_t out = tree::Searcher<Node>::select_action();
+    if (out)
+        return out;
+
+    const Node& root = m_nodes.front();
+    if (not root.has_child())
+        return static_cast<move_t>(0);
+
+    float max_score = -std::numeric_limits<float>::infinity();
+    for (const Node* c = root.get_child(); c; c = c->get_sibling()) {
+        const float score = -c->get_q_value() + c->get_proba();
+        if (score > max_score) {
+            max_score = score;
+            out = c->get_action();
+        }
+    }
+    return out;
 }
 
 template <class P>

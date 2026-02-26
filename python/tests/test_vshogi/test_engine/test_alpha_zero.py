@@ -345,5 +345,14 @@ def test_select_before_search():
         player.select(temperature=1.0)
 
 
+def test_select_after_one_search():
+    g = shogi.Game()
+    player = AlphaZero()
+    player.set_game(g)
+    player.search(budget=1)
+    player.select()
+    player.select(temperature=1.0)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
