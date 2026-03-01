@@ -46,6 +46,7 @@ def _train(buffer: ReplayBuffer, nth_cycle: int, **kwargs):
             if kwargs['train_beta2'] > 0
             else 0.999 ** (kwargs['train_minibatch_size'] / 1024)
         ),
+        load_optimizer_state=kwargs["train_resume_optimizer"],
         coeff_policy_loss=kwargs['train_coeff_policy_loss'],
         coeff_entropy_regularization=kwargs['train_coeff_policy_entropy'],
         win_ratio_threshold=kwargs['train_win_ratio_threshold'],

@@ -126,7 +126,6 @@ def _trainer_parameters(prefix: str = "") -> callable:
             ),
         ),
         cl.option(
-            # f"--{prefix}default-result-rate",
             f"--{prefix}result-backup-rate",
             default=0.1,
             show_default=True,
@@ -153,6 +152,12 @@ def _trainer_parameters(prefix: str = "") -> callable:
                 "This keeps the effective averaging window comparable "
                 "across different minibatch sizes."
             ),
+        ),
+        cl.option(
+            f"--{prefix}resume-optimizer/--{prefix}reset-optimizer",
+            default=True,
+            show_default=True,
+            help="Resume/Reset optimizer state.",
         ),
         cl.option(
             f"--{prefix}coeff-policy-loss", default=0.1, show_default=True
@@ -190,6 +195,7 @@ def _network_and_optimizer(
     learning_rate: float,
     beta2: float,
     candidate_path: list = [],
+    load_optimizer_state: bool = True,
 ):
     network = vs.dlshogi.PolicyValueNetwork(
         game_class=game_class,
@@ -209,7 +215,8 @@ def _network_and_optimizer(
         try:
             checkpoint = th.load(path)
             network.load_state_dict(checkpoint["state_dict"])
-            optimizer.load_state_dict(checkpoint["optimizer"])
+            if load_optimizer_state:
+                optimizer.load_state_dict(checkpoint["optimizer"])
         except Exception:
             if path == candidate_path[0]:
                 if os.path.exists(path):
@@ -428,6 +435,7 @@ def _train_step(
     learning_rate: float,
     epochs: int,
     beta2: float,
+    load_optimizer_state: bool,
     coeff_policy_loss: float,
     coeff_entropy_regularization: float,
     win_ratio_threshold: float,
@@ -447,6 +455,7 @@ def _train_step(
         learning_rate=learning_rate,
         beta2=beta2,
         candidate_path=[model_path, prev_model_path],
+        load_optimizer_state=load_optimizer_state,
     )
     if epochs == 0:
         sample_inputs = (
@@ -579,6 +588,7 @@ def _nn_trainer(**kwargs):
             learning_rate=kwargs['learning_rate'],
             epochs=0 if ii == 0 else kwargs['epochs'],
             beta2=kwargs['beta2'],
+            load_optimizer_state=kwargs["resume_optimizer"],
             coeff_policy_loss=kwargs['coeff_policy_loss'],
             coeff_entropy_regularization=kwargs['coeff_policy_entropy'],
             win_ratio_threshold=kwargs['win_ratio_threshold'],
