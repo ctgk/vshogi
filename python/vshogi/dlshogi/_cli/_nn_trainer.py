@@ -84,7 +84,7 @@ def _trainer_parameters(prefix: str = "") -> callable:
         ),
         cl.option(
             f"--{prefix}buffer-decay",
-            default=0.9,
+            default=0.0,
             show_default=True,
             help="Decay factor for the replay buffer.",
         ),
