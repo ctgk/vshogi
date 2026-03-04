@@ -119,10 +119,7 @@ def _cycle_selfplay_and_train(**kwargs):
         return int(tflite_list[-1].split('_')[-1].split('.')[0]) + 1
 
     start = _resume_from()
-    buffer = ReplayBuffer(
-        buffer_size=kwargs["train_buffer_size"],
-        alpha=kwargs["train_buffer_decay"],
-    )
+    buffer = ReplayBuffer(buffer_size=kwargs["train_buffer_size"])
     if start == 0:
         _train(buffer=buffer, nth_cycle=0, **kwargs)
         start += 1

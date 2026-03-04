@@ -22,38 +22,37 @@ class ReplayBuffer(th.utils.data.Dataset):
     Examples
     --------
     >>> from vshogi.minishogi import Move; import numpy as np
-    >>> b = ReplayBuffer(buffer_size=2, alpha=0.5)
+    >>> b = ReplayBuffer(buffer_size=2)
     >>> b.add(Data('4k/5/4P/5/5 b G 1', {Move('1c1b'): 1}, 1., 1.))
     >>> len(b)  # Note that the length is doubled
     2
     >>> b.add(Data('4k/5/4P/5/5 b G 3', {}, 0.5, 0.6))
     >>> len(b)
     4
+    >>> b.averagize()
     >>> b[1][2:]  # value01, weight
     (array([0.75], dtype=float32), array(1., dtype=float32))
     """
 
-    def __init__(self, buffer_size: int = 100000, alpha: float = 0.9):
+    def __init__(self, buffer_size: int = 100000):
         """Initialize dataset class.
 
         Parameters
         ----------
         buffer_size : int
             Max size of the buffer
-        alpha : float
-            Decay rate to update duplicating data.
         """
         super().__init__()
-        self._ema: list[Data] = []
+        self._average: list[Data] = []
         self._buffer: list[Data] = []
         self._buffer_size = buffer_size
-        self._alpha: float = alpha
         self._game_variant: str | None = None
 
-    def _update(self, a: Data, b: Data) -> Data:
+    def _merge(self, a: Data, b: Data) -> Data:
         assert a.sfen == b.sfen
-        r: float = self._alpha  # rate of `a`
-        return Data(
+        count = getattr(a, "count", 1)
+        r: float = count / (1 + count)
+        d = Data(
             sfen=a.sfen,
             policy={}
             if (not a.policy) or (not b.policy)
@@ -63,19 +62,8 @@ class ReplayBuffer(th.utils.data.Dataset):
             },
             value01=(r * a.value01 + (1 - r) * b.value01),
         )
-
-    def _update_ema(self, data: Data) -> Data:
-        index = next(
-            (i for i, d in enumerate(self._ema) if d.sfen == data.sfen),
-            None,
-        )
-        if index is not None:
-            moving_average = self._ema.pop(index)
-            data = self._update(moving_average, data)
-        self._ema.append(data)
-        while len(self._ema) > self._buffer_size:
-            self._ema.pop(0)  # FIFO
-        return data
+        d.count = count + 1
+        return d
 
     def add(self, data: Data):
         """Add data to the buffer.
@@ -85,15 +73,15 @@ class ReplayBuffer(th.utils.data.Dataset):
         data : Data
             Data to add.
         """
-        data = self._update_ema(data)
+        # data = self._update_ema(data)
         self._buffer.append(data)
         if self._game_variant is None:
             self._game_variant = self._infer_game_variant(data.sfen)
         while len(self._buffer) > self._buffer_size:
             self._buffer.pop(0)  # FIFO
 
-    def get_ema_of(self, sfen: str) -> Data | None:
-        """Get exponential moving average data of the given SFEN game position.
+    def get_average_of(self, sfen: str) -> Data | None:
+        """Get average data of the given SFEN game position.
 
         Parameters
         ----------
@@ -103,10 +91,10 @@ class ReplayBuffer(th.utils.data.Dataset):
         Returns
         -------
         Data | None
-            EMA data of the game position if found, otherwise None.
+            Average data of the game position if found, otherwise None.
         """
         return next(
-            (b for b in self._ema if b.sfen == sfen),
+            (b for b in self._average if b.sfen == sfen),
             None,
         )
 
@@ -120,10 +108,19 @@ class ReplayBuffer(th.utils.data.Dataset):
         """
         return len(self._buffer) == self._buffer_size
 
-    def normalize(self) -> None:
-        """Normalize policy distributions of all data."""
+    def averagize(self) -> None:
+        """Averagize value and policy of all data."""
+        merged = {}
         for d in self._buffer:
+            if d.sfen in merged:
+                merged[d.sfen] = self._merge(merged[d.sfen], d)
+            else:
+                merged[d.sfen] = d
+        for d in merged.values():
             d.policy = _normalize(d.policy)
+        self._average = []
+        for d in self._buffer:
+            self._average.append(merged[d.sfen])
 
     def __len__(self):
         """Return the length of the dataset."""
@@ -149,20 +146,20 @@ class ReplayBuffer(th.utils.data.Dataset):
         """
         if self._game_variant is None:
             raise ValueError("Please add data before trying to get items.")
-        ii = index % len(self._buffer)
-        g = eval(self._game_variant)(self._buffer[ii].sfen)
-        policy = self._buffer[ii].policy
-        if index >= len(self._buffer):
+        ii = index % len(self._average)
+        g = eval(self._game_variant)(self._average[ii].sfen)
+        policy = self._average[ii].policy
+        if index >= len(self._average):
             g = g.hflip()
             policy = {m.hflip(): v for m, v in policy.items()}
         x = g.to_dlshogi_features().squeeze()
         try:
             policy = g.to_dlshogi_policy(policy, default_value=-100000.0)
         except ZeroDivisionError:
-            msg = f"Invalid policy ({policy}) at: {self._buffer[ii].sfen}"
+            msg = f"Invalid policy ({policy}) at: {self._average[ii].sfen}"
             raise ZeroDivisionError(msg)
-        value01 = np.array([np.float32(self._buffer[ii].value01)])
-        w = np.array(np.float32(self._buffer[ii].weight))
+        value01 = np.array([np.float32(self._average[ii].value01)])
+        w = np.array(np.float32(self._average[ii].weight))
         return x.squeeze(), policy.squeeze(), value01, w
 
     def _infer_game_variant(self, sfen: str) -> str:

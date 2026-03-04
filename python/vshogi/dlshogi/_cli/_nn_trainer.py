@@ -83,12 +83,6 @@ def _trainer_parameters(prefix: str = "") -> callable:
             ),
         ),
         cl.option(
-            f"--{prefix}buffer-decay",
-            default=0.0,
-            show_default=True,
-            help="Decay factor for the replay buffer.",
-        ),
-        cl.option(
             f"--{prefix}per/--{prefix}no-per",
             default=False,
             show_default=True,
@@ -310,13 +304,15 @@ def _dataset(
         if (buffer._last == buffer._first) or (time() - start) > 60:
             break
     buffer._last = buffer._first
+    buffer.averagize()
     df_summary = pd.DataFrame(
         [
             {
                 'sfen': sfen,
                 'count': v,
                 'value': (
-                    2 * getattr(buffer.get_ema_of(sfen), "value01", np.nan) - 1
+                    2 * getattr(buffer.get_average_of(sfen), "value01", np.nan)
+                    - 1
                 ),
             }
             for sfen, v in count.items()
@@ -563,10 +559,7 @@ def _nn_trainer(**kwargs):
         return int(tflite_list[-1].split('_')[-1].split('.')[0]) + 1
 
     ii = _resume_from()
-    buffer = ReplayBuffer(
-        buffer_size=kwargs["buffer_size"],
-        alpha=kwargs["buffer_decay"],
-    )
+    buffer = ReplayBuffer(buffer_size=kwargs["buffer_size"])
     model_path = 'models/model_{:04d}.pth'
     while ii < 10000:
         _train_step(
