@@ -121,8 +121,16 @@ def _trainer_parameters(prefix: str = "") -> callable:
         ),
         cl.option(
             f"--{prefix}result-backup-rate",
-            default=0.1,
+            default=0.3,
             show_default=True,
+            help=(
+                "Rate at which to mix game result labels with MCTS Q-values "
+                "in the training target. Lower values (e.g., 0.1) rely more "
+                "on MCTS Q-values (cleaner signal), while higher values "
+                "(e.g., 0.4+) rely more on game results. With replay buffer "
+                "averagization, higher rates benefit from noise reduction. "
+                "Recommended: 0.3"
+            ),
         ),
         cl.option(f"--{prefix}minibatch-size", default=32, show_default=True),
         cl.option(f"--{prefix}learning-rate", default=1e-2, show_default=True),
