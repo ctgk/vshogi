@@ -79,24 +79,7 @@ class ReplayBuffer(th.utils.data.Dataset):
             self._game_variant = self._infer_game_variant(data.sfen)
         while len(self._buffer) > self._buffer_size:
             self._buffer.pop(0)  # FIFO
-
-    def get_average_of(self, sfen: str) -> Data | None:
-        """Get average data of the given SFEN game position.
-
-        Parameters
-        ----------
-        sfen : str
-            SFEN representation of the game position.
-
-        Returns
-        -------
-        Data | None
-            Average data of the game position if found, otherwise None.
-        """
-        return next(
-            (b for b in self._average if b.sfen == sfen),
-            None,
-        )
+        self._average = []
 
     def is_full(self) -> bool:
         """Return true if the buffer is full of data.
@@ -146,20 +129,21 @@ class ReplayBuffer(th.utils.data.Dataset):
         """
         if self._game_variant is None:
             raise ValueError("Please add data before trying to get items.")
-        ii = index % len(self._average)
-        g = eval(self._game_variant)(self._average[ii].sfen)
-        policy = self._average[ii].policy
-        if index >= len(self._average):
+        buffer = self._average if self._average else self._buffer
+        ii = index % len(buffer)
+        g = eval(self._game_variant)(buffer[ii].sfen)
+        policy = buffer[ii].policy
+        if index >= len(buffer):
             g = g.hflip()
             policy = {m.hflip(): v for m, v in policy.items()}
         x = g.to_dlshogi_features().squeeze()
         try:
             policy = g.to_dlshogi_policy(policy, default_value=-100000.0)
         except ZeroDivisionError:
-            msg = f"Invalid policy ({policy}) at: {self._average[ii].sfen}"
+            msg = f"Invalid policy ({policy}) at: {buffer[ii].sfen}"
             raise ZeroDivisionError(msg)
-        value01 = np.array([np.float32(self._average[ii].value01)])
-        w = np.array(np.float32(self._average[ii].weight))
+        value01 = np.array([np.float32(buffer[ii].value01)])
+        w = np.array(np.float32(buffer[ii].weight))
         return x.squeeze(), policy.squeeze(), value01, w
 
     def _infer_game_variant(self, sfen: str) -> str:

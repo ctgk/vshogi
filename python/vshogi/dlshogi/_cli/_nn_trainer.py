@@ -83,6 +83,12 @@ def _trainer_parameters(prefix: str = "") -> callable:
             ),
         ),
         cl.option(
+            f"--{prefix}averagize-buffer/--{prefix}no-averagize-buffer",
+            default=False,
+            show_default=True,
+            help="Enable/Disable averagizing replay buffer data.",
+        ),
+        cl.option(
             f"--{prefix}per/--{prefix}no-per",
             default=False,
             show_default=True,
@@ -241,12 +247,13 @@ def _dataset(
     importance_decay: float = 1.0,
     always_backup_result: bool = False,
     result_backup_rate: float = 1.0,
+    averagize_buffer: bool = False,
     value_func: Callable[[str], float] | None = None,
 ) -> th.utils.data.Dataset:
     buffer._first = None
     if not hasattr(buffer, "_last"):
         buffer._last = None
-    count: dict[str, int] = {}
+    added: dict[str, dict[str, float | int]] = {}
     kifu_dir_list = sorted(
         glob('/'.join(kifu_path_pattern.split('/')[:-1])),
         reverse=True,
@@ -304,26 +311,28 @@ def _dataset(
                     weight=row['weight'],
                 )
                 buffer.add(data)
-                if data.sfen not in count:
-                    count[data.sfen] = 0
-                count[data.sfen] += 1
+                if data.sfen not in added:
+                    added[data.sfen] = {"count": 0, "value": 0}
+                added[data.sfen]["value"] = (
+                    added[data.sfen]["value"] * added[data.sfen]["count"]
+                    + (2 * data.value01 - 1)
+                ) / (added[data.sfen]["count"] + 1)
+                added[data.sfen]["count"] += 1
             if (time() - start) > 60:
                 break
         if (buffer._last == buffer._first) or (time() - start) > 60:
             break
     buffer._last = buffer._first
-    buffer.averagize()
+    if averagize_buffer:
+        buffer.averagize()
     df_summary = pd.DataFrame(
         [
             {
                 'sfen': sfen,
-                'count': v,
-                'value': (
-                    2 * getattr(buffer.get_average_of(sfen), "value01", np.nan)
-                    - 1
-                ),
+                'count': a["count"],
+                'value': a["value"],
             }
-            for sfen, v in count.items()
+            for sfen, a in added.items()
         ],
         columns=['sfen', 'count', 'value'],
     )
@@ -429,6 +438,7 @@ def _train_step(
     network_bottleneck_channels: int,
     network_backbone_blocks: int,
     kifu_path_pattern: str,
+    averagize_buffer: bool,
     prioritized_experience_replay: bool,
     kifu_fraction: float,
     discount_factor: float,
@@ -492,6 +502,7 @@ def _train_step(
         importance_decay=importance_decay,
         always_backup_result=always_backup_result,
         result_backup_rate=result_backup_rate,
+        averagize_buffer=averagize_buffer,
         value_func=value_func,
     )
     if len(buffer) != 0:
@@ -579,6 +590,7 @@ def _nn_trainer(**kwargs):
             network_bottleneck_channels=kwargs['bottleneck_channels'],
             network_backbone_blocks=kwargs['backbone_blocks'],
             kifu_path_pattern="datasets/dataset_*/kifu_*.tsv",
+            averagize_buffer=kwargs["averagize_buffer"],
             prioritized_experience_replay=kwargs["per"],
             kifu_fraction=kwargs['kifu_fraction'],
             discount_factor=kwargs['discount_factor'],
