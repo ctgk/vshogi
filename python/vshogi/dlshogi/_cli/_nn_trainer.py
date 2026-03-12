@@ -15,7 +15,7 @@ import torch as th
 from tqdm import tqdm
 
 import vshogi as vs
-from vshogi.dlshogi import ReplayBuffer
+from vshogi.dlshogi import Data, ReplayBuffer
 
 
 def _trainer_parameters(prefix: str = "") -> callable:
@@ -253,7 +253,7 @@ def _dataset(
     buffer._first = None
     if not hasattr(buffer, "_last"):
         buffer._last = None
-    added: dict[str, dict[str, float | int]] = {}
+    new_data: list[Data] = []
     kifu_dir_list = sorted(
         glob('/'.join(kifu_path_pattern.split('/')[:-1])),
         reverse=True,
@@ -304,27 +304,41 @@ def _dataset(
                 weights="priority",
             )
             for _, row in df.iterrows():
-                data = vs.dlshogi.Data(
-                    sfen=row['sfen'],
-                    policy=row['policy'],
-                    value01=row['value01'],
-                    weight=row['weight'],
+                new_data.append(
+                    vs.dlshogi.Data(
+                        sfen=row['sfen'],
+                        policy=row['policy'],
+                        value01=row['value01'],
+                        weight=row['weight'],
+                    )
                 )
-                buffer.add(data)
-                if data.sfen not in added:
-                    added[data.sfen] = {"count": 0, "value": 0}
-                added[data.sfen]["value"] = (
-                    added[data.sfen]["value"] * added[data.sfen]["count"]
-                    + (2 * data.value01 - 1)
-                ) / (added[data.sfen]["count"] + 1)
-                added[data.sfen]["count"] += 1
             if (time() - start) > 60:
                 break
         if (buffer._last == buffer._first) or (time() - start) > 60:
             break
     buffer._last = buffer._first
+    average = {}
+    for d in new_data:
+        if d.sfen not in average:
+            average[d.sfen] = {"count": 0, "value": 0}
+        average[d.sfen]["value"] = (
+            average[d.sfen]["count"] * average[d.sfen]["value"]
+            + (2 * d.value01 - 1)
+        ) / (average[d.sfen]["count"] + 1)
+        average[d.sfen]["count"] += 1
     if averagize_buffer:
-        buffer.averagize()
+        for d in new_data:
+            buffer.add(
+                Data(
+                    sfen=d.sfen,
+                    policy=d.policy,
+                    value01=0.5 * (1 + average[d.sfen]["value"]),
+                    weight=d.weight,
+                )
+            )
+    else:
+        for d in new_data:
+            buffer.add(d)
     df_summary = pd.DataFrame(
         [
             {
@@ -332,7 +346,7 @@ def _dataset(
                 'count': a["count"],
                 'value': a["value"],
             }
-            for sfen, a in added.items()
+            for sfen, a in average.items()
         ],
         columns=['sfen', 'count', 'value'],
     )

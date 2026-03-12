@@ -29,9 +29,8 @@ class ReplayBuffer(th.utils.data.Dataset):
     >>> b.add(Data('4k/5/4P/5/5 b G 3', {}, 0.5, 0.6))
     >>> len(b)
     4
-    >>> b.averagize()
     >>> b[1][2:]  # value01, weight
-    (array([0.75], dtype=float32), array(1., dtype=float32))
+    (array([0.5], dtype=float32), array(0.6, dtype=float32))
     """
 
     def __init__(self, buffer_size: int = 100000):
@@ -43,27 +42,9 @@ class ReplayBuffer(th.utils.data.Dataset):
             Max size of the buffer
         """
         super().__init__()
-        self._average: list[Data] = []
         self._buffer: list[Data] = []
         self._buffer_size = buffer_size
         self._game_variant: str | None = None
-
-    def _merge(self, a: Data, b: Data) -> Data:
-        assert a.sfen == b.sfen
-        count = getattr(a, "count", 1)
-        r: float = count / (1 + count)
-        d = Data(
-            sfen=a.sfen,
-            policy={}
-            if (not a.policy) or (not b.policy)
-            else {
-                m: (r * a.policy[m] + (1 - r) * b.policy[m])
-                for m in set(a.policy.keys()) | set(b.policy.keys())
-            },
-            value01=(r * a.value01 + (1 - r) * b.value01),
-        )
-        d.count = count + 1
-        return d
 
     def add(self, data: Data):
         """Add data to the buffer.
@@ -91,20 +72,6 @@ class ReplayBuffer(th.utils.data.Dataset):
         """
         return len(self._buffer) == self._buffer_size
 
-    def averagize(self) -> None:
-        """Averagize value and policy of all data."""
-        merged = {}
-        for d in self._buffer:
-            if d.sfen in merged:
-                merged[d.sfen] = self._merge(merged[d.sfen], d)
-            else:
-                merged[d.sfen] = d
-        for d in merged.values():
-            d.policy = _normalize(d.policy)
-        self._average = []
-        for d in self._buffer:
-            self._average.append(merged[d.sfen])
-
     def __len__(self):
         """Return the length of the dataset."""
         return len(self._buffer) * 2
@@ -129,21 +96,20 @@ class ReplayBuffer(th.utils.data.Dataset):
         """
         if self._game_variant is None:
             raise ValueError("Please add data before trying to get items.")
-        buffer = self._average if self._average else self._buffer
-        ii = index % len(buffer)
-        g = eval(self._game_variant)(buffer[ii].sfen)
-        policy = buffer[ii].policy
-        if index >= len(buffer):
+        ii = index % len(self._buffer)
+        g = eval(self._game_variant)(self._buffer[ii].sfen)
+        policy = self._buffer[ii].policy
+        if index >= len(self._buffer):
             g = g.hflip()
             policy = {m.hflip(): v for m, v in policy.items()}
         x = g.to_dlshogi_features().squeeze()
         try:
             policy = g.to_dlshogi_policy(policy, default_value=-100000.0)
         except ZeroDivisionError:
-            msg = f"Invalid policy ({policy}) at: {buffer[ii].sfen}"
+            msg = f"Invalid policy ({policy}) at: {self._buffer[ii].sfen}"
             raise ZeroDivisionError(msg)
-        value01 = np.array([np.float32(buffer[ii].value01)])
-        w = np.array(np.float32(buffer[ii].weight))
+        value01 = np.array([np.float32(self._buffer[ii].value01)])
+        w = np.array(np.float32(self._buffer[ii].weight))
         return x.squeeze(), policy.squeeze(), value01, w
 
     def _infer_game_variant(self, sfen: str) -> str:
