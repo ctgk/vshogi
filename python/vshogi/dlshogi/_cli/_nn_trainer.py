@@ -258,6 +258,12 @@ def _dataset(
         glob('/'.join(kifu_path_pattern.split('/')[:-1])),
         reverse=True,
     )
+    if (buffer._last is not None) and (
+        kifu_dir_list[0] != os.path.dirname(buffer._last)
+    ):
+        for b in buffer._buffer:
+            b.malignancy /= 0.8
+        buffer._buffer = [b for b in buffer._buffer if b.malignancy < 1.0]
     start = time()
     for kifu_dir, fr in zip(
         kifu_dir_list,
@@ -310,6 +316,7 @@ def _dataset(
                         policy=row['policy'],
                         value01=row['value01'],
                         weight=row['weight'],
+                        malignancy=row["malignancy"],
                     )
                 )
             if (time() - start) > 60:
@@ -334,6 +341,7 @@ def _dataset(
                     policy=d.policy,
                     value01=0.5 * (1 + average[d.sfen]["value"]),
                     weight=d.weight,
+                    malignancy=d.malignancy,
                 )
             )
     else:

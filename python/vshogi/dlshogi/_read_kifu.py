@@ -49,6 +49,8 @@ def read_kifu(
         },
     )
     total_ply = len(df)
+    df["malignancy"] = 1.0 - (df.index + 1) / total_ply
+    df["malignancy"] = df["malignancy"].apply(lambda x: max(x, 0.01))
     game_class = _infer_game_variant(df['sfen'][0])
     move_class = game_class._get_move_class()
     df['weight'] = _compute_weight(df, importance_decay)
