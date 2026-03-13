@@ -7,15 +7,6 @@ from vshogi.minishogi._game import Game as MinishogiGame  # noqa: F401
 from vshogi.shogi._game import Game as StandardGame  # noqa: F401
 
 
-def _normalize(d: dict) -> dict:
-    if not d:
-        return d
-    s = sum(d.values())
-    if s < 0.01:
-        raise ValueError(f'Too small value: {d}')
-    return {k: v / s for k, v in d.items()}
-
-
 class ReplayBuffer(th.utils.data.Dataset):
     """Storage of data to train DL-Shogi network.
 
@@ -54,13 +45,11 @@ class ReplayBuffer(th.utils.data.Dataset):
         data : Data
             Data to add.
         """
-        # data = self._update_ema(data)
         self._buffer.append(data)
         if self._game_variant is None:
             self._game_variant = self._infer_game_variant(data.sfen)
         while len(self._buffer) > self._buffer_size:
             self._buffer.pop(0)  # FIFO
-        self._average = []
 
     def is_full(self) -> bool:
         """Return true if the buffer is full of data.
