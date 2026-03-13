@@ -83,6 +83,18 @@ def _trainer_parameters(prefix: str = "") -> callable:
             ),
         ),
         cl.option(
+            f"--{prefix}off-policy-rate",
+            default=0.0,
+            show_default=True,
+            callback=lambda ctx, param, value: max(value, 1e-4),
+            help=(
+                "Retention rate for previously buffered off-policy samples "
+                "when a new dataset directory is detected. Smaller values "
+                "drop more stale data, while 1.0 keeps all buffered "
+                "samples. Trains the network on on-policy samples only if 0.0."
+            ),
+        ),
+        cl.option(
             f"--{prefix}averagize-buffer/--{prefix}no-averagize-buffer",
             default=False,
             show_default=True,
@@ -243,6 +255,7 @@ def _dataset(
     kifu_path_pattern: str,
     *,
     kifu_fraction: float = 1.0,
+    off_policy_rate: float = 1.0,
     discount_factor: float = 1.0,
     importance_decay: float = 1.0,
     always_backup_result: bool = False,
@@ -261,8 +274,9 @@ def _dataset(
     if (buffer._last is not None) and (
         kifu_dir_list[0] != os.path.dirname(buffer._last)
     ):
+        print("Removing malignant data")
         for b in buffer._buffer:
-            b.malignancy /= 0.8
+            b.malignancy /= off_policy_rate
         buffer._buffer = [b for b in buffer._buffer if b.malignancy < 1.0]
     start = time()
     for kifu_dir, fr in zip(
@@ -460,6 +474,7 @@ def _train_step(
     network_bottleneck_channels: int,
     network_backbone_blocks: int,
     kifu_path_pattern: str,
+    off_policy_rate: float,
     averagize_buffer: bool,
     prioritized_experience_replay: bool,
     kifu_fraction: float,
@@ -519,6 +534,7 @@ def _train_step(
     buffer = _dataset(
         buffer=buffer,
         kifu_path_pattern=kifu_path_pattern,
+        off_policy_rate=off_policy_rate,
         kifu_fraction=kifu_fraction,
         discount_factor=discount_factor,
         importance_decay=importance_decay,
@@ -612,6 +628,7 @@ def _nn_trainer(**kwargs):
             network_bottleneck_channels=kwargs['bottleneck_channels'],
             network_backbone_blocks=kwargs['backbone_blocks'],
             kifu_path_pattern="datasets/dataset_*/kifu_*.tsv",
+            off_policy_rate=kwargs["off_policy_rate"],
             averagize_buffer=kwargs["averagize_buffer"],
             prioritized_experience_replay=kwargs["per"],
             kifu_fraction=kwargs['kifu_fraction'],

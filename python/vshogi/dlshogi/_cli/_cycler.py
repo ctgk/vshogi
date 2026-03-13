@@ -32,6 +32,7 @@ def _train(buffer: ReplayBuffer, nth_cycle: int, **kwargs):
             kwargs['output'],
             "datasets/dataset_*/kifu_*.tsv",
         ),
+        off_policy_rate=kwargs["train_off_policy_rate"],
         averagize_buffer=kwargs["train_averagize_buffer"],
         prioritized_experience_replay=kwargs["train_per"],
         kifu_fraction=kwargs['train_kifu_fraction'],
