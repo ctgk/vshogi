@@ -13,7 +13,7 @@ def read_kifu(
     importance_decay: float = 1.0,
     result_backup_rate: float = 1.0,
     tail_fraction: float | None = None,
-    always_backup_result: bool = False,
+    always_backup_result: bool = True,
 ) -> pd.DataFrame:
     """Return dataframe of Shogi kifu.
 
@@ -31,7 +31,7 @@ def read_kifu(
         Return fraction of the dataframe from tail if given, by default None.
     always_backup_result : bool, optional
         Whether to backup result even if the move is not the best one,
-        by default False.
+        by default True.
 
     Returns
     -------
@@ -81,7 +81,7 @@ def _compute_z_weight(
     result_backup_rate: float,
     move_class: type,
     *,
-    always_backup_result: bool = False,
+    always_backup_result: bool = True,
 ) -> list[float]:
     policy: list[dict] = df["policy"].to_list()
     if not always_backup_result:

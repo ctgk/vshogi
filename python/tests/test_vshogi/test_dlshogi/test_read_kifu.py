@@ -13,7 +13,11 @@ def test_read_kifu():
         os.path.dirname(os.path.abspath(__file__)),
         'kifu_00000.tsv',
     )
-    df = read_kifu(kifu_path, result_backup_rate=1.0)
+    df = read_kifu(
+        kifu_path,
+        result_backup_rate=1.0,
+        always_backup_result=False,
+    )
     print(df)
     assert np.isclose(df['z_weight'][0], 0.0)
     assert np.isclose(df['z_weight'][1], 0.0)
@@ -22,11 +26,7 @@ def test_read_kifu():
     assert np.isclose(df['z_weight'][38], 1.0)
     assert np.isclose(df['z_weight'][len(df) - 1], 0.0)
 
-    df = read_kifu(
-        kifu_path,
-        result_backup_rate=1.0,
-        always_backup_result=True,
-    )
+    df = read_kifu(kifu_path, result_backup_rate=1.0)
     print(df)
     assert np.isclose(df['z_weight'][0], 1.0)
     assert np.isclose(df['z_weight'][1], 1.0)
@@ -34,6 +34,13 @@ def test_read_kifu():
     assert np.isclose(df['z_weight'][31], 1.0)
     assert np.isclose(df['z_weight'][38], 1.0)
     assert np.isclose(df['z_weight'][len(df) - 1], 0.0)
+
+    assert np.isclose(df['value01'][0], 0.0)
+    assert np.isclose(df['value01'][1], 1.0)
+    assert np.isclose(df["value01"][30], 0.0)
+    assert np.isclose(df['value01'][31], 1.0)
+    assert np.isclose(df['value01'][38], 0.0)
+    assert np.isclose(df['value01'][len(df) - 1], 1.0)
 
 
 def test_read_kifu_single_policy():
