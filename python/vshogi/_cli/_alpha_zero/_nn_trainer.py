@@ -1,0 +1,517 @@
+import os
+import sys
+import tempfile
+import typing as tp
+import warnings
+from collections.abc import Callable
+from datetime import datetime
+from glob import glob
+from time import time
+
+import ai_edge_torch
+import click as cl
+import pandas as pd
+import torch as th
+from tqdm import tqdm
+
+import vshogi as vs
+from vshogi.dlshogi import (
+    read_kifu,
+    Data,
+    PolicyValueFunction,
+    PolicyValueNetwork,
+    ReplayBuffer,
+)
+
+
+class _NetworkTrainer:
+    def __init__(
+        self,
+        shogi_variant: str,
+        buffer_size: int,
+        device: tp.Literal["cpu", "cuda", "mps"],
+        network: dict[str, tp.Any],
+        optimization: dict[str, tp.Any],
+        loss: dict[str, tp.Any],
+        validation: dict[str, tp.Any],
+    ):
+        shogi_module = getattr(vs, shogi_variant)
+        self._game_class = getattr(shogi_module, "Game")
+        self._device = device
+        self._network = network
+        self._optimization = optimization
+        self._loss = loss
+        self._validation = validation
+
+        if "beta2" not in self._optimization:
+            self._optimization["beta2"] = 0.999 ** (
+                optimization["minibatch"] / 1024
+            )  # https://arxiv.org/abs/2507.07101
+
+        self._buffer = ReplayBuffer(buffer_size=buffer_size)
+        self._last_read_kifu: str | None = None
+
+    def __call__(
+        self,
+        model_path: str,
+        prev_model_path: str | None,
+        kifu_path_pattern: str = "datasets/dataset_*/kifu_*.tsv",
+    ) -> None:
+        if not os.path.isdir(os.path.dirname(model_path)):
+            os.makedirs(os.path.dirname(model_path))
+        network, optimizer = self._network_and_optimizer(
+            candidate_path=[model_path, prev_model_path]
+        )
+        if prev_model_path is None:
+            edge_model = self._to_edge_model(network)
+            edge_model.export(model_path.replace(".pth", ".tflite"))
+            return
+        self._add_data_from_kifu(kifu_path_pattern)
+        if len(self._buffer) == 0:
+            return
+
+        self._train(network, optimizer, model_path)
+        edge_model = self._to_edge_model(network)
+        with tempfile.TemporaryDirectory(delete=True) as temp_dir:
+            file_path = os.path.join(temp_dir, model_path.split("/")[-1])
+            edge_model.export(file_path)
+            player_curr = _NetworkTrainer._engine(file_path)
+        player_prev = _NetworkTrainer._engine(
+            prev_model_path.replace('.pth', '.tflite'),
+        )
+        winner = self._play_games(player_curr, player_prev)
+        if player_curr.name == winner:
+            edge_model.export(model_path.replace('.pth', '.tflite'))
+
+    def _network_and_optimizer(
+        self, candidate_path: list = []
+    ) -> tp.Tuple[th.nn.Module, th.optim.Optimizer]:
+        network = PolicyValueNetwork(
+            game_class=self._game_class,
+            hidden_channels=self._network["hidden_channels"],
+            bottleneck_channels=self._network["bottleneck_channels"],
+            num_backbone_blocks=self._network["backbone_blocks"],
+        )
+        optimizer = th.optim.AdamW(
+            network.parameters(),
+            lr=self._optimization["learning_rate"],
+            betas=(0.9, self._optimization["beta2"]),
+        )
+        for path in candidate_path:
+            if path is None:
+                continue
+            try:
+                checkpoint = th.load(path)
+                network.load_state_dict(checkpoint["state_dict"])
+                optimizer.load_state_dict(checkpoint["optimizer"])
+            except Exception:
+                if path == candidate_path[0]:
+                    if os.path.exists(path):
+                        warnings.warn(f"Failed to load: {path}")
+                else:
+                    if not os.path.exists(path):
+                        warnings.warn(f"FileNotFound: {path}")
+            else:
+                print(f"Loaded file: {path}")
+                break
+        return network, optimizer
+
+    def _read_kifu_list(
+        self,
+        kifu_list: list[str],
+        duration_sec: int = 60,
+    ) -> list[Data]:
+        new_data: list[Data] = []
+        start = time()
+        for kifu_path in kifu_list:
+            if ((time() - start) > duration_sec) or (
+                self._last_read_kifu == kifu_path
+            ):
+                break
+            df = read_kifu(kifu_path)
+            if len(df) == 0:
+                continue
+            for _, row in df.iterrows():
+                new_data.append(
+                    Data(
+                        sfen=row["sfen"],
+                        policy=row["policy"],
+                        value01=row["value01"],
+                        weight=row["weight"],
+                        malignancy=row["malignancy"],
+                    )
+                )
+        self._last_read_kifu = kifu_list[0]
+        return new_data
+
+    def _add_data_from_kifu(self, kifu_path_pattern: str) -> None:
+        kifu_dir = sorted(
+            glob("/".join(kifu_path_pattern.split("/")[:-1])), reverse=True
+        )[0]
+        if (self._last_read_kifu is not None) and (
+            kifu_dir != os.path.dirname(self._last_read_kifu)
+        ):
+            print("Removing data from previous policy")
+            self._buffer._buffer = []
+        kifu_list = sorted(
+            glob(kifu_dir + "/" + kifu_path_pattern.split("/")[-1]),
+            reverse=True,
+        )
+        new_data = self._read_kifu_list(kifu_list)
+        average = self._compute_average(new_data)
+        for d in new_data:
+            self._buffer.add(d)
+        print(f"Dataset Length = {len(self._buffer)}")
+        df_summary = pd.DataFrame(
+            [
+                {"sfen": sfen, "count": a["count"], "value": a["value"]}
+                for sfen, a in average.items()
+            ]
+        )
+        print(df_summary.sort_values(by="count", ascending=False).head(n=10))
+
+    @staticmethod
+    def _compute_average(
+        data_list: list[Data],
+    ) -> dict[str, dict[str, int | float]]:
+        average = {}
+        for d in data_list:
+            if d.sfen not in average:
+                average[d.sfen] = {"count": 0, "value": 0}
+            average[d.sfen]["value"] = (
+                average[d.sfen]["count"] * average[d.sfen]["value"]
+                + (2 * d.value01 - 1)
+            ) / (average[d.sfen]["count"] + 1)
+            average[d.sfen]["count"] += 1
+        return average
+
+    def _train(
+        self,
+        network: th.nn.Module,
+        optimizer: th.optim.Optimizer,
+        path: str,
+    ) -> None:
+        print(f"Start training: {path}")
+        device = th.device(self._device)
+        network.to(device)
+        for state in optimizer.state.values():
+            for k, v in state.items():
+                if isinstance(v, th.Tensor) and v.device != device:
+                    state[k] = v.to(device)
+        dataloader = th.utils.data.DataLoader(
+            self._buffer,
+            batch_size=self._optimization["minibatch"],
+            shuffle=True,
+            drop_last=True,
+        )
+        vs.dlshogi.train(
+            network,
+            dataloader,
+            optimizer,
+            epochs=self._optimization["epochs"],
+            coeff_policy_loss=self._loss["coeff_policy"],
+            coeff_entropy_regularization=self._loss["coeff_entropy"],
+        )
+        network.to(th.device("cpu"))
+        print(f"Saving trained parameters: {path}")
+        state = {
+            "state_dict": network.state_dict(),
+            "optimizer": optimizer.state_dict(),
+        }
+        th.save(state, path)
+
+    def _to_edge_model(self, network: th.nn.Module) -> tp.Any:
+        sample_inputs = th.randn(
+            1,
+            self._game_class.files,
+            self._game_class.ranks,
+            self._game_class.feature_channels,
+        )
+        edge_model = ai_edge_torch.convert(network.eval(), (sample_inputs,))
+        return edge_model
+
+    @staticmethod
+    def _engine(tflite_path: str) -> vs.engine.Engine:
+        name: str = tflite_path.split("/")[-1].split(".")[0]
+        if os.path.exists(tflite_path):
+            return vs.engine.AlphaZero(
+                PolicyValueFunction(tflite_path),
+                name=name,
+            )
+        else:
+            msg = f"FileNotFound: {tflite_path}"
+            warnings.warn(msg)
+            return vs.engine.AlphaZero(name=f"{name}_not_found")
+
+    def _play_games(
+        self,
+        player_curr: vs.engine.Engine,
+        player_prev: vs.engine.Engine,
+    ) -> str:
+        record_curr = vs.Record()
+        num_play = 40
+        win_threshold = num_play * self._validation["threshold"]
+        loss_threshold = num_play * (1 - self._validation["threshold"])
+        pbar = tqdm(range(num_play), ncols=100)
+        for n in pbar:
+            if (record_curr.score() >= win_threshold) or (
+                (~record_curr).score() > loss_threshold
+            ):
+                break
+            if n % 2 == 0:
+                result = vs.play_game(
+                    self._game_class(),
+                    player_curr,
+                    player_prev,
+                    draw_on_max_moves=True,
+                ).result
+                record_curr += vs.Record.from_black_result(result)
+            else:
+                result = vs.play_game(
+                    self._game_class(),
+                    player_prev,
+                    player_curr,
+                    draw_on_max_moves=True,
+                ).result
+                record_curr += vs.Record.from_white_result(result)
+            pbar.set_description(
+                f'{player_curr.name} vs {player_prev.name} '
+                f'= {record_curr.wdl()}'
+            )
+        winner = (
+            player_curr.name
+            if record_curr.score() >= win_threshold
+            else player_prev.name
+        )
+        print(f"{player_curr.name} vs {player_prev.name}: Winner {winner}")
+        return winner
+
+    @classmethod
+    def wrap_options(cls, prefix: str = "") -> Callable:
+        if prefix and (not prefix.endswith("-")):
+            prefix = prefix + "-"
+        wrappers = cls._get_cli_options(prefix)
+
+        def decorator(func: Callable) -> Callable:
+            for wrap in reversed(wrappers):
+                func = wrap(func)
+            return func
+
+        return decorator
+
+    @staticmethod
+    def _get_cli_options(prefix: str = "") -> list[cl.Option]:
+        options = [
+            cl.option(
+                f"--{prefix}device",
+                default='cpu',
+                type=cl.Choice(['cpu', 'cuda', 'mps']),
+                show_default=True,
+            ),
+            cl.option(
+                f"--{prefix}hidden-channels",
+                type=int,
+                callback=lambda ctx, param, value: (
+                    value
+                    if value is not None
+                    else {
+                        "minishogi": 64,
+                        "judkins_shogi": 64,
+                        "shogi": 128,
+                    }.get(ctx.params.get("shogi"), 128)
+                ),
+                help=(
+                    "Number of hidden channels in the backbone network. "
+                    "Defaults: minishogi=64, judkins_shogi=64, shogi=128."
+                ),
+            ),
+            cl.option(
+                f"--{prefix}bottleneck-channels",
+                type=int,
+                callback=lambda ctx, param, value: (
+                    value
+                    if value is not None
+                    else {
+                        "minishogi": 32,
+                        "judkins_shogi": 32,
+                        "shogi": 64,
+                    }.get(ctx.params.get("shogi"), 64)
+                ),
+                help=(
+                    "Number of bottleneck channels in the backbone network. "
+                    "Defaults: minishogi=32, judkins_shogi=32, shogi=64."
+                ),
+            ),
+            cl.option(
+                f"--{prefix}backbone-blocks",
+                type=int,
+                callback=lambda ctx, param, value: (
+                    value
+                    if value is not None
+                    else {
+                        "minishogi": 3,
+                        "judkins_shogi": 4,
+                        "shogi": 8,
+                    }.get(ctx.params.get("shogi"), 8)
+                ),
+                help=(
+                    "Number of residual blocks in the backbone network. "
+                    "Defaults: minishogi=3, judkins_shogi=4, shogi=8."
+                ),
+            ),
+            cl.option(
+                f"--{prefix}buffer-size",
+                default=100000,
+                show_default=True,
+                help=(
+                    "Maximum size of the replay buffer for storing training "
+                    "samples."
+                ),
+            ),
+            cl.option(
+                f"--{prefix}minibatch-size", default=32, show_default=True
+            ),
+            cl.option(
+                f"--{prefix}learning-rate", default=1e-2, show_default=True
+            ),
+            cl.option(f"--{prefix}epochs", default=5, show_default=True),
+            cl.option(
+                f"--{prefix}coeff-policy-loss", default=0.1, show_default=True
+            ),
+            cl.option(
+                f"--{prefix}coeff-policy-entropy",
+                default=0.1,
+                show_default=True,
+                help="Coefficient for policy entropy regularization.",
+            ),
+            cl.option(
+                f"--{prefix}win-ratio-threshold",
+                default=0.55,
+                show_default=True,
+            ),
+        ]
+        return options
+
+
+def _train_step(
+    buffer: ReplayBuffer,
+    model_path: str,
+    prev_model_path: str | None,
+    shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
+    network_hidden_channels: int,
+    network_bottleneck_channels: int,
+    network_backbone_blocks: int,
+    kifu_path_pattern: str,
+    minibatch_size: int,
+    learning_rate: float,
+    epochs: int,
+    coeff_policy_loss: float,
+    coeff_entropy_regularization: float,
+    win_ratio_threshold: float,
+    device: tp.Literal['cpu', 'cuda', 'mps'],
+):
+    if not os.path.isdir(os.path.dirname(model_path)):
+        os.makedirs(os.path.dirname(model_path))
+    beta2 = 0.999 ** (
+        minibatch_size / 1024
+    )  # https://arxiv.org/abs/2507.07101
+    trainer = _NetworkTrainer(
+        shogi_variant=shogi_variant,
+        device=device,
+        network={
+            "hidden_channels": network_hidden_channels,
+            "bottleneck_channels": network_bottleneck_channels,
+            "backbone_blocks": network_backbone_blocks,
+        },
+        optimization={
+            "learning_rate": learning_rate,
+            "beta2": beta2,
+            "epochs": epochs,
+            "minibatch": minibatch_size,
+        },
+        loss={
+            "coeff_policy": coeff_policy_loss,
+            "coeff_entropy": coeff_entropy_regularization,
+        },
+        validation={"threshold": win_ratio_threshold},
+    )
+    network, optimizer = trainer._network_and_optimizer(
+        candidate_path=[model_path, prev_model_path],
+    )
+    if epochs == 0:
+        edge_model = trainer._to_edge_model(network)
+        edge_model.export(model_path.replace('.pth', '.tflite'))
+        return
+
+    trainer._add_data_from_kifu(buffer, kifu_path_pattern)
+    if len(buffer) != 0:
+        print(f"Start training: {model_path}")
+        trainer._train(network, optimizer, buffer)
+        print(f"Saving trained parameters: {model_path}")
+        state = {
+            "state_dict": network.state_dict(),
+            "optimizer": optimizer.state_dict(),
+        }
+        th.save(state, model_path)
+
+    edge_model = trainer._to_edge_model(network)
+    with tempfile.TemporaryDirectory(delete=True) as temp_dir:
+        file_path = os.path.join(temp_dir, model_path.split("/")[-1])
+        edge_model.export(file_path)
+        player_curr = _NetworkTrainer._engine(file_path)
+    player_prev = _NetworkTrainer._engine(
+        prev_model_path.replace('.pth', '.tflite'),
+    )
+    winner = trainer._play_games(player_curr, player_prev)
+    if player_curr.name == winner:
+        edge_model.export(model_path.replace('.pth', '.tflite'))
+
+
+@cl.command()
+@cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
+@_NetworkTrainer.wrap_options()
+def _nn_trainer(**kwargs):
+    print(f"{kwargs=}")
+    trainer = _NetworkTrainer(
+        shogi_variant=kwargs["shogi"],
+        buffer_size=kwargs["buffer_size"],
+        device=kwargs["device"],
+        network={
+            "hidden_channels": kwargs["hidden_channels"],
+            "bottleneck_channels": kwargs["bottleneck_channels"],
+            "backbone_blocks": kwargs["backbone_blocks"],
+        },
+        optimization={
+            "learning_rate": kwargs["learning_rate"],
+            "epochs": kwargs["epochs"],
+            "minibatch": kwargs["minibatch_size"],
+        },
+        loss={
+            "coeff_policy": kwargs["coeff_policy_loss"],
+            "coeff_entropy": kwargs["coeff_policy_entropy"],
+        },
+        validation={"threshold": kwargs["win_ratio_threshold"]},
+    )
+    now = datetime.now().strftime('%Y%m%d_%H%M%S')
+    with open(f'command_{now}.txt', 'w') as f:
+        f.write(f'python {" ".join(sys.argv)}')
+
+    def _resume_from() -> int:
+        tflite_list = sorted(glob('models/model_*.tflite'))
+        if not tflite_list:
+            return 0
+        return int(tflite_list[-1].split('_')[-1].split('.')[0]) + 1
+
+    ii = _resume_from()
+    model_path = 'models/model_{:04d}.pth'
+    while ii < 10000:
+        trainer(
+            model_path=model_path.format(ii),
+            prev_model_path=None if ii == 0 else model_path.format(ii - 1),
+        )
+        if os.path.exists(model_path.format(ii).replace('.pth', '.tflite')):
+            ii += 1
+
+
+if __name__ == '__main__':
+    _nn_trainer()

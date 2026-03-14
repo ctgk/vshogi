@@ -3,6 +3,7 @@
 import click as cl
 
 from vshogi._cli._match import _match
+from vshogi._cli._alpha_zero import _alpha_zero
 from vshogi.dlshogi._cli import _dlshogi
 
 
@@ -13,6 +14,7 @@ def _main():
 
 _main.add_command(_match, 'match')
 _main.add_command(_dlshogi, 'dlshogi')
+_main.add_command(_alpha_zero, "alpha-zero")
 
 
 if __name__ == "__main__":

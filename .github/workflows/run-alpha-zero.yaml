@@ -1,0 +1,54 @@
+name: Run AlphaZero Training
+
+on:
+  push:
+    branches: [ main, develop, tmp ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        game: [
+          {name: minishogi, rl_cycle: 3, nn_backbone_blocks: 3},
+        ]
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.12
+    - name: Upgrade pip
+      run: python -m pip install --upgrade pip
+    - name: Install dependencies
+      run: pip install .[dlshogi]
+    - name: Run command
+      env:
+        NAME: ${{ matrix.game.name }}
+        CYCLE: ${{ matrix.game.rl_cycle }}
+        BACKBONES: ${{ matrix.game.nn_backbone_blocks }}
+      run: |
+        python -m vshogi alpha-zero cycler "$NAME" \
+        --cycles "$CYCLE" --play-num-games 50 \
+        --train-backbone-blocks "$BACKBONES" --train-win-ratio-threshold 0.01
+    - name: Evaluate model
+      env:
+        NAME: ${{ matrix.game.name }}
+        CYCLE: ${{ matrix.game.rl_cycle }}
+      run: |
+        python -m vshogi match $NAME \
+        --player1 models/model_0000.tflite \
+        --player2 models/model_$(printf %04d $CYCLE).tflite \
+        --az-search-count 100
+    - name: Check generated dataset
+      env:
+        NAME: ${{ matrix.game.name }}
+        CYCLE: ${{ matrix.game.rl_cycle }}
+      run: |
+        for tsv in datasets/dataset_*/kifu_*.tsv; do
+          echo "$tsv"
+          cat "$tsv"
+          python .github/workflows/check_selfplay_dataset.py "$tsv"
+        done
