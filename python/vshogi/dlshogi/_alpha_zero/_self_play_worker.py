@@ -1,8 +1,6 @@
 import contextlib
 import os
-import sys
 import typing as tp
-from datetime import datetime
 from glob import glob
 
 import click as cl
@@ -153,20 +151,8 @@ class _SelfPlayWorker:
         show_pbar: bool = True,
     ) -> vs.Record:
         game_class = getattr(getattr(vs, self._shogi_variant), 'Game')
-        player_latest = _load_player(
-            latest,
-            coeff_puct=self._coeff_puct,
-            kldgain_threshold=None,
-            dfpn_search_root=0,
-            dfpn_search_leaf=0,
-        )
-        player_prev = _load_player(
-            previous,
-            coeff_puct=self._coeff_puct,
-            kldgain_threshold=None,
-            dfpn_search_root=0,
-            dfpn_search_leaf=0,
-        )
+        player_latest = self._load_player(latest)
+        player_prev = self._load_player(previous)
         record = vs.Record()
         iterator = range(num_games)
         if show_pbar:
@@ -530,165 +516,3 @@ def _tqdm_joblib(tqdm_object):
     finally:
         joblib.parallel.BatchCompletionCallBack = old_batch_callback
         tqdm_object.close()
-
-
-def _run_self_play(
-    shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
-    tflite_path: str | None,
-    tflite_path_others: tp.List[str],
-    kifu_dir: str,
-    num_selfplay: int,
-    coeff_puct: float,
-    kldgain_threshold: float,
-    dfpn_search_root: int,
-    dfpn_search_leaf: int,
-    num_simulations: int,
-    temperature: float,
-    max_random_moves: int,
-    n_jobs: int,
-    job_size: int = 5,
-):
-    name = (
-        "none"
-        if tflite_path is None
-        else tflite_path.split("/")[-1].split(".")[0]
-    )
-    print(
-        f'Self-play ({name}) with others: '
-        + ', '.join(
-            p.split('/')[-1].split('.')[0] for p in tflite_path_others
-        ),
-    )
-    if not os.path.isdir(kifu_dir):
-        os.makedirs(kifu_dir)
-    index_start = len(glob(os.path.join(kifu_dir, 'kifu_*.tsv')))
-    worker = _SelfPlayWorker(
-        shogi_variant=shogi_variant,
-        coeff_puct=coeff_puct,
-        kldgain_threshold=kldgain_threshold,
-        dfpn_search_root=dfpn_search_root,
-        dfpn_search_leaf=dfpn_search_leaf,
-        simulations=num_simulations,
-        temperature=temperature,
-    )
-    if n_jobs <= 1:
-        worker._run_self_play_single(
-            tflite_path=tflite_path,
-            tflite_path_others=tflite_path_others,
-            kifu_dir=kifu_dir,
-            kifu_index_range=range(index_start, index_start + num_selfplay),
-            max_random_moves=max_random_moves,
-        )
-    else:
-        worker._run_self_play_parallel(
-            tflite_path=tflite_path,
-            tflite_path_others=tflite_path_others,
-            kifu_dir=kifu_dir,
-            kifu_index_groups=[
-                range(i, i + job_size)
-                for i in range(
-                    index_start, index_start + num_selfplay, job_size
-                )
-            ],
-            max_random_moves=max_random_moves,
-            n_jobs=n_jobs,
-        )
-
-
-def _load_player(
-    tflite_path: str | None,
-    coeff_puct: float,
-    kldgain_threshold: float,
-    dfpn_search_root: int,
-    dfpn_search_leaf: int,
-) -> vs.engine.Engine:
-    return vs.engine.AlphaZero(
-        (
-            (
-                lambda g: (
-                    np.zeros(g.num_dlshogi_policy, dtype=np.float32),
-                    vs.engine.piece_value_func(g),
-                )
-            )
-            if tflite_path is None
-            else vs.dlshogi.PolicyValueFunction(tflite_path)
-        ),
-        coeff_puct=coeff_puct,
-        kldgain_threshold=kldgain_threshold,
-        dfpn_search_root=dfpn_search_root,
-        dfpn_search_leaf=dfpn_search_leaf,
-        name=(
-            'none'
-            if tflite_path is None
-            else tflite_path.split('/')[-1].split('.')[0]
-        ),
-    )
-
-
-def _average_kifu_length(kifu_dir: str) -> float:
-    line_length_list = []
-    for path in glob(os.path.join(kifu_dir, 'kifu_*.tsv')):
-        if ('B' in path) or ('W' in path):
-            continue
-        with open(path, 'rb') as f:
-            line_length_list.append(sum(1 for _ in f) - 1)
-    if line_length_list:
-        return np.mean(line_length_list)
-    return np.inf
-
-
-def _compute_random_moves(random_rate: float, kifu_dir: str):
-    max_random_moves = random_rate * _average_kifu_length(kifu_dir=kifu_dir)
-    if max_random_moves != float('inf'):
-        max_random_moves = int(np.ceil(max_random_moves / 2)) * 2
-    print(f'max_random_moves = {max_random_moves}')
-    return max_random_moves
-
-
-@cl.command()
-@cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
-@_SelfPlayWorker.wrap_options()
-def _selfplay_worker(**kwargs):
-    now = datetime.now().strftime('%Y%m%d_%H%M%S')
-    with open(f'command_{now}.txt', 'w') as f:
-        f.write(f'python {" ".join(sys.argv)}')
-
-    worker = _SelfPlayWorker(
-        shogi_variant=kwargs['shogi'],
-        num_games=kwargs["play_num_games"],
-        coeff_puct=kwargs['coeff_puct'],
-        kldgain_threshold=kwargs['kldgain_threshold'],
-        dfpn_search_root=kwargs['dfpn_root'],
-        dfpn_search_leaf=kwargs['dfpn_leaf'],
-        simulations=kwargs['num_simulations'],
-        temperature=kwargs['temperature'],
-        n_jobs=kwargs['play_jobs'],
-        job_size=kwargs["job_size"],
-    )
-
-    tflite_path = 'models/model_{:04d}.tflite'
-    for ii in range(10000):
-        if os.path.exists(tflite_path.format(ii)) and os.path.exists(
-            tflite_path.format(ii + 1)
-        ):
-            continue
-        max_random_moves = _compute_random_moves(
-            kwargs['random_rate'], f'datasets/dataset_{ii - 1:04d}'
-        )
-        others = worker.validate(tflite_path.format(ii))
-        while True:
-            worker(
-                tflite_path=tflite_path.format(ii) if ii > 0 else None,
-                tflite_path_others=others,
-                kifu_dir=f'datasets/dataset_{ii:04d}',
-                max_random_moves=max_random_moves,
-            )
-            if os.path.exists(tflite_path.format(ii + 1)):
-                print(f"Found new model: {tflite_path.format(ii + 1)}")
-                break
-            else:
-                msg = (
-                    f"New model ({tflite_path.format(ii + 1)}) not found. "
-                    f"Continue self-play with {tflite_path.format(ii)}"
-                )
-                print(msg)

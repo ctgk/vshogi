@@ -1,10 +1,8 @@
 import os
-import sys
 import tempfile
 import typing as tp
 import warnings
 from collections.abc import Callable
-from datetime import datetime
 from glob import glob
 from time import time
 
@@ -397,46 +395,3 @@ class _NetworkTrainer:
             ),
         ]
         return options
-
-
-@cl.command()
-@cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
-@_NetworkTrainer.wrap_options()
-def _nn_trainer(**kwargs):
-    print(f"{kwargs=}")
-    trainer = _NetworkTrainer(
-        shogi_variant=kwargs["shogi"],
-        buffer_size=kwargs["buffer_size"],
-        device=kwargs["device"],
-        **{
-            prefix: {
-                k.removeprefix(prefix + "_"): v
-                for k, v in kwargs.items()
-                if k.startswith(prefix)
-            }
-            for prefix in ("network", "optimization", "loss", "validation")
-        },
-    )
-    now = datetime.now().strftime('%Y%m%d_%H%M%S')
-    with open(f'command_{now}.txt', 'w') as f:
-        f.write(f'python {" ".join(sys.argv)}')
-
-    def _resume_from() -> int:
-        tflite_list = sorted(glob('models/model_*.tflite'))
-        if not tflite_list:
-            return 0
-        return int(tflite_list[-1].split('_')[-1].split('.')[0]) + 1
-
-    ii = _resume_from()
-    model_path = 'models/model_{:04d}.pth'
-    while ii < 10000:
-        trainer(
-            model_path=model_path.format(ii),
-            prev_model_path=None if ii == 0 else model_path.format(ii - 1),
-        )
-        if os.path.exists(model_path.format(ii).replace('.pth', '.tflite')):
-            ii += 1
-
-
-if __name__ == '__main__':
-    _nn_trainer()

@@ -3,8 +3,8 @@
 import click as cl
 
 from vshogi._cli._match import _match
-from vshogi._cli._alpha_zero import _alpha_zero
 from vshogi.dlshogi._cli import _dlshogi
+from vshogi.dlshogi._cli._alpha_zero import _alpha_zero
 
 
 @cl.group()
