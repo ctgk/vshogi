@@ -82,21 +82,19 @@ def _cycle_selfplay_and_train(**kwargs):
         shogi_variant=kwargs["shogi"],
         buffer_size=kwargs["train_buffer_size"],
         device=kwargs["train_device"],
-        network={
-            "hidden_channels": kwargs["train_hidden_channels"],
-            "bottleneck_channels": kwargs["train_bottleneck_channels"],
-            "backbone_blocks": kwargs["train_backbone_blocks"],
+        **{
+            prefix.removeprefix("train_"): {
+                k.removeprefix(prefix + "_"): v
+                for k, v in kwargs.items()
+                if k.startswith(prefix)
+            }
+            for prefix in (
+                "train_network",
+                "train_optimization",
+                "train_loss",
+                "train_validation",
+            )
         },
-        optimization={
-            "learning_rate": kwargs["train_learning_rate"],
-            "epochs": kwargs["train_epochs"],
-            "minibatch": kwargs["train_minibatch_size"],
-        },
-        loss={
-            "coeff_policy": kwargs["train_coeff_policy_loss"],
-            "coeff_entropy": kwargs["train_coeff_policy_entropy"],
-        },
-        validation={"threshold": kwargs["train_win_ratio_threshold"]},
     )
     if start == 0:
         trainer(

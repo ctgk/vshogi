@@ -32,7 +32,7 @@ jobs:
       run: |
         python -m vshogi alpha-zero cycler "$NAME" \
         --cycles "$CYCLE" --play-num-games 50 \
-        --train-backbone-blocks "$BACKBONES" --train-win-ratio-threshold 0.01
+        --train-network-blocks "$BACKBONES" --train-validation-threshold 0.01
     - name: Evaluate model
       env:
         NAME: ${{ matrix.game.name }}

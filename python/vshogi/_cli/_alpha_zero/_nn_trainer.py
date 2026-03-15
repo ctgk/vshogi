@@ -88,9 +88,9 @@ class _NetworkTrainer:
     ) -> tp.Tuple[th.nn.Module, th.optim.Optimizer]:
         network = PolicyValueNetwork(
             game_class=self._game_class,
-            hidden_channels=self._network["hidden_channels"],
-            bottleneck_channels=self._network["bottleneck_channels"],
-            num_backbone_blocks=self._network["backbone_blocks"],
+            hidden_channels=self._network["hiddens"],
+            bottleneck_channels=self._network["bottlenecks"],
+            num_backbone_blocks=self._network["blocks"],
         )
         optimizer = th.optim.AdamW(
             network.parameters(),
@@ -309,7 +309,7 @@ class _NetworkTrainer:
                 show_default=True,
             ),
             cl.option(
-                f"--{prefix}hidden-channels",
+                f"--{prefix}network-hiddens",
                 type=int,
                 callback=lambda ctx, param, value: (
                     value
@@ -326,7 +326,7 @@ class _NetworkTrainer:
                 ),
             ),
             cl.option(
-                f"--{prefix}bottleneck-channels",
+                f"--{prefix}network-bottlenecks",
                 type=int,
                 callback=lambda ctx, param, value: (
                     value
@@ -343,7 +343,7 @@ class _NetworkTrainer:
                 ),
             ),
             cl.option(
-                f"--{prefix}backbone-blocks",
+                f"--{prefix}network-blocks",
                 type=int,
                 callback=lambda ctx, param, value: (
                     value
@@ -360,6 +360,33 @@ class _NetworkTrainer:
                 ),
             ),
             cl.option(
+                f"--{prefix}optimization-epochs", default=5, show_default=True
+            ),
+            cl.option(
+                f"--{prefix}optimization-minibatch",
+                default=32,
+                show_default=True,
+            ),
+            cl.option(
+                f"--{prefix}optimization-learning-rate",
+                default=1e-2,
+                show_default=True,
+            ),
+            cl.option(
+                f"--{prefix}loss-coeff-policy", default=0.1, show_default=True
+            ),
+            cl.option(
+                f"--{prefix}loss-coeff-entropy",
+                default=0.1,
+                show_default=True,
+                help="Coefficient for policy entropy regularization.",
+            ),
+            cl.option(
+                f"--{prefix}validation-threshold",
+                default=0.55,
+                show_default=True,
+            ),
+            cl.option(
                 f"--{prefix}buffer-size",
                 default=100000,
                 show_default=True,
@@ -368,103 +395,8 @@ class _NetworkTrainer:
                     "samples."
                 ),
             ),
-            cl.option(
-                f"--{prefix}minibatch-size", default=32, show_default=True
-            ),
-            cl.option(
-                f"--{prefix}learning-rate", default=1e-2, show_default=True
-            ),
-            cl.option(f"--{prefix}epochs", default=5, show_default=True),
-            cl.option(
-                f"--{prefix}coeff-policy-loss", default=0.1, show_default=True
-            ),
-            cl.option(
-                f"--{prefix}coeff-policy-entropy",
-                default=0.1,
-                show_default=True,
-                help="Coefficient for policy entropy regularization.",
-            ),
-            cl.option(
-                f"--{prefix}win-ratio-threshold",
-                default=0.55,
-                show_default=True,
-            ),
         ]
         return options
-
-
-def _train_step(
-    buffer: ReplayBuffer,
-    model_path: str,
-    prev_model_path: str | None,
-    shogi_variant: tp.Literal['minishogi', 'judkins_shogi', 'shogi'],
-    network_hidden_channels: int,
-    network_bottleneck_channels: int,
-    network_backbone_blocks: int,
-    kifu_path_pattern: str,
-    minibatch_size: int,
-    learning_rate: float,
-    epochs: int,
-    coeff_policy_loss: float,
-    coeff_entropy_regularization: float,
-    win_ratio_threshold: float,
-    device: tp.Literal['cpu', 'cuda', 'mps'],
-):
-    if not os.path.isdir(os.path.dirname(model_path)):
-        os.makedirs(os.path.dirname(model_path))
-    beta2 = 0.999 ** (
-        minibatch_size / 1024
-    )  # https://arxiv.org/abs/2507.07101
-    trainer = _NetworkTrainer(
-        shogi_variant=shogi_variant,
-        device=device,
-        network={
-            "hidden_channels": network_hidden_channels,
-            "bottleneck_channels": network_bottleneck_channels,
-            "backbone_blocks": network_backbone_blocks,
-        },
-        optimization={
-            "learning_rate": learning_rate,
-            "beta2": beta2,
-            "epochs": epochs,
-            "minibatch": minibatch_size,
-        },
-        loss={
-            "coeff_policy": coeff_policy_loss,
-            "coeff_entropy": coeff_entropy_regularization,
-        },
-        validation={"threshold": win_ratio_threshold},
-    )
-    network, optimizer = trainer._network_and_optimizer(
-        candidate_path=[model_path, prev_model_path],
-    )
-    if epochs == 0:
-        edge_model = trainer._to_edge_model(network)
-        edge_model.export(model_path.replace('.pth', '.tflite'))
-        return
-
-    trainer._add_data_from_kifu(buffer, kifu_path_pattern)
-    if len(buffer) != 0:
-        print(f"Start training: {model_path}")
-        trainer._train(network, optimizer, buffer)
-        print(f"Saving trained parameters: {model_path}")
-        state = {
-            "state_dict": network.state_dict(),
-            "optimizer": optimizer.state_dict(),
-        }
-        th.save(state, model_path)
-
-    edge_model = trainer._to_edge_model(network)
-    with tempfile.TemporaryDirectory(delete=True) as temp_dir:
-        file_path = os.path.join(temp_dir, model_path.split("/")[-1])
-        edge_model.export(file_path)
-        player_curr = _NetworkTrainer._engine(file_path)
-    player_prev = _NetworkTrainer._engine(
-        prev_model_path.replace('.pth', '.tflite'),
-    )
-    winner = trainer._play_games(player_curr, player_prev)
-    if player_curr.name == winner:
-        edge_model.export(model_path.replace('.pth', '.tflite'))
 
 
 @cl.command()
@@ -476,21 +408,14 @@ def _nn_trainer(**kwargs):
         shogi_variant=kwargs["shogi"],
         buffer_size=kwargs["buffer_size"],
         device=kwargs["device"],
-        network={
-            "hidden_channels": kwargs["hidden_channels"],
-            "bottleneck_channels": kwargs["bottleneck_channels"],
-            "backbone_blocks": kwargs["backbone_blocks"],
+        **{
+            prefix: {
+                k.removeprefix(prefix + "_"): v
+                for k, v in kwargs.items()
+                if k.startswith(prefix)
+            }
+            for prefix in ("network", "optimization", "loss", "validation")
         },
-        optimization={
-            "learning_rate": kwargs["learning_rate"],
-            "epochs": kwargs["epochs"],
-            "minibatch": kwargs["minibatch_size"],
-        },
-        loss={
-            "coeff_policy": kwargs["coeff_policy_loss"],
-            "coeff_entropy": kwargs["coeff_policy_entropy"],
-        },
-        validation={"threshold": kwargs["win_ratio_threshold"]},
     )
     now = datetime.now().strftime('%Y%m%d_%H%M%S')
     with open(f'command_{now}.txt', 'w') as f:
