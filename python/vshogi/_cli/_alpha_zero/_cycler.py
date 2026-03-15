@@ -8,41 +8,15 @@ import click as cl
 
 from vshogi._cli._alpha_zero._nn_trainer import _NetworkTrainer
 from vshogi._cli._alpha_zero._self_play_worker import (
+    _SelfPlayWorker,
     _compute_random_moves,
-    _get_previous_models_superior_to_latest,
-    _run_self_play,
-    _self_play_parameters,
 )
-
-
-def _selfplay(
-    tflite_path: str,
-    other_path: list[str],
-    kifu_dir: str,
-    max_random_moves: int,
-    **kwargs,
-):
-    _run_self_play(
-        shogi_variant=kwargs['shogi'],
-        tflite_path=tflite_path,
-        tflite_path_others=other_path,
-        kifu_dir=kifu_dir,
-        num_selfplay=kwargs['play_num_games'],
-        coeff_puct=kwargs['play_coeff_puct'],
-        kldgain_threshold=kwargs['play_kldgain_threshold'],
-        dfpn_search_root=kwargs['play_dfpn_root'],
-        dfpn_search_leaf=kwargs['play_dfpn_leaf'],
-        num_simulations=kwargs['play_num_simulations'],
-        temperature=kwargs['play_temperature'],
-        max_random_moves=max_random_moves,
-        n_jobs=kwargs['play_jobs'],
-    )
 
 
 @cl.command()
 @cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
 @cl.option("--cycles", default=10, show_default=True)
-@_self_play_parameters(prefix="play")
+@_SelfPlayWorker.wrap_options(prefix="play")
 @_NetworkTrainer.wrap_options(prefix="train")
 @cl.option(
     "-o",
@@ -96,6 +70,18 @@ def _cycle_selfplay_and_train(**kwargs):
             )
         },
     )
+    worker = _SelfPlayWorker(
+        shogi_variant=kwargs['shogi'],
+        num_games=kwargs["play_num_games"],
+        coeff_puct=kwargs['play_coeff_puct'],
+        kldgain_threshold=kwargs['play_kldgain_threshold'],
+        dfpn_search_root=kwargs['play_dfpn_root'],
+        dfpn_search_leaf=kwargs['play_dfpn_leaf'],
+        simulations=kwargs['play_num_simulations'],
+        temperature=kwargs['play_temperature'],
+        n_jobs=kwargs['play_jobs'],
+        job_size=kwargs['play_job_size'],
+    )
     if start == 0:
         trainer(
             weight_path.format(0),
@@ -110,23 +96,16 @@ def _cycle_selfplay_and_train(**kwargs):
             kwargs['play_random_rate'],
             os.path.join(kwargs['output'], f'datasets/dataset_{i - 1:04d}'),
         )
-        others = _get_previous_models_superior_to_latest(
-            shogi_variant=kwargs['shogi'],
-            latest=tflite_path.format(i - 1),
-            num_games=10,
-            coeff_puct=kwargs['play_coeff_puct'],
-            n_jobs=kwargs['play_jobs'],
-        )
+        others = worker.validate(tflite_path.format(i - 1))
         while True:
-            _selfplay(
+            worker(
                 tflite_path=None if i == 1 else tflite_path.format(i - 1),
-                other_path=others,
+                tflite_path_others=others,
                 kifu_dir=os.path.join(
                     kwargs['output'],
                     f'datasets/dataset_{i:04d}',
                 ),
                 max_random_moves=max_random_moves,
-                **kwargs,
             )
             trainer(
                 weight_path.format(i),
