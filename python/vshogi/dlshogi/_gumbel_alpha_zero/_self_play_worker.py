@@ -2,6 +2,7 @@ import typing as tp
 
 import click as cl
 import numpy as np
+from tqdm import tqdm
 
 import vshogi as vs
 from vshogi.engine import GumbelAlphaZero
@@ -69,6 +70,48 @@ class _SelfPlayWorker(_AlphaZeroSelfPlayWorker):
         policy = dict(sorted(policy.items(), key=lambda t: t[1], reverse=True))
         game.policy_log.append(policy)
         game.q_value_log.append(player.get_q_value())
+
+    def _validate(
+        self,
+        latest: str,
+        previous: str,
+        num_games: int = 10,
+        *,
+        show_pbar: bool = True,
+    ) -> vs.Record:
+        game_class = getattr(getattr(vs, self._shogi_variant), 'Game')
+        player_latest = self._load_player(latest)
+        player_prev = self._load_player(previous)
+        record = vs.Record()
+        search_args = {"budget": 100, "num_actions": self._num_actions}
+        iterator = range(num_games)
+        if show_pbar:
+            iterator = tqdm(iterator, ncols=100)
+        for n in iterator:
+            if n % 2 == 0:
+                result = vs.play_game(
+                    game_class(),
+                    player_latest,
+                    player_prev,
+                    search_args=search_args,
+                    draw_on_max_moves=True,
+                ).result
+                record += vs.Record.from_black_result(result)
+            else:
+                result = vs.play_game(
+                    game_class(),
+                    player_prev,
+                    player_latest,
+                    search_args=search_args,
+                    draw_on_max_moves=True,
+                ).result
+                record += vs.Record.from_white_result(result)
+            if show_pbar:
+                iterator.set_description(
+                    f'{player_latest.name} vs {player_prev.name} '
+                    f'= {record.wdl()}'
+                )
+        return record
 
     @staticmethod
     def _get_cli_options(prefix: str = "") -> dict[str, tp.Callable]:
