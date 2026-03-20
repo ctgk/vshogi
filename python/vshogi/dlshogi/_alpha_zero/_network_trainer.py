@@ -288,7 +288,7 @@ class _NetworkTrainer:
     def wrap_options(cls, prefix: str = "") -> Callable:
         if prefix and (not prefix.endswith("-")):
             prefix = prefix + "-"
-        wrappers = cls._get_cli_options(prefix)
+        wrappers = list(cls._get_cli_options(prefix).values())
 
         def decorator(func: Callable) -> Callable:
             for wrap in reversed(wrappers):
@@ -298,15 +298,15 @@ class _NetworkTrainer:
         return decorator
 
     @staticmethod
-    def _get_cli_options(prefix: str = "") -> list[cl.Option]:
-        options = [
-            cl.option(
+    def _get_cli_options(prefix: str = "") -> dict[str, tp.Callable]:
+        options = {
+            "device": cl.option(
                 f"--{prefix}device",
                 default='cpu',
                 type=cl.Choice(['cpu', 'cuda', 'mps']),
                 show_default=True,
             ),
-            cl.option(
+            "network-hiddens": cl.option(
                 f"--{prefix}network-hiddens",
                 type=int,
                 callback=lambda ctx, param, value: (
@@ -323,7 +323,7 @@ class _NetworkTrainer:
                     "Defaults: minishogi=64, judkins_shogi=64, shogi=128."
                 ),
             ),
-            cl.option(
+            "network-bottlenecks": cl.option(
                 f"--{prefix}network-bottlenecks",
                 type=int,
                 callback=lambda ctx, param, value: (
@@ -340,7 +340,7 @@ class _NetworkTrainer:
                     "Defaults: minishogi=32, judkins_shogi=32, shogi=64."
                 ),
             ),
-            cl.option(
+            "network-blocks": cl.option(
                 f"--{prefix}network-blocks",
                 type=int,
                 callback=lambda ctx, param, value: (
@@ -357,34 +357,34 @@ class _NetworkTrainer:
                     "Defaults: minishogi=3, judkins_shogi=4, shogi=8."
                 ),
             ),
-            cl.option(
+            "optimization-epochs": cl.option(
                 f"--{prefix}optimization-epochs", default=5, show_default=True
             ),
-            cl.option(
+            "optimization-minibatch": cl.option(
                 f"--{prefix}optimization-minibatch",
                 default=32,
                 show_default=True,
             ),
-            cl.option(
+            "optimization-learning-rate": cl.option(
                 f"--{prefix}optimization-learning-rate",
                 default=1e-2,
                 show_default=True,
             ),
-            cl.option(
+            "loss-coeff-policy": cl.option(
                 f"--{prefix}loss-coeff-policy", default=0.1, show_default=True
             ),
-            cl.option(
+            "loss-coeff-entropy": cl.option(
                 f"--{prefix}loss-coeff-entropy",
                 default=0.1,
                 show_default=True,
                 help="Coefficient for policy entropy regularization.",
             ),
-            cl.option(
+            "validation-threshold": cl.option(
                 f"--{prefix}validation-threshold",
                 default=0.55,
                 show_default=True,
             ),
-            cl.option(
+            "buffer-size": cl.option(
                 f"--{prefix}buffer-size",
                 default=100000,
                 show_default=True,
@@ -393,5 +393,5 @@ class _NetworkTrainer:
                     "samples."
                 ),
             ),
-        ]
+        }
         return options
