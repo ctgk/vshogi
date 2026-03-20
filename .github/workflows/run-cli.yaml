@@ -1,4 +1,4 @@
-name: Run AlphaZero Training
+name: Run CLI Training
 
 on:
   push:
@@ -9,9 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        game: [
-          {name: minishogi, rl_cycle: 3, nn_backbone_blocks: 3},
-        ]
+        algorithm: ["alpha-zero", "gumbel-alpha-zero"]
       fail-fast: false
 
     steps:
@@ -26,26 +24,18 @@ jobs:
       run: pip install .[dlshogi]
     - name: Run command
       env:
-        NAME: ${{ matrix.game.name }}
-        CYCLE: ${{ matrix.game.rl_cycle }}
-        BACKBONES: ${{ matrix.game.nn_backbone_blocks }}
+        ALGORITHM: ${{ matrix.algorithm }}
       run: |
-        python -m vshogi alpha-zero cycler "$NAME" \
-        --cycles "$CYCLE" --play-num-games 50 \
-        --train-network-blocks "$BACKBONES" --train-validation-threshold 0.01
+        python -m vshogi $ALGORITHM cycler minishogi \
+        --cycles 3 --play-num-games 50 \
+        --train-network-blocks 3 --train-validation-threshold 0.01
     - name: Evaluate model
-      env:
-        NAME: ${{ matrix.game.name }}
-        CYCLE: ${{ matrix.game.rl_cycle }}
       run: |
-        python -m vshogi match $NAME \
+        python -m vshogi match minishogi \
         --player1 models/model_0000.tflite \
-        --player2 models/model_$(printf %04d $CYCLE).tflite \
+        --player2 models/model_0003.tflite \
         --az-search-count 100
     - name: Check generated dataset
-      env:
-        NAME: ${{ matrix.game.name }}
-        CYCLE: ${{ matrix.game.rl_cycle }}
       run: |
         for tsv in datasets/dataset_*/kifu_*.tsv; do
           echo "$tsv"
