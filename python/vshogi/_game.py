@@ -845,10 +845,6 @@ class Game(abc.ABC):
     ) -> np.ndarray:
         """Convert an action into DL-shogi policy array.
 
-        A value of an element corresponding to `action` equals to `max_value`.
-        The rest of the value (`1 - max_value`) is equally divided to the
-        elements of the rest of the legal actions.
-
         Parameters
         ----------
         action_proba : tp.Union[Move, tp.Dict[Move, int]]

@@ -20,7 +20,7 @@ class Data:
 
     sfen: str
     policy: dict[Move, float]
-    value01: float
+    value01: float | dict[Move, float]
     weight: float = 1.0
     malignancy: float = 0.0
 

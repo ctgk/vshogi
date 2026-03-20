@@ -1,6 +1,7 @@
 import numpy as np
 import torch as th
 
+from vshogi._game import Game
 from vshogi.dlshogi._data import Data
 from vshogi.judkins_shogi._game import Game as JudkinsGame  # noqa: F401
 from vshogi.minishogi._game import Game as MinishogiGame  # noqa: F401
@@ -85,8 +86,9 @@ class ReplayBuffer(th.utils.data.Dataset):
         """
         if self._game_variant is None:
             raise ValueError("Please add data before trying to get items.")
+        game_class = eval(self._game_variant)
         ii = index % len(self._buffer)
-        g = eval(self._game_variant)(self._buffer[ii].sfen)
+        g: Game = eval(self._game_variant)(self._buffer[ii].sfen)
         policy = self._buffer[ii].policy
         if index >= len(self._buffer):
             g = g.hflip()
@@ -97,7 +99,20 @@ class ReplayBuffer(th.utils.data.Dataset):
         except ZeroDivisionError:
             msg = f"Invalid policy ({policy}) at: {self._buffer[ii].sfen}"
             raise ZeroDivisionError(msg)
-        value01 = np.array([np.float32(self._buffer[ii].value01)])
+        if isinstance(self._buffer[ii].value01, dict):
+            value01 = np.zeros(
+                (
+                    game_class.files,
+                    game_class.ranks,
+                    game_class._get_move_class()._num_policy_per_square(),
+                ),
+                dtype=np.float32,
+            )
+            value01[...] = np.nan
+            for m, v in self._buffer[ii].value01.items():
+                value01.ravel()[m._to_dlshogi_policy_index(g.turn)] = v
+        else:
+            value01 = np.array([np.float32(self._buffer[ii].value01)])
         w = np.array(np.float32(self._buffer[ii].weight))
         return x.squeeze(), policy.squeeze(), value01, w
 

@@ -47,5 +47,18 @@ def test_add():
     assert np.isclose(buffer[1][2], 1.0)
 
 
+def test_action_values():
+    buffer = ReplayBuffer()
+    buffer.add(
+        Data(
+            sfen="5/5/5/4g/4K b -",
+            policy={Move("1e1d"): 1.0},
+            value01={Move("1e1d"): 1.0},
+        )
+    )
+    v = buffer.__getitem__(0)[2]
+    assert np.sum(~np.isnan(v)) == 1
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
