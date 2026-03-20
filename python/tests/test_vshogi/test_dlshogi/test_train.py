@@ -115,6 +115,8 @@ def test_masked_binary_cross_entropy():
 
 
 def test_masked_binary_cross_entropy_mps():
+    if not th.backends.mps.is_available():
+        return
     t = th.tensor(
         [[np.nan, np.nan, 1], [0, np.nan, np.nan]],
         dtype=th.float32,

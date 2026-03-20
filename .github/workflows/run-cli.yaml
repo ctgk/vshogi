@@ -9,7 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        algorithm: ["alpha-zero", "gumbel-alpha-zero"]
+        config: [
+          {algorithm: "alpha-zero", num_games: 50, epochs: 5},
+          {algorithm: "gumbel-alpha-zero", num_games: 50, epochs: 5},
+          {algorithm: "klent", num_games: 2500, epochs: 1},
+        ]
       fail-fast: false
 
     steps:
@@ -24,11 +28,14 @@ jobs:
       run: pip install .[dlshogi]
     - name: Run command
       env:
-        ALGORITHM: ${{ matrix.algorithm }}
+        ALGORITHM: ${{ matrix.config.algorithm }}
+        NUM_GAMES: ${{ matrix.config.num_games }}
+        EPOCHS: ${{ matrix.config.epochs }}
       run: |
         python -m vshogi $ALGORITHM cycler minishogi \
-        --cycles 3 --play-num-games 50 \
-        --train-network-blocks 3 --train-validation-threshold 0.01
+        --cycles 3 --play-num-games $NUM_GAMES \
+        --train-network-blocks 3 --train-validation-threshold 0.01 \
+        --train-optimization-epochs $EPOCHS
     - name: Evaluate model
       run: |
         python -m vshogi match minishogi \
@@ -37,7 +44,7 @@ jobs:
         --az-search-count 100
     - name: Check generated dataset
       run: |
-        for tsv in datasets/dataset_*/kifu_*.tsv; do
+        for tsv in datasets/dataset_0003/kifu_00*.tsv; do
           echo "$tsv"
           cat "$tsv"
           python .github/workflows/check_selfplay_dataset.py "$tsv"
