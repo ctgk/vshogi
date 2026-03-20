@@ -5,6 +5,7 @@ import torch as th
 from vshogi.dlshogi._train import (
     masked_log_softmax,
     masked_softmax_cross_entropy,
+    masked_binary_cross_entropy,
 )
 
 
@@ -96,6 +97,41 @@ def test_masked_softmax_cross_entropy_mps(t, x, dx_expect):
     nll_total.backward()
     print(x.grad)
     assert np.allclose(x.grad.cpu(), dx_expect, rtol=0, atol=1e-2)
+
+
+def test_masked_binary_cross_entropy():
+    t = th.tensor([[np.nan, np.nan, 1], [0, np.nan, np.nan]], dtype=th.float32)
+    x = th.tensor(
+        [[2, 3, -np.log(np.e - 1)], [0, 2, 1]],
+        dtype=th.float32,
+        requires_grad=True,
+    )
+    loss = masked_binary_cross_entropy(t, x)
+    assert loss.shape == (2,)
+    assert np.allclose(loss.detach().numpy(), [1, np.log(2)])
+    th.sum(loss).backward()
+    print(x.grad)
+    assert np.allclose(x.grad, [[0, 0, 1 / np.e - 1], [0.5, 0, 0]])
+
+
+def test_masked_binary_cross_entropy_mps():
+    t = th.tensor(
+        [[np.nan, np.nan, 1], [0, np.nan, np.nan]],
+        dtype=th.float32,
+        device="mps",
+    )
+    x = th.tensor(
+        [[2, 3, -np.log(np.e - 1)], [0, 2, 1]],
+        dtype=th.float32,
+        device="mps",
+        requires_grad=True,
+    )
+    loss = masked_binary_cross_entropy(t, x)
+    assert loss.shape == (2,)
+    th.sum(loss).backward()
+    print(x.grad)
+    assert np.allclose(loss.cpu().detach().numpy(), [1, np.log(2)])
+    assert np.allclose(x.grad.cpu(), [[0, 0, 1 / np.e - 1], [0.5, 0, 0]])
 
 
 if __name__ == '__main__':

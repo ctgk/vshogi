@@ -9,7 +9,7 @@ from vshogi.dlshogi._network._network import PolicyValueNetwork
 from vshogi.dlshogi._policy_value_function import PolicyValueFunction
 from vshogi.dlshogi._read_kifu import read_kifu
 from vshogi.dlshogi._replay_buffer import ReplayBuffer
-from vshogi.dlshogi._train import train
+from vshogi.dlshogi._train import train, train_klent
 
 
 _classes = [
@@ -21,6 +21,7 @@ _classes = [
 _functions = [
     read_kifu,
     train,
+    train_klent,
 ]
 
 
