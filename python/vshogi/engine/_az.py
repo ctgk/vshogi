@@ -8,7 +8,7 @@ from vshogi._move import Move
 
 
 Policy = np.ndarray
-Value = float
+Value = float | np.ndarray | dict[Move, float]
 
 
 def _repr_node(n) -> str:
@@ -161,6 +161,18 @@ class AlphaZero(Engine):
             if node is None:
                 continue
             policy_logits, value = self._policy_value_func(self._game)
+            if isinstance(value, np.ndarray):
+                probas = self._game.masked_softmax(policy_logits)
+                value = sum(
+                    p
+                    * value.ravel()[
+                        m._to_dlshogi_policy_index(self._game.turn)
+                    ]
+                    for m, p in probas.items()
+                )
+            elif isinstance(value, dict):
+                probas = self._game.masked_softmax(policy_logits)
+                value = sum(p * value[m] for m, p in probas.items())
             self._searcher.simulate_expand_backprop(
                 node, self._game._game, value, policy_logits
             )

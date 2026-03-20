@@ -3,6 +3,7 @@ import pytest
 
 import vshogi.minishogi as shogi
 from vshogi.engine import AlphaZero
+from vshogi.engine import piece_value_func
 
 
 def uniform_pv_func(game):
@@ -352,6 +353,19 @@ def test_select_after_one_search():
     player.search(budget=1)
     player.select()
     player.select(temperature=1.0)
+
+
+def test_action_values_head():
+    g = shogi.Game("4k/5/5/5/4K b -")
+    player = AlphaZero(
+        lambda g: (
+            g.to_dlshogi_policy({}),
+            piece_value_func(g, return_action_values=True),
+        )
+    )
+    player.set_game(g)
+    player.search(budget=1)
+    assert np.isclose(player.get_q_value(), 0.0)
 
 
 if __name__ == '__main__':
