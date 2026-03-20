@@ -409,7 +409,7 @@ class _SelfPlayWorker:
     def wrap_options(cls, prefix: str = "") -> tp.Callable:
         if prefix and (not prefix.endswith("-")):
             prefix = prefix + "-"
-        wrappers = cls._get_cli_options(prefix)
+        wrappers = list(cls._get_cli_options(prefix).values())
 
         def decorator(func: tp.Callable) -> tp.Callable:
             for wrap in reversed(wrappers):
@@ -419,27 +419,27 @@ class _SelfPlayWorker:
         return decorator
 
     @staticmethod
-    def _get_cli_options(prefix: str = "") -> list[cl.Option]:
-        return [
-            cl.option(
+    def _get_cli_options(prefix: str = "") -> dict[str, tp.Callable]:
+        return {
+            "num-games": cl.option(
                 f"--{prefix}num-games",
                 default=100,
                 show_default=True,
                 help="Number of self-play games to generate per iteration.",
             ),
-            cl.option(
+            "dfpn-root": cl.option(
                 f"--{prefix}dfpn-root",
                 default=10000,
                 show_default=True,
                 help="DFPN search limit for root nodes",
             ),
-            cl.option(
+            "dfpn-leaf": cl.option(
                 f"--{prefix}dfpn-leaf",
                 default=100,
                 show_default=True,
                 help="DFPN search limit for leaf nodes",
             ),
-            cl.option(
+            "num-simulations": cl.option(
                 f"--{prefix}num-simulations",
                 default=100,
                 show_default=True,
@@ -448,7 +448,7 @@ class _SelfPlayWorker:
                     "higher is stronger but slower."
                 ),
             ),
-            cl.option(
+            "coeff-puct": cl.option(
                 f"--{prefix}coeff-puct",
                 default=4.0,
                 show_default=True,
@@ -457,7 +457,7 @@ class _SelfPlayWorker:
                     "search exploration."
                 ),
             ),
-            cl.option(
+            "kldgain-threshold": cl.option(
                 f"--{prefix}kldgain-threshold",
                 default=1e-4,
                 show_default=True,
@@ -466,7 +466,7 @@ class _SelfPlayWorker:
                     "search; smaller values search longer."
                 ),
             ),
-            cl.option(
+            "temperature": cl.option(
                 f"--{prefix}temperature",
                 default=1.0,
                 show_default=True,
@@ -475,7 +475,7 @@ class _SelfPlayWorker:
                     "opening moves; lower is greedier."
                 ),
             ),
-            cl.option(
+            "random-rate": cl.option(
                 f"--{prefix}random-rate",
                 default=0.5,
                 show_default=True,
@@ -484,7 +484,7 @@ class _SelfPlayWorker:
                     "random opening moves."
                 ),
             ),
-            cl.option(
+            "jobs": cl.option(
                 f"--{prefix}jobs",
                 default=1,
                 show_default=True,
@@ -493,13 +493,13 @@ class _SelfPlayWorker:
                     "1 runs sequentially."
                 ),
             ),
-            cl.option(
+            "job-size": cl.option(
                 f"--{prefix}job-size",
                 default=5,
                 show_default=True,
                 help="Number of games per parallel job.",
             ),
-        ]
+        }
 
 
 @contextlib.contextmanager
