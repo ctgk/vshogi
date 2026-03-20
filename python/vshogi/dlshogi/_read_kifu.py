@@ -9,6 +9,7 @@ from vshogi.shogi._game import Game as StandardGame  # noqa: F401
 def read_kifu(
     tsv_path: str,
     *,
+    lambda_: float = 1.0,
     discount_factor: float = 1.0,
     importance_decay: float = 1.0,
     result_backup_rate: float = 1.0,
@@ -21,6 +22,11 @@ def read_kifu(
     ----------
     tsv_path : str
         Path to tsv file containing Shogi kifu.
+    lambda_ : float, optional
+        Hyperparameter used to blend all possible n-step returns,
+        by default 0.9.
+        - `lambda_ == 0.0`: pure 1-step bootstrapping
+        - `lambda_ == 1.0`: Monte Carlo return
     discount_factor : float, optional
         Discount factor of result value, by default 1.
     importance_decay : float, optional
@@ -66,14 +72,36 @@ def read_kifu(
         move_class,
         always_backup_result=always_backup_result,
     )
-    df['value'] = (
-        df['z_weight']
-        * df['result']
-        * np.power(discount_factor, total_ply - df.index - 1)
-        + (1 - df['z_weight']) * df['q_value']
-    )
+    if np.isclose(lambda_, 1.0):
+        df['value'] = (
+            df['z_weight']
+            * df['result']
+            * np.power(discount_factor, total_ply - df.index - 1)
+            + (1 - df['z_weight']) * df['q_value']
+        )
+    else:
+        df['value'] = df['z_weight'] * df['result'] * np.power(
+            discount_factor, total_ply - df.index - 1
+        ) + (1 - df['z_weight']) * _compute_lambda_returns(
+            df['q_value'].values, lambda_
+        )
     df['value01'] = df['value'].apply(lambda v: np.clip((v + 1) / 2, 0.0, 1.0))
     return df
+
+
+def _compute_lambda_returns(
+    q_values: np.ndarray,
+    lambda_: float,
+) -> np.ndarray:
+    lambda_returns: list[float] = []
+    for i in range(len(q_values)):
+        n = len(q_values) - i
+        weights = np.power(lambda_, np.arange(n))
+        lambda_returns.append(
+            np.dot(weights, q_values[i:] * ((-1) ** np.arange(n)))
+            / weights.sum()
+        )
+    return np.asarray(lambda_returns)
 
 
 def _compute_z_weight(
