@@ -645,6 +645,21 @@ inline void export_gaz_searcher(nanobind::module_& m)
                     out.emplace_back(m);
                 return out;
             })
+        .def(
+            "improved_policy",
+            [](const Searcher& self) -> nb::dict {
+                nb::dict out{};
+                const Node& root = self.get_root();
+                const uint n = root.count_childs();
+                if (n == 0u)
+                    return out;
+                std::vector<float> probas(n);
+                root.improved_policy(probas.data());
+                const float* p = probas.data();
+                for (const Node* c = root.get_child(); c; c = c->get_sibling())
+                    out[nb::cast(Move(c->get_action()))] = *p++;
+                return out;
+            })
         .def("apply", [](Searcher& self, Game& game, const Move& action) {
             self.apply(game, action.m_value);
         });

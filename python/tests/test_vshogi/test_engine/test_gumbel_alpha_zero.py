@@ -85,5 +85,17 @@ def test_select_action():
     )
 
 
+def test_improved_policy():
+    game = shogi.Game()
+    searcher = GumbelAlphaZero()
+    searcher.set_game(game)
+    searcher.search(32, num_actions=4)
+    print(searcher._tree(depth=1, breadth=-1))
+
+    actual = searcher.improved_policy()
+    assert len(actual) == 14
+    assert np.isclose(sum(actual.values()), 1.0)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])
