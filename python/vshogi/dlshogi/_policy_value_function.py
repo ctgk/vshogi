@@ -30,14 +30,18 @@ class PolicyValueFunction:
         )
         self._input_index = input_details['index']
         output_details = self._interpreter.get_output_details()
-        if output_details[0]['shape'][-1] == 1:
+        if (output_details[0]['shape'][-1] == 1) or len(
+            output_details[0]["shape"]
+        ) == 4:
             self._value_index = output_details[0]['index']
+            self._value_shape = output_details[0]['shape']
             self._policy_index = output_details[1]['index']
         else:
             self._value_index = output_details[1]['index']
+            self._value_shape = output_details[1]['shape']
             self._policy_index = output_details[0]['index']
 
-    def __call__(self, game: Game) -> tp.Tuple[np.ndarray, float]:
+    def __call__(self, game: Game) -> tp.Tuple[np.ndarray, float | np.ndarray]:
         """Return logits of policy and value of the current game state.
 
         Parameters
@@ -47,7 +51,7 @@ class PolicyValueFunction:
 
         Returns
         -------
-        tp.Tuple[np.ndarray, float]
+        tp.Tuple[np.ndarray, float | np.ndarray]
             Tuple of logits of policy and value.
         """
         game.to_dlshogi_features(out=self._input_placeholder)
@@ -55,8 +59,10 @@ class PolicyValueFunction:
             self._input_index, self._input_placeholder
         )
         self._interpreter.invoke()
-        value = self._interpreter.get_tensor(self._value_index).item()
         policy_logits = self._interpreter.get_tensor(self._policy_index)
+        value = self._interpreter.get_tensor(self._value_index)
+        if self._value_shape[-1] == 1:
+            value = value.item()
         return policy_logits, value
 
     def summary(self) -> str:
