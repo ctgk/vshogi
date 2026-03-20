@@ -8,6 +8,7 @@ from vshogi._game import Game
 from vshogi.dlshogi._network._policy_head import _PolicyHead
 from vshogi.dlshogi._network._residual_block import _ResidualBlock
 from vshogi.dlshogi._network._value_head import _ValueHead
+from vshogi.dlshogi._network._action_value_head import _ActionValueHead
 
 
 GameClass = tp.TypeVar('Game', bound=Game)
@@ -16,7 +17,10 @@ GameClass = tp.TypeVar('Game', bound=Game)
 class PolicyValueNetwork(th.nn.Module):
     """Policy-value network.
 
-    Input (B, C_in, H, W) -> [Output1 (B, H*W*P), Output2 (B, 1)]
+    State value head:
+        Input (B, C_in, H, W) -> [Output1 (B, H*W*P), Output2 (B, 1)]
+    Action value head:
+        Input (B, C_in, H, W) -> [Output1 (B, H*W*P), Output2 (B, H*W*P)]
     """
 
     def __init__(
@@ -25,6 +29,8 @@ class PolicyValueNetwork(th.nn.Module):
         hidden_channels: int,
         bottleneck_channels: int,
         num_backbone_blocks: int,
+        *,
+        action_value_head: bool = False,
     ):
         """Initialize policy-value network.
 
@@ -38,6 +44,8 @@ class PolicyValueNetwork(th.nn.Module):
             Number of feature-channel in bottleneck block.
         num_backbone_blocks : int
             Number of backbone blocks.
+        action_value_head : bool
+            Use action value head if true, default is false.
         """
         super().__init__()
         in_ch: int = game_class.feature_channels
@@ -69,7 +77,12 @@ class PolicyValueNetwork(th.nn.Module):
             ],
         )
         self._policy_head = _PolicyHead(hidden_channels, num_policy_per_square)
-        self._value_head = _ValueHead(hidden_channels, shape)
+        if action_value_head:
+            self._value_head = _ActionValueHead(
+                hidden_channels, num_policy_per_square
+            )
+        else:
+            self._value_head = _ValueHead(hidden_channels, shape)
 
     def forward(self, x: th.Tensor) -> tp.Tuple[th.Tensor, th.Tensor]:
         # x: (B, H, W, C_in)
