@@ -74,11 +74,7 @@ class _SelfPlayWorker(_AlphaZeroSelfPlayWorker):
         game: vs.Game = game_class()
         game.q_value_log = []
         game.policy_log = []
-        num_random_moves = (
-            np.random.choice(max_random_moves + 1)
-            if np.isfinite(max_random_moves)
-            else max_random_moves
-        )
+        num_random_moves = max_moves  # always stochastic
         for _ in range(max_moves):
             if game.result != vs.Result.ONGOING:
                 break
