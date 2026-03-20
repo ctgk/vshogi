@@ -129,7 +129,7 @@ class Klent(Engine):
             Improved policy
         """
         pi_prime = sp.softmax(list(self._log_pi_prime.values()))
-        policy = {m: p for m, p in zip(self._log_pi_prime, pi_prime)}
+        policy = {m: float(p) for m, p in zip(self._log_pi_prime, pi_prime)}
         policy = dict(sorted(policy.items(), key=lambda t: t[1], reverse=True))
         return policy
 
