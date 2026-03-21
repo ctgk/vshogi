@@ -79,6 +79,17 @@ class Engine(abc.ABC):
         """
         return self._get_search_count()
 
+    def get_improved_policy(self) -> dict[Move, float]:
+        """Return the improved policy from the search results so far.
+
+        Returns
+        -------
+        dict[Move, float]
+            Probabilities for selecting each action.
+            The dictionary is sorted in descending order of probability.
+        """
+        return self._get_improved_policy()
+
     def select(self, temperature: float | None = None) -> Move:
         """Return best action based on the searches so far.
 
@@ -135,6 +146,10 @@ class Engine(abc.ABC):
 
     @abc.abstractmethod
     def _search(self, budget: int | float, **kwargs) -> None:
+        pass
+
+    @abc.abstractmethod
+    def _get_improved_policy(self) -> dict[Move, float]:
         pass
 
     def _get_search_count(self) -> int:

@@ -378,9 +378,8 @@ class _SelfPlayWorker:
         player: vs.engine.AlphaZero,
         game: vs.Game,
     ) -> None:
-        policy = player.get_visit_counts(include_random=False)
-        total = sum(policy.values())
-        policy = {m.to_sfen(): v / total for m, v in policy.items()}
+        policy = player.get_improved_policy()
+        policy = {m.to_sfen(): v for m, v in policy.items()}
         game.policy_log.append(policy)
         game.q_value_log.append(player.get_q_value())
 

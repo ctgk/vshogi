@@ -97,7 +97,9 @@ class _SelfPlayWorker(_AlphaZeroSelfPlayWorker):
         player.search()
 
     def _log_policy_value(self, player: Klent, game: Game) -> None:
-        policy = {m.to_sfen(): v for m, v in player.improved_policy().items()}
+        policy = {
+            m.to_sfen(): v for m, v in player.get_improved_policy().items()
+        }
         game.policy_log.append(policy)
         game.q_value_log.append(player.get_q_value())
 

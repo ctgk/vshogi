@@ -92,7 +92,7 @@ def test_improved_policy():
     searcher.search(32, num_actions=4)
     print(searcher._tree(depth=1, breadth=-1))
 
-    actual = searcher.improved_policy()
+    actual = searcher.get_improved_policy()
     assert len(actual) == 14
     assert np.isclose(sum(actual.values()), 1.0)
 

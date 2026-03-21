@@ -197,15 +197,9 @@ class GumbelAlphaZero(Engine):
         """
         return self._searcher.get_root().get_q_value(greedy_depth, min_visits)
 
-    def improved_policy(self) -> dict[Move, float]:
-        """Return improved policy of the current game position.
-
-        Returns
-        -------
-        dict[Move, float]
-            Probability of selecting each action.
-        """
-        return self._searcher.improved_policy()
+    def _get_improved_policy(self) -> dict[Move, float]:
+        policy = self._searcher.improved_policy()
+        return dict(sorted(policy.items(), key=lambda t: t[1], reverse=True))
 
     def _select(self, temperature: float | None = None) -> Move:
         if temperature is None:

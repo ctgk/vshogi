@@ -368,5 +368,20 @@ def test_action_values_head():
     assert np.isclose(player.get_q_value(), 0.0)
 
 
+def test_get_improved_policy():
+    g = shogi.Game("4k/5/5/4g/4K b -")
+    player = AlphaZero(random_rate=0.0)
+    player.set_game(g)
+
+    player.search(budget=1)
+    with pytest.raises(ValueError):
+        player.get_improved_policy()
+
+    player.search(budget=1)
+    actual = player.get_improved_policy()
+    assert len(actual) == 1
+    assert np.isclose(actual[shogi.Move("1e1d")], 1.0)
+
+
 if __name__ == '__main__':
     pytest.main([__file__])

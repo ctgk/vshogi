@@ -47,7 +47,7 @@ def test_get_value_policy():
     value = engine.get_q_value()
     print(value)
     assert value > 0
-    policy = engine.improved_policy()
+    policy = engine.get_improved_policy()
     print(policy)
     assert policy[moves[0]] < 0.5
     assert policy[moves[1]] > 0.5
@@ -64,7 +64,7 @@ def test_get_value_policy_dict():
     value = engine.get_q_value()
     print(value)
     assert value > 0
-    policy = engine.improved_policy()
+    policy = engine.get_improved_policy()
     print(policy)
     assert policy[moves[0]] < 0.5
     assert policy[moves[1]] > 0.5

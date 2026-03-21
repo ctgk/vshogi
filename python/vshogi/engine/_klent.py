@@ -120,14 +120,7 @@ class Klent(Engine):
         """
         return self._value
 
-    def improved_policy(self) -> dict[Move, float]:
-        """Return improved policy.
-
-        Returns
-        -------
-        dict[Move, float]
-            Improved policy
-        """
+    def _get_improved_policy(self) -> dict[Move, float]:
         pi_prime = sp.softmax(list(self._log_pi_prime.values()))
         policy = {m: float(p) for m, p in zip(self._log_pi_prime, pi_prime)}
         policy = dict(sorted(policy.items(), key=lambda t: t[1], reverse=True))

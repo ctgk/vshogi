@@ -95,6 +95,9 @@ class DfpnSearcher(Engine):
                 f"Failed to run DFPN searches on the game position: {sfen}"
             )
 
+    def _get_improved_policy(self) -> None:
+        raise NotImplementedError()
+
     def _select(self, temperature: float | None = None) -> Move:
         if temperature is not None:
             raise ValueError(

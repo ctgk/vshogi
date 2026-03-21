@@ -65,7 +65,7 @@ class _SelfPlayWorker(_AlphaZeroSelfPlayWorker):
         #     m.to_sfen(): float(m == action) for m in game.get_legal_moves()
         # } # simple policy loss
         policy = {
-            m.to_sfen(): v for m, v in player.improved_policy().items()
+            m.to_sfen(): v for m, v in player.get_improved_policy().items()
         }  # policy with completed Q-values
         policy = dict(sorted(policy.items(), key=lambda t: t[1], reverse=True))
         game.policy_log.append(policy)

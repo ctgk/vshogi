@@ -303,6 +303,14 @@ class AlphaZero(Engine):
         move_visit_count_pair_list.sort(key=lambda a: a[1], reverse=True)
         return {m: v for m, v in move_visit_count_pair_list}
 
+    def _get_improved_policy(self):
+        policy = self.get_visit_counts(include_random=False)
+        total = sum(policy.values())
+        if total == 0:
+            msg = "Please run further searches to get valid improved policy."
+            raise ValueError(msg)
+        return {m: v / total for m, v in policy.items()}
+
     def _select(self, temperature: float | None = None) -> Move:
         if (temperature is None) or np.isclose(temperature, 0):
             return self._searcher.select_action()
