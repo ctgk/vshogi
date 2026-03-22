@@ -6,7 +6,7 @@ from glob import glob
 
 import click as cl
 
-from vshogi.dlshogi._alpha_zero._network_trainer import _NetworkTrainer
+from vshogi.dlshogi._gumbel_alpha_zero._network_trainer import _NetworkTrainer
 from vshogi.dlshogi._gumbel_alpha_zero._self_play_worker import _SelfPlayWorker
 from vshogi.dlshogi._cli._alpha_zero import _compute_random_moves, _nn_trainer
 
