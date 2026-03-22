@@ -127,7 +127,10 @@ class _NetworkTrainer:
                 self._last_read_kifu == kifu_path
             ):
                 break
-            df = read_kifu(kifu_path)
+            df = read_kifu(
+                kifu_path,
+                result_backup_rate=1.0 - self._loss["q_ratio"],
+            )
             if len(df) == 0:
                 continue
             for _, row in df.iterrows():
@@ -371,6 +374,17 @@ class _NetworkTrainer:
                 f"--{prefix}optimization-learning-rate",
                 default=1e-2,
                 show_default=True,
+            ),
+            "loss-q-ratio": cl.option(
+                f"--{prefix}loss-q-ratio",
+                default=0.0,
+                show_default=True,
+                help=(
+                    "Blends game outcome z with search evaluation q for the "
+                    "value target: q_ratio * q + (1 - q_ratio) * z. "
+                    "Set to 0.0 for the original AlphaZero, or increase "
+                    "it to train against search estimates (LC0 style)."
+                ),
             ),
             "loss-coeff-policy": cl.option(
                 f"--{prefix}loss-coeff-policy", default=0.1, show_default=True
