@@ -8,6 +8,7 @@ from time import time
 
 import ai_edge_torch
 import click as cl
+import numpy as np
 import pandas as pd
 import torch as th
 from tqdm import tqdm
@@ -156,32 +157,33 @@ class _NetworkTrainer:
             reverse=True,
         )
         new_data = self._read_kifu_list(kifu_list)
-        average = self._compute_average(new_data)
+        aggregated = self._aggregate(new_data)
         for d in new_data:
             self._buffer.add(d)
         print(f"Dataset Length = {len(self._buffer)}")
         df_summary = pd.DataFrame(
             [
-                {"sfen": sfen, "count": a["count"], "value": a["value"]}
-                for sfen, a in average.items()
+                {
+                    "sfen": sfen,
+                    "count": len(a),
+                    "value": np.mean(a),
+                    "stddev": np.std(a),
+                }
+                for sfen, a in aggregated.items()
             ]
         )
         print(df_summary.sort_values(by="count", ascending=False).head(n=10))
 
     @staticmethod
-    def _compute_average(
+    def _aggregate(
         data_list: list[Data],
-    ) -> dict[str, dict[str, int | float]]:
-        average = {}
+    ) -> dict[str, list[float]]:
+        aggregated = {}
         for d in data_list:
-            if d.sfen not in average:
-                average[d.sfen] = {"count": 0, "value": 0}
-            average[d.sfen]["value"] = (
-                average[d.sfen]["count"] * average[d.sfen]["value"]
-                + (2 * d.value01 - 1)
-            ) / (average[d.sfen]["count"] + 1)
-            average[d.sfen]["count"] += 1
-        return average
+            if d.sfen not in aggregated:
+                aggregated[d.sfen] = []
+            aggregated[d.sfen].append(2 * d.value01 - 1)
+        return aggregated
 
     def _train(
         self,

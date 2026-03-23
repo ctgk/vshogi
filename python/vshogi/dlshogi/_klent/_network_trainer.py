@@ -120,19 +120,17 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
         return new_data
 
     @staticmethod
-    def _compute_average(
+    def _aggregate(
         data_list: list[Data],
-    ) -> dict[str, dict[str, int | float]]:
-        average = {}
+    ) -> dict[str, list[float]]:
+        aggregated = {}
         for d in data_list:
-            if d.sfen not in average:
-                average[d.sfen] = {"count": 0, "value": 0}
-            average[d.sfen]["value"] = (
-                average[d.sfen]["count"] * average[d.sfen]["value"]
-                + (2 * np.nansum(list(d.value01.values())) - 1)
-            ) / (average[d.sfen]["count"] + 1)
-            average[d.sfen]["count"] += 1
-        return average
+            if d.sfen not in aggregated:
+                aggregated[d.sfen] = []
+            aggregated[d.sfen].append(
+                float(2 * np.nansum(list(d.value01.values())) - 1)
+            )
+        return aggregated
 
     @staticmethod
     def _get_cli_options(prefix: str = "") -> list[tp.Callable]:
