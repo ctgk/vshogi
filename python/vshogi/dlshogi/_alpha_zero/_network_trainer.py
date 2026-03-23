@@ -377,7 +377,7 @@ class _NetworkTrainer:
             ),
             "loss-q-ratio": cl.option(
                 f"--{prefix}loss-q-ratio",
-                default=0.0,
+                default=1.0,
                 show_default=True,
                 help=(
                     "Blends game outcome z with search evaluation q for the "
