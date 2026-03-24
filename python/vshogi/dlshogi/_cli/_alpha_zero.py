@@ -24,9 +24,26 @@ from vshogi.dlshogi._alpha_zero._self_play_worker import _SelfPlayWorker
     type=str,
     help='Output directory',
 )
-def _cycle_selfplay_and_train(**kwargs):
-    print('kwargs:', kwargs)
+def _cycler(**kwargs):
+    _cycle_selfplay_and_train(_SelfPlayWorker, _NetworkTrainer, **kwargs)
 
+
+@cl.command()
+@cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
+@_NetworkTrainer.wrap_options()
+def _nn_trainer(**kwargs):
+    _train(_NetworkTrainer, **kwargs)
+
+
+@cl.command()
+@cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
+@_SelfPlayWorker.wrap_options()
+def _self_play_worker(**kwargs):
+    _selfplay(_SelfPlayWorker, **kwargs)
+
+
+def _cycle_selfplay_and_train(worker_type: type, trainer_type: type, **kwargs):
+    print('kwargs:', kwargs)
     now = datetime.now().strftime('%Y%m%d_%H%M%S')
     if kwargs['output'] != '':
         if os.path.isdir(kwargs['output']):
@@ -50,35 +67,11 @@ def _cycle_selfplay_and_train(**kwargs):
 
     start = _resume_from()
     weight_path = os.path.join(kwargs['output'], 'models/model_{:04d}.pth')
-    trainer = _NetworkTrainer(
-        shogi_variant=kwargs["shogi"],
-        buffer_size=kwargs["train_buffer_size"],
-        device=kwargs["train_device"],
-        **{
-            prefix.removeprefix("train_"): {
-                k.removeprefix(prefix + "_"): v
-                for k, v in kwargs.items()
-                if k.startswith(prefix)
-            }
-            for prefix in (
-                "train_network",
-                "train_optimization",
-                "train_loss",
-                "train_validation",
-            )
-        },
+    trainer = trainer_type(
+        **{k.removeprefix("train_"): v for k, v in kwargs.items()}
     )
-    worker = _SelfPlayWorker(
-        shogi_variant=kwargs['shogi'],
-        num_games=kwargs["play_num_games"],
-        coeff_puct=kwargs['play_coeff_puct'],
-        kldgain_threshold=kwargs['play_kldgain_threshold'],
-        dfpn_search_root=kwargs['play_dfpn_root'],
-        dfpn_search_leaf=kwargs['play_dfpn_leaf'],
-        simulations=kwargs['play_num_simulations'],
-        temperature=kwargs['play_temperature'],
-        n_jobs=kwargs['play_jobs'],
-        job_size=kwargs['play_job_size'],
+    worker = worker_type(
+        **{k.removeprefix("play_"): v for k, v in kwargs.items()}
     )
     if start == 0:
         trainer(
@@ -116,24 +109,9 @@ def _cycle_selfplay_and_train(**kwargs):
                 break
 
 
-@cl.command()
-@cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
-@_NetworkTrainer.wrap_options()
-def _nn_trainer(**kwargs):
+def _train(trainer_type: type, **kwargs):
     print(f"{kwargs=}")
-    trainer = _NetworkTrainer(
-        shogi_variant=kwargs["shogi"],
-        buffer_size=kwargs["buffer_size"],
-        device=kwargs["device"],
-        **{
-            prefix: {
-                k.removeprefix(prefix + "_"): v
-                for k, v in kwargs.items()
-                if k.startswith(prefix)
-            }
-            for prefix in ("network", "optimization", "loss", "validation")
-        },
-    )
+    trainer = trainer_type(**kwargs)
     now = datetime.now().strftime('%Y%m%d_%H%M%S')
     with open(f'command_{now}.txt', 'w') as f:
         f.write(f'python {" ".join(sys.argv)}')
@@ -155,27 +133,11 @@ def _nn_trainer(**kwargs):
             ii += 1
 
 
-@cl.command()
-@cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
-@_SelfPlayWorker.wrap_options()
-def _selfplay_worker(**kwargs):
+def _selfplay(worker_type, **kwargs):
     now = datetime.now().strftime('%Y%m%d_%H%M%S')
     with open(f'command_{now}.txt', 'w') as f:
         f.write(f'python {" ".join(sys.argv)}')
-
-    worker = _SelfPlayWorker(
-        shogi_variant=kwargs['shogi'],
-        num_games=kwargs["play_num_games"],
-        coeff_puct=kwargs['coeff_puct'],
-        kldgain_threshold=kwargs['kldgain_threshold'],
-        dfpn_search_root=kwargs['dfpn_root'],
-        dfpn_search_leaf=kwargs['dfpn_leaf'],
-        simulations=kwargs['num_simulations'],
-        temperature=kwargs['temperature'],
-        n_jobs=kwargs['play_jobs'],
-        job_size=kwargs["job_size"],
-    )
-
+    worker = worker_type(**kwargs)
     tflite_path = 'models/model_{:04d}.tflite'
     for ii in range(10000):
         if os.path.exists(tflite_path.format(ii)) and os.path.exists(
@@ -229,6 +191,6 @@ def _alpha_zero():
     pass
 
 
-_alpha_zero.add_command(_cycle_selfplay_and_train, 'cycler')
+_alpha_zero.add_command(_cycler, 'cycler')
 _alpha_zero.add_command(_nn_trainer, 'nn-trainer')
-_alpha_zero.add_command(_selfplay_worker, 'self-play-worker')
+_alpha_zero.add_command(_self_play_worker, 'self-play-worker')

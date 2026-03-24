@@ -24,30 +24,37 @@ from vshogi.dlshogi import (
 
 
 class _NetworkTrainer:
-    def __init__(
-        self,
-        shogi_variant: str,
-        buffer_size: int,
-        device: tp.Literal["cpu", "cuda", "mps"],
-        network: dict[str, tp.Any],
-        optimization: dict[str, tp.Any],
-        loss: dict[str, tp.Any],
-        validation: dict[str, tp.Any],
-    ):
-        shogi_module = getattr(vs, shogi_variant)
+    def __init__(self, **kwargs) -> None:
+        shogi_module = getattr(vs, kwargs["shogi"])
         self._game_class = getattr(shogi_module, "Game")
-        self._device = device
-        self._network = network
-        self._optimization = optimization
-        self._loss = loss
-        self._validation = validation
+        self._device: tp.Literal["cpu", "cuda", "mps"] = kwargs["device"]
+        self._network: dict = {
+            k.removeprefix("network_"): v
+            for k, v in kwargs.items()
+            if k.startswith("network_")
+        }
+        self._optimization = {
+            k.removeprefix("optimization_"): v
+            for k, v in kwargs.items()
+            if k.startswith("optimization_")
+        }
+        self._loss = {
+            k.removeprefix("loss_"): v
+            for k, v in kwargs.items()
+            if k.startswith("loss_")
+        }
+        self._validation = {
+            k.removeprefix("validation_"): v
+            for k, v in kwargs.items()
+            if k.startswith("validation_")
+        }
 
         if "beta2" not in self._optimization:
             self._optimization["beta2"] = 0.999 ** (
-                optimization["minibatch"] / 1024
+                self._optimization["minibatch"] / 1024
             )  # https://arxiv.org/abs/2507.07101
 
-        self._buffer = ReplayBuffer(buffer_size=buffer_size)
+        self._buffer = ReplayBuffer(buffer_size=kwargs["buffer_size"])
         self._last_read_kifu: str | None = None
 
     def __call__(

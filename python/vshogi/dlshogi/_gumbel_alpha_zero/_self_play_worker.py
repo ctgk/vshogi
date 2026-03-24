@@ -12,27 +12,18 @@ from vshogi.dlshogi._alpha_zero._self_play_worker import (
 
 
 class _SelfPlayWorker(_AlphaZeroSelfPlayWorker):
-    def __init__(
-        self,
-        shogi_variant: tp.Literal["minishogi", "judkin_shogi", "shogi"],
-        num_games: int,
-        num_actions: int,
-        dfpn_search_root: int,
-        dfpn_search_leaf: int,
-        simulations: int,
-        temperature: float,
-        n_jobs: int,
-        job_size: int,
-    ):
-        self._shogi_variant = shogi_variant
-        self._num_games = num_games
-        self._num_actions = num_actions
-        self._dfpn_search_root = dfpn_search_root
-        self._dfpn_search_leaf = dfpn_search_leaf
-        self._simulations = simulations
-        self._temperature = temperature
-        self._n_jobs = n_jobs
-        self._job_size = job_size
+    def __init__(self, **kwargs) -> None:
+        self._shogi_variant: tp.Literal[
+            "minishogi", "judkins_shogi", "shogi"
+        ] = kwargs["shogi"]
+        self._num_games: int = kwargs["num_games"]
+        self._num_actions: int = kwargs["num_actions"]
+        self._dfpn_search_root: int = kwargs["dfpn_root"]
+        self._dfpn_search_leaf: int = kwargs["dfpn_leaf"]
+        self._simulations: int = kwargs["simulations"]
+        self._temperature: float = kwargs["temperature"]
+        self._n_jobs: int = kwargs["jobs"]
+        self._job_size: int = kwargs["job_size"]
 
     def _load_player(self, tflite_path: str | None) -> GumbelAlphaZero:
         return GumbelAlphaZero(
@@ -120,7 +111,7 @@ class _SelfPlayWorker(_AlphaZeroSelfPlayWorker):
             "num-games": az_options["num-games"],
             "dfpn-root": az_options["dfpn-root"],
             "dfpn-leaf": az_options["dfpn-leaf"],
-            "num-simulations": az_options["num-simulations"],
+            "simulations": az_options["simulations"],
             "num-actions": cl.option(
                 f"--{prefix}num-actions",
                 default=16,

@@ -16,31 +16,18 @@ from vshogi.dlshogi._alpha_zero._self_play_worker import (
 
 
 class _SelfPlayWorker(_AlphaZeroSelfPlayWorker):
-    def __init__(
-        self,
-        shogi_variant: tp.Literal["minishogi", "judkin_shogi", "shogi"],
-        num_games: int,
-        coeff_kl: float,
-        coeff_entropy: float,
-        dfpn_search: int,
-        temperature: float,
-        n_jobs: int,
-        job_size: int,
-    ):
+    def __init__(self, **kwargs) -> None:
         super().__init__(
-            shogi_variant=shogi_variant,
-            num_games=num_games,
-            coeff_puct=4.0,
-            kldgain_threshold=1e-4,
-            dfpn_search_root=dfpn_search,
-            dfpn_search_leaf=0,
-            simulations=100,
-            temperature=temperature,
-            n_jobs=n_jobs,
-            job_size=job_size,
+            **kwargs,
+            **{
+                "coeff_puct": 4.0,
+                "kldgain_threshold": 1e-4,
+                "dfpn_leaf": 0,
+                "simulations": 100,
+            },
         )
-        self._coeff_kl = coeff_kl
-        self._coeff_entropy = coeff_entropy
+        self._coeff_kl = kwargs["coeff_kl"]
+        self._coeff_entropy = kwargs["coeff_entropy"]
 
     def _load_player(self, tflite_path: str | None) -> Klent:
         return Klent(
@@ -164,13 +151,7 @@ class _SelfPlayWorker(_AlphaZeroSelfPlayWorker):
                 show_default=True,
                 help="Coefficient of policy entropy.",
             ),
-            "dfpn": cl.option(
-                f"--{prefix}dfpn",
-                type=int,
-                default=10000,
-                show_default=True,
-                help="DFPN search limit",
-            ),
+            "dfpn-root": az_options["dfpn-root"],
             "temperature": az_options["temperature"],
             "random-rate": az_options["random-rate"],
             "jobs": az_options["jobs"],

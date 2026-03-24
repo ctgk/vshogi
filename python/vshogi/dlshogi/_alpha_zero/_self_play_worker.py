@@ -13,29 +13,19 @@ import vshogi as vs
 
 
 class _SelfPlayWorker:
-    def __init__(
-        self,
-        shogi_variant: tp.Literal["minishogi", "judkin_shogi", "shogi"],
-        num_games: int,
-        coeff_puct: float,
-        kldgain_threshold: float,
-        dfpn_search_root: int,
-        dfpn_search_leaf: int,
-        simulations: int,
-        temperature: float,
-        n_jobs: int,
-        job_size: int,
-    ):
-        self._shogi_variant = shogi_variant
-        self._num_games = num_games
-        self._coeff_puct = coeff_puct
-        self._kldgain_threshold = kldgain_threshold
-        self._dfpn_search_root = dfpn_search_root
-        self._dfpn_search_leaf = dfpn_search_leaf
-        self._simulations = simulations
-        self._temperature = temperature
-        self._n_jobs = n_jobs
-        self._job_size = job_size
+    def __init__(self, **kwargs) -> None:
+        self._shogi_variant: tp.Literal[
+            "minishogi", "judkins_shogi", "shogi"
+        ] = kwargs["shogi"]
+        self._num_games: int = kwargs["num_games"]
+        self._coeff_puct: float = kwargs["coeff_puct"]
+        self._kldgain_threshold: float = kwargs["kldgain_threshold"]
+        self._dfpn_search_root: int = kwargs["dfpn_root"]
+        self._dfpn_search_leaf: int = kwargs["dfpn_leaf"]
+        self._simulations: int = kwargs["simulations"]
+        self._temperature: float = kwargs["temperature"]
+        self._n_jobs: int = kwargs["jobs"]
+        self._job_size: int = kwargs["job_size"]
 
     def __call__(
         self,
@@ -438,8 +428,8 @@ class _SelfPlayWorker:
                 show_default=True,
                 help="DFPN search limit for leaf nodes",
             ),
-            "num-simulations": cl.option(
-                f"--{prefix}num-simulations",
+            "simulations": cl.option(
+                f"--{prefix}simulations",
                 default=100,
                 show_default=True,
                 help=(
