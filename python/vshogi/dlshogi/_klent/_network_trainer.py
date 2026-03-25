@@ -1,10 +1,12 @@
 import os
 import typing as tp
 import warnings
+from glob import glob
 from time import time
 
 import click as cl
 import numpy as np
+import pandas as pd
 import torch as th
 
 from vshogi.dlshogi import (
@@ -86,6 +88,53 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
         }
         th.save(state, path)
 
+    def _add_data_from_kifu(self, kifu_path_pattern: str) -> None:
+        kifu_dir = sorted(
+            glob("/".join(kifu_path_pattern.split("/")[:-1])), reverse=True
+        )[0]
+        if (self._last_read_kifu is not None) and (
+            kifu_dir != os.path.dirname(self._last_read_kifu)
+        ):
+            print("Removing data from previous policy")
+            self._buffer._buffer = []
+        kifu_list = sorted(
+            glob(kifu_dir + "/" + kifu_path_pattern.split("/")[-1]),
+            reverse=True,
+        )
+        new_data = self._read_kifu_list(kifu_list)
+        aggregated = self._aggregate(new_data)
+        if self._loss["value_target"] == "aggregate":
+            for sfen, a in aggregated.items():
+                self._buffer.add(
+                    Data(
+                        sfen=sfen,
+                        policy=a["policy"],
+                        value01={
+                            m: np.mean(v) for m, v in a["value01"].items()
+                        },
+                        weight=a["weight"],
+                    )
+                )
+        else:
+            for d in new_data:
+                self._buffer.add(d)
+        print(f"Dataset Length = {len(self._buffer)}")
+        df_summary = pd.DataFrame(
+            [
+                {
+                    "sfen": sfen,
+                    "count": len(sum((v for v in a["value01"].values()), [])),
+                    "value": 2
+                    * np.mean(sum((v for v in a["value01"].values()), []))
+                    - 1,
+                    "stddev": 2
+                    * np.std(sum((v for v in a["value01"].values()), [])),
+                }
+                for sfen, a in aggregated.items()
+            ]
+        )
+        print(df_summary.sort_values(by="count", ascending=False).head(n=10))
+
     def _read_kifu_list(
         self,
         kifu_list: list[str],
@@ -122,14 +171,20 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
     @staticmethod
     def _aggregate(
         data_list: list[Data],
-    ) -> dict[str, list[float]]:
+    ) -> dict[str, dict[str, dict]]:
         aggregated = {}
         for d in data_list:
             if d.sfen not in aggregated:
-                aggregated[d.sfen] = []
-            aggregated[d.sfen].append(
-                float(2 * np.nansum(list(d.value01.values())) - 1)
-            )
+                aggregated[d.sfen] = {
+                    "policy": d.policy,
+                    "value01": {},
+                    "weight": 0,
+                }
+            aggregated[d.sfen]["weight"] += d.weight
+            for m, v in d.value01.items():
+                if m not in aggregated[d.sfen]["value01"]:
+                    aggregated[d.sfen]["value01"][m] = []
+                aggregated[d.sfen]["value01"][m].append(v)
         return aggregated
 
     @staticmethod
@@ -151,6 +206,18 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
                 show_default=True,
                 help=(
                     "Hyperparameter used to blend all possible n-step returns."
+                ),
+            ),
+            "loss-value-target": cl.option(
+                f"--{prefix}loss-value-target",
+                default="as-is",
+                type=cl.Choice(["as-is", "aggregate"]),
+                show_default=True,
+                help=(
+                    "Strategy for constructing value targets. 'as-is' uses "
+                    "each sample's original value target, while "
+                    "'aggregate' replaces it with the aggregated values of "
+                    "all samples sharing the same position."
                 ),
             ),
             "validation-threshold": az_options["validation-threshold"],
