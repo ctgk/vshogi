@@ -137,6 +137,7 @@ class _NetworkTrainer:
             df = read_kifu(
                 kifu_path,
                 result_backup_rate=1.0 - self._loss["q_ratio"],
+                lambda_=self._loss["lambda"],
             )
             if len(df) == 0:
                 continue
@@ -391,6 +392,17 @@ class _NetworkTrainer:
                     "value target: q_ratio * q + (1 - q_ratio) * z. "
                     "Set to 0.0 for the original AlphaZero, or increase "
                     "it to train against search estimates (LC0 style)."
+                ),
+            ),
+            "loss-lambda": cl.option(
+                f"--{prefix}loss-lambda",
+                default=0.0,
+                show_default=True,
+                help=(
+                    "Lambda for computing lambda-returns from MCTS Q-values. "
+                    "0.0 uses one-step bootstrapping (raw Q), while larger "
+                    "values mix longer-horizon alternating backups. "
+                    "Use with non-zero q_ratio."
                 ),
             ),
             "loss-coeff-policy": cl.option(
