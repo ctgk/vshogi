@@ -43,6 +43,25 @@ def test_read_kifu():
     assert np.isclose(df['value01'][len(df) - 1], 1.0)
 
 
+def test_read_kifu_q():
+    kifu_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        'kifu_00000.tsv',
+    )
+    df = read_kifu(kifu_path, result_backup_rate=0.0)
+    assert np.isclose(2 * df["value01"][0] - 1, 0.40515002608299255)
+
+
+def test_read_kifu_lambda1():
+    kifu_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        'kifu_00000.tsv',
+    )
+    df = read_kifu(kifu_path, result_backup_rate=0.0, lambda_=1.0)
+    assert np.isclose(df["value01"][0], 0.0)
+    assert np.isclose(df["value01"][1], 1.0)
+
+
 def test_read_kifu_single_policy():
     content = (
         "sfen\tmove\tresult\tq_value\tpolicy\n"

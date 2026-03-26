@@ -9,7 +9,7 @@ from vshogi.shogi._game import Game as StandardGame  # noqa: F401
 def read_kifu(
     tsv_path: str,
     *,
-    lambda_: float = 1.0,
+    lambda_: float = 0.0,
     discount_factor: float = 1.0,
     importance_decay: float = 1.0,
     result_backup_rate: float = 1.0,
@@ -24,9 +24,7 @@ def read_kifu(
         Path to tsv file containing Shogi kifu.
     lambda_ : float, optional
         Hyperparameter used to blend all possible n-step returns,
-        by default 0.9.
-        - `lambda_ == 0.0`: pure 1-step bootstrapping
-        - `lambda_ == 1.0`: Monte Carlo return
+        by default 0.0 (pure bootstrapping).
     discount_factor : float, optional
         Discount factor of result value, by default 1.
     importance_decay : float, optional
@@ -72,19 +70,11 @@ def read_kifu(
         move_class,
         always_backup_result=always_backup_result,
     )
-    if np.isclose(lambda_, 1.0):
-        df['value'] = (
-            df['z_weight']
-            * df['result']
-            * np.power(discount_factor, total_ply - df.index - 1)
-            + (1 - df['z_weight']) * df['q_value']
-        )
-    else:
-        df['value'] = df['z_weight'] * df['result'] * np.power(
-            discount_factor, total_ply - df.index - 1
-        ) + (1 - df['z_weight']) * _compute_lambda_returns(
-            df['q_value'].values, lambda_
-        )
+    df['value'] = df['z_weight'] * df['result'] * np.power(
+        discount_factor, total_ply - df.index - 1
+    ) + (1 - df['z_weight']) * _compute_lambda_returns(
+        df['q_value'].values, lambda_
+    )
     df['value01'] = df['value'].apply(lambda v: np.clip((v + 1) / 2, 0.0, 1.0))
     return df
 
@@ -93,6 +83,13 @@ def _compute_lambda_returns(
     q_values: np.ndarray,
     lambda_: float,
 ) -> np.ndarray:
+    if np.isclose(lambda_, 0.0):
+        return q_values
+    if lambda_ >= 1.0:
+        lambda_returns = []
+        for i in range(-1, -len(q_values) - 1, -1):
+            lambda_returns.insert(0, q_values[-1] * (1 if i % 2 == 1 else -1))
+        return np.asarray(lambda_returns)
     lambda_returns: list[float] = []
     for i in range(len(q_values)):
         n = len(q_values) - i
