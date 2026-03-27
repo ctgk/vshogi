@@ -396,7 +396,7 @@ class _NetworkTrainer:
             ),
             "loss-lambda": cl.option(
                 f"--{prefix}loss-lambda",
-                default=0.0,
+                default=0.6,
                 show_default=True,
                 help=(
                     "Lambda for computing lambda-returns from MCTS Q-values. "
