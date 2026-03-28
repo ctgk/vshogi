@@ -228,6 +228,12 @@ class _OptionEatAll(cl.Option):
     '--show-pbar',
     is_flag=True,
 )
+@cl.option(
+    "--output",
+    type=cl.Choice(['table', 'wdl']),
+    default="wdl",
+    show_default=True,
+)
 def _match(
     shogi_variant,
     player1,
@@ -241,6 +247,7 @@ def _match(
     dfpn_search_root,
     dfpn_search_leaf,
     show_pbar,
+    output,
 ):
     if (az_search_count is None) and (az_search_second is None):
         raise ValueError(
@@ -279,7 +286,10 @@ def _match(
     if (not show_pbar) or (len(player1) > 1) or (len(player2) > 1):
         print(f'player1: {player1}')
         print(f'player2: {player2}')
-        _print_results(record_of_p1_group)
+        if output == "table":
+            _print_results(record_of_p1_group)
+        else:
+            print(f"p1 vs p2 = {record_of_p1_group.wdl()}")
 
 
 if __name__ == '__main__':
