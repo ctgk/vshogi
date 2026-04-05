@@ -44,6 +44,7 @@ def _get_results_of_single_pair(
                 player2,
                 search_args=search_args,
                 select_args=select_args,
+                draw_on_max_moves=True,
                 _return_num_searched=isinstance(search_args['budget'], float),
             )
             if isinstance(search_args['budget'], float):
@@ -60,6 +61,7 @@ def _get_results_of_single_pair(
                 player1,
                 search_args=search_args,
                 select_args=select_args,
+                draw_on_max_moves=True,
                 _return_num_searched=isinstance(search_args['budget'], float),
             )
             if isinstance(search_args['budget'], float):
@@ -225,7 +227,11 @@ class _OptionEatAll(cl.Option):
     show_default=True,
 )
 @cl.option(
-    '--show-pbar',
+    '--show-inner-pbar',
+    is_flag=True,
+)
+@cl.option(
+    "--show-outer-pbar",
     is_flag=True,
 )
 @cl.option(
@@ -246,7 +252,8 @@ def _match(
     az_temperature,
     dfpn_search_root,
     dfpn_search_leaf,
-    show_pbar,
+    show_inner_pbar,
+    show_outer_pbar,
     output,
 ):
     if (az_search_count is None) and (az_search_second is None):
@@ -255,8 +262,11 @@ def _match(
         )
 
     record_of_p1_group = vs.Record(0, 0, 0, 0, 0, 0)
-    for p1, p2 in itertools.product(player1, player2):
-        if show_pbar:
+    iterator = itertools.product(player1, player2)
+    if show_outer_pbar:
+        iterator = tqdm(iterator, total=len(player1) * len(player2))
+    for p1, p2 in iterator:
+        if show_inner_pbar:
             print(f'player1: {p1}')
             print(f'player2: {p2}')
         record_of_p1 = _get_results_of_single_pair(
@@ -264,7 +274,7 @@ def _match(
             p1,
             p2,
             num_games_each,
-            show_pbar,
+            show_inner_pbar,
             az_init_args={
                 'coeff_puct': az_coeff_puct,
                 'dfpn_search_root': dfpn_search_root,
@@ -280,10 +290,13 @@ def _match(
         )
         record_of_p1_group += record_of_p1
 
-        if show_pbar:
+        if show_inner_pbar:
             _print_results(record_of_p1)
 
-    if (not show_pbar) or (len(player1) > 1) or (len(player2) > 1):
+        if show_outer_pbar:
+            iterator.set_description(f"p1 vs p2 = {record_of_p1_group.wdl()}")
+
+    if (not show_inner_pbar) or (len(player1) > 1) or (len(player2) > 1):
         print(f'player1: {player1}')
         print(f'player2: {player2}')
         if output == "table":
