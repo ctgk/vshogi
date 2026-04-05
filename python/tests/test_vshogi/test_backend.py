@@ -19,6 +19,7 @@ def test_new_game_returns_success(client):
             "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1"
         ),
         "result": "ongoing",
+        "move_history": [],
     }
 
 
@@ -44,6 +45,7 @@ def test_get_state(client):
             "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1"
         ),
         "result": "ongoing",
+        "move_history": [],
     }
 
 
@@ -55,6 +57,7 @@ def test_make_move_legal(client):
             "lnsgkgsnl/1r5b1/ppppppppp/9/9/7P1/PPPPPPP1P/1B5R1/LNSGKGSNL w - 2"
         ),
         "result": "ongoing",
+        "move_history": ["2g2f"],
     }
     game: Game = app.state.game
     assert game.turn == Color.WHITE
@@ -79,6 +82,7 @@ def test_resign(client):
             "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1"
         ),
         "result": "white_win",
+        "move_history": [],
     }
 
     response = client.post("/api/resign")
@@ -103,6 +107,7 @@ def test_undo(client):
             "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1"
         ),
         "result": "ongoing",
+        "move_history": [],
     }
     assert app.state.game.ply() == 0
 

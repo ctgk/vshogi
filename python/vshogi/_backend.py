@@ -31,7 +31,13 @@ class MoveRequest(BaseModel):
 
 
 def _serialize(game: Game) -> dict:
-    return {"sfen": game.to_sfen(), "result": game.result.name.lower()}
+    return {
+        "sfen": game.to_sfen(),
+        "result": game.result.name.lower(),
+        "move_history": [
+            game.get_move_at(i).to_sfen() for i in range(game.ply())
+        ],
+    }
 
 
 @router.post("/game")
