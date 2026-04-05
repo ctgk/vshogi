@@ -14,6 +14,11 @@ async def new_game():
     return {"success": True}
 
 
+@router.get("/game/sfen")
+async def get_sfen(include_move_count: bool = True):
+    return {"sfen": app.state.game.to_sfen(include_move_count)}
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.game = Game()
