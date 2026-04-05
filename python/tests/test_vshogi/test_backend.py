@@ -71,5 +71,22 @@ def test_make_move_illegal(client):
     assert game.ply() == 0
 
 
+def test_resign(client):
+    response = client.post("/api/resign")
+    assert response.status_code == 200
+    assert response.json() == {
+        "sfen": (
+            "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1"
+        ),
+        "result": "white_win",
+    }
+
+    response = client.post("/api/resign")
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "The game has already finished with white_win.",
+    }
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

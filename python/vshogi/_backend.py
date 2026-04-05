@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI, HTTPException
 from pydantic import BaseModel
 
-from vshogi.shogi import Game
+from vshogi.shogi import Game, Result
 
 
 router = APIRouter()
@@ -35,6 +35,21 @@ async def make_move(request: MoveRequest):
     if not game.is_legal(move):
         raise HTTPException(status_code=400, detail=f"Invalid move ({move})")
     game.apply(move)
+    return _serialize(game)
+
+
+@router.post("/resign")
+async def resign():
+    game: Game = app.state.game
+    if game.result != Result.ONGOING:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "The game has already finished with "
+                f"{game.result.name.lower()}."
+            ),
+        )
+    game.resign()
     return _serialize(game)
 
 
