@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from vshogi.shogi import Game, Color
 from vshogi._backend import app
 
 
@@ -49,6 +50,29 @@ def test_get_sfen(client):
             "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b -"
         ),
     }
+
+
+def test_make_move_legal(client):
+    response = client.post("/api/move", json={"move": "2g2f"})
+    assert response.status_code == 200
+    assert response.json() == {
+        "sfen": (
+            "lnsgkgsnl/1r5b1/ppppppppp/9/9/7P1/PPPPPPP1P/1B5R1/LNSGKGSNL w - 2"
+        ),
+    }
+    game: Game = app.state.game
+    assert game.turn == Color.WHITE
+    assert game.ply() == 1
+    assert game.get_move_at(0).to_sfen() == "2g2f"
+
+
+def test_make_move_illegal(client):
+    response = client.post("/api/move", json={"move": "8c8d"})
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid move (8c8d)"}
+    game: Game = app.state.game
+    assert game.turn == Color.BLACK
+    assert game.ply() == 0
 
 
 if __name__ == "__main__":
