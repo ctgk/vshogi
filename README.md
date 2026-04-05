@@ -129,6 +129,20 @@ Black: FUx2
 
 ```
 
+## Web App
+
+```bash
+git clone https://github.com/ctgk/vshogi.git
+cd vshogi
+pip install .[app,dlshogi]
+```
+
+### Backend
+
+```bash
+uvicorn python.vshogi._backend:app --reload --port 8000
+```
+
 ## Changelog
 
 Please read the [changelog](CHANGELOG.md) to check any notable changes of this project.
