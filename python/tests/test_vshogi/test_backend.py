@@ -88,5 +88,24 @@ def test_resign(client):
     }
 
 
+def test_undo(client):
+    response = client.post("/api/undo")
+    assert response.status_code == 400
+    assert response.json() == {"detail": "No moves to undo."}
+    assert app.state.game.ply() == 0
+
+    client.post("/api/move", json={"move": "2g2f"})
+    assert app.state.game.ply() == 1
+    response = client.post("/api/undo")
+    assert response.status_code == 200
+    assert response.json() == {
+        "sfen": (
+            "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1"
+        ),
+        "result": "ongoing",
+    }
+    assert app.state.game.ply() == 0
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
