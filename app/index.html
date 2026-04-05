@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>vshogi web</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">vshogi web</p>
+          <h1>Play a full game of Shogi in the browser.</h1>
+          <p class="lede">
+            Local pass-and-play backed by the vshogi API. Includes movement
+            rules, promotion choices, drops from hand, undo, and resign.
+          </p>
+        </div>
+        <div class="status-card">
+          <p class="status-label">Match status</p>
+          <p class="status-value" id="statusValue">Loading board...</p>
+          <p class="status-meta" id="statusMeta"></p>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="board-panel">
+          <div class="hand hand-top">
+            <div class="hand-header">
+              <span>White hand</span>
+              <span id="whiteHandSummary">-</span>
+            </div>
+            <div class="hand-grid" id="whiteHand"></div>
+          </div>
+
+          <div class="board-frame">
+            <div class="board-axis board-axis-top" id="filesTop"></div>
+            <div class="board-middle">
+              <div class="board-axis board-axis-left" id="ranksLeft"></div>
+              <div class="board" id="board"></div>
+              <div class="board-axis board-axis-right" id="ranksRight"></div>
+            </div>
+            <div class="board-axis board-axis-bottom" id="filesBottom"></div>
+          </div>
+
+          <div class="hand hand-bottom">
+            <div class="hand-header">
+              <span>Black hand</span>
+              <span id="blackHandSummary">-</span>
+            </div>
+            <div class="hand-grid" id="blackHand"></div>
+          </div>
+        </section>
+
+        <aside class="side-panel">
+          <section class="panel-block">
+            <h2>Players</h2>
+            <div class="player-row">
+              <span class="player-label">Black</span>
+              <select id="blackPlayerType">
+                <option value="human">Human</option>
+                <option value="engine">Engine</option>
+              </select>
+            </div>
+            <div id="blackEngineConfig" class="engine-config is-hidden">
+              <input type="text" id="blackModelPath" placeholder="Path to .tflite model" />
+              <div class="sim-row">
+                <label for="blackNumSimulations">Simulations:</label>
+                <input type="number" id="blackNumSimulations" value="800" min="1" step="100" />
+              </div>
+            </div>
+            <div class="player-row" style="margin-top: 0.6rem">
+              <span class="player-label">White</span>
+              <select id="whitePlayerType">
+                <option value="human">Human</option>
+                <option value="engine">Engine</option>
+              </select>
+            </div>
+            <div id="whiteEngineConfig" class="engine-config is-hidden">
+              <input type="text" id="whiteModelPath" placeholder="Path to .tflite model" />
+              <div class="sim-row">
+                <label for="whiteNumSimulations">Simulations:</label>
+                <input type="number" id="whiteNumSimulations" value="800" min="1" step="100" />
+              </div>
+            </div>
+            <div class="button-row" style="margin-top: 0.8rem">
+              <button id="applyPlayersButton">Apply</button>
+            </div>
+            <p class="error-text" id="playersErrorText"></p>
+          </section>
+
+          <section class="panel-block">
+            <h2>Controls</h2>
+            <div class="button-row">
+              <button id="newGameButton">New game</button>
+              <button id="undoButton">Undo</button>
+              <button id="flipButton">Flip board</button>
+              <button class="danger" id="resignButton">Resign</button>
+            </div>
+          </section>
+
+          <section class="panel-block">
+            <h2>Selection</h2>
+            <p class="selection-copy" id="selectionInfo">
+              Select a piece on the board or in hand to see legal targets.
+            </p>
+            <p class="error-text" id="errorText"></p>
+          </section>
+
+          <section class="panel-block">
+            <h2>Move list</h2>
+            <ol class="move-list" id="moveList"></ol>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <dialog class="promotion-dialog" id="promotionDialog">
+      <form method="dialog">
+        <p>Choose how to complete the move.</p>
+        <div class="button-row promotion-actions">
+          <button value="plain" id="plainMoveButton">Move without promotion</button>
+          <button value="promote" id="promoteMoveButton">Promote</button>
+          <button value="cancel" id="cancelPromotionButton">Cancel</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="./config.js"></script>
+    <script type="module" src="./game.js"></script>
+  </body>
+</html>

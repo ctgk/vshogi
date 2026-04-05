@@ -1,14 +1,20 @@
+import asyncio
 import os
+import typing as tp
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from vshogi.engine import AlphaZero
 from vshogi.shogi import Game, Result
+from vshogi.dlshogi import PolicyValueFunction
 
 
 router = APIRouter()
+engines = {"black": None, "white": None}  # None means that the player is human
+engine_budgets = {"black": 800, "white": 800}
 
 
 def _get_allowed_origins() -> list[str]:
@@ -24,6 +30,17 @@ def _get_allowed_origins() -> list[str]:
         ),
     )
     return [origin.strip() for origin in origins.split(",") if origin.strip()]
+
+
+class EngineRequest(BaseModel):
+    color: tp.Literal["black", "white"]
+    tflite_path: str | None  # None means that the player is human
+    num_simulations: int = 800
+    coeff_puct: float
+    kldgain_threshold: float | None
+    random_rate: float
+    dfpn_search_root: int
+    dfpn_search_leaf: int
 
 
 class MoveRequest(BaseModel):
@@ -82,6 +99,54 @@ async def undo_move():
     if game.ply() == 0:
         raise HTTPException(status_code=400, detail="No moves to undo.")
     game.undo()
+    return _serialize(game)
+
+
+@router.get("/engine")
+async def get_engines():
+    return {
+        "black": engines["black"] is not None,
+        "white": engines["white"] is not None,
+    }
+
+
+@router.post("/engine")
+async def load_engine(req: EngineRequest):
+    if req.tflite_path is None:
+        engines[req.color] = None
+    else:
+        engines[req.color] = AlphaZero(
+            PolicyValueFunction(req.tflite_path),
+            coeff_puct=req.coeff_puct,
+            random_rate=req.random_rate,
+            kldgain_threshold=req.kldgain_threshold,
+            dfpn_search_root=req.dfpn_search_root,
+            dfpn_search_leaf=req.dfpn_search_leaf,
+        )
+    engine_budgets[req.color] = req.num_simulations
+
+
+@router.post("/engine/move")
+async def engine_move():
+    game: Game = app.state.game
+    if game.result != Result.ONGOING:
+        raise HTTPException(status_code=400, detail="Game is not ongoing.")
+    color = game.turn.name.lower()
+    engine = engines[color]
+    if engine is None:
+        raise HTTPException(
+            status_code=400,
+            detail=f"No engine is configured for {color}.",
+        )
+    budget = engine_budgets[color]
+
+    def _run() -> object:
+        engine.set_game(game)
+        engine.search(budget)
+        return engine.select()
+
+    move = await asyncio.to_thread(_run)
+    game.apply(move)
     return _serialize(game)
 
 

@@ -140,7 +140,24 @@ pip install .[app,dlshogi]
 ### Backend
 
 ```bash
-uvicorn python.vshogi._backend:app --reload --port 8000
+uvicorn python.vshogi._backend:app --reload --port 8080
+```
+
+If your frontend runs on a different origin, allow it with `VSHOGI_ALLOWED_ORIGINS`:
+
+```bash
+VSHOGI_ALLOWED_ORIGINS=http://127.0.0.1:8000,http://localhost:5173 \
+uvicorn python.vshogi._backend:app --reload --port 8080
+```
+
+### Frontend
+
+Set the backend origin in [app/config.js](/Users/ctgk/program/vshogi/app/config.js) if you run the API on a different host or port.
+
+```bash
+cd app
+npm install
+npm run dev
 ```
 
 ## Changelog
