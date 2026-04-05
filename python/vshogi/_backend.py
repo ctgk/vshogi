@@ -13,15 +13,19 @@ class MoveRequest(BaseModel):
     move: str
 
 
+def _serialize(game: Game) -> dict:
+    return {"sfen": game.to_sfen(), "result": game.result.name.lower()}
+
+
 @router.post("/game")
 async def new_game():
     app.state.game = Game()
-    return {"success": True}
+    return _serialize(app.state.game)
 
 
-@router.get("/game/sfen")
-async def get_sfen(include_move_count: bool = True):
-    return {"sfen": app.state.game.to_sfen(include_move_count)}
+@router.get("/game/state")
+async def get_state():
+    return _serialize(app.state.game)
 
 
 @router.post("/move")
@@ -31,7 +35,7 @@ async def make_move(request: MoveRequest):
     if not game.is_legal(move):
         raise HTTPException(status_code=400, detail=f"Invalid move ({move})")
     game.apply(move)
-    return {"sfen": game.to_sfen()}
+    return _serialize(game)
 
 
 @asynccontextmanager

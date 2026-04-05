@@ -14,7 +14,12 @@ def client():
 def test_new_game_returns_success(client):
     response = client.post("/api/game", json={})
     assert response.status_code == 200
-    assert response.json() == {"success": True}
+    assert response.json() == {
+        "sfen": (
+            "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1"
+        ),
+        "result": "ongoing",
+    }
 
 
 def test_new_game_sets_game_state(client):
@@ -31,24 +36,14 @@ def test_new_game_resets_game_state(client):
     assert isinstance(app.state.game, Game)
 
 
-def test_get_sfen(client):
-    response = client.get("/api/game/sfen")
+def test_get_state(client):
+    response = client.get("/api/game/state")
     assert response.status_code == 200
     assert response.json() == {
         "sfen": (
             "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b - 1"
         ),
-    }
-
-    response = client.get(
-        "/api/game/sfen",
-        params={"include_move_count": False},
-    )
-    assert response.status_code == 200
-    assert response.json() == {
-        "sfen": (
-            "lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b -"
-        ),
+        "result": "ongoing",
     }
 
 
@@ -59,6 +54,7 @@ def test_make_move_legal(client):
         "sfen": (
             "lnsgkgsnl/1r5b1/ppppppppp/9/9/7P1/PPPPPPP1P/1B5R1/LNSGKGSNL w - 2"
         ),
+        "result": "ongoing",
     }
     game: Game = app.state.game
     assert game.turn == Color.WHITE
