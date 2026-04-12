@@ -6,8 +6,8 @@ from threading import Thread
 
 import click as cl
 
-from vshogi.dlshogi._cli._nn_trainer import _trainer_parameters
-from vshogi.dlshogi._cli._self_play_worker import _self_play_parameters
+from vshogi.dlshogi._alpha_zero._network_trainer import _NetworkTrainer
+from vshogi.dlshogi._alpha_zero._self_play_worker import _SelfPlayWorker
 
 
 _previous_streams = {
@@ -49,7 +49,7 @@ def run_processes(**kwargs):
     # Start nn-trainer process
     nn_trainer = subprocess.Popen(
         (
-            [sys.executable, "-m", "vshogi", "dlshogi", "nn-trainer"]
+            [sys.executable, "-m", "vshogi", "alpha-zero", "nn-trainer"]
             + [kwargs["shogi"]] + sum(
                 [
                     [("--no-", "--")[v] + k.replace("_", "-")]
@@ -70,7 +70,7 @@ def run_processes(**kwargs):
     # Start self-play-worker process
     self_play_worker = subprocess.Popen(
         (
-            [sys.executable, "-m", "vshogi", "dlshogi", "self-play-worker"]
+            [sys.executable, "-m", "vshogi", "alpha-zero", "self-play-worker"]
             + [kwargs["shogi"]] + sum(
                 [
                     [("--no-", "--")[v] + k.replace("_", "-")]
@@ -172,8 +172,8 @@ def run_processes(**kwargs):
     show_default=True,
     help="Duration in seconds to run the processes.",
 )
-@_self_play_parameters(prefix="play")
-@_trainer_parameters(prefix="train")
+@_SelfPlayWorker.wrap_options(prefix="play")
+@_NetworkTrainer.wrap_options(prefix="train")
 def main(**kwargs):
     print(kwargs)
     run_processes(**kwargs)

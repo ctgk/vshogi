@@ -19,8 +19,8 @@ jobs:
       run: pip install .[dlshogi]
     - name: Run command
       run: |
-        python python/scripts/run_dlshogi_servers.py minishogi \
-        --duration-seconds 600 --train-epochs 1
+        python python/scripts/run_alpha_zero_servers.py minishogi \
+        --duration-seconds 600 --train-optimization-epochs 1
     - name: Check generated datasets and models
       run: |
         ls models/ datasets/

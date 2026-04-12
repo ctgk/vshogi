@@ -145,14 +145,14 @@ def _selfplay(worker_type, **kwargs):
         ):
             continue
         max_random_moves = _compute_random_moves(
-            kwargs['random_rate'], f'datasets/dataset_{ii - 1:04d}'
+            kwargs['random_rate'], f'datasets/dataset_{ii:04d}'
         )
         others = worker.validate(tflite_path.format(ii))
         while True:
             worker(
                 tflite_path=tflite_path.format(ii) if ii > 0 else None,
                 tflite_path_others=others,
-                kifu_dir=f'datasets/dataset_{ii:04d}',
+                kifu_dir=f'datasets/dataset_{ii + 1:04d}',
                 max_random_moves=max_random_moves,
             )
             if os.path.exists(tflite_path.format(ii + 1)):

@@ -221,5 +221,6 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
                 ),
             ),
             "validation-threshold": az_options["validation-threshold"],
-            "buffer-size": az_options["buffer-size"],
+            "max-dataset-size": az_options["max-dataset-size"],
+            "min-dataset-size": az_options["min-dataset-size"],
         }

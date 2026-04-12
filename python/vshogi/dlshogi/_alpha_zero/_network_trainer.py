@@ -4,7 +4,7 @@ import typing as tp
 import warnings
 from collections.abc import Callable
 from glob import glob
-from time import time
+from time import sleep, time
 
 import ai_edge_torch
 import click as cl
@@ -54,7 +54,10 @@ class _NetworkTrainer:
                 self._optimization["minibatch"] / 1024
             )  # https://arxiv.org/abs/2507.07101
 
-        self._buffer = ReplayBuffer(buffer_size=kwargs["buffer_size"])
+        self._buffer = ReplayBuffer(
+            buffer_size=kwargs["max_dataset_size"] // 2,
+        )
+        self._min_dataset_size = kwargs["min_dataset_size"]
         self._last_read_kifu: str | None = None
 
     def __call__(
@@ -72,8 +75,21 @@ class _NetworkTrainer:
             edge_model = self._to_edge_model(network)
             edge_model.export(model_path.replace(".pth", ".tflite"))
             return
+        index = int(model_path.split("/")[-1].split("_")[1].split(".")[0])
+        kifu_dir = "/".join(
+            kifu_path_pattern.replace("*", f"{index:04d}", 1).split("/")[:-1]
+        )
+        if not os.path.isdir(kifu_dir):
+            print(f"{kifu_dir} not found")
+            sleep(10)
+            return
         self._add_data_from_kifu(kifu_path_pattern)
-        if len(self._buffer) == 0:
+        if len(self._buffer) < self._min_dataset_size:
+            print(
+                f"Dataset size (={len(self._buffer)}) is smaller than "
+                f"minimum required size (={self._min_dataset_size})."
+            )
+            sleep(10)
             return
 
         self._train(network, optimizer, model_path)
@@ -419,13 +435,22 @@ class _NetworkTrainer:
                 default=0.55,
                 show_default=True,
             ),
-            "buffer-size": cl.option(
-                f"--{prefix}buffer-size",
+            "max-dataset-size": cl.option(
+                f"--{prefix}max-dataset-size",
                 default=100000,
                 show_default=True,
                 help=(
-                    "Maximum size of the replay buffer for storing training "
-                    "samples."
+                    "Maximum number of samples stored in the replay buffer "
+                    "for training."
+                ),
+            ),
+            "min-dataset-size": cl.option(
+                f"--{prefix}min-dataset-size",
+                default=0,
+                show_default=True,
+                help=(
+                    "Minimum number of samples required in the replay buffer "
+                    "before starting training."
                 ),
             ),
         }
