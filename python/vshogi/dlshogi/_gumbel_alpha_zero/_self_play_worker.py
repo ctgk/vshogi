@@ -20,7 +20,7 @@ class _SelfPlayWorker(_AlphaZeroSelfPlayWorker):
         self._num_actions: int = kwargs["num_actions"]
         self._dfpn_search_root: int = kwargs["dfpn_root"]
         self._dfpn_search_leaf: int = kwargs["dfpn_leaf"]
-        self._simulations: int = kwargs["simulations"]
+        self.simulations: int = kwargs["simulations"]
         self._temperature: float = kwargs["temperature"]
         self._n_jobs: int = kwargs["jobs"]
         self._job_size: int = kwargs["job_size"]
@@ -48,7 +48,7 @@ class _SelfPlayWorker(_AlphaZeroSelfPlayWorker):
 
     def _set_game_and_search(self, player: GumbelAlphaZero, game: vs.Game):
         player.set_game(game)
-        player.search(self._simulations, self._num_actions)
+        player.search(self.simulations, self._num_actions)
 
     def _log_policy_value(self, player: GumbelAlphaZero, game: vs.Game):
         # action = player.select()

@@ -3,6 +3,7 @@ import sys
 import warnings
 from datetime import datetime
 from glob import glob
+from itertools import count
 
 import click as cl
 import numpy as np
@@ -147,8 +148,21 @@ def _selfplay(worker_type, **kwargs):
         max_random_moves = _compute_random_moves(
             kwargs['random_rate'], f'datasets/dataset_{ii:04d}'
         )
+        simulations = kwargs.get("simulations", 0)
+        kldgain_threshold = kwargs.get("kldgain_threshold", 0.0)
+        for key in ("simulations", "kldgain_threshold"):
+            if (value := kwargs.get(key)) is not None:
+                setattr(worker, key, value)
+                print(f"{key}={getattr(worker, key)}")
         others = worker.validate(tflite_path.format(ii))
-        while True:
+        for jj in count():
+            if jj % 10 == 0 and jj != 0:
+                simulations += kwargs.get("simulations", 0) // 10
+                kldgain_threshold /= 1.1
+                for key in ("simulations", "kldgain_threshold"):
+                    if (value := kwargs.get(key)) is not None:
+                        setattr(worker, key, locals()[key])
+                        print(f"{key}={getattr(worker, key)}")
             worker(
                 tflite_path=tflite_path.format(ii) if ii > 0 else None,
                 tflite_path_others=others,

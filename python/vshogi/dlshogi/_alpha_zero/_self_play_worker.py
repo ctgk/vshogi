@@ -19,10 +19,10 @@ class _SelfPlayWorker:
         ] = kwargs["shogi"]
         self._num_games: int = kwargs["num_games"]
         self._coeff_puct: float = kwargs["coeff_puct"]
-        self._kldgain_threshold: float = kwargs["kldgain_threshold"]
+        self.kldgain_threshold: float = kwargs["kldgain_threshold"]
         self._dfpn_search_root: int = kwargs["dfpn_root"]
         self._dfpn_search_leaf: int = kwargs["dfpn_leaf"]
-        self._simulations: int = kwargs["simulations"]
+        self.simulations: int = kwargs["simulations"]
         self._temperature: float = kwargs["temperature"]
         self._n_jobs: int = kwargs["jobs"]
         self._job_size: int = kwargs["job_size"]
@@ -261,7 +261,7 @@ class _SelfPlayWorker:
                 else vs.dlshogi.PolicyValueFunction(tflite_path)
             ),
             coeff_puct=self._coeff_puct,
-            kldgain_threshold=self._kldgain_threshold,
+            kldgain_threshold=self.kldgain_threshold,
             dfpn_search_root=self._dfpn_search_root,
             dfpn_search_leaf=self._dfpn_search_leaf,
             name=(
@@ -327,7 +327,7 @@ class _SelfPlayWorker:
     def _set_game_and_search(self, player: vs.engine.Engine, game: vs.Game):
         if not player.is_ready():
             player.set_game(game)
-        player.search(self._simulations - player.get_search_count())
+        player.search(self.simulations - player.get_search_count())
 
     def _found_mate(self, player: vs.engine.Engine, game: vs.Game) -> bool:
         if (
