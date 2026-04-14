@@ -61,6 +61,7 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
         optimizer: th.optim.Optimizer,
         path: str,
     ) -> None:
+        self._print_dataset()
         print(f"Start training: {path}")
         device = th.device(self._device)
         network.to(device)
@@ -102,35 +103,25 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
             reverse=True,
         )
         new_data = self._read_kifu_list(kifu_list)
-        aggregated = self._aggregate(new_data)
-        if self._loss["value_target"] == "aggregate":
-            for sfen, a in aggregated.items():
-                self._buffer.add(
-                    Data(
-                        sfen=sfen,
-                        policy=a["policy"],
-                        value01={
-                            m: np.mean(v) for m, v in a["value01"].items()
-                        },
-                        weight=a["weight"],
-                    )
-                )
-        else:
-            for d in new_data:
-                self._buffer.add(d)
+        for d in new_data:
+            self._buffer.add(d)
+
+    def _print_dataset(self) -> None:
         print(f"Dataset Length = {len(self._buffer)}")
+        data = {}
+        for b in self._buffer._buffer:
+            if b.sfen not in data:
+                data[b.sfen] = []
+            data[b.sfen].append(2 * np.nanmean(list(b.value01.values())) - 1)
         df_summary = pd.DataFrame(
             [
                 {
                     "sfen": sfen,
-                    "count": len(sum((v for v in a["value01"].values()), [])),
-                    "value": 2
-                    * np.mean(sum((v for v in a["value01"].values()), []))
-                    - 1,
-                    "stddev": 2
-                    * np.std(sum((v for v in a["value01"].values()), [])),
+                    "count": len(a),
+                    "value": np.nanmean(a),
+                    "stddev": np.nanstd(a),
                 }
-                for sfen, a in aggregated.items()
+                for sfen, a in data.items()
             ]
         )
         print(df_summary.sort_values(by="count", ascending=False).head(n=10))
@@ -169,25 +160,6 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
         return new_data
 
     @staticmethod
-    def _aggregate(
-        data_list: list[Data],
-    ) -> dict[str, dict[str, dict]]:
-        aggregated = {}
-        for d in data_list:
-            if d.sfen not in aggregated:
-                aggregated[d.sfen] = {
-                    "policy": d.policy,
-                    "value01": {},
-                    "weight": 0,
-                }
-            aggregated[d.sfen]["weight"] += d.weight
-            for m, v in d.value01.items():
-                if m not in aggregated[d.sfen]["value01"]:
-                    aggregated[d.sfen]["value01"][m] = []
-                aggregated[d.sfen]["value01"][m].append(v)
-        return aggregated
-
-    @staticmethod
     def _get_cli_options(prefix: str = "") -> list[tp.Callable]:
         az_options = _AlphaZeroNetworkTrainer._get_cli_options(prefix)
         return {
@@ -206,18 +178,6 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
                 show_default=True,
                 help=(
                     "Hyperparameter used to blend all possible n-step returns."
-                ),
-            ),
-            "loss-value-target": cl.option(
-                f"--{prefix}loss-value-target",
-                default="as-is",
-                type=cl.Choice(["as-is", "aggregate"]),
-                show_default=True,
-                help=(
-                    "Strategy for constructing value targets. 'as-is' uses "
-                    "each sample's original value target, while "
-                    "'aggregate' replaces it with the aggregated values of "
-                    "all samples sharing the same position."
                 ),
             ),
             "validation-threshold": az_options["validation-threshold"],

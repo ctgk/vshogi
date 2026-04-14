@@ -68,10 +68,10 @@ class _NetworkTrainer:
     ) -> None:
         if not os.path.isdir(os.path.dirname(model_path)):
             os.makedirs(os.path.dirname(model_path))
-        network, optimizer = self._network_and_optimizer(
-            candidate_path=[model_path, prev_model_path]
-        )
         if prev_model_path is None:
+            network, optimizer = self._network_and_optimizer(
+                candidate_path=[model_path, prev_model_path]
+            )
             edge_model = self._to_edge_model(network)
             edge_model.export(model_path.replace(".pth", ".tflite"))
             return
@@ -80,18 +80,23 @@ class _NetworkTrainer:
             kifu_path_pattern.replace("*", f"{index:04d}", 1).split("/")[:-1]
         )
         if not os.path.isdir(kifu_dir):
-            print(f"{kifu_dir} not found")
+            print(f"{kifu_dir} not found", end="\r")
             sleep(10)
             return
         self._add_data_from_kifu(kifu_path_pattern)
         if len(self._buffer) < self._min_dataset_size:
             print(
                 f"Dataset size (={len(self._buffer)}) is smaller than "
-                f"minimum required size (={self._min_dataset_size})."
+                f"minimum required size (={self._min_dataset_size}).",
+                end="\r",
             )
             sleep(10)
             return
 
+        print()
+        network, optimizer = self._network_and_optimizer(
+            candidate_path=[model_path, prev_model_path]
+        )
         self._train(network, optimizer, model_path)
         edge_model = self._to_edge_model(network)
         with tempfile.TemporaryDirectory(delete=True) as temp_dir:
@@ -184,10 +189,16 @@ class _NetworkTrainer:
             reverse=True,
         )
         new_data = self._read_kifu_list(kifu_list)
-        aggregated = self._aggregate(new_data)
         for d in new_data:
             self._buffer.add(d)
+
+    def _print_dataset(self) -> None:
         print(f"Dataset Length = {len(self._buffer)}")
+        data = {}
+        for b in self._buffer._buffer:
+            if b.sfen not in data:
+                data[b.sfen] = []
+            data[b.sfen].append(2 * b.value01 - 1)
         df_summary = pd.DataFrame(
             [
                 {
@@ -196,21 +207,10 @@ class _NetworkTrainer:
                     "value": np.mean(a),
                     "stddev": np.std(a),
                 }
-                for sfen, a in aggregated.items()
+                for sfen, a in data.items()
             ]
         )
         print(df_summary.sort_values(by="count", ascending=False).head(n=10))
-
-    @staticmethod
-    def _aggregate(
-        data_list: list[Data],
-    ) -> dict[str, list[float]]:
-        aggregated = {}
-        for d in data_list:
-            if d.sfen not in aggregated:
-                aggregated[d.sfen] = []
-            aggregated[d.sfen].append(2 * d.value01 - 1)
-        return aggregated
 
     def _train(
         self,
@@ -218,6 +218,7 @@ class _NetworkTrainer:
         optimizer: th.optim.Optimizer,
         path: str,
     ) -> None:
+        self._print_dataset()
         print(f"Start training: {path}")
         device = th.device(self._device)
         network.to(device)
