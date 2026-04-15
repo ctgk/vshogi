@@ -58,7 +58,7 @@ class _NetworkTrainer:
             buffer_size=kwargs["max_dataset_size"] // 2,
         )
         self._min_dataset_size = kwargs["min_dataset_size"]
-        self._last_read_kifu: str | None = None
+        self._loaded_kifu_list: list[str] = []
 
     def __call__(
         self,
@@ -148,17 +148,16 @@ class _NetworkTrainer:
         kifu_list: list[str],
         duration_sec: int = 120,
     ) -> list[Data]:
+        kifu_list = [p for p in kifu_list if p not in self._loaded_kifu_list]
         new_data: list[Data] = []
         if len(kifu_list) == 0:
             return new_data
         start = time()
         for kifu_path in kifu_list:
-            if ((time() - start) > duration_sec) or (
-                self._last_read_kifu == kifu_path
-            ):
+            if (time() - start) > duration_sec:
                 break
             new_data.extend(self._read_kifu(kifu_path))
-        self._last_read_kifu = kifu_list[0]
+            self._loaded_kifu_list.append(kifu_path)
         return new_data
 
     def _read_kifu(self, path: str) -> list[Data]:
@@ -182,15 +181,13 @@ class _NetworkTrainer:
         kifu_dir = sorted(
             glob("/".join(kifu_path_pattern.split("/")[:-1])), reverse=True
         )[0]
-        if (self._last_read_kifu is not None) and (
-            kifu_dir != os.path.dirname(self._last_read_kifu)
+        if self._loaded_kifu_list and (
+            kifu_dir != os.path.dirname(self._loaded_kifu_list[0])
         ):
             print("Removing data from previous policy")
+            self._loaded_kifu_list = []
             self._buffer._buffer = []
-        kifu_list = sorted(
-            glob(kifu_dir + "/" + kifu_path_pattern.split("/")[-1]),
-            reverse=True,
-        )
+        kifu_list = glob(kifu_dir + "/" + kifu_path_pattern.split("/")[-1])
         new_data = self._read_kifu_list(kifu_list)
         for d in new_data:
             self._buffer.add(d)

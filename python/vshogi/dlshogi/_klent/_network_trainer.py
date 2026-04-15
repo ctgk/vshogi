@@ -1,7 +1,6 @@
 import os
 import typing as tp
 import warnings
-from glob import glob
 
 import click as cl
 import numpy as np
@@ -87,23 +86,6 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
             "optimizer": optimizer.state_dict(),
         }
         th.save(state, path)
-
-    def _add_data_from_kifu(self, kifu_path_pattern: str) -> None:
-        kifu_dir = sorted(
-            glob("/".join(kifu_path_pattern.split("/")[:-1])), reverse=True
-        )[0]
-        if (self._last_read_kifu is not None) and (
-            kifu_dir != os.path.dirname(self._last_read_kifu)
-        ):
-            print("Removing data from previous policy")
-            self._buffer._buffer = []
-        kifu_list = sorted(
-            glob(kifu_dir + "/" + kifu_path_pattern.split("/")[-1]),
-            reverse=True,
-        )
-        new_data = self._read_kifu_list(kifu_list)
-        for d in new_data:
-            self._buffer.add(d)
 
     def _print_dataset(self) -> None:
         print(f"Dataset Length = {len(self._buffer)}")
