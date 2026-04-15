@@ -146,34 +146,37 @@ class _NetworkTrainer:
     def _read_kifu_list(
         self,
         kifu_list: list[str],
-        duration_sec: int = 60,
+        duration_sec: int = 120,
     ) -> list[Data]:
         new_data: list[Data] = []
+        if len(kifu_list) == 0:
+            return new_data
         start = time()
         for kifu_path in kifu_list:
             if ((time() - start) > duration_sec) or (
                 self._last_read_kifu == kifu_path
             ):
                 break
-            df = read_kifu(
-                kifu_path,
-                result_backup_rate=1.0 - self._loss["q_ratio"],
-                lambda_=self._loss["lambda"],
-            )
-            if len(df) == 0:
-                continue
-            for _, row in df.iterrows():
-                new_data.append(
-                    Data(
-                        sfen=row["sfen"],
-                        policy=row["policy"],
-                        value01=row["value01"],
-                        weight=row["weight"],
-                        malignancy=row["malignancy"],
-                    )
-                )
+            new_data.extend(self._read_kifu(kifu_path))
         self._last_read_kifu = kifu_list[0]
         return new_data
+
+    def _read_kifu(self, path: str) -> list[Data]:
+        df = read_kifu(
+            path,
+            result_backup_rate=1.0 - self._loss["q_ratio"],
+            lambda_=self._loss["lambda"],
+        )
+        return [
+            Data(
+                sfen=row["sfen"],
+                policy=row["policy"],
+                value01=row["value01"],
+                weight=row["weight"],
+                malignancy=row["malignancy"],
+            )
+            for _, row in df.iterrows()
+        ]
 
     def _add_data_from_kifu(self, kifu_path_pattern: str) -> None:
         kifu_dir = sorted(

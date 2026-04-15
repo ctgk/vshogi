@@ -2,7 +2,6 @@ import os
 import typing as tp
 import warnings
 from glob import glob
-from time import time
 
 import click as cl
 import numpy as np
@@ -126,38 +125,23 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
         )
         print(df_summary.sort_values(by="count", ascending=False).head(n=10))
 
-    def _read_kifu_list(
-        self,
-        kifu_list: list[str],
-        duration_sec: int = 60,
-    ) -> list[Data]:
+    def _read_kifu(self, path: str) -> list[Data]:
         move_class = self._game_class._get_move_class()
-        new_data: list[Data] = []
-        start = time()
-        for kifu_path in kifu_list:
-            if ((time() - start) > duration_sec) or (
-                self._last_read_kifu == kifu_path
-            ):
-                break
-            df = read_kifu(
-                kifu_path,
-                lambda_=self._loss["lambda"],
-                result_backup_rate=0.0,
+        df = read_kifu(
+            path,
+            lambda_=self._loss["lambda"],
+            result_backup_rate=0.0,
+        )
+        return [
+            Data(
+                sfen=row["sfen"],
+                policy=row["policy"],
+                value01={move_class(row["move"]): row["value01"]},
+                weight=row["weight"],
+                malignancy=row["malignancy"],
             )
-            if len(df) == 0:
-                continue
-            for _, row in df.iterrows():
-                new_data.append(
-                    Data(
-                        sfen=row["sfen"],
-                        policy=row["policy"],
-                        value01={move_class(row["move"]): row["value01"]},
-                        weight=row["weight"],
-                        malignancy=row["malignancy"],
-                    )
-                )
-        self._last_read_kifu = kifu_list[0]
-        return new_data
+            for _, row in df.iterrows()
+        ]
 
     @staticmethod
     def _get_cli_options(prefix: str = "") -> list[tp.Callable]:
