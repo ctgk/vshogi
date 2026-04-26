@@ -165,6 +165,7 @@ class _NetworkTrainer:
             path,
             result_backup_rate=1.0 - self._loss["q_ratio"],
             lambda_=self._loss["lambda"],
+            follow_any_path=(self._loss["backup_path"] == "any"),
         )
         return [
             Data(
@@ -420,6 +421,18 @@ class _NetworkTrainer:
                     "0.0 uses one-step bootstrapping (raw Q), while larger "
                     "values mix longer-horizon alternating backups. "
                     "Use with non-zero q_ratio."
+                ),
+            ),
+            "loss-backup": cl.option(
+                f"--{prefix}loss-backup-path",
+                default="any",
+                type=cl.Choice(['any', 'best']),
+                show_default=True,
+                help=(
+                    "Backup policy used when constructing lambda-return "
+                    "targets from MCTS Q-values. 'any' follows sampled "
+                    "continuation paths, while 'best' follows only the "
+                    "principal variation (best-action path)."
                 ),
             ),
             "loss-coeff-policy": cl.option(

@@ -2,10 +2,92 @@ import io
 import os
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from vshogi.dlshogi import read_kifu
+from vshogi.dlshogi._read_kifu import _compute_lambda_returns
 from vshogi.minishogi import Move
+
+
+@pytest.mark.parametrize(
+    ("q_values, lambda_, expect"),
+    [
+        (
+            (0.6, -0.8, 1.0),
+            0.5,
+            (
+                (0.6 + 0.8 * 0.5 + 1.0 * 0.25) / (1 + 0.5 + 0.25),
+                (-0.8 + -1.0 * 0.5) / (1.0 + 0.5),
+                1.0,
+            ),
+        ),
+        (
+            (0.6, -0.8, 1.0),
+            0.0,
+            (0.6, -0.8, 1.0),
+        ),
+        (
+            (0.6, -0.8, 1.0),
+            1.0,
+            (1.0, -1.0, 1.0),
+        ),
+    ],
+)
+def test_compute_lambda_returns_follow_any(q_values, lambda_, expect):
+    df = pd.DataFrame(
+        [{"q_value": q, "move": Move("1a1b"), "policy": {}} for q in q_values]
+    )
+    actual = _compute_lambda_returns(df, lambda_=lambda_)
+    assert np.allclose(actual, expect)
+
+
+def test_compute_lambda_returns_follow_best_only():
+    df = pd.DataFrame(
+        [
+            {
+                "q_value": 0.1,
+                "move": Move("1e1d"),
+                "policy": {Move("1e1d"): 1.0},
+            },
+            {
+                "q_value": -0.2,
+                "move": Move("5a5b"),
+                "policy": {Move("5a5c"): 1.0},
+            },
+            {
+                "q_value": 1.0,
+                "move": Move("1d1c"),
+                "policy": {},
+            },
+        ]
+    )
+    actual = _compute_lambda_returns(
+        df,
+        lambda_=0.5,
+        follow_any_path=False,
+    )
+    assert np.allclose(
+        actual,
+        [
+            (0.1 + 0.2 * 0.5) / (1 + 0.5),
+            -0.2,
+            1.0,
+        ],
+    )
+    actual = _compute_lambda_returns(
+        df,
+        lambda_=1.0,
+        follow_any_path=False,
+    )
+    assert np.allclose(
+        actual,
+        [
+            (0.1 + 0.2) / 2,
+            -0.2,
+            1.0,
+        ],
+    )
 
 
 def test_read_kifu():
@@ -16,7 +98,7 @@ def test_read_kifu():
     df = read_kifu(
         kifu_path,
         result_backup_rate=1.0,
-        always_backup_result=False,
+        follow_any_path=False,
     )
     print(df)
     assert np.isclose(df['z_weight'][0], 0.0)

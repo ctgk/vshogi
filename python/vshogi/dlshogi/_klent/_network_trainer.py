@@ -2,7 +2,6 @@ import os
 import typing as tp
 import warnings
 
-import click as cl
 import numpy as np
 import pandas as pd
 import torch as th
@@ -111,8 +110,9 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
         move_class = self._game_class._get_move_class()
         df = read_kifu(
             path,
+            result_backup_rate=1.0 - self._loss["q_ratio"],
             lambda_=self._loss["lambda"],
-            result_backup_rate=0.0,
+            follow_any_path=(self._loss["backup_path"] == "any"),
         )
         return [
             Data(
@@ -129,24 +129,7 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
     def _get_cli_options(prefix: str = "") -> list[tp.Callable]:
         az_options = _AlphaZeroNetworkTrainer._get_cli_options(prefix)
         return {
-            "device": az_options["device"],
-            "network-hiddens": az_options["network-hiddens"],
-            "network-bottlenecks": az_options["network-bottlenecks"],
-            "network-blocks": az_options["network-blocks"],
-            "optimization-epochs": az_options["optimization-epochs"],
-            "optimization-minibatch": az_options["optimization-minibatch"],
-            "optimization-learning-rate": az_options[
-                "optimization-learning-rate"
-            ],
-            "loss-lambda": cl.option(
-                f"--{prefix}loss-lambda",
-                default=0.9,
-                show_default=True,
-                help=(
-                    "Hyperparameter used to blend all possible n-step returns."
-                ),
-            ),
-            "validation-threshold": az_options["validation-threshold"],
-            "max-dataset-size": az_options["max-dataset-size"],
-            "min-dataset-size": az_options["min-dataset-size"],
+            k: v
+            for k, v in az_options.items()
+            if k not in ("loss-coeff-policy", "loss-coeff-entropy")
         }

@@ -14,7 +14,7 @@ def read_kifu(
     importance_decay: float = 1.0,
     result_backup_rate: float = 1.0,
     tail_fraction: float | None = None,
-    always_backup_result: bool = True,
+    follow_any_path: bool = True,
 ) -> pd.DataFrame:
     """Return dataframe of Shogi kifu.
 
@@ -33,9 +33,10 @@ def read_kifu(
         `value = result_rate * result + (1 - result_rate) * q_value`
     tail_fraction : float, optional
         Return fraction of the dataframe from tail if given, by default None.
-    always_backup_result : bool, optional
-        Whether to backup result even if the move is not the best one,
-        by default True.
+    follow_any_path : bool, optional
+        If True, compute targets along the recorded game path regardless of
+        whether each move matches the policy argmax. If False, only continue
+        backup while moves follow the policy argmax path, by default True.
 
     Returns
     -------
@@ -63,48 +64,73 @@ def read_kifu(
         df.reset_index(drop=True, inplace=True)
     if len(df) == 0:
         return df
+    df["move"] = df["move"].apply(lambda s: move_class(s))
     df['policy'] = _preprocess_policy(df, move_class)
     df['z_weight'] = _compute_z_weight(
         df,
         result_backup_rate,
-        move_class,
-        always_backup_result=always_backup_result,
+        always_backup_result=follow_any_path,
     )
     df['value'] = df['z_weight'] * df['result'] * np.power(
         discount_factor, total_ply - df.index - 1
     ) + (1 - df['z_weight']) * _compute_lambda_returns(
-        df['q_value'].values, lambda_
+        df, lambda_, follow_any_path=follow_any_path
     )
     df['value01'] = df['value'].apply(lambda v: np.clip((v + 1) / 2, 0.0, 1.0))
     return df
 
 
 def _compute_lambda_returns(
-    q_values: np.ndarray,
+    df: pd.DataFrame,
     lambda_: float,
+    follow_any_path: bool = True,
 ) -> np.ndarray:
+    q_values = df["q_value"].values
+    is_best: list[bool] = list(
+        (
+            df["move"]
+            == df.apply(
+                lambda row: (
+                    max(row["policy"], key=row["policy"].get)
+                    if row["policy"]
+                    else row["move"]
+                ),
+                axis=1,
+            )
+        ).values
+    )
     if np.isclose(lambda_, 0.0):
         return q_values
-    if lambda_ >= 1.0:
-        lambda_returns = []
-        for i in range(-1, -len(q_values) - 1, -1):
-            lambda_returns.insert(0, q_values[-1] * (1 if i % 2 == 1 else -1))
-        return np.asarray(lambda_returns)
+
     lambda_returns: list[float] = []
     for i in range(len(q_values)):
         n = len(q_values) - i
-        weights = np.power(lambda_, np.arange(n))
-        lambda_returns.append(
-            np.dot(weights, q_values[i:] * ((-1) ** np.arange(n)))
-            / weights.sum()
-        )
+        if lambda_ >= 1.0:
+            if (not follow_any_path) and (not all(is_best[i:-1])):
+                weights = np.power(lambda_, np.arange(n))
+                weights *= np.cumprod([True] + is_best[i:-1])
+                lambda_returns.append(
+                    np.dot(weights, q_values[i:] * ((-1) ** np.arange(n)))
+                    / weights.sum()
+                )
+            else:
+                lambda_returns.append(
+                    q_values[-1] * (2 * ((len(q_values) - i) % 2) - 1)
+                )
+        else:
+            weights = np.power(lambda_, np.arange(n))
+            if not follow_any_path:
+                weights *= np.cumprod([True] + is_best[i:-1])
+            lambda_returns.append(
+                np.dot(weights, q_values[i:] * ((-1) ** np.arange(n)))
+                / weights.sum()
+            )
     return np.asarray(lambda_returns)
 
 
 def _compute_z_weight(
     df: pd.DataFrame,
     result_backup_rate: float,
-    move_class: type,
     *,
     always_backup_result: bool = True,
 ) -> list[float]:
@@ -112,10 +138,7 @@ def _compute_z_weight(
     if not always_backup_result:
         is_best: list[bool] = df.apply(
             lambda row: row["policy"] == {}
-            or (
-                move_class(row["move"])
-                == max(row["policy"], key=row["policy"].get)
-            ),
+            or (row["move"] == max(row["policy"], key=row["policy"].get)),
             axis=1,
         ).values.tolist()
         is_all_best_later_turns: list[bool] = [
