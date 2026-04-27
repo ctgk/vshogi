@@ -107,7 +107,6 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
         print(df_summary.sort_values(by="count", ascending=False).head(n=10))
 
     def _read_kifu(self, path: str) -> list[Data]:
-        move_class = self._game_class._get_move_class()
         df = read_kifu(
             path,
             result_backup_rate=1.0 - self._loss["q_ratio"],
@@ -118,7 +117,7 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
             Data(
                 sfen=row["sfen"],
                 policy=row["policy"],
-                value01={move_class(row["move"]): row["value01"]},
+                value01={row["move"]: row["value01"]},
                 weight=row["weight"],
                 malignancy=row["malignancy"],
             )
