@@ -165,6 +165,7 @@ class _NetworkTrainer:
             path,
             result_backup_rate=1.0 - self._loss["q_ratio"],
             lambda_=self._loss["lambda"],
+            discount_factor=self._loss["discount_factor"],
             follow_any_path=(self._loss["backup_path"] == "any"),
         )
         return [
@@ -421,6 +422,17 @@ class _NetworkTrainer:
                     "0.0 uses one-step bootstrapping (raw Q), while larger "
                     "values mix longer-horizon alternating backups. "
                     "Use with non-zero q_ratio."
+                ),
+            ),
+            "loss-discount-factor": cl.option(
+                f"--{prefix}loss-discount-factor",
+                default=1.0,
+                type=float,
+                show_default=True,
+                help=(
+                    "Discount factor gamma used in target computation. 1.0 "
+                    "keeps undiscounted returns (or values), while smaller "
+                    "values down-weight distant future outcomes (or values)."
                 ),
             ),
             "loss-backup": cl.option(

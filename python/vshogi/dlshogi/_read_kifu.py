@@ -74,7 +74,10 @@ def read_kifu(
     df['value'] = df['z_weight'] * df['result'] * np.power(
         discount_factor, total_ply - df.index - 1
     ) + (1 - df['z_weight']) * _compute_lambda_returns(
-        df, lambda_, follow_any_path=follow_any_path
+        df,
+        lambda_,
+        discount_factor=discount_factor,
+        follow_any_path=follow_any_path,
     )
     df['value01'] = df['value'].apply(lambda v: np.clip((v + 1) / 2, 0.0, 1.0))
     return df
@@ -83,9 +86,14 @@ def read_kifu(
 def _compute_lambda_returns(
     df: pd.DataFrame,
     lambda_: float,
+    *,
+    discount_factor: float = 1.0,
     follow_any_path: bool = True,
 ) -> np.ndarray:
     q_values = df["q_value"].values
+    if np.isclose(lambda_, 0.0):
+        return q_values
+
     is_best: list[bool] = list(
         (
             df["move"]
@@ -99,30 +107,35 @@ def _compute_lambda_returns(
             )
         ).values
     )
-    if np.isclose(lambda_, 0.0):
-        return q_values
-
     lambda_returns: list[float] = []
     for i in range(len(q_values)):
         n = len(q_values) - i
+        discount = np.power(discount_factor, np.arange(n))
         if lambda_ >= 1.0:
             if (not follow_any_path) and (not all(is_best[i:-1])):
                 weights = np.power(lambda_, np.arange(n))
                 weights *= np.cumprod([True] + is_best[i:-1])
                 lambda_returns.append(
-                    np.dot(weights, q_values[i:] * ((-1) ** np.arange(n)))
+                    np.dot(
+                        weights,
+                        q_values[i:] * discount * ((-1) ** np.arange(n)),
+                    )
                     / weights.sum()
                 )
             else:
                 lambda_returns.append(
-                    q_values[-1] * (2 * ((len(q_values) - i) % 2) - 1)
+                    q_values[-1]
+                    * discount[-1]
+                    * (2 * ((len(q_values) - i) % 2) - 1)
                 )
         else:
             weights = np.power(lambda_, np.arange(n))
             if not follow_any_path:
                 weights *= np.cumprod([True] + is_best[i:-1])
             lambda_returns.append(
-                np.dot(weights, q_values[i:] * ((-1) ** np.arange(n)))
+                np.dot(
+                    weights, q_values[i:] * discount * ((-1) ** np.arange(n))
+                )
                 / weights.sum()
             )
     return np.asarray(lambda_returns)

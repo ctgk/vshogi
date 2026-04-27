@@ -111,6 +111,7 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
             path,
             result_backup_rate=1.0 - self._loss["q_ratio"],
             lambda_=self._loss["lambda"],
+            discount_factor=self._loss["discount_factor"],
             follow_any_path=(self._loss["backup_path"] == "any"),
         )
         return [
