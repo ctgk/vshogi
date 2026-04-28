@@ -426,7 +426,7 @@ class _NetworkTrainer:
             ),
             "loss-discount-factor": cl.option(
                 f"--{prefix}loss-discount-factor",
-                default=1.0,
+                default=0.95,
                 type=float,
                 show_default=True,
                 help=(
