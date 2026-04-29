@@ -23,6 +23,7 @@ class _SelfPlayWorker:
         self._dfpn_search_root: int = kwargs["dfpn_root"]
         self._dfpn_search_leaf: int = kwargs["dfpn_leaf"]
         self.simulations: int = kwargs["simulations"]
+        self._simulations_original: int = kwargs["simulations"]
         self._temperature: float = kwargs["temperature"]
         self._n_jobs: int = kwargs["jobs"]
         self._job_size: int = kwargs["job_size"]
@@ -75,7 +76,9 @@ class _SelfPlayWorker:
                 n_jobs=self._n_jobs,
             )
 
-    def validate(self, latest: str, num_games: int = 10) -> list[str]:
+    def validate(
+        self, latest: str, num_games: int = 10
+    ) -> tuple[float, list[str]]:
         previous = self._get_previous_models(latest, max_models=10)
         if (self._n_jobs == 1) or (len(previous) < 1):
             scores = [
@@ -111,7 +114,9 @@ class _SelfPlayWorker:
                 print(msg)
             scores = [r.score() for r in records]
         indices = np.argsort(scores)[:9]  # low -> high
-        return [previous[i] for i in indices if scores[i] < num_games * 0.5]
+        average_score = np.mean([s / num_games for s in scores])
+        models = [previous[i] for i in indices if scores[i] < num_games * 0.5]
+        return average_score, models
 
     @staticmethod
     def _get_previous_models(latest: str, max_models: int) -> list[str]:
@@ -320,14 +325,25 @@ class _SelfPlayWorker:
         return game
 
     def _search(self, player, main, game):
-        self._set_game_and_search(player, game)
+        self._set_game_and_search(
+            player,
+            game,
+            sims=(
+                self.simulations
+                if (main is None) or (player is main)
+                else self._simulations_original
+            ),
+        )
         if (main is not None) and (main is not player):
-            self._set_game_and_search(main, game)
+            self._set_game_and_search(main, game, self.simulations)
 
-    def _set_game_and_search(self, player: vs.engine.Engine, game: vs.Game):
+    @staticmethod
+    def _set_game_and_search(
+        player: vs.engine.Engine, game: vs.Game, sims: int
+    ):
         if not player.is_ready():
             player.set_game(game)
-        player.search(self.simulations - player.get_search_count())
+        player.search(sims - player.get_search_count())
 
     def _found_mate(self, player: vs.engine.Engine, game: vs.Game) -> bool:
         if (

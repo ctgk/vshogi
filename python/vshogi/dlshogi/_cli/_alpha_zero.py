@@ -83,31 +83,42 @@ def _cycle_selfplay_and_train(worker_type: type, trainer_type: type, **kwargs):
         start += 1
     else:
         print(f"Resume cycle from {start}")
-    for i in range(start, kwargs['cycles'] + 1):
+    others = (
+        [] if start == 1 else worker.validate(tflite_path.format(start - 1))
+    )
+    for ii in range(start, kwargs['cycles'] + 1):
         max_random_moves = _compute_random_moves(
             kwargs['play_random_rate'],
-            os.path.join(kwargs['output'], f'datasets/dataset_{i - 1:04d}'),
+            os.path.join(kwargs['output'], f'datasets/dataset_{ii - 1:04d}'),
         )
-        others = worker.validate(tflite_path.format(i - 1))
         while True:
             worker(
-                tflite_path=None if i == 1 else tflite_path.format(i - 1),
+                tflite_path=None if ii == 1 else tflite_path.format(ii - 1),
                 tflite_path_others=others,
                 kifu_dir=os.path.join(
                     kwargs['output'],
-                    f'datasets/dataset_{i:04d}',
+                    f'datasets/dataset_{ii:04d}',
                 ),
                 max_random_moves=max_random_moves,
             )
             trainer(
-                weight_path.format(i),
-                weight_path.format(i - 1),
+                weight_path.format(ii),
+                weight_path.format(ii - 1),
                 os.path.join(
                     kwargs["output"], "datasets/dataset_*/kifu_*.tsv"
                 ),
             )
-            if os.path.exists(tflite_path.format(i)):
-                break
+            if os.path.exists(tflite_path.format(ii)):
+                score, others = worker.validate(tflite_path.format(ii))
+                msg = (
+                    f"Average score of model_{ii:04d} is {score}, where "
+                    f"threshold is {kwargs['train_validation_threshold']}"
+                )
+                print(msg)
+                if score > kwargs["train_validation_threshold"]:
+                    break
+                others = [o for o in others if o != tflite_path.format(ii - 1)]
+                os.remove(tflite_path.format(ii + 1))
 
 
 def _train(trainer_type: type, **kwargs):
@@ -126,12 +137,11 @@ def _train(trainer_type: type, **kwargs):
     ii = _resume_from()
     model_path = 'models/model_{:04d}.pth'
     while ii < 10000:
+        ii = _resume_from()
         trainer(
             model_path=model_path.format(ii),
             prev_model_path=None if ii == 0 else model_path.format(ii - 1),
         )
-        if os.path.exists(model_path.format(ii).replace('.pth', '.tflite')):
-            ii += 1
 
 
 def _selfplay(worker_type, **kwargs):
@@ -140,6 +150,8 @@ def _selfplay(worker_type, **kwargs):
         f.write(f'python {" ".join(sys.argv)}')
     worker = worker_type(**kwargs)
     tflite_path = 'models/model_{:04d}.tflite'
+
+    others = None
     for ii in range(10000):
         if os.path.exists(tflite_path.format(ii)) and os.path.exists(
             tflite_path.format(ii + 1)
@@ -154,7 +166,11 @@ def _selfplay(worker_type, **kwargs):
             if (value := kwargs.get(key)) is not None:
                 setattr(worker, key, value)
                 print(f"{key}={getattr(worker, key)}")
-        others = worker.validate(tflite_path.format(ii))
+        if others is None:
+            if ii == 0:
+                others = []
+            else:
+                others = worker.validate(tflite_path.format(ii))[1]
         for jj in count():
             if jj % 10 == 0 and jj != 0:
                 simulations += kwargs.get("simulations", 0) // 10
@@ -170,14 +186,22 @@ def _selfplay(worker_type, **kwargs):
                 max_random_moves=max_random_moves,
             )
             if os.path.exists(tflite_path.format(ii + 1)):
-                print(f"Found new model: {tflite_path.format(ii + 1)}")
-                break
-            else:
+                for key in ("simulations", "kldgain_threshold"):
+                    if (value := kwargs.get(key)) is not None:
+                        setattr(worker, key, value)
+                score, others = worker.validate(tflite_path.format(ii + 1))
                 msg = (
-                    f"New model ({tflite_path.format(ii + 1)}) not found. "
-                    f"Continue self-play with {tflite_path.format(ii)}"
+                    f"Average score of model_{ii + 1:04d} is {score}, where "
+                    f"threshold is 0.6"
                 )
                 print(msg)
+                if score > 0.6:
+                    break
+                others = [o for o in others if o != tflite_path.format(ii)]
+                for key in ("simulations", "kldgain_threshold"):
+                    if (value := kwargs.get(key)) is not None:
+                        setattr(worker, key, locals()[key])
+                os.remove(tflite_path.format(ii + 1))
 
 
 def _average_kifu_length(kifu_dir: str) -> float:

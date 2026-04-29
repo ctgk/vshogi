@@ -78,7 +78,10 @@ class _SelfPlayWorker(_AlphaZeroSelfPlayWorker):
         white.clear()
         return game
 
-    def _set_game_and_search(self, player: Klent, game: Game) -> None:
+    @staticmethod
+    def _set_game_and_search(
+        player: Klent, game: Game, *args, **kwargs
+    ) -> None:
         assert type(player) is Klent, type(player)
         player.set_game(game)
         player.search()
