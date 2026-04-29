@@ -152,8 +152,11 @@ def train(
 
     def compute_losses_and_backward(x, y_policy, y_value, w):
         p_logits, v_logits = model(x)
+        p = th.clamp(y_policy.detach(), 0.0, 1.0)
+        plnp = th.xlogy(p, p).sum(dim=-1, keepdim=True)
         loss_policy_each = _scale_grad(
-            masked_softmax_cross_entropy(
+            plnp
+            + masked_softmax_cross_entropy(
                 y_policy,
                 p_logits,
                 coeff_entropy_regularization,
@@ -161,7 +164,8 @@ def train(
             w,
         )
         loss_value_each = _scale_grad(
-            th.nn.functional.binary_cross_entropy_with_logits(
+            th.xlogy(y_value.detach(), y_value.detach())
+            + th.nn.functional.binary_cross_entropy_with_logits(
                 v_logits,
                 y_value,
                 reduction="none",
