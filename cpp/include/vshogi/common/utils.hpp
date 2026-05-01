@@ -274,13 +274,18 @@ inline uint ntz(const uint128 x)
     return ntz(static_cast<std::uint32_t>(x >> 64)) + 64u;
 }
 
+extern "C" std::uint32_t rust_hamming_weight_u32(std::uint32_t x);
+extern "C" std::uint32_t rust_hamming_weight_u64(std::uint64_t x);
+extern "C" std::uint32_t
+rust_hamming_weight_u128(std::uint64_t high, std::uint64_t low);
+
 template <class UInt>
 inline uint hamming_weight(UInt x);
 
 template <>
 inline uint hamming_weight(std::uint32_t x)
 {
-    return static_cast<uint>(__builtin_popcount(x));
+    return static_cast<uint>(rust_hamming_weight_u32(x));
 }
 
 template <>
@@ -292,14 +297,14 @@ inline uint hamming_weight(std::uint16_t x)
 template <>
 inline uint hamming_weight(std::uint64_t x)
 {
-    return static_cast<uint>(__builtin_popcountll(x));
+    return static_cast<uint>(rust_hamming_weight_u64(x));
 }
 
 template <>
 inline uint hamming_weight(uint128 x)
 {
-    return hamming_weight(static_cast<std::uint64_t>(x))
-           + hamming_weight(static_cast<std::uint32_t>(x >> 64));
+    return static_cast<uint>(rust_hamming_weight_u128(
+        static_cast<std::uint64_t>(x >> 64), static_cast<std::uint64_t>(x)));
 }
 
 } // namespace vshogi

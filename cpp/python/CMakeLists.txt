@@ -40,6 +40,10 @@ find_package(Python 3.10
 # Import nanobind through CMake's find_package mechanism
 find_package(nanobind CONFIG REQUIRED)
 
+# --- Rust Integration ---
+include(../cmake/RustIntegration.cmake)
+# ------------------------
+
 # Collect vshogi library source files
 file(GLOB_RECURSE VSHOGI_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/../src/*.cpp)
 
@@ -58,6 +62,7 @@ nanobind_add_module(
     vshogi_wrapper.cpp
 )
 
+target_link_libraries(_vshogi PRIVATE vshogi_rust_lib)
 target_include_directories(_vshogi PRIVATE ${VSHOGI_INCLUDE_DIRS})
 # Don't use vshogi_add_compile_options for nanobind modules due to strict warnings
 target_compile_features(_vshogi PUBLIC cxx_std_17)
@@ -74,6 +79,7 @@ nanobind_add_module(
     minishogi_wrapper.cpp
 )
 
+target_link_libraries(_minishogi PRIVATE vshogi_rust_lib)
 target_include_directories(_minishogi PRIVATE ${VSHOGI_INCLUDE_DIRS})
 # Don't use vshogi_add_compile_options for nanobind modules due to strict warnings
 target_compile_features(_minishogi PUBLIC cxx_std_17)
@@ -90,6 +96,7 @@ nanobind_add_module(
     judkins_shogi_wrapper.cpp
 )
 
+target_link_libraries(_judkins_shogi PRIVATE vshogi_rust_lib)
 target_include_directories(_judkins_shogi PRIVATE ${VSHOGI_INCLUDE_DIRS})
 # Don't use vshogi_add_compile_options for nanobind modules due to strict warnings
 target_compile_features(_judkins_shogi PUBLIC cxx_std_17)
@@ -106,6 +113,7 @@ nanobind_add_module(
     shogi_wrapper.cpp
 )
 
+target_link_libraries(_shogi PRIVATE vshogi_rust_lib)
 target_include_directories(_shogi PRIVATE ${VSHOGI_INCLUDE_DIRS})
 # Don't use vshogi_add_compile_options for nanobind modules due to strict warnings
 target_compile_features(_shogi PUBLIC cxx_std_17)

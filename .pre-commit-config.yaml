@@ -21,6 +21,15 @@ repos:
     hooks:
     -   id: clang-format
         files: '\.(c|h|cpp|hpp)$'
+-   repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+    -   id: fmt
+        name: Run Rust formatter
+        args: ['--manifest-path', 'rust/Cargo.toml', '--']
+    -   id: clippy
+        name: Run `cargo clippy`
+        args: ['--manifest-path', 'rust/Cargo.toml', '--']
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
     rev: v0.12.4
@@ -38,7 +47,7 @@ repos:
         name: Run C++ UnitTests
         entry: bash -c 'cd `git rev-parse --show-toplevel`; rm -rf build/pre-commit; mkdir -p build/pre-commit; cd build/pre-commit; cmake ../../cpp -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && make && ./tests/test_vshogi' --
         types: [text]
-        files: '\.(c|h|cpp|hpp)$'
+        files: '\.(c|h|cpp|hpp|rs)$'
         exclude: 'cpp/python/'
         pass_filenames: false
         language: system
@@ -47,14 +56,14 @@ repos:
         language: system
         entry: pip install --no-build-isolation -ve .[develop]
         types: [text]
-        files: '\.(c|h|cpp|hpp)$'
+        files: '\.(c|h|cpp|hpp|rs)$'
         pass_filenames: false
     -   id: python-unittest
         name: Run Python UnitTests
         language: system
         entry: pytest
         types: [text]
-        files: '\.(c|h|cpp|hpp|py)$'
+        files: '\.(c|h|cpp|hpp|py|rs)$'
         pass_filenames: false
     -   id: python-readme
         name: Run README examples
