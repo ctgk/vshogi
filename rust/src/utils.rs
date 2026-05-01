@@ -36,3 +36,16 @@ pub fn rust_hamming_weight_u128(high: u64, low: u64) -> u32 {
     let x = ((high as u128) << 64) | (low as u128);
     generic_hamming_weight(x)
 }
+
+pub fn rust_ntz_u32(x: u32) -> u32 {
+    x.trailing_zeros()
+}
+
+pub fn rust_ntz_u64(x: u64) -> u32 {
+    x.trailing_zeros()
+}
+
+pub fn rust_ntz_u128(high: u64, low: u64) -> u32 {
+    let x = ((high as u128) << 64) | (low as u128);
+    x.trailing_zeros()
+}

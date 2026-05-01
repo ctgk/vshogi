@@ -256,39 +256,40 @@ private:
 using uint128 = UInt128;
 #endif
 
-template <class T>
-inline uint ntz(const T x);
-
-template <>
-inline uint ntz(const std::uint32_t x)
-{
-    return static_cast<uint>(__builtin_ctz(x));
-}
-
-template <>
-inline uint ntz(const std::uint64_t x)
-{
-    return static_cast<uint>(__builtin_ctzll(x));
-}
-
-template <>
-inline uint ntz(const uint128 x)
-{
-    std::uint64_t x64 = static_cast<std::uint64_t>(x);
-    if (static_cast<bool>(x64))
-        return ntz(x64);
-    return ntz(static_cast<std::uint32_t>(x >> 64)) + 64u;
-}
-
 } // namespace vshogi
 
 extern "C" std::uint32_t rust_hamming_weight_u32(std::uint32_t x);
 extern "C" std::uint32_t rust_hamming_weight_u64(std::uint64_t x);
 extern "C" std::uint32_t
 rust_hamming_weight_u128(std::uint64_t high, std::uint64_t low);
+extern "C" std::uint32_t rust_ntz_u32(std::uint32_t x);
+extern "C" std::uint32_t rust_ntz_u64(std::uint64_t x);
+extern "C" std::uint32_t rust_ntz_u128(std::uint64_t high, std::uint64_t low);
 
 namespace vshogi
 {
+
+template <class T>
+inline uint ntz(const T x);
+
+template <>
+inline uint ntz(const std::uint32_t x)
+{
+    return static_cast<uint>(rust_ntz_u32(x));
+}
+
+template <>
+inline uint ntz(const std::uint64_t x)
+{
+    return static_cast<uint>(rust_ntz_u64(x));
+}
+
+template <>
+inline uint ntz(const uint128 x)
+{
+    return static_cast<uint>(rust_ntz_u128(
+        static_cast<std::uint64_t>(x >> 64), static_cast<std::uint64_t>(x)));
+}
 
 template <class UInt>
 inline uint hamming_weight(UInt x);
