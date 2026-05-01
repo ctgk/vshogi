@@ -32,6 +32,12 @@ pub extern "C" fn rust_ntz_u128(high: u64, low: u64) -> u32 {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn rust_softmax(ptr: *mut f32, len: usize) {
+    let slice = std::slice::from_raw_parts_mut(ptr, len);
+    utils::rust_softmax(slice);
+}
+
+#[no_mangle]
 pub extern "C" fn rust_to_magic_table_index_u32(relevant_occ: u32, magic: u32, shift: u32) -> u32 {
     magic::rust_to_magic_table_index_u32(relevant_occ, magic, shift)
 }

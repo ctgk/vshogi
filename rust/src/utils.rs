@@ -49,3 +49,23 @@ pub fn rust_ntz_u128(high: u64, low: u64) -> u32 {
     let x = ((high as u128) << 64) | (low as u128);
     x.trailing_zeros()
 }
+
+pub fn rust_softmax(logits: &mut [f32]) {
+    if logits.is_empty() {
+        return;
+    }
+
+    let max_val = logits.iter().fold(f32::NEG_INFINITY, |a, &b| a.max(b));
+
+    let mut sum = 0.0;
+    for val in logits.iter_mut() {
+        *val = (*val - max_val).exp();
+        sum += *val;
+    }
+
+    if sum > 0.0 {
+        for val in logits.iter_mut() {
+            *val /= sum;
+        }
+    }
+}

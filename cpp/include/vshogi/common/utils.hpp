@@ -103,25 +103,18 @@ public:
     }
 };
 
+extern "C" void rust_softmax(float* ptr, size_t len);
+
 inline void softmax(float* const logits, const uint n)
 {
-    const float maximum_value = *std::max_element(logits, logits + n);
-    float sum = 0.f;
-    for (uint ii = n; ii--;) {
-        logits[ii] -= maximum_value;
-        logits[ii] = std::exp(logits[ii]);
-        sum += logits[ii];
-    }
-    for (uint ii = n; ii--;) {
-        logits[ii] /= sum;
-    }
+    rust_softmax(logits, static_cast<size_t>(n));
 }
 
 inline void softmax(std::vector<float>& logits)
 {
     if (logits.empty())
         return;
-    softmax(logits.data(), static_cast<uint>(logits.size()));
+    rust_softmax(logits.data(), static_cast<size_t>(logits.size()));
 }
 
 #ifdef __SIZEOF_INT128__
