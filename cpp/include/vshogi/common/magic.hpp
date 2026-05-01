@@ -6,6 +6,16 @@
 #include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/utils.hpp"
 
+extern "C" std::uint32_t rust_to_magic_table_index_u32(
+    std::uint32_t relevant_occ, std::uint32_t magic, std::uint32_t shift);
+extern "C" std::uint32_t rust_to_magic_table_index_u64(
+    std::uint64_t relevant_occ, std::uint32_t magic, std::uint32_t shift);
+extern "C" std::uint32_t rust_to_magic_table_index_u128(
+    std::uint64_t high,
+    std::uint64_t low,
+    std::uint32_t magic,
+    std::uint32_t shift);
+
 namespace vshogi
 {
 
@@ -85,8 +95,9 @@ public:
     get_north_attack(const Square& sq, const bitboard_t& occupied)
     {
         const std::uint32_t magic = magic_number_north[sq];
-        const auto index = to_magic_table_index<log2_table_size_lance>(
-            occupied & premask_north[sq], magic);
+        const auto index
+            = Magic::template to_magic_table_index<log2_table_size_lance>(
+                occupied & premask_north[sq], magic);
         assert(index < table_size_lance);
         return attack_table_north[sq][index];
     }
@@ -94,8 +105,9 @@ public:
     get_south_attack(const Square& sq, const bitboard_t& occupied)
     {
         const std::uint32_t magic = magic_number_south[sq];
-        const auto index = to_magic_table_index<log2_table_size_lance>(
-            occupied & premask_south[sq], magic);
+        const auto index
+            = Magic::template to_magic_table_index<log2_table_size_lance>(
+                occupied & premask_south[sq], magic);
         assert(index < table_size_lance);
         return attack_table_south[sq][index];
     }
@@ -107,8 +119,9 @@ public:
     get_adjacent_attack(const Square& sq, const bitboard_t& occupied)
     {
         const std::uint32_t magic = magic_number_adjacent[sq];
-        const auto index = to_magic_table_index<log2_table_size_adjacent>(
-            occupied & premask_adjacent[sq], magic);
+        const auto index
+            = Magic::template to_magic_table_index<log2_table_size_adjacent>(
+                occupied & premask_adjacent[sq], magic);
         assert(index < table_size_adjacent);
         return attack_table_adjacent[sq][index];
     }
@@ -120,8 +133,9 @@ public:
     get_diagonal_attack(const Square& sq, const bitboard_t& occupied)
     {
         const std::uint32_t magic = magic_number_diagonal[sq];
-        const auto index = to_magic_table_index<log2_table_size_diagonal>(
-            occupied & premask_diagonal[sq], magic);
+        const auto index
+            = Magic::template to_magic_table_index<log2_table_size_diagonal>(
+                occupied & premask_diagonal[sq], magic);
         assert(index < table_size_diagonal);
         return attack_table_diagonal[sq][index];
     }
@@ -143,32 +157,21 @@ public:
     to_magic_table_index(bitboard_t relevant_occ, std::uint32_t magic)
     {
         if constexpr (sizeof(bitboard_t) == sizeof(std::uint32_t)) {
-            // shifting 32-bit of 32-bit integer results in undefined behavior.
-            std::uint32_t product = relevant_occ * magic;
-            return product >> (32u - Shift);
+            return static_cast<uint>(rust_to_magic_table_index_u32(
+                static_cast<std::uint32_t>(relevant_occ), magic, Shift));
         } else if constexpr (sizeof(bitboard_t) == sizeof(std::uint64_t)) {
-            std::uint32_t product
-                = static_cast<std::uint32_t>(relevant_occ) * magic;
-            product ^= static_cast<std::uint32_t>(relevant_occ >> 31u) * magic;
-            return product >> (32u - Shift);
+            return static_cast<uint>(rust_to_magic_table_index_u64(
+                static_cast<std::uint64_t>(relevant_occ), magic, Shift));
         } else if constexpr (sizeof(bitboard_t) == sizeof(uint128)) {
-            std::uint32_t product
-                = static_cast<std::uint32_t>(relevant_occ) * magic;
-            magic *= magic;
-            product ^= static_cast<std::uint32_t>(relevant_occ >> 29u) * magic;
-            magic *= magic;
-            product ^= static_cast<std::uint32_t>(relevant_occ >> 58u) * magic;
-            return product >> (32u - Shift);
+            return static_cast<uint>(rust_to_magic_table_index_u128(
+                static_cast<std::uint64_t>(relevant_occ >> 64),
+                static_cast<std::uint64_t>(relevant_occ),
+                magic,
+                Shift));
         } else {
             std::uint32_t product = 0u;
             while (relevant_occ) {
                 product ^= static_cast<std::uint32_t>(relevant_occ) * magic;
-
-                // Note: Shifting 32-bit fails to differentiate masks between
-                // bb_9g(=54) and bb_5c(=22=54-32), which both of them lie
-                // along a diagonal direction from SQ_3A.
-                // Possibly the same in major column board representation.
-                // relevant_occ >>= 32u;
                 relevant_occ >>= 31u;
             }
             return product >> (32u - Shift);
@@ -192,8 +195,8 @@ private:
                 const bitboard_t occ = get_occupancy(
                     ii, num_relevant_squares, relevant_square_locations);
                 const bitboard_t attack = compute_ray_to(sq, DIR_N, occ);
-                const auto index
-                    = to_magic_table_index<log2_table_size_lance>(occ, magic);
+                const auto index = Magic::template to_magic_table_index<
+                    log2_table_size_lance>(occ, magic);
                 assert(index < table_size_lance);
                 attack_table_north[sq][index] = attack;
             }
@@ -215,8 +218,8 @@ private:
                 const bitboard_t occ = get_occupancy(
                     ii, num_relevant_squares, relevant_square_locations);
                 const bitboard_t attack = compute_ray_to(sq, DIR_S, occ);
-                const auto index
-                    = to_magic_table_index<log2_table_size_lance>(occ, magic);
+                const auto index = Magic::template to_magic_table_index<
+                    log2_table_size_lance>(occ, magic);
                 assert(index < table_size_lance);
                 attack_table_south[sq][index] = attack;
             }
@@ -241,9 +244,8 @@ private:
                                           | compute_ray_to(sq, DIR_W, occ)
                                           | compute_ray_to(sq, DIR_E, occ)
                                           | compute_ray_to(sq, DIR_S, occ);
-                const auto index
-                    = to_magic_table_index<log2_table_size_adjacent>(
-                        occ, magic);
+                const auto index = Magic::template to_magic_table_index<
+                    log2_table_size_adjacent>(occ, magic);
                 assert(index < table_size_adjacent);
                 attack_table_adjacent[sq][index] = attack;
             }
@@ -268,9 +270,8 @@ private:
                                           | compute_ray_to(sq, DIR_NE, occ)
                                           | compute_ray_to(sq, DIR_SW, occ)
                                           | compute_ray_to(sq, DIR_SE, occ);
-                const auto index
-                    = to_magic_table_index<log2_table_size_diagonal>(
-                        occ, magic);
+                const auto index = Magic::template to_magic_table_index<
+                    log2_table_size_diagonal>(occ, magic);
                 assert(index < table_size_diagonal);
                 attack_table_diagonal[sq][index] = attack;
             }

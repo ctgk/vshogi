@@ -13,6 +13,7 @@ namespace vshogi
 
 using uint = unsigned int;
 using ZobristHashType = std::uint64_t;
+
 static std::random_device seed_gen;
 static std::default_random_engine random_engine(seed_gen());
 static std::uniform_real_distribution<float>
@@ -126,6 +127,11 @@ inline void softmax(std::vector<float>& logits)
 #ifdef __SIZEOF_INT128__
 using uint128 = __uint128_t;
 #else
+/**
+ * @brief 128-bit unsigned integer.
+ * @details This is a minimal implementation of 128-bit unsigned integer.
+ * Use this class if __uint128_t is not available.
+ */
 class UInt128
 {
 private:
@@ -178,12 +184,12 @@ public:
 
     constexpr UInt128 operator<<(const uint shift_width) const
     {
-        UInt128(lshift_higher(shift_width), lshift_lower(shift_width));
+        return UInt128(lshift_higher(shift_width), lshift_lower(shift_width));
     }
 
     constexpr UInt128 operator>>(const uint shift_width) const
     {
-        UInt128(rshift_higher(shift_width), rshift_lower(shift_width));
+        return UInt128(rshift_higher(shift_width), rshift_lower(shift_width));
     }
 
     UInt128& operator|=(const UInt128& other)
@@ -274,10 +280,15 @@ inline uint ntz(const uint128 x)
     return ntz(static_cast<std::uint32_t>(x >> 64)) + 64u;
 }
 
+} // namespace vshogi
+
 extern "C" std::uint32_t rust_hamming_weight_u32(std::uint32_t x);
 extern "C" std::uint32_t rust_hamming_weight_u64(std::uint64_t x);
 extern "C" std::uint32_t
 rust_hamming_weight_u128(std::uint64_t high, std::uint64_t low);
+
+namespace vshogi
+{
 
 template <class UInt>
 inline uint hamming_weight(UInt x);
