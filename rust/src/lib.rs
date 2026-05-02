@@ -1,6 +1,7 @@
 use crate::variants::minishogi;
 use crate::variants::minishogi::PieceTypeEnum;
 
+pub mod color;
 pub mod magic;
 pub mod utils;
 pub mod variants;
