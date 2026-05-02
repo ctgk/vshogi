@@ -10,6 +10,9 @@
 #include "vshogi/common/direction.hpp"
 #include "vshogi/common/utils.hpp"
 
+extern "C" std::uint32_t
+rust_minishogi_piece_traits_is_promotable(std::uint8_t pt);
+
 namespace vshogi
 {
 
@@ -52,7 +55,12 @@ public: // basic
 public: // promotion
     static constexpr bool is_promotable(const PieceType& p)
     {
-        return (p + 1u < C::num_stand_piece_types);
+        if constexpr (C::num_files == 5u) {
+            return static_cast<bool>(rust_minishogi_piece_traits_is_promotable(
+                static_cast<std::uint8_t>(p)));
+        } else {
+            return (p + 1u < C::num_stand_piece_types);
+        }
     }
     static constexpr bool is_promotable(const Piece& p)
     {
