@@ -1,4 +1,4 @@
-use crate::color::ColorEnum;
+use crate::common::color::ColorEnum;
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

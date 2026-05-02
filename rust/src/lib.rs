@@ -1,11 +1,10 @@
+pub mod common;
+pub mod variants;
+
+use crate::common::magic;
+use crate::common::utils;
 use crate::variants::minishogi;
 use crate::variants::minishogi::PieceTypeEnum;
-
-pub mod color;
-pub mod magic;
-pub mod result;
-pub mod utils;
-pub mod variants;
 
 #[no_mangle]
 pub extern "C" fn rust_hamming_weight_u32(x: u32) -> u32 {
