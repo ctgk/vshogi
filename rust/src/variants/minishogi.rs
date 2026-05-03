@@ -22,6 +22,9 @@ impl PieceType {
     pub fn is_promotable(self) -> bool {
         self < Self::Ki
     }
+    pub fn is_promoted(self) -> bool {
+        self >= Self::To
+    }
 }
 
 #[repr(u8)]
@@ -74,6 +77,10 @@ impl Piece {
     pub fn is_promotable(self) -> bool {
         self.to_piece_type().is_promotable()
     }
+
+    pub fn is_promoted(self) -> bool {
+        self.to_piece_type().is_promoted()
+    }
 }
 
 #[cfg(test)]
@@ -101,6 +108,14 @@ mod tests {
         fn test_is_promotable() {
             assert_eq!(PieceType::Fu.is_promotable(), true);
             assert_eq!(PieceType::Ki.is_promotable(), false);
+        }
+
+        #[test]
+        fn test_is_promoted() {
+            assert_eq!(PieceType::Fu.is_promoted(), false);
+            assert_eq!(PieceType::Ou.is_promoted(), false);
+            assert_eq!(PieceType::To.is_promoted(), true);
+            assert_eq!(PieceType::Um.is_promoted(), true);
         }
     }
 
@@ -154,6 +169,14 @@ mod tests {
         fn test_is_promotable() {
             assert_eq!(Piece::BlFu.is_promotable(), true);
             assert_eq!(Piece::WhKi.is_promotable(), false);
+        }
+
+        #[test]
+        fn test_is_promoted() {
+            assert_eq!(Piece::WhKi.is_promoted(), false);
+            assert_eq!(Piece::BlHi.is_promoted(), false);
+            assert_eq!(Piece::WhNg.is_promoted(), true);
+            assert_eq!(Piece::BlRy.is_promoted(), true);
         }
     }
 }
