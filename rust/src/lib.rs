@@ -2,6 +2,7 @@ pub mod common;
 pub mod variants;
 
 use crate::common::magic;
+use crate::common::piece_type::BasePieceType;
 use crate::common::utils;
 use crate::variants::minishogi;
 

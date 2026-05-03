@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod test_piece_type {
+    use crate::common::piece_type::BasePieceType;
     use crate::variants::minishogi::PieceType;
 
     #[test]
