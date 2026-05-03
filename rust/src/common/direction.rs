@@ -29,6 +29,9 @@ impl Direction {
     pub fn has_south(self) -> bool {
         self >= Self::SWe
     }
+    pub fn is_knight_dir(self) -> bool {
+        (self as i8).abs() >= 5
+    }
 }
 
 #[cfg(test)]
@@ -118,5 +121,22 @@ mod tests {
         assert_eq!(Direction::SEa.has_south(), true);
         assert_eq!(Direction::SSW.has_south(), true);
         assert_eq!(Direction::SSE.has_south(), true);
+    }
+
+    #[test]
+    fn test_is_knight_dir() {
+        assert_eq!(Direction::NAN.is_knight_dir(), false);
+        assert_eq!(Direction::NNW.is_knight_dir(), true);
+        assert_eq!(Direction::NNE.is_knight_dir(), true);
+        assert_eq!(Direction::NWe.is_knight_dir(), false);
+        assert_eq!(Direction::Nth.is_knight_dir(), false);
+        assert_eq!(Direction::NEa.is_knight_dir(), false);
+        assert_eq!(Direction::Wst.is_knight_dir(), false);
+        assert_eq!(Direction::Est.is_knight_dir(), false);
+        assert_eq!(Direction::SWe.is_knight_dir(), false);
+        assert_eq!(Direction::Sth.is_knight_dir(), false);
+        assert_eq!(Direction::SEa.is_knight_dir(), false);
+        assert_eq!(Direction::SSW.is_knight_dir(), true);
+        assert_eq!(Direction::SSE.is_knight_dir(), true);
     }
 }
