@@ -25,6 +25,9 @@ impl PieceType {
     pub fn is_promoted(self) -> bool {
         self >= Self::To
     }
+    pub fn is_promotion_always_better(self) -> bool {
+        matches!(self, Self::Fu | Self::Ka | Self::Hi)
+    }
 }
 
 #[repr(u8)]
@@ -62,7 +65,6 @@ impl Piece {
 
         Self::from(color as u8 * 10 + piece_type as u8)
     }
-
     pub fn get_color(self) -> ColorEnum {
         match self as u8 {
             0..=9 => ColorEnum::Black,
@@ -71,15 +73,19 @@ impl Piece {
         }
     }
     pub fn to_piece_type(self) -> PieceType {
-        PieceType::from((self as u8) % 10)
+        if self < Self::WhFu {
+            return PieceType::from(self as u8);
+        }
+        PieceType::from(self as u8 - 10u8)
     }
-
     pub fn is_promotable(self) -> bool {
         self.to_piece_type().is_promotable()
     }
-
     pub fn is_promoted(self) -> bool {
         self.to_piece_type().is_promoted()
+    }
+    pub fn is_promotion_always_better(self) -> bool {
+        self.to_piece_type().is_promotion_always_better()
     }
 }
 
@@ -116,6 +122,21 @@ mod tests {
             assert_eq!(PieceType::Ou.is_promoted(), false);
             assert_eq!(PieceType::To.is_promoted(), true);
             assert_eq!(PieceType::Um.is_promoted(), true);
+        }
+
+        #[test]
+        fn test_is_promotion_always_better() {
+            assert_eq!(PieceType::Fu.is_promotion_always_better(), true);
+            assert_eq!(PieceType::Gi.is_promotion_always_better(), false);
+            assert_eq!(PieceType::Ka.is_promotion_always_better(), true);
+            assert_eq!(PieceType::Hi.is_promotion_always_better(), true);
+            assert_eq!(PieceType::Ki.is_promotion_always_better(), false);
+            assert_eq!(PieceType::Ou.is_promotion_always_better(), false);
+            assert_eq!(PieceType::To.is_promotion_always_better(), false);
+            assert_eq!(PieceType::Ng.is_promotion_always_better(), false);
+            assert_eq!(PieceType::Um.is_promotion_always_better(), false);
+            assert_eq!(PieceType::Ry.is_promotion_always_better(), false);
+            assert_eq!(PieceType::Na.is_promotion_always_better(), false);
         }
     }
 
@@ -163,6 +184,7 @@ mod tests {
             assert_eq!(Piece::BlNg.to_piece_type(), PieceType::Ng);
             assert_eq!(Piece::WhFu.to_piece_type(), PieceType::Fu);
             assert_eq!(Piece::WhOu.to_piece_type(), PieceType::Ou);
+            assert_eq!(Piece::Void.to_piece_type(), PieceType::Na);
         }
 
         #[test]
@@ -177,6 +199,31 @@ mod tests {
             assert_eq!(Piece::BlHi.is_promoted(), false);
             assert_eq!(Piece::WhNg.is_promoted(), true);
             assert_eq!(Piece::BlRy.is_promoted(), true);
+        }
+
+        #[test]
+        fn test_is_promotion_always_better() {
+            assert_eq!(Piece::BlFu.is_promotion_always_better(), true);
+            assert_eq!(Piece::BlGi.is_promotion_always_better(), false);
+            assert_eq!(Piece::BlKa.is_promotion_always_better(), true);
+            assert_eq!(Piece::BlHi.is_promotion_always_better(), true);
+            assert_eq!(Piece::BlKi.is_promotion_always_better(), false);
+            assert_eq!(Piece::BlOu.is_promotion_always_better(), false);
+            assert_eq!(Piece::BlTo.is_promotion_always_better(), false);
+            assert_eq!(Piece::BlNg.is_promotion_always_better(), false);
+            assert_eq!(Piece::BlUm.is_promotion_always_better(), false);
+            assert_eq!(Piece::BlRy.is_promotion_always_better(), false);
+            assert_eq!(Piece::WhFu.is_promotion_always_better(), true);
+            assert_eq!(Piece::WhGi.is_promotion_always_better(), false);
+            assert_eq!(Piece::WhKa.is_promotion_always_better(), true);
+            assert_eq!(Piece::WhHi.is_promotion_always_better(), true);
+            assert_eq!(Piece::WhKi.is_promotion_always_better(), false);
+            assert_eq!(Piece::WhOu.is_promotion_always_better(), false);
+            assert_eq!(Piece::WhTo.is_promotion_always_better(), false);
+            assert_eq!(Piece::WhNg.is_promotion_always_better(), false);
+            assert_eq!(Piece::WhUm.is_promotion_always_better(), false);
+            assert_eq!(Piece::WhRy.is_promotion_always_better(), false);
+            assert_eq!(Piece::Void.is_promotion_always_better(), false);
         }
     }
 }
