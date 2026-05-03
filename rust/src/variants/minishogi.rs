@@ -59,6 +59,9 @@ impl Piece {
             _ => ColorEnum::None,
         }
     }
+    pub fn to_piece_type(self) -> PieceType {
+        PieceType::from((self as u8) % 10)
+    }
 }
 
 #[cfg(test)]
@@ -114,6 +117,14 @@ mod tests {
             assert_eq!(Piece::WhFu.get_color(), ColorEnum::White);
             assert_eq!(Piece::WhOu.get_color(), ColorEnum::White);
             assert_eq!(Piece::WhRy.get_color(), ColorEnum::White);
+        }
+
+        #[test]
+        fn test_to_piece_type() {
+            assert_eq!(Piece::BlFu.to_piece_type(), PieceType::Fu);
+            assert_eq!(Piece::BlNg.to_piece_type(), PieceType::Ng);
+            assert_eq!(Piece::WhFu.to_piece_type(), PieceType::Fu);
+            assert_eq!(Piece::WhOu.to_piece_type(), PieceType::Ou);
         }
     }
 }
