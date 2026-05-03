@@ -52,6 +52,14 @@ pub enum Piece {
 }
 
 impl Piece {
+    pub fn new(color: ColorEnum, piece_type: PieceType) -> Self {
+        if matches!(color, ColorEnum::None) || matches!(piece_type, PieceType::Na) {
+            return Self::Void;
+        }
+
+        Self::from(color as u8 * 10 + piece_type as u8)
+    }
+
     pub fn get_color(self) -> ColorEnum {
         match self as u8 {
             0..=9 => ColorEnum::Black,
@@ -98,6 +106,21 @@ mod tests {
 
     mod test_piece {
         use super::super::*;
+
+        #[test]
+        fn test_new() {
+            assert_eq!(Piece::new(ColorEnum::Black, PieceType::Fu), Piece::BlFu);
+            assert_eq!(Piece::new(ColorEnum::Black, PieceType::Ry), Piece::BlRy);
+            assert_eq!(Piece::new(ColorEnum::White, PieceType::Fu), Piece::WhFu);
+            assert_eq!(Piece::new(ColorEnum::White, PieceType::Ry), Piece::WhRy);
+        }
+
+        #[test]
+        fn test_new_invalid_inputs() {
+            assert_eq!(Piece::new(ColorEnum::None, PieceType::Fu), Piece::Void);
+            assert_eq!(Piece::new(ColorEnum::Black, PieceType::Na), Piece::Void);
+            assert_eq!(Piece::new(ColorEnum::White, PieceType::Na), Piece::Void);
+        }
 
         #[test]
         fn test_from_primitive() {
