@@ -70,6 +70,10 @@ impl Piece {
     pub fn to_piece_type(self) -> PieceType {
         PieceType::from((self as u8) % 10)
     }
+
+    pub fn is_promotable(self) -> bool {
+        self.to_piece_type().is_promotable()
+    }
 }
 
 #[cfg(test)]
@@ -94,12 +98,8 @@ mod tests {
         }
 
         #[test]
-        fn test_is_promotable_true() {
+        fn test_is_promotable() {
             assert_eq!(PieceType::Fu.is_promotable(), true);
-        }
-
-        #[test]
-        fn test_is_promotable_false() {
             assert_eq!(PieceType::Ki.is_promotable(), false);
         }
     }
@@ -148,6 +148,12 @@ mod tests {
             assert_eq!(Piece::BlNg.to_piece_type(), PieceType::Ng);
             assert_eq!(Piece::WhFu.to_piece_type(), PieceType::Fu);
             assert_eq!(Piece::WhOu.to_piece_type(), PieceType::Ou);
+        }
+
+        #[test]
+        fn test_is_promotable() {
+            assert_eq!(Piece::BlFu.is_promotable(), true);
+            assert_eq!(Piece::WhKi.is_promotable(), false);
         }
     }
 }
