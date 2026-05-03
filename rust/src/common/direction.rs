@@ -32,6 +32,9 @@ impl Direction {
     pub fn is_adjacent_dir(self) -> bool {
         matches!(self, Self::Nth | Self::Wst | Self::Est | Self::Sth)
     }
+    pub fn is_diagonal_dir(self) -> bool {
+        matches!(self, Self::NWe | Self::NEa | Self::SWe | Self::SEa)
+    }
     pub fn is_knight_dir(self) -> bool {
         (self as i8).abs() >= 5
     }
@@ -141,6 +144,23 @@ mod tests {
         assert_eq!(Direction::SEa.is_adjacent_dir(), false);
         assert_eq!(Direction::SSW.is_adjacent_dir(), false);
         assert_eq!(Direction::SSE.is_adjacent_dir(), false);
+    }
+
+    #[test]
+    fn test_is_diagonal_dir() {
+        assert_eq!(Direction::NAN.is_diagonal_dir(), false);
+        assert_eq!(Direction::NNW.is_diagonal_dir(), false);
+        assert_eq!(Direction::NNE.is_diagonal_dir(), false);
+        assert_eq!(Direction::NWe.is_diagonal_dir(), true);
+        assert_eq!(Direction::Nth.is_diagonal_dir(), false);
+        assert_eq!(Direction::NEa.is_diagonal_dir(), true);
+        assert_eq!(Direction::Wst.is_diagonal_dir(), false);
+        assert_eq!(Direction::Est.is_diagonal_dir(), false);
+        assert_eq!(Direction::SWe.is_diagonal_dir(), true);
+        assert_eq!(Direction::Sth.is_diagonal_dir(), false);
+        assert_eq!(Direction::SEa.is_diagonal_dir(), true);
+        assert_eq!(Direction::SSW.is_diagonal_dir(), false);
+        assert_eq!(Direction::SSE.is_diagonal_dir(), false);
     }
 
     #[test]
