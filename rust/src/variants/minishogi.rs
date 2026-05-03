@@ -40,6 +40,9 @@ impl PieceType {
             _ => Self::Na,
         }
     }
+    pub fn is_slider(self) -> bool {
+        matches!(self, Self::Ka | Self::Hi | Self::Um | Self::Ry)
+    }
 }
 
 #[repr(u8)]
@@ -110,6 +113,9 @@ impl Piece {
             6..=9 | 16..=19 => Self::from(self as u8 - 6u8),
             _ => Self::Void,
         }
+    }
+    pub fn is_slider(self) -> bool {
+        self.to_piece_type().is_slider()
     }
 }
 
@@ -191,6 +197,21 @@ mod tests {
             assert_eq!(PieceType::Um.demote(), PieceType::Ka);
             assert_eq!(PieceType::Ry.demote(), PieceType::Hi);
             assert_eq!(PieceType::Na.demote(), PieceType::Na);
+        }
+
+        #[test]
+        fn test_is_slider() {
+            assert_eq!(PieceType::Fu.is_slider(), false);
+            assert_eq!(PieceType::Gi.is_slider(), false);
+            assert_eq!(PieceType::Ka.is_slider(), true);
+            assert_eq!(PieceType::Hi.is_slider(), true);
+            assert_eq!(PieceType::Ki.is_slider(), false);
+            assert_eq!(PieceType::Ou.is_slider(), false);
+            assert_eq!(PieceType::To.is_slider(), false);
+            assert_eq!(PieceType::Ng.is_slider(), false);
+            assert_eq!(PieceType::Um.is_slider(), true);
+            assert_eq!(PieceType::Ry.is_slider(), true);
+            assert_eq!(PieceType::Na.is_slider(), false);
         }
     }
 
@@ -328,6 +349,31 @@ mod tests {
             assert_eq!(Piece::WhUm.demote(), Piece::WhKa);
             assert_eq!(Piece::WhRy.demote(), Piece::WhHi);
             assert_eq!(Piece::Void.demote(), Piece::Void);
+        }
+
+        #[test]
+        fn test_is_slider() {
+            assert_eq!(Piece::BlFu.is_slider(), false);
+            assert_eq!(Piece::BlGi.is_slider(), false);
+            assert_eq!(Piece::BlKa.is_slider(), true);
+            assert_eq!(Piece::BlHi.is_slider(), true);
+            assert_eq!(Piece::BlKi.is_slider(), false);
+            assert_eq!(Piece::BlOu.is_slider(), false);
+            assert_eq!(Piece::BlTo.is_slider(), false);
+            assert_eq!(Piece::BlNg.is_slider(), false);
+            assert_eq!(Piece::BlUm.is_slider(), true);
+            assert_eq!(Piece::BlRy.is_slider(), true);
+            assert_eq!(Piece::WhFu.is_slider(), false);
+            assert_eq!(Piece::WhGi.is_slider(), false);
+            assert_eq!(Piece::WhKa.is_slider(), true);
+            assert_eq!(Piece::WhHi.is_slider(), true);
+            assert_eq!(Piece::WhKi.is_slider(), false);
+            assert_eq!(Piece::WhOu.is_slider(), false);
+            assert_eq!(Piece::WhTo.is_slider(), false);
+            assert_eq!(Piece::WhNg.is_slider(), false);
+            assert_eq!(Piece::WhUm.is_slider(), true);
+            assert_eq!(Piece::WhRy.is_slider(), true);
+            assert_eq!(Piece::Void.is_slider(), false);
         }
     }
 }
