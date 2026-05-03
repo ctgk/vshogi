@@ -4,7 +4,6 @@ pub mod variants;
 use crate::common::magic;
 use crate::common::utils;
 use crate::variants::minishogi;
-use crate::variants::minishogi::PieceTypeEnum;
 
 #[no_mangle]
 pub extern "C" fn rust_hamming_weight_u32(x: u32) -> u32 {
@@ -64,5 +63,5 @@ pub extern "C" fn rust_to_magic_table_index_u128(
 
 #[no_mangle]
 pub extern "C" fn rust_minishogi_piece_traits_is_promotable(pt: u8) -> bool {
-    minishogi::PieceTraits::is_promotable(PieceTypeEnum::from(pt))
+    minishogi::PieceType::from(pt).is_promotable()
 }

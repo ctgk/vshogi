@@ -1,6 +1,8 @@
+use num_enum::FromPrimitive;
+
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum PieceTypeEnum {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive)]
+pub enum PieceType {
     Fu = 0, // Fu (Pawn)
     Gi,     // Gin (Silver)
     Ka,     // Kaku (Bishop)
@@ -11,30 +13,19 @@ pub enum PieceTypeEnum {
     Ng,     // Nari-Gin (Promoted Silver)
     Um,     // Uma (Promoted Bishop)
     Ry,     // Ryu (Promoted Rook)
-    Na,     // Not available
+    #[num_enum(default)]
+    Na, // Not available
 }
 
-impl From<u8> for PieceTypeEnum {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => Self::Fu,
-            1 => Self::Gi,
-            2 => Self::Ka,
-            3 => Self::Hi,
-            4 => Self::Ki,
-            5 => Self::Ou,
-            6 => Self::To,
-            7 => Self::Ng,
-            8 => Self::Um,
-            9 => Self::Ry,
-            _ => Self::Na,
-        }
+impl PieceType {
+    pub fn is_promotable(self) -> bool {
+        self < Self::Ki
     }
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum PieceEnum {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive)]
+pub enum Piece {
     BlFu = 0, // Black Fu (Pawn)
     BlGi,     // Black Gin (Silver)
     BlKa,     // Black Kaku (Bishop)
@@ -55,41 +46,47 @@ pub enum PieceEnum {
     WhNg,     // White Nari-Gin (Promoted Silver)
     WhUm,     // White Uma (Promoted Bishop)
     WhRy,     // White Ryu (Promoted Rook)
-    Void,     // Empty square
+    #[num_enum(default)]
+    Void, // Empty square
 }
 
-impl From<u8> for PieceEnum {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => Self::BlFu,
-            1 => Self::BlGi,
-            2 => Self::BlKa,
-            3 => Self::BlHi,
-            4 => Self::BlKi,
-            5 => Self::BlOu,
-            6 => Self::BlTo,
-            7 => Self::BlNg,
-            8 => Self::BlUm,
-            9 => Self::BlRy,
-            10 => Self::WhFu,
-            11 => Self::WhGi,
-            12 => Self::WhKa,
-            13 => Self::WhHi,
-            14 => Self::WhKi,
-            15 => Self::WhOu,
-            16 => Self::WhTo,
-            17 => Self::WhNg,
-            18 => Self::WhUm,
-            19 => Self::WhRy,
-            _ => Self::Void,
-        }
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_piece_type_from_primitive() {
+        assert_eq!(PieceType::from(0u8), PieceType::Fu);
+        assert_eq!(PieceType::from(1u8), PieceType::Gi);
+        assert_eq!(PieceType::from(2u8), PieceType::Ka);
+        assert_eq!(PieceType::from(3u8), PieceType::Hi);
+        assert_eq!(PieceType::from(4u8), PieceType::Ki);
+        assert_eq!(PieceType::from(5u8), PieceType::Ou);
+        assert_eq!(PieceType::from(6u8), PieceType::To);
+        assert_eq!(PieceType::from(7u8), PieceType::Ng);
+        assert_eq!(PieceType::from(8u8), PieceType::Um);
+        assert_eq!(PieceType::from(9u8), PieceType::Ry);
+        assert_eq!(PieceType::from(10u8), PieceType::Na);
+        assert_eq!(PieceType::from(u8::MAX), PieceType::Na);
     }
-}
 
-pub struct PieceTraits;
+    #[test]
+    fn test_piece_from_primitive() {
+        assert_eq!(Piece::from(0u8), Piece::BlFu);
+        assert_eq!(Piece::from(9u8), Piece::BlRy);
+        assert_eq!(Piece::from(10u8), Piece::WhFu);
+        assert_eq!(Piece::from(19u8), Piece::WhRy);
+        assert_eq!(Piece::from(20u8), Piece::Void);
+        assert_eq!(Piece::from(u8::MAX), Piece::Void);
+    }
 
-impl PieceTraits {
-    pub fn is_promotable(pt: PieceTypeEnum) -> bool {
-        pt < PieceTypeEnum::Ki
+    #[test]
+    fn test_piece_type_enum_is_promotable_true() {
+        assert_eq!(PieceType::Fu.is_promotable(), true);
+    }
+
+    #[test]
+    fn test_piece_type_enum_is_promotable_false() {
+        assert_eq!(PieceType::Ki.is_promotable(), false);
     }
 }
