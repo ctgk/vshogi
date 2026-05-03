@@ -1,3 +1,4 @@
+use crate::common::color::ColorEnum;
 use num_enum::FromPrimitive;
 
 #[repr(u8)]
@@ -50,43 +51,69 @@ pub enum Piece {
     Void, // Empty square
 }
 
+impl Piece {
+    pub fn get_color(self) -> ColorEnum {
+        match self as u8 {
+            0..=9 => ColorEnum::Black,
+            10..=19 => ColorEnum::White,
+            _ => ColorEnum::None,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::*;
+    mod test_piece_type {
+        use super::super::*;
 
-    #[test]
-    fn test_piece_type_from_primitive() {
-        assert_eq!(PieceType::from(0u8), PieceType::Fu);
-        assert_eq!(PieceType::from(1u8), PieceType::Gi);
-        assert_eq!(PieceType::from(2u8), PieceType::Ka);
-        assert_eq!(PieceType::from(3u8), PieceType::Hi);
-        assert_eq!(PieceType::from(4u8), PieceType::Ki);
-        assert_eq!(PieceType::from(5u8), PieceType::Ou);
-        assert_eq!(PieceType::from(6u8), PieceType::To);
-        assert_eq!(PieceType::from(7u8), PieceType::Ng);
-        assert_eq!(PieceType::from(8u8), PieceType::Um);
-        assert_eq!(PieceType::from(9u8), PieceType::Ry);
-        assert_eq!(PieceType::from(10u8), PieceType::Na);
-        assert_eq!(PieceType::from(u8::MAX), PieceType::Na);
+        #[test]
+        fn test_from_primitive() {
+            assert_eq!(PieceType::from(0u8), PieceType::Fu);
+            assert_eq!(PieceType::from(1u8), PieceType::Gi);
+            assert_eq!(PieceType::from(2u8), PieceType::Ka);
+            assert_eq!(PieceType::from(3u8), PieceType::Hi);
+            assert_eq!(PieceType::from(4u8), PieceType::Ki);
+            assert_eq!(PieceType::from(5u8), PieceType::Ou);
+            assert_eq!(PieceType::from(6u8), PieceType::To);
+            assert_eq!(PieceType::from(7u8), PieceType::Ng);
+            assert_eq!(PieceType::from(8u8), PieceType::Um);
+            assert_eq!(PieceType::from(9u8), PieceType::Ry);
+            assert_eq!(PieceType::from(10u8), PieceType::Na);
+            assert_eq!(PieceType::from(u8::MAX), PieceType::Na);
+        }
+
+        #[test]
+        fn test_is_promotable_true() {
+            assert_eq!(PieceType::Fu.is_promotable(), true);
+        }
+
+        #[test]
+        fn test_is_promotable_false() {
+            assert_eq!(PieceType::Ki.is_promotable(), false);
+        }
     }
 
-    #[test]
-    fn test_piece_from_primitive() {
-        assert_eq!(Piece::from(0u8), Piece::BlFu);
-        assert_eq!(Piece::from(9u8), Piece::BlRy);
-        assert_eq!(Piece::from(10u8), Piece::WhFu);
-        assert_eq!(Piece::from(19u8), Piece::WhRy);
-        assert_eq!(Piece::from(20u8), Piece::Void);
-        assert_eq!(Piece::from(u8::MAX), Piece::Void);
-    }
+    mod test_piece {
+        use super::super::*;
 
-    #[test]
-    fn test_piece_type_enum_is_promotable_true() {
-        assert_eq!(PieceType::Fu.is_promotable(), true);
-    }
+        #[test]
+        fn test_from_primitive() {
+            assert_eq!(Piece::from(0u8), Piece::BlFu);
+            assert_eq!(Piece::from(9u8), Piece::BlRy);
+            assert_eq!(Piece::from(10u8), Piece::WhFu);
+            assert_eq!(Piece::from(19u8), Piece::WhRy);
+            assert_eq!(Piece::from(20u8), Piece::Void);
+            assert_eq!(Piece::from(u8::MAX), Piece::Void);
+        }
 
-    #[test]
-    fn test_piece_type_enum_is_promotable_false() {
-        assert_eq!(PieceType::Ki.is_promotable(), false);
+        #[test]
+        fn test_get_color() {
+            assert_eq!(Piece::BlFu.get_color(), ColorEnum::Black);
+            assert_eq!(Piece::BlOu.get_color(), ColorEnum::Black);
+            assert_eq!(Piece::BlRy.get_color(), ColorEnum::Black);
+            assert_eq!(Piece::WhFu.get_color(), ColorEnum::White);
+            assert_eq!(Piece::WhOu.get_color(), ColorEnum::White);
+            assert_eq!(Piece::WhRy.get_color(), ColorEnum::White);
+        }
     }
 }
