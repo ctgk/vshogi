@@ -34,6 +34,12 @@ impl PieceType {
             _ => Self::Na,
         }
     }
+    pub fn demote(self) -> PieceType {
+        match self as u8 {
+            6..=9 => Self::from(self as u8 - 6u8),
+            _ => Self::Na,
+        }
+    }
 }
 
 #[repr(u8)]
@@ -96,6 +102,12 @@ impl Piece {
     pub fn promote(self) -> Piece {
         match self as u8 {
             0..=3 | 10..=13 => Self::from(self as u8 + 6u8),
+            _ => Self::Void,
+        }
+    }
+    pub fn demote(self) -> Piece {
+        match self as u8 {
+            6..=9 | 16..=19 => Self::from(self as u8 - 6u8),
             _ => Self::Void,
         }
     }
@@ -164,6 +176,21 @@ mod tests {
             assert_eq!(PieceType::Um.promote(), PieceType::Na);
             assert_eq!(PieceType::Ry.promote(), PieceType::Na);
             assert_eq!(PieceType::Na.promote(), PieceType::Na);
+        }
+
+        #[test]
+        fn test_demote() {
+            assert_eq!(PieceType::Fu.demote(), PieceType::Na);
+            assert_eq!(PieceType::Gi.demote(), PieceType::Na);
+            assert_eq!(PieceType::Ka.demote(), PieceType::Na);
+            assert_eq!(PieceType::Hi.demote(), PieceType::Na);
+            assert_eq!(PieceType::Ki.demote(), PieceType::Na);
+            assert_eq!(PieceType::Ou.demote(), PieceType::Na);
+            assert_eq!(PieceType::To.demote(), PieceType::Fu);
+            assert_eq!(PieceType::Ng.demote(), PieceType::Gi);
+            assert_eq!(PieceType::Um.demote(), PieceType::Ka);
+            assert_eq!(PieceType::Ry.demote(), PieceType::Hi);
+            assert_eq!(PieceType::Na.demote(), PieceType::Na);
         }
     }
 
@@ -276,6 +303,31 @@ mod tests {
             assert_eq!(Piece::WhUm.promote(), Piece::Void);
             assert_eq!(Piece::WhRy.promote(), Piece::Void);
             assert_eq!(Piece::Void.promote(), Piece::Void);
+        }
+
+        #[test]
+        fn test_demote() {
+            assert_eq!(Piece::BlFu.demote(), Piece::Void);
+            assert_eq!(Piece::BlGi.demote(), Piece::Void);
+            assert_eq!(Piece::BlKa.demote(), Piece::Void);
+            assert_eq!(Piece::BlHi.demote(), Piece::Void);
+            assert_eq!(Piece::BlKi.demote(), Piece::Void);
+            assert_eq!(Piece::BlOu.demote(), Piece::Void);
+            assert_eq!(Piece::BlTo.demote(), Piece::BlFu);
+            assert_eq!(Piece::BlNg.demote(), Piece::BlGi);
+            assert_eq!(Piece::BlUm.demote(), Piece::BlKa);
+            assert_eq!(Piece::BlRy.demote(), Piece::BlHi);
+            assert_eq!(Piece::WhFu.demote(), Piece::Void);
+            assert_eq!(Piece::WhGi.demote(), Piece::Void);
+            assert_eq!(Piece::WhKa.demote(), Piece::Void);
+            assert_eq!(Piece::WhHi.demote(), Piece::Void);
+            assert_eq!(Piece::WhKi.demote(), Piece::Void);
+            assert_eq!(Piece::WhOu.demote(), Piece::Void);
+            assert_eq!(Piece::WhTo.demote(), Piece::WhFu);
+            assert_eq!(Piece::WhNg.demote(), Piece::WhGi);
+            assert_eq!(Piece::WhUm.demote(), Piece::WhKa);
+            assert_eq!(Piece::WhRy.demote(), Piece::WhHi);
+            assert_eq!(Piece::Void.demote(), Piece::Void);
         }
     }
 }
