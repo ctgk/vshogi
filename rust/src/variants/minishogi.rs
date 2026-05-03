@@ -28,6 +28,12 @@ impl PieceType {
     pub fn is_promotion_always_better(self) -> bool {
         matches!(self, Self::Fu | Self::Ka | Self::Hi)
     }
+    pub fn promote(self) -> PieceType {
+        match self as u8 {
+            0..=3 => Self::from(self as u8 + 6),
+            _ => Self::Na,
+        }
+    }
 }
 
 #[repr(u8)]
@@ -87,6 +93,12 @@ impl Piece {
     pub fn is_promotion_always_better(self) -> bool {
         self.to_piece_type().is_promotion_always_better()
     }
+    pub fn promote(self) -> Piece {
+        match self as u8 {
+            0..=3 | 10..=13 => Self::from(self as u8 + 6u8),
+            _ => Self::Void,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -137,6 +149,21 @@ mod tests {
             assert_eq!(PieceType::Um.is_promotion_always_better(), false);
             assert_eq!(PieceType::Ry.is_promotion_always_better(), false);
             assert_eq!(PieceType::Na.is_promotion_always_better(), false);
+        }
+
+        #[test]
+        fn test_promote() {
+            assert_eq!(PieceType::Fu.promote(), PieceType::To);
+            assert_eq!(PieceType::Gi.promote(), PieceType::Ng);
+            assert_eq!(PieceType::Ka.promote(), PieceType::Um);
+            assert_eq!(PieceType::Hi.promote(), PieceType::Ry);
+            assert_eq!(PieceType::Ki.promote(), PieceType::Na);
+            assert_eq!(PieceType::Ou.promote(), PieceType::Na);
+            assert_eq!(PieceType::To.promote(), PieceType::Na);
+            assert_eq!(PieceType::Ng.promote(), PieceType::Na);
+            assert_eq!(PieceType::Um.promote(), PieceType::Na);
+            assert_eq!(PieceType::Ry.promote(), PieceType::Na);
+            assert_eq!(PieceType::Na.promote(), PieceType::Na);
         }
     }
 
@@ -224,6 +251,31 @@ mod tests {
             assert_eq!(Piece::WhUm.is_promotion_always_better(), false);
             assert_eq!(Piece::WhRy.is_promotion_always_better(), false);
             assert_eq!(Piece::Void.is_promotion_always_better(), false);
+        }
+
+        #[test]
+        fn test_promote() {
+            assert_eq!(Piece::BlFu.promote(), Piece::BlTo);
+            assert_eq!(Piece::BlGi.promote(), Piece::BlNg);
+            assert_eq!(Piece::BlKa.promote(), Piece::BlUm);
+            assert_eq!(Piece::BlHi.promote(), Piece::BlRy);
+            assert_eq!(Piece::BlKi.promote(), Piece::Void);
+            assert_eq!(Piece::BlOu.promote(), Piece::Void);
+            assert_eq!(Piece::BlTo.promote(), Piece::Void);
+            assert_eq!(Piece::BlNg.promote(), Piece::Void);
+            assert_eq!(Piece::BlUm.promote(), Piece::Void);
+            assert_eq!(Piece::BlRy.promote(), Piece::Void);
+            assert_eq!(Piece::WhFu.promote(), Piece::WhTo);
+            assert_eq!(Piece::WhGi.promote(), Piece::WhNg);
+            assert_eq!(Piece::WhKa.promote(), Piece::WhUm);
+            assert_eq!(Piece::WhHi.promote(), Piece::WhRy);
+            assert_eq!(Piece::WhKi.promote(), Piece::Void);
+            assert_eq!(Piece::WhOu.promote(), Piece::Void);
+            assert_eq!(Piece::WhTo.promote(), Piece::Void);
+            assert_eq!(Piece::WhNg.promote(), Piece::Void);
+            assert_eq!(Piece::WhUm.promote(), Piece::Void);
+            assert_eq!(Piece::WhRy.promote(), Piece::Void);
+            assert_eq!(Piece::Void.promote(), Piece::Void);
         }
     }
 }
