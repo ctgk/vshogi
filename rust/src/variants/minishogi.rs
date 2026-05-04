@@ -67,12 +67,6 @@ pub enum Piece {
 impl BasePiece<Parameters> for Piece {}
 
 impl Piece {
-    pub fn demote(self) -> Piece {
-        match self as u8 {
-            6..=9 | 16..=19 => Self::from(self as u8 - 6u8),
-            _ => Self::Void,
-        }
-    }
     pub fn is_slider(self) -> bool {
         self.to_piece_type().is_slider()
     }

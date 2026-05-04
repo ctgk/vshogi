@@ -43,4 +43,11 @@ pub trait BasePiece<P: BaseParameters>: Into<u8> + From<u8> {
         }
         Self::from(2u8 * P::NUM_PIECE_TYPES)
     }
+    fn demote(self) -> Self {
+        let s: u8 = self.into();
+        if (s % P::NUM_PIECE_TYPES) > P::NUM_STAND_PIECE_TYPES {
+            return Self::from(s - P::NUM_STAND_PIECE_TYPES - 1u8);
+        }
+        Self::from(2u8 * P::NUM_PIECE_TYPES)
+    }
 }
