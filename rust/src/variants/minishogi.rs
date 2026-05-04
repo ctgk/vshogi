@@ -1,10 +1,15 @@
 use crate::common::color::ColorEnum;
+use crate::common::parameters::BaseParameters;
 use crate::common::piece_type::BasePieceType;
 use num_enum::FromPrimitive;
 use num_enum::IntoPrimitive;
 
-const NUM_PIECE_TYPES: u8 = 10;
-const NUM_STAND_PIECE_TYPES: u8 = 5;
+pub struct Parameters;
+
+impl BaseParameters for Parameters {
+    const NUM_PIECE_TYPES: u8 = 10;
+    const NUM_STAND_PIECE_TYPES: u8 = 5;
+}
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, IntoPrimitive)]
@@ -23,12 +28,9 @@ pub enum PieceType {
     Na, // Not available
 }
 
-impl BasePieceType<NUM_PIECE_TYPES, NUM_STAND_PIECE_TYPES> for PieceType {
+impl BasePieceType<Parameters> for PieceType {
     fn is_promotion_always_better(self) -> bool {
         matches!(self, Self::Fu | Self::Ka | Self::Hi)
-    }
-    fn is_slider(self) -> bool {
-        matches!(self, Self::Ka | Self::Hi | Self::Um | Self::Ry)
     }
     fn promote(self) -> PieceType {
         match self as u8 {
@@ -41,6 +43,9 @@ impl BasePieceType<NUM_PIECE_TYPES, NUM_STAND_PIECE_TYPES> for PieceType {
             6..10 => Self::from(self as u8 - 6u8),
             _ => Self::Na,
         }
+    }
+    fn is_slider(self) -> bool {
+        matches!(self, Self::Ka | Self::Hi | Self::Um | Self::Ry)
     }
 }
 
