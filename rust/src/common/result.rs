@@ -1,4 +1,4 @@
-use crate::common::color::ColorEnum;
+use crate::common::color::Color;
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -10,11 +10,11 @@ pub enum ResultEnum {
 }
 
 impl ResultEnum {
-    pub fn winner(self) -> ColorEnum {
+    pub fn winner(self) -> Color {
         match self {
-            Self::BlackWin => ColorEnum::Black,
-            Self::WhiteWin => ColorEnum::White,
-            Self::Ongoing | Self::Draw => ColorEnum::None,
+            Self::BlackWin => Color::Black,
+            Self::WhiteWin => Color::White,
+            Self::Ongoing | Self::Draw => Color::None,
         }
     }
 }
@@ -25,21 +25,21 @@ mod tests {
 
     #[test]
     fn test_winner_for_ongoing() {
-        assert_eq!(ResultEnum::Ongoing.winner(), ColorEnum::None);
+        assert_eq!(ResultEnum::Ongoing.winner(), Color::None);
     }
 
     #[test]
     fn test_winner_for_draw() {
-        assert_eq!(ResultEnum::Draw.winner(), ColorEnum::None);
+        assert_eq!(ResultEnum::Draw.winner(), Color::None);
     }
 
     #[test]
     fn test_winner_for_black_win() {
-        assert_eq!(ResultEnum::BlackWin.winner(), ColorEnum::Black);
+        assert_eq!(ResultEnum::BlackWin.winner(), Color::Black);
     }
 
     #[test]
     fn test_winner_for_white_win() {
-        assert_eq!(ResultEnum::WhiteWin.winner(), ColorEnum::White);
+        assert_eq!(ResultEnum::WhiteWin.winner(), Color::White);
     }
 }

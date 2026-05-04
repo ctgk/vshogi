@@ -157,24 +157,24 @@ mod test_piece_type {
 }
 
 mod test_piece {
-    use crate::common::color::ColorEnum;
+    use crate::common::color::Color;
     use crate::common::direction::Direction;
     use crate::common::piece::BasePiece;
     use crate::variants::minishogi::{Piece, PieceType};
 
     #[test]
     fn test_new() {
-        assert_eq!(Piece::new(ColorEnum::Black, PieceType::Fu), Piece::BlFu);
-        assert_eq!(Piece::new(ColorEnum::Black, PieceType::Ry), Piece::BlRy);
-        assert_eq!(Piece::new(ColorEnum::White, PieceType::Fu), Piece::WhFu);
-        assert_eq!(Piece::new(ColorEnum::White, PieceType::Ry), Piece::WhRy);
+        assert_eq!(Piece::new(Color::Black, PieceType::Fu), Piece::BlFu);
+        assert_eq!(Piece::new(Color::Black, PieceType::Ry), Piece::BlRy);
+        assert_eq!(Piece::new(Color::White, PieceType::Fu), Piece::WhFu);
+        assert_eq!(Piece::new(Color::White, PieceType::Ry), Piece::WhRy);
     }
 
     #[test]
     fn test_new_invalid_inputs() {
-        assert_eq!(Piece::new(ColorEnum::None, PieceType::Fu), Piece::Void);
-        assert_eq!(Piece::new(ColorEnum::Black, PieceType::Na), Piece::Void);
-        assert_eq!(Piece::new(ColorEnum::White, PieceType::Na), Piece::Void);
+        assert_eq!(Piece::new(Color::None, PieceType::Fu), Piece::Void);
+        assert_eq!(Piece::new(Color::Black, PieceType::Na), Piece::Void);
+        assert_eq!(Piece::new(Color::White, PieceType::Na), Piece::Void);
     }
 
     #[test]
@@ -189,12 +189,12 @@ mod test_piece {
 
     #[test]
     fn test_get_color() {
-        assert_eq!(Piece::BlFu.get_color(), ColorEnum::Black);
-        assert_eq!(Piece::BlOu.get_color(), ColorEnum::Black);
-        assert_eq!(Piece::BlRy.get_color(), ColorEnum::Black);
-        assert_eq!(Piece::WhFu.get_color(), ColorEnum::White);
-        assert_eq!(Piece::WhOu.get_color(), ColorEnum::White);
-        assert_eq!(Piece::WhRy.get_color(), ColorEnum::White);
+        assert_eq!(Piece::BlFu.get_color(), Color::Black);
+        assert_eq!(Piece::BlOu.get_color(), Color::Black);
+        assert_eq!(Piece::BlRy.get_color(), Color::Black);
+        assert_eq!(Piece::WhFu.get_color(), Color::White);
+        assert_eq!(Piece::WhOu.get_color(), Color::White);
+        assert_eq!(Piece::WhRy.get_color(), Color::White);
     }
 
     #[test]

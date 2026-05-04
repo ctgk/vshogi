@@ -1,4 +1,4 @@
-use crate::common::color::ColorEnum;
+use crate::common::color::Color;
 use crate::common::direction::Direction;
 use crate::common::parameters::BaseParameters;
 use crate::common::piece_type::BasePieceType;
@@ -6,21 +6,21 @@ use crate::common::piece_type::BasePieceType;
 pub trait BasePiece<P: BaseParameters>: Into<u8> + From<u8> {
     type PieceType: BasePieceType<P>;
 
-    fn new(c: ColorEnum, pt: impl BasePieceType<P>) -> Self {
+    fn new(c: Color, pt: impl BasePieceType<P>) -> Self {
         let pt = pt.into();
-        if (c == ColorEnum::None) || (pt == P::NUM_PIECE_TYPES) {
+        if (c == Color::None) || (pt == P::NUM_PIECE_TYPES) {
             return Self::from(2u8 * P::NUM_PIECE_TYPES);
         }
         Self::from(c as u8 * P::NUM_PIECE_TYPES + pt)
     }
-    fn get_color(self) -> ColorEnum {
+    fn get_color(self) -> Color {
         let s: u8 = self.into();
         if s < P::NUM_PIECE_TYPES {
-            return ColorEnum::Black;
+            return Color::Black;
         } else if s < 2u8 * P::NUM_PIECE_TYPES {
-            return ColorEnum::White;
+            return Color::White;
         }
-        ColorEnum::None
+        Color::None
     }
     fn to_piece_type(self) -> Self::PieceType {
         let s: u8 = self.into();
@@ -57,12 +57,8 @@ pub trait BasePiece<P: BaseParameters>: Into<u8> + From<u8> {
     }
     fn is_attacking_to(self, dir: Direction) -> bool {
         let s: u8 = self.into();
-        let c: ColorEnum = Self::from(s).get_color();
+        let c: Color = Self::from(s).get_color();
         let pt = Self::from(s).to_piece_type();
-        pt.is_attacking_to(if c == ColorEnum::Black {
-            dir
-        } else {
-            dir.rotate()
-        })
+        pt.is_attacking_to(if c == Color::Black { dir } else { dir.rotate() })
     }
 }
