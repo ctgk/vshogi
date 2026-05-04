@@ -158,6 +158,7 @@ mod test_piece_type {
 
 mod test_piece {
     use crate::common::color::ColorEnum;
+    use crate::common::direction::Direction;
     use crate::common::piece::BasePiece;
     use crate::variants::minishogi::{Piece, PieceType};
 
@@ -317,5 +318,106 @@ mod test_piece {
         assert_eq!(Piece::WhUm.is_slider(), true);
         assert_eq!(Piece::WhRy.is_slider(), true);
         assert_eq!(Piece::Void.is_slider(), false);
+    }
+
+    #[test]
+    fn test_is_attacking_to() {
+        assert_eq!(Piece::BlFu.is_attacking_to(Direction::NWe), false);
+        assert_eq!(Piece::BlFu.is_attacking_to(Direction::Nth), true);
+        assert_eq!(Piece::BlFu.is_attacking_to(Direction::NEa), false);
+        assert_eq!(Piece::BlFu.is_attacking_to(Direction::Wst), false);
+        assert_eq!(Piece::BlFu.is_attacking_to(Direction::Est), false);
+        assert_eq!(Piece::BlFu.is_attacking_to(Direction::SWe), false);
+        assert_eq!(Piece::BlFu.is_attacking_to(Direction::Sth), false);
+        assert_eq!(Piece::BlFu.is_attacking_to(Direction::SEa), false);
+
+        assert_eq!(Piece::WhFu.is_attacking_to(Direction::NWe), false);
+        assert_eq!(Piece::WhFu.is_attacking_to(Direction::Nth), false);
+        assert_eq!(Piece::WhFu.is_attacking_to(Direction::NEa), false);
+        assert_eq!(Piece::WhFu.is_attacking_to(Direction::Wst), false);
+        assert_eq!(Piece::WhFu.is_attacking_to(Direction::Est), false);
+        assert_eq!(Piece::WhFu.is_attacking_to(Direction::SWe), false);
+        assert_eq!(Piece::WhFu.is_attacking_to(Direction::Sth), true);
+        assert_eq!(Piece::WhFu.is_attacking_to(Direction::SEa), false);
+
+        assert_eq!(Piece::BlGi.is_attacking_to(Direction::NWe), true);
+        assert_eq!(Piece::BlGi.is_attacking_to(Direction::Nth), true);
+        assert_eq!(Piece::BlGi.is_attacking_to(Direction::NEa), true);
+        assert_eq!(Piece::BlGi.is_attacking_to(Direction::Wst), false);
+        assert_eq!(Piece::BlGi.is_attacking_to(Direction::Est), false);
+        assert_eq!(Piece::BlGi.is_attacking_to(Direction::SWe), true);
+        assert_eq!(Piece::BlGi.is_attacking_to(Direction::Sth), false);
+        assert_eq!(Piece::BlGi.is_attacking_to(Direction::SEa), true);
+
+        assert_eq!(Piece::WhGi.is_attacking_to(Direction::NWe), true);
+        assert_eq!(Piece::WhGi.is_attacking_to(Direction::Nth), false);
+        assert_eq!(Piece::WhGi.is_attacking_to(Direction::NEa), true);
+        assert_eq!(Piece::WhGi.is_attacking_to(Direction::Wst), false);
+        assert_eq!(Piece::WhGi.is_attacking_to(Direction::Est), false);
+        assert_eq!(Piece::WhGi.is_attacking_to(Direction::SWe), true);
+        assert_eq!(Piece::WhGi.is_attacking_to(Direction::Sth), true);
+        assert_eq!(Piece::WhGi.is_attacking_to(Direction::SEa), true);
+
+        for p in [Piece::BlKa, Piece::WhKa] {
+            assert_eq!(p.is_attacking_to(Direction::NWe), true);
+            assert_eq!(p.is_attacking_to(Direction::Nth), false);
+            assert_eq!(p.is_attacking_to(Direction::NEa), true);
+            assert_eq!(p.is_attacking_to(Direction::Wst), false);
+            assert_eq!(p.is_attacking_to(Direction::Est), false);
+            assert_eq!(p.is_attacking_to(Direction::SWe), true);
+            assert_eq!(p.is_attacking_to(Direction::Sth), false);
+            assert_eq!(p.is_attacking_to(Direction::SEa), true);
+        }
+
+        for p in [Piece::BlHi, Piece::WhHi] {
+            assert_eq!(p.is_attacking_to(Direction::NWe), false);
+            assert_eq!(p.is_attacking_to(Direction::Nth), true);
+            assert_eq!(p.is_attacking_to(Direction::NEa), false);
+            assert_eq!(p.is_attacking_to(Direction::Wst), true);
+            assert_eq!(p.is_attacking_to(Direction::Est), true);
+            assert_eq!(p.is_attacking_to(Direction::SWe), false);
+            assert_eq!(p.is_attacking_to(Direction::Sth), true);
+            assert_eq!(p.is_attacking_to(Direction::SEa), false);
+        }
+
+        for pt in [Piece::BlKi, Piece::BlTo, Piece::BlNg] {
+            assert_eq!(pt.is_attacking_to(Direction::NWe), true);
+            assert_eq!(pt.is_attacking_to(Direction::Nth), true);
+            assert_eq!(pt.is_attacking_to(Direction::NEa), true);
+            assert_eq!(pt.is_attacking_to(Direction::Wst), true);
+            assert_eq!(pt.is_attacking_to(Direction::Est), true);
+            assert_eq!(pt.is_attacking_to(Direction::SWe), false);
+            assert_eq!(pt.is_attacking_to(Direction::Sth), true);
+            assert_eq!(pt.is_attacking_to(Direction::SEa), false);
+        }
+
+        for pt in [Piece::WhKi, Piece::WhTo, Piece::WhNg] {
+            assert_eq!(pt.is_attacking_to(Direction::NWe), false);
+            assert_eq!(pt.is_attacking_to(Direction::Nth), true);
+            assert_eq!(pt.is_attacking_to(Direction::NEa), false);
+            assert_eq!(pt.is_attacking_to(Direction::Wst), true);
+            assert_eq!(pt.is_attacking_to(Direction::Est), true);
+            assert_eq!(pt.is_attacking_to(Direction::SWe), true);
+            assert_eq!(pt.is_attacking_to(Direction::Sth), true);
+            assert_eq!(pt.is_attacking_to(Direction::SEa), true);
+        }
+
+        for pt in [
+            Piece::BlOu,
+            Piece::BlUm,
+            Piece::BlRy,
+            Piece::WhOu,
+            Piece::WhUm,
+            Piece::WhRy,
+        ] {
+            assert_eq!(pt.is_attacking_to(Direction::NWe), true);
+            assert_eq!(pt.is_attacking_to(Direction::Nth), true);
+            assert_eq!(pt.is_attacking_to(Direction::NEa), true);
+            assert_eq!(pt.is_attacking_to(Direction::Wst), true);
+            assert_eq!(pt.is_attacking_to(Direction::Est), true);
+            assert_eq!(pt.is_attacking_to(Direction::SWe), true);
+            assert_eq!(pt.is_attacking_to(Direction::Sth), true);
+            assert_eq!(pt.is_attacking_to(Direction::SEa), true);
+        }
     }
 }

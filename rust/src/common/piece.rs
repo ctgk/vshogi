@@ -1,4 +1,5 @@
 use crate::common::color::ColorEnum;
+use crate::common::direction::Direction;
 use crate::common::parameters::BaseParameters;
 use crate::common::piece_type::BasePieceType;
 use crate::variants::minishogi::PieceType;
@@ -52,5 +53,15 @@ pub trait BasePiece<P: BaseParameters>: Into<u8> + From<u8> {
     }
     fn is_slider(self) -> bool {
         self.to_piece_type().is_slider()
+    }
+    fn is_attacking_to(self, dir: Direction) -> bool {
+        let s: u8 = self.into();
+        let c: ColorEnum = Self::from(s).get_color();
+        let pt = Self::from(s).to_piece_type();
+        pt.is_attacking_to(if c == ColorEnum::Black {
+            dir
+        } else {
+            dir.rotate()
+        })
     }
 }
