@@ -10,4 +10,13 @@ pub trait BasePiece<P: BaseParameters>: Into<u8> + From<u8> {
         }
         Self::from(c as u8 * P::NUM_PIECE_TYPES + pt)
     }
+    fn get_color(self) -> ColorEnum {
+        let s: u8 = self.into();
+        if s < P::NUM_PIECE_TYPES {
+            return ColorEnum::Black;
+        } else if s < 2u8 * P::NUM_PIECE_TYPES {
+            return ColorEnum::White;
+        }
+        ColorEnum::None
+    }
 }

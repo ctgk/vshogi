@@ -68,13 +68,6 @@ pub enum Piece {
 impl BasePiece<Parameters> for Piece {}
 
 impl Piece {
-    pub fn get_color(self) -> ColorEnum {
-        match self as u8 {
-            0..=9 => ColorEnum::Black,
-            10..=19 => ColorEnum::White,
-            _ => ColorEnum::None,
-        }
-    }
     pub fn to_piece_type(self) -> PieceType {
         if self < Self::WhFu {
             return PieceType::from(self as u8);
