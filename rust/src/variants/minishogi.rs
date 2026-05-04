@@ -1,4 +1,3 @@
-use crate::common::color::ColorEnum;
 use crate::common::parameters::BaseParameters;
 use crate::common::piece::BasePiece;
 use crate::common::piece_type::BasePieceType;
@@ -68,12 +67,6 @@ pub enum Piece {
 impl BasePiece<Parameters> for Piece {}
 
 impl Piece {
-    pub fn promote(self) -> Piece {
-        match self as u8 {
-            0..=3 | 10..=13 => Self::from(self as u8 + 6u8),
-            _ => Self::Void,
-        }
-    }
     pub fn demote(self) -> Piece {
         match self as u8 {
             6..=9 | 16..=19 => Self::from(self as u8 - 6u8),
