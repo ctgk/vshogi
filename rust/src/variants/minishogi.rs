@@ -33,18 +33,6 @@ impl BasePieceType<Parameters> for PieceType {
     fn is_promotion_always_better(self) -> bool {
         matches!(self, Self::Fu | Self::Ka | Self::Hi)
     }
-    fn promote(self) -> PieceType {
-        match self as u8 {
-            0..4 => Self::from(self as u8 + 6),
-            _ => Self::Na,
-        }
-    }
-    fn demote(self) -> PieceType {
-        match self as u8 {
-            6..10 => Self::from(self as u8 - 6u8),
-            _ => Self::Na,
-        }
-    }
     fn is_slider(self) -> bool {
         matches!(self, Self::Ka | Self::Hi | Self::Um | Self::Ry)
     }
