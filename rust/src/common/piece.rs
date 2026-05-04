@@ -33,4 +33,7 @@ pub trait BasePiece<P: BaseParameters>: Into<u8> + From<u8> {
     fn is_promoted(self) -> bool {
         self.to_piece_type().is_promoted()
     }
+    fn is_promotion_always_better(self) -> bool {
+        self.to_piece_type().is_promotion_always_better()
+    }
 }

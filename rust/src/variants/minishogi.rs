@@ -68,9 +68,6 @@ pub enum Piece {
 impl BasePiece<Parameters> for Piece {}
 
 impl Piece {
-    pub fn is_promotion_always_better(self) -> bool {
-        self.to_piece_type().is_promotion_always_better()
-    }
     pub fn promote(self) -> Piece {
         match self as u8 {
             0..=3 | 10..=13 => Self::from(self as u8 + 6u8),
