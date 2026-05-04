@@ -65,9 +65,3 @@ pub enum Piece {
 }
 
 impl BasePiece<Parameters> for Piece {}
-
-impl Piece {
-    pub fn is_slider(self) -> bool {
-        self.to_piece_type().is_slider()
-    }
-}

@@ -50,4 +50,7 @@ pub trait BasePiece<P: BaseParameters>: Into<u8> + From<u8> {
         }
         Self::from(2u8 * P::NUM_PIECE_TYPES)
     }
+    fn is_slider(self) -> bool {
+        self.to_piece_type().is_slider()
+    }
 }
