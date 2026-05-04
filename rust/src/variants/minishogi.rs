@@ -68,12 +68,6 @@ pub enum Piece {
 impl BasePiece<Parameters> for Piece {}
 
 impl Piece {
-    pub fn to_piece_type(self) -> PieceType {
-        if self < Self::WhFu {
-            return PieceType::from(self as u8);
-        }
-        PieceType::from(self as u8 - 10u8)
-    }
     pub fn is_promotable(self) -> bool {
         self.to_piece_type().is_promotable()
     }

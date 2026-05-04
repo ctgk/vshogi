@@ -1,6 +1,7 @@
 use crate::common::color::ColorEnum;
 use crate::common::parameters::BaseParameters;
 use crate::common::piece_type::BasePieceType;
+use crate::variants::minishogi::PieceType;
 
 pub trait BasePiece<P: BaseParameters>: Into<u8> + From<u8> {
     fn new(c: ColorEnum, pt: impl BasePieceType<P>) -> Self {
@@ -18,5 +19,12 @@ pub trait BasePiece<P: BaseParameters>: Into<u8> + From<u8> {
             return ColorEnum::White;
         }
         ColorEnum::None
+    }
+    fn to_piece_type(self) -> PieceType {
+        let s: u8 = self.into();
+        if s < P::NUM_PIECE_TYPES {
+            return PieceType::from(s);
+        }
+        PieceType::from(s - P::NUM_PIECE_TYPES)
     }
 }
