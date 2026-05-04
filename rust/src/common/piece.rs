@@ -27,4 +27,10 @@ pub trait BasePiece<P: BaseParameters>: Into<u8> + From<u8> {
         }
         PieceType::from(s - P::NUM_PIECE_TYPES)
     }
+    fn is_promotable(self) -> bool {
+        self.to_piece_type().is_promotable()
+    }
+    fn is_promoted(self) -> bool {
+        self.to_piece_type().is_promoted()
+    }
 }

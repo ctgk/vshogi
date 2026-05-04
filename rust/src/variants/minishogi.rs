@@ -68,12 +68,6 @@ pub enum Piece {
 impl BasePiece<Parameters> for Piece {}
 
 impl Piece {
-    pub fn is_promotable(self) -> bool {
-        self.to_piece_type().is_promotable()
-    }
-    pub fn is_promoted(self) -> bool {
-        self.to_piece_type().is_promoted()
-    }
     pub fn is_promotion_always_better(self) -> bool {
         self.to_piece_type().is_promotion_always_better()
     }
