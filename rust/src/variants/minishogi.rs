@@ -86,7 +86,9 @@ pub enum Piece {
     Void, // Empty square
 }
 
-impl BasePiece<Parameters> for Piece {}
+impl BasePiece<Parameters> for Piece {
+    type PieceType = PieceType;
+}
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, IntoPrimitive)]

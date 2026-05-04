@@ -2,9 +2,10 @@ use crate::common::color::ColorEnum;
 use crate::common::direction::Direction;
 use crate::common::parameters::BaseParameters;
 use crate::common::piece_type::BasePieceType;
-use crate::variants::minishogi::PieceType;
 
 pub trait BasePiece<P: BaseParameters>: Into<u8> + From<u8> {
+    type PieceType: BasePieceType<P>;
+
     fn new(c: ColorEnum, pt: impl BasePieceType<P>) -> Self {
         let pt = pt.into();
         if (c == ColorEnum::None) || (pt == P::NUM_PIECE_TYPES) {
@@ -21,12 +22,12 @@ pub trait BasePiece<P: BaseParameters>: Into<u8> + From<u8> {
         }
         ColorEnum::None
     }
-    fn to_piece_type(self) -> PieceType {
+    fn to_piece_type(self) -> Self::PieceType {
         let s: u8 = self.into();
         if s < P::NUM_PIECE_TYPES {
-            return PieceType::from(s);
+            return Self::PieceType::from(s);
         }
-        PieceType::from(s - P::NUM_PIECE_TYPES)
+        Self::PieceType::from(s - P::NUM_PIECE_TYPES)
     }
     fn is_promotable(self) -> bool {
         self.to_piece_type().is_promotable()
