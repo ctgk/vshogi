@@ -1,3 +1,4 @@
+use crate::common::direction::Direction;
 use crate::common::parameters::BaseParameters;
 
 pub trait BasePieceType<P: BaseParameters>: Into<u8> + From<u8> {
@@ -28,4 +29,5 @@ pub trait BasePieceType<P: BaseParameters>: Into<u8> + From<u8> {
         }
     }
     fn is_slider(self) -> bool;
+    fn is_attacking_to(self, dir: Direction) -> bool;
 }

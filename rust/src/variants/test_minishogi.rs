@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod test_piece_type {
+    use crate::common::direction::Direction;
     use crate::common::piece_type::BasePieceType;
     use crate::variants::minishogi::PieceType;
 
@@ -91,6 +92,67 @@ mod test_piece_type {
         assert_eq!(PieceType::Um.is_slider(), true);
         assert_eq!(PieceType::Ry.is_slider(), true);
         assert_eq!(PieceType::Na.is_slider(), false);
+    }
+
+    #[test]
+    fn test_is_attacking_to() {
+        assert_eq!(PieceType::Fu.is_attacking_to(Direction::NWe), false);
+        assert_eq!(PieceType::Fu.is_attacking_to(Direction::Nth), true);
+        assert_eq!(PieceType::Fu.is_attacking_to(Direction::NEa), false);
+        assert_eq!(PieceType::Fu.is_attacking_to(Direction::Wst), false);
+        assert_eq!(PieceType::Fu.is_attacking_to(Direction::Est), false);
+        assert_eq!(PieceType::Fu.is_attacking_to(Direction::SWe), false);
+        assert_eq!(PieceType::Fu.is_attacking_to(Direction::Sth), false);
+        assert_eq!(PieceType::Fu.is_attacking_to(Direction::SEa), false);
+
+        assert_eq!(PieceType::Gi.is_attacking_to(Direction::NWe), true);
+        assert_eq!(PieceType::Gi.is_attacking_to(Direction::Nth), true);
+        assert_eq!(PieceType::Gi.is_attacking_to(Direction::NEa), true);
+        assert_eq!(PieceType::Gi.is_attacking_to(Direction::Wst), false);
+        assert_eq!(PieceType::Gi.is_attacking_to(Direction::Est), false);
+        assert_eq!(PieceType::Gi.is_attacking_to(Direction::SWe), true);
+        assert_eq!(PieceType::Gi.is_attacking_to(Direction::Sth), false);
+        assert_eq!(PieceType::Gi.is_attacking_to(Direction::SEa), true);
+
+        assert_eq!(PieceType::Ka.is_attacking_to(Direction::NWe), true);
+        assert_eq!(PieceType::Ka.is_attacking_to(Direction::Nth), false);
+        assert_eq!(PieceType::Ka.is_attacking_to(Direction::NEa), true);
+        assert_eq!(PieceType::Ka.is_attacking_to(Direction::Wst), false);
+        assert_eq!(PieceType::Ka.is_attacking_to(Direction::Est), false);
+        assert_eq!(PieceType::Ka.is_attacking_to(Direction::SWe), true);
+        assert_eq!(PieceType::Ka.is_attacking_to(Direction::Sth), false);
+        assert_eq!(PieceType::Ka.is_attacking_to(Direction::SEa), true);
+
+        assert_eq!(PieceType::Hi.is_attacking_to(Direction::NWe), false);
+        assert_eq!(PieceType::Hi.is_attacking_to(Direction::Nth), true);
+        assert_eq!(PieceType::Hi.is_attacking_to(Direction::NEa), false);
+        assert_eq!(PieceType::Hi.is_attacking_to(Direction::Wst), true);
+        assert_eq!(PieceType::Hi.is_attacking_to(Direction::Est), true);
+        assert_eq!(PieceType::Hi.is_attacking_to(Direction::SWe), false);
+        assert_eq!(PieceType::Hi.is_attacking_to(Direction::Sth), true);
+        assert_eq!(PieceType::Hi.is_attacking_to(Direction::SEa), false);
+
+        for pt in [PieceType::Ki, PieceType::To, PieceType::Ng] {
+            assert_eq!(pt.is_attacking_to(Direction::NWe), true);
+            assert_eq!(pt.is_attacking_to(Direction::Nth), true);
+            assert_eq!(pt.is_attacking_to(Direction::NEa), true);
+            assert_eq!(pt.is_attacking_to(Direction::Wst), true);
+            assert_eq!(pt.is_attacking_to(Direction::Est), true);
+            assert_eq!(pt.is_attacking_to(Direction::SWe), false);
+            assert_eq!(pt.is_attacking_to(Direction::Sth), true);
+            assert_eq!(pt.is_attacking_to(Direction::SEa), false);
+        }
+
+        for pt in [PieceType::Ou, PieceType::Um, PieceType::Ry] {
+            assert_eq!(pt.is_attacking_to(Direction::NWe), true);
+            assert_eq!(pt.is_attacking_to(Direction::Nth), true);
+            assert_eq!(pt.is_attacking_to(Direction::NEa), true);
+            assert_eq!(pt.is_attacking_to(Direction::Wst), true);
+            assert_eq!(pt.is_attacking_to(Direction::Est), true);
+            assert_eq!(pt.is_attacking_to(Direction::SWe), true);
+            assert_eq!(pt.is_attacking_to(Direction::Sth), true);
+            assert_eq!(pt.is_attacking_to(Direction::SEa), true);
+        }
     }
 }
 
