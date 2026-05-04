@@ -2,6 +2,7 @@ use crate::common::direction::Direction;
 use crate::common::parameters::BaseParameters;
 use crate::common::piece::BasePiece;
 use crate::common::piece_type::BasePieceType;
+use crate::common::square::{BaseFile, BaseRank, BaseSquare};
 use num_enum::FromPrimitive;
 use num_enum::IntoPrimitive;
 
@@ -10,6 +11,8 @@ pub struct Parameters;
 impl BaseParameters for Parameters {
     const NUM_PIECE_TYPES: u8 = 10;
     const NUM_STAND_PIECE_TYPES: u8 = 5;
+    const NUM_FILES: u8 = 5;
+    const NUM_RANKS: u8 = 5;
 }
 
 #[repr(u8)]
@@ -84,3 +87,46 @@ pub enum Piece {
 }
 
 impl BasePiece<Parameters> for Piece {}
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, IntoPrimitive)]
+pub enum File {
+    F1 = 0,
+    F2,
+    F3,
+    F4,
+    F5,
+    #[num_enum(default)]
+    F0,
+}
+
+impl BaseFile<Parameters> for File {}
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, IntoPrimitive)]
+pub enum Rank {
+    RA = 0,
+    RB,
+    RC,
+    RD,
+    RE,
+    #[num_enum(default)]
+    R0,
+}
+
+impl BaseRank<Parameters> for Rank {}
+
+#[rustfmt::skip]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, IntoPrimitive)]
+pub enum Square {
+    A5 = 20, A4 = 15, A3 = 10, A2 = 5, A1 = 0,
+    B5 = 21, B4 = 16, B3 = 11, B2 = 6, B1 = 1,
+    C5 = 22, C4 = 17, C3 = 12, C2 = 7, C1 = 2,
+    D5 = 23, D4 = 18, D3 = 13, D2 = 8, D1 = 3,
+    E5 = 24, E4 = 19, E3 = 14, E2 = 9, E1 = 4,
+    #[num_enum(default)]
+    Na = 25,
+}
+
+impl BaseSquare<Parameters> for Square {}

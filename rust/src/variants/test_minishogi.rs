@@ -421,3 +421,36 @@ mod test_piece {
         }
     }
 }
+
+mod test_square {
+    use crate::common::square::BaseSquare;
+    use crate::variants::minishogi::{File, Rank, Square};
+    #[test]
+    fn test_new() {
+        assert_eq!(Square::new(File::F1, Rank::RA), Square::A1);
+        assert_eq!(Square::new(File::F1, Rank::RB), Square::B1);
+        assert_eq!(Square::new(File::F1, Rank::RC), Square::C1);
+        assert_eq!(Square::new(File::F1, Rank::RD), Square::D1);
+        assert_eq!(Square::new(File::F1, Rank::RE), Square::E1);
+        assert_eq!(Square::new(File::F2, Rank::RA), Square::A2);
+        assert_eq!(Square::new(File::F2, Rank::RB), Square::B2);
+        assert_eq!(Square::new(File::F2, Rank::RC), Square::C2);
+        assert_eq!(Square::new(File::F2, Rank::RD), Square::D2);
+        assert_eq!(Square::new(File::F2, Rank::RE), Square::E2);
+        assert_eq!(Square::new(File::F3, Rank::RA), Square::A3);
+        assert_eq!(Square::new(File::F3, Rank::RB), Square::B3);
+        assert_eq!(Square::new(File::F3, Rank::RC), Square::C3);
+        assert_eq!(Square::new(File::F3, Rank::RD), Square::D3);
+        assert_eq!(Square::new(File::F3, Rank::RE), Square::E3);
+        assert_eq!(Square::new(File::F4, Rank::RA), Square::A4);
+        assert_eq!(Square::new(File::F4, Rank::RB), Square::B4);
+        assert_eq!(Square::new(File::F4, Rank::RC), Square::C4);
+        assert_eq!(Square::new(File::F4, Rank::RD), Square::D4);
+        assert_eq!(Square::new(File::F4, Rank::RE), Square::E4);
+        assert_eq!(Square::new(File::F5, Rank::RA), Square::A5);
+        assert_eq!(Square::new(File::F5, Rank::RB), Square::B5);
+        assert_eq!(Square::new(File::F5, Rank::RC), Square::C5);
+        assert_eq!(Square::new(File::F5, Rank::RD), Square::D5);
+        assert_eq!(Square::new(File::F5, Rank::RE), Square::E5);
+    }
+}
