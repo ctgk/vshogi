@@ -96,6 +96,7 @@ mod test_piece_type {
 
 mod test_piece {
     use crate::common::color::ColorEnum;
+    use crate::common::piece::BasePiece;
     use crate::variants::minishogi::{Piece, PieceType};
 
     #[test]

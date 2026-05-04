@@ -1,5 +1,6 @@
 use crate::common::color::ColorEnum;
 use crate::common::parameters::BaseParameters;
+use crate::common::piece::BasePiece;
 use crate::common::piece_type::BasePieceType;
 use num_enum::FromPrimitive;
 use num_enum::IntoPrimitive;
@@ -50,7 +51,7 @@ impl BasePieceType<Parameters> for PieceType {
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, IntoPrimitive)]
 pub enum Piece {
     BlFu = 0, // Black Fu (Pawn)
     BlGi,     // Black Gin (Silver)
@@ -76,14 +77,9 @@ pub enum Piece {
     Void, // Empty square
 }
 
-impl Piece {
-    pub fn new(color: ColorEnum, piece_type: PieceType) -> Self {
-        if matches!(color, ColorEnum::None) || matches!(piece_type, PieceType::Na) {
-            return Self::Void;
-        }
+impl BasePiece<Parameters> for Piece {}
 
-        Self::from(color as u8 * 10 + piece_type as u8)
-    }
+impl Piece {
     pub fn get_color(self) -> ColorEnum {
         match self as u8 {
             0..=9 => ColorEnum::Black,
