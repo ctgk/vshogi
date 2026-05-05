@@ -424,6 +424,7 @@ mod test_piece {
 
 mod test_square {
     use crate::common::color::Color;
+    use crate::common::direction::Direction;
     use crate::common::square::BaseSquare;
     use crate::variants::minishogi::{File, Rank, Square};
     #[test]
@@ -647,5 +648,25 @@ mod test_square {
         assert_eq!(Square::Sq5C.in_promotion_zone(Color::White), false);
         assert_eq!(Square::Sq5D.in_promotion_zone(Color::White), false);
         assert_eq!(Square::Sq5E.in_promotion_zone(Color::White), true);
+    }
+
+    #[test]
+    fn test_shift() {
+        assert_eq!(Square::Sq1A.shift(Direction::NWe), Square::SqNa);
+        assert_eq!(Square::Sq1A.shift(Direction::Nth), Square::SqNa);
+        assert_eq!(Square::Sq1A.shift(Direction::NEa), Square::SqNa);
+        assert_eq!(Square::Sq1A.shift(Direction::Wst), Square::Sq2A);
+        assert_eq!(Square::Sq1A.shift(Direction::Est), Square::SqNa);
+        assert_eq!(Square::Sq1A.shift(Direction::SWe), Square::Sq2B);
+        assert_eq!(Square::Sq1A.shift(Direction::Sth), Square::Sq1B);
+        assert_eq!(Square::Sq1A.shift(Direction::SEa), Square::SqNa);
+        assert_eq!(Square::Sq5E.shift(Direction::NWe), Square::SqNa);
+        assert_eq!(Square::Sq5E.shift(Direction::Nth), Square::Sq5D);
+        assert_eq!(Square::Sq5E.shift(Direction::NEa), Square::Sq4D);
+        assert_eq!(Square::Sq5E.shift(Direction::Wst), Square::SqNa);
+        assert_eq!(Square::Sq5E.shift(Direction::Est), Square::Sq4E);
+        assert_eq!(Square::Sq5E.shift(Direction::SWe), Square::SqNa);
+        assert_eq!(Square::Sq5E.shift(Direction::Sth), Square::SqNa);
+        assert_eq!(Square::Sq5E.shift(Direction::SEa), Square::SqNa);
     }
 }
