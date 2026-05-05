@@ -26,4 +26,9 @@ pub trait BaseSquare<P: BaseParameters>: Copy + Into<u8> + From<u8> {
     fn rotate(self) -> Self {
         Self::from(Self::NUM_SQUARES - 1 - self.into())
     }
+    fn chebyshev_distance(self, other: Self) -> u32 {
+        let df = (self.file().into() as i32 - other.file().into() as i32).abs() as u32;
+        let dr = (self.rank().into() as i32 - other.rank().into() as i32).abs() as u32;
+        df.max(dr)
+    }
 }

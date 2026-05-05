@@ -569,4 +569,28 @@ mod test_square {
         assert_eq!(Square::Sq5D.rotate(), Square::Sq1B);
         assert_eq!(Square::Sq5E.rotate(), Square::Sq1A);
     }
+
+    #[test]
+    fn test_chebyshev_distance() {
+        assert_eq!(Square::Sq1A.chebyshev_distance(Square::Sq1A), 0);
+        assert_eq!(Square::Sq1A.chebyshev_distance(Square::Sq1B), 1);
+        assert_eq!(Square::Sq1A.chebyshev_distance(Square::Sq1C), 2);
+        assert_eq!(Square::Sq1A.chebyshev_distance(Square::Sq1D), 3);
+        assert_eq!(Square::Sq1A.chebyshev_distance(Square::Sq1E), 4);
+        assert_eq!(Square::Sq1A.chebyshev_distance(Square::Sq3A), 2);
+        assert_eq!(Square::Sq1A.chebyshev_distance(Square::Sq3B), 2);
+        assert_eq!(Square::Sq1A.chebyshev_distance(Square::Sq3C), 2);
+        assert_eq!(Square::Sq1A.chebyshev_distance(Square::Sq3D), 3);
+        assert_eq!(Square::Sq1A.chebyshev_distance(Square::Sq3E), 4);
+        assert_eq!(Square::Sq5A.chebyshev_distance(Square::Sq1A), 4);
+        assert_eq!(Square::Sq5A.chebyshev_distance(Square::Sq1B), 4);
+        assert_eq!(Square::Sq5A.chebyshev_distance(Square::Sq1C), 4);
+        assert_eq!(Square::Sq5A.chebyshev_distance(Square::Sq1D), 4);
+        assert_eq!(Square::Sq5A.chebyshev_distance(Square::Sq1E), 4);
+        assert_eq!(Square::Sq5A.chebyshev_distance(Square::Sq3A), 2);
+        assert_eq!(Square::Sq5A.chebyshev_distance(Square::Sq3B), 2);
+        assert_eq!(Square::Sq5A.chebyshev_distance(Square::Sq3C), 2);
+        assert_eq!(Square::Sq5A.chebyshev_distance(Square::Sq3D), 3);
+        assert_eq!(Square::Sq5A.chebyshev_distance(Square::Sq3E), 4);
+    }
 }
