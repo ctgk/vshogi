@@ -131,4 +131,7 @@ pub enum Square {
     Na = 25,
 }
 
-impl BaseSquare<Parameters> for Square {}
+impl BaseSquare<Parameters> for Square {
+    type File = File;
+    type Rank = Rank;
+}

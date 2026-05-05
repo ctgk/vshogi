@@ -453,4 +453,62 @@ mod test_square {
         assert_eq!(Square::new(File::F5, Rank::RD), Square::D5);
         assert_eq!(Square::new(File::F5, Rank::RE), Square::E5);
     }
+
+    #[test]
+    fn test_file() {
+        assert_eq!(Square::A1.file(), File::F1);
+        assert_eq!(Square::B1.file(), File::F1);
+        assert_eq!(Square::C1.file(), File::F1);
+        assert_eq!(Square::D1.file(), File::F1);
+        assert_eq!(Square::E1.file(), File::F1);
+        assert_eq!(Square::A2.file(), File::F2);
+        assert_eq!(Square::B2.file(), File::F2);
+        assert_eq!(Square::C2.file(), File::F2);
+        assert_eq!(Square::D2.file(), File::F2);
+        assert_eq!(Square::E2.file(), File::F2);
+        assert_eq!(Square::A3.file(), File::F3);
+        assert_eq!(Square::B3.file(), File::F3);
+        assert_eq!(Square::C3.file(), File::F3);
+        assert_eq!(Square::D3.file(), File::F3);
+        assert_eq!(Square::E3.file(), File::F3);
+        assert_eq!(Square::A4.file(), File::F4);
+        assert_eq!(Square::B4.file(), File::F4);
+        assert_eq!(Square::C4.file(), File::F4);
+        assert_eq!(Square::D4.file(), File::F4);
+        assert_eq!(Square::E4.file(), File::F4);
+        assert_eq!(Square::A5.file(), File::F5);
+        assert_eq!(Square::B5.file(), File::F5);
+        assert_eq!(Square::C5.file(), File::F5);
+        assert_eq!(Square::D5.file(), File::F5);
+        assert_eq!(Square::E5.file(), File::F5);
+    }
+
+    #[test]
+    fn test_rank() {
+        assert_eq!(Square::A1.rank(), Rank::RA);
+        assert_eq!(Square::B1.rank(), Rank::RB);
+        assert_eq!(Square::C1.rank(), Rank::RC);
+        assert_eq!(Square::D1.rank(), Rank::RD);
+        assert_eq!(Square::E1.rank(), Rank::RE);
+        assert_eq!(Square::A2.rank(), Rank::RA);
+        assert_eq!(Square::B2.rank(), Rank::RB);
+        assert_eq!(Square::C2.rank(), Rank::RC);
+        assert_eq!(Square::D2.rank(), Rank::RD);
+        assert_eq!(Square::E2.rank(), Rank::RE);
+        assert_eq!(Square::A3.rank(), Rank::RA);
+        assert_eq!(Square::B3.rank(), Rank::RB);
+        assert_eq!(Square::C3.rank(), Rank::RC);
+        assert_eq!(Square::D3.rank(), Rank::RD);
+        assert_eq!(Square::E3.rank(), Rank::RE);
+        assert_eq!(Square::A4.rank(), Rank::RA);
+        assert_eq!(Square::B4.rank(), Rank::RB);
+        assert_eq!(Square::C4.rank(), Rank::RC);
+        assert_eq!(Square::D4.rank(), Rank::RD);
+        assert_eq!(Square::E4.rank(), Rank::RE);
+        assert_eq!(Square::A5.rank(), Rank::RA);
+        assert_eq!(Square::B5.rank(), Rank::RB);
+        assert_eq!(Square::C5.rank(), Rank::RC);
+        assert_eq!(Square::D5.rank(), Rank::RD);
+        assert_eq!(Square::E5.rank(), Rank::RE);
+    }
 }
