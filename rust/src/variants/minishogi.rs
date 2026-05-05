@@ -122,13 +122,13 @@ impl BaseRank<Parameters> for Rank {}
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, IntoPrimitive)]
 pub enum Square {
-    A5 = 20, A4 = 15, A3 = 10, A2 = 5, A1 = 0,
-    B5 = 21, B4 = 16, B3 = 11, B2 = 6, B1 = 1,
-    C5 = 22, C4 = 17, C3 = 12, C2 = 7, C1 = 2,
-    D5 = 23, D4 = 18, D3 = 13, D2 = 8, D1 = 3,
-    E5 = 24, E4 = 19, E3 = 14, E2 = 9, E1 = 4,
+    Sq5A = 20, Sq4A = 15, Sq3A = 10, Sq2A = 5, Sq1A = 0,
+    Sq5B = 21, Sq4B = 16, Sq3B = 11, Sq2B = 6, Sq1B = 1,
+    Sq5C = 22, Sq4C = 17, Sq3C = 12, Sq2C = 7, Sq1C = 2,
+    Sq5D = 23, Sq4D = 18, Sq3D = 13, Sq2D = 8, Sq1D = 3,
+    Sq5E = 24, Sq4E = 19, Sq3E = 14, Sq2E = 9, Sq1E = 4,
     #[num_enum(default)]
-    Na = 25,
+    SqNa = 25,
 }
 
 impl BaseSquare<Parameters> for Square {
