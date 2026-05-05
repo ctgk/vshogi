@@ -3,7 +3,7 @@ use crate::common::direction::Direction;
 use crate::common::parameters::BaseParameters;
 use crate::common::piece_type::BasePieceType;
 
-pub trait BasePiece<P: BaseParameters>: Into<u8> + From<u8> {
+pub trait BasePiece<P: BaseParameters>: Copy + Into<u8> + From<u8> {
     type PieceType: BasePieceType<P>;
 
     fn new(c: Color, pt: impl BasePieceType<P>) -> Self {
@@ -56,9 +56,8 @@ pub trait BasePiece<P: BaseParameters>: Into<u8> + From<u8> {
         self.to_piece_type().is_slider()
     }
     fn is_attacking_to(self, dir: Direction) -> bool {
-        let s: u8 = self.into();
-        let c: Color = Self::from(s).get_color();
-        let pt = Self::from(s).to_piece_type();
+        let c = self.get_color();
+        let pt = self.to_piece_type();
         pt.is_attacking_to(if c == Color::Black { dir } else { dir.rotate() })
     }
 }

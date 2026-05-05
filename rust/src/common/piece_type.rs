@@ -1,7 +1,7 @@
 use crate::common::direction::Direction;
 use crate::common::parameters::BaseParameters;
 
-pub trait BasePieceType<P: BaseParameters>: Into<u8> + From<u8> {
+pub trait BasePieceType<P: BaseParameters>: Copy + Into<u8> + From<u8> {
     const PROMOTE_MAX_FROM_STAND: u8 = P::NUM_STAND_PIECE_TYPES - 1u8;
     const DEMOTE_OFFSET: u8 = P::NUM_STAND_PIECE_TYPES + 1u8;
 

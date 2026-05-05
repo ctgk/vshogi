@@ -1,6 +1,10 @@
 use crate::common::parameters::BaseParameters;
 
-pub trait BaseFile<P: BaseParameters>: Into<u8> + From<u8> {}
+pub trait BaseFile<P: BaseParameters>: Copy + Into<u8> + From<u8> {
+    fn hflip(self) -> Self {
+        Self::from(P::NUM_FILES - 1 - self.into())
+    }
+}
 pub trait BaseRank<P: BaseParameters>: Into<u8> + From<u8> {}
 
 pub trait BaseSquare<P: BaseParameters>: Copy + Into<u8> + From<u8> {
@@ -17,8 +21,6 @@ pub trait BaseSquare<P: BaseParameters>: Copy + Into<u8> + From<u8> {
         Self::Rank::from(self.into() % P::NUM_RANKS)
     }
     fn hflip(self) -> Self {
-        let f = self.file();
-        let r = self.rank();
-        Self::new(Self::File::from(P::NUM_FILES - 1 - f.into()), r)
+        Self::new(self.file().hflip(), self.rank())
     }
 }
