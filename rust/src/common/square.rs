@@ -1,4 +1,4 @@
-use crate::common::parameters::BaseParameters;
+use crate::common::{color::Color, parameters::BaseParameters};
 
 pub trait BaseFile<P: BaseParameters>: Copy + Into<u8> + From<u8> {
     fn hflip(self) -> Self {
@@ -25,6 +25,13 @@ pub trait BaseSquare<P: BaseParameters>: Copy + Into<u8> + From<u8> {
     }
     fn rotate(self) -> Self {
         Self::from(Self::NUM_SQUARES - 1 - self.into())
+    }
+    fn in_promotion_zone(self, by_side: Color) -> bool {
+        match by_side {
+            Color::Black => self.rank().into() < P::NUM_PROMOTION_RANKS,
+            Color::White => self.rank().into() >= P::NUM_RANKS - P::NUM_PROMOTION_RANKS,
+            Color::None => false,
+        }
     }
     fn chebyshev_distance(self, other: Self) -> u32 {
         let df = (self.file().into() as i32 - other.file().into() as i32).abs() as u32;

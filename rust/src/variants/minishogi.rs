@@ -13,6 +13,7 @@ impl BaseParameters for Parameters {
     const NUM_STAND_PIECE_TYPES: u8 = 5;
     const NUM_FILES: u8 = 5;
     const NUM_RANKS: u8 = 5;
+    const NUM_PROMOTION_RANKS: u8 = 1;
 }
 
 #[repr(u8)]

@@ -423,6 +423,7 @@ mod test_piece {
 }
 
 mod test_square {
+    use crate::common::color::Color;
     use crate::common::square::BaseSquare;
     use crate::variants::minishogi::{File, Rank, Square};
     #[test]
@@ -592,5 +593,59 @@ mod test_square {
         assert_eq!(Square::Sq5A.chebyshev_distance(Square::Sq3C), 2);
         assert_eq!(Square::Sq5A.chebyshev_distance(Square::Sq3D), 3);
         assert_eq!(Square::Sq5A.chebyshev_distance(Square::Sq3E), 4);
+    }
+
+    #[test]
+    fn test_in_promotion_zone() {
+        assert_eq!(Square::Sq1A.in_promotion_zone(Color::Black), true);
+        assert_eq!(Square::Sq1B.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq1C.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq1D.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq1E.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq2A.in_promotion_zone(Color::Black), true);
+        assert_eq!(Square::Sq2B.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq2C.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq2D.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq2E.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq3A.in_promotion_zone(Color::Black), true);
+        assert_eq!(Square::Sq3B.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq3C.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq3D.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq3E.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq4A.in_promotion_zone(Color::Black), true);
+        assert_eq!(Square::Sq4B.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq4C.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq4D.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq4E.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq5A.in_promotion_zone(Color::Black), true);
+        assert_eq!(Square::Sq5B.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq5C.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq5D.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq5E.in_promotion_zone(Color::Black), false);
+        assert_eq!(Square::Sq1A.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq1B.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq1C.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq1D.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq1E.in_promotion_zone(Color::White), true);
+        assert_eq!(Square::Sq2A.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq2B.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq2C.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq2D.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq2E.in_promotion_zone(Color::White), true);
+        assert_eq!(Square::Sq3A.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq3B.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq3C.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq3D.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq3E.in_promotion_zone(Color::White), true);
+        assert_eq!(Square::Sq4A.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq4B.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq4C.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq4D.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq4E.in_promotion_zone(Color::White), true);
+        assert_eq!(Square::Sq5A.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq5B.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq5C.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq5D.in_promotion_zone(Color::White), false);
+        assert_eq!(Square::Sq5E.in_promotion_zone(Color::White), true);
     }
 }
