@@ -23,4 +23,7 @@ pub trait BaseSquare<P: BaseParameters>: Copy + Into<u8> + From<u8> {
     fn hflip(self) -> Self {
         Self::new(self.file().hflip(), self.rank())
     }
+    fn rotate(self) -> Self {
+        Self::from(Self::NUM_SQUARES - 1 - self.into())
+    }
 }

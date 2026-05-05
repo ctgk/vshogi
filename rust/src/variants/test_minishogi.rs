@@ -540,4 +540,33 @@ mod test_square {
         assert_eq!(Square::Sq5D.hflip(), Square::Sq1D);
         assert_eq!(Square::Sq5E.hflip(), Square::Sq1E);
     }
+
+    #[test]
+    fn test_rotate() {
+        assert_eq!(Square::Sq1A.rotate(), Square::Sq5E);
+        assert_eq!(Square::Sq1B.rotate(), Square::Sq5D);
+        assert_eq!(Square::Sq1C.rotate(), Square::Sq5C);
+        assert_eq!(Square::Sq1D.rotate(), Square::Sq5B);
+        assert_eq!(Square::Sq1E.rotate(), Square::Sq5A);
+        assert_eq!(Square::Sq2A.rotate(), Square::Sq4E);
+        assert_eq!(Square::Sq2B.rotate(), Square::Sq4D);
+        assert_eq!(Square::Sq2C.rotate(), Square::Sq4C);
+        assert_eq!(Square::Sq2D.rotate(), Square::Sq4B);
+        assert_eq!(Square::Sq2E.rotate(), Square::Sq4A);
+        assert_eq!(Square::Sq3A.rotate(), Square::Sq3E);
+        assert_eq!(Square::Sq3B.rotate(), Square::Sq3D);
+        assert_eq!(Square::Sq3C.rotate(), Square::Sq3C);
+        assert_eq!(Square::Sq3D.rotate(), Square::Sq3B);
+        assert_eq!(Square::Sq3E.rotate(), Square::Sq3A);
+        assert_eq!(Square::Sq4A.rotate(), Square::Sq2E);
+        assert_eq!(Square::Sq4B.rotate(), Square::Sq2D);
+        assert_eq!(Square::Sq4C.rotate(), Square::Sq2C);
+        assert_eq!(Square::Sq4D.rotate(), Square::Sq2B);
+        assert_eq!(Square::Sq4E.rotate(), Square::Sq2A);
+        assert_eq!(Square::Sq5A.rotate(), Square::Sq1E);
+        assert_eq!(Square::Sq5B.rotate(), Square::Sq1D);
+        assert_eq!(Square::Sq5C.rotate(), Square::Sq1C);
+        assert_eq!(Square::Sq5D.rotate(), Square::Sq1B);
+        assert_eq!(Square::Sq5E.rotate(), Square::Sq1A);
+    }
 }
