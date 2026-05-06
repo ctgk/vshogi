@@ -23,16 +23,8 @@ Homepage = "https://github.com/ctgk/vshogi"
 
 [project.optional-dependencies]
 develop = [
-    # TODO: Unpin when ai-edge-litert >1.4.0 is released that
-    # fixes macOS ARM64 wheels
-    # https://github.com/google-ai-edge/LiteRT/issues/2836
-    "ai-edge-litert==1.2.0; sys_platform == 'darwin'",
-    "ai-edge-torch==0.4.0; sys_platform == 'darwin'",
-    "jax < 0.7.0; sys_platform == 'darwin'",
-    "ai-edge-litert; sys_platform != 'darwin'",
-    # ai-edge-torch==0.7.2 caused a following error:
-    # AttributeError: module 'ai_edge_torch' has no attribute 'convert'
-    "ai-edge-torch!=0.7.2; sys_platform != 'darwin'",
+    "ai-edge-litert",
+    "litert-torch",
 
     "pandas",
     "torch",
@@ -43,16 +35,8 @@ develop = [
     "ruff",
 ]
 dlshogi = [
-    # TODO: Unpin when ai-edge-litert >1.4.0 is released that
-    # fixes macOS ARM64 wheels
-    # https://github.com/google-ai-edge/LiteRT/issues/2836
-    "ai-edge-litert==1.2.0; sys_platform == 'darwin'",
-    "ai-edge-torch==0.4.0; sys_platform == 'darwin'",
-    "jax < 0.7.0; sys_platform == 'darwin'",
-    "ai-edge-litert; sys_platform != 'darwin'",
-    # ai-edge-torch==0.7.2 caused a following error:
-    # AttributeError: module 'ai_edge_torch' has no attribute 'convert'
-    "ai-edge-torch!=0.7.2; sys_platform != 'darwin'",
+    "ai-edge-litert",
+    "litert-torch",
 
     "click",
     "joblib",

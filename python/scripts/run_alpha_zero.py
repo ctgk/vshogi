@@ -11,7 +11,7 @@ from vshogi.shogi import Game
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    import ai_edge_torch
+    import litert_torch
 
 
 @cl.command()
@@ -25,7 +25,7 @@ def _main(short: bool):
     ).eval()
     sample_input = (
         th.randn(1, Game.files, Game.ranks, Game.feature_channels),)
-    edge_model = ai_edge_torch.convert(model, sample_input)
+    edge_model = litert_torch.convert(model, sample_input)
     with tempfile.NamedTemporaryFile(delete=True) as t:
         edge_model.export(t.name)
         pv_func = vshogi.dlshogi.PolicyValueFunction(t.name)

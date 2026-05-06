@@ -6,7 +6,7 @@ from collections.abc import Callable
 from glob import glob
 from time import sleep, time
 
-import ai_edge_torch
+import litert_torch
 import click as cl
 import numpy as np
 import pandas as pd
@@ -257,7 +257,7 @@ class _NetworkTrainer:
             self._game_class.ranks,
             self._game_class.feature_channels,
         )
-        edge_model = ai_edge_torch.convert(network.eval(), (sample_inputs,))
+        edge_model = litert_torch.convert(network.eval(), (sample_inputs,))
         return edge_model
 
     @staticmethod

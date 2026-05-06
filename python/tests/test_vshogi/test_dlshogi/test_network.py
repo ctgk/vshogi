@@ -15,7 +15,7 @@ from vshogi.minishogi import Game
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    import ai_edge_torch
+    import litert_torch
     from ai_edge_litert.interpreter import Interpreter
 
 
@@ -29,6 +29,16 @@ with warnings.catch_warnings():
         (_ActionValueHead(32, 20), (1, 32, 5, 5), (1, 5, 5, 20)),
         (
             _DepthwiseAttention(Game.get_local_attentions(), groups=8),
+            (1, 16, 5, 5),
+            (1, 16, 5, 5),
+        ),
+        (
+            th.nn.Sequential(
+                *[
+                    _DepthwiseAttention(Game.get_local_attentions(), groups=8)
+                    for _ in range(2)
+                ]
+            ),
             (1, 16, 5, 5),
             (1, 16, 5, 5),
         ),
@@ -64,7 +74,7 @@ with warnings.catch_warnings():
 )
 def test_export_to_tflite(module, input_shape, output_shape):
     sample_inputs = (th.randn(*input_shape),)
-    edge_model = ai_edge_torch.convert(module.eval(), sample_inputs)
+    edge_model = litert_torch.convert(module.eval(), sample_inputs)
     with tempfile.NamedTemporaryFile(delete=True) as t:
         edge_model.export(t.name)
         interpreter = Interpreter(model_path=t.name)
