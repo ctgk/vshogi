@@ -1,6 +1,7 @@
 import tempfile
 import warnings
 
+import numpy as np
 import pytest
 import torch as th
 
@@ -71,6 +72,10 @@ def test_export_to_tflite(module, input_shape, output_shape):
     input_details = interpreter.get_input_details()[0]
     output_details = interpreter.get_output_details()
     assert tuple(input_details['shape']) == input_shape
+    with th.no_grad():
+        output_torch = module(sample_inputs[0])
+    interpreter.set_tensor(input_details["index"], sample_inputs[0])
+    interpreter.invoke()
 
     if isinstance(output_shape, set):
         actual = {
@@ -78,8 +83,20 @@ def test_export_to_tflite(module, input_shape, output_shape):
             tuple(output_details[1]['shape']),
         }
         assert actual == output_shape
+        output_edge = [
+            interpreter.get_tensor(output_details[i]["index"])
+            for i in range(2)
+        ]
+        if output_edge[0].shape == output_torch[0].shape:
+            assert np.allclose(output_edge[0], output_torch[0], atol=1e-5)
+            assert np.allclose(output_edge[1], output_torch[1], atol=1e-5)
+        else:
+            assert np.allclose(output_edge[0], output_torch[1], atol=1e-5)
+            assert np.allclose(output_edge[1], output_torch[0], atol=1e-5)
     else:
         assert tuple(output_details[0]['shape']) == output_shape
+        output_edge = interpreter.get_tensor(output_details[0]["index"])
+        assert np.allclose(output_edge, output_torch, atol=1e-5)
 
 
 @pytest.mark.parametrize(
