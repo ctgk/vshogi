@@ -110,7 +110,6 @@ struct Parameters
     static constexpr uint max_acceptable_repetitions = 3;
     static constexpr uint num_init_piece_each = 6;
     static constexpr std::array<uint, 11u> initial_piece_count = {2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0};
-    static constexpr uint initial_points = 13;
     static constexpr std::array<PieceEnum, 25> initial_position = {
         W_OU, W_FU, VOID, VOID, B_HI,
         W_KI, VOID, VOID, VOID, B_KA,
@@ -147,6 +146,7 @@ static_assert(FU == Config::FU);
 static_assert(OU == Config::OU);
 static_assert(NA == Config::NA);
 static_assert(VOID == Config::VOID);
+static_assert(Config::initial_points == 13u);
 
 } // namespace vshogi::minishogi
 
