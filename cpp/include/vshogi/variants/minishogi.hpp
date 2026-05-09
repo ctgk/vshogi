@@ -103,7 +103,6 @@ struct Parameters
     static constexpr uint num_files = 5; // 1, 2, 3, 4, 5
     static constexpr uint num_ranks = 5; // A, B, C, D, E
     static constexpr uint num_promotion_ranks = 1;
-    static constexpr uint num_dir = 8; //!< NW, N, NE, W, E, SW, S, SE
     static constexpr uint max_stand_sfen_length = 11; // "2p2s2g2b2r "
     static constexpr uint nfold_repetitions = 4;
     static constexpr std::array<PieceEnum, 25> initial_position = {
@@ -151,6 +150,8 @@ static_assert(Config::initial_piece_count[3] == 2u); // HI
 static_assert(Config::initial_piece_count[4] == 2u); // KI
 static_assert(Config::initial_piece_count[5] == 2u); // OU
 static_assert(Config::max_stand_piece_count == 2u);
+static_assert(Config::num_dir == 8u);
+static_assert(Config::num_dir_dl == 8u);
 
 } // namespace vshogi::minishogi
 

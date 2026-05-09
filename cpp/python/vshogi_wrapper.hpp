@@ -377,7 +377,7 @@ inline void export_game(nanobind::module_& m)
         .def_static(
             "get_local_attentions",
             []() {
-                constexpr uint num_dir = Parameters::num_dir;
+                constexpr uint num_dir = C::num_dir;
                 const auto n = Game::num_squares;
                 const auto shape = std::vector<size_t>({num_dir, n, n});
                 float* data = new float[num_dir * n * n];

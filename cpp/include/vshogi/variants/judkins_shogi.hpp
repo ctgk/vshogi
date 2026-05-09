@@ -122,7 +122,6 @@ struct Parameters
     static constexpr uint num_files = 6; // 1, 2, 3, 4, 5, 6
     static constexpr uint num_ranks = 6; // A, B, C, D, E, F
     static constexpr uint num_promotion_ranks = 2;
-    static constexpr uint num_dir = 12; //!< NW, N, NE, W, E, SW, S, SE, SSW, SSE, NNW, NNE
     static constexpr uint max_stand_sfen_length = 13; // "RBGSNPrbgsnp "
     static constexpr uint nfold_repetitions = 4;
     static constexpr std::array<PieceEnum, 36> initial_position = {
@@ -171,6 +170,8 @@ static_assert(Config::initial_piece_count[4] == 2u); // HI
 static_assert(Config::initial_piece_count[5] == 2u); // KI
 static_assert(Config::initial_piece_count[6] == 2u); // OU
 static_assert(Config::max_stand_piece_count == 2u);
+static_assert(Config::num_dir == 12u);
+static_assert(Config::num_dir_dl == 10u);
 
 } // namespace vshogi::judkins_shogi
 

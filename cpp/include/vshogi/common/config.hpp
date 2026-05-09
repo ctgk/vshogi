@@ -234,6 +234,7 @@ private:
     static constexpr std::array<uint, Param::piece_types.size()>
     compute_initial_piece_count();
     static constexpr uint compute_max_stand_piece_count();
+    static constexpr uint compute_num_dir();
 
 public: // pieces
     /**
@@ -311,7 +312,7 @@ public: // squares
      * @brief Number of directions of piece attacks by both players.
      * E.g. 12 (NNW, NNE, NW, N, NE, W, E, SW, S, SE, SSW, SSE) in shogi.
      */
-    static constexpr uint num_dir = Param::num_dir;
+    static constexpr uint num_dir = compute_num_dir();
 
     /**
      * @brief Number of direction of piece attacks by turn player.
@@ -465,6 +466,18 @@ constexpr uint Configuration<Param>::compute_max_stand_piece_count()
         }
     }
     return max_count;
+}
+
+template <class Param>
+constexpr uint Configuration<Param>::compute_num_dir()
+{
+    // Check if knight (PT_KE) exists in piece_types
+    for (const auto pt : Param::piece_types) {
+        if (pt == PT_KE) {
+            return 12u; // Knight requires 12 directions (includes NNW, NNE)
+        }
+    }
+    return 8u; // Standard 8 directions without knight
 }
 
 } // namespace vshogi
