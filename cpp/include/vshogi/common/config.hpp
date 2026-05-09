@@ -322,17 +322,8 @@ public: // stand
     static constexpr uint max_stand_sfen_length = Param::max_stand_sfen_length;
 
 private:
-    static constexpr uint compute_initial_points()
-    {
-        uint out = 0u;
-        for (const auto piece : Param::initial_position) {
-            const uint piece_index = static_cast<uint>(piece);
-            if (piece_index < num_piece_types) {
-                out += FPTHelper::to_point(Param::piece_types[piece_index]);
-            }
-        }
-        return out;
-    }
+    static constexpr uint compute_num_init_piece_each();
+    static constexpr uint compute_initial_points();
 
 public: // game rules
     /**
@@ -348,13 +339,14 @@ public: // game rules
     static constexpr std::array<uint, Param::piece_types.size()>
         initial_piece_count = Param::initial_piece_count;
 
-    static constexpr uint num_init_piece_each = Param::num_init_piece_each;
+    static constexpr uint num_init_piece_each = compute_num_init_piece_each();
     static constexpr uint half_num_init_piece_each = num_init_piece_each / 2u;
     static constexpr uint initial_points = compute_initial_points();
     static constexpr uint sum_piece_value = Param::sum_piece_value;
     static constexpr std::array<Piece, num_squares> initial_position
         = Param::initial_position;
     static_assert(2u * num_piece_types == static_cast<uint>(VOID));
+    static_assert(num_init_piece_each > 0u);
     static_assert(initial_points > 0u);
 
 public:
@@ -391,6 +383,32 @@ public:
         return EnumIteratorContainer<PieceType, num_stand_piece_types>();
     }
 };
+
+template <class Param>
+constexpr uint Configuration<Param>::compute_num_init_piece_each()
+{
+    uint out = 0u;
+    for (const auto piece : Param::initial_position) {
+        const uint piece_index = static_cast<uint>(piece);
+        if (piece_index < num_piece_types) {
+            ++out;
+        }
+    }
+    return out;
+}
+
+template <class Param>
+constexpr uint Configuration<Param>::compute_initial_points()
+{
+    uint out = 0u;
+    for (const auto piece : Param::initial_position) {
+        const uint piece_index = static_cast<uint>(piece);
+        if (piece_index < num_piece_types) {
+            out += FPTHelper::to_point(Param::piece_types[piece_index]);
+        }
+    }
+    return out;
+}
 
 } // namespace vshogi
 
