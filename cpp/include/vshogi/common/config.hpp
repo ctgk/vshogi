@@ -324,6 +324,7 @@ public: // stand
 private:
     static constexpr uint compute_num_init_piece_each();
     static constexpr uint compute_initial_points();
+    static constexpr uint compute_sum_piece_value();
 
 public: // game rules
     /**
@@ -342,7 +343,7 @@ public: // game rules
     static constexpr uint num_init_piece_each = compute_num_init_piece_each();
     static constexpr uint half_num_init_piece_each = num_init_piece_each / 2u;
     static constexpr uint initial_points = compute_initial_points();
-    static constexpr uint sum_piece_value = Param::sum_piece_value;
+    static constexpr uint sum_piece_value = compute_sum_piece_value();
     static constexpr std::array<Piece, num_squares> initial_position
         = Param::initial_position;
     static_assert(2u * num_piece_types == static_cast<uint>(VOID));
@@ -405,6 +406,28 @@ constexpr uint Configuration<Param>::compute_initial_points()
         const uint piece_index = static_cast<uint>(piece);
         if (piece_index < num_piece_types) {
             out += FPTHelper::to_point(Param::piece_types[piece_index]);
+        }
+    }
+    return out;
+}
+
+template <class Param>
+constexpr uint Configuration<Param>::compute_sum_piece_value()
+{
+    uint out = 0u;
+    constexpr uint promoted_offset = static_cast<uint>(PT_TO);
+    for (const auto piece : Param::initial_position) {
+        const uint piece_index = static_cast<uint>(piece);
+        if (piece_index < static_cast<uint>(VOID)) {
+            const uint piece_type_index = piece_index % num_piece_types;
+            const auto fpt = Param::piece_types[piece_type_index];
+            if (FPTHelper::is_promotable(fpt)) {
+                out += FPTHelper::to_value(
+                    static_cast<FullPieceTypes>(
+                        static_cast<uint>(fpt) + promoted_offset));
+            } else {
+                out += FPTHelper::to_value(fpt);
+            }
         }
     }
     return out;

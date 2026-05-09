@@ -136,7 +136,6 @@ struct Parameters
     // clang-format off
     static constexpr std::array<FullPieceTypes, 15u> piece_types = {PT_FU, PT_KY, PT_KE, PT_GI, PT_KA, PT_HI, PT_KI, PT_OU, PT_TO, PT_NY, PT_NK, PT_NG, PT_UM, PT_RY, PT_NA};
     static constexpr uint num_stand_piece_types = 7; // FU, KY, KE, GI, KA, HI, KI
-    static constexpr uint sum_piece_value = 2 * (60 * 17 + 115 + 120);
     static constexpr uint num_files = 9; // 1, 2, 3, 4, 5, 6, 7, 8, 9
     static constexpr uint num_ranks = 9; // A, B, C, D, E, F, G, H, I
     static constexpr uint num_promotion_ranks = 3;
@@ -185,6 +184,7 @@ static_assert(OU == Config::OU);
 static_assert(NA == Config::NA);
 static_assert(VOID == Config::VOID);
 static_assert(Config::initial_points == 27u);
+static_assert(Config::sum_piece_value == 2510u);
 
 } // namespace vshogi::shogi
 
