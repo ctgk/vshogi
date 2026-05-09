@@ -126,7 +126,7 @@ struct Parameters
     static constexpr uint num_dir = 12; //!< NW, N, NE, W, E, SW, S, SE, SSW, SSE, NNW, NNE
     static constexpr uint max_stand_piece_count = 2;
     static constexpr uint max_stand_sfen_length = 13; // "RBGSNPrbgsnp "
-    static constexpr uint max_acceptable_repetitions = 3;
+    static constexpr uint nfold_repetitions = 4;
     static constexpr uint num_init_piece_each = 6;
     static constexpr std::array<uint, 13u> initial_piece_count = {2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0};
     static constexpr std::array<PieceEnum, 36> initial_position = {

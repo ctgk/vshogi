@@ -211,28 +211,13 @@ public:
     Game& apply_nocheck(const move_t& move)
     {
         add_record_and_update_state(move);
-        update_result(C::max_acceptable_repetitions);
+        update_result(C::nfold_repetitions);
         return *this;
     }
     Game& apply_dfpn(const move_t& move)
     {
         add_record_and_update_state(move);
         return *this;
-    }
-    void update_result_dfpn(
-        const uint max_repetitions_inclusive,
-        const bool check_repetition = true)
-    {
-        m_result = ONGOING;
-        const auto turn = get_turn();
-        if (check_repetition && is_repetitions(max_repetitions_inclusive)) {
-            if (m_state.in_check())
-                m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
-            else
-                m_result = DRAW;
-        }
-        if (can_declare_win_by_king_enter())
-            m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
     }
     Game& undo()
     {
@@ -388,7 +373,7 @@ protected:
     {
         m_hash_list.reserve(256);
         m_captured_move_list.reserve(256);
-        update_result(C::max_acceptable_repetitions);
+        update_result(C::nfold_repetitions);
     }
     static uint num_pieces(const State<P>& s, const ColorEnum& c)
     {
@@ -444,14 +429,14 @@ protected:
     }
 
 protected:
-    void update_result(const uint max_repetitions_inclusive)
+    void update_result(const uint nfold_repetitions)
     {
         m_result = ONGOING;
         const auto turn = get_turn();
         if (!DropMoveGenerator<P>(m_state) && !KingMoveGenerator<P>(m_state)
             && !SoldierMoveGenerator<P>(m_state))
             m_result = (turn == BLACK) ? WHITE_WIN : BLACK_WIN;
-        if (is_repetitions(max_repetitions_inclusive)) {
+        if (is_repetitions(nfold_repetitions)) {
             if (m_state.in_check())
                 m_result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
             else
@@ -462,14 +447,14 @@ protected:
     }
 
 public:
-    bool is_repetitions(const uint max_repetitions_inclusive) const
+    bool is_repetitions(const uint nfold_repetitions) const
     {
         uint num_fold = 1u;
         const int n = static_cast<int>(m_hash_list.size());
         for (int ii = n - 4; ii >= 0; ii -= 2) {
             const uint index = static_cast<uint>(ii);
             num_fold += (m_hash == m_hash_list[index]);
-            if (num_fold > max_repetitions_inclusive)
+            if (num_fold >= nfold_repetitions)
                 return true;
         }
         return false;
@@ -543,7 +528,7 @@ Game<P>& Game<P>::apply_discard(const move_t& move)
         return *this;
     }
     add_record_and_update_state_banish(move);
-    update_result(C::max_acceptable_repetitions);
+    update_result(C::nfold_repetitions);
     return *this;
 }
 

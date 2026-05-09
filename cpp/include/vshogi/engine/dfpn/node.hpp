@@ -204,7 +204,7 @@ bool Node::simulate_using_game(const Game<P>& g)
     const bool offence = (g.ply() % 2u == 0u);
     const auto turn = g.get_turn();
     auto result = g.get_result(); // this is usually ONGOING
-    if (g.is_repetitions(1u)) {
+    if (g.is_repetitions(2u)) {
         if (g.in_check())
             result = (turn == BLACK) ? BLACK_WIN : WHITE_WIN;
         else

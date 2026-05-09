@@ -336,11 +336,10 @@ private:
 
 public: // game rules
     /**
-     * @brief Maximum # of repetitions accepted in the game rule.
-     * E.g. 3 in minishogi.
+     * @brief Threshold for declaring a game end due to n-fold repetition.
+     * E.g. 4 in minishogi.
      */
-    static constexpr uint max_acceptable_repetitions
-        = Param::max_acceptable_repetitions;
+    static constexpr uint nfold_repetitions = Param::nfold_repetitions;
 
     /**
      * @brief Array of initial piece count in the game.
