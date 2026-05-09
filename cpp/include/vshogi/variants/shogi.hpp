@@ -143,7 +143,6 @@ struct Parameters
     static constexpr uint max_stand_piece_count = 18;
     static constexpr uint max_stand_sfen_length = 26; // "10p2l2n2sbr2g2P2L2N2SBR2G "
     static constexpr uint nfold_repetitions = 4;
-    static constexpr std::array<uint, 15u> initial_piece_count = {18, 4, 4, 4, 2, 2, 4, 2, 0, 0, 0, 0, 0, 0, 0};
     static constexpr std::array<PieceEnum, 81> initial_position = {
         W_KY, VOID, W_FU, VOID, VOID, VOID, B_FU, VOID, B_KY,
         W_KE, W_KA, W_FU, VOID, VOID, VOID, B_FU, B_HI, B_KE,
@@ -185,6 +184,14 @@ static_assert(NA == Config::NA);
 static_assert(VOID == Config::VOID);
 static_assert(Config::initial_points == 27u);
 static_assert(Config::sum_piece_value == 2510u);
+static_assert(Config::initial_piece_count[0] == 18u); // FU
+static_assert(Config::initial_piece_count[1] == 4u); // KY
+static_assert(Config::initial_piece_count[2] == 4u); // KE
+static_assert(Config::initial_piece_count[3] == 4u); // GI
+static_assert(Config::initial_piece_count[4] == 2u); // KA
+static_assert(Config::initial_piece_count[5] == 2u); // HI
+static_assert(Config::initial_piece_count[6] == 4u); // KI
+static_assert(Config::initial_piece_count[7] == 2u); // OU
 
 } // namespace vshogi::shogi
 

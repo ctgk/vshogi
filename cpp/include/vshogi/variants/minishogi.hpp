@@ -107,7 +107,6 @@ struct Parameters
     static constexpr uint max_stand_piece_count = 2;
     static constexpr uint max_stand_sfen_length = 11; // "2p2s2g2b2r "
     static constexpr uint nfold_repetitions = 4;
-    static constexpr std::array<uint, 11u> initial_piece_count = {2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0};
     static constexpr std::array<PieceEnum, 25> initial_position = {
         W_OU, W_FU, VOID, VOID, B_HI,
         W_KI, VOID, VOID, VOID, B_KA,
@@ -146,6 +145,12 @@ static_assert(NA == Config::NA);
 static_assert(VOID == Config::VOID);
 static_assert(Config::initial_points == 13u);
 static_assert(Config::sum_piece_value == 2 * (60 * 3 + 115 + 120));
+static_assert(Config::initial_piece_count[0] == 2u); // FU
+static_assert(Config::initial_piece_count[1] == 2u); // GI
+static_assert(Config::initial_piece_count[2] == 2u); // KA
+static_assert(Config::initial_piece_count[3] == 2u); // HI
+static_assert(Config::initial_piece_count[4] == 2u); // KI
+static_assert(Config::initial_piece_count[5] == 2u); // OU
 
 } // namespace vshogi::minishogi
 

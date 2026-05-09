@@ -325,6 +325,8 @@ private:
     static constexpr uint compute_num_init_piece_each();
     static constexpr uint compute_initial_points();
     static constexpr uint compute_sum_piece_value();
+    static constexpr std::array<uint, Param::piece_types.size()>
+    compute_initial_piece_count();
 
 public: // game rules
     /**
@@ -338,7 +340,7 @@ public: // game rules
      * E.g. {2(FU), 2(GI), 2(KA), 2(HI), 2(KI), 2(OU), 0(TO), 0(NG), 0(UM), 0(RY), 0(NA)}
      */
     static constexpr std::array<uint, Param::piece_types.size()>
-        initial_piece_count = Param::initial_piece_count;
+        initial_piece_count = compute_initial_piece_count();
 
     static constexpr uint num_init_piece_each = compute_num_init_piece_each();
     static constexpr uint half_num_init_piece_each = num_init_piece_each / 2u;
@@ -427,6 +429,23 @@ constexpr uint Configuration<Param>::compute_sum_piece_value()
                         static_cast<uint>(fpt) + promoted_offset));
             } else {
                 out += FPTHelper::to_value(fpt);
+            }
+        }
+    }
+    return out;
+}
+
+template <class Param>
+constexpr std::array<uint, Param::piece_types.size()>
+Configuration<Param>::compute_initial_piece_count()
+{
+    std::array<uint, Param::piece_types.size()> out = {};
+    for (const auto piece : Param::initial_position) {
+        const uint piece_index = static_cast<uint>(piece);
+        if (piece_index != static_cast<uint>(VOID)) {
+            const uint piece_type_index = piece_index % num_piece_types;
+            if (piece_type_index < num_piece_types) {
+                ++out[piece_type_index];
             }
         }
     }

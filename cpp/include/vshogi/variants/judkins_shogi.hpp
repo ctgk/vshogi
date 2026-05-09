@@ -126,7 +126,6 @@ struct Parameters
     static constexpr uint max_stand_piece_count = 2;
     static constexpr uint max_stand_sfen_length = 13; // "RBGSNPrbgsnp "
     static constexpr uint nfold_repetitions = 4;
-    static constexpr std::array<uint, 13u> initial_piece_count = {2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0};
     static constexpr std::array<PieceEnum, 36> initial_position = {
         W_OU, W_FU, VOID, VOID, VOID, B_HI,
         W_KI, VOID, VOID, VOID, VOID, B_KA,
@@ -165,6 +164,13 @@ static_assert(NA == Config::NA);
 static_assert(VOID == Config::VOID);
 static_assert(Config::initial_points == 14u);
 static_assert(Config::sum_piece_value == 950u);
+static_assert(Config::initial_piece_count[0] == 2u); // FU
+static_assert(Config::initial_piece_count[1] == 2u); // KE
+static_assert(Config::initial_piece_count[2] == 2u); // GI
+static_assert(Config::initial_piece_count[3] == 2u); // KA
+static_assert(Config::initial_piece_count[4] == 2u); // HI
+static_assert(Config::initial_piece_count[5] == 2u); // KI
+static_assert(Config::initial_piece_count[6] == 2u); // OU
 
 } // namespace vshogi::judkins_shogi
 
