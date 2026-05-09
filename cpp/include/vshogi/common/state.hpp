@@ -32,7 +32,6 @@ private:
     using MT = MoveTraits<P>;
     using Stands = BlackWhiteStands<P>;
     using bitboard_t = typename C::bitboard_t;
-    static constexpr uint max_stand_piece_count = C::max_stand_piece_count;
     static constexpr uint num_piece_types = C::num_piece_types;
     static constexpr uint num_stand_piece_types = C::num_stand_piece_types;
     static constexpr uint num_dir = C::num_dir;

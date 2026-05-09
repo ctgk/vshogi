@@ -227,6 +227,14 @@ struct Configuration
     using BaseTypeStand = typename ParamS::BaseTypeStand;
     static_assert(sizeof(Piece) == sizeof(std::uint8_t));
 
+private:
+    static constexpr uint compute_num_init_piece_each();
+    static constexpr uint compute_initial_points();
+    static constexpr uint compute_sum_piece_value();
+    static constexpr std::array<uint, Param::piece_types.size()>
+    compute_initial_piece_count();
+    static constexpr uint compute_max_stand_piece_count();
+
 public: // pieces
     /**
      * @brief Number of piece types.
@@ -318,15 +326,9 @@ public: // squares
     static constexpr Rank RANK_Z = static_cast<Rank>(num_ranks - 1u); // NOLINT
 
 public: // stand
-    static constexpr uint max_stand_piece_count = Param::max_stand_piece_count;
+    static constexpr uint max_stand_piece_count
+        = compute_max_stand_piece_count();
     static constexpr uint max_stand_sfen_length = Param::max_stand_sfen_length;
-
-private:
-    static constexpr uint compute_num_init_piece_each();
-    static constexpr uint compute_initial_points();
-    static constexpr uint compute_sum_piece_value();
-    static constexpr std::array<uint, Param::piece_types.size()>
-    compute_initial_piece_count();
 
 public: // game rules
     /**
@@ -450,6 +452,19 @@ Configuration<Param>::compute_initial_piece_count()
         }
     }
     return out;
+}
+
+template <class Param>
+constexpr uint Configuration<Param>::compute_max_stand_piece_count()
+{
+    const auto counts = compute_initial_piece_count();
+    uint max_count = 0u;
+    for (uint i = 0u; i < num_stand_piece_types; ++i) {
+        if (counts[i] > max_count) {
+            max_count = counts[i];
+        }
+    }
+    return max_count;
 }
 
 } // namespace vshogi
