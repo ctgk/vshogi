@@ -118,7 +118,7 @@ def _cycle_selfplay_and_train(worker_type: type, trainer_type: type, **kwargs):
                 if score > kwargs["train_validation_threshold"]:
                     break
                 others = [o for o in others if o != tflite_path.format(ii - 1)]
-                os.remove(tflite_path.format(ii + 1))
+                os.remove(tflite_path.format(ii))
 
 
 def _train(trainer_type: type, **kwargs):
