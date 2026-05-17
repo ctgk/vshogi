@@ -1,8 +1,10 @@
+import io
 import os
 import tempfile
 import typing as tp
 import warnings
 from collections.abc import Callable
+from contextlib import redirect_stdout
 from glob import glob
 from time import sleep, time
 
@@ -72,7 +74,8 @@ class _NetworkTrainer:
                 candidate_path=[model_path, prev_model_path]
             )
             edge_model = self._to_edge_model(network)
-            edge_model.export(model_path.replace(".pth", ".tflite"))
+            with redirect_stdout(io.StringIO()):
+                edge_model.export(model_path.replace(".pth", ".tflite"))
             return
         index = int(model_path.split("/")[-1].split("_")[1].split(".")[0])
         kifu_dir = "/".join(
@@ -100,14 +103,16 @@ class _NetworkTrainer:
         edge_model = self._to_edge_model(network)
         with tempfile.TemporaryDirectory(delete=True) as temp_dir:
             file_path = os.path.join(temp_dir, model_path.split("/")[-1])
-            edge_model.export(file_path)
+            with redirect_stdout(io.StringIO()):
+                edge_model.export(file_path)
             player_curr = _NetworkTrainer._engine(file_path)
         player_prev = _NetworkTrainer._engine(
             prev_model_path.replace('.pth', '.tflite'),
         )
         winner = self._play_games(player_curr, player_prev)
         if player_curr.name == winner:
-            edge_model.export(model_path.replace('.pth', '.tflite'))
+            with redirect_stdout(io.StringIO()):
+                edge_model.export(model_path.replace('.pth', '.tflite'))
 
     def _network_and_optimizer(
         self, candidate_path: list = []
@@ -256,7 +261,12 @@ class _NetworkTrainer:
             self._game_class.ranks,
             self._game_class.feature_channels,
         )
-        edge_model = litert_torch.convert(network.eval(), (sample_inputs,))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with redirect_stdout(io.StringIO()):
+                edge_model = litert_torch.convert(
+                    network.eval(), (sample_inputs,)
+                )
         return edge_model
 
     @staticmethod
