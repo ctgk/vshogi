@@ -44,7 +44,7 @@ jobs:
         --az-search-count 100
     - name: Check generated dataset
       run: |
-        for tsv in datasets/dataset_0003/kifu_000*.tsv; do
+        for tsv in datasets/dataset_0003/kifu_000*.tsv.loaded; do
           echo "$tsv"
           cat "$tsv"
           python .github/workflows/check_selfplay_dataset.py "$tsv"
