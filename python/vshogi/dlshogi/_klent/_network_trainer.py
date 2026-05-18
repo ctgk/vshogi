@@ -92,7 +92,10 @@ class _NetworkTrainer(_AlphaZeroNetworkTrainer):
         for b in self._buffer._buffer:
             if b.sfen not in data:
                 data[b.sfen] = []
-            data[b.sfen].append(2 * np.nanmean(list(b.value01.values())) - 1)
+            for _ in range(b.count):
+                data[b.sfen].append(
+                    2 * np.nanmean(list(b.value01.values())) - 1
+                )
         df_summary = pd.DataFrame(
             [
                 {

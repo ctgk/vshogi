@@ -25,7 +25,7 @@ class ReplayBuffer(th.utils.data.Dataset):
     (array([0.5], dtype=float32), array(0.6, dtype=float32))
     """
 
-    def __init__(self, buffer_size: int = 100000):
+    def __init__(self, buffer_size: int = 100000, *, dedupe: bool = False):
         """Initialize dataset class.
 
         Parameters
@@ -36,6 +36,7 @@ class ReplayBuffer(th.utils.data.Dataset):
         super().__init__()
         self._buffer: list[Data] = []
         self._buffer_size = buffer_size
+        self._dedupe = dedupe
         self._game_variant: str | None = None
 
     def add(self, data: Data):
@@ -46,7 +47,19 @@ class ReplayBuffer(th.utils.data.Dataset):
         data : Data
             Data to add.
         """
-        self._buffer.append(data)
+        if (
+            self._dedupe is False
+            or (
+                old := next(
+                    (b for b in self._buffer if b.sfen == data.sfen), None
+                )
+            )
+            is None
+        ):
+            self._buffer.append(data)
+        else:
+            self._buffer.remove(old)
+            self._buffer.append(data.merge(old))
         if self._game_variant is None:
             self._game_variant = self._infer_game_variant(data.sfen)
         while len(self._buffer) > self._buffer_size:

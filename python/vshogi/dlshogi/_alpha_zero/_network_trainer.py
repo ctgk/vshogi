@@ -58,6 +58,7 @@ class _NetworkTrainer:
 
         self._buffer = ReplayBuffer(
             buffer_size=kwargs["max_dataset_size"] // 2,
+            dedupe=kwargs["dedupe_dataset"],
         )
         self._min_dataset_size = kwargs["min_dataset_size"]
 
@@ -204,7 +205,8 @@ class _NetworkTrainer:
         for b in self._buffer._buffer:
             if b.sfen not in data:
                 data[b.sfen] = []
-            data[b.sfen].append(2 * b.value01 - 1)
+            for _ in range(b.count):
+                data[b.sfen].append(2 * b.value01 - 1)
         df_summary = pd.DataFrame(
             [
                 {
@@ -487,6 +489,12 @@ class _NetworkTrainer:
                     "Minimum number of samples required in the replay buffer "
                     "before starting training."
                 ),
+            ),
+            "dedupe-dataset": cl.option(
+                f"--{prefix}dedupe-dataset",
+                default=True,
+                show_default=True,
+                help="",
             ),
         }
         return options
