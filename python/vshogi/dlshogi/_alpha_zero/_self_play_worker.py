@@ -48,7 +48,7 @@ class _SelfPlayWorker:
         )
         if not os.path.isdir(kifu_dir):
             os.makedirs(kifu_dir)
-        index_start = len(glob(os.path.join(kifu_dir, 'kifu_*.tsv')))
+        index_start = len(glob(os.path.join(kifu_dir, 'kifu_*.tsv*')))
         if self._n_jobs <= 1:
             self._run_self_play_single(
                 tflite_path=tflite_path,

@@ -84,7 +84,7 @@ def _cycle_selfplay_and_train(worker_type: type, trainer_type: type, **kwargs):
     else:
         print(f"Resume cycle from {start}")
     others = (
-        [] if start == 1 else worker.validate(tflite_path.format(start - 1))
+        [] if start == 1 else worker.validate(tflite_path.format(start - 1))[1]
     )
     for ii in range(start, kwargs['cycles'] + 1):
         max_random_moves = _compute_random_moves(
