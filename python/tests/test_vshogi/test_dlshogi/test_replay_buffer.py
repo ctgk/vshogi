@@ -60,5 +60,28 @@ def test_action_values():
     assert np.sum(~np.isnan(v)) == 1
 
 
+def test_dedupe():
+    legal_moves = Game("rbsgk/4p/5/P4/KGSBR b -").get_legal_moves()
+    buffer = ReplayBuffer(dedupe=True)
+    buffer.add(
+        Data(
+            sfen="rbsgk/4p/5/P4/KGSBR b -",
+            policy={m: float(m == Move("2e3d")) for m in legal_moves},
+            value01=0.0,
+            weight=1.0,
+        )
+    )
+    assert len(buffer) == 2
+    buffer.add(
+        Data(
+            sfen="rbsgk/4p/5/P4/KGSBR b -",
+            policy={m: float(m == Move("4e4d")) for m in legal_moves},
+            value01=0.5,
+            weight=1.0,
+        )
+    )
+    assert len(buffer) == 2
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
