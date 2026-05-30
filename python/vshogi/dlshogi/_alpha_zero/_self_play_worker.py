@@ -1,4 +1,5 @@
 import contextlib
+import multiprocessing
 import os
 import typing as tp
 from glob import glob
@@ -80,7 +81,7 @@ class _SelfPlayWorker:
         self, latest: str, num_games: int = 10
     ) -> tuple[float, list[str]]:
         previous = self._get_previous_models(latest, max_models=10)
-        if (self._n_jobs == 1) or (len(previous) < 1):
+        if (self._n_jobs == 1) or (len(previous) <= 1):
             scores = [
                 self._validate(latest, prev, num_games).score()
                 for prev in previous
@@ -94,18 +95,29 @@ class _SelfPlayWorker:
                     ncols=80,
                 ),
             ):
-                records: list[vs.Record] = Parallel(
-                    n_jobs=min(self._n_jobs, len(previous)),
-                    timeout=timeout_second,
-                )(
-                    delayed(self._validate)(
-                        latest,
-                        prev,
-                        num_games,
-                        show_pbar=False,
-                    )
-                    for prev in previous
-                )
+                for i in range(1, 4):
+                    try:
+                        records: list[vs.Record] = Parallel(
+                            n_jobs=min(self._n_jobs, len(previous)),
+                            timeout=timeout_second,
+                        )(
+                            delayed(self._validate)(
+                                latest,
+                                prev,
+                                num_games,
+                                show_pbar=False,
+                            )
+                            for prev in previous
+                        )
+                    except multiprocessing.context.TimeoutError:
+                        msg = (
+                            "Caught TimeoutError in '_SelfPlayWorker.validate'"
+                            f" in the {i}-th try out of 4 tries, "
+                            "retrying validation again."
+                        )
+                        print(msg)
+                    finally:
+                        break
             for prev, record in zip(previous, records):
                 msg = (
                     f"{latest.split('/')[-1].split('.')[0]} vs "
