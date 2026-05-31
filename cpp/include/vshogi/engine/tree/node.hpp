@@ -11,12 +11,11 @@ class Node
 {
 protected:
     Derived* m_parent;
-    move_t m_action;
     Derived* m_child;
     Derived* m_child_1st;
 
 public:
-    Node() : m_parent{}, m_action{}, m_child{}, m_child_1st{}
+    Node() : m_parent{}, m_child{}, m_child_1st{}
     {
     }
     ~Node() = default; // Rule 1/5 destructor
@@ -26,7 +25,6 @@ public:
     Node& operator=(Node&& other) = default; // Rule 5/5 move assignment
     // clang-format off
     const Derived* get_parent() const { return m_parent; }
-    move_t get_action() const { return m_action; }
     const Derived* get_child() const { return m_child; }
     const Derived* get_child_1st() const { return m_child_1st; }
     bool has_child() const { return static_cast<bool>(m_child); }
@@ -35,14 +33,12 @@ public:
     void init()
     {
         m_parent = nullptr;
-        m_action = static_cast<move_t>(0);
         m_child = nullptr;
         m_child_1st = nullptr;
     }
     void init_as_begin()
     {
         m_parent = nullptr;
-        m_action = static_cast<move_t>(0);
     }
     void init_as_end()
     {

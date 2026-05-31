@@ -4,21 +4,22 @@ namespace vshogi::engine::az
 {
 
 Node::Node()
-    : tree::Node<Node>(), m_proba(0.f), m_visit_count(0u),
-      m_visit_count_by_random(0u), m_sqrt_visit_count(0.f), m_q_value(0.f),
-      m_is_mate(false)
+    : tree::Node<Node>(), m_action{}, m_is_mate{}, m_proba(0.f),
+      m_visit_count(0u), m_visit_count_by_random(0u), m_sqrt_visit_count(0.f),
+      m_q_value(0.f)
 {
 }
 
 void Node::init()
 {
     tree::Node<Node>::init();
+    m_action = static_cast<move_t>(0);
+    m_is_mate = false;
     m_proba = 0.f;
     m_visit_count = 0u;
     m_visit_count_by_random = 0u;
     m_sqrt_visit_count = 0.f;
     m_q_value = 0.f;
-    m_is_mate = false;
 }
 
 void Node::init(Node* const parent, const move_t& action, const float proba)
@@ -27,6 +28,12 @@ void Node::init(Node* const parent, const move_t& action, const float proba)
     m_parent = parent;
     m_action = action;
     m_proba = proba;
+}
+
+void Node::init_as_begin()
+{
+    tree::Node<Node>::init_as_begin();
+    m_action = static_cast<move_t>(0);
 }
 
 float Node::get_q_value(const uint greedy_depth, const uint min_visits) const

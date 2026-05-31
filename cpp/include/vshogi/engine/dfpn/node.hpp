@@ -38,6 +38,7 @@ public: // utility
         const uint delta);
     void init(Node* const parent, const Node* const twin);
     // clang-format off
+    move_t get_action() const { return m_action; }
     uint phi() const { return m_phi; }
     uint delta() const { return (m_delta == inf) ? m_delta : (m_delta >> 8u) << 8u; }
     uint pn(const bool offence) const { return offence ? m_phi : delta(); }
@@ -70,6 +71,8 @@ public: // utility
     void backprop(const bool& offence);
 
 private:
+    move_t m_action;
+    bool m_fully_expanded; //!< Omitted drop moves if false.
     /**
      * @brief #P (or #D).
      * @details
@@ -89,7 +92,6 @@ private:
      * (MSB) ... xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx (LSB)
      */
     uint m_delta;
-    bool m_fully_expanded; //!< Omitted drop moves if false.
 
     Node* m_child_2nd;
 
@@ -122,14 +124,15 @@ private:
 };
 
 inline Node::Node()
-    : tree::Node<Node>(), m_phi{unit}, m_delta{unit}, m_fully_expanded{},
-      m_child_2nd{}
+    : tree::Node<Node>(), m_action{}, m_fully_expanded{}, m_phi{unit},
+      m_delta{unit}, m_child_2nd{}
 {
 }
 
 inline void Node::init()
 {
     tree::Node<Node>::init();
+    m_action = static_cast<move_t>(0);
     m_phi = unit;
     m_delta = unit;
     m_fully_expanded = false;

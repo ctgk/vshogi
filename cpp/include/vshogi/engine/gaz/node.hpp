@@ -35,14 +35,16 @@ constexpr uint max_legal_moves = 600u;
 class Node : public tree::Node<Node>
 {
 private:
+    move_t m_action;
+    bool m_is_mate;
     float m_logit;
     uint m_visit_count;
     float m_q_value;
-    bool m_is_mate;
 
 public:
     Node();
     // clang-format off
+    move_t get_action() const { return m_action; }
     float get_logit() const { return m_logit; }
     uint get_visit_count() const { return m_visit_count; }
     float get_q_value() const { return m_q_value; }
@@ -52,6 +54,7 @@ public:
     // clang-format on
     void init();
     void init(Node* const parent, const move_t& action, const float logit);
+    void init_as_begin();
     float
     get_q_value(const uint greedy_depth, const uint min_visits = 10u) const;
     const Node* get_child_of(const move_t& action) const;

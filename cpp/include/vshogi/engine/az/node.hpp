@@ -19,16 +19,18 @@ namespace vshogi::engine::az
 class Node : public tree::Node<Node>
 {
 private:
+    move_t m_action;
+    bool m_is_mate;
     float m_proba;
     uint m_visit_count;
     uint m_visit_count_by_random;
     float m_sqrt_visit_count;
     float m_q_value;
-    bool m_is_mate;
 
 public:
     Node();
     // clang-format off
+    move_t get_action() const { return m_action; }
     float get_proba() const { return m_proba; }
     uint get_visit_count() const { return m_visit_count; }
     uint get_visit_count_excluding_random() const { return m_visit_count - m_visit_count_by_random; }
@@ -39,6 +41,7 @@ public:
     // clang-format on
     void init();
     void init(Node* const parent, const move_t& action, const float proba);
+    void init_as_begin();
     float
     get_q_value(const uint greedy_depth, const uint min_visits = 10u) const;
     const Node* get_child_of(const move_t& action) const;
@@ -63,6 +66,7 @@ public:
     Node* backprop(const float v, Node* const child);
 
 private:
+    const Node* most_visited_child() const;
     float compute_v_pi(const uint min_visits) const;
     // select
     Node* select_best_or_random_child(const float c_puct, const float p_random);

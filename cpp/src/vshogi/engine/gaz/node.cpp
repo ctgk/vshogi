@@ -4,8 +4,8 @@ namespace vshogi::engine::gaz
 {
 
 Node::Node()
-    : tree::Node<Node>(), m_logit(0.f), m_visit_count(0u), m_q_value(0.f),
-      m_is_mate(false)
+    : tree::Node<Node>(), m_action{}, m_is_mate(false), m_logit(0.f),
+      m_visit_count(0u), m_q_value(0.f)
 {
 }
 
@@ -23,6 +23,12 @@ void Node::init(Node* const parent, const move_t& action, const float logit)
     m_parent = parent;
     m_action = action;
     m_logit = logit;
+}
+
+void Node::init_as_begin()
+{
+    tree::Node<Node>::init_as_begin();
+    m_action = static_cast<move_t>(0);
 }
 
 float Node::get_q_value(const uint greedy_depth, const uint min_visits) const

@@ -30,6 +30,24 @@ TEST_GROUP (minishogi_az_node) {
     }
 };
 
+TEST(minishogi_az_node, sizeof)
+{
+    // 24
+    // 8-byte: Node* m_parent
+    // 8-byte: Node* m_child
+    // 8-byte: Node* m_child_1st
+
+    // 24
+    // 2-byte: move_t m_action
+    // 1-byte: bool m_is_mate
+    // 4-byte: float m_proba
+    // 4-byte: uint m_visit_count
+    // 4-byte: uint m_visit_count_by_random
+    // 4-byte: float m_sqrt_visit_count
+    // 4-byte: float m_q_value
+    CHECK_EQUAL(48u, sizeof(Node));
+}
+
 TEST(minishogi_az_node, simulate_mate_and_expand)
 {
     root.simulate_mate_and_expand(next, MT::make_move("1c1b"));
