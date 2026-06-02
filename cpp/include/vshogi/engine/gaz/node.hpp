@@ -127,7 +127,6 @@ inline Node* Node::select()
         if (d > max_diff)
             out = c;
     }
-    out->m_parent = this;
     return out;
 }
 
@@ -140,10 +139,8 @@ inline Node* Node::select_from(const Node** const child_nodes)
             least_visited = *p;
     }
     for (Node* c = m_child; c->m_parent == this; ++c) {
-        if (c == least_visited) {
-            c->m_parent = this;
+        if (c == least_visited)
             return c;
-        }
     }
     assert(false);
     return nullptr;

@@ -70,7 +70,6 @@ Node* Node::select(const float& c_puct, const float& p_random)
 {
     assert(has_child());
     Node* const c = select_best_or_random_child(c_puct, p_random);
-    c->m_parent = this;
     return c;
 }
 
