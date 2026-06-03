@@ -20,6 +20,7 @@ class _SelfPlayWorker:
         ] = kwargs["shogi"]
         self._num_games: int = kwargs["num_games"]
         self._coeff_puct: float = kwargs["coeff_puct"]
+        self._epsilon_greedy: float = kwargs["epsilon_greedy"]
         self.kldgain_threshold: float = kwargs["kldgain_threshold"]
         self._dfpn_search_root: int = kwargs["dfpn_root"]
         self._dfpn_search_leaf: int = kwargs["dfpn_leaf"]
@@ -278,6 +279,7 @@ class _SelfPlayWorker:
                 else vs.dlshogi.PolicyValueFunction(tflite_path)
             ),
             coeff_puct=self._coeff_puct,
+            random_rate=self._epsilon_greedy,
             kldgain_threshold=self.kldgain_threshold,
             dfpn_search_root=self._dfpn_search_root,
             dfpn_search_leaf=self._dfpn_search_leaf,
@@ -473,6 +475,12 @@ class _SelfPlayWorker:
                     "PUCT exploration constant; larger values increase "
                     "search exploration."
                 ),
+            ),
+            "epsilon-greedy": cl.option(
+                f"--{prefix}epsilon-greedy",
+                default=0.1,
+                show_default=True,
+                help="",
             ),
             "kldgain-threshold": cl.option(
                 f"--{prefix}kldgain-threshold",
