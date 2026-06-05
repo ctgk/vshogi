@@ -57,7 +57,7 @@ class AlphaZero(Engine):
         ] = lambda g: (g.to_dlshogi_policy({}), 0.0),
         *,
         coeff_puct: float = 1.0,
-        random_rate: float = 0.25,
+        epsilon_greedy: float = 0.1,
         kldgain_threshold: tp.Optional[float] = None,
         tree_size: int = 1000000,
         dfpn_search_root: int = 0,
@@ -74,9 +74,9 @@ class AlphaZero(Engine):
         coeff_puct : float, optional
             Coefficient used the PUCT formula. Higher values put more weight on
             the policy prior relative to the value estimate. Default is 1.0.
-        random_rate : float, optional
+        epsilon_greedy : float, optional
             Probability of selecting a random node at root during exploration.
-            Default is 0.25.
+            Default is 0.1.
         kldgain_threshold : float, optional
             KL divergence threshold for early stopping of MCTS.
             Default is None.
@@ -95,7 +95,7 @@ class AlphaZero(Engine):
         self._game = None
 
         self._coeff_puct = coeff_puct
-        self._random_rate = random_rate
+        self._epsilon_greedy = epsilon_greedy
         self._kldgain_threshold = kldgain_threshold
         self._dfpn_search_root = dfpn_search_root
         self._dfpn_search_leaf = dfpn_search_leaf
@@ -156,7 +156,7 @@ class AlphaZero(Engine):
                     if kldgain < self._kldgain_threshold * kldgain_steps:
                         break
             node = self._searcher.search(
-                self._game._game, self._coeff_puct, self._random_rate
+                self._game._game, self._coeff_puct, self._epsilon_greedy
             )
             if node is None:
                 continue

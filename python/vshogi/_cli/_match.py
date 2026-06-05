@@ -13,19 +13,20 @@ def _get_results_of_single_pair(
     player2: str,
     num_games_each: int,
     show_pbar: bool,
-    az_init_args: dict,
+    az_init_args_p1: dict,
+    az_init_args_p2: dict,
     search_args: dict,
     select_args: dict,
 ) -> vs.Record:
     shogi = getattr(vs, shogi_variant)
     player1 = vs.engine.AlphaZero(
         vs.dlshogi.PolicyValueFunction(player1),
-        **az_init_args,
+        **az_init_args_p1,
         name=player1,
     )
     player2 = vs.engine.AlphaZero(
         vs.dlshogi.PolicyValueFunction(player2),
-        **az_init_args,
+        **az_init_args_p2,
         name=player2,
     )
     record_of_p1 = vs.Record(0, 0, 0, 0, 0, 0)
@@ -117,23 +118,21 @@ def _print_results(record: vs.Record):
     )
 
 
-# https://stackoverflow.com/questions/48391777/nargs-equivalent-for-options-in-click
-class _OptionEatAll(cl.Option):
+class _NargsOption(cl.Option):
     def __init__(self, *args, **kwargs):
         self.save_other_options = kwargs.pop('save_other_options', True)
-        nargs = kwargs.pop('nargs', -1)
-        assert nargs == -1, 'nargs, if set, must be -1 not {}'.format(nargs)
-        super(_OptionEatAll, self).__init__(*args, **kwargs)
+        # pop nargs to avoid a check inside `click`
+        self.nargs_custom = kwargs.pop('nargs', -1)
+
+        super(_NargsOption, self).__init__(*args, **kwargs)
         self._previous_parser_process = None
         self._eat_all_parser = None
 
     def add_to_parser(self, parser, ctx):
         def parser_process(value, state):
-            # method to hook to the parser.process
-            done = False
             value = [value]
+            done = False
             if self.save_other_options:
-                # grab everything up to the next option
                 while state.rargs and not done:
                     for prefix in self._eat_all_parser.prefixes:
                         if state.rargs[0].startswith(prefix):
@@ -141,15 +140,13 @@ class _OptionEatAll(cl.Option):
                     if not done:
                         value.append(state.rargs.pop(0))
             else:
-                # grab everything remaining
                 value += state.rargs
                 state.rargs[:] = []
-            value = tuple(value)
 
-            # call the actual process
+            value = " ".join(value)
             self._previous_parser_process(value, state)
 
-        retval = super(_OptionEatAll, self).add_to_parser(parser, ctx)
+        retval = super(_NargsOption, self).add_to_parser(parser, ctx)
         for name in self.opts:
             our_parser = parser._long_opt.get(name) or parser._short_opt.get(
                 name
@@ -161,6 +158,33 @@ class _OptionEatAll(cl.Option):
                 break
         return retval
 
+    def type_cast_value(self, ctx, value):
+        if isinstance(value, tuple):
+            if self.nargs_custom == -1 or len(value) == self.nargs_custom:
+                return value
+            raise cl.BadParameter(
+                f"expected {self.nargs_custom} values, got {len(value)}",
+                ctx=ctx,
+            )
+
+        if isinstance(value, str):
+            values = value.split()
+        else:
+            values = [value] if value is not None else []
+
+        if self.nargs_custom > 1 and len(values) == 1:
+            values = tuple(values[0] for _ in range(self.nargs_custom))
+
+        if self.nargs_custom != -1 and len(values) != self.nargs_custom:
+            raise cl.BadParameter(
+                f"expected {self.nargs_custom} values, got {len(values)}",
+                ctx=ctx,
+            )
+
+        if self.type:
+            values = [self.type.convert(v, self, ctx) for v in values]
+        return tuple(values)
+
 
 @cl.command()
 @cl.argument(
@@ -170,15 +194,15 @@ class _OptionEatAll(cl.Option):
 @cl.option(
     '-p1',
     '--player1',
-    cls=_OptionEatAll,
-    type=tuple,
+    cls=_NargsOption,
+    type=str,
     required=True,
 )
 @cl.option(
     '-p2',
     '--player2',
-    cls=_OptionEatAll,
-    type=tuple,
+    cls=_NargsOption,
+    type=str,
     required=True,
 )
 @cl.option(
@@ -206,6 +230,14 @@ class _OptionEatAll(cl.Option):
     '--az-coeff-puct',
     type=float,
     default=4.0,
+    show_default=True,
+)
+@cl.option(
+    "--az-epsilon-greedy",
+    cls=_NargsOption,
+    type=cl.FLOAT,
+    nargs=2,
+    default=(0.1, 0.1),
     show_default=True,
 )
 @cl.option(
@@ -249,6 +281,7 @@ def _match(
     az_search_count,
     az_search_second,
     az_coeff_puct,
+    az_epsilon_greedy,
     az_temperature,
     dfpn_search_root,
     dfpn_search_leaf,
@@ -260,6 +293,10 @@ def _match(
         raise ValueError(
             "Either `az_search_count` or `az_search_second` must be given"
         )
+    if len(az_epsilon_greedy) == 1:
+        az_epsilon_greedy = (az_epsilon_greedy[0], az_epsilon_greedy[0])
+    assert isinstance(az_epsilon_greedy[0], float), az_epsilon_greedy
+    assert isinstance(az_epsilon_greedy[1], float)
 
     record_of_p1_group = vs.Record(0, 0, 0, 0, 0, 0)
     iterator = itertools.product(player1, player2)
@@ -275,8 +312,16 @@ def _match(
             p2,
             num_games_each,
             show_inner_pbar,
-            az_init_args={
+            az_init_args_p1={
                 'coeff_puct': az_coeff_puct,
+                "epsilon_greedy": az_epsilon_greedy[0],
+                'dfpn_search_root': dfpn_search_root,
+                'dfpn_search_leaf': dfpn_search_leaf,
+                'kldgain_threshold': az_kldgain_threshold,
+            },
+            az_init_args_p2={
+                'coeff_puct': az_coeff_puct,
+                "epsilon_greedy": az_epsilon_greedy[1],
                 'dfpn_search_root': dfpn_search_root,
                 'dfpn_search_leaf': dfpn_search_leaf,
                 'kldgain_threshold': az_kldgain_threshold,

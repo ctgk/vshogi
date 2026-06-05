@@ -279,7 +279,7 @@ class _SelfPlayWorker:
                 else vs.dlshogi.PolicyValueFunction(tflite_path)
             ),
             coeff_puct=self._coeff_puct,
-            random_rate=self._epsilon_greedy,
+            epsilon_greedy=self._epsilon_greedy,
             kldgain_threshold=self.kldgain_threshold,
             dfpn_search_root=self._dfpn_search_root,
             dfpn_search_leaf=self._dfpn_search_leaf,

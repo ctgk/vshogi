@@ -21,6 +21,7 @@ class _SelfPlayWorker(_AlphaZeroSelfPlayWorker):
             **kwargs,
             **{
                 "coeff_puct": 4.0,
+                "epsilon_greedy": 0.1,
                 "kldgain_threshold": 1e-4,
                 "dfpn_leaf": 0,
                 "simulations": 100,

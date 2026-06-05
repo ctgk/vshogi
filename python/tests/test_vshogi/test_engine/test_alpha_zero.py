@@ -40,7 +40,7 @@ def test_q_values_mate_in_one():
     game = shogi.Game("b2pk/3b1/4P/2gRR/4K b -")
     m = shogi.Move(shogi.SQ_1C, shogi.SQ_1B)
 
-    searcher = AlphaZero(uniform_pv_func, random_rate=0.0)
+    searcher = AlphaZero(uniform_pv_func, epsilon_greedy=0.0)
     searcher.set_game(game)
     searcher.search(budget=100)
     actual = searcher.get_q_values()
@@ -65,7 +65,7 @@ def test_mate_in_three():
     game = shogi.Game('1r3/2k1G/5/2PG1/5 b -')
     m = shogi.Move(shogi.SQ_2D, shogi.SQ_3C)
 
-    searcher = AlphaZero(uniform_pv_func, random_rate=0)
+    searcher = AlphaZero(uniform_pv_func, epsilon_greedy=0)
     searcher.set_game(game)
     searcher.search(budget=100)
 
@@ -85,7 +85,8 @@ def test_visit_count_by_random():
     m = shogi.Move(shogi.SQ_1E, shogi.SQ_1B)
 
     searcher = AlphaZero(
-        lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.0), random_rate=0
+        lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.0),
+        epsilon_greedy=0,
     )
     searcher.set_game(game)
     searcher.search(budget=100)
@@ -94,7 +95,7 @@ def test_visit_count_by_random():
 
     searcher = AlphaZero(
         lambda g: (np.arange(g.num_dlshogi_policy)[::-1], 0.0),
-        random_rate=0.25,
+        epsilon_greedy=0.25,
     )
     searcher.set_game(game)
     searcher.search(budget=100)
@@ -133,7 +134,7 @@ def test_greedy_q_value():
 def test_dfpn_root():
     mcts = AlphaZero(
         lambda g: (g.to_dlshogi_policy({}), 0.0),
-        random_rate=0,
+        epsilon_greedy=0,
         dfpn_search_root=10000,
     )
 
@@ -191,7 +192,7 @@ def test_mating_net():
 def test_dfpn_vertex():
     mcts = AlphaZero(
         lambda g: (g.to_dlshogi_policy({}), 0.0),
-        random_rate=0,
+        epsilon_greedy=0,
         dfpn_search_root=0,
         dfpn_search_leaf=100,
     )
@@ -224,7 +225,7 @@ def test_dfpn_vertex():
 def test_dfpn_vertex_2():
     mcts = AlphaZero(
         lambda g: (g.to_dlshogi_policy({}), 0.0),
-        random_rate=0,
+        epsilon_greedy=0,
         dfpn_search_root=0,
         dfpn_search_leaf=100,
     )
@@ -268,7 +269,7 @@ def test_dfpn_vertex_2():
 def test_dfpn_root_vertex():
     mcts = AlphaZero(
         lambda g: (g.to_dlshogi_policy({}), 0.0),
-        random_rate=0,
+        epsilon_greedy=0,
         dfpn_search_root=10000,
         dfpn_search_leaf=100,
     )
@@ -307,7 +308,7 @@ def test_dfpn_root_vertex():
 def test_debug():
     mcts = AlphaZero(
         lambda g: (g.to_dlshogi_policy({}), 0.0),
-        random_rate=0,
+        epsilon_greedy=0,
         dfpn_search_root=10000,
         dfpn_search_leaf=100,
     )
@@ -370,7 +371,7 @@ def test_action_values_head():
 
 def test_get_improved_policy():
     g = shogi.Game("4k/5/5/4g/4K b -")
-    player = AlphaZero(random_rate=0.0)
+    player = AlphaZero(epsilon_greedy=0.0)
     player.set_game(g)
 
     player.search(budget=1)
