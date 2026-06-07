@@ -401,7 +401,7 @@ TEST(test_dfpn_searcher, test_small_num_nodes)
         searcher.search(g, 100u);
         CHECK_FALSE(searcher.proved());
         CHECK_EQUAL(0u, searcher.get_search_count());
-        CHECK_EQUAL(0u, searcher.get_num_nodes_remain());
+        CHECK_EQUAL(0u, searcher.remaining());
     }
     {
         auto g = Game("4k/5/3P1/5/5 b G");
@@ -409,7 +409,7 @@ TEST(test_dfpn_searcher, test_small_num_nodes)
         searcher.search(g, 100u);
         CHECK_FALSE(searcher.proved());
         CHECK_EQUAL(0u, searcher.get_search_count());
-        CHECK_EQUAL(0u, searcher.get_num_nodes_remain());
+        CHECK_EQUAL(0u, searcher.remaining());
     }
 }
 

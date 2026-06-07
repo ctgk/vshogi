@@ -49,16 +49,18 @@ public:
     move_t search(Game<P>& g, const uint n)
     {
         ScopedGame scope{g};
-        if ((m_search_count == 0u) && !m_nodes[0].simulate(g)
-            && !m_next->is_end()) {
-            m_nodes[0].expand(m_next, g);
-            m_table.add(&m_nodes[0], g);
-            m_nodes[0].template backprop<P>(true);
+        Node& root = m_buffer.front();
+        if ((m_search_count == 0u) && !root.simulate(g)
+            && !m_buffer.is_full()) {
+            assert(&root + 1 == m_buffer.next());
+            root.expand(m_buffer.next(), g);
+            m_table.add(&root, g);
+            root.template backprop<P>(true);
         }
-        if (m_nodes[0].proved())
+        if (root.proved())
             return static_cast<move_t>(0);
         m_remaining_searches = n;
-        const auto out = multiple_iterative_deepening(m_nodes[0], g, inf, inf);
+        const auto out = multiple_iterative_deepening(root, g, inf, inf);
         m_search_count += n - m_remaining_searches;
         return out;
     }
@@ -76,14 +78,14 @@ private:
             --m_remaining_searches;
             return out;
         }
-        if (!n.has_child() && !m_next->is_end()) {
-            n.expand(m_next, g, twin_ge, twin_le);
+        if (!n.has_child() && !m_buffer.is_full()) {
+            n.expand(m_buffer.next(), g, twin_ge, twin_le);
             if ((twin_e == nullptr) || !twin_e->fully_expanded())
                 m_table.add(&n, g);
             --m_remaining_searches;
             n.backprop<P>(offence);
         }
-        while (!m_next->is_end() && m_remaining_searches && (n.phi() < th_p)
+        while (!m_buffer.is_full() && m_remaining_searches && (n.phi() < th_p)
                && (n.delta() < th_d)) {
             uint th_p_ch, th_d_ch;
             Node* const child = n.select(th_p, th_d, th_p_ch, th_d_ch);
@@ -105,33 +107,29 @@ public: // utility
     Searcher(Searcher&& other) = delete; // 4/5 move constructor
     Searcher& operator=(Searcher&& other) = delete; // 5/5 move assignment
 
+    using tree::Searcher<Node>::get_root;
+
     void init();
     uint get_search_count() const
     {
         return m_search_count;
     }
-    uint get_num_nodes_remain() const
-    {
-        assert(m_next);
-        return static_cast<uint>(m_nodes.size())
-               - static_cast<uint>(m_next - m_nodes.data()) - 1u;
-    }
     bool proved() const
     {
-        return m_nodes[0].proved();
+        return get_root().proved();
     }
     bool proved_mate() const
     {
-        return m_nodes[0].proved_mate(true);
+        return get_root().proved_mate(true);
     }
     bool proved_no_mate() const
     {
-        return m_nodes[0].proved_no_mate(true);
+        return get_root().proved_no_mate(true);
     }
     std::vector<move_t> get_mate_moves(Game<P>& game) const
     {
         ScopedGame scope{game};
-        follow_line(game, m_nodes[0].get_child_1st());
+        follow_line(game, get_root().get_child_1st());
         std::vector<move_t> out{};
         if (game.ply() > 0u) {
             for (uint ii = 0u; ii < game.ply(); ++ii)
@@ -223,10 +221,11 @@ public:
      */
     DfpnAugmentedSearcher(
         const uint tree_size, const uint budget_root, const uint budget_leaf);
+    using tree::Searcher<N>::get_root;
     void apply(Game<P>& game, const move_t& action);
     std::vector<move_t> get_mate_moves(Game<P>& game);
     // clang-format off
-    bool proved_mate() const { return m_nodes[0].is_mate(); }
+    bool proved_mate() const { return get_root().is_mate(); }
     // clang-format on
 
 private:
@@ -239,8 +238,7 @@ private:
     bool follow_dfpn(Game<P>& game);
 
 protected:
-    using tree::Searcher<N>::m_nodes;
-    using tree::Searcher<N>::m_next;
+    using tree::Searcher<N>::m_buffer;
     using tree::Searcher<N>::backprop_to_root;
     N* simulate_backprop_if_possible(Game<P>& game, N* const leaf);
 };
@@ -259,7 +257,7 @@ void DfpnAugmentedSearcher<P, N>::apply(Game<P>& game, const move_t& action)
 {
     tree::Searcher<N>::apply(action);
     game.apply(action);
-    dfpn_proved_mate(game, &m_nodes[0]);
+    dfpn_proved_mate(game, m_buffer.data());
 }
 
 template <class P, class N>
@@ -270,7 +268,7 @@ std::vector<move_t> DfpnAugmentedSearcher<P, N>::get_mate_moves(Game<P>& game)
         return out;
 
     dfpn::ScopedGame scope{game};
-    const N& root = m_nodes.front();
+    const N& root = get_root();
     if (follow_line(game, root.get_child_1st())) {
         for (uint ii = 0u; ii < game.ply(); ++ii)
             out.emplace_back(game.get_record_action(ii));
@@ -331,7 +329,7 @@ N* DfpnAugmentedSearcher<P, N>::simulate_backprop_if_possible(
         return nullptr;
     }
     if (leaf->is_mate_to_lose()) {
-        leaf->expand(m_next, game, nullptr);
+        leaf->expand(m_buffer.next(), game, nullptr);
         backprop_to_root(game, leaf);
         return nullptr;
     }
@@ -345,7 +343,7 @@ template <class P, class N>
 bool DfpnAugmentedSearcher<P, N>::dfpn_proved_mate(Game<P>& game, N* const node)
 {
     using C = Configuration<P>;
-    const uint budget = (node == &m_nodes[0]) ? m_budget_root : m_budget_leaf;
+    const uint budget = (node == &get_root()) ? m_budget_root : m_budget_leaf;
     if (budget == 0u)
         return false;
     if (game.get_state().get_king_square(~game.get_turn()) == C::SQ_NA)
@@ -355,7 +353,7 @@ bool DfpnAugmentedSearcher<P, N>::dfpn_proved_mate(Game<P>& game, N* const node)
     if (m_dfpn.proved_mate()) {
         const move_t action = m_dfpn.select_action();
         if (action) {
-            node->simulate_mate_and_expand(m_next, action);
+            node->simulate_mate_and_expand(m_buffer.next(), action);
             backprop_to_root(game, node);
             return true;
         }

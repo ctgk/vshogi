@@ -39,6 +39,7 @@ public:
     Searcher(Searcher&& other) = default; // 4/5 move constructor
     Searcher& operator=(Searcher&& other) = default; // 5/5 move assignment
 
+    using dfpn::DfpnAugmentedSearcher<P, Node>::get_root;
     void init();
     Node* search(Game<P>& game);
     void simulate_expand_backprop(
@@ -52,13 +53,12 @@ public:
     move_t select_action(const float temperature) const;
     void apply(Game<P>& game, const move_t& action);
     // clang-format off
-    uint get_search_count() const { return m_nodes[0].get_visit_count(); }
-    bool proved_mate() const { return m_nodes[0].is_mate(); }
+    uint get_search_count() const { return get_root().get_visit_count(); }
+    bool proved_mate() const { return get_root().is_mate(); }
     // clang-format on
 
 protected:
-    using dfpn::DfpnAugmentedSearcher<P, Node>::m_nodes;
-    using dfpn::DfpnAugmentedSearcher<P, Node>::m_next;
+    using dfpn::DfpnAugmentedSearcher<P, Node>::m_buffer;
     using dfpn::DfpnAugmentedSearcher<P, Node>::backprop_to_root;
 
 private:
@@ -105,21 +105,23 @@ void Searcher<P>::simulate_expand_backprop(
 {
     if (leaf == nullptr)
         return;
-    leaf->simulate_ongoing_and_expand(m_next, game, value, policy_logits);
+    leaf->simulate_ongoing_and_expand(
+        m_buffer.next(), game, value, policy_logits);
     backprop_to_root(game, leaf);
 }
 
 template <class P>
 Node* Searcher<P>::select_a_leaf_node(Game<P>& game)
 {
-    if (!m_nodes[0].has_child())
-        return &m_nodes[0];
+    Node& root = m_buffer.front();
+    if (!root.has_child())
+        return &root;
     Node* n = nullptr;
     if (m_child_nodes[0] == nullptr)
-        n = &m_nodes[0];
+        n = &root;
     else {
-        n = m_nodes[0].select_from(m_child_nodes);
-        assert(n->get_parent() == &m_nodes[0]);
+        n = root.select_from(m_child_nodes);
+        assert(n->get_parent() == &root);
         game.apply_nocheck(n->get_action());
     }
     while (n->has_child()) {
@@ -169,7 +171,8 @@ uint Searcher<P>::set_child_nodes_and_gumbel_noises()
 
     if (m_child_nodes[0] == nullptr) {
         uint index = 0u;
-        for (const Node* c = m_nodes[0].get_child(); c; c = c->get_sibling()) {
+        for (const Node* c = m_buffer.front().get_child(); c;
+             c = c->get_sibling()) {
             m_child_nodes[index] = c;
             m_gumbel_noises[index] = gumbel_dist(random_engine);
             ++index;
@@ -203,7 +206,9 @@ move_t Searcher<P>::select_action() const
 
     const uint max_visits = max_child_visits();
     if (m_child_nodes[0] == nullptr) {
-        for (const Node* c = &m_nodes[1]; &m_nodes[0] == c->get_parent(); ++c) {
+        for (const Node* c = m_buffer.cdata() + 1;
+             m_buffer.cdata() == c->get_parent();
+             ++c) {
             const float score = score_of(*c, max_visits);
             if (score > max_score) {
                 max_score = score;
@@ -226,20 +231,22 @@ move_t Searcher<P>::select_action() const
 template <class P>
 move_t Searcher<P>::select_action(const float temperature) const
 {
-    const uint n = m_nodes[0].count_childs();
+    const Node& root = get_root();
+    const uint n = root.count_childs();
     if (n == 0u)
         return static_cast<move_t>(0);
     std::vector<float> probas(n);
-    m_nodes[0].improved_policy(probas.data(), temperature);
+    root.improved_policy(probas.data(), temperature);
     const float* p = probas.data();
     float sample = dist01(random_engine);
     for (uint i = 0u; i < n; ++i) {
         if (sample < *p)
-            return m_nodes[1u + i].get_action();
+            return m_buffer.cdata()[1u + i].get_action();
         sample -= *p++;
     }
     assert(false);
-    return m_nodes[1].get_action(); // just in case for numerical instability
+    return m_buffer.cdata()[1]
+        .get_action(); // just in case for numerical instability
 }
 
 template <class P>

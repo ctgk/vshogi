@@ -60,7 +60,7 @@ TEST(shogi_profile, alpha_zero)
             CHECK_EQUAL(ii, g.ply());
         }
         CHECK_EQUAL(100u, az.get_search_count());
-        CHECK_COMPARE(0u, <, az.count_remaining_nodes());
+        CHECK_COMPARE(0u, <, az.remaining());
 
         az.select_action();
         const auto m = MT::make_move(kifu[ii]);

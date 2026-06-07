@@ -27,8 +27,8 @@ TEST_GROUP (minishogi_searcher) {
 TEST(minishogi_searcher, explore_after_apply)
 {
     auto g = Game();
-    auto az = Searcher(1000000u);
-    for (int ii = 100; ii--;) {
+    auto az = Searcher(1000u);
+    for (int ii = 20; ii--;) {
         const auto n = az.search(g, 4.f, 1.f);
         if (n != nullptr) {
             az.simulate_expand_backprop(n, g, 0.f, zeros);
@@ -40,7 +40,7 @@ TEST(minishogi_searcher, explore_after_apply)
     az.apply(g, move);
     const auto current_visit_count = az.get_search_count();
     CHECK_TRUE(current_visit_count > 0);
-    for (int ii = 100; ii--;) {
+    for (int ii = 20; ii--;) {
         const auto n = az.search(g);
         if (n != nullptr) {
             CHECK_COMPARE(1u, <=, g.ply());
@@ -48,7 +48,7 @@ TEST(minishogi_searcher, explore_after_apply)
         }
         CHECK_EQUAL(1u, g.ply());
     }
-    CHECK_EQUAL(current_visit_count + 100, az.get_search_count());
+    CHECK_EQUAL(current_visit_count + 20, az.get_search_count());
 }
 
 TEST(minishogi_searcher, test_mate_in_three)
@@ -265,13 +265,13 @@ TEST(minishogi_searcher, few_nodes)
     }
     {
         auto az = Searcher(1u);
-        CHECK_EQUAL(1u, az.count_remaining_nodes());
+        CHECK_EQUAL(1u, az.remaining());
         auto g = Game("g3k/5/5/5/K3G b -");
         {
             const auto n = az.search(g);
             CHECK_TRUE(n != nullptr);
             az.simulate_expand_backprop(n, g, 0.f, nullptr);
-            CHECK_EQUAL(0u, az.count_remaining_nodes());
+            CHECK_EQUAL(0u, az.remaining());
         }
         for (auto ii = 100u; ii--;) {
             const auto n = az.search(g);

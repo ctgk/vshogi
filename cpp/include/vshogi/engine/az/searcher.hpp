@@ -40,12 +40,11 @@ public:
     move_t select_action() const;
     move_t select_action(const float temperature) const;
     // clang-format off
-    uint get_search_count() const { return m_nodes[0].get_visit_count(); }
+    uint get_search_count() const { return m_buffer.front().get_visit_count(); }
     // clang-format on
 
 private:
-    using dfpn::DfpnAugmentedSearcher<P, Node>::m_nodes;
-    using dfpn::DfpnAugmentedSearcher<P, Node>::m_next;
+    using dfpn::DfpnAugmentedSearcher<P, Node>::m_buffer;
     using dfpn::DfpnAugmentedSearcher<P, Node>::backprop_to_root;
     using dfpn::DfpnAugmentedSearcher<P, Node>::simulate_backprop_if_possible;
     Node*
@@ -66,7 +65,7 @@ template <class P>
 Node* Searcher<P>::search(
     Game<P>& game, const float c_puct, const float p_random)
 {
-    if (m_next->is_end())
+    if (m_buffer.is_full())
         return nullptr;
     Node* const leaf = select_a_leaf_node(game, c_puct, p_random);
     return simulate_backprop_if_possible(game, leaf);
@@ -81,7 +80,8 @@ void Searcher<P>::simulate_expand_backprop(
 {
     if (leaf == nullptr)
         return;
-    leaf->simulate_ongoing_and_expand(m_next, game, value, policy_logits);
+    leaf->simulate_ongoing_and_expand(
+        m_buffer.next(), game, value, policy_logits);
     backprop_to_root(game, leaf);
 }
 
@@ -92,7 +92,7 @@ move_t Searcher<P>::select_action() const
     if (out)
         return out;
 
-    const Node& root = m_nodes.front();
+    const Node& root = m_buffer.front();
     if (not root.has_child())
         return static_cast<move_t>(0);
 
@@ -111,7 +111,7 @@ template <class P>
 move_t Searcher<P>::select_action(const float temperature) const
 {
     constexpr float eps = 1.f;
-    const auto& root = m_nodes.front();
+    const auto& root = m_buffer.front();
     const uint n = root.count_childs();
     if (n == 0u)
         return static_cast<move_t>(0);
@@ -139,10 +139,10 @@ template <class P>
 Node* Searcher<P>::select_a_leaf_node(
     Game<P>& game, const float c_puct, const float p_random)
 {
-    Node* n = &m_nodes[0];
+    Node* n = m_buffer.data();
     while (n->has_child()) {
         Node* const child
-            = n->select(c_puct, (n == &m_nodes[0]) ? p_random : 0.f);
+            = n->select(c_puct, (n == m_buffer.data()) ? p_random : 0.f);
         assert(child != nullptr);
         game.apply_nocheck(child->get_action());
         assert(child->get_parent() == n);
