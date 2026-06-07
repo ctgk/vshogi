@@ -49,7 +49,7 @@ TEST(test_gaz_node, get_q_value_returns_compute_v_pi)
     auto g = Game("4k/5/5/5/4S b -");
 
     // Setup root with two children having different logits and visit counts
-    float logits[Game::num_dlshogi_policy()] = {0.f};
+    float logits[Config::dlshogi_policy_size] = {0.f};
     logits[MT::to_policy_index(MT::make_move(SQ_1E, SQ_1D), BLACK)] = 1.0f;
     logits[MT::to_policy_index(MT::make_move(SQ_1E, SQ_2D), BLACK)] = -1.0f;
 
@@ -110,8 +110,8 @@ TEST(test_gaz_node, select_from)
 
 TEST(test_gaz_node, select_given_policy)
 {
-    float policy_logits[State::num_dlshogi_policy()] = {};
-    for (uint ii = State::num_dlshogi_policy(); ii--;)
+    float policy_logits[Config::dlshogi_policy_size] = {};
+    for (uint ii = Config::dlshogi_policy_size; ii--;)
         policy_logits[ii] = static_cast<float>(ii);
 
     root.simulate_ongoing_and_expand(

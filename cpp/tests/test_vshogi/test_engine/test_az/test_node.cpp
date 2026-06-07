@@ -198,7 +198,7 @@ TEST(minishogi_az_node, explore_two_action)
     const float expected_greedy_q_values[] = {-0.3f, 0.8f, 0.8f};
 
     // softmax([-0.202, 0.202]) -> [0.5996, 0.4003]
-    float logits[Game::num_dlshogi_policy()] = {0.f};
+    float logits[Config::dlshogi_policy_size] = {0.f};
     logits[MT::to_policy_index(MT::make_move(SQ_1E, SQ_1D), BLACK)] = 0.202f;
     logits[MT::to_policy_index(MT::make_move(SQ_1E, SQ_2D), BLACK)] = -0.202f;
     root.simulate_ongoing_and_expand(next, g, 0.f, logits);
@@ -260,7 +260,7 @@ TEST(minishogi_az_node, explore_two_layer)
     std::vector<bool> expected_leaf_nullptr = {false, false, true};
 
     // softmax([-1.099, 1.099]) -> [0.09993023, 0.90006977]
-    float logits[Game::num_dlshogi_policy()] = {0.f};
+    float logits[Config::dlshogi_policy_size] = {0.f};
     logits[MT::to_policy_index(MT::make_move(SQ_1E, SQ_1D), BLACK)] = 1.099f;
     logits[MT::to_policy_index(MT::make_move(SQ_1E, SQ_2D), BLACK)] = -1.099f;
     auto g = Game("s4/5/5/5/4S b -");
@@ -274,7 +274,7 @@ TEST(minishogi_az_node, explore_two_layer)
         g_copy.apply_nocheck(actual->get_action());
         CHECK_EQUAL(root.get_child_of(MT::make_move(SQ_1E, SQ_1D)), actual);
         STRCMP_EQUAL("s4/5/5/4S/5 w - 2", NT::to_sfen(g_copy).c_str());
-        float policy[Game::num_dlshogi_policy()] = {0.f};
+        float policy[Config::dlshogi_policy_size] = {0.f};
         policy[MT::to_policy_index(MT::make_move(SQ_5A, SQ_5B), WHITE)]
             = 1.099f;
         policy[MT::to_policy_index(MT::make_move(SQ_5A, SQ_4B), WHITE)]

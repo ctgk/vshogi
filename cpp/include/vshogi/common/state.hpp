@@ -66,10 +66,6 @@ public:
     {
         return 2 * (num_piece_types + num_stand_piece_types);
     }
-    static constexpr uint num_dlshogi_policy()
-    {
-        return num_squares * (2 * C::num_dir_dl + C::num_stand_piece_types);
-    }
     bool operator==(const State& other) const
     {
         return (m_board == other.m_board) && (m_stands == other.m_stands)

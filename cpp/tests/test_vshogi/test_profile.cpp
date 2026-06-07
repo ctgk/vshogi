@@ -13,7 +13,7 @@ namespace test_shogi
 using namespace vshogi::shogi;
 using MT = vshogi::MoveTraits<Parameters>;
 using Searcher = vshogi::engine::az::Searcher<Parameters>;
-static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
+static constexpr float zeros[Config::dlshogi_policy_size] = {0.f};
 
 TEST_GROUP (shogi_profile) {
     const char kifu[167][6] = {

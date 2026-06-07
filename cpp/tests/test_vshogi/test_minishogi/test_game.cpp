@@ -13,9 +13,9 @@ using NT = vshogi::Notation<Parameters>;
 TEST_GROUP (test_minishogi_game) {
 };
 
-TEST(test_minishogi_game, num_dlshogi_policy)
+TEST(test_minishogi_game, dlshogi_policy_size)
 {
-    CHECK_EQUAL(5 * 5 * (2 * 8 + 5), Game::num_dlshogi_policy());
+    CHECK_EQUAL(5 * 5 * (2 * 8 + 5), Config::dlshogi_policy_size);
 }
 
 TEST(test_minishogi_game, ply)

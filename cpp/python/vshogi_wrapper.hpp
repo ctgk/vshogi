@@ -195,6 +195,7 @@ inline void export_state(nanobind::module_& m)
     using MoveTraits = vshogi::MoveTraits<Parameters>;
     using NT = vshogi::Notation<Parameters>;
     using Move = Move<Parameters>;
+    using C = vshogi::Configuration<Parameters>;
 
     nb::class_<State>(m, "State")
         .def(nb::init<const std::string&>())
@@ -232,7 +233,7 @@ inline void export_state(nanobind::module_& m)
                const nb::dict& action_proba,
                const float default_value) {
                 const auto turn = self.get_turn();
-                constexpr auto size = State::num_dlshogi_policy();
+                constexpr auto size = C::dlshogi_policy_size;
                 const auto shape = std::vector<size_t>({size});
                 float* data = new float[size];
                 auto out = nb::ndarray<nb::numpy, float>(
@@ -260,7 +261,7 @@ inline void export_state(nanobind::module_& m)
                const float default_value,
                nb::ndarray<nb::numpy, float, nb::c_contig> out) {
                 const auto turn = self.get_turn();
-                constexpr auto size = State::num_dlshogi_policy();
+                constexpr auto size = C::dlshogi_policy_size;
                 float* const data = out.data();
                 std::fill(data, data + size, default_value);
                 for (auto [key, value] : action_proba) {
@@ -357,7 +358,8 @@ inline void export_game(nanobind::module_& m)
         .def_static("ranks", []() { return &Game::num_ranks; })
         .def_static("files", []() { return &Game::num_files; })
         .def_static("feature_channels", &Game::feature_channels)
-        .def_static("num_dlshogi_policy", &Game::num_dlshogi_policy)
+        .def_static(
+            "num_dlshogi_policy", []() { return &C::dlshogi_policy_size; })
         .def_static(
             "get_attention",
             []() {
@@ -468,7 +470,7 @@ inline void export_game(nanobind::module_& m)
                const nb::dict& visit_proba,
                const float default_value) {
                 const auto turn = self.get_turn();
-                constexpr auto size = Game::num_dlshogi_policy();
+                constexpr auto size = C::dlshogi_policy_size;
                 const auto shape = std::vector<size_t>({size});
                 float* data = new float[size];
                 auto out = nb::ndarray<nb::numpy, float>(

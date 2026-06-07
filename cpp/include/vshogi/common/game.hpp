@@ -87,10 +87,6 @@ public:
         // 2-player * (piece-types + stand-piece-types)
         return State<P>::feature_channels();
     }
-    static constexpr uint num_dlshogi_policy()
-    {
-        return State<P>::num_dlshogi_policy();
-    }
     ColorEnum get_turn() const
     {
         return m_state.get_turn();

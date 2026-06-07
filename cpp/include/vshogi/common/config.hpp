@@ -355,6 +355,9 @@ public: // game rules
     static_assert(num_init_piece_each > 0u);
     static_assert(initial_points > 0u);
 
+    static constexpr uint dlshogi_policy_size
+        = num_squares * (2 * num_dir_dl + num_stand_piece_types);
+
 public:
     template <class ContiguousEnum, uint End>
     class EnumIteratorContainer

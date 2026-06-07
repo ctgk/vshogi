@@ -19,7 +19,7 @@ using MT = vshogi::MoveTraits<Parameters>;
 using NT = vshogi::Notation<Parameters>;
 using Node = vshogi::engine::az::Node;
 using Searcher = vshogi::engine::az::Searcher<Parameters>;
-static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
+static constexpr float zeros[Config::dlshogi_policy_size] = {0.f};
 
 TEST_GROUP (minishogi_searcher) {
 };
@@ -397,7 +397,7 @@ namespace test_judkins_shogi
 using namespace vshogi::judkins_shogi;
 using Node = vshogi::engine::az::Node;
 using Searcher = vshogi::engine::az::Searcher<Parameters>;
-static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
+static constexpr float zeros[Config::dlshogi_policy_size] = {0.f};
 
 TEST_GROUP (judkins_shogi_searcher) {
 };
@@ -429,7 +429,7 @@ namespace test_shogi
 using namespace vshogi::shogi;
 using Node = vshogi::engine::az::Node;
 using Searcher = vshogi::engine::az::Searcher<Parameters>;
-static constexpr float zeros[Game::num_dlshogi_policy()] = {0.f};
+static constexpr float zeros[Config::dlshogi_policy_size] = {0.f};
 
 TEST_GROUP (test_shogi_searcher) {
 };

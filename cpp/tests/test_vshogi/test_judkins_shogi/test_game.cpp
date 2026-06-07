@@ -11,9 +11,9 @@ using MT = vshogi::MoveTraits<Parameters>;
 TEST_GROUP (judkins_shogi_game) {
 };
 
-TEST(judkins_shogi_game, num_dlshogi_policy)
+TEST(judkins_shogi_game, dlshogi_policy_size)
 {
-    CHECK_EQUAL(6 * 6 * (2 * 10 + 6), Game::num_dlshogi_policy());
+    CHECK_EQUAL(6 * 6 * (2 * 10 + 6), Config::dlshogi_policy_size);
 }
 
 TEST(judkins_shogi_game, ply)
