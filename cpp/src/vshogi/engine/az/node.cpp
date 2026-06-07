@@ -166,7 +166,8 @@ Node* Node::select_random_child()
     return c;
 }
 
-void Node::simulate_mate_and_expand(Node*& next, const move_t& action)
+void Node::simulate_mate_and_expand(
+    ContiguousBuffer<Node>& buffer, const move_t& action)
 {
     m_q_value = 1.f;
     m_is_mate = true;
@@ -180,12 +181,9 @@ void Node::simulate_mate_and_expand(Node*& next, const move_t& action)
         }
         if (c == nullptr)
             throw std::invalid_argument("Given action not found.");
-    } else if (!next->is_end()) {
-        next->init(this, action, 1.f);
-        m_child = next;
+    } else if (not buffer.is_full()) {
+        m_child = buffer.emplace_next(this, action, 1.f);
         m_child_1st = m_child;
-        ++next;
-        next->init_if_not_end();
     }
     if (m_child_1st) { // m_child_1st may be nullptr if the tree if full.
         m_child_1st->m_q_value = -1.f;

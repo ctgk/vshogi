@@ -16,17 +16,14 @@ using MT = vshogi::minishogi::MoveTraits;
 using NT = vshogi::Notation<Parameters>;
 using Node = vshogi::engine::az::Node;
 using Game = vshogi::minishogi::Game;
+using ContiguousBuffer = vshogi::engine::ContiguousBuffer<Node>;
 
 TEST_GROUP (minishogi_az_node) {
-    Node root{};
-    Node nodes[1000] = {};
-    Node* next{};
+    ContiguousBuffer buffer{1000u};
+    Node& root = *buffer.data();
     void setup()
     {
-        root.init();
-        nodes[0].init();
-        nodes[999].init_as_end();
-        next = nodes;
+        buffer.init();
     }
 };
 
@@ -50,7 +47,7 @@ TEST(minishogi_az_node, sizeof)
 
 TEST(minishogi_az_node, simulate_mate_and_expand)
 {
-    root.simulate_mate_and_expand(next, MT::make_move("1c1b"));
+    root.simulate_mate_and_expand(buffer, MT::make_move("1c1b"));
     DOUBLES_EQUAL(1.f, root.get_q_value(), 1e-3f);
     CHECK_TRUE(root.is_mate_to_win());
     CHECK_EQUAL(1u, root.count_childs());
@@ -61,8 +58,8 @@ TEST(minishogi_az_node, simulate_mate_and_expand)
 
 TEST(minishogi_az_node, simulate_mate_and_expand_with_tree_full)
 {
-    next = nodes + 999;
-    root.simulate_mate_and_expand(next, MT::make_move("1c1b"));
+    ContiguousBuffer b{0u};
+    root.simulate_mate_and_expand(b, MT::make_move("1c1b"));
     DOUBLES_EQUAL(1.f, root.get_q_value(), 1e-3f);
     CHECK_TRUE(root.is_mate_to_win());
     CHECK_EQUAL(0u, root.count_childs());
@@ -77,7 +74,7 @@ TEST(minishogi_az_node, init_default)
 TEST(minishogi_az_node, init_with_args)
 {
     root.simulate_ongoing_and_expand(
-        next, Game("5/5/5/5/5 b -"), -1.f, nullptr);
+        buffer, Game("5/5/5/5/5 b -"), -1.f, nullptr);
     root.backprop(root.get_q_value(), nullptr);
     CHECK_EQUAL(1, root.get_visit_count());
     DOUBLES_EQUAL(-1.f, root.get_q_value(), 1e-2f);
@@ -97,7 +94,7 @@ TEST(minishogi_az_node, explore_no_child)
 TEST(minishogi_az_node, explore_game_end)
 {
     auto g = Game("b2pk/3b1/4P/2gRR/4K b -");
-    root.simulate_ongoing_and_expand(next, g, 0.f, nullptr);
+    root.simulate_ongoing_and_expand(buffer, g, 0.f, nullptr);
     root.backprop(root.get_q_value(), nullptr);
     DOUBLES_EQUAL(0.f, root.get_q_value(), 1e-2f);
     Node* const child = root.select(1.f, 0.f); // 1c1b
@@ -115,9 +112,9 @@ TEST(minishogi_az_node, explore_game_end)
 TEST(minishogi_az_node, explore_one_action)
 {
     auto g = Game("4k/5/4P/5/5 b -");
-    CHECK_EQUAL(nodes, next);
-    root.simulate_ongoing_and_expand(next, g, 0.1f, nullptr);
-    CHECK_EQUAL(nodes + 1, next);
+    CHECK_EQUAL(buffer.data() + 1, buffer.next());
+    root.simulate_ongoing_and_expand(buffer, g, 0.1f, nullptr);
+    CHECK_EQUAL(buffer.data() + 2, buffer.next());
     auto p = root.backprop(root.get_q_value(), nullptr);
     CHECK_EQUAL(nullptr, p);
     DOUBLES_EQUAL(0.1f, root.get_q_value(100), 1e-2f);
@@ -136,7 +133,7 @@ TEST(minishogi_az_node, explore_one_action)
         CHECK_TRUE(actual != nullptr);
         CHECK_TRUE(actual != &root);
     }
-    actual->simulate_ongoing_and_expand(next, g, -0.8f, nullptr);
+    actual->simulate_ongoing_and_expand(buffer, g, -0.8f, nullptr);
     p = actual->backprop(actual->get_q_value(), nullptr);
     CHECK_EQUAL(&root, p);
     CHECK_EQUAL(nullptr, p->backprop(-actual->get_q_value(), actual));
@@ -201,7 +198,7 @@ TEST(minishogi_az_node, explore_two_action)
     float logits[Config::dlshogi_policy_size] = {0.f};
     logits[MT::to_policy_index(MT::make_move(SQ_1E, SQ_1D), BLACK)] = 0.202f;
     logits[MT::to_policy_index(MT::make_move(SQ_1E, SQ_2D), BLACK)] = -0.202f;
-    root.simulate_ongoing_and_expand(next, g, 0.f, logits);
+    root.simulate_ongoing_and_expand(buffer, g, 0.f, logits);
     CHECK_EQUAL(nullptr, root.backprop(root.get_q_value(), nullptr));
 
     for (std::size_t ii = 0; ii < 3; ++ii) {
@@ -210,7 +207,7 @@ TEST(minishogi_az_node, explore_two_action)
         CHECK_TRUE(actual != nullptr);
         g_copy.apply_nocheck(actual->get_action());
         actual->simulate_ongoing_and_expand(
-            next, g_copy, input_value[ii], nullptr);
+            buffer, g_copy, input_value[ii], nullptr);
         CHECK_EQUAL(&root, actual->backprop(actual->get_q_value(), nullptr));
         CHECK_EQUAL(nullptr, root.backprop(-actual->get_q_value(), actual));
 
@@ -264,7 +261,7 @@ TEST(minishogi_az_node, explore_two_layer)
     logits[MT::to_policy_index(MT::make_move(SQ_1E, SQ_1D), BLACK)] = 1.099f;
     logits[MT::to_policy_index(MT::make_move(SQ_1E, SQ_2D), BLACK)] = -1.099f;
     auto g = Game("s4/5/5/5/4S b -");
-    root.simulate_ongoing_and_expand(next, g, 0.f, logits);
+    root.simulate_ongoing_and_expand(buffer, g, 0.f, logits);
     CHECK_EQUAL(nullptr, root.backprop(root.get_q_value(), nullptr));
 
     {
@@ -279,7 +276,7 @@ TEST(minishogi_az_node, explore_two_layer)
             = 1.099f;
         policy[MT::to_policy_index(MT::make_move(SQ_5A, SQ_4B), WHITE)]
             = -1.099f;
-        actual->simulate_ongoing_and_expand(next, g_copy, -0.9f, policy);
+        actual->simulate_ongoing_and_expand(buffer, g_copy, -0.9f, policy);
         CHECK_EQUAL(&root, actual->backprop(actual->get_q_value(), nullptr));
         CHECK_EQUAL(nullptr, root.backprop(-actual->get_q_value(), actual));
         DOUBLES_EQUAL((0.f + 0.9f) / 2.f, root.get_q_value(), 1e-3f);
@@ -300,7 +297,8 @@ TEST(minishogi_az_node, explore_two_layer)
                 ->get_child_of(MT::make_move(SQ_5A, SQ_5B)),
             grand_child);
         STRCMP_EQUAL("5/s4/5/4S/5 b - 3", NT::to_sfen(g_copy).c_str());
-        grand_child->simulate_ongoing_and_expand(next, g_copy, -0.5f, nullptr);
+        grand_child->simulate_ongoing_and_expand(
+            buffer, g_copy, -0.5f, nullptr);
         CHECK_EQUAL(
             child, grand_child->backprop(grand_child->get_q_value(), nullptr));
         CHECK_EQUAL(

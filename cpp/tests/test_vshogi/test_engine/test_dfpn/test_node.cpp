@@ -222,11 +222,10 @@ TEST_GROUP (dfpn_node_expand) {
 TEST(dfpn_node_expand, offence_no_twins)
 {
     {
-        auto buffer = std::vector<Node>(10);
-        auto next = buffer.data();
-        auto n = Node();
+        vshogi::engine::ContiguousBuffer<Node> buffer{10u};
+        auto& n = buffer.front();
         CHECK_FALSE(n.fully_expanded());
-        n.expand(next, Game("2B1k/5/3P1/3GK/4R b P"));
+        n.expand(buffer, Game("2B1k/5/3P1/3GK/4R b P"));
         CHECK_TRUE(n.fully_expanded());
         std::set<uint16_t> moves;
         for (auto ch = n.get_child(); ch; ch = ch->get_sibling()) {
@@ -249,36 +248,35 @@ TEST(dfpn_node_expand, offence_no_twins)
             == moves);
     }
     {
-        auto buffer = std::vector<Node>(4);
-        buffer.back().init_as_end();
-        auto next = buffer.data();
-        auto n = Node();
+        vshogi::engine::ContiguousBuffer<Node> buffer{3u};
+        CHECK_EQUAL(3u, buffer.remaining());
+        auto& n = buffer.front();
         CHECK_FALSE(n.fully_expanded());
-        n.expand(next, Game("2B1k/5/3P1/3GK/4R b P"));
+        n.expand(buffer, Game("2B1k/5/3P1/3GK/4R b P")); // 4 check moves
         CHECK_FALSE(n.fully_expanded());
-        CHECK_TRUE(next == &buffer.back());
+        CHECK_TRUE(buffer.is_full());
+        CHECK_EQUAL(0u, buffer.remaining());
     }
     {
-        auto buffer = std::vector<Node>(5);
-        buffer.back().init_as_end();
-        auto next = buffer.data();
-        auto n = Node();
+        vshogi::engine::ContiguousBuffer<Node> buffer{4u};
+        CHECK_EQUAL(4u, buffer.remaining());
+        auto& n = buffer.front();
         CHECK_FALSE(n.fully_expanded());
-        n.expand(next, Game("2B1k/5/3P1/3GK/4R b P"));
+        n.expand(buffer, Game("2B1k/5/3P1/3GK/4R b P")); // 4 check moves
         CHECK_TRUE(n.fully_expanded());
-        CHECK_TRUE(next == &buffer.back());
+        CHECK_TRUE(buffer.is_full());
+        CHECK_EQUAL(0u, buffer.remaining());
     }
 }
 
 TEST(dfpn_node_expand, offence_twin_g)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto twin_g = Node();
-    twin_g.expand(next, Game("2B1k/5/4p/5/5 b RP"));
-    auto n = Node();
+    twin_g.expand(buffer, Game("2B1k/5/4p/5/5 b RP"));
+    auto& n = buffer.front();
     CHECK_FALSE(n.fully_expanded());
-    n.expand(next, Game("2B1k/5/4p/5/5 b P"), &twin_g);
+    n.expand(buffer, Game("2B1k/5/4p/5/5 b P"), &twin_g);
     CHECK_TRUE(n.fully_expanded());
 
     std::set<uint16_t> moves;
@@ -296,13 +294,12 @@ TEST(dfpn_node_expand, offence_twin_g)
 
 TEST(dfpn_node_expand, offence_twin_l)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto twin_l = Node();
-    twin_l.expand(next, Game("2B1k/5/4p/5/5 b P"));
-    auto n = Node();
+    twin_l.expand(buffer, Game("2B1k/5/4p/5/5 b P"));
+    auto& n = buffer.front();
     CHECK_FALSE(n.fully_expanded());
-    n.expand(next, Game("2B1k/5/4p/5/4R b SP"), nullptr, &twin_l);
+    n.expand(buffer, Game("2B1k/5/4p/5/4R b SP"), nullptr, &twin_l);
     CHECK_TRUE(n.fully_expanded());
 
     std::set<uint16_t> moves;
@@ -323,14 +320,13 @@ TEST(dfpn_node_expand, offence_twin_l)
 
 TEST(dfpn_node_expand, defence_no_twins)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
-    auto n = Node();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
+    auto& n = buffer.front();
     CHECK_FALSE(n.fully_expanded());
     {
         auto g = Game("3gk/5/R4/5/4K b p");
         g.apply(MT::make_move(SQ_5C, SQ_1C));
-        n.expand(next, g);
+        n.expand(buffer, g);
     }
     CHECK_TRUE(n.fully_expanded());
 
@@ -349,20 +345,19 @@ TEST(dfpn_node_expand, defence_no_twins)
 
 TEST(dfpn_node_expand, defence_twin_l)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto twin_l = Node();
     {
         auto g = Game("3gk/5/R4/5/4K b p");
         g.apply(MT::make_move(SQ_5C, SQ_1C));
-        twin_l.expand(next, g);
+        twin_l.expand(buffer, g);
     }
-    auto n = Node();
+    auto& n = buffer.front();
     CHECK_FALSE(n.fully_expanded());
     {
         auto g = Game("3gk/5/R4/5/4K b ps");
         g.apply(MT::make_move(SQ_5C, SQ_1C));
-        n.expand(next, g, nullptr, &twin_l);
+        n.expand(buffer, g, nullptr, &twin_l);
     }
     CHECK_TRUE(n.fully_expanded());
     std::set<uint16_t> moves;
@@ -381,20 +376,19 @@ TEST(dfpn_node_expand, defence_twin_l)
 
 TEST(dfpn_node_expand, defence_twin_g)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto twin_g = Node();
     {
         auto g = Game("3gk/5/R4/5/4K b ps");
         g.apply(MT::make_move(SQ_5C, SQ_1C));
-        twin_g.expand(next, g);
+        twin_g.expand(buffer, g);
     }
-    auto n = Node();
+    auto& n = buffer.front();
     CHECK_FALSE(n.fully_expanded());
     {
         auto g = Game("3gk/5/R4/5/4K b s");
         g.apply(MT::make_move(SQ_5C, SQ_1C));
-        n.expand(next, g, &twin_g);
+        n.expand(buffer, g, &twin_g);
     }
     CHECK_TRUE(n.fully_expanded());
     std::set<uint16_t> moves;
@@ -412,17 +406,16 @@ TEST(dfpn_node_expand, defence_twin_g)
 
 TEST(dfpn_node_expand, defence_partial_expansion)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto g = Game("3gk/5/5/5/R4 b 2p2s");
     g.apply(MT::make_move(SQ_5E, SQ_1E))
         .apply(MT::make_move(FU, SQ_1D))
         .apply(MT::make_move(SQ_1E, SQ_1D))
         .apply(MT::make_move(FU, SQ_1C))
         .apply(MT::make_move(SQ_1D, SQ_1C));
-    auto n = Node();
+    auto& n = buffer.front();
     CHECK_FALSE(n.fully_expanded());
-    n.expand(next, g);
+    n.expand(buffer, g);
     CHECK_FALSE(n.fully_expanded());
     std::set<uint16_t> moves;
     for (auto ch = n.get_child(); ch; ch = ch->get_sibling()) {
@@ -442,11 +435,10 @@ TEST_GROUP (dfpn_node_backprop) {
 
 TEST(dfpn_node_backprop, offence_preference)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto g = Game("2B1k/5/5/5/5 b P");
-    auto n = Node();
-    n.expand(next, g);
+    auto& n = buffer.front();
+    n.expand(buffer, g);
     n.backprop<Parameters>(true);
     CHECK_EQUAL(unit, n.pn(true));
     CHECK_EQUAL(2u * unit + cent, n.dn(true));
@@ -461,11 +453,10 @@ TEST(dfpn_node_backprop, offence_preference)
 
 TEST(dfpn_node_backprop, offence_with_proved_child)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto g = Game("3rk/3p1/4P/5/4K b G");
-    auto n = Node();
-    n.expand(next, g);
+    auto& n = buffer.front();
+    n.expand(buffer, g);
     n.backprop<Parameters>(true);
     CHECK_FALSE(n.proved());
     CHECK_EQUAL(unit, n.pn(true));
@@ -488,13 +479,12 @@ TEST(dfpn_node_backprop, offence_with_proved_child)
 
 TEST(dfpn_node_backprop, defence_preference)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     // auto g = Game("s4/RR3/5/5/k4 w p");
     auto g = Game("s4/1R3/5/5/k4 b Rp");
-    auto n = Node();
+    auto& n = buffer.front();
     g.apply(MT::make_move(HI, SQ_5B));
-    n.expand(next, g);
+    n.expand(buffer, g);
     n.backprop<Parameters>(g.get_state().find_checker_square());
 
     // Prefer capture move
@@ -506,19 +496,18 @@ TEST(dfpn_node_backprop, defence_preference)
 
 TEST(dfpn_node_backprop, defence_with_proved_child)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto g = Game("4k/5/4P/5/5 b -");
     g.apply(MT::make_move(SQ_1C, SQ_1B));
-    auto n = Node();
-    n.expand(next, g);
+    auto& n = buffer.front();
+    n.expand(buffer, g);
     n.backprop<Parameters>(false);
 
     uint th_p_ch, th_d_ch;
     const auto ch = n.select(inf, inf, th_p_ch, th_d_ch);
     CHECK_EQUAL(MT::make_move(SQ_1A, SQ_1B), ch->get_action());
     g.apply_dfpn(ch->get_action());
-    ch->expand(next, g);
+    ch->expand(buffer, g);
     ch->backprop<Parameters>(true);
     CHECK_TRUE(ch->proved_no_mate(true));
     g.undo();
@@ -529,8 +518,7 @@ TEST(dfpn_node_backprop, defence_with_proved_child)
 
 TEST(dfpn_node_backprop, offence_proved_by_repetitions)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto g = Game("4k/5/4S/5/5 b -");
     g.apply(MT::make_move(SQ_1C, SQ_2B))
         .apply(MT::make_move(SQ_1A, SQ_1B))
@@ -544,8 +532,8 @@ TEST(dfpn_node_backprop, offence_proved_by_repetitions)
         .apply(MT::make_move(SQ_2A, SQ_1B))
         .apply(MT::make_move(SQ_2B, SQ_1C))
         .apply(MT::make_move(SQ_1B, SQ_1A));
-    auto n = Node();
-    n.expand(next, g);
+    auto& n = buffer.front();
+    n.expand(buffer, g);
     n.backprop<Parameters>(true);
 
     uint th_p_ch, th_d_ch;
@@ -567,16 +555,15 @@ TEST(dfpn_node_backprop, offence_proved_by_repetitions)
 
 TEST(dfpn_node_backprop, defence_proved_by_repetitions)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto g = Game("4k/5/4P/5/5 b S");
     g.apply(MT::make_move("S*1b"))
         .apply(MT::make_move(SQ_1A, SQ_2B))
         .apply(MT::make_move(SQ_1B, SQ_2C))
         .apply(MT::make_move(SQ_2B, SQ_1A))
         .apply(MT::make_move(SQ_2C, SQ_1B));
-    auto n = Node();
-    n.expand(next, g);
+    auto& n = buffer.front();
+    n.expand(buffer, g);
     n.backprop<Parameters>(g.get_state().find_checker_square());
 
     uint th_p_ch, th_d_ch;
@@ -594,11 +581,10 @@ TEST_GROUP (dfpn_node_select) {
 
 TEST(dfpn_node_select, offence_single_child)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     {
-        auto n = Node();
-        n.expand(next, Game("4k/5/4P/5/5 b -"));
+        auto& n = buffer.front();
+        n.expand(buffer, Game("4k/5/4P/5/5 b -"));
         n.backprop<Parameters>(true);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(inf, inf, th_p_ch, th_d_ch);
@@ -609,8 +595,8 @@ TEST(dfpn_node_select, offence_single_child)
         CHECK_EQUAL(unit, c->delta());
     }
     {
-        auto n = Node();
-        n.expand(next, Game("4k/5/4P/5/5 b -"));
+        auto& n = buffer.front();
+        n.expand(buffer, Game("4k/5/4P/5/5 b -"));
         n.backprop<Parameters>(true);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(25, 10, th_p_ch, th_d_ch);
@@ -624,11 +610,10 @@ TEST(dfpn_node_select, offence_single_child)
 
 TEST(dfpn_node_select, offence_multiple_child)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     {
-        auto n = Node();
-        n.expand(next, Game("4k/5/5/5/5 b S"));
+        auto& n = buffer.front();
+        n.expand(buffer, Game("4k/5/5/5/5 b S"));
         n.backprop<Parameters>(true);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(inf, inf, th_p_ch, th_d_ch);
@@ -639,8 +624,8 @@ TEST(dfpn_node_select, offence_multiple_child)
     }
     {
         // offence prefers promotion
-        auto n = Node();
-        n.expand(next, Game("2B1k/5/5/5/5 b -"));
+        auto& n = buffer.front();
+        n.expand(buffer, Game("2B1k/5/5/5/5 b -"));
         n.backprop<Parameters>(true);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(inf, inf, th_p_ch, th_d_ch);
@@ -650,11 +635,10 @@ TEST(dfpn_node_select, offence_multiple_child)
 
 TEST(dfpn_node_select, offence_with_disproved_child)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto g = Game("4k/5/4G/5/5 b -");
-    auto n = Node();
-    n.expand(next, g);
+    auto& n = buffer.front();
+    n.expand(buffer, g);
     n.backprop<Parameters>(true);
 
     uint th_p_ch, th_d_ch;
@@ -674,13 +658,12 @@ TEST(dfpn_node_select, offence_with_disproved_child)
 
 TEST(dfpn_node_select, defence_single_child)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     {
         auto g = Game("4k/5/4G/5/5 b -");
-        auto n = Node();
+        auto& n = buffer.front();
         g.apply(MT::make_move(SQ_1C, SQ_1B));
-        n.expand(next, g);
+        n.expand(buffer, g);
         n.backprop<Parameters>(false);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(inf, inf, th_p_ch, th_d_ch);
@@ -692,9 +675,9 @@ TEST(dfpn_node_select, defence_single_child)
     }
     {
         auto g = Game("4k/5/4G/5/5 b -");
-        auto n = Node();
+        auto& n = buffer.front();
         g.apply(MT::make_move(SQ_1C, SQ_1B));
-        n.expand(next, g);
+        n.expand(buffer, g);
         n.backprop<Parameters>(false);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(25, 10, th_p_ch, th_d_ch);
@@ -708,13 +691,12 @@ TEST(dfpn_node_select, defence_single_child)
 
 TEST(dfpn_node_select, defence_multiple_child)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     {
         auto g = Game("5/1+R3/1r3/5/k4 b -");
-        auto n = Node();
+        auto& n = buffer.front();
         g.apply(MT::make_move(SQ_4B, SQ_5C));
-        n.expand(next, g);
+        n.expand(buffer, g);
         n.backprop<Parameters>(false);
         uint th_p_ch, th_d_ch;
         const auto c = n.select(inf, inf, th_p_ch, th_d_ch);

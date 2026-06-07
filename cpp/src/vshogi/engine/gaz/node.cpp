@@ -90,7 +90,8 @@ float Node::completed_q_value_of(const Node* const child) const
     return m_q_value;
 }
 
-void Node::simulate_mate_and_expand(Node*& next, const move_t& action)
+void Node::simulate_mate_and_expand(
+    ContiguousBuffer<Node>& buffer, const move_t& action)
 {
     m_q_value = 1.f;
     m_is_mate = true;
@@ -104,13 +105,11 @@ void Node::simulate_mate_and_expand(Node*& next, const move_t& action)
             }
         }
         throw std::invalid_argument("Given action not found.");
-    } else if (!next->is_end()) {
-        next->init(this, action, 1.f);
-        m_child = next++;
+    } else if (not buffer.is_full()) {
+        m_child = buffer.emplace_next(this, action, 1.f);
         m_child_1st = m_child;
         m_child_1st->m_q_value = -1.f;
         m_child_1st->m_is_mate = true;
-        next->init_if_not_end();
     }
 }
 

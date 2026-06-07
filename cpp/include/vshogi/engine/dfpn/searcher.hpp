@@ -53,7 +53,7 @@ public:
         if ((m_search_count == 0u) && !root.simulate(g)
             && !m_buffer.is_full()) {
             assert(&root + 1 == m_buffer.next());
-            root.expand(m_buffer.next(), g);
+            root.expand(m_buffer, g);
             m_table.add(&root, g);
             root.template backprop<P>(true);
         }
@@ -79,7 +79,7 @@ private:
             return out;
         }
         if (!n.has_child() && !m_buffer.is_full()) {
-            n.expand(m_buffer.next(), g, twin_ge, twin_le);
+            n.expand(m_buffer, g, twin_ge, twin_le);
             if ((twin_e == nullptr) || !twin_e->fully_expanded())
                 m_table.add(&n, g);
             --m_remaining_searches;
@@ -329,7 +329,7 @@ N* DfpnAugmentedSearcher<P, N>::simulate_backprop_if_possible(
         return nullptr;
     }
     if (leaf->is_mate_to_lose()) {
-        leaf->expand(m_buffer.next(), game, nullptr);
+        leaf->expand(m_buffer, game, nullptr);
         backprop_to_root(game, leaf);
         return nullptr;
     }
@@ -353,7 +353,7 @@ bool DfpnAugmentedSearcher<P, N>::dfpn_proved_mate(Game<P>& game, N* const node)
     if (m_dfpn.proved_mate()) {
         const move_t action = m_dfpn.select_action();
         if (action) {
-            node->simulate_mate_and_expand(m_buffer.next(), action);
+            node->simulate_mate_and_expand(m_buffer, action);
             backprop_to_root(game, node);
             return true;
         }

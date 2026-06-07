@@ -30,7 +30,7 @@ public:
     uint remaining() const { return static_cast<uint>(m_buffer.size()) - static_cast<uint>(m_next - m_buffer.data()) - 1u; }
     T& front() { return m_buffer.front(); }
     const T& front() const { return m_buffer.front(); }
-    const T* cend() const { return &m_buffer[m_buffer.size() - 1u]; }
+    const T* cend() const { return &m_buffer.back(); }
     T* data() { return m_buffer.data(); }
     const T* cdata() const { return m_buffer.data(); }
     T*& next() { return m_next; }
@@ -65,6 +65,8 @@ T* ContiguousBuffer<T>::emplace_next(Args&&... args)
         return nullptr;
     T* out = m_next++;
     out->init(std::forward<Args>(args)...);
+    if (m_next != &m_buffer.back())
+        m_next->init();
     return out;
 }
 

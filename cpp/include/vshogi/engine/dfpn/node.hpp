@@ -10,6 +10,7 @@
 #include "vshogi/common/square_traits.hpp"
 #include "vshogi/common/state.hpp"
 #include "vshogi/common/utils.hpp"
+#include "vshogi/engine/contiguous_buffer.hpp"
 #include "vshogi/engine/tree/node.hpp"
 
 /**
@@ -57,7 +58,7 @@ public: // utility
         const Node* const twin_le = nullptr);
     template <class P>
     void expand(
-        Node*& next,
+        ContiguousBuffer<Node>& buffer,
         const Game<P>& g,
         const Node* const twin_ge = nullptr,
         const Node* const twin_le = nullptr);
@@ -105,22 +106,25 @@ private:
     template <class P>
     bool expand_board_moves(
         const bool offence,
-        Node*& next,
+        ContiguousBuffer<Node>& buffer,
         const State<P>& s,
         const Node** const nibling);
     template <class P>
-    bool expand_board_moves(Node*& next, const Node** const nibling);
+    bool expand_board_moves(
+        ContiguousBuffer<Node>& buffer, const Node** const nibling);
     template <class P>
     bool expand_drop_moves(
         const bool offence,
-        Node*& next,
+        ContiguousBuffer<Node>& buffer,
         const State<P>& s,
         const Node** const nibling);
     template <class P>
     bool expand_drop_moves(
-        Node*& next, const Node** const nibling, const Stand<P>& s);
+        ContiguousBuffer<Node>& buffer,
+        const Node** const nibling,
+        const Stand<P>& s);
     template <class G, class P>
-    bool expand_by_generator(Node*& next, const State<P>& s);
+    bool expand_by_generator(ContiguousBuffer<Node>& buffer, const State<P>& s);
 };
 
 inline Node::Node()
@@ -253,7 +257,7 @@ inline void Node::set_no_mate(const bool offence)
 
 template <class P>
 void Node::expand(
-    Node*& next,
+    ContiguousBuffer<Node>& buffer,
     const Game<P>& g,
     const Node* const twin_ge,
     const Node* const twin_le)
@@ -270,18 +274,18 @@ void Node::expand(
         nibling = twin_le->get_child();
 
     m_fully_expanded = false;
-    m_child = next;
-    expand_board_moves<P>(offence, next, s, &nibling);
+    m_child = buffer.next();
+    expand_board_moves<P>(offence, buffer, s, &nibling);
     if (offence || (!g.had_two_consecutive_sacrifice_drops())) {
         if ((twin_ge == nullptr) || (!twin_ge->fully_expanded()))
             nibling = nullptr;
-        m_fully_expanded = expand_drop_moves<P>(offence, next, s, &nibling);
+        m_fully_expanded = expand_drop_moves<P>(offence, buffer, s, &nibling);
     }
-    if (m_child == next)
+    if (m_child == buffer.next()) // no child expanded
         m_child = nullptr;
-    assert(next);
-    if (!next->is_end())
-        next->m_parent = nullptr;
+    assert(buffer.next());
+    if (not buffer.is_full())
+        buffer.next()->m_parent = nullptr;
 
     const int offset = offence ? 19 : 10;
     const Square king_sq
@@ -303,31 +307,31 @@ void Node::expand(
 template <class P>
 bool Node::expand_board_moves(
     const bool offence,
-    Node*& next,
+    ContiguousBuffer<Node>& buffer,
     const State<P>& s,
     const Node** const nibling)
 {
     if ((*nibling) != nullptr)
-        return expand_board_moves<P>(next, nibling);
+        return expand_board_moves<P>(buffer, nibling);
     if (offence)
         return expand_by_generator<BoardMoveGenerator<P, GenEnum::CHECK>>(
-            next, s);
-    expand_by_generator<KingMoveGenerator<P>>(next, s);
+            buffer, s);
+    expand_by_generator<KingMoveGenerator<P>>(buffer, s);
     return expand_by_generator<SoldierMoveGenerator<P, GenEnum::EVADE>>(
-        next, s);
+        buffer, s);
 }
 
 template <class P>
-bool Node::expand_board_moves(Node*& next, const Node** const nibling)
+bool Node::expand_board_moves(
+    ContiguousBuffer<Node>& buffer, const Node** const nibling)
 {
     using MT = MoveTraits<P>;
     for (; *nibling; *nibling = (*nibling)->get_sibling()) {
-        if (next->is_end())
+        if (buffer.is_full())
             return false;
         if (MT::is_drop((*nibling)->get_action()))
             break;
-        next->init(this, *nibling);
-        ++next;
+        buffer.emplace_next(this, *nibling);
     }
     return true;
 }
@@ -335,47 +339,48 @@ bool Node::expand_board_moves(Node*& next, const Node** const nibling)
 template <class P>
 bool Node::expand_drop_moves(
     const bool offence,
-    Node*& next,
+    ContiguousBuffer<Node>& buffer,
     const State<P>& s,
     const Node** const nibling)
 {
     if ((*nibling) != nullptr)
-        return expand_drop_moves(next, nibling, s.get_stand(s.get_turn()));
+        return expand_drop_moves(buffer, nibling, s.get_stand(s.get_turn()));
     if (offence)
         return expand_by_generator<DropMoveGenerator<P, GenEnum::CHECK>>(
-            next, s);
-    return expand_by_generator<DropMoveGenerator<P, GenEnum::EVADE>>(next, s);
+            buffer, s);
+    return expand_by_generator<DropMoveGenerator<P, GenEnum::EVADE>>(buffer, s);
 }
 
 template <class P>
 bool Node::expand_drop_moves(
-    Node*& next, const Node** const nibling, const Stand<P>& s)
+    ContiguousBuffer<Node>& buffer,
+    const Node** const nibling,
+    const Stand<P>& s)
 {
     using MT = MoveTraits<P>;
     for (; *nibling; *nibling = (*nibling)->get_sibling()) {
-        if (next->is_end())
+        if (buffer.is_full())
             return false;
         assert(MT::is_drop((*nibling)->get_action()));
         if (!s.exist(MT::get_src_pt((*nibling)->get_action())))
             continue;
-        next->init(this, *nibling);
-        ++next;
+        buffer.emplace_next(this, *nibling);
     }
     return true;
 }
 
 template <class G, class P>
-bool Node::expand_by_generator(Node*& next, const State<P>& s)
+bool Node::expand_by_generator(
+    ContiguousBuffer<Node>& buffer, const State<P>& s)
 {
     for (auto it = G(s); it; ++it) {
         const auto m = *it;
-        if (next->is_end())
+        if (buffer.is_full())
             return false;
         if (s.is_declined_promotion(m))
-            next->init(this, m, cent, kilo);
+            buffer.emplace_next(this, m, cent, kilo);
         else
-            next->init(this, m, unit, unit);
-        ++next;
+            buffer.emplace_next(this, m, unit, unit);
     }
     return true;
 }

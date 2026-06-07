@@ -7,6 +7,7 @@
 #include "vshogi/common/game.hpp"
 #include "vshogi/common/move.hpp"
 #include "vshogi/common/utils.hpp"
+#include "vshogi/engine/contiguous_buffer.hpp"
 #include "vshogi/engine/tree/node.hpp"
 
 /**
@@ -54,12 +55,15 @@ public:
     template <class P>
     void simulate(const Game<P>& g);
     template <class P>
-    void
-    expand(Node*& next, const Game<P>& g, const float* const policy_logits);
-    void simulate_mate_and_expand(Node*& next, const move_t& action);
+    void expand(
+        ContiguousBuffer<Node>& buffer,
+        const Game<P>& g,
+        const float* const policy_logits);
+    void simulate_mate_and_expand(
+        ContiguousBuffer<Node>& buffer, const move_t& action);
     template <class P>
     void simulate_ongoing_and_expand(
-        Node*& next,
+        ContiguousBuffer<Node>& buffer,
         const Game<P>& g,
         const float value,
         const float* const policy_logits);
@@ -78,9 +82,15 @@ private:
     float puct_score_of(
         const Node* const c, const float c_puct, const float q_fpu) const;
 
+    // expand
+    template <class P, GenEnum GenType>
+    void expand_by_generator(
+        ContiguousBuffer<Node>& buffer,
+        const Game<P>& game,
+        const float* const policy_logits);
     template <class P>
-    float init_node_at(
-        Node*& next,
+    float init_node_in(
+        ContiguousBuffer<Node>& buffer,
         const move_t& action,
         const ColorEnum& turn,
         const float* const policy_logits);
@@ -111,34 +121,38 @@ void Node::simulate(const Game<P>& g)
 
 template <class P>
 void Node::expand(
-    Node*& next, const Game<P>& game, const float* const policy_logits)
+    ContiguousBuffer<Node>& buffer,
+    const Game<P>& game,
+    const float* const policy_logits)
 {
+    if (game.in_check())
+        expand_by_generator<P, GenEnum::EVADE>(buffer, game, policy_logits);
+    else
+        expand_by_generator<P, GenEnum::LEGAL>(buffer, game, policy_logits);
+}
+
+template <class P, GenEnum GenType>
+void Node::expand_by_generator(
+    ContiguousBuffer<Node>& buffer,
+    const Game<P>& game,
+    const float* const policy_logits)
+{
+    m_child = buffer.next();
     const auto turn = game.get_turn();
-    m_child = next;
     float max_logit = -std::numeric_limits<float>::infinity();
-    if (game.in_check()) {
-        auto gen = MoveGenerator<P, GenEnum::EVADE>(game.get_state());
-        for (; gen; ++gen) {
-            if (next->is_end())
-                break;
-            max_logit = std::max(
-                max_logit, init_node_at<P>(next, *gen, turn, policy_logits));
-        }
-    } else {
-        auto gen = MoveGenerator<P, GenEnum::LEGAL>(game.get_state());
-        for (; gen; ++gen) {
-            if (next->is_end())
-                break;
-            max_logit = std::max(
-                max_logit, init_node_at<P>(next, *gen, turn, policy_logits));
-        }
+    auto gen = MoveGenerator<P, GenType>(game.get_state());
+    for (; gen; ++gen) {
+        if (buffer.is_full())
+            break;
+        max_logit = std::max(
+            max_logit, init_node_in<P>(buffer, *gen, turn, policy_logits));
     }
-    if (m_child == next) { // there is no child under this node.
+    if (m_child == buffer.next()) { // no child expanded
         m_child = nullptr;
         return;
     }
-    next->init_if_not_end();
-
+    if (not buffer.is_full())
+        buffer.next()->init();
     float sumexp = 0.f;
     for (Node* c = m_child; c->m_parent == this; ++c) {
         c->m_proba -= max_logit;
@@ -151,28 +165,27 @@ void Node::expand(
 }
 
 template <class P>
-float Node::init_node_at(
-    Node*& next,
+float Node::init_node_in(
+    ContiguousBuffer<Node>& buffer,
     const move_t& action,
     const ColorEnum& turn,
     const float* const policy_logits)
 {
     const auto index = MoveTraits<P>::to_policy_index(action, turn);
     const auto logit = policy_logits ? policy_logits[index] : 0.f;
-    next->init(this, action, logit);
-    ++next;
+    buffer.emplace_next(this, action, logit);
     return logit;
 }
 
 template <class P>
 void Node::simulate_ongoing_and_expand(
-    Node*& next,
+    ContiguousBuffer<Node>& buffer,
     const Game<P>& game,
     const float value,
     const float* const policy_logits)
 {
     m_q_value = value;
-    expand(next, game, policy_logits);
+    expand(buffer, game, policy_logits);
 }
 
 } // namespace vshogi::engine::az

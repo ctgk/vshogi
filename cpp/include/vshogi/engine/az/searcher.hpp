@@ -80,8 +80,7 @@ void Searcher<P>::simulate_expand_backprop(
 {
     if (leaf == nullptr)
         return;
-    leaf->simulate_ongoing_and_expand(
-        m_buffer.next(), game, value, policy_logits);
+    leaf->simulate_ongoing_and_expand(m_buffer, game, value, policy_logits);
     backprop_to_root(game, leaf);
 }
 

@@ -12,17 +12,14 @@ using Game = vshogi::minishogi::Game;
 using State = vshogi::minishogi::State;
 using Node = vshogi::engine::gaz::Node;
 using MT = vshogi::minishogi::MoveTraits;
+using ContiguousBuffer = vshogi::engine::ContiguousBuffer<Node>;
 
 TEST_GROUP (test_gaz_node) {
-    Node root{};
-    Node nodes[1000] = {};
-    Node* next{};
+    ContiguousBuffer buffer{1000u};
+    Node& root = *buffer.data();
     void setup()
     {
-        root.init();
-        nodes[0].init();
-        nodes[999].init_as_end();
-        next = nodes;
+        buffer.init();
     }
 };
 
@@ -53,15 +50,15 @@ TEST(test_gaz_node, get_q_value_returns_compute_v_pi)
     logits[MT::to_policy_index(MT::make_move(SQ_1E, SQ_1D), BLACK)] = 1.0f;
     logits[MT::to_policy_index(MT::make_move(SQ_1E, SQ_2D), BLACK)] = -1.0f;
 
-    root.simulate_ongoing_and_expand(next, g, 0.2f, logits);
+    root.simulate_ongoing_and_expand(buffer, g, 0.2f, logits);
     root.backprop(root.get_q_value(), nullptr);
-    const Node* childs[3] = {&nodes[0], &nodes[1], nullptr};
+    const Node* childs[3] = {buffer.cdata() + 1, buffer.cdata() + 2, nullptr};
 
     {
         auto g_copy = Game(g);
         Node* child1 = root.select_from(childs);
         g_copy.apply_nocheck(child1->get_action());
-        child1->simulate_ongoing_and_expand(next, g_copy, -0.5f, nullptr);
+        child1->simulate_ongoing_and_expand(buffer, g_copy, -0.5f, nullptr);
         child1->backprop(child1->get_q_value(), nullptr);
         root.backprop(-child1->get_q_value(), child1);
     }
@@ -69,7 +66,7 @@ TEST(test_gaz_node, get_q_value_returns_compute_v_pi)
         auto g_copy = Game(g);
         Node* child2 = root.select_from(childs);
         g_copy.apply_nocheck(child2->get_action());
-        child2->simulate_ongoing_and_expand(next, g_copy, -0.3f, nullptr);
+        child2->simulate_ongoing_and_expand(buffer, g_copy, -0.3f, nullptr);
         child2->backprop(child2->get_q_value(), nullptr);
         root.backprop(-child2->get_q_value(), child2);
     }
@@ -92,7 +89,7 @@ TEST(test_gaz_node, get_q_value_returns_compute_v_pi)
 TEST(test_gaz_node, select_from)
 {
     root.simulate_ongoing_and_expand(
-        next, Game("g4/5/5/5/4G b -"), 0.f, nullptr);
+        buffer, Game("g4/5/5/5/4G b -"), 0.f, nullptr);
     root.backprop(root.get_q_value(), nullptr);
     {
         const Node* child_nodes[10] = {};
@@ -115,7 +112,7 @@ TEST(test_gaz_node, select_given_policy)
         policy_logits[ii] = static_cast<float>(ii);
 
     root.simulate_ongoing_and_expand(
-        next, Game("g4/5/5/5/4G b -"), 0.f, policy_logits);
+        buffer, Game("g4/5/5/5/4G b -"), 0.f, policy_logits);
     root.backprop(root.get_q_value(), nullptr);
     const auto actual = root.select();
     CHECK_EQUAL(root.get_child()->get_sibling()->get_sibling(), actual);
@@ -124,15 +121,15 @@ TEST(test_gaz_node, select_given_policy)
 
 TEST(test_gaz_node, get_q_value)
 {
-    CHECK_EQUAL(nodes, next);
+    CHECK_EQUAL(buffer.cdata() + 1, buffer.next());
     root.simulate_ongoing_and_expand(
-        next, Game("g4/5/5/5/4G b -"), 0.f, nullptr);
-    CHECK_EQUAL(nodes + 3, next);
+        buffer, Game("g4/5/5/5/4G b -"), 0.f, nullptr);
+    CHECK_EQUAL(buffer.cdata() + 4, buffer.next());
     DOUBLES_EQUAL(0.f, root.get_q_value(), 1e-3f);
     root.backprop(root.get_q_value(), nullptr);
     {
         const auto c = root.select();
-        c->simulate_mate_and_expand(next, static_cast<move_t>(0));
+        c->simulate_mate_and_expand(buffer, static_cast<move_t>(0));
         DOUBLES_EQUAL(1.f, c->get_q_value(), 1e-3f);
         c->backprop(c->get_q_value(), nullptr);
         root.backprop(-c->get_q_value(), c);

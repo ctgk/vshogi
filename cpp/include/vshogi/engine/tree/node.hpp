@@ -28,7 +28,6 @@ public:
     const Derived* get_child() const { return m_child; }
     const Derived* get_child_1st() const { return m_child_1st; }
     bool has_child() const { return static_cast<bool>(m_child); }
-    bool is_end() const { return m_parent == this; }
     // clang-format on
     void init()
     {

@@ -21,10 +21,9 @@ TEST_GROUP (dfpn_table) {
 
 TEST(dfpn_table, look_up_e)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto t = Table();
-    auto n = Node();
+    auto& n = buffer.front();
     auto g = Game();
     t.add(&n, g);
 
@@ -34,7 +33,7 @@ TEST(dfpn_table, look_up_e)
     CHECK_TRUE(&n == node_e);
     CHECK_TRUE(&n == node_ge); // looked up unexpanded node
 
-    n.expand(next, g);
+    n.expand(buffer, g);
 
     t.look_up(g, &node_ge, &node_e, &node_le);
     CHECK_TRUE(&n == node_le);
@@ -44,8 +43,7 @@ TEST(dfpn_table, look_up_e)
 
 TEST(dfpn_table, look_up_l_prefer_fully_expanded)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto n1 = Node();
     auto g1 = Game("3rk/3p1/4P/5/5 b G");
     CHECK_FALSE(n1.fully_expanded());
@@ -53,7 +51,7 @@ TEST(dfpn_table, look_up_l_prefer_fully_expanded)
 
     auto n2 = Node();
     auto g2 = Game("3rk/3p1/4P/5/5 b S");
-    n2.expand(next, g2);
+    n2.expand(buffer, g2);
     CHECK_TRUE(n2.fully_expanded());
     CHECK_FALSE(n2.proved());
     {
@@ -71,10 +69,9 @@ TEST(dfpn_table, look_up_l_prefer_fully_expanded)
 
 TEST(dfpn_table, look_up_l)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto t = Table();
-    auto n = Node();
+    auto& n = buffer.front();
     auto g = Game("4k/5/4P/5/5 b G");
     t.add(&n, g);
 
@@ -84,7 +81,7 @@ TEST(dfpn_table, look_up_l)
     CHECK_TRUE(nullptr == node_e);
     CHECK_TRUE(nullptr == node_ge);
 
-    n.expand(next, g);
+    n.expand(buffer, g);
     t.look_up(Game("4k/5/4P/5/5 b SG"), &node_ge, &node_e, &node_le);
     CHECK_TRUE(&n == node_le);
     CHECK_TRUE(nullptr == node_e);
@@ -93,11 +90,10 @@ TEST(dfpn_table, look_up_l)
 
 TEST(dfpn_table, look_up_l_prefer_mate_at_offence)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto n1 = Node();
     auto g1 = Game("3rk/3p1/4P/5/5 b G");
-    n1.expand(next, g1);
+    n1.expand(buffer, g1);
     n1.backprop<Parameters>(true);
     uint th_p_ch, th_d_ch;
     Node* const c1 = n1.select(inf, inf, th_p_ch, th_d_ch);
@@ -111,7 +107,7 @@ TEST(dfpn_table, look_up_l_prefer_mate_at_offence)
 
     auto n2 = Node();
     auto g2 = Game("3rk/3p1/4P/5/5 b S");
-    n2.expand(next, g2);
+    n2.expand(buffer, g2);
     CHECK_TRUE(n2.fully_expanded());
     CHECK_FALSE(n2.proved());
     {
@@ -140,17 +136,16 @@ TEST(dfpn_table, look_up_l_prefer_mate_at_offence)
 
 TEST(dfpn_table, look_up_l_prefer_no_mate_at_defence)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto n1 = Node();
     auto g1 = Game("4k/5/4P/5/5 b -");
     g1.apply(MT::make_move(SQ_1C, SQ_1B));
-    n1.expand(next, g1);
+    n1.expand(buffer, g1);
     n1.backprop<Parameters>(false);
     uint th_p_ch, th_d_ch;
     Node* const c1 = n1.select(inf, inf, th_p_ch, th_d_ch);
     g1.apply_dfpn(c1->get_action());
-    c1->expand(next, g1);
+    c1->expand(buffer, g1);
     c1->backprop<Parameters>(true);
     CHECK_TRUE(c1->proved_no_mate(true));
     g1.undo();
@@ -161,7 +156,7 @@ TEST(dfpn_table, look_up_l_prefer_no_mate_at_defence)
     auto n2 = Node();
     auto g2 = Game("4k/5/4P/5/5 b ps");
     g2.apply(MT::make_move(SQ_1C, SQ_1B));
-    n2.expand(next, g2);
+    n2.expand(buffer, g2);
     CHECK_TRUE(n2.fully_expanded());
     CHECK_FALSE(n2.proved());
 
@@ -189,14 +184,13 @@ TEST(dfpn_table, look_up_l_prefer_no_mate_at_defence)
 
 TEST(dfpn_table, look_up_g_prefer_fully_expanded)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto n1 = Node();
     auto g1 = Game("3rk/3gs/5/5/5 b PSG");
     CHECK_FALSE(n1.fully_expanded());
     auto n2 = Node();
     auto g2 = Game("3rk/3gs/5/5/5 b PS");
-    n2.expand(next, g2);
+    n2.expand(buffer, g2);
     CHECK_TRUE(n2.fully_expanded());
     CHECK_FALSE(n2.proved());
     {
@@ -213,10 +207,9 @@ TEST(dfpn_table, look_up_g_prefer_fully_expanded)
 
 TEST(dfpn_table, look_up_g)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto t = Table();
-    auto n = Node();
+    auto& n = buffer.front();
     auto g = Game("4k/5/4P/5/5 b G");
     t.add(&n, g);
 
@@ -225,7 +218,7 @@ TEST(dfpn_table, look_up_g)
     CHECK_TRUE(nullptr == node_le);
     CHECK_TRUE(nullptr == node_e);
     CHECK_TRUE(&n == node_ge); // looked up unexpanded node
-    n.expand(next, g);
+    n.expand(buffer, g);
     t.look_up(Game("4k/5/4P/5/5 b -"), &node_ge, &node_e, &node_le);
     CHECK_TRUE(nullptr == node_le);
     CHECK_TRUE(nullptr == node_e);
@@ -234,16 +227,15 @@ TEST(dfpn_table, look_up_g)
 
 TEST(dfpn_table, look_up_g_prefer_no_mate_at_offence)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto n1 = Node();
     auto g1 = Game("3rk/3gs/5/5/5 b PSG");
-    n1.expand(next, g1);
+    n1.expand(buffer, g1);
     n1.backprop<Parameters>(false);
     CHECK_TRUE(n1.proved_no_mate(true));
     auto n2 = Node();
     auto g2 = Game("3rk/3gs/5/5/5 b PS");
-    n2.expand(next, g2);
+    n2.expand(buffer, g2);
     CHECK_TRUE(n2.fully_expanded());
     CHECK_FALSE(n2.proved());
     {
@@ -270,12 +262,11 @@ TEST(dfpn_table, look_up_g_prefer_no_mate_at_offence)
 
 TEST(dfpn_table, look_up_g_prefer_mate_at_defence)
 {
-    auto buffer = std::vector<Node>(100);
-    auto next = buffer.data();
+    vshogi::engine::ContiguousBuffer<Node> buffer{100u};
     auto n1 = Node();
     auto g1 = Game("4k/5/3GP/5/5 b psg");
     g1.apply(MT::make_move(SQ_2C, SQ_1B));
-    n1.expand(next, g1);
+    n1.expand(buffer, g1);
     n1.backprop<Parameters>(false);
     CHECK_TRUE(n1.fully_expanded());
     CHECK_TRUE(n1.proved_mate(false));
@@ -284,7 +275,7 @@ TEST(dfpn_table, look_up_g_prefer_mate_at_defence)
     {
         auto g = Game("4k/5/3SP/5/5 b ps");
         g.apply(MT::make_move(SQ_2C, SQ_1B));
-        n2.expand(next, g); // dummy
+        n2.expand(buffer, g); // dummy
     }
     CHECK_TRUE(n2.fully_expanded());
     CHECK_FALSE(n2.proved());
