@@ -4,6 +4,7 @@ from vshogi.engine._az import AlphaZero
 from vshogi.engine._dfpn import DfpnSearcher
 from vshogi.engine._engine import Engine
 from vshogi.engine._gaz import GumbelAlphaZero
+from vshogi.engine._mcgs import Mcgs
 from vshogi.engine._piece_value_func import piece_value_func
 from vshogi.engine._klent import Klent
 
@@ -13,6 +14,7 @@ _classes = [
     DfpnSearcher,
     Engine,
     GumbelAlphaZero,
+    Mcgs,
     Klent,
 ]
 _functions = [

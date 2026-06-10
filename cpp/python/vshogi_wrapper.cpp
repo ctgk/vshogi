@@ -3,6 +3,7 @@
 #include "vshogi/engine/az/node.hpp"
 #include "vshogi/engine/dfpn/node.hpp"
 #include "vshogi/engine/gaz/node.hpp"
+#include "vshogi/engine/mcgs/node.hpp"
 
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
@@ -131,6 +132,50 @@ void export_gaz_node(nb::module_& m)
             });
 }
 
+void export_mcgs_node(nb::module_& m)
+{
+    using Node = vshogi::engine::mcgs::Node;
+    using Edge = vshogi::engine::mcgs::Edge;
+    nb::class_<Node>(m, "McgsNode")
+        .def("get_visits", &Node::get_visits)
+        .def("get_prior_value", &Node::get_prior_value)
+        .def("get_value", &Node::get_value)
+        .def(
+            "get_actions",
+            [](const Node& self) {
+                std::vector<uint> out{};
+                out.reserve(self.count_childs());
+                for (const Edge* e = self.get_child(); e; e = e->get_sibling())
+                    out.emplace_back(e->get_action());
+                return out;
+            })
+        .def(
+            "get_probas",
+            [](const Node& self) {
+                std::vector<float> out{};
+                out.reserve(self.count_childs());
+                for (const Edge* e = self.get_child(); e; e = e->get_sibling())
+                    out.emplace_back(e->get_prior_proba());
+                return out;
+            })
+        .def(
+            "get_q_values",
+            [](const Node& self) -> nb::dict {
+                nb::dict out{};
+                for (auto e = self.get_child(); e; e = e->get_sibling())
+                    out[nb::cast(e->get_action())] = e->get_value();
+                return out;
+            })
+        .def(
+            "get_child_of",
+            [](const Node& self, const vshogi::move_t& action) -> nb::object {
+                const auto out = self.get_child_node_of(action);
+                if (out)
+                    return nb::cast(*out, nb::rv_policy::reference);
+                return nb::none();
+            });
+}
+
 NB_MODULE(_vshogi, m)
 {
     export_color_enum(m);
@@ -138,4 +183,5 @@ NB_MODULE(_vshogi, m)
     export_dfpn_node(m);
     export_az_node(m);
     export_gaz_node(m);
+    export_mcgs_node(m);
 }

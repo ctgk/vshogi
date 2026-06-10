@@ -9,6 +9,7 @@
 #include "vshogi/engine/az/searcher.hpp"
 #include "vshogi/engine/dfpn/searcher.hpp"
 #include "vshogi/engine/gaz/searcher.hpp"
+#include "vshogi/engine/mcgs/searcher.hpp"
 #include "vshogi/engine/piece_value.hpp"
 
 #include <nanobind/nanobind.h>
@@ -691,6 +692,70 @@ inline void export_gaz_searcher(nanobind::module_& m)
 }
 
 template <class Parameters>
+inline void export_mcgs_searcher(nanobind::module_& m)
+{
+    namespace nb = nanobind;
+    using Game = vshogi::Game<Parameters>;
+    using Node = vshogi::engine::mcgs::Node;
+    using Move = pyvshogi::Move<Parameters>;
+    using Searcher = vshogi::engine::mcgs::Searcher<Parameters>;
+
+    nb::class_<Searcher>(m, "Mcgs")
+        .def(nb::init<const uint, const uint, const uint>())
+        .def("init", &Searcher::init)
+        .def(
+            "search",
+            [](Searcher& self,
+               Game& game,
+               const float epsilon_greedy) -> nb::object {
+                const auto out = self.search(game, epsilon_greedy);
+                if (out == nullptr)
+                    return nb::none();
+                return nb::cast(*out, nb::rv_policy::reference);
+            },
+            nb::arg("game"),
+            nb::arg("epsilon_greedy"))
+        .def(
+            "simulate_expand_backprop",
+            [](Searcher& self,
+               Node* const leaf,
+               Game& game,
+               const float value,
+               const nb::ndarray<nb::numpy, float, nb::c_contig>&
+                   policy_logits) {
+                self.simulate_expand_backprop(
+                    leaf, game, value, policy_logits.data());
+            })
+        .def(
+            "apply",
+            [](Searcher& self, Game& g, const Move& m) {
+                self.apply(g, m.m_value);
+            })
+        .def(
+            "get_root",
+            [](Searcher& self) -> nb::object {
+                const Node& out = self.get_root();
+                return nb::cast(out, nb::rv_policy::reference);
+            })
+        .def("proved_mate", &Searcher::proved_mate)
+        .def("get_search_count", &Searcher::get_search_count)
+        .def(
+            "select_action",
+            [](const Searcher& self) { return Move(self.select_action()); })
+        .def(
+            "select_action",
+            [](const Searcher& self, const float temperature) {
+                return Move(self.select_action(temperature));
+            })
+        .def("get_mate_moves", [](Searcher& self, Game& g) {
+            std::vector<Move> out{};
+            for (auto&& m : self.get_mate_moves(g))
+                out.emplace_back(m);
+            return out;
+        });
+}
+
+template <class Parameters>
 inline void export_dfpn_searcher(nanobind::module_& m)
 {
     namespace nb = nanobind;
@@ -740,6 +805,7 @@ void export_classes(nanobind::module_& m)
     export_game<Parameters>(m);
     export_az_searcher<Parameters>(m);
     export_gaz_searcher<Parameters>(m);
+    export_mcgs_searcher<Parameters>(m);
     export_value_functions<Parameters>(m);
     export_dfpn_searcher<Parameters>(m);
 }

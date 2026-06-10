@@ -27,6 +27,7 @@ public:
 
     // clang-format off
     bool is_full() const { return m_next == cend(); }
+    auto size() const { return m_next - m_buffer.data(); }
     uint remaining() const { return static_cast<uint>(m_buffer.size()) - static_cast<uint>(m_next - m_buffer.data()) - 1u; }
     T& front() { return m_buffer.front(); }
     const T& front() const { return m_buffer.front(); }
@@ -43,7 +44,7 @@ private:
 
 template <class T>
 inline ContiguousBuffer<T>::ContiguousBuffer(const uint n)
-    : m_buffer(n + 2u), m_next{} // +2u for begin and end
+    : m_buffer(n + 1u + T::can_be_root()), m_next{} // +2u for begin and end
 {
     init();
 }
@@ -52,8 +53,11 @@ template <class T>
 inline void ContiguousBuffer<T>::init()
 {
     m_buffer.front().init();
-    m_next = std::next(m_buffer.data());
-    m_next->init();
+    m_next = m_buffer.data();
+    if constexpr (T::can_be_root()) {
+        ++m_next;
+        m_next->init();
+    }
     m_buffer.back().init_as_end();
 }
 

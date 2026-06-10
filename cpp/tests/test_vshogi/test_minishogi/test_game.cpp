@@ -1,3 +1,5 @@
+#include <set>
+
 #include "vshogi/common/notation.hpp"
 #include "vshogi/variants/minishogi.hpp"
 
@@ -34,6 +36,51 @@ TEST(test_minishogi_game, get_board_turn_hash)
     auto g2 = Game("4k/5/4G/5/5 b GS");
     CHECK_TRUE(g1.get_zobrist_hash() != g2.get_zobrist_hash());
     CHECK_EQUAL(g1.get_board_turn_hash(), g2.get_board_turn_hash());
+}
+
+TEST(test_minishogi_game, hash_with_history)
+{
+    {
+        std::set<vshogi::ZobristHashType> hashes{};
+        auto g = Game("4k/5/5/5/4K b -");
+        hashes.emplace(g.hash_with_history());
+        for (auto m : {"1e1d", "1a1b", "1d1e", "1b1a"}) {
+            g.apply(MT::make_move(m));
+            hashes.emplace(g.hash_with_history());
+        }
+        CHECK_EQUAL(5u, hashes.size());
+    }
+    {
+        std::set<vshogi::ZobristHashType> hashes{};
+        auto g = Game("GGPPP/PP1K1/5/pp1k1/ggppp b -");
+        hashes.emplace(g.hash_with_history());
+        for (auto m : {"2b1b", "2d1d", "1b2b", "1d2d"}) {
+            g.apply(MT::make_move(m));
+            hashes.emplace(g.hash_with_history());
+        }
+        CHECK_EQUAL(5u, hashes.size());
+    }
+    {
+        auto g1 = Game("3pS/4P/5/5/5 b -");
+        g1.apply(MT::make_move("1a2b+")).apply(MT::make_move("2a2b"));
+        const auto h1 = g1.hash_with_history();
+        auto g2 = Game("3pS/4P/5/5/5 b -");
+        g2.apply(MT::make_move("1a2b")).apply(MT::make_move("2a2b"));
+        const auto h2 = g2.hash_with_history();
+        CHECK_EQUAL(h1, h2);
+    }
+    {
+        auto g1 = Game("3gB/5/5/5/4K b -");
+        auto g2 = Game("3gB/5/5/5/4K b -");
+        CHECK_EQUAL(g1.get_zobrist_hash(), g2.get_zobrist_hash());
+        g1.apply(MT::make_move("1a2b")).apply(MT::make_move("2a2b"));
+        g2.apply(MT::make_move("1a3c"))
+            .apply(MT::make_move("2a3a"))
+            .apply(MT::make_move("3c2b"))
+            .apply(MT::make_move("3a2b"));
+        CHECK_EQUAL(g1.get_zobrist_hash(), g2.get_zobrist_hash());
+        CHECK_TRUE(g1.hash_with_history() != g2.hash_with_history());
+    }
 }
 
 TEST(test_minishogi_game, apply)

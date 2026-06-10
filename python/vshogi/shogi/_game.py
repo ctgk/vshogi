@@ -4,6 +4,7 @@ from vshogi.shogi._shogi import (
     BoardPiece,
     DfpnSearcher,
     GumbelAlphaZero,
+    Mcgs,
     Move,
     _Game as _ShogiGame,
     piece_value_func,
@@ -72,6 +73,10 @@ LNSGKGSNL w - 2")
     @classmethod
     def _get_gaz_searcher_class(cls):
         return GumbelAlphaZero
+
+    @classmethod
+    def _get_mcgs_class(cls):
+        return Mcgs
 
     @classmethod
     def _get_dfpn_searcher_class(cls) -> type:

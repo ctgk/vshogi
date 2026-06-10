@@ -155,9 +155,21 @@ public:
     {
         return m_hash;
     }
-    std::uint64_t get_board_turn_hash() const
+    ZobristHashType get_board_turn_hash() const
     {
         return get_zobrist_hash() ^ m_state.hash_stands();
+    }
+    ZobristHashType hash_with_history() const
+    {
+        const uint r = count_repetitions();
+        constexpr ZobristHashType table[] = {
+            0x11111111,
+            0x22222222,
+            0x44444444,
+            0x88888888,
+        };
+        const auto ply_hash = static_cast<ZobristHashType>(ply()) << 32;
+        return m_hash ^ table[r - 1u] ^ ply_hash;
     }
 
     /**

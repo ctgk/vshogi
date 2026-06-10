@@ -102,7 +102,7 @@ void Searcher<N>::apply(const move_t& action)
 {
     remove_unselected_nodes(action);
     assert(&m_buffer.front() < m_buffer.next());
-    assert(m_buffer.next() < m_nodes.cend());
+    assert(m_buffer.next() < m_buffer.cend());
     m_buffer.front().init_as_begin();
 }
 

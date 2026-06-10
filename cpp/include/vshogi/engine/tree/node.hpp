@@ -28,6 +28,7 @@ public:
     const Derived* get_child() const { return m_child; }
     const Derived* get_child_1st() const { return m_child_1st; }
     bool has_child() const { return static_cast<bool>(m_child); }
+    static constexpr bool can_be_root() { return true; }
     // clang-format on
     void init()
     {
