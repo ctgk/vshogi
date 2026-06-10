@@ -1,5 +1,4 @@
 import contextlib
-import multiprocessing
 import os
 import typing as tp
 from glob import glob
@@ -88,7 +87,7 @@ class _SelfPlayWorker:
                 for prev in previous
             ]
         else:
-            timeout_second = 5 * 60  # 5 minutes
+            timeout_second = 12 * 60 * 60  # 12 hours
             with _tqdm_joblib(
                 tqdm(
                     total=len(previous),
@@ -96,29 +95,18 @@ class _SelfPlayWorker:
                     ncols=80,
                 ),
             ):
-                for i in range(1, 4):
-                    try:
-                        records: list[vs.Record] = Parallel(
-                            n_jobs=min(self._n_jobs, len(previous)),
-                            timeout=timeout_second,
-                        )(
-                            delayed(self._validate)(
-                                latest,
-                                prev,
-                                num_games,
-                                show_pbar=False,
-                            )
-                            for prev in previous
-                        )
-                    except multiprocessing.context.TimeoutError:
-                        msg = (
-                            "Caught TimeoutError in '_SelfPlayWorker.validate'"
-                            f" in the {i}-th try out of 4 tries, "
-                            "retrying validation again."
-                        )
-                        print(msg)
-                    finally:
-                        break
+                records: list[vs.Record] = Parallel(
+                    n_jobs=min(self._n_jobs, len(previous)),
+                    timeout=timeout_second,
+                )(
+                    delayed(self._validate)(
+                        latest,
+                        prev,
+                        num_games,
+                        show_pbar=False,
+                    )
+                    for prev in previous
+                )
             for prev, record in zip(previous, records):
                 msg = (
                     f"{latest.split('/')[-1].split('.')[0]} vs "
@@ -243,7 +231,7 @@ class _SelfPlayWorker:
             if tflite_path is None
             else tflite_path.split('/')[-1].split('.')[0]
         )
-        timeout_second = 10 * 60  # 10 minutes
+        timeout_second = 12 * 60 * 60  # 12 hours
         with _tqdm_joblib(
             tqdm(
                 total=len(kifu_index_groups),
