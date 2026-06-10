@@ -39,14 +39,16 @@ class Data:
             raise TypeError(f"Cannot merge Data with {type(other)} type.")
         if self.sfen != other.sfen:
             raise ValueError("Cannot merge data with different game positions")
+        assert self.count == 1
         total_count = self.count + other.count
         return Data(
             sfen=self.sfen,
             policy=self._normalize(
                 {
-                    m: (
-                        self.policy.get(m, 0.0)
-                        + other.count * other.policy.get(m, 0.0)
+                    m: self._weighted_or_moving_average(
+                        self.policy.get(m, 0.0),
+                        other.policy.get(m, 0.0),
+                        other.count,
                     )
                     for m in (
                         set(self.policy.keys()) | set(other.policy.keys())
@@ -54,14 +56,16 @@ class Data:
                 }
             ),
             value01=(
-                (self.value01 + other.count * other.value01) / total_count
+                self._weighted_or_moving_average(
+                    self.value01, other.value01, other.count
+                )
                 if isinstance(self.value01, float)
                 else {
-                    m: (
-                        self.value01.get(m, 0.5)
-                        + other.count * other.value01.get(m, 0.5)
+                    m: self._weighted_or_moving_average(
+                        self.value01.get(m, 0.5),
+                        other.value01.get(m, 0.5),
+                        other.count,
                     )
-                    / total_count
                     for m in set(self.value01.keys())
                     | set(other.value01.keys())
                 }
@@ -70,6 +74,12 @@ class Data:
             malignancy=self.malignancy,
             count=total_count,
         )
+
+    def _weighted_or_moving_average(self, a, b, nb: int):
+        n = self.count + nb
+        if n < 100:
+            return (a * self.count + b * nb) / n
+        return 0.01 * a + 0.99 * b
 
     @staticmethod
     def _normalize(d: dict) -> dict:
