@@ -1,4 +1,5 @@
 use crate::common::direction::Direction;
+use crate::common::full_piece_type::FullPieceTypes;
 use crate::common::parameters::BaseParameters;
 use crate::common::piece::BasePiece;
 use crate::common::piece_type::BasePieceType;
@@ -14,6 +15,19 @@ impl BaseParameters for Parameters {
     const NUM_FILES: u8 = 5;
     const NUM_RANKS: u8 = 5;
     const NUM_PROMOTION_RANKS: u8 = 1;
+    const PIECE_TYPES: &'static [FullPieceTypes] = &[
+        FullPieceTypes::Fu,
+        FullPieceTypes::Gi,
+        FullPieceTypes::Ka,
+        FullPieceTypes::Hi,
+        FullPieceTypes::Ki,
+        FullPieceTypes::Ou,
+        FullPieceTypes::To,
+        FullPieceTypes::Ng,
+        FullPieceTypes::Um,
+        FullPieceTypes::Ry,
+        FullPieceTypes::Na,
+    ];
 }
 
 #[repr(u8)]
