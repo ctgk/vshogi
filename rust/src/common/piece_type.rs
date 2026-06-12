@@ -35,6 +35,17 @@ pub trait BasePieceType<P: BaseParameters>: Copy + Into<u8> + From<u8> {
             Self::from(P::NUM_PIECE_TYPES)
         }
     }
+    fn from_char(c: char) -> Self {
+        use crate::common::full_piece_type::FullPieceTypes;
+        let fpt = FullPieceTypes::to_fpt(c);
+        let arr = P::PIECE_TYPES;
+        for (i, &entry) in arr.iter().enumerate() {
+            if entry == fpt {
+                return Self::from(i as u8);
+            }
+        }
+        Self::from(P::NUM_PIECE_TYPES)
+    }
     fn is_slider(self) -> bool {
         let s: u8 = self.into();
         if (s as usize) < (P::NUM_PIECE_TYPES as usize) {

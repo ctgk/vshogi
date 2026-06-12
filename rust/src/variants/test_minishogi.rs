@@ -154,6 +154,27 @@ mod test_piece_type {
             assert_eq!(pt.is_attacking_to(Direction::SEa), true);
         }
     }
+
+    #[test]
+    fn test_from_char() {
+        // lowercase
+        assert_eq!(PieceType::from_char('p'), PieceType::Fu);
+        assert_eq!(PieceType::from_char('s'), PieceType::Gi);
+        assert_eq!(PieceType::from_char('b'), PieceType::Ka);
+        assert_eq!(PieceType::from_char('r'), PieceType::Hi);
+        assert_eq!(PieceType::from_char('g'), PieceType::Ki);
+        assert_eq!(PieceType::from_char('k'), PieceType::Ou);
+        assert_eq!(PieceType::from_char('a'), PieceType::Na);
+
+        // uppercase
+        assert_eq!(PieceType::from_char('P'), PieceType::Fu);
+        assert_eq!(PieceType::from_char('S'), PieceType::Gi);
+        assert_eq!(PieceType::from_char('B'), PieceType::Ka);
+        assert_eq!(PieceType::from_char('R'), PieceType::Hi);
+        assert_eq!(PieceType::from_char('G'), PieceType::Ki);
+        assert_eq!(PieceType::from_char('K'), PieceType::Ou);
+        assert_eq!(PieceType::from_char('A'), PieceType::Na);
+    }
 }
 
 mod test_stand {
@@ -271,14 +292,7 @@ mod test_stand {
     fn set_sfen() {
         let sfen_holdings = "2bP2GSR 3";
         let mut s = BlackWhiteStands::<Parameters>::new();
-        let rem = s.set_sfen_with_mapper(sfen_holdings, |ch| match ch.to_ascii_lowercase() {
-            'p' => Some(PieceType::Fu),
-            's' => Some(PieceType::Gi),
-            'b' => Some(PieceType::Ka),
-            'r' => Some(PieceType::Hi),
-            'g' => Some(PieceType::Ki),
-            _ => None,
-        });
+        let rem = s.set_sfen(sfen_holdings);
         assert_eq!(s.white().count(PieceType::Fu), 0);
         assert_eq!(s.white().count(PieceType::Gi), 0);
         assert_eq!(s.white().count(PieceType::Ki), 0);
@@ -304,14 +318,7 @@ mod test_stand {
         {
             let sfen_holdings = "2bP2GSR 3";
             let mut s = BlackWhiteStands::<Parameters>::new();
-            let _ = s.set_sfen_with_mapper(sfen_holdings, |ch| match ch.to_ascii_lowercase() {
-                'p' => Some(PieceType::Fu),
-                's' => Some(PieceType::Gi),
-                'b' => Some(PieceType::Ka),
-                'r' => Some(PieceType::Hi),
-                'g' => Some(PieceType::Ki),
-                _ => None,
-            });
+            let _ = s.set_sfen(sfen_holdings);
             let actual = stands_to_sfen(&s);
             assert_eq!(actual, "R2GSP2b");
         }

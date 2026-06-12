@@ -164,15 +164,10 @@ impl<P: BaseParameters> BlackWhiteStands<P> {
         &self.stands[1]
     }
 
-    /// Parse SFEN holdings using a caller-provided mapper that converts a
-    /// single-letter piece code (lowercase for white, uppercase for black)
-    /// into an optional `PieceType` for this variant.
-    /// Returns the remainder slice of the input (like the C++ API).
-    pub fn set_sfen_with_mapper<'a>(
-        &mut self,
-        sfen: &'a str,
-        mut mapper: impl FnMut(char) -> Option<P::PieceType>,
-    ) -> &'a str {
+    pub fn set_sfen<'a>(&mut self, sfen: &'a str) -> &'a str
+    where
+        P::PieceType: crate::common::piece_type::BasePieceType<P> + PartialEq,
+    {
         let mut num: u32 = 0;
         let bytes = sfen.as_bytes();
         let mut i = 0usize;
@@ -195,8 +190,11 @@ impl<P: BaseParameters> BlackWhiteStands<P> {
                 i += 1;
                 continue;
             }
-            // letter: map and add
-            if let Some(pt) = mapper(c) {
+            // letter: map via BasePieceType::from_char and add if valid
+            use crate::common::piece_type::BasePieceType;
+            let pt = P::PieceType::from_char(c);
+            // check sentinel NA (not available)
+            if pt != P::PieceType::from(P::NUM_PIECE_TYPES) {
                 let count = if num == 0 { 1 } else { num };
                 if c.is_ascii_uppercase() {
                     // black
