@@ -46,7 +46,7 @@ impl FullPieceTypes {
         (self as u8) > (FullPieceTypes::Ou as u8)
     }
 
-    pub fn is_promotion_fully_superior(self) -> bool {
+    pub fn is_promotion_always_better(self) -> bool {
         matches!(
             self,
             FullPieceTypes::Fu | FullPieceTypes::Ka | FullPieceTypes::Hi

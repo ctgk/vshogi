@@ -11,11 +11,10 @@ pub trait BasePieceType<P: BaseParameters>: Copy + Into<u8> + From<u8> {
     fn is_promoted(self) -> bool {
         self.into() > P::NUM_STAND_PIECE_TYPES
     }
-    fn is_promotion_always_better(self) -> bool;
-    fn is_promotion_fully_superior(self) -> bool {
+    fn is_promotion_always_better(self) -> bool {
         let s: u8 = self.into();
         if (s as usize) < (P::NUM_PIECE_TYPES as usize) {
-            P::PIECE_TYPES[s as usize].is_promotion_fully_superior()
+            P::PIECE_TYPES[s as usize].is_promotion_always_better()
         } else {
             false
         }
@@ -36,6 +35,13 @@ pub trait BasePieceType<P: BaseParameters>: Copy + Into<u8> + From<u8> {
             Self::from(P::NUM_PIECE_TYPES)
         }
     }
-    fn is_slider(self) -> bool;
+    fn is_slider(self) -> bool {
+        let s: u8 = self.into();
+        if (s as usize) < (P::NUM_PIECE_TYPES as usize) {
+            P::PIECE_TYPES[s as usize].is_slider()
+        } else {
+            false
+        }
+    }
     fn is_attacking_to(self, dir: Direction) -> bool;
 }

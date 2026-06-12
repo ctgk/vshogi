@@ -48,12 +48,6 @@ pub enum PieceType {
 }
 
 impl BasePieceType<Parameters> for PieceType {
-    fn is_promotion_always_better(self) -> bool {
-        matches!(self, Self::Fu | Self::Ka | Self::Hi)
-    }
-    fn is_slider(self) -> bool {
-        matches!(self, Self::Ka | Self::Hi | Self::Um | Self::Ry)
-    }
     fn is_attacking_to(self, dir: Direction) -> bool {
         #[rustfmt::skip]
         const TABLE: [[bool; 9]; 11] = [
