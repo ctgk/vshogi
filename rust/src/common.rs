@@ -9,4 +9,5 @@ pub mod piece;
 pub mod piece_type;
 pub mod result;
 pub mod square;
+pub mod stand;
 pub mod utils;

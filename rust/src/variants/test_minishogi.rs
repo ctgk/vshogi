@@ -156,6 +156,195 @@ mod test_piece_type {
     }
 }
 
+mod test_stand {
+    use crate::common::stand::{BlackWhiteStands, Stand};
+    use crate::variants::minishogi::{Parameters, Piece, PieceType};
+
+    fn stand_from_counts(counts: [u32; 5]) -> Stand<Parameters> {
+        let mut s = Stand::<Parameters>::new();
+        for (i, &c) in counts.iter().enumerate() {
+            let pt = PieceType::from(i as u8);
+            for _ in 0..c {
+                s.add(pt, 1);
+            }
+        }
+        s
+    }
+
+    fn piece_type_to_char(pt: PieceType) -> char {
+        match pt {
+            PieceType::Fu => 'p',
+            PieceType::Gi => 's',
+            PieceType::Ka => 'b',
+            PieceType::Hi => 'r',
+            PieceType::Ki => 'g',
+            _ => '?',
+        }
+    }
+
+    fn stands_to_sfen(s: &BlackWhiteStands<Parameters>) -> String {
+        // pieces_in_sfen_order for minishogi: HI, KA, KI, GI, FU
+        let order = [
+            PieceType::Hi,
+            PieceType::Ka,
+            PieceType::Ki,
+            PieceType::Gi,
+            PieceType::Fu,
+        ];
+        if !s.black().any() && !s.white().any() {
+            return "-".to_string();
+        }
+        let mut out = String::new();
+        for idx in 0..2 {
+            for &pt in order.iter() {
+                let num = if idx == 0 {
+                    s.black().count(pt)
+                } else {
+                    s.white().count(pt)
+                };
+                if num == 0 {
+                    continue;
+                }
+                if num > 9 {
+                    out.push('1');
+                }
+                if num > 1 {
+                    out.push((b'0' + (num % 10) as u8) as char);
+                }
+                let mut c = piece_type_to_char(pt);
+                if idx == 0 {
+                    c = c.to_ascii_uppercase();
+                }
+                out.push(c);
+            }
+        }
+        out
+    }
+
+    #[test]
+    fn count() {
+        let s = stand_from_counts([0, 1, 2, 0, 2]);
+        assert_eq!(s.count(PieceType::Fu), 0);
+        assert_eq!(s.count(PieceType::Gi), 1);
+        assert_eq!(s.count(PieceType::Ka), 2);
+        assert_eq!(s.count(PieceType::Hi), 0);
+        assert_eq!(s.count(PieceType::Ki), 2);
+    }
+
+    #[test]
+    fn exist() {
+        let s = stand_from_counts([0, 1, 2, 0, 2]);
+        assert!(!s.exist(PieceType::Fu));
+        assert!(s.exist(PieceType::Gi));
+        assert!(s.exist(PieceType::Ka));
+        assert!(!s.exist(PieceType::Hi));
+        assert!(s.exist(PieceType::Ki));
+    }
+
+    #[test]
+    fn any() {
+        assert!(stand_from_counts([0, 0, 0, 1, 0]).any());
+        assert!(!stand_from_counts([0, 0, 0, 0, 0]).any());
+    }
+
+    #[test]
+    fn add() {
+        let mut s = Stand::<Parameters>::new();
+        s.add(PieceType::Fu, 1);
+        assert_eq!(s.count(PieceType::Fu), 1);
+        let mut s2 = Stand::<Parameters>::new();
+        s2.add(PieceType::Gi, 1);
+        assert_eq!(s2.count(PieceType::Fu), 0);
+        let mut s3 = Stand::<Parameters>::new();
+        s3.add(PieceType::Hi, 1);
+        assert_eq!(s3.count(PieceType::Hi), 1);
+    }
+
+    #[test]
+    fn subtract() {
+        let mut s = stand_from_counts([1, 0, 0, 0, 0]);
+        s.subtract(PieceType::Fu);
+        assert_eq!(s.count(PieceType::Fu), 0);
+    }
+
+    #[test]
+    fn set_sfen() {
+        let sfen_holdings = "2bP2GSR 3";
+        let mut s = BlackWhiteStands::<Parameters>::new();
+        let rem = s.set_sfen_with_mapper(sfen_holdings, |ch| match ch.to_ascii_lowercase() {
+            'p' => Some(PieceType::Fu),
+            's' => Some(PieceType::Gi),
+            'b' => Some(PieceType::Ka),
+            'r' => Some(PieceType::Hi),
+            'g' => Some(PieceType::Ki),
+            _ => None,
+        });
+        assert_eq!(s.white().count(PieceType::Fu), 0);
+        assert_eq!(s.white().count(PieceType::Gi), 0);
+        assert_eq!(s.white().count(PieceType::Ki), 0);
+        assert_eq!(s.white().count(PieceType::Ka), 2);
+        assert_eq!(s.white().count(PieceType::Hi), 0);
+        assert_eq!(s.black().count(PieceType::Fu), 1);
+        assert_eq!(s.black().count(PieceType::Gi), 1);
+        assert_eq!(s.black().count(PieceType::Ki), 2);
+        assert_eq!(s.black().count(PieceType::Ka), 0);
+        assert_eq!(s.black().count(PieceType::Hi), 1);
+        // remainder should start with '3' and have length 1
+        assert_eq!(rem.as_bytes()[0], b'3');
+        assert_eq!(rem.len(), 1);
+    }
+
+    #[test]
+    fn to_sfen() {
+        {
+            let s = BlackWhiteStands::<Parameters>::new();
+            let actual = stands_to_sfen(&s);
+            assert_eq!(actual, "-");
+        }
+        {
+            let sfen_holdings = "2bP2GSR 3";
+            let mut s = BlackWhiteStands::<Parameters>::new();
+            let _ = s.set_sfen_with_mapper(sfen_holdings, |ch| match ch.to_ascii_lowercase() {
+                'p' => Some(PieceType::Fu),
+                's' => Some(PieceType::Gi),
+                'b' => Some(PieceType::Ka),
+                'r' => Some(PieceType::Hi),
+                'g' => Some(PieceType::Ki),
+                _ => None,
+            });
+            let actual = stands_to_sfen(&s);
+            assert_eq!(actual, "R2GSP2b");
+        }
+    }
+
+    #[test]
+    fn operators() {
+        let a = stand_from_counts([0, 0, 0, 0, 1]);
+        let b = stand_from_counts([0, 0, 0, 0, 0]);
+        assert!(a >= b);
+        let c = stand_from_counts([0, 1, 0, 0, 0]);
+        assert!(!(a >= c));
+    }
+
+    #[test]
+    fn rotate() {
+        let mut s = BlackWhiteStands::<Parameters>::new();
+        // add FU on white's stand: captured black piece B_Fu -> add to white
+        s.add_captured_piece(Piece::BlFu);
+        // add HI on black's stand: captured white Hi -> add to black
+        s.add_captured_piece(Piece::WhHi);
+        assert_eq!(s.black().count(PieceType::Fu), 0);
+        assert_eq!(s.black().count(PieceType::Hi), 1);
+        assert_eq!(s.white().count(PieceType::Fu), 1);
+        assert_eq!(s.white().count(PieceType::Hi), 0);
+        let actual = s.rotate();
+        assert_eq!(actual.black().count(PieceType::Fu), 1);
+        assert_eq!(actual.black().count(PieceType::Hi), 0);
+        assert_eq!(actual.white().count(PieceType::Fu), 0);
+        assert_eq!(actual.white().count(PieceType::Hi), 1);
+    }
+}
+
 mod test_piece {
     use crate::common::color::Color;
     use crate::common::direction::Direction;
