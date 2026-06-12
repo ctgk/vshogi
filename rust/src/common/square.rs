@@ -8,8 +8,6 @@ pub trait BaseFile<P: BaseParameters>: Copy + Into<u8> + From<u8> {
 pub trait BaseRank<P: BaseParameters>: Copy + Into<u8> + From<u8> {}
 
 pub trait BaseSquare<P: BaseParameters>: Copy + Into<u8> + From<u8> {
-    type File: BaseFile<P>;
-    type Rank: BaseRank<P>;
     const NUM_SQUARES: u8 = P::NUM_FILES * P::NUM_RANKS;
     fn new(f: impl BaseFile<P>, r: impl BaseRank<P>) -> Self {
         if f.into() >= P::NUM_FILES || r.into() >= P::NUM_RANKS {
@@ -17,11 +15,11 @@ pub trait BaseSquare<P: BaseParameters>: Copy + Into<u8> + From<u8> {
         }
         Self::from(f.into() * P::NUM_RANKS + r.into())
     }
-    fn file(self) -> Self::File {
-        Self::File::from(self.into() / P::NUM_RANKS)
+    fn file(self) -> P::File {
+        P::File::from(self.into() / P::NUM_RANKS)
     }
-    fn rank(self) -> Self::Rank {
-        Self::Rank::from(self.into() % P::NUM_RANKS)
+    fn rank(self) -> P::Rank {
+        P::Rank::from(self.into() % P::NUM_RANKS)
     }
     fn hflip(self) -> Self {
         Self::new(self.file().hflip(), self.rank())
@@ -45,8 +43,8 @@ pub trait BaseSquare<P: BaseParameters>: Copy + Into<u8> + From<u8> {
         const TABLE_DF: [i32; 9] = [1, 0, -1, 1, 0, -1, 1, 0, -1];
         const TABLE_DR: [i32; 9] = [-1, -1, -1, 0, 0, 0, 1, 1, 1];
         let i = (dir as i32 + 4) as usize;
-        let f = Self::File::from((self.file().into() as i32 + TABLE_DF[i]) as u8);
-        let r = Self::Rank::from((self.rank().into() as i32 + TABLE_DR[i]) as u8);
+        let f = P::File::from((self.file().into() as i32 + TABLE_DF[i]) as u8);
+        let r = P::Rank::from((self.rank().into() as i32 + TABLE_DR[i]) as u8);
         Self::new(f, r)
     }
 }

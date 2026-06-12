@@ -10,6 +10,8 @@ pub struct Parameters;
 
 impl BaseParameters for Parameters {
     type PieceType = PieceType;
+    type File = File;
+    type Rank = Rank;
     const NUM_PIECE_TYPES: u8 = 10;
     const NUM_STAND_PIECE_TYPES: u8 = 5;
     const NUM_FILES: u8 = 5;
@@ -119,7 +121,4 @@ pub enum Square {
     SqNa = 25,
 }
 
-impl BaseSquare<Parameters> for Square {
-    type File = File;
-    type Rank = Rank;
-}
+impl BaseSquare<Parameters> for Square {}

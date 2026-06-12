@@ -1,6 +1,9 @@
 use crate::common::full_piece_type::FullPieceTypes;
+use crate::common::square::{BaseFile, BaseRank};
 
 pub trait BaseParameters: Sized {
+    type File: BaseFile<Self>;
+    type Rank: BaseRank<Self>;
     /// The piece-type enum used by this variant.
     type PieceType: crate::common::piece_type::BasePieceType<Self>;
 
