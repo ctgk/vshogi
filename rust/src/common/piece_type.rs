@@ -1,4 +1,5 @@
 use crate::common::direction::Direction;
+use crate::common::full_piece_type::FullPieceTypes;
 use crate::common::parameters::BaseParameters;
 
 pub trait BasePieceType<P: BaseParameters>: Copy + Into<u8> + From<u8> {
@@ -43,5 +44,12 @@ pub trait BasePieceType<P: BaseParameters>: Copy + Into<u8> + From<u8> {
             false
         }
     }
-    fn is_attacking_to(self, dir: Direction) -> bool;
+    fn is_attacking_to(self, dir: Direction) -> bool {
+        let s: u8 = self.into();
+        if (s as usize) < (P::NUM_PIECE_TYPES as usize) {
+            P::PIECE_TYPES[s as usize].is_attacking_to(dir)
+        } else {
+            false
+        }
+    }
 }

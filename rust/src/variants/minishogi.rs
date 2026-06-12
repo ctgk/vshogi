@@ -47,26 +47,7 @@ pub enum PieceType {
     Na, // Not available
 }
 
-impl BasePieceType<Parameters> for PieceType {
-    fn is_attacking_to(self, dir: Direction) -> bool {
-        #[rustfmt::skip]
-        const TABLE: [[bool; 9]; 11] = [
-            // NWe,   Nth,   NEa,   Wst,          Est,   SWe,   Sth,   SEa
-            [false,  true, false, false, false, false, false, false, false],  // Fu
-            [ true,  true,  true, false, false, false,  true, false,  true],  // Gi
-            [ true, false,  true, false, false, false,  true, false,  true],  // Ka
-            [false,  true, false,  true, false,  true, false,  true, false],  // Hi
-            [ true,  true,  true,  true, false,  true, false,  true, false],  // Ki
-            [ true,  true,  true,  true, false,  true,  true,  true,  true],  // Ou
-            [ true,  true,  true,  true, false,  true, false,  true, false],  // To
-            [ true,  true,  true,  true, false,  true, false,  true, false],  // Ng
-            [ true,  true,  true,  true, false,  true,  true,  true,  true],  // Um
-            [ true,  true,  true,  true, false,  true,  true,  true,  true],  // Ry
-            [false, false, false, false, false, false, false, false, false],  // Na
-        ];
-        TABLE[self as usize][(dir as i8 + 4) as usize]
-    }
-}
+impl BasePieceType<Parameters> for PieceType {}
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, IntoPrimitive)]
