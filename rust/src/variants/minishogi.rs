@@ -12,6 +12,7 @@ impl BaseParameters for Parameters {
     type PieceType = PieceType;
     type File = File;
     type Rank = Rank;
+    type Square = Square;
     const NUM_PIECE_TYPES: u8 = 10;
     const NUM_STAND_PIECE_TYPES: u8 = 5;
     const NUM_FILES: u8 = 5;

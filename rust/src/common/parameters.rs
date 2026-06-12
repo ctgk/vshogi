@@ -2,10 +2,10 @@ use crate::common::full_piece_type::FullPieceTypes;
 use crate::common::square::{BaseFile, BaseRank};
 
 pub trait BaseParameters: Sized {
+    type PieceType: crate::common::piece_type::BasePieceType<Self>;
     type File: BaseFile<Self>;
     type Rank: BaseRank<Self>;
-    /// The piece-type enum used by this variant.
-    type PieceType: crate::common::piece_type::BasePieceType<Self>;
+    type Square: crate::common::square::BaseSquare<Self>;
 
     const NUM_PIECE_TYPES: u8;
     const NUM_STAND_PIECE_TYPES: u8;

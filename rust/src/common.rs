@@ -3,6 +3,7 @@ pub mod config;
 pub mod direction;
 pub mod full_piece_type;
 pub mod magic;
+pub mod r#move;
 pub mod parameters;
 pub mod piece;
 pub mod piece_type;
