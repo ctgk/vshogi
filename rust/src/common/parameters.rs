@@ -1,6 +1,9 @@
 use crate::common::full_piece_type::FullPieceTypes;
 
-pub trait BaseParameters {
+pub trait BaseParameters: Sized {
+    /// The piece-type enum used by this variant.
+    type PieceType: crate::common::piece_type::BasePieceType<Self>;
+
     const NUM_PIECE_TYPES: u8;
     const NUM_STAND_PIECE_TYPES: u8;
     const NUM_FILES: u8;

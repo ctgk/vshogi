@@ -4,8 +4,6 @@ use crate::common::parameters::BaseParameters;
 use crate::common::piece_type::BasePieceType;
 
 pub trait BasePiece<P: BaseParameters>: Copy + Into<u8> + From<u8> {
-    type PieceType: BasePieceType<P>;
-
     fn new(c: Color, pt: impl BasePieceType<P>) -> Self {
         let pt = pt.into();
         if (c == Color::None) || (pt == P::NUM_PIECE_TYPES) {
@@ -22,12 +20,12 @@ pub trait BasePiece<P: BaseParameters>: Copy + Into<u8> + From<u8> {
         }
         Color::None
     }
-    fn to_piece_type(self) -> Self::PieceType {
+    fn to_piece_type(self) -> P::PieceType {
         let s: u8 = self.into();
         if s < P::NUM_PIECE_TYPES {
-            return Self::PieceType::from(s);
+            return P::PieceType::from(s);
         }
-        Self::PieceType::from(s - P::NUM_PIECE_TYPES)
+        P::PieceType::from(s - P::NUM_PIECE_TYPES)
     }
     fn is_promotable(self) -> bool {
         self.to_piece_type().is_promotable()

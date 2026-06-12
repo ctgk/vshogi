@@ -1,5 +1,4 @@
 use crate::common::direction::Direction;
-use crate::common::full_piece_type::FullPieceTypes;
 use crate::common::parameters::BaseParameters;
 
 pub trait BasePieceType<P: BaseParameters>: Copy + Into<u8> + From<u8> {

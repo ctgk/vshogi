@@ -1,4 +1,3 @@
-use crate::common::direction::Direction;
 use crate::common::full_piece_type::FullPieceTypes;
 use crate::common::parameters::BaseParameters;
 use crate::common::piece::BasePiece;
@@ -10,6 +9,7 @@ use num_enum::IntoPrimitive;
 pub struct Parameters;
 
 impl BaseParameters for Parameters {
+    type PieceType = PieceType;
     const NUM_PIECE_TYPES: u8 = 10;
     const NUM_STAND_PIECE_TYPES: u8 = 5;
     const NUM_FILES: u8 = 5;
@@ -76,9 +76,7 @@ pub enum Piece {
     Void, // Empty square
 }
 
-impl BasePiece<Parameters> for Piece {
-    type PieceType = PieceType;
-}
+impl BasePiece<Parameters> for Piece {}
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromPrimitive, IntoPrimitive)]
