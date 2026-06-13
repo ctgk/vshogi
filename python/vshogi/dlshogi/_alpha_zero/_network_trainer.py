@@ -59,6 +59,7 @@ class _NetworkTrainer:
         self._buffer = ReplayBuffer(
             buffer_size=kwargs["max_dataset_size"] // 2,
             dedupe=kwargs["dedupe_dataset"],
+            feature_promotion_zone=kwargs["network_promotion_zone"],
         )
         self._min_dataset_size = kwargs["min_dataset_size"]
 
@@ -123,6 +124,7 @@ class _NetworkTrainer:
             hidden_channels=self._network["hiddens"],
             bottleneck_channels=self._network["bottlenecks"],
             num_backbone_blocks=self._network["blocks"],
+            feature_promotion_zone=self._network["promotion_zone"],
         )
         optimizer = th.optim.AdamW(
             network.parameters(),
@@ -259,7 +261,9 @@ class _NetworkTrainer:
     def _to_edge_model(self, network: th.nn.Module) -> tp.Any:
         sample_inputs = th.randn(
             1,
-            *self._game_class.dlshogi_feature_shape,
+            self._game_class.feature_channels
+            + self._buffer._feature_promotion_zone,
+            *self._game_class.dlshogi_feature_shape[1:],
         )
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -397,6 +401,12 @@ class _NetworkTrainer:
                     "Number of residual blocks in the backbone network. "
                     "Defaults: minishogi=3, judkins_shogi=4, shogi=8."
                 ),
+            ),
+            "network-promotion-zone": cl.option(
+                f"--{prefix}network-promotion-zone",
+                default=False,
+                show_default=True,
+                help="Include promotion zone feature if true",
             ),
             "optimization-epochs": cl.option(
                 f"--{prefix}optimization-epochs", default=5, show_default=True

@@ -30,6 +30,7 @@ class PolicyValueNetwork(th.nn.Module):
         bottleneck_channels: int,
         num_backbone_blocks: int,
         *,
+        feature_promotion_zone: bool = False,
         action_value_head: bool = False,
     ):
         """Initialize policy-value network.
@@ -48,7 +49,7 @@ class PolicyValueNetwork(th.nn.Module):
             Use action value head if true, default is false.
         """
         super().__init__()
-        in_ch: int = game_class.feature_channels
+        in_ch: int = game_class.feature_channels + feature_promotion_zone
         shape = (game_class.files, game_class.ranks)
         num_policy_per_square = (
             game_class._get_move_class()._num_policy_per_square()

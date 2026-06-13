@@ -25,7 +25,13 @@ class ReplayBuffer(th.utils.data.Dataset):
     (array([0.5], dtype=float32), array(0.6, dtype=float32))
     """
 
-    def __init__(self, buffer_size: int = 100000, *, dedupe: bool = False):
+    def __init__(
+        self,
+        buffer_size: int = 100000,
+        *,
+        dedupe: bool = False,
+        feature_promotion_zone: bool = False,
+    ):
         """Initialize dataset class.
 
         Parameters
@@ -37,6 +43,7 @@ class ReplayBuffer(th.utils.data.Dataset):
         self._buffer: list[Data] = []
         self._buffer_size = buffer_size
         self._dedupe = dedupe
+        self._feature_promotion_zone = feature_promotion_zone
         self._game_variant: str | None = None
 
     def add(self, data: Data):
@@ -106,7 +113,9 @@ class ReplayBuffer(th.utils.data.Dataset):
         if index >= len(self._buffer):
             g = g.hflip()
             policy = {m.hflip(): v for m, v in policy.items()}
-        x = g.to_dlshogi_features().squeeze()
+        x = g.to_dlshogi_features(
+            promotion_zone=self._feature_promotion_zone
+        ).squeeze()
         try:
             policy = g.to_dlshogi_policy(policy, default_value=-100000.0)
         except ZeroDivisionError:
