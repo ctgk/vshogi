@@ -800,11 +800,18 @@ class Game(abc.ABC):
         """
         return (cls.feature_channels, cls.files, cls.ranks)
 
-    def to_dlshogi_features(self, *, out: np.ndarray = None) -> np.ndarray:
+    def to_dlshogi_features(
+        self,
+        *,
+        promotion_zone: bool = False,
+        out: np.ndarray = None,
+    ) -> np.ndarray:
         """Return DL-shogi features.
 
         Parameters
         ----------
+        promotion_zone : bool, optional
+            Add promotion_zone feature if true.
         out : np.ndarray, optional
             Dump DL-shogi features into `out` if given.
 
@@ -850,8 +857,12 @@ class Game(abc.ABC):
          [0. 0. 0. 0. 0.]]
         """
         if out is None:
-            return self._game.to_dlshogi_features()
+            return self._game.to_dlshogi_features(promotion_zone)
         if out.shape[-3:] == self.dlshogi_feature_shape:
+            return self._game.to_dlshogi_features(out)
+        elif (out.shape[-3] == self.feature_channels + 1) and (
+            out.shape[-2:] == self.dlshogi_feature_shape[1:]
+        ):
             return self._game.to_dlshogi_features(out)
         else:
             msg = (

@@ -324,9 +324,10 @@ public:
             return MT::make_move(C::SQ_NA, C::SQ_NA);
         return static_cast<move_t>(m_captured_move_list[index]);
     }
-    void to_feature_map(float* const data) const
+    void
+    to_feature_map(float* const data, const bool promotion_zone = false) const
     {
-        m_state.to_feature_map(data);
+        m_state.to_feature_map(data, promotion_zone);
     }
     static void attention_matrix(float* const data)
     {

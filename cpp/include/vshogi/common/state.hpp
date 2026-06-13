@@ -217,7 +217,8 @@ public:
         const Piece& captured,
         const DirectionEnum& checker_dir_0,
         const DirectionEnum& checker_dir_1);
-    void to_feature_map(float* const data) const;
+    void
+    to_feature_map(float* const data, const bool promotion_zone = false) const;
     std::uint64_t zobrist_hash(const bool& hash_stands = true) const
     {
         auto out = m_board.zobrist_hash();
@@ -396,13 +397,24 @@ State<P>& State<P>::undo_discard(
 }
 
 template <class P>
-void State<P>::to_feature_map(float* const data) const
+void State<P>::to_feature_map(
+    float* const data, const bool promotion_zone) const
 {
     // data[c][r][f]
     constexpr uint sp_types = num_stand_piece_types;
     constexpr uint ch_half = sp_types + num_piece_types;
     to_feature_map(data, m_turn);
     to_feature_map(data + ch_half * C::num_squares, ~m_turn);
+    if (promotion_zone) {
+        float* const ptr = data + ch_half * 2u * C::num_squares;
+        std::fill_n(ptr, C::num_squares, 0.f);
+        for (auto sq : C::square_iterator()) {
+            if (ST::in_promotion_zone(sq, BLACK))
+                ptr[sq] = 1.f;
+            else if (ST::in_promotion_zone(sq, WHITE))
+                ptr[sq] = -1.f;
+        }
+    }
 }
 
 template <class P>

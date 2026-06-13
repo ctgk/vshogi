@@ -224,11 +224,21 @@ def test_array_black():
     game.apply("4c2a+").apply("1a2a")
 
     actual = game.to_dlshogi_features()
+    assert actual.shape == (1, 30, 5, 5)
     assert np.allclose(actual[0, 0, ...], 0)  # white's captured pawn
     assert np.allclose(actual[0, 1, ...], 0)  # white's captured silver
     assert np.allclose(actual[0, 2, ...], 0)  # white's captured bishop
     assert np.allclose(actual[0, 3, ...], 0)  # white's captured rook
     assert np.allclose(actual[0, 4, ...], 1)  # white's captured gold
+
+    actual = game.to_dlshogi_features(promotion_zone=True)
+    assert actual.shape == (1, 31, 5, 5)
+    assert np.allclose(actual[0, 0, ...], 0)  # white's captured pawn
+    assert np.allclose(actual[0, 1, ...], 0)  # white's captured silver
+    assert np.allclose(actual[0, 2, ...], 0)  # white's captured bishop
+    assert np.allclose(actual[0, 3, ...], 0)  # white's captured rook
+    assert np.allclose(actual[0, 4, ...], 1)  # white's captured gold
+    assert np.allclose(actual[0, 30], [[1, 0, 0, 0, -1] for _ in range(5)])
 
 
 def test_array_white():
@@ -320,6 +330,9 @@ def test_array_white():
             ]
         ),
     )  # black's rook
+
+    actual = game.to_dlshogi_features(promotion_zone=True)
+    assert np.allclose(actual[0, 30], [[1, 0, 0, 0, -1] for _ in range(5)])
 
 
 def test_stand():

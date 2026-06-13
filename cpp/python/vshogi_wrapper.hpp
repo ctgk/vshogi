@@ -203,10 +203,10 @@ inline void export_state(nanobind::module_& m)
         .def("to_sfen", [](const State& self) { return NT::to_sfen(self); })
         .def(
             "to_dlshogi_features",
-            [](const State& self) {
+            [](const State& self, const bool promotion_zone) {
                 const auto shape = std::vector<size_t>(
                     {1,
-                     State::feature_channels(),
+                     State::feature_channels() + promotion_zone,
                      State::num_files,
                      State::num_ranks});
                 float* data
@@ -218,14 +218,26 @@ inline void export_state(nanobind::module_& m)
                     nb::capsule(data, [](void* p) noexcept {
                         delete[] static_cast<float*>(p);
                     }));
-                self.to_feature_map(data);
+                self.to_feature_map(data, promotion_zone);
                 return out;
-            })
+            },
+            nb::arg("promotion_zone") = false)
         .def(
             "to_dlshogi_features",
             [](const State& self,
                nb::ndarray<nb::numpy, float, nb::c_contig> out) {
-                self.to_feature_map(out.data());
+                if ((out.ndim() != 3u) and (out.ndim() != 4u))
+                    throw nb::python_error();
+                switch (out.shape(out.ndim() - 3u)) {
+                case State::feature_channels():
+                    self.to_feature_map(out.data());
+                    break;
+                case State::feature_channels() + 1:
+                    self.to_feature_map(out.data(), true);
+                    break;
+                default:
+                    break;
+                }
             })
         .def(
             "to_dlshogi_policy",
@@ -440,10 +452,10 @@ inline void export_game(nanobind::module_& m)
             })
         .def(
             "to_dlshogi_features",
-            [](const Game& self) {
+            [](const Game& self, const bool promotion_zone) {
                 const auto shape = std::vector<size_t>(
                     {1,
-                     Game::feature_channels(),
+                     Game::feature_channels() + promotion_zone,
                      Game::num_files,
                      Game::num_ranks});
                 float* data
@@ -455,14 +467,25 @@ inline void export_game(nanobind::module_& m)
                     nb::capsule(data, [](void* p) noexcept {
                         delete[] static_cast<float*>(p);
                     }));
-                self.to_feature_map(data);
+                self.to_feature_map(data, promotion_zone);
                 return out;
             })
         .def(
             "to_dlshogi_features",
             [](const Game& self,
                nb::ndarray<nb::numpy, float, nb::c_contig> out) {
-                self.to_feature_map(out.data());
+                if ((out.ndim() != 3u) and (out.ndim() != 4u))
+                    throw nb::python_error();
+                switch (out.shape(out.ndim() - 3u)) {
+                case Game::feature_channels():
+                    self.to_feature_map(out.data());
+                    break;
+                case Game::feature_channels() + 1:
+                    self.to_feature_map(out.data(), true);
+                    break;
+                default:
+                    break;
+                }
             })
         .def(
             "to_dlshogi_policy",
