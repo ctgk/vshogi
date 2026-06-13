@@ -224,11 +224,11 @@ def test_array_black():
     game.apply("4c2a+").apply("1a2a")
 
     actual = game.to_dlshogi_features()
-    assert np.allclose(actual[0, ..., 0], 0)  # white's captured pawn
-    assert np.allclose(actual[0, ..., 1], 0)  # white's captured silver
-    assert np.allclose(actual[0, ..., 2], 0)  # white's captured bishop
-    assert np.allclose(actual[0, ..., 3], 0)  # white's captured rook
-    assert np.allclose(actual[0, ..., 4], 1)  # white's captured gold
+    assert np.allclose(actual[0, 0, ...], 0)  # white's captured pawn
+    assert np.allclose(actual[0, 1, ...], 0)  # white's captured silver
+    assert np.allclose(actual[0, 2, ...], 0)  # white's captured bishop
+    assert np.allclose(actual[0, 3, ...], 0)  # white's captured rook
+    assert np.allclose(actual[0, 4, ...], 1)  # white's captured gold
 
 
 def test_array_white():
@@ -252,15 +252,15 @@ def test_array_white():
 
     actual = game.to_dlshogi_features()
     assert actual.dtype == np.float32
-    assert actual.shape == (1, 5, 5, 30)
-    assert np.allclose(actual[0, ..., 0], 0)  # white's captured pawn
-    assert np.allclose(actual[0, ..., 1], 0)  # white's captured silver
-    assert np.allclose(actual[0, ..., 2], 0)  # white's captured gold
-    assert np.allclose(actual[0, ..., 3], 0)  # white's captured bishop
-    assert np.allclose(actual[0, ..., 4], 0)  # white's captured rook
-    assert np.allclose(actual[0, ..., 5], 0)  # white's board pawn
+    assert actual.shape == (1, 30, 5, 5)
+    assert np.allclose(actual[0, 0, ...], 0)  # white's captured pawn
+    assert np.allclose(actual[0, 1, ...], 0)  # white's captured silver
+    assert np.allclose(actual[0, 2, ...], 0)  # white's captured gold
+    assert np.allclose(actual[0, 3, ...], 0)  # white's captured bishop
+    assert np.allclose(actual[0, 4, ...], 0)  # white's captured rook
+    assert np.allclose(actual[0, 5, ...], 0)  # white's board pawn
     assert np.allclose(
-        actual[0, ..., 6],
+        actual[0, 6, ...],
         np.rot90(
             [
                 [0, 0, 0, 0, 0],
@@ -272,7 +272,7 @@ def test_array_white():
         ),
     )  # white's board silver
     assert np.allclose(
-        actual[0, ..., 7],
+        actual[0, 7, ...],
         np.rot90(
             [
                 [0, 0, 0, 0, 0],
@@ -284,7 +284,7 @@ def test_array_white():
         ),
     )  # white's board bishop
     assert np.allclose(
-        actual[0, ..., 8],
+        actual[0, 8, ...],
         np.rot90(
             [
                 [0, 0, 0, 0, 0],
@@ -296,7 +296,7 @@ def test_array_white():
         ),
     )  # white's board rook
     assert np.allclose(
-        actual[0, ..., 9],
+        actual[0, 9, ...],
         np.rot90(
             [
                 [0, 0, 0, 0, 0],
@@ -307,9 +307,9 @@ def test_array_white():
             ]
         ),
     )  # white's board gold
-    assert np.allclose(actual[0, ..., 15], 1)  # black's captured pawn
+    assert np.allclose(actual[0, 15, ...], 1)  # black's captured pawn
     assert np.allclose(
-        actual[0, ..., 23],
+        actual[0, 23, ...],
         np.rot90(
             [
                 [0, 0, 0, 0, 0],

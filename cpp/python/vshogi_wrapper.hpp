@@ -206,9 +206,9 @@ inline void export_state(nanobind::module_& m)
             [](const State& self) {
                 const auto shape = std::vector<size_t>(
                     {1,
-                     State::num_ranks,
+                     State::feature_channels(),
                      State::num_files,
-                     State::feature_channels()});
+                     State::num_ranks});
                 float* data
                     = new float[shape[0] * shape[1] * shape[2] * shape[3]];
                 auto out = nb::ndarray<nb::numpy, float>(
@@ -443,9 +443,9 @@ inline void export_game(nanobind::module_& m)
             [](const Game& self) {
                 const auto shape = std::vector<size_t>(
                     {1,
-                     Game::num_ranks,
+                     Game::feature_channels(),
                      Game::num_files,
-                     Game::feature_channels()});
+                     Game::num_ranks});
                 float* data
                     = new float[shape[0] * shape[1] * shape[2] * shape[3]];
                 auto out = nb::ndarray<nb::numpy, float>(

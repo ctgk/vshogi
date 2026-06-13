@@ -24,7 +24,7 @@ def _main(short: bool):
         num_backbone_blocks=10,
     ).eval()
     sample_input = (
-        th.randn(1, Game.files, Game.ranks, Game.feature_channels),)
+        th.randn(1, Game.feature_channels, Game.files, Game.ranks),)
     edge_model = litert_torch.convert(model, sample_input)
     with tempfile.NamedTemporaryFile(delete=True) as t:
         edge_model.export(t.name)

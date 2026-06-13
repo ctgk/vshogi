@@ -217,41 +217,7 @@ public:
         const Piece& captured,
         const DirectionEnum& checker_dir_0,
         const DirectionEnum& checker_dir_1);
-    void to_feature_map(float* const data) const
-    {
-        constexpr uint sp_types = num_stand_piece_types;
-        constexpr uint ch_half = sp_types + num_piece_types;
-        constexpr uint ch = ch_half * 2;
-
-        const auto& stand_curr = m_stands[m_turn];
-        const auto& stand_next = m_stands[~m_turn];
-
-        float num_pieces_curr[sp_types] = {};
-        float num_pieces_next[sp_types] = {};
-        for (auto pt : C::stand_piece_type_iterator()) {
-            num_pieces_curr[pt] = static_cast<float>(stand_curr.count(pt));
-            num_pieces_next[pt] = static_cast<float>(stand_next.count(pt));
-        }
-
-        std::fill_n(data, num_squares * ch, 0.f);
-        for (uint i = num_squares; i--;) {
-            float* const data_ch = data + i * ch;
-            for (uint k = sp_types; k--;)
-                data_ch[k + ch_half] = num_pieces_next[k];
-            for (uint k = sp_types; k--;)
-                data_ch[k] = num_pieces_curr[k];
-
-            const auto sq = static_cast<Square>(
-                (m_turn == BLACK) ? i : (num_squares - 1 - i));
-            if (m_board.is_empty(sq))
-                continue;
-            const auto& p = m_board[sq];
-            const auto pt = PT::to_piece_type(p);
-            const auto k = static_cast<uint>(pt)
-                           + (m_turn != PT::get_color(p)) * ch_half;
-            data_ch[k + sp_types] = 1.f;
-        }
-    }
+    void to_feature_map(float* const data) const;
     std::uint64_t zobrist_hash(const bool& hash_stands = true) const
     {
         auto out = m_board.zobrist_hash();
@@ -375,6 +341,7 @@ private:
         *hash ^= static_cast<std::uint64_t>(p) << (64u - 8u);
         *hash ^= static_cast<std::uint64_t>(m) << (64u - 24u);
     }
+    void to_feature_map(float* const data, const ColorEnum by_side) const;
 };
 
 template <class P>
@@ -426,6 +393,44 @@ State<P>& State<P>::undo_discard(
     m_checkers[0] = checker_dir_0;
     m_checkers[1] = checker_dir_1;
     return *this;
+}
+
+template <class P>
+void State<P>::to_feature_map(float* const data) const
+{
+    // data[c][r][f]
+    constexpr uint sp_types = num_stand_piece_types;
+    constexpr uint ch_half = sp_types + num_piece_types;
+    to_feature_map(data, m_turn);
+    to_feature_map(data + ch_half * C::num_squares, ~m_turn);
+}
+
+template <class P>
+void State<P>::to_feature_map(float* const data, const ColorEnum by_side) const
+{
+    // data[c][r][f];
+    constexpr uint sp_types = num_stand_piece_types;
+    constexpr uint ch = sp_types + num_piece_types;
+    std::fill_n(data, C::num_squares * ch, 0.f);
+    const auto& stand = m_stands[by_side];
+    for (auto pt : C::stand_piece_type_iterator()) {
+        const float v = static_cast<float>(stand.count(pt));
+        float* data_ch = data + pt * C::num_squares;
+        for (auto sq : C::square_iterator())
+            *data_ch++ = v;
+    }
+
+    for (uint i = C::num_squares; i--;) {
+        const auto sq = static_cast<Square>(
+            (m_turn == BLACK) ? i : (C::num_squares - 1 - i));
+        if (m_board.is_empty(sq))
+            continue;
+        const auto& p = m_board[sq];
+        if (PT::get_color(p) == by_side) {
+            const uint k = static_cast<uint>(PT::to_piece_type(p)) + sp_types;
+            data[k * C::num_squares + i] = 1.f;
+        }
+    }
 }
 
 } // namespace vshogi

@@ -24,7 +24,7 @@ def test_to_dlshogi_features_white():
     assert np.allclose(game.to_dlshogi_features(), state.to_dlshogi_features())
 
     a = np.empty(
-        (2, shogi.Game.ranks, shogi.Game.files, shogi.Game.feature_channels),
+        (2, shogi.Game.feature_channels, shogi.Game.files, shogi.Game.ranks),
         dtype=np.float32,
     )
     state.to_dlshogi_features(a[1])

@@ -28,7 +28,7 @@ from vshogi.dlshogi import (
 class _NetworkTrainer:
     def __init__(self, **kwargs) -> None:
         shogi_module = getattr(vs, kwargs["shogi"])
-        self._game_class = getattr(shogi_module, "Game")
+        self._game_class: type[vs.Game] = getattr(shogi_module, "Game")
         self._device: tp.Literal["cpu", "cuda", "mps"] = kwargs["device"]
         self._network: dict = {
             k.removeprefix("network_"): v
@@ -259,9 +259,7 @@ class _NetworkTrainer:
     def _to_edge_model(self, network: th.nn.Module) -> tp.Any:
         sample_inputs = th.randn(
             1,
-            self._game_class.files,
-            self._game_class.ranks,
-            self._game_class.feature_channels,
+            *self._game_class.dlshogi_feature_shape,
         )
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")

@@ -783,6 +783,23 @@ class Game(abc.ABC):
         """
         return self.__class__(self._game.rotate())
 
+    @_ClassProperty
+    def dlshogi_feature_shape(cls) -> tuple[int, ...]:
+        """Return the shape of DL-shogi feature
+
+        Returns
+        -------
+        tuple[int, ...]
+            Shape of DL-shogi feature.
+
+        Examples
+        --------
+        >>> import vshogi.minishogi as shogi
+        >>> shogi.Game.dlshogi_feature_shape
+        (30, 5, 5)
+        """
+        return (cls.feature_channels, cls.files, cls.ranks)
+
     def to_dlshogi_features(self, *, out: np.ndarray = None) -> np.ndarray:
         """Return DL-shogi features.
 
@@ -800,32 +817,32 @@ class Game(abc.ABC):
         --------
         >>> import vshogi.minishogi as shogi; import numpy as np
         >>> x = shogi.Game("rbs1k/4g/5/P4/KGSB1 b P").to_dlshogi_features()
-        >>> print(x[0, ..., 0]) # Black's FU on stand
+        >>> print(x[0, 0, ...]) # Black's FU on stand
         [[1. 1. 1. 1. 1.]
          [1. 1. 1. 1. 1.]
          [1. 1. 1. 1. 1.]
          [1. 1. 1. 1. 1.]
          [1. 1. 1. 1. 1.]]
-        >>> print(np.rot90(x[0, ..., 10], -1)) # Black's OU on board
+        >>> print(np.rot90(x[0, 10, ...], -1)) # Black's OU on board
         [[0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [1. 0. 0. 0. 0.]]
-        >>> print(np.rot90(x[0, ..., 15], -1)) # White's FU on stand
+        >>> print(np.rot90(x[0, 15, ...], -1)) # White's FU on stand
         [[0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]]
-        >>> print(np.rot90(x[0, ..., 25], -1)) # White's LI on board
+        >>> print(np.rot90(x[0, 25, ...], -1)) # White's LI on board
         [[0. 0. 0. 0. 1.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]]
         >>> shogi.Game("rbs1k/4g/5/P4/KGSB1 w P").to_dlshogi_features(out=x)
-        >>> print(np.rot90(x[0, ..., 9], -1)) # White's KI from white's view
+        >>> print(np.rot90(x[0, 9, ...], -1)) # White's KI from white's view
         [[0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
          [0. 0. 0. 0. 0.]
@@ -834,8 +851,14 @@ class Game(abc.ABC):
         """
         if out is None:
             return self._game.to_dlshogi_features()
-        else:
+        if out.shape[-3:] == self.dlshogi_feature_shape:
             return self._game.to_dlshogi_features(out)
+        else:
+            msg = (
+                f"The shape of 'out', {out.shape}, "
+                f"does not match expected shape {self.dlshogi_feature_shape}."
+            )
+            raise ValueError(msg)
 
     def to_dlshogi_policy(
         self,

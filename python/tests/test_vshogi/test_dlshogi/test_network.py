@@ -56,7 +56,7 @@ with warnings.catch_warnings():
         ),
         (
             PolicyValueNetwork(Game, 32, 8, 3),
-            (1, 5, 5, Game.feature_channels),
+            (1, Game.feature_channels, Game.files, Game.ranks),
             {
                 (1, 1),
                 (1, 5 * 5 * Game._get_move_class()._num_policy_per_square()),
@@ -64,7 +64,7 @@ with warnings.catch_warnings():
         ),
         (
             PolicyValueNetwork(Game, 32, 8, 3, action_value_head=True),
-            (1, 5, 5, Game.feature_channels),
+            (1, Game.feature_channels, Game.files, Game.ranks),
             {
                 (1, 5, 5, Game._get_move_class()._num_policy_per_square()),
                 (1, 5 * 5 * Game._get_move_class()._num_policy_per_square()),
@@ -125,10 +125,13 @@ def test_export_to_tflite(module, input_shape, output_shape):
             ),
             (2, 32, 5, 5),
         ),
-        (PolicyValueNetwork(Game, 32, 8, 1), (2, 5, 5, Game.feature_channels)),
+        (
+            PolicyValueNetwork(Game, 32, 8, 1),
+            (2, Game.feature_channels, Game.files, Game.ranks),
+        ),
         (
             PolicyValueNetwork(Game, 32, 8, 3, action_value_head=True),
-            (2, 5, 5, Game.feature_channels),
+            (2, Game.feature_channels, Game.files, Game.ranks),
         ),
     ],
 )
@@ -158,10 +161,13 @@ def test_backward(model, input_shape: tuple):
             ),
             (2, 32, 5, 5),
         ),
-        (PolicyValueNetwork(Game, 32, 8, 1), (2, 5, 5, Game.feature_channels)),
+        (
+            PolicyValueNetwork(Game, 32, 8, 1),
+            (2, Game.feature_channels, Game.files, Game.ranks),
+        ),
         (
             PolicyValueNetwork(Game, 32, 8, 3, action_value_head=True),
-            (2, 5, 5, Game.feature_channels),
+            (2, Game.feature_channels, Game.files, Game.ranks),
         ),
     ],
 )

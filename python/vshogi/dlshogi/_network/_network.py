@@ -85,11 +85,7 @@ class PolicyValueNetwork(th.nn.Module):
             self._value_head = _ValueHead(hidden_channels, shape)
 
     def forward(self, x: th.Tensor) -> tp.Tuple[th.Tensor, th.Tensor]:
-        # x: (B, H, W, C_in)
-        x = x.moveaxis(-1, 1)  # (B, C_in, H, W)
-        if x.is_mps:
-            # https://github.com/pytorch/pytorch/issues/131736
-            x = x.contiguous()
+        # x: (B, C_in, H, W)
         x = self._backbone(x)  # (B, C_hid, H, W)
         p = self._policy_head(x)
         v = self._value_head(x)
