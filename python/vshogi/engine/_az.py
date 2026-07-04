@@ -11,41 +11,6 @@ Policy = np.ndarray
 Value = float | np.ndarray | dict[Move, float]
 
 
-def _repr_node(n) -> str:
-    return f"Node(q={n.get_q_value():.2f}, count={n.get_visit_count()})"
-
-
-def _tree(
-    root,
-    move_type: type,
-    depth: int = 1,
-    breadth: int = 3,
-    *,
-    sort_key=lambda n: -n.get_visit_count(),
-) -> str:
-    out = _repr_node(root)
-    if depth == 0:
-        return out
-    children = [(a, root.get_child_of(a)) for a in root.get_actions()]
-    children.sort(key=lambda t: sort_key(t[1]), reverse=False)
-    if breadth > 0:
-        children = children[:breadth]
-    for i, (a, child) in enumerate(children):
-        s = _tree(
-            child,
-            move_type,
-            depth - 1,
-            breadth,
-            sort_key=sort_key,
-        )
-        if i == len(children) - 1:
-            s = s.replace('\n', '\n    ')
-        else:
-            s = s.replace('\n', '\n|   ')
-        out += f'\n+-- p={child.get_proba():.4f} {move_type(a)} -> {s}'
-    return out
-
-
 class AlphaZero(Engine):
     """Alpha Zero engine."""
 
@@ -90,7 +55,7 @@ class AlphaZero(Engine):
             Name of the search engine instance. Default is None.
         """
         super().__init__(tree_size=tree_size, name=name)
-        self._policy_value_func = policy_value_func
+        self._policy_value_func = self._wrap_pv_func(policy_value_func)
         self._searcher = None
         self._game = None
 
@@ -161,21 +126,27 @@ class AlphaZero(Engine):
             if node is None:
                 continue
             policy_logits, value = self._policy_value_func(self._game)
-            if isinstance(value, np.ndarray):
-                probas = self._game.masked_softmax(policy_logits)
-                value = sum(
-                    p
-                    * value.ravel()[
-                        m._to_dlshogi_policy_index(self._game.turn)
-                    ]
-                    for m, p in probas.items()
-                )
-            elif isinstance(value, dict):
-                probas = self._game.masked_softmax(policy_logits)
-                value = sum(p * value[m] for m, p in probas.items())
             self._searcher.simulate_expand_backprop(
                 node, self._game._game, value, policy_logits
             )
+
+    @staticmethod
+    def _wrap_pv_func(pv_func: tp.Callable) -> tp.Callable:
+        def wrapped_pv_func(game: Game) -> tp.Tuple[Policy, Value]:
+            t = game.turn
+            policy_logits, value = pv_func(game)
+            if isinstance(value, np.ndarray):
+                probas = game.masked_softmax(policy_logits)
+                value = sum(
+                    p * value.ravel()[m._to_dlshogi_policy_index(t)]
+                    for m, p in probas.items()
+                )
+            elif isinstance(value, dict):
+                probas = game.masked_softmax(policy_logits)
+                value = sum(p * value[m] for m, p in probas.items())
+            return policy_logits, value
+
+        return wrapped_pv_func
 
     def _kldgain(self, prev_visits: tp.Dict[Move, int]) -> float:
         prev_visits_added = {m: v + 1 for m, v in prev_visits.items()}
@@ -352,3 +323,38 @@ class AlphaZero(Engine):
             breadth,
             sort_key=sort_key,
         )
+
+
+def _repr_node(n) -> str:
+    return f"Node(q={n.get_q_value():.2f}, count={n.get_visit_count()})"
+
+
+def _tree(
+    root,
+    move_type: type,
+    depth: int = 1,
+    breadth: int = 3,
+    *,
+    sort_key=lambda n: -n.get_visit_count(),
+) -> str:
+    out = _repr_node(root)
+    if depth == 0:
+        return out
+    children = [(a, root.get_child_of(a)) for a in root.get_actions()]
+    children.sort(key=lambda t: sort_key(t[1]), reverse=False)
+    if breadth > 0:
+        children = children[:breadth]
+    for i, (a, child) in enumerate(children):
+        s = _tree(
+            child,
+            move_type,
+            depth - 1,
+            breadth,
+            sort_key=sort_key,
+        )
+        if i == len(children) - 1:
+            s = s.replace('\n', '\n    ')
+        else:
+            s = s.replace('\n', '\n|   ')
+        out += f'\n+-- p={child.get_proba():.4f} {move_type(a)} -> {s}'
+    return out
