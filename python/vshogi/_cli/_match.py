@@ -266,7 +266,6 @@ def _match(
     player1,
     player2,
     num_games_each,
-    az_kldgain_threshold,
     az_search_count,
     az_search_second,
     az_epsilon_greedy,

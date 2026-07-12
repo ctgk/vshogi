@@ -4,6 +4,8 @@
 #include <utility>
 #include <vector>
 
+#include "vshogi/common/utils.hpp"
+
 namespace vshogi::engine
 {
 

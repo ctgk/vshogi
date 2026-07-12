@@ -1,6 +1,8 @@
 #ifndef VSHOGI_ENGINE_MCGS_NODE_HPP
 #define VSHOGI_ENGINE_MCGS_NODE_HPP
 
+#include <cstring>
+
 #include "vshogi/common/game.hpp"
 #include "vshogi/engine/contiguous_buffer.hpp"
 #include "vshogi/engine/mcgs/edge.hpp"
@@ -78,18 +80,14 @@ private:
 };
 
 inline Node::Node(Node&& other)
+    : m_child(other.m_child), m_value(other.m_value),
+      m_prior_value(other.m_prior_value), m_visits(other.m_visits),
+      m_num_parents(other.m_num_parents)
 {
-    m_child = other.m_child;
-    m_value = other.m_value;
-    m_prior_value = other.m_prior_value;
-    m_visits = other.m_visits;
-    m_num_parents = other.m_num_parents;
-
     const auto n = other.count_childs();
     for (auto e = m_child; e < m_child + n; ++e) {
         e->m_parent = this;
     }
-
     other.init();
 }
 
@@ -202,15 +200,11 @@ void Node::expand_by_generator(
 }
 
 inline Edge::Edge(Edge&& other)
+    : m_parent(other.m_parent), m_child(other.m_child),
+      m_prior_proba(other.m_prior_proba), m_visits(other.m_visits),
+      m_action(other.m_action), m_mate(other.m_mate)
 {
-    m_parent = other.m_parent;
-    m_child = other.m_child;
-    m_prior_proba = other.m_prior_proba;
-    m_visits = other.m_visits;
-    m_action = other.m_action;
-    m_mate = other.m_mate;
     other.init();
-
     assert(m_parent->m_child);
     if (m_parent->m_child == &other)
         m_parent->m_child = this;

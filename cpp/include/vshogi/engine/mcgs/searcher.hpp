@@ -173,8 +173,8 @@ bool Searcher<P>::follow_line_and_node(Game<P>& game, const Node* const node)
         }
     }
     const auto moves_blk = game.get_legal_moves();
-    const uint index
-        = static_cast<uint>(dist01(random_engine) * moves_blk.size());
+    const uint index = static_cast<uint>(
+        dist01(random_engine) * static_cast<float>(moves_blk.size()));
     const auto move_blk = moves_blk[index];
     game.apply_nocheck(move_blk);
     if (follow_dfpn(game))

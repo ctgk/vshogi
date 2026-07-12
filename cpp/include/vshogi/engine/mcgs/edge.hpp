@@ -1,6 +1,8 @@
 #ifndef VSHOGI_ENGINE_MCGS_EDGE_HPP
 #define VSHOGI_ENGINE_MCGS_EDGE_HPP
 
+#include <cstring>
+
 #include "vshogi/common/move.hpp"
 
 namespace vshogi::engine::mcgs

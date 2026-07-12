@@ -1,4 +1,5 @@
 #include <cmath>
+#include <stdexcept>
 
 #include "vshogi/engine/mcgs/edge.hpp"
 #include "vshogi/engine/mcgs/node.hpp"

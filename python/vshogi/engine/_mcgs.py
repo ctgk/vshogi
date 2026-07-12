@@ -5,6 +5,7 @@ import numpy as np
 from vshogi._game import Game
 from vshogi._move import Move
 from vshogi.engine._engine import Engine
+from vshogi.engine._az import AlphaZero
 
 
 Policy = np.ndarray
@@ -28,7 +29,7 @@ class Mcgs(Engine):
         name: str | None = None,
     ) -> None:
         super().__init__(tree_size=tree_size, name=name)
-        self._policy_value_func = policy_value_func
+        self._policy_value_func = AlphaZero._wrap_pv_func(policy_value_func)
         self._searcher = None
         self._game = None
 
