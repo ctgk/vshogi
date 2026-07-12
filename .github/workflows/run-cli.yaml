@@ -10,6 +10,7 @@ jobs:
     strategy:
       matrix:
         config: [
+          {algorithm: "mcgs", num_games: 50, epochs: 5},
           {algorithm: "alpha-zero", num_games: 50, epochs: 5},
           {algorithm: "gumbel-alpha-zero", num_games: 50, epochs: 5},
           {algorithm: "klent", num_games: 2500, epochs: 1},
