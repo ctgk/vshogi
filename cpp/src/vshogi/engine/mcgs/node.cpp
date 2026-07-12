@@ -19,7 +19,7 @@ Edge* Node::select()
     float max_score = -std::numeric_limits<float>::infinity();
 
     const float n_s = static_cast<float>(m_visits); // sum_{a}N(s,a) + 1
-    const float sqrtn = std::sqrtf(n_s);
+    const float sqrtn = std::sqrt(n_s);
 
     // eq(6) in https://arxiv.org/pdf/2012.11045
     const float c_puct = std::log(n_s + c_puct_base) + c_puct_bias;
