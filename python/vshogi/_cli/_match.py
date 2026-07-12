@@ -19,12 +19,12 @@ def _get_results_of_single_pair(
     select_args: dict,
 ) -> vs.Record:
     shogi = getattr(vs, shogi_variant)
-    player1 = vs.engine.AlphaZero(
+    player1 = vs.engine.Mcgs(
         vs.dlshogi.PolicyValueFunction(player1),
         **az_init_args_p1,
         name=player1,
     )
-    player2 = vs.engine.AlphaZero(
+    player2 = vs.engine.Mcgs(
         vs.dlshogi.PolicyValueFunction(player2),
         **az_init_args_p2,
         name=player2,
@@ -212,11 +212,6 @@ class _NargsOption(cl.Option):
     show_default=True,
 )
 @cl.option(
-    '--az-kldgain-threshold',
-    type=float,
-    default=None,
-)
-@cl.option(
     '--az-search-count',
     type=int,
     default=None,
@@ -225,12 +220,6 @@ class _NargsOption(cl.Option):
     '--az-search-second',
     type=float,
     default=None,
-)
-@cl.option(
-    '--az-coeff-puct',
-    type=float,
-    default=4.0,
-    show_default=True,
 )
 @cl.option(
     "--az-epsilon-greedy",
@@ -280,7 +269,6 @@ def _match(
     az_kldgain_threshold,
     az_search_count,
     az_search_second,
-    az_coeff_puct,
     az_epsilon_greedy,
     az_temperature,
     dfpn_search_root,
@@ -313,18 +301,14 @@ def _match(
             num_games_each,
             show_inner_pbar,
             az_init_args_p1={
-                'coeff_puct': az_coeff_puct,
                 "epsilon_greedy": az_epsilon_greedy[0],
                 'dfpn_search_root': dfpn_search_root,
                 'dfpn_search_leaf': dfpn_search_leaf,
-                'kldgain_threshold': az_kldgain_threshold,
             },
             az_init_args_p2={
-                'coeff_puct': az_coeff_puct,
                 "epsilon_greedy": az_epsilon_greedy[1],
                 'dfpn_search_root': dfpn_search_root,
                 'dfpn_search_leaf': dfpn_search_leaf,
-                'kldgain_threshold': az_kldgain_threshold,
             },
             search_args={
                 'budget': az_search_count or az_search_second,
