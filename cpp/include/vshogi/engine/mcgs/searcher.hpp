@@ -351,26 +351,35 @@ move_t Searcher<P>::select_action(const float temperature) const
 {
     constexpr float eps = 1.f;
     const Node* const root = &get_root();
-    const uint n = root->count_childs();
-    if (n == 0u)
+    if (root->is_leaf())
         return static_cast<move_t>(0);
-    std::vector<float> probas(n);
-    const Edge* e = root->get_child();
-    for (uint ii = 0u; e->get_parent() == root; ++e) {
+
+    std::vector<float> probas{};
+    for (auto e = root->get_child(); e->get_parent() == root; ++e) {
+        if (not e->get_visits())
+            continue;
         const float v = static_cast<float>(e->get_visits());
-        probas[ii++] = std::log(v + eps) / temperature;
+        probas.emplace_back(std::log(v + eps) / temperature);
     }
     softmax(probas);
 
     float s = dist01(random_engine);
-    e = root->get_child();
-    for (uint ii = 0u; e->get_parent() == root; ++e) {
+    uint ii = 0u;
+    for (auto e = root->get_child(); e->get_parent() == root; ++e) {
+        if (not e->get_visits())
+            continue;
         const auto p = probas[ii++];
         if (s < p)
             return e->get_action();
         s -= p;
     }
-    return root->get_child()->get_action(); // for numerical instability.
+
+    // for numerical instability.
+    for (auto e = root->get_child(); e->get_parent() == root; ++e) {
+        if (e->get_visits())
+            return e->get_action();
+    }
+    return root->get_child()->get_action();
 }
 
 template <class P>

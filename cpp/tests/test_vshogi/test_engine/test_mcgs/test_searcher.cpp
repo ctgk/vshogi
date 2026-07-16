@@ -530,6 +530,35 @@ TEST(test_minishogi_mcgs_searcher, test_apply)
     CHECK_EQUAL(2u, searcher.num_edges_in_buffer());
 }
 
+TEST(test_minishogi_mcgs_searcher, test_select_action)
+{
+    Game game("4k/4p/4P/5/K3R w -");
+    Searcher searcher(1000u);
+    for (uint ii = 100u; ii--;) {
+        Node* const n = searcher.search(game, 0.1f);
+        const float v = 0.9f * (game.get_board().get_king_square(WHITE) != 0);
+        float logits[C::dlshogi_policy_size] = {};
+        logits[MT::to_policy_index(MT::make_move("1b1c"), WHITE)] = 100.f;
+        searcher.simulate_expand_backprop(n, game, v, logits);
+    }
+    const Node& root = searcher.get_root();
+    CHECK_TRUE(root.has_child());
+    for (auto e = root.get_child(); e->get_parent() == &root; ++e) {
+        if (e->get_action() == MT::make_move("1b1c"))
+            CHECK_TRUE(e->get_visits());
+        else
+            CHECK_EQUAL(0u, e->get_visits());
+    }
+    {
+        const auto actual = searcher.select_action();
+        CHECK_EQUAL(MT::make_move("1b1c"), actual);
+    }
+    for (uint ii = 10000u; ii--;) {
+        const auto actual = searcher.select_action(1.f);
+        CHECK_EQUAL(MT::make_move("1b1c"), actual);
+    }
+}
+
 TEST(test_minishogi_mcgs_searcher, test_transposition_nodes)
 {
     constexpr auto SQ_2B = vshogi::minishogi::SQ_2B;
