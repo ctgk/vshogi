@@ -262,6 +262,7 @@ public:
         }
         return false;
     }
+    bool is_check(const move_t move) const;
     bool is_aigoma(const move_t move) const;
     void swap_log(
         std::vector<ZobristHashType>& hash_list,
@@ -512,6 +513,14 @@ private:
         return out;
     }
 };
+
+template <class P>
+bool Game<P>::is_check(const move_t move) const
+{
+    State<P> s{m_state};
+    s.apply(move);
+    return s.in_check();
+}
 
 template <class P>
 bool Game<P>::is_aigoma(const move_t move) const

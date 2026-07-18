@@ -221,6 +221,23 @@ TEST(test_minishogi_game, is_legal)
     }
 }
 
+TEST(test_minishogi_game, test_is_check)
+{
+    {
+        // standard check
+        auto g = Game("4k/4p/5/5/K3R b -");
+        CHECK_TRUE(g.is_check(MT::make_move("1e1b")));
+        CHECK_FALSE(g.is_check(MT::make_move("1e1c")));
+    }
+    {
+        // discovered check
+        auto g = Game("4k/5/5/4S/K3R b -");
+        CHECK_TRUE(g.is_check(MT::make_move("1d2e")));
+        CHECK_TRUE(g.is_check(MT::make_move("1d2c")));
+        CHECK_FALSE(g.is_check(MT::make_move("1d1c")));
+    }
+}
+
 TEST(test_minishogi_game, get_legal_moves)
 {
     {
