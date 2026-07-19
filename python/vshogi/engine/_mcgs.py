@@ -23,7 +23,7 @@ class Mcgs(Engine):
         ] = lambda g: (g.to_dlshogi_policy({}), 0.0),
         *,
         epsilon_greedy: float = 0.1,
-        enhanced_checks: bool = False,
+        enhanced_checks: bool = True,
         tree_size: int = 1000000,
         dfpn_search_root: int = 0,
         dfpn_search_leaf: int = 0,

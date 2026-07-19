@@ -50,6 +50,6 @@ class _SelfPlayWorker(_AlphaZeroWorker):
         options["enhanced-checks"] = cl.option(
             f"--{prefix}enhanced-checks",
             type=cl.BOOL,
-            default=False,
+            default=True,
         )
         return options
