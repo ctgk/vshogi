@@ -2,6 +2,8 @@
 #define VSHOGI_ENGINE_MCGS_NODE_HPP
 
 #include <cstring>
+#include <tuple>
+#include <type_traits>
 
 #include "vshogi/common/game.hpp"
 #include "vshogi/engine/contiguous_buffer.hpp"
@@ -24,7 +26,7 @@ public:
     Edge* select_unexplored();
     template <class P>
     void simulate(const Game<P>& g);
-    template <class P>
+    template <bool EnhancedChecks = false, class P>
     void expand(
         ContiguousBuffer<Edge>& buffer,
         const Game<P>& g,
@@ -32,7 +34,7 @@ public:
         = nullptr);
     void backprop();
 
-    template <class P>
+    template <bool EnhancedChecks = false, class P>
     void simulate_ongoing_and_expand(
         ContiguousBuffer<Edge>& buffer,
         const Game<P>& game,
@@ -64,15 +66,13 @@ public:
 
 private:
     Edge* m_child;
-
-    // ZobristHashType m_hash;
     float m_value;
     float m_prior_value;
     uint m_visits;
     uint m_num_parents;
 
     float first_play_urgency() const;
-    template <class P, GenEnum GenType>
+    template <class P, GenEnum GenType, bool EnhancedChecks>
     void expand_by_generator(
         ContiguousBuffer<Edge>& buffer,
         const Game<P>& g,
@@ -131,20 +131,22 @@ void Node::simulate(const Game<P>& g)
     }
 }
 
-template <class P>
+template <bool EnhancedChecks, class P>
 void Node::expand(
     ContiguousBuffer<Edge>& buffer,
     const Game<P>& game,
     const float policy_logits[Configuration<P>::dlshogi_policy_size])
 {
     if (game.in_check()) {
-        expand_by_generator<P, GenEnum::EVADE>(buffer, game, policy_logits);
+        expand_by_generator<P, GenEnum::EVADE, EnhancedChecks>(
+            buffer, game, policy_logits);
     } else {
-        expand_by_generator<P, GenEnum::LEGAL>(buffer, game, policy_logits);
+        expand_by_generator<P, GenEnum::LEGAL, EnhancedChecks>(
+            buffer, game, policy_logits);
     }
 }
 
-template <class P>
+template <bool EnhancedChecks, class P>
 void Node::simulate_ongoing_and_expand(
     ContiguousBuffer<Edge>& buffer,
     const Game<P>& game,
@@ -153,33 +155,44 @@ void Node::simulate_ongoing_and_expand(
 {
     m_prior_value = std::clamp(value, -0.99f, 0.99f);
     m_value = m_prior_value;
-    expand(buffer, game, policy_logits);
+    expand<EnhancedChecks, P>(buffer, game, policy_logits);
 }
 
-template <class P, GenEnum GenType>
+template <class P, GenEnum GenType, bool EnhancedChecks>
 void Node::expand_by_generator(
     ContiguousBuffer<Edge>& buffer,
     const Game<P>& game,
     const float* const policy_logits)
 {
-    std::vector<std::pair<float, move_t>> lm_pairs{};
-    lm_pairs.reserve(128u);
     const auto turn = game.get_turn();
+    float max_logit = -std::numeric_limits<float>::infinity();
+    m_child = buffer.next();
+    std::vector<std::conditional_t<
+        EnhancedChecks,
+        std::tuple<bool, float, move_t>,
+        std::pair<float, move_t>>>
+        data{};
+    data.reserve(128u);
     for (auto gen = MoveGenerator<P, GenType>(game.get_state()); gen; ++gen) {
         const move_t action = *gen;
         const auto index = MoveTraits<P>::to_policy_index(action, turn);
         const float p = policy_logits ? policy_logits[index] : 0.f;
-        lm_pairs.emplace_back(p, action);
+        if constexpr (EnhancedChecks)
+            data.emplace_back(game.is_check(action), p, action);
+        else
+            data.emplace_back(p, action);
     }
-    std::sort(lm_pairs.begin(), lm_pairs.end(), std::greater<>());
-
-    m_child = buffer.next();
-    float max_logit = -std::numeric_limits<float>::infinity();
-    for (auto&& pair : lm_pairs) {
+    std::sort(data.begin(), data.end(), std::greater<>());
+    for (auto&& d : data) {
         if (buffer.is_full())
             break;
-        buffer.emplace_next(this, pair.first, pair.second);
-        max_logit = std::max(max_logit, pair.first);
+        if constexpr (EnhancedChecks) {
+            buffer.emplace_next(this, std::get<1>(d), std::get<2>(d));
+            max_logit = std::max(max_logit, std::get<1>(d));
+        } else {
+            buffer.emplace_next(this, d.first, d.second);
+            max_logit = std::max(max_logit, d.first);
+        }
     }
 
     if (m_child == buffer.next()) { // no child expanded.

@@ -23,6 +23,7 @@ class Mcgs(Engine):
         ] = lambda g: (g.to_dlshogi_policy({}), 0.0),
         *,
         epsilon_greedy: float = 0.1,
+        enhanced_checks: bool = False,
         tree_size: int = 1000000,
         dfpn_search_root: int = 0,
         dfpn_search_leaf: int = 0,
@@ -34,6 +35,7 @@ class Mcgs(Engine):
         self._game = None
 
         self._epsilon_greedy = epsilon_greedy
+        self._enhanced_checks = enhanced_checks
         self._dfpn_search_root = dfpn_search_root
         self._dfpn_search_leaf = dfpn_search_leaf
 
@@ -84,6 +86,7 @@ class Mcgs(Engine):
                 self._game._game,
                 value,
                 policy_logits,
+                self._enhanced_checks,
             )
 
     def _get_improved_policy(self) -> dict[Move, float]:

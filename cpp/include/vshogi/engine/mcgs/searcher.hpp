@@ -25,6 +25,7 @@ public:
         const uint dfpn_budget_root = 0u,
         const uint dfpn_budget_leaf = 0u);
     Node* search(Game<P>& game, const float epsilon_greedy = 0.f);
+    template <bool EnhancedChecks = false>
     void simulate_expand_backprop(
         Node* const leaf,
         Game<P>& game,
@@ -295,6 +296,7 @@ Node* Searcher<P>::find_child_node_of(Edge* const edge, const Game<P>& game)
 }
 
 template <class P>
+template <bool EnhancedChecks>
 void Searcher<P>::simulate_expand_backprop(
     Node* const leaf,
     Game<P>& game,
@@ -307,7 +309,7 @@ void Searcher<P>::simulate_expand_backprop(
         m_trajectory.empty() || (m_trajectory[0] == nullptr)
         || ((*m_trajectory.rbegin())->get_child() == leaf
             and m_trajectory[0]->get_parent() == &m_root));
-    leaf->simulate_ongoing_and_expand(
+    leaf->simulate_ongoing_and_expand<EnhancedChecks, P>(
         m_edge_buffer, game, value, policy_logits);
     backprop_to_root(game);
 }

@@ -1,5 +1,6 @@
 from typing import Callable
 
+import click as cl
 import numpy as np
 
 from vshogi.dlshogi._alpha_zero._self_play_worker import (
@@ -46,4 +47,9 @@ class _SelfPlayWorker(_AlphaZeroWorker):
             for k, v in options.items()
             if k not in ("coeff-puct", "kldgain-threshold")
         }
+        options["enhanced-checks"] = cl.option(
+            f"--{prefix}enhanced-checks",
+            type=cl.BOOL,
+            default=False,
+        )
         return options

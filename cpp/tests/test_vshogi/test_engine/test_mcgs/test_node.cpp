@@ -247,6 +247,27 @@ TEST(test_mcgs_node, test_select_with_policy)
     }
 }
 
+TEST(test_mcgs_node, test_expand_enhanced_checks)
+{
+    {
+        ContiguousBuffer<Edge> buffer{10u};
+        Node node{};
+        Game game("4k/5/5/5/2B1K b -");
+        node.expand<false>(buffer, game, nullptr);
+        CHECK_EQUAL(7, node.count_childs());
+        CHECK_COMPARE(
+            MT::make_move("3e4d"), !=, node.get_child()->get_action());
+    }
+    {
+        ContiguousBuffer<Edge> buffer{10u};
+        Node node{};
+        Game game("4k/5/5/5/2B1K b -");
+        node.expand<true>(buffer, game, nullptr);
+        CHECK_EQUAL(7, node.count_childs());
+        CHECK_EQUAL(MT::make_move("3e4d"), node.get_child()->get_action());
+    }
+}
+
 TEST(test_mcgs_node, test_expand_with_policy)
 {
     ContiguousBuffer<Edge> buffer{10u};

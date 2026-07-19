@@ -721,10 +721,14 @@ inline void export_mcgs_searcher(nanobind::module_& m)
                Node* const leaf,
                Game& game,
                const float value,
-               const nb::ndarray<nb::numpy, float, nb::c_contig>&
-                   policy_logits) {
-                self.simulate_expand_backprop(
-                    leaf, game, value, policy_logits.data());
+               const nb::ndarray<nb::numpy, float, nb::c_contig>& policy_logits,
+               const bool enhanced_checks) {
+                if (enhanced_checks)
+                    self.template simulate_expand_backprop<true>(
+                        leaf, game, value, policy_logits.data());
+                else
+                    self.template simulate_expand_backprop<false>(
+                        leaf, game, value, policy_logits.data());
             })
         .def(
             "apply",
