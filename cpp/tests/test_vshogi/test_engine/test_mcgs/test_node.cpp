@@ -217,12 +217,13 @@ TEST(test_mcgs_node, test_select_with_policy)
     n.backprop();
     DOUBLES_EQUAL(0.9f, n.get_value(), 1e-4f);
     CHECK_EQUAL(1u, n.get_visits());
+    CHECK_FALSE(buffer.is_full());
+    auto leaf1 = std::make_unique<Node>();
     {
         Edge* const e = n.select();
         CHECK_EQUAL(SQ_2D, MT::get_dst(e->get_action()));
-        auto leaf = std::make_unique<Node>();
-        leaf->simulate_ongoing_and_expand(buffer, Game("5/5/5/5/5 w -"), 0.9f);
-        e->set_child(*leaf);
+        leaf1->simulate_ongoing_and_expand(buffer, Game("5/5/5/5/5 w -"), 0.9f);
+        e->set_child(*leaf1);
         e->backprop();
         CHECK_EQUAL(1u, e->get_visits());
         DOUBLES_EQUAL(-0.9f, e->get_value(), 1e-4f);
