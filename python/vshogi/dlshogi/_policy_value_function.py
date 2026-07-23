@@ -54,7 +54,14 @@ class PolicyValueFunction:
         tp.Tuple[np.ndarray, float | np.ndarray]
             Tuple of logits of policy and value.
         """
-        game.to_dlshogi_features(out=self._input_placeholder)
+        if self._input_placeholder.shape[1] > self._input_placeholder.shape[2]:
+            # channel first
+            game.to_dlshogi_features(out=self._input_placeholder)
+        else:
+            # channel last
+            self._input_placeholder[...] = (
+                game.to_dlshogi_features().transpose((0, 2, 3, 1))
+            )
         self._interpreter.set_tensor(
             self._input_index, self._input_placeholder
         )
