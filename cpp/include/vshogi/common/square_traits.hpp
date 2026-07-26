@@ -54,6 +54,7 @@ template <class P>
 constexpr typename SquareTraits<P>::File
 SquareTraits<P>::to_file(const Square& sq)
 {
+    assert((0 <= sq) and (sq < C::num_squares));
     return static_cast<File>(sq / C::num_ranks);
 }
 
@@ -61,6 +62,7 @@ template <class P>
 constexpr typename SquareTraits<P>::Rank
 SquareTraits<P>::to_rank(const Square& sq)
 {
+    assert((0 <= sq) and (sq < C::num_squares));
     return static_cast<Rank>(sq % C::num_ranks);
 }
 
@@ -86,6 +88,7 @@ typename SquareTraits<P>::Square SquareTraits<P>::hflip(const Square& sq)
 template <class P>
 typename SquareTraits<P>::Square SquareTraits<P>::rotate(const Square& sq)
 {
+    assert((0 <= sq) and (sq < C::num_squares));
     return static_cast<Square>(C::num_squares - 1u - sq);
 }
 
@@ -100,6 +103,7 @@ template <class P>
 bool SquareTraits<P>::in_promotion_zone(
     const Square& sq, const ColorEnum& by_side)
 {
+    assert((0 <= sq) and (sq < C::num_squares));
     return in_promotion_zone(to_rank(sq), by_side);
 }
 
