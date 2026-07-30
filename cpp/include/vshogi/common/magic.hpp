@@ -65,7 +65,7 @@ public:
     {
         init_attack_table_adjacent();
         init_attack_table_diagonal();
-        if constexpr (C::num_squares > 80) {
+        if constexpr ((C::num_squares == 81) or (C::num_squares == 24)) {
             init_attack_table_north();
             init_attack_table_south();
         }

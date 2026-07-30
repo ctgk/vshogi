@@ -103,8 +103,8 @@ template <class P>
 bool SquareTraits<P>::in_promotion_zone(
     const Square& sq, const ColorEnum& by_side)
 {
-    assert((0 <= sq) and (sq < C::num_squares));
-    return in_promotion_zone(to_rank(sq), by_side);
+    // assert((0 <= sq) and (sq < C::num_squares));
+    return (sq == C::SQ_NA) ? false : in_promotion_zone(to_rank(sq), by_side);
 }
 
 template <class P>

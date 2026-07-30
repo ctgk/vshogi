@@ -1,4 +1,5 @@
 #include "vshogi/variants/judkins_shogi.hpp"
+#include "vshogi/variants/leshogi.hpp"
 #include "vshogi/variants/minishogi.hpp"
 #include "vshogi/variants/shogi.hpp"
 
@@ -13,6 +14,12 @@ SimpleString StringFrom(std::nullptr_t)
 
 int main(int argc, char* argv[])
 {
+    vshogi::leshogi::SquareTraits::init_tables();
+    vshogi::leshogi::BlackWhiteStands::init_tables();
+    vshogi::leshogi::BitboardTraits::init_tables();
+    vshogi::leshogi::Magic::init_tables();
+    vshogi::leshogi::Board::init_tables();
+
     vshogi::minishogi::SquareTraits::init_tables();
     vshogi::minishogi::BlackWhiteStands::init_tables();
     vshogi::minishogi::BitboardTraits::init_tables();
