@@ -1,9 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from vshogi.judkins_shogi._game import Game as JudkinsGame  # noqa: F401
-from vshogi.minishogi._game import Game as MinishogiGame  # noqa: F401
-from vshogi.shogi._game import Game as StandardGame  # noqa: F401
+from vshogi.dlshogi._utils import _infer_game_variant
 
 
 def read_kifu(
@@ -191,15 +189,3 @@ def _preprocess_policy(df: pd.DataFrame, move_class: type):
     return df["policy"].apply(
         lambda d: {move_class(m): v for m, v in eval(d).items()}
     )
-
-
-def _infer_game_variant(sfen: str) -> type:
-    num_slashes = sfen.split(' ')[0].count('/')
-    if num_slashes == 4:
-        return MinishogiGame
-    elif num_slashes == 5:
-        return JudkinsGame
-    elif num_slashes == 8:
-        return StandardGame
-    else:
-        raise ValueError(f'Invalid SFEN: {sfen}')

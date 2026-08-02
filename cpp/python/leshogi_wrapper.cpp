@@ -119,7 +119,9 @@ void export_pieces(nb::module_& m)
         .value("VOID", ls::VOID);
 }
 
-NB_MODULE(_shogi, m)
+} // namespace
+
+NB_MODULE(_leshogi, m)
 {
     export_leshogi(m);
 }
@@ -138,5 +140,3 @@ void export_leshogi(nb::module_& m)
 
     pyvshogi::export_classes<ls::Parameters>(m);
 }
-
-} // namespace

@@ -65,6 +65,20 @@ target_compile_features(_vshogi PUBLIC cxx_std_17)
 # Install directive for scikit-build-core
 install(TARGETS _vshogi LIBRARY DESTINATION .)
 
+# Build leshogi extension
+nanobind_add_module(
+    _leshogi
+    STABLE_ABI
+    NB_STATIC
+    ${VSHOGI_SOURCES}
+    leshogi_wrapper.cpp
+)
+target_include_directories(_leshogi PRIVATE ${VSHOGI_INCLUDE_DIRS})
+# Don't use vshogi_add_compile_options for nanobind modules due to strict warnings
+target_compile_features(_leshogi PUBLIC cxx_std_17)
+# Install directive for scikit-build-core
+install(TARGETS _leshogi LIBRARY DESTINATION leshogi)
+
 # Build minishogi extension
 nanobind_add_module(
     _minishogi
@@ -73,11 +87,9 @@ nanobind_add_module(
     ${VSHOGI_SOURCES}
     minishogi_wrapper.cpp
 )
-
 target_include_directories(_minishogi PRIVATE ${VSHOGI_INCLUDE_DIRS})
 # Don't use vshogi_add_compile_options for nanobind modules due to strict warnings
 target_compile_features(_minishogi PUBLIC cxx_std_17)
-
 # Install directive for scikit-build-core
 install(TARGETS _minishogi LIBRARY DESTINATION minishogi)
 
@@ -89,11 +101,9 @@ nanobind_add_module(
     ${VSHOGI_SOURCES}
     judkins_shogi_wrapper.cpp
 )
-
 target_include_directories(_judkins_shogi PRIVATE ${VSHOGI_INCLUDE_DIRS})
 # Don't use vshogi_add_compile_options for nanobind modules due to strict warnings
 target_compile_features(_judkins_shogi PUBLIC cxx_std_17)
-
 # Install directive for scikit-build-core
 install(TARGETS _judkins_shogi LIBRARY DESTINATION judkins_shogi)
 
@@ -105,11 +115,9 @@ nanobind_add_module(
     ${VSHOGI_SOURCES}
     shogi_wrapper.cpp
 )
-
 target_include_directories(_shogi PRIVATE ${VSHOGI_INCLUDE_DIRS})
 # Don't use vshogi_add_compile_options for nanobind modules due to strict warnings
 target_compile_features(_shogi PUBLIC cxx_std_17)
-
 # Install directive for scikit-build-core
 install(TARGETS _shogi LIBRARY DESTINATION shogi)
 

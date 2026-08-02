@@ -1,6 +1,6 @@
 """Shogi API for shogi and its variants."""
 
-from vshogi import engine, judkins_shogi, minishogi, shogi
+from vshogi import engine, judkins_shogi, leshogi, minishogi, shogi
 from vshogi._game import Game
 from vshogi._move import Move
 from vshogi._play import play_game
@@ -19,7 +19,7 @@ except ModuleNotFoundError:
 
 _classes = [Color, Game, Move, Record, Result]
 _enums = [Color, Result]
-_modules = [engine, judkins_shogi, minishogi, shogi]
+_modules = [engine, judkins_shogi, leshogi, minishogi, shogi]
 if dlshogi is not None:
     _modules.append(dlshogi)
 _functions = [play_game, solve_tsumeshogi]

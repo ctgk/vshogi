@@ -3,9 +3,7 @@ import torch as th
 
 from vshogi._game import Game
 from vshogi.dlshogi._data import Data
-from vshogi.judkins_shogi._game import Game as JudkinsGame  # noqa: F401
-from vshogi.minishogi._game import Game as MinishogiGame  # noqa: F401
-from vshogi.shogi._game import Game as StandardGame  # noqa: F401
+from vshogi.dlshogi._utils import _infer_game_variant
 
 
 class ReplayBuffer(th.utils.data.Dataset):
@@ -44,7 +42,7 @@ class ReplayBuffer(th.utils.data.Dataset):
         self._buffer_size = buffer_size
         self._dedupe = dedupe
         self._feature_promotion_zone = feature_promotion_zone
-        self._game_variant: str | None = None
+        self._game_variant: type[Game] | None = None
 
     def add(self, data: Data):
         """Add data to the buffer.
@@ -68,7 +66,7 @@ class ReplayBuffer(th.utils.data.Dataset):
             self._buffer.remove(old)
             self._buffer.append(data.merge(old))
         if self._game_variant is None:
-            self._game_variant = self._infer_game_variant(data.sfen)
+            self._game_variant = _infer_game_variant(data.sfen)
         while len(self._buffer) > self._buffer_size:
             self._buffer.pop(0)  # FIFO
 
@@ -106,9 +104,8 @@ class ReplayBuffer(th.utils.data.Dataset):
         """
         if self._game_variant is None:
             raise ValueError("Please add data before trying to get items.")
-        game_class = eval(self._game_variant)
         ii = index % len(self._buffer)
-        g: Game = eval(self._game_variant)(self._buffer[ii].sfen)
+        g: Game = self._game_variant(self._buffer[ii].sfen)
         policy = self._buffer[ii].policy
         if index >= len(self._buffer):
             g = g.hflip()
@@ -118,15 +115,15 @@ class ReplayBuffer(th.utils.data.Dataset):
         ).squeeze()
         try:
             policy = g.to_dlshogi_policy(policy, default_value=-100000.0)
-        except ZeroDivisionError:
+        except (ZeroDivisionError, RuntimeError):
             msg = f"Invalid policy ({policy}) at: {self._buffer[ii].sfen}"
-            raise ZeroDivisionError(msg)
+            raise RuntimeError(msg)
         if isinstance(self._buffer[ii].value01, dict):
             value01 = np.zeros(
                 (
-                    game_class.files,
-                    game_class.ranks,
-                    game_class._get_move_class()._num_policy_per_square(),
+                    self._game_variant.files,
+                    self._game_variant.ranks,
+                    self._game_variant._get_move_class()._num_policy_per_square(),
                 ),
                 dtype=np.float32,
             )
@@ -137,14 +134,3 @@ class ReplayBuffer(th.utils.data.Dataset):
             value01 = np.array([np.float32(self._buffer[ii].value01)])
         w = np.array(np.float32(self._buffer[ii].weight))
         return x.squeeze(), policy.squeeze(), value01, w
-
-    def _infer_game_variant(self, sfen: str) -> str:
-        num_slashes = sfen.split(' ')[0].count('/')
-        if num_slashes == 4:
-            return 'MinishogiGame'
-        elif num_slashes == 5:
-            return 'JudkinsGame'
-        elif num_slashes == 8:
-            return 'StandardGame'
-        else:
-            raise ValueError(f'Invalid SFEN: {sfen}')

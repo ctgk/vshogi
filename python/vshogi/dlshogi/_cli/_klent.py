@@ -10,7 +10,9 @@ from vshogi.dlshogi._cli._alpha_zero import (
 
 
 @cl.command()
-@cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
+@cl.argument(
+    "shogi", type=cl.Choice(["leshogi", 'minishogi', 'judkins_shogi', 'shogi'])
+)
 @cl.option("--cycles", default=10, show_default=True)
 @_SelfPlayWorker.wrap_options(prefix="play")
 @_NetworkTrainer.wrap_options(prefix="train")
@@ -27,14 +29,18 @@ def _cycler(**kwargs):
 
 
 @cl.command()
-@cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
+@cl.argument(
+    "shogi", type=cl.Choice(["leshogi", 'minishogi', 'judkins_shogi', 'shogi'])
+)
 @_NetworkTrainer.wrap_options()
 def _nn_trainer(**kwargs):
     _train(_NetworkTrainer, **kwargs)
 
 
 @cl.command()
-@cl.argument("shogi", type=cl.Choice(['minishogi', 'judkins_shogi', 'shogi']))
+@cl.argument(
+    "shogi", type=cl.Choice(["leshogi", 'minishogi', 'judkins_shogi', 'shogi'])
+)
 @_SelfPlayWorker.wrap_options()
 def _self_play_worker(**kwargs):
     _selfplay(_SelfPlayWorker, **kwargs)
