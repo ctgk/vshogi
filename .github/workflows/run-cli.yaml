@@ -10,10 +10,11 @@ jobs:
     strategy:
       matrix:
         config: [
-          {algorithm: "mcgs", num_games: 50, epochs: 5},
-          {algorithm: "alpha-zero", num_games: 50, epochs: 5},
-          {algorithm: "gumbel-alpha-zero", num_games: 50, epochs: 5},
-          {algorithm: "klent", num_games: 2500, epochs: 1},
+          {algorithm: "mcgs", variant: "leshogi", num_games: 50, epochs: 5},
+          {algorithm: "mcgs", variant: "minishogi", num_games: 50, epochs: 5},
+          {algorithm: "alpha-zero", variant: "minishogi", num_games: 50, epochs: 5},
+          {algorithm: "gumbel-alpha-zero", variant: "minishogi", num_games: 50, epochs: 5},
+          {algorithm: "klent", variant: "minishogi", num_games: 2500, epochs: 1},
         ]
       fail-fast: false
 
@@ -32,14 +33,17 @@ jobs:
         ALGORITHM: ${{ matrix.config.algorithm }}
         NUM_GAMES: ${{ matrix.config.num_games }}
         EPOCHS: ${{ matrix.config.epochs }}
+        VARIANT: ${{ matrix.config.variant }}
       run: |
-        python -m vshogi $ALGORITHM cycler minishogi \
+        python -m vshogi $ALGORITHM cycler $VARIANT \
         --cycles 3 --play-num-games $NUM_GAMES \
         --train-network-blocks 3 --train-validation-threshold 0.01 \
         --train-optimization-epochs $EPOCHS
     - name: Evaluate model
+      env:
+        VARIANT: ${{ matrix.config.variant }}
       run: |
-        python -m vshogi match minishogi \
+        python -m vshogi match $VARIANT \
         --player1 models/model_0000.tflite \
         --player2 models/model_0003.tflite \
         --az-search-count 100

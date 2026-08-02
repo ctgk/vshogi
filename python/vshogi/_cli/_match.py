@@ -189,7 +189,7 @@ class _NargsOption(cl.Option):
 @cl.command()
 @cl.argument(
     'shogi-variant',
-    type=cl.Choice(['shogi', 'judkins_shogi', 'minishogi']),
+    type=cl.Choice(['shogi', 'judkins_shogi', 'minishogi', "leshogi"]),
 )
 @cl.option(
     '-p1',
