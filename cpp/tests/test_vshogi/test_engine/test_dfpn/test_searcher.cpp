@@ -1,6 +1,7 @@
 #include "vshogi/common/notation.hpp"
 #include "vshogi/engine/dfpn/searcher.hpp"
 #include "vshogi/variants/judkins_shogi.hpp"
+#include "vshogi/variants/leshogi.hpp"
 #include "vshogi/variants/minishogi.hpp"
 #include "vshogi/variants/shogi.hpp"
 
@@ -683,6 +684,39 @@ TEST(test_dfpn_searcher, test_minishogi_nply_mate)
 }
 
 } // namespace test_minishogi
+
+namespace test_leshogi
+{
+
+using namespace vshogi::leshogi;
+
+TEST(test_dfpn_searcher, test_leshogi_debug)
+{
+    const std::vector<std::tuple<std::string, vshogi::uint>> args = {
+        // Turn: WHITE
+        // White: FU,KEx2,HI
+        //     4   3   2   1
+        //   +---+---+---+---+
+        // A |   |   |-OU|-KY|
+        //   +---+---+---+---+
+        // B |-FU|   |   |   |
+        //   +---+---+---+---+
+        // C |-GI|-KY|   |-KI|
+        //   +---+---+---+---+
+        // D |   |+KI|   |   |
+        //   +---+---+---+---+
+        // E |   |+KA|   |   |
+        //   +---+---+---+---+
+        // F |   |+GI|   |+OU|
+        //   +---+---+---+---+
+        // Black: KA,HI
+        {"2kl/p3/sl1g/1G2/1B2/1S1K w RBr2np", 112u},
+    };
+    for (auto&& arg : args)
+        search_mate<Parameters>(std::get<0>(arg), std::get<1>(arg));
+}
+
+} // namespace test_leshogi
 
 namespace test_judkins_shogi
 {

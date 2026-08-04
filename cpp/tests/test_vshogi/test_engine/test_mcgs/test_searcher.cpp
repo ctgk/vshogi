@@ -1,10 +1,57 @@
 #include "vshogi/engine/mcgs/searcher.hpp"
+#include "vshogi/variants/leshogi.hpp"
 #include "vshogi/variants/minishogi.hpp"
 
 #include <CppUTest/TestHarness.h>
 
 namespace test_vshogi::test_engine::test_mcgs
 {
+
+namespace test_leshogi
+{
+
+using namespace vshogi;
+using C = vshogi::leshogi::Config;
+using Game = vshogi::leshogi::Game;
+using MT = vshogi::leshogi::MoveTraits;
+using Node = vshogi::engine::mcgs::Node;
+using Searcher = vshogi::engine::mcgs::Searcher<vshogi::leshogi::Parameters>;
+
+TEST_GROUP (test_leshogi_mcgs) {
+};
+
+TEST(test_leshogi_mcgs, debug)
+{
+    // Turn: BLACK
+    // White: FU,KEx2,HIx2
+    //     4   3   2   1
+    //   +---+---+---+---+
+    // A |   |   |-OU|-KY|
+    //   +---+---+---+---+
+    // B |-FU|   |   |   |
+    //   +---+---+---+---+
+    // C |-GI|-KY|   |-KI|
+    //   +---+---+---+---+
+    // D |   |+KI|   |   |
+    //   +---+---+---+---+
+    // E |   |+KA|+GI|+OU|
+    //   +---+---+---+---+
+    // F |   |   |   |   |
+    //   +---+---+---+---+
+    // Black: KA
+    Game game("2kl/p3/sl1g/1G2/1BSK/4 b B2r2np");
+    Searcher searcher(1000u, 500u, 100u);
+    for (uint ii = 20; ii--;) {
+        const auto n = searcher.search(game, 0.1f);
+        searcher.simulate_expand_backprop(n, game, 0.f);
+        CHECK_TRUE(searcher.edge_buffer().remaining());
+    }
+    searcher.apply(game, MT::make_move("1e1f"));
+    const auto actual = searcher.get_mate_moves(game);
+    CHECK_COMPARE(actual.size(), >, 5);
+}
+
+} // namespace test_leshogi
 
 namespace test_minishogi
 {

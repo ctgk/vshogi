@@ -154,7 +154,7 @@ private: // utility
         const bool offence = (game.ply() % 2u == 0u);
         if (is_mate_end(game))
             return true;
-        if (!node->proved_mate(offence))
+        if (!node->proved_mate(offence) or !node->has_child())
             node = lookup_in_table(game);
         if (node) {
             const Node* c = node->get_child_1st();

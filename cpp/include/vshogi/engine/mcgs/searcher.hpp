@@ -188,6 +188,9 @@ template <class P>
 bool Searcher<P>::follow_dfpn(Game<P>& game)
 {
     assert(game.ply() % 2u == 0u);
+    if (game.get_result() != ONGOING)
+        return game.get_result() == (game.get_turn() ? BLACK_WIN : WHITE_WIN);
+
     m_dfpn.init();
     m_dfpn.search(game, std::max(m_dfpn_budget_root, m_dfpn_budget_leaf));
     if (!m_dfpn.proved_mate())
