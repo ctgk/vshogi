@@ -160,4 +160,5 @@ class _SelfPlayWorker(_AlphaZeroSelfPlayWorker):
             "random-rate": az_options["random-rate"],
             "jobs": az_options["jobs"],
             "job-size": az_options["job-size"],
+            "job-timeout": az_options["job-timeout"],
         }

@@ -28,6 +28,7 @@ class _SelfPlayWorker:
         self._temperature: float = kwargs["temperature"]
         self._n_jobs: int = kwargs["jobs"]
         self._job_size: int = kwargs["job_size"]
+        self._timeout: int = kwargs["job_timeout"]
 
     def __call__(
         self,
@@ -87,7 +88,6 @@ class _SelfPlayWorker:
                 for prev in previous
             ]
         else:
-            timeout_second = 12 * 60 * 60  # 12 hours
             with _tqdm_joblib(
                 tqdm(
                     total=len(previous),
@@ -97,7 +97,7 @@ class _SelfPlayWorker:
             ):
                 records: list[vs.Record] = Parallel(
                     n_jobs=min(self._n_jobs, len(previous)),
-                    timeout=timeout_second,
+                    timeout=self._timeout,
                 )(
                     delayed(self._validate)(
                         latest,
@@ -231,7 +231,6 @@ class _SelfPlayWorker:
             if tflite_path is None
             else tflite_path.split('/')[-1].split('.')[0]
         )
-        timeout_second = 12 * 60 * 60  # 12 hours
         with _tqdm_joblib(
             tqdm(
                 total=len(kifu_index_groups),
@@ -240,7 +239,7 @@ class _SelfPlayWorker:
             ),
         ):
             try:
-                Parallel(n_jobs=n_jobs, timeout=timeout_second)(
+                Parallel(n_jobs=n_jobs, timeout=self._timeout)(
                     delayed(self._run_self_play_single)(
                         tflite_path,
                         tflite_path_others,
@@ -508,9 +507,15 @@ class _SelfPlayWorker:
             ),
             "job-size": cl.option(
                 f"--{prefix}job-size",
-                default=5,
+                default=1,
                 show_default=True,
                 help="Number of games per parallel job.",
+            ),
+            "job-timeout": cl.option(
+                f"--{prefix}job-timeout",
+                default=10 * 60,
+                show_default=True,
+                help="Timeout of a job in seconds.",
             ),
         }
 
