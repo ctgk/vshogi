@@ -162,8 +162,13 @@ class _NetworkTrainer:
         for kifu_path in kifu_list:
             if (time() - start) > duration_sec:
                 break
-            new_data.extend(self._read_kifu(kifu_path))
-            os.rename(kifu_path, kifu_path + ".loaded")
+            try:
+                out = self._read_kifu(kifu_path)
+            except Exception:
+                out = None
+            if out is not None:
+                new_data.extend(out)
+                os.rename(kifu_path, kifu_path + ".loaded")
         return new_data
 
     def _read_kifu(self, path: str) -> list[Data]:
