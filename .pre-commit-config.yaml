@@ -34,6 +34,14 @@ repos:
         entry: ruff format --force-exclude
 -   repo: local
     hooks:
+    -   id: cpp-unittest-debug
+        name: Run C++ UnitTests with Debug build
+        entry: bash -c 'cd `git rev-parse --show-toplevel`; rm -rf build/pre-commit-debug; mkdir -p build/pre-commit-debug; cd build/pre-commit-debug; cmake ../../cpp -DCMAKE_BUILD_TYPE=Debug && make && ./tests/test_vshogi' --
+        types: [text]
+        files: '\.(c|h|cpp|hpp)$'
+        exclude: 'cpp/python/'
+        pass_filenames: false
+        language: system
     -   id: cpp-unittest
         name: Run C++ UnitTests
         entry: bash -c 'cd `git rev-parse --show-toplevel`; rm -rf build/pre-commit; mkdir -p build/pre-commit; cd build/pre-commit; cmake ../../cpp -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && make && ./tests/test_vshogi' --
